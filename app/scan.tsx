@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -15,7 +15,10 @@ import { Ionicons } from '@expo/vector-icons'
 import { useChildStore } from '../store/useChildStore'
 import { scanImage } from '../lib/scan'
 import { supabase } from '../lib/supabase'
+import { checkPremium } from '../lib/revenue'
 import ResultCard from '../components/ui/ResultCard'
+
+const FREE_SCAN_LIMIT = 3
 
 const SCAN_TYPES = [
   { id: 'medicine', icon: '💊', label: 'Medicine' },
@@ -28,10 +31,27 @@ export default function Scan() {
   const { child } = useChildStore()
   const [scanType, setScanType] = useState('medicine')
   const [loading, setLoading] = useState(false)
+  const [isPremium, setIsPremium] = useState(false)
+  const [scanCount, setScanCount] = useState(0)
+
+  useEffect(() => {
+    checkPremium().then(setIsPremium).catch(() => {})
+    if (child?.id) {
+      supabase
+        .from('scan_history')
+        .select('id', { count: 'exact', head: true })
+        .eq('child_id', child.id)
+        .then(({ count }) => setScanCount(count ?? 0))
+    }
+  }, [child?.id])
   const [imageUri, setImageUri] = useState<string | null>(null)
   const [result, setResult] = useState<string | null>(null)
 
   async function pickImage(useCamera: boolean) {
+    if (!isPremium && scanCount >= FREE_SCAN_LIMIT) {
+      router.push('/paywall')
+      return
+    }
     const permissionFn = useCamera
       ? ImagePicker.requestCameraPermissionsAsync
       : ImagePicker.requestMediaLibraryPermissionsAsync
@@ -90,6 +110,7 @@ export default function Scan() {
           image_url: uri,
           result_json: { reply },
         })
+        setScanCount(prev => prev + 1)
       }
     } catch (e: any) {
       Alert.alert('Scan failed', e.message)

@@ -3,6 +3,7 @@ import { View, ActivityIndicator } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
+import { initRevenueCat } from '../lib/revenue'
 import type { Session } from '@supabase/supabase-js'
 
 export default function RootLayout() {
@@ -35,6 +36,11 @@ export default function RootLayout() {
           })
         }
       }
+      // Initialize RevenueCat with user ID for subscription tracking
+      if (session?.user?.id) {
+        initRevenueCat(session.user.id).catch(() => {})
+      }
+
       setLoading(false)
     })
 
@@ -75,6 +81,7 @@ export default function RootLayout() {
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="pillar/[id]" />
       <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
     </Stack>
   )
 }
