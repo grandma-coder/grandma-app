@@ -57,6 +57,7 @@ export default function RootLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="pillar/[id]" />
+      <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
     </Stack>
   )
 }

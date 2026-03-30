@@ -30,6 +30,18 @@ export default function Home() {
         <Text style={{ color: '#fff', fontSize: 20 }}>→</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        onPress={() => router.push('/scan')}
+        style={{ marginHorizontal: 24, backgroundColor: '#1A1A2E', borderRadius: 16, padding: 16, marginBottom: 28, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+      >
+        <Text style={{ fontSize: 28 }}>📷</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Scan a product</Text>
+          <Text style={{ color: '#fff', opacity: 0.8, fontSize: 13, marginTop: 2 }}>Medicine, food, or labels</Text>
+        </View>
+        <Text style={{ color: '#fff', fontSize: 20 }}>→</Text>
+      </TouchableOpacity>
+
       <Text style={{ fontSize: 13, fontWeight: '600', color: '#888', paddingHorizontal: 24, marginBottom: 12, letterSpacing: 0.5 }}>
         KNOWLEDGE PILLARS
       </Text>
