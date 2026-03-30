@@ -9,6 +9,7 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { Pillar } from '../../types'
 import { pillars } from '../../lib/pillars'
+import TipCard from '../../components/pillar/TipCard'
 
 export default function PillarDetail() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -49,10 +50,7 @@ export default function PillarDetail() {
         {/* Tips */}
         <Text style={styles.sectionTitle}>Tips</Text>
         {pillar.tips.map((tip, index) => (
-          <View key={index} style={styles.tipCard}>
-            <Text style={styles.tipLabel}>{tip.label}</Text>
-            <Text style={styles.tipText}>{tip.text}</Text>
-          </View>
+          <TipCard key={index} label={tip.label} text={tip.text} />
         ))}
 
         {/* Suggestions */}
@@ -138,25 +136,6 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginTop: 8,
     marginBottom: 12,
-  },
-
-  /* Tip cards */
-  tipCard: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 10,
-  },
-  tipLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  tipText: {
-    fontSize: 14,
-    color: '#4B5563',
-    lineHeight: 20,
   },
 
   /* Suggestion chips */
