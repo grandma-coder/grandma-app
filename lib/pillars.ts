@@ -1,0 +1,148 @@
+import { Pillar } from '../types'
+
+export const pillars: Pillar[] = [
+  {
+    id: 'milk',
+    name: 'Breastfeeding',
+    icon: '🍼',
+    description: 'Everything about breastfeeding and infant formulas.',
+    color: '#F9A8D4',
+    tips: [
+      { label: 'On demand', text: 'Offer the breast whenever the baby shows signs of hunger, without a fixed schedule.' },
+      { label: 'Proper latch', text: 'The baby\'s mouth should cover the entire areola, not just the nipple.' },
+      { label: 'Hydration', text: 'Drink plenty of water while breastfeeding to maintain milk production.' },
+    ],
+    suggestions: [
+      'My 2-month-old nurses every hour, is that normal?',
+      'How do I know if my breast milk is enough?',
+      'When should I introduce formula?',
+      'How do I store breast milk properly?',
+    ],
+  },
+  {
+    id: 'food',
+    name: 'Feeding',
+    icon: '🥑',
+    description: 'Introducing solids, meal plans, and tips for every stage.',
+    color: '#86EFAC',
+    tips: [
+      { label: 'BLW', text: 'From 6 months on, offer finger foods so the baby can explore textures and flavors.' },
+      { label: 'No salt or sugar', text: 'Avoid salt and sugar in your baby\'s food until age 2.' },
+      { label: 'Variety', text: 'Introduce a new food every 3 days to identify possible allergies.' },
+    ],
+    suggestions: [
+      'What foods should I offer first when starting solids?',
+      'My 1-year-old refuses vegetables, what can I do?',
+      'How do I create a weekly meal plan for an 8-month-old?',
+      'Which fruits are best to start with?',
+    ],
+  },
+  {
+    id: 'nutrition',
+    name: 'Nutrition',
+    icon: '🧬',
+    description: 'Vitamins, minerals, and infant supplementation.',
+    color: '#FDE68A',
+    tips: [
+      { label: 'Vitamin D', text: 'Vitamin D supplementation is recommended from the first days of life.' },
+      { label: 'Iron', text: 'From 6 months on, include iron-rich foods like beans, meat, and leafy greens.' },
+      { label: 'Omega-3', text: 'Fish like sardines and salmon are excellent sources of omega-3 for brain development.' },
+    ],
+    suggestions: [
+      'What vitamins does my baby need to take?',
+      'How can I prevent anemia in the first year of life?',
+      'Does my child need an omega-3 supplement?',
+      'What is the correct vitamin D dose for a newborn?',
+    ],
+  },
+  {
+    id: 'vaccines',
+    name: 'Vaccines',
+    icon: '💉',
+    description: 'Vaccination schedule, reactions, and post-vaccine guidance.',
+    color: '#93C5FD',
+    tips: [
+      { label: 'Stay on schedule', text: 'Follow the national vaccination calendar and don\'t delay doses.' },
+      { label: 'Post-vaccine fever', text: 'Mild fever after vaccination is normal and can be treated with a pediatrician-recommended antipyretic.' },
+      { label: 'Shot record', text: 'Always bring the vaccination booklet to appointments and keep an updated photo on your phone.' },
+    ],
+    suggestions: [
+      'Which vaccines does my baby get at 2 months?',
+      'Is it normal to have a fever after a vaccine?',
+      'Can I delay a vaccine? What are the risks?',
+      'Which optional vaccines are worth getting?',
+    ],
+  },
+  {
+    id: 'clothes',
+    name: 'Layette',
+    icon: '👶',
+    description: 'Clothing, accessories, and organization for every season.',
+    color: '#C4B5FD',
+    tips: [
+      { label: 'Fabric', text: 'Choose cotton clothing to avoid skin irritation on the baby.' },
+      { label: 'Layering', text: 'Dress the baby in one more layer than what you\'re wearing.' },
+      { label: 'Sizing', text: 'Buy few newborn-size pieces — most babies outgrow them quickly.' },
+    ],
+    suggestions: [
+      'How many clothes do I need for the layette?',
+      'How do I dress the baby in summer without overheating?',
+      'Which layette items are truly essential?',
+      'What is the best fabric for newborn clothing?',
+    ],
+  },
+  {
+    id: 'recipes',
+    name: 'Recipes',
+    icon: '🍲',
+    description: 'Practical and healthy recipes for every stage of your baby.',
+    color: '#FDBA74',
+    tips: [
+      { label: 'Homemade purees', text: 'Prefer homemade purees over store-bought ones — they\'re more nutritious and free of preservatives.' },
+      { label: 'Freezing', text: 'Freeze individual portions in glass containers to simplify your routine.' },
+      { label: 'Natural seasonings', text: 'Use garlic, onion, parsley, and chives for flavor without needing salt.' },
+    ],
+    suggestions: [
+      'Puree recipe for a 6-month-old baby',
+      'How do I make a nutritious soup for a baby?',
+      'Healthy snack recipes for 2-year-olds',
+      'How do I meal prep baby food for the whole week?',
+    ],
+  },
+  {
+    id: 'natural',
+    name: 'Natural Care',
+    icon: '🌿',
+    description: 'Natural remedies, safe teas, and infant aromatherapy.',
+    color: '#6EE7B7',
+    tips: [
+      { label: 'Chamomile', text: 'Chamomile tea can help calm the baby, but only after 6 months and with medical guidance.' },
+      { label: 'Lavender', text: 'Diluted lavender essential oil in the bath may help with sleep, but never apply it directly on skin.' },
+      { label: 'Sunlight', text: '10 to 15 minutes of sunlight before 10 AM helps with vitamin D absorption.' },
+    ],
+    suggestions: [
+      'Which teas are safe for babies?',
+      'Is aromatherapy safe for newborns?',
+      'Natural remedies for baby colic',
+      'How do I make an herbal bath for my baby?',
+    ],
+  },
+  {
+    id: 'medicine',
+    name: 'Medicine',
+    icon: '💊',
+    description: 'Basic medicine cabinet, dosages, and when to see the pediatrician.',
+    color: '#FCA5A5',
+    tips: [
+      { label: 'Medicine cabinet', text: 'Keep at home: a thermometer, saline solution, antipyretic, and diaper rash cream.' },
+      { label: 'Self-medication', text: 'Never medicate your child without a pediatrician\'s guidance, even with common remedies.' },
+      { label: 'Emergency', text: 'A fever above 100.4 °F in babies under 3 months is a reason to go to the emergency room.' },
+    ],
+    suggestions: [
+      'What antipyretic can I give my baby?',
+      'How do I calculate medicine dosage by weight?',
+      'When should I take my child to the emergency room?',
+      'What should I have in the baby medicine cabinet?',
+    ],
+  },
+]

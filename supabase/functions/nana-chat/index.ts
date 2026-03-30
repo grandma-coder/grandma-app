@@ -1,3 +1,5 @@
+// deno-lint-ignore-file
+// @ts-nocheck — Deno Edge Function: TS errors in VS Code are expected (runs in Deno, not Node)
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
@@ -83,6 +85,8 @@ function getPillarNote(pillarId: string): string {
     natural: 'You are in natural remedies mode. Only suggest evidence-backed home remedies.',
     milk: 'You are in feeding mode. Cover breastfeeding, formula, and transition milestones by age.',
     clothes: 'You are in sizing mode. Provide brand-specific size conversions based on height and weight.',
+    nutrition: 'You are in nutrition mode. Focus on daily vitamins, minerals, and age-appropriate portion guidance.',
+    recipes: 'You are in recipe mode. Suggest age-appropriate, easy-to-make meals. Flag allergens from the child profile.',
   }
   return notes[pillarId ?? ''] ?? ''
 }

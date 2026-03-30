@@ -1,17 +1,8 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
 import { useChildStore } from '../../store/useChildStore'
-
-const pillars = [
-  { id: 'milk', icon: '🍼', name: 'Milk & Feeding', desc: 'Formula, breastfeeding, bottles' },
-  { id: 'food', icon: '🥦', name: 'First Foods', desc: 'Solids, allergens, textures' },
-  { id: 'nutrition', icon: '📊', name: 'Nutrition', desc: 'Daily nutrients, portions' },
-  { id: 'vaccines', icon: '💉', name: 'Vaccines', desc: 'Schedule, side effects' },
-  { id: 'clothes', icon: '👕', name: 'Clothing Sizes', desc: 'Brand size conversions' },
-  { id: 'recipes', icon: '🍳', name: 'Recipes', desc: 'Kid-friendly meal ideas' },
-  { id: 'natural', icon: '🌿', name: 'Natural Remedies', desc: 'Evidence-backed home care' },
-  { id: 'medicine', icon: '💊', name: 'Medicine', desc: 'Doses, safety, interactions' },
-]
+import { pillars } from '../../lib/pillars'
+import PillarCard from '../../components/pillar/PillarCard'
 
 export default function Home() {
   const { child } = useChildStore()
@@ -43,17 +34,13 @@ export default function Home() {
         KNOWLEDGE PILLARS
       </Text>
 
-      <View style={{ paddingHorizontal: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+      <View style={{ paddingHorizontal: 16, gap: 10 }}>
         {pillars.map(pillar => (
-          <TouchableOpacity
+          <PillarCard
             key={pillar.id}
-            onPress={() => router.push(`/pillar/${pillar.id}`)}
-            style={{ width: '47%', backgroundColor: '#fff', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#E8E4DC' }}
-          >
-            <Text style={{ fontSize: 28, marginBottom: 8 }}>{pillar.icon}</Text>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A2E', marginBottom: 2 }}>{pillar.name}</Text>
-            <Text style={{ fontSize: 12, color: '#aaa' }}>{pillar.desc}</Text>
-          </TouchableOpacity>
+            pillar={pillar}
+            onPress={(p) => router.push(`/pillar/${p.id}`)}
+          />
         ))}
       </View>
     </ScrollView>
