@@ -18,6 +18,21 @@ export default function Onboarding() {
       return
     }
 
+    if (birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+      Alert.alert('Invalid date', 'Please use YYYY-MM-DD format (e.g. 2025-06-15)')
+      return
+    }
+
+    if (birthDate && isNaN(new Date(birthDate).getTime())) {
+      Alert.alert('Invalid date', 'That date doesn\'t seem right. Please check and try again.')
+      return
+    }
+
+    if (weight && (isNaN(parseFloat(weight)) || parseFloat(weight) <= 0)) {
+      Alert.alert('Invalid weight', 'Please enter a valid weight in kg')
+      return
+    }
+
     setLoading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()

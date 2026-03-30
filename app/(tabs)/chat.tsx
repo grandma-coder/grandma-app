@@ -31,6 +31,22 @@ export default function Chat() {
 
   const pillarId = typeof params.pillarId === 'string' ? params.pillarId as PillarId : undefined
 
+  // Load chat history from Supabase
+  useEffect(() => {
+    if (!child?.id) return
+    supabase
+      .from('chat_messages')
+      .select('id, role, content')
+      .eq('child_id', child.id)
+      .order('created_at', { ascending: true })
+      .limit(50)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setMessages(data.map(m => ({ id: m.id, role: m.role as 'user' | 'assistant', content: m.content })))
+        }
+      })
+  }, [child?.id])
+
   useEffect(() => {
     if (params.suggestion && typeof params.suggestion === 'string') {
       setInput(params.suggestion)

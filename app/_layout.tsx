@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { View, ActivityIndicator } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { supabase } from '../lib/supabase'
+import { useChildStore } from '../store/useChildStore'
 import type { Session } from '@supabase/supabase-js'
 
 export default function RootLayout() {
@@ -11,12 +12,28 @@ export default function RootLayout() {
   const router = useRouter()
   const segments = useSegments()
 
+  const setChild = useChildStore((s) => s.setChild)
+
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       if (session) {
-        const { data } = await supabase.from('children').select('id').limit(1)
-        setHasChild(!!(data && data.length > 0))
+        const { data } = await supabase.from('children').select('*').limit(1)
+        if (data && data.length > 0) {
+          setHasChild(true)
+          const c = data[0]
+          setChild({
+            id: c.id,
+            parentId: c.parent_id,
+            name: c.name,
+            birthDate: c.birth_date ?? '',
+            weightKg: c.weight_kg ?? 0,
+            heightCm: c.height_cm ?? 0,
+            allergies: c.allergies ?? [],
+            medications: c.medications ?? [],
+            countryCode: c.country_code ?? 'US',
+          })
+        }
       }
       setLoading(false)
     })
