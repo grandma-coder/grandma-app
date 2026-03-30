@@ -30,3 +30,31 @@ export interface Pillar {
   tips: { label: string; text: string }[]
   suggestions: string[]
 }
+
+export type CaregiverRole = 'parent' | 'nanny' | 'family'
+export type InviteStatus = 'pending' | 'accepted' | 'revoked'
+
+export interface CaregiverPermissions {
+  view: boolean
+  log_activity: boolean
+  chat: boolean
+}
+
+export interface ChildCaregiver {
+  id: string
+  childId: string
+  userId: string | null
+  email: string
+  role: CaregiverRole
+  status: InviteStatus
+  permissions: CaregiverPermissions
+  inviteToken: string | null
+  invitedBy: string
+  createdAt: string
+  acceptedAt: string | null
+}
+
+export interface ChildWithRole extends Child {
+  caregiverRole: CaregiverRole
+  permissions: CaregiverPermissions
+}

@@ -1,14 +1,18 @@
 import { create } from 'zustand'
-import type { Child } from '../types'
+import type { ChildWithRole } from '../types'
 
 interface ChildStore {
-  child: Child | null
-  setChild: (child: Child) => void
-  clearChild: () => void
+  children: ChildWithRole[]
+  activeChild: ChildWithRole | null
+  setChildren: (children: ChildWithRole[]) => void
+  setActiveChild: (child: ChildWithRole) => void
+  clearChildren: () => void
 }
 
 export const useChildStore = create<ChildStore>((set) => ({
-  child: null,
-  setChild: (child) => set({ child }),
-  clearChild: () => set({ child: null }),
+  children: [],
+  activeChild: null,
+  setChildren: (children) => set({ children, activeChild: children[0] ?? null }),
+  setActiveChild: (activeChild) => set({ activeChild }),
+  clearChildren: () => set({ children: [], activeChild: null }),
 }))

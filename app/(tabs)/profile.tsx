@@ -31,7 +31,8 @@ const scanTypeLabel: Record<string, string> = {
 }
 
 export default function Profile() {
-  const { child, clearChild } = useChildStore()
+  const child = useChildStore((s) => s.activeChild)
+  const clearChildren = useChildStore((s) => s.clearChildren)
   const [scans, setScans] = useState<ScanEntry[]>([])
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export default function Profile() {
 
   async function signOut() {
     await supabase.auth.signOut()
-    clearChild()
+    clearChildren()
   }
 
   return (
@@ -107,6 +108,27 @@ export default function Profile() {
         >
           <Text style={styles.addChildText}>Add your child's profile</Text>
         </TouchableOpacity>
+      )}
+
+      {/* Caregivers — only for parents */}
+      {child && child.caregiverRole === 'parent' && (
+        <TouchableOpacity
+          onPress={() => router.push('/manage-caregivers')}
+          style={styles.caregiverButton}
+        >
+          <Ionicons name="people-outline" size={20} color="#7BAE8E" />
+          <Text style={styles.caregiverButtonText}>Manage caregivers</Text>
+          <Ionicons name="chevron-forward" size={18} color="#aaa" />
+        </TouchableOpacity>
+      )}
+
+      {child && child.caregiverRole !== 'parent' && (
+        <View style={styles.roleBadge}>
+          <Ionicons name="shield-checkmark-outline" size={16} color="#7BAE8E" />
+          <Text style={styles.roleBadgeText}>
+            You're a {child.caregiverRole} for {child.name}
+          </Text>
+        </View>
       )}
 
       {/* Scan History */}
@@ -198,6 +220,20 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', padding: 24, gap: 8 },
   emptyText: { fontSize: 15, fontWeight: '600', color: '#aaa' },
   emptySubtext: { fontSize: 13, color: '#ccc', textAlign: 'center' },
+
+  caregiverButton: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#fff', borderRadius: 12, padding: 16,
+    borderWidth: 1, borderColor: '#E8E4DC', marginBottom: 24,
+  },
+  caregiverButtonText: { flex: 1, fontSize: 15, fontWeight: '600', color: '#1A1A2E' },
+
+  roleBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#E1F5EE', borderRadius: 12, padding: 14,
+    marginBottom: 24,
+  },
+  roleBadgeText: { fontSize: 14, color: '#15803D' },
 
   signOutButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,

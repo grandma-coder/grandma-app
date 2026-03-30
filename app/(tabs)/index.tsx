@@ -5,7 +5,7 @@ import { pillars } from '../../lib/pillars'
 import PillarCard from '../../components/pillar/PillarCard'
 
 export default function Home() {
-  const { child } = useChildStore()
+  const child = useChildStore((s) => s.activeChild)
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: '#FAF8F4' }} contentContainerStyle={{ paddingBottom: 40 }}>

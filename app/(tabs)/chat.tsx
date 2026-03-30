@@ -23,7 +23,7 @@ type Message = {
 
 export default function Chat() {
   const params = useLocalSearchParams()
-  const { child } = useChildStore()
+  const child = useChildStore((s) => s.activeChild)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)

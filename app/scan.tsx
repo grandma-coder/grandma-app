@@ -28,7 +28,7 @@ const SCAN_TYPES = [
 ]
 
 export default function Scan() {
-  const { child } = useChildStore()
+  const child = useChildStore((s) => s.activeChild)
   const [scanType, setScanType] = useState('medicine')
   const [loading, setLoading] = useState(false)
   const [isPremium, setIsPremium] = useState(false)
