@@ -4,7 +4,7 @@
 
 A full-platform parenting companion covering the entire journey — **Pre-Pregnancy, Pregnancy, and Kids/Baby** — with AI-powered chat (Guru Grandma), camera scanning, 40-week pregnancy tracking, a social marketplace (Grandma's Garage), community channels, activity logging, food tracking, caregiver collaboration, secure document storage (Vault), and a premium subscription model.
 
-Dark cosmic theme. Powered by Claude AI. Built with Expo + Supabase + RevenueCat.
+Dark neon theme. Powered by Claude AI. Built with Expo + Supabase + RevenueCat.
 
 ---
 
@@ -18,7 +18,7 @@ The app adapts its entire UI based on the user's journey:
 | **Pregnancy** | Expecting parents | 40-week tracking, baby development, birth planning, milk control, partner dashboard |
 | **Kids/Baby** | Parents with children | Pillar-based tracking, food calendar, nanny notes, AirTag location, activity logging |
 
-Users can switch modes at any time via the Mode Switcher on the home screen.
+Users can switch modes at any time via the Mode Switcher pill on the home screen.
 
 ---
 
@@ -28,39 +28,105 @@ Users can switch modes at any time via the Mode Switcher on the home screen.
 |-------|-----------|---------|
 | Mobile | Expo SDK 54 + React Native 0.81 | Cross-platform iOS/Android app |
 | Navigation | Expo Router v6 | File-based routing with 6 tabs + modals |
-| Styling | StyleSheet + expo-linear-gradient + expo-blur | Dark cosmic theme with glassmorphism |
-| Animations | react-native-reanimated | Grandma ball, transitions, effects |
+| Styling | StyleSheet + expo-linear-gradient + expo-blur | Dark neon theme with glassmorphism |
+| Animations | react-native-reanimated | Grandma ball, floating effects, transitions |
 | Backend | Supabase | Auth (email + Apple + Google), PostgreSQL, Edge Functions, Storage |
 | AI | Claude Sonnet API | Guru Grandma chat + image analysis via Edge Functions |
-| State | Zustand v5 (7 stores) | Client-side state management |
+| State | Zustand v5 (9 stores) | Client-side state management |
 | Data Fetching | TanStack React Query v5 | Server state, caching, date-based queries |
 | Payments | RevenueCat | Subscriptions, paywall, receipt validation |
 | Language | TypeScript (strict) | End-to-end type safety with typed routes |
 
 ---
 
+## Design System
+
+Dark neon aesthetic defined in `constants/theme.ts`:
+
+### Color Palette
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| Background | `#0A0E1A` | Deep cosmic navy — app background |
+| Surface | `#141829` | Card backgrounds |
+| Surface glass | `rgba(255,255,255,0.06)` | Glassmorphism cards |
+| Accent (golden) | `#F5C754` | Primary accent — buttons, active states, highlights |
+| Accent glow | `#FFD97D` | Glow effects |
+| Text | `#FFFFFF` | Primary text |
+| Text secondary | `rgba(255,255,255,0.6)` | Body text, descriptions |
+| Text tertiary | `rgba(255,255,255,0.35)` | Labels, placeholders, inactive |
+| Border | `rgba(255,255,255,0.08)` | Card borders, dividers |
+| Success | `#4ADE80` | Positive states, connected |
+| Error | `#F87171` | Errors, allergies, sign out |
+| Warning | `#FBBF24` | Warnings, pending states |
+
+### Neon Accent Palette (for pillar cards, badges, and category highlights)
+
+| Color | Hex | Usage |
+|-------|-----|-------|
+| Neon Yellow | `#F4FD50` | Primary CTA, active tab indicator |
+| Neon Pink | `#FF8AD8` | Breastfeeding, fertility, exams |
+| Neon Orange | `#FF6B35` | Recipes, insurance, sign-out |
+| Neon Blue | `#4D96FF` | Vaccines, hospital, partner, emergency card |
+| Neon Green | `#A2FF86` | Feeding, getting started, success |
+| Neon Purple | `#B983FF` | Layette, milestones |
+
+### Typography (Target)
+
+| Weight | Font | Usage |
+|--------|------|-------|
+| Display (Black/900) | Cabinet Grotesk | Headings, titles, CTAs — uppercase, tight tracking |
+| Body (400-700) | Satoshi | Body text, descriptions, labels |
+| Mono (500) | JetBrains Mono | Labels, timestamps, technical text — uppercase tracking |
+
+### Design Tokens
+
+| Token | Value |
+|-------|-------|
+| Border radius (buttons) | 32-40px (full rounded) |
+| Border radius (cards) | 24-40px (super rounded) |
+| Border radius (inputs) | 40px (pill-shaped) |
+| Spacing baseline | 8px |
+| Active press scale | `0.95` |
+| Hover scale | `1.02-1.05` |
+| Shadow (glow) | `0 0 25px color/0.5` |
+| Card height (grid) | ~200px (aspect driven) |
+
+### Reusable Components
+
+| Component | File | Description |
+|-----------|------|-------------|
+| `GlassCard` | `components/ui/GlassCard.tsx` | Glassmorphism card with gradient border (default/accent/elevated variants) |
+| `GradientButton` | `components/ui/GradientButton.tsx` | Primary CTA with gradient fill + glow shadow (primary/secondary/outline) |
+| `CosmicBackground` | `components/ui/CosmicBackground.tsx` | Full-screen dark gradient (default/pregnancy variants) |
+| `DatePickerField` | `components/ui/DatePickerField.tsx` | Dark themed date picker with label |
+| `ResultCard` | `components/ui/ResultCard.tsx` | Scan result bottom sheet overlay |
+
+---
+
 ## Features
 
 ### Guru Grandma (AI Chat)
-- Interactive AI advisor for ALL parenting topics: pre-pregnancy, pregnancy, birthing, education, nutrition, vaccines, emergencies
-- Child/pregnancy context injected into every request (name, age/week, weight, allergies, medications)
+- Interactive AI advisor powered by Claude Sonnet for ALL parenting topics
+- Covers: pre-pregnancy, pregnancy, birthing, education, nutrition, vaccines, emergencies
+- Child/pregnancy context injected into every request
 - 9 knowledge pillar system prompts for specialized answers
 - Chat history persisted to Supabase (last 50 messages per session)
-- Strong "I'm not your doctor" disclaimer — advises consulting healthcare professionals
-- Safety rules: no diagnosis, weight-based dosages only, always suggests pediatrician
+- "I'm not your doctor" disclaimer — recommends consulting healthcare professionals
+- Chat interface with neon yellow user bubbles, dark AI bubbles with glow effects
 
 ### 3-Mode Home Screen
-- **Pre-Pregnancy:** GrandmaBall + learning modules + preparation checklist + partner connection
-- **Pregnancy:** Week display with moon phases + animated globe + baby size card + development insight + daily pulse (weight/mood/symptoms) + Grandma's Wisdom quotes + Moments of Care (wellness activities) + milk tracker
-- **Kids/Baby:** GrandmaBall + 2x4 pillar grid with last activity + nanny updates feed + food dashboard + AirTag location card
+- **Pre-Pregnancy:** Floating GrandmaBall + "Let's prepare for your journey, dear." + learning modules (Fertility & Preparation, Partner Connection) + community highlights
+- **Pregnancy:** Week display with moon phase name + animated globe + baby size card (days to go + fruit comparison) + Development Insight with "Record a lullaby" action + Daily Pulse (weight/mood/symptoms) + Grandma's Wisdom quotes + Moments of Care (Stardust Stretching, Deep Sleep Ritual) + milk tracker
+- **Kids/Baby:** GrandmaBall + "How can I help you today, dear?" + 2x4 neon pillar card grid with last activity + nanny updates feed + food dashboard + AirTag location card
 
 ### 40-Week Pregnancy Tracking
 - Week-by-week baby size comparisons (poppy seed to pumpkin)
-- Moon phase names for each week
+- Moon phase names for each week (The New Moon Phase, The Harvest Moon Phase, The Full Birth Moon)
 - Development facts and mom tips per week
-- Daily Pulse: weight tracking, mood (radiant/calm/tired/anxious/nauseous/energetic), symptom logging
+- Daily Pulse: weight, mood (radiant/calm/tired/anxious/nauseous/energetic), symptom logging
 - Grandma's Wisdom: rotating personalized quotes
-- Moments of Care: Stardust Stretching, Deep Sleep Ritual
+- Moments of Care: wellness activities with cosmic theme
 
 ### Birth Planning
 - 4 birth type explorer: Natural, C-section, Home Birth, Water Birth
@@ -69,92 +135,89 @@ Users can switch modes at any time via the Mode Switcher on the home screen.
 
 ### Camera Scanning
 - 4 scan types: `medicine`, `food`, `nutrition`, `general`
-- Image compressed to under 1MB (1024px width, 0.7 quality) before sending
+- Image compressed to under 1MB before sending
 - Claude Vision API analyzes with child-specific context
-- Scan history saved with structured JSON results
+- Dark themed scan UI with neon type chips
 - Free tier: 3 scans per child, then paywall
 
 ### Agenda (Calendar + Food + Nanny Notes)
-- Monthly calendar with activity dot indicators and month navigation
-- 3 sub-tabs: Timeline, Food, Notes
-- **Timeline:** Vertical chronological activity log with colored icons, timestamps, "logged by" attribution
-- **Food Dashboard:** Meal tracking status (breakfast/lunch/dinner/snack), photo-based food logging with 5-star rating, AI-powered nutrition tips
+- Monthly calendar with neon yellow selected date, activity dot indicators
+- 3 sub-tabs: Timeline | Food | Notes (pill-shaped active state)
+- **Timeline:** Vertical chronological activity log with colored dots and timestamps
+- **Food Dashboard:** Meal tracking (breakfast/lunch/dinner/snack), photo-based food logging with 5-star rating, AI-powered nutrition tips
 - **Nanny Notes:** Bidirectional parent-to-nanny and nanny-to-parent notes with category pills (schedule, nutrition, medication, behavior, general)
 
 ### Vault (Baby Health Space)
-- **Emergency Card:** Blood type, allergies, medical conditions, primary contact, pediatrician, "Broadcast to EMS" (native share sheet)
-- **Vaccine Records:** Visual checklist with administered/pending states and dose tracking
-- **Document Sections:** Exams, Hospital Records, Insurance — collapsible with file count, download, and upload
-- **Document Upload:** Camera scan or file picker, stored in Supabase Storage
-- **Recent Documents** list with file type/size/date
+- **Emergency Card:** Blue gradient card with shield icon, blood type, allergies, primary contact, "Broadcast to EMS" button
+- **Vaccine Records:** Visual checklist with checkmarks/pending dots
+- **Document Sections:** Exams (pink), Hospital Records (green), Insurance (orange) — collapsible with file count, colored category icons
+- **Document Upload:** Cloud upload area with scan/upload buttons + "Add Record" CTA
+- **Recent Documents** list
 
 ### Grandma's Garage (Social Marketplace)
 - Social feed for trading, selling, or donating baby items
-- Post types: Sell, Trade, Donate (free)
+- Post types: Sell, Trade, Donate (free) with colored badges
 - Categories: Clothing, Toys, Gear, Furniture, Books, Other
-- Listing cards with photos, type badge, price, condition, age range
-- Social interactions: save/bookmark, comment, share
-- Deal flow: Available > Interested > Pending > Completed
+- Listing cards with photos, save/comment/share actions
+- Filter pills: All | Sell | Trade | Free
 - Create listing form with type/category/condition pickers
+- Empty state with floating placeholder cards
 
-### Community Channels
-- Forum-style discussion spaces (inside Library tab)
+### Community Channels (Inside Library Tab)
+- Forum-style discussion spaces
 - Channel browser with member count and category
 - Thread-based discussions with pinned threads
-- Reply system with real-time posting
-- Topic categories: Birth stories, Breastfeeding support, Sleep training, Recipes, Local meetups, and more
+- Reply system with compose bar
 
 ### AirTag Location Tracking
 - Connect Apple AirTag to track child's location
-- Location card on Kids home screen
-- 3-step setup modal with Bluetooth pairing guide
-- Last known location with map placeholder
+- Location card on Kids home screen (connected/disconnected states)
+- 3-step setup modal with numbered steps
 
 ### 9 Knowledge Pillars
-Each pillar has 3 tips + 4 suggestion chips that deep-link into a pillar-scoped chat:
 
-| ID | Icon | Name | Description |
-|----|------|------|-------------|
-| `milk` | Baby Bottle | Breastfeeding | Formula, breastfeeding, bottles, transition milestones |
-| `food` | Avocado | Feeding | Introducing solids, meal plans, age-appropriate textures |
-| `nutrition` | DNA | Nutrition | Vitamins, minerals, supplementation guidance |
-| `vaccines` | Syringe | Vaccines | CDC/WHO schedule, reactions, post-vaccine care |
-| `clothes` | Baby | Layette | Clothing sizes, brand conversions, seasonal guides |
-| `recipes` | Pot of Food | Recipes | Age-appropriate meals, allergen-safe cooking |
-| `habits` | Herb | Habits & Natural Care | Evidence-backed home care, routines, when to see a doctor |
-| `medicine` | Pill | Medicine | Weight-based dosages, safety, interactions |
-| `milestones` | Star | Milestones | Developmental tracking, celebrating firsts |
+| ID | Icon | Name | Neon Color | Description |
+|----|------|------|------------|-------------|
+| `milk` | Baby | Breastfeeding | Blue `#4D96FF` | Formula, breastfeeding, bottles, transitions |
+| `food` | Apple | Feeding | Green `#A2FF86` | Introducing solids, meal plans, textures |
+| `nutrition` | Leaf | Nutrition | Yellow `#F4FD50` | Vitamins, minerals, supplementation |
+| `vaccines` | Syringe | Vaccines | Pink `#FF8AD8` | CDC/WHO schedule, reactions, post-vaccine |
+| `clothes` | Shirt | Layette | Orange `#FF6B35` | Clothing sizes, brand conversions, seasonal |
+| `recipes` | Utensils | Recipes | Dark card | Age-appropriate meals, allergen-safe cooking |
+| `habits` | Herb | Habits & Natural Care | Teal | Evidence-backed home care, routines |
+| `medicine` | Pill | Medicine | Red | Weight-based dosages, safety, interactions |
+| `milestones` | Star | Milestones | Cyan `#67E8F9` | Developmental tracking, celebrating firsts |
 
 ### 3-Journey Onboarding (6 screens)
-1. **Journey Selection** — "I want to be pregnant" / "I'm pregnant" / "I have kids"
-2. **Parent Name** — "How shall I call you, dear?"
-3. **Due Date / LMP** (pregnancy only) — Date picker with week calculator
+1. **Journey Selection** — 3 large cards: "I want to be pregnant" / "I'm pregnant" / "I have kids"
+2. **Parent Name** — "How shall I call you, dear?" with pill-shaped input
+3. **Due Date / LMP** (pregnancy only) — Toggle chips + date picker + week preview
 4. **Baby Name** — Optional for pregnancy, required for kids
-5. **Activity Tracking** — Select activities per journey (different lists for pre-preg/pregnancy/kids)
-6. **Child Profile** — Birth date, weight, allergies + "Begin My Journey" CTA
+5. **Activity Tracking** — Multi-select cards per journey type
+6. **Child Profile** — Details + "Begin My Journey" CTA + terms/privacy
 
 ### Authentication
 - Email + password (sign in / sign up)
 - Apple Sign-In (native iOS)
 - Google Sign-In (OAuth)
-- Dark cosmic themed auth screens
+- Dark themed with neon accents
 
 ### Caregiver Invite System
-- Invite nannies or family members by email
-- 3 roles: `parent`, `nanny`, `family`
+- Invite nannies or family by email with role selector (Nanny/Family)
+- Neon yellow "Send Invite" CTA
 - Granular permissions: `view`, `log_activity`, `chat`
 - Secure token-based invite flow
-- Manage caregivers screen: view status, revoke access
+- Manage caregivers: view status, revoke access
 
 ### Pre-Pregnancy Content
 - 6 learning modules: Fertility Basics, Nutrition Prep, Emotional Readiness, Financial Planning, Partner's Journey, Pre-Conception Health
-- 10-item preparation checklist with progress tracking
-- Partner invitation and shared view
+- 10-item preparation checklist with progress bar
+- Partner invitation card
 
 ### Milk Control
 - Track breast (left/right), bottle, and pump sessions
-- Quick-start buttons with session history
-- Available in both Pregnancy and Kids modes
+- Quick-start grid buttons
+- Session history with duration and amount
 
 ### Premium Subscription
 | Tier | Price | Features |
@@ -162,9 +225,56 @@ Each pillar has 3 tips + 4 suggestion chips that deep-link into a pillar-scoped 
 | Free | $0 | Chat with Grandma, browse all 9 pillars, 3 free scans |
 | Premium | $9.99/mo or $69.99/yr | Unlimited scans, unlimited chat, vaccine reminders, priority responses |
 
-- 7-day free trial on premium
-- Managed by RevenueCat SDK
-- Subscription status synced to Supabase via webhook
+---
+
+## Navigation (6 Tabs)
+
+| Tab | Icon | Screen | Content |
+|-----|------|--------|---------|
+| Home | `home` | `(tabs)/index` | 3-mode adaptive home with ModeSwitcher |
+| Agenda | `calendar` | `(tabs)/agenda` | Calendar + timeline + food + nanny notes |
+| Library | `book-open` | `(tabs)/library` | Guru Grandma chat + pillars + channels |
+| Vault | `shield` | `(tabs)/vault` | Emergency card + documents + vaccines |
+| Garage | `tag` | `(tabs)/exchange` | Grandma's Garage marketplace |
+| Settings | `settings` | `(tabs)/settings` | Profile + caregivers + sign out |
+
+Tab bar: Dark background (`#141414`), neon yellow active state, rounded pill shape (40px border radius).
+
+---
+
+## Screens Overview (28 screens)
+
+| Screen | Route | Description |
+|--------|-------|-------------|
+| Welcome | `(auth)/welcome` | "Welcome, Dear One." + Apple/Google/email auth |
+| Sign In | `(auth)/sign-in` | Social auth + email/password |
+| Sign Up | `(auth)/sign-up` | Social auth + "Begin Your Journey" |
+| Journey | `onboarding/journey` | 3 journey cards |
+| Parent Name | `onboarding/parent-name` | Name input |
+| Baby Name | `onboarding/baby-name` | Optional baby name |
+| Due Date | `onboarding/due-date` | Due date/LMP with week calc |
+| Activities | `onboarding/activities` | Activity selection per journey |
+| Child Profile | `onboarding/child-profile` | Child details + CTA |
+| Home | `(tabs)/index` | 3-mode home with ModeSwitcher |
+| Agenda | `(tabs)/agenda` | Calendar + Timeline/Food/Notes tabs |
+| Library | `(tabs)/library` | Guru Grandma + pillars + channels |
+| Vault | `(tabs)/vault` | Emergency card + documents + vaccines |
+| Garage | `(tabs)/exchange` | Marketplace feed with filters |
+| Settings | `(tabs)/settings` | Profile, caregivers, scan history |
+| Pillar Detail | `pillar/[id]` | Tips + suggestion chips |
+| Scan | `scan` | Camera/gallery + 4 scan types (modal) |
+| Paywall | `paywall` | Premium subscription (modal) |
+| Birth Plan | `birth-plan` | 4 birth types + hospital bag |
+| AirTag Setup | `airtag-setup` | 3-step AirTag connection (modal) |
+| Child Picker | `child-picker` | Switch children (modal) |
+| Invite Caregiver | `invite-caregiver` | Send invite (modal) |
+| Manage Caregivers | `manage-caregivers` | List + revoke |
+| Accept Invite | `accept-invite` | Accept invitation |
+| Channel Browser | `channels/` | Discover channels |
+| Channel Detail | `channels/[id]` | Thread list |
+| Thread Detail | `channels/thread/[id]` | Thread + replies |
+| Listing Detail | `exchange/[id]` | Item detail |
+| Create Listing | `exchange/create` | Post new item |
 
 ---
 
@@ -172,188 +282,46 @@ Each pillar has 3 tips + 4 suggestion chips that deep-link into a pillar-scoped 
 
 ```
 grandma-app/
-├── app/                                    # Expo Router screens (file-based routing)
-│   ├── _layout.tsx                         # Root layout — auth guard, RevenueCat, child loading
-│   ├── (auth)/                             # Authentication screens
-│   │   ├── _layout.tsx                     # Auth stack layout
-│   │   ├── welcome.tsx                     # "Welcome, Dear One." + social auth
-│   │   ├── sign-in.tsx                     # Email/Apple/Google sign in
-│   │   └── sign-up.tsx                     # Email/Apple/Google sign up
-│   ├── onboarding/                         # Onboarding flow (6 screens)
-│   │   ├── _layout.tsx                     # Onboarding stack
-│   │   ├── journey.tsx                     # 3 journey cards (pre-preg/pregnancy/kids)
-│   │   ├── parent-name.tsx                 # Parent's name input
-│   │   ├── baby-name.tsx                   # Baby name (optional for pregnancy)
-│   │   ├── due-date.tsx                    # Due date or LMP picker
-│   │   ├── activities.tsx                  # Activity selection per journey
-│   │   └── child-profile.tsx              # Child details + "Begin My Journey"
-│   ├── (tabs)/                             # Main tab navigation (6 tabs)
-│   │   ├── _layout.tsx                     # Tab bar: Home, Agenda, Library, Vault, Garage, Settings
-│   │   ├── index.tsx                       # 3-mode home (pre-preg/pregnancy/kids)
-│   │   ├── agenda.tsx                      # Calendar + timeline + food + nanny notes
-│   │   ├── library.tsx                     # Guru Grandma chat + pillars + channels
-│   │   ├── vault.tsx                       # Emergency card + documents + vaccines
-│   │   ├── exchange.tsx                    # Grandma's Garage marketplace feed
-│   │   └── settings.tsx                    # Profile + caregivers + scan history + sign out
-│   ├── pillar/[id].tsx                     # Dynamic pillar detail (tips + suggestions)
-│   ├── scan.tsx                            # Camera/photo scan (modal)
-│   ├── paywall.tsx                         # Premium subscription (modal)
-│   ├── birth-plan.tsx                      # Birth types + hospital bag checklist
-│   ├── airtag-setup.tsx                    # AirTag connection setup (modal)
-│   ├── child-picker.tsx                    # Switch between children (modal)
-│   ├── invite-caregiver.tsx                # Invite nanny/family (modal)
-│   ├── manage-caregivers.tsx               # List & revoke caregivers
-│   ├── accept-invite.tsx                   # Accept caregiver invite
-│   ├── channels/                           # Community forum screens
-│   │   ├── index.tsx                       # Channel browser
-│   │   ├── [id].tsx                        # Thread list per channel
-│   │   └── thread/[id].tsx                 # Thread detail with replies
-│   └── exchange/                           # Marketplace screens
-│       ├── [id].tsx                        # Listing detail
-│       └── create.tsx                      # Create new listing
+├── app/                                    # Expo Router (file-based routing)
+│   ├── _layout.tsx                         # Root — auth guard, RevenueCat, routing
+│   ├── (auth)/                             # Auth: welcome, sign-in, sign-up
+│   ├── onboarding/                         # 6 onboarding screens
+│   ├── (tabs)/                             # 6-tab navigation
+│   │   ├── index.tsx                       # 3-mode home
+│   │   ├── agenda.tsx                      # Calendar + food + nanny notes
+│   │   ├── library.tsx                     # Guru Grandma + pillars + channels
+│   │   ├── vault.tsx                       # Emergency card + documents
+│   │   ├── exchange.tsx                    # Grandma's Garage
+│   │   └── settings.tsx                    # Profile + sign out
+│   ├── pillar/[id].tsx                     # Pillar detail
+│   ├── scan.tsx, paywall.tsx               # Modals
+│   ├── birth-plan.tsx, airtag-setup.tsx    # Feature screens
+│   ├── channels/                           # Forum: browser, detail, thread
+│   └── exchange/                           # Marketplace: detail, create
 │
-├── components/                             # Reusable UI components
-│   ├── ui/                                 # Foundation components
-│   │   ├── GlassCard.tsx                   # Glassmorphism card (gradient + blur)
-│   │   ├── GradientButton.tsx              # Primary/secondary/outline CTA button
-│   │   ├── CosmicBackground.tsx            # Dark gradient background wrapper
-│   │   ├── DatePickerField.tsx             # Dark themed date picker
-│   │   └── ResultCard.tsx                  # Scan result bottom sheet
-│   ├── auth/
-│   │   └── SocialAuthButtons.tsx           # Apple + Google sign-in buttons
-│   ├── home/                               # Home screen components
-│   │   ├── GrandmaBall.tsx                 # Animated grandma silhouette sphere
-│   │   ├── ModeSwitcher.tsx                # 3-mode toggle pill
-│   │   ├── PillarGrid.tsx                  # 2x4 pillar card grid
-│   │   ├── PregnancyWeekDisplay.tsx        # Week number + moon phase + globe
-│   │   ├── BabySizeCard.tsx                # Days to go + baby size comparison
-│   │   ├── DevelopmentInsight.tsx           # Weekly baby development facts
-│   │   ├── DailyPulse.tsx                  # Weight, mood, symptom tracking
-│   │   ├── GrandmaWisdom.tsx               # Rotating wisdom quote card
-│   │   ├── MomentsOfCare.tsx               # Wellness activity cards
-│   │   ├── MilkTracker.tsx                 # Breast/bottle/pump tracker
-│   │   ├── NannyUpdatesFeed.tsx            # Caregiver activity feed
-│   │   └── ActivityCard.tsx                # Activity tracking card
-│   ├── pillar/
-│   │   ├── PillarCard.tsx                  # Pillar card for grid
-│   │   └── TipCard.tsx                     # Knowledge tip card
-│   ├── agenda/                             # Agenda tab components
-│   │   ├── CalendarView.tsx                # Monthly calendar with dot indicators
-│   │   ├── ActivityTimeline.tsx            # Vertical chronological timeline
-│   │   ├── FoodPhotoEntry.tsx              # Photo meal capture + star rating
-│   │   ├── FoodDashboard.tsx               # Daily meal tracking status
-│   │   └── NannyNotesPanel.tsx             # Bidirectional notes with categories
-│   ├── vault/                              # Vault tab components
-│   │   ├── EmergencyCard.tsx               # Medical profile + EMS broadcast
-│   │   ├── DocumentSection.tsx             # Collapsible document category
-│   │   ├── DocumentUpload.tsx              # Camera scan or file upload
-│   │   └── VaccineRecord.tsx               # Vaccine checklist with doses
-│   ├── exchange/
-│   │   └── ListingCard.tsx                 # Marketplace listing card
-│   ├── channels/
-│   │   ├── ChannelCard.tsx                 # Channel preview card
-│   │   └── ThreadCard.tsx                  # Thread preview card
-│   ├── kids/
-│   │   └── LocationCard.tsx                # AirTag location card
-│   ├── prepreg/                            # Pre-pregnancy components
-│   │   ├── LearningModule.tsx              # Course/lesson card
-│   │   ├── ChecklistCard.tsx               # Preparation checklist with progress
-│   │   └── PartnerView.tsx                 # Partner invitation card
-│   └── pregnancy/                          # Pregnancy enhancement components
-│       ├── BirthTypeCard.tsx               # Birth type explorer card
-│       ├── MilkControl.tsx                 # Full milk tracking view
-│       ├── PartnerDashboard.tsx            # Partner's tips per week
-│       └── WeeklyInsight.tsx               # Detailed weekly deep dive
+├── components/                             # Reusable components
+│   ├── ui/                                 # GlassCard, GradientButton, CosmicBackground, DatePickerField, ResultCard
+│   ├── auth/                               # SocialAuthButtons
+│   ├── home/                               # GrandmaBall, ModeSwitcher, PillarGrid, PregnancyWeekDisplay, BabySizeCard, DevelopmentInsight, DailyPulse, GrandmaWisdom, MomentsOfCare, MilkTracker, NannyUpdatesFeed, ActivityCard
+│   ├── agenda/                             # CalendarView, ActivityTimeline, FoodPhotoEntry, FoodDashboard, NannyNotesPanel
+│   ├── vault/                              # EmergencyCard, DocumentSection, DocumentUpload, VaccineRecord
+│   ├── exchange/                           # ListingCard
+│   ├── channels/                           # ChannelCard, ThreadCard
+│   ├── kids/                               # LocationCard
+│   ├── pillar/                             # PillarCard, TipCard
+│   ├── prepreg/                            # LearningModule, ChecklistCard, PartnerView
+│   └── pregnancy/                          # BirthTypeCard, MilkControl, PartnerDashboard, WeeklyInsight
 │
-├── constants/
-│   └── theme.ts                            # Design tokens (colors, gradients, spacing, typography)
-│
-├── lib/                                    # Core business logic
-│   ├── supabase.ts                         # Supabase client with SecureStore auth
-│   ├── claude.ts                           # callNana() — Guru Grandma chat API
-│   ├── scan.ts                             # scanImage() — Claude Vision API
-│   ├── pillars.ts                          # 9 pillar definitions
-│   ├── revenue.ts                          # RevenueCat helpers
-│   ├── auth-providers.ts                   # Apple/Google Sign-In helpers
-│   ├── pregnancyData.ts                    # 40-week pregnancy data (size, facts, moon phases)
-│   ├── prepregnancyData.ts                 # Learning modules + preparation checklist
-│   ├── birthData.ts                        # Birth types + hospital bag checklist
-│   ├── foodTracking.ts                     # Food log Supabase helpers
-│   ├── vault.ts                            # Document storage + emergency card helpers
-│   ├── exchange.ts                         # Marketplace CRUD helpers
-│   ├── channels.ts                         # Forum CRUD helpers
-│   └── airtag.ts                           # AirTag location helpers
-│
-├── store/                                  # Zustand v5 state stores (7 stores)
-│   ├── useChildStore.ts                    # Children + active child + role/permissions
-│   ├── useChatStore.ts                     # Chat messages
-│   ├── useJourneyStore.ts                  # Onboarding state (3 modes, parent/baby name)
-│   ├── useModeStore.ts                     # Pre-Pregnancy / Pregnancy / Kids mode toggle
-│   ├── usePregnancyStore.ts                # Pregnancy tracking (week, weight, mood, symptoms)
-│   ├── useFoodStore.ts                     # Food entries and ratings
-│   ├── useVaultStore.ts                    # Documents + emergency card
-│   ├── useExchangeStore.ts                 # Marketplace listings + saved IDs
-│   └── useChannelsStore.ts                 # Channels + threads
-│
-├── types/
-│   └── index.ts                            # TypeScript interfaces & types
-│
-├── supabase/
-│   ├── functions/
-│   │   ├── nana-chat/index.ts              # Guru Grandma chat (Claude Sonnet)
-│   │   ├── scan-image/index.ts             # Vision analysis (Claude Vision)
-│   │   ├── invite-caregiver/index.ts       # Caregiver invite token
-│   │   ├── accept-invite/index.ts          # Accept invite + link user
-│   │   └── revenuecat-webhook/index.ts     # Subscription status sync
-│   └── migrations/                         # Database migration files
-│
-├── app.json                                # Expo config (Apple Sign-In, plugins)
-├── babel.config.js                         # Babel + reanimated plugin
-├── tailwind.config.js                      # Tailwind/NativeWind config
-├── tsconfig.json                           # TypeScript strict + typed routes
-└── package.json                            # Dependencies and scripts
+├── constants/theme.ts                      # Design tokens
+├── lib/                                    # Business logic (14 files)
+├── store/                                  # Zustand stores (9 stores)
+├── types/index.ts                          # TypeScript interfaces
+└── supabase/functions/                     # 5 Edge Functions
 ```
 
 ---
 
-## Design System
-
-Dark cosmic theme defined in `constants/theme.ts`:
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| Background | `#0A0E1A` | Deep cosmic navy — app background |
-| Surface | `#141829` | Card backgrounds |
-| Surface glass | `rgba(255,255,255,0.06)` | Glassmorphism cards |
-| Accent | `#F5C754` | Golden — buttons, active states, highlights |
-| Accent glow | `#FFD97D` | Glow effects |
-| Text | `#FFFFFF` | Primary text |
-| Text secondary | `rgba(255,255,255,0.6)` | Body text, descriptions |
-| Text tertiary | `rgba(255,255,255,0.35)` | Labels, placeholders |
-| Border | `rgba(255,255,255,0.08)` | Card borders, dividers |
-| Success | `#4ADE80` | Positive states |
-| Error | `#F87171` | Errors, allergies |
-| Warning | `#FBBF24` | Warnings, pending states |
-| Pillar colors | 9 unique pastels | Per-pillar accent on dark backgrounds |
-
----
-
-## Architecture
-
-### Authentication & Routing
-
-```
-App opens
-  └─ _layout.tsx checks Supabase session
-      ├─ No session → (auth)/welcome
-      └─ Has session
-          ├─ Load profile + children via child_caregivers
-          ├─ Initialize RevenueCat
-          ├─ No children → /onboarding/journey
-          └─ Has children → /(tabs) with mode from useModeStore
-```
-
-### State Management (7 Zustand stores)
+## State Management (9 Zustand Stores)
 
 | Store | Purpose |
 |-------|---------|
@@ -367,116 +335,40 @@ App opens
 | `useExchangeStore` | Marketplace listings + saved |
 | `useChannelsStore` | Channels + threads |
 
-### Navigation (6 tabs)
-
-| Tab | Screen | Content |
-|-----|--------|---------|
-| Home | `(tabs)/index` | 3-mode adaptive home screen |
-| Agenda | `(tabs)/agenda` | Calendar + timeline + food + nanny notes |
-| Library | `(tabs)/library` | Guru Grandma chat + pillars + channels |
-| Vault | `(tabs)/vault` | Emergency card + documents + vaccines |
-| Garage | `(tabs)/exchange` | Grandma's Garage marketplace |
-| Settings | `(tabs)/settings` | Profile + caregivers + sign out |
-
----
-
-## Screens Overview (28 screens)
-
-| Screen | Route | Description |
-|--------|-------|-------------|
-| Welcome | `(auth)/welcome` | "Welcome, Dear One." + Apple/Google/email auth |
-| Sign In | `(auth)/sign-in` | Dark theme, social auth + email |
-| Sign Up | `(auth)/sign-up` | Dark theme, social auth + "Begin Your Journey" |
-| Journey | `onboarding/journey` | 3 GlassCards: Pre-Pregnancy / Pregnancy / Kids |
-| Parent Name | `onboarding/parent-name` | "How shall I call you, dear?" |
-| Baby Name | `onboarding/baby-name` | Optional baby name |
-| Due Date | `onboarding/due-date` | Due date or LMP with week calculator |
-| Activities | `onboarding/activities` | Activity selection per journey |
-| Child Profile | `onboarding/child-profile` | Child details + "Begin My Journey" |
-| Home | `(tabs)/index` | 3-mode home with ModeSwitcher |
-| Agenda | `(tabs)/agenda` | Calendar + Timeline / Food / Notes tabs |
-| Library | `(tabs)/library` | Guru Grandma + pillars + channels |
-| Vault | `(tabs)/vault` | Emergency card + documents + vaccines |
-| Garage | `(tabs)/exchange` | Marketplace feed with filters |
-| Settings | `(tabs)/settings` | Profile, caregivers, scan history |
-| Pillar Detail | `pillar/[id]` | Tips + suggestion chips |
-| Scan | `scan` | Camera/gallery + 4 scan types (modal) |
-| Paywall | `paywall` | Premium subscription offer (modal) |
-| Birth Plan | `birth-plan` | 4 birth types + hospital bag checklist |
-| AirTag Setup | `airtag-setup` | 3-step AirTag connection (modal) |
-| Child Picker | `child-picker` | Switch between children (modal) |
-| Invite Caregiver | `invite-caregiver` | Send nanny/family invite (modal) |
-| Manage Caregivers | `manage-caregivers` | List + revoke caregivers |
-| Accept Invite | `accept-invite` | Accept caregiver invitation |
-| Channel Browser | `channels/` | Discover and join channels |
-| Channel Detail | `channels/[id]` | Thread list per channel |
-| Thread Detail | `channels/thread/[id]` | Thread with replies |
-| Listing Detail | `exchange/[id]` | Marketplace item detail |
-| Create Listing | `exchange/create` | Post new item to Garage |
-
 ---
 
 ## Edge Functions
 
-### `nana-chat` — Guru Grandma's Brain
-- Covers: pre-pregnancy, pregnancy, birthing, education, nutrition, vaccines, emergencies
-- Builds system prompt with child/pregnancy context + pillar-specific instructions
-- Calls Claude Sonnet API (`claude-sonnet-4-20250514`)
-- Strong "I'm not your doctor" disclaimer
-- Supports all 9 pillar IDs including `habits` and `milestones`
-
-### `scan-image` — Vision Analysis
-- 4 scan types with child-specific analysis
-- Claude Vision API with base64 image
-
-### `invite-caregiver` / `accept-invite` — Caregiver System
-- JWT-authenticated invite flow with token verification
-
-### `revenuecat-webhook` — Subscription Sync
-- RevenueCat webhook events to Supabase profiles
+| Function | Purpose |
+|----------|---------|
+| `nana-chat` | Guru Grandma AI chat (Claude Sonnet) — 3-mode context, 9 pillar prompts |
+| `scan-image` | Vision analysis (Claude Vision) — 4 scan types with child context |
+| `invite-caregiver` | JWT-authenticated caregiver invite with token generation |
+| `accept-invite` | Token verification + user linking |
+| `revenuecat-webhook` | Subscription status sync from RevenueCat |
 
 ---
 
 ## Getting Started
 
-### Prerequisites
-- Node.js 18+
-- Expo CLI (`npm install -g expo-cli`)
-- Supabase CLI (`brew install supabase/tap/supabase`)
-- Expo Go app or iOS Simulator / Android Emulator
-
-### Setup
-
 ```bash
-# 1. Clone and install
+# Clone and install
 git clone https://github.com/grandma-coder/grandma-app.git
-cd grandma-app
-npm install
+cd grandma-app && npm install
 
-# 2. Environment variables
-cp .env.example .env
-# Fill in Supabase URL, anon key, Anthropic key, RevenueCat key
+# Environment
+cp .env.example .env  # Fill in Supabase, Anthropic, RevenueCat keys
 
-# 3. Link Supabase
-supabase login
-supabase link --project-ref YOUR_PROJECT_REF
-
-# 4. Deploy Edge Functions
+# Supabase
+supabase login && supabase link --project-ref YOUR_REF
 supabase functions deploy nana-chat --no-verify-jwt
 supabase functions deploy scan-image --no-verify-jwt
 supabase functions deploy invite-caregiver
 supabase functions deploy accept-invite
 supabase functions deploy revenuecat-webhook --no-verify-jwt
 
-# 5. Start the app
+# Run
 npx expo start --clear
-```
-
-### Running
-```bash
-npx expo start --ios      # iOS Simulator
-npx expo start --android  # Android Emulator
-npx expo start --tunnel   # Real device (different network)
 ```
 
 ---
@@ -490,32 +382,6 @@ npx expo start --tunnel   # Real device (different network)
 | RevenueCat | Free | Until $2,500 MRR |
 | Expo EAS | Free | 30 builds/month |
 | **Total** | **~$17/mo** | **Break even: 2 subscribers** |
-
----
-
-## Build Phases
-
-- **Phase 1** (Foundation): Auth, onboarding, chat with Grandma
-- **Phase 2** (Pillars): 8 knowledge pillars, tips, suggestion chips, chat persistence
-- **Phase 3** (Camera Scan): Medicine/food scanning with Claude Vision
-- **Phase 4** (Monetise): RevenueCat paywall, subscription gate, webhook
-- **Phase 5** (Journey): Journey-based onboarding, activity cards, history tab
-- **Phase 6** (Caregivers): Nanny/family invite system, permissions, multi-child
-- **Phase 7** (Dark Redesign): Full 15-phase cosmic dark theme rebuild
-  - Dark theme system + glassmorphism components
-  - 3-journey onboarding (pre-pregnancy/pregnancy/kids)
-  - 6-tab navigation (Home, Agenda, Library, Vault, Garage, Settings)
-  - 3-mode home with 40-week pregnancy tracking
-  - Guru Grandma (AI chat rebrand) + pillar browsing + channels
-  - Agenda with calendar, food tracking, nanny notes
-  - Vault with emergency card, documents, vaccine records
-  - Grandma's Garage social marketplace
-  - Community channels forum system
-  - AirTag location tracking
-  - Pre-pregnancy learning + birth planning
-  - All screens dark themed
-
-See [BLUEPRINT.md](BLUEPRINT.md) for the original step-by-step build guide.
 
 ---
 
