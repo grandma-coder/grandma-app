@@ -100,6 +100,7 @@ const styles = StyleSheet.create({
   },
   question: {
     ...typography.heading,
+    fontWeight: '900',
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 36,
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
   },
   cardInner: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 20,
   },
   iconCircle: {
     width: 64,
@@ -125,6 +126,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     ...typography.subtitle,
+    fontWeight: '900',
     marginBottom: 6,
     textAlign: 'center',
   },

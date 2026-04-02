@@ -8,18 +8,20 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: '#141414',
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 88,
-          paddingBottom: 28,
-          paddingTop: 8,
+          height: 90,
+          paddingBottom: 30,
+          paddingTop: 10,
+          borderTopLeftRadius: 32,
+          borderTopRightRadius: 32,
         },
         tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textTertiary,
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.20)',
         tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '600',
+          fontSize: 9,
+          fontWeight: '900',
           letterSpacing: 0.5,
           textTransform: 'uppercase',
         },
@@ -57,7 +59,7 @@ export default function TabLayout() {
         options={{
           title: 'Vault',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="lock-closed-outline" size={size} color={color} />
+            <Ionicons name="shield-outline" size={size} color={color} />
           ),
         }}
       />

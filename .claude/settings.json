@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(kill %1)",
+      "Read(//dev/**)",
+      "Bash(ls /Users/igorcarvalhorodrigues/Projects/grandma-app/*.*)",
+      "Bash(npx tsc:*)",
+      "Bash(git -C /Users/igorcarvalhorodrigues/Projects/grandma-app status)",
+      "Bash(git -C /Users/igorcarvalhorodrigues/Projects/grandma-app diff --stat HEAD)",
+      "Bash(git -C /Users/igorcarvalhorodrigues/Projects/grandma-app log --oneline -5)",
+      "Bash(git -C /Users/igorcarvalhorodrigues/Projects/grandma-app diff --cached --stat)",
+      "Bash(git -C /Users/igorcarvalhorodrigues/Projects/grandma-app add README.md)",
+      "Bash(git -C /Users/igorcarvalhorodrigues/Projects/grandma-app commit -m ':*)",
+      "Bash(git -C /Users/igorcarvalhorodrigues/Projects/grandma-app add -A)",
+      "Bash(git -C /Users/igorcarvalhorodrigues/Projects/grandma-app status --short)"
+    ]
+  }
+}

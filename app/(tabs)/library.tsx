@@ -161,9 +161,16 @@ export default function Library() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={90}
       >
-        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-          <Text style={styles.title}>Guru Grandma</Text>
-          <Text style={styles.headerSubtitle}>Your parenting wisdom guide</Text>
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+          <View style={styles.headerRow}>
+            <View>
+              <Text style={styles.title}>Guru{'\n'}<Text style={{ color: colors.accent }}>Grandma</Text></Text>
+              <Text style={styles.headerSubtitle}>Your parenting wisdom guide</Text>
+            </View>
+            <View style={styles.sparkleBox}>
+              <Text style={{ fontSize: 22 }}>✨</Text>
+            </View>
+          </View>
         </View>
 
         {messages.length === 0 ? (
@@ -211,14 +218,34 @@ export default function Library() {
 const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing['2xl'],
-    paddingBottom: 12,
+    paddingBottom: 16,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   title: {
-    ...typography.heading,
-    marginBottom: 2,
+    fontSize: 40,
+    fontWeight: '900',
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: -1,
+    lineHeight: 40,
   },
   headerSubtitle: {
     ...typography.caption,
+    marginTop: 6,
+  },
+  sparkleBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceGlass,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyScroll: {
     paddingHorizontal: spacing['2xl'],
@@ -299,59 +326,71 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   bubble: {
-    maxWidth: '80%',
+    maxWidth: '85%',
     borderRadius: borderRadius.lg,
-    padding: 12,
+    padding: 20,
   },
   bubbleUser: {
     backgroundColor: colors.accent,
     borderBottomRightRadius: 4,
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
   },
   bubbleAssistant: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderBottomLeftRadius: 4,
+    borderTopLeftRadius: 4,
   },
   bubbleText: {
-    fontSize: 15,
-    color: colors.text,
-    lineHeight: 22,
+    fontSize: 16,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 24,
   },
   bubbleTextUser: {
     color: colors.textOnAccent,
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
   inputBar: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
+    alignItems: 'center',
     paddingHorizontal: spacing['2xl'],
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    paddingTop: 12,
+    paddingBottom: 8,
     backgroundColor: colors.background,
   },
   input: {
     flex: 1,
-    backgroundColor: colors.surfaceGlass,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.xl,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 15,
+    height: 72,
+    paddingHorizontal: 24,
+    fontSize: 16,
+    fontWeight: '700',
     color: colors.text,
-    maxHeight: 100,
     borderWidth: 1,
     borderColor: colors.border,
   },
   sendButton: {
+    height: 56,
+    paddingHorizontal: 24,
     backgroundColor: colors.accent,
-    borderRadius: borderRadius.xl,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    borderRadius: borderRadius.lg,
+    marginLeft: -64,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
   sendText: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '900',
     color: colors.textOnAccent,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
 })

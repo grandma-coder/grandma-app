@@ -107,8 +107,9 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     ...typography.hero,
-    fontSize: 42,
-    lineHeight: 50,
+    fontSize: 48,
+    fontWeight: '900',
+    lineHeight: 56,
     marginBottom: 16,
   },
   heroSubtitle: {
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   cta: {
-    gap: 16,
+    gap: 20,
   },
   termsText: {
     fontSize: 12,

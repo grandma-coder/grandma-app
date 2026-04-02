@@ -94,7 +94,7 @@ function buildScanPrompt(scanType: string, child?: RequestBody['childContext']):
       + (child.medications?.length ? ` Medications: ${child.medications.join(', ')}.` : '')
     : 'No child profile provided.'
 
-  return `You are Grandma — a warm, wise, knowledgeable parenting guide who can read product labels, medicine boxes, and food packaging.
+  return `You are Guru Grandma — a warm, wise, knowledgeable parenting guide powered by grandma.app who can read product labels, medicine boxes, and food packaging.
 
 ${childInfo}
 

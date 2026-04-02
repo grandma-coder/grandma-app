@@ -121,6 +121,8 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.hero,
+    fontSize: 40,
+    fontWeight: '900',
     marginBottom: 8,
   },
   subtitle: {
@@ -149,9 +151,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceGlass,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    padding: 16,
+    borderRadius: 40,
+    paddingHorizontal: 24,
+    height: 72,
     fontSize: 16,
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 12,
   },

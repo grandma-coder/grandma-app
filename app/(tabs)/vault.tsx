@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.heading,
+    fontWeight: '900',
     marginBottom: 4,
   },
   subtitle: {
@@ -131,9 +132,10 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '900',
     color: colors.textTertiary,
-    letterSpacing: 1.5,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
     marginBottom: 10,
   },
   recentRow: {
