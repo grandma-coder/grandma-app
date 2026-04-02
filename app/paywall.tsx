@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { PurchasesPackage } from 'react-native-purchases'
 import { getOfferings, purchasePackage, restorePurchases } from '../lib/revenue'
 import { supabase } from '../lib/supabase'
+import { colors } from '../constants/theme'
 
 const FEATURES = [
   { icon: 'scan-outline', text: 'Unlimited medicine & food scans' },
@@ -94,7 +95,7 @@ export default function Paywall() {
     <View style={styles.container}>
       {/* Close button */}
       <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
-        <Ionicons name="close" size={24} color="#888" />
+        <Ionicons name="close" size={24} color={colors.textTertiary} />
       </TouchableOpacity>
 
       {/* Header */}
@@ -106,7 +107,7 @@ export default function Paywall() {
       <View style={styles.features}>
         {FEATURES.map((f, i) => (
           <View key={i} style={styles.featureRow}>
-            <Ionicons name={f.icon as any} size={20} color="#7BAE8E" />
+            <Ionicons name={f.icon as any} size={20} color={colors.accent} />
             <Text style={styles.featureText}>{f.text}</Text>
           </View>
         ))}
@@ -114,7 +115,7 @@ export default function Paywall() {
 
       {/* Pricing cards */}
       {loading ? (
-        <ActivityIndicator size="large" color="#7BAE8E" style={{ marginTop: 24 }} />
+        <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 24 }} />
       ) : packages.length > 0 ? (
         <View style={styles.packages}>
           {packages.map((pkg, idx) => {
@@ -185,7 +186,7 @@ export default function Paywall() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF8F4',
+    backgroundColor: colors.background,
     paddingHorizontal: 24,
     paddingTop: 60,
   },
@@ -196,75 +197,77 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surfaceGlass,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   emoji: { fontSize: 48, textAlign: 'center', marginBottom: 12 },
   title: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#1A1A2E',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 15,
-    color: '#888',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 28,
   },
   features: { gap: 14, marginBottom: 28 },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  featureText: { fontSize: 15, color: '#1A1A2E' },
+  featureText: { fontSize: 15, color: colors.text },
 
   packages: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   packageCard: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#E8E4DC',
+    borderColor: colors.border,
   },
   packageCardSelected: {
-    borderColor: '#7BAE8E',
-    backgroundColor: '#F0F8F3',
+    borderColor: colors.accent,
+    backgroundColor: colors.accentMuted,
   },
   saveBadge: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#fff',
-    backgroundColor: '#7BAE8E',
+    color: colors.textOnAccent,
+    backgroundColor: colors.accent,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
     marginBottom: 8,
     overflow: 'hidden',
   },
-  packageTitle: { fontSize: 14, fontWeight: '600', color: '#888', marginBottom: 4 },
-  packageTitleSelected: { color: '#1A1A2E' },
-  packagePrice: { fontSize: 24, fontWeight: '800', color: '#888' },
-  packagePriceSelected: { color: '#1A1A2E' },
-  packagePeriod: { fontSize: 12, color: '#aaa', marginTop: 2 },
+  packageTitle: { fontSize: 14, fontWeight: '600', color: colors.textTertiary, marginBottom: 4 },
+  packageTitleSelected: { color: colors.text },
+  packagePrice: { fontSize: 24, fontWeight: '800', color: colors.textTertiary },
+  packagePriceSelected: { color: colors.text },
+  packagePeriod: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
 
   ctaButton: {
-    backgroundColor: '#7BAE8E',
+    backgroundColor: colors.accent,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 12,
   },
-  ctaText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  ctaText: { color: colors.textOnAccent, fontSize: 17, fontWeight: '700' },
 
   restoreButton: { alignItems: 'center', paddingVertical: 8 },
-  restoreText: { color: '#7BAE8E', fontSize: 14 },
+  restoreText: { color: colors.accent, fontSize: 14 },
 
   disclaimer: {
     fontSize: 11,
-    color: '#aaa',
+    color: colors.textTertiary,
     textAlign: 'center',
     marginTop: 16,
     lineHeight: 16,

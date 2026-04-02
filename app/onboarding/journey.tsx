@@ -1,128 +1,151 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { CosmicBackground } from '../../components/ui/CosmicBackground'
+import { GlassCard } from '../../components/ui/GlassCard'
+import { colors, typography, spacing } from '../../constants/theme'
+import type { JourneyMode } from '../../types'
 
-const JOURNEYS = [
+const JOURNEYS: {
+  id: JourneyMode
+  journey: 'pregnancy' | 'newborn' | 'newborn'
+  icon: string
+  title: string
+  subtitle: string
+  next: string
+}[] = [
   {
-    id: 'pregnancy' as const,
-    emoji: '🤰',
+    id: 'pre-pregnancy',
+    journey: 'newborn',
+    icon: '✨',
+    title: 'I want to be pregnant',
+    subtitle: 'Prepare, learn, and start your journey to parenthood.',
+    next: '/onboarding/parent-name',
+  },
+  {
+    id: 'pregnancy',
+    journey: 'pregnancy',
+    icon: '🤰',
     title: "I'm pregnant",
-    subtitle: 'Just found out or already tracking',
-    color: '#FDE8F0',
-    next: '/onboarding/due-date',
+    subtitle: 'Guided wisdom for each trimester of your growth.',
+    next: '/onboarding/parent-name',
   },
   {
-    id: 'newborn' as const,
-    emoji: '👶',
-    title: 'I have a newborn',
-    subtitle: '0–12 months old',
-    color: '#E1F5EE',
-    next: '/onboarding/activities',
-  },
-  {
-    id: 'toddler' as const,
-    emoji: '🧒',
-    title: 'I have a toddler',
-    subtitle: '1–3+ years old',
-    color: '#FAEEDA',
+    id: 'kids',
+    journey: 'newborn',
+    icon: '👶',
+    title: 'I have kids',
+    subtitle: "Nurturing insights for your little one's milestones.",
     next: '/onboarding/activities',
   },
 ]
 
 export default function JourneySelect() {
-  const setJourney = useJourneyStore((s) => s.setJourney)
+  const { setJourney, setMode } = useJourneyStore()
+  const insets = useSafeAreaInsets()
 
-  function handleSelect(journey: typeof JOURNEYS[number]) {
-    setJourney(journey.id)
-    router.push(journey.next as any)
+  function handleSelect(item: (typeof JOURNEYS)[number]) {
+    setMode(item.id)
+    setJourney(item.journey)
+    router.push(item.next as any)
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.emoji}>👵</Text>
-        <Text style={styles.title}>Welcome to Grandma</Text>
-        <Text style={styles.subtitle}>Tell me where you are in your journey</Text>
-      </View>
+    <CosmicBackground>
+      <View style={[styles.container, { paddingTop: insets.top + 40 }]}>
+        <Text style={styles.question}>
+          Are you expecting or is your{'\n'}little one already here?
+        </Text>
 
-      <View style={styles.cards}>
-        {JOURNEYS.map((j) => (
-          <Pressable
-            key={j.id}
-            onPress={() => handleSelect(j)}
-            style={({ pressed }) => [
-              styles.card,
-              { backgroundColor: j.color, opacity: pressed ? 0.85 : 1 },
-            ]}
-          >
-            <View style={styles.cardContent}>
-              <View style={styles.cardText}>
-                <Text style={styles.cardTitle}>{j.title}</Text>
-                <Text style={styles.cardSubtitle}>{j.subtitle}</Text>
-              </View>
-              <Text style={styles.cardEmoji}>{j.emoji}</Text>
-            </View>
-          </Pressable>
-        ))}
+        <View style={styles.cards}>
+          {JOURNEYS.map((j) => (
+            <Pressable
+              key={j.id}
+              onPress={() => handleSelect(j)}
+              style={({ pressed }) => [pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }]}
+            >
+              <GlassCard variant="elevated">
+                <View style={styles.cardInner}>
+                  <View style={styles.iconCircle}>
+                    <Text style={styles.icon}>{j.icon}</Text>
+                  </View>
+                  <Text style={styles.cardTitle}>{j.title}</Text>
+                  <Text style={styles.cardSubtitle}>{j.subtitle}</Text>
+                </View>
+              </GlassCard>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Bottom section */}
+        <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
+          <View style={styles.basics}>
+            <Text style={styles.basicsTitle}>The Basics</Text>
+            <Text style={styles.basicsSubtitle}>
+              We'll collect a few details next to personalize your experience.
+            </Text>
+          </View>
+        </View>
       </View>
-    </View>
+    </CosmicBackground>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF8F4',
-    paddingHorizontal: 24,
-    paddingTop: 80,
+    paddingHorizontal: spacing['2xl'],
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  emoji: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#1A1A2E',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#888888',
+  question: {
+    ...typography.heading,
     textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 36,
   },
   cards: {
     gap: 16,
   },
-  card: {
-    borderRadius: 20,
-    padding: 24,
-  },
-  cardContent: {
-    flexDirection: 'row',
+  cardInner: {
     alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingVertical: 12,
   },
-  cardText: {
-    flex: 1,
-    marginRight: 16,
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.accentMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  icon: {
+    fontSize: 32,
   },
   cardTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1A1A2E',
+    ...typography.subtitle,
     marginBottom: 6,
+    textAlign: 'center',
   },
   cardSubtitle: {
-    fontSize: 14,
-    color: '#555555',
-    lineHeight: 20,
+    ...typography.caption,
+    textAlign: 'center',
+    lineHeight: 18,
   },
-  cardEmoji: {
-    fontSize: 48,
+  bottom: {
+    marginTop: 'auto',
+  },
+  basics: {
+    alignItems: 'center',
+  },
+  basicsTitle: {
+    ...typography.subtitle,
+    marginBottom: 6,
+  },
+  basicsSubtitle: {
+    ...typography.caption,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 })

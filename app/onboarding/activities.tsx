@@ -1,42 +1,61 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { CosmicBackground } from '../../components/ui/CosmicBackground'
+import { GradientButton } from '../../components/ui/GradientButton'
+import { colors, typography, spacing, borderRadius } from '../../constants/theme'
 
 const ACTIVITIES = [
-  { id: 'feeding', emoji: '🍼', label: 'Feeding', subtitle: 'Breast, bottle, solids', color: '#FDE8F0' },
-  { id: 'sleep', emoji: '😴', label: 'Sleep', subtitle: 'Naps, bedtime, wake-ups', color: '#E1F5EE' },
-  { id: 'diaper', emoji: '🧷', label: 'Diaper', subtitle: 'Wet, dirty, changes', color: '#FAEEDA' },
-  { id: 'mood', emoji: '😊', label: 'Mood', subtitle: 'How baby is feeling', color: '#E8F5E9' },
-  { id: 'growth', emoji: '📏', label: 'Growth', subtitle: 'Weight, height, milestones', color: '#E6F1FB' },
-  { id: 'medicine', emoji: '💊', label: 'Medicine', subtitle: 'Doses, vitamins, meds', color: '#EEEDFE' },
-  { id: 'vaccines', emoji: '💉', label: 'Vaccines', subtitle: 'Schedule, reactions', color: '#EEEDFE' },
-  { id: 'milestones', emoji: '⭐', label: 'Milestones', subtitle: 'First steps, words, skills', color: '#FAEEDA' },
+  { id: 'feeding', emoji: '🍼', label: 'Feeding', subtitle: 'Breast, bottle, solids' },
+  { id: 'sleep', emoji: '😴', label: 'Sleep', subtitle: 'Naps, bedtime, wake-ups' },
+  { id: 'diaper', emoji: '🧷', label: 'Diaper', subtitle: 'Wet, dirty, changes' },
+  { id: 'mood', emoji: '😊', label: 'Mood', subtitle: 'How baby is feeling' },
+  { id: 'growth', emoji: '📏', label: 'Growth', subtitle: 'Weight, height, milestones' },
+  { id: 'medicine', emoji: '💊', label: 'Medicine', subtitle: 'Doses, vitamins, meds' },
+  { id: 'vaccines', emoji: '💉', label: 'Vaccines', subtitle: 'Schedule, reactions' },
+  { id: 'milestones', emoji: '⭐', label: 'Milestones', subtitle: 'First steps, words, skills' },
 ]
 
 const PREGNANCY_ACTIVITIES = [
-  { id: 'symptoms', emoji: '🤢', label: 'Symptoms', subtitle: 'Nausea, fatigue, kicks', color: '#FDE8F0' },
-  { id: 'appointments', emoji: '🏥', label: 'Appointments', subtitle: 'Checkups, ultrasounds', color: '#E6F1FB' },
-  { id: 'mood', emoji: '😊', label: 'Mood', subtitle: 'How you\'re feeling', color: '#E8F5E9' },
-  { id: 'weight', emoji: '⚖️', label: 'Weight', subtitle: 'Track your gain', color: '#E1F5EE' },
-  { id: 'nutrition', emoji: '🥗', label: 'Nutrition', subtitle: 'Meals, cravings, water', color: '#FAEEDA' },
-  { id: 'medicine', emoji: '💊', label: 'Supplements', subtitle: 'Prenatal, iron, folic acid', color: '#EEEDFE' },
+  { id: 'symptoms', emoji: '🤢', label: 'Symptoms', subtitle: 'Nausea, fatigue, kicks' },
+  { id: 'appointments', emoji: '🏥', label: 'Appointments', subtitle: 'Checkups, ultrasounds' },
+  { id: 'mood', emoji: '😊', label: 'Mood', subtitle: "How you're feeling" },
+  { id: 'weight', emoji: '⚖️', label: 'Weight', subtitle: 'Track your gain' },
+  { id: 'nutrition', emoji: '🥗', label: 'Nutrition', subtitle: 'Meals, cravings, water' },
+  { id: 'medicine', emoji: '💊', label: 'Supplements', subtitle: 'Prenatal, iron, folic acid' },
+]
+
+const PRE_PREGNANCY_ACTIVITIES = [
+  { id: 'fertility', emoji: '🌸', label: 'Fertility', subtitle: 'Cycle tracking, ovulation' },
+  { id: 'nutrition', emoji: '🥗', label: 'Nutrition', subtitle: 'Prenatal diet prep' },
+  { id: 'appointments', emoji: '🏥', label: 'Appointments', subtitle: 'Pre-conception checkups' },
+  { id: 'mood', emoji: '😊', label: 'Mood', subtitle: "How you're feeling" },
+  { id: 'fitness', emoji: '🧘', label: 'Fitness', subtitle: 'Exercise, wellness' },
+  { id: 'learning', emoji: '📚', label: 'Learning', subtitle: 'Courses, preparation' },
 ]
 
 export default function Activities() {
-  const journey = useJourneyStore((s) => s.journey)
-  const setTrackedActivities = useJourneyStore((s) => s.setTrackedActivities)
-  const [selected, setSelected] = useState<string[]>(['feeding', 'sleep', 'diaper', 'mood'])
+  const insets = useSafeAreaInsets()
+  const { mode, setTrackedActivities } = useJourneyStore()
 
-  const items = journey === 'pregnancy' ? PREGNANCY_ACTIVITIES : ACTIVITIES
+  const items =
+    mode === 'pregnancy'
+      ? PREGNANCY_ACTIVITIES
+      : mode === 'pre-pregnancy'
+        ? PRE_PREGNANCY_ACTIVITIES
+        : ACTIVITIES
 
-  // Pre-select relevant defaults for pregnancy
-  useState(() => {
-    if (journey === 'pregnancy') {
-      setSelected(['symptoms', 'appointments', 'mood', 'nutrition'])
-    }
-  })
+  const defaultSelected =
+    mode === 'pregnancy'
+      ? ['symptoms', 'appointments', 'mood', 'nutrition']
+      : mode === 'pre-pregnancy'
+        ? ['fertility', 'nutrition', 'mood']
+        : ['feeding', 'sleep', 'diaper', 'mood']
+
+  const [selected, setSelected] = useState<string[]>(defaultSelected)
 
   function toggle(id: string) {
     setSelected((prev) =>
@@ -50,91 +69,83 @@ export default function Activities() {
   }
 
   return (
-    <View style={styles.container}>
-      <Pressable onPress={() => router.back()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color="#1A1A2E" />
-      </Pressable>
-
-      <Text style={styles.title}>What would you like to track?</Text>
-      <Text style={styles.subtitle}>
-        Pick the ones that matter most — you can always change later
-      </Text>
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {items.map((item) => {
-          const isSelected = selected.includes(item.id)
-          return (
-            <Pressable
-              key={item.id}
-              onPress={() => toggle(item.id)}
-              style={[
-                styles.card,
-                { backgroundColor: isSelected ? item.color : '#FFFFFF' },
-                isSelected && styles.cardSelected,
-              ]}
-            >
-              <Text style={styles.cardEmoji}>{item.emoji}</Text>
-              <View style={styles.cardText}>
-                <Text style={styles.cardLabel}>{item.label}</Text>
-                <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
-              </View>
-              <View style={[styles.checkbox, isSelected && styles.checkboxActive]}>
-                {isSelected && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
-              </View>
-            </Pressable>
-          )
-        })}
-      </ScrollView>
-
-      <View style={styles.bottom}>
-        <Text style={styles.countText}>
-          {selected.length} selected
-        </Text>
-        <Pressable
-          onPress={handleContinue}
-          style={[styles.continueButton, selected.length === 0 && { opacity: 0.5 }]}
-          disabled={selected.length === 0}
-        >
-          <Text style={styles.continueText}>Let's go</Text>
+    <CosmicBackground>
+      <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+        <Pressable onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </Pressable>
+
+        <Text style={styles.title}>What would you{'\n'}like to track?</Text>
+        <Text style={styles.subtitle}>
+          Pick the ones that matter most — you can always change later
+        </Text>
+
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {items.map((item) => {
+            const isSelected = selected.includes(item.id)
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => toggle(item.id)}
+                style={[
+                  styles.card,
+                  isSelected && styles.cardSelected,
+                ]}
+              >
+                <Text style={styles.cardEmoji}>{item.emoji}</Text>
+                <View style={styles.cardText}>
+                  <Text style={styles.cardLabel}>{item.label}</Text>
+                  <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
+                </View>
+                <View style={[styles.checkbox, isSelected && styles.checkboxActive]}>
+                  {isSelected && <Ionicons name="checkmark" size={16} color={colors.textOnAccent} />}
+                </View>
+              </Pressable>
+            )
+          })}
+        </ScrollView>
+
+        <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
+          <Text style={styles.countText}>{selected.length} selected</Text>
+          <GradientButton
+            title="Let's go"
+            onPress={handleContinue}
+            disabled={selected.length === 0}
+          />
+        </View>
       </View>
-    </View>
+    </CosmicBackground>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF8F4',
-    paddingTop: 60,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surfaceGlass,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 24,
+    marginLeft: spacing['2xl'],
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#E8E4DC',
+    borderColor: colors.border,
   },
   title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#1A1A2E',
-    paddingHorizontal: 24,
+    ...typography.heading,
+    paddingHorizontal: spacing['2xl'],
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 15,
-    color: '#888888',
-    paddingHorizontal: 24,
+    ...typography.bodySecondary,
+    paddingHorizontal: spacing['2xl'],
     marginBottom: 24,
     lineHeight: 22,
   },
@@ -142,21 +153,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingHorizontal: spacing['2xl'],
+    paddingBottom: 16,
     gap: 10,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 20,
+    borderRadius: borderRadius.lg,
     borderWidth: 1.5,
-    borderColor: '#E8E4DC',
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceGlass,
     gap: 14,
   },
   cardSelected: {
-    borderColor: '#7BAE8E',
+    borderColor: colors.accent,
+    backgroundColor: colors.accentMuted,
   },
   cardEmoji: {
     fontSize: 28,
@@ -167,49 +180,36 @@ const styles = StyleSheet.create({
   cardLabel: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1A1A2E',
+    color: colors.text,
     marginBottom: 2,
   },
   cardSubtitle: {
     fontSize: 13,
-    color: '#888888',
+    color: colors.textSecondary,
   },
   checkbox: {
     width: 28,
     height: 28,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: '#E8E4DC',
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxActive: {
-    backgroundColor: '#7BAE8E',
-    borderColor: '#7BAE8E',
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   bottom: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingHorizontal: spacing['2xl'],
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E8E4DC',
-    backgroundColor: '#FAF8F4',
+    borderTopColor: colors.border,
+    gap: 8,
   },
   countText: {
     fontSize: 13,
-    color: '#888888',
+    color: colors.textTertiary,
     textAlign: 'center',
-    marginBottom: 12,
-  },
-  continueButton: {
-    backgroundColor: '#7BAE8E',
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  continueText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
   },
 })

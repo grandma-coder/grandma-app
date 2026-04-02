@@ -1,50 +1,53 @@
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Pillar } from '../../types'
 import { pillars } from '../../lib/pillars'
 import TipCard from '../../components/pillar/TipCard'
+import { CosmicBackground } from '../../components/ui/CosmicBackground'
+import { colors, typography, spacing, borderRadius } from '../../constants/theme'
 
 export default function PillarDetail() {
+  const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const pillar = pillars.find((p) => p.id === id) as Pillar | undefined
 
   if (!pillar) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.notFound}>Pillar not found</Text>
-      </View>
+      <CosmicBackground>
+        <View style={styles.center}>
+          <Text style={styles.notFound}>Pillar not found</Text>
+        </View>
+      </CosmicBackground>
     )
   }
 
   function handleSuggestion(suggestion: string) {
     router.push({
-      pathname: '/(tabs)/chat',
+      pathname: '/(tabs)/library',
       params: { suggestion, pillarId: pillar!.id },
     })
   }
 
   return (
-    <View style={styles.container}>
+    <CosmicBackground>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: pillar.color }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </Pressable>
-        <Text style={styles.icon}>{pillar.icon}</Text>
+
+        <View style={[styles.iconCircle, { backgroundColor: pillar.color + '25' }]}>
+          <Text style={styles.icon}>{pillar.icon}</Text>
+        </View>
         <Text style={styles.name}>{pillar.name}</Text>
         <Text style={styles.description}>{pillar.description}</Text>
       </View>
 
       <ScrollView
         style={styles.body}
-        contentContainerStyle={styles.bodyContent}
+        contentContainerStyle={[styles.bodyContent, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Tips */}
@@ -54,7 +57,7 @@ export default function PillarDetail() {
         ))}
 
         {/* Suggestions */}
-        <Text style={styles.sectionTitle}>Ask Grandma</Text>
+        <Text style={styles.sectionTitle}>Ask Guru Grandma</Text>
         <View style={styles.chipsContainer}>
           {pillar.suggestions.map((suggestion, index) => (
             <Pressable
@@ -62,7 +65,7 @@ export default function PillarDetail() {
               onPress={() => handleSuggestion(suggestion)}
               style={({ pressed }) => [
                 styles.chip,
-                { borderColor: pillar.color, opacity: pressed ? 0.7 : 1 },
+                pressed && { opacity: 0.7 },
               ]}
             >
               <Text style={styles.chipText}>{suggestion}</Text>
@@ -70,15 +73,11 @@ export default function PillarDetail() {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </CosmicBackground>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -86,59 +85,58 @@ const styles = StyleSheet.create({
   },
   notFound: {
     fontSize: 16,
-    color: '#6B7280',
+    color: colors.textSecondary,
   },
-
-  /* Header */
   header: {
-    paddingTop: 60,
+    paddingHorizontal: spacing['2xl'],
     paddingBottom: 24,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: colors.surfaceGlass,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
   icon: {
-    fontSize: 48,
-    marginBottom: 8,
+    fontSize: 32,
   },
   name: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
-    color: '#1F2937',
-    marginBottom: 4,
+    color: colors.text,
+    marginBottom: 6,
   },
   description: {
     fontSize: 15,
-    color: '#374151',
-    lineHeight: 20,
+    color: colors.textSecondary,
+    lineHeight: 22,
   },
-
-  /* Body */
   body: {
     flex: 1,
   },
   bodyContent: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingHorizontal: spacing['2xl'],
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1F2937',
+    color: colors.text,
     marginTop: 8,
     marginBottom: 12,
   },
-
-  /* Suggestion chips */
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -146,13 +144,14 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderWidth: 1.5,
-    borderRadius: 20,
+    borderRadius: borderRadius.xl,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
+    borderColor: colors.borderLight,
+    backgroundColor: colors.surfaceGlass,
   },
   chipText: {
     fontSize: 13,
-    color: '#374151',
+    color: colors.textSecondary,
   },
 })

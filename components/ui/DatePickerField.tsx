@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { View, Text, Pressable, Platform, StyleSheet } from 'react-native'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
+import { colors, borderRadius, typography } from '../../constants/theme'
 
 interface DatePickerFieldProps {
   label: string
@@ -62,6 +63,7 @@ export default function DatePickerField({
             onChange={handleChange}
             maximumDate={maximumDate}
             minimumDate={minimumDate}
+            themeVariant="dark"
           />
           {Platform.OS === 'ios' && (
             <Pressable onPress={handleConfirm} style={styles.doneButton}>
@@ -76,32 +78,29 @@ export default function DatePickerField({
 
 const styles = StyleSheet.create({
   label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#888888',
-    letterSpacing: 1,
-    marginBottom: 6,
+    ...typography.label,
+    marginBottom: 8,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surfaceGlass,
     borderWidth: 1,
-    borderColor: '#E8E4DC',
-    borderRadius: 12,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
     padding: 16,
     marginBottom: 16,
   },
   inputText: {
     fontSize: 16,
-    color: '#1A1A2E',
+    color: colors.text,
   },
   placeholder: {
-    color: '#CCCCCC',
+    color: colors.textTertiary,
   },
   pickerContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: '#E8E4DC',
+    borderColor: colors.border,
     marginBottom: 16,
     overflow: 'hidden',
   },
@@ -109,11 +108,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E8E4DC',
+    borderTopColor: colors.border,
   },
   doneText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#7BAE8E',
+    color: colors.accent,
   },
 })

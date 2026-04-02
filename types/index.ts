@@ -19,7 +19,9 @@ export interface Message {
   createdAt: string
 }
 
-export type PillarId = 'milk' | 'food' | 'nutrition' | 'vaccines' | 'clothes' | 'recipes' | 'natural' | 'medicine'
+export type JourneyMode = 'pre-pregnancy' | 'pregnancy' | 'kids'
+
+export type PillarId = 'milk' | 'food' | 'nutrition' | 'vaccines' | 'clothes' | 'recipes' | 'habits' | 'medicine' | 'milestones'
 
 export interface Pillar {
   id: PillarId

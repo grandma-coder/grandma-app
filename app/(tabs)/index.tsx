@@ -1,60 +1,169 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import { ScrollView, View, Text, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useChildStore } from '../../store/useChildStore'
-import { pillars } from '../../lib/pillars'
-import PillarCard from '../../components/pillar/PillarCard'
+import { useModeStore } from '../../store/useModeStore'
+import { useJourneyStore } from '../../store/useJourneyStore'
+import { CosmicBackground } from '../../components/ui/CosmicBackground'
+import { GlassCard } from '../../components/ui/GlassCard'
+import { ModeSwitcher } from '../../components/home/ModeSwitcher'
+import { GrandmaBall } from '../../components/home/GrandmaBall'
+import { PillarGrid } from '../../components/home/PillarGrid'
+import { NannyUpdatesFeed } from '../../components/home/NannyUpdatesFeed'
+import { PregnancyWeekDisplay } from '../../components/home/PregnancyWeekDisplay'
+import { BabySizeCard } from '../../components/home/BabySizeCard'
+import { DevelopmentInsight } from '../../components/home/DevelopmentInsight'
+import { DailyPulse } from '../../components/home/DailyPulse'
+import { GrandmaWisdom } from '../../components/home/GrandmaWisdom'
+import { MomentsOfCare } from '../../components/home/MomentsOfCare'
+import { MilkTracker } from '../../components/home/MilkTracker'
+import { colors, typography, spacing } from '../../constants/theme'
 
-export default function Home() {
+function PrePregnancyHome() {
+  return (
+    <>
+      <GrandmaBall onPress={() => router.push('/(tabs)/library')} />
+      <Text style={styles.quote}>
+        "Let's prepare for{'\n'}your journey, dear."
+      </Text>
+      <Text style={styles.quoteSubtitle}>
+        Grandma AI is here to guide you through{'\n'}every step of preparing for parenthood.
+      </Text>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Getting Started</Text>
+        <GlassCard style={styles.learningCard}>
+          <Text style={{ fontSize: 28, marginBottom: 8 }}>📚</Text>
+          <Text style={styles.learningTitle}>Fertility & Preparation</Text>
+          <Text style={styles.learningSubtitle}>
+            Nutrition, health checkups, and emotional readiness courses coming soon.
+          </Text>
+        </GlassCard>
+
+        <GlassCard style={styles.learningCard}>
+          <Text style={{ fontSize: 28, marginBottom: 8 }}>💑</Text>
+          <Text style={styles.learningTitle}>Partner Connection</Text>
+          <Text style={styles.learningSubtitle}>
+            Invite your partner to learn together and share the journey.
+          </Text>
+        </GlassCard>
+      </View>
+    </>
+  )
+}
+
+function PregnancyHome() {
+  const weekNumber = useJourneyStore((s) => s.weekNumber) ?? 24
+  const dueDate = useJourneyStore((s) => s.dueDate)
+
+  return (
+    <>
+      <PregnancyWeekDisplay weekNumber={weekNumber} />
+      <BabySizeCard weekNumber={weekNumber} dueDate={dueDate} />
+      <DevelopmentInsight weekNumber={weekNumber} />
+      <DailyPulse />
+      <GrandmaWisdom weekNumber={weekNumber} />
+      <MilkTracker />
+      <MomentsOfCare />
+    </>
+  )
+}
+
+function KidsHome() {
   const child = useChildStore((s) => s.activeChild)
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#FAF8F4' }} contentContainerStyle={{ paddingBottom: 40 }}>
-      <View style={{ padding: 24, paddingTop: 60 }}>
-        <Text style={{ fontSize: 26, fontWeight: '600', color: '#1A1A2E' }}>
-          {child ? `Hi! Ask about ${child.name}` : 'Hello! 👵'}
-        </Text>
-        <Text style={{ fontSize: 15, color: '#888', marginTop: 4 }}>
-          What do you need help with today?
-        </Text>
-      </View>
-
-      <TouchableOpacity
-        onPress={() => router.push('/(tabs)/chat')}
-        style={{ marginHorizontal: 24, backgroundColor: '#7BAE8E', borderRadius: 16, padding: 16, marginBottom: 28, flexDirection: 'row', alignItems: 'center', gap: 12 }}
-      >
-        <Text style={{ fontSize: 28 }}>👵</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Ask Grandma anything</Text>
-          <Text style={{ color: '#fff', opacity: 0.8, fontSize: 13, marginTop: 2 }}>Chat with your parenting guide</Text>
-        </View>
-        <Text style={{ color: '#fff', fontSize: 20 }}>→</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={() => router.push('/scan')}
-        style={{ marginHorizontal: 24, backgroundColor: '#1A1A2E', borderRadius: 16, padding: 16, marginBottom: 28, flexDirection: 'row', alignItems: 'center', gap: 12 }}
-      >
-        <Text style={{ fontSize: 28 }}>📷</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Scan a product</Text>
-          <Text style={{ color: '#fff', opacity: 0.8, fontSize: 13, marginTop: 2 }}>Medicine, food, or labels</Text>
-        </View>
-        <Text style={{ color: '#fff', fontSize: 20 }}>→</Text>
-      </TouchableOpacity>
-
-      <Text style={{ fontSize: 13, fontWeight: '600', color: '#888', paddingHorizontal: 24, marginBottom: 12, letterSpacing: 0.5 }}>
-        KNOWLEDGE PILLARS
+    <>
+      <GrandmaBall onPress={() => router.push('/(tabs)/library')} />
+      <Text style={styles.quote}>
+        "How can I help{'\n'}you today, dear?"
+      </Text>
+      <Text style={styles.quoteSubtitle}>
+        Grandma AI is watching over your little one's{'\n'}rhythms and needs.
       </Text>
 
-      <View style={{ paddingHorizontal: 16, gap: 10 }}>
-        {pillars.map(pillar => (
-          <PillarCard
-            key={pillar.id}
-            pillar={pillar}
-            onPress={(p) => router.push(`/pillar/${p.id}`)}
-          />
-        ))}
+      <View style={styles.section}>
+        <PillarGrid />
       </View>
-    </ScrollView>
+
+      <View style={styles.section}>
+        <NannyUpdatesFeed />
+      </View>
+    </>
   )
 }
+
+export default function Home() {
+  const insets = useSafeAreaInsets()
+  const mode = useModeStore((s) => s.mode)
+  const isPregnancy = mode === 'pregnancy'
+
+  return (
+    <CosmicBackground variant={isPregnancy ? 'pregnancy' : 'default'}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Mode Switcher */}
+        <View style={styles.switcherRow}>
+          <ModeSwitcher />
+        </View>
+
+        {/* Mode-specific content */}
+        {mode === 'pre-pregnancy' && <PrePregnancyHome />}
+        {mode === 'pregnancy' && <PregnancyHome />}
+        {mode === 'kids' && <KidsHome />}
+      </ScrollView>
+    </CosmicBackground>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: spacing['2xl'],
+  },
+  switcherRow: {
+    marginBottom: 24,
+  },
+  quote: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    lineHeight: 34,
+    marginBottom: 8,
+  },
+  quoteSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 28,
+  },
+  section: {
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  learningCard: {
+    marginBottom: 12,
+  },
+  learningTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  learningSubtitle: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 18,
+  },
+})

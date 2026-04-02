@@ -9,18 +9,21 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.grandmacoder.grandmaapp"
+      "bundleIdentifier": "com.grandmacoder.grandmaapp",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#FAF8F4"
+        "backgroundColor": "#0A0E1A"
       },
       "package": "com.grandmacoder.grandmaapp"
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-web-browser",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true

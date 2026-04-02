@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Alert,
   Image,
@@ -12,11 +12,14 @@ import { router } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useChildStore } from '../store/useChildStore'
 import { scanImage } from '../lib/scan'
 import { supabase } from '../lib/supabase'
 import { checkPremium } from '../lib/revenue'
+import { CosmicBackground } from '../components/ui/CosmicBackground'
 import ResultCard from '../components/ui/ResultCard'
+import { colors, spacing, borderRadius } from '../constants/theme'
 
 const FREE_SCAN_LIMIT = 3
 
@@ -28,11 +31,14 @@ const SCAN_TYPES = [
 ]
 
 export default function Scan() {
+  const insets = useSafeAreaInsets()
   const child = useChildStore((s) => s.activeChild)
   const [scanType, setScanType] = useState('medicine')
   const [loading, setLoading] = useState(false)
   const [isPremium, setIsPremium] = useState(false)
   const [scanCount, setScanCount] = useState(0)
+  const [imageUri, setImageUri] = useState<string | null>(null)
+  const [result, setResult] = useState<string | null>(null)
 
   useEffect(() => {
     checkPremium().then(setIsPremium).catch(() => {})
@@ -44,8 +50,6 @@ export default function Scan() {
         .then(({ count }) => setScanCount(count ?? 0))
     }
   }, [child?.id])
-  const [imageUri, setImageUri] = useState<string | null>(null)
-  const [result, setResult] = useState<string | null>(null)
 
   async function pickImage(useCamera: boolean) {
     if (!isPremium && scanCount >= FREE_SCAN_LIMIT) {
@@ -66,15 +70,15 @@ export default function Scan() {
       ? ImagePicker.launchCameraAsync
       : ImagePicker.launchImageLibraryAsync
 
-    const result = await launchFn({
+    const pickerResult = await launchFn({
       mediaTypes: ['images'],
       quality: 0.8,
       base64: false,
     })
 
-    if (result.canceled || !result.assets[0]) return
+    if (pickerResult.canceled || !pickerResult.assets[0]) return
 
-    const uri = result.assets[0].uri
+    const uri = pickerResult.assets[0].uri
     setImageUri(uri)
     await analyzeImage(uri)
   }
@@ -84,7 +88,6 @@ export default function Scan() {
     setResult(null)
 
     try {
-      // Compress image to under 1MB
       const manipulated = await ImageManipulator.manipulateAsync(
         uri,
         [{ resize: { width: 1024 } }],
@@ -102,7 +105,6 @@ export default function Scan() {
 
       setResult(reply)
 
-      // Save to scan_history
       if (child?.id) {
         await supabase.from('scan_history').insert({
           child_id: child.id,
@@ -110,7 +112,7 @@ export default function Scan() {
           image_url: uri,
           result_json: { reply },
         })
-        setScanCount(prev => prev + 1)
+        setScanCount((prev) => prev + 1)
       }
     } catch (e: any) {
       Alert.alert('Scan failed', e.message)
@@ -120,120 +122,130 @@ export default function Scan() {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1A1A2E" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Scan</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <CosmicBackground>
+      <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
+          </Pressable>
+          <Text style={styles.title}>Scan</Text>
+          <View style={{ width: 40 }} />
+        </View>
 
-      {/* Scan type selector */}
-      <View style={styles.typesRow}>
-        {SCAN_TYPES.map(type => (
-          <TouchableOpacity
-            key={type.id}
-            onPress={() => setScanType(type.id)}
-            style={[
-              styles.typeChip,
-              scanType === type.id && styles.typeChipActive,
-            ]}
+        {/* Scan type selector */}
+        <View style={styles.typesRow}>
+          {SCAN_TYPES.map((type) => (
+            <Pressable
+              key={type.id}
+              onPress={() => setScanType(type.id)}
+              style={[
+                styles.typeChip,
+                scanType === type.id && styles.typeChipActive,
+              ]}
+            >
+              <Text style={styles.typeIcon}>{type.icon}</Text>
+              <Text
+                style={[
+                  styles.typeLabel,
+                  scanType === type.id && styles.typeLabelActive,
+                ]}
+              >
+                {type.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Image preview */}
+        <View style={styles.previewContainer}>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.preview} resizeMode="contain" />
+          ) : (
+            <View style={styles.placeholder}>
+              <Ionicons name="scan-outline" size={64} color={colors.textTertiary} />
+              <Text style={styles.placeholderText}>
+                Take a photo or pick from library
+              </Text>
+            </View>
+          )}
+          {loading && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color={colors.accent} />
+              <Text style={styles.loadingText}>Grandma is looking...</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Action buttons */}
+        <View style={[styles.actions, { paddingBottom: insets.bottom + 16 }]}>
+          <Pressable
+            style={({ pressed }) => [styles.actionButton, pressed && { opacity: 0.85 }]}
+            onPress={() => pickImage(true)}
+            disabled={loading}
           >
-            <Text style={styles.typeIcon}>{type.icon}</Text>
-            <Text style={[
-              styles.typeLabel,
-              scanType === type.id && styles.typeLabelActive,
-            ]}>{type.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+            <Ionicons name="camera" size={22} color={colors.textOnAccent} />
+            <Text style={styles.actionText}>Camera</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              styles.actionButtonSecondary,
+              pressed && { opacity: 0.85 },
+            ]}
+            onPress={() => pickImage(false)}
+            disabled={loading}
+          >
+            <Ionicons name="images" size={22} color={colors.text} />
+            <Text style={styles.actionTextSecondary}>Library</Text>
+          </Pressable>
+        </View>
 
-      {/* Image preview or placeholder */}
-      <View style={styles.previewContainer}>
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} style={styles.preview} resizeMode="contain" />
-        ) : (
-          <View style={styles.placeholder}>
-            <Ionicons name="scan-outline" size={64} color="#ccc" />
-            <Text style={styles.placeholderText}>
-              Take a photo or pick from library
-            </Text>
-          </View>
+        {/* Result overlay */}
+        {result && (
+          <ResultCard
+            result={result}
+            scanType={scanType}
+            onClose={() => {
+              setResult(null)
+              setImageUri(null)
+            }}
+          />
         )}
-        {loading && (
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#7BAE8E" />
-            <Text style={styles.loadingText}>Grandma is looking...</Text>
-          </View>
-        )}
       </View>
-
-      {/* Action buttons */}
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => pickImage(true)}
-          disabled={loading}
-        >
-          <Ionicons name="camera" size={24} color="#fff" />
-          <Text style={styles.actionText}>Camera</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.actionButtonSecondary]}
-          onPress={() => pickImage(false)}
-          disabled={loading}
-        >
-          <Ionicons name="images" size={24} color="#1A1A2E" />
-          <Text style={[styles.actionText, styles.actionTextSecondary]}>Library</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Result overlay */}
-      {result && (
-        <ResultCard
-          result={result}
-          scanType={scanType}
-          onClose={() => {
-            setResult(null)
-            setImageUri(null)
-          }}
-        />
-      )}
-    </View>
+    </CosmicBackground>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF8F4',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 60,
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing['2xl'],
     paddingBottom: 16,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surfaceGlass,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A2E',
+    color: colors.text,
   },
   typesRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
     gap: 8,
     marginBottom: 16,
   },
@@ -241,14 +253,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: '#fff',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surfaceGlass,
     borderWidth: 1.5,
-    borderColor: '#E8E4DC',
+    borderColor: colors.border,
   },
   typeChipActive: {
-    borderColor: '#7BAE8E',
-    backgroundColor: '#F0F8F3',
+    borderColor: colors.accent,
+    backgroundColor: colors.accentMuted,
   },
   typeIcon: {
     fontSize: 20,
@@ -257,19 +269,19 @@ const styles = StyleSheet.create({
   typeLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#888',
+    color: colors.textTertiary,
   },
   typeLabelActive: {
-    color: '#7BAE8E',
+    color: colors.accent,
   },
   previewContainer: {
     flex: 1,
-    marginHorizontal: 16,
-    borderRadius: 16,
+    marginHorizontal: spacing.lg,
+    borderRadius: borderRadius.lg,
     overflow: 'hidden',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#E8E4DC',
+    borderColor: colors.border,
   },
   preview: {
     flex: 1,
@@ -282,23 +294,24 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: 15,
-    color: '#aaa',
+    color: colors.textTertiary,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(250,248,244,0.9)',
+    backgroundColor: 'rgba(10, 14, 26, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 12,
   },
   loadingText: {
     fontSize: 15,
-    color: '#1A1A2E',
+    color: colors.text,
     fontWeight: '600',
   },
   actions: {
     flexDirection: 'row',
-    padding: 16,
+    paddingHorizontal: spacing.lg,
+    paddingTop: 12,
     gap: 12,
   },
   actionButton: {
@@ -307,21 +320,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#1A1A2E',
-    borderRadius: 14,
+    backgroundColor: colors.accent,
+    borderRadius: borderRadius.md,
     paddingVertical: 14,
   },
   actionButtonSecondary: {
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#E8E4DC',
+    backgroundColor: colors.surfaceGlass,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   actionText: {
-    color: '#fff',
+    color: colors.textOnAccent,
     fontSize: 15,
     fontWeight: '600',
   },
   actionTextSecondary: {
-    color: '#1A1A2E',
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '600',
   },
 })

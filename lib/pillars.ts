@@ -110,7 +110,7 @@ export const pillars: Pillar[] = [
     ],
   },
   {
-    id: 'natural',
+    id: 'habits',
     name: 'Natural Care',
     icon: '🌿',
     description: 'Natural remedies, safe teas, and infant aromatherapy.',
@@ -143,6 +143,24 @@ export const pillars: Pillar[] = [
       'How do I calculate medicine dosage by weight?',
       'When should I take my child to the emergency room?',
       'What should I have in the baby medicine cabinet?',
+    ],
+  },
+  {
+    id: 'milestones',
+    name: 'Milestones',
+    icon: '⭐',
+    description: 'Track developmental milestones and celebrate firsts.',
+    color: '#67E8F9',
+    tips: [
+      { label: 'Every child is unique', text: 'Milestones are guidelines, not deadlines. Every baby develops at their own pace.' },
+      { label: 'First words', text: 'Most babies say their first words between 10-14 months. Babbling counts as language practice!' },
+      { label: 'Motor skills', text: 'Tummy time from day one helps build the neck and core strength needed for crawling and walking.' },
+    ],
+    suggestions: [
+      'What milestones should my 6-month-old be hitting?',
+      'My baby is 14 months and not walking yet — is that normal?',
+      'When do babies start talking in sentences?',
+      'How can I encourage my baby to crawl?',
     ],
   },
 ]

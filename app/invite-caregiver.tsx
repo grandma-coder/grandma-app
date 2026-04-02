@@ -5,6 +5,7 @@ import * as Clipboard from 'expo-clipboard'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
+import { colors } from '../constants/theme'
 
 const ROLES = [
   { id: 'nanny', label: 'Nanny', icon: '👩‍🍼' },
@@ -57,7 +58,7 @@ export default function InviteCaregiver() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color="#888" />
+          <Ionicons name="close" size={24} color={colors.textTertiary} />
         </Pressable>
       </View>
 
@@ -72,7 +73,7 @@ export default function InviteCaregiver() {
           <TextInput
             style={styles.input}
             placeholder="nanny@email.com"
-            placeholderTextColor="#ccc"
+            placeholderTextColor={colors.textTertiary}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -101,7 +102,7 @@ export default function InviteCaregiver() {
             style={[styles.sendButton, loading && { opacity: 0.6 }]}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.textOnAccent} />
             ) : (
               <Text style={styles.sendText}>Send invite</Text>
             )}
@@ -117,7 +118,7 @@ export default function InviteCaregiver() {
 
           <Pressable onPress={copyLink} style={styles.linkCard}>
             <Text style={styles.linkText} numberOfLines={2}>{inviteLink}</Text>
-            <Ionicons name="copy-outline" size={20} color="#7BAE8E" />
+            <Ionicons name="copy-outline" size={20} color={colors.accent} />
           </Pressable>
 
           <Pressable onPress={() => router.back()} style={styles.doneButton}>
@@ -130,41 +131,41 @@ export default function InviteCaregiver() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAF8F4', paddingHorizontal: 24, paddingTop: 60 },
+  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 24, paddingTop: 60 },
   header: { alignItems: 'flex-end', marginBottom: 16 },
   closeButton: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: '#fff',
+    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface,
     justifyContent: 'center', alignItems: 'center',
   },
-  title: { fontSize: 26, fontWeight: '700', color: '#1A1A2E', marginBottom: 8 },
-  subtitle: { fontSize: 15, color: '#888', marginBottom: 28, lineHeight: 22 },
-  label: { fontSize: 12, fontWeight: '600', color: '#888', letterSpacing: 1, marginBottom: 8 },
+  title: { fontSize: 26, fontWeight: '700', color: colors.text, marginBottom: 8 },
+  subtitle: { fontSize: 15, color: colors.textTertiary, marginBottom: 28, lineHeight: 22 },
+  label: { fontSize: 12, fontWeight: '600', color: colors.textTertiary, letterSpacing: 1, marginBottom: 8 },
   input: {
-    backgroundColor: '#fff', borderWidth: 1, borderColor: '#E8E4DC', borderRadius: 12,
-    padding: 16, fontSize: 16, color: '#1A1A2E', marginBottom: 24,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12,
+    padding: 16, fontSize: 16, color: colors.text, marginBottom: 24,
   },
   roleRow: { flexDirection: 'row', gap: 12, marginBottom: 32 },
   roleChip: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingVertical: 14, borderRadius: 16, backgroundColor: '#fff',
-    borderWidth: 1.5, borderColor: '#E8E4DC',
+    paddingVertical: 14, borderRadius: 16, backgroundColor: colors.surface,
+    borderWidth: 1.5, borderColor: colors.border,
   },
-  roleChipActive: { borderColor: '#7BAE8E', backgroundColor: '#E1F5EE' },
+  roleChipActive: { borderColor: colors.accent, backgroundColor: colors.accentMuted },
   roleIcon: { fontSize: 20 },
-  roleLabel: { fontSize: 14, fontWeight: '600', color: '#888' },
-  roleLabelActive: { color: '#7BAE8E' },
+  roleLabel: { fontSize: 14, fontWeight: '600', color: colors.textTertiary },
+  roleLabelActive: { color: colors.accent },
   sendButton: {
-    backgroundColor: '#7BAE8E', borderRadius: 16, paddingVertical: 16, alignItems: 'center',
+    backgroundColor: colors.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center',
   },
-  sendText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  sendText: { color: colors.textOnAccent, fontSize: 16, fontWeight: '700' },
   successContainer: { alignItems: 'center', paddingTop: 40 },
   successEmoji: { fontSize: 48, marginBottom: 16 },
   linkCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12, width: '100%',
-    backgroundColor: '#fff', borderRadius: 12, padding: 16,
-    borderWidth: 1, borderColor: '#E8E4DC', marginTop: 20, marginBottom: 24,
+    backgroundColor: colors.surface, borderRadius: 12, padding: 16,
+    borderWidth: 1, borderColor: colors.border, marginTop: 20, marginBottom: 24,
   },
-  linkText: { flex: 1, fontSize: 13, color: '#888' },
+  linkText: { flex: 1, fontSize: 13, color: colors.textTertiary },
   doneButton: { paddingVertical: 12 },
-  doneText: { color: '#7BAE8E', fontSize: 16, fontWeight: '600' },
+  doneText: { color: colors.accent, fontSize: 16, fontWeight: '600' },
 })

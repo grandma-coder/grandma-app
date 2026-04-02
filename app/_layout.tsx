@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { initRevenueCat } from '../lib/revenue'
+import { colors } from '../constants/theme'
 import type { Session } from '@supabase/supabase-js'
 import type { ChildWithRole, CaregiverPermissions } from '../types'
 
@@ -118,8 +119,8 @@ export default function RootLayout() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FAF8F4' }}>
-        <ActivityIndicator size="large" color="#7BAE8E" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     )
   }
@@ -136,6 +137,10 @@ export default function RootLayout() {
         <Stack.Screen name="invite-caregiver" options={{ presentation: 'modal' }} />
         <Stack.Screen name="accept-invite" />
         <Stack.Screen name="child-picker" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="airtag-setup" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="birth-plan" />
+        <Stack.Screen name="channels" />
+        <Stack.Screen name="exchange" />
       </Stack>
     </QueryClientProvider>
   )

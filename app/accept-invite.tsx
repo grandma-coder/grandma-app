@@ -3,6 +3,7 @@ import { View, Text, Pressable, Alert, StyleSheet, ActivityIndicator } from 'rea
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../lib/supabase'
+import { colors } from '../constants/theme'
 
 export default function AcceptInvite() {
   const { token } = useLocalSearchParams<{ token: string }>()
@@ -52,7 +53,7 @@ export default function AcceptInvite() {
   return (
     <View style={styles.container}>
       <Pressable onPress={() => router.back()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color="#1A1A2E" />
+        <Ionicons name="arrow-back" size={24} color={colors.text} />
       </Pressable>
 
       <Text style={styles.emoji}>👵</Text>
@@ -64,15 +65,15 @@ export default function AcceptInvite() {
       <View style={styles.permissionsCard}>
         <Text style={styles.permissionsTitle}>You'll be able to:</Text>
         <View style={styles.permRow}>
-          <Ionicons name="eye-outline" size={18} color="#7BAE8E" />
+          <Ionicons name="eye-outline" size={18} color={colors.accent} />
           <Text style={styles.permText}>View child's profile and health info</Text>
         </View>
         <View style={styles.permRow}>
-          <Ionicons name="create-outline" size={18} color="#7BAE8E" />
+          <Ionicons name="create-outline" size={18} color={colors.accent} />
           <Text style={styles.permText}>Log feeding, sleep, and activities</Text>
         </View>
         <View style={styles.permRow}>
-          <Ionicons name="chatbubble-outline" size={18} color="#7BAE8E" />
+          <Ionicons name="chatbubble-outline" size={18} color={colors.accent} />
           <Text style={styles.permText}>Chat with Grandma for advice</Text>
         </View>
       </View>
@@ -83,7 +84,7 @@ export default function AcceptInvite() {
         style={[styles.button, loading && { opacity: 0.6 }]}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.textOnAccent} />
         ) : (
           <Text style={styles.buttonText}>Accept invite</Text>
         )}
@@ -98,29 +99,29 @@ export default function AcceptInvite() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, backgroundColor: '#FAF8F4',
+    flex: 1, backgroundColor: colors.background,
     paddingHorizontal: 24, paddingTop: 80, alignItems: 'center',
   },
   backButton: {
     position: 'absolute', top: 60, left: 24,
-    width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff',
-    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#E8E4DC',
+    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface,
+    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border,
   },
   emoji: { fontSize: 56, marginBottom: 20 },
-  title: { fontSize: 26, fontWeight: '700', color: '#1A1A2E', marginBottom: 8, textAlign: 'center' },
-  subtitle: { fontSize: 15, color: '#888', textAlign: 'center', lineHeight: 22, marginBottom: 32 },
+  title: { fontSize: 26, fontWeight: '700', color: colors.text, marginBottom: 8, textAlign: 'center' },
+  subtitle: { fontSize: 15, color: colors.textTertiary, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
   permissionsCard: {
-    width: '100%', backgroundColor: '#fff', borderRadius: 16, padding: 20,
-    borderWidth: 1, borderColor: '#E8E4DC', marginBottom: 32, gap: 14,
+    width: '100%', backgroundColor: colors.surface, borderRadius: 16, padding: 20,
+    borderWidth: 1, borderColor: colors.border, marginBottom: 32, gap: 14,
   },
-  permissionsTitle: { fontSize: 14, fontWeight: '700', color: '#1A1A2E', marginBottom: 4 },
+  permissionsTitle: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 4 },
   permRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  permText: { fontSize: 14, color: '#555' },
+  permText: { fontSize: 14, color: colors.textSecondary },
   button: {
-    width: '100%', backgroundColor: '#7BAE8E', borderRadius: 16,
+    width: '100%', backgroundColor: colors.accent, borderRadius: 16,
     paddingVertical: 16, alignItems: 'center',
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  buttonText: { color: colors.textOnAccent, fontSize: 16, fontWeight: '700' },
   declineButton: { paddingVertical: 16 },
-  declineText: { color: '#888', fontSize: 14 },
+  declineText: { color: colors.textTertiary, fontSize: 14 },
 })

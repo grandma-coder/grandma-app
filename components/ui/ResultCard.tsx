@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View, ScrollView, Pressable } from 'react-native'
+import { colors, borderRadius } from '../../constants/theme'
 
 interface ResultCardProps {
   result: string
@@ -35,11 +36,11 @@ export default function ResultCard({ result, scanType, onClose }: ResultCardProp
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'flex-end',
   },
   card: {
-    backgroundColor: '#FAF8F4',
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '80%',
@@ -51,21 +52,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E4DC',
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A2E',
+    color: colors.text,
   },
   closeButton: {
-    backgroundColor: '#7BAE8E',
-    borderRadius: 16,
+    backgroundColor: colors.accent,
+    borderRadius: borderRadius.lg,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   closeText: {
-    color: '#fff',
+    color: colors.textOnAccent,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -78,7 +79,7 @@ const styles = StyleSheet.create({
   },
   resultText: {
     fontSize: 15,
-    color: '#1A1A2E',
+    color: colors.textSecondary,
     lineHeight: 24,
   },
 })
