@@ -40,6 +40,7 @@ export default function ParentName() {
         <Text style={styles.label}>PARENT'S NAME</Text>
         <TextInput
           style={styles.input}
+          selectionColor={colors.neon.blue}
           placeholder="How shall I call you?"
           placeholderTextColor={colors.textTertiary}
           value={name}

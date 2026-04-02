@@ -41,6 +41,7 @@ export default function BabyName() {
         <Text style={styles.label}>BABY'S NAME {mode === 'pregnancy' ? '(OPTIONAL)' : ''}</Text>
         <TextInput
           style={styles.input}
+          selectionColor={colors.neon.blue}
           placeholder="If chosen..."
           placeholderTextColor={colors.textTertiary}
           value={name}

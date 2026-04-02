@@ -71,6 +71,7 @@ export default function SignUp() {
           {/* Email/Password */}
           <TextInput
             style={styles.input}
+            selectionColor={colors.neon.blue}
             placeholder="Email"
             placeholderTextColor={colors.textTertiary}
             value={email}
@@ -81,6 +82,7 @@ export default function SignUp() {
 
           <TextInput
             style={styles.input}
+            selectionColor={colors.neon.blue}
             placeholder="Password (min 6 characters)"
             placeholderTextColor={colors.textTertiary}
             value={password}

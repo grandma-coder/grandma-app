@@ -78,6 +78,7 @@ export default function ThreadDetail() {
         <View style={[styles.inputBar, { paddingBottom: insets.bottom + 8 }]}>
           <TextInput
             style={styles.input}
+            selectionColor={colors.neon.blue}
             placeholder="Write a reply..."
             placeholderTextColor={colors.textTertiary}
             value={input}

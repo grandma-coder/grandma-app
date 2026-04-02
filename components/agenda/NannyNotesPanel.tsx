@@ -74,6 +74,7 @@ export function NannyNotesPanel({ notes, userRole, onSendNote }: NannyNotesPanel
       <View style={styles.composeRow}>
         <TextInput
           style={styles.input}
+          selectionColor={colors.neon.blue}
           placeholder="Write a note..."
           placeholderTextColor={colors.textTertiary}
           value={draft}

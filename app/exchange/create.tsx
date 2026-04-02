@@ -112,6 +112,7 @@ export default function CreateListing() {
           <Text style={styles.label}>TITLE *</Text>
           <TextInput
             style={styles.input}
+            selectionColor={colors.neon.blue}
             placeholder="e.g. Baby Bjorn Carrier"
             placeholderTextColor={colors.textTertiary}
             value={title}
@@ -122,6 +123,7 @@ export default function CreateListing() {
           <Text style={styles.label}>DESCRIPTION</Text>
           <TextInput
             style={[styles.input, styles.inputMulti]}
+            selectionColor={colors.neon.blue}
             placeholder="Tell parents about the item..."
             placeholderTextColor={colors.textTertiary}
             value={description}
@@ -167,6 +169,7 @@ export default function CreateListing() {
               <Text style={styles.label}>PRICE ($)</Text>
               <TextInput
                 style={styles.input}
+                selectionColor={colors.neon.blue}
                 placeholder="0.00"
                 placeholderTextColor={colors.textTertiary}
                 value={price}

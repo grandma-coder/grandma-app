@@ -72,6 +72,7 @@ export default function InviteCaregiver() {
           <Text style={styles.label}>EMAIL</Text>
           <TextInput
             style={styles.input}
+            selectionColor={colors.neon.blue}
             placeholder="nanny@email.com"
             placeholderTextColor={colors.textTertiary}
             value={email}

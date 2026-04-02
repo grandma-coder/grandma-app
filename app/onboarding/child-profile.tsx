@@ -133,6 +133,7 @@ export default function ChildProfile() {
               <Text style={styles.label}>CHILD'S NAME *</Text>
               <TextInput
                 style={styles.input}
+                selectionColor={colors.neon.blue}
                 placeholder="e.g. Sofia"
                 placeholderTextColor={colors.textTertiary}
                 value={name}
@@ -156,6 +157,7 @@ export default function ChildProfile() {
               <Text style={styles.label}>WEIGHT (kg)</Text>
               <TextInput
                 style={styles.input}
+                selectionColor={colors.neon.blue}
                 placeholder="e.g. 7.5"
                 placeholderTextColor={colors.textTertiary}
                 value={weight}
@@ -168,6 +170,7 @@ export default function ChildProfile() {
           <Text style={styles.label}>KNOWN ALLERGIES</Text>
           <TextInput
             style={styles.input}
+            selectionColor={colors.neon.blue}
             placeholder="e.g. dairy, peanuts (comma separated)"
             placeholderTextColor={colors.textTertiary}
             value={allergies}

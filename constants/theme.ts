@@ -1,8 +1,24 @@
 /**
- * grandma.app — Dark Neon Theme
- * Follows the HTML mockup design system.
- * Fonts target: Cabinet Grotesk (display), Satoshi (body), JetBrains Mono (mono)
+ * grandma.app — Neon Design System
+ * React Native Components Export Guide
+ *
+ * Fonts: Cabinet Grotesk (display/headings), Satoshi (body), JetBrains Mono (mono/labels)
+ * Load via expo-font — see lib/fonts.ts
  */
+
+// ─── NEON COLOR PALETTE ─────────────────────────────────────────────────────
+
+export const THEME_COLORS = {
+  yellow: '#F4FD50',
+  pink: '#FF8AD8',
+  orange: '#FF6B35',
+  blue: '#4D96FF',
+  green: '#A2FF86',
+  purple: '#B983FF',
+  dark: '#0A0A0A',
+} as const
+
+// ─── COLORS ─────────────────────────────────────────────────────────────────
 
 export const colors = {
   // Core backgrounds
@@ -12,20 +28,13 @@ export const colors = {
   surfaceGlass: 'rgba(255, 255, 255, 0.05)',
 
   // Primary accent — Neon Yellow
-  accent: '#F4FD50',
-  accentGlow: '#F4FD50',
+  accent: THEME_COLORS.yellow,
+  accentGlow: THEME_COLORS.yellow,
   accentMuted: 'rgba(244, 253, 80, 0.10)',
   accentDark: '#D4DD30',
 
-  // Neon palette
-  neon: {
-    yellow: '#F4FD50',
-    pink: '#FF8AD8',
-    orange: '#FF6B35',
-    blue: '#4D96FF',
-    green: '#A2FF86',
-    purple: '#B983FF',
-  },
+  // Neon palette (shortcut)
+  neon: THEME_COLORS,
 
   // Text
   text: '#FFFFFF',
@@ -39,22 +48,22 @@ export const colors = {
   borderAccent: 'rgba(244, 253, 80, 0.30)',
 
   // Status
-  success: '#A2FF86',
-  error: '#FF6B35',
-  warning: '#F4FD50',
-  info: '#4D96FF',
+  success: THEME_COLORS.green,
+  error: THEME_COLORS.orange,
+  warning: THEME_COLORS.yellow,
+  info: THEME_COLORS.blue,
 
-  // Pillar neon colors (used as full card backgrounds in Kids grid)
+  // Pillar neon colors (full card backgrounds in Kids grid)
   pillar: {
-    milk: '#4D96FF',
-    food: '#A2FF86',
-    nutrition: '#F4FD50',
-    vaccines: '#FF8AD8',
-    clothes: '#FF6B35',
+    milk: THEME_COLORS.blue,
+    food: THEME_COLORS.green,
+    nutrition: THEME_COLORS.yellow,
+    vaccines: THEME_COLORS.pink,
+    clothes: THEME_COLORS.orange,
     recipes: '#141414',
-    habits: '#A2FF86',
-    milestones: '#B983FF',
-    medicine: '#FF8AD8',
+    habits: THEME_COLORS.green,
+    milestones: THEME_COLORS.purple,
+    medicine: THEME_COLORS.pink,
   },
 
   // Role colors
@@ -65,16 +74,20 @@ export const colors = {
   },
 } as const
 
+// ─── GRADIENTS ──────────────────────────────────────────────────────────────
+
 export const gradients = {
   background: ['#0A0A0A', '#0A0A0A', '#111111'] as const,
   card: ['#1A1A1A', '#111111'] as const,
   cardHover: ['#222222', '#141414'] as const,
-  accent: ['#F4FD50', '#FF6B35'] as const,
+  accent: [THEME_COLORS.yellow, THEME_COLORS.orange] as const,
   accentSoft: ['rgba(244, 253, 80, 0.15)', 'rgba(255, 107, 53, 0.08)'] as const,
   glass: ['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.02)'] as const,
   pregnancy: ['#0A0A0A', '#0D0D1A'] as const,
-  insight: ['#4D96FF', '#FF8AD8', '#A2FF86'] as const,
+  insight: [THEME_COLORS.blue, THEME_COLORS.pink, THEME_COLORS.green] as const,
 } as const
+
+// ─── SPACING ────────────────────────────────────────────────────────────────
 
 export const spacing = {
   xs: 4,
@@ -89,14 +102,30 @@ export const spacing = {
   '6xl': 64,
 } as const
 
+// ─── BORDER RADIUS ──────────────────────────────────────────────────────────
+
 export const borderRadius = {
   sm: 12,
   md: 20,
   lg: 32,
   xl: 40,
   '2xl': 48,
-  full: 9999,
+  full: 999,   // Pill shape — matches guide (borderRadius: 999)
 } as const
+
+// ─── FONT FAMILIES ──────────────────────────────────────────────────────────
+// These require font files in assets/fonts/ loaded via expo-font.
+// Fallback to system font if not loaded.
+
+export const fonts = {
+  display: 'CabinetGrotesk-Extrabold',  // Headings, titles, CTAs
+  displayBold: 'CabinetGrotesk-Bold',
+  body: 'Satoshi-Medium',               // Body text
+  bodyBold: 'Satoshi-Bold',
+  mono: 'JetBrainsMono-Medium',         // Labels, timestamps, technical
+} as const
+
+// ─── TYPOGRAPHY ─────────────────────────────────────────────────────────────
 
 export const typography = {
   hero: {
@@ -155,6 +184,8 @@ export const typography = {
   },
 } as const
 
+// ─── SHADOWS ────────────────────────────────────────────────────────────────
+
 export const shadows = {
   card: {
     shadowColor: '#000',
@@ -164,21 +195,35 @@ export const shadows = {
     elevation: 10,
   },
   glow: {
-    shadowColor: '#F4FD50',
-    shadowOffset: { width: 0, height: 0 },
+    shadowColor: THEME_COLORS.yellow,
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
-    shadowRadius: 20,
+    shadowRadius: 25,
     elevation: 12,
   },
   glowPink: {
-    shadowColor: '#FF8AD8',
+    shadowColor: THEME_COLORS.pink,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
   },
   glowBlue: {
-    shadowColor: '#4D96FF',
+    shadowColor: THEME_COLORS.blue,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  glowGreen: {
+    shadowColor: THEME_COLORS.green,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  glowOrange: {
+    shadowColor: THEME_COLORS.orange,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 20,
@@ -190,5 +235,24 @@ export const shadows = {
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
+  },
+} as const
+
+// ─── INPUT STYLES ───────────────────────────────────────────────────────────
+// Shared input styles matching the design guide
+
+export const inputStyles = {
+  selectionColor: THEME_COLORS.blue,
+  placeholderTextColor: colors.textTertiary,
+  field: {
+    backgroundColor: colors.surfaceGlass,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 24,
+    height: 72,
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: colors.text,
   },
 } as const
