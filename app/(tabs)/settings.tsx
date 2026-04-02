@@ -6,8 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useChildStore } from '../../store/useChildStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { GlassCard } from '../../components/ui/GlassCard'
-import { colors, typography, spacing, borderRadius } from '../../constants/theme'
+import { colors, THEME_COLORS, borderRadius, shadows, spacing, typography } from '../../constants/theme'
 
 interface ScanEntry {
   id: string
@@ -21,10 +20,11 @@ function getAge(birthDate: string): string {
   const now = new Date()
   const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
   if (months < 1) return 'Newborn'
-  if (months < 12) return `${months} month${months > 1 ? 's' : ''} old`
   const years = Math.floor(months / 12)
   const rem = months % 12
-  return rem > 0 ? `${years}y ${rem}m old` : `${years} year${years > 1 ? 's' : ''} old`
+  if (years >= 1 && rem > 0) return `${years}Y ${rem}M OLD`
+  if (years >= 1) return `${years}Y OLD`
+  return `${months}M OLD`
 }
 
 const scanTypeLabel: Record<string, string> = {
@@ -65,53 +65,51 @@ export default function Settings() {
           styles.content,
           { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 },
         ]}
+        showsVerticalScrollIndicator={false}
       >
+        <Text style={styles.label}>ACCOUNT</Text>
         <Text style={styles.heading}>Settings</Text>
 
+        {/* Profile Card — Blue solid background */}
         {child ? (
-          <GlassCard>
-            <View style={styles.avatarRow}>
+          <View style={styles.profileCard}>
+            {/* Avatar + Name */}
+            <View style={styles.profileTop}>
               <View style={styles.avatar}>
-                <Text style={{ fontSize: 28 }}>👶</Text>
+                <Text style={styles.avatarEmoji}>👶</Text>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.childName}>{child.name}</Text>
-                {child.birthDate ? (
-                  <Text style={styles.childAge}>{getAge(child.birthDate)}</Text>
-                ) : null}
-              </View>
+              <Text style={styles.childName}>{child.name}</Text>
+              {child.birthDate ? (
+                <Text style={styles.childAge}>{getAge(child.birthDate)}</Text>
+              ) : null}
             </View>
 
-            <View style={styles.infoGrid}>
+            {/* Info row */}
+            <View style={styles.infoRow}>
               {child.birthDate ? (
                 <View style={styles.infoItem}>
-                  <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
+                  <Ionicons name="calendar-outline" size={14} color="rgba(255,255,255,0.7)" />
                   <Text style={styles.infoText}>{child.birthDate}</Text>
                 </View>
               ) : null}
               {child.weightKg > 0 ? (
                 <View style={styles.infoItem}>
-                  <Ionicons name="scale-outline" size={16} color={colors.textSecondary} />
+                  <Ionicons name="scale-outline" size={14} color="rgba(255,255,255,0.7)" />
                   <Text style={styles.infoText}>{child.weightKg} kg</Text>
-                </View>
-              ) : null}
-              {child.heightCm > 0 ? (
-                <View style={styles.infoItem}>
-                  <Ionicons name="resize-outline" size={16} color={colors.textSecondary} />
-                  <Text style={styles.infoText}>{child.heightCm} cm</Text>
                 </View>
               ) : null}
             </View>
 
+            {/* Allergy warning */}
             {child.allergies.length > 0 && (
-              <View style={styles.allergiesRow}>
-                <Ionicons name="warning-outline" size={16} color={colors.warning} />
-                <Text style={styles.allergiesText}>
-                  {child.allergies.join(', ')}
+              <View style={styles.allergyRow}>
+                <Ionicons name="warning-outline" size={16} color={THEME_COLORS.yellow} />
+                <Text style={styles.allergyText}>
+                  Allergies: {child.allergies.join(', ')}
                 </Text>
               </View>
             )}
-          </GlassCard>
+          </View>
         ) : (
           <Pressable
             onPress={() => router.push('/onboarding/journey')}
@@ -121,21 +119,23 @@ export default function Settings() {
           </Pressable>
         )}
 
-        {/* Caregivers — parents only */}
+        {/* Manage Caregivers */}
         {child && child.caregiverRole === 'parent' && (
           <Pressable
             onPress={() => router.push('/manage-caregivers')}
-            style={styles.menuItem}
+            style={styles.caregiversCard}
           >
-            <Ionicons name="people-outline" size={20} color={colors.accent} />
-            <Text style={styles.menuItemText}>Manage caregivers</Text>
+            <View style={styles.caregiversIconWrap}>
+              <Ionicons name="people" size={20} color={THEME_COLORS.pink} />
+            </View>
+            <Text style={styles.caregiversText}>Manage Caregivers</Text>
             <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
           </Pressable>
         )}
 
         {child && child.caregiverRole !== 'parent' && (
           <View style={styles.roleBadge}>
-            <Ionicons name="shield-checkmark-outline" size={16} color={colors.success} />
+            <Ionicons name="shield-checkmark-outline" size={16} color={THEME_COLORS.green} />
             <Text style={styles.roleBadgeText}>
               You're a {child.caregiverRole} for {child.name}
             </Text>
@@ -143,11 +143,11 @@ export default function Settings() {
         )}
 
         {/* Scan History */}
-        <Text style={styles.sectionTitle}>SCAN HISTORY</Text>
+        <Text style={styles.sectionLabel}>SCAN HISTORY</Text>
         {scans.length > 0 ? (
           scans.map((scan) => (
             <View key={scan.id} style={styles.scanItem}>
-              <Ionicons name="scan-outline" size={18} color={colors.accent} />
+              <Ionicons name="scan-outline" size={18} color={THEME_COLORS.yellow} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.scanLabel}>
                   {scanTypeLabel[scan.scan_type] ?? scan.scan_type}
@@ -165,15 +165,17 @@ export default function Settings() {
           ))
         ) : (
           <View style={styles.emptyState}>
-            <Ionicons name="camera-outline" size={32} color={colors.textTertiary} />
-            <Text style={styles.emptyText}>No scans yet</Text>
+            <View style={styles.emptyIconWrap}>
+              <Ionicons name="camera-outline" size={40} color={colors.textTertiary} />
+            </View>
+            <Text style={styles.emptyTitle}>No scans yet</Text>
             <Text style={styles.emptySubtext}>
-              Scan a medicine or food label to see history here
+              Scan a medicine or food label to see history here.
             </Text>
           </View>
         )}
 
-        {/* Sign out */}
+        {/* Sign Out */}
         <Pressable
           onPress={() =>
             Alert.alert('Sign out', 'Are you sure?', [
@@ -183,8 +185,8 @@ export default function Settings() {
           }
           style={styles.signOutButton}
         >
-          <Ionicons name="log-out-outline" size={18} color={colors.error} />
-          <Text style={styles.signOutText}>Sign out</Text>
+          <Ionicons name="log-out-outline" size={18} color={THEME_COLORS.orange} />
+          <Text style={styles.signOutText}>Sign Out Account</Text>
         </Pressable>
       </ScrollView>
     </CosmicBackground>
@@ -195,40 +197,59 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing['2xl'],
   },
+  label: {
+    ...typography.label,
+    marginBottom: 4,
+  },
   heading: {
     ...typography.heading,
     marginBottom: 24,
   },
-  avatarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
+
+  // Profile Card — Blue solid
+  profileCard: {
+    backgroundColor: THEME_COLORS.blue,
+    borderRadius: borderRadius['2xl'],
+    padding: 28,
     marginBottom: 16,
+    ...shadows.glowBlue,
+  },
+  profileTop: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.accentMuted,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(0,0,0,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 12,
+  },
+  avatarEmoji: {
+    fontSize: 32,
   },
   childName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: -0.5,
   },
   childAge: {
     fontSize: 14,
-    color: colors.accent,
-    fontWeight: '600',
-    marginTop: 2,
+    fontWeight: '900',
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+    marginTop: 4,
   },
-  infoGrid: {
+  infoRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-    marginBottom: 12,
+    justifyContent: 'center',
+    gap: 20,
+    marginBottom: 16,
   },
   infoItem: {
     flexDirection: 'row',
@@ -236,69 +257,88 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   infoText: {
-    fontSize: 14,
-    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.8)',
   },
-  allergiesRow: {
+  allergyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(251, 191, 36, 0.1)',
-    borderRadius: 8,
-    padding: 10,
+    gap: 8,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
-  allergiesText: {
+  allergyText: {
     fontSize: 13,
-    color: colors.warning,
+    fontWeight: '700',
+    color: THEME_COLORS.yellow,
     flex: 1,
   },
   addChildButton: {
-    backgroundColor: colors.accent,
+    backgroundColor: THEME_COLORS.yellow,
     borderRadius: borderRadius.lg,
     padding: 20,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
+    ...shadows.glow,
   },
   addChildText: {
-    color: colors.textOnAccent,
+    color: '#0A0A0A',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  menuItem: {
+
+  // Caregivers Card
+  caregiversCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
     backgroundColor: colors.surfaceGlass,
-    borderRadius: borderRadius.md,
-    padding: 16,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    marginTop: 16,
+    padding: 18,
     marginBottom: 24,
   },
-  menuItemText: {
+  caregiversIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.sm,
+    backgroundColor: 'rgba(255, 138, 216, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  caregiversText: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '800',
     color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   roleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(74, 222, 128, 0.1)',
-    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(162, 255, 134, 0.1)',
+    borderRadius: borderRadius.lg,
     padding: 14,
-    marginTop: 16,
     marginBottom: 24,
   },
   roleBadgeText: {
     fontSize: 14,
-    color: colors.success,
+    fontWeight: '600',
+    color: THEME_COLORS.green,
   },
-  sectionTitle: {
+
+  // Scan History
+  sectionLabel: {
     ...typography.label,
-    marginBottom: 12,
+    marginBottom: 16,
     marginTop: 8,
   },
   scanItem: {
@@ -306,50 +346,74 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     backgroundColor: colors.surfaceGlass,
-    borderRadius: borderRadius.md,
-    padding: 14,
+    borderRadius: borderRadius.lg,
+    padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: 8,
   },
   scanLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.text,
   },
   scanDate: {
     fontSize: 12,
+    fontWeight: '500',
     color: colors.textTertiary,
     marginTop: 2,
   },
+
+  // Empty state
   emptyState: {
     alignItems: 'center',
-    padding: 24,
-    gap: 8,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
   },
-  emptyText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textSecondary,
+  emptyIconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.lg,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
   emptySubtext: {
-    fontSize: 13,
-    color: colors.textTertiary,
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textSecondary,
     textAlign: 'center',
+    lineHeight: 20,
   },
+
+  // Sign Out
   signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    padding: 16,
-    marginTop: 24,
+    gap: 10,
+    borderWidth: 2,
+    borderColor: THEME_COLORS.orange,
+    borderRadius: borderRadius.full,
+    paddingVertical: 18,
+    marginTop: 32,
   },
   signOutText: {
-    color: colors.error,
     fontSize: 15,
+    fontWeight: '900',
+    color: THEME_COLORS.orange,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
 })

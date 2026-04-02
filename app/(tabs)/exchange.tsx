@@ -1,19 +1,22 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { LinearGradient } from 'expo-linear-gradient'
 import { getListings } from '../../lib/exchange'
 import { useExchangeStore } from '../../store/useExchangeStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { GradientButton } from '../../components/ui/GradientButton'
 import { ListingCard } from '../../components/exchange/ListingCard'
-import { colors, typography, spacing, borderRadius } from '../../constants/theme'
+import { colors, THEME_COLORS, borderRadius, shadows, spacing, typography } from '../../constants/theme'
 import type { Listing } from '../../lib/exchange'
+
+const FILTERS = ['All', 'Sell', 'Trade', 'Free'] as const
 
 export default function Exchange() {
   const insets = useSafeAreaInsets()
   const { listings, savedIds, loading, setListings, toggleSaved, setLoading } = useExchangeStore()
+  const [activeFilter, setActiveFilter] = useState<string>('All')
 
   useEffect(() => {
     loadListings()
@@ -44,41 +47,75 @@ export default function Exchange() {
 
   return (
     <CosmicBackground>
-      <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
+      <View style={[styles.container, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 }]}>
+        {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Grandma's Garage</Text>
-            <Text style={styles.subtitle}>Trade, sell, or donate baby items</Text>
+            <Text style={styles.label}>MARKETPLACE</Text>
+            <Text style={styles.titleLine1}>Grandma's</Text>
+            <Text style={styles.titleLine2}>Garage</Text>
           </View>
           <Pressable
             onPress={() => router.push('/exchange/create')}
             style={styles.addBtn}
           >
-            <Ionicons name="add" size={22} color={colors.textOnAccent} />
+            <Ionicons name="add" size={24} color="#0A0A0A" />
           </Pressable>
         </View>
 
         {/* Filter pills */}
         <View style={styles.filters}>
-          {['All', 'Sell', 'Trade', 'Free'].map((f) => (
-            <Pressable key={f} style={styles.filterPill}>
-              <Text style={styles.filterText}>{f}</Text>
+          {FILTERS.map((f) => (
+            <Pressable
+              key={f}
+              style={[
+                styles.filterPill,
+                activeFilter === f && styles.filterPillActive,
+              ]}
+              onPress={() => setActiveFilter(f)}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  activeFilter === f && styles.filterTextActive,
+                ]}
+              >
+                {f}
+              </Text>
             </Pressable>
           ))}
         </View>
 
         {listings.length === 0 && !loading ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🏷️</Text>
+            {/* Floating placeholder cards */}
+            <View style={styles.placeholderCards}>
+              <View style={[styles.placeholderCard, styles.placeholderPink]}>
+                <Ionicons name="help-outline" size={32} color={THEME_COLORS.pink} />
+              </View>
+              <View style={[styles.placeholderCard, styles.placeholderBlue]}>
+                <Ionicons name="help-outline" size={32} color={THEME_COLORS.blue} />
+              </View>
+            </View>
+
             <Text style={styles.emptyTitle}>No listings yet</Text>
             <Text style={styles.emptySubtitle}>
-              Be the first to post! Share baby items you no longer need.
+              Be the first to post! Share baby items you no longer need with your community.
             </Text>
-            <GradientButton
-              title="Post Your First Item"
+
+            <Pressable
               onPress={() => router.push('/exchange/create')}
-              style={{ marginTop: 20 }}
-            />
+              style={styles.gradientBtnWrap}
+            >
+              <LinearGradient
+                colors={[THEME_COLORS.yellow, THEME_COLORS.orange]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientBtn}
+              >
+                <Text style={styles.gradientBtnText}>Post Your First Item</Text>
+              </LinearGradient>
+            </Pressable>
           </View>
         ) : (
           <FlatList
@@ -103,65 +140,133 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: spacing['2xl'],
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  title: {
-    ...typography.heading,
-    marginBottom: 2,
+  label: {
+    ...typography.label,
+    marginBottom: 4,
   },
-  subtitle: {
-    ...typography.caption,
+  titleLine1: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: colors.text,
+    letterSpacing: -0.8,
+    textTransform: 'uppercase',
+  },
+  titleLine2: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: THEME_COLORS.yellow,
+    letterSpacing: -0.8,
+    textTransform: 'uppercase',
+    marginTop: -4,
   },
   addBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.accent,
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.full,
+    backgroundColor: THEME_COLORS.yellow,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 20,
+    ...shadows.glow,
   },
   filters: {
     flexDirection: 'row',
     gap: 8,
     paddingHorizontal: spacing['2xl'],
-    marginBottom: 16,
+    marginBottom: 24,
   },
   filterPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     borderRadius: borderRadius.full,
     backgroundColor: colors.surfaceGlass,
     borderWidth: 1,
     borderColor: colors.border,
   },
+  filterPillActive: {
+    backgroundColor: THEME_COLORS.yellow,
+    borderColor: THEME_COLORS.yellow,
+  },
   filterText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '800',
     color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  filterTextActive: {
+    color: '#0A0A0A',
   },
   list: {
     paddingHorizontal: spacing['2xl'],
     paddingBottom: 40,
   },
+
+  // Empty state
   empty: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: 32,
   },
-  emptyIcon: {
-    fontSize: 56,
-    marginBottom: 16,
+  placeholderCards: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 32,
+  },
+  placeholderCard: {
+    width: 120,
+    height: 150,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  placeholderPink: {
+    backgroundColor: 'rgba(255, 138, 216, 0.1)',
+    borderColor: 'rgba(255, 138, 216, 0.2)',
+    transform: [{ rotate: '-6deg' }],
+  },
+  placeholderBlue: {
+    backgroundColor: 'rgba(77, 150, 255, 0.1)',
+    borderColor: 'rgba(77, 150, 255, 0.2)',
+    transform: [{ rotate: '6deg' }],
+    marginTop: 20,
   },
   emptyTitle: {
     ...typography.title,
     marginBottom: 8,
+    textAlign: 'center',
   },
   emptySubtitle: {
-    ...typography.bodySecondary,
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
+    marginBottom: 28,
+  },
+  gradientBtnWrap: {
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
+    ...shadows.glow,
+  },
+  gradientBtn: {
+    paddingHorizontal: 32,
+    paddingVertical: 18,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gradientBtnText: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#0A0A0A',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
 })

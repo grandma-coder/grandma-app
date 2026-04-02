@@ -1,7 +1,6 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
-import { colors, borderRadius } from '../../constants/theme'
+import { colors, THEME_COLORS, borderRadius } from '../../constants/theme'
 
 interface DailyPulseProps {
   weight?: number | null
@@ -11,37 +10,19 @@ interface DailyPulseProps {
 
 export function DailyPulse({ weight, mood, onAddSymptom }: DailyPulseProps) {
   return (
-    <GlassCard style={styles.container}>
+    <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Daily Pulse</Text>
-        <Text style={styles.sparkle}>✨</Text>
+        <Ionicons name="help-circle-outline" size={24} color={colors.textTertiary} />
       </View>
 
-      <View style={styles.row}>
-        <Ionicons name="fitness-outline" size={18} color={colors.textSecondary} />
-        <Text style={styles.rowLabel}>Weight</Text>
-        <Text style={styles.rowValue}>
-          {weight ? `${weight} lbs` : '—'}
-        </Text>
+      {/* Empty state */}
+      <View style={styles.emptyCard}>
+        <Ionicons name="information-circle-outline" size={32} color={colors.textTertiary} style={{ marginBottom: 12 }} />
+        <Text style={styles.emptyText}>No entries for today yet...</Text>
       </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.row}>
-        <Ionicons name="happy-outline" size={18} color={colors.textSecondary} />
-        <Text style={styles.rowLabel}>Mood</Text>
-        <Text style={[styles.rowValue, mood && styles.moodActive]}>
-          {mood || '—'}
-        </Text>
-      </View>
-
-      <Pressable
-        onPress={onAddSymptom}
-        style={styles.addButton}
-      >
-        <Text style={styles.addButtonText}>ADD SYMPTOM</Text>
-      </Pressable>
-    </GlassCard>
+    </View>
   )
 }
 
@@ -54,52 +35,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    paddingHorizontal: 4,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '900',
     color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: -0.3,
   },
-  sparkle: {
-    fontSize: 18,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 4,
-  },
-  rowLabel: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.textSecondary,
-  },
-  rowValue: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  moodActive: {
-    color: colors.accent,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: 10,
-  },
-  addButton: {
-    alignItems: 'center',
-    paddingVertical: 12,
-    marginTop: 12,
+  emptyCard: {
     backgroundColor: colors.surfaceGlass,
-    borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
+    borderRadius: borderRadius.lg,
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  addButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    letterSpacing: 1,
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.textTertiary,
+    fontStyle: 'italic',
   },
 })

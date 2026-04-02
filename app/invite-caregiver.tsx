@@ -3,16 +3,18 @@ import { View, Text, TextInput, Pressable, Alert, StyleSheet, ActivityIndicator 
 import { router } from 'expo-router'
 import * as Clipboard from 'expo-clipboard'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
-import { colors } from '../constants/theme'
+import { colors, THEME_COLORS, borderRadius, shadows } from '../constants/theme'
 
 const ROLES = [
-  { id: 'nanny', label: 'Nanny', icon: '👩‍🍼' },
-  { id: 'family', label: 'Family', icon: '👨‍👩‍👦' },
+  { id: 'nanny', label: 'Nanny', icon: 'person-outline' as const },
+  { id: 'family', label: 'Family', icon: 'people-outline' as const },
 ]
 
 export default function InviteCaregiver() {
+  const insets = useSafeAreaInsets()
   const child = useChildStore((s) => s.activeChild)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('nanny')
@@ -55,48 +57,71 @@ export default function InviteCaregiver() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }]}>
+      {/* Close button top-right */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color={colors.textTertiary} />
+          <Ionicons name="close" size={22} color={colors.textTertiary} />
         </Pressable>
       </View>
 
       {!inviteLink ? (
         <>
-          <Text style={styles.title}>Invite a caregiver</Text>
+          {/* Title */}
+          <Text style={styles.title}>
+            Invite a{'\n'}
+            <Text style={{ color: THEME_COLORS.yellow }}>caregiver</Text>
+          </Text>
           <Text style={styles.subtitle}>
-            They'll get access to {child?.name ?? "your child"}'s profile
+            They'll get access to {child?.name ?? "Rio"}'s profile and your personalized parenting wisdom guide.
           </Text>
 
-          <Text style={styles.label}>EMAIL</Text>
-          <TextInput
-            style={styles.input}
-            selectionColor={colors.neon.blue}
-            placeholder="nanny@email.com"
-            placeholderTextColor={colors.textTertiary}
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
-
-          <Text style={styles.label}>ROLE</Text>
-          <View style={styles.roleRow}>
-            {ROLES.map((r) => (
-              <Pressable
-                key={r.id}
-                onPress={() => setRole(r.id)}
-                style={[styles.roleChip, role === r.id && styles.roleChipActive]}
-              >
-                <Text style={styles.roleIcon}>{r.icon}</Text>
-                <Text style={[styles.roleLabel, role === r.id && styles.roleLabelActive]}>
-                  {r.label}
-                </Text>
-              </Pressable>
-            ))}
+          {/* Email input */}
+          <Text style={styles.label}>Email Address</Text>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.input}
+              selectionColor={colors.neon.blue}
+              placeholder="nanny@email.com"
+              placeholderTextColor={colors.textTertiary}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+            <View style={styles.inputIconBox}>
+              <Ionicons name="mail-outline" size={20} color={colors.textTertiary} />
+            </View>
           </View>
 
+          {/* Role selection */}
+          <Text style={styles.label}>Select Relationship Role</Text>
+          <View style={styles.roleRow}>
+            {ROLES.map((r) => {
+              const isActive = role === r.id
+              return (
+                <Pressable
+                  key={r.id}
+                  onPress={() => setRole(r.id)}
+                  style={[
+                    styles.roleChip,
+                    isActive && styles.roleChipActive,
+                  ]}
+                >
+                  <Ionicons
+                    name={r.icon}
+                    size={28}
+                    color={isActive ? THEME_COLORS.yellow : colors.textTertiary}
+                  />
+                  <Text style={[styles.roleLabel, isActive && styles.roleLabelActive]}>
+                    {r.label}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+
+          {/* Send button */}
           <Pressable
             onPress={handleInvite}
             disabled={loading}
@@ -105,9 +130,15 @@ export default function InviteCaregiver() {
             {loading ? (
               <ActivityIndicator color={colors.textOnAccent} />
             ) : (
-              <Text style={styles.sendText}>Send invite</Text>
+              <View style={styles.sendButtonInner}>
+                <Text style={styles.sendText}>Send Invite</Text>
+                <Ionicons name="send" size={18} color="#0A0A0A" />
+              </View>
             )}
           </Pressable>
+
+          {/* Footer */}
+          <Text style={styles.footerText}>Secured by Parental System V.2</Text>
         </>
       ) : (
         <View style={styles.successContainer}>
@@ -132,41 +163,160 @@ export default function InviteCaregiver() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 24, paddingTop: 60 },
-  header: { alignItems: 'flex-end', marginBottom: 16 },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    paddingHorizontal: 24,
+  },
+  header: {
+    alignItems: 'flex-end',
+    marginBottom: 24,
+  },
   closeButton: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface,
-    justifyContent: 'center', alignItems: 'center',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.surfaceGlass,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  title: { fontSize: 26, fontWeight: '900', color: colors.text, marginBottom: 8 },
-  subtitle: { fontSize: 15, color: colors.textTertiary, marginBottom: 28, lineHeight: 22 },
-  label: { fontSize: 12, fontWeight: '700', color: colors.textTertiary, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 },
+  title: {
+    fontSize: 48,
+    fontWeight: '900',
+    color: colors.text,
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    lineHeight: 50,
+    letterSpacing: -1,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: colors.textTertiary,
+    marginBottom: 32,
+    lineHeight: 22,
+  },
+  label: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: colors.textTertiary,
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+    fontFamily: undefined, // mono style handled by letterSpacing
+  },
+  inputWrapper: {
+    position: 'relative' as const,
+    marginBottom: 28,
+  },
   input: {
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 40,
-    paddingHorizontal: 24, height: 80, fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 24,
+    backgroundColor: colors.surfaceGlass,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: 24,
+    paddingRight: 56,
+    height: 80,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
   },
-  roleRow: { flexDirection: 'row', gap: 12, marginBottom: 32 },
+  inputIconBox: {
+    position: 'absolute' as const,
+    right: 24,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+  roleRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 32,
+  },
   roleChip: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    height: 128, borderRadius: 40, backgroundColor: colors.surface,
-    borderWidth: 1.5, borderColor: colors.border,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    height: 128,
+    borderRadius: borderRadius.xl,
+    backgroundColor: colors.surfaceGlass,
+    borderWidth: 2,
+    borderColor: colors.border,
   },
-  roleChipActive: { borderColor: colors.accent, backgroundColor: colors.accentMuted },
-  roleIcon: { fontSize: 20 },
-  roleLabel: { fontSize: 14, fontWeight: '600', color: colors.textTertiary },
-  roleLabelActive: { color: colors.accent },
+  roleChipActive: {
+    borderColor: THEME_COLORS.yellow,
+    backgroundColor: 'rgba(244, 253, 80, 0.06)',
+    ...shadows.glow,
+  },
+  roleLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textTertiary,
+  },
+  roleLabelActive: {
+    color: THEME_COLORS.yellow,
+  },
   sendButton: {
-    backgroundColor: colors.accent, borderRadius: 48, height: 96, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: THEME_COLORS.yellow,
+    borderRadius: borderRadius['2xl'],
+    height: 96,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.glow,
   },
-  sendText: { color: colors.textOnAccent, fontSize: 16, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.5 },
-  successContainer: { alignItems: 'center', paddingTop: 40 },
-  successEmoji: { fontSize: 48, marginBottom: 16 },
+  sendButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sendText: {
+    color: '#0A0A0A',
+    fontSize: 16,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+  },
+  footerText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textTertiary,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    marginTop: 24,
+  },
+  successContainer: {
+    alignItems: 'center',
+    paddingTop: 40,
+  },
+  successEmoji: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
   linkCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 12, width: '100%',
-    backgroundColor: colors.surface, borderRadius: 12, padding: 16,
-    borderWidth: 1, borderColor: colors.border, marginTop: 20, marginBottom: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.sm,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: 20,
+    marginBottom: 24,
   },
-  linkText: { flex: 1, fontSize: 13, color: colors.textTertiary },
-  doneButton: { paddingVertical: 12 },
-  doneText: { color: colors.accent, fontSize: 16, fontWeight: '600' },
+  linkText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textTertiary,
+  },
+  doneButton: {
+    paddingVertical: 12,
+  },
+  doneText: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '600',
+  },
 })
