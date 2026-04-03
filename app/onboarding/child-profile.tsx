@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { useModeStore } from '../../store/useModeStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { GradientButton } from '../../components/ui/GradientButton'
 import DatePickerField from '../../components/ui/DatePickerField'
@@ -24,7 +25,8 @@ import { colors, typography, spacing, borderRadius } from '../../constants/theme
 export default function ChildProfile() {
   const insets = useSafeAreaInsets()
   const setChildren = useChildStore((s) => s.setChildren)
-  const { mode, parentName, babyName } = useJourneyStore()
+  const mode = useModeStore((s) => s.mode)
+  const { parentName, babyName } = useJourneyStore()
 
   const [name, setName] = useState(babyName || '')
   const [birthDate, setBirthDate] = useState('')

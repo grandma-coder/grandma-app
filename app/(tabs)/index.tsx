@@ -1,4 +1,5 @@
-import { ScrollView, View, Text, StyleSheet } from 'react-native'
+import { useState } from 'react'
+import { ScrollView, View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -7,7 +8,6 @@ import { useModeStore } from '../../store/useModeStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { GlassCard } from '../../components/ui/GlassCard'
-import { ModeSwitcher } from '../../components/home/ModeSwitcher'
 import { GrandmaBall } from '../../components/home/GrandmaBall'
 import { PillarGrid } from '../../components/home/PillarGrid'
 import { NannyUpdatesFeed } from '../../components/home/NannyUpdatesFeed'
@@ -15,65 +15,123 @@ import { PregnancyWeekDisplay } from '../../components/home/PregnancyWeekDisplay
 import { BabySizeCard } from '../../components/home/BabySizeCard'
 import { DevelopmentInsight } from '../../components/home/DevelopmentInsight'
 import { DailyPulse } from '../../components/home/DailyPulse'
+import { CyclePhaseRing } from '../../components/prepreg/CyclePhaseRing'
+import { WeekStrip } from '../../components/prepreg/WeekStrip'
+import { HormoneChart } from '../../components/prepreg/HormoneChart'
+import { HealthDashboard } from '../../components/prepreg/HealthDashboard'
+import { DailyInsights } from '../../components/prepreg/DailyInsights'
+import { getCycleInfo, toDateStr } from '../../lib/cycleLogic'
+import { useAppTheme } from '../../components/ui/ThemeProvider'
 import { colors, THEME_COLORS, spacing, borderRadius } from '../../constants/theme'
 
 // ─── PRE-PREGNANCY HOME ─────────────────────────────────────────────────────
 function PrePregnancyHome() {
+  const { colors: tc } = useAppTheme()
+  const parentName = useJourneyStore((s) => s.parentName)
+  const [waterGlasses, setWaterGlasses] = useState(0)
+
+  // Cycle info — using a demo last period start for now
+  // In production this comes from cycle_logs in Supabase
+  const [lastPeriodStart] = useState(() => {
+    // Default: assume period started 10 days ago for demo
+    const d = new Date()
+    d.setDate(d.getDate() - 10)
+    return toDateStr(d)
+  })
+
+  const cycleInfo = getCycleInfo({ lastPeriodStart, cycleLength: 28, periodLength: 5 })
+  const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
+
+  const greeting = getGreeting()
+
   return (
     <>
-      {/* Globe */}
-      <View style={styles.preGlobeWrapper}>
-        <View style={[styles.preGlobe, { shadowColor: THEME_COLORS.blue }]}>
-          <View style={styles.preGlobeInner}>
-            <Ionicons name="help-circle-outline" size={72} color={THEME_COLORS.blue} style={{ opacity: 0.8 }} />
-          </View>
-        </View>
-        <View style={styles.preSparkle}>
-          <Ionicons name="sparkles" size={14} color="#000" />
+      {/* Header */}
+      <View style={styles.preHeader}>
+        <View>
+          <Text style={[styles.preLabel, { color: THEME_COLORS.pink }]}>COSMIC CYCLE</Text>
+          <Text style={[styles.preName, { color: tc.text }]}>
+            {greeting}, {parentName ?? 'Dear'}
+          </Text>
         </View>
       </View>
 
-      {/* Quote */}
-      <Text style={styles.quote}>
-        "Let's prepare for{'\n'}your journey, dear."
-      </Text>
-      <Text style={styles.quoteSubtitle}>
-        Grandma AI is here to guide you through every step of preparing for parenthood.
-      </Text>
+      {/* Moon Phase Ring */}
+      <CyclePhaseRing cycleInfo={cycleInfo} />
 
-      {/* Getting Started */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionLabel}>Getting Started</Text>
-        <View style={styles.sectionLine} />
+      {/* Horizontal Week Strip */}
+      <WeekStrip
+        selectedDate={selectedDate}
+        onSelectDate={setSelectedDate}
+        cycleInfo={cycleInfo}
+      />
+
+      {/* Hormone Rhythm Chart */}
+      <View style={{ marginTop: 16 }}>
+        <HormoneChart cycleInfo={cycleInfo} />
       </View>
 
-      {/* Fertility card */}
-      <GlassCard style={styles.startCard}>
-        <View style={styles.startCardRow}>
-          <View style={[styles.startCardIcon, { backgroundColor: 'rgba(255,138,216,0.1)', borderColor: 'rgba(255,138,216,0.2)' }]}>
-            <Ionicons name="heart-outline" size={28} color={THEME_COLORS.pink} />
+      {/* Daily Decode */}
+      <GlassCard style={{ ...styles.decodeCard, marginTop: 16 }}>
+        <View style={styles.decodeGlow} />
+        <View style={styles.decodeHeader}>
+          <Text style={[styles.decodeTitle, { color: tc.text }]}>YOUR DAILY DECODE</Text>
+          <Text style={[styles.decodeCycleDay, { color: THEME_COLORS.yellow }]}>
+            Cycle Day {cycleInfo.cycleDay} of {cycleInfo.cycleLength}
+          </Text>
+        </View>
+        <Text style={[styles.decodeText, { color: 'rgba(255,255,255,0.8)' }]}>
+          {cycleInfo.phaseDescription}
+          {cycleInfo.isFertile ? ' This is your fertile window — peak time to conceive!' : ''}
+        </Text>
+        <View style={styles.decodeFooter}>
+          <View style={styles.decodeIcons}>
+            <View style={[styles.decodeIconCircle, { backgroundColor: THEME_COLORS.pink }]}>
+              <Ionicons name="sparkles" size={12} color="#1A1030" />
+            </View>
+            <View style={[styles.decodeIconCircle, { backgroundColor: '#B983FF' }]}>
+              <Ionicons name="moon" size={12} color="#1A1030" />
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.startCardTitle}>Fertility &{'\n'}Preparation</Text>
-            <Text style={styles.startCardDesc}>Nutrition, health checkups, and emotional readiness courses coming soon.</Text>
-          </View>
+          <Pressable
+            onPress={() => router.push('/(tabs)/library')}
+            style={styles.decodeLink}
+          >
+            <Text style={styles.decodeLinkText}>EXPLORE INSIGHTS</Text>
+            <Ionicons name="arrow-forward" size={14} color={THEME_COLORS.pink} />
+          </Pressable>
         </View>
       </GlassCard>
 
-      {/* Partner card */}
-      <GlassCard style={styles.startCard}>
-        <View style={styles.startCardRow}>
-          <View style={[styles.startCardIcon, { backgroundColor: 'rgba(77,150,255,0.1)', borderColor: 'rgba(77,150,255,0.2)' }]}>
-            <Ionicons name="people-outline" size={28} color={THEME_COLORS.blue} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.startCardTitle}>Partner{'\n'}Connection</Text>
-            <Text style={styles.startCardDesc}>Invite your partner to learn together and share the journey.</Text>
-          </View>
-        </View>
-      </GlassCard>
+      {/* Health Dashboard */}
+      <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+        <Text style={styles.sectionLabel}>Health Tracking</Text>
+        <View style={[styles.sectionLine, { backgroundColor: tc.border }]} />
+      </View>
+      <HealthDashboard
+        waterGlasses={waterGlasses}
+        onAddWater={() => setWaterGlasses((prev) => Math.min(prev + 1, 12))}
+      />
+
+      {/* Daily Insights */}
+      <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+        <Text style={styles.sectionLabel}>Daily Insights</Text>
+        <View style={[styles.sectionLine, { backgroundColor: tc.border }]} />
+      </View>
+      <DailyInsights
+        cycleInfo={cycleInfo}
+        onLogSymptoms={() => router.push('/(tabs)/agenda')}
+        onAskGrandma={(q) => router.push({ pathname: '/(tabs)/library', params: { suggestion: q } })}
+      />
     </>
   )
+}
+
+function getGreeting(): string {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good Morning'
+  if (h < 17) return 'Good Afternoon'
+  return 'Good Evening'
 }
 
 // ─── PREGNANCY HOME ─────────────────────────────────────────────────────────
@@ -93,16 +151,17 @@ function PregnancyHome() {
 
 // ─── KIDS HOME ──────────────────────────────────────────────────────────────
 function KidsHome() {
+  const { colors: tc } = useAppTheme()
   return (
     <>
       {/* Grandma Ball */}
       <GrandmaBall onPress={() => router.push('/(tabs)/library')} />
 
       {/* Quote */}
-      <Text style={styles.quote}>
+      <Text style={[styles.quote, { color: tc.text }]}>
         "How can I help{'\n'}you today, dear?"
       </Text>
-      <Text style={styles.quoteSubtitle}>
+      <Text style={[styles.quoteSubtitle, { color: tc.textSecondary }]}>
         Grandma AI is watching over your little one's rhythms and needs.
       </Text>
 
@@ -126,9 +185,6 @@ export default function Home() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Mode Switcher */}
-        <ModeSwitcher />
-
         <View style={styles.content}>
           {mode === 'pre-pregnancy' && <PrePregnancyHome />}
           {mode === 'pregnancy' && <PregnancyHome />}
@@ -262,5 +318,95 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textSecondary,
     lineHeight: 18,
+  },
+
+  // Pre-Pregnancy new styles
+  preHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  preLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  preName: {
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+
+  // Daily Decode card
+  decodeCard: {
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  decodeGlow: {
+    position: 'absolute',
+    right: -24,
+    top: -24,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#B983FF',
+    opacity: 0.12,
+  },
+  decodeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  decodeTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  decodeCycleDay: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  decodeText: {
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 22,
+  },
+  decodeFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+  },
+  decodeIcons: {
+    flexDirection: 'row',
+    marginLeft: -4,
+  },
+  decodeIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#1A1030',
+    marginLeft: -8,
+  },
+  decodeLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  decodeLinkText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: THEME_COLORS.pink,
+    letterSpacing: 0.5,
   },
 })

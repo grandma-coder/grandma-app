@@ -3,22 +3,23 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useChildStore } from '../../store/useChildStore'
+import { useModeStore } from '../../store/useModeStore'
+import { useJourneyStore } from '../../store/useJourneyStore'
 import { useVaultStore } from '../../store/useVaultStore'
+import { getModeConfig } from '../../lib/modeConfig'
 import { getDocuments, getEmergencyCard } from '../../lib/vault'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { colors, THEME_COLORS, borderRadius, shadows, spacing, typography } from '../../constants/theme'
 
-type SectionKey = 'exams' | 'hospital' | 'insurance'
-
 export default function Vault() {
   const insets = useSafeAreaInsets()
   const child = useChildStore((s) => s.activeChild)
+  const mode = useModeStore((s) => s.mode)
+  const parentName = useJourneyStore((s) => s.parentName)
+  const modeConfig = getModeConfig(mode)
+  const vaultSections = modeConfig.vaultSections
   const { documents, emergencyCard, setDocuments, setEmergencyCard } = useVaultStore()
-  const [expanded, setExpanded] = useState<Record<SectionKey, boolean>>({
-    exams: false,
-    hospital: false,
-    insurance: false,
-  })
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (!child?.id) return
@@ -41,39 +42,24 @@ export default function Vault() {
 
   const countByCategory = (cat: string) => documents.filter((d) => d.category === cat).length
 
-  const toggleSection = (key: SectionKey) => {
+  const toggleSection = (key: string) => {
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
-  const sections: {
-    key: SectionKey
-    title: string
-    description: string
-    icon: keyof typeof Ionicons.glyphMap
-    color: string
-  }[] = [
-    {
-      key: 'exams',
-      title: 'Exams & Lab Results',
-      description: 'Blood tests, radiology reports, and diagnostic results.',
-      icon: 'clipboard-outline',
-      color: THEME_COLORS.pink,
-    },
-    {
-      key: 'hospital',
-      title: 'Hospital Records',
-      description: 'Discharge summaries, surgical history, and clinic visits.',
-      icon: 'business-outline',
-      color: THEME_COLORS.green,
-    },
-    {
-      key: 'insurance',
-      title: 'Insurance & Coverage',
-      description: 'Policy documents, cards, and claim history.',
-      icon: 'document-text-outline',
-      color: THEME_COLORS.orange,
-    },
-  ]
+  // Vault title + subtitle per mode
+  const vaultTitle = mode === 'pregnancy' ? 'Documents' : 'Vault'
+  const vaultLabel = mode === 'pregnancy' ? 'PREGNANCY RECORDS' : 'SECURE ARCHIVES'
+  const vaultSubtitle = mode === 'pregnancy'
+    ? 'Your pregnancy documents, test results, and birth plan.'
+    : 'Secure archives for your life\'s most vital documents.'
+
+  // Emergency card title per mode
+  const emergencyName = mode === 'pregnancy'
+    ? (parentName ?? 'Your')
+    : (child?.name ?? 'Baby')
+  const emergencyLabel = mode === 'pregnancy'
+    ? 'PREGNANCY MEDICAL PROFILE'
+    : 'CRUCIAL MEDICAL PROFILE'
 
   return (
     <CosmicBackground>
@@ -85,11 +71,9 @@ export default function Vault() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <Text style={styles.label}>SECURE ARCHIVES</Text>
-        <Text style={styles.title}>Vault</Text>
-        <Text style={styles.subtitle}>
-          Secure archives for your life's most vital documents.
-        </Text>
+        <Text style={styles.label}>{vaultLabel}</Text>
+        <Text style={styles.title}>{vaultTitle}</Text>
+        <Text style={styles.subtitle}>{vaultSubtitle}</Text>
 
         {/* Emergency Card — Blue solid background */}
         <View style={styles.emergencyCard}>
@@ -98,28 +82,30 @@ export default function Vault() {
               <Ionicons name="shield-checkmark" size={28} color="#FFFFFF" />
             </View>
             <View style={styles.emergencyBadge}>
-              <Text style={styles.emergencyBadgeText}>CRUCIAL MEDICAL PROFILE</Text>
+              <Text style={styles.emergencyBadgeText}>{emergencyLabel}</Text>
             </View>
           </View>
           <Text style={styles.emergencyTitle}>
-            {child?.name ?? 'Baby'}'s Emergency Card
+            {emergencyName}'s Emergency Card
           </Text>
           <Text style={styles.emergencyDesc}>
             Critical health information for emergencies. Accessible offline for caregivers and first responders.
           </Text>
         </View>
 
-        {/* Vaccine Records — Empty state */}
-        <View style={styles.vaccineCard}>
-          <Ionicons name="snow-outline" size={40} color={colors.textTertiary} />
-          <Text style={styles.vaccineTitle}>Vaccine Records</Text>
-          <Text style={styles.vaccineDesc}>
-            No vaccines recorded yet. Add your child's immunization history.
-          </Text>
-        </View>
+        {/* Vaccine Records — Kids mode only */}
+        {mode === 'kids' && (
+          <View style={styles.vaccineCard}>
+            <Ionicons name="snow-outline" size={40} color={colors.textTertiary} />
+            <Text style={styles.vaccineTitle}>Vaccine Records</Text>
+            <Text style={styles.vaccineDesc}>
+              No vaccines recorded yet. Add your child's immunization history.
+            </Text>
+          </View>
+        )}
 
-        {/* Expandable sections */}
-        {sections.map((section) => {
+        {/* Dynamic sections from mode config */}
+        {vaultSections.map((section) => {
           const count = countByCategory(section.key)
           return (
             <Pressable
@@ -129,7 +115,7 @@ export default function Vault() {
             >
               <View style={styles.sectionRow}>
                 <View style={[styles.sectionIconWrap, { backgroundColor: section.color }]}>
-                  <Ionicons name={section.icon} size={20} color="#0A0A0A" />
+                  <Ionicons name={section.icon as any} size={20} color="#0A0A0A" />
                 </View>
                 <View style={styles.sectionContent}>
                   <Text style={styles.sectionTitle}>{section.title}</Text>

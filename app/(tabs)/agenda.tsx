@@ -5,18 +5,25 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useChildStore } from '../../store/useChildStore'
+import { useModeStore } from '../../store/useModeStore'
+import { useJourneyStore } from '../../store/useJourneyStore'
+import { getModeConfig } from '../../lib/modeConfig'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { CalendarView, type CalendarViewMode, type ActivityDot } from '../../components/agenda/CalendarView'
 import { ActivityTimeline, type TimelineEntry } from '../../components/agenda/ActivityTimeline'
 import { FoodDashboard } from '../../components/agenda/FoodDashboard'
 import { NotesPanel, type NoteEntry } from '../../components/agenda/NannyNotesPanel'
+import { CycleTracker } from '../../components/agenda/CycleTracker'
+import { PrePregChecklist } from '../../components/agenda/PrePregChecklist'
+import { AppointmentList, type AppointmentEntry } from '../../components/agenda/AppointmentList'
+import { SymptomLogger } from '../../components/agenda/SymptomLogger'
+import { KickCounter } from '../../components/agenda/KickCounter'
+import { ContractionTimer } from '../../components/agenda/ContractionTimer'
 import { colors, THEME_COLORS, shadows, borderRadius, spacing, typography } from '../../constants/theme'
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
-
-type Tab = 'timeline' | 'food' | 'notes'
 
 const ACTIVITY_COLORS: Record<string, string> = {
   feeding: THEME_COLORS.pink,
@@ -39,15 +46,39 @@ const NOTE_COLORS: Record<string, string> = {
   general: THEME_COLORS.purple,
 }
 
+// Pre-pregnancy checklist items (static)
+const PREP_CHECKLIST = [
+  { id: 'folic_acid', title: 'Start Folic Acid', description: 'Take 400mcg daily at least 1-3 months before conceiving', category: 'health' },
+  { id: 'prenatal_vitamins', title: 'Prenatal Vitamins', description: 'Start a complete prenatal vitamin with iron and DHA', category: 'health' },
+  { id: 'ob_visit', title: 'Pre-Conception Checkup', description: 'Schedule a visit with your OB/GYN for a full assessment', category: 'health' },
+  { id: 'dental', title: 'Dental Checkup', description: 'Complete dental work before pregnancy (hormones worsen gum disease)', category: 'health' },
+  { id: 'track_cycle', title: 'Track Your Cycle', description: 'Start tracking periods and ovulation signs for 2-3 months', category: 'fertility' },
+  { id: 'partner_checkup', title: 'Partner Health Check', description: 'Both partners should get a pre-conception checkup', category: 'fertility' },
+  { id: 'quit_smoking', title: 'Quit Smoking & Limit Alcohol', description: 'Stop smoking and reduce alcohol intake for both partners', category: 'lifestyle' },
+  { id: 'exercise', title: 'Start Regular Exercise', description: 'Build a consistent exercise routine to prepare your body', category: 'lifestyle' },
+  { id: 'insurance', title: 'Review Insurance Coverage', description: 'Check maternity benefits, deductibles, and pediatrician networks', category: 'financial' },
+  { id: 'savings', title: 'Start Baby Fund', description: 'Begin saving for the first year (diapers, gear, childcare, etc.)', category: 'financial' },
+]
+
 export default function Agenda() {
   const insets = useSafeAreaInsets()
   const child = useChildStore((s) => s.activeChild)
+  const mode = useModeStore((s) => s.mode)
+  const weekNumber = useJourneyStore((s) => s.weekNumber)
+  const modeConfig = getModeConfig(mode)
   const queryClient = useQueryClient()
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
-  const [activeTab, setActiveTab] = useState<Tab>('timeline')
+  const [activeTab, setActiveTab] = useState(modeConfig.agendaTabs[0]?.id ?? 'timeline')
   const [calendarView, setCalendarView] = useState<CalendarViewMode>('month')
+  const [checklistState, setChecklistState] = useState<Record<string, boolean>>({})
 
-  // ─── Load activity logs for selected date ─────
+  // Reset active tab when mode changes
+  const tabs = modeConfig.agendaTabs
+  if (!tabs.find((t) => t.id === activeTab)) {
+    // This will trigger on next render
+  }
+
+  // ─── KIDS MODE: Load activity logs for selected date ─────
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['activity_logs', child?.id, selectedDate],
     queryFn: async () => {
@@ -72,24 +103,21 @@ export default function Agenda() {
         createdAt: e.created_at,
       }))
     },
-    enabled: !!child?.id,
+    enabled: !!child?.id && mode === 'kids',
   })
 
-  // ─── Load notes for selected child ─────
+  // ─── KIDS MODE: Load notes ─────
   const { data: notes = [] } = useQuery({
     queryKey: ['notes', child?.id],
     queryFn: async (): Promise<NoteEntry[]> => {
       if (!child?.id) return []
-
       const { data } = await supabase
         .from('nanny_notes')
         .select('*')
         .eq('child_id', child.id)
         .order('created_at', { ascending: false })
         .limit(50)
-
       if (!data) return []
-
       return data.map((n: any) => ({
         id: n.id,
         authorName: n.author_name ?? 'You',
@@ -99,20 +127,18 @@ export default function Agenda() {
         createdAt: n.created_at,
       }))
     },
-    enabled: !!child?.id,
+    enabled: !!child?.id && mode === 'kids',
   })
 
-  // ─── Load dots for the whole month (activity_logs + notes) ─────
-  const currentMonth = selectedDate.substring(0, 7) // "2026-04"
+  // ─── Load dots for the whole month ─────
+  const currentMonth = selectedDate.substring(0, 7)
   const { data: monthDots = [] } = useQuery({
-    queryKey: ['month_dots', child?.id, currentMonth],
+    queryKey: ['month_dots', child?.id, currentMonth, mode],
     queryFn: async (): Promise<ActivityDot[]> => {
-      if (!child?.id) return []
-
+      if (mode !== 'kids' || !child?.id) return []
       const startOfMonth = `${currentMonth}-01T00:00:00.000Z`
       const endOfMonth = `${currentMonth}-31T23:59:59.999Z`
 
-      // Fetch activity_logs for the month
       const { data: activities } = await supabase
         .from('activity_logs')
         .select('activity_type, created_at')
@@ -120,7 +146,6 @@ export default function Agenda() {
         .gte('created_at', startOfMonth)
         .lte('created_at', endOfMonth)
 
-      // Fetch notes for the month
       const { data: monthNotes } = await supabase
         .from('nanny_notes')
         .select('category, created_at')
@@ -129,42 +154,31 @@ export default function Agenda() {
         .lte('created_at', endOfMonth)
 
       const dots: ActivityDot[] = []
-
-      // Activity dots
       ;(activities ?? []).forEach((a: any) => {
-        const dateStr = a.created_at.substring(0, 10)
         dots.push({
-          date: dateStr,
+          date: a.created_at.substring(0, 10),
           color: ACTIVITY_COLORS[a.activity_type] ?? THEME_COLORS.blue,
           type: a.activity_type,
         })
       })
-
-      // Note dots
       ;(monthNotes ?? []).forEach((n: any) => {
-        const dateStr = n.created_at.substring(0, 10)
         dots.push({
-          date: dateStr,
+          date: n.created_at.substring(0, 10),
           color: NOTE_COLORS[n.category] ?? THEME_COLORS.purple,
           type: `note:${n.category}`,
         })
       })
-
       return dots
     },
-    enabled: !!child?.id,
+    enabled: !!child?.id && mode === 'kids',
   })
 
-  // ─── Add note handler ─────
+  // ─── KIDS MODE: Add note handler ─────
   const handleAddNote = useCallback(async (content: string, topic: string) => {
     if (!child?.id) return
-
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not signed in')
-
-      // Try inserting to nanny_notes table
-      // If table doesn't exist yet (migration not run), fall back gracefully
       const { error } = await supabase.from('nanny_notes').insert({
         child_id: child.id,
         author_id: user.id,
@@ -172,14 +186,8 @@ export default function Agenda() {
         category: topic,
         content,
       })
+      if (error) console.warn('nanny_notes insert failed:', error.message)
 
-      if (error) {
-        // If table doesn't exist, store locally and show success
-        // The note will appear via optimistic update below
-        console.warn('nanny_notes insert failed (table may not exist yet):', error.message)
-      }
-
-      // Optimistic: add note to local cache immediately
       const newNote: NoteEntry = {
         id: Date.now().toString(),
         authorName: user.email?.split('@')[0] ?? 'You',
@@ -188,27 +196,32 @@ export default function Agenda() {
         content,
         createdAt: new Date().toISOString(),
       }
-
       queryClient.setQueryData<NoteEntry[]>(
         ['notes', child.id],
         (old = []) => [newNote, ...old]
       )
-
-      // Refresh dots
       queryClient.invalidateQueries({ queryKey: ['month_dots', child.id, currentMonth] })
     } catch (e: any) {
       Alert.alert('Error', e.message)
     }
   }, [child?.id, child?.caregiverRole, currentMonth, queryClient])
 
-  // ─── Tabs config ─────
-  const TABS: { id: Tab; label: string; icon: string }[] = [
-    { id: 'timeline', label: 'Timeline', icon: 'time-outline' },
-    { id: 'food', label: 'Food', icon: 'restaurant-outline' },
-    { id: 'notes', label: 'Notes', icon: 'document-text-outline' },
-  ]
+  // ─── Header title per mode ─────
+  const headerTitle = mode === 'pre-pregnancy' ? 'Planner' : mode === 'pregnancy' ? 'Calendar' : 'Agenda'
+  const headerSubtitle = mode === 'pre-pregnancy'
+    ? 'Your conception preparation'
+    : mode === 'pregnancy'
+      ? weekNumber ? `Week ${weekNumber} tracking` : 'Pregnancy tracking'
+      : child ? `${child.name}'s daily log` : 'Calendar & tracking'
 
   const hasEntries = entries.length > 0
+  const noteCount = notes.length
+
+  // Checklist items with state
+  const checklistItems = PREP_CHECKLIST.map((item) => ({
+    ...item,
+    completed: checklistState[item.id] ?? false,
+  }))
 
   return (
     <CosmicBackground>
@@ -222,17 +235,15 @@ export default function Agenda() {
         {/* Header */}
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>Agenda</Text>
-            <Text style={styles.subtitle}>
-              {child ? `${child.name}'s daily log` : 'Calendar & tracking'}
-            </Text>
+            <Text style={styles.title}>{headerTitle}</Text>
+            <Text style={styles.subtitle}>{headerSubtitle}</Text>
           </View>
           <View style={styles.calendarIconBox}>
             <Ionicons name="calendar" size={24} color={THEME_COLORS.yellow} />
           </View>
         </View>
 
-        {/* Calendar with view mode switcher + real dots */}
+        {/* Calendar */}
         <CalendarView
           selectedDate={selectedDate}
           onSelectDate={setSelectedDate}
@@ -241,11 +252,13 @@ export default function Agenda() {
           onViewModeChange={setCalendarView}
         />
 
-        {/* Tab pills */}
+        {/* Tab pills — dynamic per mode */}
         <View style={styles.tabRow}>
-          {TABS.map((tab) => {
+          {tabs.map((tab) => {
             const isActive = activeTab === tab.id
-            const noteCount = tab.id === 'notes' ? notes.length : 0
+            // Show kick counter only after week 28
+            if (tab.id === 'kicks' && mode === 'pregnancy' && (weekNumber ?? 0) < 28) return null
+            const badgeCount = tab.id === 'notes' ? noteCount : 0
             return (
               <Pressable
                 key={tab.id}
@@ -260,10 +273,10 @@ export default function Agenda() {
                 <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                   {tab.label}
                 </Text>
-                {noteCount > 0 && tab.id === 'notes' && (
+                {badgeCount > 0 && (
                   <View style={[styles.badge, isActive && styles.badgeActive]}>
                     <Text style={[styles.badgeText, isActive && styles.badgeTextActive]}>
-                      {noteCount}
+                      {badgeCount}
                     </Text>
                   </View>
                 )}
@@ -272,8 +285,43 @@ export default function Agenda() {
           })}
         </View>
 
-        {/* Tab content */}
-        {activeTab === 'timeline' && (
+        {/* ═══════ PRE-PREGNANCY CONTENT ═══════ */}
+        {mode === 'pre-pregnancy' && activeTab === 'cycle' && (
+          <CycleTracker selectedDate={selectedDate} />
+        )}
+        {mode === 'pre-pregnancy' && activeTab === 'checklist' && (
+          <PrePregChecklist
+            items={checklistItems}
+            onToggle={(id) => setChecklistState((prev) => ({ ...prev, [id]: !prev[id] }))}
+          />
+        )}
+        {mode === 'pre-pregnancy' && activeTab === 'appointments' && (
+          <AppointmentList appointments={[]} selectedDate={selectedDate} />
+        )}
+
+        {/* ═══════ PREGNANCY CONTENT ═══════ */}
+        {mode === 'pregnancy' && activeTab === 'timeline' && (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIconBox}>
+              <Ionicons name="calendar-outline" size={48} color={THEME_COLORS.blue} />
+            </View>
+            <Text style={styles.emptyTitle}>
+              Pregnancy <Text style={{ color: THEME_COLORS.pink }}>Timeline</Text>
+            </Text>
+            <Text style={styles.emptyDesc}>
+              Your appointments, symptoms, and weight entries for {selectedDate} will appear here.
+            </Text>
+          </View>
+        )}
+        {mode === 'pregnancy' && activeTab === 'symptoms' && (
+          <SymptomLogger selectedDate={selectedDate} />
+        )}
+        {mode === 'pregnancy' && activeTab === 'kicks' && (
+          <KickCounter />
+        )}
+
+        {/* ═══════ KIDS CONTENT ═══════ */}
+        {mode === 'kids' && activeTab === 'timeline' && (
           hasEntries || isLoading ? (
             <ActivityTimeline entries={entries} loading={isLoading} />
           ) : (
@@ -290,26 +338,33 @@ export default function Agenda() {
             </View>
           )
         )}
-
-        {activeTab === 'food' && <FoodDashboard />}
-
-        {activeTab === 'notes' && (
+        {mode === 'kids' && activeTab === 'food' && <FoodDashboard />}
+        {mode === 'kids' && activeTab === 'notes' && (
           <NotesPanel notes={notes} onAddNote={handleAddNote} />
         )}
 
-        {/* Quick Insight */}
-        <Pressable style={styles.insightCard} onPress={() => setActiveTab('food')}>
-          <View style={styles.insightIconBox}>
-            <Ionicons name="sparkles" size={24} color={THEME_COLORS.pink} />
+        {/* Quick Insight — only in kids mode */}
+        {mode === 'kids' && (
+          <Pressable style={styles.insightCard} onPress={() => setActiveTab('food')}>
+            <View style={styles.insightIconBox}>
+              <Ionicons name="sparkles" size={24} color={THEME_COLORS.pink} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.insightTitle}>Log Food</Text>
+              <Text style={styles.insightSubtitle}>Get AI-powered nutrition tips</Text>
+            </View>
+            <View style={styles.insightChevron}>
+              <Ionicons name="chevron-forward" size={18} color={THEME_COLORS.pink} />
+            </View>
+          </Pressable>
+        )}
+
+        {/* Contraction timer — pregnancy mode, week >= 36 */}
+        {mode === 'pregnancy' && (weekNumber ?? 0) >= 36 && activeTab === 'kicks' && (
+          <View style={{ marginTop: 24 }}>
+            <ContractionTimer />
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.insightTitle}>Log Food</Text>
-            <Text style={styles.insightSubtitle}>Get AI-powered nutrition tips</Text>
-          </View>
-          <View style={styles.insightChevron}>
-            <Ionicons name="chevron-forward" size={18} color={THEME_COLORS.pink} />
-          </View>
-        </Pressable>
+        )}
       </ScrollView>
     </CosmicBackground>
   )

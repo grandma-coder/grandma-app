@@ -1,11 +1,9 @@
 import { create } from 'zustand'
-import type { JourneyMode } from '../types'
 
 type Journey = 'pregnancy' | 'newborn' | 'toddler' | null
 
 interface JourneyStore {
   journey: Journey
-  mode: JourneyMode | null
   dueDate: string | null
   lmpDate: string | null
   weekNumber: number | null
@@ -13,7 +11,6 @@ interface JourneyStore {
   parentName: string | null
   babyName: string | null
   setJourney: (journey: Journey) => void
-  setMode: (mode: JourneyMode) => void
   setDueDate: (date: string | null) => void
   setLmpDate: (date: string | null) => void
   setWeekNumber: (week: number | null) => void
@@ -25,7 +22,6 @@ interface JourneyStore {
 
 export const useJourneyStore = create<JourneyStore>((set) => ({
   journey: null,
-  mode: null,
   dueDate: null,
   lmpDate: null,
   weekNumber: null,
@@ -33,7 +29,6 @@ export const useJourneyStore = create<JourneyStore>((set) => ({
   parentName: null,
   babyName: null,
   setJourney: (journey) => set({ journey }),
-  setMode: (mode) => set({ mode }),
   setDueDate: (dueDate) => set({ dueDate }),
   setLmpDate: (lmpDate) => set({ lmpDate }),
   setWeekNumber: (weekNumber) => set({ weekNumber }),
@@ -42,7 +37,6 @@ export const useJourneyStore = create<JourneyStore>((set) => ({
   setBabyName: (babyName) => set({ babyName }),
   clearAll: () => set({
     journey: null,
-    mode: null,
     dueDate: null,
     lmpDate: null,
     weekNumber: null,

@@ -4,8 +4,10 @@ import { Stack, useRouter, useSegments } from 'expo-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
+import { useModeStore } from '../store/useModeStore'
 import { initRevenueCat } from '../lib/revenue'
 import { colors } from '../constants/theme'
+import { ThemeProvider } from '../components/ui/ThemeProvider'
 import type { Session } from '@supabase/supabase-js'
 import type { ChildWithRole, CaregiverPermissions } from '../types'
 
@@ -22,18 +24,22 @@ export default function RootLayout() {
   const segments = useSegments()
 
   const setChildren = useChildStore((s) => s.setChildren)
+  const setMode = useModeStore((s) => s.setMode)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       if (session) {
-        // Load user profile role
+        // Load user profile role + journey mode
         const { data: profile } = await supabase
           .from('profiles')
-          .select('user_role')
+          .select('user_role, journey_mode')
           .eq('id', session.user.id)
           .single()
         if (profile?.user_role) setUserRole(profile.user_role)
+        if (profile?.journey_mode) {
+          setMode(profile.journey_mode as any)
+        }
 
         // Load all children accessible via child_caregivers
         const { data: links } = await supabase
@@ -126,22 +132,24 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="pillar/[id]" />
-        <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="manage-caregivers" />
-        <Stack.Screen name="invite-caregiver" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="accept-invite" />
-        <Stack.Screen name="child-picker" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="airtag-setup" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="birth-plan" />
-        <Stack.Screen name="channels" />
-        <Stack.Screen name="exchange" />
-      </Stack>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="pillar/[id]" />
+          <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="manage-caregivers" />
+          <Stack.Screen name="invite-caregiver" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="accept-invite" />
+          <Stack.Screen name="child-picker" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="airtag-setup" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="birth-plan" />
+          <Stack.Screen name="channels" />
+          <Stack.Screen name="exchange" />
+        </Stack>
+      </QueryClientProvider>
+    </ThemeProvider>
   )
 }

@@ -4,6 +4,7 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { useModeStore } from '../../store/useModeStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { GradientButton } from '../../components/ui/GradientButton'
 import { colors, typography, spacing, borderRadius } from '../../constants/theme'
@@ -39,7 +40,8 @@ const PRE_PREGNANCY_ACTIVITIES = [
 
 export default function Activities() {
   const insets = useSafeAreaInsets()
-  const { mode, setTrackedActivities } = useJourneyStore()
+  const mode = useModeStore((s) => s.mode)
+  const setTrackedActivities = useJourneyStore((s) => s.setTrackedActivities)
 
   const items =
     mode === 'pregnancy'

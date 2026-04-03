@@ -1,27 +1,30 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import type { JourneyMode } from '../types'
 
-interface ModeStore {
-  mode: JourneyMode
+export type AppTheme = 'dark' | 'light'
+
+interface ThemeStore {
+  theme: AppTheme
   hydrated: boolean
-  setMode: (mode: JourneyMode) => void
+  setTheme: (theme: AppTheme) => void
+  toggleTheme: () => void
   setHydrated: (hydrated: boolean) => void
 }
 
-export const useModeStore = create<ModeStore>()(
+export const useThemeStore = create<ThemeStore>()(
   persist(
-    (set) => ({
-      mode: 'kids',
+    (set, get) => ({
+      theme: 'dark',
       hydrated: false,
-      setMode: (mode) => set({ mode }),
+      setTheme: (theme) => set({ theme }),
+      toggleTheme: () => set({ theme: get().theme === 'dark' ? 'light' : 'dark' }),
       setHydrated: (hydrated) => set({ hydrated }),
     }),
     {
-      name: 'grandma-mode',
+      name: 'grandma-theme',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ mode: state.mode }),
+      partialize: (state) => ({ theme: state.theme }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated(true)
       },

@@ -1,5 +1,6 @@
 import { StyleSheet, View, type ViewStyle } from 'react-native'
-import { colors, borderRadius, shadows } from '../../constants/theme'
+import { borderRadius, shadows } from '../../constants/theme'
+import { useAppTheme } from './ThemeProvider'
 
 interface GlassCardProps {
   children: React.ReactNode
@@ -16,6 +17,8 @@ export function GlassCard({
   noPadding = false,
   color,
 }: GlassCardProps) {
+  const { colors } = useAppTheme()
+
   const borderColor =
     variant === 'accent' ? colors.borderAccent : colors.border
   const bgColor = color || (variant === 'elevated' ? colors.surfaceLight : colors.surfaceGlass)
@@ -39,7 +42,6 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
     padding: 20,
     overflow: 'hidden',
   },

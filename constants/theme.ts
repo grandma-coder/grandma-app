@@ -18,74 +18,134 @@ export const THEME_COLORS = {
   dark: '#0A0A0A',
 } as const
 
-// ─── COLORS ─────────────────────────────────────────────────────────────────
+// ─── DARK COLORS (default) ──────────────────────────────────────────────────
 
-export const colors = {
-  // Core backgrounds
-  background: '#0A0A0A',
-  surface: '#141414',
-  surfaceLight: '#1A1A1A',
+export const darkColors = {
+  background: '#1A1030',
+  surface: '#241845',
+  surfaceLight: '#2D2055',
   surfaceGlass: 'rgba(255, 255, 255, 0.05)',
-
-  // Primary accent — Neon Yellow
   accent: THEME_COLORS.yellow,
   accentGlow: THEME_COLORS.yellow,
   accentMuted: 'rgba(244, 253, 80, 0.10)',
   accentDark: '#D4DD30',
-
-  // Neon palette (shortcut)
   neon: THEME_COLORS,
-
-  // Text
   text: '#FFFFFF',
   textSecondary: 'rgba(255, 255, 255, 0.50)',
   textTertiary: 'rgba(255, 255, 255, 0.30)',
   textOnAccent: '#0A0A0A',
-
-  // Borders
   border: 'rgba(255, 255, 255, 0.10)',
   borderLight: 'rgba(255, 255, 255, 0.15)',
   borderAccent: 'rgba(244, 253, 80, 0.30)',
-
-  // Status
   success: THEME_COLORS.green,
   error: THEME_COLORS.orange,
   warning: THEME_COLORS.yellow,
   info: THEME_COLORS.blue,
-
-  // Pillar neon colors (full card backgrounds in Kids grid)
   pillar: {
     milk: THEME_COLORS.blue,
     food: THEME_COLORS.green,
     nutrition: THEME_COLORS.yellow,
     vaccines: THEME_COLORS.pink,
     clothes: THEME_COLORS.orange,
-    recipes: '#141414',
+    recipes: '#241845',
     habits: THEME_COLORS.green,
     milestones: THEME_COLORS.purple,
     medicine: THEME_COLORS.pink,
   },
-
-  // Role colors
   role: {
     parent: 'rgba(162, 255, 134, 0.15)',
     nanny: 'rgba(185, 131, 255, 0.15)',
     family: 'rgba(255, 107, 53, 0.15)',
   },
+  // Tab bar
+  tabBar: '#1A1030',
+  tabBarInactive: 'rgba(255,255,255,0.20)',
 } as const
+
+// ─── LIGHT COLORS ───────────────────────────────────────────────────────────
+
+export const lightColors = {
+  background: '#F2F2F7',
+  surface: '#FFFFFF',
+  surfaceLight: '#E8E8ED',
+  surfaceGlass: 'rgba(0, 0, 0, 0.05)',
+  accent: '#C8A800',
+  accentGlow: '#C8A800',
+  accentMuted: 'rgba(180, 150, 0, 0.12)',
+  accentDark: '#9A8200',
+  neon: THEME_COLORS,
+  text: '#111111',
+  textSecondary: '#555555',
+  textTertiary: '#888888',
+  textOnAccent: '#111111',
+  border: 'rgba(0, 0, 0, 0.12)',
+  borderLight: 'rgba(0, 0, 0, 0.18)',
+  borderAccent: 'rgba(180, 150, 0, 0.35)',
+  success: '#1A8A1A',
+  error: '#CC3311',
+  warning: '#B89400',
+  info: '#2A6ACB',
+  pillar: {
+    milk: '#D6E8FF',
+    food: '#D6FFD0',
+    nutrition: '#FFF9CC',
+    vaccines: '#FFD6F0',
+    clothes: '#FFD6C4',
+    recipes: '#E8E8ED',
+    habits: '#D6FFD0',
+    milestones: '#E8D6FF',
+    medicine: '#FFD6F0',
+  },
+  role: {
+    parent: 'rgba(26, 138, 26, 0.15)',
+    nanny: 'rgba(120, 60, 200, 0.15)',
+    family: 'rgba(204, 51, 17, 0.15)',
+  },
+  tabBar: '#FFFFFF',
+  tabBarInactive: 'rgba(0,0,0,0.35)',
+} as const
+
+// Use a structural type so dark and light palettes are compatible
+export type AppColors = {
+  [K in keyof typeof darkColors]: K extends 'pillar' | 'role' | 'neon'
+    ? Record<string, string>
+    : string
+}
+
+export function getColors(theme: 'dark' | 'light'): AppColors {
+  return (theme === 'light' ? lightColors : darkColors) as unknown as AppColors
+}
+
+// ─── Default export (dark) — used by files that haven't migrated to context ─
+export const colors = darkColors
 
 // ─── GRADIENTS ──────────────────────────────────────────────────────────────
 
 export const gradients = {
-  background: ['#0A0A0A', '#0A0A0A', '#111111'] as const,
-  card: ['#1A1A1A', '#111111'] as const,
-  cardHover: ['#222222', '#141414'] as const,
+  background: ['#1A1030', '#150D28', '#100A20'] as const,
+  card: ['#241845', '#1A1030'] as const,
+  cardHover: ['#2D2055', '#241845'] as const,
   accent: [THEME_COLORS.yellow, THEME_COLORS.orange] as const,
   accentSoft: ['rgba(244, 253, 80, 0.15)', 'rgba(255, 107, 53, 0.08)'] as const,
   glass: ['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.02)'] as const,
-  pregnancy: ['#0A0A0A', '#0D0D1A'] as const,
+  pregnancy: ['#1A1030', '#1A0D30'] as const,
   insight: [THEME_COLORS.blue, THEME_COLORS.pink, THEME_COLORS.green] as const,
 } as const
+
+export const lightGradients = {
+  background: ['#F5F5F7', '#EDEDF0', '#E8E8EB'] as const,
+  card: ['#FFFFFF', '#F8F8FA'] as const,
+  cardHover: ['#F0F0F2', '#E8E8EB'] as const,
+  accent: ['#E8C800', '#D4A800'] as const,
+  accentSoft: ['rgba(232, 200, 0, 0.10)', 'rgba(217, 69, 32, 0.05)'] as const,
+  glass: ['rgba(0, 0, 0, 0.02)', 'rgba(0, 0, 0, 0.01)'] as const,
+  pregnancy: ['#F5F5F7', '#F0F0FA'] as const,
+  insight: [THEME_COLORS.blue, THEME_COLORS.pink, THEME_COLORS.green] as const,
+} as const
+
+export function getGradients(theme: 'dark' | 'light') {
+  return theme === 'light' ? lightGradients : gradients
+}
 
 // ─── SPACING ────────────────────────────────────────────────────────────────
 

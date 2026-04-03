@@ -1,6 +1,6 @@
+import { View, StyleSheet, type ViewStyle } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { StyleSheet, type ViewStyle } from 'react-native'
-import { gradients } from '../../constants/theme'
+import { useAppTheme } from './ThemeProvider'
 
 interface CosmicBackgroundProps {
   children: React.ReactNode
@@ -13,6 +13,8 @@ export function CosmicBackground({
   style,
   variant = 'default',
 }: CosmicBackgroundProps) {
+  const { gradients } = useAppTheme()
+
   const gradientColors =
     variant === 'pregnancy' ? gradients.pregnancy : gradients.background
 

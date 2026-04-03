@@ -16,8 +16,10 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { callNana } from '../../lib/claude'
-import { pillars } from '../../lib/pillars'
 import { useChildStore } from '../../store/useChildStore'
+import { useModeStore } from '../../store/useModeStore'
+import { useJourneyStore } from '../../store/useJourneyStore'
+import { getModeConfig } from '../../lib/modeConfig'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { GlassCard } from '../../components/ui/GlassCard'
 import { GrandmaBall } from '../../components/home/GrandmaBall'
@@ -33,7 +35,12 @@ interface ChatMessage {
 export default function Library() {
   const insets = useSafeAreaInsets()
   const child = useChildStore((s) => s.activeChild)
+  const mode = useModeStore((s) => s.mode)
+  const modeConfig = getModeConfig(mode)
+  const modePillars = modeConfig.pillars
   const { pillarId, suggestion } = useLocalSearchParams<{ pillarId?: string; suggestion?: string }>()
+
+  const weekNumber = useJourneyStore((s) => s.weekNumber)
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState(suggestion ?? '')
@@ -75,7 +82,7 @@ export default function Library() {
       }
 
       const allMessages = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }))
-      const reply = await callNana({ messages: allMessages, child, pillarId: pillarId as PillarId })
+      const reply = await callNana({ messages: allMessages, child, pillarId: pillarId as PillarId, mode, weekNumber })
 
       const assistantMsg: ChatMessage = { id: (Date.now() + 1).toString(), role: 'assistant', content: reply }
       setMessages((prev) => [...prev, assistantMsg])
@@ -121,10 +128,10 @@ export default function Library() {
           I'm not your doctor, dear — but I can share wisdom on pre-pregnancy, pregnancy, feeding, vaccines, emergencies, and so much more.
         </Text>
 
-        {/* Knowledge Pillars */}
+        {/* Knowledge Pillars — mode-specific */}
         <Text style={styles.pillarsLabel}>KNOWLEDGE PILLARS</Text>
         <View style={styles.pillarsGrid}>
-          {pillars.map((pillar) => (
+          {modePillars.map((pillar) => (
             <Pressable
               key={pillar.id}
               onPress={() => router.push(`/pillar/${pillar.id}`)}
@@ -165,7 +172,9 @@ export default function Library() {
           <View style={styles.headerRow}>
             <View>
               <Text style={styles.title}>Guru{'\n'}<Text style={{ color: colors.accent }}>Grandma</Text></Text>
-              <Text style={styles.headerSubtitle}>Your parenting wisdom guide</Text>
+              <Text style={styles.headerSubtitle}>
+            {mode === 'pre-pregnancy' ? 'Your conception guide' : mode === 'pregnancy' ? 'Your pregnancy companion' : 'Your parenting wisdom guide'}
+          </Text>
             </View>
             <View style={styles.sparkleBox}>
               <Text style={{ fontSize: 22 }}>✨</Text>

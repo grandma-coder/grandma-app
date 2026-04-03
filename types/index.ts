@@ -21,7 +21,14 @@ export interface Message {
 
 export type JourneyMode = 'pre-pregnancy' | 'pregnancy' | 'kids'
 
-export type PillarId = 'milk' | 'food' | 'nutrition' | 'vaccines' | 'clothes' | 'recipes' | 'habits' | 'medicine' | 'milestones'
+// Kids pillars
+export type KidsPillarId = 'milk' | 'food' | 'nutrition' | 'vaccines' | 'clothes' | 'recipes' | 'habits' | 'medicine' | 'milestones'
+// Pregnancy pillars
+export type PregnancyPillarId = 'week-by-week' | 'symptoms-relief' | 'birth-planning' | 'breastfeeding-prep' | 'baby-gear' | 'partner-support' | 'postpartum-prep' | 'pregnancy-nutrition' | 'emotional-wellness'
+// Pre-pregnancy pillars
+export type PrePregPillarId = 'fertility' | 'nutrition-prep' | 'emotional-readiness' | 'financial-planning' | 'partner-journey' | 'health-checkups'
+
+export type PillarId = KidsPillarId | PregnancyPillarId | PrePregPillarId
 
 export interface Pillar {
   id: PillarId

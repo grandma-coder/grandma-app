@@ -1,11 +1,16 @@
-import { useEffect, useState } from 'react'
-import { View, Text, ScrollView, Pressable, Alert, StyleSheet } from 'react-native'
+import { useEffect, useState, useRef } from 'react'
+import { View, Text, ScrollView, Pressable, Alert, Switch, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useChildStore } from '../../store/useChildStore'
+import { useModeStore } from '../../store/useModeStore'
+import { useJourneyStore } from '../../store/useJourneyStore'
+import { useThemeStore } from '../../store/useThemeStore'
+import { ModeSwitcher } from '../../components/home/ModeSwitcher'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
+import { useAppTheme } from '../../components/ui/ThemeProvider'
 import { colors, THEME_COLORS, borderRadius, shadows, spacing, typography } from '../../constants/theme'
 
 interface ScanEntry {
@@ -38,7 +43,28 @@ export default function Settings() {
   const insets = useSafeAreaInsets()
   const child = useChildStore((s) => s.activeChild)
   const clearChildren = useChildStore((s) => s.clearChildren)
+  const mode = useModeStore((s) => s.mode)
+  const parentName = useJourneyStore((s) => s.parentName)
+  const dueDate = useJourneyStore((s) => s.dueDate)
+  const weekNumber = useJourneyStore((s) => s.weekNumber)
+  const theme = useThemeStore((s) => s.theme)
+  const toggleTheme = useThemeStore((s) => s.toggleTheme)
+  const { colors } = useAppTheme()
   const [scans, setScans] = useState<ScanEntry[]>([])
+  const [adminMode, setAdminMode] = useState(false)
+  const tapCountRef = useRef(0)
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleHeadingPress() {
+    tapCountRef.current += 1
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current)
+    if (tapCountRef.current >= 5) {
+      tapCountRef.current = 0
+      setAdminMode((prev) => !prev)
+    } else {
+      tapTimerRef.current = setTimeout(() => { tapCountRef.current = 0 }, 1500)
+    }
+  }
 
   useEffect(() => {
     if (!child?.id) return
@@ -68,59 +94,100 @@ export default function Settings() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.label}>ACCOUNT</Text>
-        <Text style={styles.heading}>Settings</Text>
+        <Pressable onPress={handleHeadingPress}>
+          <Text style={styles.heading}>Settings</Text>
+        </Pressable>
 
-        {/* Profile Card — Blue solid background */}
-        {child ? (
-          <View style={styles.profileCard}>
-            {/* Avatar + Name */}
+        {/* Super Admin Mode Switcher — hidden, tap heading 5x to toggle */}
+        {adminMode && (
+          <View style={{ marginBottom: 24 }}>
+            <Text style={[styles.sectionLabel, { color: THEME_COLORS.orange }]}>ADMIN MODE</Text>
+            <ModeSwitcher />
+          </View>
+        )}
+
+        {/* Profile Card — adapts per mode */}
+        {mode === 'pre-pregnancy' && (
+          <View style={[styles.profileCard, { backgroundColor: THEME_COLORS.pink }]}>
             <View style={styles.profileTop}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarEmoji}>👶</Text>
+                <Text style={styles.avatarEmoji}>✨</Text>
               </View>
-              <Text style={styles.childName}>{child.name}</Text>
-              {child.birthDate ? (
-                <Text style={styles.childAge}>{getAge(child.birthDate)}</Text>
+              <Text style={styles.childName}>{parentName ?? 'Your Journey'}</Text>
+              <Text style={styles.childAge}>TRYING TO CONCEIVE</Text>
+            </View>
+          </View>
+        )}
+
+        {mode === 'pregnancy' && (
+          <View style={[styles.profileCard, { backgroundColor: THEME_COLORS.purple }]}>
+            <View style={styles.profileTop}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarEmoji}>🤰</Text>
+              </View>
+              <Text style={styles.childName}>{parentName ?? 'Your Pregnancy'}</Text>
+              {weekNumber ? (
+                <Text style={styles.childAge}>WEEK {weekNumber}</Text>
               ) : null}
             </View>
-
-            {/* Info row */}
-            <View style={styles.infoRow}>
-              {child.birthDate ? (
+            {dueDate && (
+              <View style={styles.infoRow}>
                 <View style={styles.infoItem}>
                   <Ionicons name="calendar-outline" size={14} color="rgba(255,255,255,0.7)" />
-                  <Text style={styles.infoText}>{child.birthDate}</Text>
+                  <Text style={styles.infoText}>Due: {dueDate}</Text>
                 </View>
-              ) : null}
-              {child.weightKg > 0 ? (
-                <View style={styles.infoItem}>
-                  <Ionicons name="scale-outline" size={14} color="rgba(255,255,255,0.7)" />
-                  <Text style={styles.infoText}>{child.weightKg} kg</Text>
-                </View>
-              ) : null}
-            </View>
-
-            {/* Allergy warning */}
-            {child.allergies.length > 0 && (
-              <View style={styles.allergyRow}>
-                <Ionicons name="warning-outline" size={16} color={THEME_COLORS.yellow} />
-                <Text style={styles.allergyText}>
-                  Allergies: {child.allergies.join(', ')}
-                </Text>
               </View>
             )}
           </View>
-        ) : (
-          <Pressable
-            onPress={() => router.push('/onboarding/journey')}
-            style={styles.addChildButton}
-          >
-            <Text style={styles.addChildText}>Add your child's profile</Text>
-          </Pressable>
         )}
 
-        {/* Manage Caregivers */}
-        {child && child.caregiverRole === 'parent' && (
+        {mode === 'kids' && (
+          child ? (
+            <View style={styles.profileCard}>
+              <View style={styles.profileTop}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarEmoji}>👶</Text>
+                </View>
+                <Text style={styles.childName}>{child.name}</Text>
+                {child.birthDate ? (
+                  <Text style={styles.childAge}>{getAge(child.birthDate)}</Text>
+                ) : null}
+              </View>
+              <View style={styles.infoRow}>
+                {child.birthDate ? (
+                  <View style={styles.infoItem}>
+                    <Ionicons name="calendar-outline" size={14} color="rgba(255,255,255,0.7)" />
+                    <Text style={styles.infoText}>{child.birthDate}</Text>
+                  </View>
+                ) : null}
+                {child.weightKg > 0 ? (
+                  <View style={styles.infoItem}>
+                    <Ionicons name="scale-outline" size={14} color="rgba(255,255,255,0.7)" />
+                    <Text style={styles.infoText}>{child.weightKg} kg</Text>
+                  </View>
+                ) : null}
+              </View>
+              {child.allergies.length > 0 && (
+                <View style={styles.allergyRow}>
+                  <Ionicons name="warning-outline" size={16} color={THEME_COLORS.yellow} />
+                  <Text style={styles.allergyText}>
+                    Allergies: {child.allergies.join(', ')}
+                  </Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            <Pressable
+              onPress={() => router.push('/onboarding/journey')}
+              style={styles.addChildButton}
+            >
+              <Text style={styles.addChildText}>Add your child's profile</Text>
+            </Pressable>
+          )
+        )}
+
+        {/* Manage Caregivers — Kids mode only */}
+        {mode === 'kids' && child && child.caregiverRole === 'parent' && (
           <Pressable
             onPress={() => router.push('/manage-caregivers')}
             style={styles.caregiversCard}
@@ -133,7 +200,7 @@ export default function Settings() {
           </Pressable>
         )}
 
-        {child && child.caregiverRole !== 'parent' && (
+        {mode === 'kids' && child && child.caregiverRole !== 'parent' && (
           <View style={styles.roleBadge}>
             <Ionicons name="shield-checkmark-outline" size={16} color={THEME_COLORS.green} />
             <Text style={styles.roleBadgeText}>
@@ -174,6 +241,32 @@ export default function Settings() {
             </Text>
           </View>
         )}
+
+        {/* Appearance */}
+        <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>APPEARANCE</Text>
+        <View style={[styles.themeRow, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
+          <View style={styles.themeLeft}>
+            <Ionicons
+              name={theme === 'dark' ? 'moon' : 'sunny'}
+              size={20}
+              color={theme === 'dark' ? THEME_COLORS.purple : THEME_COLORS.yellow}
+            />
+            <View>
+              <Text style={[styles.themeLabel, { color: colors.text }]}>
+                {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+              </Text>
+              <Text style={[styles.themeDesc, { color: colors.textTertiary }]}>
+                {theme === 'dark' ? 'Easy on the eyes' : 'Bright and clean'}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={theme === 'light'}
+            onValueChange={toggleTheme}
+            trackColor={{ false: 'rgba(255,255,255,0.15)', true: THEME_COLORS.yellow }}
+            thumbColor="#FFFFFF"
+          />
+        </View>
 
         {/* Sign Out */}
         <Pressable
@@ -395,6 +488,33 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
+  },
+
+  // Theme toggle
+  themeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    padding: 18,
+    marginBottom: 24,
+  },
+  themeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  themeLabel: {
+    fontSize: 16,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  themeDesc: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
   },
 
   // Sign Out

@@ -5,13 +5,15 @@ import { Ionicons } from '@expo/vector-icons'
 import { Pressable } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { useModeStore } from '../../store/useModeStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { GradientButton } from '../../components/ui/GradientButton'
 import { colors, typography, spacing, borderRadius } from '../../constants/theme'
 
 export default function ParentName() {
   const insets = useSafeAreaInsets()
-  const { setParentName, mode } = useJourneyStore()
+  const setParentName = useJourneyStore((s) => s.setParentName)
+  const mode = useModeStore((s) => s.mode)
   const [name, setName] = useState('')
 
   function handleContinue() {

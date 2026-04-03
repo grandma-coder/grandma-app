@@ -1,13 +1,15 @@
 import { supabase } from './supabase'
-import type { Child, PillarId } from '../types'
+import type { Child, PillarId, JourneyMode } from '../types'
 
 interface CallNanaParams {
   messages: { role: string; content: string }[]
   child?: Child | null
   pillarId?: PillarId
+  mode?: JourneyMode
+  weekNumber?: number | null
 }
 
-export async function callNana({ messages, child, pillarId }: CallNanaParams): Promise<string> {
+export async function callNana({ messages, child, pillarId, mode = 'kids', weekNumber }: CallNanaParams): Promise<string> {
   const childContext = child ? {
     name: child.name,
     ageMonths: getAgeInMonths(child.birthDate),
@@ -17,7 +19,7 @@ export async function callNana({ messages, child, pillarId }: CallNanaParams): P
   } : undefined
 
   const { data, error } = await supabase.functions.invoke('nana-chat', {
-    body: { messages, childContext, pillarId },
+    body: { messages, childContext, pillarId, mode, weekNumber },
   })
 
   if (error) throw new Error(error.message)

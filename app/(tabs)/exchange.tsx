@@ -6,15 +6,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import { getListings } from '../../lib/exchange'
 import { useExchangeStore } from '../../store/useExchangeStore'
+import { useModeStore } from '../../store/useModeStore'
+import { getModeConfig } from '../../lib/modeConfig'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { ListingCard } from '../../components/exchange/ListingCard'
 import { colors, THEME_COLORS, borderRadius, shadows, spacing, typography } from '../../constants/theme'
 import type { Listing } from '../../lib/exchange'
 
-const FILTERS = ['All', 'Sell', 'Trade', 'Free'] as const
+const TYPE_FILTERS = ['All', 'Sell', 'Trade', 'Free'] as const
 
 export default function Exchange() {
   const insets = useSafeAreaInsets()
+  const mode = useModeStore((s) => s.mode)
+  const modeConfig = getModeConfig(mode)
+  const categoryFilters = modeConfig.exchangeFilters
   const { listings, savedIds, loading, setListings, toggleSaved, setLoading } = useExchangeStore()
   const [activeFilter, setActiveFilter] = useState<string>('All')
 
@@ -63,9 +68,9 @@ export default function Exchange() {
           </Pressable>
         </View>
 
-        {/* Filter pills */}
+        {/* Filter pills — dynamic per mode */}
         <View style={styles.filters}>
-          {FILTERS.map((f) => (
+          {categoryFilters.map((f) => (
             <Pressable
               key={f}
               style={[

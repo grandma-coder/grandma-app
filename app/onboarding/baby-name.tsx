@@ -4,13 +4,15 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { useModeStore } from '../../store/useModeStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { GradientButton } from '../../components/ui/GradientButton'
 import { colors, typography, spacing, borderRadius } from '../../constants/theme'
 
 export default function BabyName() {
   const insets = useSafeAreaInsets()
-  const { setBabyName, mode } = useJourneyStore()
+  const setBabyName = useJourneyStore((s) => s.setBabyName)
+  const mode = useModeStore((s) => s.mode)
   const [name, setName] = useState('')
 
   function handleContinue() {

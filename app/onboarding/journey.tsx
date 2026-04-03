@@ -3,6 +3,7 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { useModeStore } from '../../store/useModeStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { GlassCard } from '../../components/ui/GlassCard'
 import { colors, typography, spacing } from '../../constants/theme'
@@ -43,7 +44,8 @@ const JOURNEYS: {
 ]
 
 export default function JourneySelect() {
-  const { setJourney, setMode } = useJourneyStore()
+  const setJourney = useJourneyStore((s) => s.setJourney)
+  const setMode = useModeStore((s) => s.setMode)
   const insets = useSafeAreaInsets()
 
   function handleSelect(item: (typeof JOURNEYS)[number]) {
