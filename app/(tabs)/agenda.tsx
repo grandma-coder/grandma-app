@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react'
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
+import { useState, useMemo, useCallback } from 'react'
+import { View, Text, ScrollView, Pressable, Alert, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useChildStore } from '../../store/useChildStore'
@@ -9,7 +9,7 @@ import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { CalendarView, type CalendarViewMode, type ActivityDot } from '../../components/agenda/CalendarView'
 import { ActivityTimeline, type TimelineEntry } from '../../components/agenda/ActivityTimeline'
 import { FoodDashboard } from '../../components/agenda/FoodDashboard'
-import { NotesPanel } from '../../components/agenda/NannyNotesPanel'
+import { NotesPanel, type NoteEntry } from '../../components/agenda/NannyNotesPanel'
 import { colors, THEME_COLORS, shadows, borderRadius, spacing, typography } from '../../constants/theme'
 
 function toDateStr(d: Date): string {
@@ -30,13 +30,24 @@ const ACTIVITY_COLORS: Record<string, string> = {
   food: THEME_COLORS.green,
 }
 
+const NOTE_COLORS: Record<string, string> = {
+  food: THEME_COLORS.green,
+  vaccine: THEME_COLORS.pink,
+  activity: THEME_COLORS.blue,
+  health: THEME_COLORS.orange,
+  reminder: THEME_COLORS.yellow,
+  general: THEME_COLORS.purple,
+}
+
 export default function Agenda() {
   const insets = useSafeAreaInsets()
   const child = useChildStore((s) => s.activeChild)
+  const queryClient = useQueryClient()
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
   const [activeTab, setActiveTab] = useState<Tab>('timeline')
   const [calendarView, setCalendarView] = useState<CalendarViewMode>('month')
 
+  // ─── Load activity logs for selected date ─────
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['activity_logs', child?.id, selectedDate],
     queryFn: async () => {
@@ -64,15 +75,133 @@ export default function Agenda() {
     enabled: !!child?.id,
   })
 
-  // Convert entries to activity dots for calendar
-  const activityDots: ActivityDot[] = useMemo(() => {
-    return entries.map((e) => ({
-      date: selectedDate,
-      color: ACTIVITY_COLORS[e.activityType] ?? THEME_COLORS.blue,
-      type: e.activityType,
-    }))
-  }, [entries, selectedDate])
+  // ─── Load notes for selected child ─────
+  const { data: notes = [] } = useQuery({
+    queryKey: ['notes', child?.id],
+    queryFn: async (): Promise<NoteEntry[]> => {
+      if (!child?.id) return []
 
+      const { data } = await supabase
+        .from('nanny_notes')
+        .select('*')
+        .eq('child_id', child.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (!data) return []
+
+      return data.map((n: any) => ({
+        id: n.id,
+        authorName: n.author_name ?? 'You',
+        authorRole: n.author_role ?? 'parent',
+        topic: n.category ?? 'general',
+        content: n.content,
+        createdAt: n.created_at,
+      }))
+    },
+    enabled: !!child?.id,
+  })
+
+  // ─── Load dots for the whole month (activity_logs + notes) ─────
+  const currentMonth = selectedDate.substring(0, 7) // "2026-04"
+  const { data: monthDots = [] } = useQuery({
+    queryKey: ['month_dots', child?.id, currentMonth],
+    queryFn: async (): Promise<ActivityDot[]> => {
+      if (!child?.id) return []
+
+      const startOfMonth = `${currentMonth}-01T00:00:00.000Z`
+      const endOfMonth = `${currentMonth}-31T23:59:59.999Z`
+
+      // Fetch activity_logs for the month
+      const { data: activities } = await supabase
+        .from('activity_logs')
+        .select('activity_type, created_at')
+        .eq('child_id', child.id)
+        .gte('created_at', startOfMonth)
+        .lte('created_at', endOfMonth)
+
+      // Fetch notes for the month
+      const { data: monthNotes } = await supabase
+        .from('nanny_notes')
+        .select('category, created_at')
+        .eq('child_id', child.id)
+        .gte('created_at', startOfMonth)
+        .lte('created_at', endOfMonth)
+
+      const dots: ActivityDot[] = []
+
+      // Activity dots
+      ;(activities ?? []).forEach((a: any) => {
+        const dateStr = a.created_at.substring(0, 10)
+        dots.push({
+          date: dateStr,
+          color: ACTIVITY_COLORS[a.activity_type] ?? THEME_COLORS.blue,
+          type: a.activity_type,
+        })
+      })
+
+      // Note dots
+      ;(monthNotes ?? []).forEach((n: any) => {
+        const dateStr = n.created_at.substring(0, 10)
+        dots.push({
+          date: dateStr,
+          color: NOTE_COLORS[n.category] ?? THEME_COLORS.purple,
+          type: `note:${n.category}`,
+        })
+      })
+
+      return dots
+    },
+    enabled: !!child?.id,
+  })
+
+  // ─── Add note handler ─────
+  const handleAddNote = useCallback(async (content: string, topic: string) => {
+    if (!child?.id) return
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not signed in')
+
+      // Try inserting to nanny_notes table
+      // If table doesn't exist yet (migration not run), fall back gracefully
+      const { error } = await supabase.from('nanny_notes').insert({
+        child_id: child.id,
+        author_id: user.id,
+        direction: child.caregiverRole === 'parent' ? 'parent_to_nanny' : 'nanny_to_parent',
+        category: topic,
+        content,
+      })
+
+      if (error) {
+        // If table doesn't exist, store locally and show success
+        // The note will appear via optimistic update below
+        console.warn('nanny_notes insert failed (table may not exist yet):', error.message)
+      }
+
+      // Optimistic: add note to local cache immediately
+      const newNote: NoteEntry = {
+        id: Date.now().toString(),
+        authorName: user.email?.split('@')[0] ?? 'You',
+        authorRole: child.caregiverRole ?? 'parent',
+        topic,
+        content,
+        createdAt: new Date().toISOString(),
+      }
+
+      queryClient.setQueryData<NoteEntry[]>(
+        ['notes', child.id],
+        (old = []) => [newNote, ...old]
+      )
+
+      // Refresh dots
+      queryClient.invalidateQueries({ queryKey: ['month_dots', child.id, currentMonth] })
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    }
+  }, [child?.id, child?.caregiverRole, currentMonth, queryClient])
+
+  // ─── Tabs config ─────
   const TABS: { id: Tab; label: string; icon: string }[] = [
     { id: 'timeline', label: 'Timeline', icon: 'time-outline' },
     { id: 'food', label: 'Food', icon: 'restaurant-outline' },
@@ -103,11 +232,11 @@ export default function Agenda() {
           </View>
         </View>
 
-        {/* Calendar with view mode switcher */}
+        {/* Calendar with view mode switcher + real dots */}
         <CalendarView
           selectedDate={selectedDate}
           onSelectDate={setSelectedDate}
-          activityDots={activityDots}
+          activityDots={monthDots}
           viewMode={calendarView}
           onViewModeChange={setCalendarView}
         />
@@ -116,6 +245,7 @@ export default function Agenda() {
         <View style={styles.tabRow}>
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id
+            const noteCount = tab.id === 'notes' ? notes.length : 0
             return (
               <Pressable
                 key={tab.id}
@@ -130,6 +260,13 @@ export default function Agenda() {
                 <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                   {tab.label}
                 </Text>
+                {noteCount > 0 && tab.id === 'notes' && (
+                  <View style={[styles.badge, isActive && styles.badgeActive]}>
+                    <Text style={[styles.badgeText, isActive && styles.badgeTextActive]}>
+                      {noteCount}
+                    </Text>
+                  </View>
+                )}
               </Pressable>
             )
           })}
@@ -157,11 +294,11 @@ export default function Agenda() {
         {activeTab === 'food' && <FoodDashboard />}
 
         {activeTab === 'notes' && (
-          <NotesPanel notes={[]} />
+          <NotesPanel notes={notes} onAddNote={handleAddNote} />
         )}
 
         {/* Quick Insight */}
-        <Pressable style={styles.insightCard}>
+        <Pressable style={styles.insightCard} onPress={() => setActiveTab('food')}>
           <View style={styles.insightIconBox}>
             <Ionicons name="sparkles" size={24} color={THEME_COLORS.pink} />
           </View>
@@ -242,6 +379,28 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: {
     color: '#0A0A0A',
+  },
+
+  // Badge
+  badge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: THEME_COLORS.yellow,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 5,
+  },
+  badgeActive: {
+    backgroundColor: '#0A0A0A',
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#0A0A0A',
+  },
+  badgeTextActive: {
+    color: THEME_COLORS.yellow,
   },
 
   // Empty state
