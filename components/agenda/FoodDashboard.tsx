@@ -1,139 +1,325 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { useState } from 'react'
+import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import * as ImagePicker from 'expo-image-picker'
 import { GlassCard } from '../ui/GlassCard'
-import { colors, borderRadius } from '../../constants/theme'
+import { colors, THEME_COLORS, borderRadius, shadows } from '../../constants/theme'
 
-interface MealSummary {
+interface FoodEntry {
+  id: string
   mealType: string
-  logged: boolean
+  photoUri?: string
   description?: string
+  aiAnalysis?: string
   rating?: number
 }
 
 interface FoodDashboardProps {
-  meals?: MealSummary[]
-  weeklyHighlight?: string
+  entries?: FoodEntry[]
+  onAnalyzePhoto?: (uri: string, mealType: string) => void
+  onManualAdd?: (mealType: string) => void
 }
 
-const DEFAULT_MEALS: MealSummary[] = [
-  { mealType: 'Breakfast', logged: false },
-  { mealType: 'Lunch', logged: false },
-  { mealType: 'Dinner', logged: false },
-  { mealType: 'Snack', logged: false },
+const MEALS = [
+  { id: 'breakfast', label: 'Breakfast', icon: 'sunny-outline', color: THEME_COLORS.yellow },
+  { id: 'lunch', label: 'Lunch', icon: 'restaurant-outline', color: THEME_COLORS.green },
+  { id: 'dinner', label: 'Dinner', icon: 'moon-outline', color: THEME_COLORS.blue },
+  { id: 'snack', label: 'Snack', icon: 'cafe-outline', color: THEME_COLORS.pink },
 ]
 
-export function FoodDashboard({ meals = DEFAULT_MEALS, weeklyHighlight }: FoodDashboardProps) {
-  const loggedCount = meals.filter((m) => m.logged).length
+export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: FoodDashboardProps) {
+  const [selectedMeal, setSelectedMeal] = useState<string | null>(null)
+
+  async function handleTakePhoto(mealType: string) {
+    const { granted } = await ImagePicker.requestCameraPermissionsAsync()
+    if (!granted) return
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    })
+
+    if (!result.canceled && result.assets[0]) {
+      onAnalyzePhoto?.(result.assets[0].uri, mealType)
+    }
+  }
+
+  async function handlePickPhoto(mealType: string) {
+    const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!granted) return
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    })
+
+    if (!result.canceled && result.assets[0]) {
+      onAnalyzePhoto?.(result.assets[0].uri, mealType)
+    }
+  }
 
   return (
-    <GlassCard style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Food Dashboard</Text>
-        <Text style={styles.counter}>
-          {loggedCount}/{meals.length} meals
-        </Text>
+    <View style={styles.container}>
+      {/* Meal type selector */}
+      <View style={styles.mealGrid}>
+        {MEALS.map((meal) => {
+          const logged = entries.some((e) => e.mealType === meal.id)
+          return (
+            <Pressable
+              key={meal.id}
+              onPress={() => setSelectedMeal(selectedMeal === meal.id ? null : meal.id)}
+              style={({ pressed }) => [
+                styles.mealCard,
+                selectedMeal === meal.id && { borderColor: meal.color, borderWidth: 2 },
+                pressed && { transform: [{ scale: 0.95 }] },
+              ]}
+            >
+              <View style={[styles.mealIconBox, { backgroundColor: meal.color + '15' }]}>
+                <Ionicons name={meal.icon as any} size={22} color={meal.color} />
+              </View>
+              <Text style={styles.mealLabel}>{meal.label}</Text>
+              {logged && (
+                <Ionicons name="checkmark-circle" size={16} color={THEME_COLORS.green} style={{ position: 'absolute', top: 10, right: 10 }} />
+              )}
+            </Pressable>
+          )
+        })}
       </View>
 
-      <View style={styles.mealsGrid}>
-        {meals.map((meal) => (
-          <View key={meal.mealType} style={styles.mealItem}>
-            <View style={[styles.mealDot, meal.logged && styles.mealDotLogged]} />
-            <Text style={[styles.mealLabel, meal.logged && styles.mealLabelLogged]}>
-              {meal.mealType}
-            </Text>
-            {meal.description && (
-              <Text style={styles.mealDesc} numberOfLines={1}>
-                {meal.description}
-              </Text>
-            )}
+      {/* Expanded meal action */}
+      {selectedMeal && (
+        <GlassCard style={styles.actionCard}>
+          <Text style={styles.actionTitle}>Log {MEALS.find((m) => m.id === selectedMeal)?.label}</Text>
+          <Text style={styles.actionDesc}>
+            Take a photo and AI will analyze the nutritional content, or add details manually.
+          </Text>
+
+          <View style={styles.actionButtons}>
+            <Pressable
+              onPress={() => handleTakePhoto(selectedMeal)}
+              style={[styles.actionBtn, { backgroundColor: THEME_COLORS.yellow }]}
+            >
+              <Ionicons name="camera" size={20} color={colors.textOnAccent} />
+              <Text style={[styles.actionBtnText, { color: colors.textOnAccent }]}>Photo + AI</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => handlePickPhoto(selectedMeal)}
+              style={styles.actionBtn}
+            >
+              <Ionicons name="images-outline" size={20} color={colors.text} />
+              <Text style={styles.actionBtnText}>Gallery</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => onManualAdd?.(selectedMeal)}
+              style={styles.actionBtn}
+            >
+              <Ionicons name="create-outline" size={20} color={colors.text} />
+              <Text style={styles.actionBtnText}>Manual</Text>
+            </Pressable>
           </View>
-        ))}
-      </View>
+        </GlassCard>
+      )}
 
-      {weeklyHighlight ? (
-        <View style={styles.highlight}>
-          <Text style={styles.highlightIcon}>💡</Text>
-          <Text style={styles.highlightText}>{weeklyHighlight}</Text>
+      {/* Logged entries */}
+      {entries.length > 0 && (
+        <View style={styles.entriesSection}>
+          <Text style={styles.entriesLabel}>TODAY'S MEALS</Text>
+          {entries.map((entry) => {
+            const meal = MEALS.find((m) => m.id === entry.mealType)
+            return (
+              <GlassCard key={entry.id} style={styles.entryCard}>
+                <View style={styles.entryRow}>
+                  {entry.photoUri && (
+                    <Image source={{ uri: entry.photoUri }} style={styles.entryPhoto} />
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.entryHeader}>
+                      <View style={[styles.entryDot, { backgroundColor: meal?.color }]} />
+                      <Text style={styles.entryMealType}>{meal?.label}</Text>
+                    </View>
+                    {entry.description && (
+                      <Text style={styles.entryDesc}>{entry.description}</Text>
+                    )}
+                    {entry.aiAnalysis && (
+                      <View style={styles.aiTag}>
+                        <Ionicons name="sparkles" size={12} color={THEME_COLORS.yellow} />
+                        <Text style={styles.aiTagText}>{entry.aiAnalysis}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </GlassCard>
+            )
+          })}
         </View>
-      ) : (
-        <View style={styles.highlight}>
-          <Text style={styles.highlightIcon}>💡</Text>
-          <Text style={styles.highlightText}>
-            Log meals with photos to get AI-powered nutrition tips from Guru Grandma.
+      )}
+
+      {/* Empty hint */}
+      {entries.length === 0 && !selectedMeal && (
+        <View style={styles.emptyHint}>
+          <Ionicons name="nutrition-outline" size={32} color={colors.textTertiary} />
+          <Text style={styles.emptyTitle}>No meals logged today</Text>
+          <Text style={styles.emptyDesc}>
+            Tap a meal above to log food. Take a photo and Guru Grandma will analyze the protein, carbs, and nutrients.
           </Text>
         </View>
       )}
-    </GlassCard>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: {},
+
+  // Meal grid
+  mealGrid: {
+    flexDirection: 'row',
+    gap: 10,
     marginBottom: 16,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  mealCard: {
+    flex: 1,
     alignItems: 'center',
-    marginBottom: 14,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  counter: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.accent,
-  },
-  mealsGrid: {
+    paddingVertical: 16,
+    backgroundColor: colors.surfaceGlass,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
     gap: 8,
-    marginBottom: 14,
   },
-  mealItem: {
-    flexDirection: 'row',
+  mealIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
     alignItems: 'center',
-    gap: 10,
-  },
-  mealDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: colors.textTertiary,
-  },
-  mealDotLogged: {
-    backgroundColor: colors.success,
-    borderColor: colors.success,
+    justifyContent: 'center',
   },
   mealLabel: {
-    fontSize: 14,
-    color: colors.textTertiary,
-    fontWeight: '500',
-    width: 70,
-  },
-  mealLabelLogged: {
-    color: colors.text,
-  },
-  mealDesc: {
-    flex: 1,
-    fontSize: 13,
+    fontSize: 10,
+    fontWeight: '800',
     color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  highlight: {
+
+  // Action card
+  actionCard: {
+    marginBottom: 16,
+  },
+  actionTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: colors.text,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  actionDesc: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  actionButtons: {
     flexDirection: 'row',
     gap: 8,
-    backgroundColor: colors.accentMuted,
-    borderRadius: borderRadius.sm,
-    padding: 10,
   },
-  highlightIcon: {
-    fontSize: 14,
-  },
-  highlightText: {
+  actionBtn: {
     flex: 1,
-    fontSize: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 48,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surfaceGlass,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  actionBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.text,
+    textTransform: 'uppercase',
+  },
+
+  // Entries
+  entriesSection: {
+    marginTop: 8,
+  },
+  entriesLabel: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: colors.textTertiary,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  entryCard: {
+    marginBottom: 8,
+  },
+  entryRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  entryPhoto: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+  },
+  entryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  entryDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  entryMealType: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.text,
+    textTransform: 'uppercase',
+  },
+  entryDesc: {
+    fontSize: 13,
     color: colors.textSecondary,
-    lineHeight: 17,
+    marginBottom: 4,
+  },
+  aiTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  aiTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: THEME_COLORS.yellow,
+  },
+
+  // Empty
+  emptyHint: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+  },
+  emptyDesc: {
+    fontSize: 13,
+    color: colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 16,
   },
 })

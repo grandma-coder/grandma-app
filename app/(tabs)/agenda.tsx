@@ -1,16 +1,16 @@
 import { useState, useMemo } from 'react'
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useChildStore } from '../../store/useChildStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { CalendarView } from '../../components/agenda/CalendarView'
+import { CalendarView, type CalendarViewMode, type ActivityDot } from '../../components/agenda/CalendarView'
 import { ActivityTimeline, type TimelineEntry } from '../../components/agenda/ActivityTimeline'
 import { FoodDashboard } from '../../components/agenda/FoodDashboard'
-import { NannyNotesPanel } from '../../components/agenda/NannyNotesPanel'
-import { colors, typography, spacing, THEME_COLORS, shadows, borderRadius } from '../../constants/theme'
+import { NotesPanel } from '../../components/agenda/NannyNotesPanel'
+import { colors, THEME_COLORS, shadows, borderRadius, spacing, typography } from '../../constants/theme'
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -18,11 +18,24 @@ function toDateStr(d: Date): string {
 
 type Tab = 'timeline' | 'food' | 'notes'
 
+const ACTIVITY_COLORS: Record<string, string> = {
+  feeding: THEME_COLORS.pink,
+  sleep: THEME_COLORS.blue,
+  diaper: THEME_COLORS.yellow,
+  mood: THEME_COLORS.green,
+  growth: THEME_COLORS.purple,
+  medicine: THEME_COLORS.orange,
+  vaccines: THEME_COLORS.pink,
+  milestones: THEME_COLORS.blue,
+  food: THEME_COLORS.green,
+}
+
 export default function Agenda() {
   const insets = useSafeAreaInsets()
   const child = useChildStore((s) => s.activeChild)
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
   const [activeTab, setActiveTab] = useState<Tab>('timeline')
+  const [calendarView, setCalendarView] = useState<CalendarViewMode>('month')
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['activity_logs', child?.id, selectedDate],
@@ -51,6 +64,15 @@ export default function Agenda() {
     enabled: !!child?.id,
   })
 
+  // Convert entries to activity dots for calendar
+  const activityDots: ActivityDot[] = useMemo(() => {
+    return entries.map((e) => ({
+      date: selectedDate,
+      color: ACTIVITY_COLORS[e.activityType] ?? THEME_COLORS.blue,
+      type: e.activityType,
+    }))
+  }, [entries, selectedDate])
+
   const TABS: { id: Tab; label: string; icon: string }[] = [
     { id: 'timeline', label: 'Timeline', icon: 'time-outline' },
     { id: 'food', label: 'Food', icon: 'restaurant-outline' },
@@ -64,11 +86,11 @@ export default function Agenda() {
       <ScrollView
         contentContainerStyle={[
           styles.container,
-          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 },
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 120 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header row */}
+        {/* Header */}
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>Agenda</Text>
@@ -81,15 +103,16 @@ export default function Agenda() {
           </View>
         </View>
 
-        {/* Calendar */}
-        <View style={{ marginBottom: 20 }}>
-          <CalendarView
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-          />
-        </View>
+        {/* Calendar with view mode switcher */}
+        <CalendarView
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          activityDots={activityDots}
+          viewMode={calendarView}
+          onViewModeChange={setCalendarView}
+        />
 
-        {/* Filter pills */}
+        {/* Tab pills */}
         <View style={styles.tabRow}>
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id
@@ -97,10 +120,7 @@ export default function Agenda() {
               <Pressable
                 key={tab.id}
                 onPress={() => setActiveTab(tab.id)}
-                style={[
-                  styles.tab,
-                  isActive && styles.tabActive,
-                ]}
+                style={[styles.tab, isActive && styles.tabActive]}
               >
                 <Ionicons
                   name={tab.icon as any}
@@ -122,34 +142,25 @@ export default function Agenda() {
           ) : (
             <View style={styles.emptyState}>
               <View style={styles.emptyIconBox}>
-                <Ionicons name="skull-outline" size={48} color={THEME_COLORS.blue} />
+                <Ionicons name="calendar-outline" size={48} color={THEME_COLORS.blue} />
               </View>
               <Text style={styles.emptyTitle}>
                 No activity <Text style={{ color: THEME_COLORS.pink }}>today</Text>
               </Text>
               <Text style={styles.emptyDesc}>
-                Nothing has been logged yet. Check back later or add a new entry.
+                Activities logged by you or caregivers appear here. Each activity type has its own color.
               </Text>
-              <Pressable style={styles.refreshButton}>
-                <Ionicons name="refresh" size={16} color={colors.textSecondary} />
-                <Text style={styles.refreshText}>Refresh View</Text>
-              </Pressable>
             </View>
           )
         )}
 
-        {activeTab === 'food' && (
-          <FoodDashboard />
-        )}
+        {activeTab === 'food' && <FoodDashboard />}
 
         {activeTab === 'notes' && (
-          <NannyNotesPanel
-            notes={[]}
-            userRole={child?.caregiverRole ?? 'parent'}
-          />
+          <NotesPanel notes={[]} />
         )}
 
-        {/* Quick Insight card */}
+        {/* Quick Insight */}
         <Pressable style={styles.insightCard}>
           <View style={styles.insightIconBox}>
             <Ionicons name="sparkles" size={24} color={THEME_COLORS.pink} />
@@ -195,7 +206,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceGlass,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
+
+  // Tab pills
   tabRow: {
     flexDirection: 'row',
     gap: 10,
@@ -210,19 +225,25 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 24,
     backgroundColor: colors.surfaceGlass,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   tabActive: {
     backgroundColor: THEME_COLORS.yellow,
+    borderColor: THEME_COLORS.yellow,
     ...shadows.glow,
   },
   tabLabel: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '800',
     color: colors.textTertiary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   tabLabelActive: {
     color: '#0A0A0A',
   },
+
   // Empty state
   emptyState: {
     alignItems: 'center',
@@ -231,42 +252,29 @@ const styles = StyleSheet.create({
   emptyIconBox: {
     width: 96,
     height: 96,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     backgroundColor: 'rgba(77, 150, 255, 0.10)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
   },
   emptyTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 24,
+    fontWeight: '900',
     color: colors.text,
     marginBottom: 8,
     textAlign: 'center',
+    textTransform: 'uppercase',
   },
   emptyDesc: {
     fontSize: 14,
+    fontWeight: '500',
     color: colors.textTertiary,
     textAlign: 'center',
     lineHeight: 20,
-    marginBottom: 24,
     paddingHorizontal: 24,
   },
-  refreshButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    height: 48,
-    paddingHorizontal: 24,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  refreshText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
+
   // Quick Insight card
   insightCard: {
     flexDirection: 'row',
@@ -275,7 +283,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceGlass,
     borderRadius: borderRadius.lg,
     padding: 20,
-    marginTop: 12,
+    marginTop: 20,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -289,20 +297,23 @@ const styles = StyleSheet.create({
   },
   insightTitle: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors.text,
-    marginBottom: 2,
+    textTransform: 'uppercase',
   },
   insightSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: '500',
     color: colors.textTertiary,
+    marginTop: 2,
   },
   insightChevron: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 138, 216, 0.10)',
-    justifyContent: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
+    justifyContent: 'center',
   },
 })
