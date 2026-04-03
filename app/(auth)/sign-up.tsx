@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   Alert,
+  Pressable,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -13,9 +14,8 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { GradientButton } from '../../components/ui/GradientButton'
 import { SocialAuthButtons } from '../../components/auth/SocialAuthButtons'
-import { colors, typography, spacing, borderRadius } from '../../constants/theme'
+import { colors, THEME_COLORS, spacing, borderRadius, shadows } from '../../constants/theme'
 
 export default function SignUp() {
   const insets = useSafeAreaInsets()
@@ -44,10 +44,7 @@ export default function SignUp() {
         <ScrollView
           contentContainerStyle={[
             styles.container,
-            {
-              paddingTop: insets.top + 60,
-              paddingBottom: insets.bottom + 24,
-            },
+            { paddingTop: insets.top + 60, paddingBottom: insets.bottom + 24 },
           ]}
           keyboardShouldPersistTaps="handled"
         >
@@ -68,12 +65,12 @@ export default function SignUp() {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Email/Password */}
+          {/* Inputs */}
           <TextInput
             style={styles.input}
-            selectionColor={colors.neon.blue}
-            placeholder="Email"
-            placeholderTextColor={colors.textTertiary}
+            selectionColor={THEME_COLORS.yellow}
+            placeholder="Email address"
+            placeholderTextColor="rgba(255,255,255,0.25)"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -82,28 +79,35 @@ export default function SignUp() {
 
           <TextInput
             style={styles.input}
-            selectionColor={colors.neon.blue}
+            selectionColor={THEME_COLORS.yellow}
             placeholder="Password (min 6 characters)"
-            placeholderTextColor={colors.textTertiary}
+            placeholderTextColor="rgba(255,255,255,0.25)"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
           />
 
-          <GradientButton
-            title="Create Account"
+          {/* CTA */}
+          <Pressable
             onPress={signUp}
-            loading={loading}
-            style={{ marginTop: spacing.md }}
-          />
-
-          <Text
-            onPress={() => router.back()}
-            style={styles.switchLink}
+            disabled={loading}
+            style={({ pressed }) => [
+              styles.ctaButton,
+              pressed && { transform: [{ scale: 0.98 }] },
+              loading && { opacity: 0.6 },
+            ]}
           >
-            Already have an account?{' '}
-            <Text style={styles.switchLinkAccent}>Sign in</Text>
-          </Text>
+            <Text style={styles.ctaText}>
+              {loading ? 'Creating...' : 'Create Account'}
+            </Text>
+          </Pressable>
+
+          <Pressable onPress={() => router.back()}>
+            <Text style={styles.switchLink}>
+              Already have an account?{' '}
+              <Text style={styles.switchBold}>Sign in</Text>
+            </Text>
+          </Pressable>
 
           <Text style={styles.termsText}>
             By creating an account, you agree to Grandma's{' '}
@@ -122,14 +126,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing['2xl'],
   },
   title: {
-    ...typography.hero,
-    fontSize: 40,
+    fontSize: 36,
     fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.8,
+    lineHeight: 40,
     marginBottom: 8,
   },
   subtitle: {
-    ...typography.bodySecondary,
-    marginBottom: 36,
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.55)',
+    marginBottom: 32,
   },
   socialSection: {
     marginBottom: 24,
@@ -143,43 +151,61 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   dividerText: {
     fontSize: 13,
-    color: colors.textTertiary,
+    color: 'rgba(255,255,255,0.35)',
   },
   input: {
-    backgroundColor: colors.surfaceGlass,
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 40,
-    paddingHorizontal: 24,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 36,
+    paddingHorizontal: 28,
     height: 72,
     fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
+    fontWeight: '600',
+    color: '#FFFFFF',
     marginBottom: 12,
+  },
+  ctaButton: {
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: THEME_COLORS.yellow,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    shadowColor: THEME_COLORS.yellow,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 30,
+  },
+  ctaText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1A1030',
+    letterSpacing: 0.5,
   },
   switchLink: {
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 24,
     fontSize: 15,
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.5)',
   },
-  switchLinkAccent: {
-    color: colors.accent,
+  switchBold: {
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   termsText: {
     fontSize: 12,
-    color: colors.textTertiary,
+    color: 'rgba(255,255,255,0.3)',
     textAlign: 'center',
     lineHeight: 18,
     marginTop: 24,
   },
   termsLink: {
     textDecorationLine: 'underline',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.5)',
   },
 })

@@ -1,53 +1,84 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { LinearGradient } from 'expo-linear-gradient'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { GradientButton } from '../../components/ui/GradientButton'
-import { colors, typography, spacing } from '../../constants/theme'
+import { colors, THEME_COLORS, borderRadius, spacing, shadows } from '../../constants/theme'
 
 export default function Welcome() {
   const insets = useSafeAreaInsets()
 
   return (
     <CosmicBackground>
-      <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
-        {/* Header: Sign-in link */}
-        <View style={styles.header}>
-          <View style={styles.logoRow}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoEmoji}>👵</Text>
+      <View style={[styles.container, { paddingTop: insets.top + 40 }]}>
+        {/* Cosmic Ring Logo */}
+        <View style={styles.ringSection}>
+          {/* Nebula glow */}
+          <View style={styles.nebulaGlow} />
+
+          {/* Ring with 28 dots */}
+          <View style={styles.ringWrapper}>
+            {Array.from({ length: 28 }).map((_, i) => {
+              const angle = (i / 28) * 2 * Math.PI - Math.PI / 2
+              const x = Math.cos(angle) * 60
+              const y = Math.sin(angle) * 60
+              const phaseColors = ['#FF8AD8', '#FF8AD8', '#FF8AD8', '#FF8AD8', '#FF8AD8',
+                '#F4FD50', '#F4FD50', '#F4FD50', '#F4FD50', '#F4FD50', '#F4FD50', '#F4FD50',
+                '#A2FF86', '#A2FF86', '#A2FF86', '#A2FF86',
+                '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF']
+              return (
+                <View
+                  key={i}
+                  style={[styles.ringDot, {
+                    backgroundColor: phaseColors[i],
+                    left: 70 + x - 3,
+                    top: 70 + y - 3,
+                    opacity: 0.7,
+                  }]}
+                />
+              )
+            })}
+            {/* Center moon */}
+            <View style={styles.ringCenter}>
+              <Ionicons name="moon-outline" size={28} color="rgba(255,255,255,0.4)" />
             </View>
-            <Text style={styles.logoText}>grandma.app</Text>
           </View>
-          <Text
-            onPress={() => router.push('/(auth)/sign-in')}
-            style={styles.signInLink}
-          >
-            Already a member?{'\n'}
-            <Text style={styles.signInLinkBold}>Sign in</Text>
-          </Text>
         </View>
 
+        {/* Brand */}
+        <Text style={styles.brand}>grandma.app</Text>
+
         {/* Hero */}
-        <View style={styles.hero}>
-          <Text style={styles.heroTitle}>
-            Welcome,{'\n'}Dear One.
-          </Text>
-          <Text style={styles.heroSubtitle}>
-            Let's prepare your space. Tell Grandma{'\n'}
-            AI a bit about your family journey.
-          </Text>
-        </View>
+        <Text style={styles.heroTitle}>Welcome, Dear One.</Text>
+        <Text style={styles.heroSubtitle}>
+          Let Grandma guide you through every step of your journey — from trying to conceive, through pregnancy, and into parenthood.
+        </Text>
 
         {/* Spacer */}
         <View style={{ flex: 1 }} />
 
         {/* CTA */}
         <View style={[styles.cta, { paddingBottom: insets.bottom + 24 }]}>
-          <GradientButton
-            title="Begin Your Journey"
+          <Pressable
             onPress={() => router.push('/(auth)/sign-up')}
-          />
+            style={({ pressed }) => [styles.ctaButton, pressed && { transform: [{ scale: 0.98 }] }]}
+          >
+            <LinearGradient
+              colors={['#EC4899', '#A855F7', '#6366F1']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.ctaGradient}
+            >
+              <Text style={styles.ctaText}>Begin Your Journey</Text>
+            </LinearGradient>
+          </Pressable>
+
+          <Pressable onPress={() => router.push('/(auth)/sign-in')}>
+            <Text style={styles.signInLink}>
+              Already a member? <Text style={styles.signInBold}>Sign in</Text>
+            </Text>
+          </Pressable>
 
           <Text style={styles.termsText}>
             By continuing, you agree to Grandma's{' '}
@@ -64,69 +95,123 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: spacing['2xl'],
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  logoRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
   },
-  logoCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+
+  // Cosmic ring
+  ringSection: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 32,
+    position: 'relative',
+  },
+  nebulaGlow: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: '#B983FF',
+    opacity: 0.08,
+  },
+  ringWrapper: {
+    width: 140,
+    height: 140,
+    position: 'relative',
+  },
+  ringDot: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  ringCenter: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoEmoji: {
-    fontSize: 22,
-  },
-  logoText: {
-    fontSize: 18,
+
+  // Brand
+  brand: {
+    fontSize: 20,
     fontWeight: '700',
     color: colors.text,
+    letterSpacing: 1,
+    marginBottom: 40,
   },
-  signInLink: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    textAlign: 'right',
-    lineHeight: 18,
-  },
-  signInLinkBold: {
-    color: colors.accent,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-  },
-  hero: {
-    marginTop: 60,
-  },
+
+  // Hero
   heroTitle: {
-    ...typography.hero,
-    fontSize: 48,
+    fontSize: 44,
     fontWeight: '900',
-    lineHeight: 56,
+    color: colors.text,
+    textAlign: 'center',
+    letterSpacing: -1,
+    lineHeight: 48,
     marginBottom: 16,
   },
   heroSubtitle: {
-    ...typography.bodySecondary,
-    lineHeight: 22,
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.6)',
+    textAlign: 'center',
+    lineHeight: 24,
+    paddingHorizontal: 16,
   },
+
+  // CTA
   cta: {
-    gap: 20,
+    width: '100%',
+    alignItems: 'center',
+    gap: 16,
   },
+  ctaButton: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
+    shadowColor: '#EC4899',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 25,
+  },
+  ctaGradient: {
+    height: 56,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+
+  signInLink: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  signInBold: {
+    color: colors.text,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+    textDecorationColor: 'rgba(255,255,255,0.2)',
+  },
+
   termsText: {
     fontSize: 12,
-    color: colors.textTertiary,
+    color: 'rgba(255,255,255,0.3)',
     textAlign: 'center',
     lineHeight: 18,
+    paddingHorizontal: 24,
   },
   termsLink: {
     textDecorationLine: 'underline',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.5)',
   },
 })

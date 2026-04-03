@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -6,8 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useModeStore } from '../../store/useModeStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { GradientButton } from '../../components/ui/GradientButton'
-import { colors, typography, spacing, borderRadius } from '../../constants/theme'
+import { THEME_COLORS, spacing, borderRadius } from '../../constants/theme'
 
 const ACTIVITIES = [
   { id: 'feeding', emoji: '🍼', label: 'Feeding', subtitle: 'Breast, bottle, solids' },
@@ -72,9 +71,9 @@ export default function Activities() {
 
   return (
     <CosmicBackground>
-      <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
+      <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color="rgba(255,255,255,0.6)" />
         </Pressable>
 
         <Text style={styles.title}>What would you{'\n'}like to track?</Text>
@@ -93,18 +92,21 @@ export default function Activities() {
               <Pressable
                 key={item.id}
                 onPress={() => toggle(item.id)}
-                style={[
+                style={({ pressed }) => [
                   styles.card,
                   isSelected && styles.cardSelected,
+                  pressed && { transform: [{ scale: 0.98 }] },
                 ]}
               >
-                <Text style={styles.cardEmoji}>{item.emoji}</Text>
+                <View style={styles.emojiCircle}>
+                  <Text style={styles.cardEmoji}>{item.emoji}</Text>
+                </View>
                 <View style={styles.cardText}>
                   <Text style={styles.cardLabel}>{item.label}</Text>
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
                 <View style={[styles.checkbox, isSelected && styles.checkboxActive]}>
-                  {isSelected && <Ionicons name="checkmark" size={16} color={colors.textOnAccent} />}
+                  {isSelected && <Ionicons name="checkmark" size={14} color="#000" />}
                 </View>
               </Pressable>
             )
@@ -113,11 +115,17 @@ export default function Activities() {
 
         <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
           <Text style={styles.countText}>{selected.length} selected</Text>
-          <GradientButton
-            title="Let's go"
+          <Pressable
             onPress={handleContinue}
             disabled={selected.length === 0}
-          />
+            style={({ pressed }) => [
+              styles.ctaButton,
+              pressed && { transform: [{ scale: 0.95 }] },
+              selected.length === 0 && { opacity: 0.4 },
+            ]}
+          >
+            <Text style={styles.ctaText}>Let's go</Text>
+          </Pressable>
         </View>
       </View>
     </CosmicBackground>
@@ -128,25 +136,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceGlass,
-    justifyContent: 'center',
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
+    justifyContent: 'center',
     marginLeft: spacing['2xl'],
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   title: {
-    ...typography.heading,
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+    lineHeight: 36,
     paddingHorizontal: spacing['2xl'],
     marginBottom: 8,
   },
   subtitle: {
-    ...typography.bodySecondary,
+    fontSize: 15,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.5)',
     paddingHorizontal: spacing['2xl'],
     marginBottom: 24,
     lineHeight: 22,
@@ -163,55 +177,82 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceGlass,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     gap: 14,
   },
   cardSelected: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentMuted,
+    borderColor: 'rgba(162,255,134,0.3)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  emojiCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cardEmoji: {
-    fontSize: 28,
+    fontSize: 22,
   },
   cardText: {
     flex: 1,
   },
   cardLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.text,
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
     marginBottom: 2,
   },
   cardSubtitle: {
     fontSize: 13,
-    color: colors.textSecondary,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.45)',
   },
   checkbox: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    backgroundColor: THEME_COLORS.green,
+    borderColor: THEME_COLORS.green,
   },
   bottom: {
     paddingHorizontal: spacing['2xl'],
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
-    gap: 8,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+    gap: 10,
   },
   countText: {
     fontSize: 13,
-    color: colors.textTertiary,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.4)',
     textAlign: 'center',
+  },
+  ctaButton: {
+    height: 56,
+    borderRadius: borderRadius.full,
+    backgroundColor: THEME_COLORS.yellow,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: THEME_COLORS.yellow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 25,
+  },
+  ctaText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1A1030',
+    letterSpacing: 0.5,
   },
 })
