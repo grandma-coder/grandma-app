@@ -214,9 +214,9 @@ export default function Library() {
             style={[styles.sendButton, (!input.trim() || loading) && { opacity: 0.4 }]}
           >
             {loading ? (
-              <ActivityIndicator size="small" color={colors.textOnAccent} />
+              <ActivityIndicator size="small" color="#1A1030" />
             ) : (
-              <Text style={styles.sendText}>Send</Text>
+              <Ionicons name="arrow-up" size={20} color="#1A1030" />
             )}
           </Pressable>
         </View>
@@ -226,8 +226,9 @@ export default function Library() {
 }
 
 const styles = StyleSheet.create({
+  // matches HTML: header.shrink-0.pt-14.px-8.flex.justify-between.items-start
   header: {
-    paddingHorizontal: spacing['2xl'],
+    paddingHorizontal: 32,
     paddingBottom: 16,
   },
   headerRow: {
@@ -235,97 +236,117 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+  // matches HTML: text-2xl font-light tracking-tight leading-tight uppercase + text-4xl font-bold neon-yellow italic
   title: {
-    fontSize: 40,
-    fontWeight: '900',
-    color: colors.text,
+    fontSize: 24,
+    fontWeight: '300',
+    color: '#FFFFFF',
     textTransform: 'uppercase',
-    letterSpacing: -1,
-    lineHeight: 40,
+    letterSpacing: -0.5,
+    lineHeight: 28,
   },
+  // matches HTML: text-sm text-purple-200/60 mt-1 uppercase tracking-[0.2em]
   headerSubtitle: {
-    ...typography.caption,
-    marginTop: 6,
+    fontSize: 14,
+    fontWeight: '400',
+    color: 'rgba(200,180,255,0.6)',
+    textTransform: 'uppercase',
+    letterSpacing: 3,
+    marginTop: 4,
   },
+  // matches HTML: w-12 h-12 rounded-2xl bg-white/5 border border-white/10
   sparkleBox: {
     width: 48,
     height: 48,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceGlass,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // matches HTML: px-6 pt-10 pb-4 space-y-10
   emptyScroll: {
-    paddingHorizontal: spacing['2xl'],
+    paddingHorizontal: 24,
+    paddingTop: 40,
     paddingBottom: 20,
     alignItems: 'center',
   },
+  // matches HTML: text-2xl font-bold mb-3 tracking-tight
   emptyTitle: {
-    ...typography.title,
-    marginBottom: 8,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+    marginBottom: 12,
   },
+  // matches HTML: text-purple-100/70 text-[15px] leading-relaxed max-w-[280px]
   emptySubtitle: {
-    ...typography.bodySecondary,
+    fontSize: 15,
+    fontWeight: '400',
+    color: 'rgba(200,180,255,0.7)',
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: 28,
-    paddingHorizontal: 10,
+    marginBottom: 40,
+    maxWidth: 280,
   },
+  // matches HTML: text-[11px] font-bold tracking-[0.2em] text-white/40 uppercase
   pillarsLabel: {
     fontSize: 11,
-    fontWeight: '600',
-    color: colors.textTertiary,
-    letterSpacing: 1.5,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.4)',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
     alignSelf: 'flex-start',
-    marginBottom: 12,
-    marginTop: 4,
+    marginBottom: 16,
+    paddingLeft: 4,
   },
+  // matches HTML: flex flex-wrap gap-2.5
   pillarsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 24,
+    gap: 10,
+    marginBottom: 40,
     width: '100%',
   },
+  // matches HTML: glass-pill px-5 py-2.5 rounded-full flex items-center gap-2 text-sm font-medium
   pillarChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: colors.surfaceGlass,
-    borderRadius: borderRadius.full,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 999,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   pillarIcon: {
     fontSize: 16,
   },
   pillarName: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.text,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#FFFFFF',
   },
+  // matches HTML: glass-pill rounded-3xl p-6 border-dashed
   channelPlaceholder: {
-    alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 0,
   },
+  // matches HTML: text-lg font-semibold
   channelTitle: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: '#FFFFFF',
     marginBottom: 4,
   },
+  // matches HTML: text-xs text-white/40
   channelSubtitle: {
-    fontSize: 13,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: 18,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.4)',
   },
   messageList: {
-    paddingHorizontal: spacing['2xl'],
+    paddingHorizontal: 24,
     paddingBottom: 8,
   },
   msgRow: {
@@ -337,69 +358,69 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: '85%',
-    borderRadius: borderRadius.lg,
+    borderRadius: 24,
     padding: 20,
   },
   bubbleUser: {
-    backgroundColor: colors.accent,
+    backgroundColor: THEME_COLORS.yellow,
     borderBottomRightRadius: 4,
-    shadowColor: colors.accent,
+    shadowColor: THEME_COLORS.yellow,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 15,
   },
   bubbleAssistant: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.1)',
     borderTopLeftRadius: 4,
   },
   bubbleText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '500',
     color: 'rgba(255,255,255,0.9)',
     lineHeight: 24,
   },
   bubbleTextUser: {
-    color: colors.textOnAccent,
-    fontWeight: '900',
-    letterSpacing: -0.3,
+    color: '#1A1030',
+    fontWeight: '700',
   },
+  // matches HTML: px-6 pb-6 → glass-pill rounded-2xl p-2 pl-5
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing['2xl'],
+    paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 8,
-    backgroundColor: colors.background,
   },
+  // matches HTML: bg-transparent flex-1 text-sm, inside glass-pill container
   input: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.xl,
-    height: 72,
-    paddingHorizontal: 24,
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    height: 52,
+    paddingHorizontal: 20,
+    paddingRight: 52,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
+  // matches HTML: bg-neon-yellow text-[#1A1030] w-10 h-10 rounded-xl
   sendButton: {
-    height: 56,
-    paddingHorizontal: 24,
-    backgroundColor: colors.accent,
-    borderRadius: borderRadius.lg,
-    marginLeft: -64,
+    width: 40,
+    height: 40,
+    backgroundColor: THEME_COLORS.yellow,
+    borderRadius: 12,
+    marginLeft: -48,
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
   },
   sendText: {
     fontSize: 14,
     fontWeight: '900',
-    color: colors.textOnAccent,
+    color: '#1A1030',
     textTransform: 'uppercase',
     letterSpacing: 2,
   },

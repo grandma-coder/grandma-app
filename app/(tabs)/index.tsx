@@ -24,16 +24,12 @@ import { getCycleInfo, toDateStr } from '../../lib/cycleLogic'
 import { useAppTheme } from '../../components/ui/ThemeProvider'
 import { colors, THEME_COLORS, spacing, borderRadius } from '../../constants/theme'
 
-// ─── PRE-PREGNANCY HOME ─────────────────────────────────────────────────────
+// ─── PRE-PREGNANCY HOME — exact match to cycle-home.html ────────────────────
 function PrePregnancyHome() {
   const { colors: tc } = useAppTheme()
   const parentName = useJourneyStore((s) => s.parentName)
-  const [waterGlasses, setWaterGlasses] = useState(0)
 
-  // Cycle info — using a demo last period start for now
-  // In production this comes from cycle_logs in Supabase
   const [lastPeriodStart] = useState(() => {
-    // Default: assume period started 10 days ago for demo
     const d = new Date()
     d.setDate(d.getDate() - 10)
     return toDateStr(d)
@@ -41,56 +37,63 @@ function PrePregnancyHome() {
 
   const cycleInfo = getCycleInfo({ lastPeriodStart, cycleLength: 28, periodLength: 5 })
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
-
   const greeting = getGreeting()
 
   return (
     <>
-      {/* Header */}
+      {/* ── Header (matches HTML: header.shrink-0.pt-14.px-6) ── */}
       <View style={styles.preHeader}>
         <View>
-          <Text style={[styles.preLabel, { color: THEME_COLORS.pink }]}>COSMIC CYCLE</Text>
-          <Text style={[styles.preName, { color: tc.text }]}>
-            {greeting}, {parentName ?? 'Dear'}
-          </Text>
+          <Text style={styles.preLabel}>COSMIC CYCLE</Text>
+          <Text style={styles.preName}>{greeting}, {parentName ?? 'Luna'}</Text>
+        </View>
+        <View style={styles.profileBtn}>
+          <Ionicons name="person-outline" size={20} color="#FFFFFF" />
         </View>
       </View>
 
-      {/* Moon Phase Ring */}
+      {/* ── Moon Phase Ring (matches HTML: .relative.flex.justify-center py-10 min-h-320) ── */}
       <CyclePhaseRing cycleInfo={cycleInfo} />
 
-      {/* Horizontal Week Strip */}
-      <WeekStrip
-        selectedDate={selectedDate}
-        onSelectDate={setSelectedDate}
-        cycleInfo={cycleInfo}
-      />
+      {/* ── Week Strip (matches HTML: .px-6.mb-8 flex space-x-4) ── */}
+      <View style={{ marginBottom: 32 }}>
+        <WeekStrip
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          cycleInfo={cycleInfo}
+        />
+      </View>
 
-      {/* Hormone Rhythm Chart */}
-      <View style={{ marginTop: 16 }}>
+      {/* ── Hormone Chart (matches HTML: .bg-white/5.rounded-[32px].p-6.border) ── */}
+      <View style={{ marginBottom: 32 }}>
         <HormoneChart cycleInfo={cycleInfo} />
       </View>
 
-      {/* Daily Decode */}
-      <GlassCard style={{ ...styles.decodeCard, marginTop: 16 }}>
+      {/* ── Daily Decode (matches HTML: .bg-gradient-to-br.from-white/10.rounded-[32px].p-6) ── */}
+      <View style={styles.decodeCard}>
+        {/* Purple glow blur (matches: .absolute.-right-6.-top-6.w-24.h-24.bg-B983FF.blur-40.opacity-20) */}
         <View style={styles.decodeGlow} />
+
+        {/* Header row */}
         <View style={styles.decodeHeader}>
-          <Text style={[styles.decodeTitle, { color: tc.text }]}>YOUR DAILY DECODE</Text>
-          <Text style={[styles.decodeCycleDay, { color: THEME_COLORS.yellow }]}>
-            Cycle Day {cycleInfo.cycleDay} of {cycleInfo.cycleLength}
-          </Text>
+          <Text style={styles.decodeTitle}>YOUR DAILY DECODE</Text>
+          <Text style={styles.decodeCycleDay}>Cycle Day {cycleInfo.cycleDay} of {cycleInfo.cycleLength}</Text>
         </View>
-        <Text style={[styles.decodeText, { color: 'rgba(255,255,255,0.8)' }]}>
-          {cycleInfo.phaseDescription}
-          {cycleInfo.isFertile ? ' This is your fertile window — peak time to conceive!' : ''}
+
+        {/* Body text (matches: .text-base.leading-relaxed.text-white/80) */}
+        <Text style={styles.decodeText}>
+          Your <Text style={{ color: THEME_COLORS.green, fontWeight: '700' }}>peak energy</Text> is here. {cycleInfo.phaseDescription}
+          {cycleInfo.isFertile ? " It's the cosmic moment to connect, create, and share your light with the world." : ''}
         </Text>
+
+        {/* Footer (matches: .mt-6.pt-4.border-t.border-white/5) */}
         <View style={styles.decodeFooter}>
           <View style={styles.decodeIcons}>
             <View style={[styles.decodeIconCircle, { backgroundColor: THEME_COLORS.pink }]}>
-              <Ionicons name="sparkles" size={12} color="#1A1030" />
+              <Ionicons name="sparkles" size={10} color="#1A1030" />
             </View>
-            <View style={[styles.decodeIconCircle, { backgroundColor: '#B983FF' }]}>
-              <Ionicons name="moon" size={12} color="#1A1030" />
+            <View style={[styles.decodeIconCircle, { backgroundColor: '#B983FF', marginLeft: -8 }]}>
+              <Ionicons name="moon" size={10} color="#1A1030" />
             </View>
           </View>
           <Pressable
@@ -101,28 +104,7 @@ function PrePregnancyHome() {
             <Ionicons name="arrow-forward" size={14} color={THEME_COLORS.pink} />
           </Pressable>
         </View>
-      </GlassCard>
-
-      {/* Health Dashboard */}
-      <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-        <Text style={styles.sectionLabel}>Health Tracking</Text>
-        <View style={[styles.sectionLine, { backgroundColor: tc.border }]} />
       </View>
-      <HealthDashboard
-        waterGlasses={waterGlasses}
-        onAddWater={() => setWaterGlasses((prev) => Math.min(prev + 1, 12))}
-      />
-
-      {/* Daily Insights */}
-      <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-        <Text style={styles.sectionLabel}>Daily Insights</Text>
-        <View style={[styles.sectionLine, { backgroundColor: tc.border }]} />
-      </View>
-      <DailyInsights
-        cycleInfo={cycleInfo}
-        onLogSymptoms={() => router.push('/(tabs)/agenda')}
-        onAskGrandma={(q) => router.push({ pathname: '/(tabs)/library', params: { suggestion: q } })}
-      />
     </>
   )
 }
@@ -320,30 +302,47 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  // Pre-Pregnancy new styles
+  // Pre-Pregnancy — exact match to cycle-home.html
   preHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
+    alignItems: 'center',
   },
   preLabel: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 12,
+    fontWeight: '700',
     letterSpacing: 3,
     textTransform: 'uppercase',
-    marginBottom: 4,
+    color: '#FF8AD8',
+    marginBottom: 2,
   },
   preName: {
     fontSize: 24,
-    fontWeight: '900',
+    fontWeight: '700',
+    color: '#FFFFFF',
     letterSpacing: -0.3,
   },
+  profileBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-  // Daily Decode card
+  // Daily Decode — exact match to HTML .bg-gradient-to-br.from-white/10.rounded-[32px].p-6
   decodeCard: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 32,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
     position: 'relative',
     overflow: 'hidden',
+    marginBottom: 48,
   },
   decodeGlow: {
     position: 'absolute',
@@ -353,40 +352,42 @@ const styles = StyleSheet.create({
     height: 96,
     borderRadius: 48,
     backgroundColor: '#B983FF',
-    opacity: 0.12,
+    opacity: 0.2,
   },
   decodeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 16,
   },
   decodeTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   decodeCycleDay: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '500',
+    color: THEME_COLORS.yellow,
   },
   decodeText: {
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 22,
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+    color: 'rgba(255,255,255,0.8)',
   },
   decodeFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 16,
-    paddingTop: 14,
+    marginTop: 24,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.05)',
   },
   decodeIcons: {
     flexDirection: 'row',
-    marginLeft: -4,
   },
   decodeIconCircle: {
     width: 32,
@@ -396,7 +397,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#1A1030',
-    marginLeft: -8,
   },
   decodeLink: {
     flexDirection: 'row',
@@ -404,9 +404,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   decodeLinkText: {
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 12,
+    fontWeight: '700',
     color: THEME_COLORS.pink,
-    letterSpacing: 0.5,
   },
 })

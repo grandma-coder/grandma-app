@@ -18,55 +18,64 @@ function getDotColor(day: number, info: CycleInfo): string {
   return '#B983FF'                                           // Luteal (purple)
 }
 
-const RING_RADIUS = 105
+// matches HTML: .relative.w-[210px].h-[210px] with transform-origin 0 100px
+const RING_SIZE = 210
+const RING_RADIUS = 100 // matches HTML transform-origin: 0 100px
 const DOT_SIZE = 8
 
 export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePhaseRingProps) {
   const { colors: tc } = useAppTheme()
   const { cycleDay, phaseLabel, phaseColor, daysUntilPeriod, cycleLength } = cycleInfo
   const showData = cycleDay > 0
+  const center = RING_SIZE / 2
 
-  // Generate 28 dots positioned in a circle
+  // Generate 28 dots positioned in a circle (matches HTML rotation pattern)
   const dots = Array.from({ length: cycleLength }, (_, i) => {
     const day = i + 1
-    const angle = (i / cycleLength) * 2 * Math.PI - Math.PI / 2 // start at top
-    const x = Math.cos(angle) * RING_RADIUS
-    const y = Math.sin(angle) * RING_RADIUS
+    // HTML uses rotate(0deg) to rotate(347.1deg), which is i * (360/28)
+    const angleDeg = i * (360 / cycleLength)
+    const angleRad = (angleDeg - 90) * (Math.PI / 180) // -90 to start at top
+    const x = Math.cos(angleRad) * RING_RADIUS
+    const y = Math.sin(angleRad) * RING_RADIUS
     const isToday = day === cycleDay
     const color = getDotColor(day, cycleInfo)
     return { day, x, y, isToday, color }
   })
 
   return (
+    // matches HTML: .relative.flex.justify-center.items-center.py-10.min-h-[320px]
     <View style={styles.container}>
-      {/* Ring container */}
+      {/* Ring wrapper — matches: .relative.w-[210px].h-[210px] */}
       <View style={styles.ringWrapper}>
         {/* Render 28 dots */}
-        {dots.map((dot) => (
-          <View
-            key={dot.day}
-            style={[
-              styles.dot,
-              {
-                backgroundColor: dot.color,
-                width: dot.isToday ? 14 : DOT_SIZE,
-                height: dot.isToday ? 14 : DOT_SIZE,
-                borderRadius: dot.isToday ? 7 : DOT_SIZE / 2,
-                left: 120 + dot.x - (dot.isToday ? 7 : DOT_SIZE / 2),
-                top: 120 + dot.y - (dot.isToday ? 7 : DOT_SIZE / 2),
-                opacity: dot.isToday ? 1 : 0.7,
-              },
-              dot.isToday && {
-                borderWidth: 2,
-                borderColor: 'rgba(255,255,255,0.6)',
-                shadowColor: dot.color,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.8,
-                shadowRadius: 8,
-              },
-            ]}
-          />
-        ))}
+        {dots.map((dot) => {
+          const size = dot.isToday ? 12 : DOT_SIZE
+          return (
+            <View
+              key={dot.day}
+              style={[
+                styles.dot,
+                {
+                  backgroundColor: dot.color,
+                  width: size,
+                  height: size,
+                  borderRadius: size / 2,
+                  left: center + dot.x - size / 2,
+                  top: center + dot.y - size / 2,
+                },
+                // matches HTML: today dot has scale-150 ring-2 ring-white/50
+                dot.isToday && {
+                  borderWidth: 2,
+                  borderColor: 'rgba(255,255,255,0.5)',
+                  shadowColor: dot.color,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.8,
+                  shadowRadius: 8,
+                },
+              ]}
+            />
+          )
+        })}
 
         {/* Center content */}
         <View style={styles.center}>
@@ -138,14 +147,17 @@ export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePh
 }
 
 const styles = StyleSheet.create({
+  // matches HTML: .relative.flex.justify-center.items-center.py-10.min-h-[320px]
   container: {
     alignItems: 'center',
-    marginBottom: 16,
+    paddingVertical: 40,
+    minHeight: 320,
   },
 
+  // matches HTML: .relative.w-[210px].h-[210px]
   ringWrapper: {
-    width: 240,
-    height: 240,
+    width: RING_SIZE,
+    height: RING_SIZE,
     position: 'relative',
   },
 
@@ -163,47 +175,50 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  // matches HTML: text-[10px] tracking-[0.3em] font-bold text-white/50 uppercase mb-1
   periodLabel: {
     fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 3,
+    fontWeight: '700',
+    letterSpacing: 4,
     textTransform: 'uppercase',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   countdownRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 12,
+    marginBottom: 16,
   },
+  // matches HTML: text-5xl font-display font-bold text-white
   countdownNumber: {
-    fontSize: 56,
-    fontWeight: '900',
+    fontSize: 48,
+    fontWeight: '700',
     color: '#FFFFFF',
-    letterSpacing: -2,
   },
+  // matches HTML: text-lg ml-1
   countdownUnit: {
     fontSize: 18,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
+    fontWeight: '400',
+    color: '#FFFFFF',
     marginLeft: 4,
   },
 
+  // matches HTML: px-5 py-2.5 bg-[#FF8AD8] text-[#1A1030] rounded-full text-xs font-bold uppercase tracking-wider neon-shadow-pink
   addPeriodBtn: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: THEME_COLORS.pink,
-    borderRadius: borderRadius.full,
-    shadowColor: THEME_COLORS.pink,
+    backgroundColor: '#FF8AD8',
+    borderRadius: 999,
+    shadowColor: '#FF8AD8',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.4,
     shadowRadius: 15,
   },
   addPeriodText: {
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#1A1030',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
   },
 
   noDataTitle: {

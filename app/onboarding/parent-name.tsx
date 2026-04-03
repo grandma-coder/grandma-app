@@ -50,7 +50,7 @@ export default function ParentName() {
             placeholderTextColor="rgba(255,255,255,0.2)"
             value={name}
             onChangeText={setName}
-            autoFocus
+            autoFocus={false}
           />
         </View>
 

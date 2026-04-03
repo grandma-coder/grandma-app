@@ -72,10 +72,13 @@ export default function JourneySelect() {
           {JOURNEYS.map((j) => (
             <Pressable
               key={j.id}
-              onPress={() => handleSelect(j)}
+              onPress={() => {
+                console.log('Journey selected:', j.id, '→', j.next)
+                handleSelect(j)
+              }}
               style={({ pressed }) => [
                 styles.card,
-                pressed && { opacity: 0.85, transform: [{ scale: 0.98 }], backgroundColor: 'rgba(255,255,255,0.08)' },
+                pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
               ]}
             >
               <View style={[styles.iconCircle, { backgroundColor: j.iconBg }]}>
