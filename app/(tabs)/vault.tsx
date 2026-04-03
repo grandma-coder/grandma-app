@@ -115,7 +115,7 @@ export default function Vault() {
             >
               <View style={styles.sectionRow}>
                 <View style={[styles.sectionIconWrap, { backgroundColor: section.color }]}>
-                  <Ionicons name={section.icon as any} size={20} color="#0A0A0A" />
+                  <Ionicons name={section.icon as any} size={20} color="#1A1030" />
                 </View>
                 <View style={styles.sectionContent}>
                   <Text style={styles.sectionTitle}>{section.title}</Text>
@@ -153,7 +153,7 @@ export default function Vault() {
         {/* Upload section */}
         <View style={styles.uploadCard}>
           <View style={styles.uploadIconWrap}>
-            <Ionicons name="cloud-upload-outline" size={32} color="#0A0A0A" />
+            <Ionicons name="cloud-upload-outline" size={32} color="#1A1030" />
           </View>
           <Text style={styles.uploadTitle}>Secure New Document</Text>
           <Text style={styles.uploadDesc}>
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emergencyBadge: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#1A1030',
     borderRadius: borderRadius.full,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
   addRecordText: {
     fontSize: 14,
     fontWeight: '900',
-    color: '#0A0A0A',
+    color: '#1A1030',
     textTransform: 'uppercase',
     letterSpacing: 2,
   },

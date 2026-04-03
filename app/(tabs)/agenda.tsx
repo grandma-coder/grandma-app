@@ -268,7 +268,7 @@ export default function Agenda() {
                 <Ionicons
                   name={tab.icon as any}
                   size={18}
-                  color={isActive ? '#0A0A0A' : colors.textTertiary}
+                  color={isActive ? '#1A1030' : colors.textTertiary}
                 />
                 <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                   {tab.label}
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   tabLabelActive: {
-    color: '#0A0A0A',
+    color: '#1A1030',
   },
 
   // Badge
@@ -447,12 +447,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   badgeActive: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#1A1030',
   },
   badgeText: {
     fontSize: 10,
     fontWeight: '900',
-    color: '#0A0A0A',
+    color: '#1A1030',
   },
   badgeTextActive: {
     color: THEME_COLORS.yellow,

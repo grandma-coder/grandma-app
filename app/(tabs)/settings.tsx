@@ -246,11 +246,13 @@ export default function Settings() {
         <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>APPEARANCE</Text>
         <View style={[styles.themeRow, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
           <View style={styles.themeLeft}>
-            <Ionicons
-              name={theme === 'dark' ? 'moon' : 'sunny'}
-              size={20}
-              color={theme === 'dark' ? THEME_COLORS.purple : THEME_COLORS.yellow}
-            />
+            <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: theme === 'dark' ? 'rgba(109,40,217,0.2)' : 'rgba(244,253,80,0.15)', alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons
+                name={theme === 'dark' ? 'moon' : 'sunny'}
+                size={22}
+                color={theme === 'dark' ? '#B983FF' : THEME_COLORS.yellow}
+              />
+            </View>
             <View>
               <Text style={[styles.themeLabel, { color: colors.text }]}>
                 {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
@@ -263,7 +265,7 @@ export default function Settings() {
           <Switch
             value={theme === 'light'}
             onValueChange={toggleTheme}
-            trackColor={{ false: 'rgba(255,255,255,0.15)', true: THEME_COLORS.yellow }}
+            trackColor={{ false: '#6D28D9', true: THEME_COLORS.yellow }}
             thumbColor="#FFFFFF"
           />
         </View>
@@ -291,19 +293,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing['2xl'],
   },
   label: {
-    ...typography.label,
+    fontSize: 10,
+    fontWeight: '900',
+    color: 'rgba(185,131,255,0.4)',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
     marginBottom: 4,
   },
   heading: {
-    ...typography.heading,
+    fontSize: 48,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -2,
+    textTransform: 'uppercase',
     marginBottom: 24,
   },
 
-  // Profile Card — Blue solid
+  // Profile Card
   profileCard: {
     backgroundColor: THEME_COLORS.blue,
-    borderRadius: borderRadius['2xl'],
-    padding: 28,
+    borderRadius: 48,
+    padding: 32,
     marginBottom: 16,
     ...shadows.glowBlue,
   },
@@ -312,16 +322,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   avatarEmoji: {
-    fontSize: 32,
+    fontSize: 40,
   },
   childName: {
     fontSize: 36,
@@ -378,7 +390,7 @@ const styles = StyleSheet.create({
     ...shadows.glow,
   },
   addChildText: {
-    color: '#0A0A0A',
+    color: '#1A1030',
     fontSize: 16,
     fontWeight: '900',
     textTransform: 'uppercase',
@@ -495,9 +507,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: borderRadius.lg,
+    borderRadius: 32,
     borderWidth: 1,
-    padding: 18,
+    padding: 20,
     marginBottom: 24,
   },
   themeLeft: {

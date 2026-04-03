@@ -132,7 +132,7 @@ export default function InviteCaregiver() {
             ) : (
               <View style={styles.sendButtonInner}>
                 <Text style={styles.sendText}>Send Invite</Text>
-                <Ionicons name="send" size={18} color="#0A0A0A" />
+                <Ionicons name="send" size={18} color="#1A1030" />
               </View>
             )}
           </Pressable>
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sendText: {
-    color: '#0A0A0A',
+    color: '#1A1030',
     fontSize: 16,
     fontWeight: '900',
     textTransform: 'uppercase',

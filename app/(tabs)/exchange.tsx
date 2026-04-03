@@ -64,7 +64,7 @@ export default function Exchange() {
             onPress={() => router.push('/exchange/create')}
             style={styles.addBtn}
           >
-            <Ionicons name="add" size={24} color="#0A0A0A" />
+            <Ionicons name="add" size={24} color="#1A1030" />
           </Pressable>
         </View>
 
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   filterTextActive: {
-    color: '#0A0A0A',
+    color: '#1A1030',
   },
   list: {
     paddingHorizontal: spacing['2xl'],
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   gradientBtnText: {
     fontSize: 14,
     fontWeight: '900',
-    color: '#0A0A0A',
+    color: '#1A1030',
     textTransform: 'uppercase',
     letterSpacing: 2,
   },

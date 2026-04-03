@@ -23,7 +23,7 @@ import { getModeConfig } from '../../lib/modeConfig'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { GlassCard } from '../../components/ui/GlassCard'
 import { GrandmaBall } from '../../components/home/GrandmaBall'
-import { colors, typography, spacing, borderRadius } from '../../constants/theme'
+import { colors, THEME_COLORS, typography, spacing, borderRadius } from '../../constants/theme'
 import type { PillarId, Pillar } from '../../types'
 
 interface ChatMessage {
@@ -171,13 +171,13 @@ export default function Library() {
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <View style={styles.headerRow}>
             <View>
-              <Text style={styles.title}>Guru{'\n'}<Text style={{ color: colors.accent }}>Grandma</Text></Text>
+              <Text style={styles.title}>Guru{'\n'}<Text style={{ color: THEME_COLORS.yellow, fontStyle: 'italic' }}>Grandma</Text></Text>
               <Text style={styles.headerSubtitle}>
             {mode === 'pre-pregnancy' ? 'Your conception guide' : mode === 'pregnancy' ? 'Your pregnancy companion' : 'Your parenting wisdom guide'}
           </Text>
             </View>
             <View style={styles.sparkleBox}>
-              <Text style={{ fontSize: 22 }}>✨</Text>
+              <Ionicons name="sparkles" size={20} color={THEME_COLORS.yellow} />
             </View>
           </View>
         </View>

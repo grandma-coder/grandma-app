@@ -31,7 +31,7 @@ export function PillarGrid({ lastActivities = {} }: PillarGridProps) {
     <View style={styles.grid}>
       {pillars.map((pillar) => {
         const bgColor = (colors.pillar as Record<string, string>)[pillar.id] ?? colors.surface
-        const isDark = bgColor === '#141414'
+        const isDark = bgColor === '#241845' || bgColor === '#141414'
         const textColor = isDark ? '#FFFFFF' : '#000000'
         const iconName = PILLAR_ICONS[pillar.id] ?? 'help-circle-outline'
 
