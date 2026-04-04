@@ -42,3 +42,6 @@ yarn-error.*
 .env
 .env
 .superdesign
+.agents/
+.claude/skills/
+skills-lock.json
