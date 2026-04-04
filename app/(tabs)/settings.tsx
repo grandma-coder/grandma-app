@@ -289,17 +289,20 @@ export default function Settings() {
 }
 
 const styles = StyleSheet.create({
+  // matches HTML: px-6
   content: {
-    paddingHorizontal: spacing['2xl'],
+    paddingHorizontal: 24,
   },
+  // matches HTML: text-[10px] font-black tracking-[0.2em] text-purple-300/60 uppercase mb-1
   label: {
     fontSize: 10,
     fontWeight: '900',
-    color: 'rgba(185,131,255,0.4)',
+    color: 'rgba(185,131,255,0.6)',
     letterSpacing: 3,
     textTransform: 'uppercase',
     marginBottom: 4,
   },
+  // matches HTML: text-5xl font-display font-black tracking-tighter
   heading: {
     fontSize: 48,
     fontWeight: '900',
@@ -309,18 +312,21 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 
-  // Profile Card
+  // matches HTML: bg-[#FF8AD8] pink-glow rounded-[48px] p-8 flex flex-col items-center text-center
   profileCard: {
     backgroundColor: THEME_COLORS.blue,
     borderRadius: 48,
     padding: 32,
     marginBottom: 16,
-    ...shadows.glowBlue,
+    shadowColor: '#FF8AD8',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.4,
+    shadowRadius: 30,
   },
   profileTop: {
     alignItems: 'center',
-    marginBottom: 20,
   },
+  // matches HTML: w-24 h-24 bg-white/20 rounded-full border-2 border-white/30
   avatar: {
     width: 96,
     height: 96,
@@ -335,20 +341,26 @@ const styles = StyleSheet.create({
   avatarEmoji: {
     fontSize: 40,
   },
+  // matches HTML: text-3xl font-black text-white tracking-tight mb-2
   childName: {
-    fontSize: 36,
+    fontSize: 30,
     fontWeight: '900',
     color: '#FFFFFF',
-    textTransform: 'uppercase',
     letterSpacing: -0.5,
+    marginBottom: 8,
   },
+  // matches HTML: bg-white/20 px-4 py-1.5 rounded-full text-[10px] font-black tracking-[0.2em]
   childAge: {
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: '900',
-    color: 'rgba(255,255,255,0.7)',
+    color: '#FFFFFF',
     letterSpacing: 3,
     textTransform: 'uppercase',
-    marginTop: 4,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 999,
+    overflow: 'hidden',
   },
   infoRow: {
     flexDirection: 'row',
@@ -440,69 +452,79 @@ const styles = StyleSheet.create({
     color: THEME_COLORS.green,
   },
 
-  // Scan History
+  // matches HTML: text-[10px] font-black tracking-[0.2em] text-purple-300/40 uppercase
   sectionLabel: {
-    ...typography.label,
+    fontSize: 10,
+    fontWeight: '900',
+    color: 'rgba(185,131,255,0.4)',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
     marginBottom: 16,
     marginTop: 8,
   },
+  // matches HTML: glass-card rounded-[32px]
   scanItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: colors.surfaceGlass,
-    borderRadius: borderRadius.lg,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 32,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.1)',
     marginBottom: 8,
   },
   scanLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.text,
+    color: '#FFFFFF',
   },
   scanDate: {
     fontSize: 12,
     fontWeight: '500',
-    color: colors.textTertiary,
+    color: 'rgba(185,131,255,0.4)',
     marginTop: 2,
   },
 
-  // Empty state
+  // matches HTML: glass-card rounded-[32px] p-10 flex flex-col items-center justify-center text-center space-y-4
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 24,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    padding: 40,
   },
+  // matches HTML: w-16 h-16 border-2 border-dashed border-purple-300/20 rounded-full
   emptyIconWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.lg,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: 'rgba(185,131,255,0.2)',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
+  // matches HTML: font-bold text-lg
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '900',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 6,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
   },
+  // matches HTML: text-sm text-purple-300/40 px-6
   emptySubtext: {
     fontSize: 14,
-    fontWeight: '500',
-    color: colors.textSecondary,
+    fontWeight: '400',
+    color: 'rgba(185,131,255,0.4)',
     textAlign: 'center',
     lineHeight: 20,
+    paddingHorizontal: 24,
   },
 
-  // Theme toggle
+  // matches HTML: glass-card rounded-[32px] p-5 flex items-center justify-between
   themeRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -512,40 +534,45 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 24,
   },
+  // matches HTML: flex items-center gap-4
   themeLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
   },
+  // matches HTML: font-bold text-lg leading-tight
   themeLabel: {
-    fontSize: 16,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0,
   },
+  // matches HTML: text-sm text-purple-300/60
   themeDesc: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '400',
     marginTop: 2,
   },
 
-  // Sign Out
+  // matches HTML: border-2 border-orange-500/50 rounded-full px-8 py-4 font-black tracking-widest text-xs uppercase
   signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
     borderWidth: 2,
-    borderColor: THEME_COLORS.orange,
-    borderRadius: borderRadius.full,
-    paddingVertical: 18,
-    marginTop: 32,
+    borderColor: 'rgba(249,115,22,0.5)',
+    borderRadius: 999,
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    marginTop: 16,
+    alignSelf: 'center',
   },
+  // matches HTML: text-orange-400 font-black tracking-widest text-xs uppercase
   signOutText: {
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '900',
-    color: THEME_COLORS.orange,
+    color: '#FB923C',
     textTransform: 'uppercase',
-    letterSpacing: 2,
+    letterSpacing: 4,
   },
 })
