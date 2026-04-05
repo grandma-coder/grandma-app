@@ -1,3 +1,15 @@
+/**
+ * Root Layout — Auth guard + providers
+ *
+ * Stack: React Native + Expo Router + TypeScript + NativeWind
+ * Backend: Supabase Auth
+ *
+ * Redirects:
+ * - Not logged in → (auth)/welcome
+ * - Logged in, no children → onboarding/journey
+ * - Logged in, has children → (tabs)
+ */
+
 import { useEffect, useState } from 'react'
 import { View, ActivityIndicator } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
@@ -6,8 +18,8 @@ import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
 import { initRevenueCat } from '../lib/revenue'
-import { colors } from '../constants/theme'
 import { ThemeProvider } from '../components/ui/ThemeProvider'
+import { useTheme } from '../constants/theme'
 import type { Session } from '@supabase/supabase-js'
 import type { ChildWithRole, CaregiverPermissions } from '../types'
 
@@ -26,6 +38,7 @@ export default function RootLayout() {
   const setChildren = useChildStore((s) => s.setChildren)
   const setMode = useModeStore((s) => s.setMode)
 
+  // ─── Auth listener ────────────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
@@ -70,7 +83,7 @@ export default function RootLayout() {
           setChildren(mapped)
           setHasChildren(true)
         } else {
-          // Fallback: load own children directly (pre-migration compatibility)
+          // Fallback: load own children directly
           const { data: ownChildren } = await supabase
             .from('children')
             .select('*')
@@ -109,13 +122,14 @@ export default function RootLayout() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // ─── Route guard ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (loading) return
 
     const inAuth = segments[0] === '(auth)'
 
     if (!session && !inAuth) {
-      router.replace('/(auth)/sign-in')
+      router.replace('/(auth)/welcome')
     } else if (session && !hasChildren && segments[0] !== 'onboarding') {
       router.replace('/onboarding/journey')
     } else if (session && hasChildren && inAuth) {
@@ -123,12 +137,9 @@ export default function RootLayout() {
     }
   }, [loading, session, hasChildren, segments])
 
+  // ─── Loading state ────────────────────────────────────────────────────────
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
-    )
+    return <LoadingScreen />
   }
 
   return (
@@ -137,6 +148,7 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="onboarding" />
           <Stack.Screen name="pillar/[id]" />
           <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
           <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
@@ -151,5 +163,14 @@ export default function RootLayout() {
         </Stack>
       </QueryClientProvider>
     </ThemeProvider>
+  )
+}
+
+function LoadingScreen() {
+  const { colors } = useTheme()
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg }}>
+      <ActivityIndicator size="large" color={colors.primary} />
+    </View>
   )
 }
