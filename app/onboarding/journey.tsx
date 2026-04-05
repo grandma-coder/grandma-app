@@ -1,174 +1,287 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+/**
+ * B1 — Journey Selection Screen
+ *
+ * Multi-select: user picks one or more behaviors (pre-pregnancy, pregnancy, kids).
+ * Selections stored in useBehaviorStore. Primary mode set in useModeStore.
+ * Continue → queues onboarding flows for each selected behavior.
+ */
+
+import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useJourneyStore } from '../../store/useJourneyStore'
+import { Moon, Heart, Star, Check } from 'lucide-react-native'
+import { useTheme, brand } from '../../constants/theme'
+import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
-import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { THEME_COLORS, spacing, borderRadius } from '../../constants/theme'
-import type { JourneyMode } from '../../types'
 
 const JOURNEYS: {
-  id: JourneyMode
-  journey: 'pregnancy' | 'newborn'
-  icon: string
-  iconColor: string
-  iconBg: string
+  id: Behavior
+  icon: typeof Moon
   title: string
   subtitle: string
-  next: string
+  color: string
 }[] = [
   {
     id: 'pre-pregnancy',
-    journey: 'newborn',
-    icon: '✨',
-    iconColor: THEME_COLORS.pink,
-    iconBg: 'rgba(255,138,216,0.15)',
-    title: 'I want to be pregnant',
-    subtitle: 'Prepare, learn, and start your journey to parenthood.',
-    next: '/onboarding/parent-name',
+    icon: Moon,
+    title: 'Pre-Pregnancy & Cycle Tracking',
+    subtitle: 'Track your cycle and prepare for what comes next',
+    color: brand.prePregnancy,
   },
   {
     id: 'pregnancy',
-    journey: 'pregnancy',
-    icon: '🤰',
-    iconColor: THEME_COLORS.purple,
-    iconBg: 'rgba(185,131,255,0.15)',
-    title: "I'm pregnant",
-    subtitle: 'Guided wisdom for each trimester of your growth.',
-    next: '/onboarding/parent-name',
+    icon: Heart,
+    title: 'Pregnancy',
+    subtitle: 'Follow your pregnancy week by week',
+    color: brand.pregnancy,
   },
   {
     id: 'kids',
-    journey: 'newborn',
-    icon: '👶',
-    iconColor: THEME_COLORS.blue,
-    iconBg: 'rgba(77,150,255,0.15)',
+    icon: Star,
     title: 'I have kids',
-    subtitle: "Nurturing insights for your little one's milestones.",
-    next: '/onboarding/activities',
+    subtitle: 'Track health, growth, and every beautiful moment',
+    color: brand.kids,
   },
 ]
 
-export default function JourneySelect() {
-  const setJourney = useJourneyStore((s) => s.setJourney)
-  const setMode = useModeStore((s) => s.setMode)
-  const insets = useSafeAreaInsets()
+/** First onboarding route per behavior */
+const FIRST_ROUTE: Record<Behavior, string> = {
+  'pre-pregnancy': '/onboarding/cycle',
+  pregnancy: '/onboarding/pregnancy',
+  kids: '/onboarding/kids',
+}
 
-  function handleSelect(item: (typeof JOURNEYS)[number]) {
-    setMode(item.id)
-    setJourney(item.journey)
-    router.push(item.next as any)
+export default function JourneyScreen() {
+  const insets = useSafeAreaInsets()
+  const { colors, radius } = useTheme()
+
+  const behaviors = useBehaviorStore((s) => s.behaviors)
+  const toggleBehavior = useBehaviorStore((s) => s.toggleBehavior)
+  const setOnboardingQueue = useBehaviorStore((s) => s.setOnboardingQueue)
+  const setMode = useModeStore((s) => s.setMode)
+
+  const hasSelection = behaviors.length > 0
+
+  function handleContinue() {
+    if (!hasSelection) return
+
+    // Set primary mode to first selected behavior
+    setMode(behaviors[0])
+
+    // Queue remaining behaviors for sequential onboarding
+    const [first, ...rest] = behaviors
+    setOnboardingQueue(rest)
+
+    router.push(FIRST_ROUTE[first] as any)
   }
 
   return (
-    <CosmicBackground>
-      <View style={[styles.container, { paddingTop: insets.top + 40 }]}>
-        <Text style={styles.question}>
-          Are you expecting or is your{'\n'}little one already here?
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 120 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <Text style={[styles.heading, { color: colors.text }]}>
+          Where are you{'\n'}on your journey?
         </Text>
 
-        <View style={styles.cards}>
-          {JOURNEYS.map((j) => (
-            <Pressable
-              key={j.id}
-              onPress={() => {
-                console.log('Journey selected:', j.id, '→', j.next)
-                handleSelect(j)
-              }}
-              style={({ pressed }) => [
-                styles.card,
-                pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
-              ]}
-            >
-              <View style={[styles.iconCircle, { backgroundColor: j.iconBg }]}>
-                <Text style={styles.icon}>{j.icon}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>{j.title}</Text>
-                <Text style={styles.cardSubtitle}>{j.subtitle}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
-            </Pressable>
-          ))}
-        </View>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          Pick all that apply — Grandma's here for every chapter of your story.
+        </Text>
 
-        {/* Bottom section */}
-        <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
-          <Text style={styles.basicsTitle}>The Basics</Text>
-          <Text style={styles.basicsSubtitle}>
-            We'll collect a few details next to personalize your experience.
-          </Text>
+        {/* Journey cards */}
+        <View style={styles.cards}>
+          {JOURNEYS.map((journey) => {
+            const selected = behaviors.includes(journey.id)
+            const Icon = journey.icon
+
+            return (
+              <Pressable
+                key={journey.id}
+                onPress={() => toggleBehavior(journey.id)}
+                style={({ pressed }) => [
+                  styles.card,
+                  {
+                    backgroundColor: colors.surface,
+                    borderRadius: radius.xl,
+                    borderColor: selected ? colors.primary : colors.border,
+                    borderWidth: selected ? 2 : 1,
+                  },
+                  selected && {
+                    backgroundColor: colors.primaryTint,
+                  },
+                  pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
+                ]}
+              >
+                {/* Icon circle */}
+                <View
+                  style={[
+                    styles.iconCircle,
+                    {
+                      backgroundColor: selected
+                        ? journey.color + '20'
+                        : colors.surfaceGlass,
+                    },
+                  ]}
+                >
+                  <Icon
+                    size={28}
+                    color={selected ? journey.color : colors.textMuted}
+                    strokeWidth={2}
+                  />
+                </View>
+
+                {/* Text */}
+                <View style={styles.cardText}>
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>
+                    {journey.title}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cardSubtitle,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    {journey.subtitle}
+                  </Text>
+                </View>
+
+                {/* Check indicator */}
+                {selected && (
+                  <View
+                    style={[
+                      styles.checkCircle,
+                      { backgroundColor: colors.primary },
+                    ]}
+                  >
+                    <Check size={16} color="#FFFFFF" strokeWidth={3} />
+                  </View>
+                )}
+              </Pressable>
+            )
+          })}
         </View>
-      </View>
-    </CosmicBackground>
+      </ScrollView>
+
+      {/* Continue button — fixed at bottom */}
+      {hasSelection && (
+        <View
+          style={[
+            styles.bottomBar,
+            {
+              paddingBottom: insets.bottom + 16,
+              backgroundColor: colors.bg,
+            },
+          ]}
+        >
+          <Pressable
+            onPress={handleContinue}
+            style={({ pressed }) => [
+              styles.continueButton,
+              {
+                backgroundColor: colors.primary,
+                borderRadius: radius.lg,
+              },
+              pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
+            ]}
+          >
+            <Text style={styles.continueText}>Continue</Text>
+          </Pressable>
+        </View>
+      )}
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    paddingHorizontal: spacing['2xl'],
   },
-  question: {
-    fontSize: 28,
+  scroll: {
+    paddingHorizontal: 24,
+  },
+
+  // Header
+  heading: {
+    fontSize: 36,
     fontWeight: '900',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    lineHeight: 34,
-    letterSpacing: -0.5,
-    marginBottom: 36,
+    letterSpacing: -0.8,
+    lineHeight: 42,
+    marginBottom: 12,
   },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+
+  // Cards
   cards: {
-    gap: 12,
+    gap: 16,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 32,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
     padding: 20,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   iconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  icon: {
-    fontSize: 26,
+  cardText: {
+    flex: 1,
+    gap: 4,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 4,
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   cardSubtitle: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.5)',
-    lineHeight: 18,
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 20,
   },
-  bottom: {
-    marginTop: 'auto',
+  checkCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  basicsTitle: {
+
+  // Bottom bar
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  continueButton: {
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  continueText: {
     fontSize: 16,
-    fontWeight: '800',
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: 6,
-  },
-  basicsSubtitle: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.35)',
-    textAlign: 'center',
-    lineHeight: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
 })

@@ -1,0 +1,444 @@
+/**
+ * Cycle Log Forms — 6 bottom sheet forms for cycle tracking.
+ *
+ * Each form saves to Supabase cycle_logs table.
+ * Forms: PeriodStart, PeriodEnd, Symptoms, Mood, Temperature, Intimacy
+ */
+
+import { useState } from 'react'
+import { View, Text, TextInput, Pressable, Alert, StyleSheet, ActivityIndicator } from 'react-native'
+import {
+  Droplets,
+  Thermometer,
+  Heart,
+  Smile,
+  Frown,
+  Meh,
+  Laugh,
+  Zap,
+  Moon,
+  Check,
+} from 'lucide-react-native'
+import { useTheme, brand } from '../../constants/theme'
+import { supabase } from '../../lib/supabase'
+
+// ─── Shared save helper ────────────────────────────────────────────────────
+
+async function saveCycleLog(
+  date: string,
+  type: string,
+  value?: string,
+  notes?: string
+) {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+
+  const { error } = await supabase.from('cycle_logs').insert({
+    user_id: session.user.id,
+    date,
+    type,
+    value: value ?? null,
+    notes: notes ?? null,
+  })
+  if (error) throw error
+}
+
+// ─── Period Start Form ─────────────────────────────────────────────────────
+
+export function PeriodStartForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    try {
+      await saveCycleLog(date, 'period_start', null, notes || undefined)
+      onSaved()
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconRow, { backgroundColor: brand.phase.menstrual + '15' }]}>
+        <Droplets size={24} color={brand.phase.menstrual} strokeWidth={2} />
+        <Text style={[styles.formLabel, { color: colors.text }]}>Period started on {formatDate(date)}</Text>
+      </View>
+      <TextInput
+        value={notes}
+        onChangeText={setNotes}
+        placeholder="Notes (optional)"
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+      />
+      <SaveButton onPress={save} saving={saving} />
+    </View>
+  )
+}
+
+// ─── Period End Form ───────────────────────────────────────────────────────
+
+export function PeriodEndForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    try {
+      await saveCycleLog(date, 'period_end')
+      onSaved()
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconRow, { backgroundColor: brand.phase.menstrual + '15' }]}>
+        <Droplets size={24} color={brand.phase.menstrual} strokeWidth={2} />
+        <Text style={[styles.formLabel, { color: colors.text }]}>Period ended on {formatDate(date)}</Text>
+      </View>
+      <SaveButton onPress={save} saving={saving} />
+    </View>
+  )
+}
+
+// ─── Symptoms Form ─────────────────────────────────────────────────────────
+
+const SYMPTOMS = [
+  'Cramps', 'Headache', 'Bloating', 'Fatigue', 'Nausea',
+  'Back pain', 'Breast tenderness', 'Acne', 'Insomnia', 'Cravings',
+]
+
+export function SymptomsForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [selected, setSelected] = useState<string[]>([])
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  function toggle(s: string) {
+    setSelected((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+    )
+  }
+
+  async function save() {
+    if (selected.length === 0) return
+    setSaving(true)
+    try {
+      await saveCycleLog(date, 'symptom', selected.join(', '), notes || undefined)
+      onSaved()
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={styles.chipGrid}>
+        {SYMPTOMS.map((s) => {
+          const active = selected.includes(s)
+          return (
+            <Pressable
+              key={s}
+              onPress={() => toggle(s)}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: active ? colors.primaryTint : colors.surface,
+                  borderColor: active ? colors.primary : colors.border,
+                  borderRadius: radius.full,
+                },
+              ]}
+            >
+              {active && <Check size={12} color={colors.primary} strokeWidth={3} />}
+              <Text style={[styles.chipText, { color: active ? colors.primary : colors.text }]}>{s}</Text>
+            </Pressable>
+          )
+        })}
+      </View>
+      <TextInput
+        value={notes}
+        onChangeText={setNotes}
+        placeholder="Additional notes"
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+      />
+      <SaveButton onPress={save} saving={saving} disabled={selected.length === 0} />
+    </View>
+  )
+}
+
+// ─── Mood Form ─────────────────────────────────────────────────────────────
+
+const MOODS = [
+  { id: 'great', icon: Laugh, label: 'Great' },
+  { id: 'good', icon: Smile, label: 'Good' },
+  { id: 'okay', icon: Meh, label: 'Okay' },
+  { id: 'low', icon: Frown, label: 'Low' },
+  { id: 'energetic', icon: Zap, label: 'Energetic' },
+]
+
+export function MoodForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [mood, setMood] = useState<string | null>(null)
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    if (!mood) return
+    setSaving(true)
+    try {
+      await saveCycleLog(date, 'mood', mood, notes || undefined)
+      onSaved()
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={styles.moodRow}>
+        {MOODS.map((m) => {
+          const Icon = m.icon
+          const active = mood === m.id
+          return (
+            <Pressable
+              key={m.id}
+              onPress={() => setMood(m.id)}
+              style={[
+                styles.moodBtn,
+                {
+                  backgroundColor: active ? colors.primaryTint : colors.surface,
+                  borderRadius: radius.lg,
+                },
+              ]}
+            >
+              <Icon size={24} color={active ? colors.primary : colors.textMuted} strokeWidth={2} />
+              <Text style={[styles.moodLabel, { color: active ? colors.primary : colors.textMuted }]}>{m.label}</Text>
+            </Pressable>
+          )
+        })}
+      </View>
+      <TextInput
+        value={notes}
+        onChangeText={setNotes}
+        placeholder="How are you feeling?"
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+      />
+      <SaveButton onPress={save} saving={saving} disabled={!mood} />
+    </View>
+  )
+}
+
+// ─── Temperature Form ──────────────────────────────────────────────────────
+
+export function TemperatureForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [temp, setTemp] = useState('')
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    if (!temp) return
+    setSaving(true)
+    try {
+      await saveCycleLog(date, 'basal_temp', temp, notes || undefined)
+      onSaved()
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconRow, { backgroundColor: brand.accent + '15' }]}>
+        <Thermometer size={24} color={brand.accent} strokeWidth={2} />
+        <Text style={[styles.formLabel, { color: colors.text }]}>Basal Temperature</Text>
+      </View>
+      <View style={[styles.tempRow, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+        <TextInput
+          value={temp}
+          onChangeText={setTemp}
+          placeholder="36.5"
+          placeholderTextColor={colors.textMuted}
+          keyboardType="decimal-pad"
+          style={[styles.tempInput, { color: colors.text }]}
+        />
+        <Text style={[styles.tempUnit, { color: colors.textSecondary }]}>°C</Text>
+      </View>
+      <TextInput
+        value={notes}
+        onChangeText={setNotes}
+        placeholder="Notes (optional)"
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+      />
+      <SaveButton onPress={save} saving={saving} disabled={!temp} />
+    </View>
+  )
+}
+
+// ─── Intimacy Form ─────────────────────────────────────────────────────────
+
+export function IntimacyForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    try {
+      await saveCycleLog(date, 'intercourse', 'yes', notes || undefined)
+      onSaved()
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconRow, { backgroundColor: brand.prePregnancy + '15' }]}>
+        <Heart size={24} color={brand.prePregnancy} strokeWidth={2} />
+        <Text style={[styles.formLabel, { color: colors.text }]}>Intimacy logged for {formatDate(date)}</Text>
+      </View>
+      <TextInput
+        value={notes}
+        onChangeText={setNotes}
+        placeholder="Notes (optional)"
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+      />
+      <SaveButton onPress={save} saving={saving} />
+    </View>
+  )
+}
+
+// ─── Shared Save Button ────────────────────────────────────────────────────
+
+function SaveButton({ onPress, saving, disabled }: { onPress: () => void; saving: boolean; disabled?: boolean }) {
+  const { colors, radius } = useTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={saving || disabled}
+      style={({ pressed }) => [
+        styles.saveBtn,
+        { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: disabled ? 0.4 : 1 },
+        pressed && !disabled && { transform: [{ scale: 0.98 }], opacity: 0.9 },
+      ]}
+    >
+      {saving ? (
+        <ActivityIndicator color="#FFF" />
+      ) : (
+        <Text style={styles.saveBtnText}>Save</Text>
+      )}
+    </Pressable>
+  )
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+// ─── Styles ────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  form: {
+    gap: 16,
+    paddingBottom: 8,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 14,
+    borderRadius: 12,
+  },
+  formLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  input: {
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    height: 48,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  chipGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  moodRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  moodBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    gap: 4,
+  },
+  moodLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  tempRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    height: 56,
+  },
+  tempInput: {
+    flex: 1,
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  tempUnit: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  saveBtn: {
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  saveBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+})

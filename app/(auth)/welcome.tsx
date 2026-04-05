@@ -1,217 +1,300 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+/**
+ * A4 — Welcome + Auth Screen
+ *
+ * Animated GRANDMA wordmark, taglines, Apple + Google OAuth.
+ * Auth state changes trigger route guard in _layout.tsx automatically.
+ */
+
+import { useEffect, useRef, useState } from 'react'
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  Animated,
+  Alert,
+  ActivityIndicator,
+  Platform,
+} from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { colors, THEME_COLORS, borderRadius, spacing, shadows } from '../../constants/theme'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
+import { useTheme, brand } from '../../constants/theme'
+import {
+  signInWithApple,
+  signInWithGoogle,
+  isAppleSignInAvailable,
+} from '../../lib/auth-providers'
 
 export default function Welcome() {
   const insets = useSafeAreaInsets()
+  const { colors, fontSize, fontWeight, radius, spacing } = useTheme()
+
+  // ─── Animated logo ──────────────────────────────────────────────────────
+  const logoOpacity = useRef(new Animated.Value(0)).current
+  const logoScale = useRef(new Animated.Value(0.8)).current
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(logoOpacity, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: true,
+      }),
+      Animated.spring(logoScale, {
+        toValue: 1,
+        tension: 20,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [])
+
+  // ─── Background pulse ───────────────────────────────────────────────────
+  const pulseAnim = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 4000,
+          useNativeDriver: false,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0,
+          duration: 4000,
+          useNativeDriver: false,
+        }),
+      ])
+    ).start()
+  }, [])
+
+  const bgOpacity = pulseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.6, 1],
+  })
+
+  // ─── Auth state ─────────────────────────────────────────────────────────
+  const [appleAvailable, setAppleAvailable] = useState(false)
+  const [loading, setLoading] = useState<'apple' | 'google' | null>(null)
+
+  useEffect(() => {
+    isAppleSignInAvailable().then(setAppleAvailable)
+  }, [])
+
+  async function handleApple() {
+    try {
+      setLoading('apple')
+      await signInWithApple()
+      // Route guard in _layout.tsx handles navigation
+    } catch (e: any) {
+      if (e.code !== 'ERR_REQUEST_CANCELED') {
+        Alert.alert('Sign-In Error', e.message)
+      }
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  async function handleGoogle() {
+    try {
+      setLoading('google')
+      await signInWithGoogle()
+      // Route guard in _layout.tsx handles navigation
+    } catch (e: any) {
+      if (e.message !== 'Google sign-in was cancelled or failed') {
+        Alert.alert('Sign-In Error', e.message)
+      }
+    } finally {
+      setLoading(null)
+    }
+  }
 
   return (
-    <CosmicBackground>
-      <View style={[styles.container, { paddingTop: insets.top + 40 }]}>
-        {/* Cosmic Ring Logo */}
-        <View style={styles.ringSection}>
-          {/* Nebula glow */}
-          <View style={styles.nebulaGlow} />
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+      {/* Animated gradient background */}
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: bgOpacity }]}>
+        <LinearGradient
+          colors={[brand.primaryDark, colors.bg, brand.primaryTint]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
 
-          {/* Ring with 28 dots */}
-          <View style={styles.ringWrapper}>
-            {Array.from({ length: 28 }).map((_, i) => {
-              const angle = (i / 28) * 2 * Math.PI - Math.PI / 2
-              const x = Math.cos(angle) * 60
-              const y = Math.sin(angle) * 60
-              const phaseColors = ['#FF8AD8', '#FF8AD8', '#FF8AD8', '#FF8AD8', '#FF8AD8',
-                '#F4FD50', '#F4FD50', '#F4FD50', '#F4FD50', '#F4FD50', '#F4FD50', '#F4FD50',
-                '#A2FF86', '#A2FF86', '#A2FF86', '#A2FF86',
-                '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF', '#B983FF']
-              return (
-                <View
-                  key={i}
-                  style={[styles.ringDot, {
-                    backgroundColor: phaseColors[i],
-                    left: 70 + x - 3,
-                    top: 70 + y - 3,
-                    opacity: 0.7,
-                  }]}
-                />
-              )
-            })}
-            {/* Center moon */}
-            <View style={styles.ringCenter}>
-              <Ionicons name="moon-outline" size={28} color="rgba(255,255,255,0.4)" />
-            </View>
-          </View>
-        </View>
+      <View style={[styles.container, { paddingTop: insets.top + 80 }]}>
+        {/* Animated GRANDMA wordmark */}
+        <Animated.Text
+          style={[
+            styles.wordmark,
+            {
+              color: colors.primary,
+              opacity: logoOpacity,
+              transform: [{ scale: logoScale }],
+            },
+          ]}
+        >
+          GRANDMA
+        </Animated.Text>
 
-        {/* Brand */}
-        <Text style={styles.brand}>grandma.app</Text>
+        {/* Tagline 1 */}
+        <Text style={[styles.tagline, { color: colors.textSecondary }]}>
+          Your favorite parents tracker and community builder
+        </Text>
 
-        {/* Hero */}
-        <Text style={styles.heroTitle}>Welcome, Dear One.</Text>
-        <Text style={styles.heroSubtitle}>
-          Let Grandma guide you through every step of your journey — from trying to conceive, through pregnancy, and into parenthood.
+        {/* Tagline 2 */}
+        <Text style={[styles.taglineItalic, { color: colors.textMuted }]}>
+          Your support system for the most beautiful journey of your life.
         </Text>
 
         {/* Spacer */}
         <View style={{ flex: 1 }} />
 
-        {/* CTA */}
-        <View style={[styles.cta, { paddingBottom: insets.bottom + 24 }]}>
-          <Pressable
-            onPress={() => router.push('/(auth)/sign-up')}
-            style={({ pressed }) => [styles.ctaButton, pressed && { transform: [{ scale: 0.98 }] }]}
-          >
-            <LinearGradient
-              colors={['#EC4899', '#A855F7', '#6366F1']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.ctaGradient}
+        {/* Auth buttons */}
+        <View style={[styles.authSection, { paddingBottom: insets.bottom + 24 }]}>
+          {/* Apple Sign In */}
+          {appleAvailable && (
+            <Pressable
+              onPress={handleApple}
+              disabled={loading !== null}
+              style={({ pressed }) => [
+                styles.authButton,
+                styles.appleButton,
+                { borderRadius: radius.lg },
+                pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
+                loading === 'apple' && { opacity: 0.6 },
+              ]}
             >
-              <Text style={styles.ctaText}>Begin Your Journey</Text>
-            </LinearGradient>
+              {loading === 'apple' ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
+                  <Text style={styles.appleText}>Continue with Apple</Text>
+                </>
+              )}
+            </Pressable>
+          )}
+
+          {/* Google Sign In */}
+          <Pressable
+            onPress={handleGoogle}
+            disabled={loading !== null}
+            style={({ pressed }) => [
+              styles.authButton,
+              styles.googleButton,
+              { borderRadius: radius.lg, borderColor: colors.border },
+              pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
+              loading === 'google' && { opacity: 0.6 },
+            ]}
+          >
+            {loading === 'google' ? (
+              <ActivityIndicator color="#1A1A2E" />
+            ) : (
+              <>
+                <Ionicons name="logo-google" size={18} color="#1A1A2E" />
+                <Text style={styles.googleText}>Continue with Google</Text>
+              </>
+            )}
           </Pressable>
 
-          <Pressable onPress={() => router.push('/(auth)/sign-in')}>
-            <Text style={styles.signInLink}>
-              Already a member? <Text style={styles.signInBold}>Sign in</Text>
-            </Text>
-          </Pressable>
-
-          <Text style={styles.termsText}>
+          {/* Terms */}
+          <Text style={[styles.terms, { color: colors.textMuted }]}>
             By continuing, you agree to Grandma's{' '}
-            <Text style={styles.termsLink}>Terms of Serenity</Text> and{' '}
-            <Text style={styles.termsLink}>Privacy Policy</Text>.
+            <Text style={{ color: colors.textSecondary, textDecorationLine: 'underline' }}>
+              Terms of Service
+            </Text>{' '}
+            and{' '}
+            <Text style={{ color: colors.textSecondary, textDecorationLine: 'underline' }}>
+              Privacy Policy
+            </Text>
+            .
           </Text>
         </View>
       </View>
-    </CosmicBackground>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    paddingHorizontal: spacing['2xl'],
+    paddingHorizontal: 24,
     alignItems: 'center',
   },
 
-  // Cosmic ring
-  ringSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 32,
-    position: 'relative',
-  },
-  nebulaGlow: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: '#B983FF',
-    opacity: 0.08,
-  },
-  ringWrapper: {
-    width: 140,
-    height: 140,
-    position: 'relative',
-  },
-  ringDot: {
-    position: 'absolute',
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  ringCenter: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // Brand
-  brand: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-    letterSpacing: 1,
-    marginBottom: 40,
-  },
-
-  // Hero
-  heroTitle: {
-    fontSize: 44,
+  // Wordmark
+  wordmark: {
+    fontSize: 48,
     fontWeight: '900',
-    color: colors.text,
-    textAlign: 'center',
-    letterSpacing: -1,
-    lineHeight: 48,
-    marginBottom: 16,
+    letterSpacing: 6,
+    marginBottom: 24,
   },
-  heroSubtitle: {
+
+  // Taglines
+  tagline: {
     fontSize: 16,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.6)',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 22,
+    marginBottom: 8,
     paddingHorizontal: 16,
   },
-
-  // CTA
-  cta: {
-    width: '100%',
-    alignItems: 'center',
-    gap: 16,
-  },
-  ctaButton: {
-    width: '100%',
-    maxWidth: 320,
-    borderRadius: borderRadius.full,
-    overflow: 'hidden',
-    shadowColor: '#EC4899',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 25,
-  },
-  ctaGradient: {
-    height: 56,
-    borderRadius: borderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ctaText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-
-  signInLink: {
+  taglineItalic: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
-  },
-  signInBold: {
-    color: colors.text,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-    textDecorationColor: 'rgba(255,255,255,0.2)',
-  },
-
-  termsText: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.3)',
+    fontWeight: '400',
+    fontStyle: 'italic',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 20,
     paddingHorizontal: 24,
   },
-  termsLink: {
-    textDecorationLine: 'underline',
-    color: 'rgba(255,255,255,0.5)',
+
+  // Auth section
+  authSection: {
+    width: '100%',
+    gap: 12,
+    alignItems: 'center',
+  },
+  authButton: {
+    width: '100%',
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+
+  // Apple
+  appleButton: {
+    backgroundColor: '#000000',
+  },
+  appleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+
+  // Google
+  googleButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+  },
+  googleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A2E',
+  },
+
+  // Terms
+  terms: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 16,
+    marginTop: 8,
   },
 })

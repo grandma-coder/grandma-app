@@ -160,6 +160,10 @@ export default function RootLayout() {
           <Stack.Screen name="birth-plan" />
           <Stack.Screen name="channels" />
           <Stack.Screen name="exchange" />
+          <Stack.Screen name="insights" />
+          <Stack.Screen name="grandma-talk" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
         </Stack>
       </QueryClientProvider>
     </ThemeProvider>

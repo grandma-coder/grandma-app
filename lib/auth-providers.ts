@@ -60,7 +60,11 @@ export async function signInWithGoogle() {
   if (error) throw error
   if (!data.url) throw new Error('No OAuth URL returned')
 
-  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl)
+
+  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl, {
+    preferEphemeralSession: true,
+    showInRecents: false,
+  })
 
   if (result.type === 'success' && result.url) {
     const url = new URL(result.url)

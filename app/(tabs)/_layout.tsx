@@ -19,7 +19,7 @@ function CenterTabButton() {
   return (
     <View style={styles.centerWrapper}>
       <Pressable
-        onPress={() => router.push('/(tabs)/library')}
+        onPress={() => router.push('/grandma-talk')}
         style={({ pressed }) => [
           styles.centerButton,
           { backgroundColor: brand.primary },

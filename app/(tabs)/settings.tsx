@@ -1,578 +1,291 @@
-import { useEffect, useState, useRef } from 'react'
-import { View, Text, ScrollView, Pressable, Alert, Switch, StyleSheet } from 'react-native'
+/**
+ * E2 — Profile Tab Screen
+ *
+ * User header + section cards navigating to sub-screens.
+ * Sign out at bottom.
+ */
+
+import { useState, useEffect } from 'react'
+import { View, Text, Pressable, ScrollView, Alert, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import {
+  User,
+  Heart,
+  Users,
+  Image,
+  ClipboardList,
+  Bell,
+  Settings,
+  Shield,
+  CreditCard,
+  Lock,
+  ChevronRight,
+  LogOut,
+  Moon,
+  Baby,
+  Sparkles,
+} from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { supabase } from '../../lib/supabase'
-import { useChildStore } from '../../store/useChildStore'
+import { useTheme, brand } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
-import { useJourneyStore } from '../../store/useJourneyStore'
-import { useThemeStore } from '../../store/useThemeStore'
-import { ModeSwitcher } from '../../components/home/ModeSwitcher'
-import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { useAppTheme } from '../../components/ui/ThemeProvider'
-import { colors, THEME_COLORS, borderRadius, shadows, spacing, typography } from '../../constants/theme'
+import { useBehaviorStore } from '../../store/useBehaviorStore'
+import { useChildStore } from '../../store/useChildStore'
+import { supabase } from '../../lib/supabase'
 
-interface ScanEntry {
+// ─── Section config ────────────────────────────────────────────────────────
+
+interface SectionItem {
   id: string
-  scan_type: string
-  created_at: string
+  label: string
+  icon: typeof User
+  color: string
+  route?: string
+  onPress?: () => void
 }
 
-function getAge(birthDate: string): string {
-  if (!birthDate) return ''
-  const birth = new Date(birthDate)
-  const now = new Date()
-  const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
-  if (months < 1) return 'Newborn'
-  const years = Math.floor(months / 12)
-  const rem = months % 12
-  if (years >= 1 && rem > 0) return `${years}Y ${rem}M OLD`
-  if (years >= 1) return `${years}Y OLD`
-  return `${months}M OLD`
-}
+// ─── Main Component ────────────────────────────────────────────────────────
 
-const scanTypeLabel: Record<string, string> = {
-  medicine: 'Medicine scan',
-  food: 'Food scan',
-  nutrition: 'Nutrition check',
-  general: 'General scan',
-}
-
-export default function Settings() {
+export default function ProfileScreen() {
+  const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
-  const child = useChildStore((s) => s.activeChild)
-  const clearChildren = useChildStore((s) => s.clearChildren)
   const mode = useModeStore((s) => s.mode)
-  const parentName = useJourneyStore((s) => s.parentName)
-  const dueDate = useJourneyStore((s) => s.dueDate)
-  const weekNumber = useJourneyStore((s) => s.weekNumber)
-  const theme = useThemeStore((s) => s.theme)
-  const toggleTheme = useThemeStore((s) => s.toggleTheme)
-  const { colors } = useAppTheme()
-  const [scans, setScans] = useState<ScanEntry[]>([])
-  const [adminMode, setAdminMode] = useState(false)
-  const tapCountRef = useRef(0)
-  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const behaviors = useBehaviorStore((s) => s.behaviors)
+  const children = useChildStore((s) => s.children)
 
-  function handleHeadingPress() {
-    tapCountRef.current += 1
-    if (tapTimerRef.current) clearTimeout(tapTimerRef.current)
-    if (tapCountRef.current >= 5) {
-      tapCountRef.current = 0
-      setAdminMode((prev) => !prev)
-    } else {
-      tapTimerRef.current = setTimeout(() => { tapCountRef.current = 0 }, 1500)
-    }
-  }
+  const [userName, setUserName] = useState<string | null>(null)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!child?.id) return
-    supabase
-      .from('scan_history')
-      .select('id, scan_type, created_at')
-      .eq('child_id', child.id)
-      .order('created_at', { ascending: false })
-      .limit(10)
-      .then(({ data }) => {
-        if (data) setScans(data)
-      })
-  }, [child?.id])
+    loadProfile()
+  }, [])
 
-  async function signOut() {
-    await supabase.auth.signOut()
-    clearChildren()
+  async function loadProfile() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    setUserEmail(session.user.email ?? null)
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('user_id', session.user.id)
+      .single()
+
+    if (profile?.name) setUserName(profile.name)
   }
 
+  async function handleSignOut() {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          await supabase.auth.signOut()
+          router.replace('/(auth)/welcome')
+        },
+      },
+    ])
+  }
+
+  const behaviorLabel =
+    mode === 'pre-pregnancy' ? 'Cycle Tracking'
+    : mode === 'pregnancy' ? 'Pregnancy'
+    : 'Kids'
+
+  const behaviorColor =
+    mode === 'pre-pregnancy' ? brand.prePregnancy
+    : mode === 'pregnancy' ? brand.pregnancy
+    : brand.kids
+
+  // Build sections
+  const sections: SectionItem[][] = [
+    // Personal
+    [
+      { id: 'personal', label: 'My Profile', icon: User, color: colors.primary, route: '/profile/personal' },
+      { id: 'behavior', label: `${behaviorLabel} Profile`, icon: mode === 'pre-pregnancy' ? Moon : mode === 'pregnancy' ? Baby : Sparkles, color: behaviorColor, route: '/profile/personal' },
+    ],
+    // Care & Family
+    [
+      { id: 'care-circle', label: 'Care Circle', icon: Users, color: brand.secondary, route: '/profile/care-circle' },
+      ...(mode === 'kids' && children.length > 0 ? [
+        { id: 'memories', label: 'Memories', icon: Image, color: brand.accent, route: '/profile/personal' },
+        { id: 'health-history', label: 'Health History', icon: ClipboardList, color: brand.phase.ovulation, route: '/profile/personal' },
+      ] : []),
+    ],
+    // App settings
+    [
+      { id: 'notifications', label: 'Notifications', icon: Bell, color: brand.accent, route: '/profile/notifications' },
+      { id: 'settings', label: 'Units & Display', icon: Settings, color: colors.textSecondary, route: '/profile/settings' },
+    ],
+    // Account
+    [
+      { id: 'subscription', label: 'Subscription & Plan', icon: CreditCard, color: brand.phase.ovulation, route: '/paywall' },
+      { id: 'account', label: 'Account & Security', icon: Lock, color: brand.error, route: '/profile/settings' },
+      { id: 'privacy', label: 'Data & Privacy', icon: Shield, color: brand.success, route: '/profile/settings' },
+    ],
+  ]
+
   return (
-    <CosmicBackground>
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <ScrollView
         contentContainerStyle={[
-          styles.content,
+          styles.scroll,
           { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.label}>ACCOUNT</Text>
-        <Pressable onPress={handleHeadingPress}>
-          <Text style={styles.heading}>Settings</Text>
-        </Pressable>
-
-        {/* Super Admin Mode Switcher — hidden, tap heading 5x to toggle */}
-        {adminMode && (
-          <View style={{ marginBottom: 24 }}>
-            <Text style={[styles.sectionLabel, { color: THEME_COLORS.orange }]}>ADMIN MODE</Text>
-            <ModeSwitcher />
+        {/* 1. User Header */}
+        <View style={styles.header}>
+          <View style={[styles.avatar, { backgroundColor: colors.primaryTint }]}>
+            <User size={32} color={colors.primary} strokeWidth={1.5} />
           </View>
-        )}
-
-        {/* Profile Card — adapts per mode */}
-        {mode === 'pre-pregnancy' && (
-          <View style={[styles.profileCard, { backgroundColor: THEME_COLORS.pink }]}>
-            <View style={styles.profileTop}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarEmoji}>✨</Text>
-              </View>
-              <Text style={styles.childName}>{parentName ?? 'Your Journey'}</Text>
-              <Text style={styles.childAge}>TRYING TO CONCEIVE</Text>
-            </View>
-          </View>
-        )}
-
-        {mode === 'pregnancy' && (
-          <View style={[styles.profileCard, { backgroundColor: THEME_COLORS.purple }]}>
-            <View style={styles.profileTop}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarEmoji}>🤰</Text>
-              </View>
-              <Text style={styles.childName}>{parentName ?? 'Your Pregnancy'}</Text>
-              {weekNumber ? (
-                <Text style={styles.childAge}>WEEK {weekNumber}</Text>
-              ) : null}
-            </View>
-            {dueDate && (
-              <View style={styles.infoRow}>
-                <View style={styles.infoItem}>
-                  <Ionicons name="calendar-outline" size={14} color="rgba(255,255,255,0.7)" />
-                  <Text style={styles.infoText}>Due: {dueDate}</Text>
-                </View>
-              </View>
-            )}
-          </View>
-        )}
-
-        {mode === 'kids' && (
-          child ? (
-            <View style={styles.profileCard}>
-              <View style={styles.profileTop}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarEmoji}>👶</Text>
-                </View>
-                <Text style={styles.childName}>{child.name}</Text>
-                {child.birthDate ? (
-                  <Text style={styles.childAge}>{getAge(child.birthDate)}</Text>
-                ) : null}
-              </View>
-              <View style={styles.infoRow}>
-                {child.birthDate ? (
-                  <View style={styles.infoItem}>
-                    <Ionicons name="calendar-outline" size={14} color="rgba(255,255,255,0.7)" />
-                    <Text style={styles.infoText}>{child.birthDate}</Text>
-                  </View>
-                ) : null}
-                {child.weightKg > 0 ? (
-                  <View style={styles.infoItem}>
-                    <Ionicons name="scale-outline" size={14} color="rgba(255,255,255,0.7)" />
-                    <Text style={styles.infoText}>{child.weightKg} kg</Text>
-                  </View>
-                ) : null}
-              </View>
-              {child.allergies.length > 0 && (
-                <View style={styles.allergyRow}>
-                  <Ionicons name="warning-outline" size={16} color={THEME_COLORS.yellow} />
-                  <Text style={styles.allergyText}>
-                    Allergies: {child.allergies.join(', ')}
-                  </Text>
-                </View>
-              )}
-            </View>
-          ) : (
-            <Pressable
-              onPress={() => router.push('/onboarding/journey')}
-              style={styles.addChildButton}
-            >
-              <Text style={styles.addChildText}>Add your child's profile</Text>
-            </Pressable>
-          )
-        )}
-
-        {/* Manage Caregivers — Kids mode only */}
-        {mode === 'kids' && child && child.caregiverRole === 'parent' && (
-          <Pressable
-            onPress={() => router.push('/manage-caregivers')}
-            style={styles.caregiversCard}
-          >
-            <View style={styles.caregiversIconWrap}>
-              <Ionicons name="people" size={20} color={THEME_COLORS.pink} />
-            </View>
-            <Text style={styles.caregiversText}>Manage Caregivers</Text>
-            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
-          </Pressable>
-        )}
-
-        {mode === 'kids' && child && child.caregiverRole !== 'parent' && (
-          <View style={styles.roleBadge}>
-            <Ionicons name="shield-checkmark-outline" size={16} color={THEME_COLORS.green} />
-            <Text style={styles.roleBadgeText}>
-              You're a {child.caregiverRole} for {child.name}
+          <Text style={[styles.userName, { color: colors.text }]}>
+            {userName ?? 'Hello, dear'}
+          </Text>
+          {userEmail && (
+            <Text style={[styles.userEmail, { color: colors.textMuted }]}>
+              {userEmail}
             </Text>
+          )}
+          <View style={styles.badgeRow}>
+            {behaviors.length > 0
+              ? behaviors.map((b) => (
+                  <View
+                    key={b}
+                    style={[
+                      styles.badge,
+                      {
+                        backgroundColor:
+                          (b === 'pre-pregnancy' ? brand.prePregnancy
+                          : b === 'pregnancy' ? brand.pregnancy
+                          : brand.kids) + '20',
+                        borderRadius: radius.full,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.badgeText,
+                        {
+                          color:
+                            b === 'pre-pregnancy' ? brand.prePregnancy
+                            : b === 'pregnancy' ? brand.pregnancy
+                            : brand.kids,
+                        },
+                      ]}
+                    >
+                      {b === 'pre-pregnancy' ? 'Cycle' : b === 'pregnancy' ? 'Pregnancy' : 'Kids'}
+                    </Text>
+                  </View>
+                ))
+              : (
+                <View style={[styles.badge, { backgroundColor: behaviorColor + '20', borderRadius: radius.full }]}>
+                  <Text style={[styles.badgeText, { color: behaviorColor }]}>{behaviorLabel}</Text>
+                </View>
+              )
+            }
           </View>
-        )}
-
-        {/* Scan History */}
-        <Text style={styles.sectionLabel}>SCAN HISTORY</Text>
-        {scans.length > 0 ? (
-          scans.map((scan) => (
-            <View key={scan.id} style={styles.scanItem}>
-              <Ionicons name="scan-outline" size={18} color={THEME_COLORS.yellow} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.scanLabel}>
-                  {scanTypeLabel[scan.scan_type] ?? scan.scan_type}
-                </Text>
-                <Text style={styles.scanDate}>
-                  {new Date(scan.created_at).toLocaleDateString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </Text>
-              </View>
-            </View>
-          ))
-        ) : (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIconWrap}>
-              <Ionicons name="camera-outline" size={40} color={colors.textTertiary} />
-            </View>
-            <Text style={styles.emptyTitle}>No scans yet</Text>
-            <Text style={styles.emptySubtext}>
-              Scan a medicine or food label to see history here.
-            </Text>
-          </View>
-        )}
-
-        {/* Appearance */}
-        <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>APPEARANCE</Text>
-        <View style={[styles.themeRow, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
-          <View style={styles.themeLeft}>
-            <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: theme === 'dark' ? 'rgba(109,40,217,0.2)' : 'rgba(244,253,80,0.15)', alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons
-                name={theme === 'dark' ? 'moon' : 'sunny'}
-                size={22}
-                color={theme === 'dark' ? '#B983FF' : THEME_COLORS.yellow}
-              />
-            </View>
-            <View>
-              <Text style={[styles.themeLabel, { color: colors.text }]}>
-                {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-              </Text>
-              <Text style={[styles.themeDesc, { color: colors.textTertiary }]}>
-                {theme === 'dark' ? 'Easy on the eyes' : 'Bright and clean'}
-              </Text>
-            </View>
-          </View>
-          <Switch
-            value={theme === 'light'}
-            onValueChange={toggleTheme}
-            trackColor={{ false: '#6D28D9', true: THEME_COLORS.yellow }}
-            thumbColor="#FFFFFF"
-          />
         </View>
 
-        {/* Sign Out */}
+        {/* 2. Section Cards */}
+        {sections.map((group, gi) => (
+          <View
+            key={gi}
+            style={[styles.sectionGroup, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
+          >
+            {group.map((item, ii) => {
+              const Icon = item.icon
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => {
+                    if (item.onPress) item.onPress()
+                    else if (item.route) router.push(item.route as any)
+                  }}
+                  style={({ pressed }) => [
+                    styles.sectionItem,
+                    ii < group.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.borderLight },
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <View style={[styles.sectionIcon, { backgroundColor: item.color + '15' }]}>
+                    <Icon size={18} color={item.color} strokeWidth={2} />
+                  </View>
+                  <Text style={[styles.sectionLabel, { color: colors.text }]}>{item.label}</Text>
+                  <ChevronRight size={18} color={colors.textMuted} />
+                </Pressable>
+              )
+            })}
+          </View>
+        ))}
+
+        {/* 3. Sign Out */}
         <Pressable
-          onPress={() =>
-            Alert.alert('Sign out', 'Are you sure?', [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Sign out', onPress: signOut, style: 'destructive' },
-            ])
-          }
-          style={styles.signOutButton}
+          onPress={handleSignOut}
+          style={({ pressed }) => [
+            styles.signOutBtn,
+            { backgroundColor: colors.surface, borderRadius: radius.xl },
+            pressed && { opacity: 0.7 },
+          ]}
         >
-          <Ionicons name="log-out-outline" size={18} color={THEME_COLORS.orange} />
-          <Text style={styles.signOutText}>Sign Out Account</Text>
+          <LogOut size={18} color={brand.error} strokeWidth={2} />
+          <Text style={[styles.signOutText, { color: brand.error }]}>Sign Out</Text>
         </Pressable>
+
+        <Text style={[styles.version, { color: colors.textMuted }]}>
+          grandma.app v1.0.0
+        </Text>
       </ScrollView>
-    </CosmicBackground>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  // matches HTML: px-6
-  content: {
-    paddingHorizontal: 24,
-  },
-  // matches HTML: text-[10px] font-black tracking-[0.2em] text-purple-300/60 uppercase mb-1
-  label: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: 'rgba(185,131,255,0.6)',
-    letterSpacing: 3,
-    textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  // matches HTML: text-5xl font-display font-black tracking-tighter
-  heading: {
-    fontSize: 48,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -2,
-    textTransform: 'uppercase',
-    marginBottom: 24,
-  },
+  root: { flex: 1 },
+  scroll: { paddingHorizontal: 20 },
 
-  // matches HTML: bg-[#FF8AD8] pink-glow rounded-[48px] p-8 flex flex-col items-center text-center
-  profileCard: {
-    backgroundColor: THEME_COLORS.blue,
-    borderRadius: 48,
-    padding: 32,
-    marginBottom: 16,
-    shadowColor: '#FF8AD8',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.4,
-    shadowRadius: 30,
+  // Header
+  header: { alignItems: 'center', marginBottom: 24, gap: 6 },
+  avatar: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  userName: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  userEmail: { fontSize: 13, fontWeight: '500' },
+  badgeRow: { flexDirection: 'row', gap: 6, marginTop: 8 },
+  badge: { paddingVertical: 4, paddingHorizontal: 12 },
+  badgeText: { fontSize: 12, fontWeight: '700' },
+
+  // Sections
+  sectionGroup: {
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  profileTop: {
+  sectionItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  // matches HTML: w-24 h-24 bg-white/20 rounded-full border-2 border-white/30
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  avatarEmoji: {
-    fontSize: 40,
-  },
-  // matches HTML: text-3xl font-black text-white tracking-tight mb-2
-  childName: {
-    fontSize: 30,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -0.5,
-    marginBottom: 8,
-  },
-  // matches HTML: bg-white/20 px-4 py-1.5 rounded-full text-[10px] font-black tracking-[0.2em]
-  childAge: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 3,
-    textTransform: 'uppercase',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 20,
-    marginBottom: 16,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  infoText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.8)',
-  },
-  allergyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    borderRadius: borderRadius.full,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  allergyText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: THEME_COLORS.yellow,
-    flex: 1,
-  },
-  addChildButton: {
-    backgroundColor: THEME_COLORS.yellow,
-    borderRadius: borderRadius.lg,
-    padding: 20,
-    alignItems: 'center',
-    marginBottom: 16,
-    ...shadows.glow,
-  },
-  addChildText: {
-    color: '#1A1030',
-    fontSize: 16,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-
-  // Caregivers Card
-  caregiversCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 12,
-    backgroundColor: colors.surfaceGlass,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 18,
-    marginBottom: 24,
   },
-  caregiversIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.sm,
-    backgroundColor: 'rgba(255, 138, 216, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  caregiversText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  roleBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(162, 255, 134, 0.1)',
-    borderRadius: borderRadius.lg,
-    padding: 14,
-    marginBottom: 24,
-  },
-  roleBadgeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: THEME_COLORS.green,
-  },
+  sectionIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  sectionLabel: { flex: 1, fontSize: 15, fontWeight: '600' },
 
-  // matches HTML: text-[10px] font-black tracking-[0.2em] text-purple-300/40 uppercase
-  sectionLabel: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: 'rgba(185,131,255,0.4)',
-    letterSpacing: 3,
-    textTransform: 'uppercase',
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  // matches HTML: glass-card rounded-[32px]
-  scanItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: 32,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    marginBottom: 8,
-  },
-  scanLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  scanDate: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: 'rgba(185,131,255,0.4)',
-    marginTop: 2,
-  },
-
-  // matches HTML: glass-card rounded-[32px] p-10 flex flex-col items-center justify-center text-center space-y-4
-  emptyState: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: 32,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    padding: 40,
-  },
-  // matches HTML: w-16 h-16 border-2 border-dashed border-purple-300/20 rounded-full
-  emptyIconWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 2,
-    borderColor: 'rgba(185,131,255,0.2)',
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  // matches HTML: font-bold text-lg
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  // matches HTML: text-sm text-purple-300/40 px-6
-  emptySubtext: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: 'rgba(185,131,255,0.4)',
-    textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: 24,
-  },
-
-  // matches HTML: glass-card rounded-[32px] p-5 flex items-center justify-between
-  themeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: 32,
-    borderWidth: 1,
-    padding: 20,
-    marginBottom: 24,
-  },
-  // matches HTML: flex items-center gap-4
-  themeLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  // matches HTML: font-bold text-lg leading-tight
-  themeLabel: {
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 0,
-  },
-  // matches HTML: text-sm text-purple-300/60
-  themeDesc: {
-    fontSize: 14,
-    fontWeight: '400',
-    marginTop: 2,
-  },
-
-  // matches HTML: border-2 border-orange-500/50 rounded-full px-8 py-4 font-black tracking-widest text-xs uppercase
-  signOutButton: {
+  // Sign out
+  signOutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    borderWidth: 2,
-    borderColor: 'rgba(249,115,22,0.5)',
-    borderRadius: 999,
-    paddingHorizontal: 32,
     paddingVertical: 16,
-    marginTop: 16,
-    alignSelf: 'center',
+    marginTop: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  // matches HTML: text-orange-400 font-black tracking-widest text-xs uppercase
-  signOutText: {
-    fontSize: 12,
-    fontWeight: '900',
-    color: '#FB923C',
-    textTransform: 'uppercase',
-    letterSpacing: 4,
-  },
+  signOutText: { fontSize: 15, fontWeight: '700' },
+  version: { textAlign: 'center', fontSize: 12, fontWeight: '500', marginTop: 16 },
 })
