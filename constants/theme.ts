@@ -1,160 +1,158 @@
 /**
- * grandma.app — Neon Design System
- * React Native Components Export Guide
+ * grandma.app — Dual-Mode Design Token System
  *
- * Fonts: Cabinet Grotesk (display/headings), Satoshi (body), JetBrains Mono (mono/labels)
- * Load via expo-font — see lib/fonts.ts
+ * Stack: React Native + Expo Router + TypeScript + NativeWind
+ * State: Zustand v5. Data fetching: React Query. Backend: Supabase.
+ *
+ * RULE: Components NEVER hardcode hex values — always use semantic tokens.
  */
 
-// ─── NEON COLOR PALETTE ─────────────────────────────────────────────────────
+import { useColorScheme } from 'react-native'
 
-export const THEME_COLORS = {
-  yellow: '#F4FD50',
-  pink: '#FF8AD8',
-  orange: '#FF6B35',
-  blue: '#4D96FF',
-  green: '#A2FF86',
-  purple: '#B983FF',
-  dark: '#0A0A0A',
+// ─── BRAND COLORS (never change between modes) ─────────────────────────────
+
+export const brand = {
+  primary: '#7048B8',
+  primaryLight: '#9B70D4',
+  primaryDark: '#4A2880',
+  primaryTint: '#EFE6FF',
+
+  secondary: '#3B7DD8',
+  secondaryTint: '#E3EDFF',
+
+  accent: '#F59E0B',
+  accentTint: '#FEF5E1',
+
+  success: '#4CAF50',
+  warning: '#FF9800',
+  error: '#F44336',
+
+  // Journey mode colors
+  prePregnancy: '#FF8AD8',
+  pregnancy: '#B983FF',
+  kids: '#4D96FF',
+
+  // Cycle phase colors
+  phase: {
+    menstrual: '#E8557A',
+    follicular: '#D4A017',
+    ovulation: '#3DAA6E',
+    luteal: '#7048B8',
+  },
+
+  // Trimester colors
+  trimester: {
+    first: '#F9D77E',
+    second: '#81C995',
+    third: '#FFAB76',
+  },
 } as const
 
-// ─── DARK COLORS (default) ──────────────────────────────────────────────────
+// ─── LIGHT MODE TOKENS ─────────────────────────────────────────────────────
 
-export const darkColors = {
-  background: '#1A1030',
-  surface: '#241845',
-  surfaceLight: '#2D2055',
-  surfaceGlass: 'rgba(255, 255, 255, 0.05)',
-  accent: THEME_COLORS.yellow,
-  accentGlow: THEME_COLORS.yellow,
-  accentMuted: 'rgba(244, 253, 80, 0.10)',
-  accentDark: '#D4DD30',
-  neon: THEME_COLORS,
-  text: '#FFFFFF',
-  textSecondary: 'rgba(255, 255, 255, 0.50)',
-  textTertiary: 'rgba(255, 255, 255, 0.30)',
-  textOnAccent: '#0A0A0A',
-  border: 'rgba(255, 255, 255, 0.10)',
-  borderLight: 'rgba(255, 255, 255, 0.15)',
-  borderAccent: 'rgba(244, 253, 80, 0.30)',
-  success: THEME_COLORS.green,
-  error: THEME_COLORS.orange,
-  warning: THEME_COLORS.yellow,
-  info: THEME_COLORS.blue,
-  pillar: {
-    milk: THEME_COLORS.blue,
-    food: THEME_COLORS.green,
-    nutrition: THEME_COLORS.yellow,
-    vaccines: THEME_COLORS.pink,
-    clothes: THEME_COLORS.orange,
-    recipes: '#241845',
-    habits: THEME_COLORS.green,
-    milestones: THEME_COLORS.purple,
-    medicine: THEME_COLORS.pink,
-  },
-  role: {
-    parent: 'rgba(162, 255, 134, 0.15)',
-    nanny: 'rgba(185, 131, 255, 0.15)',
-    family: 'rgba(255, 107, 53, 0.15)',
-  },
-  // Tab bar
-  tabBar: '#1A1030',
-  tabBarInactive: 'rgba(255,255,255,0.20)',
-} as const
+export const lightTokens = {
+  bg: '#FBF9FF',
+  bgWarm: '#F5EEFF',
 
-// ─── LIGHT COLORS ───────────────────────────────────────────────────────────
-
-export const lightColors = {
-  background: '#F2F2F7',
   surface: '#FFFFFF',
-  surfaceLight: '#E8E8ED',
-  surfaceGlass: 'rgba(0, 0, 0, 0.05)',
-  accent: '#C8A800',
-  accentGlow: '#C8A800',
-  accentMuted: 'rgba(180, 150, 0, 0.12)',
-  accentDark: '#9A8200',
-  neon: THEME_COLORS,
-  text: '#111111',
-  textSecondary: '#555555',
-  textTertiary: '#888888',
-  textOnAccent: '#111111',
-  border: 'rgba(0, 0, 0, 0.12)',
-  borderLight: 'rgba(0, 0, 0, 0.18)',
-  borderAccent: 'rgba(180, 150, 0, 0.35)',
-  success: '#1A8A1A',
-  error: '#CC3311',
-  warning: '#B89400',
-  info: '#2A6ACB',
-  pillar: {
-    milk: '#D6E8FF',
-    food: '#D6FFD0',
-    nutrition: '#FFF9CC',
-    vaccines: '#FFD6F0',
-    clothes: '#FFD6C4',
-    recipes: '#E8E8ED',
-    habits: '#D6FFD0',
-    milestones: '#E8D6FF',
-    medicine: '#FFD6F0',
-  },
-  role: {
-    parent: 'rgba(26, 138, 26, 0.15)',
-    nanny: 'rgba(120, 60, 200, 0.15)',
-    family: 'rgba(204, 51, 17, 0.15)',
-  },
-  tabBar: '#FFFFFF',
-  tabBarInactive: 'rgba(0,0,0,0.35)',
+  surfaceRaised: '#F3EBF9',
+  surfaceGlass: 'rgba(107,72,184,0.06)',
+
+  border: '#E6DAFB',
+  borderLight: '#F0E8FF',
+  borderStrong: '#C4A8F0',
+
+  text: '#1E1440',
+  textSecondary: '#6B5A8A',
+  textMuted: '#A393C0',
+  textInverse: '#FFFFFF',
+
+  primary: '#7048B8',
+  primaryLight: '#9B70D4',
+  primaryTint: '#EFE6FF',
+
+  secondary: '#3B7DD8',
+  secondaryTint: '#E3EDFF',
+
+  accent: '#F59E0B',
+  accentTint: '#FEF5E1',
+
+  success: '#2E7D32',
+  successTint: '#E8F5E9',
+  warning: '#E65100',
+  error: '#C62828',
+
+  tabBg: '#FFFFFF',
+  tabBorder: 'rgba(0,0,0,0.08)',
+  tabActive: '#7048B8',
+  tabInactive: '#A393C0',
 } as const
 
-// Use a structural type so dark and light palettes are compatible
-export type AppColors = {
-  [K in keyof typeof darkColors]: K extends 'pillar' | 'role' | 'neon'
-    ? Record<string, string>
-    : string
-}
+// ─── DARK MODE TOKENS ──────────────────────────────────────────────────────
 
-export function getColors(theme: 'dark' | 'light'): AppColors {
-  return (theme === 'light' ? lightColors : darkColors) as unknown as AppColors
-}
+export const darkTokens = {
+  bg: '#0E0B1A',
+  bgWarm: '#140F28',
 
-// ─── Default export (dark) — used by files that haven't migrated to context ─
-export const colors = darkColors
+  surface: '#1A1430',
+  surfaceRaised: '#231B42',
+  surfaceGlass: 'rgba(255,255,255,0.06)',
 
-// ─── GRADIENTS ──────────────────────────────────────────────────────────────
+  border: 'rgba(255,255,255,0.12)',
+  borderLight: 'rgba(255,255,255,0.06)',
+  borderStrong: 'rgba(255,255,255,0.24)',
 
-export const gradients = {
-  background: ['#1A1030', '#150D28', '#100A20'] as const,
-  card: ['#241845', '#1A1030'] as const,
-  cardHover: ['#2D2055', '#241845'] as const,
-  accent: [THEME_COLORS.yellow, THEME_COLORS.orange] as const,
-  accentSoft: ['rgba(244, 253, 80, 0.15)', 'rgba(255, 107, 53, 0.08)'] as const,
-  glass: ['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.02)'] as const,
-  pregnancy: ['#1A1030', '#1A0D30'] as const,
-  insight: [THEME_COLORS.blue, THEME_COLORS.pink, THEME_COLORS.green] as const,
+  text: '#FFFFFF',
+  textSecondary: 'rgba(255,255,255,0.65)',
+  textMuted: 'rgba(255,255,255,0.35)',
+  textInverse: '#1E1440',
+
+  primary: '#A07FDC',
+  primaryLight: '#C4A8F0',
+  primaryTint: 'rgba(160,127,220,0.15)',
+
+  secondary: '#6AABF7',
+  secondaryTint: 'rgba(106,171,247,0.15)',
+
+  accent: '#FBBF24',
+  accentTint: 'rgba(251,191,36,0.15)',
+
+  success: '#6EC96E',
+  successTint: 'rgba(110,201,110,0.15)',
+  warning: '#FFB347',
+  error: '#FF7070',
+
+  tabBg: '#0E0B1A',
+  tabBorder: 'rgba(255,255,255,0.06)',
+  tabActive: '#A07FDC',
+  tabInactive: 'rgba(255,255,255,0.40)',
 } as const
 
-export const lightGradients = {
-  background: ['#F5F5F7', '#EDEDF0', '#E8E8EB'] as const,
-  card: ['#FFFFFF', '#F8F8FA'] as const,
-  cardHover: ['#F0F0F2', '#E8E8EB'] as const,
-  accent: ['#E8C800', '#D4A800'] as const,
-  accentSoft: ['rgba(232, 200, 0, 0.10)', 'rgba(217, 69, 32, 0.05)'] as const,
-  glass: ['rgba(0, 0, 0, 0.02)', 'rgba(0, 0, 0, 0.01)'] as const,
-  pregnancy: ['#F5F5F7', '#F0F0FA'] as const,
-  insight: [THEME_COLORS.blue, THEME_COLORS.pink, THEME_COLORS.green] as const,
+// ─── COLOR TOKEN TYPE ──────────────────────────────────────────────────────
+
+// Structural type so light and dark tokens are interchangeable
+export type ColorTokens = { [K in keyof typeof lightTokens]: string }
+
+// ─── STATIC TOKENS (same in both modes) ────────────────────────────────────
+
+export const radius = {
+  sm: 12,
+  md: 16,
+  lg: 32,
+  xl: 48,
+  full: 999,
+  // Legacy alias
+  '2xl': 48,
 } as const
-
-export function getGradients(theme: 'dark' | 'light') {
-  return theme === 'light' ? lightGradients : gradients
-}
-
-// ─── SPACING ────────────────────────────────────────────────────────────────
 
 export const spacing = {
   xs: 4,
   sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+  // Legacy aliases (used by existing code)
   '2xl': 24,
   '3xl': 32,
   '4xl': 40,
@@ -162,157 +160,177 @@ export const spacing = {
   '6xl': 64,
 } as const
 
-// ─── BORDER RADIUS ──────────────────────────────────────────────────────────
-
-export const borderRadius = {
-  sm: 12,
-  md: 20,
-  lg: 32,
-  xl: 40,
-  '2xl': 48,
-  full: 999,   // Pill shape — matches guide (borderRadius: 999)
+export const fontSize = {
+  xs: 11,
+  sm: 14,
+  md: 16,
+  lg: 18,
+  xl: 22,
+  xxl: 28,
+  display: 36,
+  hero: 48,
 } as const
 
-// ─── FONT FAMILIES ──────────────────────────────────────────────────────────
-// These require font files in assets/fonts/ loaded via expo-font.
-// Fallback to system font if not loaded.
+export const fontWeight = {
+  regular: '400' as const,
+  medium: '500' as const,
+  semibold: '600' as const,
+  bold: '700' as const,
+  black: '900' as const,
+}
 
-export const fonts = {
-  display: 'CabinetGrotesk-Extrabold',  // Headings, titles, CTAs
-  displayBold: 'CabinetGrotesk-Bold',
-  body: 'Satoshi-Medium',               // Body text
-  bodyBold: 'Satoshi-Bold',
-  mono: 'JetBrainsMono-Medium',         // Labels, timestamps, technical
+export const font = {
+  display: 'CabinetGrotesk-Black',
+  body: 'Satoshi-Variable',
 } as const
 
-// ─── TYPOGRAPHY ─────────────────────────────────────────────────────────────
+// ─── useTheme() HOOK ───────────────────────────────────────────────────────
 
+export function useTheme() {
+  const scheme = useColorScheme()
+  const isDark = scheme === 'dark'
+  const colors: ColorTokens = isDark ? darkTokens : lightTokens
+
+  return {
+    colors,
+    brand,
+    radius,
+    spacing,
+    fontSize,
+    fontWeight,
+    font,
+    isDark,
+  }
+}
+
+// ─── LEGACY EXPORTS ────────────────────────────────────────────────────────
+// These keep existing components working while we migrate to useTheme().
+// TODO: Remove once all components use useTheme() hook.
+
+export const THEME_COLORS = {
+  yellow: brand.accent,
+  pink: brand.prePregnancy,
+  orange: '#FF6B35',
+  blue: brand.kids,
+  green: '#A2FF86',
+  purple: brand.pregnancy,
+  dark: darkTokens.bg,
+} as const
+
+export const colors = {
+  background: darkTokens.bg,
+  surface: darkTokens.surface,
+  surfaceLight: darkTokens.surfaceRaised,
+  surfaceGlass: darkTokens.surfaceGlass,
+  accent: darkTokens.primary,
+  accentGlow: darkTokens.primary,
+  accentMuted: darkTokens.primaryTint,
+  accentDark: brand.primaryDark,
+  neon: THEME_COLORS,
+  text: darkTokens.text,
+  textSecondary: darkTokens.textSecondary,
+  textTertiary: darkTokens.textMuted,
+  textOnAccent: darkTokens.textInverse,
+  border: darkTokens.border,
+  borderLight: darkTokens.borderLight,
+  borderAccent: darkTokens.borderStrong,
+  success: darkTokens.success,
+  error: darkTokens.error,
+  warning: darkTokens.warning,
+  info: darkTokens.secondary,
+  pillar: {
+    milk: brand.kids,
+    food: '#A2FF86',
+    nutrition: brand.accent,
+    vaccines: brand.prePregnancy,
+    clothes: '#FF6B35',
+    recipes: darkTokens.surface,
+    habits: '#A2FF86',
+    milestones: brand.pregnancy,
+    medicine: brand.prePregnancy,
+  },
+  role: {
+    parent: 'rgba(162, 255, 134, 0.15)',
+    nanny: 'rgba(185, 131, 255, 0.15)',
+    family: 'rgba(255, 107, 53, 0.15)',
+  },
+  tabBar: darkTokens.tabBg,
+  tabBarInactive: darkTokens.tabInactive,
+} as const
+
+export type AppColors = {
+  [K in keyof typeof colors]: (typeof colors)[K] extends Record<string, string>
+    ? Record<string, string>
+    : string
+}
+
+export function getColors(theme: 'dark' | 'light'): AppColors {
+  // Legacy: returns the old-format colors object. Prefer useTheme() for new code.
+  return colors as unknown as AppColors
+}
+
+export const gradients = {
+  background: [darkTokens.bg, '#0A0714', '#08061A'] as const,
+  card: [darkTokens.surface, darkTokens.bg] as const,
+  cardHover: [darkTokens.surfaceRaised, darkTokens.surface] as const,
+  accent: [brand.primary, brand.primaryDark] as const,
+  accentSoft: ['rgba(112,72,184,0.15)', 'rgba(59,125,216,0.08)'] as const,
+  glass: ['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.02)'] as const,
+  pregnancy: [darkTokens.bg, '#0D0A20'] as const,
+  insight: [brand.secondary, brand.prePregnancy, brand.pregnancy] as const,
+} as const
+
+export const lightGradients = {
+  background: [lightTokens.bg, '#F5F0FF', '#EFE8FF'] as const,
+  card: [lightTokens.surface, lightTokens.surfaceRaised] as const,
+  cardHover: [lightTokens.surfaceRaised, '#ECE2F8'] as const,
+  accent: [brand.primary, brand.primaryDark] as const,
+  accentSoft: ['rgba(112,72,184,0.08)', 'rgba(59,125,216,0.04)'] as const,
+  glass: ['rgba(107,72,184,0.04)', 'rgba(107,72,184,0.02)'] as const,
+  pregnancy: [lightTokens.bg, '#F0E8FF'] as const,
+  insight: [brand.secondary, brand.prePregnancy, brand.pregnancy] as const,
+} as const
+
+export function getGradients(theme: 'dark' | 'light') {
+  return theme === 'light' ? lightGradients : gradients
+}
+
+// Legacy aliases
+export const borderRadius = radius
 export const typography = {
-  hero: {
-    fontSize: 48,
-    fontWeight: '900' as const,
-    color: colors.text,
-    letterSpacing: -1,
-    textTransform: 'uppercase' as const,
-  },
-  heading: {
-    fontSize: 36,
-    fontWeight: '900' as const,
-    color: colors.text,
-    letterSpacing: -0.8,
-    textTransform: 'uppercase' as const,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '900' as const,
-    color: colors.text,
-    letterSpacing: -0.3,
-    textTransform: 'uppercase' as const,
-  },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: '800' as const,
-    color: colors.text,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
-  },
-  body: {
-    fontSize: 16,
-    fontWeight: '500' as const,
-    color: colors.text,
-    lineHeight: 24,
-  },
-  bodySecondary: {
-    fontSize: 16,
-    fontWeight: '500' as const,
-    color: colors.textSecondary,
-    lineHeight: 24,
-  },
-  caption: {
-    fontSize: 11,
-    fontWeight: '700' as const,
-    color: colors.textTertiary,
-    letterSpacing: 2,
-    textTransform: 'uppercase' as const,
-  },
-  label: {
-    fontSize: 10,
-    fontWeight: '900' as const,
-    color: colors.textTertiary,
-    letterSpacing: 3,
-    textTransform: 'uppercase' as const,
-  },
+  hero: { fontSize: fontSize.hero, fontWeight: fontWeight.black, color: colors.text, letterSpacing: -1, textTransform: 'uppercase' as const },
+  heading: { fontSize: fontSize.display, fontWeight: fontWeight.black, color: colors.text, letterSpacing: -0.8, textTransform: 'uppercase' as const },
+  title: { fontSize: fontSize.xl, fontWeight: fontWeight.black, color: colors.text, letterSpacing: -0.3, textTransform: 'uppercase' as const },
+  subtitle: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
+  body: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.text, lineHeight: 24 },
+  bodySecondary: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textSecondary, lineHeight: 24 },
+  caption: { fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.textTertiary, letterSpacing: 2, textTransform: 'uppercase' as const },
+  label: { fontSize: 10 as number, fontWeight: fontWeight.black, color: colors.textTertiary, letterSpacing: 3, textTransform: 'uppercase' as const },
 } as const
-
-// ─── SHADOWS ────────────────────────────────────────────────────────────────
 
 export const shadows = {
-  card: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  glow: {
-    shadowColor: THEME_COLORS.yellow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 25,
-    elevation: 12,
-  },
-  glowPink: {
-    shadowColor: THEME_COLORS.pink,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  glowBlue: {
-    shadowColor: THEME_COLORS.blue,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  glowGreen: {
-    shadowColor: THEME_COLORS.green,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  glowOrange: {
-    shadowColor: THEME_COLORS.orange,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  subtle: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
+  card: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 10 },
+  glow: { shadowColor: brand.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 25, elevation: 12 },
+  glowPink: { shadowColor: brand.prePregnancy, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
+  glowBlue: { shadowColor: brand.kids, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
+  glowGreen: { shadowColor: '#A2FF86', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
+  glowOrange: { shadowColor: '#FF6B35', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
+  subtle: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
 } as const
 
-// ─── INPUT STYLES ───────────────────────────────────────────────────────────
-// Shared input styles matching the design guide
-
+export const fonts = font
 export const inputStyles = {
-  selectionColor: THEME_COLORS.blue,
+  selectionColor: brand.secondary,
   placeholderTextColor: colors.textTertiary,
   field: {
     backgroundColor: colors.surfaceGlass,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: borderRadius.full,
-    paddingHorizontal: 24,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.lg,
     height: 72,
-    fontSize: 16,
-    fontWeight: '700' as const,
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
     color: colors.text,
   },
 } as const
