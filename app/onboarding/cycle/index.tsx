@@ -21,7 +21,7 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 import { router } from 'expo-router'
 import { Sparkles } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { OnboardingStep } from '../../../components/onboarding/OnboardingStep'
+import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
 import { useTheme, brand } from '../../../constants/theme'
 import {
   useCycleOnboardingStore,
@@ -29,9 +29,8 @@ import {
   type TryingDuration,
   type TempUnit,
 } from '../../../store/useCycleOnboardingStore'
-import { useBehaviorStore } from '../../../store/useBehaviorStore'
-import { useModeStore } from '../../../store/useModeStore'
 import { supabase } from '../../../lib/supabase'
+import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 
 // ─── Step IDs ──────────────────────────────────────────────────────────────
 
@@ -66,8 +65,7 @@ function getSteps(ttc: boolean): StepId[] {
 
 export default function CycleOnboarding() {
   const store = useCycleOnboardingStore()
-  const nextBehavior = useBehaviorStore((s) => s.nextOnboarding)
-  const setMode = useModeStore((s) => s.setMode)
+  const { handleComplete: onboardingComplete } = useOnboardingComplete()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showDatePicker, setShowDatePicker] = useState(Platform.OS === 'ios')
@@ -86,12 +84,21 @@ export default function CycleOnboarding() {
     goNext()
   }, [goNext])
 
+  const goBack = useCallback(() => {
+    if (currentIndex > 0) setCurrentIndex(currentIndex - 1)
+  }, [currentIndex])
+
+  const handleClose = useCallback(() => {
+    store.clearAll()
+    router.back()
+  }, [])
+
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
   async function saveAndFinish() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return navigateOut()
+      if (!session) return onboardingComplete()
 
       const userId = session.user.id
 
@@ -132,24 +139,7 @@ export default function CycleOnboarding() {
     }
 
     store.clearAll()
-    navigateOut()
-  }
-
-  function navigateOut() {
-    // Check if there are more behaviors to onboard
-    const next = nextBehavior()
-    if (next) {
-      setMode(next)
-      if (next === 'pregnancy') {
-        router.replace('/onboarding/pregnancy' as any)
-      } else if (next === 'kids') {
-        router.replace('/onboarding/kids' as any)
-      } else {
-        router.replace('/(tabs)' as any)
-      }
-    } else {
-      router.replace('/(tabs)' as any)
-    }
+    onboardingComplete()
   }
 
   // ─── Render current step ────────────────────────────────────────────────
@@ -163,6 +153,7 @@ export default function CycleOnboarding() {
   }
 
   return (
+    <OnboardingNavProvider onBack={currentIndex > 0 ? goBack : undefined} onClose={handleClose}>
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -230,6 +221,7 @@ export default function CycleOnboarding() {
         />
       )}
     </KeyboardAvoidingView>
+    </OnboardingNavProvider>
   )
 }
 
@@ -287,7 +279,7 @@ function StepLastPeriod({
               if (Platform.OS === 'android') setShowPicker(false)
               if (selected) setDate(selected.toISOString().split('T')[0])
             }}
-            themeVariant="dark"
+            themeVariant="light"
           />
         )}
       </View>

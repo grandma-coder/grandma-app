@@ -581,7 +581,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                 minimumDate={new Date()}
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 onChange={(_, d) => d && setAccessEnd(d)}
-                themeVariant="dark"
+                themeVariant="light"
               />
             )}
             <SheetButton label="Next" onPress={() => setStep(5)} />

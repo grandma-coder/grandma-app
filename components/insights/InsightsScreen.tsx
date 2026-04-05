@@ -24,6 +24,7 @@ import {
   CalendarClock,
   Sparkles,
   X,
+  ArrowLeft,
   MessageCircle,
   ChevronRight,
 } from 'lucide-react-native'
@@ -120,7 +121,10 @@ export function InsightsScreen() {
           />
         }
       >
-        {/* Header */}
+        {/* Header with back */}
+        <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
+          <ArrowLeft size={24} color={colors.text} />
+        </Pressable>
         <Text style={[styles.heading, { color: colors.text }]}>Insights</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           AI-powered observations from your data. Pull down to refresh.
@@ -280,6 +284,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { paddingHorizontal: 20 },
 
+  backBtn: { alignSelf: 'flex-start', padding: 4, marginBottom: 8 },
   heading: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 4 },
   subtitle: { fontSize: 14, fontWeight: '500', lineHeight: 20, marginBottom: 24 },
 

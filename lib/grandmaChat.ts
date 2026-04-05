@@ -13,8 +13,11 @@ export interface ChatMessage {
   content: string
 }
 
-interface ChatContext {
+export interface ChatContext {
+  /** Currently active behavior */
   behavior: string
+  /** All active behaviors — Grandma knows about all of them */
+  allBehaviors?: string[]
   screen?: string
   insight?: string
 }

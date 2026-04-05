@@ -20,7 +20,7 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 import { router } from 'expo-router'
 import { Heart } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { OnboardingStep } from '../../../components/onboarding/OnboardingStep'
+import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
 import { useTheme, brand } from '../../../constants/theme'
 import {
   usePregnancyOnboardingStore,
@@ -28,8 +28,7 @@ import {
   type PregnancyMood,
 } from '../../../store/usePregnancyOnboardingStore'
 import { usePregnancyStore } from '../../../store/usePregnancyStore'
-import { useBehaviorStore } from '../../../store/useBehaviorStore'
-import { useModeStore } from '../../../store/useModeStore'
+import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -95,8 +94,7 @@ function daysUntil(dueDateStr: string): number {
 export default function PregnancyOnboarding() {
   const store = usePregnancyOnboardingStore()
   const pregnancyStore = usePregnancyStore()
-  const nextBehavior = useBehaviorStore((s) => s.nextOnboarding)
-  const setMode = useModeStore((s) => s.setMode)
+  const { handleComplete: onboardingComplete } = useOnboardingComplete()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showDatePicker, setShowDatePicker] = useState(Platform.OS === 'ios')
@@ -113,12 +111,21 @@ export default function PregnancyOnboarding() {
     goNext()
   }, [goNext])
 
+  const goBack = useCallback(() => {
+    if (currentIndex > 0) setCurrentIndex(currentIndex - 1)
+  }, [currentIndex])
+
+  const handleClose = useCallback(() => {
+    store.clearAll()
+    router.back()
+  }, [])
+
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
   async function saveAndFinish() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return navigateOut()
+      if (!session) return onboardingComplete()
 
       const userId = session.user.id
 
@@ -185,24 +192,9 @@ export default function PregnancyOnboarding() {
     }
 
     store.clearAll()
-    navigateOut()
+    onboardingComplete()
   }
 
-  function navigateOut() {
-    const next = nextBehavior()
-    if (next) {
-      setMode(next)
-      if (next === 'kids') {
-        router.replace('/onboarding/kids' as any)
-      } else if (next === 'pre-pregnancy') {
-        router.replace('/onboarding/cycle' as any)
-      } else {
-        router.replace('/(tabs)' as any)
-      }
-    } else {
-      router.replace('/(tabs)' as any)
-    }
-  }
 
   // ─── Render ──────────────────────────────────────────────────────────────
 
@@ -211,6 +203,7 @@ export default function PregnancyOnboarding() {
   }
 
   return (
+    <OnboardingNavProvider onBack={currentIndex > 0 ? goBack : undefined} onClose={handleClose}>
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -242,6 +235,7 @@ export default function PregnancyOnboarding() {
         <StepPartner step={7} onContinue={goNext} onSkip={goSkip} />
       )}
     </KeyboardAvoidingView>
+    </OnboardingNavProvider>
   )
 }
 
@@ -319,7 +313,7 @@ function StepDueDate({
               if (Platform.OS === 'android') setShowPicker(false)
               if (selected) setDueDate(selected.toISOString().split('T')[0])
             }}
-            themeVariant="dark"
+            themeVariant="light"
           />
         )}
 

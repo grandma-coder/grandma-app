@@ -5,9 +5,10 @@
  * Sign out at bottom.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { View, Text, Pressable, ScrollView, Alert, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
+import * as Haptics from 'expo-haptics'
 import {
   User,
   Heart,
@@ -31,6 +32,8 @@ import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
+import { MyJourneys } from '../../components/profile/MyJourneys'
+import { useDevPanel } from '../../context/DevPanelContext'
 
 // ─── Section config ────────────────────────────────────────────────────────
 
@@ -49,11 +52,33 @@ export default function ProfileScreen() {
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
-  const behaviors = useBehaviorStore((s) => s.behaviors)
+  const behaviors = useBehaviorStore((s) => s.enrolledBehaviors)
   const children = useChildStore((s) => s.children)
 
   const [userName, setUserName] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+
+  // Dev panel 5-tap trigger
+  const { openDevPanel } = useDevPanel()
+  const tapCount = useRef(0)
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleBadgePress() {
+    if (!__DEV__ && process.env.EXPO_PUBLIC_ENABLE_DEV_PANEL !== 'true') return
+
+    tapCount.current += 1
+    if (tapTimer.current) clearTimeout(tapTimer.current)
+    tapTimer.current = setTimeout(() => { tapCount.current = 0 }, 1500)
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+
+    if (tapCount.current === 5) {
+      tapCount.current = 0
+      if (tapTimer.current) clearTimeout(tapTimer.current)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      openDevPanel()
+    }
+  }
 
   useEffect(() => {
     loadProfile()
@@ -102,7 +127,7 @@ export default function ProfileScreen() {
     // Personal
     [
       { id: 'personal', label: 'My Profile', icon: User, color: colors.primary, route: '/profile/personal' },
-      { id: 'behavior', label: `${behaviorLabel} Profile`, icon: mode === 'pre-pregnancy' ? Moon : mode === 'pregnancy' ? Baby : Sparkles, color: behaviorColor, route: '/profile/personal' },
+      { id: 'behavior', label: `${behaviorLabel} Profile`, icon: mode === 'pre-pregnancy' ? Moon : mode === 'pregnancy' ? Baby : Sparkles, color: behaviorColor, route: mode === 'kids' ? '/profile/kids' : '/profile/personal' },
     ],
     // Care & Family
     [
@@ -147,45 +172,33 @@ export default function ProfileScreen() {
               {userEmail}
             </Text>
           )}
-          <View style={styles.badgeRow}>
+          <Pressable
+            onPress={handleBadgePress}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={styles.badgeRow}
+          >
             {behaviors.length > 0
-              ? behaviors.map((b) => (
-                  <View
-                    key={b}
-                    style={[
-                      styles.badge,
-                      {
-                        backgroundColor:
-                          (b === 'pre-pregnancy' ? brand.prePregnancy
-                          : b === 'pregnancy' ? brand.pregnancy
-                          : brand.kids) + '20',
-                        borderRadius: radius.full,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.badgeText,
-                        {
-                          color:
-                            b === 'pre-pregnancy' ? brand.prePregnancy
-                            : b === 'pregnancy' ? brand.pregnancy
-                            : brand.kids,
-                        },
-                      ]}
-                    >
-                      {b === 'pre-pregnancy' ? 'Cycle' : b === 'pregnancy' ? 'Pregnancy' : 'Kids'}
-                    </Text>
-                  </View>
-                ))
+              ? behaviors.map((b) => {
+                  const c = b === 'pre-pregnancy' ? brand.prePregnancy : b === 'pregnancy' ? brand.pregnancy : brand.kids
+                  return (
+                    <View key={b} style={[styles.badge, { backgroundColor: c + '20', borderColor: c + '40', borderWidth: 1, borderRadius: radius.full }]}>
+                      <Text style={[styles.badgeText, { color: c }]}>
+                        {b === 'pre-pregnancy' ? 'Cycle Tracking' : b === 'pregnancy' ? 'Pregnancy' : 'Kids'}
+                      </Text>
+                    </View>
+                  )
+                })
               : (
-                <View style={[styles.badge, { backgroundColor: behaviorColor + '20', borderRadius: radius.full }]}>
+                <View style={[styles.badge, { backgroundColor: behaviorColor + '20', borderColor: behaviorColor + '40', borderWidth: 1, borderRadius: radius.full }]}>
                   <Text style={[styles.badgeText, { color: behaviorColor }]}>{behaviorLabel}</Text>
                 </View>
               )
             }
-          </View>
+          </Pressable>
         </View>
+
+        {/* My Journeys */}
+        <MyJourneys />
 
         {/* 2. Section Cards */}
         {sections.map((group, gi) => (

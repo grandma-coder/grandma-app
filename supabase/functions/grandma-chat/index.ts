@@ -32,6 +32,7 @@ serve(async (req) => {
     }
 
     const behavior = context?.behavior ?? 'kids'
+    const allBehaviors: string[] = context?.allBehaviors ?? [behavior]
     const insightContext = context?.insight ?? null
     const screen = context?.screen ?? null
 
@@ -49,37 +50,45 @@ serve(async (req) => {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
     const sinceDate = sevenDaysAgo.toISOString().split('T')[0]
 
+    // ─── Fetch logs for ALL enrolled behaviors ──────────────────────
     let recentLogs = ''
 
-    if (behavior === 'pre-pregnancy') {
+    // Cycle logs (if enrolled in pre-pregnancy)
+    if (allBehaviors.includes('pre-pregnancy')) {
       const { data: logs } = await supabase
         .from('cycle_logs')
         .select('date, type, value, notes')
         .eq('user_id', user_id)
         .gte('date', sinceDate)
         .order('date', { ascending: false })
-        .limit(30)
+        .limit(20)
 
       if (logs?.length) {
-        recentLogs = 'Recent cycle logs:\n' + logs.map((l: any) =>
+        recentLogs += '\n[CYCLE TRACKING DATA]\n' + logs.map((l: any) =>
           `  ${l.date} — ${l.type}: ${l.value ?? ''} ${l.notes ? `(${l.notes})` : ''}`
         ).join('\n')
       }
-    } else if (behavior === 'pregnancy') {
+    }
+
+    // Pregnancy logs (if enrolled in pregnancy)
+    if (allBehaviors.includes('pregnancy')) {
       const { data: logs } = await supabase
         .from('pregnancy_logs')
         .select('date, type, value, notes')
         .eq('user_id', user_id)
         .gte('date', sinceDate)
         .order('date', { ascending: false })
-        .limit(30)
+        .limit(20)
 
       if (logs?.length) {
-        recentLogs = 'Recent pregnancy logs:\n' + logs.map((l: any) =>
+        recentLogs += '\n[PREGNANCY DATA]\n' + logs.map((l: any) =>
           `  ${l.date} — ${l.type}: ${l.value ?? ''} ${l.notes ? `(${l.notes})` : ''}`
         ).join('\n')
       }
-    } else {
+    }
+
+    // Child logs (if enrolled in kids)
+    if (allBehaviors.includes('kids')) {
       const { data: children } = await supabase
         .from('children')
         .select('id, name, dob, allergies, conditions')
@@ -93,20 +102,19 @@ serve(async (req) => {
           .in('child_id', childIds)
           .gte('date', sinceDate)
           .order('date', { ascending: false })
-          .limit(50)
+          .limit(30)
 
         const childNames = Object.fromEntries((children ?? []).map((c: any) => [c.id, c.name]))
 
-        if (logs?.length) {
-          recentLogs = 'Recent child activity logs:\n' + logs.map((l: any) =>
-            `  ${l.date} — ${childNames[l.child_id] ?? 'Child'}: ${l.type} — ${l.value ?? ''} ${l.notes ? `(${l.notes})` : ''}`
-          ).join('\n')
-        }
-
-        // Add child profiles
+        recentLogs += '\n[KIDS DATA]\n'
         if (children?.length) {
-          recentLogs += '\n\nChild profiles:\n' + children.map((c: any) =>
-            `  ${c.name}: born ${c.dob ?? 'unknown'}${c.allergies?.length ? `, allergies: ${c.allergies.join(', ')}` : ''}${c.conditions?.length ? `, conditions: ${c.conditions.join(', ')}` : ''}`
+          recentLogs += 'Children: ' + children.map((c: any) =>
+            `${c.name} (born ${c.dob ?? 'unknown'}${c.allergies?.length ? `, allergies: ${c.allergies.join(', ')}` : ''})`
+          ).join(', ') + '\n'
+        }
+        if (logs?.length) {
+          recentLogs += logs.map((l: any) =>
+            `  ${l.date} — ${childNames[l.child_id] ?? 'Child'}: ${l.type} — ${l.value ?? ''} ${l.notes ? `(${l.notes})` : ''}`
           ).join('\n')
         }
       }
@@ -121,11 +129,22 @@ serve(async (req) => {
       ? `\n\nThe user is asking about this insight: "${insightContext}". Use it as context for your response.`
       : ''
 
+    const behaviorList = allBehaviors.map((b: string) =>
+      b === 'pre-pregnancy' ? 'Cycle Tracking (trying to conceive)' :
+      b === 'pregnancy' ? 'Pregnancy' : 'Kids'
+    ).join(', ')
+
+    const multiBehaviorNote = allBehaviors.length > 1
+      ? `\n\nIMPORTANT: This user has set up the following journeys: ${behaviorList}.
+She may ask about any of them. Answer using whichever context is most relevant to her question — she does not need to specify which journey she is asking about. If she asks about pregnancy while in Kids mode, use the pregnancy data. If she asks about her cycle while in pregnancy mode, use the cycle data. Be fluid.`
+      : ''
+
     const systemPrompt = `You are Grandma — a warm, wise, knowledgeable companion from grandma.app.
 You speak like a trusted grandmother who has guided many families.
 You never make parents feel judged.
 
-Current behavior mode: ${behavior}
+Currently viewing: ${behavior}
+Enrolled journeys: ${behaviorList}${multiBehaviorNote}
 ${profileContext}
 
 ${recentLogs ? `\n${recentLogs}` : ''}

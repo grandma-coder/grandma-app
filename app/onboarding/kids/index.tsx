@@ -23,15 +23,14 @@ import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 import { Star, Camera, User, Plus, Minus, Check } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { OnboardingStep } from '../../../components/onboarding/OnboardingStep'
+import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
 import { useTheme, brand } from '../../../constants/theme'
 import {
   useKidsOnboardingStore,
   type CaregiverRole,
 } from '../../../store/useKidsOnboardingStore'
 import { useChildStore } from '../../../store/useChildStore'
-import { useBehaviorStore } from '../../../store/useBehaviorStore'
-import { useModeStore } from '../../../store/useModeStore'
+import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
 import type { ChildWithRole } from '../../../types'
 
@@ -83,8 +82,7 @@ const CAREGIVER_ROLES: { id: CaregiverRole; label: string }[] = [
 export default function KidsOnboarding() {
   const store = useKidsOnboardingStore()
   const setChildrenStore = useChildStore((s) => s.setChildren)
-  const nextBehavior = useBehaviorStore((s) => s.nextOnboarding)
-  const setMode = useModeStore((s) => s.setMode)
+  const { handleComplete: onboardingComplete } = useOnboardingComplete()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showDatePicker, setShowDatePicker] = useState(Platform.OS === 'ios')
@@ -106,12 +104,24 @@ export default function KidsOnboarding() {
 
   const goSkip = useCallback(() => goNext(), [goNext])
 
+  const goBack = useCallback(() => {
+    if (currentIndex > 0) {
+      setCurrentIndex((i) => i - 1)
+      if (Platform.OS === 'android') setShowDatePicker(false)
+    }
+  }, [currentIndex])
+
+  const handleClose = useCallback(() => {
+    store.clearAll()
+    router.back()
+  }, [])
+
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
   async function saveAndFinish() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return navigateOut()
+      if (!session) return onboardingComplete()
 
       const userId = session.user.id
 
@@ -183,23 +193,7 @@ export default function KidsOnboarding() {
     }
 
     store.clearAll()
-    navigateOut()
-  }
-
-  function navigateOut() {
-    const next = nextBehavior()
-    if (next) {
-      setMode(next)
-      if (next === 'pre-pregnancy') {
-        router.replace('/onboarding/cycle' as any)
-      } else if (next === 'pregnancy') {
-        router.replace('/onboarding/pregnancy' as any)
-      } else {
-        router.replace('/(tabs)' as any)
-      }
-    } else {
-      router.replace('/(tabs)' as any)
-    }
+    onboardingComplete()
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────
@@ -211,6 +205,7 @@ export default function KidsOnboarding() {
   const stepNum = currentIndex + 1
 
   return (
+    <OnboardingNavProvider onBack={currentIndex > 0 ? goBack : undefined} onClose={handleClose}>
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -271,6 +266,7 @@ export default function KidsOnboarding() {
         <StepCaregiver step={stepNum} total={totalSteps} onContinue={goNext} onSkip={goSkip} />
       )}
     </KeyboardAvoidingView>
+    </OnboardingNavProvider>
   )
 }
 
@@ -461,7 +457,7 @@ function StepChildDob({
                 updateChild(childIdx, { birthDate: selected.toISOString().split('T')[0] })
               }
             }}
-            themeVariant="dark"
+            themeVariant="light"
           />
         )}
 

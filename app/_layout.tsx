@@ -20,6 +20,7 @@ import { useModeStore } from '../store/useModeStore'
 import { initRevenueCat } from '../lib/revenue'
 import { ThemeProvider } from '../components/ui/ThemeProvider'
 import { useTheme } from '../constants/theme'
+import { DevPanelProvider } from '../context/DevPanelContext'
 import type { Session } from '@supabase/supabase-js'
 import type { ChildWithRole, CaregiverPermissions } from '../types'
 
@@ -145,6 +146,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
+        <DevPanelProvider>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
@@ -164,7 +166,11 @@ export default function RootLayout() {
           <Stack.Screen name="grandma-talk" options={{ presentation: 'modal' }} />
           <Stack.Screen name="profile" />
           <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="connections" />
+          <Stack.Screen name="garage" />
+          <Stack.Screen name="channel" />
         </Stack>
+        </DevPanelProvider>
       </QueryClientProvider>
     </ThemeProvider>
   )

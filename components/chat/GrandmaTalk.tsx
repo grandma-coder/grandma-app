@@ -28,6 +28,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
+import { useBehaviorStore } from '../../store/useBehaviorStore'
 import { sendGrandmaMessage, type ChatMessage } from '../../lib/grandmaChat'
 
 // ─── Generate unique ID ────────────────────────────────────────────────────
@@ -59,6 +60,7 @@ export function GrandmaTalk() {
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
+  const allBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
   const params = useLocalSearchParams<{ insightContext?: string; screen?: string }>()
 
   const insightContext = params.insightContext ?? undefined
@@ -103,6 +105,7 @@ export function GrandmaTalk() {
 
     const context = {
       behavior: mode,
+      allBehaviors,
       screen,
       insight: insightContext,
     }
@@ -188,6 +191,25 @@ export function GrandmaTalk() {
         </View>
         <View style={styles.headerBtn} />
       </View>
+
+      {/* Multi-behavior awareness line */}
+      {allBehaviors.length > 1 && (
+        <View style={[styles.awarenessLine, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.awarenessText, { color: colors.textMuted }]}>
+            Grandma knows about your{' '}
+            {allBehaviors.map((b, i) => {
+              const label = b === 'pre-pregnancy' ? 'cycle' : b === 'pregnancy' ? 'pregnancy' : 'kids'
+              const color = b === 'pre-pregnancy' ? brand.prePregnancy : b === 'pregnancy' ? brand.pregnancy : brand.kids
+              return (
+                <Text key={b}>
+                  {i > 0 && (i === allBehaviors.length - 1 ? ' and ' : ', ')}
+                  <Text style={{ color, fontWeight: '700' }}>{label}</Text>
+                </Text>
+              )
+            })}
+          </Text>
+        </View>
+      )}
 
       {/* Context card (when opened from insight) */}
       {insightContext && (
@@ -277,6 +299,19 @@ const styles = StyleSheet.create({
   headerBtn: { width: 40, alignItems: 'center' },
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   headerTitle: { fontSize: 18, fontWeight: '700' },
+
+  // Awareness line
+  awarenessLine: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    alignItems: 'center',
+  },
+  awarenessText: {
+    fontSize: 11,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
 
   // Context
   contextCard: {

@@ -63,7 +63,7 @@ export default function DatePickerField({
             onChange={handleChange}
             maximumDate={maximumDate}
             minimumDate={minimumDate}
-            themeVariant="dark"
+            themeVariant="light"
           />
           {Platform.OS === 'ios' && (
             <Pressable onPress={handleConfirm} style={styles.doneButton}>

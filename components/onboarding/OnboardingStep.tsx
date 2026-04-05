@@ -1,12 +1,35 @@
 /**
  * OnboardingStep — shared wrapper for multi-step onboarding flows.
  *
- * Shows: step indicator, progress bar, question, input area, Skip + Continue.
+ * Shows: back button (optional), step indicator, progress bar,
+ * question, input area, Skip + Continue.
  */
 
+import { createContext, useContext } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { ArrowLeft, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
+
+/**
+ * OnboardingNavContext — lets parent provide back/close handlers
+ * without threading props through every step sub-component.
+ */
+interface OnboardingNav {
+  onBack?: () => void
+  onClose?: () => void
+}
+
+const OnboardingNavContext = createContext<OnboardingNav>({})
+
+/** Wrap your stepper in this to provide back/close to all OnboardingStep instances */
+export function OnboardingNavProvider({ onBack, onClose, children }: OnboardingNav & { children: React.ReactNode }) {
+  return (
+    <OnboardingNavContext.Provider value={{ onBack, onClose }}>
+      {children}
+    </OnboardingNavContext.Provider>
+  )
+}
 
 interface OnboardingStepProps {
   /** Current step (1-based) */
@@ -21,6 +44,10 @@ interface OnboardingStepProps {
   onContinue: () => void
   /** Called when Skip is pressed. If undefined, skip is hidden. */
   onSkip?: () => void
+  /** Called when Back is pressed. If undefined, back is hidden. */
+  onBack?: () => void
+  /** Called when Close (X) is pressed. If undefined, close is hidden. */
+  onClose?: () => void
   /** Disable Continue button */
   continueDisabled?: boolean
   /** Custom continue label */
@@ -34,18 +61,45 @@ export function OnboardingStep({
   children,
   onContinue,
   onSkip,
+  onBack,
+  onClose,
   continueDisabled = false,
   continueLabel = 'Continue',
 }: OnboardingStepProps) {
   const insets = useSafeAreaInsets()
   const { colors, radius } = useTheme()
+  const nav = useContext(OnboardingNavContext)
+
+  // Use prop if provided, otherwise fall back to context
+  const backHandler = onBack ?? nav.onBack
+  const closeHandler = onClose ?? nav.onClose
 
   const progress = step / total
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       {/* Top section */}
-      <View style={[styles.top, { paddingTop: insets.top + 16 }]}>
+      <View style={[styles.top, { paddingTop: insets.top + 12 }]}>
+        {/* Navigation row */}
+        {(backHandler || closeHandler) && (
+          <View style={styles.navRow}>
+            {backHandler ? (
+              <Pressable onPress={backHandler} style={styles.navBtn} hitSlop={8}>
+                <ArrowLeft size={22} color={colors.text} />
+              </Pressable>
+            ) : (
+              <View style={styles.navBtn} />
+            )}
+            {closeHandler ? (
+              <Pressable onPress={closeHandler} style={styles.navBtn} hitSlop={8}>
+                <X size={22} color={colors.textMuted} />
+              </Pressable>
+            ) : (
+              <View style={styles.navBtn} />
+            )}
+          </View>
+        )}
+
         {/* Step indicator */}
         <Text style={[styles.stepLabel, { color: colors.textMuted }]}>
           Step {step} of {total}
@@ -109,6 +163,18 @@ const styles = StyleSheet.create({
   top: {
     paddingHorizontal: 24,
     gap: 16,
+  },
+  navRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  navBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   stepLabel: {
     fontSize: 13,
