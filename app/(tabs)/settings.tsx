@@ -5,9 +5,9 @@
  * Sign out at bottom.
  */
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { View, Text, Pressable, ScrollView, Alert, StyleSheet } from 'react-native'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import * as Haptics from 'expo-haptics'
 import {
   User,
@@ -80,9 +80,11 @@ export default function ProfileScreen() {
     }
   }
 
-  useEffect(() => {
-    loadProfile()
-  }, [])
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile()
+    }, [])
+  )
 
   async function loadProfile() {
     const { data: { session } } = await supabase.auth.getSession()
@@ -92,7 +94,7 @@ export default function ProfileScreen() {
     const { data: profile } = await supabase
       .from('profiles')
       .select('name')
-      .eq('user_id', session.user.id)
+      .eq('id', session.user.id)
       .single()
 
     if (profile?.name) setUserName(profile.name)
@@ -133,8 +135,8 @@ export default function ProfileScreen() {
     [
       { id: 'care-circle', label: 'Care Circle', icon: Users, color: brand.secondary, route: '/profile/care-circle' },
       ...(mode === 'kids' && children.length > 0 ? [
-        { id: 'memories', label: 'Memories', icon: Image, color: brand.accent, route: '/profile/personal' },
-        { id: 'health-history', label: 'Health History', icon: ClipboardList, color: brand.phase.ovulation, route: '/profile/personal' },
+        { id: 'memories', label: 'Memories', icon: Image, color: brand.accent, route: '/profile/memories' },
+        { id: 'health-history', label: 'Health History', icon: ClipboardList, color: brand.phase.ovulation, route: '/profile/health-history' },
       ] : []),
     ],
     // App settings
@@ -145,8 +147,8 @@ export default function ProfileScreen() {
     // Account
     [
       { id: 'subscription', label: 'Subscription & Plan', icon: CreditCard, color: brand.phase.ovulation, route: '/paywall' },
-      { id: 'account', label: 'Account & Security', icon: Lock, color: brand.error, route: '/profile/settings' },
-      { id: 'privacy', label: 'Data & Privacy', icon: Shield, color: brand.success, route: '/profile/settings' },
+      { id: 'account', label: 'Account & Security', icon: Lock, color: brand.error, route: '/profile/account' },
+      { id: 'privacy', label: 'Data & Privacy', icon: Shield, color: brand.success, route: '/profile/privacy' },
     ],
   ]
 

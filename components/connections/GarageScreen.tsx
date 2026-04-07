@@ -1,533 +1,634 @@
 /**
- * F2 — Grandma Garage Screen
+ * F2 — Garage Feed (Instagram-style)
  *
- * Search + filters + 2-column grid + FAB.
- * Create listing via 5-step bottom sheet.
+ * Vertical scroll feed with full-width media posts,
+ * like/comment/share/save actions, and post composer via FAB.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   View,
   Text,
-  TextInput,
   Pressable,
   FlatList,
   Image,
   ScrollView,
   Alert,
+  Share,
   StyleSheet,
   ActivityIndicator,
+  Dimensions,
+  Animated,
+  RefreshControl,
 } from 'react-native'
-import * as ImagePicker from 'expo-image-picker'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import {
-  Search,
-  SlidersHorizontal,
+  Heart,
+  MessageCircle,
+  Send,
+  Bookmark,
   Plus,
   Camera,
-  X,
-  Check,
-  MapPin,
   User,
+  MoreHorizontal,
+  Play,
 } from 'lucide-react-native'
 import { useTheme, brand } from '../../constants/theme'
-import { useModeStore } from '../../store/useModeStore'
-import { getModeConfig } from '../../lib/modeConfig'
-import { fetchListings, createListing, type GarageListing } from '../../lib/garage'
-import { LogSheet } from '../calendar/LogSheet'
+import {
+  fetchFeed,
+  toggleLike,
+  toggleSave,
+  deletePost,
+  type GaragePost,
+  type MediaItem,
+} from '../../lib/garagePosts'
+import { supabase } from '../../lib/supabase'
 
-// ─── Constants ─────────────────────────────────────────────────────────────
+const SCREEN_W = Dimensions.get('window').width
+const MEDIA_HEIGHT = SCREEN_W * 1.1 // Slightly taller than square, like IG
 
-const CATEGORIES = ['All', 'Free', 'Clothing', 'Gear', 'Furniture', 'Toys', 'Books', 'Other']
-const CONDITIONS = ['New', 'Like New', 'Good', 'Fair', 'Well Loved']
+// ─── Feed Categories ──────────────────────────────────────────────────────
 
-// ─── Main Component ────────────────────────────────────────────────────────
+const FEED_FILTERS = ['For You', 'Clothing', 'Gear', 'Toys', 'Furniture', 'Books']
+
+// ─── Main Component ───────────────────────────────────────────────────────
 
 export function GarageScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, spacing } = useTheme()
 
-  const [listings, setListings] = useState<GarageListing[]>([])
+  const [posts, setPosts] = useState<GaragePost[]>([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [activeFilter, setActiveFilter] = useState('All')
-  const [showCreate, setShowCreate] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [activeFilter, setActiveFilter] = useState('For You')
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    loadListings()
+    supabase.auth.getSession().then(({ data }) => {
+      setCurrentUserId(data.session?.user.id ?? null)
+    })
+  }, [])
+
+  // Reload feed on filter change
+  useEffect(() => {
+    loadFeed()
   }, [activeFilter])
 
-  async function loadListings() {
+  // Reload feed when screen comes into focus (e.g. after creating a post)
+  useFocusEffect(
+    useCallback(() => {
+      loadFeed()
+    }, [activeFilter])
+  )
+
+  async function loadFeed() {
     setLoading(true)
     try {
-      const category = activeFilter === 'Free' ? undefined : activeFilter
-      const data = await fetchListings(category, search || undefined)
-      const filtered = activeFilter === 'Free' ? data.filter((l) => l.is_free) : data
-      setListings(filtered)
+      const category = activeFilter === 'For You' ? undefined : activeFilter
+      const data = await fetchFeed({ category })
+      setPosts(data)
     } catch {} finally {
       setLoading(false)
     }
   }
 
-  function handleSearch() {
-    loadListings()
+  async function handleRefresh() {
+    setRefreshing(true)
+    try {
+      const category = activeFilter === 'For You' ? undefined : activeFilter
+      const data = await fetchFeed({ category })
+      setPosts(data)
+    } catch {} finally {
+      setRefreshing(false)
+    }
+  }
+
+  async function handleLike(postId: string) {
+    // Optimistic update
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              user_liked: !p.user_liked,
+              like_count: p.like_count + (p.user_liked ? -1 : 1),
+            }
+          : p
+      )
+    )
+    try {
+      await toggleLike(postId)
+    } catch {
+      // Revert on error
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                user_liked: !p.user_liked,
+                like_count: p.like_count + (p.user_liked ? -1 : 1),
+              }
+            : p
+        )
+      )
+    }
+  }
+
+  async function handleSave(postId: string) {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId ? { ...p, user_saved: !p.user_saved } : p
+      )
+    )
+    try {
+      await toggleSave(postId)
+    } catch {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, user_saved: !p.user_saved } : p
+        )
+      )
+    }
+  }
+
+  function handleDelete(postId: string) {
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          setPosts((prev) => prev.filter((p) => p.id !== postId))
+          try {
+            await deletePost(postId)
+          } catch {
+            loadFeed() // reload if delete failed
+          }
+        },
+      },
+    ])
+  }
+
+  function handleShare(post: GaragePost) {
+    const postUrl = `grandma://garage/${post.id}`
+    const caption = post.caption?.split('\n')[0] ?? 'Check out this post'
+
+    Alert.alert('Share', '', [
+      {
+        text: 'Share to Channel',
+        onPress: () => router.push({ pathname: '/garage/share', params: { postId: post.id, caption } } as any),
+      },
+      {
+        text: 'Copy Link',
+        onPress: () => {
+          import('expo-clipboard').then(({ setStringAsync }) => {
+            setStringAsync(postUrl)
+            Alert.alert('Copied!', 'Link copied to clipboard')
+          })
+        },
+      },
+      {
+        text: 'Share External...',
+        onPress: () => {
+          Share.share({
+            message: `${caption}\n\n${postUrl}`,
+          })
+        },
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ])
   }
 
   return (
     <View style={styles.root}>
-      {/* Search bar */}
-      <View style={[styles.searchRow, { paddingHorizontal: 20 }]}>
-        <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
-          <Search size={18} color={colors.textMuted} strokeWidth={2} />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            onSubmitEditing={handleSearch}
-            placeholder="Search listings..."
-            placeholderTextColor={colors.textMuted}
-            returnKeyType="search"
-            style={[styles.searchInput, { color: colors.text }]}
-          />
-        </View>
-      </View>
-
-      {/* Filter chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterBar}
-      >
-        {CATEGORIES.map((f) => (
-          <Pressable
-            key={f}
-            onPress={() => setActiveFilter(f)}
-            style={[
-              styles.filterChip,
-              {
-                backgroundColor: activeFilter === f ? colors.primaryTint : colors.surface,
-                borderColor: activeFilter === f ? colors.primary : colors.border,
-                borderRadius: radius.full,
-              },
-            ]}
-          >
-            <Text style={[styles.filterText, { color: activeFilter === f ? colors.primary : colors.textSecondary }]}>
-              {f}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      {/* Grid */}
-      {loading ? (
+      {/* Feed */}
+      {loading && posts.length === 0 ? (
         <View style={styles.center}>
           <ActivityIndicator color={colors.primary} />
         </View>
-      ) : listings.length === 0 ? (
-        <View style={styles.center}>
-          <Search size={36} color={colors.textMuted} strokeWidth={1.5} />
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>No listings found</Text>
-          <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
-            Try a different filter or list your first item!
-          </Text>
-        </View>
       ) : (
         <FlatList
-          data={listings}
+          data={posts}
           keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.gridRow}
-          contentContainerStyle={styles.gridContent}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => <ListingCard item={item} />}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+            />
+          }
+          ListHeaderComponent={
+            <View>
+              <FeedFilters
+                active={activeFilter}
+                onSelect={setActiveFilter}
+              />
+              {/* My Garage profile button */}
+              <Pressable
+                onPress={() => router.push('/garage/profile' as any)}
+                style={[styles.profileBtn, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}
+              >
+                <User size={16} color={colors.primary} strokeWidth={2} />
+                <Text style={[styles.profileBtnText, { color: colors.primary }]}>My Garage</Text>
+              </Pressable>
+            </View>
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <View style={[styles.emptyIcon, { backgroundColor: colors.primaryTint }]}>
+                <Camera size={32} color={colors.primary} strokeWidth={1.5} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                No posts yet
+              </Text>
+              <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
+                Be the first to share something with the community!
+              </Text>
+              <Pressable
+                onPress={() => router.push('/garage/create' as any)}
+                style={[styles.emptyBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}
+              >
+                <Text style={styles.emptyBtnText}>Create Post</Text>
+              </Pressable>
+            </View>
+          }
+          renderItem={({ item }) => (
+            <FeedPost
+              post={item}
+              isOwner={currentUserId === item.author_id}
+              onLike={() => handleLike(item.id)}
+              onSave={() => handleSave(item.id)}
+              onComment={() => router.push(`/garage/${item.id}` as any)}
+              onDelete={() => handleDelete(item.id)}
+              onShare={() => handleShare(item)}
+            />
+          )}
         />
       )}
 
       {/* FAB */}
       <Pressable
-        onPress={() => setShowCreate(true)}
+        onPress={() => router.push('/garage/create' as any)}
         style={({ pressed }) => [
           styles.fab,
           { backgroundColor: colors.primary, borderRadius: radius.full },
-          pressed && { transform: [{ scale: 0.95 }] },
+          pressed && { transform: [{ scale: 0.93 }] },
         ]}
       >
-        <Plus size={24} color="#FFFFFF" strokeWidth={2.5} />
+        <Plus size={26} color="#FFFFFF" strokeWidth={2.5} />
       </Pressable>
-
-      {/* Create sheet */}
-      <CreateListingSheet
-        visible={showCreate}
-        onClose={() => setShowCreate(false)}
-        onCreated={() => { setShowCreate(false); loadListings() }}
-      />
     </View>
   )
 }
 
-// ─── Listing Card ──────────────────────────────────────────────────────────
+// ─── Feed Filters (horizontal chips) ──────────────────────────────────────
 
-function ListingCard({ item }: { item: GarageListing }) {
+function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: string) => void }) {
   const { colors, radius } = useTheme()
-  const hasPhoto = item.photos.length > 0
 
   return (
-    <Pressable
-      onPress={() => router.push(`/garage/${item.id}` as any)}
-      style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: colors.surface, borderRadius: radius.xl },
-        pressed && { opacity: 0.9 },
-      ]}
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.filterBar}
     >
-      {/* Photo */}
-      {hasPhoto ? (
-        <Image source={{ uri: item.photos[0] }} style={[styles.cardPhoto, { borderRadius: radius.lg }]} />
-      ) : (
-        <View style={[styles.cardPhotoPlaceholder, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-          <Text style={{ fontSize: 28 }}>📦</Text>
-        </View>
-      )}
-
-      {/* Condition badge */}
-      {item.condition && (
-        <View style={[styles.conditionBadge, { backgroundColor: colors.surfaceGlass, borderRadius: radius.sm }]}>
-          <Text style={[styles.conditionText, { color: colors.textSecondary }]}>{item.condition}</Text>
-        </View>
-      )}
-
-      {/* Info */}
-      <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
-        {item.title}
-      </Text>
-
-      <Text style={[styles.cardPrice, { color: item.is_free ? brand.success : colors.primary }]}>
-        {item.is_free ? 'FREE' : `$${item.price}`}
-      </Text>
-
-      {/* Location */}
-      {item.location && (
-        <View style={styles.locationRow}>
-          <MapPin size={12} color={colors.textMuted} strokeWidth={2} />
-          <Text style={[styles.locationText, { color: colors.textMuted }]} numberOfLines={1}>
-            {item.location}
-          </Text>
-        </View>
-      )}
-    </Pressable>
+      {FEED_FILTERS.map((f) => {
+        const isActive = active === f
+        return (
+          <Pressable
+            key={f}
+            onPress={() => onSelect(f)}
+            style={[
+              styles.filterChip,
+              {
+                backgroundColor: isActive ? colors.primary : colors.surface,
+                borderColor: isActive ? colors.primary : colors.border,
+                borderRadius: radius.full,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.filterText,
+                { color: isActive ? '#FFFFFF' : colors.textSecondary },
+              ]}
+            >
+              {f}
+            </Text>
+          </Pressable>
+        )
+      })}
+    </ScrollView>
   )
 }
 
-// ─── Create Listing Sheet (5-step) ────────────────────────────────────────
+// ─── Feed Post Card (Instagram-style) ─────────────────────────────────────
 
-function CreateListingSheet({
-  visible,
-  onClose,
-  onCreated,
+function FeedPost({
+  post,
+  isOwner,
+  onLike,
+  onSave,
+  onComment,
+  onDelete,
+  onShare,
 }: {
-  visible: boolean
-  onClose: () => void
-  onCreated: () => void
+  post: GaragePost
+  isOwner: boolean
+  onLike: () => void
+  onSave: () => void
+  onComment: () => void
+  onDelete: () => void
+  onShare: () => void
 }) {
   const { colors, radius } = useTheme()
+  const [mediaIndex, setMediaIndex] = useState(0)
+  const [captionExpanded, setCaptionExpanded] = useState(false)
+  const likeScale = useRef(new Animated.Value(1)).current
 
-  const [step, setStep] = useState(1)
-  const [photos, setPhotos] = useState<string[]>([])
-  const [title, setTitle] = useState('')
-  const [category, setCategory] = useState<string | null>(null)
-  const [condition, setCondition] = useState<string | null>(null)
-  const [price, setPrice] = useState('')
-  const [isFree, setIsFree] = useState(false)
-  const [description, setDescription] = useState('')
-  const [sizeRange, setSizeRange] = useState('')
-  const [saving, setSaving] = useState(false)
-
-  function reset() {
-    setStep(1); setPhotos([]); setTitle(''); setCategory(null)
-    setCondition(null); setPrice(''); setIsFree(false)
-    setDescription(''); setSizeRange('')
+  function animateLike() {
+    onLike()
+    Animated.sequence([
+      Animated.spring(likeScale, { toValue: 1.3, useNativeDriver: true, speed: 50 }),
+      Animated.spring(likeScale, { toValue: 1, useNativeDriver: true, speed: 30 }),
+    ]).start()
   }
 
-  function handleClose() { reset(); onClose() }
-
-  async function pickPhotos() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsMultipleSelection: true,
-      quality: 0.7,
-      selectionLimit: 6,
-    })
-    if (!result.canceled) {
-      setPhotos((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 6))
-    }
-  }
-
-  async function takePhoto() {
-    const perm = await ImagePicker.requestCameraPermissionsAsync()
-    if (!perm.granted) return Alert.alert('Permission needed')
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 })
-    if (!result.canceled && result.assets[0]) {
-      setPhotos((prev) => [...prev, result.assets[0].uri].slice(0, 6))
-    }
-  }
-
-  async function publish() {
-    if (!title || !category) return
-    setSaving(true)
-    try {
-      await createListing({
-        title,
-        description: description || undefined,
-        category,
-        condition: condition ?? undefined,
-        price: isFree ? 0 : parseFloat(price) || 0,
-        is_free: isFree,
-        size_range: sizeRange || undefined,
-        photos,
-      })
-      reset()
-      onCreated()
-    } catch (e: any) {
-      Alert.alert('Error', e.message)
-    } finally {
-      setSaving(false)
-    }
-  }
+  const hasMultipleMedia = post.media.length > 1
+  const captionShort = post.caption && post.caption.length > 120
 
   return (
-    <LogSheet visible={visible} title={`List an Item (${step}/5)`} onClose={handleClose}>
-      <ScrollView style={{ maxHeight: 450 }} showsVerticalScrollIndicator={false}>
-        <View style={createStyles.form}>
-          {/* Step 1: Photos */}
-          {step === 1 && (
-            <>
-              <Text style={[createStyles.hint, { color: colors.textSecondary }]}>
-                Add up to 6 photos of your item
+    <View style={[styles.postCard, { borderBottomColor: colors.borderLight }]}>
+      {/* Header: Author */}
+      <View style={styles.postHeader}>
+        <Pressable style={styles.postAuthorRow}>
+          <View style={[styles.avatar, { backgroundColor: colors.surfaceRaised }]}>
+            <User size={18} color={colors.textMuted} strokeWidth={1.5} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.authorName, { color: colors.text }]}>
+              {post.author_name ?? 'Community Member'}
+            </Text>
+            {post.category && (
+              <Text style={[styles.categoryLabel, { color: colors.textMuted }]}>
+                {post.category}
               </Text>
-              <View style={createStyles.photoGrid}>
-                {photos.map((uri, i) => (
-                  <View key={i} style={{ position: 'relative' }}>
-                    <Image source={{ uri }} style={[createStyles.photoThumb, { borderRadius: radius.lg }]} />
-                    <Pressable
-                      onPress={() => setPhotos((p) => p.filter((_, j) => j !== i))}
-                      style={[createStyles.removePhoto, { backgroundColor: brand.error }]}
-                    >
-                      <X size={12} color="#FFF" />
-                    </Pressable>
-                  </View>
-                ))}
-                {photos.length < 6 && (
-                  <>
-                    <Pressable onPress={takePhoto} style={[createStyles.addPhotoBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}>
-                      <Camera size={24} color="#FFF" strokeWidth={2} />
-                    </Pressable>
-                    <Pressable onPress={pickPhotos} style={[createStyles.addPhotoBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed' }]}>
-                      <Plus size={24} color={colors.textMuted} strokeWidth={2} />
-                    </Pressable>
-                  </>
-                )}
-              </View>
-              <StepButton label="Next" onPress={() => setStep(2)} disabled={photos.length === 0} />
-            </>
+            )}
+          </View>
+        </Pressable>
+        <Pressable
+          hitSlop={12}
+          onPress={() => {
+            if (isOwner) {
+              Alert.alert('Post Options', '', [
+                { text: 'Delete Post', style: 'destructive', onPress: onDelete },
+                { text: 'Cancel', style: 'cancel' },
+              ])
+            } else {
+              Alert.alert('Post Options', '', [
+                { text: 'Report', onPress: () => {} },
+                { text: 'Cancel', style: 'cancel' },
+              ])
+            }
+          }}
+        >
+          <MoreHorizontal size={20} color={colors.textMuted} strokeWidth={2} />
+        </Pressable>
+      </View>
+
+      {/* Media Carousel */}
+      {post.media.length > 0 && (
+        <View>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(e) => {
+              setMediaIndex(Math.round(e.nativeEvent.contentOffset.x / SCREEN_W))
+            }}
+          >
+            {post.media.map((item, i) => (
+              <MediaCard key={i} item={item} />
+            ))}
+          </ScrollView>
+
+          {/* Pagination dots */}
+          {hasMultipleMedia && (
+            <View style={styles.dotsRow}>
+              {post.media.map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.dot,
+                    {
+                      backgroundColor:
+                        i === mediaIndex ? colors.primary : colors.textMuted + '40',
+                    },
+                  ]}
+                />
+              ))}
+            </View>
           )}
 
-          {/* Step 2: Title + Category */}
-          {step === 2 && (
-            <>
-              <TextInput
-                value={title}
-                onChangeText={setTitle}
-                placeholder="Item name"
-                placeholderTextColor={colors.textMuted}
-                style={[createStyles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
-              />
-              <Text style={[createStyles.label, { color: colors.textMuted }]}>CATEGORY</Text>
-              <View style={createStyles.chipGrid}>
-                {CATEGORIES.filter((c) => c !== 'All' && c !== 'Free').map((c) => (
-                  <Pressable
-                    key={c}
-                    onPress={() => setCategory(c)}
-                    style={[createStyles.chip, {
-                      backgroundColor: category === c ? colors.primaryTint : colors.surface,
-                      borderColor: category === c ? colors.primary : colors.border,
-                      borderRadius: radius.full,
-                    }]}
-                  >
-                    <Text style={[createStyles.chipText, { color: category === c ? colors.primary : colors.text }]}>{c}</Text>
-                  </Pressable>
-                ))}
-              </View>
-              <StepButton label="Next" onPress={() => setStep(3)} disabled={!title || !category} />
-            </>
-          )}
-
-          {/* Step 3: Condition + Price */}
-          {step === 3 && (
-            <>
-              <Text style={[createStyles.label, { color: colors.textMuted }]}>CONDITION</Text>
-              <View style={createStyles.chipGrid}>
-                {CONDITIONS.map((c) => (
-                  <Pressable
-                    key={c}
-                    onPress={() => setCondition(c)}
-                    style={[createStyles.chip, {
-                      backgroundColor: condition === c ? colors.primaryTint : colors.surface,
-                      borderColor: condition === c ? colors.primary : colors.border,
-                      borderRadius: radius.full,
-                    }]}
-                  >
-                    <Text style={[createStyles.chipText, { color: condition === c ? colors.primary : colors.text }]}>{c}</Text>
-                  </Pressable>
-                ))}
-              </View>
-
-              {/* Free toggle */}
-              <Pressable
-                onPress={() => setIsFree(!isFree)}
-                style={[createStyles.freeToggle, {
-                  backgroundColor: isFree ? brand.success + '15' : colors.surface,
-                  borderColor: isFree ? brand.success : colors.border,
-                  borderRadius: radius.lg,
-                }]}
-              >
-                {isFree && <Check size={16} color={brand.success} strokeWidth={3} />}
-                <Text style={[createStyles.freeText, { color: isFree ? brand.success : colors.text }]}>
-                  Give away for free
-                </Text>
-              </Pressable>
-
-              {!isFree && (
-                <View style={[createStyles.priceRow, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
-                  <Text style={[createStyles.priceSymbol, { color: colors.textSecondary }]}>$</Text>
-                  <TextInput
-                    value={price}
-                    onChangeText={setPrice}
-                    placeholder="0.00"
-                    placeholderTextColor={colors.textMuted}
-                    keyboardType="decimal-pad"
-                    style={[createStyles.priceInput, { color: colors.text }]}
-                  />
-                </View>
-              )}
-              <StepButton label="Next" onPress={() => setStep(4)} />
-            </>
-          )}
-
-          {/* Step 4: Description + Size */}
-          {step === 4 && (
-            <>
-              <TextInput
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Describe your item..."
-                placeholderTextColor={colors.textMuted}
-                multiline
-                style={[createStyles.textArea, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
-              />
-              <TextInput
-                value={sizeRange}
-                onChangeText={setSizeRange}
-                placeholder="Size / age range (e.g. 6-12 months)"
-                placeholderTextColor={colors.textMuted}
-                style={[createStyles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
-              />
-              <StepButton label="Next" onPress={() => setStep(5)} />
-            </>
-          )}
-
-          {/* Step 5: Confirm */}
-          {step === 5 && (
-            <>
-              <View style={[createStyles.summary, { backgroundColor: colors.surfaceRaised, borderRadius: radius.xl }]}>
-                {photos.length > 0 && (
-                  <Image source={{ uri: photos[0] }} style={[createStyles.summaryPhoto, { borderRadius: radius.lg }]} />
-                )}
-                <Text style={[createStyles.summaryTitle, { color: colors.text }]}>{title}</Text>
-                <Text style={[createStyles.summaryPrice, { color: isFree ? brand.success : colors.primary }]}>
-                  {isFree ? 'FREE' : `$${price || '0'}`}
-                </Text>
-                <Text style={[createStyles.summaryMeta, { color: colors.textMuted }]}>
-                  {category} {condition ? `— ${condition}` : ''}
-                </Text>
-              </View>
-              <StepButton label={saving ? 'Publishing...' : 'Publish'} onPress={publish} disabled={saving} />
-            </>
+          {/* Media counter badge */}
+          {hasMultipleMedia && (
+            <View style={[styles.mediaBadge, { backgroundColor: colors.bg + 'CC', borderRadius: radius.sm }]}>
+              <Text style={[styles.mediaBadgeText, { color: colors.text }]}>
+                {mediaIndex + 1}/{post.media.length}
+              </Text>
+            </View>
           )}
         </View>
-      </ScrollView>
-    </LogSheet>
+      )}
+
+      {/* Actions Row */}
+      <View style={styles.actionsRow}>
+        <View style={styles.actionsLeft}>
+          {/* Like */}
+          <Pressable onPress={animateLike} hitSlop={8}>
+            <Animated.View style={{ transform: [{ scale: likeScale }] }}>
+              <Heart
+                size={24}
+                color={post.user_liked ? brand.error : colors.text}
+                strokeWidth={2}
+                fill={post.user_liked ? brand.error : 'none'}
+              />
+            </Animated.View>
+          </Pressable>
+
+          {/* Comment */}
+          <Pressable onPress={onComment} hitSlop={8}>
+            <MessageCircle size={24} color={colors.text} strokeWidth={2} />
+          </Pressable>
+
+          {/* Share */}
+          <Pressable onPress={onShare} hitSlop={8}>
+            <Send size={22} color={colors.text} strokeWidth={2} />
+          </Pressable>
+        </View>
+
+        {/* Save / Bookmark */}
+        <Pressable onPress={onSave} hitSlop={8}>
+          <Bookmark
+            size={24}
+            color={post.user_saved ? colors.primary : colors.text}
+            strokeWidth={2}
+            fill={post.user_saved ? colors.primary : 'none'}
+          />
+        </Pressable>
+      </View>
+
+      {/* Like count */}
+      {post.like_count > 0 && (
+        <Text style={[styles.likeCount, { color: colors.text }]}>
+          {post.like_count.toLocaleString()} {post.like_count === 1 ? 'like' : 'likes'}
+        </Text>
+      )}
+
+      {/* Caption */}
+      {post.caption && (
+        <View style={styles.captionRow}>
+          <Text style={[styles.captionText, { color: colors.text }]} numberOfLines={captionExpanded ? undefined : 2}>
+            <Text style={styles.captionAuthor}>{post.author_name ?? 'Community Member'} </Text>
+            {post.caption}
+          </Text>
+          {captionShort && !captionExpanded && (
+            <Pressable onPress={() => setCaptionExpanded(true)}>
+              <Text style={[styles.moreText, { color: colors.textMuted }]}>more</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
+
+      {/* Comments preview */}
+      {post.comment_count > 0 && (
+        <Pressable onPress={onComment}>
+          <Text style={[styles.viewComments, { color: colors.textMuted }]}>
+            View {post.comment_count === 1 ? '1 comment' : `all ${post.comment_count} comments`}
+          </Text>
+        </Pressable>
+      )}
+
+      {/* Timestamp */}
+      <Text style={[styles.timestamp, { color: colors.textMuted }]}>
+        {formatTimeAgo(post.created_at)}
+      </Text>
+    </View>
   )
 }
 
-function StepButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
-  const { colors, radius } = useTheme()
+// ─── Media Card (photo or video) ──────────────────────────────────────────
+
+function MediaCard({ item }: { item: MediaItem }) {
+  const { colors } = useTheme()
+
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }) => [
-        createStyles.stepBtn,
-        { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: disabled ? 0.4 : 1 },
-        pressed && !disabled && { transform: [{ scale: 0.98 }] },
-      ]}
-    >
-      <Text style={createStyles.stepBtnText}>{label}</Text>
-    </Pressable>
+    <View style={styles.mediaContainer}>
+      <Image source={{ uri: item.url }} style={styles.mediaImage} />
+      {item.type === 'video' && (
+        <View style={styles.videoPlayOverlay}>
+          <Play size={32} color="#FFFFFF" fill="#FFFFFF" />
+        </View>
+      )}
+    </View>
   )
 }
 
-// ─── Styles ────────────────────────────────────────────────────────────────
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
+
+function formatTimeAgo(dateStr: string): string {
+  const d = new Date(dateStr)
+  const now = new Date()
+  const diffSec = Math.floor((now.getTime() - d.getTime()) / 1000)
+
+  if (diffSec < 60) return 'Just now'
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHrs = Math.floor(diffMin / 60)
+  if (diffHrs < 24) return `${diffHrs}h ago`
+  const diffDays = Math.floor(diffHrs / 24)
+  if (diffDays < 7) return `${diffDays}d ago`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  searchRow: { marginBottom: 12 },
-  searchBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, height: 48, borderWidth: 1 },
-  searchInput: { flex: 1, fontSize: 15, fontWeight: '500' },
-  filterBar: { gap: 8, paddingHorizontal: 20, paddingBottom: 12 },
-  filterChip: { paddingVertical: 7, paddingHorizontal: 16, borderWidth: 1 },
-  filterText: { fontSize: 13, fontWeight: '600' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingTop: 40 },
-  emptyTitle: { fontSize: 18, fontWeight: '700' },
-  emptyBody: { fontSize: 14, fontWeight: '500', textAlign: 'center' },
-  gridContent: { paddingHorizontal: 20, paddingBottom: 100 },
-  gridRow: { gap: 12, marginBottom: 12 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  // Card
-  card: { flex: 1, padding: 10, gap: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
-  cardPhoto: { width: '100%', height: 110, resizeMode: 'cover' },
-  cardPhotoPlaceholder: { width: '100%', height: 110, alignItems: 'center', justifyContent: 'center' },
-  conditionBadge: { position: 'absolute', top: 16, right: 16, paddingVertical: 2, paddingHorizontal: 6 },
-  conditionText: { fontSize: 10, fontWeight: '700' },
-  cardTitle: { fontSize: 14, fontWeight: '600' },
-  cardPrice: { fontSize: 16, fontWeight: '800' },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  locationText: { fontSize: 11, fontWeight: '500' },
+  // Filters
+  filterBar: { gap: 8, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 16 },
+  filterChip: { paddingVertical: 8, paddingHorizontal: 18, borderWidth: 1 },
+  filterText: { fontSize: 13, fontWeight: '600' },
+
+  // My Garage button
+  profileBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginLeft: 16, marginBottom: 12, paddingVertical: 8, paddingHorizontal: 14 },
+  profileBtnText: { fontSize: 13, fontWeight: '700' },
+
+  // Empty state
+  emptyState: { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40, gap: 12 },
+  emptyIcon: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  emptyTitle: { fontSize: 20, fontWeight: '800' },
+  emptyBody: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20 },
+  emptyBtn: { marginTop: 12, paddingVertical: 12, paddingHorizontal: 32 },
+  emptyBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+
+  // Post card
+  postCard: { borderBottomWidth: 1, paddingBottom: 16, marginBottom: 8 },
+
+  // Post header
+  postHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10 },
+  postAuthorRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  avatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  authorName: { fontSize: 14, fontWeight: '700' },
+  categoryLabel: { fontSize: 11, fontWeight: '500', marginTop: 1 },
+
+  // Media
+  mediaContainer: { width: SCREEN_W, height: MEDIA_HEIGHT },
+  mediaImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  dotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: 10 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  mediaBadge: { position: 'absolute', top: 12, right: 12, paddingVertical: 3, paddingHorizontal: 8 },
+  mediaBadgeText: { fontSize: 12, fontWeight: '700' },
+  videoPlayOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.2)' },
+
+  // Actions
+  actionsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
+  actionsLeft: { flexDirection: 'row', alignItems: 'center', gap: 18 },
+
+  // Like count
+  likeCount: { fontSize: 14, fontWeight: '700', paddingHorizontal: 16, marginTop: 4 },
+
+  // Caption
+  captionRow: { paddingHorizontal: 16, marginTop: 4 },
+  captionText: { fontSize: 14, fontWeight: '400', lineHeight: 20 },
+  captionAuthor: { fontWeight: '700' },
+  moreText: { fontSize: 14, fontWeight: '400', marginTop: 1 },
+
+  // Comments link
+  viewComments: { fontSize: 13, fontWeight: '500', paddingHorizontal: 16, marginTop: 4 },
+
+  // Timestamp
+  timestamp: { fontSize: 11, fontWeight: '400', paddingHorizontal: 16, marginTop: 4 },
 
   // FAB
-  fab: { position: 'absolute', bottom: 24, right: 20, width: 56, height: 56, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    width: 56,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+  },
 })
 
-const createStyles = StyleSheet.create({
-  form: { gap: 16, paddingBottom: 8 },
-  hint: { fontSize: 14, fontWeight: '500' },
-  label: { fontSize: 12, fontWeight: '700', letterSpacing: 1 },
-  input: { borderWidth: 1, paddingHorizontal: 16, height: 48, fontSize: 15, fontWeight: '500' },
-  textArea: { borderWidth: 1, padding: 16, fontSize: 15, fontWeight: '500', minHeight: 100, textAlignVertical: 'top' },
-  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1 },
-  chipText: { fontSize: 13, fontWeight: '600' },
-  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  photoThumb: { width: 80, height: 80 },
-  removePhoto: { position: 'absolute', top: -4, right: -4, width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  addPhotoBtn: { width: 80, height: 80, alignItems: 'center', justifyContent: 'center' },
-  freeToggle: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1 },
-  freeText: { fontSize: 15, fontWeight: '600' },
-  priceRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, paddingHorizontal: 16, height: 56 },
-  priceSymbol: { fontSize: 20, fontWeight: '700', marginRight: 4 },
-  priceInput: { flex: 1, fontSize: 24, fontWeight: '800' },
-  summary: { alignItems: 'center', padding: 20, gap: 8 },
-  summaryPhoto: { width: 120, height: 120, marginBottom: 8 },
-  summaryTitle: { fontSize: 18, fontWeight: '700' },
-  summaryPrice: { fontSize: 22, fontWeight: '900' },
-  summaryMeta: { fontSize: 13, fontWeight: '500' },
-  stepBtn: { height: 48, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  stepBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
-})

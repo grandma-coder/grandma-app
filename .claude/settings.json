@@ -19,7 +19,27 @@
       "Bash(git -C /Users/igorcarvalhorodrigues/Projects/grandma-app config user.email)",
       "Bash(ssh -T git@github.com)",
       "Read(//Users/igorcarvalhorodrigues/.ssh/**)",
-      "Read(//Users/igorcarvalhorodrigues/**)"
+      "Read(//Users/igorcarvalhorodrigues/**)",
+      "Bash(cat ~/.claude/skills/*/skill.json)",
+      "Bash(ls /Users/igorcarvalhorodrigues/Projects/grandma-app/superdesign*)",
+      "Bash(npx superdesign:*)",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); require\\('fs'\\).writeFileSync\\('/Users/igorcarvalhorodrigues/Projects/grandma-app/.superdesign/cycle-home.html', d.htmlContent\\)\")",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); require\\('fs'\\).writeFileSync\\('/Users/igorcarvalhorodrigues/Projects/grandma-app/.superdesign/cycle-planner.html', d.htmlContent\\)\")",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); require\\('fs'\\).writeFileSync\\('/Users/igorcarvalhorodrigues/Projects/grandma-app/.superdesign/health-dashboard.html', d.htmlContent\\)\")",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); require\\('fs'\\).writeFileSync\\('/Users/igorcarvalhorodrigues/Projects/grandma-app/.superdesign/journey-selection.html', d.htmlContent\\)\")",
+      "Bash(git status:*)",
+      "Bash(lsof -ti:8081)",
+      "Bash(xargs kill:*)",
+      "Bash(kill -9 50629)",
+      "Bash(lsof -i:8081)",
+      "Bash(ps -p 51758 -o command=)",
+      "Bash(ps -p 78824 -o command=)",
+      "Bash(npx supabase:*)",
+      "Bash(find /Users/igorcarvalhorodrigues/Projects/grandma-app -path \"*/supabase/migrations/*\" -name \"*.sql\" -exec grep -l \"create table.*profiles\" {} \\\\;)",
+      "Bash(xargs ls:*)",
+      "Bash(ls 20260405*)",
+      "Bash(grep -A 20 \"user_role\\\\|journey_mode\" /Users/igorcarvalhorodrigues/Projects/grandma-app/supabase/migrations/*.sql)",
+      "Bash(wc -l /Users/igorcarvalhorodrigues/Projects/grandma-app/app/channel/[id].tsx)"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"

@@ -8,6 +8,7 @@
  */
 
 import { useColorScheme } from 'react-native'
+import { useThemeStore } from '../store/useThemeStore'
 
 // ─── BRAND COLORS (never change between modes) ─────────────────────────────
 
@@ -187,8 +188,12 @@ export const font = {
 // ─── useTheme() HOOK ───────────────────────────────────────────────────────
 
 export function useTheme() {
-  const scheme = useColorScheme()
-  const isDark = scheme === 'dark'
+  const systemScheme = useColorScheme()
+  const storeTheme = useThemeStore((s) => s.theme)
+  const hydrated = useThemeStore((s) => s.hydrated)
+
+  // Use store preference if hydrated, otherwise fall back to system
+  const isDark = hydrated ? storeTheme === 'dark' : systemScheme === 'dark'
   const colors: ColorTokens = isDark ? darkTokens : lightTokens
 
   return {

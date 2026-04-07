@@ -1,0 +1,290 @@
+import { useState } from 'react'
+import {
+  View, Text, TextInput, Pressable, ScrollView, Alert, StyleSheet,
+  KeyboardAvoidingView, Platform,
+} from 'react-native'
+import { router } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { ArrowLeft, Hash, Check } from 'lucide-react-native'
+import { useTheme } from '../../constants/theme'
+import { createChannel } from '../../lib/channelPosts'
+
+const CATEGORIES = [
+  'Parenting',
+  'Pregnancy',
+  'Fertility',
+  'Feeding',
+  'Sleep',
+  'Community',
+  'Wellness',
+  'Milestones',
+] as const
+
+type Category = (typeof CATEGORIES)[number]
+
+export default function CreateChannel() {
+  const insets = useSafeAreaInsets()
+  const { colors, radius, spacing } = useTheme()
+
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [category, setCategory] = useState<Category | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function handleCreate() {
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      Alert.alert('Required', 'Give your channel a name')
+      return
+    }
+    if (!category) {
+      Alert.alert('Required', 'Pick a category')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const id = await createChannel({
+        name: trimmedName,
+        description: description.trim() || undefined,
+        category,
+      })
+      router.replace(`/channel/${id}`)
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const styles = makeStyles(colors, radius, spacing)
+
+  return (
+    <View style={[styles.screen, { backgroundColor: colors.bg }]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* Header */}
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <ArrowLeft size={22} color={colors.text} />
+          </Pressable>
+          <Text style={styles.headerTitle}>New Channel</Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <ScrollView
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: insets.bottom + 100 },
+          ]}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Channel icon preview */}
+          <View style={styles.iconPreview}>
+            <Hash size={28} color={colors.primary} />
+          </View>
+
+          {/* Name */}
+          <Text style={styles.label}>CHANNEL NAME *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. Sleep Training Tips"
+            placeholderTextColor={colors.textMuted}
+            value={name}
+            onChangeText={(t) => setName(t.slice(0, 50))}
+            maxLength={50}
+            autoFocus
+          />
+          <Text style={styles.charCount}>{name.length}/50</Text>
+
+          {/* Description */}
+          <Text style={styles.label}>DESCRIPTION</Text>
+          <TextInput
+            style={[styles.input, styles.inputMulti]}
+            placeholder="What is this channel about?"
+            placeholderTextColor={colors.textMuted}
+            value={description}
+            onChangeText={(t) => setDescription(t.slice(0, 200))}
+            maxLength={200}
+            multiline
+          />
+          <Text style={styles.charCount}>{description.length}/200</Text>
+
+          {/* Category */}
+          <Text style={styles.label}>CATEGORY *</Text>
+          <View style={styles.chipRow}>
+            {CATEGORIES.map((c) => {
+              const selected = category === c
+              return (
+                <Pressable
+                  key={c}
+                  onPress={() => setCategory(c)}
+                  style={[
+                    styles.chip,
+                    selected && styles.chipSelected,
+                  ]}
+                >
+                  {selected && (
+                    <Check size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                  )}
+                  <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                    {c}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+        </ScrollView>
+
+        {/* Create button */}
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+          <Pressable
+            onPress={handleCreate}
+            disabled={loading || !name.trim() || !category}
+            style={[
+              styles.createBtn,
+              (!name.trim() || !category) && styles.createBtnDisabled,
+            ]}
+          >
+            <Text style={styles.createBtnText}>
+              {loading ? 'Creating...' : 'Create Channel'}
+            </Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </View>
+  )
+}
+
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  radius: ReturnType<typeof useTheme>['radius'],
+  spacing: ReturnType<typeof useTheme>['spacing'],
+) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing['2xl'],
+      marginBottom: 8,
+    },
+    backBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.surfaceGlass,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: '900',
+      color: colors.text,
+      letterSpacing: -0.3,
+      textTransform: 'uppercase',
+    },
+    content: {
+      paddingHorizontal: spacing['2xl'],
+      paddingTop: 16,
+    },
+    iconPreview: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.lg,
+      backgroundColor: colors.primaryTint,
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'center',
+      marginBottom: 24,
+    },
+    label: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: colors.textMuted,
+      letterSpacing: 1,
+      marginBottom: 8,
+      marginTop: 16,
+    },
+    input: {
+      backgroundColor: colors.surfaceGlass,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      padding: 14,
+      fontSize: 15,
+      color: colors.text,
+    },
+    inputMulti: {
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
+    charCount: {
+      fontSize: 11,
+      color: colors.textMuted,
+      textAlign: 'right',
+      marginTop: 4,
+    },
+    chipRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: radius.full,
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    chipSelected: {
+      backgroundColor: colors.primaryTint,
+      borderColor: colors.primary,
+    },
+    chipText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    chipTextSelected: {
+      color: colors.primary,
+    },
+    footer: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      paddingHorizontal: spacing['2xl'],
+      paddingTop: 12,
+      backgroundColor: colors.bg,
+      borderTopWidth: 1,
+      borderTopColor: colors.borderLight,
+    },
+    createBtn: {
+      backgroundColor: colors.primary,
+      paddingVertical: 16,
+      borderRadius: radius.lg,
+      alignItems: 'center',
+    },
+    createBtnDisabled: {
+      opacity: 0.4,
+    },
+    createBtnText: {
+      fontSize: 16,
+      fontWeight: '800',
+      color: colors.textInverse,
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+    },
+  })
+}

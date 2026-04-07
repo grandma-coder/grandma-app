@@ -134,10 +134,9 @@ export default function PregnancyOnboarding() {
         await supabase.from('profiles').upsert(
           {
             id: userId,
-            user_id: userId,
             health_notes: store.conditionsText,
           },
-          { onConflict: 'user_id' }
+          { onConflict: 'id' }
         )
       }
 

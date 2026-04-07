@@ -42,7 +42,7 @@ serve(async (req) => {
     const { data: profile } = await supabase
       .from('profiles')
       .select('name, location, language, health_notes, allergies, conditions, medications')
-      .eq('user_id', user_id)
+      .eq('id', user_id)
       .single()
 
     // ─── Fetch last 7 days of logs ─────────────────────────────────────

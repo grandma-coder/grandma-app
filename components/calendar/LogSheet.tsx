@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   sheet: {
-    maxHeight: '80%',
+    maxHeight: '95%',
   },
   handleWrap: {
     alignItems: 'center',

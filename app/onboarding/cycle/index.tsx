@@ -105,8 +105,7 @@ export default function CycleOnboarding() {
       // Update profile with cycle preferences
       await supabase.from('profiles').upsert({
         id: userId,
-        user_id: userId,
-      }, { onConflict: 'user_id' })
+      }, { onConflict: 'id' })
 
       // Create behavior record
       await supabase.from('behaviors').insert({

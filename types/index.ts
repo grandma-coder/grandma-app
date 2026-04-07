@@ -5,8 +5,16 @@ export interface Child {
   birthDate: string
   weightKg: number
   heightCm: number
+  sex: string
+  bloodType: string
   allergies: string[]
   medications: string[]
+  conditions: string[]
+  dietaryRestrictions: string[]
+  preferredFoods: string[]
+  dislikedFoods: string[]
+  pediatrician: { name: string; phone: string; clinic: string } | null
+  notes: string
   countryCode: string
 }
 

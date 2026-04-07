@@ -134,10 +134,9 @@ export default function KidsOnboarding() {
 
       // Insert children
       const childrenToInsert = store.children.map((c) => ({
-        user_id: userId,
+        parent_id: userId,
         name: c.name,
-        dob: c.birthDate,
-        photo_url: c.photoUri,
+        birth_date: c.birthDate || null,
         allergies: c.allergies,
         conditions: c.conditionsText ? [c.conditionsText] : [],
       }))
@@ -175,14 +174,22 @@ export default function KidsOnboarding() {
         // Set children in the app store for immediate use
         const mapped: ChildWithRole[] = insertedChildren.map((c: any) => ({
           id: c.id,
-          parentId: c.user_id,
+          parentId: c.parent_id ?? c.user_id,
           name: c.name,
-          birthDate: c.dob ?? '',
+          birthDate: c.birth_date ?? c.dob ?? '',
           weightKg: 0,
           heightCm: 0,
+          sex: c.sex ?? '',
+          bloodType: c.blood_type ?? '',
           allergies: c.allergies ?? [],
-          medications: [],
-          countryCode: 'US',
+          medications: c.medications ?? [],
+          conditions: c.conditions ?? [],
+          dietaryRestrictions: c.dietary_restrictions ?? [],
+          preferredFoods: c.preferred_foods ?? [],
+          dislikedFoods: c.disliked_foods ?? [],
+          pediatrician: c.pediatrician ?? null,
+          notes: c.notes ?? '',
+          countryCode: c.country_code ?? 'US',
           caregiverRole: 'parent' as const,
           permissions: { view: true, log_activity: true, chat: true },
         }))

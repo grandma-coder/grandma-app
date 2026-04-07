@@ -4,30 +4,30 @@
  * Discovery header, suggested channels, trending, my channels, search.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
   TextInput,
   Pressable,
   ScrollView,
-  FlatList,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import {
   Search,
   Hash,
   Users,
   TrendingUp,
   Bookmark,
-  ChevronRight,
+  Plus,
 } from 'lucide-react-native'
 import { useTheme, brand } from '../../constants/theme'
 import { getChannels, type Channel } from '../../lib/channels'
 import { getMyChannelIds } from '../../lib/channelPosts'
 import { useModeStore } from '../../store/useModeStore'
+import { useChannelsStore } from '../../store/useChannelsStore'
 
 // ─── Behavior-based suggestions ────────────────────────────────────────────
 
@@ -47,10 +47,19 @@ export function ChannelsScreen() {
   const [myIds, setMyIds] = useState<string[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const unreadCounts = useChannelsStore((s) => s.unreadCounts)
+  const fetchUnreadCounts = useChannelsStore((s) => s.fetchUnreadCounts)
 
   useEffect(() => {
     load()
   }, [])
+
+  // Refresh on focus
+  useFocusEffect(
+    useCallback(() => {
+      load()
+    }, [])
+  )
 
   async function load() {
     setLoading(true)
@@ -58,6 +67,7 @@ export function ChannelsScreen() {
       const [all, ids] = await Promise.all([getChannels(), getMyChannelIds()])
       setChannels(all)
       setMyIds(ids)
+      fetchUnreadCounts()
     } catch {} finally {
       setLoading(false)
     }
@@ -88,6 +98,7 @@ export function ChannelsScreen() {
   }
 
   return (
+    <View style={{ flex: 1 }}>
     <ScrollView
       contentContainerStyle={styles.scroll}
       showsVerticalScrollIndicator={false}
@@ -142,7 +153,7 @@ export function ChannelsScreen() {
               <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0 }]}>TRENDING</Text>
             </View>
             {trending.map((c) => (
-              <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} />
+              <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} unread={unreadCounts[c.id]} />
             ))}
           </View>
 
@@ -154,19 +165,32 @@ export function ChannelsScreen() {
                 <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0 }]}>MY CHANNELS</Text>
               </View>
               {myChannels.map((c) => (
-                <ChannelCard key={c.id} channel={c} joined />
+                <ChannelCard key={c.id} channel={c} joined unread={unreadCounts[c.id]} />
               ))}
             </View>
           )}
         </>
       )}
     </ScrollView>
+
+    {/* Create Channel FAB */}
+    <Pressable
+      onPress={() => router.push('/channel/create' as any)}
+      style={({ pressed }) => [
+        styles.fab,
+        { backgroundColor: colors.primary, borderRadius: radius.full },
+        pressed && { transform: [{ scale: 0.93 }] },
+      ]}
+    >
+      <Plus size={26} color="#FFFFFF" strokeWidth={2.5} />
+    </Pressable>
+    </View>
   )
 }
 
 // ─── Channel Card (full) ───────────────────────────────────────────────────
 
-function ChannelCard({ channel, joined }: { channel: Channel; joined: boolean }) {
+function ChannelCard({ channel, joined, unread }: { channel: Channel; joined: boolean; unread?: number }) {
   const { colors, radius } = useTheme()
 
   return (
@@ -190,12 +214,18 @@ function ChannelCard({ channel, joined }: { channel: Channel; joined: boolean })
         </Text>
       </View>
       <View style={styles.cardRight}>
-        <View style={styles.memberRow}>
-          <Users size={12} color={colors.textMuted} strokeWidth={2} />
-          <Text style={[styles.memberCount, { color: colors.textMuted }]}>
-            {channel.memberCount}
-          </Text>
-        </View>
+        {(unread ?? 0) > 0 ? (
+          <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>
+            <Text style={styles.unreadText}>{unread! > 99 ? '99+' : unread}</Text>
+          </View>
+        ) : (
+          <View style={styles.memberRow}>
+            <Users size={12} color={colors.textMuted} strokeWidth={2} />
+            <Text style={[styles.memberCount, { color: colors.textMuted }]}>
+              {channel.memberCount}
+            </Text>
+          </View>
+        )}
         {joined && (
           <View style={[styles.joinedBadge, { backgroundColor: brand.success + '20', borderRadius: radius.full }]}>
             <Text style={[styles.joinedText, { color: brand.success }]}>Joined</Text>
@@ -269,6 +299,13 @@ const styles = StyleSheet.create({
   memberCount: { fontSize: 12, fontWeight: '600' },
   joinedBadge: { paddingVertical: 2, paddingHorizontal: 8 },
   joinedText: { fontSize: 10, fontWeight: '700' },
+
+  // Unread badge
+  unreadBadge: { minWidth: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
+  unreadText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
+
+  // FAB
+  fab: { position: 'absolute', bottom: 24, right: 20, width: 56, height: 56, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 8 },
 
   // Compact
   compactCard: { width: 150, padding: 16, alignItems: 'center', gap: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
