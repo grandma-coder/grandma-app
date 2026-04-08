@@ -4,7 +4,7 @@
  * Discovery header, suggested channels, trending, my channels, search.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
+  Dimensions,
+  Animated,
 } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
 import {
@@ -22,6 +24,7 @@ import {
   TrendingUp,
   Bookmark,
   Plus,
+  Star,
 } from 'lucide-react-native'
 import { useTheme, brand } from '../../constants/theme'
 import { getChannels, type Channel } from '../../lib/channels'
@@ -108,6 +111,11 @@ export function ChannelsScreen() {
         Find your community
       </Text>
 
+      {/* Auto-scrolling banner carousel */}
+      {!search && suggested.length > 0 && (
+        <BannerCarousel channels={suggested} myIds={myIds} />
+      )}
+
       {/* Search */}
       <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
         <Search size={18} color={colors.textMuted} strokeWidth={2} />
@@ -188,6 +196,99 @@ export function ChannelsScreen() {
   )
 }
 
+// ─── Auto-scrolling Banner Carousel ────────────────────────────────────────
+
+const BANNER_W = Dimensions.get('window').width - 40 // padding 20 each side
+
+function BannerCarousel({ channels, myIds }: { channels: Channel[]; myIds: string[] }) {
+  const { colors, radius } = useTheme()
+  const scrollRef = useRef<ScrollView>(null)
+  const indexRef = useRef(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      indexRef.current = (indexRef.current + 1) % channels.length
+      scrollRef.current?.scrollTo({ x: indexRef.current * (BANNER_W + 12), animated: true })
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [channels.length])
+
+  return (
+    <View style={styles.bannerContainer}>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        pagingEnabled={false}
+        decelerationRate="fast"
+        snapToInterval={BANNER_W + 12}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 12 }}
+      >
+        {channels.map((c) => {
+          const joined = myIds.includes(c.id)
+          return (
+            <Pressable
+              key={c.id}
+              onPress={() => router.push(`/channel/${c.id}` as any)}
+              style={[styles.banner, { width: BANNER_W, backgroundColor: colors.primary + '15', borderRadius: radius.xl }]}
+            >
+              <View style={[styles.bannerIcon, { backgroundColor: colors.primary + '20' }]}>
+                <Hash size={28} color={colors.primary} strokeWidth={2} />
+              </View>
+              <View style={styles.bannerContent}>
+                <Text style={[styles.bannerName, { color: colors.text }]} numberOfLines={1}>
+                  {c.name}
+                </Text>
+                <Text style={[styles.bannerDesc, { color: colors.textSecondary }]} numberOfLines={2}>
+                  {c.description ?? 'Join the conversation'}
+                </Text>
+                <View style={styles.bannerMeta}>
+                  <Text style={[styles.bannerMembers, { color: colors.textMuted }]}>
+                    {c.memberCount} members
+                  </Text>
+                  {c.avgRating > 0 && (
+                    <View style={styles.bannerRating}>
+                      <Star size={12} color={brand.accent} strokeWidth={2} fill={brand.accent} />
+                      <Text style={[styles.bannerRatingText, { color: brand.accent }]}>
+                        {c.avgRating.toFixed(1)}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+              {!joined && (
+                <View style={[styles.bannerJoin, { backgroundColor: colors.primary, borderRadius: radius.lg }]}>
+                  <Text style={styles.bannerJoinText}>Join</Text>
+                </View>
+              )}
+            </Pressable>
+          )
+        })}
+      </ScrollView>
+    </View>
+  )
+}
+
+// ─── Star Rating Display ──────────────────────────────────────────────────
+
+function StarRating({ rating, count }: { rating: number; count: number }) {
+  if (count === 0) return null
+  return (
+    <View style={styles.starRow}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          size={10}
+          color={brand.accent}
+          strokeWidth={2}
+          fill={i <= Math.round(rating) ? brand.accent : 'none'}
+        />
+      ))}
+      <Text style={[styles.ratingText, { color: brand.accent }]}>{rating.toFixed(1)}</Text>
+    </View>
+  )
+}
+
 // ─── Channel Card (full) ───────────────────────────────────────────────────
 
 function ChannelCard({ channel, joined, unread }: { channel: Channel; joined: boolean; unread?: number }) {
@@ -226,6 +327,7 @@ function ChannelCard({ channel, joined, unread }: { channel: Channel; joined: bo
             </Text>
           </View>
         )}
+        <StarRating rating={channel.avgRating} count={channel.ratingCount} />
         {joined && (
           <View style={[styles.joinedBadge, { backgroundColor: brand.success + '20', borderRadius: radius.full }]}>
             <Text style={[styles.joinedText, { color: brand.success }]}>Joined</Text>
@@ -274,6 +376,24 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   scroll: { paddingHorizontal: 20, paddingBottom: 40 },
   heading: { fontSize: 24, fontWeight: '800', letterSpacing: -0.3, marginBottom: 16 },
+
+  // Banner carousel
+  bannerContainer: { marginBottom: 16 },
+  banner: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
+  bannerIcon: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
+  bannerContent: { flex: 1, gap: 4 },
+  bannerName: { fontSize: 16, fontWeight: '700' },
+  bannerDesc: { fontSize: 12, fontWeight: '400', lineHeight: 16 },
+  bannerMeta: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 2 },
+  bannerMembers: { fontSize: 11, fontWeight: '600' },
+  bannerRating: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  bannerRatingText: { fontSize: 11, fontWeight: '700' },
+  bannerJoin: { paddingVertical: 8, paddingHorizontal: 16 },
+  bannerJoinText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
+
+  // Star rating
+  starRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  ratingText: { fontSize: 10, fontWeight: '700', marginLeft: 2 },
 
   // Search
   searchBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, height: 48, borderWidth: 1, marginBottom: 20 },

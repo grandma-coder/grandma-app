@@ -353,6 +353,176 @@ export async function searchChannelMembers(
     .map((p: any) => ({ id: p.user_id, name: p.name }))
 }
 
+// ─── Channel Ratings ───────────────────────────────────────────────────────
+
+export interface ChannelRating {
+  id: string
+  channel_id: string
+  user_id: string
+  rating: number
+  review: string | null
+  created_at: string
+  // Joined
+  author_name?: string
+}
+
+export async function rateChannel(channelId: string, rating: number, review?: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+
+  // Upsert — update if already rated
+  const { error } = await supabase
+    .from('channel_ratings')
+    .upsert({
+      channel_id: channelId,
+      user_id: session.user.id,
+      rating,
+      review: review?.trim() ?? null,
+    }, { onConflict: 'channel_id,user_id' })
+
+  if (error) throw error
+}
+
+export async function fetchChannelRatings(channelId: string): Promise<ChannelRating[]> {
+  const { data } = await supabase
+    .from('channel_ratings')
+    .select('*')
+    .eq('channel_id', channelId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  const ratings = (data ?? []) as ChannelRating[]
+
+  // Backfill author names
+  const missing = ratings.filter((r) => !r.author_name)
+  if (missing.length > 0) {
+    const userIds = [...new Set(missing.map((r) => r.user_id))]
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, name')
+      .in('user_id', userIds)
+    if (profiles) {
+      const nameMap = new Map(profiles.map((p: any) => [p.user_id, p.name]))
+      for (const r of ratings) {
+        if (!r.author_name) r.author_name = nameMap.get(r.user_id) ?? null
+      }
+    }
+  }
+  return ratings
+}
+
+export async function getMyRating(channelId: string): Promise<{ rating: number; review: string | null } | null> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return null
+  const { data } = await supabase
+    .from('channel_ratings')
+    .select('rating, review')
+    .eq('channel_id', channelId)
+    .eq('user_id', session.user.id)
+    .single()
+  return data as { rating: number; review: string | null } | null
+}
+
+// ─── Save/Follow Channels ──────────────────────────────────────────────────
+
+export async function saveChannel(channelId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+  await supabase.from('channel_saves').insert({ channel_id: channelId, user_id: session.user.id })
+}
+
+export async function unsaveChannel(channelId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  await supabase.from('channel_saves').delete().eq('channel_id', channelId).eq('user_id', session.user.id)
+}
+
+export async function getMySavedChannelIds(): Promise<string[]> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return []
+  const { data } = await supabase.from('channel_saves').select('channel_id').eq('user_id', session.user.id)
+  return (data ?? []).map((d: any) => d.channel_id)
+}
+
+// ─── Delete Messages ───────────────────────────────────────────────────────
+
+export async function deleteMessage(messageId: string): Promise<void> {
+  await supabase.from('channel_posts').delete().eq('id', messageId)
+}
+
+// ─── Notifications ─────────────────────────────────────────────────────────
+
+export interface AppNotification {
+  id: string
+  user_id: string
+  type: string
+  title: string
+  body: string | null
+  data: any
+  is_read: boolean
+  created_at: string
+}
+
+export async function fetchNotifications(): Promise<AppNotification[]> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return []
+  const { data } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .order('created_at', { ascending: false })
+    .limit(50)
+  return (data ?? []) as AppNotification[]
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  await supabase.from('notifications').update({ is_read: true }).eq('id', id)
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  await supabase.from('notifications').update({ is_read: true }).eq('user_id', session.user.id).eq('is_read', false)
+}
+
+export async function getUnreadNotificationCount(): Promise<number> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return 0
+  const { count } = await supabase
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', session.user.id)
+    .eq('is_read', false)
+  return count ?? 0
+}
+
+// Create notification for mentioned users
+export async function notifyMentions(
+  channelId: string,
+  channelName: string,
+  messageContent: string,
+  mentionedUserIds: string[]
+): Promise<void> {
+  if (mentionedUserIds.length === 0) return
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  const authorName = await getCurrentUserName()
+
+  const notifications = mentionedUserIds
+    .filter((uid) => uid !== session.user.id) // don't notify self
+    .map((uid) => ({
+      user_id: uid,
+      type: 'mention',
+      title: `${authorName ?? 'Someone'} mentioned you in #${channelName}`,
+      body: messageContent.slice(0, 100),
+      data: { channelId },
+    }))
+
+  if (notifications.length > 0) {
+    await supabase.from('notifications').insert(notifications)
+  }
+}
+
 // ─── Legacy exports (backward compat) ──────────────────────────────────────
 
 export const fetchPosts = fetchMessages

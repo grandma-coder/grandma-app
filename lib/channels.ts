@@ -9,6 +9,8 @@ export interface Channel {
   createdBy: string
   memberCount: number
   avatarUrl?: string
+  avgRating: number
+  ratingCount: number
   createdAt: string
 }
 
@@ -49,6 +51,8 @@ export async function getChannels(): Promise<Channel[]> {
     createdBy: c.created_by,
     memberCount: c.member_count,
     avatarUrl: c.avatar_url,
+    avgRating: parseFloat(c.avg_rating) || 0,
+    ratingCount: c.rating_count ?? 0,
     createdAt: c.created_at,
   }))
 }

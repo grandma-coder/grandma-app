@@ -5,12 +5,13 @@
  * Accessible from Grandma Wheel and tab bar.
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { ArrowLeft } from 'lucide-react-native'
+import { ArrowLeft, Bell } from 'lucide-react-native'
+import { getUnreadNotificationCount } from '../lib/channelPosts'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme } from '../constants/theme'
+import { useTheme, brand } from '../constants/theme'
 import { GarageTab } from '../components/connections/GarageTab'
 import { ChannelsTab } from '../components/connections/ChannelsTab'
 
@@ -18,6 +19,11 @@ export default function ConnectionsScreen() {
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const [tab, setTab] = useState<'garage' | 'channels'>('garage')
+  const [notifCount, setNotifCount] = useState(0)
+
+  useEffect(() => {
+    getUnreadNotificationCount().then(setNotifCount).catch(() => {})
+  }, [])
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -27,7 +33,14 @@ export default function ConnectionsScreen() {
           <ArrowLeft size={24} color={colors.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Connections</Text>
-        <View style={styles.headerBtn} />
+        <Pressable onPress={() => router.push('/notifications' as any)} style={styles.headerBtn}>
+          <Bell size={22} color={colors.text} strokeWidth={2} />
+          {notifCount > 0 && (
+            <View style={[styles.notifBadge, { backgroundColor: brand.error }]}>
+              <Text style={styles.notifBadgeText}>{notifCount > 9 ? '9+' : notifCount}</Text>
+            </View>
+          )}
+        </Pressable>
       </View>
 
       {/* Tab bar */}
@@ -87,8 +100,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 12,
   },
-  headerBtn: { width: 40, alignItems: 'center' },
+  headerBtn: { width: 40, alignItems: 'center', position: 'relative' },
   headerTitle: { fontSize: 18, fontWeight: '700' },
+  notifBadge: { position: 'absolute', top: -4, right: 2, minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
+  notifBadgeText: { fontSize: 9, fontWeight: '800', color: '#FFFFFF' },
   tabBar: { flexDirection: 'row', padding: 4, marginBottom: 12 },
   tabBtn: { flex: 1, alignItems: 'center', paddingVertical: 10 },
   tabText: { fontSize: 14, fontWeight: '700' },

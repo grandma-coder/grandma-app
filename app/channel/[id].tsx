@@ -17,6 +17,7 @@ import {
   Platform,
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
+import * as DocumentPicker from 'expo-document-picker'
 import { router, useLocalSearchParams } from 'expo-router'
 import {
   ArrowLeft,
@@ -31,6 +32,9 @@ import {
   User,
   Reply,
   AtSign,
+  Star,
+  Bookmark,
+  Trash2,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
@@ -44,6 +48,13 @@ import {
   leaveChannel,
   markChannelRead,
   searchChannelMembers,
+  rateChannel,
+  getMyRating,
+  deleteMessage,
+  saveChannel,
+  unsaveChannel,
+  getMySavedChannelIds,
+  notifyMentions,
   type ChannelPost,
 } from '../../lib/channelPosts'
 import { supabase } from '../../lib/supabase'
@@ -76,6 +87,16 @@ export default function ChannelChat() {
   const [mentionResults, setMentionResults] = useState<{ id: string; name: string }[]>([])
   const [mentionIds, setMentionIds] = useState<string[]>([])
 
+  // Save state
+  const [isSaved, setIsSaved] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+  // Rating state
+  const [showRating, setShowRating] = useState(false)
+  const [myRating, setMyRating] = useState(0)
+  const [myReview, setMyReview] = useState('')
+  const [savingRating, setSavingRating] = useState(false)
+
   // ─── Data loading ─────────────────────────────────────────────────────
 
   const load = useCallback(async () => {
@@ -90,6 +111,18 @@ export default function ChannelChat() {
       setChannel(allChannels.find((c) => c.id === id) ?? null)
       setMessages(msgData)
       setIsMember(member)
+
+      // Load current user, saved state, and rating
+      const { data: { session: sess } } = await supabase.auth.getSession()
+      if (sess) setCurrentUserId(sess.user.id)
+      const savedIds = await getMySavedChannelIds()
+      setIsSaved(savedIds.includes(id))
+
+      const existing = await getMyRating(id)
+      if (existing) {
+        setMyRating(existing.rating)
+        setMyReview(existing.review ?? '')
+      }
     } catch {
       // silent
     } finally {
@@ -223,6 +256,12 @@ export default function ChannelChat() {
         replyToId: replyTo?.id,
         mentions: mentionIds.length > 0 ? mentionIds : undefined,
       })
+
+      // Notify mentioned users
+      if (mentionIds.length > 0 && channel) {
+        notifyMentions(id, channel.name, content, mentionIds).catch(() => {})
+      }
+
       setText('')
       setPhotos([])
       setReplyTo(null)
@@ -238,18 +277,26 @@ export default function ChannelChat() {
 
   async function pickPhoto() {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsMultipleSelection: false,
-        preferredAssetRepresentationMode:
-          ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
-        exif: false,
-      })
-      if (!result.canceled && result.assets[0]) {
+      const result = await ImagePicker.launchImageLibraryAsync({})
+      if (!result.canceled && result.assets?.[0]) {
         setPhotos((prev) => [...prev, result.assets[0].uri].slice(0, 4))
+        return
       }
+      if (result.canceled) return
     } catch {
-      Alert.alert('Error', 'Could not load photo.')
+      // Fallback to DocumentPicker on iOS PHPicker failure
+      try {
+        const result = await DocumentPicker.getDocumentAsync({
+          type: ['image/*'],
+          multiple: true,
+          copyToCacheDirectory: true,
+        })
+        if (!result.canceled && result.assets?.length > 0) {
+          setPhotos((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4))
+        }
+      } catch {
+        Alert.alert('Error', 'Could not load photo.')
+      }
     }
   }
 
@@ -287,6 +334,46 @@ export default function ChannelChat() {
     }
   }
 
+  async function handleSaveToggle() {
+    if (!id) return
+    if (isSaved) {
+      setIsSaved(false)
+      await unsaveChannel(id).catch(() => setIsSaved(true))
+    } else {
+      setIsSaved(true)
+      await saveChannel(id).catch(() => setIsSaved(false))
+    }
+  }
+
+  function handleDeleteMessage(msgId: string, authorId: string) {
+    if (authorId !== currentUserId) return
+    Alert.alert('Delete Message', 'Remove this message?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete', style: 'destructive',
+        onPress: async () => {
+          setMessages((prev) => prev.filter((m) => m.id !== msgId))
+          await deleteMessage(msgId).catch(() => load())
+        },
+      },
+    ])
+  }
+
+  async function handleSubmitRating() {
+    if (!id || myRating === 0) return
+    setSavingRating(true)
+    try {
+      await rateChannel(id, myRating, myReview || undefined)
+      setShowRating(false)
+      Alert.alert('Thanks!', 'Your rating has been submitted.')
+      load() // Refresh to get updated avg
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    } finally {
+      setSavingRating(false)
+    }
+  }
+
   // ─── Pinned messages ──────────────────────────────────────────────────
 
   const pinnedMessage = useMemo(
@@ -318,7 +405,10 @@ export default function ChannelChat() {
         <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerBtn}>
           <ArrowLeft size={24} color={colors.text} />
         </Pressable>
-        <View style={styles.headerCenter}>
+        <Pressable
+          onPress={() => router.push(`/channel/info/${id}` as any)}
+          style={styles.headerCenter}
+        >
           <Hash size={18} color={colors.primary} strokeWidth={2} />
           <Text
             style={[styles.headerTitle, { color: colors.text }]}
@@ -330,7 +420,16 @@ export default function ChannelChat() {
             {channel?.memberCount ?? 0}
           </Text>
           <Users size={12} color={colors.textMuted} strokeWidth={2} />
-        </View>
+        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Pressable onPress={handleSaveToggle} hitSlop={8}>
+          <Bookmark
+            size={20}
+            color={isSaved ? colors.primary : colors.textMuted}
+            strokeWidth={2}
+            fill={isSaved ? colors.primary : 'none'}
+          />
+        </Pressable>
         <Pressable
           onPress={handleJoinLeave}
           style={[
@@ -350,7 +449,39 @@ export default function ChannelChat() {
             {isMember ? 'Leave' : 'Join'}
           </Text>
         </Pressable>
+        </View>
       </View>
+
+      {/* Channel info bar with rating */}
+      {channel && isMember && (
+        <Pressable
+          onPress={() => setShowRating(true)}
+          style={[styles.rateBar, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}
+        >
+          <View style={styles.rateBarLeft}>
+            {channel.avgRating > 0 ? (
+              <>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star
+                    key={i}
+                    size={14}
+                    color={brand.accent}
+                    strokeWidth={2}
+                    fill={i <= Math.round(channel.avgRating) ? brand.accent : 'none'}
+                  />
+                ))}
+                <Text style={[styles.rateBarScore, { color: brand.accent }]}>{channel.avgRating.toFixed(1)}</Text>
+                <Text style={[styles.rateBarCount, { color: colors.textMuted }]}>({channel.ratingCount})</Text>
+              </>
+            ) : (
+              <Text style={[styles.rateBarPrompt, { color: colors.textMuted }]}>No ratings yet</Text>
+            )}
+          </View>
+          <Text style={[styles.rateBarAction, { color: colors.primary }]}>
+            {myRating > 0 ? 'Edit Rating' : 'Rate Channel'}
+          </Text>
+        </Pressable>
+      )}
 
       {/* Pinned message banner */}
       {pinnedMessage && (
@@ -408,9 +539,16 @@ export default function ChannelChat() {
               message={item}
               onReaction={() => handleReaction(item.id)}
               onLongPress={() => {
-                setReplyTo(item)
-                inputRef.current?.focus()
+                Alert.alert('Message', '', [
+                  { text: 'Reply in Thread', onPress: () => router.push(`/channel/thread/${item.id}` as any) },
+                  { text: 'Reply', onPress: () => { setReplyTo(item); inputRef.current?.focus() } },
+                  ...(item.author_id === currentUserId ? [
+                    { text: 'Delete', style: 'destructive' as const, onPress: () => handleDeleteMessage(item.id, item.author_id) },
+                  ] : []),
+                  { text: 'Cancel', style: 'cancel' as const },
+                ])
               }}
+              onThreadPress={() => router.push(`/channel/thread/${item.id}` as any)}
             />
           )}
         />
@@ -576,6 +714,63 @@ export default function ChannelChat() {
           </View>
         )}
       </KeyboardAvoidingView>
+
+      {/* Rating overlay */}
+      {showRating && (
+        <View style={styles.ratingOverlay}>
+          <View style={[styles.ratingCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+            <Text style={[styles.ratingTitle, { color: colors.text }]}>Rate this channel</Text>
+            <Text style={[styles.ratingSubtitle, { color: colors.textMuted }]}>
+              #{channel?.name}
+            </Text>
+
+            {/* Star selector */}
+            <View style={styles.ratingStars}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Pressable key={i} onPress={() => setMyRating(i)} hitSlop={8}>
+                  <Star
+                    size={36}
+                    color={brand.accent}
+                    strokeWidth={2}
+                    fill={i <= myRating ? brand.accent : 'none'}
+                  />
+                </Pressable>
+              ))}
+            </View>
+
+            {/* Review text */}
+            <TextInput
+              value={myReview}
+              onChangeText={setMyReview}
+              placeholder="Write a review (optional)..."
+              placeholderTextColor={colors.textMuted}
+              multiline
+              style={[styles.ratingInput, { color: colors.text, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}
+            />
+
+            {/* Buttons */}
+            <View style={styles.ratingButtons}>
+              <Pressable
+                onPress={() => setShowRating(false)}
+                style={[styles.ratingCancelBtn, { borderColor: colors.border, borderRadius: radius.lg }]}
+              >
+                <Text style={[styles.ratingCancelText, { color: colors.textSecondary }]}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleSubmitRating}
+                disabled={myRating === 0 || savingRating}
+                style={[styles.ratingSubmitBtn, { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: myRating === 0 ? 0.4 : 1 }]}
+              >
+                {savingRating ? (
+                  <ActivityIndicator color="#FFF" size="small" />
+                ) : (
+                  <Text style={styles.ratingSubmitText}>Submit</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   )
 }
@@ -586,10 +781,12 @@ function MessageBubble({
   message,
   onReaction,
   onLongPress,
+  onThreadPress,
 }: {
   message: ChannelPost
   onReaction: () => void
   onLongPress: () => void
+  onThreadPress: () => void
 }) {
   const { colors, radius } = useTheme()
 
@@ -668,9 +865,9 @@ function MessageBubble({
             )}
           </Pressable>
 
-          {/* Reply count */}
+          {/* Reply count — tap to open thread */}
           {message.reply_count > 0 && (
-            <Pressable style={styles.replyLink}>
+            <Pressable onPress={onThreadPress} style={styles.replyLink}>
               <MessageCircle size={14} color={colors.primary} strokeWidth={2} />
               <Text style={[styles.replyLinkText, { color: colors.primary }]}>
                 {message.reply_count} {message.reply_count === 1 ? 'reply' : 'replies'}
@@ -724,6 +921,27 @@ const styles = StyleSheet.create({
   memberCount: { fontSize: 12, fontWeight: '600', marginLeft: 4 },
   joinLeaveBtn: { paddingVertical: 6, paddingHorizontal: 16 },
   joinLeaveText: { fontSize: 13, fontWeight: '700' },
+
+  // Rate bar
+  rateBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
+  rateBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  rateBarScore: { fontSize: 13, fontWeight: '700', marginLeft: 4 },
+  rateBarCount: { fontSize: 11, fontWeight: '500' },
+  rateBarPrompt: { fontSize: 13, fontWeight: '500' },
+  rateBarAction: { fontSize: 13, fontWeight: '700' },
+
+  // Rating overlay
+  ratingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+  ratingCard: { width: 300, padding: 28, gap: 16, alignItems: 'center' },
+  ratingTitle: { fontSize: 20, fontWeight: '800' },
+  ratingSubtitle: { fontSize: 14, fontWeight: '500' },
+  ratingStars: { flexDirection: 'row', gap: 8 },
+  ratingInput: { width: '100%', padding: 14, fontSize: 14, fontWeight: '500', minHeight: 80, textAlignVertical: 'top' },
+  ratingButtons: { flexDirection: 'row', gap: 12, width: '100%' },
+  ratingCancelBtn: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  ratingCancelText: { fontSize: 14, fontWeight: '600' },
+  ratingSubmitBtn: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center' },
+  ratingSubmitText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
 
   // Pinned banner
   pinnedBanner: {
