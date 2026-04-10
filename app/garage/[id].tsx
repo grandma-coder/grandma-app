@@ -16,6 +16,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   Animated,
+  Alert,
+  Share,
 } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import {
@@ -109,6 +111,35 @@ export default function PostDetail() {
     } catch {
       setPost((prev) => (prev ? { ...prev, user_saved: !prev.user_saved } : prev))
     }
+  }
+
+  function handleShare() {
+    if (!post) return
+    const postUrl = `grandma://garage/${post.id}`
+    const caption = post.caption?.split('\n')[0] ?? 'Check out this post'
+
+    Alert.alert('Share', '', [
+      {
+        text: 'Share to Channel',
+        onPress: () => router.push({ pathname: '/garage/share', params: { postId: post.id, caption } } as any),
+      },
+      {
+        text: 'Copy Link',
+        onPress: () => {
+          import('expo-clipboard').then(({ setStringAsync }) => {
+            setStringAsync(postUrl)
+            Alert.alert('Copied!', 'Link copied to clipboard')
+          })
+        },
+      },
+      {
+        text: 'Share External...',
+        onPress: () => {
+          Share.share({ message: `${caption}\n\n${postUrl}` })
+        },
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ])
   }
 
   async function handleComment() {
@@ -258,10 +289,13 @@ export default function PostDetail() {
                 />
               </Animated.View>
             </Pressable>
-            <Pressable hitSlop={8}>
+            <Pressable hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <MessageCircle size={26} color={colors.text} strokeWidth={2} />
+              {post.comment_count > 0 && (
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>{post.comment_count}</Text>
+              )}
             </Pressable>
-            <Pressable hitSlop={8}>
+            <Pressable hitSlop={8} onPress={handleShare}>
               <Send size={24} color={colors.text} strokeWidth={2} />
             </Pressable>
           </View>

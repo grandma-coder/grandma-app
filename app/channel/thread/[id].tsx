@@ -93,7 +93,12 @@ export default function ThreadView() {
     if (!text.trim() || !parentMsg) return
     setSending(true)
     try {
-      await sendMessage(parentMsg.channel_id, text.trim(), { replyToId: id! })
+      const newReply = await sendMessage(parentMsg.channel_id, text.trim(), { replyToId: id! })
+      // Optimistically add reply to list
+      setReplies((prev) => {
+        if (prev.some((r) => r.id === newReply.id)) return prev
+        return [...prev, newReply]
+      })
       setText('')
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 200)
     } catch (e: any) {

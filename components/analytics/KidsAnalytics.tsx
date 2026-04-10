@@ -1,26 +1,26 @@
 /**
- * D3 — Kids Analytics Screen
+ * Kids Analytics Screen — real data from child_logs via Supabase.
  *
- * 5 major sections: Nutrition, Sleep, Mood, Health, Growth
- * Each section has multiple charts. Child selector at top.
- * All data from Supabase child_logs (mocked for now).
+ * 5 sections: Nutrition, Sleep, Mood, Health, Growth
+ * Child selector at top. All charts driven by useKidsAnalytics hook.
  */
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
   Pressable,
   ScrollView,
+  RefreshControl,
   Dimensions,
   StyleSheet,
+  ActivityIndicator,
+  AppState,
 } from 'react-native'
 import { router } from 'expo-router'
 import Svg, {
   Rect,
   Circle,
-  Polyline,
-  Line,
   Path,
   Defs,
   LinearGradient,
@@ -37,75 +37,36 @@ import {
   Smile,
   Heart,
   TrendingUp,
-  User,
   Shield,
   Syringe,
-  Apple,
+  RefreshCw,
+  FileQuestion,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { LineChart, BarChart, HeatmapGrid, BubbleGrid } from '../charts/SvgCharts'
 import { FullScreenChart } from '../charts/FullScreenChart'
+import { useKidsAnalytics, type NutritionData, type SleepData, type MoodData, type HealthData } from '../../lib/analyticsData'
+import { supabase } from '../../lib/supabase'
 
 const SCREEN_W = Dimensions.get('window').width
 
-// ─── Mock data ─────────────────────────────────────────────────────────────
+const MOOD_COLORS: Record<string, string> = {
+  happy: '#FBBF24',
+  calm: '#6AABF7',
+  energetic: '#6EC96E',
+  fussy: '#FFB347',
+  cranky: '#FF7070',
+}
 
-const MOCK_EAT_QUALITY = { good: [4, 3, 5, 4, 3, 4, 5], little: [1, 2, 0, 1, 2, 1, 0], none: [0, 0, 0, 0, 0, 0, 0] }
-const MOCK_MEAL_FREQ = [3, 4, 3, 5, 3, 4, 3]
-const MOCK_NEW_FOODS_DAYS = [2, 5, 8, 14, 18, 22, 25]
-const MOCK_NUTRITION_HEATMAP = [
-  [0.8, 0.9, 0.7, 0.6, 0.8, 0.9, 0.7],
-  [0.6, 0.7, 0.8, 0.9, 0.5, 0.7, 0.8],
-  [0.9, 0.8, 0.6, 0.7, 0.8, 0.6, 0.9],
-  [0.7, 0.6, 0.8, 0.7, 0.9, 0.8, 0.7],
-]
-const MOCK_TOP_FOODS: { label: string; value: number; color?: string }[] = [
-  { label: 'Banana', value: 12, color: brand.accent },
-  { label: 'Rice', value: 10, color: brand.kids },
-  { label: 'Avocado', value: 8, color: brand.phase.ovulation },
-  { label: 'Oats', value: 7, color: brand.pregnancy },
-  { label: 'Chicken', value: 6, color: brand.phase.menstrual },
-  { label: 'Sweet potato', value: 5, color: brand.secondary },
-]
-
-const MOCK_SLEEP_WEEKLY = [10.5, 11, 10, 11.5, 10.5, 11, 10.5]
-const MOCK_SLEEP_QUALITY = { deep: 45, light: 35, restless: 20 }
-
-const MOCK_MOOD_HEATMAP = [
-  [0.9, 0.8, 0.7, 0.6, 0.8, 0.9, 0.8],
-  [0.7, 0.5, 0.6, 0.8, 0.7, 0.8, 0.9],
-  [0.8, 0.7, 0.5, 0.4, 0.6, 0.7, 0.8],
-  [0.6, 0.8, 0.9, 0.7, 0.8, 0.6, 0.7],
-]
-
-const MOCK_HEALTH_EVENTS = [
-  { date: 'Mar 15', type: 'Vaccine', label: 'DTaP dose 3' },
-  { date: 'Mar 20', type: 'Temperature', label: '38.2°C — mild fever' },
-  { date: 'Apr 1', type: 'Checkup', label: '9-month pediatric visit' },
-]
-const MOCK_HEALTH_FREQ = [2, 1, 3, 1, 2, 0, 1]
-
-const MOCK_VACCINES = [
-  { name: 'HepB', done: true }, { name: 'DTaP', done: true },
-  { name: 'IPV', done: true }, { name: 'Hib', done: false },
-  { name: 'PCV13', done: false }, { name: 'RV', done: true },
-  { name: 'MMR', done: false }, { name: 'Varicella', done: false },
-]
-
-const MOCK_WEIGHTS = [3.5, 4.8, 6.2, 7.5, 8.3, 9.1]
-const MOCK_HEIGHTS = [50, 55, 60, 64, 67, 70]
-const MOCK_GROWTH_LABELS = ['0m', '2m', '4m', '6m', '8m', '10m']
-
-const MOCK_INSIGHTS = [
-  { title: 'Banana is the most eaten food this month', color: brand.accent },
-  { title: 'Sleep duration improved 8% this week', color: brand.kids },
-  { title: 'Mood tends to dip on low-sleep days', color: brand.prePregnancy },
-]
-
-const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const MOOD_EMOJI: Record<string, string> = {
+  happy: '😊',
+  calm: '😌',
+  energetic: '⚡',
+  fussy: '😣',
+  cranky: '😤',
+}
 
 // ─── Main Component ────────────────────────────────────────────────────────
 
@@ -113,7 +74,6 @@ export function KidsAnalytics() {
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
-  const activeChild = useChildStore((s) => s.activeChild)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
 
   const [selectedChildId, setSelectedChildId] = useState<string | 'all'>('all')
@@ -122,8 +82,56 @@ export function KidsAnalytics() {
     nutrition: true, sleep: true, mood: false, health: false, growth: false,
   })
 
+  const { data: analytics, isLoading, isFetching, error, refetch } = useKidsAnalytics(selectedChildId)
+  const [refreshing, setRefreshing] = useState(false)
+
   const chartW = SCREEN_W - 72
   const toggle = (key: string) => setExpanded((p) => ({ ...p, [key]: !p[key] }))
+
+  // Pull-to-refresh
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }, [refetch])
+
+  // Realtime: refetch when child_logs change
+  useEffect(() => {
+    const childIds = selectedChildId === 'all'
+      ? children.map((c) => c.id)
+      : [selectedChildId]
+
+    if (childIds.length === 0) return
+
+    const channel = supabase
+      .channel('analytics-live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'child_logs' },
+        (payload: any) => {
+          // Only refetch if the change is for one of our children
+          if (payload.new?.child_id && childIds.includes(payload.new.child_id)) {
+            refetch()
+          } else if (payload.old?.child_id && childIds.includes(payload.old.child_id)) {
+            refetch()
+          }
+        },
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [selectedChildId, children, refetch])
+
+  // Refetch when app comes back to foreground
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refetch()
+    })
+    return () => sub.remove()
+  }, [refetch])
+
+  // Build insight cards from real data
+  const insights = buildInsightCards(analytics)
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -133,14 +141,18 @@ export function KidsAnalytics() {
           { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
       >
         {/* 1. Child Selector */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childRow}>
-          <ChildChip
-            label="All Kids"
-            active={selectedChildId === 'all'}
-            onPress={() => setSelectedChildId('all')}
-          />
+          <ChildChip label="All Kids" active={selectedChildId === 'all'} onPress={() => setSelectedChildId('all')} />
           {children.map((c) => (
             <ChildChip
               key={c.id}
@@ -168,187 +180,318 @@ export function KidsAnalytics() {
           </View>
         </Pressable>
 
-        {/* 3. Insight Cards */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.insightScroll}>
-          {MOCK_INSIGHTS.map((c, i) => (
-            <View key={i} style={[styles.insightCard, { backgroundColor: c.color + '12', borderRadius: radius.xl, borderColor: c.color + '25', borderWidth: 1 }]}>
-              <Zap size={14} color={c.color} strokeWidth={2} />
-              <Text style={[styles.insightText, { color: colors.text }]}>{c.title}</Text>
+        {/* Loading state */}
+        {isLoading && (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading analytics...</Text>
+          </View>
+        )}
+
+        {/* Error state */}
+        {error && !isLoading && (
+          <Pressable onPress={() => refetch()} style={[styles.errorCard, { backgroundColor: brand.error + '15', borderRadius: radius.xl }]}>
+            <Text style={[styles.errorText, { color: brand.error }]}>Failed to load data</Text>
+            <View style={styles.row}>
+              <RefreshCw size={14} color={brand.error} />
+              <Text style={[styles.errorRetry, { color: brand.error }]}>Tap to retry</Text>
             </View>
-          ))}
-        </ScrollView>
-
-        {/* ═══ NUTRITION SECTION ═══ */}
-        <SectionHeader title="Nutrition" icon={<Utensils size={18} color={brand.phase.ovulation} strokeWidth={2} />} expanded={expanded.nutrition} onToggle={() => toggle('nutrition')} />
-        {expanded.nutrition && (
-          <View style={styles.sectionBody}>
-            {/* Eat Quality */}
-            <ChartCard title="Weekly Eat Quality" onExpand={() => setFullScreen('eat_quality')}>
-              <StackedBarChart good={MOCK_EAT_QUALITY.good} little={MOCK_EAT_QUALITY.little} none={MOCK_EAT_QUALITY.none} labels={DAY_LABELS} width={chartW} />
-            </ChartCard>
-
-            {/* Meal Frequency */}
-            <ChartCard title="Meal Frequency" onExpand={() => setFullScreen('meal_freq')}>
-              <BarChart data={MOCK_MEAL_FREQ} labels={DAY_LABELS} color={brand.kids} width={chartW} />
-            </ChartCard>
-
-            {/* Nutrition Heatmap */}
-            <ChartCard title="Monthly Nutrition" onExpand={() => setFullScreen('nutrition_heat')}>
-              <HeatmapGrid data={MOCK_NUTRITION_HEATMAP} rowLabels={['W1', 'W2', 'W3', 'W4']} colLabels={DAYS} color={brand.phase.ovulation} />
-            </ChartCard>
-
-            {/* Top Foods */}
-            <ChartCard title="Most Logged Foods" onExpand={() => setFullScreen('top_foods')}>
-              <BubbleGrid items={MOCK_TOP_FOODS} />
-            </ChartCard>
-          </View>
+          </Pressable>
         )}
 
-        {/* ═══ SLEEP SECTION ═══ */}
-        <SectionHeader title="Sleep" icon={<Moon size={18} color={brand.pregnancy} strokeWidth={2} />} expanded={expanded.sleep} onToggle={() => toggle('sleep')} />
-        {expanded.sleep && (
-          <View style={styles.sectionBody}>
-            {/* Weekly Sleep */}
-            <ChartCard title="Weekly Sleep Hours" onExpand={() => setFullScreen('sleep_weekly')}>
-              <BarChart data={MOCK_SLEEP_WEEKLY} labels={DAY_LABELS} color={brand.pregnancy} width={chartW} />
-            </ChartCard>
-
-            {/* Sleep Quality Donut */}
-            <ChartCard title="Sleep Quality" onExpand={() => setFullScreen('sleep_quality')}>
-              <DonutChart deep={MOCK_SLEEP_QUALITY.deep} light={MOCK_SLEEP_QUALITY.light} restless={MOCK_SLEEP_QUALITY.restless} />
-            </ChartCard>
-          </View>
+        {/* 3. Insight Cards (generated from real data) */}
+        {insights.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.insightScroll}>
+            {insights.map((c, i) => (
+              <View key={i} style={[styles.insightCard, { backgroundColor: c.color + '12', borderRadius: radius.xl, borderColor: c.color + '25', borderWidth: 1 }]}>
+                <Zap size={14} color={c.color} strokeWidth={2} />
+                <Text style={[styles.insightText, { color: colors.text }]}>{c.title}</Text>
+              </View>
+            ))}
+          </ScrollView>
         )}
 
-        {/* ═══ MOOD SECTION ═══ */}
-        <SectionHeader title="Mood" icon={<Smile size={18} color={brand.prePregnancy} strokeWidth={2} />} expanded={expanded.mood} onToggle={() => toggle('mood')} />
-        {expanded.mood && (
-          <View style={styles.sectionBody}>
-            <ChartCard title="Weekly Mood Heatmap" onExpand={() => setFullScreen('mood_heat')}>
-              <HeatmapGrid data={MOCK_MOOD_HEATMAP} rowLabels={['W1', 'W2', 'W3', 'W4']} colLabels={DAYS} color={brand.prePregnancy} />
-            </ChartCard>
+        {analytics && (
+          <>
+            {/* ═══ NUTRITION SECTION ═══ */}
+            <SectionHeader title="Nutrition" icon={<Utensils size={18} color={brand.phase.ovulation} strokeWidth={2} />} expanded={expanded.nutrition} onToggle={() => toggle('nutrition')} />
+            {expanded.nutrition && (
+              <View style={styles.sectionBody}>
+                {analytics.nutrition.hasData ? (
+                  <>
+                    {/* Eat Quality */}
+                    <ChartCard title="Weekly Eat Quality" onExpand={() => setFullScreen('eat_quality')}>
+                      <StackedBarChart
+                        good={analytics.nutrition.eatQuality.good}
+                        little={analytics.nutrition.eatQuality.little}
+                        none={analytics.nutrition.eatQuality.none}
+                        labels={analytics.nutrition.weekLabels}
+                        width={chartW}
+                      />
+                    </ChartCard>
 
-            <CorrelationCard
-              leftLabel="Mood"
-              leftData={[0.7, 0.5, 0.8, 0.6, 0.9, 0.7, 0.8]}
-              leftColor={brand.prePregnancy}
-              rightLabel="Sleep"
-              rightData={MOCK_SLEEP_WEEKLY.map((v) => v / 12)}
-              rightColor={brand.pregnancy}
-              labels={DAY_LABELS}
-              width={chartW}
-            />
-          </View>
-        )}
+                    {/* Meal Frequency */}
+                    <ChartCard title="Meals per Day" onExpand={() => setFullScreen('meal_freq')}>
+                      <BarChart data={analytics.nutrition.mealFrequency} labels={analytics.nutrition.weekLabels} color={brand.phase.ovulation} width={chartW} />
+                    </ChartCard>
 
-        {/* ═══ HEALTH SECTION ═══ */}
-        <SectionHeader title="Health" icon={<Heart size={18} color={brand.error} strokeWidth={2} />} expanded={expanded.health} onToggle={() => toggle('health')} />
-        {expanded.health && (
-          <View style={styles.sectionBody}>
-            {/* Event Timeline */}
-            <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <Text style={[styles.chartTitle, { color: colors.text }]}>Recent Events</Text>
-              {MOCK_HEALTH_EVENTS.map((e, i) => (
-                <View key={i} style={styles.eventRow}>
-                  <View style={[styles.eventDot, { backgroundColor: e.type === 'Vaccine' ? brand.kids : e.type === 'Temperature' ? brand.error : brand.secondary }]} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.eventLabel, { color: colors.text }]}>{e.label}</Text>
-                    <Text style={[styles.eventDate, { color: colors.textMuted }]}>{e.date} — {e.type}</Text>
+                    {/* Top Foods */}
+                    {analytics.nutrition.topFoods.length > 0 && (
+                      <ChartCard title="Most Logged Foods" onExpand={() => setFullScreen('top_foods')}>
+                        <BubbleGrid items={analytics.nutrition.topFoods.map((f, i) => ({
+                          label: f.label,
+                          value: f.count,
+                          color: [brand.accent, brand.kids, brand.phase.ovulation, brand.pregnancy, brand.phase.menstrual, brand.secondary][i % 6],
+                        }))} />
+                      </ChartCard>
+                    )}
+                  </>
+                ) : (
+                  <EmptySection icon={<Utensils size={20} color={colors.textMuted} />} message="No meals logged yet this week. Log feeding from the calendar to see nutrition trends." />
+                )}
+              </View>
+            )}
+
+            {/* ═══ SLEEP SECTION ═══ */}
+            <SectionHeader title="Sleep" icon={<Moon size={18} color={brand.pregnancy} strokeWidth={2} />} expanded={expanded.sleep} onToggle={() => toggle('sleep')} />
+            {expanded.sleep && (
+              <View style={styles.sectionBody}>
+                {analytics.sleep.hasData ? (
+                  <>
+                    <ChartCard title="Daily Sleep Hours" onExpand={() => setFullScreen('sleep_weekly')}>
+                      <BarChart data={analytics.sleep.dailyHours} labels={analytics.sleep.weekLabels} color={brand.pregnancy} width={chartW} />
+                    </ChartCard>
+
+                    <ChartCard title="Sleep Quality" onExpand={() => setFullScreen('sleep_quality')}>
+                      <SleepQualityChart counts={analytics.sleep.qualityCounts} />
+                    </ChartCard>
+
+                    {/* Average stat */}
+                    <View style={[styles.statRow, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+                      <StatPill label="Avg sleep" value={`${analytics.sleep.avgHours.toFixed(1)}h`} color={brand.pregnancy} />
+                      <StatPill
+                        label="Quality"
+                        value={getBestQuality(analytics.sleep.qualityCounts)}
+                        color={brand.success}
+                      />
+                    </View>
+                  </>
+                ) : (
+                  <EmptySection icon={<Moon size={20} color={colors.textMuted} />} message="No sleep entries yet. Log sleep from the calendar to track patterns." />
+                )}
+              </View>
+            )}
+
+            {/* ═══ MOOD SECTION ═══ */}
+            <SectionHeader title="Mood" icon={<Smile size={18} color={brand.prePregnancy} strokeWidth={2} />} expanded={expanded.mood} onToggle={() => toggle('mood')} />
+            {expanded.mood && (
+              <View style={styles.sectionBody}>
+                {analytics.mood.hasData ? (
+                  <>
+                    {/* Mood distribution */}
+                    <ChartCard title="Mood This Week" onExpand={() => setFullScreen('mood_dist')}>
+                      <MoodDistribution moods={analytics.mood.dominantMoods} />
+                    </ChartCard>
+
+                    {/* Mood by day stacked bar */}
+                    <ChartCard title="Daily Mood Tracking" onExpand={() => setFullScreen('mood_daily')}>
+                      <MoodDailyChart dailyCounts={analytics.mood.dailyCounts} labels={analytics.mood.weekLabels} width={chartW} />
+                    </ChartCard>
+                  </>
+                ) : (
+                  <EmptySection icon={<Smile size={20} color={colors.textMuted} />} message="No mood entries yet. Track your child's mood daily to see patterns." />
+                )}
+              </View>
+            )}
+
+            {/* ═══ HEALTH SECTION ═══ */}
+            <SectionHeader title="Health" icon={<Heart size={18} color={brand.error} strokeWidth={2} />} expanded={expanded.health} onToggle={() => toggle('health')} />
+            {expanded.health && (
+              <View style={styles.sectionBody}>
+                {analytics.health.hasData ? (
+                  <>
+                    {/* Event Timeline */}
+                    {analytics.health.recentEvents.length > 0 && (
+                      <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+                        <Text style={[styles.chartTitle, { color: colors.text }]}>Recent Events</Text>
+                        {analytics.health.recentEvents.map((e, i) => (
+                          <View key={i} style={styles.eventRow}>
+                            <View style={[styles.eventDot, { backgroundColor: getEventColor(e.type) }]} />
+                            <View style={{ flex: 1 }}>
+                              <Text style={[styles.eventLabel, { color: colors.text }]} numberOfLines={1}>{e.label}</Text>
+                              <Text style={[styles.eventDate, { color: colors.textMuted }]}>{e.date} — {e.type}</Text>
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    <ChartCard title="Health Events (weekly)" onExpand={() => setFullScreen('health_freq')}>
+                      <BarChart data={analytics.health.weeklyFrequency} labels={analytics.health.weekLabels} color={brand.error} width={chartW} />
+                    </ChartCard>
+                  </>
+                ) : (
+                  <EmptySection icon={<Heart size={20} color={colors.textMuted} />} message="No health events logged. Record temperatures, vaccines, and doctor visits here." />
+                )}
+
+                {/* Vaccine Tracker (always show) */}
+                <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+                  <View style={styles.row}>
+                    <Syringe size={18} color={brand.kids} strokeWidth={2} />
+                    <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 0 }]}>Vaccine Tracker</Text>
+                  </View>
+                  <View style={styles.vaccineGrid}>
+                    {analytics.health.vaccines.map((v, i) => (
+                      <View key={i} style={[styles.vaccineChip, {
+                        backgroundColor: v.done ? brand.success + '15' : colors.surfaceRaised,
+                        borderColor: v.done ? brand.success + '30' : colors.border,
+                        borderRadius: radius.full,
+                      }]}>
+                        {v.done && <Shield size={12} color={brand.success} strokeWidth={2.5} />}
+                        <Text style={[styles.vaccineText, { color: v.done ? brand.success : colors.textMuted }]}>{v.name}</Text>
+                      </View>
+                    ))}
                   </View>
                 </View>
-              ))}
-            </View>
-
-            {/* Health Frequency */}
-            <ChartCard title="Health Events (weekly)" onExpand={() => setFullScreen('health_freq')}>
-              <BarChart data={MOCK_HEALTH_FREQ} labels={DAY_LABELS} color={brand.error} width={chartW} />
-            </ChartCard>
-
-            {/* Vaccine Tracker */}
-            <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <View style={styles.row}>
-                <Syringe size={18} color={brand.kids} strokeWidth={2} />
-                <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 0 }]}>Vaccine Tracker</Text>
               </View>
-              <View style={styles.vaccineGrid}>
-                {MOCK_VACCINES.map((v, i) => (
-                  <View key={i} style={[styles.vaccineChip, {
-                    backgroundColor: v.done ? brand.success + '15' : colors.surfaceRaised,
-                    borderColor: v.done ? brand.success + '30' : colors.border,
-                    borderRadius: radius.full,
-                  }]}>
-                    {v.done && <Shield size={12} color={brand.success} strokeWidth={2.5} />}
-                    <Text style={[styles.vaccineText, { color: v.done ? brand.success : colors.textMuted }]}>{v.name}</Text>
-                  </View>
-                ))}
+            )}
+
+            {/* ═══ GROWTH SECTION ═══ */}
+            <SectionHeader title="Growth" icon={<TrendingUp size={18} color={brand.kids} strokeWidth={2} />} expanded={expanded.growth} onToggle={() => toggle('growth')} />
+            {expanded.growth && (
+              <View style={styles.sectionBody}>
+                {analytics.growth.hasData ? (
+                  <>
+                    {analytics.growth.weights.length >= 2 && (
+                      <ChartCard title="Weight (kg)" onExpand={() => setFullScreen('weight')}>
+                        <LineChart
+                          data={analytics.growth.weights.map((w) => w.value)}
+                          labels={analytics.growth.weights.map((w) => {
+                            const d = new Date(w.date)
+                            return `${d.getMonth() + 1}/${d.getDate()}`
+                          })}
+                          color={brand.kids}
+                          width={chartW}
+                          unit="kg"
+                          showAverage
+                        />
+                      </ChartCard>
+                    )}
+
+                    {analytics.growth.heights.length >= 2 && (
+                      <ChartCard title="Height (cm)" onExpand={() => setFullScreen('height')}>
+                        <LineChart
+                          data={analytics.growth.heights.map((h) => h.value)}
+                          labels={analytics.growth.heights.map((h) => {
+                            const d = new Date(h.date)
+                            return `${d.getMonth() + 1}/${d.getDate()}`
+                          })}
+                          color={brand.phase.ovulation}
+                          width={chartW}
+                          unit="cm"
+                          showAverage
+                        />
+                      </ChartCard>
+                    )}
+                  </>
+                ) : (
+                  <EmptySection icon={<TrendingUp size={20} color={colors.textMuted} />} message="No growth data yet. Log weight and height measurements to track development." />
+                )}
               </View>
-            </View>
-          </View>
+            )}
+          </>
         )}
 
-        {/* ═══ GROWTH SECTION ═══ */}
-        <SectionHeader title="Growth" icon={<TrendingUp size={18} color={brand.kids} strokeWidth={2} />} expanded={expanded.growth} onToggle={() => toggle('growth')} />
-        {expanded.growth && (
-          <View style={styles.sectionBody}>
-            <ChartCard title="Weight (kg)" onExpand={() => setFullScreen('weight')}>
-              <LineChart data={MOCK_WEIGHTS} labels={MOCK_GROWTH_LABELS} color={brand.kids} width={chartW} showAverage />
-            </ChartCard>
-
-            <ChartCard title="Height (cm)" onExpand={() => setFullScreen('height')}>
-              <LineChart data={MOCK_HEIGHTS} labels={MOCK_GROWTH_LABELS} color={brand.phase.ovulation} width={chartW} showAverage />
-            </ChartCard>
-
-            {/* Growth Velocity */}
-            <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <Text style={[styles.chartTitle, { color: colors.text }]}>Growth Velocity</Text>
-              <View style={styles.velocityRow}>
-                <VelocityStat label="Weight" value="+0.8 kg/mo" trend="normal" />
-                <VelocityStat label="Height" value="+2.5 cm/mo" trend="good" />
-              </View>
-            </View>
+        {/* No data at all */}
+        {analytics && analytics.totalLogs === 0 && !isLoading && (
+          <View style={[styles.emptyAll, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+            <FileQuestion size={32} color={colors.textMuted} />
+            <Text style={[styles.emptyAllTitle, { color: colors.text }]}>No data yet</Text>
+            <Text style={[styles.emptyAllSub, { color: colors.textMuted }]}>
+              Start logging meals, sleep, mood, and activities from the Calendar tab to see your analytics here.
+            </Text>
           </View>
         )}
       </ScrollView>
 
       {/* ─── Full Screen Modals ──────────────────────────────────────── */}
-      <FullScreenChart visible={fullScreen === 'eat_quality'} title="Weekly Eat Quality" onClose={() => setFullScreen(null)}>
-        <StackedBarChart good={MOCK_EAT_QUALITY.good} little={MOCK_EAT_QUALITY.little} none={MOCK_EAT_QUALITY.none} labels={DAY_LABELS} width={SCREEN_W - 48} height={200} />
-      </FullScreenChart>
-      <FullScreenChart visible={fullScreen === 'meal_freq'} title="Meal Frequency" onClose={() => setFullScreen(null)}>
-        <BarChart data={MOCK_MEAL_FREQ} labels={DAY_LABELS} color={brand.kids} width={SCREEN_W - 48} height={200} />
-      </FullScreenChart>
-      <FullScreenChart visible={fullScreen === 'nutrition_heat'} title="Monthly Nutrition" onClose={() => setFullScreen(null)}>
-        <HeatmapGrid data={MOCK_NUTRITION_HEATMAP} rowLabels={['W1', 'W2', 'W3', 'W4']} colLabels={DAYS} color={brand.phase.ovulation} />
-      </FullScreenChart>
-      <FullScreenChart visible={fullScreen === 'top_foods'} title="Most Logged Foods" onClose={() => setFullScreen(null)}>
-        <BubbleGrid items={MOCK_TOP_FOODS} />
-      </FullScreenChart>
-      <FullScreenChart visible={fullScreen === 'sleep_weekly'} title="Weekly Sleep" onClose={() => setFullScreen(null)}>
-        <BarChart data={MOCK_SLEEP_WEEKLY} labels={DAY_LABELS} color={brand.pregnancy} width={SCREEN_W - 48} height={200} />
-      </FullScreenChart>
-      <FullScreenChart visible={fullScreen === 'sleep_quality'} title="Sleep Quality" onClose={() => setFullScreen(null)}>
-        <DonutChart deep={MOCK_SLEEP_QUALITY.deep} light={MOCK_SLEEP_QUALITY.light} restless={MOCK_SLEEP_QUALITY.restless} />
-      </FullScreenChart>
-      <FullScreenChart visible={fullScreen === 'mood_heat'} title="Mood Heatmap" onClose={() => setFullScreen(null)}>
-        <HeatmapGrid data={MOCK_MOOD_HEATMAP} rowLabels={['W1', 'W2', 'W3', 'W4']} colLabels={DAYS} color={brand.prePregnancy} />
-      </FullScreenChart>
-      <FullScreenChart visible={fullScreen === 'health_freq'} title="Health Events" onClose={() => setFullScreen(null)}>
-        <BarChart data={MOCK_HEALTH_FREQ} labels={DAY_LABELS} color={brand.error} width={SCREEN_W - 48} height={200} />
-      </FullScreenChart>
-      <FullScreenChart visible={fullScreen === 'weight'} title="Weight" onClose={() => setFullScreen(null)}>
-        <LineChart data={MOCK_WEIGHTS} labels={MOCK_GROWTH_LABELS} color={brand.kids} width={SCREEN_W - 48} height={200} showAverage />
-      </FullScreenChart>
-      <FullScreenChart visible={fullScreen === 'height'} title="Height" onClose={() => setFullScreen(null)}>
-        <LineChart data={MOCK_HEIGHTS} labels={MOCK_GROWTH_LABELS} color={brand.phase.ovulation} width={SCREEN_W - 48} height={200} showAverage />
-      </FullScreenChart>
+      {analytics && (
+        <>
+          <FullScreenChart visible={fullScreen === 'eat_quality'} title="Weekly Eat Quality" onClose={() => setFullScreen(null)}>
+            <StackedBarChart good={analytics.nutrition.eatQuality.good} little={analytics.nutrition.eatQuality.little} none={analytics.nutrition.eatQuality.none} labels={analytics.nutrition.weekLabels} width={SCREEN_W - 48} height={220} />
+          </FullScreenChart>
+          <FullScreenChart visible={fullScreen === 'meal_freq'} title="Meals per Day" onClose={() => setFullScreen(null)}>
+            <BarChart data={analytics.nutrition.mealFrequency} labels={analytics.nutrition.weekLabels} color={brand.phase.ovulation} width={SCREEN_W - 48} height={220} />
+          </FullScreenChart>
+          <FullScreenChart visible={fullScreen === 'top_foods'} title="Most Logged Foods" onClose={() => setFullScreen(null)}>
+            <BubbleGrid items={analytics.nutrition.topFoods.map((f, i) => ({
+              label: f.label,
+              value: f.count,
+              color: [brand.accent, brand.kids, brand.phase.ovulation, brand.pregnancy, brand.phase.menstrual, brand.secondary][i % 6],
+            }))} />
+          </FullScreenChart>
+          <FullScreenChart visible={fullScreen === 'sleep_weekly'} title="Daily Sleep" onClose={() => setFullScreen(null)}>
+            <BarChart data={analytics.sleep.dailyHours} labels={analytics.sleep.weekLabels} color={brand.pregnancy} width={SCREEN_W - 48} height={220} />
+          </FullScreenChart>
+          <FullScreenChart visible={fullScreen === 'sleep_quality'} title="Sleep Quality" onClose={() => setFullScreen(null)}>
+            <SleepQualityChart counts={analytics.sleep.qualityCounts} />
+          </FullScreenChart>
+          <FullScreenChart visible={fullScreen === 'health_freq'} title="Health Events" onClose={() => setFullScreen(null)}>
+            <BarChart data={analytics.health.weeklyFrequency} labels={analytics.health.weekLabels} color={brand.error} width={SCREEN_W - 48} height={220} />
+          </FullScreenChart>
+          {analytics.growth.weights.length >= 2 && (
+            <FullScreenChart visible={fullScreen === 'weight'} title="Weight" onClose={() => setFullScreen(null)}>
+              <LineChart data={analytics.growth.weights.map((w) => w.value)} labels={analytics.growth.weights.map((w) => { const d = new Date(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })} color={brand.kids} width={SCREEN_W - 48} height={220} unit="kg" showAverage />
+            </FullScreenChart>
+          )}
+          {analytics.growth.heights.length >= 2 && (
+            <FullScreenChart visible={fullScreen === 'height'} title="Height" onClose={() => setFullScreen(null)}>
+              <LineChart data={analytics.growth.heights.map((h) => h.value)} labels={analytics.growth.heights.map((h) => { const d = new Date(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })} color={brand.phase.ovulation} width={SCREEN_W - 48} height={220} unit="cm" showAverage />
+            </FullScreenChart>
+          )}
+        </>
+      )}
     </View>
   )
+}
+
+// ─── Insight Card Builder ─────────────────────────────────────────────────
+
+function buildInsightCards(analytics: ReturnType<typeof useKidsAnalytics>['data']) {
+  if (!analytics) return []
+  const cards: { title: string; color: string }[] = []
+
+  // Nutrition insights
+  if (analytics.nutrition.hasData) {
+    const totalMeals = analytics.nutrition.mealFrequency.reduce((a, b) => a + b, 0)
+    const totalGood = analytics.nutrition.eatQuality.good.reduce((a, b) => a + b, 0)
+    if (totalMeals > 0) {
+      const pct = Math.round((totalGood / totalMeals) * 100)
+      cards.push({ title: `${pct}% of meals eaten well this week`, color: brand.phase.ovulation })
+    }
+    if (analytics.nutrition.topFoods.length > 0) {
+      cards.push({ title: `${analytics.nutrition.topFoods[0].label} is the most eaten food`, color: brand.accent })
+    }
+  }
+
+  // Sleep insights
+  if (analytics.sleep.hasData && analytics.sleep.avgHours > 0) {
+    cards.push({ title: `Average ${analytics.sleep.avgHours.toFixed(1)}h of sleep per night`, color: brand.pregnancy })
+  }
+
+  // Mood insights
+  if (analytics.mood.hasData && analytics.mood.dominantMoods.length > 0) {
+    const top = analytics.mood.dominantMoods[0]
+    cards.push({ title: `Most common mood: ${top.mood} (${top.count}x)`, color: MOOD_COLORS[top.mood] || brand.prePregnancy })
+  }
+
+  return cards.slice(0, 3)
 }
 
 // ─── Section Header (collapsible) ──────────────────────────────────────────
 
 function SectionHeader({ title, icon, expanded, onToggle }: { title: string; icon: React.ReactNode; expanded: boolean; onToggle: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors } = useTheme()
   return (
     <Pressable onPress={onToggle} style={[styles.sectionHeader, { borderColor: colors.border }]}>
       <View style={styles.row}>
@@ -395,130 +538,208 @@ function ChildChip({ label, active, onPress }: { label: string; active: boolean;
 
 // ─── Stacked Bar Chart ─────────────────────────────────────────────────────
 
-function StackedBarChart({ good, little, none, labels, width = 300, height = 120 }: {
+function StackedBarChart({ good, little, none, labels, width = 300, height = 140 }: {
   good: number[]; little: number[]; none: number[]; labels: string[]; width?: number; height?: number
 }) {
-  const { colors, radius } = useTheme()
-  const pad = 20
+  const { colors } = useTheme()
+  const leftPad = 28
+  const rightPad = 8
+  const topPad = 16
+  const bottomPad = 8
+  const chartW = width - leftPad - rightPad
+  const chartH = height - topPad - bottomPad
   const count = good.length
-  const maxVal = Math.max(...good.map((g, i) => g + little[i] + none[i])) + 1
-  const barW = Math.min(24, (width - pad * 2) / count - 6)
+  const maxVal = Math.max(...good.map((g, i) => g + little[i] + none[i]), 1)
+  const barW = Math.min(24, chartW / count - 8)
 
   return (
-    <View style={styles.chartCenter}>
+    <View style={{ alignItems: 'center' }}>
       <Svg width={width} height={height}>
-        {good.map((g, i) => {
-          const x = pad + (i / count) * (width - pad * 2) + (width - pad * 2) / count / 2 - barW / 2
-          const total = g + little[i] + none[i]
-          const gH = (g / maxVal) * (height - pad * 2)
-          const lH = (little[i] / maxVal) * (height - pad * 2)
-          const nH = (none[i] / maxVal) * (height - pad * 2)
-          const baseY = height - pad
+        <Defs>
+          <LinearGradient id="stackGood" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={brand.success} stopOpacity="0.9" />
+            <Stop offset="1" stopColor={brand.success} stopOpacity="0.6" />
+          </LinearGradient>
+          <LinearGradient id="stackLittle" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={brand.accent} stopOpacity="0.9" />
+            <Stop offset="1" stopColor={brand.accent} stopOpacity="0.6" />
+          </LinearGradient>
+          <LinearGradient id="stackNone" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={brand.error} stopOpacity="0.7" />
+            <Stop offset="1" stopColor={brand.error} stopOpacity="0.4" />
+          </LinearGradient>
+        </Defs>
+
+        {/* Grid lines */}
+        {[0, 0.5, 1].map((pct, i) => {
+          const y = topPad + chartH * (1 - pct)
+          const val = Math.round(maxVal * pct)
           return (
             <View key={i}>
-              <Rect x={x} y={baseY - gH} width={barW} height={gH} rx={barW / 4} fill={brand.success} opacity={0.8} />
-              <Rect x={x} y={baseY - gH - lH} width={barW} height={lH} rx={0} fill={brand.accent} opacity={0.8} />
-              {nH > 0 && <Rect x={x} y={baseY - gH - lH - nH} width={barW} height={nH} rx={barW / 4} fill={brand.error} opacity={0.6} />}
+              <Rect x={leftPad} y={y} width={chartW} height={0.5} fill={colors.border} opacity={0.4} />
+              {val > 0 && (
+                <Circle cx={0} cy={0} r={0}>
+                  {/* Y label via SvgText below */}
+                </Circle>
+              )}
+            </View>
+          )
+        })}
+
+        {good.map((g, i) => {
+          const x = leftPad + (i + 0.5) * (chartW / count) - barW / 2
+          const baseY = topPad + chartH
+          const gH = (g / maxVal) * chartH
+          const lH = (little[i] / maxVal) * chartH
+          const nH = (none[i] / maxVal) * chartH
+          return (
+            <View key={i}>
+              {gH > 0 && <Rect x={x} y={baseY - gH} width={barW} height={gH} rx={3} fill="url(#stackGood)" />}
+              {lH > 0 && <Rect x={x} y={baseY - gH - lH} width={barW} height={lH} rx={lH === gH + lH + nH ? 3 : 0} fill="url(#stackLittle)" />}
+              {nH > 0 && <Rect x={x} y={baseY - gH - lH - nH} width={barW} height={nH} rx={3} fill="url(#stackNone)" />}
             </View>
           )
         })}
       </Svg>
-      <View style={[styles.labelRow, { width, paddingHorizontal: pad }]}>
+
+      <View style={[styles.labelRow, { width, paddingLeft: leftPad, paddingRight: rightPad }]}>
         {labels.map((l, i) => <Text key={i} style={[styles.label, { color: colors.textMuted }]}>{l}</Text>)}
       </View>
+
       <View style={styles.legendRow}>
         <LegendDot color={brand.success} label="Ate well" />
         <LegendDot color={brand.accent} label="A little" />
-        <LegendDot color={brand.error} label="Did not eat" />
+        <LegendDot color={brand.error} label="Didn't eat" />
       </View>
     </View>
   )
 }
 
-// ─── Donut Chart ───────────────────────────────────────────────────────────
+// ─── Sleep Quality Chart (horizontal bars) ─────────────────────────────────
 
-function DonutChart({ deep, light, restless }: { deep: number; light: number; restless: number }) {
-  const { colors } = useTheme()
-  const size = 120
-  const stroke = 14
-  const r = (size - stroke) / 2
-  const cx = size / 2
-  const cy = size / 2
-  const total = deep + light + restless
-  const circ = 2 * Math.PI * r
-
-  function arc(startPct: number, pct: number) {
-    const startAngle = startPct * 2 * Math.PI - Math.PI / 2
-    const endAngle = (startPct + pct) * 2 * Math.PI - Math.PI / 2
-    const x1 = cx + r * Math.cos(startAngle)
-    const y1 = cy + r * Math.sin(startAngle)
-    const x2 = cx + r * Math.cos(endAngle)
-    const y2 = cy + r * Math.sin(endAngle)
-    const large = pct > 0.5 ? 1 : 0
-    return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`
-  }
-
-  const deepPct = deep / total
-  const lightPct = light / total
-  const restlessPct = restless / total
-
-  return (
-    <View style={styles.donutWrap}>
-      <Svg width={size} height={size}>
-        <Path d={arc(0, deepPct)} fill="none" stroke={brand.kids} strokeWidth={stroke} strokeLinecap="round" />
-        <Path d={arc(deepPct, lightPct)} fill="none" stroke={brand.accent} strokeWidth={stroke} strokeLinecap="round" />
-        <Path d={arc(deepPct + lightPct, restlessPct)} fill="none" stroke={brand.error} strokeWidth={stroke} strokeLinecap="round" />
-      </Svg>
-      <View style={styles.donutCenter}>
-        <Text style={[styles.donutValue, { color: colors.text }]}>{deep}%</Text>
-        <Text style={[styles.donutLabel, { color: colors.textMuted }]}>Deep</Text>
-      </View>
-      <View style={styles.legendRow}>
-        <LegendDot color={brand.kids} label={`Deep ${deep}%`} />
-        <LegendDot color={brand.accent} label={`Light ${light}%`} />
-        <LegendDot color={brand.error} label={`Restless ${restless}%`} />
-      </View>
-    </View>
-  )
-}
-
-// ─── Correlation Card ──────────────────────────────────────────────────────
-
-function CorrelationCard({ leftLabel, leftData, leftColor, rightLabel, rightData, rightColor, labels, width }: {
-  leftLabel: string; leftData: number[]; leftColor: string
-  rightLabel: string; rightData: number[]; rightColor: string
-  labels: string[]; width: number
-}) {
+function SleepQualityChart({ counts }: { counts: { great: number; good: number; restless: number; poor: number } }) {
   const { colors, radius } = useTheme()
-  const scaledLeft = leftData.map((v) => v * 10)
-  const scaledRight = rightData.map((v) => v * 10)
+  const total = counts.great + counts.good + counts.restless + counts.poor
+  if (total === 0) return null
+
+  const items = [
+    { label: 'Great', count: counts.great, color: brand.success, emoji: '😴' },
+    { label: 'Good', count: counts.good, color: brand.kids, emoji: '🙂' },
+    { label: 'Restless', count: counts.restless, color: brand.accent, emoji: '😐' },
+    { label: 'Poor', count: counts.poor, color: brand.error, emoji: '😣' },
+  ]
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-      <Text style={[styles.chartTitle, { color: colors.text }]}>{leftLabel} vs {rightLabel}</Text>
-      <View style={styles.chartCenter}>
-        <LineChart data={scaledLeft} labels={labels} color={leftColor} width={width} />
-        <View style={{ marginTop: 8 }}>
-          <LineChart data={scaledRight} labels={labels} color={rightColor} width={width} />
-        </View>
-      </View>
-      <View style={styles.legendRow}>
-        <LegendDot color={leftColor} label={leftLabel} />
-        <LegendDot color={rightColor} label={rightLabel} />
+    <View style={styles.qualityWrap}>
+      {items.map((item, i) => {
+        const pct = Math.round((item.count / total) * 100)
+        if (item.count === 0) return null
+        return (
+          <View key={i} style={styles.qualityRow}>
+            <Text style={[styles.qualityEmoji]}>{item.emoji}</Text>
+            <Text style={[styles.qualityLabel, { color: colors.textSecondary }]}>{item.label}</Text>
+            <View style={[styles.qualityBarBg, { backgroundColor: colors.surfaceRaised, borderRadius: radius.full }]}>
+              <View style={[styles.qualityBarFill, { width: `${pct}%`, backgroundColor: item.color, borderRadius: radius.full }]} />
+            </View>
+            <Text style={[styles.qualityPct, { color: item.color }]}>{pct}%</Text>
+          </View>
+        )
+      })}
+    </View>
+  )
+}
+
+// ─── Mood Distribution ─────────────────────────────────────────────────────
+
+function MoodDistribution({ moods }: { moods: { mood: string; count: number }[] }) {
+  const { colors, radius } = useTheme()
+  const total = moods.reduce((a, m) => a + m.count, 0)
+
+  return (
+    <View style={styles.moodDistWrap}>
+      {moods.map((m, i) => {
+        const pct = Math.round((m.count / total) * 100)
+        const color = MOOD_COLORS[m.mood] || colors.primary
+        const emoji = MOOD_EMOJI[m.mood] || '🙂'
+        return (
+          <View key={i} style={[styles.moodChip, { backgroundColor: color + '15', borderColor: color + '30', borderRadius: radius.xl }]}>
+            <Text style={styles.moodEmoji}>{emoji}</Text>
+            <Text style={[styles.moodLabel, { color }]}>{m.mood}</Text>
+            <Text style={[styles.moodPct, { color: colors.textSecondary }]}>{pct}%</Text>
+          </View>
+        )
+      })}
+    </View>
+  )
+}
+
+// ─── Mood Daily Chart (stacked colored dots per day) ───────────────────────
+
+function MoodDailyChart({ dailyCounts, labels, width }: { dailyCounts: Record<string, number[]>; labels: string[]; width: number }) {
+  const { colors, radius } = useTheme()
+  const days = labels.length
+  const moods = Object.keys(dailyCounts)
+  const colW = width / days
+
+  return (
+    <View style={{ alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', width }}>
+        {labels.map((label, dayIdx) => {
+          const dayMoods = moods.filter((m) => dailyCounts[m][dayIdx] > 0)
+          return (
+            <View key={dayIdx} style={{ width: colW, alignItems: 'center', gap: 4, paddingVertical: 8 }}>
+              {dayMoods.length > 0 ? dayMoods.map((mood) => {
+                const count = dailyCounts[mood][dayIdx]
+                const color = MOOD_COLORS[mood] || colors.primary
+                return Array.from({ length: Math.min(count, 3) }).map((_, dotIdx) => (
+                  <View
+                    key={`${mood}-${dotIdx}`}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 9,
+                      backgroundColor: color + '30',
+                      borderWidth: 1.5,
+                      borderColor: color + '50',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text style={{ fontSize: 10 }}>{MOOD_EMOJI[mood]}</Text>
+                  </View>
+                ))
+              }) : (
+                <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border }} />
+              )}
+              <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
+            </View>
+          )
+        })}
       </View>
     </View>
   )
 }
 
-// ─── Velocity Stat ─────────────────────────────────────────────────────────
+// ─── Stat Pill ─────────────────────────────────────────────────────────────
 
-function VelocityStat({ label, value, trend }: { label: string; value: string; trend: 'good' | 'normal' | 'slow' }) {
+function StatPill({ label, value, color }: { label: string; value: string; color: string }) {
   const { colors, radius } = useTheme()
-  const trendColor = trend === 'good' ? brand.success : trend === 'normal' ? brand.accent : brand.error
   return (
-    <View style={[styles.velocityStat, { backgroundColor: trendColor + '12', borderRadius: radius.xl }]}>
-      <Text style={[styles.velocityValue, { color: trendColor }]}>{value}</Text>
-      <Text style={[styles.velocityLabel, { color: colors.textSecondary }]}>{label}</Text>
+    <View style={[styles.statPill, { backgroundColor: color + '12', borderRadius: radius.xl }]}>
+      <Text style={[styles.statValue, { color }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
+    </View>
+  )
+}
+
+// ─── Empty Section ─────────────────────────────────────────────────────────
+
+function EmptySection({ icon, message }: { icon: React.ReactNode; message: string }) {
+  const { colors, radius } = useTheme()
+  return (
+    <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+      {icon}
+      <Text style={[styles.emptyText, { color: colors.textMuted }]}>{message}</Text>
     </View>
   )
 }
@@ -533,6 +754,24 @@ function LegendDot({ color, label }: { color: string; label: string }) {
       <Text style={[styles.legendText, { color: colors.textMuted }]}>{label}</Text>
     </View>
   )
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+function getEventColor(type: string): string {
+  switch (type.toLowerCase()) {
+    case 'vaccine': return brand.kids
+    case 'temperature': return brand.error
+    case 'medicine': return brand.accent
+    default: return brand.secondary
+  }
+}
+
+function getBestQuality(counts: { great: number; good: number; restless: number; poor: number }): string {
+  const total = counts.great + counts.good + counts.restless + counts.poor
+  if (total === 0) return '—'
+  const goodPct = Math.round(((counts.great + counts.good) / total) * 100)
+  return `${goodPct}% good`
 }
 
 // ─── Styles ────────────────────────────────────────────────────────────────
@@ -566,12 +805,11 @@ const styles = StyleSheet.create({
   chartHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   chartTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 },
   chartBody: { alignItems: 'center' },
-  chartCenter: { alignItems: 'center' },
 
-  // Labels
+  // Labels & Legend
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   label: { fontSize: 10, fontWeight: '600', textAlign: 'center' },
-  legendRow: { flexDirection: 'row', gap: 12, marginTop: 8, justifyContent: 'center' },
+  legendRow: { flexDirection: 'row', gap: 12, marginTop: 10, justifyContent: 'center' },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendDotStyle: { width: 8, height: 8, borderRadius: 4 },
   legendText: { fontSize: 10, fontWeight: '600' },
@@ -587,15 +825,37 @@ const styles = StyleSheet.create({
   vaccineChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1 },
   vaccineText: { fontSize: 12, fontWeight: '600' },
 
-  // Donut
-  donutWrap: { alignItems: 'center', gap: 8 },
-  donutCenter: { position: 'absolute', top: 0, left: 0, right: 0, height: 120, alignItems: 'center', justifyContent: 'center' },
-  donutValue: { fontSize: 22, fontWeight: '900' },
-  donutLabel: { fontSize: 11, fontWeight: '600' },
+  // Sleep quality bars
+  qualityWrap: { width: '100%', gap: 8, paddingVertical: 4 },
+  qualityRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  qualityEmoji: { fontSize: 16, width: 24, textAlign: 'center' },
+  qualityLabel: { fontSize: 12, fontWeight: '600', width: 56 },
+  qualityBarBg: { flex: 1, height: 12, overflow: 'hidden' },
+  qualityBarFill: { height: '100%' },
+  qualityPct: { fontSize: 12, fontWeight: '800', width: 36, textAlign: 'right' },
 
-  // Velocity
-  velocityRow: { flexDirection: 'row', gap: 12 },
-  velocityStat: { flex: 1, alignItems: 'center', padding: 16, gap: 4 },
-  velocityValue: { fontSize: 18, fontWeight: '800' },
-  velocityLabel: { fontSize: 12, fontWeight: '600' },
+  // Mood
+  moodDistWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  moodChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1 },
+  moodEmoji: { fontSize: 16 },
+  moodLabel: { fontSize: 13, fontWeight: '700', textTransform: 'capitalize' },
+  moodPct: { fontSize: 11, fontWeight: '600' },
+
+  // Stat row
+  statRow: { flexDirection: 'row', gap: 10, padding: 12 },
+  statPill: { flex: 1, alignItems: 'center', padding: 14, gap: 4 },
+  statValue: { fontSize: 20, fontWeight: '900' },
+  statLabel: { fontSize: 11, fontWeight: '600' },
+
+  // Loading / Error / Empty
+  loadingWrap: { alignItems: 'center', gap: 8, paddingVertical: 24 },
+  loadingText: { fontSize: 13, fontWeight: '500' },
+  errorCard: { padding: 16, alignItems: 'center', gap: 8 },
+  errorText: { fontSize: 14, fontWeight: '700' },
+  errorRetry: { fontSize: 13, fontWeight: '600' },
+  emptyCard: { padding: 20, alignItems: 'center', gap: 8 },
+  emptyText: { fontSize: 13, fontWeight: '500', textAlign: 'center', lineHeight: 18 },
+  emptyAll: { padding: 32, alignItems: 'center', gap: 12, marginTop: 12 },
+  emptyAllTitle: { fontSize: 18, fontWeight: '800' },
+  emptyAllSub: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20 },
 })

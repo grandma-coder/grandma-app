@@ -23,6 +23,7 @@ export interface GaragePost {
   tags: string[]
   like_count: number
   comment_count: number
+  share_count: number
   is_featured: boolean
   created_at: string
   // Client-side state

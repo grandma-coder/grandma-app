@@ -63,9 +63,28 @@ export async function createChannel(opts: {
   name: string
   description?: string
   category: string
+  avatarUri?: string
 }): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
+
+  // Upload avatar if provided
+  let avatarUrl: string | null = null
+  if (opts.avatarUri) {
+    try {
+      const ext = opts.avatarUri.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const path = `channels/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`
+      const formData = new FormData()
+      formData.append('', { uri: opts.avatarUri, name: path.split('/').pop(), type: `image/${ext}` } as any)
+      const { error: uploadErr } = await supabase.storage
+        .from('garage-media')
+        .upload(path, formData, { contentType: 'multipart/form-data', upsert: true })
+      if (!uploadErr) {
+        const { data: urlData } = supabase.storage.from('garage-media').getPublicUrl(path)
+        avatarUrl = urlData.publicUrl
+      }
+    } catch {}
+  }
 
   const { data, error } = await supabase
     .from('channels')
@@ -75,6 +94,7 @@ export async function createChannel(opts: {
       category: opts.category,
       channel_type: 'public',
       created_by: session.user.id,
+      avatar_url: avatarUrl,
     })
     .select('id')
     .single()

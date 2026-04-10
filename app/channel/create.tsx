@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import {
   View, Text, TextInput, Pressable, ScrollView, Alert, StyleSheet,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, Image,
 } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ArrowLeft, Hash, Check } from 'lucide-react-native'
+import { ArrowLeft, Hash, Check, Camera } from 'lucide-react-native'
 import { useTheme } from '../../constants/theme'
 import { createChannel } from '../../lib/channelPosts'
 
@@ -18,6 +19,7 @@ const CATEGORIES = [
   'Community',
   'Wellness',
   'Milestones',
+  'Other',
 ] as const
 
 type Category = (typeof CATEGORIES)[number]
@@ -29,7 +31,18 @@ export default function CreateChannel() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState<Category | null>(null)
+  const [customCategory, setCustomCategory] = useState('')
+  const [channelPhoto, setChannelPhoto] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  async function pickChannelPhoto() {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({})
+      if (!result.canceled && result.assets?.[0]) {
+        setChannelPhoto(result.assets[0].uri)
+      }
+    } catch {}
+  }
 
   async function handleCreate() {
     const trimmedName = name.trim()
@@ -41,13 +54,15 @@ export default function CreateChannel() {
       Alert.alert('Required', 'Pick a category')
       return
     }
+    const finalCategory = category === 'Other' ? (customCategory.trim() || 'other') : category
 
     setLoading(true)
     try {
       const id = await createChannel({
         name: trimmedName,
         description: description.trim() || undefined,
-        category,
+        category: finalCategory.toLowerCase(),
+        avatarUri: channelPhoto ?? undefined,
       })
       router.replace(`/channel/${id}`)
     } catch (e: any) {
@@ -81,10 +96,17 @@ export default function CreateChannel() {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Channel icon preview */}
-          <View style={styles.iconPreview}>
-            <Hash size={28} color={colors.primary} />
-          </View>
+          {/* Channel photo/icon */}
+          <Pressable onPress={pickChannelPhoto} style={styles.iconPreview}>
+            {channelPhoto ? (
+              <Image source={{ uri: channelPhoto }} style={styles.iconImage} />
+            ) : (
+              <Hash size={28} color={colors.primary} />
+            )}
+            <View style={[styles.cameraOverlay, { backgroundColor: colors.primary }]}>
+              <Camera size={12} color="#FFF" strokeWidth={2} />
+            </View>
+          </Pressable>
 
           {/* Name */}
           <Text style={styles.label}>CHANNEL NAME *</Text>
@@ -136,6 +158,24 @@ export default function CreateChannel() {
               )
             })}
           </View>
+
+          {/* Custom category input when "Other" selected */}
+          {category === 'Other' && (
+            <View style={{ marginTop: 12 }}>
+              <Text style={styles.label}>YOUR CATEGORY</Text>
+              <TextInput
+                value={customCategory}
+                onChangeText={setCustomCategory}
+                placeholder='e.g. "Mental Health", "Activities"'
+                placeholderTextColor={colors.textMuted}
+                style={[
+                  styles.input,
+                  { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface },
+                ]}
+                autoFocus
+              />
+            </View>
+          )}
         </ScrollView>
 
         {/* Create button */}
@@ -196,14 +236,31 @@ function makeStyles(
       paddingTop: 16,
     },
     iconPreview: {
-      width: 56,
-      height: 56,
-      borderRadius: radius.lg,
+      width: 72,
+      height: 72,
+      borderRadius: 36,
       backgroundColor: colors.primaryTint,
       alignItems: 'center',
       justifyContent: 'center',
       alignSelf: 'center',
       marginBottom: 24,
+      overflow: 'hidden',
+      position: 'relative',
+    },
+    iconImage: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+    },
+    cameraOverlay: {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     label: {
       fontSize: 11,

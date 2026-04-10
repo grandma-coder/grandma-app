@@ -58,6 +58,7 @@ import {
   type ChannelPost,
 } from '../../lib/channelPosts'
 import { supabase } from '../../lib/supabase'
+import { checkPhotoSafety } from '../../lib/photoSafety'
 
 // ─── Main Component ───────────────────────────────────────────────────────
 
@@ -251,11 +252,29 @@ export default function ChannelChat() {
     if (!content || !id) return
     setSending(true)
     try {
-      await sendMessage(id, content, {
+      const isReply = !!replyTo?.id
+      const newMsg = await sendMessage(id, content, {
         photos: photos.length > 0 ? photos : undefined,
         replyToId: replyTo?.id,
         mentions: mentionIds.length > 0 ? mentionIds : undefined,
       })
+
+      // Optimistically add to messages list (if top-level, not a thread reply)
+      if (!isReply) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === newMsg.id)) return prev
+          return [...prev, newMsg]
+        })
+      } else {
+        // Increment reply count on parent message
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === replyTo?.id
+              ? { ...m, reply_count: (m.reply_count ?? 0) + 1 }
+              : m
+          )
+        )
+      }
 
       // Notify mentioned users
       if (mentionIds.length > 0 && channel) {
@@ -276,6 +295,10 @@ export default function ChannelChat() {
   // ─── Photo picker ─────────────────────────────────────────────────────
 
   async function pickPhoto() {
+    // Safety check before first photo upload
+    const safe = await checkPhotoSafety()
+    if (!safe) return
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({})
       if (!result.canceled && result.assets?.[0]) {
@@ -823,23 +846,8 @@ function MessageBubble({
           </View>
         )}
 
-        {/* Message text */}
-        <Text style={[styles.messageText, { color: colors.text }]}>
-          {message.content}
-        </Text>
-
-        {/* Photos */}
-        {message.photos && message.photos.length > 0 && (
-          <View style={styles.messagePhotos}>
-            {message.photos.map((uri, i) => (
-              <Image
-                key={i}
-                source={{ uri }}
-                style={[styles.messagePhoto, { borderRadius: radius.sm }]}
-              />
-            ))}
-          </View>
-        )}
+        {/* Message content — handles shared posts, @mentions, plain text + photos */}
+        <MessageContent content={message.content} photos={message.photos} />
 
         {/* Bottom row: reactions + replies */}
         <View style={styles.bubbleFooter}>
@@ -882,6 +890,94 @@ function MessageBubble({
 
 // ─── Helpers ────────────────────────────────────────────────────────────
 
+// ─── Message Content with share link detection ──────────────────────────
+
+function MessageContent({ content, photos }: { content: string; photos?: string[] }) {
+  const { colors, radius } = useTheme()
+
+  // Check for [garage:ID] share tag
+  const garageMatch = content.match(/\[garage:([a-f0-9-]+)\]/)
+
+  if (garageMatch) {
+    const garageId = garageMatch[1]
+    // Extract user note (before 📢) and post info
+    const cleanText = content.replace(/\[garage:[a-f0-9-]+\]/, '').trim()
+    const noteMatch = cleanText.match(/^(.*?)(?:\n\n)?📢/s)
+    const userNote = noteMatch?.[1]?.trim()
+    // Extract quoted caption
+    const quoteMatch = cleanText.match(/"([^"]+)"/)
+    const quotedCaption = quoteMatch?.[1]
+    // Extract author
+    const authorMatch = cleanText.match(/—\s*(.+)$/)
+    const sharedAuthor = authorMatch?.[1]?.trim()
+    const coverPhoto = photos?.[0]
+
+    return (
+      <View style={{ gap: 8 }}>
+        {/* User's personal note */}
+        {userNote && (
+          <Text style={[styles.messageText, { color: colors.text }]}>{userNote}</Text>
+        )}
+
+        {/* Shared post card */}
+        <Pressable
+          onPress={() => router.push(`/garage/${garageId}` as any)}
+          style={[styles.shareCard, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}
+        >
+          {coverPhoto && (
+            <Image source={{ uri: coverPhoto }} style={[styles.shareCardImage, { borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg }]} />
+          )}
+          <View style={styles.shareCardBody}>
+            <Text style={[styles.shareCardLabel, { color: colors.primary }]}>
+              Shared from Garage
+            </Text>
+            {quotedCaption && (
+              <Text style={[styles.shareCardCaption, { color: colors.text }]} numberOfLines={2}>
+                {quotedCaption}
+              </Text>
+            )}
+            {sharedAuthor && (
+              <Text style={[styles.shareCardAuthor, { color: colors.textMuted }]}>
+                by {sharedAuthor}
+              </Text>
+            )}
+            <Text style={[styles.shareCardCta, { color: colors.primary }]}>
+              Tap to view →
+            </Text>
+          </View>
+        </Pressable>
+      </View>
+    )
+  }
+
+  // Regular message — render with @mention highlighting + photos
+  const parts = content.split(/(@\S+)/g)
+  const hasMentions = parts.some((p) => p.startsWith('@'))
+
+  return (
+    <View style={{ gap: 6 }}>
+      <Text style={[styles.messageText, { color: colors.text }]}>
+        {hasMentions
+          ? parts.map((part, i) =>
+              part.startsWith('@') ? (
+                <Text key={i} style={{ color: colors.primary, fontWeight: '600' }}>{part}</Text>
+              ) : (
+                <Text key={i}>{part}</Text>
+              )
+            )
+          : content}
+      </Text>
+      {photos && photos.length > 0 && (
+        <View style={styles.messagePhotos}>
+          {photos.map((uri, i) => (
+            <Image key={i} source={{ uri }} style={[styles.messagePhoto, { borderRadius: radius.sm }]} />
+          ))}
+        </View>
+      )}
+    </View>
+  )
+}
+
 function formatTime(dateStr: string): string {
   const d = new Date(dateStr)
   const now = new Date()
@@ -921,6 +1017,15 @@ const styles = StyleSheet.create({
   memberCount: { fontSize: 12, fontWeight: '600', marginLeft: 4 },
   joinLeaveBtn: { paddingVertical: 6, paddingHorizontal: 16 },
   joinLeaveText: { fontSize: 13, fontWeight: '700' },
+
+  // Shared post card
+  shareCard: { borderWidth: 1, overflow: 'hidden', marginTop: 6 },
+  shareCardImage: { width: '100%', height: 160, resizeMode: 'cover' },
+  shareCardBody: { padding: 12, gap: 4 },
+  shareCardLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
+  shareCardCaption: { fontSize: 14, fontWeight: '600' },
+  shareCardAuthor: { fontSize: 12, fontWeight: '500' },
+  shareCardCta: { fontSize: 13, fontWeight: '700', marginTop: 4 },
 
   // Rate bar
   rateBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },

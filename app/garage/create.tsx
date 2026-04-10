@@ -25,6 +25,7 @@ import {
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
 import { router } from 'expo-router'
+import { checkPhotoSafety } from '../../lib/photoSafety'
 import {
   ArrowLeft,
   Camera,
@@ -123,6 +124,9 @@ export default function CreatePostScreen() {
   // ─── Media pickers ────────────────────────────────────────────────────
 
   async function pickMedia() {
+    const safe = await checkPhotoSafety()
+    if (!safe) return
+
     // Primary: expo-image-picker (works on real devices, flaky on iOS sim)
     try {
       const result = await ImagePicker.launchImageLibraryAsync({})

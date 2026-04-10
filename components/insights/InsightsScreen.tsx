@@ -249,6 +249,12 @@ export function InsightsScreen() {
           <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
             <ArrowLeft size={22} color={colors.text} />
           </Pressable>
+          {/* Regenerate button - always visible */}
+          {!generating && insights.length > 0 && (
+            <Pressable onPress={handleGenerate} style={[styles.regenBtn, { backgroundColor: colors.primary + '15' }]} hitSlop={8}>
+              <RefreshCw size={16} color={colors.primary} strokeWidth={2} />
+            </Pressable>
+          )}
         </View>
         <Text style={[styles.heading, { color: colors.text }]}>Insights</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -831,8 +837,9 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { paddingHorizontal: 20 },
 
-  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   backBtn: { padding: 4 },
+  regenBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   heading: { fontSize: 32, fontWeight: '900', letterSpacing: -0.8, marginBottom: 4 },
   subtitle: { fontSize: 15, fontWeight: '500', lineHeight: 21, marginBottom: 20 },
 

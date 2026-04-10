@@ -39,7 +39,20 @@
       "Bash(xargs ls:*)",
       "Bash(ls 20260405*)",
       "Bash(grep -A 20 \"user_role\\\\|journey_mode\" /Users/igorcarvalhorodrigues/Projects/grandma-app/supabase/migrations/*.sql)",
-      "Bash(wc -l /Users/igorcarvalhorodrigues/Projects/grandma-app/app/channel/[id].tsx)"
+      "Bash(wc -l /Users/igorcarvalhorodrigues/Projects/grandma-app/app/channel/[id].tsx)",
+      "Bash(ls -la /Users/igorcarvalhorodrigues/Projects/grandma-app/*.ts /Users/igorcarvalhorodrigues/Projects/grandma-app/*.d.ts)",
+      "Bash(supabase db:*)",
+      "Bash(curl -s -X POST https://icohpzzfpabzvwuumcct.supabase.co/functions/v1/generate-insights -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imljb2hwenpmcGFienZ3dXVtY2N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MzA5OTMsImV4cCI6MjA5MDQwNjk5M30.c0EijtYayEuEr80oO4uTxOIq15wUWV_-PLBYR_ZzyJ8' -H 'Content-Type: application/json' -d '{\"user_id\":\"00000000-0000-0000-0000-000000000000\",\"behavior\":\"kids\"}')",
+      "Bash(curl -s 'https://icohpzzfpabzvwuumcct.supabase.co/rest/v1/insights?select=id,title,type,behavior,archived,user_id&limit=5&order=created_at.desc' -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imljb2hwenpmcGFienZ3dXVtY2N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MzA5OTMsImV4cCI6MjA5MDQwNjk5M30.c0EijtYayEuEr80oO4uTxOIq15wUWV_-PLBYR_ZzyJ8' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imljb2hwenpmcGFienZ3dXVtY2N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MzA5OTMsImV4cCI6MjA5MDQwNjk5M30.c0EijtYayEuEr80oO4uTxOIq15wUWV_-PLBYR_ZzyJ8')",
+      "Bash(curl -s -X POST https://icohpzzfpabzvwuumcct.supabase.co/rest/v1/rpc/ -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imljb2hwenpmcGFienZ3dXVtY2N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MzA5OTMsImV4cCI6MjA5MDQwNjk5M30.c0EijtYayEuEr80oO4uTxOIq15wUWV_-PLBYR_ZzyJ8')",
+      "Bash(grep -r \"CREATE TABLE\" /Users/igorcarvalhorodrigues/Projects/grandma-app/supabase/migrations/*.sql)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(superdesign list-projects:*)",
+      "Bash(superdesign --help)",
+      "Bash(superdesign fetch-design-nodes:*)",
+      "Bash(superdesign create-project:*)",
+      "Bash(superdesign iterate-design-draft:*)",
+      "Bash(superdesign get-design:*)"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"

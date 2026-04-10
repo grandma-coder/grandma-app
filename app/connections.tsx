@@ -5,9 +5,9 @@
  * Accessible from Grandma Wheel and tab bar.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { router } from 'expo-router'
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { ArrowLeft, Bell } from 'lucide-react-native'
 import { getUnreadNotificationCount } from '../lib/channelPosts'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -18,12 +18,16 @@ import { ChannelsTab } from '../components/connections/ChannelsTab'
 export default function ConnectionsScreen() {
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
-  const [tab, setTab] = useState<'garage' | 'channels'>('garage')
+  const params = useLocalSearchParams<{ tab?: string }>()
+  const [tab, setTab] = useState<'garage' | 'channels'>(params.tab === 'channels' ? 'channels' : 'garage')
   const [notifCount, setNotifCount] = useState(0)
 
-  useEffect(() => {
-    getUnreadNotificationCount().then(setNotifCount).catch(() => {})
-  }, [])
+  // Refresh notification count on focus
+  useFocusEffect(
+    useCallback(() => {
+      getUnreadNotificationCount().then(setNotifCount).catch(() => {})
+    }, [])
+  )
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>

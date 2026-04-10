@@ -25,7 +25,7 @@ const WHEEL_ITEMS = [
   { id: 'chat', label: 'Grandma Talk', icon: MessageCircle, color: brand.primary, route: '/grandma-talk' },
   { id: 'insights', label: 'Insights', icon: Lightbulb, color: brand.accent, route: '/insights' },
   { id: 'garage', label: 'Garage', icon: ShoppingBag, color: brand.kids, route: '/connections' },
-  { id: 'channels', label: 'Channels', icon: Users, color: brand.secondary, route: '/connections' },
+  { id: 'channels', label: 'Channels', icon: Users, color: brand.secondary, route: '/connections?tab=channels' },
 ]
 
 function CenterTabButton() {

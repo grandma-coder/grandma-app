@@ -458,13 +458,19 @@ function FeedPost({
           </Pressable>
 
           {/* Comment */}
-          <Pressable onPress={onComment} hitSlop={8}>
+          <Pressable onPress={onComment} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <MessageCircle size={24} color={colors.text} strokeWidth={2} />
+            {post.comment_count > 0 && (
+              <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>{post.comment_count}</Text>
+            )}
           </Pressable>
 
           {/* Share */}
-          <Pressable onPress={onShare} hitSlop={8}>
+          <Pressable onPress={onShare} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Send size={22} color={colors.text} strokeWidth={2} />
+            {post.share_count > 0 && (
+              <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>{post.share_count}</Text>
+            )}
           </Pressable>
         </View>
 
