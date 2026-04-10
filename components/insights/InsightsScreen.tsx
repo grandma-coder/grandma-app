@@ -13,9 +13,9 @@ import {
   Pressable,
   ScrollView,
   RefreshControl,
-  Alert,
   ActivityIndicator,
   StyleSheet,
+  Animated,
 } from 'react-native'
 import { router } from 'expo-router'
 import {
@@ -26,7 +26,8 @@ import {
   X,
   ArrowLeft,
   MessageCircle,
-  ChevronRight,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -59,6 +60,8 @@ export function InsightsScreen() {
   const queryClient = useQueryClient()
 
   const [refreshing, setRefreshing] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const { data: insights = [], isLoading } = useQuery({
     queryKey: ['insights', mode],
@@ -68,16 +71,32 @@ export function InsightsScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
+    setGenerating(true)
+    setError(null)
     try {
       await archiveStaleInsights()
       await generateInsights(mode)
       queryClient.invalidateQueries({ queryKey: ['insights', mode] })
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      setError(e.message ?? 'Something went wrong')
     } finally {
       setRefreshing(false)
+      setGenerating(false)
     }
   }, [mode])
+
+  async function handleGenerate() {
+    setGenerating(true)
+    setError(null)
+    try {
+      await generateInsights(mode)
+      queryClient.invalidateQueries({ queryKey: ['insights', mode] })
+    } catch (e: any) {
+      setError(e.message ?? 'Something went wrong')
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   async function handleArchive(id: string) {
     await archiveInsight(id)
@@ -85,7 +104,6 @@ export function InsightsScreen() {
   }
 
   function handleTapInsight(insight: Insight) {
-    // Navigate to library (Grandma Talk) with insight as context
     router.push({
       pathname: '/(tabs)/library',
       params: { insightContext: `${insight.title}: ${insight.body}` },
@@ -130,25 +148,47 @@ export function InsightsScreen() {
           AI-powered observations from your data. Pull down to refresh.
         </Text>
 
+        {/* Generating banner */}
+        {generating && (
+          <View style={[styles.generatingBanner, { backgroundColor: colors.primary + '15', borderRadius: radius.lg }]}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={[styles.generatingText, { color: colors.primary }]}>
+              Grandma is thinking...
+            </Text>
+          </View>
+        )}
+
+        {/* Error banner */}
+        {error && !generating && (
+          <View style={[styles.errorBanner, { backgroundColor: '#FF4D4F15', borderRadius: radius.lg }]}>
+            <AlertTriangle size={16} color="#FF4D4F" strokeWidth={2} />
+            <Text style={[styles.errorText, { color: '#FF6B6B' }]}>{error}</Text>
+            <Pressable onPress={onRefresh} hitSlop={8}>
+              <RefreshCw size={16} color={colors.primary} strokeWidth={2} />
+            </Pressable>
+          </View>
+        )}
+
         {/* Loading state */}
-        {isLoading && (
+        {isLoading && !generating && (
           <View style={styles.loadingWrap}>
             <ActivityIndicator color={colors.primary} />
           </View>
         )}
 
         {/* Empty state */}
-        {!isLoading && insights.length === 0 && (
+        {!isLoading && !generating && insights.length === 0 && (
           <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
             <Sparkles size={32} color={colors.textMuted} strokeWidth={1.5} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>No insights yet</Text>
             <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
-              Log a few days of data and pull down to generate your first insights.
+              Log a few days of data and tap below to generate your first insights.
             </Text>
             <Pressable
-              onPress={onRefresh}
+              onPress={handleGenerate}
               style={[styles.generateBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}
             >
+              <Sparkles size={16} color="#FFFFFF" strokeWidth={2} />
               <Text style={styles.generateBtnText}>Generate Insights</Text>
             </Pressable>
           </View>
@@ -181,6 +221,19 @@ export function InsightsScreen() {
             </View>
           )
         })}
+
+        {/* Refresh hint when insights exist */}
+        {!isLoading && insights.length > 0 && !generating && (
+          <Pressable
+            onPress={handleGenerate}
+            style={[styles.refreshHint, { borderRadius: radius.lg }]}
+          >
+            <RefreshCw size={14} color={colors.textMuted} strokeWidth={2} />
+            <Text style={[styles.refreshHintText, { color: colors.textMuted }]}>
+              Tap to regenerate insights
+            </Text>
+          </Pressable>
+        )}
       </ScrollView>
     </View>
   )
@@ -290,11 +343,19 @@ const styles = StyleSheet.create({
 
   loadingWrap: { paddingVertical: 40, alignItems: 'center' },
 
+  // Generating banner
+  generatingBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, marginBottom: 16 },
+  generatingText: { fontSize: 14, fontWeight: '600' },
+
+  // Error banner
+  errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, marginBottom: 16 },
+  errorText: { fontSize: 13, fontWeight: '500', flex: 1 },
+
   // Empty
   emptyCard: { alignItems: 'center', padding: 32, gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
   emptyTitle: { fontSize: 18, fontWeight: '700' },
   emptyBody: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20 },
-  generateBtn: { paddingVertical: 12, paddingHorizontal: 24, marginTop: 8 },
+  generateBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 24, marginTop: 8 },
   generateBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
 
   // Sections
@@ -315,6 +376,10 @@ const styles = StyleSheet.create({
   behaviorText: { fontSize: 11, fontWeight: '600' },
   talkHint: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   talkHintText: { fontSize: 12, fontWeight: '600' },
+
+  // Refresh hint
+  refreshHint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, marginTop: 4 },
+  refreshHintText: { fontSize: 13, fontWeight: '500' },
 
   // Compact (for home screens)
   compactCard: { flex: 1, padding: 14, gap: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },

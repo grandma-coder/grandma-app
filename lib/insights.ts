@@ -49,12 +49,23 @@ export async function generateInsights(behavior: string): Promise<Insight[]> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
 
-  const { data, error } = await supabase.functions.invoke('generate-insights', {
-    body: { user_id: session.user.id, behavior },
-  })
+  try {
+    const { data, error } = await supabase.functions.invoke('generate-insights', {
+      body: { user_id: session.user.id, behavior },
+    })
 
-  if (error) throw error
-  return data?.insights ?? []
+    if (error) {
+      console.warn('generate-insights error:', error)
+      throw new Error('Could not generate insights right now. Please try again later.')
+    }
+
+    return data?.insights ?? []
+  } catch (e: any) {
+    // Re-throw our own friendly errors
+    if (e.message?.includes('Could not generate')) throw e
+    console.warn('generate-insights unexpected error:', e)
+    throw new Error('Something went wrong generating insights. Please try again.')
+  }
 }
 
 /** Archive a single insight */

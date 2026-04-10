@@ -79,8 +79,33 @@ serve(async (req) => {
       }
     }
 
+    // ─── If no logs, return starter nudges without calling AI ─────────
     if (!logSummary) {
-      logSummary = 'No logs found in the last 30 days.'
+      const starterInsights = getStarterInsights(behavior)
+
+      // Archive old insights for this user + behavior
+      await supabase
+        .from('insights')
+        .update({ archived: true, archived_at: new Date().toISOString() })
+        .eq('user_id', user_id)
+        .eq('behavior', behavior)
+        .eq('archived', false)
+
+      const rows = starterInsights.map((ins: any) => ({
+        user_id,
+        type: ins.type,
+        title: ins.title,
+        body: ins.body,
+        behavior,
+        child_id: null,
+      }))
+
+      await supabase.from('insights').insert(rows)
+
+      return new Response(
+        JSON.stringify({ insights: starterInsights, count: starterInsights.length }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     // ─── Call Claude API ─────────────────────────────────────────────────
@@ -244,4 +269,28 @@ function formatChildLogs(logs: any[], childNames: Record<string, string>): strin
     }
   }
   return summary
+}
+
+// ─── Starter Insights (when no logs exist) ────────────────────────────────
+
+function getStarterInsights(behavior: string): any[] {
+  if (behavior === 'pre-pregnancy') {
+    return [
+      { type: 'nudge', title: 'Start logging your cycle', body: 'Track a few days of data so Grandma can spot patterns and give you personalized tips.', child_id: null },
+      { type: 'upcoming', title: 'Better predictions ahead', body: 'With a week of logs, I can start predicting your fertile window and next period.', child_id: null },
+      { type: 'nudge', title: 'Log symptoms too', body: 'Tracking mood, cramps, and energy helps me find patterns you might miss.', child_id: null },
+    ]
+  } else if (behavior === 'pregnancy') {
+    return [
+      { type: 'nudge', title: 'Start your pregnancy journal', body: 'Log how you feel each day — symptoms, mood, energy — so I can track your journey.', child_id: null },
+      { type: 'upcoming', title: 'Milestones are coming', body: 'Once I know your due date, I can give you week-by-week insights and reminders.', child_id: null },
+      { type: 'nudge', title: 'Track your appointments', body: 'Log checkups and test results so I can help you stay on top of everything.', child_id: null },
+    ]
+  } else {
+    return [
+      { type: 'nudge', title: "Log your little one's day", body: 'Track feeds, sleep, and milestones so Grandma can spot trends and cheer you on.', child_id: null },
+      { type: 'upcoming', title: 'Development insights await', body: 'A few days of logs and I can start sharing personalized development observations.', child_id: null },
+      { type: 'nudge', title: 'Every detail helps', body: 'Diaper changes, naps, feeding times — the more you log, the smarter my insights get.', child_id: null },
+    ]
+  }
 }
