@@ -11,7 +11,7 @@ import { View, Text, Pressable, Modal, Animated, StyleSheet } from 'react-native
 import { Tabs, router } from 'expo-router'
 import {
   Home, Calendar, BarChart3, User, Sparkles,
-  MessageCircle, Lightbulb, ShoppingBag, Users, X,
+  MessageCircle, Lightbulb, ShoppingBag, Users, X, Gift,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useModeStore } from '../../store/useModeStore'
@@ -24,6 +24,7 @@ import { useTheme, brand } from '../../constants/theme'
 const WHEEL_ITEMS = [
   { id: 'chat', label: 'Grandma Talk', icon: MessageCircle, color: brand.primary, route: '/grandma-talk' },
   { id: 'insights', label: 'Insights', icon: Lightbulb, color: brand.accent, route: '/insights' },
+  { id: 'rewards', label: 'Daily Rewards', icon: Gift, color: '#FFD700', route: '/daily-rewards' },
   { id: 'garage', label: 'Garage', icon: ShoppingBag, color: brand.kids, route: '/connections' },
   { id: 'channels', label: 'Channels', icon: Users, color: brand.secondary, route: '/connections?tab=channels' },
 ]
@@ -237,9 +238,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   wheelItem: {
-    width: '46%',
+    width: '30%',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 14,
     gap: 8,
   },
   wheelIcon: {

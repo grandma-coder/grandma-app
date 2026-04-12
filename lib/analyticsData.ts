@@ -57,12 +57,39 @@ export interface GrowthData {
   hasData: boolean
 }
 
+export interface RoutineComplianceData {
+  weeklySkips: number[]    // skip count per day, last 7 days
+  totalSkips: number
+  skipRate: number         // percentage 0-100 of skips vs total scheduled
+  mostSkipped: { name: string; count: number }[]
+  weekLabels: string[]
+  hasData: boolean
+}
+
+export interface PillarScore {
+  value: number       // 0-10 scale
+  label: string       // e.g. 'excellent', 'good', 'needs attention'
+  trend: number       // percentage change from prior week (-100 to +100)
+  hasData: boolean
+}
+
+export interface WellnessScores {
+  overall: number     // weighted average 0-10
+  nutrition: PillarScore
+  sleep: PillarScore
+  mood: PillarScore
+  health: PillarScore
+  growth: PillarScore
+}
+
 export interface AnalyticsData {
   nutrition: NutritionData
   sleep: SleepData
   mood: MoodData
   health: HealthData
+  routineCompliance: RoutineComplianceData
   growth: GrowthData
+  scores: WellnessScores
   totalLogs: number
   dateRange: { from: string; to: string }
 }
@@ -272,6 +299,192 @@ function buildGrowthData(logs: ChildLog[]): GrowthData {
   return { weights, heights, hasData: weights.length > 0 || heights.length > 0 }
 }
 
+// ─── Scoring Functions ───────────────────────────────────────────────────────
+
+function scoreLabel(score: number): string {
+  if (score >= 8.5) return 'excellent'
+  if (score >= 7) return 'good'
+  if (score >= 5) return 'fair'
+  if (score >= 3) return 'needs attention'
+  return 'low'
+}
+
+function scoreNutrition(data: NutritionData): PillarScore {
+  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false }
+
+  const totalMeals = data.mealFrequency.reduce((a, b) => a + b, 0)
+  const totalGood = data.eatQuality.good.reduce((a, b) => a + b, 0)
+  const totalLittle = data.eatQuality.little.reduce((a, b) => a + b, 0)
+  const totalNone = data.eatQuality.none.reduce((a, b) => a + b, 0)
+
+  if (totalMeals === 0) return { value: 0, label: 'no data', trend: 0, hasData: false }
+
+  // Quality score (0-10): good=10pts, little=5pts, none=0pts
+  const qualityScore = ((totalGood * 10 + totalLittle * 5) / totalMeals)
+
+  // Frequency bonus: log at least 2 meals/day for 7 days = 14 total
+  const daysWithData = data.mealFrequency.filter((m) => m > 0).length
+  const freqBonus = Math.min(daysWithData / 7, 1) * 1.5 // up to 1.5 bonus
+
+  // Variety bonus: more unique foods = better
+  const varietyBonus = Math.min(data.topFoods.length / 5, 1) * 1.0
+
+  const raw = Math.min(qualityScore + freqBonus + varietyBonus, 10)
+  const value = Math.round(raw * 10) / 10
+
+  // Simple trend: compare first half vs second half of week
+  const firstHalf = data.eatQuality.good.slice(0, 3).reduce((a, b) => a + b, 0)
+  const secondHalf = data.eatQuality.good.slice(4).reduce((a, b) => a + b, 0)
+  const trend = firstHalf > 0 ? Math.round(((secondHalf - firstHalf) / firstHalf) * 100) : 0
+
+  return { value, label: scoreLabel(value), trend, hasData: true }
+}
+
+function scoreSleep(data: SleepData): PillarScore {
+  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false }
+
+  const total = data.qualityCounts.great + data.qualityCounts.good + data.qualityCounts.restless + data.qualityCounts.poor
+  if (total === 0) return { value: 0, label: 'no data', trend: 0, hasData: false }
+
+  // Quality score: great=10, good=7.5, restless=4, poor=1
+  const qualityScore = (
+    data.qualityCounts.great * 10 +
+    data.qualityCounts.good * 7.5 +
+    data.qualityCounts.restless * 4 +
+    data.qualityCounts.poor * 1
+  ) / total
+
+  // Consistency bonus: more days logged = better
+  const daysWithSleep = data.dailyHours.filter((h) => h > 0).length
+  const consistencyBonus = Math.min(daysWithSleep / 7, 1) * 1.5
+
+  const raw = Math.min(qualityScore * 0.85 + consistencyBonus, 10)
+  const value = Math.round(raw * 10) / 10
+
+  // Trend: average of last 3 days vs first 3
+  const first3 = data.dailyHours.slice(0, 3).reduce((a, b) => a + b, 0) / 3
+  const last3 = data.dailyHours.slice(4).reduce((a, b) => a + b, 0) / 3
+  const trend = first3 > 0 ? Math.round(((last3 - first3) / first3) * 100) : 0
+
+  return { value, label: scoreLabel(value), trend, hasData: true }
+}
+
+function scoreMood(data: MoodData): PillarScore {
+  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false }
+
+  const totalMoods = data.dominantMoods.reduce((a, m) => a + m.count, 0)
+  if (totalMoods === 0) return { value: 0, label: 'no data', trend: 0, hasData: false }
+
+  // Mood weights: happy=10, calm=9, energetic=8, fussy=3, cranky=1
+  const moodWeights: Record<string, number> = { happy: 10, calm: 9, energetic: 8, fussy: 3, cranky: 1 }
+  let weightedSum = 0
+  for (const m of data.dominantMoods) {
+    weightedSum += (moodWeights[m.mood] || 5) * m.count
+  }
+  const raw = Math.min(weightedSum / totalMoods, 10)
+  const value = Math.round(raw * 10) / 10
+
+  return { value, label: scoreLabel(value), trend: 0, hasData: true }
+}
+
+function buildRoutineComplianceData(logs: ChildLog[], dates: string[], labels: string[]): RoutineComplianceData {
+  const skippedLogs = logs.filter((l) => l.type === 'skipped')
+  if (skippedLogs.length === 0) {
+    return { weeklySkips: [0,0,0,0,0,0,0], totalSkips: 0, skipRate: 0, mostSkipped: [], weekLabels: labels, hasData: false }
+  }
+
+  const weeklySkips = new Array(7).fill(0)
+  const routineSkipCounts: Record<string, number> = {}
+
+  for (const log of skippedLogs) {
+    const dayIdx = dates.indexOf(log.date)
+    if (dayIdx !== -1) weeklySkips[dayIdx]++
+    try {
+      const val = parseValue(log.value)
+      if (val?.routineName) {
+        routineSkipCounts[val.routineName] = (routineSkipCounts[val.routineName] || 0) + 1
+      }
+    } catch {}
+  }
+
+  const totalSkips = skippedLogs.length
+  // Skip rate: skips vs (skips + actual logs) in the 7-day window
+  const windowLogs = logs.filter((l) => l.type !== 'skipped' && dates.includes(l.date)).length
+  const skipRate = windowLogs + totalSkips > 0 ? Math.round((totalSkips / (windowLogs + totalSkips)) * 100) : 0
+
+  const mostSkipped = Object.entries(routineSkipCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+
+  return { weeklySkips, totalSkips, skipRate, mostSkipped, weekLabels: labels, hasData: true }
+}
+
+function scoreHealth(data: HealthData): PillarScore {
+  if (!data.hasData && data.vaccines.every((v) => !v.done)) {
+    return { value: 0, label: 'no data', trend: 0, hasData: false }
+  }
+
+  // Vaccine completion score (0-10)
+  const doneVaccines = data.vaccines.filter((v) => v.done).length
+  const vaccineScore = data.vaccines.length > 0 ? (doneVaccines / data.vaccines.length) * 10 : 5
+
+  // Less health incidents is better (temperature, medicine = concerning)
+  const totalEvents = data.weeklyFrequency.reduce((a, b) => a + b, 0)
+  const eventPenalty = Math.min(totalEvents * 0.8, 5) // max 5 points penalty
+  const eventScore = Math.max(10 - eventPenalty, 2)
+
+  const raw = (vaccineScore * 0.6 + eventScore * 0.4)
+  const value = Math.round(Math.min(raw, 10) * 10) / 10
+
+  return { value, label: scoreLabel(value), trend: 0, hasData: data.hasData || doneVaccines > 0 }
+}
+
+function scoreGrowth(data: GrowthData): PillarScore {
+  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false }
+
+  // Growth is tracked by having measurements — more regular = higher score
+  const totalMeasurements = data.weights.length + data.heights.length
+  const measureScore = Math.min(totalMeasurements / 4, 1) * 7 // up to 7 for having data
+
+  // Bonus for recent measurements (within last 7 days)
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const recentDate = sevenDaysAgo.toISOString().split('T')[0]
+  const hasRecent = data.weights.some((w) => w.date >= recentDate) || data.heights.some((h) => h.date >= recentDate)
+  const recencyBonus = hasRecent ? 3 : 1
+
+  const value = Math.round(Math.min(measureScore + recencyBonus, 10) * 10) / 10
+  return { value, label: scoreLabel(value), trend: 0, hasData: true }
+}
+
+function buildScores(nutrition: NutritionData, sleep: SleepData, mood: MoodData, health: HealthData, growth: GrowthData): WellnessScores {
+  const ns = scoreNutrition(nutrition)
+  const ss = scoreSleep(sleep)
+  const ms = scoreMood(mood)
+  const hs = scoreHealth(health)
+  const gs = scoreGrowth(growth)
+
+  // Weighted overall: nutrition 30%, sleep 25%, mood 20%, health 15%, growth 10%
+  const pillars = [
+    { score: ns, weight: 0.30 },
+    { score: ss, weight: 0.25 },
+    { score: ms, weight: 0.20 },
+    { score: hs, weight: 0.15 },
+    { score: gs, weight: 0.10 },
+  ]
+
+  const withData = pillars.filter((p) => p.score.hasData)
+  let overall = 0
+  if (withData.length > 0) {
+    const totalWeight = withData.reduce((a, p) => a + p.weight, 0)
+    overall = withData.reduce((a, p) => a + p.score.value * (p.weight / totalWeight), 0)
+  }
+  overall = Math.round(overall * 10) / 10
+
+  return { overall, nutrition: ns, sleep: ss, mood: ms, health: hs, growth: gs }
+}
+
 // ─── Main Query Hook ──────────────────────────────────────────────────────────
 
 export function useKidsAnalytics(childId: string | 'all') {
@@ -309,13 +522,23 @@ export function useKidsAnalytics(childId: string | 'all') {
       const allLogs: ChildLog[] = (logs ?? []) as ChildLog[]
       const { dates, labels } = getLast7Days()
 
+      const nutrition = buildNutritionData(allLogs, dates, labels)
+      const sleep = buildSleepData(allLogs, dates, labels)
+      const mood = buildMoodData(allLogs, dates, labels)
+      const health = buildHealthData(allLogs, dates, labels)
+      const growth = buildGrowthData(allLogs)
+      const routineCompliance = buildRoutineComplianceData(allLogs, dates, labels)
+      const scores = buildScores(nutrition, sleep, mood, health, growth)
+
       return {
-        nutrition: buildNutritionData(allLogs, dates, labels),
-        sleep: buildSleepData(allLogs, dates, labels),
-        mood: buildMoodData(allLogs, dates, labels),
-        health: buildHealthData(allLogs, dates, labels),
-        growth: buildGrowthData(allLogs),
-        totalLogs: allLogs.length,
+        nutrition,
+        sleep,
+        mood,
+        health,
+        growth,
+        routineCompliance,
+        scores,
+        totalLogs: allLogs.filter((l) => l.type !== 'skipped').length,
         dateRange: { from: sinceDate, to: new Date().toISOString().split('T')[0] },
       }
     },

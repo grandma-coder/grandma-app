@@ -15,7 +15,7 @@ export function ChannelCard({ channel, onPress }: ChannelCardProps) {
       <GlassCard style={styles.container}>
         <View style={styles.row}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>#</Text>
+            <Text style={styles.avatarText}>{channel.channelType === 'private' ? '🔒' : '#'}</Text>
           </View>
           <View style={styles.content}>
             <Text style={styles.name}>{channel.name}</Text>

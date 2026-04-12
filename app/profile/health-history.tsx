@@ -92,8 +92,9 @@ export default function HealthHistoryScreen() {
       .from('child_logs')
       .select('id, child_id, date, type, value, notes, created_at')
       .in('child_id', childIds)
+      .in('type', ['vaccine', 'medicine', 'temperature', 'growth', 'milestone', 'note'])
       .order('date', { ascending: false })
-      .limit(300)
+      .limit(500)
 
     setEvents(((data ?? []) as any[]).map((log) => {
       const child = children.find((c) => c.id === log.child_id)
@@ -313,18 +314,27 @@ export default function HealthHistoryScreen() {
         </Pressable>
 
         {/* ─── Quick Reference ──────────────────────────────────────── */}
-        {children.some((c) => c.allergies.length > 0 || c.medications.length > 0) && (
+        {(() => {
+          const alertKids = (filterChild
+            ? children.filter((c) => c.id === filterChild)
+            : children
+          ).filter((c) =>
+            c.allergies.filter((a) => a && a.toLowerCase() !== 'no').length > 0 ||
+            c.medications.length > 0
+          )
+          if (alertKids.length === 0) return null
+          return (
           <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
             <View style={styles.sectionHeader}>
               <AlertTriangle size={18} color={brand.error} strokeWidth={2} />
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Allergies & Alerts</Text>
             </View>
-            {children.filter((c) => c.allergies.length > 0 || c.medications.length > 0).map((c) => (
+            {alertKids.map((c) => (
               <View key={c.id} style={styles.refChild}>
                 <Text style={[styles.refChildName, { color: colors.text }]}>{c.name}</Text>
-                {c.allergies.length > 0 && (
+                {c.allergies.filter((a) => a && a.toLowerCase() !== 'no').length > 0 && (
                   <View style={styles.refChipRow}>
-                    {c.allergies.map((a) => (
+                    {c.allergies.filter((a) => a && a.toLowerCase() !== 'no').map((a) => (
                       <View key={a} style={[styles.refChip, { backgroundColor: brand.error + '12', borderRadius: radius.full }]}>
                         <Text style={[styles.refChipText, { color: brand.error }]}>{a}</Text>
                       </View>
@@ -344,7 +354,8 @@ export default function HealthHistoryScreen() {
               </View>
             ))}
           </View>
-        )}
+          )
+        })()}
       </ScrollView>
 
       {/* ─── Detail Popup ──────────────────────────────────────────── */}

@@ -25,6 +25,7 @@ import {
   Moon,
   Baby,
   Sparkles,
+  Trophy,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
@@ -134,6 +135,7 @@ export default function ProfileScreen() {
     // Care & Family
     [
       { id: 'care-circle', label: 'Care Circle', icon: Users, color: brand.secondary, route: '/profile/care-circle' },
+      { id: 'badges', label: 'Badge Wallet', icon: Trophy, color: '#FFD700', route: '/profile/badges' },
       ...(mode === 'kids' && children.length > 0 ? [
         { id: 'memories', label: 'Memories', icon: Image, color: brand.accent, route: '/profile/memories' },
         { id: 'health-history', label: 'Health History', icon: ClipboardList, color: brand.phase.ovulation, route: '/profile/health-history' },

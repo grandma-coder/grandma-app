@@ -28,6 +28,8 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Utensils,
   Moon,
   Heart,
@@ -42,6 +44,15 @@ import {
   Pencil,
   Check,
   Plus,
+  Repeat,
+  RotateCcw,
+  CheckCircle2,
+  AlertCircle,
+  Circle,
+  Settings2,
+  Bell,
+  Sparkles,
+  MinusCircle,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
@@ -56,6 +67,7 @@ import {
   KidsMoodForm,
   MemoryForm,
   ActivityForm,
+  type RoutinePrefill,
 } from './KidsLogForms'
 
 // Enable layout animations on Android
@@ -77,6 +89,17 @@ interface ChildLog {
 }
 
 type LogType = 'feeding' | 'sleep' | 'health' | 'mood' | 'memory' | 'activity'
+
+interface ChildRoutine {
+  id: string
+  child_id: string
+  type: string
+  name: string
+  value: string | null
+  days_of_week: number[]
+  time: string | null
+  active: boolean
+}
 
 // ─── Child colors (cycle through for multi-child dots) ─────────────────────
 
@@ -106,6 +129,20 @@ const LOG_META: Record<string, { label: string; icon: typeof Utensils; color: st
   milestone: { label: 'Milestone', icon: Camera, color: brand.accent },
   activity: { label: 'Activity', icon: Dumbbell, color: brand.phase.ovulation },
   note: { label: 'Note', icon: Calendar, color: brand.primaryLight },
+  skipped: { label: 'Skipped', icon: MinusCircle, color: '#888888' },
+}
+
+/** Check if a routine was skipped (persisted as a 'skipped' log) for the given day */
+function isRoutineSkipped(routine: ChildRoutine, dayLogs: ChildLog[] | undefined): boolean {
+  return (dayLogs ?? []).some((log) => {
+    if (log.type !== 'skipped') return false
+    try {
+      const val = JSON.parse(log.value ?? '{}')
+      return val.routineId === routine.id
+    } catch {
+      return false
+    }
+  })
 }
 
 const QUICK_LOGS: { id: LogType; label: string; icon: typeof Utensils; color: string }[] = [
@@ -116,6 +153,14 @@ const QUICK_LOGS: { id: LogType; label: string; icon: typeof Utensils; color: st
   { id: 'mood', label: 'Mood', icon: Smile, color: brand.accent },
   { id: 'memory', label: 'Memory', icon: Camera, color: brand.phase.ovulation },
 ]
+
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+/** Map routine type → sheet LogType */
+const ROUTINE_SHEET_MAP: Record<string, string> = {
+  feeding: 'feeding', food: 'feeding', sleep: 'sleep',
+  activity: 'activity', mood: 'mood', health: 'health', memory: 'memory',
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -169,14 +214,22 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
         }
         case 'feeding': {
           const parts: string[] = []
-          if (parsed.feedType) parts.push(parsed.feedType === 'breast' ? 'Breastfed' : 'Bottle')
-          if (parsed.duration) {
-            const d = stripUnit(String(parsed.duration), ['min', 'mins', 'minutes', 'm'])
-            parts.push(`${d} min`)
-          }
-          if (parsed.amount) {
-            const a = stripUnit(String(parsed.amount), ['ml', 'oz'])
-            parts.push(`${a} ml`)
+          if (parsed.feedType === 'breast') {
+            parts.push('Breastfed')
+            if (parsed.side) {
+              const sideLabel = parsed.side === 'left' ? 'Left' : parsed.side === 'right' ? 'Right' : 'Both'
+              parts.push(sideLabel)
+            }
+            if (parsed.duration) {
+              const d = stripUnit(String(parsed.duration), ['min', 'mins', 'minutes', 'm'])
+              parts.push(`${d} min`)
+            }
+          } else {
+            parts.push('Bottle')
+            if (parsed.amount) {
+              const a = stripUnit(String(parsed.amount), ['ml', 'oz'])
+              parts.push(`${a} ml`)
+            }
           }
           return parts.join(' · ') || notes || ''
         }
@@ -235,7 +288,7 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
 
 // ─── FAB + Quick Log Sheet ────────────────────────────────────────────────
 
-function FabWithSheet({ onSelect }: { onSelect: (type: LogType) => void }) {
+function FabWithSheet({ onSelect, onManageRoutines }: { onSelect: (type: LogType) => void; onManageRoutines: () => void }) {
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const [open, setOpen] = useState(false)
@@ -288,6 +341,20 @@ function FabWithSheet({ onSelect }: { onSelect: (type: LogType) => void }) {
               )
             })}
           </View>
+
+          {/* Manage Routines button */}
+          <Pressable
+            onPress={() => { setOpen(false); onManageRoutines() }}
+            style={({ pressed }) => [
+              styles.fabRoutineBtn,
+              { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg },
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <Repeat size={18} color={colors.primary} strokeWidth={2} />
+            <Text style={[styles.fabRoutineBtnText, { color: colors.primary }]}>Manage Routines</Text>
+            <ChevronRightSmall size={16} color={colors.textMuted} />
+          </Pressable>
         </View>
       </Modal>
     </>
@@ -309,11 +376,21 @@ export function KidsCalendar() {
   const [viewDate, setViewDate] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
   const [sheetType, setSheetType] = useState<LogType | null>(null)
+  const [routinePrefill, setRoutinePrefill] = useState<RoutinePrefill | null>(null)
+  const [skippedToday, setSkippedToday] = useState<Set<string>>(new Set())
 
   // Real data from Supabase
   const [monthLogs, setMonthLogs] = useState<ChildLog[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedLog, setSelectedLog] = useState<ChildLog | null>(null)
+
+  // Routines
+  const [routines, setRoutines] = useState<ChildRoutine[]>([])
+  const [showRoutineManager, setShowRoutineManager] = useState(false)
+  const [routineEditing, setRoutineEditing] = useState<ChildRoutine | null>(null)
+  const [routineForm, setRoutineForm] = useState({ name: '', type: 'activity' as string, time: '09:00', days: [0,1,2,3,4,5,6] as number[] })
+  const [routineSaving, setRoutineSaving] = useState(false)
+  const [highlightIndex, setHighlightIndex] = useState(0)
 
   // Edit state
   const [editing, setEditing] = useState(false)
@@ -363,9 +440,41 @@ export function KidsCalendar() {
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
+  // ── Fetch routines ──────────────────────────────────────────────────────
+  const fetchRoutines = useCallback(async () => {
+    const childIds = selectedChildId === 'all'
+      ? children.map((c) => c.id)
+      : [selectedChildId]
+    if (childIds.length === 0) { setRoutines([]); return }
+    try {
+      const { data } = await supabase
+        .from('child_routines')
+        .select('id, child_id, type, name, value, days_of_week, time, active')
+        .in('child_id', childIds)
+        .eq('active', true)
+        .order('time', { ascending: true })
+      if (data) setRoutines(data)
+    } catch { /* silent */ }
+  }, [selectedChildId, children])
+
+  useEffect(() => { fetchRoutines() }, [fetchRoutines])
+
+  // Reset skipped routines when the selected date changes
+  useEffect(() => { setSkippedToday(new Set()) }, [selectedDate])
+
   function handleSaved() {
+    // Optimistically mark the routine as done so it disappears from pending immediately
+    if (routinePrefill?.routineId) {
+      setSkippedToday((prev) => new Set([...prev, routinePrefill.routineId!]))
+    }
     setSheetType(null)
+    setRoutinePrefill(null)
     fetchLogs()
+  }
+
+  function closeSheet() {
+    setSheetType(null)
+    setRoutinePrefill(null)
   }
 
   async function handleDeleteLog(logId: string) {
@@ -403,6 +512,248 @@ export function KidsCalendar() {
     }
   }
 
+  // ── Child index map (needed early for routines + highlights) ─────────────
+  const childIndexMap = useMemo(() => {
+    const map = new Map<string, number>()
+    children.forEach((c, i) => map.set(c.id, i))
+    return map
+  }, [children])
+
+  // ── Routine helpers ──────────────────────────────────────────────────────
+
+  /** Routines that apply to the selected day */
+  const selectedDayRoutines = useMemo(() => {
+    const d = new Date(selectedDate + 'T12:00:00')
+    const dow = d.getDay()
+    return routines.filter((r) => r.days_of_week.includes(dow))
+  }, [routines, selectedDate])
+
+  /** Upcoming highlights for the next 3 days — routines + milestones */
+  const upcomingHighlights = useMemo(() => {
+    const highlights: { id: string; icon: string; color: string; title: string; detail: string; childName: string; childColor: string; date: string }[] = []
+    const today = new Date()
+
+    for (let offset = 1; offset <= 3; offset++) {
+      const d = new Date(today)
+      d.setDate(d.getDate() + offset)
+      const dow = d.getDay()
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      const dayLabel = offset === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+
+      // Routines for that day — only show notable ones (activities, not daily meals)
+      for (const r of routines) {
+        if (!r.days_of_week.includes(dow)) continue
+        if (['activity'].includes(r.type)) {
+          const childName = children.find((c) => c.id === r.child_id)?.name ?? ''
+          const ci = childIndexMap.get(r.child_id) ?? 0
+          highlights.push({
+            id: `r-${r.id}-${offset}`,
+            icon: r.type,
+            color: (LOG_META[r.type] ?? { color: brand.accent }).color,
+            title: r.name,
+            detail: `${r.time ? fmtTime(r.time) : ''} · ${dayLabel}`,
+            childName,
+            childColor: childColor(ci),
+            date: dateStr,
+          })
+        }
+      }
+
+      // Future logs (vaccines, doctor visits, etc.)
+      const futureLogs = monthLogs.filter((l) => l.date === dateStr && ['vaccine', 'milestone', 'note'].includes(l.type))
+      for (const log of futureLogs) {
+        const meta = LOG_META[log.type] ?? { label: log.type, color: brand.accent }
+        const childName = children.find((c) => c.id === log.child_id)?.name ?? ''
+        const ci = childIndexMap.get(log.child_id) ?? 0
+        highlights.push({
+          id: `l-${log.id}`,
+          icon: log.type,
+          color: meta.color,
+          title: meta.label,
+          detail: `${formatLogDisplay(log.type, log.value, log.notes).slice(0, 40)} · ${dayLabel}`,
+          childName,
+          childColor: childColor(ci),
+          date: dateStr,
+        })
+      }
+    }
+    return highlights
+  }, [routines, monthLogs, children, childIndexMap])
+
+  // Auto-rotate highlights
+  useEffect(() => {
+    if (upcomingHighlights.length <= 1) return
+    const timer = setInterval(() => {
+      setHighlightIndex((i) => (i + 1) % upcomingHighlights.length)
+    }, 4000)
+    return () => clearInterval(timer)
+  }, [upcomingHighlights.length])
+
+  /** Check if a routine was already logged for a given date */
+  function isRoutineDone(routine: ChildRoutine, dayLogs: ChildLog[] | undefined): boolean {
+    return (dayLogs ?? []).some((log) => {
+      if (log.child_id !== routine.child_id) return false
+      // Match by type and (for food) meal, or by name
+      if (log.type !== routine.type && !(routine.type === 'food' && log.type === 'feeding') && !(routine.type === 'feeding' && log.type === 'food')) {
+        // Also match exact types
+        if (log.type !== routine.type) return false
+      }
+      // For food logs, match by meal
+      if (routine.type === 'food' && routine.value) {
+        try {
+          const rv = JSON.parse(routine.value)
+          const lv = log.value ? JSON.parse(log.value) : null
+          if (rv.meal && lv && lv.meal === rv.meal) return true
+        } catch {}
+      }
+      // For feeding type, match by time or feedType
+      if (routine.type === 'feeding' && routine.value) {
+        try {
+          const rv = JSON.parse(routine.value)
+          const lv = log.value ? JSON.parse(log.value) : null
+          if (rv.feedType && lv && lv.feedType === rv.feedType && routine.time) {
+            // Close enough if within 2 hours
+            const rHour = parseInt(routine.time.split(':')[0])
+            const logTime = new Date(log.created_at)
+            if (Math.abs(logTime.getHours() - rHour) <= 2) return true
+          }
+        } catch {}
+      }
+      // For activity, match by name
+      if (routine.type === 'activity' && routine.value) {
+        try {
+          const rv = JSON.parse(routine.value)
+          const lv = log.value ? JSON.parse(log.value) : null
+          if (rv.name && lv && lv.name === rv.name) return true
+        } catch {}
+      }
+      // For mood, any same-child mood log on the same day = done
+      if (routine.type === 'mood') return true
+      // For sleep, match by time proximity
+      if (routine.type === 'sleep' && routine.time) {
+        const rHour = parseInt(routine.time.split(':')[0])
+        const logTime = new Date(log.created_at)
+        if (Math.abs(logTime.getHours() - rHour) <= 2) return true
+      }
+      return false
+    })
+  }
+
+  /** Routines scheduled today that haven't been logged yet and not skipped */
+  const pendingRoutines = useMemo(
+    () => selectedDayRoutines.filter(
+      (r) => !isRoutineDone(r, selectedDayLogs) && !skippedToday.has(r.id) && !isRoutineSkipped(r, selectedDayLogs)
+    ),
+    [selectedDayRoutines, selectedDayLogs, skippedToday],
+  )
+
+  /** Save a new or edited routine */
+  async function saveRoutine() {
+    setRoutineSaving(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not authenticated')
+      const childId = selectedChildId !== 'all' ? selectedChildId : (activeChild?.id ?? children[0]?.id)
+      if (!childId) throw new Error('Select a child first')
+
+      if (routineEditing) {
+        await supabase.from('child_routines').update({
+          name: routineForm.name,
+          type: routineForm.type,
+          time: routineForm.time,
+          days_of_week: routineForm.days,
+        }).eq('id', routineEditing.id)
+      } else {
+        await supabase.from('child_routines').insert({
+          child_id: childId,
+          user_id: session.user.id,
+          type: routineForm.type,
+          name: routineForm.name,
+          time: routineForm.time,
+          days_of_week: routineForm.days,
+          value: null,
+        })
+      }
+      setRoutineEditing(null)
+      setRoutineForm({ name: '', type: 'activity', time: '09:00', days: [0,1,2,3,4,5,6] })
+      fetchRoutines()
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    } finally {
+      setRoutineSaving(false)
+    }
+  }
+
+  async function deleteRoutine(id: string) {
+    Alert.alert('Delete Routine', 'Remove this routine?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        await supabase.from('child_routines').delete().eq('id', id)
+        fetchRoutines()
+      }},
+    ])
+  }
+
+  async function skipRoutine(routine: ChildRoutine) {
+    // Optimistic UI update
+    setSkippedToday((prev) => new Set([...prev, routine.id]))
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      await supabase.from('child_logs').insert({
+        child_id: routine.child_id,
+        user_id: session.user.id,
+        date: selectedDate,
+        type: 'skipped',
+        value: JSON.stringify({ routineId: routine.id, routineName: routine.name, routineType: routine.type }),
+        notes: null,
+        photos: [],
+      })
+      fetchLogs()
+    } catch {
+      // silently fail — optimistic state still hides the item
+    }
+  }
+
+  function handleRoutineOptions(routine: ChildRoutine) {
+    Alert.alert(
+      routine.name,
+      'What would you like to do?',
+      [
+        {
+          text: 'Skip today',
+          onPress: () => skipRoutine(routine),
+        },
+        {
+          text: 'Delete entire routine',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert(
+              'Delete routine',
+              `Remove "${routine.name}" from all future days?`,
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: async () => {
+                    await supabase.from('child_routines').delete().eq('id', routine.id)
+                    fetchRoutines()
+                  },
+                },
+              ]
+            ),
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    )
+  }
+
+  async function toggleRoutine(id: string, active: boolean) {
+    await supabase.from('child_routines').update({ active: !active }).eq('id', id)
+    fetchRoutines()
+  }
+
   // ── Derived data ────────────────────────────────────────────────────────
 
   const logsByDate = useMemo(() => {
@@ -427,6 +778,12 @@ export function KidsCalendar() {
   const selectedDayLogs = useMemo(() => {
     return logsByDate.get(selectedDate) ?? []
   }, [logsByDate, selectedDate])
+
+  /** Routines that were explicitly skipped for the selected day */
+  const skippedDayRoutines = useMemo(
+    () => selectedDayRoutines.filter((r) => isRoutineSkipped(r, selectedDayLogs)),
+    [selectedDayRoutines, selectedDayLogs],
+  )
 
   const nextEvent = useMemo(() => {
     const futureLogs = monthLogs
@@ -467,12 +824,6 @@ export function KidsCalendar() {
     }
     return days
   }, [year, month, todayStr])
-
-  const childIndexMap = useMemo(() => {
-    const map = new Map<string, number>()
-    children.forEach((c, i) => map.set(c.id, i))
-    return map
-  }, [children])
 
   function prevMonth() {
     setViewDate(new Date(year, month - 1, 1))
@@ -666,7 +1017,36 @@ export function KidsCalendar() {
               <ActivityIndicator size="small" color={colors.primary} style={{ marginBottom: 12 }} />
             )}
 
-            {/* 4. Day Detail Panel */}
+            {/* 4. Upcoming Highlights Banner */}
+            {upcomingHighlights.length > 0 && (() => {
+              const h = upcomingHighlights[highlightIndex % upcomingHighlights.length]
+              if (!h) return null
+              const meta = LOG_META[h.icon] ?? { icon: Calendar, color: brand.accent }
+              const HIcon = meta.icon
+              return (
+                <View style={[styles.highlightBanner, { backgroundColor: h.color + '10', borderColor: h.color + '25', borderRadius: radius.xl }]}>
+                  <View style={[styles.highlightIconWrap, { backgroundColor: h.color + '20' }]}>
+                    <HIcon size={18} color={h.color} strokeWidth={2} />
+                  </View>
+                  <View style={styles.highlightContent}>
+                    <Text style={[styles.highlightTitle, { color: colors.text }]} numberOfLines={1}>{h.title}</Text>
+                    <Text style={[styles.highlightDetail, { color: colors.textSecondary }]} numberOfLines={1}>{h.detail}</Text>
+                  </View>
+                  <View style={[styles.highlightChildTag, { backgroundColor: h.childColor + '18' }]}>
+                    <Text style={[styles.highlightChildName, { color: h.childColor }]}>{h.childName}</Text>
+                  </View>
+                  {upcomingHighlights.length > 1 && (
+                    <View style={styles.highlightDots}>
+                      {upcomingHighlights.map((_, i) => (
+                        <View key={i} style={[styles.highlightDot, { backgroundColor: i === (highlightIndex % upcomingHighlights.length) ? colors.primary : colors.border }]} />
+                      ))}
+                    </View>
+                  )}
+                </View>
+              )
+            })()}
+
+            {/* 5. Day Detail Panel — pending routines + logged activities merged */}
             <View style={[styles.dayDetailPanel, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
               <View style={styles.dayDetailHeader}>
                 <View style={styles.dayDetailTitleRow}>
@@ -676,43 +1056,166 @@ export function KidsCalendar() {
                   </Text>
                 </View>
                 <Text style={[styles.dayDetailCount, { color: colors.textMuted }]}>
-                  {selectedDayLogs.length} {selectedDayLogs.length === 1 ? 'activity' : 'activities'}
+                  {selectedDayLogs.filter((l) => l.type !== 'skipped').length} {selectedDayLogs.filter((l) => l.type !== 'skipped').length === 1 ? 'activity' : 'activities'}
                 </Text>
               </View>
 
-              {selectedDayLogs.length === 0 ? (
+              {/* Pending routines — tap to open the log form */}
+              {pendingRoutines.length > 0 && (
+                <View style={styles.dayLogList}>
+                  {pendingRoutines.map((routine) => {
+                    const meta = LOG_META[routine.type] ?? { label: routine.type, icon: Calendar, color: colors.textMuted }
+                    const Icon = meta.icon
+                    const routineChild = children.find((c) => c.id === routine.child_id)
+                    const ci = childIndexMap.get(routine.child_id) ?? 0
+                    return (
+                      <Pressable
+                        key={`pending-${routine.id}`}
+                        onPress={() => {
+                          setRoutinePrefill({ routineId: routine.id, childId: routine.child_id, time: routine.time ?? undefined, value: routine.value ?? undefined, name: routine.name })
+                          setSheetType((ROUTINE_SHEET_MAP[routine.type] ?? 'feeding') as LogType)
+                        }}
+                        onLongPress={() => handleRoutineOptions(routine)}
+                        delayLongPress={400}
+                        style={({ pressed }) => [
+                          styles.dayLogItem,
+                          styles.pendingRoutineItem,
+                          { borderColor: meta.color + '60', backgroundColor: meta.color + '08', borderRadius: radius.lg },
+                          pressed && { opacity: 0.7 },
+                        ]}
+                      >
+                        <View>
+                          <View style={[styles.dayLogIcon, { backgroundColor: meta.color + '15' }]}>
+                            <Icon size={16} color={meta.color} strokeWidth={2} />
+                          </View>
+                          <View style={[styles.loggedBadge, { backgroundColor: colors.bg, borderColor: brand.accent + '80' }]}>
+                            <AlertCircle size={12} color={brand.accent} strokeWidth={2.5} />
+                          </View>
+                        </View>
+                        <View style={styles.dayLogContent}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                            <Text style={[styles.dayLogType, { color: colors.textSecondary }]}>{routine.name}</Text>
+                            <Repeat size={10} color={colors.textMuted} strokeWidth={2.5} />
+                          </View>
+                          <Text style={[styles.dayLogDetail, { color: colors.textMuted }]}>
+                            {routine.time ? `${fmtTime(routine.time)} · ` : ''}Tap to log
+                          </Text>
+                        </View>
+                        <View style={styles.dayLogMeta}>
+                          {routine.time && (
+                            <Text style={[styles.dayLogTime, { color: colors.textMuted }]}>{fmtTime(routine.time)}</Text>
+                          )}
+                          {selectedChildId === 'all' && routineChild && (
+                            <View style={[styles.dayLogChildTag, { backgroundColor: childColor(ci) + '15' }]}>
+                              <Text style={[styles.dayLogChildName, { color: childColor(ci) }]}>{routineChild.name}</Text>
+                            </View>
+                          )}
+                        </View>
+                        <ChevronRightSmall size={14} color={colors.textMuted} style={{ marginLeft: 4 }} />
+                      </Pressable>
+                    )
+                  })}
+                </View>
+              )}
+
+              {/* Skipped routines */}
+              {skippedDayRoutines.length > 0 && (
+                <>
+                  {pendingRoutines.length > 0 && (
+                    <View style={[styles.listDivider, { backgroundColor: colors.border }]} />
+                  )}
+                  <View style={styles.dayLogList}>
+                    {skippedDayRoutines.map((routine) => {
+                      const meta = LOG_META[routine.type] ?? { label: routine.type, icon: Calendar, color: colors.textMuted }
+                      const Icon = meta.icon
+                      const routineChild = children.find((c) => c.id === routine.child_id)
+                      const ci = childIndexMap.get(routine.child_id) ?? 0
+                      return (
+                        <View
+                          key={`skipped-${routine.id}`}
+                          style={[
+                            styles.dayLogItem,
+                            styles.pendingRoutineItem,
+                            { borderColor: '#88888840', backgroundColor: '#88888808', borderRadius: radius.lg, opacity: 0.75 },
+                          ]}
+                        >
+                          <View>
+                            <View style={[styles.dayLogIcon, { backgroundColor: '#88888815' }]}>
+                              <Icon size={16} color="#888888" strokeWidth={2} />
+                            </View>
+                            <View style={[styles.loggedBadge, { backgroundColor: colors.bg, borderColor: '#88888880' }]}>
+                              <MinusCircle size={12} color="#888888" strokeWidth={2.5} />
+                            </View>
+                          </View>
+                          <View style={styles.dayLogContent}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                              <Text style={[styles.dayLogType, { color: colors.textMuted, textDecorationLine: 'line-through' }]}>{routine.name}</Text>
+                              <Repeat size={10} color={colors.textMuted} strokeWidth={2.5} />
+                            </View>
+                            <Text style={[styles.dayLogDetail, { color: colors.textMuted }]}>
+                              {routine.time ? `${fmtTime(routine.time)} · ` : ''}Skipped
+                            </Text>
+                          </View>
+                          <View style={styles.dayLogMeta}>
+                            {routine.time && (
+                              <Text style={[styles.dayLogTime, { color: colors.textMuted }]}>{fmtTime(routine.time)}</Text>
+                            )}
+                            {selectedChildId === 'all' && routineChild && (
+                              <View style={[styles.dayLogChildTag, { backgroundColor: childColor(ci) + '15' }]}>
+                                <Text style={[styles.dayLogChildName, { color: childColor(ci) }]}>{routineChild.name}</Text>
+                              </View>
+                            )}
+                          </View>
+                        </View>
+                      )
+                    })}
+                  </View>
+                </>
+              )}
+
+              {/* Divider when both sections have content */}
+              {(pendingRoutines.length > 0 || skippedDayRoutines.length > 0) && selectedDayLogs.filter((l) => l.type !== 'skipped').length > 0 && (
+                <View style={[styles.listDivider, { backgroundColor: colors.border }]} />
+              )}
+
+              {/* Logged activities */}
+              {selectedDayLogs.filter((l) => l.type !== 'skipped').length === 0 && pendingRoutines.length === 0 && skippedDayRoutines.length === 0 ? (
                 <View style={styles.emptyDay}>
-                  <Text style={[styles.emptyDayText, { color: colors.textMuted }]}>
-                    No activities logged
-                  </Text>
-                  <Text style={[styles.emptyDayHint, { color: colors.textMuted }]}>
-                    Tap + to add one
-                  </Text>
+                  <Text style={[styles.emptyDayText, { color: colors.textMuted }]}>No activities logged</Text>
+                  <Text style={[styles.emptyDayHint, { color: colors.textMuted }]}>Tap + to add one</Text>
                 </View>
               ) : (
                 <View style={styles.dayLogList}>
-                  {selectedDayLogs.map((log) => {
+                  {selectedDayLogs.filter((l) => l.type !== 'skipped').map((log) => {
                     const meta = LOG_META[log.type] ?? { label: log.type, icon: Calendar, color: colors.textMuted }
                     const Icon = meta.icon
                     const logChildName = children.find((c) => c.id === log.child_id)?.name
                     const ci = childIndexMap.get(log.child_id) ?? 0
+                    const isFromRoutine = selectedDayRoutines.some((r) => isRoutineDone(r, [log]))
                     return (
                       <Pressable
                         key={log.id}
                         onPress={() => { setSelectedLog(log); setEditing(false) }}
                         style={({ pressed }) => [
                           styles.dayLogItem,
-                          { borderColor: colors.border },
+                          styles.loggedItem,
+                          { borderColor: brand.success + '50', backgroundColor: brand.success + '08', borderRadius: radius.lg },
                           pressed && { opacity: 0.7 },
                         ]}
                       >
-                        <View style={[styles.dayLogIcon, { backgroundColor: meta.color + '15' }]}>
-                          <Icon size={16} color={meta.color} strokeWidth={2} />
+                        <View>
+                          <View style={[styles.dayLogIcon, { backgroundColor: meta.color + '15' }]}>
+                            <Icon size={16} color={meta.color} strokeWidth={2} />
+                          </View>
+                          <View style={[styles.loggedBadge, { backgroundColor: colors.bg, borderColor: brand.success + '80' }]}>
+                            <CheckCircle2 size={12} color={brand.success} strokeWidth={2.5} />
+                          </View>
                         </View>
                         <View style={styles.dayLogContent}>
-                          <Text style={[styles.dayLogType, { color: colors.text }]}>
-                            {meta.label}
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                            <Text style={[styles.dayLogType, { color: colors.text }]}>{meta.label}</Text>
+                            {isFromRoutine && <Repeat size={10} color={colors.textMuted} strokeWidth={2.5} />}
+                          </View>
                           {formatLogDisplay(log.type, log.value, log.notes) !== '' && (
                             <Text style={[styles.dayLogDetail, { color: colors.textSecondary }]} numberOfLines={2}>
                               {formatLogDisplay(log.type, log.value, log.notes)}
@@ -720,14 +1223,10 @@ export function KidsCalendar() {
                           )}
                         </View>
                         <View style={styles.dayLogMeta}>
-                          <Text style={[styles.dayLogTime, { color: colors.textMuted }]}>
-                            {formatTime(log.created_at)}
-                          </Text>
+                          <Text style={[styles.dayLogTime, { color: colors.textMuted }]}>{formatTime(log.created_at)}</Text>
                           {selectedChildId === 'all' && logChildName && (
                             <View style={[styles.dayLogChildTag, { backgroundColor: childColor(ci) + '15' }]}>
-                              <Text style={[styles.dayLogChildName, { color: childColor(ci) }]}>
-                                {logChildName}
-                              </Text>
+                              <Text style={[styles.dayLogChildName, { color: childColor(ci) }]}>{logChildName}</Text>
                             </View>
                           )}
                         </View>
@@ -739,8 +1238,8 @@ export function KidsCalendar() {
               )}
             </View>
 
-            {/* Next Event Banner */}
-            {nextEvent && (
+            {/* Next Event Banner (fallback if no highlights) */}
+            {upcomingHighlights.length === 0 && nextEvent && (
               <View style={[styles.banner, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
                 <View style={styles.bannerHeader}>
                   <Calendar size={18} color={colors.primary} strokeWidth={2} />
@@ -823,33 +1322,205 @@ export function KidsCalendar() {
       </ScrollView>
 
       {/* ─── FAB + Quick Log Sheet ─────────────────────────────────────── */}
-      <FabWithSheet onSelect={(type) => setSheetType(type)} />
+      <FabWithSheet onSelect={(type) => { setRoutinePrefill(null); setSheetType(type) }} onManageRoutines={() => setShowRoutineManager(true)} />
 
       {/* ─── Bottom Sheets ────────────────────────────────────────────── */}
 
-      <LogSheet visible={sheetType === 'feeding'} title="Log Feeding" onClose={() => setSheetType(null)}>
-        <FeedingForm onSaved={handleSaved} initialDate={selectedDate} />
+      <LogSheet visible={sheetType === 'feeding'} title={routinePrefill?.name ?? 'Log Feeding'} onClose={closeSheet}>
+        <FeedingForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'sleep'} title="Log Sleep" onClose={() => setSheetType(null)}>
-        <SleepForm onSaved={handleSaved} initialDate={selectedDate} />
+      <LogSheet visible={sheetType === 'sleep'} title={routinePrefill?.name ?? 'Log Sleep'} onClose={closeSheet}>
+        <SleepForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'health'} title="Log Health Event" onClose={() => setSheetType(null)}>
-        <HealthEventForm onSaved={handleSaved} initialDate={selectedDate} />
+      <LogSheet visible={sheetType === 'health'} title={routinePrefill?.name ?? 'Log Health Event'} onClose={closeSheet}>
+        <HealthEventForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'mood'} title="Log Mood" onClose={() => setSheetType(null)}>
-        <KidsMoodForm onSaved={handleSaved} initialDate={selectedDate} />
+      <LogSheet visible={sheetType === 'mood'} title={routinePrefill?.name ?? 'Log Mood'} onClose={closeSheet}>
+        <KidsMoodForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'activity'} title="Log Activity" onClose={() => setSheetType(null)}>
-        <ActivityForm onSaved={handleSaved} initialDate={selectedDate} />
+      <LogSheet visible={sheetType === 'activity'} title={routinePrefill?.name ?? 'Log Activity'} onClose={closeSheet}>
+        <ActivityForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'memory'} title="Capture Memory" onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'memory'} title="Capture Memory" onClose={closeSheet}>
         <MemoryForm onSaved={handleSaved} initialDate={selectedDate} />
       </LogSheet>
+
+      {/* ─── Routine Manager ────────────────────────────────────────── */}
+      <Modal
+        visible={showRoutineManager}
+        animationType="slide"
+        transparent
+        onRequestClose={() => { setShowRoutineManager(false); setRoutineEditing(null) }}
+      >
+        <Pressable style={styles.popupBackdrop} onPress={() => { setShowRoutineManager(false); setRoutineEditing(null) }} />
+        <View style={[styles.popupSheet, { backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingBottom: insets.bottom + 20 }]}>
+          <View style={styles.popupHandleWrap}>
+            <View style={[styles.popupHandle, { backgroundColor: colors.border }]} />
+          </View>
+          <View style={[styles.popupHeader, { paddingBottom: 12 }]}>
+            <View style={[styles.popupIconLarge, { backgroundColor: colors.primary + '15' }]}>
+              <Repeat size={24} color={colors.primary} strokeWidth={2} />
+            </View>
+            <View style={styles.popupHeaderText}>
+              <Text style={[styles.popupTitle, { color: colors.text }]}>Routines</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500' }}>
+                Recurring activities for your kids
+              </Text>
+            </View>
+            <Pressable onPress={() => { setShowRoutineManager(false); setRoutineEditing(null) }} style={styles.popupClose}>
+              <X size={20} color={colors.textMuted} />
+            </Pressable>
+          </View>
+
+          <ScrollView style={styles.popupBody} showsVerticalScrollIndicator={false}>
+            {/* Add / Edit Form */}
+            <View style={[styles.routineFormWrap, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+              <Text style={[styles.routineFormTitle, { color: colors.text }]}>
+                {routineEditing ? 'Edit Routine' : 'New Routine'}
+              </Text>
+
+              {/* Name */}
+              <TextInput
+                value={routineForm.name}
+                onChangeText={(t) => setRoutineForm((f) => ({ ...f, name: t }))}
+                placeholder="Routine name (e.g. Morning bottle)"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.routineInput, { color: colors.text, borderColor: colors.border, borderRadius: radius.md }]}
+              />
+
+              {/* Type */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.routineTypeRow}>
+                {['feeding', 'food', 'sleep', 'activity', 'mood', 'health'].map((t) => {
+                  const meta = LOG_META[t]
+                  const active = routineForm.type === t
+                  return (
+                    <Pressable
+                      key={t}
+                      onPress={() => setRoutineForm((f) => ({ ...f, type: t }))}
+                      style={[
+                        styles.routineTypeChip,
+                        { backgroundColor: active ? meta.color + '20' : colors.surfaceRaised, borderColor: active ? meta.color : colors.border, borderRadius: radius.full },
+                      ]}
+                    >
+                      <Text style={[styles.routineTypeText, { color: active ? meta.color : colors.textSecondary }]}>
+                        {meta.label}
+                      </Text>
+                    </Pressable>
+                  )
+                })}
+              </ScrollView>
+
+              {/* Time */}
+              <View style={styles.routineTimeRow}>
+                <Clock size={16} color={colors.textMuted} />
+                <TextInput
+                  value={routineForm.time}
+                  onChangeText={(t) => setRoutineForm((f) => ({ ...f, time: t }))}
+                  placeholder="HH:MM"
+                  placeholderTextColor={colors.textMuted}
+                  style={[styles.routineTimeInput, { color: colors.text, borderColor: colors.border, borderRadius: radius.md }]}
+                  keyboardType="numbers-and-punctuation"
+                />
+              </View>
+
+              {/* Days */}
+              <View style={styles.routineDaysRow}>
+                {DAY_NAMES.map((name, i) => {
+                  const active = routineForm.days.includes(i)
+                  return (
+                    <Pressable
+                      key={i}
+                      onPress={() => setRoutineForm((f) => ({
+                        ...f,
+                        days: active ? f.days.filter((d) => d !== i) : [...f.days, i].sort(),
+                      }))}
+                      style={[
+                        styles.routineDayChip,
+                        {
+                          backgroundColor: active ? colors.primary : colors.surfaceRaised,
+                          borderColor: active ? colors.primary : colors.border,
+                          borderRadius: radius.full,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.routineDayText, { color: active ? '#FFF' : colors.textSecondary }]}>
+                        {name.charAt(0)}
+                      </Text>
+                    </Pressable>
+                  )
+                })}
+              </View>
+
+              {/* Save */}
+              <Pressable
+                onPress={saveRoutine}
+                disabled={!routineForm.name.trim() || routineSaving}
+                style={({ pressed }) => [
+                  styles.routineSaveBtn,
+                  { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: (!routineForm.name.trim() || routineSaving) ? 0.4 : 1 },
+                  pressed && { opacity: 0.9 },
+                ]}
+              >
+                {routineSaving
+                  ? <ActivityIndicator color="#FFF" size="small" />
+                  : <Text style={styles.routineSaveBtnText}>{routineEditing ? 'Update' : 'Add Routine'}</Text>
+                }
+              </Pressable>
+            </View>
+
+            {/* Existing Routines List */}
+            {routines.length > 0 && (
+              <View style={{ marginTop: 16 }}>
+                <Text style={[styles.routineFormTitle, { color: colors.text, marginBottom: 10, paddingHorizontal: 4 }]}>
+                  Active Routines ({routines.length})
+                </Text>
+                {routines.map((r) => {
+                  const meta = LOG_META[r.type] ?? { label: r.type, icon: Calendar, color: colors.textMuted }
+                  const Icon = meta.icon
+                  const childName = children.find((c) => c.id === r.child_id)?.name
+                  const ci = childIndexMap.get(r.child_id) ?? 0
+                  return (
+                    <View
+                      key={r.id}
+                      style={[styles.routineManagerItem, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
+                    >
+                      <View style={[styles.routineIcon, { backgroundColor: meta.color + '12' }]}>
+                        <Icon size={14} color={meta.color} strokeWidth={2} />
+                      </View>
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={[styles.routineName, { color: colors.text }]}>{r.name}</Text>
+                        <Text style={[styles.routineTime, { color: colors.textMuted }]}>
+                          {r.time ? fmtTime(r.time) : 'Anytime'}
+                          {' · '}
+                          {r.days_of_week.length === 7 ? 'Daily' : r.days_of_week.map((d) => DAY_NAMES[d].charAt(0)).join(' ')}
+                          {childName ? ` · ${childName}` : ''}
+                        </Text>
+                      </View>
+                      <Pressable
+                        onPress={() => {
+                          setRoutineEditing(r)
+                          setRoutineForm({ name: r.name, type: r.type, time: r.time ?? '09:00', days: r.days_of_week })
+                        }}
+                        style={{ padding: 6 }}
+                      >
+                        <Pencil size={14} color={colors.textMuted} />
+                      </Pressable>
+                      <Pressable onPress={() => deleteRoutine(r.id)} style={{ padding: 6 }}>
+                        <Trash2 size={14} color={brand.error} />
+                      </Pressable>
+                    </View>
+                  )
+                })}
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
 
       {/* ─── Log Detail Popup with Edit ───────────────────────────────── */}
       <Modal
@@ -1068,9 +1739,13 @@ const styles = StyleSheet.create({
   emptyDay: { alignItems: 'center', paddingVertical: 20, gap: 4 },
   emptyDayText: { fontSize: 14, fontWeight: '600' },
   emptyDayHint: { fontSize: 13 },
-  dayLogList: { gap: 10 },
-  dayLogItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 10, borderBottomWidth: StyleSheet.hairlineWidth },
+  dayLogList: { gap: 8 },
+  dayLogItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 10 },
+  loggedItem: { borderWidth: 1 },
+  pendingRoutineItem: { borderWidth: 1, borderStyle: 'dashed' },
+  listDivider: { height: StyleSheet.hairlineWidth, marginVertical: 8 },
   dayLogIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  loggedBadge: { position: 'absolute', bottom: -2, right: -2, width: 14, height: 14, borderRadius: 7, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   dayLogContent: { flex: 1, gap: 2 },
   dayLogType: { fontSize: 14, fontWeight: '700' },
   dayLogDetail: { fontSize: 13, fontWeight: '400' },
@@ -1099,6 +1774,35 @@ const styles = StyleSheet.create({
   bannerEvent: { fontSize: 17, fontWeight: '700' },
   bannerDate: { fontSize: 14, fontWeight: '500', marginTop: 2 },
 
+  // Highlight banner
+  highlightBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, marginBottom: 12, borderWidth: 1 },
+  highlightIconWrap: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  highlightContent: { flex: 1, gap: 2 },
+  highlightTitle: { fontSize: 14, fontWeight: '700' },
+  highlightDetail: { fontSize: 12, fontWeight: '500' },
+  highlightChildTag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
+  highlightChildName: { fontSize: 10, fontWeight: '700' },
+  highlightDots: { position: 'absolute', bottom: 6, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 4 },
+  highlightDot: { width: 4, height: 4, borderRadius: 2 },
+
+  // Routine panel
+
+  // Routine manager
+  routineFormWrap: { padding: 16, gap: 12 },
+  routineFormTitle: { fontSize: 16, fontWeight: '700' },
+  routineInput: { borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, fontWeight: '500' },
+  routineTypeRow: { gap: 8, paddingVertical: 2 },
+  routineTypeChip: { paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1 },
+  routineTypeText: { fontSize: 13, fontWeight: '600' },
+  routineTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  routineTimeInput: { flex: 1, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, fontWeight: '500' },
+  routineDaysRow: { flexDirection: 'row', gap: 6, justifyContent: 'space-between' },
+  routineDayChip: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  routineDayText: { fontSize: 13, fontWeight: '700' },
+  routineSaveBtn: { alignItems: 'center', justifyContent: 'center', paddingVertical: 14 },
+  routineSaveBtnText: { fontSize: 14, fontWeight: '700', color: '#FFF' },
+  routineManagerItem: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, marginBottom: 8 },
+
   // FAB + Sheet
   fabBtn: { position: 'absolute', right: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 6, zIndex: 10 },
   fabSheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
@@ -1110,6 +1814,8 @@ const styles = StyleSheet.create({
   fabSheetItem: { width: '31%', flexGrow: 1, alignItems: 'center', paddingVertical: 16, gap: 8 },
   fabSheetIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   fabSheetLabel: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  fabRoutineBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 12, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1 },
+  fabRoutineBtnText: { flex: 1, fontSize: 14, fontWeight: '700' },
 
   // Detail popup
   popupBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },

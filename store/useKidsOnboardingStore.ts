@@ -15,6 +15,7 @@ export interface ChildDraft {
   photoUri: string | null
   allergies: string[]
   conditionsText: string | null
+  countryCode: string
 }
 
 interface KidsOnboardingStore {
@@ -40,6 +41,7 @@ function emptyChild(): ChildDraft {
     photoUri: null,
     allergies: [],
     conditionsText: null,
+    countryCode: 'US',
   }
 }
 

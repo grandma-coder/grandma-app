@@ -6,7 +6,7 @@ import {
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ArrowLeft, Hash, Check, Camera } from 'lucide-react-native'
+import { ArrowLeft, Hash, Check, Camera, Lock, Globe } from 'lucide-react-native'
 import { useTheme } from '../../constants/theme'
 import { createChannel } from '../../lib/channelPosts'
 
@@ -33,6 +33,7 @@ export default function CreateChannel() {
   const [category, setCategory] = useState<Category | null>(null)
   const [customCategory, setCustomCategory] = useState('')
   const [channelPhoto, setChannelPhoto] = useState<string | null>(null)
+  const [isPrivate, setIsPrivate] = useState(false)
   const [loading, setLoading] = useState(false)
 
   async function pickChannelPhoto() {
@@ -63,6 +64,7 @@ export default function CreateChannel() {
         description: description.trim() || undefined,
         category: finalCategory.toLowerCase(),
         avatarUri: channelPhoto ?? undefined,
+        channelType: isPrivate ? 'private' : 'public',
       })
       router.replace(`/channel/${id}`)
     } catch (e: any) {
@@ -133,6 +135,30 @@ export default function CreateChannel() {
             multiline
           />
           <Text style={styles.charCount}>{description.length}/200</Text>
+
+          {/* Privacy toggle */}
+          <Text style={styles.label}>CHANNEL TYPE</Text>
+          <View style={styles.chipRow}>
+            <Pressable
+              onPress={() => setIsPrivate(false)}
+              style={[styles.chip, !isPrivate && styles.chipSelected]}
+            >
+              <Globe size={14} color={!isPrivate ? colors.primary : colors.textSecondary} style={{ marginRight: 4 }} />
+              <Text style={[styles.chipText, !isPrivate && styles.chipTextSelected]}>Public</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setIsPrivate(true)}
+              style={[styles.chip, isPrivate && styles.chipSelected]}
+            >
+              <Lock size={14} color={isPrivate ? colors.primary : colors.textSecondary} style={{ marginRight: 4 }} />
+              <Text style={[styles.chipText, isPrivate && styles.chipTextSelected]}>Private</Text>
+            </Pressable>
+          </View>
+          {isPrivate && (
+            <Text style={[styles.charCount, { textAlign: 'left', marginTop: 6 }]}>
+              Members must request to join. You'll approve or deny each request.
+            </Text>
+          )}
 
           {/* Category */}
           <Text style={styles.label}>CATEGORY *</Text>

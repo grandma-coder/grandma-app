@@ -19,11 +19,23 @@ export interface ChannelPost {
   reply_to_id: string | null
   reply_count: number
   mentions: string[]
+  message_type: 'user' | 'system_join' | 'system_leave'
   created_at: string
   user_reacted?: boolean
   // For thread preview
   reply_to_content?: string
   reply_to_author?: string
+}
+
+export interface ChannelRequest {
+  id: string
+  channel_id: string
+  user_id: string
+  user_name?: string
+  status: 'pending' | 'approved' | 'denied'
+  created_at: string
+  resolved_at: string | null
+  resolved_by: string | null
 }
 
 export interface PostComment {
@@ -64,6 +76,7 @@ export async function createChannel(opts: {
   description?: string
   category: string
   avatarUri?: string
+  channelType?: 'public' | 'private'
 }): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
@@ -92,7 +105,7 @@ export async function createChannel(opts: {
       name: opts.name.trim(),
       description: opts.description?.trim() ?? null,
       category: opts.category,
-      channel_type: 'public',
+      channel_type: opts.channelType ?? 'public',
       created_by: session.user.id,
       avatar_url: avatarUrl,
     })
@@ -272,15 +285,33 @@ export async function toggleReaction(postId: string): Promise<boolean> {
 
 // ─── Memberships ───────────────────────────────────────────────────────────
 
+async function postSystemMessage(channelId: string, messageType: 'system_join' | 'system_leave'): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  const authorName = await getCurrentUserName()
+  const content = messageType === 'system_join'
+    ? `${authorName ?? 'Someone'} joined the channel`
+    : `${authorName ?? 'Someone'} left the channel`
+  await supabase.from('channel_posts').insert({
+    channel_id: channelId,
+    author_id: session.user.id,
+    author_name: authorName,
+    content,
+    message_type: messageType,
+  })
+}
+
 export async function joinChannel(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
   await supabase.from('channel_members').insert({ channel_id: channelId, user_id: session.user.id })
+  await postSystemMessage(channelId, 'system_join')
 }
 
 export async function leaveChannel(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
+  await postSystemMessage(channelId, 'system_leave')
   await supabase.from('channel_members').delete().eq('channel_id', channelId).eq('user_id', session.user.id)
 }
 
@@ -541,6 +572,112 @@ export async function notifyMentions(
   if (notifications.length > 0) {
     await supabase.from('notifications').insert(notifications)
   }
+}
+
+// ─── Private Channel Requests ─────────────────────────────────────────────
+
+export async function requestToJoinChannel(channelId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+  const { error } = await supabase.from('channel_requests').insert({
+    channel_id: channelId,
+    user_id: session.user.id,
+  })
+  if (error) {
+    if (error.code === '23505') throw new Error('You already have a pending request')
+    throw error
+  }
+}
+
+export async function getMyRequestStatus(channelId: string): Promise<ChannelRequest | null> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return null
+  const { data } = await supabase
+    .from('channel_requests')
+    .select('*')
+    .eq('channel_id', channelId)
+    .eq('user_id', session.user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+  return (data as ChannelRequest) ?? null
+}
+
+export async function getPendingRequests(channelId: string): Promise<ChannelRequest[]> {
+  const { data: requests } = await supabase
+    .from('channel_requests')
+    .select('*')
+    .eq('channel_id', channelId)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true })
+
+  if (!requests || requests.length === 0) return []
+
+  // Enrich with user names
+  const userIds = requests.map((r: any) => r.user_id)
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('user_id, name')
+    .in('user_id', userIds)
+
+  const nameMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p.name]))
+  return requests.map((r: any) => ({
+    ...r,
+    user_name: nameMap.get(r.user_id) ?? null,
+  })) as ChannelRequest[]
+}
+
+export async function approveRequest(requestId: string, channelId: string, userId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+
+  // Update request status
+  await supabase.from('channel_requests').update({
+    status: 'approved',
+    resolved_at: new Date().toISOString(),
+    resolved_by: session.user.id,
+  }).eq('id', requestId)
+
+  // Add user as member
+  await supabase.from('channel_members').insert({
+    channel_id: channelId,
+    user_id: userId,
+  })
+
+  // Post system message
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('name')
+    .eq('user_id', userId)
+    .single()
+  const userName = profile?.name ?? 'Someone'
+  const authorName = await getCurrentUserName()
+  await supabase.from('channel_posts').insert({
+    channel_id: channelId,
+    author_id: userId,
+    author_name: userName,
+    content: `${userName} was approved to join by ${authorName ?? 'the host'}`,
+    message_type: 'system_join',
+  })
+}
+
+export async function denyRequest(requestId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+  await supabase.from('channel_requests').update({
+    status: 'denied',
+    resolved_at: new Date().toISOString(),
+    resolved_by: session.user.id,
+  }).eq('id', requestId)
+}
+
+export async function cancelRequest(channelId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  await supabase.from('channel_requests').delete()
+    .eq('channel_id', channelId)
+    .eq('user_id', session.user.id)
+    .eq('status', 'pending')
 }
 
 // ─── Legacy exports (backward compat) ──────────────────────────────────────

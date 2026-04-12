@@ -18,6 +18,8 @@ import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
 import { initRevenueCat } from '../lib/revenue'
+import { runNotificationEngine } from '../lib/notificationEngine'
+import { syncBadgesFromSupabase } from '../lib/badgeSync'
 import { ThemeProvider } from '../components/ui/ThemeProvider'
 import { useTheme } from '../constants/theme'
 import { DevPanelProvider } from '../context/DevPanelContext'
@@ -126,6 +128,10 @@ export default function RootLayout() {
 
         if (session.user.id) {
           initRevenueCat(session.user.id).catch(() => {})
+          // Generate smart notifications on app open (deduped per day)
+          runNotificationEngine().catch(() => {})
+          // Sync badges from real activity data
+          syncBadgesFromSupabase().catch(() => {})
         }
       }
       setLoading(false)

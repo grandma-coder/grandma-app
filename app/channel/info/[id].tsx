@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
   TextInput,
   Dimensions,
+  Share,
 } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import {
@@ -32,6 +33,12 @@ import {
   Check,
   X,
   Shield,
+  Lock,
+  UserPlus,
+  XCircle,
+  Share2,
+  Copy,
+  Link,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../../constants/theme'
@@ -41,7 +48,11 @@ import {
   joinChannel,
   leaveChannel,
   deleteMessage,
+  getPendingRequests,
+  approveRequest,
+  denyRequest,
   type ChannelPost,
+  type ChannelRequest,
 } from '../../../lib/channelPosts'
 import { supabase } from '../../../lib/supabase'
 
@@ -75,6 +86,9 @@ export default function ChannelInfoScreen() {
   // Messages for admin moderation
   const [messages, setMessages] = useState<ChannelPost[]>([])
   const [showMessages, setShowMessages] = useState(false)
+
+  // Pending join requests (owner of private channel)
+  const [pendingRequests, setPendingRequests] = useState<ChannelRequest[]>([])
 
   useEffect(() => {
     if (id) load()
@@ -146,7 +160,7 @@ export default function ChannelInfoScreen() {
       }
       setSharedMedia(allPhotos.slice(0, 20))
 
-      // Messages for moderation (owner only)
+      // Messages for moderation + pending requests (owner only)
       if (userId === ch?.createdBy) {
         const { data: msgs } = await supabase
           .from('channel_posts')
@@ -155,6 +169,12 @@ export default function ChannelInfoScreen() {
           .order('created_at', { ascending: false })
           .limit(50)
         setMessages((msgs ?? []) as ChannelPost[])
+
+        // Load pending requests for private channels
+        if (ch?.channelType === 'private') {
+          const reqs = await getPendingRequests(id!)
+          setPendingRequests(reqs)
+        }
       }
     } catch {} finally {
       setLoading(false)
@@ -215,10 +235,97 @@ export default function ChannelInfoScreen() {
     ])
   }
 
-  async function handleLeave() {
+  function handleLeave() {
     if (!id) return
-    await leaveChannel(id)
-    router.back()
+    Alert.alert(
+      'Leave Channel',
+      `Are you sure you want to leave #${channel?.name ?? 'this channel'}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await leaveChannel(id)
+              router.back()
+            } catch {
+              Alert.alert('Error', 'Failed to leave channel')
+            }
+          },
+        },
+      ]
+    )
+  }
+
+  async function handleApproveRequest(req: ChannelRequest) {
+    try {
+      await approveRequest(req.id, req.channel_id, req.user_id)
+      setPendingRequests((prev) => prev.filter((r) => r.id !== req.id))
+      load()
+      Alert.alert('Approved', `${req.user_name ?? 'User'} has been added to the channel.`)
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    }
+  }
+
+  async function handleDenyRequest(req: ChannelRequest) {
+    Alert.alert(
+      'Deny Request',
+      `Deny ${req.user_name ?? 'this user'}'s request to join?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Deny',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await denyRequest(req.id)
+              setPendingRequests((prev) => prev.filter((r) => r.id !== req.id))
+            } catch (e: any) {
+              Alert.alert('Error', e.message)
+            }
+          },
+        },
+      ]
+    )
+  }
+
+  function handleShareChannel() {
+    if (!id || !channel) return
+
+    // Private: only members can share
+    if (channel.channelType === 'private' && !isMember) {
+      Alert.alert('Private Channel', 'Only members can share this channel.')
+      return
+    }
+
+    const channelUrl = `grandma-app://channel/${id}`
+    const desc = channel.description ? `\n${channel.description}` : ''
+    const privacy = channel.channelType === 'private' ? ' (Private)' : ''
+    const shareMessage = `Join #${channel.name}${privacy} on grandma.app!${desc}\n\n${channelUrl}`
+
+    Alert.alert('Share Channel', '', [
+      {
+        text: 'Copy Link',
+        onPress: () => {
+          import('expo-clipboard').then(({ setStringAsync }) => {
+            setStringAsync(channelUrl)
+            Alert.alert('Copied!', 'Channel link copied to clipboard.')
+          })
+        },
+      },
+      {
+        text: 'Share...',
+        onPress: () => {
+          Share.share({
+            message: shareMessage,
+            title: `#${channel.name}`,
+          })
+        },
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ])
   }
 
   if (loading) {
@@ -293,9 +400,14 @@ export default function ChannelInfoScreen() {
               {channel.description && (
                 <Text style={[s.channelDesc, { color: colors.textSecondary }]}>{channel.description}</Text>
               )}
-              <Text style={[s.channelCategory, { color: colors.textMuted }]}>
-                {channel.category} channel
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                {channel.channelType === 'private' && (
+                  <Lock size={12} color={colors.textMuted} strokeWidth={2} />
+                )}
+                <Text style={[s.channelCategory, { color: colors.textMuted }]}>
+                  {channel.channelType === 'private' ? 'Private' : channel.category} channel
+                </Text>
+              </View>
             </>
           )}
         </View>
@@ -320,6 +432,26 @@ export default function ChannelInfoScreen() {
             <Text style={[s.statLabel, { color: colors.textMuted }]}>Media</Text>
           </View>
         </View>
+
+        {/* Share Channel — public: always, private: members only */}
+        {(channel.channelType !== 'private' || isMember) && (
+          <View style={s.section}>
+            <Pressable
+              onPress={handleShareChannel}
+              style={[s.shareBtn, { backgroundColor: colors.primaryTint, borderRadius: radius.xl }]}
+            >
+              <Share2 size={18} color={colors.primary} strokeWidth={2} />
+              <View style={{ flex: 1 }}>
+                <Text style={[s.shareBtnText, { color: colors.primary }]}>Share Channel</Text>
+                <Text style={[s.shareBtnSub, { color: colors.textMuted }]}>
+                  {channel.channelType === 'private'
+                    ? 'Invite link — only members can share'
+                    : 'Send invite link via text, WhatsApp, etc.'}
+                </Text>
+              </View>
+            </Pressable>
+          </View>
+        )}
 
         {/* Owner / Creator */}
         <View style={s.section}>
@@ -395,6 +527,40 @@ export default function ChannelInfoScreen() {
               <Edit3 size={18} color={colors.primary} strokeWidth={2} />
               <Text style={[s.adminBtnText, { color: colors.text }]}>Edit Channel Info</Text>
             </Pressable>
+
+            {/* Pending join requests (private channels) */}
+            {pendingRequests.length > 0 && (
+              <View style={[s.requestsSection, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+                <View style={s.requestsHeader}>
+                  <UserPlus size={16} color={brand.accent} strokeWidth={2} />
+                  <Text style={[s.requestsTitle, { color: colors.text }]}>
+                    Pending Requests ({pendingRequests.length})
+                  </Text>
+                </View>
+                {pendingRequests.map((req) => (
+                  <View key={req.id} style={[s.requestRow, { borderTopColor: colors.borderLight }]}>
+                    <View style={[s.memberAvatar, { backgroundColor: colors.surfaceRaised }]}>
+                      <User size={14} color={colors.textMuted} strokeWidth={1.5} />
+                    </View>
+                    <Text style={[s.memberName, { color: colors.text }]}>
+                      {req.user_name ?? 'Community Member'}
+                    </Text>
+                    <Pressable
+                      onPress={() => handleApproveRequest(req)}
+                      style={[s.requestActionBtn, { backgroundColor: brand.success + '20' }]}
+                    >
+                      <Check size={16} color={brand.success} strokeWidth={2} />
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleDenyRequest(req)}
+                      style={[s.requestActionBtn, { backgroundColor: brand.error + '20' }]}
+                    >
+                      <XCircle size={16} color={brand.error} strokeWidth={2} />
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            )}
 
             <Pressable
               onPress={() => setShowMessages(!showMessages)}
@@ -512,4 +678,16 @@ const s = StyleSheet.create({
   // Leave
   leaveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: 20, marginTop: 32, paddingVertical: 16 },
   leaveBtnText: { fontSize: 15, fontWeight: '700' },
+
+  // Share
+  shareBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },
+  shareBtnText: { fontSize: 15, fontWeight: '700' },
+  shareBtnSub: { fontSize: 11, fontWeight: '500', marginTop: 2 },
+
+  // Pending requests
+  requestsSection: { padding: 16, marginBottom: 8 },
+  requestsHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  requestsTitle: { fontSize: 14, fontWeight: '700' },
+  requestRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 10, borderTopWidth: 1 },
+  requestActionBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
 })

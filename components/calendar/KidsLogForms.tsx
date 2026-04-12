@@ -5,7 +5,7 @@
  * Persist to Supabase child_logs table.
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
   View,
   Text,
@@ -17,7 +17,10 @@ import {
   Platform,
   StyleSheet,
   ActivityIndicator,
+  Vibration,
+  AppState,
 } from 'react-native'
+import * as Haptics from 'expo-haptics'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import * as ImagePicker from 'expo-image-picker'
 import {
@@ -37,12 +40,65 @@ import {
   CalendarDays,
   Clock,
   Dumbbell,
+  Repeat,
 } from 'lucide-react-native'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { estimateCalories, categoryColor } from '../../lib/foodCalories'
 import type { ChildWithRole } from '../../types'
+
+// ─── Routine Prefill type ─────────────────────────────────────────────────
+
+export interface RoutinePrefill {
+  routineId?: string
+  childId: string
+  time?: string   // 'HH:MM'
+  value?: string  // JSON string matching the routine's stored value
+  name?: string
+}
+
+// ─── Photo upload helper ───────────────────────────────────────────────────
+
+async function uploadPhotos(uris: string[]): Promise<string[]> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session || uris.length === 0) return []
+
+  const publicUrls: string[] = []
+  for (const uri of uris) {
+    try {
+      const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const path = `kids-logs/${session.user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`
+      const formData = new FormData()
+      formData.append('', { uri, name: path.split('/').pop(), type: `image/${ext}` } as any)
+      const { error } = await supabase.storage
+        .from('garage-photos')
+        .upload(path, formData, { contentType: 'multipart/form-data', upsert: true })
+      if (!error) {
+        const { data: urlData } = supabase.storage.from('garage-photos').getPublicUrl(path)
+        publicUrls.push(urlData.publicUrl)
+      }
+    } catch {}
+  }
+  return publicUrls
+}
+
+// ─── Safe camera launcher ─────────────────────────────────────────────────
+
+async function launchCameraSafe(): Promise<string | null> {
+  try {
+    const perm = await ImagePicker.requestCameraPermissionsAsync()
+    if (!perm.granted) {
+      Alert.alert('Permission needed', 'Camera access is required')
+      return null
+    }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 })
+    if (!result.canceled && result.assets[0]) return result.assets[0].uri
+  } catch {
+    Alert.alert('Camera unavailable', 'Please use the gallery to pick a photo instead.')
+  }
+  return null
+}
 
 // ─── Shared save helper ────────────────────────────────────────────────────
 
@@ -75,6 +131,131 @@ async function saveChildLog(
   })
   if (error) throw error
 }
+
+// ─── Save as Routine helper ────────────────────────────────────────────────
+
+async function saveAsRoutine(
+  childId: string,
+  type: string,
+  name: string,
+  value: string | null,
+  time: string | null,
+  daysOfWeek: number[] = [0, 1, 2, 3, 4, 5, 6],
+) {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  await supabase.from('child_routines').insert({
+    child_id: childId,
+    user_id: session.user.id,
+    type,
+    name,
+    value,
+    time,
+    days_of_week: daysOfWeek,
+    active: true,
+  })
+}
+
+const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+
+function RoutineToggle({
+  enabled,
+  onToggle,
+  days,
+  onDaysChange,
+  locked,
+}: {
+  enabled: boolean
+  onToggle: (v: boolean) => void
+  days: number[]
+  onDaysChange: (d: number[]) => void
+  locked?: boolean
+}) {
+  const { colors, radius } = useTheme()
+  if (locked) {
+    return (
+      <View style={[routineStyles.toggleRow, { backgroundColor: brand.success + '12', borderColor: brand.success + '40', borderRadius: radius.lg }]}>
+        <Repeat size={16} color={brand.success} strokeWidth={2} />
+        <Text style={[routineStyles.toggleText, { color: brand.success }]}>Already a routine</Text>
+        <Check size={16} color={brand.success} strokeWidth={2.5} />
+      </View>
+    )
+  }
+  return (
+    <View style={routineStyles.wrap}>
+      <Pressable
+        onPress={() => onToggle(!enabled)}
+        style={[
+          routineStyles.toggleRow,
+          {
+            backgroundColor: enabled ? colors.primary + '12' : colors.surface,
+            borderColor: enabled ? colors.primary + '40' : colors.border,
+            borderRadius: radius.lg,
+          },
+        ]}
+      >
+        <Repeat size={16} color={enabled ? colors.primary : colors.textMuted} strokeWidth={2} />
+        <Text style={[routineStyles.toggleText, { color: enabled ? colors.primary : colors.textSecondary }]}>
+          Save as routine
+        </Text>
+        <View
+          style={[
+            routineStyles.toggleSwitch,
+            {
+              backgroundColor: enabled ? colors.primary : colors.border,
+              borderRadius: 10,
+            },
+          ]}
+        >
+          <View
+            style={[
+              routineStyles.toggleKnob,
+              { transform: [{ translateX: enabled ? 14 : 0 }] },
+            ]}
+          />
+        </View>
+      </Pressable>
+      {enabled && (
+        <View style={routineStyles.daysRow}>
+          {DAY_LABELS.map((label, i) => {
+            const active = days.includes(i)
+            return (
+              <Pressable
+                key={i}
+                onPress={() =>
+                  onDaysChange(active ? days.filter((d) => d !== i) : [...days, i].sort())
+                }
+                style={[
+                  routineStyles.dayChip,
+                  {
+                    backgroundColor: active ? colors.primary : 'transparent',
+                    borderColor: active ? colors.primary : colors.border,
+                    borderRadius: radius.full,
+                  },
+                ]}
+              >
+                <Text style={[routineStyles.dayText, { color: active ? '#FFF' : colors.textMuted }]}>
+                  {label}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      )}
+    </View>
+  )
+}
+
+const routineStyles = StyleSheet.create({
+  wrap: { gap: 8 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1 },
+  toggleText: { flex: 1, fontSize: 14, fontWeight: '600' },
+  toggleSwitch: { width: 34, height: 20, padding: 3, justifyContent: 'center' },
+  toggleKnob: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#FFF' },
+  daysRow: { flexDirection: 'row', gap: 6, justifyContent: 'space-between', paddingHorizontal: 4 },
+  dayChip: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  dayText: { fontSize: 12, fontWeight: '700' },
+})
 
 // ─── Child Selector (shared) ───────────────────────────────────────────────
 
@@ -324,7 +505,7 @@ const EAT_QUALITIES: { id: EatQuality; label: string; icon: typeof Smile; color:
   { id: 'did_not_eat', label: 'Did not eat', icon: Frown, color: brand.error },
 ]
 
-export function FeedingForm({ onSaved, initialDate }: { onSaved: () => void; initialDate?: string }) {
+export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill }) {
   const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -343,39 +524,164 @@ export function FeedingForm({ onSaved, initialDate }: { onSaved: () => void; ini
   const [reactionFood, setReactionFood] = useState('')
   const [reactionDesc, setReactionDesc] = useState('')
   const [saving, setSaving] = useState(false)
+  const [routineEnabled, setRoutineEnabled] = useState(false)
+  const [routineDays, setRoutineDays] = useState([0, 1, 2, 3, 4, 5, 6])
 
-  // Breast/bottle fields
+  // Breast fields
   const [duration, setDuration] = useState('')
+  const [breastSide, setBreastSide] = useState<'left' | 'right' | 'both' | null>(null)
+  const [lastSide, setLastSide] = useState<string | null>(null)
+  const [lastSideLoading, setLastSideLoading] = useState(false)
+
+  // Live timer state
+  const [timerActive, setTimerActive] = useState(false)
+  const [timerSeconds, setTimerSeconds] = useState(0)
+  const [timerSide, setTimerSide] = useState<'left' | 'right'>('left')
+  const [timerSwitched, setTimerSwitched] = useState(false)
+  const [switchAlertShown, setSwitchAlertShown] = useState(false)
+  const [switchTargetMin, setSwitchTargetMin] = useState(15)  // default 15 min per side
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timerStartRef = useRef<number>(0)
+  // Track left/right durations separately
+  const [leftSeconds, setLeftSeconds] = useState(0)
+  const [rightSeconds, setRightSeconds] = useState(0)
+
+  // Bottle fields
   const [amount, setAmount] = useState('')
+
+  // Apply routine prefill when it changes
+  useEffect(() => {
+    setRoutineEnabled(!!prefill)
+    if (!prefill) return
+    if (prefill.childId) setChildId(prefill.childId)
+    if (prefill.time) setStartTime(prefill.time)
+    if (prefill.value) {
+      try {
+        const p = JSON.parse(prefill.value)
+        if (p.feedType) setFeedType(p.feedType as FeedingType)
+        if (p.meal) setMeal(p.meal as MealMoment)
+        if (p.quality) setQuality(p.quality as EatQuality)
+        if (p.amount) setAmount(String(p.amount))
+        if (p.side) setBreastSide(p.side)
+      } catch {}
+    }
+  }, [prefill])
+
+  // Fetch last breast side for this child
+  useEffect(() => {
+    if (feedType !== 'breast' || !childId) { setLastSide(null); return }
+    setLastSideLoading(true)
+    supabase
+      .from('child_logs')
+      .select('value')
+      .eq('child_id', childId)
+      .eq('type', 'feeding')
+      .like('value', '%breast%')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data[0]?.value) {
+          try {
+            const parsed = JSON.parse(data[0].value)
+            if (parsed.side) setLastSide(parsed.side)
+            else setLastSide(null)
+          } catch { setLastSide(null) }
+        } else {
+          setLastSide(null)
+        }
+        setLastSideLoading(false)
+      })
+  }, [feedType, childId])
+
+  // Timer tick
+  useEffect(() => {
+    if (!timerActive) {
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+      return
+    }
+    timerStartRef.current = Date.now() - timerSeconds * 1000
+    timerRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - timerStartRef.current) / 1000)
+      setTimerSeconds(elapsed)
+      // Track per-side time
+      if (timerSide === 'left') setLeftSeconds((p) => p + 1)
+      else setRightSeconds((p) => p + 1)
+    }, 1000)
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [timerActive, timerSide])
+
+  // Switch side alert
+  useEffect(() => {
+    if (!timerActive || switchAlertShown) return
+    const currentSideSeconds = timerSide === 'left' ? leftSeconds : rightSeconds
+    if (currentSideSeconds >= switchTargetMin * 60) {
+      setSwitchAlertShown(true)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
+      Vibration.vibrate([0, 400, 200, 400])
+    }
+  }, [leftSeconds, rightSeconds, timerActive, switchTargetMin, switchAlertShown, timerSide])
+
+  function startTimer(side: 'left' | 'right') {
+    setTimerSide(side)
+    setBreastSide(side)
+    setTimerActive(true)
+    setTimerSeconds(0)
+    setLeftSeconds(0)
+    setRightSeconds(0)
+    setTimerSwitched(false)
+    setSwitchAlertShown(false)
+  }
+
+  function switchSide() {
+    const newSide = timerSide === 'left' ? 'right' : 'left'
+    setTimerSide(newSide)
+    setTimerSwitched(true)
+    setSwitchAlertShown(false)
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+  }
+
+  function stopTimer() {
+    setTimerActive(false)
+    const totalMin = Math.round(timerSeconds / 60)
+    setDuration(String(totalMin || 1))
+    setBreastSide(timerSwitched ? 'both' : timerSide)
+  }
+
+  function formatTimer(secs: number): string {
+    const m = Math.floor(secs / 60)
+    const s = secs % 60
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  }
 
   // Live calorie estimation
   const calorieEstimate = useMemo(() => estimateCalories(description), [description])
 
   async function pickPhoto() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsMultipleSelection: true,
-      quality: 0.7,
-      selectionLimit: 4,
-    })
-    if (!result.canceled) {
-      setPhotos((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4))
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        quality: 0.7,
+        selectionLimit: 4,
+      })
+      if (!result.canceled) {
+        setPhotos((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4))
+      }
+    } catch (e: any) {
+      Alert.alert('Error', 'Could not open photo library')
     }
   }
 
   async function takePhoto() {
-    const perm = await ImagePicker.requestCameraPermissionsAsync()
-    if (!perm.granted) return Alert.alert('Permission needed', 'Camera access is required')
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 })
-    if (!result.canceled && result.assets[0]) {
-      setPhotos((prev) => [...prev, result.assets[0].uri].slice(0, 4))
-    }
+    const uri = await launchCameraSafe()
+    if (uri) setPhotos((prev) => [...prev, uri].slice(0, 4))
   }
 
   async function save() {
     if (!childId) return
     setSaving(true)
     try {
+      const uploadedPhotos = await uploadPhotos(photos)
       if (feedType === 'solids') {
         const value = JSON.stringify({
           feedType: 'solids',
@@ -392,15 +698,33 @@ export function FeedingForm({ onSaved, initialDate }: { onSaved: () => void; ini
             ? calorieEstimate.matches.map((m) => m.food)
             : undefined,
         })
-        await saveChildLog(childId, 'food', value, description || undefined, photos, logDate)
-      } else {
+        await saveChildLog(childId, 'food', value, description || undefined, uploadedPhotos, logDate)
+      } else if (feedType === 'breast') {
         const value = JSON.stringify({
-          feedType,
+          feedType: 'breast',
           time: startTime,
           duration: duration || undefined,
+          side: breastSide || undefined,
+        })
+        await saveChildLog(childId, 'feeding', value, undefined, undefined, logDate)
+      } else {
+        // Bottle
+        const value = JSON.stringify({
+          feedType: 'bottle',
+          time: startTime,
           amount: amount || undefined,
         })
         await saveChildLog(childId, 'feeding', value, undefined, undefined, logDate)
+      }
+      // Save as routine if toggled (only for new logs, not from existing routines)
+      if (routineEnabled && !prefill) {
+        const routineName = feedType === 'solids'
+          ? (meal ? MEAL_MOMENTS.find((m) => m.id === meal)?.label ?? 'Meal' : 'Meal')
+          : (feedType === 'breast' ? 'Breastfeed' : 'Bottle')
+        const routineValue = feedType === 'solids'
+          ? JSON.stringify({ feedType: 'solids', meal })
+          : JSON.stringify({ feedType, amount: amount || undefined, duration: duration || undefined })
+        await saveAsRoutine(childId, feedType === 'solids' ? 'food' : 'feeding', routineName, routineValue, startTime, routineDays)
       }
       onSaved()
     } catch (e: any) {
@@ -513,8 +837,8 @@ export function FeedingForm({ onSaved, initialDate }: { onSaved: () => void; ini
                     </Text>
                   </View>
                   <View style={styles.calorieMatchList}>
-                    {calorieEstimate.matches.map((m) => (
-                      <View key={m.food} style={styles.calorieMatchRow}>
+                    {calorieEstimate.matches.map((m, i) => (
+                      <View key={`${m.food}-${i}`} style={styles.calorieMatchRow}>
                         <View style={[styles.calorieMatchDot, { backgroundColor: categoryColor(m.category) }]} />
                         <Text style={[styles.calorieMatchFood, { color: colors.text }]}>
                           {m.food.charAt(0).toUpperCase() + m.food.slice(1)}
@@ -622,13 +946,233 @@ export function FeedingForm({ onSaved, initialDate }: { onSaved: () => void; ini
               </View>
             )}
           </>
+        ) : feedType === 'breast' ? (
+          <>
+            {/* ── Breast Feeding with Live Timer ── */}
+
+            {/* Last side reminder */}
+            {!timerActive && (lastSideLoading ? (
+              <ActivityIndicator size="small" color={colors.primary} style={{ alignSelf: 'flex-start' }} />
+            ) : lastSide ? (
+              <View style={[styles.lastSideBanner, { backgroundColor: brand.accent + '12', borderColor: brand.accent + '25', borderRadius: radius.lg }]}>
+                <Text style={[styles.lastSideLabel, { color: colors.textSecondary }]}>
+                  Last session was <Text style={{ fontWeight: '800', color: brand.accent }}>
+                    {lastSide === 'left' ? 'Left' : lastSide === 'right' ? 'Right' : 'Both'}
+                  </Text> — try <Text style={{ fontWeight: '800', color: colors.text }}>
+                    {lastSide === 'left' ? 'Right' : lastSide === 'right' ? 'Left' : 'alternating'}
+                  </Text> next
+                </Text>
+              </View>
+            ) : null)}
+
+            {timerActive ? (
+              /* ── LIVE TIMER MODE ── */
+              <View style={[styles.timerWrap, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+                {/* Current side indicator with body icon */}
+                <View style={styles.timerSideIndicator}>
+                  <View style={styles.breastIcon}>
+                    <View style={[styles.breastShape, styles.breastShapeL, {
+                      backgroundColor: (timerSide === 'left' ? colors.primary : colors.textMuted + '20') + '20',
+                      borderColor: timerSide === 'left' ? colors.primary : colors.textMuted + '30',
+                    }]}>
+                      {timerSide === 'left' && <View style={[styles.breastNipple, { backgroundColor: colors.primary }]} />}
+                    </View>
+                    <View style={[styles.breastShape, styles.breastShapeR, {
+                      backgroundColor: (timerSide === 'right' ? colors.primary : colors.textMuted + '20') + '20',
+                      borderColor: timerSide === 'right' ? colors.primary : colors.textMuted + '30',
+                    }]}>
+                      {timerSide === 'right' && <View style={[styles.breastNipple, { backgroundColor: colors.primary }]} />}
+                    </View>
+                  </View>
+                  <Text style={[styles.timerSideLabel, { color: colors.primary }]}>
+                    {timerSide === 'left' ? 'Left side' : 'Right side'}
+                  </Text>
+                </View>
+
+                {/* Big timer display */}
+                <Text style={[styles.timerDisplay, { color: colors.text }]}>
+                  {formatTimer(timerSeconds)}
+                </Text>
+
+                {/* Per-side breakdown */}
+                <View style={styles.timerBreakdown}>
+                  <View style={[styles.timerBreakdownItem, { backgroundColor: timerSide === 'left' ? colors.primary + '15' : 'transparent', borderRadius: radius.md }]}>
+                    <View style={[styles.timerBreakdownDot, { backgroundColor: timerSide === 'left' ? colors.primary : colors.textMuted }]} />
+                    <Text style={[styles.timerBreakdownLabel, { color: timerSide === 'left' ? colors.text : colors.textMuted }]}>L</Text>
+                    <Text style={[styles.timerBreakdownTime, { color: timerSide === 'left' ? colors.primary : colors.textMuted }]}>
+                      {formatTimer(leftSeconds)}
+                    </Text>
+                  </View>
+                  <View style={[styles.timerBreakdownItem, { backgroundColor: timerSide === 'right' ? colors.primary + '15' : 'transparent', borderRadius: radius.md }]}>
+                    <View style={[styles.timerBreakdownDot, { backgroundColor: timerSide === 'right' ? colors.primary : colors.textMuted }]} />
+                    <Text style={[styles.timerBreakdownLabel, { color: timerSide === 'right' ? colors.text : colors.textMuted }]}>R</Text>
+                    <Text style={[styles.timerBreakdownTime, { color: timerSide === 'right' ? colors.primary : colors.textMuted }]}>
+                      {formatTimer(rightSeconds)}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Switch alert banner */}
+                {switchAlertShown && (
+                  <View style={[styles.switchAlert, { backgroundColor: brand.accent + '15', borderColor: brand.accent + '30', borderRadius: radius.lg }]}>
+                    <Text style={[styles.switchAlertText, { color: brand.accent }]}>
+                      {switchTargetMin} min reached — time to switch sides!
+                    </Text>
+                  </View>
+                )}
+
+                {/* Timer actions */}
+                <View style={styles.timerActions}>
+                  <Pressable
+                    onPress={switchSide}
+                    style={({ pressed }) => [
+                      styles.timerSwitchBtn,
+                      { backgroundColor: brand.accent + '15', borderColor: brand.accent + '40', borderRadius: radius.lg },
+                      pressed && { opacity: 0.8 },
+                    ]}
+                  >
+                    <Repeat size={18} color={brand.accent} strokeWidth={2} />
+                    <Text style={[styles.timerSwitchText, { color: brand.accent }]}>Switch side</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={stopTimer}
+                    style={({ pressed }) => [
+                      styles.timerStopBtn,
+                      { backgroundColor: colors.primary, borderRadius: radius.lg },
+                      pressed && { opacity: 0.8 },
+                    ]}
+                  >
+                    <Check size={18} color="#FFF" strokeWidth={2.5} />
+                    <Text style={styles.timerStopText}>Done</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              /* ── START MODE — pick side and go ── */
+              <>
+                <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Tap a side to start live timer</Text>
+                <View style={styles.sideRow}>
+                  {([
+                    { id: 'left' as const, label: 'Left' },
+                    { id: 'right' as const, label: 'Right' },
+                  ]).map((s) => {
+                    const isRecommended = lastSide && (
+                      (lastSide === 'left' && s.id === 'right') ||
+                      (lastSide === 'right' && s.id === 'left')
+                    )
+                    const accentC = colors.primary
+                    const dimC = colors.textMuted + '30'
+                    const lFill = s.id === 'left' ? accentC : dimC
+                    const rFill = s.id === 'right' ? accentC : dimC
+                    return (
+                      <Pressable
+                        key={s.id}
+                        onPress={() => startTimer(s.id)}
+                        style={({ pressed }) => [
+                          styles.sideBtn,
+                          {
+                            backgroundColor: colors.surface,
+                            borderColor: isRecommended ? brand.accent + '50' : colors.border,
+                            borderRadius: radius.lg,
+                          },
+                          pressed && { opacity: 0.7, transform: [{ scale: 0.97 }] },
+                        ]}
+                      >
+                        <View style={styles.breastIcon}>
+                          <View style={[styles.breastShape, styles.breastShapeL, { backgroundColor: lFill + '20', borderColor: lFill }]}>
+                            {s.id === 'left' && <View style={[styles.breastNipple, { backgroundColor: lFill }]} />}
+                          </View>
+                          <View style={[styles.breastShape, styles.breastShapeR, { backgroundColor: rFill + '20', borderColor: rFill }]}>
+                            {s.id === 'right' && <View style={[styles.breastNipple, { backgroundColor: rFill }]} />}
+                          </View>
+                        </View>
+                        <Text style={[styles.sideBtnText, { color: colors.text }]}>{s.label}</Text>
+                        {isRecommended && (
+                          <View style={[styles.recommendedTag, { backgroundColor: brand.accent + '20' }]}>
+                            <Text style={{ fontSize: 9, fontWeight: '700', color: brand.accent }}>NEXT</Text>
+                          </View>
+                        )}
+                      </Pressable>
+                    )
+                  })}
+                </View>
+
+                {/* Switch target setting */}
+                <View style={[styles.switchTargetRow, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+                  <Clock size={14} color={colors.textMuted} strokeWidth={2} />
+                  <Text style={[styles.switchTargetLabel, { color: colors.textSecondary }]}>Alert to switch at</Text>
+                  {[10, 15, 20].map((min) => (
+                    <Pressable
+                      key={min}
+                      onPress={() => setSwitchTargetMin(min)}
+                      style={[
+                        styles.switchTargetChip,
+                        {
+                          backgroundColor: switchTargetMin === min ? colors.primary : 'transparent',
+                          borderColor: switchTargetMin === min ? colors.primary : colors.border,
+                          borderRadius: radius.full,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.switchTargetChipText, { color: switchTargetMin === min ? '#FFF' : colors.textMuted }]}>
+                        {min}m
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                {/* Or log manually */}
+                <View style={styles.manualDivider}>
+                  <View style={[styles.manualDividerLine, { backgroundColor: colors.border }]} />
+                  <Text style={[styles.manualDividerText, { color: colors.textMuted }]}>or log manually</Text>
+                  <View style={[styles.manualDividerLine, { backgroundColor: colors.border }]} />
+                </View>
+
+                {/* Manual side selection */}
+                <View style={styles.sideRow}>
+                  {([
+                    { id: 'left' as const, label: 'Left' },
+                    { id: 'right' as const, label: 'Right' },
+                    { id: 'both' as const, label: 'Both' },
+                  ]).map((s) => {
+                    const active = breastSide === s.id
+                    return (
+                      <Pressable
+                        key={s.id}
+                        onPress={() => setBreastSide(s.id)}
+                        style={[
+                          styles.sideChipSmall,
+                          {
+                            backgroundColor: active ? colors.primaryTint : 'transparent',
+                            borderColor: active ? colors.primary : colors.border,
+                            borderRadius: radius.full,
+                          },
+                        ]}
+                      >
+                        <Text style={[styles.sideChipSmallText, { color: active ? colors.primary : colors.textMuted }]}>{s.label}</Text>
+                      </Pressable>
+                    )
+                  })}
+                </View>
+
+                <TextInput
+                  value={duration}
+                  onChangeText={setDuration}
+                  placeholder="Duration (minutes)"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="number-pad"
+                  style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+                />
+              </>
+            )}
+          </>
         ) : (
           <>
-            {/* Breast / Bottle */}
+            {/* ── Bottle ── */}
             <TextInput
-              value={duration}
-              onChangeText={setDuration}
-              placeholder={feedType === 'breast' ? 'Duration (minutes)' : 'Amount (ml)'}
+              value={amount}
+              onChangeText={setAmount}
+              placeholder="Amount (ml)"
               placeholderTextColor={colors.textMuted}
               keyboardType="number-pad"
               style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
@@ -636,6 +1180,7 @@ export function FeedingForm({ onSaved, initialDate }: { onSaved: () => void; ini
           </>
         )}
 
+        <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
         <SaveButton onPress={save} saving={saving} disabled={!childId} />
       </View>
     </ScrollView>
@@ -644,7 +1189,7 @@ export function FeedingForm({ onSaved, initialDate }: { onSaved: () => void; ini
 
 // ─── 2. SLEEP FORM ─────────────────────────────────────────────────────────
 
-export function SleepForm({ onSaved, initialDate }: { onSaved: () => void; initialDate?: string }) {
+export function SleepForm({ onSaved, initialDate, prefill }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill }) {
   const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -656,6 +1201,24 @@ export function SleepForm({ onSaved, initialDate }: { onSaved: () => void; initi
   const [quality, setQuality] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const [routineEnabled, setRoutineEnabled] = useState(false)
+  const [routineDays, setRoutineDays] = useState([0, 1, 2, 3, 4, 5, 6])
+
+  // Apply routine prefill when it changes
+  useEffect(() => {
+    setRoutineEnabled(!!prefill)
+    if (!prefill) return
+    if (prefill.childId) setChildId(prefill.childId)
+    if (prefill.time) setStartTime(prefill.time)
+    if (prefill.value) {
+      try {
+        const p = JSON.parse(prefill.value)
+        if (p.quality) setQuality(p.quality)
+        if (p.startTime) setStartTime(p.startTime)
+        if (p.endTime) setEndTime(p.endTime)
+      } catch {}
+    }
+  }, [prefill])
 
   const autoDuration = useMemo(() => calcDuration(startTime, endTime), [startTime, endTime])
 
@@ -667,6 +1230,10 @@ export function SleepForm({ onSaved, initialDate }: { onSaved: () => void; initi
     try {
       const value = JSON.stringify({ duration: autoDuration || undefined, quality, startTime, endTime: endTime || undefined })
       await saveChildLog(childId, 'sleep', value, notes || undefined, undefined, logDate)
+      if (routineEnabled && !prefill) {
+        const isNap = parseInt(startTime.split(':')[0]) < 16
+        await saveAsRoutine(childId, 'sleep', isNap ? 'Nap' : 'Bedtime', JSON.stringify({ startTime, quality }), startTime, routineDays)
+      }
       onSaved()
     } catch (e: any) {
       Alert.alert('Error', e.message)
@@ -727,6 +1294,7 @@ export function SleepForm({ onSaved, initialDate }: { onSaved: () => void; initi
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
+      <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
       <SaveButton onPress={save} saving={saving} disabled={!childId} />
     </View>
   )
@@ -736,7 +1304,7 @@ export function SleepForm({ onSaved, initialDate }: { onSaved: () => void; initi
 
 const HEALTH_EVENTS = ['Temperature', 'Vaccine', 'Medicine', 'Doctor visit', 'Injury', 'Other']
 
-export function HealthEventForm({ onSaved, initialDate }: { onSaved: () => void; initialDate?: string }) {
+export function HealthEventForm({ onSaved, initialDate, prefill }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill }) {
   const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -748,6 +1316,17 @@ export function HealthEventForm({ onSaved, initialDate }: { onSaved: () => void;
   const [value, setValue] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+
+  // Apply routine prefill when it changes
+  useEffect(() => {
+    if (!prefill) return
+    if (prefill.childId) setChildId(prefill.childId)
+    if (prefill.time) setStartTime(prefill.time)
+    if (prefill.name) {
+      const matched = HEALTH_EVENTS.find((e) => e.toLowerCase() === prefill.name!.toLowerCase())
+      if (matched) setEventType(matched)
+    }
+  }, [prefill])
 
   async function save() {
     if (!childId || !eventType) return
@@ -827,7 +1406,7 @@ const MOODS = [
   { id: 'energetic', icon: Zap, label: 'Energetic' },
 ]
 
-export function KidsMoodForm({ onSaved, initialDate }: { onSaved: () => void; initialDate?: string }) {
+export function KidsMoodForm({ onSaved, initialDate, prefill }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill }) {
   const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -838,12 +1417,34 @@ export function KidsMoodForm({ onSaved, initialDate }: { onSaved: () => void; in
   const [mood, setMood] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const [routineEnabled, setRoutineEnabled] = useState(false)
+  const [routineDays, setRoutineDays] = useState([0, 1, 2, 3, 4, 5, 6])
+
+  // Apply routine prefill when it changes
+  useEffect(() => {
+    setRoutineEnabled(!!prefill)
+    if (!prefill) return
+    if (prefill.childId) setChildId(prefill.childId)
+    if (prefill.time) setStartTime(prefill.time)
+    if (prefill.value) {
+      try {
+        const p = JSON.parse(prefill.value)
+        if (p.mood) setMood(p.mood)
+      } catch {
+        // value might be the mood string directly
+        if (MOODS.some((m) => m.id === prefill.value)) setMood(prefill.value!)
+      }
+    }
+  }, [prefill])
 
   async function save() {
     if (!childId || !mood) return
     setSaving(true)
     try {
       await saveChildLog(childId, 'mood', mood, notes || undefined, undefined, logDate)
+      if (routineEnabled && !prefill) {
+        await saveAsRoutine(childId, 'mood', 'Mood check', null, startTime, routineDays)
+      }
       onSaved()
     } catch (e: any) {
       Alert.alert('Error', e.message)
@@ -887,6 +1488,7 @@ export function KidsMoodForm({ onSaved, initialDate }: { onSaved: () => void; in
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
+      <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
       <SaveButton onPress={save} saving={saving} disabled={!childId || !mood} />
     </View>
   )
@@ -907,31 +1509,32 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
   const [saving, setSaving] = useState(false)
 
   async function pickPhoto() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsMultipleSelection: true,
-      quality: 0.7,
-      selectionLimit: 4,
-    })
-    if (!result.canceled) {
-      setPhotos((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4))
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        quality: 0.7,
+        selectionLimit: 4,
+      })
+      if (!result.canceled) {
+        setPhotos((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4))
+      }
+    } catch (e: any) {
+      Alert.alert('Error', 'Could not open photo library')
     }
   }
 
   async function takePhoto() {
-    const perm = await ImagePicker.requestCameraPermissionsAsync()
-    if (!perm.granted) return Alert.alert('Permission needed', 'Camera access is required')
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 })
-    if (!result.canceled && result.assets[0]) {
-      setPhotos((prev) => [...prev, result.assets[0].uri].slice(0, 4))
-    }
+    const uri = await launchCameraSafe()
+    if (uri) setPhotos((prev) => [...prev, uri].slice(0, 4))
   }
 
   async function save() {
     if (!childId) return
     setSaving(true)
     try {
-      await saveChildLog(childId, 'photo', 'memory', caption || undefined, photos, logDate)
+      const uploadedPhotos = await uploadPhotos(photos)
+      await saveChildLog(childId, 'photo', 'memory', caption || undefined, uploadedPhotos, logDate)
       onSaved()
     } catch (e: any) {
       Alert.alert('Error', e.message)
@@ -992,7 +1595,7 @@ const ACTIVITY_TYPES = [
   { id: 'other', label: 'Other' },
 ]
 
-export function ActivityForm({ onSaved, initialDate }: { onSaved: () => void; initialDate?: string }) {
+export function ActivityForm({ onSaved, initialDate, prefill }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill }) {
   const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
 
@@ -1004,6 +1607,27 @@ export function ActivityForm({ onSaved, initialDate }: { onSaved: () => void; in
   const [name, setName] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const [routineEnabled, setRoutineEnabled] = useState(false)
+  const [routineDays, setRoutineDays] = useState([0, 1, 2, 3, 4, 5, 6])
+
+  // Apply routine prefill when it changes
+  useEffect(() => {
+    setRoutineEnabled(!!prefill)
+    if (!prefill) return
+    if (prefill.childId) setChildId(prefill.childId)
+    if (prefill.time) setStartTime(prefill.time)
+    if (prefill.value) {
+      try {
+        const p = JSON.parse(prefill.value)
+        if (p.activityType) setActivityType(p.activityType)
+        if (p.name) setName(p.name)
+        if (p.startTime) setStartTime(p.startTime)
+        if (p.endTime) setEndTime(p.endTime)
+      } catch {}
+    } else if (prefill.name) {
+      setName(prefill.name)
+    }
+  }, [prefill])
 
   const autoDuration = useMemo(() => calcDuration(startTime, endTime), [startTime, endTime])
 
@@ -1019,6 +1643,10 @@ export function ActivityForm({ onSaved, initialDate }: { onSaved: () => void; in
         endTime: endTime || undefined,
       })
       await saveChildLog(childId, 'activity', value, notes || undefined, undefined, logDate)
+      if (routineEnabled && !prefill) {
+        const routineName = name || ACTIVITY_TYPES.find((a) => a.id === activityType)?.label || 'Activity'
+        await saveAsRoutine(childId, 'activity', routineName, value, startTime, routineDays)
+      }
       onSaved()
     } catch (e: any) {
       Alert.alert('Error', e.message)
@@ -1090,6 +1718,7 @@ export function ActivityForm({ onSaved, initialDate }: { onSaved: () => void; in
           placeholderTextColor={colors.textMuted}
           style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
         />
+        <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
         <SaveButton onPress={save} saving={saving} disabled={!childId || !activityType} />
       </View>
     </ScrollView>
@@ -1175,4 +1804,45 @@ const styles = StyleSheet.create({
   expandedFlag: { padding: 12, gap: 8, borderWidth: 1 },
   expandedFlagLabel: { fontSize: 13, fontWeight: '700' },
   expandedFlagInput: { borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, fontWeight: '500' },
+
+  // Breast feeding
+  lastSideBanner: { padding: 12, borderWidth: 1 },
+  lastSideLabel: { fontSize: 13, fontWeight: '500', lineHeight: 20 },
+  sectionLabel: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  sideRow: { flexDirection: 'row', gap: 8 },
+  sideBtn: { flex: 1, alignItems: 'center', paddingVertical: 16, gap: 8, borderWidth: 1 },
+  breastIcon: { flexDirection: 'row', gap: 2, alignItems: 'flex-end' },
+  breastShape: { width: 22, height: 20, borderWidth: 1.5, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 3 },
+  breastShapeL: { borderTopLeftRadius: 14, borderTopRightRadius: 4, borderBottomLeftRadius: 10, borderBottomRightRadius: 4 },
+  breastShapeR: { borderTopLeftRadius: 4, borderTopRightRadius: 14, borderBottomLeftRadius: 4, borderBottomRightRadius: 10 },
+  breastNipple: { width: 5, height: 5, borderRadius: 3 },
+  sideBtnText: { fontSize: 13, fontWeight: '700' },
+  recommendedTag: { position: 'absolute', top: 4, right: 4, paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4 },
+  sideChipSmall: { flex: 1, alignItems: 'center', paddingVertical: 8, borderWidth: 1 },
+  sideChipSmallText: { fontSize: 13, fontWeight: '600' },
+
+  // Live timer
+  timerWrap: { padding: 20, alignItems: 'center', gap: 16 },
+  timerSideIndicator: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  timerSideLabel: { fontSize: 16, fontWeight: '700' },
+  timerDisplay: { fontSize: 56, fontWeight: '200', letterSpacing: 2, fontVariant: ['tabular-nums'] },
+  timerBreakdown: { flexDirection: 'row', gap: 12, width: '100%' },
+  timerBreakdownItem: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10 },
+  timerBreakdownDot: { width: 8, height: 8, borderRadius: 4 },
+  timerBreakdownLabel: { fontSize: 14, fontWeight: '700' },
+  timerBreakdownTime: { fontSize: 16, fontWeight: '600', fontVariant: ['tabular-nums'] },
+  switchAlert: { width: '100%', padding: 12, borderWidth: 1, alignItems: 'center' },
+  switchAlertText: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  timerActions: { flexDirection: 'row', gap: 10, width: '100%' },
+  timerSwitchBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderWidth: 1 },
+  timerSwitchText: { fontSize: 14, fontWeight: '700' },
+  timerStopBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14 },
+  timerStopText: { fontSize: 14, fontWeight: '700', color: '#FFF' },
+  switchTargetRow: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderWidth: 1 },
+  switchTargetLabel: { flex: 1, fontSize: 13, fontWeight: '500' },
+  switchTargetChip: { paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1 },
+  switchTargetChipText: { fontSize: 12, fontWeight: '700' },
+  manualDivider: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  manualDividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
+  manualDividerText: { fontSize: 12, fontWeight: '500' },
 })

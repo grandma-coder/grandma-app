@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Share,
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
@@ -35,6 +36,12 @@ import {
   Star,
   Bookmark,
   Trash2,
+  LogIn,
+  LogOut,
+  Lock,
+  Share2,
+  Link,
+  Copy,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
@@ -55,7 +62,10 @@ import {
   unsaveChannel,
   getMySavedChannelIds,
   notifyMentions,
+  requestToJoinChannel,
+  getMyRequestStatus,
   type ChannelPost,
+  type ChannelRequest,
 } from '../../lib/channelPosts'
 import { supabase } from '../../lib/supabase'
 import { checkPhotoSafety } from '../../lib/photoSafety'
@@ -98,6 +108,9 @@ export default function ChannelChat() {
   const [myReview, setMyReview] = useState('')
   const [savingRating, setSavingRating] = useState(false)
 
+  // Private channel request state
+  const [myRequest, setMyRequest] = useState<ChannelRequest | null>(null)
+
   // ─── Data loading ─────────────────────────────────────────────────────
 
   const load = useCallback(async () => {
@@ -123,6 +136,15 @@ export default function ChannelChat() {
       if (existing) {
         setMyRating(existing.rating)
         setMyReview(existing.review ?? '')
+      }
+
+      // Check private channel request status
+      const ch = allChannels.find((c) => c.id === id)
+      if (ch?.channelType === 'private' && !member) {
+        const req = await getMyRequestStatus(id)
+        setMyRequest(req)
+      } else {
+        setMyRequest(null)
       }
     } catch {
       // silent
@@ -342,18 +364,78 @@ export default function ChannelChat() {
 
   // ─── Join/Leave ───────────────────────────────────────────────────────
 
-  async function handleJoinLeave() {
+  function handleJoinLeave() {
     if (!id) return
-    try {
-      if (isMember) {
-        await leaveChannel(id)
-        setIsMember(false)
-      } else {
-        await joinChannel(id)
-        setIsMember(true)
+
+    if (isMember) {
+      // Confirm leave
+      Alert.alert(
+        'Leave Channel',
+        `Are you sure you want to leave #${channel?.name ?? 'this channel'}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Leave',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await leaveChannel(id)
+                setIsMember(false)
+                load()
+              } catch {
+                Alert.alert('Error', 'Failed to leave channel')
+              }
+            },
+          },
+        ]
+      )
+    } else if (channel?.channelType === 'private') {
+      // Private channel: request to join
+      if (myRequest?.status === 'pending') {
+        Alert.alert('Request Pending', 'Your request to join is awaiting approval from the channel host.')
+        return
       }
-    } catch {
-      // silent
+      Alert.alert(
+        'Request to Join',
+        `This is a private channel. Send a request to the host to join #${channel.name}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Send Request',
+            onPress: async () => {
+              try {
+                await requestToJoinChannel(id)
+                const req = await getMyRequestStatus(id)
+                setMyRequest(req)
+                Alert.alert('Request Sent', 'The channel host will review your request.')
+              } catch (e: any) {
+                Alert.alert('Error', e.message)
+              }
+            },
+          },
+        ]
+      )
+    } else {
+      // Public channel: confirm join
+      Alert.alert(
+        'Join Channel',
+        `Join #${channel?.name ?? 'this channel'}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Join',
+            onPress: async () => {
+              try {
+                await joinChannel(id)
+                setIsMember(true)
+                load()
+              } catch {
+                Alert.alert('Error', 'Failed to join channel')
+              }
+            },
+          },
+        ]
+      )
     }
   }
 
@@ -366,6 +448,44 @@ export default function ChannelChat() {
       setIsSaved(true)
       await saveChannel(id).catch(() => setIsSaved(false))
     }
+  }
+
+  function handleShareChannel() {
+    if (!id || !channel) return
+
+    // Private channels: only members can share
+    if (channel.channelType === 'private' && !isMember) {
+      Alert.alert('Private Channel', 'Only members can share this channel.')
+      return
+    }
+
+    const channelUrl = `grandma-app://channel/${id}`
+    const channelName = channel.name
+    const desc = channel.description ? `\n${channel.description}` : ''
+    const privacy = channel.channelType === 'private' ? ' (Private)' : ''
+    const shareMessage = `Join #${channelName}${privacy} on grandma.app!${desc}\n\n${channelUrl}`
+
+    Alert.alert('Share Channel', '', [
+      {
+        text: 'Copy Link',
+        onPress: () => {
+          import('expo-clipboard').then(({ setStringAsync }) => {
+            setStringAsync(channelUrl)
+            Alert.alert('Copied!', 'Channel link copied to clipboard.')
+          })
+        },
+      },
+      {
+        text: 'Share...',
+        onPress: () => {
+          Share.share({
+            message: shareMessage,
+            title: `#${channelName}`,
+          })
+        },
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ])
   }
 
   function handleDeleteMessage(msgId: string, authorId: string) {
@@ -432,7 +552,11 @@ export default function ChannelChat() {
           onPress={() => router.push(`/channel/info/${id}` as any)}
           style={styles.headerCenter}
         >
-          <Hash size={18} color={colors.primary} strokeWidth={2} />
+          {channel?.channelType === 'private' ? (
+            <Lock size={16} color={colors.primary} strokeWidth={2} />
+          ) : (
+            <Hash size={18} color={colors.primary} strokeWidth={2} />
+          )}
           <Text
             style={[styles.headerTitle, { color: colors.text }]}
             numberOfLines={1}
@@ -444,10 +568,16 @@ export default function ChannelChat() {
           </Text>
           <Users size={12} color={colors.textMuted} strokeWidth={2} />
         </Pressable>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Pressable onPress={handleSaveToggle} hitSlop={8}>
+        <View style={styles.headerActions}>
+        {/* Share — public: always, private: members only */}
+        {(channel?.channelType !== 'private' || isMember) && (
+          <Pressable onPress={handleShareChannel} hitSlop={8} style={styles.headerIconBtn}>
+            <Share2 size={18} color={colors.textMuted} strokeWidth={2} />
+          </Pressable>
+        )}
+        <Pressable onPress={handleSaveToggle} hitSlop={8} style={styles.headerIconBtn}>
           <Bookmark
-            size={20}
+            size={18}
             color={isSaved ? colors.primary : colors.textMuted}
             strokeWidth={2}
             fill={isSaved ? colors.primary : 'none'}
@@ -469,7 +599,13 @@ export default function ChannelChat() {
               { color: isMember ? colors.textSecondary : '#FFFFFF' },
             ]}
           >
-            {isMember ? 'Leave' : 'Join'}
+            {isMember
+              ? 'Leave'
+              : channel?.channelType === 'private' && myRequest?.status === 'pending'
+              ? 'Requested'
+              : channel?.channelType === 'private'
+              ? 'Request'
+              : 'Join'}
           </Text>
         </Pressable>
         </View>
@@ -557,23 +693,27 @@ export default function ChannelChat() {
               </Text>
             </View>
           }
-          renderItem={({ item }) => (
-            <MessageBubble
-              message={item}
-              onReaction={() => handleReaction(item.id)}
-              onLongPress={() => {
-                Alert.alert('Message', '', [
-                  { text: 'Reply in Thread', onPress: () => router.push(`/channel/thread/${item.id}` as any) },
-                  { text: 'Reply', onPress: () => { setReplyTo(item); inputRef.current?.focus() } },
-                  ...(item.author_id === currentUserId ? [
-                    { text: 'Delete', style: 'destructive' as const, onPress: () => handleDeleteMessage(item.id, item.author_id) },
-                  ] : []),
-                  { text: 'Cancel', style: 'cancel' as const },
-                ])
-              }}
-              onThreadPress={() => router.push(`/channel/thread/${item.id}` as any)}
-            />
-          )}
+          renderItem={({ item }) =>
+            item.message_type === 'system_join' || item.message_type === 'system_leave' ? (
+              <SystemMessage message={item} />
+            ) : (
+              <MessageBubble
+                message={item}
+                onReaction={() => handleReaction(item.id)}
+                onLongPress={() => {
+                  Alert.alert('Message', '', [
+                    { text: 'Reply in Thread', onPress: () => router.push(`/channel/thread/${item.id}` as any) },
+                    { text: 'Reply', onPress: () => { setReplyTo(item); inputRef.current?.focus() } },
+                    ...(item.author_id === currentUserId ? [
+                      { text: 'Delete', style: 'destructive' as const, onPress: () => handleDeleteMessage(item.id, item.author_id) },
+                    ] : []),
+                    { text: 'Cancel', style: 'cancel' as const },
+                  ])
+                }}
+                onThreadPress={() => router.push(`/channel/thread/${item.id}` as any)}
+              />
+            )
+          }
         />
 
         {/* Mention autocomplete overlay */}
@@ -800,6 +940,33 @@ export default function ChannelChat() {
 
 // ─── Message Bubble ─────────────────────────────────────────────────────
 
+// ─── System Message (join/leave) ──────────────────────────────────────────
+
+function SystemMessage({ message }: { message: ChannelPost }) {
+  const { colors } = useTheme()
+  const isJoin = message.message_type === 'system_join'
+
+  return (
+    <View style={styles.systemMsg}>
+      <View style={[styles.systemMsgDot, { backgroundColor: isJoin ? brand.success + '30' : brand.error + '30' }]}>
+        {isJoin ? (
+          <LogIn size={12} color={brand.success} strokeWidth={2} />
+        ) : (
+          <LogOut size={12} color={brand.error} strokeWidth={2} />
+        )}
+      </View>
+      <Text style={[styles.systemMsgText, { color: colors.textMuted }]}>
+        {message.content}
+      </Text>
+      <Text style={[styles.systemMsgTime, { color: colors.textMuted }]}>
+        {formatTime(message.created_at)}
+      </Text>
+    </View>
+  )
+}
+
+// ─── Message Bubble ──────────────────────────────────────────────────────
+
 function MessageBubble({
   message,
   onReaction,
@@ -996,6 +1163,32 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
+  // System messages
+  systemMsg: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  systemMsgDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  systemMsgText: {
+    fontSize: 12,
+    fontWeight: '500',
+    fontStyle: 'italic',
+  },
+  systemMsgTime: {
+    fontSize: 10,
+    fontWeight: '400',
+  },
+
   // Header
   header: {
     flexDirection: 'row',
@@ -1012,10 +1205,22 @@ const styles = StyleSheet.create({
     gap: 6,
     flex: 1,
     marginLeft: 8,
+    marginRight: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
-  memberCount: { fontSize: 12, fontWeight: '600', marginLeft: 4 },
-  joinLeaveBtn: { paddingVertical: 6, paddingHorizontal: 16 },
+  headerTitle: { fontSize: 18, fontWeight: '700', flexShrink: 1 },
+  memberCount: { fontSize: 12, fontWeight: '600', marginLeft: 2 },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  headerIconBtn: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  joinLeaveBtn: { paddingVertical: 6, paddingHorizontal: 14, marginLeft: 2 },
   joinLeaveText: { fontSize: 13, fontWeight: '700' },
 
   // Shared post card

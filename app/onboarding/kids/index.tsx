@@ -40,6 +40,7 @@ type StepId =
   | 'child_count'
   | 'child_name'
   | 'child_dob'
+  | 'child_country'
   | 'child_photo'
   | 'child_allergies'
   | 'child_conditions'
@@ -50,7 +51,7 @@ type StepId =
 function buildSteps(childCount: number): StepId[] {
   const steps: StepId[] = ['child_count']
   for (let i = 0; i < childCount; i++) {
-    steps.push('child_name', 'child_dob', 'child_photo', 'child_allergies', 'child_conditions')
+    steps.push('child_name', 'child_dob', 'child_country', 'child_photo', 'child_allergies', 'child_conditions')
   }
   steps.push('partner', 'caregiver', 'complete')
   return steps
@@ -58,9 +59,9 @@ function buildSteps(childCount: number): StepId[] {
 
 /** Given a flat step index, figure out which child index we're on (0-based) */
 function childIndexForStep(stepIndex: number, childCount: number): number {
-  // Steps per child = 5, first step is child_count
+  // Steps per child = 6 (name, dob, country, photo, allergies, conditions), first step is child_count
   if (stepIndex <= 0) return 0
-  return Math.floor((stepIndex - 1) / 5)
+  return Math.floor((stepIndex - 1) / 6)
 }
 
 // ─── Common allergy options ────────────────────────────────────────────────
@@ -91,8 +92,8 @@ export default function KidsOnboarding() {
   const currentStep = steps[currentIndex]
   const childIdx = childIndexForStep(currentIndex, store.childCount)
 
-  // Total visible steps = child_count(1) + perChild(5)*N + partner(1) + caregiver(1)
-  const totalSteps = 1 + store.childCount * 5 + 2
+  // Total visible steps = child_count(1) + perChild(6)*N + partner(1) + caregiver(1)
+  const totalSteps = 1 + store.childCount * 6 + 2
 
   const goNext = useCallback(() => {
     if (currentIndex < steps.length - 1) {
@@ -139,6 +140,7 @@ export default function KidsOnboarding() {
         birth_date: c.birthDate || null,
         allergies: c.allergies,
         conditions: c.conditionsText ? [c.conditionsText] : [],
+        country_code: c.countryCode || 'US',
       }))
 
       const { data: insertedChildren } = await supabase
@@ -236,6 +238,14 @@ export default function KidsOnboarding() {
           childIdx={childIdx}
           showPicker={showDatePicker}
           setShowPicker={setShowDatePicker}
+          onContinue={goNext}
+        />
+      )}
+      {currentStep === 'child_country' && (
+        <StepChildCountry
+          step={stepNum}
+          total={totalSteps}
+          childIdx={childIdx}
           onContinue={goNext}
         />
       )}
@@ -490,6 +500,121 @@ function formatAge(birthDate: string): string {
   const rem = months % 12
   if (rem === 0) return `${years} year${years === 1 ? '' : 's'} old`
   return `${years}y ${rem}m old`
+}
+
+// ─── STEP: Child Country ──────────────────────────────────────────────────
+
+const COUNTRY_OPTIONS: { code: string; flag: string; name: string }[] = [
+  { code: 'US', flag: '🇺🇸', name: 'United States' },
+  { code: 'BR', flag: '🇧🇷', name: 'Brazil' },
+  { code: 'GB', flag: '🇬🇧', name: 'United Kingdom' },
+  { code: 'AU', flag: '🇦🇺', name: 'Australia' },
+  { code: 'CA', flag: '🇨🇦', name: 'Canada' },
+  { code: 'PT', flag: '🇵🇹', name: 'Portugal' },
+  { code: 'DE', flag: '🇩🇪', name: 'Germany' },
+  { code: 'FR', flag: '🇫🇷', name: 'France' },
+  { code: 'MX', flag: '🇲🇽', name: 'Mexico' },
+  { code: 'AR', flag: '🇦🇷', name: 'Argentina' },
+  { code: 'IN', flag: '🇮🇳', name: 'India' },
+]
+
+function StepChildCountry({
+  step,
+  total,
+  childIdx,
+  onContinue,
+}: {
+  step: number
+  total: number
+  childIdx: number
+  onContinue: () => void
+}) {
+  const { colors, radius } = useTheme()
+  const child = useKidsOnboardingStore((s) => s.children[childIdx])
+  const updateChild = useKidsOnboardingStore((s) => s.updateChild)
+  const childName = child?.name || `Child ${childIdx + 1}`
+  const selected = child?.countryCode || 'US'
+
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+
+  const selectedCountry = COUNTRY_OPTIONS.find(c => c.code === selected)
+  const filteredOptions = query.trim()
+    ? COUNTRY_OPTIONS.filter(c => c.name.toLowerCase().includes(query.toLowerCase()) || c.code.toLowerCase().includes(query.toLowerCase()))
+    : COUNTRY_OPTIONS
+
+  return (
+    <OnboardingStep
+      step={step}
+      total={total}
+      question={`Where does ${childName} live?`}
+      onContinue={onContinue}
+    >
+      <View>
+        {/* Selected country display */}
+        {selectedCountry && !open && (
+          <Pressable
+            onPress={() => { setOpen(true); setQuery('') }}
+            style={[
+              stepStyles.countryRow,
+              { backgroundColor: colors.primaryTint, borderColor: colors.primary, borderRadius: radius.lg, marginBottom: 12 },
+            ]}
+          >
+            <Text style={[stepStyles.countryName, { color: colors.primary, flex: 1 }]}>{selectedCountry.name}</Text>
+            <Check size={16} color={colors.primary} strokeWidth={2.5} />
+          </Pressable>
+        )}
+
+        {/* Search input */}
+        <View style={[stepStyles.countrySearch, { backgroundColor: colors.surface, borderColor: open ? colors.primary : colors.border, borderRadius: radius.lg }]}>
+          <TextInput
+            value={query}
+            onChangeText={(t) => { setQuery(t); setOpen(true) }}
+            onFocus={() => setOpen(true)}
+            placeholder="Search country..."
+            placeholderTextColor={colors.textMuted ?? 'rgba(255,255,255,0.35)'}
+            autoCapitalize="none"
+            style={[stepStyles.countrySearchInput, { color: colors.text }]}
+          />
+        </View>
+
+        {/* Dropdown list */}
+        {open && (
+          <View style={[stepStyles.countryDropdown, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ maxHeight: 280 }}>
+              {filteredOptions.map((c) => {
+                const isSelected = selected === c.code
+                return (
+                  <Pressable
+                    key={c.code}
+                    onPress={() => {
+                      updateChild(childIdx, { countryCode: c.code })
+                      setQuery('')
+                      setOpen(false)
+                    }}
+                    style={[
+                      stepStyles.countryDropdownItem,
+                      { backgroundColor: isSelected ? colors.primaryTint : 'transparent' },
+                    ]}
+                  >
+                    <Text style={[stepStyles.countryName, { color: isSelected ? colors.primary : colors.text, flex: 1 }]}>
+                      {c.name}
+                    </Text>
+                    {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
+                  </Pressable>
+                )
+              })}
+              {filteredOptions.length === 0 && (
+                <Text style={[stepStyles.countryName, { color: colors.textMuted ?? 'rgba(255,255,255,0.35)', padding: 16 }]}>
+                  No countries found
+                </Text>
+              )}
+            </ScrollView>
+          </View>
+        )}
+      </View>
+    </OnboardingStep>
+  )
 }
 
 // ─── STEP: Child Photo ─────────────────────────────────────────────────────
@@ -966,6 +1091,40 @@ const stepStyles = StyleSheet.create({
   counterNumber: {
     fontSize: 40,
     fontWeight: '900',
+  },
+  countryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+  },
+  countryName: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  countrySearch: {
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    height: 52,
+    justifyContent: 'center',
+  },
+  countrySearchInput: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  countryDropdown: {
+    borderWidth: 1,
+    marginTop: 6,
+    overflow: 'hidden',
+  },
+  countryDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 10,
   },
   photoPreview: {
     width: 160,

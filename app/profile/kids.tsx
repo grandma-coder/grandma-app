@@ -54,6 +54,20 @@ const SEX_OPTIONS = [
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
+const COUNTRY_OPTIONS = [
+  { code: 'US', flag: '🇺🇸', name: 'United States' },
+  { code: 'BR', flag: '🇧🇷', name: 'Brazil' },
+  { code: 'GB', flag: '🇬🇧', name: 'United Kingdom' },
+  { code: 'AU', flag: '🇦🇺', name: 'Australia' },
+  { code: 'CA', flag: '🇨🇦', name: 'Canada' },
+  { code: 'PT', flag: '🇵🇹', name: 'Portugal' },
+  { code: 'DE', flag: '🇩🇪', name: 'Germany' },
+  { code: 'FR', flag: '🇫🇷', name: 'France' },
+  { code: 'MX', flag: '🇲🇽', name: 'Mexico' },
+  { code: 'AR', flag: '🇦🇷', name: 'Argentina' },
+  { code: 'IN', flag: '🇮🇳', name: 'India' },
+]
+
 const COMMON_CHILD_ALLERGIES = [
   'Milk', 'Eggs', 'Peanuts', 'Tree nuts', 'Wheat', 'Soy', 'Fish',
   'Shellfish', 'Sesame', 'Gluten', 'Lactose', 'Corn', 'Strawberry',
@@ -417,13 +431,16 @@ function EditChildSheet({
   const [bloodType, setBloodType] = useState(child.bloodType)
   const [allergies, setAllergies] = useState<string[]>(child.allergies)
   const [medications, setMedications] = useState<string[]>(child.medications)
-  const [conditions, setConditions] = useState(child.conditions.join(', '))
-  const [dietaryRestrictions, setDietaryRestrictions] = useState(child.dietaryRestrictions.join(', '))
-  const [preferredFoods, setPreferredFoods] = useState(child.preferredFoods.join(', '))
-  const [dislikedFoods, setDislikedFoods] = useState(child.dislikedFoods.join(', '))
+  const [conditions, setConditions] = useState<string[]>(child.conditions)
+  const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>(child.dietaryRestrictions)
+  const [preferredFoods, setPreferredFoods] = useState<string[]>(child.preferredFoods)
+  const [dislikedFoods, setDislikedFoods] = useState<string[]>(child.dislikedFoods)
   const [pedName, setPedName] = useState(child.pediatrician?.name ?? '')
   const [pedPhone, setPedPhone] = useState(child.pediatrician?.phone ?? '')
   const [pedClinic, setPedClinic] = useState(child.pediatrician?.clinic ?? '')
+  const [countryCode, setCountryCode] = useState(child.countryCode ?? 'US')
+  const [countryQuery, setCountryQuery] = useState(COUNTRY_OPTIONS.find(c => c.code === (child.countryCode ?? 'US'))?.name ?? 'United States')
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false)
   const [notes, setNotes] = useState(child.notes)
   const [showDatePicker, setShowDatePicker] = useState(Platform.OS === 'ios')
   const [saving, setSaving] = useState(false)
@@ -432,8 +449,12 @@ function EditChildSheet({
     return [...new Set(s ? s.split(',').map((a) => a.trim()).filter(Boolean) : [])]
   }
 
+  const canSave = name.trim().length > 0 && sex.length > 0 && !!birthDate
+
   async function handleSave() {
-    if (!name.trim()) return Alert.alert('Name required')
+    if (!name.trim()) return Alert.alert('Missing Info', 'Name is required.')
+    if (!sex) return Alert.alert('Missing Info', 'Please select the sex.')
+    if (!birthDate) return Alert.alert('Missing Info', 'Please set the birth date.')
     setSaving(true)
     try {
       const pediatrician = pedName.trim() ? { name: pedName.trim(), phone: pedPhone.trim(), clinic: pedClinic.trim() } : null
@@ -445,12 +466,13 @@ function EditChildSheet({
         blood_type: bloodType || null,
         allergies,
         medications,
-        conditions: splitList(conditions),
-        dietary_restrictions: splitList(dietaryRestrictions),
-        preferred_foods: splitList(preferredFoods),
-        disliked_foods: splitList(dislikedFoods),
+        conditions,
+        dietary_restrictions: dietaryRestrictions,
+        preferred_foods: preferredFoods,
+        disliked_foods: dislikedFoods,
         pediatrician,
         notes: notes.trim() || null,
+        country_code: countryCode,
       }).eq('id', child.id)
 
       if (error) throw error
@@ -461,12 +483,13 @@ function EditChildSheet({
         birthDate: birthDate ?? '',
         sex,
         bloodType,
+        countryCode,
         allergies,
         medications,
-        conditions: splitList(conditions),
-        dietaryRestrictions: splitList(dietaryRestrictions),
-        preferredFoods: splitList(preferredFoods),
-        dislikedFoods: splitList(dislikedFoods),
+        conditions,
+        dietaryRestrictions,
+        preferredFoods,
+        dislikedFoods,
         pediatrician,
         notes: notes.trim(),
       })
@@ -482,9 +505,9 @@ function EditChildSheet({
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={formStyles.form}>
           <SectionHeader label="Basic Info" />
-          <FormField label="Name" value={name} onChangeText={setName} placeholder="Child name" />
+          <FormField label="Name *" value={name} onChangeText={setName} placeholder="Child name" />
 
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>SEX</Text>
+          <Text style={[formStyles.label, { color: colors.textSecondary }]}>SEX *</Text>
           <View style={formStyles.optionRow}>
             {SEX_OPTIONS.map((opt) => (
               <Pressable
@@ -497,7 +520,14 @@ function EditChildSheet({
             ))}
           </View>
 
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>BIRTH DATE</Text>
+          <Text style={[formStyles.label, { color: colors.textSecondary }]}>BIRTH DATE *</Text>
+          {birthDate ? (
+            <View style={[formStyles.ageBadge, { backgroundColor: colors.primary + '15', borderRadius: radius.lg }]}>
+              <Text style={[formStyles.ageBadgeText, { color: colors.primary }]}>
+                {formatAge(birthDate)}
+              </Text>
+            </View>
+          ) : null}
           {Platform.OS === 'android' && !showDatePicker && (
             <Pressable
               onPress={() => setShowDatePicker(true)}
@@ -515,7 +545,7 @@ function EditChildSheet({
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               maximumDate={new Date()}
               minimumDate={new Date(2005, 0, 1)}
-              themeVariant="light"
+              themeVariant="dark"
               onChange={(_, d) => {
                 if (Platform.OS === 'android') setShowDatePicker(false)
                 if (d) setBirthDate(d.toISOString().split('T')[0])
@@ -536,17 +566,61 @@ function EditChildSheet({
             ))}
           </View>
 
+          <Text style={[formStyles.label, { color: colors.textSecondary, marginTop: 8 }]}>COUNTRY (VACCINE SCHEDULE)</Text>
+          <View>
+            <View style={[formStyles.inputRow, { borderRadius: radius.lg, borderColor: countryDropdownOpen ? colors.primary : colors.border }]}>
+              <Search size={16} color={colors.textMuted} strokeWidth={2} />
+              <TextInput
+                value={countryQuery}
+                onChangeText={(t) => { setCountryQuery(t); setCountryDropdownOpen(true) }}
+                onFocus={() => setCountryDropdownOpen(true)}
+                placeholder="Search country..."
+                placeholderTextColor={colors.textMuted}
+                style={[formStyles.inputInner, { color: colors.text }]}
+              />
+              {countryCode && (
+                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primary }}>
+                  {COUNTRY_OPTIONS.find(c => c.code === countryCode)?.code}
+                </Text>
+              )}
+            </View>
+            {countryDropdownOpen && (() => {
+              const q = countryQuery.toLowerCase().trim()
+              const matches = COUNTRY_OPTIONS.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+              if (matches.length === 0) return null
+              return (
+                <View style={[formStyles.dropdown, { borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.lg }]}>
+                  {matches.map((c) => (
+                    <Pressable
+                      key={c.code}
+                      onPress={() => {
+                        setCountryCode(c.code)
+                        setCountryQuery(c.name)
+                        setCountryDropdownOpen(false)
+                      }}
+                      style={[formStyles.dropdownItem, { backgroundColor: c.code === countryCode ? colors.primary + '15' : 'transparent' }]}
+                    >
+                      <Text style={[formStyles.dropdownText, { color: c.code === countryCode ? colors.primary : colors.text }]}>
+                        {c.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )
+            })()}
+          </View>
+
           {/* Health — chips with autocomplete */}
           <SectionHeader label="Health & Medical" />
           <ChipInput label="Allergies" value={allergies} onChange={setAllergies} suggestions={COMMON_CHILD_ALLERGIES} chipColor={brand.error} placeholder="Search allergies..." />
           <ChipInput label="Medications" value={medications} onChange={setMedications} suggestions={COMMON_MEDICATIONS} chipColor={brand.secondary} placeholder="Search medications..." />
-          <FormField label="Conditions" value={conditions} onChangeText={setConditions} placeholder="e.g. Asthma, Eczema" hint="Comma-separated" />
+          <ChipInput label="Conditions" value={conditions} onChange={setConditions} suggestions={[]} chipColor={colors.textSecondary} placeholder="e.g. Asthma, Eczema" />
 
           {/* Food */}
           <SectionHeader label="Food Preferences" />
-          <FormField label="Preferred Foods" value={preferredFoods} onChangeText={setPreferredFoods} placeholder="e.g. Banana, Rice, Chicken nuggets" hint="Things they love eating" />
-          <FormField label="Disliked Foods" value={dislikedFoods} onChangeText={setDislikedFoods} placeholder="e.g. Broccoli, Spinach, Fish" hint="Things they refuse or avoid" />
-          <FormField label="Dietary Restrictions" value={dietaryRestrictions} onChangeText={setDietaryRestrictions} placeholder="e.g. Gluten-free, No pork" hint="Comma-separated" />
+          <ChipInput label="Preferred Foods" value={preferredFoods} onChange={setPreferredFoods} suggestions={[]} chipColor={brand.success} placeholder="e.g. Banana, Rice" />
+          <ChipInput label="Disliked Foods" value={dislikedFoods} onChange={setDislikedFoods} suggestions={[]} chipColor={brand.warning} placeholder="e.g. Broccoli, Spinach" />
+          <ChipInput label="Dietary Restrictions" value={dietaryRestrictions} onChange={setDietaryRestrictions} suggestions={[]} chipColor={brand.accent} placeholder="e.g. Gluten-free, No pork" />
 
           {/* Pediatrician */}
           <SectionHeader label="Pediatrician" />
@@ -560,8 +634,8 @@ function EditChildSheet({
 
           <Pressable
             onPress={handleSave}
-            disabled={saving}
-            style={({ pressed }) => [formStyles.saveBtn, { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: saving ? 0.6 : 1 }, pressed && { transform: [{ scale: 0.98 }] }]}
+            disabled={saving || !canSave}
+            style={({ pressed }) => [formStyles.saveBtn, { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: saving || !canSave ? 0.4 : 1 }, pressed && { transform: [{ scale: 0.98 }] }]}
           >
             <Save size={18} color="#FFFFFF" strokeWidth={2} />
             <Text style={formStyles.saveBtnText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
@@ -591,10 +665,11 @@ function AddChildSheet({
   const [bloodType, setBloodType] = useState('')
   const [allergies, setAllergies] = useState<string[]>([])
   const [medications, setMedications] = useState<string[]>([])
-  const [conditions, setConditions] = useState('')
-  const [dietaryRestrictions, setDietaryRestrictions] = useState('')
-  const [preferredFoods, setPreferredFoods] = useState('')
-  const [dislikedFoods, setDislikedFoods] = useState('')
+  const [conditions, setConditions] = useState<string[]>([])
+  const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([])
+  const [preferredFoods, setPreferredFoods] = useState<string[]>([])
+  const [dislikedFoods, setDislikedFoods] = useState<string[]>([])
+
   const [pedName, setPedName] = useState('')
   const [pedPhone, setPedPhone] = useState('')
   const [pedClinic, setPedClinic] = useState('')
@@ -608,13 +683,17 @@ function AddChildSheet({
 
   function reset() {
     setName(''); setBirthDate(null); setSex(''); setBloodType('')
-    setAllergies([]); setMedications([]); setConditions('')
-    setDietaryRestrictions(''); setPreferredFoods(''); setDislikedFoods('')
+    setAllergies([]); setMedications([]); setConditions([])
+    setDietaryRestrictions([]); setPreferredFoods([]); setDislikedFoods([])
     setPedName(''); setPedPhone(''); setPedClinic(''); setNotes('')
   }
 
+  const canSave = name.trim().length > 0 && sex.length > 0 && !!birthDate
+
   async function handleSave() {
-    if (!name.trim()) return Alert.alert('Name required')
+    if (!name.trim()) return Alert.alert('Missing Info', 'Name is required.')
+    if (!sex) return Alert.alert('Missing Info', 'Please select the sex.')
+    if (!birthDate) return Alert.alert('Missing Info', 'Please set the birth date.')
     setSaving(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -630,10 +709,10 @@ function AddChildSheet({
         blood_type: bloodType || null,
         allergies,
         medications,
-        conditions: splitList(conditions),
-        dietary_restrictions: splitList(dietaryRestrictions),
-        preferred_foods: splitList(preferredFoods),
-        disliked_foods: splitList(dislikedFoods),
+        conditions,
+        dietary_restrictions: dietaryRestrictions,
+        preferred_foods: preferredFoods,
+        disliked_foods: dislikedFoods,
         pediatrician,
         notes: notes.trim() || null,
       }).select().single()
@@ -655,9 +734,9 @@ function AddChildSheet({
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={formStyles.form}>
           <SectionHeader label="Basic Info" />
-          <FormField label="Name" value={name} onChangeText={setName} placeholder="Child's name" />
+          <FormField label="Name *" value={name} onChangeText={setName} placeholder="Child's name" />
 
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>SEX</Text>
+          <Text style={[formStyles.label, { color: colors.textSecondary }]}>SEX *</Text>
           <View style={formStyles.optionRow}>
             {SEX_OPTIONS.map((opt) => (
               <Pressable
@@ -670,7 +749,14 @@ function AddChildSheet({
             ))}
           </View>
 
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>BIRTH DATE</Text>
+          <Text style={[formStyles.label, { color: colors.textSecondary }]}>BIRTH DATE *</Text>
+          {birthDate ? (
+            <View style={[formStyles.ageBadge, { backgroundColor: colors.primary + '15', borderRadius: radius.lg }]}>
+              <Text style={[formStyles.ageBadgeText, { color: colors.primary }]}>
+                {formatAge(birthDate)}
+              </Text>
+            </View>
+          ) : null}
           {Platform.OS === 'android' && !showDatePicker && (
             <Pressable
               onPress={() => setShowDatePicker(true)}
@@ -688,7 +774,7 @@ function AddChildSheet({
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               maximumDate={new Date()}
               minimumDate={new Date(2005, 0, 1)}
-              themeVariant="light"
+              themeVariant="dark"
               onChange={(_, d) => {
                 if (Platform.OS === 'android') setShowDatePicker(false)
                 if (d) setBirthDate(d.toISOString().split('T')[0])
@@ -712,12 +798,12 @@ function AddChildSheet({
           <SectionHeader label="Health & Medical" />
           <ChipInput label="Allergies" value={allergies} onChange={setAllergies} suggestions={COMMON_CHILD_ALLERGIES} chipColor={brand.error} placeholder="Search allergies..." />
           <ChipInput label="Medications" value={medications} onChange={setMedications} suggestions={COMMON_MEDICATIONS} chipColor={brand.secondary} placeholder="Search medications..." />
-          <FormField label="Conditions" value={conditions} onChangeText={setConditions} placeholder="e.g. Asthma, Eczema" hint="Comma-separated" />
+          <ChipInput label="Conditions" value={conditions} onChange={setConditions} suggestions={[]} chipColor={colors.textSecondary} placeholder="e.g. Asthma, Eczema" />
 
           <SectionHeader label="Food Preferences" />
-          <FormField label="Preferred Foods" value={preferredFoods} onChangeText={setPreferredFoods} placeholder="e.g. Banana, Rice, Chicken nuggets" hint="Things they love eating" />
-          <FormField label="Disliked Foods" value={dislikedFoods} onChangeText={setDislikedFoods} placeholder="e.g. Broccoli, Spinach, Fish" hint="Things they refuse or avoid" />
-          <FormField label="Dietary Restrictions" value={dietaryRestrictions} onChangeText={setDietaryRestrictions} placeholder="e.g. Gluten-free, No pork" hint="Comma-separated" />
+          <ChipInput label="Preferred Foods" value={preferredFoods} onChange={setPreferredFoods} suggestions={[]} chipColor={brand.success} placeholder="e.g. Banana, Rice" />
+          <ChipInput label="Disliked Foods" value={dislikedFoods} onChange={setDislikedFoods} suggestions={[]} chipColor={brand.warning} placeholder="e.g. Broccoli, Spinach" />
+          <ChipInput label="Dietary Restrictions" value={dietaryRestrictions} onChange={setDietaryRestrictions} suggestions={[]} chipColor={brand.accent} placeholder="e.g. Gluten-free, No pork" />
 
           <SectionHeader label="Pediatrician" />
           <FormField label="Doctor Name" value={pedName} onChangeText={setPedName} placeholder="Dr. Smith" />
@@ -729,8 +815,8 @@ function AddChildSheet({
 
           <Pressable
             onPress={handleSave}
-            disabled={saving || !name.trim()}
-            style={({ pressed }) => [formStyles.saveBtn, { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: saving || !name.trim() ? 0.4 : 1 }, pressed && { transform: [{ scale: 0.98 }] }]}
+            disabled={saving || !canSave}
+            style={({ pressed }) => [formStyles.saveBtn, { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: saving || !canSave ? 0.4 : 1 }, pressed && { transform: [{ scale: 0.98 }] }]}
           >
             <Plus size={18} color="#FFFFFF" strokeWidth={2} />
             <Text style={formStyles.saveBtnText}>{saving ? 'Adding...' : 'Add Child'}</Text>
@@ -824,7 +910,10 @@ const formStyles = StyleSheet.create({
   input: { borderWidth: 1, paddingHorizontal: 16, height: 48, fontSize: 15, fontWeight: '500' },
   dateBtn: { paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1 },
   dateText: { fontSize: 15, fontWeight: '500' },
+  ageBadge: { alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 14, marginBottom: 4 },
+  ageBadgeText: { fontSize: 14, fontWeight: '800', letterSpacing: 0.3 },
 
+  countryRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1 },
   optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
   optionBtn: { paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1 },
   optionText: { fontSize: 14, fontWeight: '600' },
