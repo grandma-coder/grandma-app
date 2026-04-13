@@ -108,6 +108,10 @@ function getTypeConfig(type: string, size: number = 20): TypeConfig {
     case 'care_circle_accepted':
       return { icon: <Heart size={size} color="#FF8AD8" />, color: '#FF8AD8', category: 'Care Circle' }
 
+    // Reminder
+    case 'reminder':
+      return { icon: <Bell size={size} color="#F59E0B" />, color: '#F59E0B', category: 'Other' }
+
     default:
       return { icon: <Bell size={size} color="#A07FDC" />, color: '#A07FDC', category: 'Other' }
   }
@@ -152,6 +156,10 @@ function navigateForNotification(item: AppNotification) {
       if (data.channelId) {
         router.push(`/channel/${data.channelId}` as any)
       }
+      break
+    case 'reminder':
+      // Navigate to home tab where the reminders section lives
+      router.replace('/(tabs)')
       break
     default:
       break

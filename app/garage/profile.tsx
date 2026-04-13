@@ -72,7 +72,7 @@ export default function GarageProfileScreen() {
       const { data: profile } = await supabase
         .from('profiles')
         .select('name, photo_url')
-        .eq('user_id', session.user.id)
+        .eq('id', session.user.id)
         .single()
 
       if (profile) {

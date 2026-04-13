@@ -69,11 +69,11 @@ export async function fetchFeed(opts?: {
     const authorIds = [...new Set(missingNamePosts.map((p) => p.author_id))]
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('user_id, name')
-      .in('user_id', authorIds)
+      .select('id, name')
+      .in('id', authorIds)
 
     if (profiles) {
-      const nameMap = new Map(profiles.map((p: any) => [p.user_id, p.name]))
+      const nameMap = new Map(profiles.map((p: any) => [p.id, p.name]))
       for (const post of posts) {
         if (!post.author_name) {
           post.author_name = nameMap.get(post.author_id) ?? null
@@ -205,7 +205,7 @@ export async function createGaragePost(opts: {
   const { data: profile } = await supabase
     .from('profiles')
     .select('name')
-    .eq('user_id', session.user.id)
+    .eq('id', session.user.id)
     .single()
 
   const authorName = profile?.name || session.user.email?.split('@')[0] || null
@@ -268,11 +268,11 @@ export async function fetchComments(postId: string): Promise<GarageComment[]> {
     const authorIds = [...new Set(missing.map((c) => c.author_id))]
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('user_id, name')
-      .in('user_id', authorIds)
+      .select('id, name')
+      .in('id', authorIds)
 
     if (profiles) {
-      const nameMap = new Map(profiles.map((p: any) => [p.user_id, p.name]))
+      const nameMap = new Map(profiles.map((p: any) => [p.id, p.name]))
       for (const c of comments) {
         if (!c.author_name) {
           c.author_name = nameMap.get(c.author_id) ?? null
@@ -292,7 +292,7 @@ export async function addComment(postId: string, content: string): Promise<Garag
   const { data: profile } = await supabase
     .from('profiles')
     .select('name')
-    .eq('user_id', session.user.id)
+    .eq('id', session.user.id)
     .single()
 
   const authorName = profile?.name || session.user.email?.split('@')[0] || null
@@ -319,12 +319,12 @@ export async function searchUsers(query: string): Promise<{ id: string; name: st
 
   const { data } = await supabase
     .from('profiles')
-    .select('user_id, name')
+    .select('id, name')
     .ilike('name', `%${query}%`)
     .limit(10)
 
   return (data ?? []).filter((p: any) => p.name).map((p: any) => ({
-    id: p.user_id,
+    id: p.id,
     name: p.name,
   }))
 }

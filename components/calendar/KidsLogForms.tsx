@@ -13,6 +13,7 @@ import {
   Pressable,
   Image,
   Alert,
+  Modal,
   ScrollView,
   Platform,
   StyleSheet,
@@ -23,6 +24,7 @@ import {
 import * as Haptics from 'expo-haptics'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import * as ImagePicker from 'expo-image-picker'
+import * as ImageManipulator from 'expo-image-manipulator'
 import {
   Utensils,
   Moon,
@@ -41,11 +43,16 @@ import {
   Clock,
   Dumbbell,
   Repeat,
+  MinusCircle,
+  Sparkles,
+  ScanLine,
 } from 'lucide-react-native'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
-import { estimateCalories, categoryColor } from '../../lib/foodCalories'
+import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodCalories'
+import type { CalorieMatch } from '../../lib/foodCalories'
+import { estimateFromText, estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
 import type { ChildWithRole } from '../../types'
 
 // ─── Routine Prefill type ─────────────────────────────────────────────────
@@ -56,6 +63,34 @@ export interface RoutinePrefill {
   time?: string   // 'HH:MM'
   value?: string  // JSON string matching the routine's stored value
   name?: string
+}
+
+// ─── Edit Log type (minimal shape for editing an existing child_log) ──────
+
+export interface EditLog {
+  id: string
+  child_id: string
+  date: string
+  type: string
+  value: string | null
+  notes: string | null
+  photos: string[]
+}
+
+// ─── Routine tag helper ────────────────────────────────────────────────────
+// Stamps routineId/routineName onto a JSON value string so the log carries
+// identity back to the routine that produced it. Enables reliable dedup in the
+// calendar and lets logged cards display the routine name (e.g. "Breakfast")
+// instead of the generic log-type label (e.g. "Food").
+function tagWithRoutine(value: string | undefined, prefill?: RoutinePrefill): string | undefined {
+  if (!prefill?.routineId) return value
+  try {
+    const obj = value ? JSON.parse(value) : {}
+    if (typeof obj !== 'object' || obj === null) return value
+    return JSON.stringify({ ...obj, routineId: prefill.routineId, routineName: prefill.name ?? undefined })
+  } catch {
+    return value
+  }
 }
 
 // ─── Photo upload helper ───────────────────────────────────────────────────
@@ -129,6 +164,19 @@ async function saveChildLog(
     photos: photos ?? [],
     logged_by: session.user.id,
   })
+  if (error) throw error
+}
+
+async function updateChildLog(
+  id: string,
+  value?: string | null,
+  notes?: string | null,
+  photos?: string[]
+) {
+  const { error } = await supabase
+    .from('child_logs')
+    .update({ value: value ?? null, notes: notes ?? null, ...(photos ? { photos } : {}) })
+    .eq('id', id)
   if (error) throw error
 }
 
@@ -505,18 +553,22 @@ const EAT_QUALITIES: { id: EatQuality; label: string; icon: typeof Smile; color:
   { id: 'did_not_eat', label: 'Did not eat', icon: Frown, color: brand.error },
 ]
 
-export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill }) {
+export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
   const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
   const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
-  const [startTime, setStartTime] = useState(toTimeStr(new Date()))
+  // Seed startTime directly from prefill so the activity time is the routine's time, not "now"
+  const [startTime, setStartTime] = useState(() => prefill?.time ?? toTimeStr(new Date()))
   const [feedType, setFeedType] = useState<FeedingType>('solids')
   const [meal, setMeal] = useState<MealMoment | null>(null)
   const [photos, setPhotos] = useState<string[]>([])
-  const [description, setDescription] = useState('')
+  const [foodTags, setFoodTags] = useState<{ name: string; match: CalorieMatch | null; manualCals: number | null }[]>([])
+  const [foodInput, setFoodInput] = useState('')
+  const [manualCalIdx, setManualCalIdx] = useState<number | null>(null)
+  const [manualCalInput, setManualCalInput] = useState('')
   const [quality, setQuality] = useState<EatQuality | null>(null)
   const [isNewFood, setIsNewFood] = useState(false)
   const [newFoodName, setNewFoodName] = useState('')
@@ -549,6 +601,21 @@ export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => 
   // Bottle fields
   const [amount, setAmount] = useState('')
 
+  // AI enrichment state — tracks tags currently being estimated by the backend
+  // (for unknown foods not in local FOOD_DB) + plate-photo scanning
+  const [aiLoadingIdx, setAiLoadingIdx] = useState<Set<number>>(new Set())
+  const [scanningPlate, setScanningPlate] = useState(false)
+
+  // Derive child age in months for AI context — improves portion estimation
+  const childAgeMonths = useMemo(() => {
+    const c = children.find((x) => x.id === childId) ?? activeChild
+    if (!c?.birthDate) return undefined
+    const d = new Date(c.birthDate)
+    if (isNaN(d.getTime())) return undefined
+    const now = new Date()
+    return Math.max(0, (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()))
+  }, [children, childId, activeChild])
+
   // Apply routine prefill when it changes
   useEffect(() => {
     setRoutineEnabled(!!prefill)
@@ -566,6 +633,27 @@ export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => 
       } catch {}
     }
   }, [prefill])
+
+  // Apply editLog when opening in edit mode
+  useEffect(() => {
+    if (!editLog) return
+    setChildId(editLog.child_id)
+    setLogDate(editLog.date)
+    if (editLog.notes) setFoodTags(
+      editLog.notes.split(',').map((s) => s.trim()).filter(Boolean).map((name) => ({ name, match: matchSingleTag(name), manualCals: null }))
+    )
+    if (editLog.photos?.length) setPhotos(editLog.photos)
+    try {
+      const p = JSON.parse(editLog.value ?? '{}')
+      if (p.feedType) setFeedType(p.feedType as FeedingType)
+      if (p.meal) setMeal(p.meal as MealMoment)
+      if (p.quality) setQuality(p.quality as EatQuality)
+      if (p.amount) setAmount(String(p.amount))
+      if (p.side) setBreastSide(p.side)
+      if (p.duration) setDuration(String(p.duration))
+      if (p.time) setStartTime(p.time)
+    } catch {}
+  }, [editLog?.id])
 
   // Fetch last breast side for this child
   useEffect(() => {
@@ -653,8 +741,17 @@ export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => 
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
   }
 
-  // Live calorie estimation
-  const calorieEstimate = useMemo(() => estimateCalories(description), [description])
+  // description derived from tags — used for saving as notes
+  const description = foodTags.map((t) => t.name).join(', ')
+
+  // Calorie summary derived directly from tags (match cals or manually entered)
+  const calorieMatches = useMemo(() =>
+    foodTags
+      .filter((t) => t.match !== null || t.manualCals !== null)
+      .map((t) => t.match ? { ...t.match, cals: t.manualCals ?? t.match.cals } : { food: t.name, cals: t.manualCals!, category: 'mixed' as const }),
+    [foodTags]
+  )
+  const totalEstimatedCals = useMemo(() => calorieMatches.reduce((s, m) => s + m.cals, 0), [calorieMatches])
 
   async function pickPhoto() {
     try {
@@ -677,11 +774,104 @@ export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => 
     if (uri) setPhotos((prev) => [...prev, uri].slice(0, 4))
   }
 
+  /** Convert an AI food item to the tag shape used by FeedingForm */
+  function aiItemToTag(item: AiFoodItem): { name: string; match: CalorieMatch; manualCals: null } {
+    return {
+      name: item.name,
+      match: { food: item.name, cals: item.cals, category: item.category },
+      manualCals: null,
+    }
+  }
+
+  /** Enrich a typed food tag via the food-ai backend (used when local DB misses) */
+  async function enrichTagWithAi(indexAtSubmit: number, name: string) {
+    setAiLoadingIdx((prev) => { const next = new Set(prev); next.add(indexAtSubmit); return next })
+    try {
+      const res = await estimateFromText({ text: name, childAgeMonths, meal: meal ?? undefined })
+      const first = res.foods[0]
+      if (first) {
+        setFoodTags((prev) => prev.map((t, i) => (i === indexAtSubmit ? aiItemToTag(first) : t)))
+      }
+    } catch {
+      // Silent — user can still tap the ⚠︎ on the tag to enter kcal manually
+    } finally {
+      setAiLoadingIdx((prev) => { const next = new Set(prev); next.delete(indexAtSubmit); return next })
+    }
+  }
+
+  /** Take/pick a photo of the plate and auto-populate foodTags via Claude Vision */
+  async function scanPlate(source: 'camera' | 'library') {
+    try {
+      if (source === 'camera') {
+        const perm = await ImagePicker.requestCameraPermissionsAsync()
+        if (!perm.granted) { Alert.alert('Permission needed', 'Camera access is required'); return }
+      }
+      const launcher = source === 'camera'
+        ? ImagePicker.launchCameraAsync
+        : ImagePicker.launchImageLibraryAsync
+      const pick = await launcher({ mediaTypes: ['images'], quality: 0.8, base64: false })
+      if (pick.canceled || !pick.assets[0]) return
+      const uri = pick.assets[0].uri
+
+      setScanningPlate(true)
+      // Compress + base64 to keep the payload small (<1MB) per project rules
+      const manipulated = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 1024 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true },
+      )
+      if (!manipulated.base64) throw new Error('Could not encode photo')
+
+      const res = await estimateFromImage({
+        imageBase64: manipulated.base64,
+        mediaType: 'image/jpeg',
+        childAgeMonths,
+        meal: meal ?? undefined,
+      })
+
+      if (res.foods.length === 0) {
+        Alert.alert('No food detected', res.notes ?? 'Try another angle or closer shot.')
+        return
+      }
+
+      // Keep the photo alongside the tags so the log has visual evidence
+      setPhotos((prev) => [...prev, uri].slice(0, 4))
+      // Merge AI results with existing tags (don't duplicate by name)
+      setFoodTags((prev) => {
+        const existing = new Set(prev.map((t) => t.name.toLowerCase()))
+        const added = res.foods
+          .filter((f) => !existing.has(f.name.toLowerCase()))
+          .map(aiItemToTag)
+        return [...prev, ...added]
+      })
+      if (res.notes) Alert.alert('Grandma noticed', res.notes)
+    } catch (e: unknown) {
+      Alert.alert('Scan failed', (e as Error)?.message ?? 'Please try again')
+    } finally {
+      setScanningPlate(false)
+    }
+  }
+
   async function save() {
     if (!childId) return
     setSaving(true)
     try {
-      const uploadedPhotos = await uploadPhotos(photos)
+      const uploadedPhotos = photos.some((p) => !p.startsWith('http')) ? await uploadPhotos(photos.filter((p) => !p.startsWith('http'))) : []
+      const finalPhotos = [...photos.filter((p) => p.startsWith('http')), ...uploadedPhotos]
+      if (editLog) {
+        // Edit mode — UPDATE existing log
+        let value: string
+        if (feedType === 'solids') {
+          value = JSON.stringify({ feedType: 'solids', meal, quality, time: startTime, isNewFood, newFoodName: isNewFood ? newFoodName : undefined, hasReaction, reactionFood: hasReaction ? reactionFood : undefined, reactionDesc: hasReaction ? reactionDesc : undefined, estimatedCals: totalEstimatedCals || undefined })
+        } else if (feedType === 'breast') {
+          value = JSON.stringify({ feedType: 'breast', time: startTime, duration: duration || undefined, side: breastSide || undefined })
+        } else {
+          value = JSON.stringify({ feedType: 'bottle', time: startTime, amount: amount || undefined })
+        }
+        await updateChildLog(editLog.id, tagWithRoutine(value, prefill) ?? value, feedType === 'solids' ? (description || null) : null, finalPhotos.length ? finalPhotos : undefined)
+        onSaved()
+        return
+      }
       if (feedType === 'solids') {
         const value = JSON.stringify({
           feedType: 'solids',
@@ -693,12 +883,10 @@ export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => 
           hasReaction,
           reactionFood: hasReaction ? reactionFood : undefined,
           reactionDesc: hasReaction ? reactionDesc : undefined,
-          estimatedCals: calorieEstimate.totalCals || undefined,
-          matchedFoods: calorieEstimate.matches.length > 0
-            ? calorieEstimate.matches.map((m) => m.food)
-            : undefined,
+          estimatedCals: totalEstimatedCals || undefined,
+          matchedFoods: calorieMatches.length > 0 ? calorieMatches.map((m) => m.food) : undefined,
         })
-        await saveChildLog(childId, 'food', value, description || undefined, uploadedPhotos, logDate)
+        await saveChildLog(childId, 'food', tagWithRoutine(value, prefill) ?? value, description || undefined, finalPhotos, logDate)
       } else if (feedType === 'breast') {
         const value = JSON.stringify({
           feedType: 'breast',
@@ -706,7 +894,7 @@ export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => 
           duration: duration || undefined,
           side: breastSide || undefined,
         })
-        await saveChildLog(childId, 'feeding', value, undefined, undefined, logDate)
+        await saveChildLog(childId, 'feeding', tagWithRoutine(value, prefill) ?? value, undefined, undefined, logDate)
       } else {
         // Bottle
         const value = JSON.stringify({
@@ -714,7 +902,7 @@ export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => 
           time: startTime,
           amount: amount || undefined,
         })
-        await saveChildLog(childId, 'feeding', value, undefined, undefined, logDate)
+        await saveChildLog(childId, 'feeding', tagWithRoutine(value, prefill) ?? value, undefined, undefined, logDate)
       }
       // Save as routine if toggled (only for new logs, not from existing routines)
       if (routineEnabled && !prefill) {
@@ -818,26 +1006,93 @@ export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => 
               )}
             </View>
 
-            {/* Description + live calorie estimate */}
+            {/* Scan plate — Claude Vision identifies every food + estimates kcal */}
+            <Pressable
+              onPress={() =>
+                Alert.alert('Scan plate', "Let Grandma identify what's on the plate and estimate calories.", [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Take photo', onPress: () => scanPlate('camera') },
+                  { text: 'From library', onPress: () => scanPlate('library') },
+                ])
+              }
+              disabled={scanningPlate}
+              style={({ pressed }) => [
+                styles.scanPlateBtn,
+                { backgroundColor: colors.primary + '14', borderColor: colors.primary + '40', borderRadius: radius.lg },
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              {scanningPlate
+                ? <ActivityIndicator size="small" color={colors.primary} />
+                : <ScanLine size={18} color={colors.primary} strokeWidth={2.2} />}
+              <Text style={[styles.scanPlateText, { color: colors.primary }]}>
+                {scanningPlate ? 'Reading the plate…' : 'Scan plate — auto-detect foods & calories'}
+              </Text>
+              <Sparkles size={14} color={colors.primary} strokeWidth={2} />
+            </Pressable>
+
+            {/* Food tag input + live calorie estimate */}
             <View>
+              {/* Existing tags */}
+              {foodTags.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+                  {foodTags.map((tag, i) => {
+                    const loading = aiLoadingIdx.has(i)
+                    const known = tag.match !== null || tag.manualCals !== null
+                    const borderColor = loading ? colors.primary : known ? brand.success : brand.error
+                    return (
+                      <View key={`${tag.name}-${i}`} style={[styles.foodTag, { backgroundColor: colors.surfaceRaised, borderColor, borderRadius: radius.full }]}>
+                        {loading
+                          ? <ActivityIndicator size="small" color={colors.primary} />
+                          : known
+                            ? <Check size={12} color={brand.success} strokeWidth={3} />
+                            : (
+                              <Pressable onPress={() => { setManualCalIdx(i); setManualCalInput('') }} hitSlop={8}>
+                                <AlertTriangle size={12} color={brand.error} strokeWidth={2.5} />
+                              </Pressable>
+                            )
+                        }
+                        <Text style={[styles.foodTagText, { color: colors.text }]}>{tag.name}</Text>
+                        <Pressable onPress={() => setFoodTags((prev) => prev.filter((_, idx) => idx !== i))} hitSlop={8}>
+                          <Text style={[styles.foodTagRemove, { color: colors.textMuted }]}>×</Text>
+                        </Pressable>
+                      </View>
+                    )
+                  })}
+                </View>
+              )}
+              {/* Input for next food */}
               <TextInput
-                value={description}
-                onChangeText={setDescription}
-                placeholder="What did they eat? (e.g. rice, chicken, banana)"
+                value={foodInput}
+                onChangeText={setFoodInput}
+                placeholder={foodTags.length === 0 ? 'Add a food (e.g. banana) and press ↵' : 'Add another food…'}
                 placeholderTextColor={colors.textMuted}
-                multiline
+                returnKeyType="done"
+                blurOnSubmit={false}
+                onSubmitEditing={() => {
+                  const trimmed = foodInput.trim()
+                  if (!trimmed) return
+                  const match = matchSingleTag(trimmed)
+                  setFoodTags((prev) => {
+                    const idx = prev.length
+                    // Kick off AI enrichment in the background if the local DB missed
+                    if (!match) enrichTagWithAi(idx, trimmed)
+                    return [...prev, { name: trimmed, match, manualCals: null }]
+                  })
+                  setFoodInput('')
+                }}
                 style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg, minHeight: 48 }]}
               />
-              {calorieEstimate.matches.length > 0 && (
+              {calorieMatches.length > 0 && (
                 <View style={[styles.calorieBanner, { backgroundColor: brand.success + '10', borderColor: brand.success + '30', borderRadius: radius.lg }]}>
                   <View style={styles.calorieHeader}>
                     <Utensils size={14} color={brand.success} strokeWidth={2} />
                     <Text style={[styles.calorieTotalText, { color: brand.success }]}>
-                      ~{calorieEstimate.totalCals} kcal estimated
+                      ~{totalEstimatedCals} kcal estimated
                     </Text>
                   </View>
                   <View style={styles.calorieMatchList}>
-                    {calorieEstimate.matches.map((m, i) => (
+                    {calorieMatches.map((m, i) => (
                       <View key={`${m.food}-${i}`} style={styles.calorieMatchRow}>
                         <View style={[styles.calorieMatchDot, { backgroundColor: categoryColor(m.category) }]} />
                         <Text style={[styles.calorieMatchFood, { color: colors.text }]}>
@@ -851,6 +1106,49 @@ export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => 
                   </View>
                 </View>
               )}
+
+              {/* Manual kcal popup for unrecognized foods */}
+              <Modal visible={manualCalIdx !== null} transparent animationType="fade" onRequestClose={() => setManualCalIdx(null)}>
+                <Pressable style={styles.popupBackdrop} onPress={() => setManualCalIdx(null)} />
+                <View style={[styles.manualCalPopup, { backgroundColor: colors.surface, borderRadius: radius.xl, borderColor: colors.border }]}>
+                  <Text style={[styles.manualCalTitle, { color: colors.text }]}>
+                    Unknown food — add kcal manually
+                  </Text>
+                  <Text style={[styles.manualCalSubtitle, { color: colors.textSecondary }]}>
+                    "{manualCalIdx !== null ? foodTags[manualCalIdx]?.name : ''}" wasn't found in our database. How many kcal?
+                  </Text>
+                  <TextInput
+                    value={manualCalInput}
+                    onChangeText={setManualCalInput}
+                    placeholder="e.g. 120"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="number-pad"
+                    style={[styles.input, { color: colors.text, backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderRadius: radius.lg, minHeight: 48, marginTop: 12 }]}
+                    autoFocus
+                  />
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+                    <Pressable
+                      onPress={() => setManualCalIdx(null)}
+                      style={[styles.manualCalBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, flex: 1 }]}
+                    >
+                      <Text style={[styles.manualCalBtnText, { color: colors.textSecondary }]}>Skip</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        const n = parseInt(manualCalInput, 10)
+                        if (!isNaN(n) && n > 0 && manualCalIdx !== null) {
+                          setFoodTags((prev) => prev.map((t, i) => i === manualCalIdx ? { ...t, manualCals: n } : t))
+                        }
+                        setManualCalIdx(null)
+                        setManualCalInput('')
+                      }}
+                      style={[styles.manualCalBtn, { backgroundColor: colors.primary, borderColor: colors.primary, flex: 1 }]}
+                    >
+                      <Text style={[styles.manualCalBtnText, { color: '#FFF' }]}>Confirm</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </Modal>
             </View>
 
             {/* Eat quality */}
@@ -1181,7 +1479,7 @@ export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => 
         )}
 
         <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
-        <SaveButton onPress={save} saving={saving} disabled={!childId} />
+        <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={prefill?.routineId ? onSkip : undefined} />
       </View>
     </ScrollView>
   )
@@ -1189,22 +1487,33 @@ export function FeedingForm({ onSaved, initialDate, prefill }: { onSaved: () => 
 
 // ─── 2. SLEEP FORM ─────────────────────────────────────────────────────────
 
-export function SleepForm({ onSaved, initialDate, prefill }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill }) {
+export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
   const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
   const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
-  const [startTime, setStartTime] = useState(toTimeStr(new Date()))
-  const [endTime, setEndTime] = useState('')
+  // Seed startTime directly from prefill so the activity time is the routine's time, not "now"
+  const [startTime, setStartTime] = useState(() => {
+    if (prefill?.value) {
+      try { const p = JSON.parse(prefill.value); if (p.startTime) return p.startTime } catch {}
+    }
+    return prefill?.time ?? toTimeStr(new Date())
+  })
+  const [endTime, setEndTime] = useState(() => {
+    if (prefill?.value) {
+      try { const p = JSON.parse(prefill.value); if (p.endTime) return p.endTime } catch {}
+    }
+    return ''
+  })
   const [quality, setQuality] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
-  const [routineEnabled, setRoutineEnabled] = useState(false)
+  const [routineEnabled, setRoutineEnabled] = useState(!!prefill)
   const [routineDays, setRoutineDays] = useState([0, 1, 2, 3, 4, 5, 6])
 
-  // Apply routine prefill when it changes
+  // Apply routine prefill when it changes (handles cases where prefill changes after mount)
   useEffect(() => {
     setRoutineEnabled(!!prefill)
     if (!prefill) return
@@ -1220,6 +1529,20 @@ export function SleepForm({ onSaved, initialDate, prefill }: { onSaved: () => vo
     }
   }, [prefill])
 
+  // Apply editLog when opening in edit mode
+  useEffect(() => {
+    if (!editLog) return
+    setChildId(editLog.child_id)
+    setLogDate(editLog.date)
+    if (editLog.notes) setNotes(editLog.notes)
+    try {
+      const p = JSON.parse(editLog.value ?? '{}')
+      if (p.startTime) setStartTime(p.startTime)
+      if (p.endTime) setEndTime(p.endTime)
+      if (p.quality) setQuality(p.quality)
+    } catch {}
+  }, [editLog?.id])
+
   const autoDuration = useMemo(() => calcDuration(startTime, endTime), [startTime, endTime])
 
   const qualities = ['Great', 'Good', 'Restless', 'Poor']
@@ -1229,7 +1552,13 @@ export function SleepForm({ onSaved, initialDate, prefill }: { onSaved: () => vo
     setSaving(true)
     try {
       const value = JSON.stringify({ duration: autoDuration || undefined, quality, startTime, endTime: endTime || undefined })
-      await saveChildLog(childId, 'sleep', value, notes || undefined, undefined, logDate)
+      const taggedValue = tagWithRoutine(value, prefill) ?? value
+      if (editLog) {
+        await updateChildLog(editLog.id, taggedValue, notes || null)
+        onSaved()
+        return
+      }
+      await saveChildLog(childId, 'sleep', taggedValue, notes || undefined, undefined, logDate)
       if (routineEnabled && !prefill) {
         const isNap = parseInt(startTime.split(':')[0]) < 16
         await saveAsRoutine(childId, 'sleep', isNap ? 'Nap' : 'Bedtime', JSON.stringify({ startTime, quality }), startTime, routineDays)
@@ -1295,7 +1624,7 @@ export function SleepForm({ onSaved, initialDate, prefill }: { onSaved: () => vo
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
       <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
-      <SaveButton onPress={save} saving={saving} disabled={!childId} />
+      <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={prefill?.routineId ? onSkip : undefined} />
     </View>
   )
 }
@@ -1304,14 +1633,14 @@ export function SleepForm({ onSaved, initialDate, prefill }: { onSaved: () => vo
 
 const HEALTH_EVENTS = ['Temperature', 'Vaccine', 'Medicine', 'Doctor visit', 'Injury', 'Other']
 
-export function HealthEventForm({ onSaved, initialDate, prefill }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill }) {
+export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
   const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
   const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
-  const [startTime, setStartTime] = useState(toTimeStr(new Date()))
+  const [startTime, setStartTime] = useState(() => prefill?.time ?? toTimeStr(new Date()))
   const [eventType, setEventType] = useState<string | null>(null)
   const [value, setValue] = useState('')
   const [notes, setNotes] = useState('')
@@ -1328,6 +1657,19 @@ export function HealthEventForm({ onSaved, initialDate, prefill }: { onSaved: ()
     }
   }, [prefill])
 
+  // Apply editLog when opening in edit mode
+  useEffect(() => {
+    if (!editLog) return
+    setChildId(editLog.child_id)
+    setLogDate(editLog.date)
+    if (editLog.notes) setNotes(editLog.notes)
+    // Reverse-map log type to event label
+    const typeToLabel: Record<string, string> = { temperature: 'Temperature', vaccine: 'Vaccine', medicine: 'Medicine', note: 'Other' }
+    if (typeToLabel[editLog.type]) setEventType(typeToLabel[editLog.type])
+    else if (HEALTH_EVENTS.includes(editLog.type)) setEventType(editLog.type)
+    if (editLog.value) setValue(editLog.value)
+  }, [editLog?.id])
+
   async function save() {
     if (!childId || !eventType) return
     setSaving(true)
@@ -1336,7 +1678,13 @@ export function HealthEventForm({ onSaved, initialDate, prefill }: { onSaved: ()
         : eventType === 'Vaccine' ? 'vaccine'
         : eventType === 'Medicine' ? 'medicine'
         : 'note'
-      await saveChildLog(childId, logType, value || eventType, notes || undefined, undefined, logDate)
+      const tagged = tagWithRoutine(value || eventType, prefill) ?? (value || eventType)
+      if (editLog) {
+        await updateChildLog(editLog.id, tagged, notes || null)
+        onSaved()
+        return
+      }
+      await saveChildLog(childId, logType, tagged, notes || undefined, undefined, logDate)
       onSaved()
     } catch (e: any) {
       Alert.alert('Error', e.message)
@@ -1391,7 +1739,7 @@ export function HealthEventForm({ onSaved, initialDate, prefill }: { onSaved: ()
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
-      <SaveButton onPress={save} saving={saving} disabled={!childId || !eventType} />
+      <SaveButton onPress={save} saving={saving} disabled={!childId || !eventType} onSkip={prefill?.routineId ? onSkip : undefined} />
     </View>
   )
 }
@@ -1406,18 +1754,18 @@ const MOODS = [
   { id: 'energetic', icon: Zap, label: 'Energetic' },
 ]
 
-export function KidsMoodForm({ onSaved, initialDate, prefill }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill }) {
+export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
   const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
   const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
-  const [startTime, setStartTime] = useState(toTimeStr(new Date()))
+  const [startTime, setStartTime] = useState(() => prefill?.time ?? toTimeStr(new Date()))
   const [mood, setMood] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
-  const [routineEnabled, setRoutineEnabled] = useState(false)
+  const [routineEnabled, setRoutineEnabled] = useState(!!prefill)
   const [routineDays, setRoutineDays] = useState([0, 1, 2, 3, 4, 5, 6])
 
   // Apply routine prefill when it changes
@@ -1437,10 +1785,24 @@ export function KidsMoodForm({ onSaved, initialDate, prefill }: { onSaved: () =>
     }
   }, [prefill])
 
+  // Apply editLog when opening in edit mode
+  useEffect(() => {
+    if (!editLog) return
+    setChildId(editLog.child_id)
+    setLogDate(editLog.date)
+    if (editLog.notes) setNotes(editLog.notes)
+    if (editLog.value && MOODS.some((m) => m.id === editLog.value)) setMood(editLog.value)
+  }, [editLog?.id])
+
   async function save() {
     if (!childId || !mood) return
     setSaving(true)
     try {
+      if (editLog) {
+        await updateChildLog(editLog.id, mood, notes || null)
+        onSaved()
+        return
+      }
       await saveChildLog(childId, 'mood', mood, notes || undefined, undefined, logDate)
       if (routineEnabled && !prefill) {
         await saveAsRoutine(childId, 'mood', 'Mood check', null, startTime, routineDays)
@@ -1489,7 +1851,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill }: { onSaved: () =>
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
       <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
-      <SaveButton onPress={save} saving={saving} disabled={!childId || !mood} />
+      <SaveButton onPress={save} saving={saving} disabled={!childId || !mood} onSkip={prefill?.routineId ? onSkip : undefined} />
     </View>
   )
 }
@@ -1595,13 +1957,13 @@ const ACTIVITY_TYPES = [
   { id: 'other', label: 'Other' },
 ]
 
-export function ActivityForm({ onSaved, initialDate, prefill }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill }) {
+export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
   const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
 
   const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
-  const [startTime, setStartTime] = useState(toTimeStr(new Date()))
+  const [startTime, setStartTime] = useState(() => prefill?.time ?? toTimeStr(new Date()))
   const [endTime, setEndTime] = useState('')
   const [activityType, setActivityType] = useState<string | null>(null)
   const [name, setName] = useState('')
@@ -1629,6 +1991,21 @@ export function ActivityForm({ onSaved, initialDate, prefill }: { onSaved: () =>
     }
   }, [prefill])
 
+  // Apply editLog when opening in edit mode
+  useEffect(() => {
+    if (!editLog) return
+    setChildId(editLog.child_id)
+    setLogDate(editLog.date)
+    if (editLog.notes) setNotes(editLog.notes)
+    try {
+      const p = JSON.parse(editLog.value ?? '{}')
+      if (p.activityType) setActivityType(p.activityType)
+      if (p.name) setName(p.name)
+      if (p.startTime) setStartTime(p.startTime)
+      if (p.endTime) setEndTime(p.endTime)
+    } catch {}
+  }, [editLog?.id])
+
   const autoDuration = useMemo(() => calcDuration(startTime, endTime), [startTime, endTime])
 
   async function save() {
@@ -1642,7 +2019,13 @@ export function ActivityForm({ onSaved, initialDate, prefill }: { onSaved: () =>
         startTime,
         endTime: endTime || undefined,
       })
-      await saveChildLog(childId, 'activity', value, notes || undefined, undefined, logDate)
+      const tagged = tagWithRoutine(value, prefill) ?? value
+      if (editLog) {
+        await updateChildLog(editLog.id, tagged, notes || null)
+        onSaved()
+        return
+      }
+      await saveChildLog(childId, 'activity', tagged, notes || undefined, undefined, logDate)
       if (routineEnabled && !prefill) {
         const routineName = name || ACTIVITY_TYPES.find((a) => a.id === activityType)?.label || 'Activity'
         await saveAsRoutine(childId, 'activity', routineName, value, startTime, routineDays)
@@ -1719,7 +2102,7 @@ export function ActivityForm({ onSaved, initialDate, prefill }: { onSaved: () =>
           style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
         />
         <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
-        <SaveButton onPress={save} saving={saving} disabled={!childId || !activityType} />
+        <SaveButton onPress={save} saving={saving} disabled={!childId || !activityType} onSkip={prefill?.routineId ? onSkip : undefined} />
       </View>
     </ScrollView>
   )
@@ -1727,20 +2110,44 @@ export function ActivityForm({ onSaved, initialDate, prefill }: { onSaved: () =>
 
 // ─── Save Button ───────────────────────────────────────────────────────────
 
-function SaveButton({ onPress, saving, disabled }: { onPress: () => void; saving: boolean; disabled?: boolean }) {
+function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void; saving: boolean; disabled?: boolean; onSkip?: () => void }) {
   const { colors, radius } = useTheme()
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={saving || disabled}
-      style={({ pressed }) => [
-        styles.saveBtn,
-        { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: disabled ? 0.4 : 1 },
-        pressed && !disabled && { transform: [{ scale: 0.98 }], opacity: 0.9 },
-      ]}
-    >
-      {saving ? <ActivityIndicator color="#FFF" /> : <Text style={styles.saveBtnText}>Save</Text>}
-    </Pressable>
+    <View style={{ gap: 8 }}>
+      {onSkip && (
+        <Pressable
+          onPress={onSkip}
+          disabled={saving}
+          style={({ pressed }) => [
+            styles.saveBtn,
+            {
+              backgroundColor: 'transparent',
+              borderRadius: radius.lg,
+              borderWidth: 1,
+              borderColor: colors.border,
+              opacity: saving ? 0.4 : 1,
+            },
+            pressed && { opacity: 0.7 },
+          ]}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <MinusCircle size={16} color={colors.textMuted} strokeWidth={2} />
+            <Text style={[styles.saveBtnText, { color: colors.textMuted }]}>Skip this time</Text>
+          </View>
+        </Pressable>
+      )}
+      <Pressable
+        onPress={onPress}
+        disabled={saving || disabled}
+        style={({ pressed }) => [
+          styles.saveBtn,
+          { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: disabled ? 0.4 : 1 },
+          pressed && !disabled && { transform: [{ scale: 0.98 }], opacity: 0.9 },
+        ]}
+      >
+        {saving ? <ActivityIndicator color="#FFF" /> : <Text style={styles.saveBtnText}>Save</Text>}
+      </Pressable>
+    </View>
   )
 }
 
@@ -1790,7 +2197,20 @@ const styles = StyleSheet.create({
   saveBtn: { height: 48, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   saveBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 
+  // Scan plate (AI vision)
+  scanPlateBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, marginBottom: 12 },
+  scanPlateText: { flex: 1, fontSize: 14, fontWeight: '700' },
+
   // Calorie banner
+  foodTag: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5 },
+  foodTagText: { fontSize: 13, fontWeight: '600' },
+  foodTagRemove: { fontSize: 18, lineHeight: 20, fontWeight: '400' },
+  popupBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
+  manualCalPopup: { position: 'absolute', left: 24, right: 24, top: '35%', padding: 20, borderWidth: 1 },
+  manualCalTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
+  manualCalSubtitle: { fontSize: 13, fontWeight: '500', lineHeight: 18 },
+  manualCalBtn: { paddingVertical: 12, alignItems: 'center', borderRadius: 999, borderWidth: 1 },
+  manualCalBtnText: { fontSize: 14, fontWeight: '700' },
   calorieBanner: { marginTop: 8, padding: 12, borderWidth: 1 },
   calorieHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   calorieTotalText: { fontSize: 13, fontWeight: '700' },

@@ -23,6 +23,7 @@ const FOOD_DB: FoodEntry[] = [
   { name: 'avocado', aliases: ['abacate'], calsPer100g: 160, typicalServingG: 40, category: 'fruit' },
   { name: 'pear', aliases: ['pears', 'pera'], calsPer100g: 57, typicalServingG: 60, category: 'fruit' },
   { name: 'grape', aliases: ['grapes', 'uva', 'uvas'], calsPer100g: 69, typicalServingG: 40, category: 'fruit' },
+  { name: 'pineapple', aliases: ['ananas', 'abacaxi', 'pinapple', 'pineaple'], calsPer100g: 50, typicalServingG: 60, category: 'fruit' },
   { name: 'watermelon', aliases: ['melancia'], calsPer100g: 30, typicalServingG: 80, category: 'fruit' },
   { name: 'orange', aliases: ['oranges', 'laranja'], calsPer100g: 47, typicalServingG: 60, category: 'fruit' },
   { name: 'peach', aliases: ['peaches', 'pessego'], calsPer100g: 39, typicalServingG: 60, category: 'fruit' },
@@ -66,7 +67,7 @@ const FOOD_DB: FoodEntry[] = [
   { name: 'milk', aliases: ['leite', 'whole milk'], calsPer100g: 61, typicalServingG: 120, category: 'dairy' },
   { name: 'formula', aliases: ['baby formula', 'formula milk'], calsPer100g: 65, typicalServingG: 120, category: 'dairy' },
   { name: 'breast milk', aliases: ['breastmilk', 'leite materno'], calsPer100g: 70, typicalServingG: 120, category: 'dairy' },
-  { name: 'yogurt', aliases: ['iogurte', 'yoghurt'], calsPer100g: 59, typicalServingG: 80, category: 'dairy' },
+  { name: 'yogurt', aliases: ['iogurte', 'yoghurt', 'yourgurt', 'yougurt', 'yoghurt'], calsPer100g: 59, typicalServingG: 80, category: 'dairy' },
   { name: 'cheese', aliases: ['queijo', 'cheddar', 'mozzarella'], calsPer100g: 350, typicalServingG: 15, category: 'dairy' },
   { name: 'cream cheese', aliases: ['requeijao', 'requeijão'], calsPer100g: 342, typicalServingG: 15, category: 'dairy' },
   { name: 'butter', aliases: ['manteiga'], calsPer100g: 717, typicalServingG: 5, category: 'dairy' },
@@ -111,30 +112,58 @@ export interface CalorieEstimate {
   matches: CalorieMatch[]
 }
 
+/** Escape special regex chars in a food name */
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/** True if `token` matches `candidate` as a whole word or exact string */
+function tokenMatchesName(token: string, candidate: string): boolean {
+  if (token === candidate) return true
+  // Word-boundary match so "pineapple" doesn't match "apple"
+  const re = new RegExp(`(?<![a-z])${escapeRegex(candidate)}(?![a-z])`)
+  return re.test(token)
+}
+
 export function estimateCalories(description: string): CalorieEstimate {
   if (!description.trim()) return { totalCals: 0, matches: [] }
 
-  const input = description.toLowerCase()
+  // Each tag is a comma-separated token (from the tag chip input)
+  const tokens = description.toLowerCase().split(',').map((s) => s.trim()).filter(Boolean)
+
   const matches: CalorieMatch[] = []
   const matched = new Set<string>()
 
-  for (const entry of FOOD_DB) {
-    const allNames = [entry.name, ...entry.aliases]
-    const found = allNames.some((name) => input.includes(name.toLowerCase()))
-
-    if (found && !matched.has(entry.name)) {
-      matched.add(entry.name)
-      const cals = Math.round((entry.calsPer100g * entry.typicalServingG) / 100)
-      matches.push({
-        food: entry.name,
-        cals,
-        category: entry.category,
-      })
+  for (const token of tokens) {
+    for (const entry of FOOD_DB) {
+      if (matched.has(entry.name)) continue
+      const allNames = [entry.name, ...entry.aliases]
+      const found = allNames.some((name) => tokenMatchesName(token, name.toLowerCase()))
+      if (found) {
+        matched.add(entry.name)
+        const cals = Math.round((entry.calsPer100g * entry.typicalServingG) / 100)
+        matches.push({ food: entry.name, cals, category: entry.category })
+      }
     }
   }
 
   const totalCals = matches.reduce((sum, m) => sum + m.cals, 0)
   return { totalCals, matches }
+}
+
+/** Match a single food tag against the DB. Returns the match or null if unknown. */
+export function matchSingleTag(tag: string): CalorieMatch | null {
+  const token = tag.toLowerCase().trim()
+  if (!token) return null
+  for (const entry of FOOD_DB) {
+    const allNames = [entry.name, ...entry.aliases]
+    const found = allNames.some((name) => tokenMatchesName(token, name.toLowerCase()))
+    if (found) {
+      const cals = Math.round((entry.calsPer100g * entry.typicalServingG) / 100)
+      return { food: entry.name, cals, category: entry.category }
+    }
+  }
+  return null
 }
 
 /** Get a color for a calorie category */
