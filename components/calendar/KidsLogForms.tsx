@@ -46,6 +46,7 @@ import {
   MinusCircle,
   Sparkles,
   ScanLine,
+  X,
 } from 'lucide-react-native'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
@@ -93,6 +94,25 @@ function tagWithRoutine(value: string | undefined, prefill?: RoutinePrefill): st
   }
 }
 
+// ─── Stabilise a picked image ─────────────────────────────────────────────
+// iOS image picker URIs (ph://) can become unreadable once the picker closes.
+// Run the image through expo-image-manipulator immediately to copy it to a
+// stable file:// path and compress to < 1 MB (per project rules).
+
+async function stabiliseUri(uri: string): Promise<string> {
+  try {
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: 1200 } }],
+      { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
+    )
+    return result.uri
+  } catch {
+    // If manipulate fails, return original and let upload handle it
+    return uri
+  }
+}
+
 // ─── Photo upload helper ───────────────────────────────────────────────────
 
 async function uploadPhotos(uris: string[]): Promise<string[]> {
@@ -102,10 +122,9 @@ async function uploadPhotos(uris: string[]): Promise<string[]> {
   const publicUrls: string[] = []
   for (const uri of uris) {
     try {
-      const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg'
-      const path = `kids-logs/${session.user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`
+      const path = `kids-logs/${session.user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`
       const formData = new FormData()
-      formData.append('', { uri, name: path.split('/').pop(), type: `image/${ext}` } as any)
+      formData.append('', { uri, name: path.split('/').pop(), type: 'image/jpeg' } as any)
       const { error } = await supabase.storage
         .from('garage-photos')
         .upload(path, formData, { contentType: 'multipart/form-data', upsert: true })
@@ -128,7 +147,9 @@ async function launchCameraSafe(): Promise<string | null> {
       return null
     }
     const result = await ImagePicker.launchCameraAsync({ quality: 0.7 })
-    if (!result.canceled && result.assets[0]) return result.assets[0].uri
+    if (!result.canceled && result.assets[0]) {
+      return stabiliseUri(result.assets[0].uri)
+    }
   } catch {
     Alert.alert('Camera unavailable', 'Please use the gallery to pick a photo instead.')
   }
@@ -157,7 +178,7 @@ async function saveChildLog(
   const { error } = await supabase.from('child_logs').insert({
     child_id: childId,
     user_id: child?.user_id ?? session.user.id,
-    date: date ?? new Date().toISOString().split('T')[0],
+    date: date ?? toDateStr(new Date()),
     type,
     value: value ?? null,
     notes: notes ?? null,
@@ -762,7 +783,8 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
         selectionLimit: 4,
       })
       if (!result.canceled) {
-        setPhotos((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4))
+        const stable = await Promise.all(result.assets.map((a) => stabiliseUri(a.uri)))
+        setPhotos((prev) => [...prev, ...stable].slice(0, 4))
       }
     } catch (e: any) {
       Alert.alert('Error', 'Could not open photo library')
@@ -1879,7 +1901,8 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
         selectionLimit: 4,
       })
       if (!result.canceled) {
-        setPhotos((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4))
+        const stable = await Promise.all(result.assets.map((a) => stabiliseUri(a.uri)))
+        setPhotos((prev) => [...prev, ...stable].slice(0, 4))
       }
     } catch (e: any) {
       Alert.alert('Error', 'Could not open photo library')
@@ -2103,6 +2126,227 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
         />
         <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
         <SaveButton onPress={save} saving={saving} disabled={!childId || !activityType} onSkip={prefill?.routineId ? onSkip : undefined} />
+      </View>
+    </ScrollView>
+  )
+}
+
+// ─── 7. DIAPER FORM ────────────────────────────────────────────────────────
+
+type DiaperType = 'pee' | 'poop' | 'mixed'
+type DiaperColor = 'yellow' | 'green' | 'brown' | 'black' | 'red' | 'orange'
+type DiaperConsistency = 'liquid' | 'soft' | 'normal' | 'hard'
+
+const DIAPER_TYPES: { id: DiaperType; label: string; emoji: string }[] = [
+  { id: 'pee', label: 'Pee', emoji: '💧' },
+  { id: 'poop', label: 'Poop', emoji: '💩' },
+  { id: 'mixed', label: 'Both', emoji: '🔄' },
+]
+
+const DIAPER_COLORS: { id: DiaperColor; label: string; hex: string }[] = [
+  { id: 'yellow', label: 'Yellow', hex: '#F4D03F' },
+  { id: 'green', label: 'Green', hex: '#58D68D' },
+  { id: 'brown', label: 'Brown', hex: '#A04000' },
+  { id: 'black', label: 'Black', hex: '#2C2C2C' },
+  { id: 'orange', label: 'Orange', hex: '#F39C12' },
+  { id: 'red', label: 'Red', hex: '#E74C3C' },
+]
+
+const DIAPER_CONSISTENCIES: { id: DiaperConsistency; label: string }[] = [
+  { id: 'liquid', label: 'Liquid' },
+  { id: 'soft', label: 'Soft' },
+  { id: 'normal', label: 'Normal' },
+  { id: 'hard', label: 'Hard' },
+]
+
+export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => void; initialDate?: string; editLog?: EditLog }) {
+  const { colors, radius } = useTheme()
+  const children = useChildStore((s) => s.children)
+
+  const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
+  const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
+  const [logTime, setLogTime] = useState(toTimeStr(new Date()))
+  const [diaperType, setDiaperType] = useState<DiaperType | null>(null)
+  const [color, setColor] = useState<DiaperColor | null>(null)
+  const [consistency, setConsistency] = useState<DiaperConsistency | null>(null)
+  const [photos, setPhotos] = useState<string[]>([])
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const showPooDetails = diaperType === 'poop' || diaperType === 'mixed'
+
+  useEffect(() => {
+    if (!editLog) return
+    setChildId(editLog.child_id)
+    setLogDate(editLog.date)
+    if (editLog.notes) setNotes(editLog.notes)
+    if (editLog.photos?.length) setPhotos(editLog.photos)
+    try {
+      const p = JSON.parse(editLog.value ?? '{}')
+      if (p.diaperType) setDiaperType(p.diaperType)
+      if (p.color) setColor(p.color)
+      if (p.consistency) setConsistency(p.consistency)
+      if (p.time) setLogTime(p.time)
+    } catch {}
+  }, [editLog?.id])
+
+  async function pickPhoto() {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: false, quality: 0.7 })
+      if (!result.canceled && result.assets[0]) {
+        const stable = await stabiliseUri(result.assets[0].uri)
+        setPhotos([stable])
+      }
+    } catch {
+      Alert.alert('Error', 'Could not open photo library')
+    }
+  }
+
+  async function takePhoto() {
+    const uri = await launchCameraSafe()
+    if (uri) setPhotos([uri])
+  }
+
+  async function save() {
+    if (!childId || !diaperType) return
+    setSaving(true)
+    try {
+      const value = JSON.stringify({
+        diaperType,
+        color: showPooDetails ? (color ?? undefined) : undefined,
+        consistency: showPooDetails ? (consistency ?? undefined) : undefined,
+        time: logTime,
+      })
+      const uploadedPhotos = photos.length ? await uploadPhotos(photos) : undefined
+      if (editLog) {
+        await updateChildLog(editLog.id, value, notes || null, uploadedPhotos)
+        onSaved()
+        return
+      }
+      await saveChildLog(childId, 'diaper', value, notes || undefined, uploadedPhotos, logDate)
+      onSaved()
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
+      <View style={styles.form}>
+        <View style={styles.topRow}>
+          <ChildSelector selected={childId} onSelect={setChildId} />
+          <View style={styles.dateTimeRow}>
+            <DateChip value={logDate} onChange={setLogDate} />
+            <TimeChip value={logTime} onChange={setLogTime} label="Time" />
+          </View>
+        </View>
+
+        <View style={[styles.iconBanner, { backgroundColor: brand.secondary + '15' }]}>
+          <Baby size={20} color={brand.secondary} strokeWidth={2} />
+          <Text style={[styles.bannerLabel, { color: colors.text }]}>Log Diaper</Text>
+        </View>
+
+        {/* Diaper type */}
+        <View style={styles.chipGrid}>
+          {DIAPER_TYPES.map((t) => {
+            const active = diaperType === t.id
+            return (
+              <Pressable
+                key={t.id}
+                onPress={() => setDiaperType(t.id)}
+                style={[styles.chip, {
+                  backgroundColor: active ? brand.secondary + '25' : colors.surface,
+                  borderColor: active ? brand.secondary : colors.border,
+                  borderRadius: radius.full,
+                  gap: 4,
+                }]}
+              >
+                <Text style={{ fontSize: 14 }}>{t.emoji}</Text>
+                <Text style={[styles.chipText, { color: active ? brand.secondary : colors.text }]}>{t.label}</Text>
+              </Pressable>
+            )
+          })}
+        </View>
+
+        {/* Poop details */}
+        {showPooDetails && (
+          <>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Color</Text>
+            <View style={[styles.chipGrid, { gap: 8 }]}>
+              {DIAPER_COLORS.map((c) => {
+                const active = color === c.id
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => setColor(c.id)}
+                    style={[styles.chip, {
+                      backgroundColor: active ? c.hex + '25' : colors.surface,
+                      borderColor: active ? c.hex : colors.border,
+                      borderRadius: radius.full,
+                      gap: 6,
+                    }]}
+                  >
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.hex }} />
+                    <Text style={[styles.chipText, { color: active ? c.hex : colors.text }]}>{c.label}</Text>
+                  </Pressable>
+                )
+              })}
+            </View>
+
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Consistency</Text>
+            <View style={styles.chipGrid}>
+              {DIAPER_CONSISTENCIES.map((c) => {
+                const active = consistency === c.id
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => setConsistency(c.id)}
+                    style={[styles.chip, {
+                      backgroundColor: active ? colors.primaryTint : colors.surface,
+                      borderColor: active ? colors.primary : colors.border,
+                      borderRadius: radius.full,
+                    }]}
+                  >
+                    <Text style={[styles.chipText, { color: active ? colors.primary : colors.text }]}>{c.label}</Text>
+                  </Pressable>
+                )
+              })}
+            </View>
+          </>
+        )}
+
+        {/* Optional photo */}
+        <View style={styles.photoRow}>
+          {photos.map((uri, i) => (
+            <Pressable key={i} onPress={() => setPhotos([])} style={{ position: 'relative' }}>
+              <Image source={{ uri }} style={[styles.photoThumb, { borderRadius: radius.lg }]} />
+              <View style={{ position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8, padding: 2 }}>
+                <X size={10} color="#FFFFFF" strokeWidth={2.5} />
+              </View>
+            </Pressable>
+          ))}
+          {photos.length === 0 && (
+            <View style={styles.photoButtons}>
+              <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}>
+                <Camera size={24} color="#FFFFFF" strokeWidth={2} />
+              </Pressable>
+              <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderRadius: radius.lg }]}>
+                <Plus size={20} color={colors.textMuted} strokeWidth={2} />
+              </Pressable>
+            </View>
+          )}
+        </View>
+
+        <TextInput
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Notes (optional)"
+          placeholderTextColor={colors.textMuted}
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        />
+        <SaveButton onPress={save} saving={saving} disabled={!childId || !diaperType} />
       </View>
     </ScrollView>
   )

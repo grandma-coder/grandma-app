@@ -2,12 +2,12 @@
  * SVG Chart Components — polished custom charts using react-native-svg.
  *
  * LineChart, BarChart, HeatmapGrid, BubbleGrid, DotTimeline
- * Features: Y-axis labels, grid lines, value labels, gradient fills, rounded bars.
+ * Features: smooth curves, Y-axis labels, grid lines, value labels, gradient fills, rounded bars.
  */
 
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import Svg, {
-  Polyline, Circle, Rect, Line, Path,
+  Circle, Rect, Line, Path,
   Text as SvgText, Defs, LinearGradient, Stop,
 } from 'react-native-svg'
 import { useTheme, brand } from '../../constants/theme'
@@ -32,6 +32,27 @@ function formatNum(v: number): string {
   return v.toFixed(1)
 }
 
+/** Build a smooth cubic bezier SVG path through points */
+function smoothPath(pts: { x: number; y: number }[]): string {
+  if (pts.length < 2) return ''
+  let d = `M ${pts[0].x} ${pts[0].y}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)]
+    const p1 = pts[i]
+    const p2 = pts[i + 1]
+    const p3 = pts[Math.min(pts.length - 1, i + 2)]
+
+    const tension = 0.3
+    const cp1x = p1.x + (p2.x - p0.x) * tension
+    const cp1y = p1.y + (p2.y - p0.y) * tension
+    const cp2x = p2.x - (p3.x - p1.x) * tension
+    const cp2y = p2.y - (p3.y - p1.y) * tension
+
+    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`
+  }
+  return d
+}
+
 // ─── Line Chart ────────────────────────────────────────────────────────────
 
 interface LineChartProps {
@@ -50,7 +71,7 @@ export function LineChart({
   labels,
   color,
   width = 300,
-  height = 140,
+  height = 200,
   showAverage = false,
   unit = '',
   onPress,
@@ -60,10 +81,10 @@ export function LineChart({
 
   if (data.length < 2) return null
 
-  const leftPad = 36
-  const rightPad = 12
-  const topPad = 16
-  const bottomPad = 24
+  const leftPad = 40
+  const rightPad = 16
+  const topPad = 28
+  const bottomPad = 8
   const chartW = width - leftPad - rightPad
   const chartH = height - topPad - bottomPad
 
@@ -82,13 +103,12 @@ export function LineChart({
   }))
 
   const avgY = topPad + chartH - ((avg - scaleMin) / range) * chartH
-  const polyline = pts.map((p) => `${p.x},${p.y}`).join(' ')
 
-  // Area fill path
-  const areaPath = `M ${pts[0].x},${topPad + chartH} L ${polyline.replace(/,/g, ' ').split(' ').reduce((acc, val, i) => {
-    if (i % 2 === 0) return acc + `L ${val},`
-    return acc + `${val} `
-  }, '').trim()} L ${pts[pts.length - 1].x},${topPad + chartH} Z`
+  // Smooth curve path
+  const curvePath = smoothPath(pts)
+
+  // Area fill path — follow smooth curve then close at bottom
+  const areaPath = curvePath + ` L ${pts[pts.length - 1].x} ${topPad + chartH} L ${pts[0].x} ${topPad + chartH} Z`
 
   return (
     <Pressable onPress={onPress} disabled={!onPress}>
@@ -96,8 +116,9 @@ export function LineChart({
         <Svg width={width} height={height}>
           <Defs>
             <LinearGradient id={`lineGrad_${lineColor.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={lineColor} stopOpacity="0.2" />
-              <Stop offset="1" stopColor={lineColor} stopOpacity="0.02" />
+              <Stop offset="0" stopColor={lineColor} stopOpacity="0.25" />
+              <Stop offset="0.7" stopColor={lineColor} stopOpacity="0.06" />
+              <Stop offset="1" stopColor={lineColor} stopOpacity="0" />
             </LinearGradient>
           </Defs>
 
@@ -106,8 +127,12 @@ export function LineChart({
             const y = topPad + chartH - ((tick - scaleMin) / range) * chartH
             return (
               <View key={i}>
-                <Line x1={leftPad} y1={y} x2={width - rightPad} y2={y} stroke={colors.border} strokeWidth={0.5} opacity={0.5} />
-                <SvgText x={leftPad - 6} y={y + 3.5} fill={colors.textMuted} fontSize={9} fontWeight="500" textAnchor="end">
+                <Line
+                  x1={leftPad} y1={y} x2={width - rightPad} y2={y}
+                  stroke={colors.border} strokeWidth={0.5} opacity={0.35}
+                  strokeDasharray={i === 0 ? undefined : '4,4'}
+                />
+                <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end">
                   {formatNum(tick)}
                 </SvgText>
               </View>
@@ -120,35 +145,54 @@ export function LineChart({
           {/* Average line */}
           {showAverage && (
             <>
-              <Line x1={leftPad} y1={avgY} x2={width - rightPad} y2={avgY} stroke={lineColor} strokeWidth={1} strokeDasharray="5,4" opacity={0.5} />
-              <SvgText x={width - rightPad + 2} y={avgY + 3} fill={lineColor} fontSize={8} fontWeight="600" opacity={0.7}>
+              <Line
+                x1={leftPad} y1={avgY} x2={width - rightPad} y2={avgY}
+                stroke={lineColor} strokeWidth={1} strokeDasharray="6,4" opacity={0.4}
+              />
+              <SvgText x={width - rightPad + 4} y={avgY + 3} fill={lineColor} fontSize={10} fontWeight="600" opacity={0.6}>
                 avg
               </SvgText>
             </>
           )}
 
-          {/* Line */}
-          <Polyline
-            points={polyline}
+          {/* Smooth curve line */}
+          <Path
+            d={curvePath}
             fill="none"
             stroke={lineColor}
-            strokeWidth={2.5}
+            strokeWidth={3}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
 
-          {/* Data points */}
-          {pts.map((p, i) => (
-            <View key={i}>
-              <Circle cx={p.x} cy={p.y} r={4.5} fill={lineColor} stroke={colors.surface} strokeWidth={2} />
-              {/* Value label on first, last, max */}
-              {(i === 0 || i === pts.length - 1 || p.v === maxV) && (
-                <SvgText x={p.x} y={p.y - 10} fill={colors.text} fontSize={9} fontWeight="700" textAnchor="middle">
-                  {formatNum(p.v)}{unit}
-                </SvgText>
-              )}
-            </View>
-          ))}
+          {/* Data points + value labels */}
+          {pts.map((p, i) => {
+            const isFirst = i === 0
+            const isLast = i === pts.length - 1
+            const isMax = p.v === maxV
+            const isMin = p.v === minV && data.length > 3
+            const showLabel = isFirst || isLast || isMax || isMin
+            return (
+              <View key={i}>
+                <Circle cx={p.x} cy={p.y} r={5} fill={lineColor} stroke={colors.surface} strokeWidth={2.5} />
+                {showLabel && (
+                  <View>
+                    <Rect
+                      x={p.x - 18} y={p.y - 24} width={36} height={17}
+                      rx={4} fill={colors.surface} opacity={0.9}
+                    />
+                    <SvgText
+                      x={p.x} y={p.y - 12}
+                      fill={isMax ? lineColor : colors.text}
+                      fontSize={11} fontWeight="800" textAnchor="middle"
+                    >
+                      {formatNum(p.v)}{unit}
+                    </SvgText>
+                  </View>
+                )}
+              </View>
+            )
+          })}
         </Svg>
 
         {/* X labels */}
@@ -181,7 +225,7 @@ export function BarChart({
   labels,
   color,
   width = 300,
-  height = 140,
+  height = 200,
   showValues = true,
   onPress,
 }: BarChartProps) {
@@ -190,9 +234,9 @@ export function BarChart({
 
   if (data.length === 0) return null
 
-  const leftPad = 32
-  const rightPad = 12
-  const topPad = 20
+  const leftPad = 40
+  const rightPad = 16
+  const topPad = 28
   const bottomPad = 8
   const chartW = width - leftPad - rightPad
   const chartH = height - topPad - bottomPad
@@ -200,7 +244,8 @@ export function BarChart({
   const maxV = Math.max(...data)
   const ticks = niceScale(0, Math.ceil(maxV), 3)
   const scaleMax = ticks[ticks.length - 1] || 1
-  const barW = Math.min(28, chartW / data.length - 10)
+  const barW = Math.min(36, chartW / data.length - 10)
+  const barR = Math.min(8, barW / 3)
 
   return (
     <Pressable onPress={onPress} disabled={!onPress}>
@@ -208,8 +253,8 @@ export function BarChart({
         <Svg width={width} height={height}>
           <Defs>
             <LinearGradient id={`barGrad_${barColor.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={barColor} stopOpacity="0.95" />
-              <Stop offset="1" stopColor={barColor} stopOpacity="0.55" />
+              <Stop offset="0" stopColor={barColor} stopOpacity="1" />
+              <Stop offset="1" stopColor={barColor} stopOpacity="0.5" />
             </LinearGradient>
           </Defs>
 
@@ -218,32 +263,55 @@ export function BarChart({
             const y = topPad + chartH - (tick / scaleMax) * chartH
             return (
               <View key={i}>
-                <Line x1={leftPad} y1={y} x2={width - rightPad} y2={y} stroke={colors.border} strokeWidth={0.5} opacity={0.4} />
-                <SvgText x={leftPad - 6} y={y + 3.5} fill={colors.textMuted} fontSize={9} fontWeight="500" textAnchor="end">
+                <Line
+                  x1={leftPad} y1={y} x2={width - rightPad} y2={y}
+                  stroke={colors.border} strokeWidth={0.5} opacity={0.3}
+                  strokeDasharray={i === 0 ? undefined : '4,4'}
+                />
+                <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end">
                   {formatNum(tick)}
                 </SvgText>
               </View>
             )
           })}
 
-          {/* Bars */}
+          {/* Bars with rounded top corners */}
           {data.map((v, i) => {
-            const barH = (v / scaleMax) * chartH
+            const rawH = (v / scaleMax) * chartH
+            const barH = Math.max(rawH, 3)
             const x = leftPad + (i + 0.5) * (chartW / data.length) - barW / 2
             const y = topPad + chartH - barH
+
+            // Rounded top rect via path for better control
+            const rTop = rawH > barR * 2 ? barR : Math.min(rawH / 2, barR)
+            const barPath = `
+              M ${x} ${y + barH}
+              L ${x} ${y + rTop}
+              Q ${x} ${y}, ${x + rTop} ${y}
+              L ${x + barW - rTop} ${y}
+              Q ${x + barW} ${y}, ${x + barW} ${y + rTop}
+              L ${x + barW} ${y + barH}
+              Z
+            `
+
             return (
               <View key={i}>
-                <Rect
-                  x={x}
-                  y={y}
-                  width={barW}
-                  height={Math.max(barH, 2)}
-                  rx={barW / 3}
+                <Path
+                  d={barPath}
                   fill={`url(#barGrad_${barColor.replace('#', '')})`}
+                />
+                {/* Subtle glow behind bar */}
+                <Path
+                  d={barPath}
+                  fill={barColor}
+                  opacity={0.08}
                 />
                 {/* Value on top */}
                 {showValues && v > 0 && (
-                  <SvgText x={x + barW / 2} y={y - 5} fill={colors.text} fontSize={9} fontWeight="700" textAnchor="middle">
+                  <SvgText
+                    x={x + barW / 2} y={y - 8}
+                    fill={colors.text} fontSize={12} fontWeight="800" textAnchor="middle"
+                  >
                     {formatNum(v)}
                   </SvgText>
                 )}
@@ -276,7 +344,7 @@ interface HeatmapProps {
 }
 
 export function HeatmapGrid({ data, rowLabels, colLabels, color, onPress }: HeatmapProps) {
-  const { colors, radius } = useTheme()
+  const { colors } = useTheme()
   const heatColor = color ?? colors.primary
   const cellSize = 30
   const gap = 4
@@ -340,7 +408,7 @@ export function BubbleGrid({ items, onPress }: BubbleGridProps) {
     <Pressable onPress={onPress} disabled={!onPress}>
       <View style={styles.bubbleWrap}>
         {items.map((item, i) => {
-          const size = 40 + (item.value / maxVal) * 36
+          const size = 48 + (item.value / maxVal) * 40
           const bg = item.color ?? colors.primary
           return (
             <View
@@ -349,15 +417,15 @@ export function BubbleGrid({ items, onPress }: BubbleGridProps) {
                 width: size,
                 height: size,
                 borderRadius: size / 2,
-                backgroundColor: bg + '20',
+                backgroundColor: bg + '18',
                 borderWidth: 1.5,
-                borderColor: bg + '40',
+                borderColor: bg + '35',
               }]}
             >
-              <Text style={[styles.bubbleCount, { color: bg, fontSize: Math.max(12, size / 4.5) }]}>
+              <Text style={[styles.bubbleCount, { color: bg, fontSize: Math.max(14, size / 4) }]}>
                 {item.value}
               </Text>
-              <Text style={[styles.bubbleLabel, { color: bg, fontSize: Math.max(8, size / 7) }]} numberOfLines={1}>
+              <Text style={[styles.bubbleLabel, { color: bg, fontSize: Math.max(9, size / 7) }]} numberOfLines={1}>
                 {item.label}
               </Text>
             </View>
@@ -423,15 +491,15 @@ export function DotTimeline({ dots, cycleLength = 28, color, width = 300, onPres
 
 const styles = StyleSheet.create({
   chartWrap: { alignItems: 'center' },
-  labelRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  label: { fontSize: 10, fontWeight: '600', textAlign: 'center' },
+  labelRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+  label: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
   heatColLabels: { flexDirection: 'row', marginBottom: 2 },
-  heatLabel: { fontSize: 9, fontWeight: '600', textAlign: 'center' },
+  heatLabel: { fontSize: 10, fontWeight: '600', textAlign: 'center' },
   heatRow: { flexDirection: 'row', alignItems: 'center' },
-  heatRowLabel: { width: 30, fontSize: 9, fontWeight: '600', textAlign: 'right', marginRight: 4 },
+  heatRowLabel: { width: 30, fontSize: 10, fontWeight: '600', textAlign: 'right', marginRight: 4 },
   heatCell: {},
-  bubbleWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', paddingVertical: 4 },
-  bubble: { alignItems: 'center', justifyContent: 'center', gap: 1 },
-  bubbleCount: { fontWeight: '800' },
+  bubbleWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', paddingVertical: 8 },
+  bubble: { alignItems: 'center', justifyContent: 'center', gap: 2 },
+  bubbleCount: { fontWeight: '900' },
   bubbleLabel: { fontWeight: '600', textAlign: 'center' },
 })

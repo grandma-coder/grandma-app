@@ -6,8 +6,8 @@
  *
  * Redirects:
  * - Not logged in → (auth)/welcome
- * - Logged in, no children → onboarding/journey
- * - Logged in, has children → (tabs)
+ * - Logged in, no enrolled behaviors & no children → onboarding/journey
+ * - Logged in, has enrolled behaviors or children → (tabs)
  */
 
 import { useEffect, useState } from 'react'
@@ -17,6 +17,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
+import { useBehaviorStore } from '../store/useBehaviorStore'
 import { initRevenueCat } from '../lib/revenue'
 import { runNotificationEngine } from '../lib/notificationEngine'
 import { syncBadgesFromSupabase } from '../lib/badgeSync'
@@ -40,6 +41,8 @@ export default function RootLayout() {
 
   const setChildren = useChildStore((s) => s.setChildren)
   const setMode = useModeStore((s) => s.setMode)
+  const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
+  const behaviorHydrated = useBehaviorStore((s) => s.hydrated)
 
   // ─── Auth listener ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -126,6 +129,21 @@ export default function RootLayout() {
           }
         }
 
+        // Restore enrolled behaviors from Supabase if local store is empty
+        // (handles app reinstall / cleared storage scenarios)
+        const localBehaviors = useBehaviorStore.getState().enrolledBehaviors
+        if (localBehaviors.length === 0) {
+          const { data: dbBehaviors } = await supabase
+            .from('behaviors')
+            .select('type')
+            .eq('user_id', session.user.id)
+            .eq('active', true)
+          if (dbBehaviors && dbBehaviors.length > 0) {
+            const types = dbBehaviors.map((b: any) => b.type === 'cycle' ? 'pre-pregnancy' : b.type)
+            useBehaviorStore.getState().setBehaviors(types)
+          }
+        }
+
         if (session.user.id) {
           initRevenueCat(session.user.id).catch(() => {})
           // Generate smart notifications on app open (deduped per day)
@@ -146,22 +164,26 @@ export default function RootLayout() {
   }, [])
 
   // ─── Route guard ──────────────────────────────────────────────────────────
+  // Onboarding is complete when user has enrolled behaviors (works for all
+  // journey types: kids, pregnancy, pre-pregnancy) OR has children in DB.
+  const hasCompletedOnboarding = enrolledBehaviors.length > 0 || hasChildren
+
   useEffect(() => {
-    if (loading) return
+    if (loading || !behaviorHydrated) return
 
     const inAuth = segments[0] === '(auth)'
 
     if (!session && !inAuth) {
       router.replace('/(auth)/welcome')
-    } else if (session && !hasChildren && segments[0] !== 'onboarding') {
+    } else if (session && !hasCompletedOnboarding && segments[0] !== 'onboarding') {
       router.replace('/onboarding/journey')
-    } else if (session && hasChildren && inAuth) {
+    } else if (session && hasCompletedOnboarding && inAuth) {
       router.replace('/(tabs)')
     }
-  }, [loading, session, hasChildren, segments])
+  }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments])
 
   // ─── Loading state ────────────────────────────────────────────────────────
-  if (loading) {
+  if (loading || !behaviorHydrated) {
     return <LoadingScreen />
   }
 

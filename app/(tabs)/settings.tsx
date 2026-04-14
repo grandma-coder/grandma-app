@@ -26,6 +26,7 @@ import {
   Baby,
   Sparkles,
   Trophy,
+  Phone,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
@@ -35,6 +36,7 @@ import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { MyJourneys } from '../../components/profile/MyJourneys'
 import { useDevPanel } from '../../context/DevPanelContext'
+import { useTranslation } from '../../lib/i18n'
 
 // ─── Section config ────────────────────────────────────────────────────────
 
@@ -56,6 +58,7 @@ export default function ProfileScreen() {
   const behaviors = useBehaviorStore((s) => s.enrolledBehaviors)
   const children = useChildStore((s) => s.children)
 
+  const { t } = useTranslation()
   const [userName, setUserName] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
 
@@ -102,10 +105,10 @@ export default function ProfileScreen() {
   }
 
   async function handleSignOut() {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('profile_signOut'), t('profile_signOutConfirm'), [
+      { text: t('common_cancel'), style: 'cancel' },
       {
-        text: 'Sign Out',
+        text: t('profile_signOut'),
         style: 'destructive',
         onPress: async () => {
           await supabase.auth.signOut()
@@ -116,9 +119,9 @@ export default function ProfileScreen() {
   }
 
   const behaviorLabel =
-    mode === 'pre-pregnancy' ? 'Cycle Tracking'
-    : mode === 'pregnancy' ? 'Pregnancy'
-    : 'Kids'
+    mode === 'pre-pregnancy' ? t('mode_cycleTracking')
+    : mode === 'pregnancy' ? t('mode_pregnancy')
+    : t('mode_kids')
 
   const behaviorColor =
     mode === 'pre-pregnancy' ? brand.prePregnancy
@@ -129,28 +132,29 @@ export default function ProfileScreen() {
   const sections: SectionItem[][] = [
     // Personal
     [
-      { id: 'personal', label: 'My Profile', icon: User, color: colors.primary, route: '/profile/personal' },
-      { id: 'behavior', label: `${behaviorLabel} Profile`, icon: mode === 'pre-pregnancy' ? Moon : mode === 'pregnancy' ? Baby : Sparkles, color: behaviorColor, route: mode === 'kids' ? '/profile/kids' : '/profile/personal' },
+      { id: 'personal', label: t('profile_myProfile'), icon: User, color: colors.primary, route: '/profile/personal' },
+      { id: 'behavior', label: `${behaviorLabel} ${t('profile_title')}`, icon: mode === 'pre-pregnancy' ? Moon : mode === 'pregnancy' ? Baby : Sparkles, color: behaviorColor, route: mode === 'kids' ? '/profile/kids' : '/profile/personal' },
     ],
     // Care & Family
     [
-      { id: 'care-circle', label: 'Care Circle', icon: Users, color: brand.secondary, route: '/profile/care-circle' },
-      { id: 'badges', label: 'Badge Wallet', icon: Trophy, color: '#FFD700', route: '/profile/badges' },
+      { id: 'care-circle', label: t('profile_careCircle'), icon: Users, color: brand.secondary, route: '/profile/care-circle' },
+      { id: 'emergency', label: t('profile_emergencyInsurance'), icon: Phone, color: '#FF6B35', route: '/profile/emergency-insurance' },
+      { id: 'badges', label: t('profile_badgeWallet'), icon: Trophy, color: '#FFD700', route: '/profile/badges' },
       ...(mode === 'kids' && children.length > 0 ? [
-        { id: 'memories', label: 'Memories', icon: Image, color: brand.accent, route: '/profile/memories' },
-        { id: 'health-history', label: 'Health History', icon: ClipboardList, color: brand.phase.ovulation, route: '/profile/health-history' },
+        { id: 'memories', label: t('profile_memories'), icon: Image, color: brand.accent, route: '/profile/memories' },
+        { id: 'health-history', label: t('profile_healthHistory'), icon: ClipboardList, color: brand.phase.ovulation, route: '/profile/health-history' },
       ] : []),
     ],
     // App settings
     [
-      { id: 'notifications', label: 'Notifications', icon: Bell, color: brand.accent, route: '/profile/notifications' },
-      { id: 'settings', label: 'Units & Display', icon: Settings, color: colors.textSecondary, route: '/profile/settings' },
+      { id: 'notifications', label: t('profile_notifications'), icon: Bell, color: brand.accent, route: '/profile/notifications' },
+      { id: 'settings', label: t('profile_unitsDisplay'), icon: Settings, color: colors.textSecondary, route: '/profile/settings' },
     ],
     // Account
     [
-      { id: 'subscription', label: 'Subscription & Plan', icon: CreditCard, color: brand.phase.ovulation, route: '/paywall' },
-      { id: 'account', label: 'Account & Security', icon: Lock, color: brand.error, route: '/profile/account' },
-      { id: 'privacy', label: 'Data & Privacy', icon: Shield, color: brand.success, route: '/profile/privacy' },
+      { id: 'subscription', label: t('profile_subscription'), icon: CreditCard, color: brand.phase.ovulation, route: '/paywall' },
+      { id: 'account', label: t('profile_accountSecurity'), icon: Lock, color: brand.error, route: '/profile/account' },
+      { id: 'privacy', label: t('profile_dataPrivacy'), icon: Shield, color: brand.success, route: '/profile/privacy' },
     ],
   ]
 
@@ -169,7 +173,7 @@ export default function ProfileScreen() {
             <User size={32} color={colors.primary} strokeWidth={1.5} />
           </View>
           <Text style={[styles.userName, { color: colors.text }]}>
-            {userName ?? 'Hello, dear'}
+            {userName ?? t('home_greeting')}
           </Text>
           {userEmail && (
             <Text style={[styles.userEmail, { color: colors.textMuted }]}>
@@ -187,7 +191,7 @@ export default function ProfileScreen() {
                   return (
                     <View key={b} style={[styles.badge, { backgroundColor: c + '20', borderColor: c + '40', borderWidth: 1, borderRadius: radius.full }]}>
                       <Text style={[styles.badgeText, { color: c }]}>
-                        {b === 'pre-pregnancy' ? 'Cycle Tracking' : b === 'pregnancy' ? 'Pregnancy' : 'Kids'}
+                        {b === 'pre-pregnancy' ? t('mode_cycleTracking') : b === 'pregnancy' ? t('mode_pregnancy') : t('mode_kids')}
                       </Text>
                     </View>
                   )
@@ -246,11 +250,11 @@ export default function ProfileScreen() {
           ]}
         >
           <LogOut size={18} color={brand.error} strokeWidth={2} />
-          <Text style={[styles.signOutText, { color: brand.error }]}>Sign Out</Text>
+          <Text style={[styles.signOutText, { color: brand.error }]}>{t('profile_signOut')}</Text>
         </Pressable>
 
         <Text style={[styles.version, { color: colors.textMuted }]}>
-          grandma.app v1.0.0
+          {t('profile_version')}
         </Text>
       </ScrollView>
     </View>

@@ -75,6 +75,7 @@ import {
 } from '../../lib/analyticsData'
 import { supabase } from '../../lib/supabase'
 import { runWellnessNotifications } from '../../lib/notificationEngine'
+import { ChildPill, CHILD_COLORS, formatChildAge as sharedFormatChildAge } from '../ui/ChildPills'
 
 const SCREEN_W = Dimensions.get('window').width
 
@@ -90,6 +91,11 @@ const PILLAR_CONFIG = {
 
 type PillarKey = keyof typeof PILLAR_CONFIG
 const PILLAR_ORDER: PillarKey[] = ['nutrition', 'sleep', 'mood', 'health', 'growth']
+
+function formatChildAge(bd: string): string {
+  if (!bd) return ''
+  return sharedFormatChildAge(bd)
+}
 
 const MOOD_COLORS: Record<string, string> = {
   happy: '#FBBF24', calm: '#6AABF7', energetic: '#6EC96E',
@@ -260,6 +266,38 @@ function getHealthTips(
     })
   }
 
+  // ── Diaper
+  if (analytics.diaper.hasData) {
+    const { totalCount, typeCounts } = analytics.diaper
+    const avgPerDay = (totalCount / 7).toFixed(1)
+    const poopPct = totalCount > 0 ? Math.round((typeCounts.poop + typeCounts.mixed) / totalCount * 100) : 0
+    if (ageMonths < 6 && totalCount / 7 < 6) {
+      tips.push({
+        title: 'Low Diaper Count',
+        body: `${avgPerDay} diapers/day — newborns typically need 8-12. Check hydration.`,
+        detail: `${childName} is averaging ${avgPerDay} diapers per day this week. Newborns under 6 months typically have 8-12 wet/dirty diapers daily. Fewer than 6 wet diapers may indicate insufficient feeding. Track diapers in Calendar → Diaper and consult your pediatrician if concerned.`,
+        color: brand.secondary,
+        icon: Heart,
+      })
+    } else if (analytics.diaper.colorCounts['green'] && analytics.diaper.colorCounts['green'] > 3) {
+      tips.push({
+        title: 'Green Stools Noticed',
+        body: `${analytics.diaper.colorCounts['green']} green diapers this week — worth monitoring.`,
+        detail: `Green stools can be normal (especially with dietary changes or iron supplements), but persistent green poop may indicate foremilk/hindmilk imbalance in breastfed babies, or food sensitivities. If accompanied by fussiness or other symptoms, consult your pediatrician.`,
+        color: brand.secondary,
+        icon: Heart,
+      })
+    }
+  } else if (ageMonths < 24) {
+    tips.push({
+      title: 'Track Diapers',
+      body: `Log ${childName}'s diaper changes to monitor hydration and digestion.`,
+      detail: 'Diaper tracking helps you spot dehydration, dietary reactions, and digestive patterns. For newborns, adequate wet diapers (6+/day) confirm sufficient feeding. Log each change in Calendar → Diaper.',
+      color: brand.secondary,
+      icon: Heart,
+    })
+  }
+
   return tips.slice(0, 4)
 }
 
@@ -273,7 +311,7 @@ function buildGrandmaContext(
 ): string {
   const lines: string[] = [
     `Analytics for ${childName} (${getAgeLabel(ageMonths)}) — this week:`,
-    `Overall wellness score: ${scores.overall.toFixed(1)}/10`,
+    `Overall thriving score: ${scores.overall.toFixed(1)}/10`,
   ]
 
   if (scores.sleep.hasData) {
@@ -298,6 +336,10 @@ function buildGrandmaContext(
     const h = analytics.growth.heights.at(-1)
     if (w) lines.push(`Latest weight: ${w.value}kg`)
     if (h) lines.push(`Latest height: ${h.value}cm`)
+  }
+  if (analytics.diaper.hasData) {
+    const { totalCount, typeCounts } = analytics.diaper
+    lines.push(`Diapers: ${totalCount} this week (${typeCounts.pee} pee, ${typeCounts.poop} poop, ${typeCounts.mixed} mixed) — avg ${(totalCount / 7).toFixed(1)}/day`)
   }
 
   const lowest = PILLAR_ORDER.reduce<PillarKey | null>((min, key) => {
@@ -405,11 +447,13 @@ export function KidsAnalytics() {
 
         {/* ── 1. CHILD SELECTOR ── */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childRow}>
-          {children.map((c) => (
+          {children.map((c, idx) => (
             <ChildChip
               key={c.id}
               label={c.name}
+              age={formatChildAge(c.birthDate)}
               active={selectedChildId === c.id}
+              color={CHILD_COLORS[idx % CHILD_COLORS.length]}
               onPress={() => { setSelectedChildId(c.id); setActiveChild(c) }}
             />
           ))}
@@ -457,7 +501,7 @@ export function KidsAnalytics() {
 
             {/* ── 5. PILLAR BREAKDOWN ── */}
             <View style={styles.pillarSection}>
-              <Text style={[styles.pillarSectionTitle, { color: colors.text }]}>WELLNESS BREAKDOWN</Text>
+              <Text style={[styles.pillarSectionTitle, { color: colors.text }]}>THRIVING BREAKDOWN</Text>
               {PILLAR_ORDER.map((key) => (
                 <View key={key}>
                   <PillarRow
@@ -602,7 +646,7 @@ function ScoreInfoModal({
       <View style={styles.modalOverlay}>
         <View style={[styles.modalSheet, { backgroundColor: colors.surface, borderRadius: radius.xl, paddingBottom: insets.bottom + 24 }]}>
           <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Wellness Score Guide</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Thriving Score Guide</Text>
             <Pressable onPress={onClose} hitSlop={8} style={[styles.modalClose, { backgroundColor: colors.surfaceRaised }]}>
               <X size={18} color={colors.textMuted} />
             </Pressable>
@@ -615,7 +659,7 @@ function ScoreInfoModal({
                   {scores.overall.toFixed(1)}
                 </Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.scoreHighlightLabel, { color: colors.text }]}>{childName}'s overall wellness</Text>
+                  <Text style={[styles.scoreHighlightLabel, { color: colors.text }]}>{childName}'s thriving score</Text>
                   <Text style={[styles.scoreHighlightSub, { color: colors.textSecondary }]}>Weighted average of 5 pillars</Text>
                 </View>
               </View>
@@ -747,7 +791,8 @@ function TipDetailModal({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function WellnessScoreArc({ scores, onInfoPress }: { scores: WellnessScores; onInfoPress: () => void }) {
-  const { colors } = useTheme()
+  const { colors, radius } = useTheme()
+  const [activePillar, setActivePillar] = useState<PillarKey | null>(null)
   const size = SCREEN_W - 32
   const cx = size / 2
   const cy = size / 2
@@ -760,14 +805,14 @@ function WellnessScoreArc({ scores, onInfoPress }: { scores: WellnessScores; onI
   const strokeW = 16
   const bgStrokeW = 12
 
-  function arcPath(startDeg: number, sweepDeg: number, radius: number): string {
+  function arcPath(startDeg: number, sweepDeg: number, arcRadius: number): string {
     const s = (startDeg * Math.PI) / 180
     const e = ((startDeg + sweepDeg) * Math.PI) / 180
-    const x1 = cx + radius * Math.cos(s)
-    const y1 = cy + radius * Math.sin(s)
-    const x2 = cx + radius * Math.cos(e)
-    const y2 = cy + radius * Math.sin(e)
-    return `M ${x1} ${y1} A ${radius} ${radius} 0 ${sweepDeg > 180 ? 1 : 0} 1 ${x2} ${y2}`
+    const x1 = cx + arcRadius * Math.cos(s)
+    const y1 = cy + arcRadius * Math.sin(s)
+    const x2 = cx + arcRadius * Math.cos(e)
+    const y2 = cy + arcRadius * Math.sin(e)
+    return `M ${x1} ${y1} A ${arcRadius} ${arcRadius} 0 ${sweepDeg > 180 ? 1 : 0} 1 ${x2} ${y2}`
   }
 
   function iconPos(segIndex: number) {
@@ -775,6 +820,19 @@ function WellnessScoreArc({ scores, onInfoPress }: { scores: WellnessScores; onI
     const rad = (mid * Math.PI) / 180
     const iconR = r + 26
     return { x: cx + iconR * Math.cos(rad), y: cy + iconR * Math.sin(rad) }
+  }
+
+  function getPillarExplanation(key: PillarKey): string {
+    const score = scores[key]
+    const pct = score.hasData ? Math.round((score.value / 10) * 100) : 0
+    const explanations: Record<PillarKey, string> = {
+      nutrition: `${pct}% — tracks meal frequency, eating quality, and food variety this week`,
+      sleep: `${pct}% — measures avg sleep hours vs age target, quality, and consistency`,
+      mood: `${pct}% — based on daily mood logs (happy, calm, energetic, fussy, cranky)`,
+      health: `${pct}% — reflects vaccine completion and health event frequency`,
+      growth: `${pct}% — tracks weight & height measurement regularity`,
+    }
+    return score.hasData ? explanations[key] : 'No data logged yet — start logging to see progress'
   }
 
   const hasAnyData = PILLAR_ORDER.some((k) => scores[k].hasData)
@@ -795,8 +853,9 @@ function WellnessScoreArc({ scores, onInfoPress }: { scores: WellnessScores; onI
 
         {PILLAR_ORDER.map((key, i) => {
           const segStart = startAngle + i * (segmentSweep + gapDeg)
+          const isActive = activePillar === key
           return (
-            <Path key={`bg-${key}`} d={arcPath(segStart, segmentSweep, r)} stroke={PILLAR_CONFIG[key].color + '20'} strokeWidth={bgStrokeW} fill="none" strokeLinecap="round" />
+            <Path key={`bg-${key}`} d={arcPath(segStart, segmentSweep, r)} stroke={PILLAR_CONFIG[key].color + (isActive ? '40' : '20')} strokeWidth={isActive ? bgStrokeW + 4 : bgStrokeW} fill="none" strokeLinecap="round" />
           )
         })}
 
@@ -806,17 +865,19 @@ function WellnessScoreArc({ scores, onInfoPress }: { scores: WellnessScores; onI
           const segStart = startAngle + i * (segmentSweep + gapDeg)
           const fillSweep = (score.value / 10) * segmentSweep
           if (fillSweep < 1) return null
+          const isActive = activePillar === key
           return (
-            <Path key={`fill-${key}`} d={arcPath(segStart, fillSweep, r)} stroke={`url(#grad-${key})`} strokeWidth={strokeW} fill="none" strokeLinecap="round" />
+            <Path key={`fill-${key}`} d={arcPath(segStart, fillSweep, r)} stroke={`url(#grad-${key})`} strokeWidth={isActive ? strokeW + 4 : strokeW} fill="none" strokeLinecap="round" />
           )
         })}
 
         {PILLAR_ORDER.map((key, i) => {
           const pos = iconPos(i)
+          const isActive = activePillar === key
           const color = scores[key].hasData ? PILLAR_CONFIG[key].color : colors.textMuted
           return (
             <G key={`icon-bg-${key}`}>
-              <Circle cx={pos.x} cy={pos.y} r={14} fill={color + '15'} stroke={color + '30'} strokeWidth={1} />
+              <Circle cx={pos.x} cy={pos.y} r={isActive ? 17 : 14} fill={color + (isActive ? '30' : '15')} stroke={color + (isActive ? '60' : '30')} strokeWidth={isActive ? 2 : 1} />
             </G>
           )
         })}
@@ -825,20 +886,26 @@ function WellnessScoreArc({ scores, onInfoPress }: { scores: WellnessScores; onI
           {hasAnyData ? overall.toFixed(1) : '—'}
         </SvgText>
         <SvgText x={cx} y={cy + 22} textAnchor="middle" fill={colors.textSecondary} fontSize={13} fontWeight="600">
-          wellness score
+          thriving score
         </SvgText>
       </Svg>
 
-      {/* Icon overlays */}
-      <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
+      {/* Pressable icon overlays */}
+      <View style={StyleSheet.absoluteFill}>
         {PILLAR_ORDER.map((key, i) => {
           const pos = iconPos(i)
           const Icon = PILLAR_CONFIG[key].icon
+          const isActive = activePillar === key
           const color = scores[key].hasData ? PILLAR_CONFIG[key].color : colors.textMuted
           return (
-            <View key={`overlay-${key}`} style={{ position: 'absolute', left: pos.x - 9, top: pos.y - 9 + (-size * 0.08) }}>
-              <Icon size={18} color={color} strokeWidth={2} />
-            </View>
+            <Pressable
+              key={`overlay-${key}`}
+              hitSlop={8}
+              onPress={() => setActivePillar(activePillar === key ? null : key)}
+              style={{ position: 'absolute', left: pos.x - 18, top: pos.y - 18 + (-size * 0.08), width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Icon size={18} color={color} strokeWidth={isActive ? 3 : 2} />
+            </Pressable>
           )
         })}
       </View>
@@ -847,16 +914,41 @@ function WellnessScoreArc({ scores, onInfoPress }: { scores: WellnessScores; onI
       <View style={styles.arcLegend}>
         {PILLAR_ORDER.map((key) => {
           const score = scores[key]
+          const isActive = activePillar === key
           return (
-            <View key={key} style={styles.legendItem}>
+            <Pressable
+              key={key}
+              onPress={() => setActivePillar(activePillar === key ? null : key)}
+              style={[styles.legendItem, isActive && { backgroundColor: PILLAR_CONFIG[key].color + '18', borderRadius: radius.full, paddingHorizontal: 8, paddingVertical: 2 }]}
+            >
               <View style={[styles.legendDot, { backgroundColor: PILLAR_CONFIG[key].color }]} />
-              <Text style={[styles.legendLabel, { color: colors.textMuted }]}>
+              <Text style={[styles.legendLabel, { color: isActive ? PILLAR_CONFIG[key].color : colors.textMuted, fontWeight: isActive ? '800' : '600' }]}>
                 {PILLAR_CONFIG[key].label}{score.hasData ? ` ${score.value.toFixed(0)}` : ''}
               </Text>
-            </View>
+            </Pressable>
           )
         })}
       </View>
+
+      {/* Pillar detail tooltip */}
+      {activePillar && (
+        <Pressable
+          onPress={() => setActivePillar(null)}
+          style={[styles.arcTooltip, { backgroundColor: PILLAR_CONFIG[activePillar].color + '15', borderColor: PILLAR_CONFIG[activePillar].color + '40', borderRadius: radius.xl }]}
+        >
+          <View style={styles.arcTooltipHeader}>
+            <View style={[styles.arcTooltipIcon, { backgroundColor: PILLAR_CONFIG[activePillar].color + '25' }]}>
+              {(() => { const Icon = PILLAR_CONFIG[activePillar].icon; return <Icon size={16} color={PILLAR_CONFIG[activePillar].color} strokeWidth={2} /> })()}
+            </View>
+            <Text style={[styles.arcTooltipTitle, { color: PILLAR_CONFIG[activePillar].color }]}>
+              {PILLAR_CONFIG[activePillar].label} — {scores[activePillar].hasData ? `${scores[activePillar].value.toFixed(1)}/10` : 'No data'}
+            </Text>
+          </View>
+          <Text style={[styles.arcTooltipBody, { color: colors.textSecondary }]}>
+            {getPillarExplanation(activePillar)}
+          </Text>
+        </Pressable>
+      )}
 
       <Pressable onPress={onInfoPress} style={styles.arcInfoHint} hitSlop={12}>
         <Info size={12} color={colors.textMuted} strokeWidth={2} />
@@ -913,7 +1005,7 @@ function GrandmaInsightCard({
       parts.push(`${childName}'s ${PILLAR_CONFIG[highest].label.toLowerCase()} is excellent at ${scores[highest].value.toFixed(1)}/10 this week!`)
     }
   } else {
-    parts.push(`${childName}'s overall wellness is ${scores.overall >= 7 ? 'on track' : 'developing'} at ${scores.overall.toFixed(1)}/10.`)
+    parts.push(`${childName}'s overall thriving score is ${scores.overall >= 7 ? 'on track' : 'developing'} at ${scores.overall.toFixed(1)}/10.`)
   }
 
   // Secondary trend
@@ -1049,53 +1141,53 @@ function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
           {
             backgroundColor: colors.surface, borderRadius: radius.xl, borderWidth: 1,
             borderColor: expanded ? SKIP_COLOR + '30' : colors.border,
-            padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12,
+            padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14,
           },
           pressed && { opacity: 0.9 },
         ]}
       >
-        <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: SKIP_COLOR + '15', alignItems: 'center', justifyContent: 'center' }}>
-          <SkipForward size={18} color={SKIP_COLOR} strokeWidth={2} />
+        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: SKIP_COLOR + '15', alignItems: 'center', justifyContent: 'center' }}>
+          <SkipForward size={20} color={SKIP_COLOR} strokeWidth={2} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>Routine Compliance</Text>
-          <View style={{ height: 6, borderRadius: 3, marginTop: 6, overflow: 'hidden', backgroundColor: SKIP_COLOR + '15' }}>
-            <View style={{ width: `${adherenceRate}%`, height: '100%', backgroundColor: adherenceRate >= 70 ? '#A2FF86' : adherenceRate >= 40 ? SKIP_COLOR : '#FF7070', borderRadius: 3 }} />
+          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>Routine Compliance</Text>
+          <View style={{ height: 8, borderRadius: 4, marginTop: 8, overflow: 'hidden', backgroundColor: SKIP_COLOR + '15' }}>
+            <View style={{ width: `${adherenceRate}%`, height: '100%', backgroundColor: adherenceRate >= 70 ? '#A2FF86' : adherenceRate >= 40 ? SKIP_COLOR : '#FF7070', borderRadius: 4 }} />
           </View>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           {data.hasData
-            ? <><Text style={{ color: SKIP_COLOR, fontSize: 18, fontWeight: '800' }}>{data.totalSkips}</Text><Text style={{ color: colors.textMuted, fontSize: 11 }}>skips</Text></>
-            : <Text style={{ color: colors.textMuted, fontSize: 12 }}>No skips</Text>
+            ? <><Text style={{ color: SKIP_COLOR, fontSize: 22, fontWeight: '900' }}>{data.totalSkips}</Text><Text style={{ color: colors.textMuted, fontSize: 12 }}>skips</Text></>
+            : <Text style={{ color: colors.textMuted, fontSize: 13 }}>No skips</Text>
           }
         </View>
-        {expanded ? <ChevronUp size={18} color={colors.textMuted} /> : <ChevronRight size={18} color={colors.textMuted} />}
+        {expanded ? <ChevronUp size={20} color={colors.textMuted} /> : <ChevronRight size={20} color={colors.textMuted} />}
       </Pressable>
 
       {expanded && (
-        <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, borderWidth: 1, borderColor: SKIP_COLOR + '20', marginTop: 2, padding: 16, gap: 14 }}>
+        <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, borderWidth: 1, borderColor: SKIP_COLOR + '20', marginTop: 2, padding: 20, gap: 18 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={{ color: adherenceRate >= 70 ? '#A2FF86' : SKIP_COLOR, fontSize: 24, fontWeight: '800' }}>{adherenceRate}%</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>adherence this week</Text>
+              <Text style={{ color: adherenceRate >= 70 ? '#A2FF86' : SKIP_COLOR, fontSize: 28, fontWeight: '900' }}>{adherenceRate}%</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500', marginTop: 4 }}>adherence this week</Text>
             </View>
             <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={{ color: SKIP_COLOR, fontSize: 24, fontWeight: '800' }}>{data.totalSkips}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>total skips (7d)</Text>
+              <Text style={{ color: SKIP_COLOR, fontSize: 28, fontWeight: '900' }}>{data.totalSkips}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500', marginTop: 4 }}>total skips (7d)</Text>
             </View>
           </View>
 
           {data.hasData && (
             <View>
-              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8 }}>SKIPS PER DAY</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: 48 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>SKIPS PER DAY</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 56 }}>
                 {data.weeklySkips.map((count, i) => {
                   const maxV = Math.max(...data.weeklySkips, 1)
-                  const barH = count > 0 ? Math.max((count / maxV) * 40, 8) : 4
+                  const barH = count > 0 ? Math.max((count / maxV) * 44, 10) : 4
                   return (
-                    <View key={i} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
-                      <View style={{ width: '100%', height: barH, backgroundColor: count > 0 ? SKIP_COLOR + 'CC' : colors.border, borderRadius: 3 }} />
-                      <Text style={{ color: colors.textMuted, fontSize: 10 }}>{data.weekLabels[i]}</Text>
+                    <View key={i} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
+                      <View style={{ width: '80%', height: barH, backgroundColor: count > 0 ? SKIP_COLOR + 'CC' : colors.border, borderRadius: 4 }} />
+                      <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500' }}>{data.weekLabels[i]}</Text>
                     </View>
                   )
                 })}
@@ -1105,21 +1197,21 @@ function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
 
           {data.mostSkipped.length > 0 && (
             <View>
-              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8 }}>MOST SKIPPED</Text>
-              <View style={{ gap: 6 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>MOST SKIPPED</Text>
+              <View style={{ gap: 10 }}>
                 {data.mostSkipped.map((item, i) => (
-                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <MinusCircle size={14} color={SKIP_COLOR} strokeWidth={2} />
-                    <Text style={{ color: colors.text, fontSize: 13, flex: 1 }}>{item.name}</Text>
-                    <View style={{ backgroundColor: SKIP_COLOR + '20', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
-                      <Text style={{ color: SKIP_COLOR, fontSize: 12, fontWeight: '700' }}>{item.count}×</Text>
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <MinusCircle size={16} color={SKIP_COLOR} strokeWidth={2} />
+                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: '500', flex: 1 }}>{item.name}</Text>
+                    <View style={{ backgroundColor: SKIP_COLOR + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                      <Text style={{ color: SKIP_COLOR, fontSize: 14, fontWeight: '700' }}>{item.count}×</Text>
                     </View>
                   </View>
                 ))}
               </View>
             </View>
           )}
-          {!data.hasData && <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center' }}>No skipped routines this week</Text>}
+          {!data.hasData && <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center' }}>No skipped routines this week</Text>}
         </View>
       )}
     </View>
@@ -1157,7 +1249,7 @@ function PillarRow({ pillarKey, score, expanded, onToggle }: {
       ]}
     >
       <View style={[styles.pillarIcon, { backgroundColor: config.color + '15' }]}>
-        <Icon size={18} color={config.color} strokeWidth={2} />
+        <Icon size={20} color={config.color} strokeWidth={2} />
       </View>
 
       <View style={styles.pillarInfo}>
@@ -1333,7 +1425,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
               <Text style={[styles.chartTitle, { color: colors.text }]}>Recent Events</Text>
               {analytics.health.recentEvents.map((e, i) => (
-                <View key={i} style={styles.eventRow}>
+                <View key={i} style={[styles.eventRow, { borderBottomColor: i < analytics.health.recentEvents.length - 1 ? colors.border : 'transparent' }]}>
                   <View style={[styles.eventDot, { backgroundColor: getEventColor(e.type) }]} />
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.eventLabel, { color: colors.text }]} numberOfLines={1}>{e.label}</Text>
@@ -1350,10 +1442,10 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
           <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
             <View style={styles.row}>
-              <Syringe size={18} color={PILLAR_CONFIG.health.color} strokeWidth={2} />
+              <Syringe size={20} color={PILLAR_CONFIG.health.color} strokeWidth={2} />
               <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 0 }]}>Vaccine Tracker</Text>
             </View>
-            <Text style={[styles.detailExplain, { color: colors.textSecondary, marginBottom: 10 }]}>
+            <Text style={[styles.detailExplain, { color: colors.textSecondary, marginTop: 4, marginBottom: 12 }]}>
               {analytics.health.vaccines.filter((v) => v.done).length}/{analytics.health.vaccines.length} vaccines logged as completed.
             </Text>
             <View style={styles.vaccineGrid}>
@@ -1363,7 +1455,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                   borderColor: v.done ? brand.success + '30' : colors.border,
                   borderRadius: radius.full,
                 }]}>
-                  {v.done && <Shield size={12} color={brand.success} strokeWidth={2.5} />}
+                  {v.done && <Shield size={14} color={brand.success} strokeWidth={2.5} />}
                   <Text style={[styles.vaccineText, { color: v.done ? brand.success : colors.textMuted }]}>{v.name}</Text>
                 </View>
               ))}
@@ -1503,20 +1595,8 @@ function DayDetailStrip({
 // SHARED SUB-COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function ChildChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors, radius } = useTheme()
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.childChip, {
-        backgroundColor: active ? colors.primaryTint : colors.surface,
-        borderColor: active ? colors.primary : colors.border,
-        borderRadius: radius.full,
-      }]}
-    >
-      <Text style={[styles.childChipText, { color: active ? colors.primary : colors.text }]}>{label}</Text>
-    </Pressable>
-  )
+function ChildChip({ label, age, active, color, onPress }: { label: string; age: string; active: boolean; color: string; onPress: () => void }) {
+  return <ChildPill label={label} age={age} active={active} color={color} onPress={onPress} />
 }
 
 function ChartCard({ title, children, onExpand }: { title: string; children: React.ReactNode; onExpand: () => void }) {
@@ -1563,49 +1643,102 @@ function EmptyDetail({ pillar }: { pillar: PillarKey }) {
 
 // ─── Chart Sub-components ─────────────────────────────────────────────────────
 
-function StackedBarChart({ good, little, none, labels, width = 300, height = 140 }: {
+function StackedBarChart({ good, little, none, labels, width = 300, height = 200 }: {
   good: number[]; little: number[]; none: number[]; labels: string[]; width?: number; height?: number
 }) {
   const { colors } = useTheme()
-  const leftPad = 28, rightPad = 8, topPad = 16, bottomPad = 8
+  const leftPad = 40, rightPad = 16, topPad = 28, bottomPad = 8
   const chartW = width - leftPad - rightPad
   const chartH = height - topPad - bottomPad
   const count = good.length
   const maxVal = Math.max(...good.map((g, i) => g + little[i] + none[i]), 1)
-  const barW = Math.min(24, chartW / count - 8)
+  const barW = Math.min(36, chartW / count - 10)
+  const barR = Math.min(8, barW / 3)
+
+  // Y-axis ticks
+  const ticks = [0, Math.round(maxVal / 2), maxVal]
 
   return (
     <View style={{ alignItems: 'center' }}>
       <Svg width={width} height={height}>
         <Defs>
           <LinearGradient id="stackGood" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={brand.success} stopOpacity="0.9" />
-            <Stop offset="1" stopColor={brand.success} stopOpacity="0.6" />
+            <Stop offset="0" stopColor={brand.success} stopOpacity="1" />
+            <Stop offset="1" stopColor={brand.success} stopOpacity="0.55" />
           </LinearGradient>
           <LinearGradient id="stackLittle" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={brand.accent} stopOpacity="0.9" />
+            <Stop offset="0" stopColor={brand.accent} stopOpacity="1" />
             <Stop offset="1" stopColor={brand.accent} stopOpacity="0.6" />
           </LinearGradient>
           <LinearGradient id="stackNone" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={brand.error} stopOpacity="0.7" />
-            <Stop offset="1" stopColor={brand.error} stopOpacity="0.4" />
+            <Stop offset="0" stopColor={brand.error} stopOpacity="0.85" />
+            <Stop offset="1" stopColor={brand.error} stopOpacity="0.45" />
           </LinearGradient>
         </Defs>
-        {[0, 0.5, 1].map((pct, i) => {
-          const y = topPad + chartH * (1 - pct)
-          return <Rect key={i} x={leftPad} y={y} width={chartW} height={0.5} fill={colors.border} opacity={0.4} />
+
+        {/* Grid lines + Y labels */}
+        {ticks.map((tick, i) => {
+          const y = topPad + chartH - (tick / maxVal) * chartH
+          return (
+            <G key={`grid-${i}`}>
+              <Line
+                x1={leftPad} y1={y} x2={width - rightPad} y2={y}
+                stroke={colors.border} strokeWidth={0.5} opacity={0.3}
+                strokeDasharray={i === 0 ? undefined : '4,4'}
+              />
+              <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end">
+                {tick}
+              </SvgText>
+            </G>
+          )
         })}
+
+        {/* Stacked bars */}
         {good.map((g, i) => {
           const x = leftPad + (i + 0.5) * (chartW / count) - barW / 2
           const baseY = topPad + chartH
           const gH = (g / maxVal) * chartH
           const lH = (little[i] / maxVal) * chartH
           const nH = (none[i] / maxVal) * chartH
+          const totalH = gH + lH + nH
+
+          // Build stacked segments with rounded top on topmost segment
+          const topR = totalH > barR * 2 ? barR : Math.min(totalH / 2, barR)
+          const topY = baseY - totalH
+
           return (
             <G key={i}>
-              {gH > 0 && <Rect x={x} y={baseY - gH} width={barW} height={gH} rx={3} fill="url(#stackGood)" />}
-              {lH > 0 && <Rect x={x} y={baseY - gH - lH} width={barW} height={lH} rx={0} fill="url(#stackLittle)" />}
-              {nH > 0 && <Rect x={x} y={baseY - gH - lH - nH} width={barW} height={nH} rx={3} fill="url(#stackNone)" />}
+              {/* Determine which is the topmost segment for rounded corners */}
+              {(() => {
+                const hasN = nH > 0, hasL = lH > 0, hasG = gH > 0
+                const topSeg = hasN ? 'none' : hasL ? 'little' : 'good'
+                const segments: { fill: string; y0: number; h: number }[] = []
+                if (hasG) segments.push({ fill: 'url(#stackGood)', y0: baseY - gH, h: gH })
+                if (hasL) segments.push({ fill: 'url(#stackLittle)', y0: baseY - gH - lH, h: lH })
+                if (hasN) segments.push({ fill: 'url(#stackNone)', y0: topY, h: nH })
+
+                return segments.map((seg, si) => {
+                  const isTop = (seg.fill.includes('Good') && topSeg === 'good')
+                    || (seg.fill.includes('Little') && topSeg === 'little')
+                    || (seg.fill.includes('None') && topSeg === 'none')
+
+                  if (isTop && seg.h > 2) {
+                    const r = Math.min(topR, seg.h / 2)
+                    return (
+                      <Path key={si} d={`
+                        M ${x} ${seg.y0 + seg.h}
+                        L ${x} ${seg.y0 + r}
+                        Q ${x} ${seg.y0}, ${x + r} ${seg.y0}
+                        L ${x + barW - r} ${seg.y0}
+                        Q ${x + barW} ${seg.y0}, ${x + barW} ${seg.y0 + r}
+                        L ${x + barW} ${seg.y0 + seg.h}
+                        Z
+                      `} fill={seg.fill} />
+                    )
+                  }
+                  return <Rect key={si} x={x} y={seg.y0} width={barW} height={Math.max(seg.h, 1)} fill={seg.fill} />
+                })
+              })()}
             </G>
           )
         })}
@@ -1684,17 +1817,17 @@ function MoodDailyChart({ dailyCounts, labels, width }: { dailyCounts: Record<st
         {labels.map((label, dayIdx) => {
           const dayMoods = moods.filter((m) => dailyCounts[m][dayIdx] > 0)
           return (
-            <View key={dayIdx} style={{ width: colW, alignItems: 'center', gap: 4, paddingVertical: 8 }}>
+            <View key={dayIdx} style={{ width: colW, alignItems: 'center', gap: 6, paddingVertical: 10 }}>
               {dayMoods.length > 0 ? dayMoods.map((mood) => {
                 const count = dailyCounts[mood][dayIdx]
                 const color = MOOD_COLORS[mood] || colors.primary
                 return Array.from({ length: Math.min(count, 3) }).map((_, dotIdx) => (
-                  <View key={`${mood}-${dotIdx}`} style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: color + '30', borderWidth: 1.5, borderColor: color + '50', alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 10 }}>{MOOD_EMOJI[mood]}</Text>
+                  <View key={`${mood}-${dotIdx}`} style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color + '30', borderWidth: 1.5, borderColor: color + '50', alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 13 }}>{MOOD_EMOJI[mood]}</Text>
                   </View>
                 ))
               }) : (
-                <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border }} />
+                <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border }} />
               )}
               <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
             </View>
@@ -1736,178 +1869,184 @@ function getBestQuality(counts: { great: number; good: number; restless: number;
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  scroll: { paddingHorizontal: 16, gap: 16 },
+  scroll: { paddingHorizontal: 20, gap: 20 },
 
   // Header
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  screenTitle: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
-  screenSub: { fontSize: 13, fontWeight: '500', marginTop: 2 },
-  infoBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  screenTitle: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
+  screenSub: { fontSize: 14, fontWeight: '500', marginTop: 2 },
+  infoBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
 
   // Child selector
-  childRow: { gap: 8, paddingVertical: 4 },
-  childChip: { paddingVertical: 8, paddingHorizontal: 16, borderWidth: 1 },
-  childChipText: { fontSize: 14, fontWeight: '600' },
+  childRow: { gap: 10, paddingVertical: 4 },
+  childChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 18, borderWidth: 1 },
+  childChipName: { fontSize: 15, fontWeight: '700' },
+  childChipAge: { fontSize: 12, fontWeight: '500' },
 
   // Arc
-  arcContainer: { alignItems: 'center', marginTop: -8 },
-  arcLegend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10, marginTop: 4 },
-  arcInfoHint: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, paddingVertical: 4 },
-  arcInfoText: { fontSize: 11, fontWeight: '500' },
+  arcContainer: { alignItems: 'center', marginTop: 8 },
+  arcLegend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12, marginTop: 6 },
+  arcTooltip: { marginTop: 10, padding: 16, borderWidth: 1, gap: 8, width: '100%' },
+  arcTooltipHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  arcTooltipIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  arcTooltipTitle: { fontSize: 16, fontWeight: '800' },
+  arcTooltipBody: { fontSize: 14, fontWeight: '500', lineHeight: 20 },
+  arcInfoHint: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 10, paddingVertical: 4 },
+  arcInfoText: { fontSize: 12, fontWeight: '500' },
 
   // Insight card
-  insightCard: { padding: 16, gap: 12 },
+  insightCard: { padding: 20, gap: 14 },
   insightHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  insightBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999 },
-  insightBadgeText: { fontSize: 12, fontWeight: '700' },
-  insightDate: { fontSize: 11, fontWeight: '500' },
-  insightMessage: { fontSize: 15, fontWeight: '600', lineHeight: 22 },
-  insightButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 20, alignSelf: 'flex-start' },
-  insightButtonText: { fontSize: 14, fontWeight: '700' },
+  insightBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 12, borderRadius: 999 },
+  insightBadgeText: { fontSize: 13, fontWeight: '700' },
+  insightDate: { fontSize: 12, fontWeight: '500' },
+  insightMessage: { fontSize: 16, fontWeight: '600', lineHeight: 24 },
+  insightButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 24, alignSelf: 'flex-start' },
+  insightButtonText: { fontSize: 15, fontWeight: '700' },
 
   // Tips
-  tipsSection: { gap: 12 },
-  tipsSectionHeader: { gap: 2 },
+  tipsSection: { gap: 14 },
+  tipsSectionHeader: { gap: 4 },
   tipsSectionTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 2 },
-  tipsSectionSub: { fontSize: 13, fontWeight: '500' },
-  tipsScroll: { gap: 12, paddingRight: 16 },
-  tipCard: { width: 200, padding: 16, gap: 10 },
-  tipIconWrap: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  tipTitle: { fontSize: 15, fontWeight: '800', lineHeight: 20 },
-  tipBody: { fontSize: 12, fontWeight: '500', lineHeight: 17 },
-  tipTapHint: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 },
-  tipTapText: { fontSize: 11, fontWeight: '600' },
-  askButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, marginTop: 4 },
-  askButtonText: { fontSize: 15, fontWeight: '700' },
+  tipsSectionSub: { fontSize: 14, fontWeight: '500' },
+  tipsScroll: { gap: 12, paddingRight: 20 },
+  tipCard: { width: 200, padding: 18, gap: 12 },
+  tipIconWrap: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  tipTitle: { fontSize: 16, fontWeight: '800', lineHeight: 22 },
+  tipBody: { fontSize: 13, fontWeight: '500', lineHeight: 19 },
+  tipTapHint: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  tipTapText: { fontSize: 12, fontWeight: '600' },
+  askButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, marginTop: 4 },
+  askButtonText: { fontSize: 16, fontWeight: '700' },
 
   // Pillar section
-  pillarSection: { gap: 10 },
+  pillarSection: { gap: 12 },
   pillarSectionTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 2, marginBottom: 4 },
-  pillarRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  pillarIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  pillarInfo: { flex: 1, gap: 5 },
-  pillarNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  pillarName: { fontSize: 15, fontWeight: '700' },
-  trendBadge: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  trendText: { fontSize: 11, fontWeight: '700' },
-  pillarBarBg: { height: 6, width: '100%', overflow: 'hidden' },
+  pillarRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
+  pillarIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  pillarInfo: { flex: 1, gap: 6 },
+  pillarNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  pillarName: { fontSize: 16, fontWeight: '700' },
+  trendBadge: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  trendText: { fontSize: 12, fontWeight: '700' },
+  pillarBarBg: { height: 8, width: '100%', overflow: 'hidden' },
   pillarBarFill: { height: '100%' },
-  pillarTakeaway: { fontSize: 11, fontWeight: '500' },
+  pillarTakeaway: { fontSize: 12, fontWeight: '500' },
   pillarScoreWrap: { flexDirection: 'row', alignItems: 'baseline', marginRight: 4 },
-  pillarScoreValue: { fontSize: 18, fontWeight: '900' },
-  pillarScoreOf: { fontSize: 11, fontWeight: '600' },
+  pillarScoreValue: { fontSize: 22, fontWeight: '900' },
+  pillarScoreOf: { fontSize: 12, fontWeight: '600' },
 
   // Detail body
-  detailBody: { gap: 12, paddingTop: 4 },
-  detailExplain: { fontSize: 12, fontWeight: '500', lineHeight: 17, paddingHorizontal: 4 },
+  detailBody: { gap: 16, paddingTop: 8 },
+  detailExplain: { fontSize: 13, fontWeight: '500', lineHeight: 19, paddingHorizontal: 4 },
 
   // Chart card
-  card: { padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
-  chartHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  chartTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 },
+  card: { padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 3 },
+  chartHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  chartTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
   chartBody: { alignItems: 'center' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 
   // Day detail strip
-  dayStrip: { gap: 8, paddingVertical: 4 },
-  dayStripLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5, paddingHorizontal: 4 },
-  dayChips: { flexDirection: 'row', gap: 6 },
-  dayChip: { flex: 1, alignItems: 'center', paddingVertical: 8, borderWidth: 1 },
-  dayChipLabel: { fontSize: 10, fontWeight: '600' },
-  dayChipValue: { fontSize: 11, fontWeight: '800', marginTop: 2 },
-  dayDetail: { paddingVertical: 10, paddingHorizontal: 14, borderWidth: 1 },
-  dayDetailText: { fontSize: 13, fontWeight: '500', lineHeight: 18 },
+  dayStrip: { gap: 10, paddingVertical: 6 },
+  dayStripLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5, paddingHorizontal: 4 },
+  dayChips: { flexDirection: 'row', gap: 8 },
+  dayChip: { flex: 1, alignItems: 'center', paddingVertical: 12, borderWidth: 1 },
+  dayChipLabel: { fontSize: 12, fontWeight: '600' },
+  dayChipValue: { fontSize: 13, fontWeight: '800', marginTop: 3 },
+  dayDetail: { paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1 },
+  dayDetailText: { fontSize: 14, fontWeight: '500', lineHeight: 20 },
 
   // Labels & Legend
-  labelRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  label: { fontSize: 10, fontWeight: '600', textAlign: 'center' },
-  legendRow: { flexDirection: 'row', gap: 12, marginTop: 10, justifyContent: 'center' },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendLabel: { fontSize: 10, fontWeight: '600' },
+  labelRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
+  label: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  legendRow: { flexDirection: 'row', gap: 16, marginTop: 12, justifyContent: 'center' },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendLabel: { fontSize: 12, fontWeight: '600' },
 
   // Events
-  eventRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
-  eventDot: { width: 10, height: 10, borderRadius: 5 },
-  eventLabel: { fontSize: 14, fontWeight: '600' },
-  eventDate: { fontSize: 12, fontWeight: '500' },
+  eventRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
+  eventDot: { width: 12, height: 12, borderRadius: 6 },
+  eventLabel: { fontSize: 15, fontWeight: '600' },
+  eventDate: { fontSize: 13, fontWeight: '500' },
 
   // Vaccines
-  vaccineGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-  vaccineChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1 },
-  vaccineText: { fontSize: 12, fontWeight: '600' },
+  vaccineGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 },
+  vaccineChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1 },
+  vaccineText: { fontSize: 14, fontWeight: '600' },
 
   // Sleep quality bars
-  qualityWrap: { width: '100%', gap: 8, paddingVertical: 4 },
-  qualityRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  qualityEmoji: { fontSize: 16, width: 24, textAlign: 'center' },
-  qualityLabel: { fontSize: 12, fontWeight: '600', width: 56 },
-  qualityBarBg: { flex: 1, height: 12, overflow: 'hidden' },
+  qualityWrap: { width: '100%', gap: 12, paddingVertical: 6 },
+  qualityRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  qualityEmoji: { fontSize: 18, width: 28, textAlign: 'center' },
+  qualityLabel: { fontSize: 14, fontWeight: '600', width: 64 },
+  qualityBarBg: { flex: 1, height: 16, overflow: 'hidden' },
   qualityBarFill: { height: '100%' },
-  qualityPct: { fontSize: 12, fontWeight: '800', width: 36, textAlign: 'right' },
+  qualityPct: { fontSize: 14, fontWeight: '800', width: 44, textAlign: 'right' },
 
   // Mood
-  moodDistWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
-  moodChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1 },
-  moodEmoji: { fontSize: 16 },
-  moodLabel: { fontSize: 13, fontWeight: '700', textTransform: 'capitalize' },
-  moodPct: { fontSize: 11, fontWeight: '600' },
+  moodDistWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
+  moodChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1 },
+  moodEmoji: { fontSize: 18 },
+  moodLabel: { fontSize: 14, fontWeight: '700', textTransform: 'capitalize' },
+  moodPct: { fontSize: 13, fontWeight: '600' },
 
   // Stat row
-  statRow: { flexDirection: 'row', gap: 10, padding: 12 },
-  statPill: { flex: 1, alignItems: 'center', padding: 14, gap: 4 },
-  statValue: { fontSize: 20, fontWeight: '900' },
-  statLabel: { fontSize: 11, fontWeight: '600', textAlign: 'center' },
+  statRow: { flexDirection: 'row', gap: 12, padding: 8 },
+  statPill: { flex: 1, alignItems: 'center', padding: 16, gap: 6 },
+  statValue: { fontSize: 24, fontWeight: '900' },
+  statLabel: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
 
   // Loading / Error / Empty
-  loadingWrap: { alignItems: 'center', gap: 8, paddingVertical: 24 },
-  loadingText: { fontSize: 13, fontWeight: '500' },
-  errorCard: { padding: 16, alignItems: 'center', gap: 8 },
-  errorText: { fontSize: 14, fontWeight: '700' },
-  errorRetry: { fontSize: 13, fontWeight: '600' },
-  emptyCard: { padding: 20, alignItems: 'center', gap: 8 },
-  emptyText: { fontSize: 13, fontWeight: '500', textAlign: 'center', lineHeight: 18 },
-  emptyAll: { padding: 32, alignItems: 'center', gap: 12, marginTop: 12 },
-  emptyAllTitle: { fontSize: 18, fontWeight: '800' },
-  emptyAllSub: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20 },
+  loadingWrap: { alignItems: 'center', gap: 10, paddingVertical: 32 },
+  loadingText: { fontSize: 14, fontWeight: '500' },
+  errorCard: { padding: 20, alignItems: 'center', gap: 10 },
+  errorText: { fontSize: 15, fontWeight: '700' },
+  errorRetry: { fontSize: 14, fontWeight: '600' },
+  emptyCard: { padding: 24, alignItems: 'center', gap: 10 },
+  emptyText: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20 },
+  emptyAll: { padding: 40, alignItems: 'center', gap: 14, marginTop: 16 },
+  emptyAllTitle: { fontSize: 20, fontWeight: '800' },
+  emptyAllSub: { fontSize: 15, fontWeight: '500', textAlign: 'center', lineHeight: 22 },
 
   // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   modalSheet: { maxHeight: '90%', marginHorizontal: 0 },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12 },
-  modalTitle: { fontSize: 18, fontWeight: '800' },
-  modalClose: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  modalTitle: { fontSize: 20, fontWeight: '800' },
+  modalClose: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 
   // Score info modal
-  scoreHighlight: { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 16, marginHorizontal: 20, marginBottom: 20, borderWidth: 1 },
-  scoreHighlightNum: { fontSize: 40, fontWeight: '900' },
-  scoreHighlightLabel: { fontSize: 15, fontWeight: '700' },
-  scoreHighlightSub: { fontSize: 12, fontWeight: '500', marginTop: 2 },
-  infoSectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5, marginHorizontal: 20, marginBottom: 8 },
-  bandRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20 },
-  bandDot: { width: 10, height: 10, borderRadius: 5 },
-  bandLabel: { flex: 1, fontSize: 14, fontWeight: '600' },
-  bandRange: { fontSize: 13, fontWeight: '500' },
-  pillarInfoCard: { marginHorizontal: 20, padding: 14, gap: 8 },
-  pillarInfoHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  pillarInfoIcon: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  pillarInfoName: { flex: 1, fontSize: 14, fontWeight: '700' },
-  pillarInfoWeight: { fontSize: 12, fontWeight: '600' },
-  pillarInfoScoreBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  pillarInfoScoreText: { fontSize: 13, fontWeight: '800' },
-  pillarInfoBody: { fontSize: 12, fontWeight: '500', lineHeight: 17 },
-  ageBanner: { marginHorizontal: 20, marginBottom: 8, padding: 16, borderWidth: 1, gap: 6 },
-  ageBannerTitle: { fontSize: 14, fontWeight: '800' },
-  ageBannerBody: { fontSize: 13, fontWeight: '500', lineHeight: 19 },
+  scoreHighlight: { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 20, marginHorizontal: 20, marginBottom: 20, borderWidth: 1 },
+  scoreHighlightNum: { fontSize: 44, fontWeight: '900' },
+  scoreHighlightLabel: { fontSize: 16, fontWeight: '700' },
+  scoreHighlightSub: { fontSize: 13, fontWeight: '500', marginTop: 2 },
+  infoSectionLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 1.5, marginHorizontal: 20, marginBottom: 10 },
+  bandRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20 },
+  bandDot: { width: 12, height: 12, borderRadius: 6 },
+  bandLabel: { flex: 1, fontSize: 15, fontWeight: '600' },
+  bandRange: { fontSize: 14, fontWeight: '500' },
+  pillarInfoCard: { marginHorizontal: 20, padding: 16, gap: 10 },
+  pillarInfoHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  pillarInfoIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  pillarInfoName: { flex: 1, fontSize: 15, fontWeight: '700' },
+  pillarInfoWeight: { fontSize: 13, fontWeight: '600' },
+  pillarInfoScoreBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  pillarInfoScoreText: { fontSize: 14, fontWeight: '800' },
+  pillarInfoBody: { fontSize: 13, fontWeight: '500', lineHeight: 19 },
+  ageBanner: { marginHorizontal: 20, marginBottom: 10, padding: 18, borderWidth: 1, gap: 8 },
+  ageBannerTitle: { fontSize: 15, fontWeight: '800' },
+  ageBannerBody: { fontSize: 14, fontWeight: '500', lineHeight: 21 },
 
   // Tip detail modal
-  tipModalContent: { marginHorizontal: 20, marginBottom: 20, padding: 20, gap: 14 },
+  tipModalContent: { marginHorizontal: 20, marginBottom: 20, padding: 24, gap: 16 },
   tipModalHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  tipModalIconWrap: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  tipModalTitle: { fontSize: 20, fontWeight: '900', lineHeight: 26 },
-  tipModalSummary: { padding: 12 },
-  tipModalSummaryText: { fontSize: 14, fontWeight: '600', lineHeight: 20 },
-  tipModalDetail: { fontSize: 14, fontWeight: '500', lineHeight: 21 },
-  tipAskBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderWidth: 1, marginTop: 4 },
-  tipAskBtnText: { fontSize: 15, fontWeight: '700' },
+  tipModalIconWrap: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  tipModalTitle: { fontSize: 22, fontWeight: '900', lineHeight: 28 },
+  tipModalSummary: { padding: 14 },
+  tipModalSummaryText: { fontSize: 15, fontWeight: '600', lineHeight: 22 },
+  tipModalDetail: { fontSize: 15, fontWeight: '500', lineHeight: 23 },
+  tipAskBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderWidth: 1, marginTop: 4 },
+  tipAskBtnText: { fontSize: 16, fontWeight: '700' },
 })

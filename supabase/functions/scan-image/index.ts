@@ -88,6 +88,27 @@ serve(async (req) => {
 })
 
 function buildScanPrompt(scanType: string, child?: RequestBody['childContext']): string {
+  if (scanType === 'insurance_card') {
+    return `You are a precise OCR assistant for grandma.app. Extract insurance card information from the image.
+
+Rules:
+- Read every piece of text visible on the card carefully
+- Return ONLY a valid JSON object — no markdown, no explanation, no backticks
+- Use null for any field you cannot find or read
+- For plan_type: determine if this is "health", "dental", or "vision" based on the card content. Default to "health" if unclear.
+- Normalize phone numbers to include area code when visible
+- The JSON schema MUST be exactly:
+{
+  "provider_name": string | null,
+  "plan_name": string | null,
+  "plan_type": "health" | "dental" | "vision",
+  "policy_number": string | null,
+  "group_number": string | null,
+  "member_id": string | null,
+  "phone": string | null
+}`
+  }
+
   const childInfo = child
     ? `Child: ${child.name}, ${child.ageMonths} months old, ${child.weightKg}kg.`
       + (child.allergies?.length ? ` Allergies: ${child.allergies.join(', ')}.` : '')
@@ -114,6 +135,7 @@ function getScanQuestion(scanType: string): string {
     medicine: 'What medicine is this? Is it safe for my child? What is the correct dose based on their weight?',
     food: 'What food product is this? Are any ingredients unsafe or allergenic for my child?',
     nutrition: 'What are the nutritional facts? Is this appropriate for my child\'s age?',
+    insurance_card: 'Extract all insurance information from this card. Return ONLY the JSON object, nothing else.',
     general: 'What is this product? Tell me anything relevant for my child.',
   }
   return questions[scanType] ?? questions.general

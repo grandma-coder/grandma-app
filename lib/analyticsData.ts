@@ -51,6 +51,15 @@ export interface HealthData {
   hasData: boolean
 }
 
+export interface DiaperData {
+  dailyCounts: number[]
+  typeCounts: { pee: number; poop: number; mixed: number }
+  colorCounts: Record<string, number>
+  weekLabels: string[]
+  totalCount: number
+  hasData: boolean
+}
+
 export interface GrowthData {
   weights: { value: number; date: string }[]
   heights: { value: number; date: string }[]
@@ -87,6 +96,7 @@ export interface AnalyticsData {
   sleep: SleepData
   mood: MoodData
   health: HealthData
+  diaper: DiaperData
   routineCompliance: RoutineComplianceData
   growth: GrowthData
   scores: WellnessScores
@@ -96,6 +106,11 @@ export interface AnalyticsData {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Format a Date to local YYYY-MM-DD (matches how calendar stores log dates). */
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function getLast7Days(): { dates: string[]; labels: string[] } {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   const dates: string[] = []
@@ -103,7 +118,7 @@ function getLast7Days(): { dates: string[]; labels: string[] } {
   for (let i = 6; i >= 0; i--) {
     const d = new Date()
     d.setDate(d.getDate() - i)
-    dates.push(d.toISOString().split('T')[0])
+    dates.push(localDateStr(d))
     labels.push(dayNames[d.getDay()])
   }
   return { dates, labels }
@@ -299,6 +314,35 @@ function buildGrowthData(logs: ChildLog[]): GrowthData {
   return { weights, heights, hasData: weights.length > 0 || heights.length > 0 }
 }
 
+function buildDiaperData(logs: ChildLog[], dates: string[], labels: string[]): DiaperData {
+  const diaperLogs = logs.filter((l) => l.type === 'diaper')
+  if (diaperLogs.length === 0) {
+    return { dailyCounts: [0,0,0,0,0,0,0], typeCounts: { pee: 0, poop: 0, mixed: 0 }, colorCounts: {}, weekLabels: labels, totalCount: 0, hasData: false }
+  }
+
+  const dailyCounts = new Array(7).fill(0)
+  const typeCounts = { pee: 0, poop: 0, mixed: 0 }
+  const colorCounts: Record<string, number> = {}
+
+  for (const log of diaperLogs) {
+    const dayIdx = dates.indexOf(log.date)
+    if (dayIdx !== -1) dailyCounts[dayIdx]++
+
+    const val = parseValue(log.value)
+    if (val && typeof val === 'object') {
+      const dt = (val.diaperType || '') as keyof typeof typeCounts
+      if (dt in typeCounts) typeCounts[dt]++
+
+      if (val.color) {
+        const c = String(val.color)
+        colorCounts[c] = (colorCounts[c] || 0) + 1
+      }
+    }
+  }
+
+  return { dailyCounts, typeCounts, colorCounts, weekLabels: labels, totalCount: diaperLogs.length, hasData: true }
+}
+
 // ─── Scoring Functions ───────────────────────────────────────────────────────
 
 function scoreLabel(score: number): string {
@@ -450,7 +494,7 @@ function scoreGrowth(data: GrowthData): PillarScore {
   // Bonus for recent measurements (within last 7 days)
   const sevenDaysAgo = new Date()
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-  const recentDate = sevenDaysAgo.toISOString().split('T')[0]
+  const recentDate = localDateStr(sevenDaysAgo)
   const hasRecent = data.weights.some((w) => w.date >= recentDate) || data.heights.some((h) => h.date >= recentDate)
   const recencyBonus = hasRecent ? 3 : 1
 
@@ -499,7 +543,7 @@ export function useKidsAnalytics(childId: string | 'all') {
       // Get 30 days of data for broader context, 7-day window for charts
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-      const sinceDate = thirtyDaysAgo.toISOString().split('T')[0]
+      const sinceDate = localDateStr(thirtyDaysAgo)
 
       const childIds = childId === 'all'
         ? children.map((c) => c.id)
@@ -526,6 +570,7 @@ export function useKidsAnalytics(childId: string | 'all') {
       const sleep = buildSleepData(allLogs, dates, labels)
       const mood = buildMoodData(allLogs, dates, labels)
       const health = buildHealthData(allLogs, dates, labels)
+      const diaper = buildDiaperData(allLogs, dates, labels)
       const growth = buildGrowthData(allLogs)
       const routineCompliance = buildRoutineComplianceData(allLogs, dates, labels)
       const scores = buildScores(nutrition, sleep, mood, health, growth)
@@ -535,11 +580,12 @@ export function useKidsAnalytics(childId: string | 'all') {
         sleep,
         mood,
         health,
+        diaper,
         growth,
         routineCompliance,
         scores,
         totalLogs: allLogs.filter((l) => l.type !== 'skipped').length,
-        dateRange: { from: sinceDate, to: new Date().toISOString().split('T')[0] },
+        dateRange: { from: sinceDate, to: localDateStr(new Date()) },
       }
     },
     staleTime: 60 * 1000,        // 1 min — charts feel live

@@ -15,6 +15,11 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '../lib/supabase'
 
+/** Format a Date to local YYYY-MM-DD (matches how calendar stores log dates). */
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 // ─── Badge Definitions ────────────────────────────────────────────────────────
 
 export interface BadgeDef {
@@ -59,6 +64,11 @@ export const BADGE_DEFS: BadgeDef[] = [
   { id: 'health_vaccine',  name: 'Shield Up',        description: 'Logged first vaccine',        icon: '🛡', category: 'health', color: '#4D96FF', tier: 'bronze' },
   { id: 'health_all_vax',  name: 'Fully Protected',  description: 'All vaccines up to date',     icon: '💪', category: 'health', color: '#4D96FF', tier: 'gold' },
   { id: 'health_checkup',  name: 'Health Check',     description: 'Logged 5 health events',      icon: '🏥', category: 'health', color: '#4D96FF', tier: 'silver' },
+
+  // ═══ DIAPER BADGES ═══
+  { id: 'diaper_first',    name: 'Diaper Duty',       description: 'Logged first diaper change',      icon: '🧷', category: 'health', color: '#6AABF7', tier: 'bronze' },
+  { id: 'diaper_week',     name: 'Diaper Tracker',    description: 'Logged diapers 7 days in a row',  icon: '🧷', category: 'health', color: '#6AABF7', tier: 'silver' },
+  { id: 'diaper_100',      name: 'Diaper Champion',   description: 'Logged 100 diaper changes',       icon: '🏅', category: 'health', color: '#6AABF7', tier: 'gold' },
 
   // ═══ GROWTH BADGES ═══
   { id: 'growth_first',    name: 'Growing Up',       description: 'Logged first growth measurement', icon: '📏', category: 'growth', color: '#F59E0B', tier: 'bronze' },
@@ -130,6 +140,8 @@ interface BadgeState {
     uniqueFoods: number
     sleepDays: number
     moodDays: number
+    diaperCount: number
+    diaperDays: number
     vaccinesDone: number
     totalVaccines: number
     growthMeasurements: number
@@ -168,7 +180,7 @@ export const useBadgeStore = create<BadgeState>()(
       totalPoints: 485,
       currentStreak: 30,
       longestStreak: 30,
-      lastCheckInDate: new Date().toISOString().split('T')[0],
+      lastCheckInDate: localDateStr(new Date()),
       totalCheckIns: 42,
       hydrated: false,
 
@@ -193,14 +205,15 @@ export const useBadgeStore = create<BadgeState>()(
 
       checkIn: () => {
         const state = get()
-        const today = new Date().toISOString().split('T')[0]
+        const today = localDateStr(new Date())
 
         // Already checked in today
         if (state.lastCheckInDate === today) {
           return { points: 0, newBadges: [], streak: state.currentStreak }
         }
 
-        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+        const yd = new Date(); yd.setDate(yd.getDate() - 1)
+        const yesterday = localDateStr(yd)
         const isConsecutive = state.lastCheckInDate === yesterday
         const newStreak = isConsecutive ? state.currentStreak + 1 : 1
         const newTotal = state.totalCheckIns + 1
@@ -287,6 +300,11 @@ export const useBadgeStore = create<BadgeState>()(
         if (data.vaccinesDone >= 1) earn('health_vaccine')
         if (data.vaccinesDone >= data.totalVaccines && data.totalVaccines > 0) earn('health_all_vax')
 
+        // Diaper
+        if (data.diaperCount >= 1) earn('diaper_first')
+        if (data.diaperDays >= 7) earn('diaper_week')
+        if (data.diaperCount >= 100) earn('diaper_100')
+
         // Growth
         if (data.growthMeasurements >= 1) earn('growth_first')
         if (data.growthMeasurements >= 10) earn('growth_tracker')
@@ -316,7 +334,7 @@ export const useBadgeStore = create<BadgeState>()(
             totalPoints: 485,
             currentStreak: 30,
             longestStreak: 30,
-            lastCheckInDate: new Date().toISOString().split('T')[0],
+            lastCheckInDate: localDateStr(new Date()),
             totalCheckIns: 42,
           }
         }

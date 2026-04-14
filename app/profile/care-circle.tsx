@@ -46,6 +46,8 @@ import {
   Heart,
   Smile,
   Camera,
+  Dumbbell,
+  Thermometer,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
@@ -138,18 +140,153 @@ const PERMISSION_LEVELS = [
 
 const EVENT_ICONS: Record<string, typeof Utensils> = {
   feeding: Utensils,
+  food: Utensils,
   sleep: MoonIcon,
   mood: Smile,
-  food: Utensils,
+  diaper: Baby,
+  health: Heart,
+  temperature: Thermometer,
+  vaccine: Shield,
+  medicine: Heart,
+  activity: Dumbbell,
+  memory: Camera,
+  photo: Camera,
+  growth: Heart,
+  milestone: Heart,
   note: MessageSquare,
 }
 
 const EVENT_COLORS: Record<string, string> = {
   feeding: brand.kids,
+  food: brand.phase.ovulation,
   sleep: brand.pregnancy,
   mood: brand.accent,
-  food: brand.phase.ovulation,
+  diaper: brand.secondary,
+  health: brand.error,
+  temperature: brand.error,
+  vaccine: brand.error,
+  medicine: brand.error,
+  activity: brand.phase.ovulation,
+  memory: brand.phase.ovulation,
+  photo: brand.phase.ovulation,
+  growth: brand.success,
+  milestone: brand.accent,
   note: brand.secondary,
+}
+
+/** Convert raw log type + JSON value into a friendly, human-readable summary */
+function formatActivitySummary(type: string, value: string | null, notes: string | null): string {
+  if (!value) return notes ?? ''
+  try {
+    const v = JSON.parse(value)
+    if (typeof v !== 'object' || v === null) return typeof v === 'string' ? v : (notes ?? '')
+
+    switch (type) {
+      case 'feeding': {
+        const parts: string[] = []
+        if (v.feedType === 'breast') {
+          parts.push('Breastfed')
+          if (v.side) parts.push(v.side === 'left' ? 'Left side' : v.side === 'right' ? 'Right side' : 'Both sides')
+          if (v.duration) parts.push(`${v.duration} min`)
+        } else if (v.feedType === 'bottle') {
+          parts.push('Bottle')
+          if (v.amount) parts.push(`${v.amount} ml`)
+        }
+        if (v.time) parts.push(fmtTime12(v.time))
+        return parts.join(' · ') || notes || ''
+      }
+      case 'food': {
+        const parts: string[] = []
+        const meals: Record<string, string> = { breakfast: 'Breakfast', morning_snack: 'AM Snack', lunch: 'Lunch', afternoon_snack: 'PM Snack', dinner: 'Dinner', night_snack: 'Night Snack' }
+        if (v.meal) parts.push(meals[v.meal] ?? v.meal)
+        const quality: Record<string, string> = { ate_well: 'Ate well', ate_little: 'Ate a little', did_not_eat: 'Did not eat' }
+        if (v.quality) parts.push(quality[v.quality] ?? v.quality)
+        if (v.estimatedCals) parts.push(`~${v.estimatedCals} kcal`)
+        if (v.time) parts.push(fmtTime12(v.time))
+        return parts.join(' · ') || notes || ''
+      }
+      case 'sleep': {
+        const parts: string[] = []
+        if (v.startTime && v.endTime) parts.push(`${fmtTime12(v.startTime)} – ${fmtTime12(v.endTime)}`)
+        else if (v.startTime) parts.push(`Started ${fmtTime12(v.startTime)}`)
+        if (v.duration) parts.push(`${v.duration} hrs`)
+        if (v.quality) parts.push(v.quality.charAt(0).toUpperCase() + v.quality.slice(1))
+        return parts.join(' · ') || notes || ''
+      }
+      case 'diaper': {
+        const parts: string[] = []
+        const types: Record<string, string> = { pee: 'Wet 💧', poop: 'Dirty 💩', mixed: 'Both 🔄' }
+        if (v.diaperType) parts.push(types[v.diaperType] ?? v.diaperType)
+        if (v.color) parts.push(v.color.charAt(0).toUpperCase() + v.color.slice(1))
+        if (v.consistency) parts.push(v.consistency)
+        if (v.time) parts.push(fmtTime12(v.time))
+        return parts.join(' · ') || notes || ''
+      }
+      case 'activity': {
+        const parts: string[] = []
+        if (v.name) parts.push(v.name)
+        else if (v.activityType) parts.push(v.activityType.charAt(0).toUpperCase() + v.activityType.slice(1))
+        if (v.startTime && v.endTime) parts.push(`${fmtTime12(v.startTime)} – ${fmtTime12(v.endTime)}`)
+        if (v.duration) parts.push(v.duration)
+        return parts.join(' · ') || notes || ''
+      }
+      case 'temperature':
+        return v ? `${v}°C` : (notes ?? '')
+      case 'mood':
+        return ''  // mood value is a raw string, handled by the title
+      default: {
+        // For unknown types, try to extract meaningful fields
+        if (v.name) return v.name
+        if (v.value) return String(v.value)
+        return notes ?? ''
+      }
+    }
+  } catch {
+    // Not JSON — mood values are just the mood string
+    if (type === 'mood') return ''
+    return value
+  }
+}
+
+/** Format "HH:MM" to "H:MM AM/PM" */
+function fmtTime12(t: string): string {
+  const [hStr, mStr] = t.split(':')
+  const h = parseInt(hStr, 10)
+  const m = mStr ?? '00'
+  if (isNaN(h)) return t
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return `${h12}:${m} ${ampm}`
+}
+
+/** Friendly label for log type */
+function friendlyTypeLabel(type: string, value: string | null): string {
+  try {
+    const v = value ? JSON.parse(value) : null
+    if (type === 'feeding' && v?.feedType === 'breast') return 'Breastfeed'
+    if (type === 'feeding' && v?.feedType === 'bottle') return 'Bottle Feed'
+    if (type === 'mood' && typeof v === 'string') return `Mood: ${v.charAt(0).toUpperCase() + v.slice(1)}`
+  } catch {
+    if (type === 'mood' && value) return `Mood: ${value.charAt(0).toUpperCase() + value.slice(1)}`
+  }
+  const labels: Record<string, string> = {
+    feeding: 'Feeding',
+    food: 'Meal',
+    sleep: 'Sleep',
+    diaper: 'Diaper Change',
+    mood: 'Mood',
+    activity: 'Activity',
+    temperature: 'Temperature',
+    vaccine: 'Vaccine',
+    medicine: 'Medicine',
+    health: 'Health',
+    photo: 'Memory',
+    memory: 'Memory',
+    growth: 'Growth',
+    milestone: 'Milestone',
+    note: 'Note',
+  }
+  return labels[type] ?? type.charAt(0).toUpperCase() + type.slice(1)
 }
 
 // ─── Photo Picker ─────────────────────────────────────────────────────────
@@ -684,6 +821,8 @@ export default function CareCircleScreen() {
                 {items.map((a) => {
                   const Icon = EVENT_ICONS[a.type] ?? Heart
                   const color = EVENT_COLORS[a.type] ?? colors.textMuted
+                  const summary = formatActivitySummary(a.type, a.value, a.notes)
+                  const typeLabel = friendlyTypeLabel(a.type, a.value)
                   return (
                     <View key={a.id} style={[styles.activityItem, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
                       <View style={[styles.activityIcon, { backgroundColor: color + '15' }]}>
@@ -692,18 +831,18 @@ export default function CareCircleScreen() {
                       <View style={{ flex: 1 }}>
                         <View style={styles.activityTopRow}>
                           <Text style={[styles.activityType, { color: colors.text }]}>
-                            {a.type.charAt(0).toUpperCase() + a.type.slice(1)}
+                            {typeLabel}
                           </Text>
                           <View style={[styles.loggerBadge, { backgroundColor: colors.surfaceRaised, borderRadius: radius.full }]}>
                             <Text style={[styles.loggerText, { color: colors.textSecondary }]}>{a.loggedByName}</Text>
                           </View>
                         </View>
-                        {a.value && (
+                        {summary !== '' && (
                           <Text style={[styles.activityValue, { color: colors.textSecondary }]} numberOfLines={2}>
-                            {a.value}
+                            {summary}
                           </Text>
                         )}
-                        {a.notes && (
+                        {a.notes && summary !== a.notes && (
                           <Text style={[styles.activityNotes, { color: colors.textMuted }]} numberOfLines={1}>
                             {a.notes}
                           </Text>
@@ -1307,17 +1446,17 @@ const styles = StyleSheet.create({
 
   // Activity
   dateHeader: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 8, marginBottom: 4 },
-  activityItem: { flexDirection: 'row', padding: 12, gap: 10, marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
-  activityIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  activityItem: { flexDirection: 'row', alignItems: 'flex-start', padding: 14, gap: 12, marginBottom: 10 },
+  activityIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   activityTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  activityType: { fontSize: 14, fontWeight: '700' },
-  loggerBadge: { paddingHorizontal: 8, paddingVertical: 2 },
+  activityType: { fontSize: 15, fontWeight: '700' },
+  loggerBadge: { paddingHorizontal: 8, paddingVertical: 3 },
   loggerText: { fontSize: 10, fontWeight: '600' },
-  activityValue: { fontSize: 13, fontWeight: '500', marginTop: 2 },
-  activityNotes: { fontSize: 12, fontWeight: '400', fontStyle: 'italic', marginTop: 2 },
-  activityFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  childTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 2 },
-  childTagText: { fontSize: 10, fontWeight: '600' },
+  activityValue: { fontSize: 13, fontWeight: '500', marginTop: 4, lineHeight: 18 },
+  activityNotes: { fontSize: 12, fontWeight: '400', fontStyle: 'italic', marginTop: 3, lineHeight: 17 },
+  activityFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
+  childTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3 },
+  childTagText: { fontSize: 10, fontWeight: '700' },
   activityTime: { fontSize: 10, fontWeight: '500' },
 })
 

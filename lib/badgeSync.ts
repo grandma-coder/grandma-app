@@ -6,6 +6,11 @@
 import { supabase } from './supabase'
 import { useBadgeStore } from '../store/useBadgeStore'
 
+/** Format a Date to local YYYY-MM-DD (matches how calendar stores log dates). */
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export async function syncBadgesFromSupabase(): Promise<string[]> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return []
@@ -13,7 +18,7 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
   const userId = session.user.id
   const ninetyDaysAgo = new Date()
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
-  const sinceDate = ninetyDaysAgo.toISOString().split('T')[0]
+  const sinceDate = localDateStr(ninetyDaysAgo)
 
   // Run all queries in parallel
   const [
@@ -21,6 +26,7 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
     foodResult,
     sleepResult,
     moodResult,
+    diaperResult,
     vaccineResult,
     growthResult,
     photosResult,
@@ -56,6 +62,13 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
       .select('date')
       .eq('user_id', userId)
       .eq('type', 'mood'),
+
+    // Diaper logs
+    supabase
+      .from('child_logs')
+      .select('date')
+      .eq('user_id', userId)
+      .eq('type', 'diaper'),
 
     // Vaccines done
     supabase
@@ -111,7 +124,7 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
   const checkDate = new Date()
   checkDate.setDate(checkDate.getDate() - 1)
   for (let i = 0; i < 120; i++) {
-    if (logDates.has(checkDate.toISOString().split('T')[0])) {
+    if (logDates.has(localDateStr(checkDate))) {
       streak++
       checkDate.setDate(checkDate.getDate() - 1)
     } else break
@@ -130,9 +143,11 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
     }
   }
 
-  // Unique sleep/mood days
+  // Unique sleep/mood/diaper days
   const sleepDays = new Set((sleepResult.data ?? []).map((l: any) => l.date)).size
   const moodDays = new Set((moodResult.data ?? []).map((l: any) => l.date)).size
+  const diaperCount = (diaperResult.data ?? []).length
+  const diaperDays = new Set((diaperResult.data ?? []).map((l: any) => l.date)).size
 
   // Total reactions on channel posts
   const totalReactions = (reactionsResult.data ?? []).reduce(
@@ -152,6 +167,8 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
     uniqueFoods: foodNames.size,
     sleepDays,
     moodDays,
+    diaperCount,
+    diaperDays,
     vaccinesDone: vaccineResult.count ?? 0,
     totalVaccines: 8, // standard set
     growthMeasurements: growthResult.count ?? 0,

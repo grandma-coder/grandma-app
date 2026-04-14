@@ -11,7 +11,7 @@ import {
   View, Text, Pressable, ScrollView, StyleSheet, Dimensions, Image, Modal, TextInput, Platform,
   Animated, PanResponder,
 } from 'react-native'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import Svg, {
@@ -408,7 +408,8 @@ function getRecommendedCalories(bd: string): number {
   return 1200
 }
 
-const CHILD_COLORS = [brand.kids, brand.prePregnancy, brand.accent, brand.phase.ovulation, brand.pregnancy, brand.secondary]
+// CHILD_COLORS imported from shared component
+import { CHILD_COLORS } from '../ui/ChildPills'
 
 const MOOD_COLORS: Record<string, string> = {
   happy: '#FBBF24', calm: '#6EC96E', energetic: '#4D96FF', fussy: '#FF9800', cranky: '#FF7070',
@@ -424,13 +425,18 @@ const MOOD_EMOJI: Record<string, string> = {
 }
 
 // Normalize a date value from Supabase to YYYY-MM-DD string
+/** Format a Date to local YYYY-MM-DD (matches how calendar stores log dates). */
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function toDateStr(d: any): string {
   if (!d) return ''
   if (typeof d === 'string') {
     // Already YYYY-MM-DD or ISO string
     return d.substring(0, 10)
   }
-  if (d instanceof Date) return d.toISOString().split('T')[0]
+  if (d instanceof Date) return localDateStr(d)
   return String(d).substring(0, 10)
 }
 
@@ -458,36 +464,35 @@ function getDateRange(
   custom?: { start: Date; end: Date },
 ): { startDate: string; endDate: string; days: number } {
   const today = new Date()
-  const fmt = (d: Date) => d.toISOString().split('T')[0]
 
   switch (range) {
     case 'today':
-      return { startDate: fmt(today), endDate: fmt(today), days: 1 }
+      return { startDate: localDateStr(today), endDate: localDateStr(today), days: 1 }
     case 'yesterday': {
       const y = new Date(today)
       y.setDate(y.getDate() - 1)
-      return { startDate: fmt(y), endDate: fmt(y), days: 1 }
+      return { startDate: localDateStr(y), endDate: localDateStr(y), days: 1 }
     }
     case '7days': {
       const start = new Date(today)
       start.setDate(start.getDate() - 6)
-      return { startDate: fmt(start), endDate: fmt(today), days: 7 }
+      return { startDate: localDateStr(start), endDate: localDateStr(today), days: 7 }
     }
     case '30days': {
       const start = new Date(today)
       start.setDate(start.getDate() - 29)
-      return { startDate: fmt(start), endDate: fmt(today), days: 30 }
+      return { startDate: localDateStr(start), endDate: localDateStr(today), days: 30 }
     }
     case 'custom': {
       if (!custom) {
         // fallback to last 7 days if custom range not yet set
         const start = new Date(today)
         start.setDate(start.getDate() - 6)
-        return { startDate: fmt(start), endDate: fmt(today), days: 7 }
+        return { startDate: localDateStr(start), endDate: localDateStr(today), days: 7 }
       }
       const diffMs = custom.end.getTime() - custom.start.getTime()
       const days = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1)
-      return { startDate: fmt(custom.start), endDate: fmt(custom.end), days }
+      return { startDate: localDateStr(custom.start), endDate: localDateStr(custom.end), days }
     }
   }
 }
@@ -524,6 +529,13 @@ interface RangeData {
   feedingMlTarget: number
   activityCount: number
   activityTarget: number
+  // Diaper tracking
+  diaperCount: number
+  diaperPee: number
+  diaperPoop: number
+  diaperMixed: number
+  diaperByDay: Record<string, { pee: number; poop: number; mixed: number }>
+  diaperColors: Record<string, number>
   moodCounts: Record<string, number>
   dominantMood: string
   healthTasks: { label: string; done: boolean }[]
@@ -602,6 +614,7 @@ export function KidsHome() {
   const [moodModalVisible, setMoodModalVisible] = useState(false)
   const [healthModalVisible, setHealthModalVisible] = useState(false)
   const [activityModalVisible, setActivityModalVisible] = useState(false)
+  const [diaperModalVisible, setDiaperModalVisible] = useState(false)
   const [goalsModalVisible, setGoalsModalVisible] = useState(false)
 
   // Reminders
@@ -671,7 +684,7 @@ export function KidsHome() {
         const today = new Date()
         const days = (n: number) => {
           const d = new Date(today); d.setDate(d.getDate() + n)
-          return d.toISOString().split('T')[0]
+          return localDateStr(d)
         }
         const perChild: { text: string; dueDate: string | null }[][] = [
           // First child (oldest)
@@ -764,7 +777,7 @@ export function KidsHome() {
 
   async function addReminder() {
     if (!newReminderText.trim()) return
-    const dueDate = newReminderDate ? newReminderDate.toISOString().substring(0, 10) : null
+    const dueDate = newReminderDate ? localDateStr(newReminderDate) : null
     let notifId: string | null = null
 
     // Insert a Supabase notification so it shows in the notifications feed
@@ -837,6 +850,7 @@ export function KidsHome() {
     feedingCount: 0, feedingCountTarget: 0,
     feedingMl: 0, feedingMlTarget: 0,
     activityCount: 0, activityTarget: 0,
+    diaperCount: 0, diaperPee: 0, diaperPoop: 0, diaperMixed: 0, diaperByDay: {}, diaperColors: {},
     moodCounts: {}, dominantMood: '',
     healthTasks: [], memories: [],
     dailySleep: [0, 0, 0, 0, 0, 0, 0],
@@ -860,6 +874,15 @@ export function KidsHome() {
     if (child) loadRangeData(child, dateRange, customRange)
   }, [child?.id, dateRange, customRange])
 
+  // Re-fetch when tab becomes active (e.g. after logging on Agenda)
+  useFocusEffect(useCallback(() => {
+    if (child) {
+      loadRangeData(child, dateRange, customRange)
+      loadHealthHistory(child.id)
+      syncGoals(child.id)
+    }
+  }, [child?.id, dateRange, customRange]))
+
   async function loadRangeData(c: ChildWithRole, range: DateRange, custom?: { start: Date; end: Date }) {
     const { startDate, endDate, days } = getDateRange(range, custom)
     const g = getGoals(c.id, c.birthDate)
@@ -869,7 +892,7 @@ export function KidsHome() {
     // Always load last 7 days for mini rings
     const miniStart = new Date()
     miniStart.setDate(miniStart.getDate() - 6)
-    const miniStartStr = miniStart.toISOString().split('T')[0]
+    const miniStartStr = localDateStr(miniStart)
 
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     const miniDates: string[] = []
@@ -877,7 +900,7 @@ export function KidsHome() {
     for (let i = 6; i >= 0; i--) {
       const d = new Date()
       d.setDate(d.getDate() - i)
-      miniDates.push(d.toISOString().split('T')[0])
+      miniDates.push(localDateStr(d))
       miniLabels.push(dayNames[d.getDay()])
     }
 
@@ -892,7 +915,7 @@ export function KidsHome() {
 
     // Normalize all log dates to YYYY-MM-DD strings
     const logs = ((data ?? []) as any[]).map((l) => ({ ...l, date: toDateStr(l.date) }))
-    const today = new Date().toISOString().split('T')[0]
+    const today = localDateStr(new Date())
 
     // Filter logs for the selected range
     const rangeLogs = logs.filter((l) => l.date >= startDate && l.date <= endDate)
@@ -977,8 +1000,33 @@ export function KidsHome() {
     const feedingMlTarget = g.feedingMl * days
     const avgFeedingMl = feedingCount > 0 ? Math.round(feedingMlTotal / feedingCount) : 0
 
+    // ── Diaper ──
+    const diaperLogs = rangeLogs.filter((l) => l.type === 'diaper')
+    const diaperCount = diaperLogs.length
+    let diaperPee = 0, diaperPoop = 0, diaperMixed = 0
+    const diaperByDay: Record<string, { pee: number; poop: number; mixed: number }> = {}
+    const diaperColors: Record<string, number> = {}
+    for (const log of diaperLogs) {
+      let parsed: any = null
+      try { parsed = typeof log.value === 'string' ? JSON.parse(log.value) : log.value } catch {}
+      const dt = parsed?.diaperType ?? ''
+      if (dt === 'pee') diaperPee++
+      else if (dt === 'poop') diaperPoop++
+      else if (dt === 'mixed') diaperMixed++
+      // Per-day breakdown
+      if (!diaperByDay[log.date]) diaperByDay[log.date] = { pee: 0, poop: 0, mixed: 0 }
+      if (dt === 'pee') diaperByDay[log.date].pee++
+      else if (dt === 'poop') diaperByDay[log.date].poop++
+      else if (dt === 'mixed') diaperByDay[log.date].mixed++
+      // Color distribution (only for poop/mixed)
+      if (parsed?.color && (dt === 'poop' || dt === 'mixed')) {
+        const c = String(parsed.color)
+        diaperColors[c] = (diaperColors[c] || 0) + 1
+      }
+    }
+
     // ── Activity (mood logs + feeding + any other logged actions) ──
-    const activityLogs = rangeLogs.filter((l) => ['mood', 'food', 'feeding', 'medicine', 'vaccine', 'growth', 'temperature'].includes(l.type))
+    const activityLogs = rangeLogs.filter((l) => ['mood', 'food', 'feeding', 'medicine', 'vaccine', 'growth', 'temperature', 'diaper'].includes(l.type))
     const activityCount = activityLogs.length
     const activityTarget = g.activity * days
     const activityBreakdown: Record<string, number> = {}
@@ -1038,7 +1086,7 @@ export function KidsHome() {
           if (log.type === 'feeding') dailyNutrition[dayIdx]++
         }
       }
-      if (['mood', 'food', 'feeding', 'medicine', 'vaccine', 'growth', 'temperature'].includes(log.type)) {
+      if (['mood', 'food', 'feeding', 'medicine', 'vaccine', 'growth', 'temperature', 'diaper'].includes(log.type)) {
         dailyActivity[dayIdx]++
       }
     }
@@ -1054,6 +1102,7 @@ export function KidsHome() {
       feedingCount, feedingCountTarget, feedingMl: feedingMlTotal, feedingMlTarget,
       activityCount,
       activityTarget,
+      diaperCount, diaperPee, diaperPoop, diaperMixed, diaperByDay, diaperColors,
       moodCounts, dominantMood,
       healthTasks, memories,
       dailySleep, dailySleepTarget: g.sleep,
@@ -1451,6 +1500,11 @@ export function KidsHome() {
           <HealthCard reminders={reminders} healthHistory={healthHistory} child={child} />
         </Pressable>
       </View>
+      {rangeData.diaperCount > 0 && (
+        <Pressable onPress={() => setDiaperModalVisible(true)} style={{ marginTop: 10 }}>
+          <DiaperCard count={rangeData.diaperCount} pee={rangeData.diaperPee} poop={rangeData.diaperPoop} mixed={rangeData.diaperMixed} diaperByDay={rangeData.diaperByDay} startDate={getDateRange(dateRange, customRange).startDate} endDate={getDateRange(dateRange, customRange).endDate} />
+        </Pressable>
+      )}
 
       {/* ─── Growth Leap ──────────────────────────────────────── */}
       {growthLeap && <GrowthLeapCard leap={growthLeap} childName={child.name} />}
@@ -1657,16 +1711,40 @@ export function KidsHome() {
       </Pressable>
 
       {/* ─── Detail Modals ───────────────────────────────────── */}
-      <MoodDetailModal
-        visible={moodModalVisible}
-        onClose={() => setMoodModalVisible(false)}
-        moodCounts={rangeData.moodCounts}
-        dominantMood={rangeData.dominantMood}
-        moodByDay={rangeData.moodByDay}
-        dateRange={dateRange}
-        childName={child?.name}
-        childColor={CHILD_COLORS[children.findIndex(c => c.id === child?.id) % CHILD_COLORS.length]}
-      />
+      {(() => {
+        const { startDate: sd, endDate: ed } = getDateRange(dateRange, customRange)
+        return (
+          <>
+            <DiaperDetailModal
+              visible={diaperModalVisible}
+              onClose={() => setDiaperModalVisible(false)}
+              count={rangeData.diaperCount}
+              pee={rangeData.diaperPee}
+              poop={rangeData.diaperPoop}
+              mixed={rangeData.diaperMixed}
+              diaperByDay={rangeData.diaperByDay}
+              diaperColors={rangeData.diaperColors}
+              dateRange={dateRange}
+              startDate={sd}
+              endDate={ed}
+              childName={child?.name}
+              childColor={CHILD_COLORS[children.findIndex(c => c.id === child?.id) % CHILD_COLORS.length]}
+            />
+            <MoodDetailModal
+            visible={moodModalVisible}
+            onClose={() => setMoodModalVisible(false)}
+            moodCounts={rangeData.moodCounts}
+            dominantMood={rangeData.dominantMood}
+            moodByDay={rangeData.moodByDay}
+            dateRange={dateRange}
+            startDate={sd}
+            endDate={ed}
+            childName={child?.name}
+            childColor={CHILD_COLORS[children.findIndex(c => c.id === child?.id) % CHILD_COLORS.length]}
+          />
+          </>
+        )
+      })()}
       <HealthDetailModal
         visible={healthModalVisible}
         onClose={() => setHealthModalVisible(false)}
@@ -2013,26 +2091,328 @@ function HealthCard({ reminders, healthHistory, child }: {
   )
 }
 
+// ─── Diaper Card (full-width, tappable) ────────────────────────────────────
+
+const DIAPER_COLORS = { pee: '#93C5FD', poop: '#D97706', mixed: '#FBBF24' } as const
+
+function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }: {
+  count: number; pee: number; poop: number; mixed: number
+  diaperByDay: Record<string, { pee: number; poop: number; mixed: number }>
+  startDate: string; endDate: string
+}) {
+  const { colors, radius } = useTheme()
+  const total = pee + poop + mixed
+  const peeW  = total > 0 ? (pee  / total) * 100 : 0
+  const poopW = total > 0 ? (poop / total) * 100 : 0
+  const mixedW = total > 0 ? (mixed / total) * 100 : 0
+
+  // Build last 7 (or range) day bars for mini sparkline
+  const start = new Date(startDate + 'T00:00:00')
+  const end   = new Date(endDate   + 'T00:00:00')
+  const totalDays = Math.min(Math.round((end.getTime() - start.getTime()) / 86400000) + 1, 7)
+  const sparkDays = Array.from({ length: totalDays }, (_, i) => {
+    const d = new Date(end)
+    d.setDate(d.getDate() - (totalDays - 1 - i))
+    return localDateStr(d)
+  })
+  const sparkMax = Math.max(...sparkDays.map(d => {
+    const b = diaperByDay[d]
+    return b ? b.pee + b.poop + b.mixed : 0
+  }), 1)
+
+  return (
+    <View style={[s.diaperFullCard, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.borderLight }]}>
+      {/* Header */}
+      <View style={s.diaperCardHeader}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Baby size={15} color={DIAPER_COLORS.pee} strokeWidth={2} />
+          <Text style={[s.diaperCardTitle, { color: colors.textSecondary }]}>Diapers</Text>
+        </View>
+        <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
+      </View>
+
+      {/* Main row: big number + type chips */}
+      <View style={s.diaperMainRow}>
+        <Text style={[s.diaperBigCount, { color: colors.text }]}>{count}</Text>
+        <View style={s.diaperChips}>
+          {[
+            { label: 'Pee', count: pee, color: DIAPER_COLORS.pee, emoji: '💧' },
+            { label: 'Poop', count: poop, color: DIAPER_COLORS.poop, emoji: '💩' },
+            { label: 'Mixed', count: mixed, color: DIAPER_COLORS.mixed, emoji: '🔄' },
+          ].map(({ label, count: c, color, emoji }) => (
+            <View key={label} style={[s.diaperChip, { backgroundColor: color + '18', borderColor: color + '50' }]}>
+              <Text style={{ fontSize: 12 }}>{emoji}</Text>
+              <Text style={[s.diaperChipLabel, { color }]}>{label}</Text>
+              <Text style={[s.diaperChipCount, { color }]}>{c}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* Proportion bar */}
+      <View style={[s.diaperBar, { borderRadius: 4, marginTop: 10 }]}>
+        {peeW  > 0 && <View style={{ width: `${peeW}%`  as any, height: 8, backgroundColor: DIAPER_COLORS.pee,   borderTopLeftRadius: 4, borderBottomLeftRadius: 4 }} />}
+        {poopW > 0 && <View style={{ width: `${poopW}%` as any, height: 8, backgroundColor: DIAPER_COLORS.poop }} />}
+        {mixedW > 0 && <View style={{ width: `${mixedW}%` as any, height: 8, backgroundColor: DIAPER_COLORS.mixed, borderTopRightRadius: 4, borderBottomRightRadius: 4 }} />}
+      </View>
+
+      {/* Daily sparkline */}
+      <View style={s.diaperSparkRow}>
+        {sparkDays.map((d) => {
+          const b = diaperByDay[d] ?? { pee: 0, poop: 0, mixed: 0 }
+          const dayTotal = b.pee + b.poop + b.mixed
+          const barH = dayTotal > 0 ? Math.max((dayTotal / sparkMax) * 32, 4) : 2
+          const isToday = d === localDateStr(new Date())
+          return (
+            <View key={d} style={s.diaperSparkCol}>
+              <View style={{ height: 32, justifyContent: 'flex-end' }}>
+                <View style={{
+                  width: 6, height: barH, borderRadius: 3,
+                  backgroundColor: dayTotal > 0
+                    ? (isToday ? DIAPER_COLORS.pee : DIAPER_COLORS.pee + 'AA')
+                    : 'rgba(255,255,255,0.08)',
+                }} />
+              </View>
+              <Text style={[s.diaperSparkLabel, { color: isToday ? colors.text : colors.textMuted }]}>
+                {new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'narrow' })}
+              </Text>
+            </View>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
+// ─── Diaper Detail Modal ────────────────────────────────────────────────────
+
+const DIAPER_COLOR_META: Record<string, { label: string; swatch: string }> = {
+  yellow:  { label: 'Yellow',  swatch: '#FBBF24' },
+  green:   { label: 'Green',   swatch: '#4ADE80' },
+  brown:   { label: 'Brown',   swatch: '#A16207' },
+  black:   { label: 'Black',   swatch: '#6B7280' },
+  red:     { label: 'Red',     swatch: '#EF4444' },
+  orange:  { label: 'Orange',  swatch: '#F97316' },
+}
+
+function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperByDay, diaperColors, dateRange, startDate, endDate, childName, childColor }: {
+  visible: boolean; onClose: () => void
+  count: number; pee: number; poop: number; mixed: number
+  diaperByDay: Record<string, { pee: number; poop: number; mixed: number }>
+  diaperColors: Record<string, number>
+  dateRange: DateRange; startDate: string; endDate: string
+  childName?: string; childColor?: string
+}) {
+  const { colors, radius } = useTheme()
+  const total = pee + poop + mixed
+
+  // Build date buckets (same logic as MoodDetailModal)
+  const chartDays = useMemo(() => {
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const start = new Date(startDate + 'T00:00:00')
+    const end   = new Date(endDate   + 'T00:00:00')
+    const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1
+
+    if (totalDays <= 7) {
+      return Array.from({ length: totalDays }, (_, i) => {
+        const d = new Date(start)
+        d.setDate(d.getDate() + i)
+        const iso = localDateStr(d)
+        return { label: dayNames[d.getDay()], dates: [iso] }
+      })
+    }
+    // Weekly buckets
+    const weeks: { label: string; dates: string[] }[] = []
+    let wNum = 1
+    let cursor = new Date(start)
+    while (cursor <= end) {
+      const bucket: string[] = []
+      for (let d = 0; d < 7; d++) {
+        if (cursor > end) break
+        bucket.push(localDateStr(cursor))
+        cursor.setDate(cursor.getDate() + 1)
+      }
+      weeks.push({ label: `W${wNum}`, dates: bucket })
+      wNum++
+    }
+    return weeks
+  }, [startDate, endDate])
+
+  // Per-bucket totals
+  const buckets = chartDays.map((b) => {
+    let bPee = 0, bPoop = 0, bMixed = 0
+    for (const d of b.dates) {
+      const day = diaperByDay[d]
+      if (day) { bPee += day.pee; bPoop += day.poop; bMixed += day.mixed }
+    }
+    return { label: b.label, pee: bPee, poop: bPoop, mixed: bMixed, total: bPee + bPoop + bMixed }
+  })
+  const bucketMax = Math.max(...buckets.map((b) => b.total), 1)
+
+  const rangeLabel = dateRange === 'today' ? 'Today' : dateRange === 'yesterday' ? 'Yesterday' : dateRange === '7days' ? 'Past 7 Days' : dateRange === '30days' ? 'Past 30 Days' : `${startDate} – ${endDate}`
+  const avgPerDay = (() => {
+    const start = new Date(startDate + 'T00:00:00')
+    const end   = new Date(endDate   + 'T00:00:00')
+    const days = Math.round((end.getTime() - start.getTime()) / 86400000) + 1
+    return (count / days).toFixed(1)
+  })()
+
+  const colorEntries = Object.entries(diaperColors).sort((a, b) => b[1] - a[1])
+  const poopTotal = poop + mixed
+
+  const BAR_H = 100
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={s.modalOverlay}>
+        <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
+          {/* Header */}
+          <View style={s.modalHeader}>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={[s.modalTitle, { color: colors.text }]}>Diaper Tracker</Text>
+              {childName && childColor && (
+                <View style={{ backgroundColor: childColor + '25', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: childColor + '60' }}>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: childColor }}>{childName}</Text>
+                </View>
+              )}
+            </View>
+            <Pressable onPress={onClose} style={[s.modalClose, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
+              <X size={18} color={colors.textMuted} strokeWidth={2} />
+            </Pressable>
+          </View>
+          <Text style={[s.modalSubtitle, { color: colors.textMuted }]}>
+            {rangeLabel} — {count} diaper{count !== 1 ? 's' : ''} · avg {avgPerDay}/day
+          </Text>
+
+          {/* Type chips */}
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+            {[
+              { label: 'Pee', count: pee, color: DIAPER_COLORS.pee, emoji: '💧' },
+              { label: 'Poop', count: poop, color: DIAPER_COLORS.poop, emoji: '💩' },
+              { label: 'Mixed', count: mixed, color: DIAPER_COLORS.mixed, emoji: '🔄' },
+            ].map(({ label, count: c, color, emoji }) => (
+              <View key={label} style={{ flex: 1, backgroundColor: color + '15', borderRadius: radius.md, borderWidth: 1, borderColor: color + '40', padding: 10, alignItems: 'center', gap: 2 }}>
+                <Text style={{ fontSize: 20 }}>{emoji}</Text>
+                <Text style={{ color, fontSize: 18, fontWeight: '800' }}>{c}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 10 }}>{total > 0 ? Math.round((c / total) * 100) : 0}%</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Proportion bar */}
+          <View style={[s.diaperBar, { height: 10, borderRadius: 5, marginTop: 14 }]}>
+            {pee > 0  && <View style={{ width: `${(pee  / total) * 100}%` as any, height: 10, backgroundColor: DIAPER_COLORS.pee,   borderTopLeftRadius: 5, borderBottomLeftRadius: 5 }} />}
+            {poop > 0 && <View style={{ width: `${(poop / total) * 100}%` as any, height: 10, backgroundColor: DIAPER_COLORS.poop }} />}
+            {mixed > 0 && <View style={{ width: `${(mixed / total) * 100}%` as any, height: 10, backgroundColor: DIAPER_COLORS.mixed, borderTopRightRadius: 5, borderBottomRightRadius: 5 }} />}
+          </View>
+
+          {/* Daily / weekly bar chart */}
+          <View style={{ marginTop: 20 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Trend</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 3 }}>
+              {buckets.map((b, i) => {
+                const h = b.total > 0 ? Math.max((b.total / bucketMax) * BAR_H, 6) : 3
+                const peeH   = b.total > 0 ? Math.round((b.pee   / b.total) * h) : 0
+                const poopH  = b.total > 0 ? Math.round((b.poop  / b.total) * h) : 0
+                const mixedH = Math.max(h - peeH - poopH, 0)
+                return (
+                  <View key={i} style={{ flex: 1 }}>
+                    {/* Stacked bar — grows upward via column-reverse */}
+                    <View style={{ height: BAR_H, flexDirection: 'column', justifyContent: 'flex-end' }}>
+                      <View style={{ height: h, borderRadius: 4, overflow: 'hidden', marginHorizontal: 2 }}>
+                        {b.total > 0 ? (
+                          <>
+                            {mixedH > 0 && <View style={{ height: mixedH, backgroundColor: DIAPER_COLORS.mixed }} />}
+                            {poopH  > 0 && <View style={{ height: poopH,  backgroundColor: DIAPER_COLORS.poop }} />}
+                            {peeH   > 0 && <View style={{ height: peeH,   backgroundColor: DIAPER_COLORS.pee }} />}
+                          </>
+                        ) : (
+                          <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.07)' }} />
+                        )}
+                      </View>
+                    </View>
+                    <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '700', textAlign: 'center', marginTop: 4 }}>{b.label}</Text>
+                  </View>
+                )
+              })}
+            </View>
+          </View>
+
+          {/* Color distribution (poop/mixed only) */}
+          {colorEntries.length > 0 && (
+            <View style={{ marginTop: 16 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Stool Color {poopTotal > 0 ? `· ${poopTotal} logged` : ''}
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                {colorEntries.map(([color, cnt]) => {
+                  const meta = DIAPER_COLOR_META[color] ?? { label: color.charAt(0).toUpperCase() + color.slice(1), swatch: '#888' }
+                  return (
+                    <View key={color} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 5 }}>
+                      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: meta.swatch }} />
+                      <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600' }}>{meta.label}</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 11 }}>{cnt}</Text>
+                    </View>
+                  )
+                })}
+              </View>
+            </View>
+          )}
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
 // ─── Mood Detail Modal ──────────────────────────────────────────────────────
 
-function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay, dateRange, childName, childColor }: {
+function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay, dateRange, startDate, endDate, childName, childColor }: {
   visible: boolean; onClose: () => void
   moodCounts: Record<string, number>; dominantMood: string
   moodByDay: Record<string, Record<string, number>>; dateRange: DateRange
+  startDate: string; endDate: string
   childName?: string; childColor?: string
 }) {
   const { colors, radius } = useTheme()
   const moods = ['happy', 'calm', 'energetic', 'fussy', 'cranky']
   const totalMoods = Object.values(moodCounts).reduce((a, b) => a + b, 0)
-  // Always chart the last 7 days
-  const chartDays = useMemo(() => {
+
+  // Build chart buckets from the actual date range.
+  // ≤ 7 days → one bucket per day; > 7 days → aggregate into weekly buckets.
+  const { chartDays } = useMemo(() => {
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date()
-      d.setDate(d.getDate() - (6 - i))
-      return { date: d.toISOString().split('T')[0], label: dayNames[d.getDay()] }
-    })
-  }, [visible])
+    const start = new Date(startDate + 'T00:00:00')
+    const end   = new Date(endDate   + 'T00:00:00')
+    const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1
+
+    if (totalDays <= 7) {
+      // Individual days
+      const days: { date: string; label: string; dates: string[] }[] = []
+      for (let i = 0; i < totalDays; i++) {
+        const d = new Date(start)
+        d.setDate(d.getDate() + i)
+        const iso = localDateStr(d)
+        days.push({ date: iso, label: dayNames[d.getDay()], dates: [iso] })
+      }
+      return { chartDays: days }
+    }
+
+    // Weekly buckets: group dates into weeks of up to 7 days each
+    const weeks: { date: string; label: string; dates: string[] }[] = []
+    let weekNum = 1
+    let cursor = new Date(start)
+    while (cursor <= end) {
+      const bucketDates: string[] = []
+      for (let d = 0; d < 7; d++) {
+        if (cursor > end) break
+        bucketDates.push(localDateStr(cursor))
+        cursor.setDate(cursor.getDate() + 1)
+      }
+      weeks.push({ date: bucketDates[0], label: `W${weekNum}`, dates: bucketDates })
+      weekNum++
+    }
+    return { chartDays: weeks }
+  }, [startDate, endDate])
 
   // Chart dimensions
   const chartW = SW - 96
@@ -2041,9 +2421,15 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
   const innerW = chartW - padL - padR
   const innerH = chartH - padT - padB
 
-  // Dominant mood per day (highest count wins)
+  // Dominant mood per bucket (highest count across all dates in the bucket wins)
   const dominantPerDay = chartDays.map((day, i) => {
-    const dayData = moodByDay[day.date] || {}
+    const dayData: Record<string, number> = {}
+    for (const d of day.dates) {
+      const dayMoods = moodByDay[d] || {}
+      for (const [mood, count] of Object.entries(dayMoods)) {
+        dayData[mood] = (dayData[mood] || 0) + count
+      }
+    }
     let dominant: string | null = null
     let maxCount = 0
     for (const [mood, count] of Object.entries(dayData)) {
@@ -2051,7 +2437,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
     }
     if (!dominant) return null
     const score = MOOD_SCORE[dominant] || 3
-    const x = padL + (i / (chartDays.length - 1)) * innerW
+    const x = chartDays.length > 1 ? padL + (i / (chartDays.length - 1)) * innerW : padL + innerW / 2
     const y = padT + innerH - ((score - 1) / 4) * innerH
     return { x, y, score, mood: dominant, emoji: MOOD_EMOJI[dominant] || '😐', color: MOOD_COLORS[dominant] || '#888' }
   })
@@ -2088,7 +2474,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
             </Pressable>
           </View>
           <Text style={[s.modalSubtitle, { color: colors.textMuted }]}>
-            Past 7 Days — {totalMoods} mood{totalMoods !== 1 ? 's' : ''} logged
+            {dateRange === 'today' ? 'Today' : dateRange === 'yesterday' ? 'Yesterday' : dateRange === '7days' ? 'Past 7 Days' : dateRange === '30days' ? 'Past 30 Days' : `${startDate} – ${endDate}`} — {totalMoods} mood{totalMoods !== 1 ? 's' : ''} logged
           </Text>
 
           {totalMoods > 0 ? (
@@ -2130,11 +2516,11 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
                     ]
                   })}
 
-                  {/* Day labels */}
+                  {/* Day/week labels */}
                   {chartDays.map((day, i) => (
                     <SvgText
                       key={day.date}
-                      x={padL + (i / (chartDays.length - 1)) * innerW}
+                      x={chartDays.length > 1 ? padL + (i / (chartDays.length - 1)) * innerW : padL + innerW / 2}
                       y={chartH - 8}
                       textAnchor="middle"
                       fontSize={8} fontWeight="700"
@@ -3105,8 +3491,9 @@ function RemindersModal({
 
   // Group archived by completion date (archivedAt date)
   const archivedByDate = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0]
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+    const today = localDateStr(new Date())
+    const yd = new Date(); yd.setDate(yd.getDate() - 1)
+    const yesterday = localDateStr(yd)
     const groups: Record<string, { label: string; items: Reminder[] }> = {}
     for (const r of archived) {
       const date = r.archivedAt ? r.archivedAt.split('T')[0] : 'unknown'
@@ -3921,6 +4308,25 @@ const s = StyleSheet.create({
   metricValue: { fontSize: 13, fontWeight: '700', marginTop: 4 },
   metricSmall: { fontSize: 10, fontWeight: '500' },
   metricEmpty: { height: 50, alignItems: 'center', justifyContent: 'center' },
+  metricBigNumber: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginVertical: 4 },
+
+  // Diaper card
+  diaperBar: { flexDirection: 'row', height: 6, width: '100%', overflow: 'hidden', marginTop: 4 },
+  diaperLegend: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 6 },
+  diaperLegendText: { fontSize: 10, fontWeight: '600' },
+  // Full-width diaper card
+  diaperFullCard: { padding: 16, borderWidth: 1, marginHorizontal: 0 },
+  diaperCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  diaperCardTitle: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  diaperBigCount: { fontSize: 40, fontWeight: '900', letterSpacing: -1, lineHeight: 44 },
+  diaperMainRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  diaperChips: { flex: 1, flexDirection: 'row', gap: 6 },
+  diaperChip: { flex: 1, flexDirection: 'column', alignItems: 'center', paddingVertical: 6, borderRadius: 12, borderWidth: 1, gap: 1 },
+  diaperChipLabel: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
+  diaperChipCount: { fontSize: 15, fontWeight: '800' },
+  diaperSparkRow: { flexDirection: 'row', gap: 2, marginTop: 10, alignItems: 'flex-end' },
+  diaperSparkCol: { flex: 1, alignItems: 'center', gap: 3 },
+  diaperSparkLabel: { fontSize: 8, fontWeight: '700', textTransform: 'uppercase' },
 
   // Mood bars
   moodBars: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 50, marginBottom: 4 },

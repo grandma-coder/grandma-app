@@ -77,7 +77,12 @@
       "Bash(grep -rn \"ALTER TABLE children\\\\|alter table children\\\\|ADD COLUMN\\\\|RENAME COLUMN\\\\|DROP COLUMN\" /Users/igorcarvalhorodrigues/Projects/grandma-app/supabase/migrations/*.sql)",
       "Bash(grep -rn \"CREATE TABLE.*children\\\\|create table.*children\\\\|CREATE TABLE IF NOT EXISTS children\\\\|create table if not exists children\" /Users/igorcarvalhorodrigues/Projects/grandma-app/supabase/migrations/*.sql)",
       "Bash(grep -rn \"useChildStore\\\\|childStore\" /Users/igorcarvalhorodrigues/Projects/grandma-app/store/*.ts)",
-      "Bash(grep -rn \"logged_by\" /Users/igorcarvalhorodrigues/Projects/grandma-app/supabase/migrations/*.sql)"
+      "Bash(grep -rn \"logged_by\" /Users/igorcarvalhorodrigues/Projects/grandma-app/supabase/migrations/*.sql)",
+      "Bash(ls -la /Users/igorcarvalhorodrigues/Projects/grandma-app/*.ts)",
+      "Bash(grep -l \"channel_ratings\\\\|avg_rating\\\\|rating_count\" /Users/igorcarvalhorodrigues/Projects/grandma-app/supabase/migrations/*.sql)",
+      "Bash(node -e \"const l = require\\('lucide-react-native'\\); console.log\\('PartyPopper:', !!l.PartyPopper\\); console.log\\('ArrowRightLeft:', !!l.ArrowRightLeft\\); console.log\\('MessageSquare:', !!l.MessageSquare\\); console.log\\('BarChart3:', !!l.BarChart3\\); console.log\\('Zap:', !!l.Zap\\)\")",
+      "Bash(cat)",
+      "Bash(chmod +x /tmp/count_strings.sh)"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"

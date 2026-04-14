@@ -1,8 +1,8 @@
 /**
  * Grandma Chat API — chat with context-aware AI.
  *
- * Tries the new grandma-chat function first (streaming),
- * falls back to the existing nana-chat function (non-streaming).
+ * Calls grandma-chat edge function (with suggestions),
+ * falls back to nana-chat (legacy, no suggestions).
  */
 
 import { supabase } from './supabase'
@@ -20,20 +20,26 @@ export interface ChatContext {
   allBehaviors?: string[]
   screen?: string
   insight?: string
+  /** Active child ID for focused context */
+  activeChildId?: string
+}
+
+export interface GrandmaResponse {
+  reply: string
+  suggestions: string[]
 }
 
 /**
- * Send messages to Grandma via the existing nana-chat function.
- * Reliable, non-streaming.
+ * Send messages to Grandma and get a reply with follow-up suggestions.
  */
 export async function sendGrandmaMessage(
   messages: { role: string; content: string }[],
   context: ChatContext
-): Promise<string> {
+): Promise<GrandmaResponse> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
 
-  // Try grandma-chat first (enhanced with context)
+  // Try grandma-chat first (enhanced with context + suggestions)
   try {
     const { data, error } = await supabase.functions.invoke('grandma-chat', {
       body: {
@@ -44,17 +50,17 @@ export async function sendGrandmaMessage(
     })
 
     if (!error && data) {
-      // If it returned streamed text, extract it
-      if (typeof data === 'string') return data
-      if (data.reply) return data.reply
-      // If it returned raw text from streaming, reconstruct
-      if (data.content?.[0]?.text) return data.content[0].text
+      const reply = typeof data === 'string'
+        ? data
+        : data.reply ?? data.content?.[0]?.text ?? ''
+      const suggestions: string[] = data.suggestions ?? []
+      if (reply) return { reply, suggestions }
     }
   } catch {
     // grandma-chat not deployed — fall through to nana-chat
   }
 
-  // Fallback: use nana-chat (always deployed)
+  // Fallback: use nana-chat (always deployed, no suggestions)
   const { data, error } = await supabase.functions.invoke('nana-chat', {
     body: {
       messages,
@@ -66,5 +72,8 @@ export async function sendGrandmaMessage(
   })
 
   if (error) throw error
-  return data?.reply ?? 'Grandma is thinking...'
+  return {
+    reply: data?.reply ?? 'Grandma is thinking...',
+    suggestions: [],
+  }
 }

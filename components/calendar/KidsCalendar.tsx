@@ -53,7 +53,10 @@ import {
   Bell,
   Sparkles,
   MinusCircle,
+  Minus,
+  Baby,
 } from 'lucide-react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
@@ -67,6 +70,7 @@ import {
   KidsMoodForm,
   MemoryForm,
   ActivityForm,
+  DiaperForm,
   type RoutinePrefill,
   type EditLog,
 } from './KidsLogForms'
@@ -90,7 +94,7 @@ interface ChildLog {
   logged_by: string | null
 }
 
-type LogType = 'feeding' | 'sleep' | 'health' | 'mood' | 'memory' | 'activity'
+type LogType = 'feeding' | 'sleep' | 'health' | 'mood' | 'memory' | 'activity' | 'diaper'
 
 interface ChildRoutine {
   id: string
@@ -103,13 +107,9 @@ interface ChildRoutine {
   active: boolean
 }
 
-// ─── Child colors (cycle through for multi-child dots) ─────────────────────
+// ─── Child colors (shared palette) ────────────────────────────────────────
 
-const CHILD_COLORS = [brand.kids, brand.prePregnancy, brand.accent, brand.phase.ovulation, brand.pregnancy, brand.secondary]
-
-function childColor(index: number) {
-  return CHILD_COLORS[index % CHILD_COLORS.length]
-}
+import { CHILD_COLORS, childColor } from '../ui/ChildPills'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -126,7 +126,7 @@ const LOG_META: Record<string, { label: string; icon: typeof Utensils; color: st
   mood: { label: 'Mood', icon: Smile, color: brand.accent },
   memory: { label: 'Memory', icon: Camera, color: brand.phase.ovulation },
   photo: { label: 'Photo', icon: Camera, color: brand.phase.ovulation },
-  diaper: { label: 'Diaper', icon: Smile, color: brand.secondary },
+  diaper: { label: 'Diaper', icon: Baby, color: brand.secondary },
   growth: { label: 'Growth', icon: Heart, color: brand.success },
   milestone: { label: 'Milestone', icon: Camera, color: brand.accent },
   activity: { label: 'Activity', icon: Dumbbell, color: brand.phase.ovulation },
@@ -150,6 +150,7 @@ function isRoutineSkipped(routine: ChildRoutine, dayLogs: ChildLog[] | undefined
 const QUICK_LOGS: { id: LogType; label: string; icon: typeof Utensils; color: string }[] = [
   { id: 'feeding', label: 'Feeding', icon: Utensils, color: brand.kids },
   { id: 'sleep', label: 'Sleep', icon: Moon, color: brand.pregnancy },
+  { id: 'diaper', label: 'Diaper', icon: Baby, color: brand.secondary },
   { id: 'health', label: 'Health', icon: Heart, color: brand.error },
   { id: 'activity', label: 'Activity', icon: Dumbbell, color: brand.phase.ovulation },
   { id: 'mood', label: 'Mood', icon: Smile, color: brand.accent },
@@ -161,7 +162,7 @@ const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 /** Map routine type → sheet LogType */
 const ROUTINE_SHEET_MAP: Record<string, string> = {
   feeding: 'feeding', food: 'feeding', sleep: 'sleep',
-  activity: 'activity', mood: 'mood', health: 'health', memory: 'memory',
+  activity: 'activity', mood: 'mood', health: 'health', memory: 'memory', diaper: 'diaper',
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -266,10 +267,11 @@ function routineSig(r: { child_id: string; type: string; name: string }): string
 }
 
 // ─── Day View Constants ────────────────────────────────────────────────────
-const DAY_VIEW_HOUR_H = 64   // px per hour
-const DAY_VIEW_START = 5     // 5 AM
-const DAY_VIEW_END = 23      // 11 PM
-const DAY_VIEW_TOTAL_H = (DAY_VIEW_END - DAY_VIEW_START) * DAY_VIEW_HOUR_H
+const DAY_VIEW_DEFAULT_HOUR_H = 64   // px per hour (default zoom)
+const DAY_VIEW_MIN_HOUR_H = 32      // minimum zoom (fits 24h on smaller screens)
+const DAY_VIEW_MAX_HOUR_H = 120     // maximum zoom
+const DAY_VIEW_START = 0             // 12 AM — full 24h coverage
+const DAY_VIEW_END = 24              // 12 AM next day
 
 /** Parse JSON value fields into human-readable text */
 function formatLogDisplay(type: string, value: string | null, notes: string | null): string {
@@ -348,6 +350,15 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
             const d = stripUnit(String(parsed.duration), ['min', 'mins', 'minutes', 'm'])
             parts.push(`${d} min`)
           }
+          return parts.join(' · ') || notes || ''
+        }
+        case 'diaper': {
+          const parts: string[] = []
+          const typeLabels: Record<string, string> = { pee: 'Pee 💧', poop: 'Poop 💩', mixed: 'Both 🔄' }
+          if (parsed.diaperType) parts.push(typeLabels[parsed.diaperType] ?? parsed.diaperType)
+          if (parsed.color) parts.push(parsed.color.charAt(0).toUpperCase() + parsed.color.slice(1))
+          if (parsed.consistency) parts.push(parsed.consistency.charAt(0).toUpperCase() + parsed.consistency.slice(1))
+          if (parsed.time) parts.push(fmtTime(parsed.time))
           return parts.join(' · ') || notes || ''
         }
         default: {
@@ -451,6 +462,7 @@ export function KidsCalendar() {
 
   const [selectedChildId, setSelectedChildId] = useState<string | 'all'>('all')
   const [view, setView] = useState<'month' | 'day' | 'list'>('month')
+  const [dayZoomH, setDayZoomH] = useState(DAY_VIEW_DEFAULT_HOUR_H)
   const [viewDate, setViewDate] = useState(() => new Date())
   const [expandedChildren, setExpandedChildren] = useState<Set<string>>(new Set())
   const [loggedCollapsed, setLoggedCollapsed] = useState(true)
@@ -466,6 +478,21 @@ export function KidsCalendar() {
   const [doneByDate, setDoneByDate] = useState<Map<string, Set<string>>>(new Map())
   const [showDayCongrats, setShowDayCongrats] = useState(false)
   const congratsShownRef = useRef<Set<string>>(new Set())
+  // Hydrate from AsyncStorage on mount so the popup won't re-show after tab switch / remount
+  const congratsHydrated = useRef(false)
+  useEffect(() => {
+    AsyncStorage.getItem('congrats_shown').then((raw) => {
+      if (raw) {
+        try {
+          const arr: string[] = JSON.parse(raw)
+          // Only keep entries from today to avoid unbounded growth
+          const todayPrefix = toDateStr(new Date())
+          for (const k of arr) { if (k.startsWith(todayPrefix)) congratsShownRef.current.add(k) }
+        } catch {}
+      }
+      congratsHydrated.current = true
+    })
+  }, [])
   const [editingLog, setEditingLog] = useState<EditLog | null>(null)
   const [expandedLogCategories, setExpandedLogCategories] = useState<Set<string>>(new Set())
   const [pendingCollapsed, setPendingCollapsed] = useState(true)
@@ -582,9 +609,9 @@ export function KidsCalendar() {
     const targetHours = selectedDate === todayStr
       ? Math.max(DAY_VIEW_START, now.getHours() + now.getMinutes() / 60 - 2)
       : 8
-    const scrollY = Math.max(0, (targetHours - DAY_VIEW_START) * DAY_VIEW_HOUR_H)
+    const scrollY = Math.max(0, (targetHours - DAY_VIEW_START) * dayZoomH)
     setTimeout(() => dayScrollRef.current?.scrollTo({ y: scrollY, animated: false }), 80)
-  }, [view, selectedDate, todayStr])
+  }, [view, selectedDate, todayStr, dayZoomH])
 
   function handleSaved() {
     // Optimistically mark the routine as done so it disappears from pending immediately
@@ -642,6 +669,7 @@ export function KidsCalendar() {
         })
       }
       congratsShownRef.current.delete(`${log.date}:${selectedChildId}`)
+      AsyncStorage.setItem('congrats_shown', JSON.stringify([...congratsShownRef.current])).catch(() => {})
     }
     setSelectedLog(null)
     setEditing(false)
@@ -670,6 +698,7 @@ export function KidsCalendar() {
     }
     // Allow the congrats popup to fire again once new logs re-satisfy all routines
     congratsShownRef.current.delete(`${target.date}:${selectedChildId}`)
+    AsyncStorage.setItem('congrats_shown', JSON.stringify([...congratsShownRef.current])).catch(() => {})
     setUnlogTarget(null)
     setUnlogging(false)
     fetchLogs()
@@ -680,7 +709,7 @@ export function KidsCalendar() {
     const LOG_TO_SHEET: Record<string, LogType> = {
       food: 'feeding', feeding: 'feeding', sleep: 'sleep',
       temperature: 'health', vaccine: 'health', medicine: 'health', note: 'health',
-      mood: 'mood', photo: 'memory', activity: 'activity',
+      mood: 'mood', photo: 'memory', activity: 'activity', diaper: 'diaper',
     }
     const sheetLogType = LOG_TO_SHEET[log.type] ?? 'feeding'
     setEditingLog({ id: log.id, child_id: log.child_id, date: log.date, type: log.type, value: log.value, notes: log.notes, photos: log.photos ?? [] })
@@ -921,20 +950,26 @@ export function KidsCalendar() {
     })
   }, [selectedDayRoutines, selectedDayLogs, doneByDate, selectedDate])
 
-  // Congrats popup: fire once per date when all routines are done and ≥1 activity logged.
-  // Only for TODAY, and only when the user actively transitions from pending>0 → pending=0
-  // (otherwise it fires on every day navigation because seeded past days are already "done").
-  const prevPendingCountRef = useRef<number>(pendingRoutines.length)
+  // Congrats popup: fire once per date+child when all routines transition from pending>0 → 0.
+  // Guards: only for TODAY, only when the *same* child transitions (not on child switch),
+  // only once per session+child (persisted to AsyncStorage).
+  const prevPendingRef = useRef<{ count: number; childId: string }>({ count: pendingRoutines.length, childId: selectedChildId })
   useEffect(() => {
-    const prev = prevPendingCountRef.current
-    prevPendingCountRef.current = pendingRoutines.length
+    if (!congratsHydrated.current) return
+    const prev = prevPendingRef.current
+    prevPendingRef.current = { count: pendingRoutines.length, childId: selectedChildId }
+
+    // Skip if child or date changed — the pending count drop is from switching context, not completing
+    if (prev.childId !== selectedChildId) return
     if (selectedDate !== todayStr) return
+
     const dayLogCount = monthLogs.filter((l) => l.date === selectedDate && l.type !== 'skipped').length
-    const transitioned = prev > 0 && pendingRoutines.length === 0
+    const transitioned = prev.count > 0 && pendingRoutines.length === 0
     const allDone = transitioned && dayLogCount > 0
     const key = `${selectedDate}:${selectedChildId}`
     if (allDone && !congratsShownRef.current.has(key)) {
       congratsShownRef.current.add(key)
+      AsyncStorage.setItem('congrats_shown', JSON.stringify([...congratsShownRef.current])).catch(() => {})
       setShowDayCongrats(true)
     }
   }, [pendingRoutines.length, monthLogs, selectedDate, selectedChildId, todayStr])
@@ -2008,7 +2043,7 @@ export function KidsCalendar() {
           </>
         ) : view === 'day' ? (
           /* Day Time View — Google Calendar-style vertical timeline */
-          <View style={[{ backgroundColor: colors.surface, borderRadius: radius.xl, overflow: 'hidden', marginBottom: 20 }]}>
+          <View style={[{ flex: 1, backgroundColor: colors.surface, borderRadius: radius.xl, overflow: 'hidden' }]}>
             {/* Day nav header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
               <Pressable onPress={prevDay} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -2030,13 +2065,29 @@ export function KidsCalendar() {
               </Pressable>
             </View>
 
-            {/* Time grid */}
-            <ScrollView ref={dayScrollRef} style={{ height: 520 }} showsVerticalScrollIndicator={false}>
-              <View style={{ flexDirection: 'row', height: DAY_VIEW_TOTAL_H + DAY_VIEW_HOUR_H }}>
+            {/* Zoom controls */}
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 6, paddingHorizontal: 12, paddingBottom: 6 }}>
+              <Pressable
+                onPress={() => setDayZoomH((h) => Math.min(h + 16, DAY_VIEW_MAX_HOUR_H))}
+                style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}
+              >
+                <Plus size={14} color={colors.textSecondary} strokeWidth={2.5} />
+              </Pressable>
+              <Pressable
+                onPress={() => setDayZoomH((h) => Math.max(h - 16, DAY_VIEW_MIN_HOUR_H))}
+                style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}
+              >
+                <Minus size={14} color={colors.textSecondary} strokeWidth={2.5} />
+              </Pressable>
+            </View>
+
+            {/* Time grid — full 24h, flex height */}
+            <ScrollView ref={dayScrollRef} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+              <View style={{ flexDirection: 'row', height: (DAY_VIEW_END - DAY_VIEW_START) * dayZoomH + dayZoomH }}>
                 {/* Time labels column */}
                 <View style={{ width: 52 }}>
                   {Array.from({ length: DAY_VIEW_END - DAY_VIEW_START + 1 }, (_, i) => (
-                    <View key={i} style={{ height: DAY_VIEW_HOUR_H, paddingTop: 5, alignItems: 'flex-end', paddingRight: 8 }}>
+                    <View key={i} style={{ height: dayZoomH, paddingTop: 5, alignItems: 'flex-end', paddingRight: 8 }}>
                       <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600' }}>
                         {fmtHourLabel(DAY_VIEW_START + i)}
                       </Text>
@@ -2045,22 +2096,21 @@ export function KidsCalendar() {
                 </View>
 
                 {/* Events canvas */}
-                <View style={{ flex: 1, position: 'relative', height: DAY_VIEW_TOTAL_H }}>
+                <View style={{ flex: 1, position: 'relative', height: (DAY_VIEW_END - DAY_VIEW_START) * dayZoomH }}>
                   {/* Hour grid lines */}
                   {Array.from({ length: DAY_VIEW_END - DAY_VIEW_START }, (_, i) => (
-                    <View key={`h-${i}`} style={{ position: 'absolute', top: i * DAY_VIEW_HOUR_H, left: 0, right: 8, height: 1, backgroundColor: colors.border }} />
+                    <View key={`h-${i}`} style={{ position: 'absolute', top: i * dayZoomH, left: 0, right: 8, height: 1, backgroundColor: colors.border }} />
                   ))}
                   {/* Half-hour lines */}
                   {Array.from({ length: DAY_VIEW_END - DAY_VIEW_START }, (_, i) => (
-                    <View key={`hh-${i}`} style={{ position: 'absolute', top: i * DAY_VIEW_HOUR_H + DAY_VIEW_HOUR_H / 2, left: 0, right: 8, height: 0.5, backgroundColor: colors.border + '50' }} />
+                    <View key={`hh-${i}`} style={{ position: 'absolute', top: i * dayZoomH + dayZoomH / 2, left: 0, right: 8, height: 0.5, backgroundColor: colors.border + '50' }} />
                   ))}
 
                   {/* Current time indicator */}
                   {selectedDate === todayStr && (() => {
                     const now = new Date()
                     const nowH = now.getHours() + now.getMinutes() / 60
-                    if (nowH < DAY_VIEW_START || nowH > DAY_VIEW_END) return null
-                    const y = (nowH - DAY_VIEW_START) * DAY_VIEW_HOUR_H
+                    const y = (nowH - DAY_VIEW_START) * dayZoomH
                     return (
                       <View style={{ position: 'absolute', top: y, left: 0, right: 8, flexDirection: 'row', alignItems: 'center', zIndex: 20 }} pointerEvents="none">
                         <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#FF4444', marginLeft: -2 }} />
@@ -2115,7 +2165,7 @@ export function KidsCalendar() {
 
                     if (events.length === 0) {
                       return (
-                        <View style={{ position: 'absolute', top: (8 - DAY_VIEW_START) * DAY_VIEW_HOUR_H, left: 0, right: 8, alignItems: 'center' }}>
+                        <View style={{ position: 'absolute', top: (8 - DAY_VIEW_START) * dayZoomH, left: 0, right: 8, alignItems: 'center' }}>
                           <Text style={{ color: colors.textMuted, fontSize: 12 }}>No activities — tap + to add</Text>
                         </View>
                       )
@@ -2143,8 +2193,8 @@ export function KidsCalendar() {
 
                     return withTotalCols.map((ev) => {
                       const clampedH = Math.max(DAY_VIEW_START, ev.hours)
-                      const y = (clampedH - DAY_VIEW_START) * DAY_VIEW_HOUR_H
-                      const blockH = Math.max(44, ev.durationHours * DAY_VIEW_HOUR_H - 4)
+                      const y = (clampedH - DAY_VIEW_START) * dayZoomH
+                      const blockH = Math.max(dayZoomH > 50 ? 44 : 28, ev.durationHours * dayZoomH - 4)
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       const leftPct = `${(ev.col / ev.totalCols) * 100}%` as any
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2181,20 +2231,22 @@ export function KidsCalendar() {
                             opacity: pressed ? 0.7 : (ev.isSkipped ? 0.55 : 1),
                           })}
                         >
-                          <Text style={{ color: ev.isSkipped ? '#888888' : ev.color, fontSize: 11, fontWeight: '700', lineHeight: 14 }} numberOfLines={1}>
+                          <Text style={{ color: ev.isSkipped ? '#888888' : ev.color, fontSize: dayZoomH < 50 ? 9 : 11, fontWeight: '700', lineHeight: dayZoomH < 50 ? 11 : 14 }} numberOfLines={1}>
                             {ev.title}
                           </Text>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: 3 }}>
-                            <Text style={{ color: colors.textMuted, fontSize: 9 }} numberOfLines={1}>
-                              {fmtTime(hoursToHHMM(ev.hours))}
-                            </Text>
-                            {ev.isLogged
-                              ? <CheckCircle2 size={9} color={brand.success} strokeWidth={2.5} />
-                              : ev.isPending
-                                ? <AlertCircle size={9} color={brand.accent} strokeWidth={2.5} />
-                                : <MinusCircle size={9} color="#888888" strokeWidth={2.5} />}
-                          </View>
-                          {selectedChildId === 'all' && childName && ev.totalCols < 3 && (
+                          {dayZoomH >= 40 && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1, gap: 3 }}>
+                              <Text style={{ color: colors.textMuted, fontSize: 9 }} numberOfLines={1}>
+                                {fmtTime(hoursToHHMM(ev.hours))}
+                              </Text>
+                              {ev.isLogged
+                                ? <CheckCircle2 size={9} color={brand.success} strokeWidth={2.5} />
+                                : ev.isPending
+                                  ? <AlertCircle size={9} color={brand.accent} strokeWidth={2.5} />
+                                  : <MinusCircle size={9} color="#888888" strokeWidth={2.5} />}
+                            </View>
+                          )}
+                          {dayZoomH >= 56 && selectedChildId === 'all' && childName && ev.totalCols < 3 && (
                             <View style={{ marginTop: 3, alignSelf: 'flex-start', backgroundColor: ev.color + '30', borderRadius: 3, paddingHorizontal: 4, paddingVertical: 1 }}>
                               <Text style={{ color: ev.color, fontSize: 8, fontWeight: '700' }} numberOfLines={1}>{childName}</Text>
                             </View>
@@ -2452,6 +2504,10 @@ export function KidsCalendar() {
         <MemoryForm onSaved={handleSaved} initialDate={selectedDate} />
       </LogSheet>
 
+      <LogSheet visible={sheetType === 'diaper'} title={editingLog ? 'Edit Diaper Log' : 'Log Diaper'} onClose={closeSheet}>
+        <DiaperForm onSaved={handleSaved} initialDate={selectedDate} editLog={editingLog ?? undefined} />
+      </LogSheet>
+
       {/* ─── Routine Manager ────────────────────────────────────────── */}
       <Modal
         visible={showRoutineManager}
@@ -2497,7 +2553,7 @@ export function KidsCalendar() {
 
               {/* Type */}
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.routineTypeRow}>
-                {['feeding', 'food', 'sleep', 'activity', 'mood', 'health'].map((t) => {
+                {['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health'].map((t) => {
                   const meta = LOG_META[t]
                   const active = routineForm.type === t
                   return (

@@ -150,9 +150,25 @@ export default function KidsOnboarding() {
 
       if (insertedChildren && insertedChildren.length > 0) {
         const childIds = insertedChildren.map((c: any) => c.id)
+        const userEmail = session.user.email ?? ''
+
+        // Create child_caregivers entries so root layout can load children
+        const caregiverLinks = insertedChildren.map((c: any) => ({
+          child_id: c.id,
+          user_id: userId,
+          email: userEmail,
+          role: 'parent' as const,
+          status: 'accepted' as const,
+          permissions: { view: true, log_activity: true, chat: true, edit_child: true, emergency: true },
+          invited_by: userId,
+          accepted_at: new Date().toISOString(),
+        }))
+        // Insert into child_caregivers so root layout can load children on next open
+        const { error: ccError } = await supabase.from('child_caregivers').insert(caregiverLinks)
+        if (ccError) console.warn('child_caregivers insert:', ccError.message)
 
         // Create care_circle entry for the parent (self)
-        await supabase.from('care_circle').insert({
+        const { error: circleError } = await supabase.from('care_circle').insert({
           owner_id: userId,
           member_user_id: userId,
           role: 'partner',
@@ -160,6 +176,7 @@ export default function KidsOnboarding() {
           children_access: childIds,
           status: 'accepted',
         })
+        if (circleError) console.warn('care_circle insert:', circleError.message)
 
         // Create caregiver entry if provided
         if (store.caregiverName && store.caregiverRole) {
