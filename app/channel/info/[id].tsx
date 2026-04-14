@@ -35,10 +35,14 @@ import {
   Shield,
   Lock,
   UserPlus,
+  ArrowRightLeft,
   XCircle,
   Share2,
   Copy,
   Link,
+  MessageSquare,
+  ChartBar,
+  Zap,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../../constants/theme'
@@ -51,8 +55,11 @@ import {
   getPendingRequests,
   approveRequest,
   denyRequest,
+  transferChannelOwnership,
+  getChannelMetrics,
   type ChannelPost,
   type ChannelRequest,
+  type ChannelMetrics,
 } from '../../../lib/channelPosts'
 import { supabase } from '../../../lib/supabase'
 
@@ -89,6 +96,9 @@ export default function ChannelInfoScreen() {
 
   // Pending join requests (owner of private channel)
   const [pendingRequests, setPendingRequests] = useState<ChannelRequest[]>([])
+
+  // Channel metrics (owner only)
+  const [metrics, setMetrics] = useState<ChannelMetrics | null>(null)
 
   useEffect(() => {
     if (id) load()
@@ -160,15 +170,19 @@ export default function ChannelInfoScreen() {
       }
       setSharedMedia(allPhotos.slice(0, 20))
 
-      // Messages for moderation + pending requests (owner only)
+      // Messages for moderation + pending requests + metrics (owner only)
       if (userId === ch?.createdBy) {
-        const { data: msgs } = await supabase
-          .from('channel_posts')
-          .select('*')
-          .eq('channel_id', id)
-          .order('created_at', { ascending: false })
-          .limit(50)
+        const [{ data: msgs }, channelMetrics] = await Promise.all([
+          supabase
+            .from('channel_posts')
+            .select('*')
+            .eq('channel_id', id)
+            .order('created_at', { ascending: false })
+            .limit(50),
+          getChannelMetrics(id!),
+        ])
         setMessages((msgs ?? []) as ChannelPost[])
+        setMetrics(channelMetrics)
 
         // Load pending requests for private channels
         if (ch?.channelType === 'private') {
@@ -237,6 +251,14 @@ export default function ChannelInfoScreen() {
 
   function handleLeave() {
     if (!id) return
+    if (isOwner) {
+      Alert.alert(
+        'You are the host',
+        'As the channel creator, you cannot leave. Transfer ownership first or delete the channel.',
+        [{ text: 'OK' }]
+      )
+      return
+    }
     Alert.alert(
       'Leave Channel',
       `Are you sure you want to leave #${channel?.name ?? 'this channel'}?`,
@@ -256,6 +278,41 @@ export default function ChannelInfoScreen() {
         },
       ]
     )
+  }
+
+  function handleTransferOwnership() {
+    if (!id) return
+    const others = members.filter((m) => m.user_id !== currentUserId)
+    if (others.length === 0) {
+      Alert.alert('No Members', 'There are no other members to transfer ownership to.')
+      return
+    }
+    const buttons = others.slice(0, 8).map((m) => ({
+      text: m.name ?? 'Member',
+      onPress: () => {
+        Alert.alert(
+          'Confirm Transfer',
+          `Transfer ownership of #${channel?.name} to ${m.name ?? 'this member'}? This cannot be undone.`,
+          [
+            { text: 'Cancel', style: 'cancel' as const },
+            {
+              text: 'Transfer',
+              onPress: async () => {
+                try {
+                  await transferChannelOwnership(id, m.user_id)
+                  Alert.alert('Done', `Ownership transferred to ${m.name ?? 'the new host'}.`)
+                  load()
+                } catch (e: any) {
+                  Alert.alert('Error', e.message)
+                }
+              },
+            },
+          ]
+        )
+      },
+    }))
+    buttons.push({ text: 'Cancel', onPress: () => {} })
+    Alert.alert('Transfer Ownership', 'Select the new channel host:', buttons as any)
   }
 
   async function handleApproveRequest(req: ChannelRequest) {
@@ -520,12 +577,63 @@ export default function ChannelInfoScreen() {
               <Shield size={12} color={colors.textMuted} strokeWidth={2} /> ADMIN
             </Text>
 
+            {/* Channel Metrics Dashboard */}
+            {metrics && (
+              <View style={[s.metricsCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+                <View style={s.metricsHeader}>
+                  <ChartBar size={16} color={colors.primary} strokeWidth={2} />
+                  <Text style={[s.metricsTitle, { color: colors.text }]}>Channel Metrics</Text>
+                </View>
+                <View style={s.metricsGrid}>
+                  <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
+                    <Users size={16} color={colors.primary} strokeWidth={2} />
+                    <Text style={[s.metricValue, { color: colors.text }]}>{metrics.totalMembers}</Text>
+                    <Text style={[s.metricLabel, { color: colors.textMuted }]}>Members</Text>
+                  </View>
+                  <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
+                    <MessageSquare size={16} color={brand.secondary} strokeWidth={2} />
+                    <Text style={[s.metricValue, { color: colors.text }]}>{metrics.totalMessages}</Text>
+                    <Text style={[s.metricLabel, { color: colors.textMuted }]}>Messages</Text>
+                  </View>
+                  <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
+                    <ImageIcon size={16} color={brand.accent} strokeWidth={2} />
+                    <Text style={[s.metricValue, { color: colors.text }]}>{metrics.totalMedia}</Text>
+                    <Text style={[s.metricLabel, { color: colors.textMuted }]}>Media</Text>
+                  </View>
+                  <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
+                    <Zap size={16} color={brand.success} strokeWidth={2} />
+                    <Text style={[s.metricValue, { color: colors.text }]}>{metrics.activeToday}</Text>
+                    <Text style={[s.metricLabel, { color: colors.textMuted }]}>Active Today</Text>
+                  </View>
+                </View>
+                <View style={[s.metricsFooter, { borderTopColor: colors.borderLight }]}>
+                  <View style={s.metricsFooterItem}>
+                    <Text style={[s.metricsFooterValue, { color: colors.primary }]}>{metrics.messagesToday}</Text>
+                    <Text style={[s.metricsFooterLabel, { color: colors.textMuted }]}>msgs today</Text>
+                  </View>
+                  <View style={[s.metricsFooterDivider, { backgroundColor: colors.borderLight }]} />
+                  <View style={s.metricsFooterItem}>
+                    <Text style={[s.metricsFooterValue, { color: colors.primary }]}>{metrics.messagesThisWeek}</Text>
+                    <Text style={[s.metricsFooterLabel, { color: colors.textMuted }]}>this week</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
             <Pressable
               onPress={() => setEditing(true)}
               style={[s.adminBtn, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
             >
               <Edit3 size={18} color={colors.primary} strokeWidth={2} />
               <Text style={[s.adminBtnText, { color: colors.text }]}>Edit Channel Info</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleTransferOwnership}
+              style={[s.adminBtn, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
+            >
+              <ArrowRightLeft size={18} color={brand.accent} strokeWidth={2} />
+              <Text style={[s.adminBtnText, { color: colors.text }]}>Transfer Ownership</Text>
             </Pressable>
 
             {/* Pending join requests (private channels) */}
@@ -678,6 +786,20 @@ const s = StyleSheet.create({
   // Leave
   leaveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: 20, marginTop: 32, paddingVertical: 16 },
   leaveBtnText: { fontSize: 15, fontWeight: '700' },
+
+  // Metrics
+  metricsCard: { padding: 16, marginBottom: 12, gap: 12 },
+  metricsHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  metricsTitle: { fontSize: 15, fontWeight: '700' },
+  metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  metricItem: { width: '47%' as any, padding: 14, alignItems: 'center', gap: 6 },
+  metricValue: { fontSize: 22, fontWeight: '800' },
+  metricLabel: { fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  metricsFooter: { flexDirection: 'row', borderTopWidth: 1, paddingTop: 12 },
+  metricsFooterItem: { flex: 1, alignItems: 'center', gap: 2 },
+  metricsFooterValue: { fontSize: 18, fontWeight: '800' },
+  metricsFooterLabel: { fontSize: 11, fontWeight: '500' },
+  metricsFooterDivider: { width: 1, height: '100%' },
 
   // Share
   shareBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },

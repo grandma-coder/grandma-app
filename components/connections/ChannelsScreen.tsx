@@ -22,13 +22,12 @@ import {
   Hash,
   Users,
   TrendingUp,
-  Bookmark,
   Plus,
   Star,
 } from 'lucide-react-native'
 import { useTheme, brand } from '../../constants/theme'
 import { getChannels, type Channel } from '../../lib/channels'
-import { getMyChannelIds } from '../../lib/channelPosts'
+import { getMyChannelIds, getMyFavoriteChannelIds } from '../../lib/channelPosts'
 import { useModeStore } from '../../store/useModeStore'
 import { useChannelsStore } from '../../store/useChannelsStore'
 
@@ -48,6 +47,7 @@ export function ChannelsScreen() {
 
   const [channels, setChannels] = useState<Channel[]>([])
   const [myIds, setMyIds] = useState<string[]>([])
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const unreadCounts = useChannelsStore((s) => s.unreadCounts)
@@ -67,9 +67,14 @@ export function ChannelsScreen() {
   async function load() {
     setLoading(true)
     try {
-      const [all, ids] = await Promise.all([getChannels(), getMyChannelIds()])
+      const [all, ids, favIds] = await Promise.all([
+        getChannels(),
+        getMyChannelIds(),
+        getMyFavoriteChannelIds(),
+      ])
       setChannels(all)
       setMyIds(ids)
+      setFavoriteIds(favIds)
       fetchUnreadCounts()
     } catch {} finally {
       setLoading(false)
@@ -77,6 +82,7 @@ export function ChannelsScreen() {
   }
 
   const myChannels = channels.filter((c) => myIds.includes(c.id))
+  const favoriteChannels = channels.filter((c) => favoriteIds.includes(c.id))
   const trending = channels.slice(0, 5)
   const suggested = channels.filter((c) => {
     const tags = BEHAVIOR_TAGS[mode] ?? []
@@ -165,11 +171,24 @@ export function ChannelsScreen() {
             ))}
           </View>
 
+          {/* Favorites */}
+          {favoriteChannels.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Star size={16} color={brand.accent} strokeWidth={2} fill={brand.accent} />
+                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0 }]}>FAVORITES</Text>
+              </View>
+              {favoriteChannels.map((c) => (
+                <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} unread={unreadCounts[c.id]} />
+              ))}
+            </View>
+          )}
+
           {/* My channels */}
           {myChannels.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Bookmark size={16} color={colors.primary} strokeWidth={2} />
+                <Hash size={16} color={colors.primary} strokeWidth={2} />
                 <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0 }]}>MY CHANNELS</Text>
               </View>
               {myChannels.map((c) => (

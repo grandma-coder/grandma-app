@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import {
   View, Text, TextInput, Pressable, ScrollView, Alert, StyleSheet,
-  KeyboardAvoidingView, Platform, Image,
+  KeyboardAvoidingView, Platform, Image, Modal,
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArrowLeft, Hash, Check, Camera, Lock, Globe } from 'lucide-react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, brand } from '../../constants/theme'
 import { createChannel } from '../../lib/channelPosts'
 
 const CATEGORIES = [
@@ -35,6 +35,8 @@ export default function CreateChannel() {
   const [channelPhoto, setChannelPhoto] = useState<string | null>(null)
   const [isPrivate, setIsPrivate] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [createdChannelId, setCreatedChannelId] = useState<string | null>(null)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   async function pickChannelPhoto() {
     try {
@@ -66,7 +68,8 @@ export default function CreateChannel() {
         avatarUri: channelPhoto ?? undefined,
         channelType: isPrivate ? 'private' : 'public',
       })
-      router.replace(`/channel/${id}`)
+      setCreatedChannelId(id)
+      setShowSuccess(true)
     } catch (e: any) {
       Alert.alert('Error', e.message)
     } finally {
@@ -220,6 +223,33 @@ export default function CreateChannel() {
           </Pressable>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Success modal */}
+      <Modal visible={showSuccess} transparent animationType="fade">
+        <View style={styles.successOverlay}>
+          <View style={[styles.successCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+            <View style={[styles.successIcon, { backgroundColor: brand.success + '20' }]}>
+              <Check size={32} color={brand.success} strokeWidth={3} />
+            </View>
+            <Text style={[styles.successTitle, { color: colors.text }]}>
+              Channel Created!
+            </Text>
+            <Text style={[styles.successDesc, { color: colors.textSecondary }]}>
+              Your channel <Text style={{ fontWeight: '700', color: colors.text }}>#{name.trim()}</Text> is live.{'\n'}
+              Invite friends and start the conversation!
+            </Text>
+            <Pressable
+              onPress={() => {
+                setShowSuccess(false)
+                if (createdChannelId) router.replace(`/channel/${createdChannelId}`)
+              }}
+              style={[styles.successBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}
+            >
+              <Text style={styles.successBtnText}>Go to Channel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -368,6 +398,50 @@ function makeStyles(
       color: colors.textInverse,
       letterSpacing: 0.5,
       textTransform: 'uppercase',
+    },
+    // Success modal
+    successOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(0,0,0,0.6)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 100,
+    } as any,
+    successCard: {
+      width: 300,
+      padding: 32,
+      alignItems: 'center',
+      gap: 16,
+    },
+    successIcon: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    successTitle: {
+      fontSize: 22,
+      fontWeight: '800',
+    },
+    successDesc: {
+      fontSize: 14,
+      fontWeight: '500',
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    successBtn: {
+      width: '100%',
+      paddingVertical: 16,
+      alignItems: 'center',
+      marginTop: 8,
+    },
+    successBtnText: {
+      fontSize: 16,
+      fontWeight: '800',
+      color: '#FFFFFF',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
     },
   })
 }

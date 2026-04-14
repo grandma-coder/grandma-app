@@ -19,7 +19,7 @@ import {
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
-import { router, useLocalSearchParams } from 'expo-router'
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import {
   ArrowLeft,
   Hash,
@@ -34,7 +34,6 @@ import {
   Reply,
   AtSign,
   Star,
-  Bookmark,
   Trash2,
   LogIn,
   LogOut,
@@ -58,12 +57,14 @@ import {
   rateChannel,
   getMyRating,
   deleteMessage,
-  saveChannel,
-  unsaveChannel,
-  getMySavedChannelIds,
+  favoriteChannel,
+  unfavoriteChannel,
+  getMyFavoriteChannelIds,
   notifyMentions,
   requestToJoinChannel,
   getMyRequestStatus,
+  transferChannelOwnership,
+  getChannelMembers,
   type ChannelPost,
   type ChannelRequest,
 } from '../../lib/channelPosts'
@@ -98,8 +99,8 @@ export default function ChannelChat() {
   const [mentionResults, setMentionResults] = useState<{ id: string; name: string }[]>([])
   const [mentionIds, setMentionIds] = useState<string[]>([])
 
-  // Save state
-  const [isSaved, setIsSaved] = useState(false)
+  // Favorite state
+  const [isFavorited, setIsFavorited] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   // Rating state
@@ -107,6 +108,9 @@ export default function ChannelChat() {
   const [myRating, setMyRating] = useState(0)
   const [myReview, setMyReview] = useState('')
   const [savingRating, setSavingRating] = useState(false)
+
+  // Owner state
+  const [isOwner, setIsOwner] = useState(false)
 
   // Private channel request state
   const [myRequest, setMyRequest] = useState<ChannelRequest | null>(null)
@@ -126,11 +130,15 @@ export default function ChannelChat() {
       setMessages(msgData)
       setIsMember(member)
 
-      // Load current user, saved state, and rating
+      // Load current user, favorite state, and rating
       const { data: { session: sess } } = await supabase.auth.getSession()
-      if (sess) setCurrentUserId(sess.user.id)
-      const savedIds = await getMySavedChannelIds()
-      setIsSaved(savedIds.includes(id))
+      if (sess) {
+        setCurrentUserId(sess.user.id)
+        const ch = allChannels.find((c) => c.id === id)
+        setIsOwner(sess.user.id === ch?.createdBy)
+      }
+      const favIds = await getMyFavoriteChannelIds()
+      setIsFavorited(favIds.includes(id))
 
       const existing = await getMyRating(id)
       if (existing) {
@@ -161,6 +169,29 @@ export default function ChannelChat() {
   useEffect(() => {
     if (id) markChannelRead(id)
   }, [id])
+
+  // Refresh reply counts when coming back from thread screen
+  useFocusEffect(
+    useCallback(() => {
+      if (!id || loading) return
+      // Re-fetch messages to get fresh reply_count from DB triggers
+      fetchMessages(id).then((fresh) => {
+        setMessages((prev) => {
+          // Merge: update reply_count from fresh data, keep optimistic additions
+          const freshMap = new Map(fresh.map((m) => [m.id, m]))
+          const merged = prev.map((m) => {
+            const f = freshMap.get(m.id)
+            return f ? { ...m, reply_count: f.reply_count } : m
+          })
+          // Add any new messages not in prev
+          for (const f of fresh) {
+            if (!merged.some((m) => m.id === f.id)) merged.push(f)
+          }
+          return merged
+        })
+      }).catch(() => {})
+    }, [id, loading])
+  )
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -194,7 +225,7 @@ export default function ChannelChat() {
               return [...prev, newMsg]
             })
           }
-          // If the new message is a reply, increment reply_count on parent
+          // If the new message is a reply, increment reply_count on parent immediately
           if (newMsg.reply_to_id) {
             setMessages((prev) =>
               prev.map((m) =>
@@ -206,6 +237,28 @@ export default function ChannelChat() {
           }
           // Re-mark as read
           markChannelRead(id)
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'channel_posts',
+          filter: `channel_id=eq.${id}`,
+        },
+        (payload) => {
+          // Catch trigger-based reply_count updates from the DB
+          const updated = payload.new as ChannelPost
+          if (updated.reply_to_id === null) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === updated.id
+                  ? { ...m, reply_count: updated.reply_count ?? m.reply_count }
+                  : m
+              )
+            )
+          }
         }
       )
       .subscribe()
@@ -274,29 +327,23 @@ export default function ChannelChat() {
     if (!content || !id) return
     setSending(true)
     try {
-      const isReply = !!replyTo?.id
+      // Inline reply sends as a top-level message with context reference
+      // (only "Reply in Thread" creates actual thread replies via the thread screen)
       const newMsg = await sendMessage(id, content, {
         photos: photos.length > 0 ? photos : undefined,
-        replyToId: replyTo?.id,
         mentions: mentionIds.length > 0 ? mentionIds : undefined,
       })
 
-      // Optimistically add to messages list (if top-level, not a thread reply)
-      if (!isReply) {
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === newMsg.id)) return prev
-          return [...prev, newMsg]
-        })
-      } else {
-        // Increment reply count on parent message
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === replyTo?.id
-              ? { ...m, reply_count: (m.reply_count ?? 0) + 1 }
-              : m
-          )
-        )
+      // Attach reply-to info for display (not stored in DB, just local display)
+      if (replyTo) {
+        newMsg.reply_to_content = replyTo.content
+        newMsg.reply_to_author = replyTo.author_name ?? 'someone'
       }
+
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev
+        return [...prev, newMsg]
+      })
 
       // Notify mentioned users
       if (mentionIds.length > 0 && channel) {
@@ -364,11 +411,86 @@ export default function ChannelChat() {
 
   // ─── Join/Leave ───────────────────────────────────────────────────────
 
+  async function handleTransferOwnership() {
+    if (!id) return
+    const members = await getChannelMembers(id)
+    const others = members.filter((m) => m.user_id !== currentUserId)
+    if (others.length === 0) {
+      Alert.alert('No Members', 'There are no other members to transfer ownership to. You can delete the channel instead.')
+      return
+    }
+    const buttons = others.slice(0, 8).map((m) => ({
+      text: m.name ?? 'Member',
+      onPress: () => {
+        Alert.alert(
+          'Confirm Transfer',
+          `Transfer ownership of #${channel?.name} to ${m.name ?? 'this member'}? This cannot be undone.`,
+          [
+            { text: 'Cancel', style: 'cancel' as const },
+            {
+              text: 'Transfer',
+              onPress: async () => {
+                try {
+                  await transferChannelOwnership(id, m.user_id)
+                  setIsOwner(false)
+                  Alert.alert('Done', `Ownership transferred to ${m.name ?? 'the new host'}.`)
+                  load()
+                } catch (e: any) {
+                  Alert.alert('Error', e.message)
+                }
+              },
+            },
+          ]
+        )
+      },
+    }))
+    buttons.push({ text: 'Cancel', onPress: () => {} })
+    Alert.alert('Transfer Ownership', 'Select the new channel host:', buttons as any)
+  }
+
   function handleJoinLeave() {
     if (!id) return
 
+    if (isMember && isOwner) {
+      // Creator cannot leave — offer delete or transfer
+      Alert.alert(
+        'You are the host',
+        'As the channel creator, you cannot leave. You can transfer ownership to another member or delete the channel.',
+        [
+          { text: 'Transfer Ownership', onPress: handleTransferOwnership },
+          {
+            text: 'Delete Channel',
+            style: 'destructive',
+            onPress: () => {
+              Alert.alert(
+                'Delete Channel',
+                'This will permanently delete this channel and all its messages. This cannot be undone.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Delete Forever',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        await supabase.from('channels').delete().eq('id', id)
+                        router.replace('/connections' as any)
+                      } catch (e: any) {
+                        Alert.alert('Error', e.message)
+                      }
+                    },
+                  },
+                ]
+              )
+            },
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      )
+      return
+    }
+
     if (isMember) {
-      // Confirm leave
+      // Non-owner: confirm leave
       Alert.alert(
         'Leave Channel',
         `Are you sure you want to leave #${channel?.name ?? 'this channel'}?`,
@@ -439,14 +561,14 @@ export default function ChannelChat() {
     }
   }
 
-  async function handleSaveToggle() {
+  async function handleFavoriteToggle() {
     if (!id) return
-    if (isSaved) {
-      setIsSaved(false)
-      await unsaveChannel(id).catch(() => setIsSaved(true))
+    if (isFavorited) {
+      setIsFavorited(false)
+      await unfavoriteChannel(id).catch(() => setIsFavorited(true))
     } else {
-      setIsSaved(true)
-      await saveChannel(id).catch(() => setIsSaved(false))
+      setIsFavorited(true)
+      await favoriteChannel(id).catch(() => setIsFavorited(false))
     }
   }
 
@@ -575,12 +697,12 @@ export default function ChannelChat() {
             <Share2 size={18} color={colors.textMuted} strokeWidth={2} />
           </Pressable>
         )}
-        <Pressable onPress={handleSaveToggle} hitSlop={8} style={styles.headerIconBtn}>
-          <Bookmark
+        <Pressable onPress={handleFavoriteToggle} hitSlop={8} style={styles.headerIconBtn}>
+          <Star
             size={18}
-            color={isSaved ? colors.primary : colors.textMuted}
+            color={isFavorited ? brand.accent : colors.textMuted}
             strokeWidth={2}
-            fill={isSaved ? colors.primary : 'none'}
+            fill={isFavorited ? brand.accent : 'none'}
           />
         </Pressable>
         <Pressable
@@ -599,7 +721,9 @@ export default function ChannelChat() {
               { color: isMember ? colors.textSecondary : '#FFFFFF' },
             ]}
           >
-            {isMember
+            {isMember && isOwner
+              ? 'Host'
+              : isMember
               ? 'Leave'
               : channel?.channelType === 'private' && myRequest?.status === 'pending'
               ? 'Requested'
@@ -995,6 +1119,18 @@ function MessageBubble({
       </View>
 
       <View style={styles.bubbleContent}>
+        {/* Inline reply reference */}
+        {message.reply_to_content && (
+          <View style={[styles.inlineReplyRef, { backgroundColor: colors.surfaceRaised, borderLeftColor: colors.primary }]}>
+            <Text style={[styles.inlineReplyAuthor, { color: colors.primary }]}>
+              {message.reply_to_author ?? 'someone'}
+            </Text>
+            <Text style={[styles.inlineReplyText, { color: colors.textSecondary }]} numberOfLines={1}>
+              {message.reply_to_content}
+            </Text>
+          </View>
+        )}
+
         {/* Author + timestamp row */}
         <View style={styles.bubbleHeader}>
           <Text style={[styles.authorName, { color: colors.text }]}>
@@ -1045,7 +1181,17 @@ function MessageBubble({
             <Pressable onPress={onThreadPress} style={styles.replyLink}>
               <MessageCircle size={14} color={colors.primary} strokeWidth={2} />
               <Text style={[styles.replyLinkText, { color: colors.primary }]}>
-                {message.reply_count} {message.reply_count === 1 ? 'reply' : 'replies'}
+                {message.reply_count} {message.reply_count === 1 ? 'reply' : 'replies'} — View thread
+              </Text>
+            </Pressable>
+          )}
+
+          {/* Thread CTA for messages with no replies yet */}
+          {(message.reply_count ?? 0) === 0 && (
+            <Pressable onPress={onThreadPress} style={styles.replyLink}>
+              <MessageCircle size={12} color={colors.textMuted} strokeWidth={1.5} />
+              <Text style={[styles.replyLinkText, { color: colors.textMuted, fontSize: 11 }]}>
+                Reply in thread
               </Text>
             </Pressable>
           )}
@@ -1289,6 +1435,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   bubbleContent: { flex: 1, gap: 2 },
+  inlineReplyRef: { paddingHorizontal: 10, paddingVertical: 6, borderLeftWidth: 3, borderRadius: 4, marginBottom: 4 },
+  inlineReplyAuthor: { fontSize: 11, fontWeight: '700' },
+  inlineReplyText: { fontSize: 12, fontWeight: '400', marginTop: 1 },
   bubbleHeader: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
   authorName: { fontSize: 13, fontWeight: '700' },
   timestamp: { fontSize: 11, fontWeight: '400' },

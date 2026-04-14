@@ -65,8 +65,19 @@ async function getCurrentUserName(): Promise<string | null> {
     .single()
 
   _cachedUserId = session.user.id
-  _cachedUserName = profile?.name || session.user.email?.split('@')[0] || null
+  // Priority: profile name > user_metadata full_name > user_metadata name > null
+  // Never fall back to email — show proper name or null
+  _cachedUserName = profile?.name
+    || session.user.user_metadata?.full_name
+    || session.user.user_metadata?.name
+    || null
   return _cachedUserName
+}
+
+/** Clear the cached user name (call when profile name changes) */
+export function clearUserNameCache(): void {
+  _cachedUserName = null
+  _cachedUserId = null
 }
 
 // ─── Channels CRUD ─────────────────────────────────────────────────────────
@@ -136,10 +147,10 @@ export async function fetchMessages(channelId: string): Promise<ChannelPost[]> {
 
   const posts = (data ?? []) as ChannelPost[]
 
-  // Backfill author names
-  const missing = posts.filter((p) => !p.author_name)
-  if (missing.length > 0) {
-    const authorIds = [...new Set(missing.map((p) => p.author_id))]
+  // Backfill author names (including those stored with email prefix)
+  const needsName = posts.filter((p) => !p.author_name || p.author_name.includes('@') || (!p.author_name.includes(' ') && p.author_name.length < 4))
+  if (needsName.length > 0) {
+    const authorIds = [...new Set(needsName.map((p) => p.author_id))]
     const { data: profiles } = await supabase
       .from('profiles')
       .select('user_id, name')
@@ -148,8 +159,9 @@ export async function fetchMessages(channelId: string): Promise<ChannelPost[]> {
     if (profiles) {
       const nameMap = new Map(profiles.map((p: any) => [p.user_id, p.name]))
       for (const post of posts) {
-        if (!post.author_name) {
-          post.author_name = nameMap.get(post.author_id) ?? null
+        const profileName = nameMap.get(post.author_id)
+        if (profileName) {
+          post.author_name = profileName
         }
       }
     }
@@ -474,25 +486,138 @@ export async function getMyRating(channelId: string): Promise<{ rating: number; 
   return data as { rating: number; review: string | null } | null
 }
 
-// ─── Save/Follow Channels ──────────────────────────────────────────────────
+// ─── Favorite Channels ────────────────────────────────────────────────────
 
-export async function saveChannel(channelId: string): Promise<void> {
+export async function favoriteChannel(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
   await supabase.from('channel_saves').insert({ channel_id: channelId, user_id: session.user.id })
 }
 
-export async function unsaveChannel(channelId: string): Promise<void> {
+export async function unfavoriteChannel(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
   await supabase.from('channel_saves').delete().eq('channel_id', channelId).eq('user_id', session.user.id)
 }
 
-export async function getMySavedChannelIds(): Promise<string[]> {
+export async function getMyFavoriteChannelIds(): Promise<string[]> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return []
   const { data } = await supabase.from('channel_saves').select('channel_id').eq('user_id', session.user.id)
   return (data ?? []).map((d: any) => d.channel_id)
+}
+
+/** @deprecated Use favoriteChannel */
+export const saveChannel = favoriteChannel
+/** @deprecated Use unfavoriteChannel */
+export const unsaveChannel = unfavoriteChannel
+/** @deprecated Use getMyFavoriteChannelIds */
+export const getMySavedChannelIds = getMyFavoriteChannelIds
+
+// ─── Channel Metrics (owner dashboard) ────────────────────────────────────
+
+export interface ChannelMetrics {
+  totalMembers: number
+  totalMessages: number
+  totalMedia: number
+  messagesToday: number
+  messagesThisWeek: number
+  activeToday: number // unique authors today
+}
+
+export async function getChannelMetrics(channelId: string): Promise<ChannelMetrics> {
+  const now = new Date()
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7).toISOString()
+
+  const [
+    { count: totalMembers },
+    { count: totalMessages },
+    { count: totalMedia },
+    { count: messagesToday },
+    { count: messagesThisWeek },
+    { data: todayAuthors },
+  ] = await Promise.all([
+    supabase.from('channel_members').select('*', { count: 'exact', head: true }).eq('channel_id', channelId),
+    supabase.from('channel_posts').select('*', { count: 'exact', head: true }).eq('channel_id', channelId),
+    supabase.from('channel_posts').select('*', { count: 'exact', head: true }).eq('channel_id', channelId).not('photos', 'eq', '{}'),
+    supabase.from('channel_posts').select('*', { count: 'exact', head: true }).eq('channel_id', channelId).gte('created_at', todayStart),
+    supabase.from('channel_posts').select('*', { count: 'exact', head: true }).eq('channel_id', channelId).gte('created_at', weekStart),
+    supabase.from('channel_posts').select('author_id').eq('channel_id', channelId).gte('created_at', todayStart),
+  ])
+
+  const uniqueAuthors = new Set((todayAuthors ?? []).map((a: any) => a.author_id))
+
+  return {
+    totalMembers: totalMembers ?? 0,
+    totalMessages: totalMessages ?? 0,
+    totalMedia: totalMedia ?? 0,
+    messagesToday: messagesToday ?? 0,
+    messagesThisWeek: messagesThisWeek ?? 0,
+    activeToday: uniqueAuthors.size,
+  }
+}
+
+// ─── Channel Ownership ────────────────────────────────────────────────────
+
+export async function transferChannelOwnership(channelId: string, newOwnerId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+
+  // Verify current user is the owner
+  const { data: channel } = await supabase
+    .from('channels')
+    .select('created_by')
+    .eq('id', channelId)
+    .single()
+
+  if (!channel || channel.created_by !== session.user.id) {
+    throw new Error('Only the channel creator can transfer ownership')
+  }
+
+  // Transfer ownership
+  await supabase
+    .from('channels')
+    .update({ created_by: newOwnerId })
+    .eq('id', channelId)
+
+  // Post system message
+  const authorName = await getCurrentUserName()
+  const { data: newOwnerProfile } = await supabase
+    .from('profiles')
+    .select('name')
+    .eq('user_id', newOwnerId)
+    .single()
+  const newOwnerName = newOwnerProfile?.name ?? 'Someone'
+
+  await supabase.from('channel_posts').insert({
+    channel_id: channelId,
+    author_id: session.user.id,
+    author_name: authorName,
+    content: `${authorName ?? 'The host'} transferred ownership to ${newOwnerName}`,
+    message_type: 'system_leave',
+  })
+}
+
+export async function getChannelMembers(channelId: string): Promise<{ user_id: string; name: string | null }[]> {
+  const { data: memberRows } = await supabase
+    .from('channel_members')
+    .select('user_id')
+    .eq('channel_id', channelId)
+
+  if (!memberRows || memberRows.length === 0) return []
+
+  const userIds = memberRows.map((m: any) => m.user_id)
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('user_id, name')
+    .in('user_id', userIds)
+
+  const nameMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p.name]))
+  return memberRows.map((m: any) => ({
+    user_id: m.user_id,
+    name: nameMap.get(m.user_id) ?? null,
+  }))
 }
 
 // ─── Delete Messages ───────────────────────────────────────────────────────
