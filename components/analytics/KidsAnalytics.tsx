@@ -664,7 +664,7 @@ function ScoreInfoModal({
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+          <ScrollView showsVerticalScrollIndicator={false}>
             {scores && (
               <View style={[styles.scoreHighlight, { backgroundColor: colors.primaryTint, borderRadius: radius.xl, borderColor: colors.primary + '30' }]}>
                 <Text style={[styles.scoreHighlightNum, { color: scoreColor(scores.overall) }]}>
@@ -1367,7 +1367,7 @@ function PillarDetailModal({
           </View>
 
           {/* Content */}
-          <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, gap: 16 }}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, gap: 16 }}>
             <PillarDetail
               pillarKey={pillarKey}
               analytics={analytics}
