@@ -994,8 +994,10 @@ function WellnessScoreArc({
             return (
               <AnimatedCircle
                 key={key}
-                r={hasData ? 6 : 3}
+                r={hasData ? 7 : 3}
                 fill={hasData ? PILLAR_CONFIG[key].color : colors.textMuted}
+                stroke={hasData ? '#0E0B1A' : 'none'}
+                strokeWidth={hasData ? 2.5 : 0}
                 opacity={!hasData ? 0.25 : activePillar !== null && activePillar !== key ? 0.35 : 1}
                 animatedProps={dotProps[i]}
               />
