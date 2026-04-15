@@ -133,7 +133,7 @@ export default function ProfileScreen() {
     // Personal
     [
       { id: 'personal', label: t('profile_myProfile'), icon: User, color: colors.primary, route: '/profile/personal' },
-      { id: 'behavior', label: `${behaviorLabel} ${t('profile_title')}`, icon: mode === 'pre-pregnancy' ? Moon : mode === 'pregnancy' ? Baby : Sparkles, color: behaviorColor, route: mode === 'kids' ? '/profile/kids' : '/profile/personal' },
+      { id: 'behavior', label: `${behaviorLabel} ${t('profile_title')}`, icon: mode === 'pre-pregnancy' ? Moon : mode === 'pregnancy' ? Baby : Sparkles, color: behaviorColor, route: mode === 'kids' ? '/profile/kids' : mode === 'pregnancy' ? '/profile/pregnancy' : '/profile/personal' },
     ],
     // Care & Family
     [
