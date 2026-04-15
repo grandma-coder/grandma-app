@@ -90,17 +90,27 @@ import { ChildPill, CHILD_COLORS, formatChildAge as sharedFormatChildAge } from 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
 
+const AnimatedPath   = Animated.createAnimatedComponent(Path)
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
-// ─── Wellness Arc — module-level geometry (SCREEN_W is constant) ───────────
-const ARC_SIZE    = SCREEN_W - 32
-const ARC_OUTER_R = ARC_SIZE / 2 - 20
-const ARC_INNER_R = 58
-const ARC_GAP     = (ARC_OUTER_R - ARC_INNER_R) / 5
-// Index 0 = smallest ring (Nutrition, innermost) → index 5 = largest (Activity, outermost)
-const ARC_RADII   = Array.from({ length: 6 }, (_, i) => ARC_INNER_R + i * ARC_GAP)
-const STROKE_TRACK = 13
-const STROKE_FILL  = 15
+// ─── Radar Chart — module-level geometry (SCREEN_W is constant) ────────────
+const RADAR_SIZE  = SCREEN_W - 32
+const RADAR_CX    = RADAR_SIZE / 2
+const RADAR_CY    = RADAR_SIZE / 2
+const RADAR_R     = RADAR_SIZE * 0.34   // max radius for score = 10
+const RADAR_LABEL_R = RADAR_R + 28      // label distance from center
+const GRID_LEVELS = [0.25, 0.5, 0.75, 1.0]
+
+function hexPath(cx: number, cy: number, r: number): string {
+  let d = ''
+  for (let i = 0; i < 6; i++) {
+    const a = (-90 + i * 60) * (Math.PI / 180)
+    const x = cx + r * Math.cos(a)
+    const y = cy + r * Math.sin(a)
+    d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1)
+  }
+  return d + 'Z'
+}
 
 // ─── Pillar Config ─────────────────────────────────────────────────────────
 
@@ -830,7 +840,7 @@ function TipDetailModal({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// WELLNESS SCORE ARC
+// WELLNESS RADAR CHART
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function WellnessScoreArc({
@@ -845,22 +855,35 @@ function WellnessScoreArc({
   const { colors, radius } = useTheme()
   const [activePillar, setActivePillar] = useState<PillarKey | null>(null)
 
-  const cx     = ARC_SIZE / 2
-  const cy     = ARC_SIZE / 2
-
-  // Six shared values — one per ring (React hooks rules: no hooks in loops/maps)
+  // Six shared values — one per axis (React hooks rules: no hooks in loops)
   const p0 = useSharedValue(0); const p1 = useSharedValue(0)
   const p2 = useSharedValue(0); const p3 = useSharedValue(0)
   const p4 = useSharedValue(0); const p5 = useSharedValue(0)
   const scoreOpacity = useSharedValue(0)
 
-  const ap0 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*ARC_RADII[0]*(1-p0.value) }))
-  const ap1 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*ARC_RADII[1]*(1-p1.value) }))
-  const ap2 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*ARC_RADII[2]*(1-p2.value) }))
-  const ap3 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*ARC_RADII[3]*(1-p3.value) }))
-  const ap4 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*ARC_RADII[4]*(1-p4.value) }))
-  const ap5 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*ARC_RADII[5]*(1-p5.value) }))
-  const ringAnimatedProps = [ap0, ap1, ap2, ap3, ap4, ap5]
+  // Animated data polygon path
+  const dataPathProps = useAnimatedProps(() => {
+    'worklet'
+    const vals = [p0.value, p1.value, p2.value, p3.value, p4.value, p5.value]
+    let d = ''
+    for (let i = 0; i < 6; i++) {
+      const a = (-90 + i * 60) * (Math.PI / 180)
+      const r = vals[i] * RADAR_R
+      const x = RADAR_CX + r * Math.cos(a)
+      const y = RADAR_CY + r * Math.sin(a)
+      d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1)
+    }
+    return { d: d + 'Z' }
+  })
+
+  // Animated dot positions — explicit per-axis (hooks rules)
+  const dot0 = useAnimatedProps(() => { const a = -90*(Math.PI/180); return { cx: RADAR_CX+p0.value*RADAR_R*Math.cos(a), cy: RADAR_CY+p0.value*RADAR_R*Math.sin(a) } })
+  const dot1 = useAnimatedProps(() => { const a = -30*(Math.PI/180); return { cx: RADAR_CX+p1.value*RADAR_R*Math.cos(a), cy: RADAR_CY+p1.value*RADAR_R*Math.sin(a) } })
+  const dot2 = useAnimatedProps(() => { const a =  30*(Math.PI/180); return { cx: RADAR_CX+p2.value*RADAR_R*Math.cos(a), cy: RADAR_CY+p2.value*RADAR_R*Math.sin(a) } })
+  const dot3 = useAnimatedProps(() => { const a =  90*(Math.PI/180); return { cx: RADAR_CX+p3.value*RADAR_R*Math.cos(a), cy: RADAR_CY+p3.value*RADAR_R*Math.sin(a) } })
+  const dot4 = useAnimatedProps(() => { const a = 150*(Math.PI/180); return { cx: RADAR_CX+p4.value*RADAR_R*Math.cos(a), cy: RADAR_CY+p4.value*RADAR_R*Math.sin(a) } })
+  const dot5 = useAnimatedProps(() => { const a = 210*(Math.PI/180); return { cx: RADAR_CX+p5.value*RADAR_R*Math.cos(a), cy: RADAR_CY+p5.value*RADAR_R*Math.sin(a) } })
+  const dotProps = [dot0, dot1, dot2, dot3, dot4, dot5]
 
   const scoreAnimStyle = useAnimatedStyle(() => ({
     opacity: scoreOpacity.value,
@@ -872,19 +895,26 @@ function WellnessScoreArc({
     p3.value = 0; p4.value = 0; p5.value = 0
     scoreOpacity.value = 0
 
+    const spring = { damping: 14, stiffness: 90, mass: 0.8 }
     const targets = PILLAR_ORDER.map((key) => scores[key].hasData ? scores[key].value / 10 : 0)
-    p0.value = withDelay(0,   withSpring(targets[0], { damping: 14, stiffness: 90, mass: 0.8 }))
-    p1.value = withDelay(150, withSpring(targets[1], { damping: 14, stiffness: 90, mass: 0.8 }))
-    p2.value = withDelay(300, withSpring(targets[2], { damping: 14, stiffness: 90, mass: 0.8 }))
-    p3.value = withDelay(450, withSpring(targets[3], { damping: 14, stiffness: 90, mass: 0.8 }))
-    p4.value = withDelay(600, withSpring(targets[4], { damping: 14, stiffness: 90, mass: 0.8 }))
-    p5.value = withDelay(750, withSpring(targets[5], { damping: 14, stiffness: 90, mass: 0.8 }))
-    scoreOpacity.value = withDelay(950, withTiming(1, { duration: 400, easing: Easing.out(Easing.quad) }))
+    p0.value = withDelay(0,   withSpring(targets[0], spring))
+    p1.value = withDelay(100, withSpring(targets[1], spring))
+    p2.value = withDelay(200, withSpring(targets[2], spring))
+    p3.value = withDelay(300, withSpring(targets[3], spring))
+    p4.value = withDelay(400, withSpring(targets[4], spring))
+    p5.value = withDelay(500, withSpring(targets[5], spring))
+    scoreOpacity.value = withDelay(600, withTiming(1, { duration: 400, easing: Easing.out(Easing.quad) }))
   }, [childId, scores.overall])
 
   const hasAnyData = PILLAR_ORDER.some((k) => scores[k].hasData)
   const overall    = hasAnyData ? scores.overall : 0
   const overallC   = hasAnyData ? scoreColor(overall) : colors.textMuted
+
+  // Label positions (computed once per render)
+  const labelPositions = PILLAR_ORDER.map((_, i) => {
+    const a = (-90 + i * 60) * (Math.PI / 180)
+    return { x: RADAR_CX + RADAR_LABEL_R * Math.cos(a), y: RADAR_CY + RADAR_LABEL_R * Math.sin(a) }
+  })
 
   function getPillarExplanation(key: PillarKey): string {
     const score = scores[key]
@@ -904,37 +934,89 @@ function WellnessScoreArc({
 
   return (
     <View style={styles.arcContainer}>
-      <View style={{ width: ARC_SIZE, height: ARC_SIZE }}>
-        <Svg width={ARC_SIZE} height={ARC_SIZE}>
+      <View style={{ width: RADAR_SIZE, height: RADAR_SIZE }}>
+        <Svg width={RADAR_SIZE} height={RADAR_SIZE}>
+          {/* Grid hexagons */}
+          {GRID_LEVELS.map((level) => (
+            <Path
+              key={level}
+              d={hexPath(RADAR_CX, RADAR_CY, RADAR_R * level)}
+              fill="none"
+              stroke={colors.border}
+              strokeWidth={1}
+              opacity={level === 1 ? 0.3 : 0.12}
+            />
+          ))}
+          {/* Axis lines */}
           {PILLAR_ORDER.map((key, i) => {
-            const r     = ARC_RADII[i]
-            const circ  = 2 * Math.PI * r
-            const color = PILLAR_CONFIG[key].color
-            const isActive = activePillar === key
+            const a = (-90 + i * 60) * (Math.PI / 180)
             return (
-              <React.Fragment key={key}>
-                <Circle
-                  cx={cx} cy={cy} r={r}
-                  fill="none"
-                  stroke={color + '1A'}
-                  strokeWidth={STROKE_TRACK}
-                />
-                <AnimatedCircle
-                  cx={cx} cy={cy} r={r}
-                  fill="none"
-                  stroke={color}
-                  strokeWidth={isActive ? STROKE_FILL + 4 : STROKE_FILL}
-                  strokeDasharray={circ}
-                  strokeLinecap="round"
-                  transform={`rotate(-90 ${cx} ${cy})`}
-                  opacity={activePillar !== null && !isActive ? 0.35 : 1}
-                  animatedProps={ringAnimatedProps[i]}
-                />
-              </React.Fragment>
+              <Line
+                key={key}
+                x1={RADAR_CX} y1={RADAR_CY}
+                x2={RADAR_CX + RADAR_R * Math.cos(a)}
+                y2={RADAR_CY + RADAR_R * Math.sin(a)}
+                stroke={colors.border}
+                strokeWidth={1}
+                opacity={0.1}
+              />
             )
           })}
+          {/* Data polygon — filled + stroked */}
+          <AnimatedPath
+            animatedProps={dataPathProps}
+            fill="#7048B830"
+            stroke="#A07FDC"
+            strokeWidth={2.5}
+            strokeLinejoin="round"
+          />
+          {/* Colored dots at each vertex */}
+          {PILLAR_ORDER.map((key, i) => (
+            <AnimatedCircle
+              key={key}
+              r={6}
+              fill={PILLAR_CONFIG[key].color}
+              opacity={activePillar !== null && activePillar !== key ? 0.35 : 1}
+              animatedProps={dotProps[i]}
+            />
+          ))}
         </Svg>
 
+        {/* Axis labels — positioned absolutely */}
+        {PILLAR_ORDER.map((key, i) => {
+          const pos    = labelPositions[i]
+          const score  = scores[key]
+          const isActive = activePillar === key
+          const isTop  = i === 0
+          const isBot  = i === 3
+          const isLeft = i === 4 || i === 5
+          return (
+            <Pressable
+              key={key}
+              onPress={() => setActivePillar(activePillar === key ? null : key)}
+              hitSlop={8}
+              style={{
+                position: 'absolute',
+                left: pos.x - 50,
+                top:  pos.y - (isTop ? 24 : isBot ? -6 : 10),
+                width: 100,
+                alignItems: isTop || isBot ? 'center' : isLeft ? 'flex-end' : 'flex-start',
+              }}
+            >
+              <Text style={{
+                fontSize: 14,
+                fontWeight: isActive ? '900' : '800',
+                color: PILLAR_CONFIG[key].color,
+                opacity: activePillar !== null && !isActive ? 0.4 : 1,
+              }}>
+                {PILLAR_CONFIG[key].label}{' '}
+                {score.hasData ? score.value.toFixed(0) : '—'}
+              </Text>
+            </Pressable>
+          )
+        })}
+
+        {/* Center score overlay */}
         <Animated.View
           style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }, scoreAnimStyle]}
           pointerEvents="none"
@@ -944,91 +1026,24 @@ function WellnessScoreArc({
               <Text style={{ fontSize: 42, fontWeight: '900', color: PILLAR_CONFIG[activePillar].color, lineHeight: 46 }}>
                 {scores[activePillar].hasData ? scores[activePillar].value.toFixed(1) : '—'}
               </Text>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: PILLAR_CONFIG[activePillar].color + 'AA', marginTop: 3, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                {PILLAR_CONFIG[activePillar].label}
+              <Text style={{ fontSize: 11, fontWeight: '700', color: PILLAR_CONFIG[activePillar].color + 'AA', marginTop: 2, letterSpacing: 0.5 }}>
+                {PILLAR_CONFIG[activePillar].label.toLowerCase()}
               </Text>
             </>
           ) : (
             <>
-              <Text style={{ fontSize: 46, fontWeight: '900', color: overallC, lineHeight: 50 }}>
+              <Text style={{ fontSize: 42, fontWeight: '900', color: overallC, lineHeight: 46 }}>
                 {hasAnyData ? overall.toFixed(1) : '—'}
               </Text>
               <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textSecondary, marginTop: 2 }}>
-                thriving score
+                thriving
               </Text>
             </>
           )}
         </Animated.View>
-
-        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-          {[...PILLAR_ORDER].reverse().map((key, revI) => {
-            const i = PILLAR_ORDER.length - 1 - revI
-            const r = ARC_RADII[i]
-            return (
-              <Pressable
-                key={key}
-                onPress={() => setActivePillar(activePillar === key ? null : key)}
-                hitSlop={0}
-                style={{
-                  position: 'absolute',
-                  left: cx - r,
-                  top:  cy - r,
-                  width:  r * 2,
-                  height: r * 2,
-                  borderRadius: r,
-                }}
-              />
-            )
-          })}
-          {/* Deadzone: blocks touches in the centre (score text area) from hitting ring 5 */}
-          <Pressable
-            onPress={() => setActivePillar(null)}
-            style={{
-              position: 'absolute',
-              left: cx - ARC_INNER_R,
-              top:  cy - ARC_INNER_R,
-              width:  ARC_INNER_R * 2,
-              height: ARC_INNER_R * 2,
-              borderRadius: ARC_INNER_R,
-            }}
-          />
-        </View>
       </View>
 
-      <View style={styles.arcLegend}>
-        {PILLAR_ORDER.map((key) => {
-          const score    = scores[key]
-          const isActive = activePillar === key
-          return (
-            <Pressable
-              key={key}
-              onPress={() => setActivePillar(activePillar === key ? null : key)}
-              style={[
-                styles.legendItem,
-                isActive && {
-                  backgroundColor: PILLAR_CONFIG[key].color + '18',
-                  borderRadius: radius.full,
-                  paddingHorizontal: 8,
-                  paddingVertical: 2,
-                },
-              ]}
-            >
-              <View style={[styles.legendDot, { backgroundColor: PILLAR_CONFIG[key].color }]} />
-              <Text
-                style={[
-                  styles.legendLabel,
-                  { color: isActive ? PILLAR_CONFIG[key].color : colors.textMuted,
-                    fontWeight: isActive ? '800' : '600' },
-                ]}
-              >
-                {PILLAR_CONFIG[key].label}
-                {score.hasData ? ` ${score.value.toFixed(0)}` : ''}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
-
+      {/* Tooltip when a pillar is selected */}
       {activePillar && (
         <Pressable
           onPress={() => setActivePillar(null)}
