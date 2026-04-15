@@ -14,6 +14,15 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import Animated, {
+  useSharedValue,
+  useAnimatedProps,
+  useAnimatedStyle,
+  withDelay,
+  withSpring,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated'
 import {
   View,
   Text,
@@ -38,6 +47,9 @@ import Svg, {
   G,
   Text as SvgText,
 } from 'react-native-svg'
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle)
+
 import {
   MessageCircle,
   ChevronRight,
