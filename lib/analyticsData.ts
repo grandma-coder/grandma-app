@@ -672,3 +672,267 @@ export function useKidsAnalytics(childId: string | 'all') {
     retry: 1,
   })
 }
+
+// ─── Pregnancy Analytics Types ────────────────────────────────────────────────
+
+export interface PregnancyWeightEntry {
+  date: string
+  weight: number
+}
+
+export interface PregnancyMoodEntry {
+  week: number
+  mood: string
+  count: number
+}
+
+export interface PregnancyKickSession {
+  date: string
+  kicks: number
+}
+
+export interface PregnancySymptomFreq {
+  symptom: string
+  count: number
+}
+
+export interface PregnancyWellbeingScore {
+  sleep: number      // avg hours / 9 * 10
+  mood: number       // positive moods / total * 10
+  nutrition: number  // days with nutrition log / 7 * 10
+  exercise: number   // days with exercise / 7 * 10
+  hydration: number  // avg glasses / 8 * 10 (capped at 10)
+  overall: number    // average of above
+  delta: number      // change from previous week (percentage points)
+}
+
+export interface PregnancyNutritionMatrix {
+  dates: string[]
+  iron: boolean[]
+  folic: boolean[]
+  protein: boolean[]
+  calcium: boolean[]
+}
+
+// ─── Pregnancy Query Hooks ────────────────────────────────────────────────────
+
+export function usePregnancyWeightHistory(userId: string, limit = 10) {
+  return useQuery({
+    queryKey: ['pregnancy_weight', userId, limit],
+    queryFn: async (): Promise<PregnancyWeightEntry[]> => {
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('log_date, value')
+        .eq('user_id', userId)
+        .eq('log_type', 'weight')
+        .order('log_date', { ascending: true })
+        .limit(limit)
+      if (error) throw error
+      return (data ?? []).map(r => ({
+        date: r.log_date,
+        weight: parseFloat(r.value ?? '0'),
+      })).filter(r => !isNaN(r.weight))
+    },
+    enabled: !!userId,
+  })
+}
+
+export function usePregnancyMoodTrend(userId: string, weeks = 12) {
+  return useQuery({
+    queryKey: ['pregnancy_mood_trend', userId, weeks],
+    queryFn: async () => {
+      const since = new Date()
+      since.setDate(since.getDate() - weeks * 7)
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('log_date, value')
+        .eq('user_id', userId)
+        .eq('log_type', 'mood')
+        .gte('log_date', since.toISOString().split('T')[0])
+        .order('log_date', { ascending: true })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!userId,
+  })
+}
+
+export function usePregnancyKickSessions(userId: string, limit = 14) {
+  return useQuery({
+    queryKey: ['pregnancy_kicks', userId, limit],
+    queryFn: async (): Promise<PregnancyKickSession[]> => {
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('log_date, value')
+        .eq('user_id', userId)
+        .eq('log_type', 'kick_count')
+        .order('log_date', { ascending: false })
+        .limit(limit)
+      if (error) throw error
+      return (data ?? []).map(r => ({
+        date: r.log_date,
+        kicks: parseInt(r.value ?? '0', 10),
+      })).reverse()
+    },
+    enabled: !!userId,
+  })
+}
+
+export function usePregnancySymptomFrequency(userId: string) {
+  return useQuery({
+    queryKey: ['pregnancy_symptoms', userId],
+    queryFn: async (): Promise<PregnancySymptomFreq[]> => {
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('value')
+        .eq('user_id', userId)
+        .eq('log_type', 'symptom')
+      if (error) throw error
+      const counts: Record<string, number> = {}
+      for (const row of data ?? []) {
+        if (row.value) counts[row.value] = (counts[row.value] ?? 0) + 1
+      }
+      return Object.entries(counts)
+        .map(([symptom, count]) => ({ symptom, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5)
+    },
+    enabled: !!userId,
+  })
+}
+
+export function usePregnancyWellbeingScore(userId: string) {
+  return useQuery({
+    queryKey: ['pregnancy_wellbeing', userId],
+    queryFn: async (): Promise<PregnancyWellbeingScore> => {
+      const since = new Date()
+      since.setDate(since.getDate() - 7)
+      const sinceStr = since.toISOString().split('T')[0]
+
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('log_date, log_type, value')
+        .eq('user_id', userId)
+        .gte('log_date', sinceStr)
+      if (error) throw error
+
+      const logs = data ?? []
+      const sleepLogs = logs.filter(l => l.log_type === 'sleep')
+      const moodLogs = logs.filter(l => l.log_type === 'mood')
+      const nutritionLogs = logs.filter(l => l.log_type === 'nutrition')
+      const exerciseLogs = logs.filter(l => l.log_type === 'exercise')
+      const waterLogs = logs.filter(l => l.log_type === 'water')
+
+      const positiveMoods = ['happy', 'radiant', 'energetic', 'okay']
+      const avgSleepHours = sleepLogs.length > 0
+        ? sleepLogs.reduce((s, l) => s + parseFloat(l.value ?? '0'), 0) / sleepLogs.length
+        : 0
+      const moodScore = moodLogs.length > 0
+        ? (moodLogs.filter(l => positiveMoods.includes(l.value ?? '')).length / moodLogs.length) * 10
+        : 0
+      const nutritionScore = Math.min(10, (nutritionLogs.length / 7) * 10)
+      const exerciseScore = Math.min(10, (exerciseLogs.length / 7) * 10 * 2)
+      const avgWater = waterLogs.length > 0
+        ? waterLogs.reduce((s, l) => s + parseInt(l.value ?? '0', 10), 0) / waterLogs.length
+        : 0
+      const hydrationScore = Math.min(10, (avgWater / 8) * 10)
+      const sleepScore = Math.min(10, (avgSleepHours / 9) * 10)
+      const overall = (sleepScore + moodScore + nutritionScore + exerciseScore + hydrationScore) / 5
+
+      return {
+        sleep: Math.round(sleepScore * 10) / 10,
+        mood: Math.round(moodScore * 10) / 10,
+        nutrition: Math.round(nutritionScore * 10) / 10,
+        exercise: Math.round(exerciseScore * 10) / 10,
+        hydration: Math.round(hydrationScore * 10) / 10,
+        overall: Math.round(overall * 10),
+        delta: 0,
+      }
+    },
+    enabled: !!userId,
+  })
+}
+
+export function usePregnancySleepHistory(userId: string, weeks = 4) {
+  return useQuery({
+    queryKey: ['pregnancy_sleep', userId, weeks],
+    queryFn: async () => {
+      const since = new Date()
+      since.setDate(since.getDate() - weeks * 7)
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('log_date, value')
+        .eq('user_id', userId)
+        .eq('log_type', 'sleep')
+        .gte('log_date', since.toISOString().split('T')[0])
+        .order('log_date', { ascending: true })
+      if (error) throw error
+      return (data ?? []).map(r => ({
+        date: r.log_date,
+        hours: parseFloat(r.value ?? '0'),
+      }))
+    },
+    enabled: !!userId,
+  })
+}
+
+export function usePregnancyHydrationHistory(userId: string, days = 7) {
+  return useQuery({
+    queryKey: ['pregnancy_hydration', userId, days],
+    queryFn: async () => {
+      const since = new Date()
+      since.setDate(since.getDate() - days)
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('log_date, value')
+        .eq('user_id', userId)
+        .eq('log_type', 'water')
+        .gte('log_date', since.toISOString().split('T')[0])
+        .order('log_date', { ascending: true })
+      if (error) throw error
+      return (data ?? []).map(r => ({
+        date: r.log_date,
+        glasses: parseInt(r.value ?? '0', 10),
+      }))
+    },
+    enabled: !!userId,
+  })
+}
+
+export function usePregnancyNutritionMatrix(userId: string, days = 7) {
+  return useQuery({
+    queryKey: ['pregnancy_nutrition', userId, days],
+    queryFn: async (): Promise<PregnancyNutritionMatrix> => {
+      const dates: string[] = []
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date()
+        d.setDate(d.getDate() - i)
+        dates.push(d.toISOString().split('T')[0])
+      }
+
+      const since = dates[0]
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('log_date, notes')
+        .eq('user_id', userId)
+        .eq('log_type', 'nutrition')
+        .gte('log_date', since)
+      if (error) throw error
+
+      const logsByDate = new Map<string, string[]>()
+      for (const row of data ?? []) {
+        const tags: string[] = JSON.parse(row.notes ?? '[]')
+        logsByDate.set(row.log_date, tags)
+      }
+
+      return {
+        dates,
+        iron: dates.map(d => logsByDate.get(d)?.includes('iron') ?? false),
+        folic: dates.map(d => logsByDate.get(d)?.includes('folic') ?? false),
+        protein: dates.map(d => logsByDate.get(d)?.includes('protein') ?? false),
+        calcium: dates.map(d => logsByDate.get(d)?.includes('calcium') ?? false),
+      }
+    },
+    enabled: !!userId,
+  })
+}
