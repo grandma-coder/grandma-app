@@ -82,6 +82,16 @@ export interface PillarScore {
   hasData: boolean
 }
 
+export interface ActivityData {
+  activeDays: number              // days in last 7 with at least 1 session
+  totalSessions: number           // total activity logs this week
+  totalMinutes: number            // total logged minutes (from duration field)
+  uniqueTypes: string[]           // unique activityType values
+  dailySessions: number[]         // sessions per day (7 values)
+  weekLabels: string[]
+  hasData: boolean
+}
+
 export interface WellnessScores {
   overall: number     // weighted average 0-10
   nutrition: PillarScore
@@ -89,6 +99,7 @@ export interface WellnessScores {
   mood: PillarScore
   health: PillarScore
   growth: PillarScore
+  activity: PillarScore
 }
 
 export interface AnalyticsData {
@@ -99,6 +110,7 @@ export interface AnalyticsData {
   diaper: DiaperData
   routineCompliance: RoutineComplianceData
   growth: GrowthData
+  activity: ActivityData
   scores: WellnessScores
   totalLogs: number
   dateRange: { from: string; to: string }
@@ -520,20 +532,67 @@ function scoreGrowth(data: GrowthData): PillarScore {
   return { value, label: scoreLabel(value), trend: 0, hasData: true }
 }
 
-function buildScores(nutrition: NutritionData, sleep: SleepData, mood: MoodData, health: HealthData, growth: GrowthData): WellnessScores {
+function buildActivityData(logs: ChildLog[], dates: string[], labels: string[]): ActivityData {
+  const activityLogs = logs.filter((l) => l.type === 'activity' && dates.includes(l.date))
+  const empty: ActivityData = { activeDays: 0, totalSessions: 0, totalMinutes: 0, uniqueTypes: [], dailySessions: new Array(7).fill(0), weekLabels: labels, hasData: false }
+  if (activityLogs.length === 0) return empty
+
+  const dailySessions = new Array(7).fill(0)
+  let totalMinutes = 0
+  const typeSet = new Set<string>()
+
+  for (const log of activityLogs) {
+    const dayIdx = dates.indexOf(log.date)
+    if (dayIdx !== -1) dailySessions[dayIdx]++
+    try {
+      const parsed = parseValue(log.value)
+      if (parsed?.activityType) typeSet.add(parsed.activityType as string)
+      if (parsed?.duration) {
+        const mins = parseFloat(String(parsed.duration))
+        if (!isNaN(mins)) totalMinutes += mins
+      }
+    } catch {}
+  }
+
+  return {
+    activeDays: dailySessions.filter((s) => s > 0).length,
+    totalSessions: dailySessions.reduce((a, b) => a + b, 0),
+    totalMinutes,
+    uniqueTypes: [...typeSet],
+    dailySessions,
+    weekLabels: labels,
+    hasData: true,
+  }
+}
+
+function scoreActivity(data: ActivityData): PillarScore {
+  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false }
+
+  // Base: active days this week (0–7) → 0–9 pts
+  const base = (data.activeDays / 7) * 9
+  // Variety bonus: up to +1 for logging 3+ different activity types
+  const varietyBonus = Math.min(data.uniqueTypes.length / 3, 1)
+  const value = Math.round(Math.min(base + varietyBonus, 10) * 10) / 10
+  return { value, label: scoreLabel(value), trend: 0, hasData: true }
+}
+
+function buildScores(nutrition: NutritionData, sleep: SleepData, mood: MoodData, health: HealthData, growth: GrowthData, activity: ActivityData): WellnessScores {
   const ns = scoreNutrition(nutrition)
   const ss = scoreSleep(sleep)
   const ms = scoreMood(mood)
   const hs = scoreHealth(health)
   const gs = scoreGrowth(growth)
 
-  // Weighted overall: nutrition 30%, sleep 25%, mood 20%, health 15%, growth 10%
+  const as = scoreActivity(activity)
+
+  // Weighted overall: nutrition 27%, sleep 22%, mood 18%, health 13%, growth 9%, activity 11%
   const pillars = [
-    { score: ns, weight: 0.30 },
-    { score: ss, weight: 0.25 },
-    { score: ms, weight: 0.20 },
-    { score: hs, weight: 0.15 },
-    { score: gs, weight: 0.10 },
+    { score: ns, weight: 0.27 },
+    { score: ss, weight: 0.22 },
+    { score: ms, weight: 0.18 },
+    { score: hs, weight: 0.13 },
+    { score: gs, weight: 0.09 },
+    { score: as, weight: 0.11 },
   ]
 
   const withData = pillars.filter((p) => p.score.hasData)
@@ -544,7 +603,7 @@ function buildScores(nutrition: NutritionData, sleep: SleepData, mood: MoodData,
   }
   overall = Math.round(overall * 10) / 10
 
-  return { overall, nutrition: ns, sleep: ss, mood: ms, health: hs, growth: gs }
+  return { overall, nutrition: ns, sleep: ss, mood: ms, health: hs, growth: gs, activity: as }
 }
 
 // ─── Main Query Hook ──────────────────────────────────────────────────────────
@@ -590,8 +649,9 @@ export function useKidsAnalytics(childId: string | 'all') {
       const health = buildHealthData(allLogs, dates, labels)
       const diaper = buildDiaperData(allLogs, dates, labels)
       const growth = buildGrowthData(allLogs)
+      const activity = buildActivityData(allLogs, dates, labels)
       const routineCompliance = buildRoutineComplianceData(allLogs, dates, labels)
-      const scores = buildScores(nutrition, sleep, mood, health, growth)
+      const scores = buildScores(nutrition, sleep, mood, health, growth, activity)
 
       return {
         nutrition,
@@ -600,6 +660,7 @@ export function useKidsAnalytics(childId: string | 'all') {
         health,
         diaper,
         growth,
+        activity,
         routineCompliance,
         scores,
         totalLogs: allLogs.filter((l) => l.type !== 'skipped').length,

@@ -88,10 +88,11 @@ const PILLAR_CONFIG = {
   mood:      { label: 'Mood',      color: '#FF8AD8', icon: Smile },
   health:    { label: 'Health',    color: '#4D96FF', icon: Heart },
   growth:    { label: 'Growth',    color: '#F59E0B', icon: TrendingUp },
+  activity:  { label: 'Activity',  color: '#FF6B35', icon: Zap },
 } as const
 
 type PillarKey = keyof typeof PILLAR_CONFIG
-const PILLAR_ORDER: PillarKey[] = ['nutrition', 'sleep', 'mood', 'health', 'growth']
+const PILLAR_ORDER: PillarKey[] = ['nutrition', 'sleep', 'mood', 'health', 'growth', 'activity']
 
 function formatChildAge(bd: string): string {
   if (!bd) return ''
@@ -519,7 +520,6 @@ export function KidsAnalytics() {
                   onPress={() => setSelectedPillar(key)}
                 />
               ))}
-              <ActivitySection ageMonths={ageMonths} childName={childName} />
               <RoutineComplianceSection data={analytics.routineCompliance} />
             </View>
           </>
@@ -647,10 +647,11 @@ function ScoreInfoModal({
     mood: `Weighted from logged moods: happy/calm/energetic raise the score; fussy/cranky lower it. The more days logged, the more accurate the score.`,
     health: `Combines vaccine completion and health event frequency. More vaccines done + fewer incidents (temperature, medicine) = higher score.`,
     growth: `Reflects how regularly weight and height are measured. Frequent tracking earns a higher score. Recent measurements get a recency bonus.`,
+    activity: `Scored by active days per week (how many days had at least one logged session) plus a variety bonus for mixing different types. 7 active days = perfect score.`,
   }
 
   const WEIGHTS: Record<PillarKey, string> = {
-    nutrition: '30%', sleep: '25%', mood: '20%', health: '15%', growth: '10%',
+    nutrition: '27%', sleep: '22%', mood: '18%', health: '13%', growth: '9%', activity: '11%',
   }
 
   return (
@@ -843,6 +844,7 @@ function WellnessScoreArc({ scores, onInfoPress }: { scores: WellnessScores; onI
       mood: `${pct}% — based on daily mood logs (happy, calm, energetic, fussy, cranky)`,
       health: `${pct}% — reflects vaccine completion and health event frequency`,
       growth: `${pct}% — tracks weight & height measurement regularity`,
+      activity: `${pct}% — based on active days this week and variety of activities logged`,
     }
     return score.hasData ? explanations[key] : 'No data logged yet — start logging to see progress'
   }
@@ -1879,6 +1881,105 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
         </View>
       )
 
+    case 'activity': {
+      const act = analytics.activity
+      const COLOR = PILLAR_CONFIG.activity.color
+      const ageLabel = getAgeLabel(ageMonths)
+      const weeklyTarget = ageMonths < 12
+        ? '20–30 min tummy time & floor play daily'
+        : ageMonths < 36
+        ? '180 min of light active play daily'
+        : '60 min of moderate-to-vigorous activity daily'
+
+      const guideItems = ageMonths < 12
+        ? [
+            { emoji: '👶', label: 'Tummy time', pct: 35, tip: 'Builds neck, shoulder, and core strength for crawling' },
+            { emoji: '🧸', label: 'Floor play',  pct: 30, tip: 'Reaching, grasping, rolling — motor development' },
+            { emoji: '🚶', label: 'Movement & carrying', pct: 20, tip: 'Supported sitting, bouncing, gentle movement' },
+            { emoji: '😴', label: 'Rest & sleep', pct: 15, tip: 'Essential for brain development at this age' },
+          ]
+        : ageMonths < 36
+        ? [
+            { emoji: '🏃', label: 'Active free play', pct: 40, tip: 'Climbing, running, dancing — unstructured is best' },
+            { emoji: '🌳', label: 'Outdoor time',     pct: 30, tip: 'Fresh air, nature exploration, sensory play' },
+            { emoji: '🧩', label: 'Structured play',  pct: 20, tip: 'Puzzles, building, role-play — cognitive growth' },
+            { emoji: '📖', label: 'Quiet rest',        pct: 10, tip: 'Story time, calm activities between active sessions' },
+          ]
+        : [
+            { emoji: '⚽', label: 'Physical activity',    pct: 40, tip: 'Running, jumping, sports — at least 60 min/day' },
+            { emoji: '🌳', label: 'Outdoor play',         pct: 25, tip: 'Parks, nature, free exploration' },
+            { emoji: '🎨', label: 'Creative play',        pct: 20, tip: 'Art, building, imaginative games' },
+            { emoji: '📚', label: 'Structured learning',  pct: 15, tip: 'Reading, puzzles, educational activities' },
+          ]
+
+      return (
+        <View style={styles.detailBody}>
+          {/* Stats */}
+          <View style={[styles.statRow, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+            <StatPill label="Active days" value={act.hasData ? `${act.activeDays}/7` : '—'} color={COLOR} />
+            <StatPill label="Sessions" value={act.hasData ? `${act.totalSessions}` : '—'} color={brand.secondary} />
+            <StatPill label="Types" value={act.hasData ? `${act.uniqueTypes.length}` : '—'} color={brand.accent} />
+          </View>
+
+          {/* Explanation */}
+          <View style={[{ backgroundColor: colors.surfaceRaised, borderRadius: radius.xl, padding: 16, gap: 8 }]}>
+            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700' }]}>How this score works</Text>
+            <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+              {act.hasData
+                ? `${childName} was active on ${act.activeDays} of 7 days this week (${act.totalSessions} session${act.totalSessions !== 1 ? 's' : ''}, ${act.uniqueTypes.length} unique type${act.uniqueTypes.length !== 1 ? 's' : ''}). Score = active days × 1.3 + variety bonus.`
+                : `No activity logs found this week. Log sessions from Calendar → Activity to track ${childName}'s movement.`}
+            </Text>
+            <Text style={[styles.detailExplain, { color: colors.textMuted }]}>
+              {`Target for ${ageLabel}: ${weeklyTarget}`}
+            </Text>
+          </View>
+
+          {/* Weekly sessions bar chart */}
+          {act.hasData && (
+            <ChartCard title="Activity Sessions This Week" onExpand={() => onFullScreen('activity_weekly')}>
+              <HighlightBarChart
+                data={act.dailySessions}
+                labels={act.weekLabels}
+                color={COLOR}
+                width={chartW}
+              />
+            </ChartCard>
+          )}
+
+          {/* Age-appropriate guide */}
+          <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+            <Text style={[styles.chartTitle, { color: colors.text }]}>Recommended Activity Split</Text>
+            <View style={{ gap: 12, marginTop: 4 }}>
+              {guideItems.map((item) => (
+                <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <Text style={{ fontSize: 22 }}>{item.emoji}</Text>
+                  <View style={{ flex: 1, gap: 4 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700' }}>{item.label}</Text>
+                      <Text style={{ color: COLOR, fontSize: 15, fontWeight: '900' }}>{item.pct}%</Text>
+                    </View>
+                    <View style={{ height: 5, borderRadius: 3, backgroundColor: COLOR + '18', overflow: 'hidden' }}>
+                      <View style={{ width: `${item.pct}%`, height: '100%', backgroundColor: COLOR + 'CC', borderRadius: 3 }} />
+                    </View>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '500' }}>{item.tip}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+            <View style={{ backgroundColor: COLOR + '10', borderRadius: 12, padding: 12, marginTop: 12, borderWidth: 1, borderColor: COLOR + '25' }}>
+              <Text style={{ color: COLOR, fontSize: 12, fontWeight: '700' }}>
+                {ageMonths < 12
+                  ? '📋 Aim for 20–30 min tummy time daily, spread across sessions.'
+                  : ageMonths < 36
+                  ? '📋 WHO recommends 180 min of activity/day for toddlers, spread throughout.'
+                  : '📋 WHO recommends 60 min of moderate-to-vigorous activity daily for children 3+.'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      )
+    }
+
     default:
       return null
   }
@@ -1926,6 +2027,7 @@ function EmptyDetail({ pillar }: { pillar: PillarKey }) {
     mood: "No mood entries yet. Track your child's mood daily to see patterns.",
     health: 'No health events logged. Record temperatures, vaccines, and doctor visits here.',
     growth: 'No growth data yet. Log weight and height measurements to track development.',
+    activity: 'No activities logged yet this week. Log sessions from the calendar to track movement.',
   }
   return (
     <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
