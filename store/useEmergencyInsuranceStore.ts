@@ -1,5 +1,12 @@
 /**
  * Emergency Contacts + Insurance Plans Store
+ *
+ * Intentionally NOT persisted: data is always fetched fresh from Supabase on
+ * mount so it stays in sync with care circle edits and server-side changes.
+ * Offline support is not a requirement for emergency/insurance data.
+ * If offline support is added in future, wire up `persist` middleware with
+ * the same AsyncStorage pattern as other stores — but ensure upsert logic
+ * still reconciles correctly with the server copy.
  */
 
 import { create } from 'zustand'

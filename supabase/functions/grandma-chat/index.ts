@@ -1,6 +1,5 @@
 // deno-lint-ignore-file
 // @ts-nocheck — Deno Edge Function: TS errors in VS Code are expected (runs in Deno, not Node)
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
@@ -12,7 +11,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -20,14 +19,36 @@ serve(async (req) => {
   try {
     const {
       messages,
-      user_id,
       context,
     } = await req.json()
 
-    if (!user_id || !messages) {
+    if (!messages) {
       return new Response(
-        JSON.stringify({ error: 'user_id and messages are required' }),
+        JSON.stringify({ error: 'messages are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Extract user_id from JWT — never trust the request body for this
+    const authHeader = req.headers.get('Authorization') ?? ''
+    const token = authHeader.replace(/^Bearer\s+/i, '')
+    if (!token) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Decode JWT payload (base64url, no verification needed — Supabase service role trusts its own tokens)
+    let user_id: string
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+      user_id = payload.sub
+      if (!user_id) throw new Error('No sub claim')
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authorization token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -253,7 +274,9 @@ function getTopicKnowledge(userMessage: string, behavior: string): string {
   }
 
   if (blocks.length === 0) return ''
-  return '\n\n## REFERENCE DATA (use this to give specific, accurate answers)\n\n' + blocks.join('\n\n')
+  // Cap at 2 blocks to avoid approaching context window limits when multiple
+  // topics match simultaneously (e.g. a sick-baby question matching vaccines + fever + feeding)
+  return '\n\n## REFERENCE DATA (use this to give specific, accurate answers)\n\n' + blocks.slice(0, 2).join('\n\n')
 }
 
 // ─── Vaccine Knowledge Base ─────────────────────────────────────────────────

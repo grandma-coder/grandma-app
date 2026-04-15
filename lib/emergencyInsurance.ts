@@ -49,9 +49,40 @@ export interface InsurancePlan {
   createdAt: string
 }
 
+// ─── DB row shapes (snake_case from Supabase) ────────────────────────────────
+
+interface DbEmergencyContact {
+  id: string
+  user_id: string
+  name: string
+  relationship: ContactRelationship
+  phone: string
+  email: string | null
+  is_primary: boolean | null
+  notes: string | null
+  sort_order: number | null
+  created_at: string
+}
+
+interface DbInsurancePlan {
+  id: string
+  user_id: string
+  plan_type: InsurancePlanType
+  provider_name: string
+  plan_name: string | null
+  policy_number: string | null
+  group_number: string | null
+  member_id: string | null
+  phone: string | null
+  start_date: string | null
+  end_date: string | null
+  notes: string | null
+  created_at: string
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function mapContact(row: any): EmergencyContact {
+function mapContact(row: DbEmergencyContact): EmergencyContact {
   return {
     id: row.id,
     userId: row.user_id,
@@ -66,7 +97,7 @@ function mapContact(row: any): EmergencyContact {
   }
 }
 
-function mapPlan(row: any): InsurancePlan {
+function mapPlan(row: DbInsurancePlan): InsurancePlan {
   return {
     id: row.id,
     userId: row.user_id,
@@ -113,13 +144,17 @@ export async function upsertEmergencyContact(contact: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not signed in')
 
-  // If marking as primary, unset any existing primary
+  // If marking as primary, unset any existing primary first.
+  // NOTE: this is two separate operations and not atomic — a retry between them
+  // could result in two primaries. A future migration should add a DB trigger or
+  // RPC (set_primary_emergency_contact) to make this atomic.
   if (contact.isPrimary) {
-    await supabase
+    const { error: clearError } = await supabase
       .from('emergency_contacts')
       .update({ is_primary: false })
       .eq('user_id', user.id)
       .eq('is_primary', true)
+    if (clearError) throw clearError
   }
 
   const row = {
@@ -145,10 +180,14 @@ export async function upsertEmergencyContact(contact: {
 }
 
 export async function deleteEmergencyContact(id: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+
   const { error } = await supabase
     .from('emergency_contacts')
     .delete()
     .eq('id', id)
+    .eq('user_id', user.id)
 
   if (error) throw error
 }
@@ -212,10 +251,14 @@ export async function upsertInsurancePlan(plan: {
 }
 
 export async function deleteInsurancePlan(id: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+
   const { error } = await supabase
     .from('insurance_plans')
     .delete()
     .eq('id', id)
+    .eq('user_id', user.id)
 
   if (error) throw error
 }
@@ -294,20 +337,28 @@ export async function pickAndScanInsuranceCard(
   // Strip markdown code fences if present
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')
 
-  let parsed: any
+  let parsed: unknown
   try {
     parsed = JSON.parse(cleaned)
   } catch {
     throw new Error('Could not read card details. Please try again with a clearer photo.')
   }
 
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error('Unexpected response format. Please try again with a clearer photo.')
+  }
+
+  const card = parsed as Record<string, unknown>
+
+  const validPlanTypes: InsurancePlanType[] = ['health', 'dental', 'vision']
+
   return {
-    providerName: parsed.provider_name ?? null,
-    planName: parsed.plan_name ?? null,
-    planType: (['health', 'dental', 'vision'].includes(parsed.plan_type) ? parsed.plan_type : 'health') as InsurancePlanType,
-    policyNumber: parsed.policy_number ?? null,
-    groupNumber: parsed.group_number ?? null,
-    memberId: parsed.member_id ?? null,
-    phone: parsed.phone ?? null,
+    providerName: typeof card.provider_name === 'string' ? card.provider_name : null,
+    planName: typeof card.plan_name === 'string' ? card.plan_name : null,
+    planType: validPlanTypes.includes(card.plan_type as InsurancePlanType) ? card.plan_type as InsurancePlanType : 'health',
+    policyNumber: typeof card.policy_number === 'string' ? card.policy_number : null,
+    groupNumber: typeof card.group_number === 'string' ? card.group_number : null,
+    memberId: typeof card.member_id === 'string' ? card.member_id : null,
+    phone: typeof card.phone === 'string' ? card.phone : null,
   }
 }

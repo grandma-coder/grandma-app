@@ -881,14 +881,19 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       const uploadedPhotos = photos.some((p) => !p.startsWith('http')) ? await uploadPhotos(photos.filter((p) => !p.startsWith('http'))) : []
       const finalPhotos = [...photos.filter((p) => p.startsWith('http')), ...uploadedPhotos]
       if (editLog) {
-        // Edit mode — UPDATE existing log
+        // Edit mode — UPDATE existing log, preserving original routine metadata
+        let routineMeta: { routineId?: string; routineName?: string } = {}
+        try {
+          const orig = JSON.parse(editLog.value ?? '{}')
+          if (orig.routineId) routineMeta = { routineId: orig.routineId, routineName: orig.routineName }
+        } catch {}
         let value: string
         if (feedType === 'solids') {
-          value = JSON.stringify({ feedType: 'solids', meal, quality, time: startTime, isNewFood, newFoodName: isNewFood ? newFoodName : undefined, hasReaction, reactionFood: hasReaction ? reactionFood : undefined, reactionDesc: hasReaction ? reactionDesc : undefined, estimatedCals: totalEstimatedCals || undefined })
+          value = JSON.stringify({ feedType: 'solids', meal, quality, time: startTime, isNewFood, newFoodName: isNewFood ? newFoodName : undefined, hasReaction, reactionFood: hasReaction ? reactionFood : undefined, reactionDesc: hasReaction ? reactionDesc : undefined, estimatedCals: totalEstimatedCals || undefined, ...routineMeta })
         } else if (feedType === 'breast') {
-          value = JSON.stringify({ feedType: 'breast', time: startTime, duration: duration || undefined, side: breastSide || undefined })
+          value = JSON.stringify({ feedType: 'breast', time: startTime, duration: duration || undefined, side: breastSide || undefined, ...routineMeta })
         } else {
-          value = JSON.stringify({ feedType: 'bottle', time: startTime, amount: amount || undefined })
+          value = JSON.stringify({ feedType: 'bottle', time: startTime, amount: amount || undefined, ...routineMeta })
         }
         await updateChildLog(editLog.id, tagWithRoutine(value, prefill) ?? value, feedType === 'solids' ? (description || null) : null, finalPhotos.length ? finalPhotos : undefined)
         onSaved()
@@ -1008,7 +1013,16 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             {/* Photo area */}
             <View style={styles.photoRow}>
               {photos.map((uri, i) => (
-                <Image key={i} source={{ uri }} style={[styles.photoThumb, { borderRadius: radius.lg }]} />
+                <View key={i} style={{ position: 'relative' }}>
+                  <Image source={{ uri }} style={[styles.photoThumb, { borderRadius: radius.lg }]} />
+                  <Pressable
+                    onPress={() => setPhotos(prev => prev.filter((_, idx) => idx !== i))}
+                    style={styles.photoDeleteBtn}
+                    hitSlop={4}
+                  >
+                    <X size={14} color="#FFFFFF" strokeWidth={3} />
+                  </Pressable>
+                </View>
               ))}
               {photos.length < 4 && (
                 <View style={styles.photoButtons}>
@@ -1573,7 +1587,17 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
     if (!childId) return
     setSaving(true)
     try {
-      const value = JSON.stringify({ duration: autoDuration || undefined, quality, startTime, endTime: endTime || undefined })
+      // When editing a routine-tagged log, preserve the original routineId/routineName
+      // so the log remains linked to its routine (e.g. "Afternoon Nap" stays "Afternoon Nap")
+      let routineMeta: { routineId?: string; routineName?: string } = {}
+      if (editLog) {
+        try {
+          const orig = JSON.parse(editLog.value ?? '{}')
+          if (orig.routineId) routineMeta = { routineId: orig.routineId, routineName: orig.routineName }
+        } catch {}
+      }
+      const valueObj: Record<string, unknown> = { duration: autoDuration || undefined, quality, startTime, endTime: endTime || undefined, ...routineMeta }
+      const value = JSON.stringify(valueObj)
       const taggedValue = tagWithRoutine(value, prefill) ?? value
       if (editLog) {
         await updateChildLog(editLog.id, taggedValue, notes || null)
@@ -1939,7 +1963,16 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
       </View>
       <View style={styles.photoRow}>
         {photos.map((uri, i) => (
-          <Image key={i} source={{ uri }} style={[styles.photoThumb, { borderRadius: radius.lg }]} />
+          <View key={i} style={{ position: 'relative' }}>
+            <Image source={{ uri }} style={[styles.photoThumb, { borderRadius: radius.lg }]} />
+            <Pressable
+              onPress={() => setPhotos(prev => prev.filter((_, idx) => idx !== i))}
+              style={styles.photoDeleteBtn}
+              hitSlop={4}
+            >
+              <X size={14} color="#FFFFFF" strokeWidth={3} />
+            </Pressable>
+          </View>
         ))}
         {photos.length < 4 && (
           <View style={styles.photoButtons}>
@@ -2035,12 +2068,21 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
     if (!childId || !activityType) return
     setSaving(true)
     try {
+      // Preserve original routine metadata when editing
+      let routineMeta: { routineId?: string; routineName?: string } = {}
+      if (editLog) {
+        try {
+          const orig = JSON.parse(editLog.value ?? '{}')
+          if (orig.routineId) routineMeta = { routineId: orig.routineId, routineName: orig.routineName }
+        } catch {}
+      }
       const value = JSON.stringify({
         activityType,
         name: name || undefined,
         duration: autoDuration || undefined,
         startTime,
         endTime: endTime || undefined,
+        ...routineMeta,
       })
       const tagged = tagWithRoutine(value, prefill) ?? value
       if (editLog) {
@@ -2320,12 +2362,16 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
         {/* Optional photo */}
         <View style={styles.photoRow}>
           {photos.map((uri, i) => (
-            <Pressable key={i} onPress={() => setPhotos([])} style={{ position: 'relative' }}>
+            <View key={i} style={{ position: 'relative' }}>
               <Image source={{ uri }} style={[styles.photoThumb, { borderRadius: radius.lg }]} />
-              <View style={{ position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8, padding: 2 }}>
-                <X size={10} color="#FFFFFF" strokeWidth={2.5} />
-              </View>
-            </Pressable>
+              <Pressable
+                onPress={() => setPhotos(prev => prev.filter((_, idx) => idx !== i))}
+                style={styles.photoDeleteBtn}
+                hitSlop={4}
+              >
+                <X size={14} color="#FFFFFF" strokeWidth={3} />
+              </Pressable>
+            </View>
           ))}
           {photos.length === 0 && (
             <View style={styles.photoButtons}>
@@ -2426,6 +2472,7 @@ const styles = StyleSheet.create({
   toggleText: { fontSize: 14, fontWeight: '700' },
   photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   photoThumb: { width: 72, height: 72 },
+  photoDeleteBtn: { position: 'absolute', top: -6, right: -6, backgroundColor: 'rgba(0,0,0,0.75)', borderRadius: 999, width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
   photoButtons: { flexDirection: 'row', gap: 8 },
   cameraBtn: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
   galleryBtn: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderStyle: 'dashed' },

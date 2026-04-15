@@ -82,10 +82,16 @@
       "Bash(grep -l \"channel_ratings\\\\|avg_rating\\\\|rating_count\" /Users/igorcarvalhorodrigues/Projects/grandma-app/supabase/migrations/*.sql)",
       "Bash(node -e \"const l = require\\('lucide-react-native'\\); console.log\\('PartyPopper:', !!l.PartyPopper\\); console.log\\('ArrowRightLeft:', !!l.ArrowRightLeft\\); console.log\\('MessageSquare:', !!l.MessageSquare\\); console.log\\('BarChart3:', !!l.BarChart3\\); console.log\\('Zap:', !!l.Zap\\)\")",
       "Bash(cat)",
-      "Bash(chmod +x /tmp/count_strings.sh)"
+      "Bash(chmod +x /tmp/count_strings.sh)",
+      "Bash(grep -r \"camera\\\\|Camera\\\\|photo\\\\|Photo\\\\|image picker\" /Users/igorcarvalhorodrigues/Projects/grandma-app/app/\\\\\\(tabs\\\\\\)/agenda*)",
+      "Bash(claude plugin:*)",
+      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"
     ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
   }
 }

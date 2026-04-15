@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { NativeModules, Platform } from 'react-native'
+import * as Localization from 'expo-localization'
 
 export type AppLanguage =
   | 'en'
@@ -42,17 +42,7 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 function getDeviceLanguage(): AppLanguage {
   try {
-    let locale = 'en'
-    if (Platform.OS === 'ios') {
-      locale =
-        NativeModules.SettingsManager?.settings?.AppleLocale ||
-        NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] ||
-        'en'
-    } else {
-      locale = NativeModules.I18nManager?.localeIdentifier || 'en'
-    }
-
-    // Normalize locale string
+    const locale = Localization.getLocales()?.[0]?.languageTag ?? 'en'
     const normalized = locale.replace('_', '-')
 
     // Check exact match first (e.g. pt-BR)

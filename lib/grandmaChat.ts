@@ -33,7 +33,7 @@ export interface GrandmaResponse {
  * Send messages to Grandma and get a reply with follow-up suggestions.
  */
 export async function sendGrandmaMessage(
-  messages: { role: string; content: string }[],
+  messages: Pick<ChatMessage, 'role' | 'content'>[],
   context: ChatContext
 ): Promise<GrandmaResponse> {
   const { data: { session } } = await supabase.auth.getSession()
@@ -56,8 +56,8 @@ export async function sendGrandmaMessage(
       const suggestions: string[] = data.suggestions ?? []
       if (reply) return { reply, suggestions }
     }
-  } catch {
-    // grandma-chat not deployed — fall through to nana-chat
+  } catch (err) {
+    if (__DEV__) console.warn('[grandmaChat] grandma-chat failed, falling back to nana-chat:', err)
   }
 
   // Fallback: use nana-chat (always deployed, no suggestions)

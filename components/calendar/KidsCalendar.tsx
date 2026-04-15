@@ -2964,8 +2964,188 @@ export function KidsCalendar() {
                       )
                     })()}
 
-                    {/* ── Generic details for other types ── */}
-                    {selectedLog.type !== 'food' && selectedLog.type !== 'feeding' && (
+                    {/* ── Sleep Rich Card ── */}
+                    {selectedLog.type === 'sleep' && (() => {
+                      let sp: Record<string, any> = {}
+                      try { sp = JSON.parse(selectedLog.value ?? '{}') } catch {}
+                      const sleepColor = '#B983FF'
+                      const durNum = sp.duration ? String(sp.duration).replace(/[^\d.]/g, '') : null
+                      const qualityMap: Record<string, { emoji: string; color: string }> = {
+                        great:    { emoji: '😴', color: '#A2FF86' },
+                        good:     { emoji: '😊', color: '#4D96FF' },
+                        restless: { emoji: '😤', color: '#F4FD50' },
+                        poor:     { emoji: '😞', color: '#FF6B35' },
+                      }
+                      const q = sp.quality ? qualityMap[sp.quality.toLowerCase()] ?? null : null
+                      return (
+                        <>
+                          <View style={{ backgroundColor: sleepColor + '15', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: sleepColor + '30' }}>
+                            <Text style={{ fontSize: 52, lineHeight: 56 }}>🌙</Text>
+                            {durNum ? (
+                              <>
+                                <Text style={{ color: sleepColor, fontSize: 56, fontWeight: '800', lineHeight: 64, letterSpacing: -2, marginTop: 6 }}>{durNum}</Text>
+                                <Text style={{ color: sleepColor, fontSize: 16, fontWeight: '700', marginTop: 2 }}>hours</Text>
+                              </>
+                            ) : (
+                              <Text style={{ color: sleepColor, fontSize: 20, fontWeight: '700', marginTop: 8 }}>Sleep logged</Text>
+                            )}
+                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Sleep session</Text>
+                          </View>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                            {sp.startTime && sp.endTime && (
+                              <View style={{ backgroundColor: colors.surface, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                <Clock size={13} color={colors.textMuted} />
+                                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>{fmtTime(sp.startTime)} – {fmtTime(sp.endTime)}</Text>
+                              </View>
+                            )}
+                            {q && (
+                              <View style={{ backgroundColor: q.color + '25', borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
+                                <Text style={{ color: q.color, fontSize: 13, fontWeight: '700' }}>{q.emoji} {sp.quality.charAt(0).toUpperCase() + sp.quality.slice(1)}</Text>
+                              </View>
+                            )}
+                          </View>
+                        </>
+                      )
+                    })()}
+
+                    {/* ── Activity Rich Card ── */}
+                    {selectedLog.type === 'activity' && (() => {
+                      let ap: Record<string, any> = {}
+                      try { ap = JSON.parse(selectedLog.value ?? '{}') } catch {}
+                      const actColor = '#A2FF86'
+                      const emojiMap: Record<string, string> = {
+                        class: '📚', sport: '⚽', swim: '🏊', dance: '💃',
+                        music: '🎵', art: '🎨', playground: '🛝', walk: '🚶',
+                        therapy: '🧩', playdate: '👫', other: '🎯',
+                      }
+                      const emoji = ap.activityType ? (emojiMap[ap.activityType] ?? '🎯') : '🎯'
+                      const durRaw = ap.duration ? String(ap.duration).replace(/[^\d.]/g, '') : null
+                      const durUnit = durRaw ? (Number(durRaw) >= 60 ? `${Math.floor(Number(durRaw) / 60)}h ${Number(durRaw) % 60}m` : `${durRaw} min`) : null
+                      return (
+                        <>
+                          <View style={{ backgroundColor: actColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: actColor + '30' }}>
+                            <Text style={{ fontSize: 52, lineHeight: 56 }}>{emoji}</Text>
+                            {ap.name ? (
+                              <Text style={{ color: actColor, fontSize: 26, fontWeight: '800', marginTop: 10, textAlign: 'center' }}>{ap.name}</Text>
+                            ) : null}
+                            {durUnit && (
+                              <>
+                                <Text style={{ color: actColor, fontSize: 20, fontWeight: '700', marginTop: ap.name ? 4 : 10 }}>{durUnit}</Text>
+                              </>
+                            )}
+                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Activity</Text>
+                          </View>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                            {ap.activityType && (
+                              <View style={{ backgroundColor: actColor + '20', borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
+                                <Text style={{ color: actColor, fontSize: 13, fontWeight: '700' }}>{ap.activityType.charAt(0).toUpperCase() + ap.activityType.slice(1)}</Text>
+                              </View>
+                            )}
+                            {ap.startTime && ap.endTime && (
+                              <View style={{ backgroundColor: colors.surface, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                <Clock size={13} color={colors.textMuted} />
+                                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>{fmtTime(ap.startTime)} – {fmtTime(ap.endTime)}</Text>
+                              </View>
+                            )}
+                          </View>
+                        </>
+                      )
+                    })()}
+
+                    {/* ── Diaper Rich Card ── */}
+                    {selectedLog.type === 'diaper' && (() => {
+                      let dp: Record<string, any> = {}
+                      try { dp = JSON.parse(selectedLog.value ?? '{}') } catch {}
+                      const diaperColor = '#4D96FF'
+                      const typeMap: Record<string, { emoji: string; label: string }> = {
+                        pee:   { emoji: '💧', label: 'Pee' },
+                        poop:  { emoji: '💩', label: 'Poop' },
+                        mixed: { emoji: '🔄', label: 'Both' },
+                      }
+                      const dt = dp.diaperType ? (typeMap[dp.diaperType] ?? { emoji: '🍼', label: dp.diaperType }) : null
+                      return (
+                        <>
+                          <View style={{ backgroundColor: diaperColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: diaperColor + '30' }}>
+                            <Text style={{ fontSize: 64, lineHeight: 68 }}>{dt?.emoji ?? '🍼'}</Text>
+                            <Text style={{ color: diaperColor, fontSize: 24, fontWeight: '800', marginTop: 8 }}>{dt?.label ?? 'Diaper'}</Text>
+                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Diaper change</Text>
+                          </View>
+                          {(dp.color || dp.consistency) && (
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                              {dp.color && (
+                                <View style={{ backgroundColor: colors.surface, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
+                                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>Color: {dp.color.charAt(0).toUpperCase() + dp.color.slice(1)}</Text>
+                                </View>
+                              )}
+                              {dp.consistency && (
+                                <View style={{ backgroundColor: colors.surface, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
+                                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>{dp.consistency.charAt(0).toUpperCase() + dp.consistency.slice(1)}</Text>
+                                </View>
+                              )}
+                            </View>
+                          )}
+                        </>
+                      )
+                    })()}
+
+                    {/* ── Mood Rich Card ── */}
+                    {selectedLog.type === 'mood' && (() => {
+                      const moodVal = selectedLog.value ?? ''
+                      const moodMap: Record<string, { emoji: string; label: string; color: string }> = {
+                        happy:     { emoji: '😄', label: 'Happy',     color: '#A2FF86' },
+                        calm:      { emoji: '😌', label: 'Calm',      color: '#4D96FF' },
+                        fussy:     { emoji: '😤', label: 'Fussy',     color: '#F4FD50' },
+                        cranky:    { emoji: '😠', label: 'Cranky',    color: '#FF6B35' },
+                        energetic: { emoji: '⚡', label: 'Energetic', color: '#B983FF' },
+                      }
+                      const m = moodMap[moodVal] ?? { emoji: '🙂', label: moodVal, color: brand.accent }
+                      return (
+                        <View style={{ backgroundColor: m.color + '12', borderRadius: 24, paddingVertical: 32, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: m.color + '30' }}>
+                          <Text style={{ fontSize: 72, lineHeight: 80 }}>{m.emoji}</Text>
+                          <Text style={{ color: m.color, fontSize: 32, fontWeight: '800', marginTop: 10, letterSpacing: -1 }}>{m.label}</Text>
+                          <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 1, textTransform: 'uppercase' }}>Today's mood</Text>
+                        </View>
+                      )
+                    })()}
+
+                    {/* ── Health / Temperature / Vaccine / Medicine ── */}
+                    {['health', 'temperature', 'vaccine', 'medicine', 'note'].includes(selectedLog.type) && (() => {
+                      const healthColor = brand.error
+                      const typeEmojiMap: Record<string, string> = {
+                        temperature: '🌡️', vaccine: '💉', medicine: '💊', health: '❤️', note: '📝',
+                      }
+                      const emoji = typeEmojiMap[selectedLog.type] ?? '❤️'
+                      const rawVal = selectedLog.value ?? ''
+                      let displayVal = rawVal
+                      try {
+                        const p = JSON.parse(rawVal)
+                        if (typeof p === 'object') displayVal = p.value ?? p.name ?? rawVal
+                      } catch {}
+                      return (
+                        <>
+                          <View style={{ backgroundColor: healthColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: healthColor + '30' }}>
+                            <Text style={{ fontSize: 52, lineHeight: 56 }}>{emoji}</Text>
+                            {displayVal && displayVal !== selectedLog.type ? (
+                              <Text style={{ color: healthColor, fontSize: 32, fontWeight: '800', marginTop: 10, textAlign: 'center', letterSpacing: -1 }}>{displayVal}</Text>
+                            ) : null}
+                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 1, textTransform: 'uppercase' }}>
+                              {selectedLog.type.charAt(0).toUpperCase() + selectedLog.type.slice(1)}
+                            </Text>
+                          </View>
+                        </>
+                      )
+                    })()}
+
+                    {/* Notes for non-food/feeding types */}
+                    {!['food', 'feeding'].includes(selectedLog.type) && selectedLog.notes && (
+                      <View style={{ backgroundColor: colors.surface, borderRadius: 20, padding: 16, marginBottom: 12 }}>
+                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' }}>Notes</Text>
+                        <Text style={{ color: colors.text, fontSize: 15, lineHeight: 22 }}>{selectedLog.notes}</Text>
+                      </View>
+                    )}
+
+                    {/* Fallback for unknown types */}
+                    {!['food', 'feeding', 'sleep', 'activity', 'diaper', 'mood', 'health', 'temperature', 'vaccine', 'medicine', 'note'].includes(selectedLog.type) && (
                       <>
                         {formatLogDisplay(selectedLog.type, selectedLog.value, null) !== '' && (
                           <View style={[styles.popupSection, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
@@ -2973,12 +3153,6 @@ export function KidsCalendar() {
                             <Text style={[styles.popupSectionValue, { color: colors.text }]}>
                               {formatLogDisplay(selectedLog.type, selectedLog.value, null)}
                             </Text>
-                          </View>
-                        )}
-                        {selectedLog.notes && (
-                          <View style={[styles.popupSection, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
-                            <Text style={[styles.popupSectionLabel, { color: colors.textMuted }]}>Notes</Text>
-                            <Text style={[styles.popupSectionValue, { color: colors.text }]}>{selectedLog.notes}</Text>
                           </View>
                         )}
                       </>

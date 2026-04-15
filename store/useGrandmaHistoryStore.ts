@@ -10,6 +10,9 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import type { ChatMessage } from '../lib/grandmaChat'
 
+const MAX_SESSIONS = 20
+const MAX_MESSAGES_PER_SESSION = 50
+
 export interface ChatSession {
   id: string
   title: string
@@ -33,13 +36,17 @@ export const useGrandmaHistoryStore = create<GrandmaHistoryStore>()(
 
       upsertSession: (session) =>
         set((state) => {
-          const exists = state.sessions.findIndex((s) => s.id === session.id)
+          const trimmed = {
+            ...session,
+            messages: session.messages.slice(-MAX_MESSAGES_PER_SESSION),
+          }
+          const exists = state.sessions.findIndex((s) => s.id === trimmed.id)
           if (exists >= 0) {
             const updated = [...state.sessions]
-            updated[exists] = session
+            updated[exists] = trimmed
             return { sessions: updated }
           }
-          return { sessions: [session, ...state.sessions] }
+          return { sessions: [trimmed, ...state.sessions].slice(0, MAX_SESSIONS) }
         }),
 
       deleteSession: (id) =>
