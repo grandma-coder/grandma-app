@@ -2657,7 +2657,7 @@ const styles = StyleSheet.create({
   childChipAge: { fontSize: 12, fontWeight: '500' },
 
   // Arc
-  arcContainer: { alignItems: 'center', marginTop: 8 },
+  arcContainer: { alignItems: 'center', marginTop: 8, overflow: 'visible' },
   arcLegend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12, marginTop: 6 },
   arcTooltip: { marginTop: 10, padding: 16, borderWidth: 1, gap: 8, width: '100%' },
   arcTooltipHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
