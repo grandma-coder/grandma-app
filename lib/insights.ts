@@ -150,12 +150,10 @@ export async function fetchBehaviorMetrics(behavior: string): Promise<BehaviorMe
     : behavior === 'pregnancy' ? 'pregnancy_logs'
     : 'child_logs'
 
-  const userField = table === 'child_logs' ? 'user_id' : 'user_id'
-
   const { data: logs, error } = await supabase
     .from(table)
     .select('date, type')
-    .eq(userField, session.user.id)
+    .eq('user_id', session.user.id)
     .gte('date', sinceDate)
     .order('date', { ascending: false })
     .limit(500)

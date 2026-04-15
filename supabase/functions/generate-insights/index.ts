@@ -37,45 +37,82 @@ serve(async (req) => {
     let logSummary = ''
 
     if (behavior === 'pre-pregnancy') {
-      const { data: cycleLogs } = await supabase
+      const { data: cycleLogs, error: cycleErr } = await supabase
         .from('cycle_logs')
         .select('date, type, value, notes')
         .eq('user_id', user_id)
         .gte('date', sinceDate)
         .order('date', { ascending: false })
-        .limit(100)
+        .limit(200)
 
+      if (cycleErr) {
+        console.error('Failed to fetch cycle_logs:', cycleErr.message)
+      }
       logSummary = formatCycleLogs(cycleLogs ?? [])
     } else if (behavior === 'pregnancy') {
-      const { data: pregLogs } = await supabase
+      const { data: pregLogs, error: pregErr } = await supabase
         .from('pregnancy_logs')
         .select('date, type, value, notes')
         .eq('user_id', user_id)
         .gte('date', sinceDate)
         .order('date', { ascending: false })
-        .limit(100)
+        .limit(200)
 
+      if (pregErr) {
+        console.error('Failed to fetch pregnancy_logs:', pregErr.message)
+      }
       logSummary = formatPregnancyLogs(pregLogs ?? [])
     } else if (behavior === 'kids') {
       // Get user's children
-      const { data: children } = await supabase
+      const { data: children, error: childErr } = await supabase
         .from('children')
-        .select('id, name')
+        .select('id, name, birth_date')
         .eq('user_id', user_id)
 
-      const childIds = (children ?? []).map((c: any) => c.id)
-      const childNames = Object.fromEntries((children ?? []).map((c: any) => [c.id, c.name]))
+      if (childErr) {
+        console.error('Failed to fetch children:', childErr.message)
+      }
+
+      const childList = children ?? []
+      const childIds = childList.map((c: any) => c.id)
+      const childNames = Object.fromEntries(childList.map((c: any) => [c.id, c.name]))
+      const childAges = Object.fromEntries(childList.map((c: any) => {
+        if (!c.birth_date) return [c.id, null]
+        const months = Math.floor((Date.now() - new Date(c.birth_date).getTime()) / (1000 * 60 * 60 * 24 * 30.44))
+        return [c.id, months]
+      }))
 
       if (childIds.length > 0) {
-        const { data: childLogs } = await supabase
+        const { data: childLogs, error: logErr } = await supabase
           .from('child_logs')
           .select('child_id, date, type, value, notes')
           .in('child_id', childIds)
           .gte('date', sinceDate)
           .order('date', { ascending: false })
-          .limit(200)
+          .limit(500)
 
-        logSummary = formatChildLogs(childLogs ?? [], childNames)
+        if (logErr) {
+          console.error('Failed to fetch child_logs:', logErr.message)
+        }
+
+        logSummary = formatChildLogs(childLogs ?? [], childNames, childAges)
+      } else {
+        // Also try direct user_id query as fallback (some logs may have user_id without children record)
+        const { data: directLogs, error: directErr } = await supabase
+          .from('child_logs')
+          .select('child_id, date, type, value, notes')
+          .eq('user_id', user_id)
+          .gte('date', sinceDate)
+          .order('date', { ascending: false })
+          .limit(500)
+
+        if (directErr) {
+          console.error('Failed to fetch child_logs by user_id:', directErr.message)
+        }
+
+        if (directLogs && directLogs.length > 0) {
+          logSummary = formatChildLogs(directLogs, {}, {})
+        }
       }
     }
 
@@ -110,7 +147,7 @@ serve(async (req) => {
 
     // ─── Call Claude API ─────────────────────────────────────────────────
     const systemPrompt = buildSystemPrompt(behavior)
-    const userMessage = `Here are the user's logs from the last 30 days:\n\n${logSummary}\n\nGenerate 3-5 insights based on this data. Return ONLY valid JSON array.`
+    const userMessage = `Here are the user's logs from the last 30 days:\n\n${logSummary}\n\nGenerate 3-5 personalized insights based on this data. Return ONLY a valid JSON array.`
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -135,30 +172,30 @@ serve(async (req) => {
     const aiResponse = await response.json()
     const aiText = aiResponse.content?.[0]?.text ?? '[]'
 
-    // Parse JSON from response
+    // Parse JSON from response — handle markdown code blocks too
     let insights: any[] = []
     try {
-      // Try to extract JSON array from response
-      const jsonMatch = aiText.match(/\[[\s\S]*\]/)
+      // Strip markdown code blocks if present
+      const cleaned = aiText.replace(/```json?\s*/g, '').replace(/```\s*/g, '')
+      const jsonMatch = cleaned.match(/\[[\s\S]*\]/)
       if (jsonMatch) {
         insights = JSON.parse(jsonMatch[0])
       }
-    } catch {
-      console.error('Failed to parse insights JSON:', aiText)
+    } catch (parseErr: any) {
+      console.error('Failed to parse insights JSON:', parseErr.message, 'Raw:', aiText.slice(0, 500))
       insights = []
     }
 
     // ─── Save insights to database ───────────────────────────────────────
-    if (insights.length > 0) {
-      // Archive old insights for this user + behavior
-      await supabase
-        .from('insights')
-        .update({ archived: true, archived_at: new Date().toISOString() })
-        .eq('user_id', user_id)
-        .eq('behavior', behavior)
-        .eq('archived', false)
+    // Always archive old insights, even if new generation produced 0
+    await supabase
+      .from('insights')
+      .update({ archived: true, archived_at: new Date().toISOString() })
+      .eq('user_id', user_id)
+      .eq('behavior', behavior)
+      .eq('archived', false)
 
-      // Insert new insights
+    if (insights.length > 0) {
       const rows = insights.map((ins: any) => ({
         user_id,
         type: ins.type ?? 'nudge',
@@ -169,6 +206,16 @@ serve(async (req) => {
       }))
 
       await supabase.from('insights').insert(rows)
+    } else {
+      // AI returned nothing useful — insert a single fallback so the user isn't left empty
+      await supabase.from('insights').insert([{
+        user_id,
+        type: 'nudge',
+        title: 'Grandma is still learning',
+        body: 'Keep logging and I\'ll have personalized insights for you soon!',
+        behavior,
+        child_id: null,
+      }])
     }
 
     return new Response(
@@ -193,25 +240,27 @@ You generate personalized insights based on the user's health logs.
 Current behavior mode: ${behavior}
 
 Generate insights in these 4 categories:
-1. **pattern** — recurring patterns you notice (e.g. "Cramps tend to appear on cycle days 1-3", "Sleep quality drops on feeding days")
-2. **trend** — changes over time (e.g. "Your cycle length has been getting more regular", "Weight gain is tracking within normal range")
-3. **upcoming** — predictions or reminders (e.g. "Your fertile window starts in 3 days", "Next vaccine is due around April 20")
-4. **nudge** — gentle encouragement or suggestions (e.g. "Try logging your temperature each morning for better predictions", "Adding more iron-rich foods could help with fatigue")
+1. **pattern** — recurring patterns you notice (e.g. "Sleep quality drops after late feeds", "Mood is happier on active days")
+2. **trend** — changes over time (e.g. "Feeding amounts have been increasing steadily", "Sleep is improving week over week")
+3. **upcoming** — predictions or reminders (e.g. "Next vaccine may be due soon", "Growth spurt might be coming based on increased appetite")
+4. **nudge** — gentle encouragement or suggestions (e.g. "Try logging temperature for better tracking", "You're doing great — 12 days of consistent logging!")
 
 RULES:
 - Be warm, supportive, never clinical or scary
+- Reference SPECIFIC data from the logs (actual numbers, days, types) — do NOT be generic
 - Keep titles under 60 characters
 - Keep body under 150 characters
 - Include the insight type in each object
 - For kids mode, include child_id if the insight is child-specific
 - Return ONLY a JSON array: [{"type": "pattern|trend|upcoming|nudge", "title": "...", "body": "...", "child_id": null}]
-- Generate 3-5 insights total, at least one of each type if data supports it`
+- Generate 3-5 insights total, at least one of each type if data supports it
+- If a child's name is mentioned in the data, use it in your insights for a personal touch`
 }
 
 // ─── Log Formatters ────────────────────────────────────────────────────────
 
 function formatCycleLogs(logs: any[]): string {
-  if (logs.length === 0) return 'No cycle logs in the last 30 days.'
+  if (logs.length === 0) return ''
 
   const grouped: Record<string, any[]> = {}
   for (const log of logs) {
@@ -220,18 +269,21 @@ function formatCycleLogs(logs: any[]): string {
     grouped[key].push(log)
   }
 
-  let summary = `Cycle tracking data (${logs.length} entries):\n`
+  let summary = `Cycle tracking data (${logs.length} entries over last 30 days):\n`
   for (const [type, entries] of Object.entries(grouped)) {
     summary += `\n${type} (${entries.length} entries):\n`
-    for (const e of entries.slice(0, 10)) {
+    for (const e of entries.slice(0, 15)) {
       summary += `  - ${e.date}: ${e.value ?? ''} ${e.notes ? `(${e.notes})` : ''}\n`
+    }
+    if (entries.length > 15) {
+      summary += `  ... and ${entries.length - 15} more\n`
     }
   }
   return summary
 }
 
 function formatPregnancyLogs(logs: any[]): string {
-  if (logs.length === 0) return 'No pregnancy logs in the last 30 days.'
+  if (logs.length === 0) return ''
 
   const grouped: Record<string, any[]> = {}
   for (const log of logs) {
@@ -240,34 +292,75 @@ function formatPregnancyLogs(logs: any[]): string {
     grouped[key].push(log)
   }
 
-  let summary = `Pregnancy tracking data (${logs.length} entries):\n`
+  let summary = `Pregnancy tracking data (${logs.length} entries over last 30 days):\n`
   for (const [type, entries] of Object.entries(grouped)) {
     summary += `\n${type} (${entries.length} entries):\n`
-    for (const e of entries.slice(0, 10)) {
+    for (const e of entries.slice(0, 15)) {
       summary += `  - ${e.date}: ${e.value ?? ''} ${e.notes ? `(${e.notes})` : ''}\n`
+    }
+    if (entries.length > 15) {
+      summary += `  ... and ${entries.length - 15} more\n`
     }
   }
   return summary
 }
 
-function formatChildLogs(logs: any[], childNames: Record<string, string>): string {
-  if (logs.length === 0) return 'No child logs in the last 30 days.'
+function formatChildLogs(logs: any[], childNames: Record<string, string>, childAges: Record<string, number | null>): string {
+  if (logs.length === 0) return ''
 
-  const grouped: Record<string, any[]> = {}
+  // Build per-child summaries with stats
+  const byChild: Record<string, any[]> = {}
   for (const log of logs) {
-    const childName = childNames[log.child_id] ?? 'Unknown'
-    const key = `${childName} — ${log.type}`
-    if (!grouped[key]) grouped[key] = []
-    grouped[key].push(log)
+    const cid = log.child_id ?? 'unknown'
+    if (!byChild[cid]) byChild[cid] = []
+    byChild[cid].push(log)
   }
 
-  let summary = `Child activity data (${logs.length} entries):\n`
-  for (const [key, entries] of Object.entries(grouped)) {
-    summary += `\n${key} (${entries.length} entries):\n`
-    for (const e of entries.slice(0, 5)) {
-      summary += `  - ${e.date}: ${e.value ?? ''} ${e.notes ? `(${e.notes})` : ''}\n`
+  let summary = `Child activity data (${logs.length} total entries over last 30 days):\n`
+
+  for (const [childId, childLogs] of Object.entries(byChild)) {
+    const name = childNames[childId] ?? 'Child'
+    const age = childAges[childId]
+    const ageStr = age != null ? (age < 12 ? `${age} months old` : `${Math.floor(age / 12)} years ${age % 12} months old`) : ''
+
+    summary += `\n── ${name}${ageStr ? ` (${ageStr})` : ''} ── ${childLogs.length} entries\n`
+
+    // Group by type
+    const byType: Record<string, any[]> = {}
+    for (const log of childLogs) {
+      if (!byType[log.type]) byType[log.type] = []
+      byType[log.type].push(log)
+    }
+
+    for (const [type, entries] of Object.entries(byType)) {
+      summary += `\n  ${type} (${entries.length} entries):\n`
+
+      // Show aggregate stats for numeric-heavy types
+      if (type === 'feeding' || type === 'sleep') {
+        const values = entries.map(e => {
+          try { return typeof e.value === 'string' ? JSON.parse(e.value) : e.value } catch { return e.value }
+        })
+        summary += `    Dates: ${entries[entries.length - 1]?.date} to ${entries[0]?.date}\n`
+      }
+
+      // Show recent entries with detail
+      for (const e of entries.slice(0, 10)) {
+        let val = e.value ?? ''
+        // Parse JSON values for readability
+        if (typeof val === 'string' && val.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(val)
+            val = Object.entries(parsed).map(([k, v]) => `${k}=${v}`).join(', ')
+          } catch { /* keep raw */ }
+        }
+        summary += `    - ${e.date}: ${val} ${e.notes ? `(${e.notes})` : ''}\n`
+      }
+      if (entries.length > 10) {
+        summary += `    ... and ${entries.length - 10} more entries\n`
+      }
     }
   }
+
   return summary
 }
 

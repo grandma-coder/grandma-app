@@ -6,7 +6,7 @@
  * History: Past AI-generated insights (archived)
  */
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
   ActivityIndicator, StyleSheet, Modal,
@@ -505,6 +505,37 @@ export function InsightsScreen() {
     }
   }
 
+  // ─── Auto-generate when user has data but only starter nudges ──────────
+  const STARTER_TITLES = new Set([
+    "Log your little one's day",
+    'Development insights await',
+    'Every detail helps',
+    'Start logging your cycle',
+    'Better predictions ahead',
+    'Log symptoms too',
+    'Start your pregnancy journal',
+    'Milestones are coming',
+    'Track your appointments',
+  ])
+
+  const didAutoGenerate = useRef(false)
+
+  useEffect(() => {
+    if (didAutoGenerate.current) return
+    if (isLoading || generating) return
+    if (!metrics || metrics.totalLogs === 0) return
+
+    // All current insights are starter nudges — user has data but AI hasn't run
+    const allStarter = insights.length > 0 && insights.every((i) => STARTER_TITLES.has(i.title))
+    // Or no insights at all despite having data
+    const noInsights = insights.length === 0
+
+    if (allStarter || noInsights) {
+      didAutoGenerate.current = true
+      handleGenerate()
+    }
+  }, [insights, metrics, isLoading, generating])
+
   async function handleArchive(id: string) {
     await archiveInsight(id)
     queryClient.invalidateQueries({ queryKey: ['insights', mode] })
@@ -560,6 +591,7 @@ export function InsightsScreen() {
       <ScrollView
         contentContainerStyle={[s.scroll, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
         {/* Header */}
