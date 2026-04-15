@@ -95,9 +95,10 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 // ─── Wellness Arc — module-level geometry (SCREEN_W is constant) ───────────
 const ARC_SIZE    = SCREEN_W - 32
 const ARC_OUTER_R = ARC_SIZE / 2 - 20
-const ARC_INNER_R = 44
+const ARC_INNER_R = 58
 const ARC_GAP     = (ARC_OUTER_R - ARC_INNER_R) / 5
-const ARC_RADII   = Array.from({ length: 6 }, (_, i) => ARC_OUTER_R - i * ARC_GAP)
+// Index 0 = smallest ring (Nutrition, innermost) → index 5 = largest (Activity, outermost)
+const ARC_RADII   = Array.from({ length: 6 }, (_, i) => ARC_INNER_R + i * ARC_GAP)
 const STROKE_TRACK = 13
 const STROKE_FILL  = 15
 
@@ -938,12 +939,25 @@ function WellnessScoreArc({
           style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }, scoreAnimStyle]}
           pointerEvents="none"
         >
-          <Text style={{ fontSize: 46, fontWeight: '900', color: overallC, lineHeight: 50 }}>
-            {hasAnyData ? overall.toFixed(1) : '—'}
-          </Text>
-          <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginTop: 2 }}>
-            thriving score
-          </Text>
+          {activePillar ? (
+            <>
+              <Text style={{ fontSize: 42, fontWeight: '900', color: PILLAR_CONFIG[activePillar].color, lineHeight: 46 }}>
+                {scores[activePillar].hasData ? scores[activePillar].value.toFixed(1) : '—'}
+              </Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: PILLAR_CONFIG[activePillar].color + 'AA', marginTop: 3, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                {PILLAR_CONFIG[activePillar].label}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={{ fontSize: 46, fontWeight: '900', color: overallC, lineHeight: 50 }}>
+                {hasAnyData ? overall.toFixed(1) : '—'}
+              </Text>
+              <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textSecondary, marginTop: 2 }}>
+                thriving score
+              </Text>
+            </>
+          )}
         </Animated.View>
 
         <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
