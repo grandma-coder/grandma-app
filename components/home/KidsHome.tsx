@@ -17,6 +17,10 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import Svg, {
   Circle as SvgCircle, Defs, LinearGradient, Stop, Path, Line as SvgLine, Text as SvgText,
 } from 'react-native-svg'
+import Reanimated, {
+  useSharedValue, useAnimatedProps, useAnimatedStyle,
+  withDelay, withSpring, withTiming, withRepeat, Easing,
+} from 'react-native-reanimated'
 import {
   Moon, Smile, Utensils, Heart, Camera, ChevronRight, ChevronDown,
   Thermometer, MessageCircle, Plus, AlertCircle, Baby,
@@ -35,6 +39,7 @@ import { estimateCalories } from '../../lib/foodCalories'
 import type { ChildWithRole } from '../../types'
 
 const SW = Dimensions.get('window').width
+const AnimatedSvgCircle = Reanimated.createAnimatedComponent(SvgCircle)
 
 // ─── Growth Leap Data ────────────────────────────────────────────────────────
 
@@ -1805,13 +1810,53 @@ function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, foc
   const size = SW - 80
   const center = size / 2
 
-  // Three concentric rings - outer to inner
-  const rings = [
-    { key: 'sleep' as const, progress: sleepProgress, color: PILLAR_COLORS.sleep, r: (size - 20) / 2, strokeW: 14 },
-    { key: 'nutrition' as const, progress: nutritionProgress, color: PILLAR_COLORS.nutrition, r: (size - 60) / 2, strokeW: 14 },
-    { key: 'activity' as const, progress: activityProgress, color: PILLAR_COLORS.activity, r: (size - 100) / 2, strokeW: 14 },
-  ]
+  // Ring geometry
+  const RING_R = [(size - 20) / 2, (size - 60) / 2, (size - 100) / 2]
+  const RING_CIRC = RING_R.map((r) => 2 * Math.PI * r)
 
+  // Animated shared values — one per ring (hooks rules: no loops)
+  const rp0 = useSharedValue(0); const rp1 = useSharedValue(0); const rp2 = useSharedValue(0)
+  const breathe = useSharedValue(0)
+  const scoreOpacity = useSharedValue(0)
+
+  // Animated props for each ring's strokeDashoffset
+  const rap0 = useAnimatedProps(() => {
+    const wobble = 1 + 0.015 * Math.sin(breathe.value + 0)
+    return { strokeDashoffset: RING_CIRC[0] * (1 - rp0.value * wobble) }
+  })
+  const rap1 = useAnimatedProps(() => {
+    const wobble = 1 + 0.015 * Math.sin(breathe.value + 1.2)
+    return { strokeDashoffset: RING_CIRC[1] * (1 - rp1.value * wobble) }
+  })
+  const rap2 = useAnimatedProps(() => {
+    const wobble = 1 + 0.015 * Math.sin(breathe.value + 2.4)
+    return { strokeDashoffset: RING_CIRC[2] * (1 - rp2.value * wobble) }
+  })
+  const ringAnimProps = [rap0, rap1, rap2]
+
+  const centerAnimStyle = useAnimatedStyle(() => ({
+    opacity: scoreOpacity.value,
+    transform: [{ scale: 0.9 + 0.1 * scoreOpacity.value }],
+  }))
+
+  useEffect(() => {
+    const spring = { damping: 14, stiffness: 90, mass: 0.8 }
+    rp0.value = 0; rp1.value = 0; rp2.value = 0
+    scoreOpacity.value = 0
+    rp0.value = withDelay(0,   withSpring(Math.min(sleepProgress, 1), spring))
+    rp1.value = withDelay(150, withSpring(Math.min(nutritionProgress, 1), spring))
+    rp2.value = withDelay(300, withSpring(Math.min(activityProgress, 1), spring))
+    scoreOpacity.value = withDelay(400, withTiming(1, { duration: 400, easing: Easing.out(Easing.quad) }))
+    // Start breathing loop
+    breathe.value = 0
+    breathe.value = withDelay(800, withRepeat(
+      withTiming(2 * Math.PI, { duration: 4000, easing: Easing.linear }),
+      -1, false
+    ))
+  }, [sleepProgress, nutritionProgress, activityProgress])
+
+  const ringKeys = ['sleep', 'nutrition', 'activity'] as const
+  const gradIds  = ['sleepGrad', 'calGrad', 'actGrad']
   const Icon = centerData.icon
 
   return (
@@ -1836,37 +1881,34 @@ function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, foc
               <Stop offset="1" stopColor="#3DAA6E" />
             </LinearGradient>
           </Defs>
-          {rings.map((ring) => {
-            const circumference = 2 * Math.PI * ring.r
-            const offset = circumference * (1 - ring.progress)
-            const gradId = ring.key === 'sleep' ? 'sleepGrad' : ring.key === 'nutrition' ? 'calGrad' : 'actGrad'
-            const isFocused = focused === ring.key
+          {ringKeys.map((key, i) => {
+            const isFocused = focused === key
             return [
               <SvgCircle
-                key={ring.key + '-bg'}
-                cx={center} cy={center} r={ring.r}
+                key={key + '-bg'}
+                cx={center} cy={center} r={RING_R[i]}
                 stroke="rgba(255,255,255,0.04)"
-                strokeWidth={ring.strokeW}
+                strokeWidth={14}
                 fill="none"
               />,
-              <SvgCircle
-                key={ring.key + '-fg'}
-                cx={center} cy={center} r={ring.r}
-                stroke={`url(#${gradId})`}
-                strokeWidth={isFocused ? ring.strokeW + 2 : ring.strokeW}
+              <AnimatedSvgCircle
+                key={key + '-fg'}
+                cx={center} cy={center} r={RING_R[i]}
+                stroke={`url(#${gradIds[i]})`}
+                strokeWidth={isFocused ? 16 : 14}
                 fill="none"
-                strokeDasharray={`${circumference}`}
-                strokeDashoffset={offset}
+                strokeDasharray={`${RING_CIRC[i]}`}
                 strokeLinecap="round"
-                rotation="-90"
+                rotation={-90}
                 origin={`${center}, ${center}`}
                 opacity={isFocused ? 1 : 0.6}
+                animatedProps={ringAnimProps[i]}
               />,
             ]
           })}
         </Svg>
 
-        <View style={s.heroCenter}>
+        <Reanimated.View style={[s.heroCenter, centerAnimStyle]}>
           <Icon size={20} color={centerData.color} strokeWidth={2} />
           <Text style={[s.heroNumber, { color: colors.text }]}>{centerData.value}</Text>
           <Text style={[s.heroUnit, { color: colors.textMuted }]}>{centerData.unit.toUpperCase()}</Text>
@@ -1877,7 +1919,7 @@ function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, foc
               </Text>
             </View>
           )}
-        </View>
+        </Reanimated.View>
       </View>
     </Pressable>
   )
