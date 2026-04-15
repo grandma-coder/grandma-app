@@ -973,3 +973,51 @@ export function usePregnancyTodayLogs(userId: string | undefined) {
     staleTime: 30_000,
   })
 }
+
+// ─── Pregnancy — calendar month logs ─────────────────────────────────────────
+
+export interface PregnancyCalendarLog {
+  id: string
+  log_date: string
+  log_type: string
+  value: string | null
+  notes: string | null
+  created_at: string
+}
+
+/**
+ * Returns all pregnancy_logs for a given year+month, grouped by date string.
+ * Example: { '2026-04-15': [{log_type:'mood',...}, {log_type:'water',...}] }
+ */
+export function usePregnancyCalendarLogs(
+  userId: string | undefined,
+  year: number,
+  month: number // 0-indexed
+) {
+  return useQuery({
+    queryKey: ['pregnancy-calendar-logs', userId, year, month],
+    queryFn: async (): Promise<Record<string, PregnancyCalendarLog[]>> => {
+      if (!userId) return {}
+      const from = `${year}-${String(month + 1).padStart(2, '0')}-01`
+      const lastDay = new Date(year, month + 1, 0).getDate()
+      const to = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('id, log_date, log_type, value, notes, created_at')
+        .eq('user_id', userId)
+        .gte('log_date', from)
+        .lte('log_date', to)
+        .order('created_at', { ascending: true })
+      if (error) throw error
+      const grouped: Record<string, PregnancyCalendarLog[]> = {}
+      for (const row of data ?? []) {
+        const key = row.log_date
+        if (!grouped[key]) grouped[key] = []
+        grouped[key].push(row as PregnancyCalendarLog)
+      }
+      return grouped
+    },
+    enabled: !!userId,
+    staleTime: 60_000,
+  })
+}
