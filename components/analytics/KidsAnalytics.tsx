@@ -94,11 +94,11 @@ const AnimatedPath   = Animated.createAnimatedComponent(Path)
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
 // ─── Radar Chart — module-level geometry (SCREEN_W is constant) ────────────
-const RADAR_SIZE  = SCREEN_W - 32
+const RADAR_SIZE  = SCREEN_W - 64
 const RADAR_CX    = RADAR_SIZE / 2
 const RADAR_CY    = RADAR_SIZE / 2
 const RADAR_R     = RADAR_SIZE * 0.34   // max radius for score = 10
-const RADAR_LABEL_R = RADAR_R + 28      // label distance from center
+const RADAR_LABEL_R = RADAR_R + 24      // label distance from center
 const GRID_LEVELS = [0.25, 0.5, 0.75, 1.0]
 
 function hexPath(cx: number, cy: number, r: number): string {
@@ -1008,7 +1008,7 @@ function WellnessScoreArc({
               }}
             >
               <Text style={{
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: isActive ? '900' : '800',
                 color: PILLAR_CONFIG[key].color,
                 opacity: activePillar !== null && !isActive ? 0.4 : 1,
@@ -1027,19 +1027,19 @@ function WellnessScoreArc({
         >
           {activePillar ? (
             <>
-              <Text style={{ fontSize: 42, fontWeight: '900', color: PILLAR_CONFIG[activePillar].color, lineHeight: 46 }}>
+              <Text style={{ fontSize: 34, fontWeight: '900', color: PILLAR_CONFIG[activePillar].color, lineHeight: 38 }}>
                 {scores[activePillar].hasData ? scores[activePillar].value.toFixed(1) : '—'}
               </Text>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: PILLAR_CONFIG[activePillar].color + 'AA', marginTop: 2, letterSpacing: 0.5 }}>
+              <Text style={{ fontSize: 10, fontWeight: '700', color: PILLAR_CONFIG[activePillar].color + 'AA', marginTop: 2, letterSpacing: 0.5 }}>
                 {PILLAR_CONFIG[activePillar].label.toLowerCase()}
               </Text>
             </>
           ) : (
             <>
-              <Text style={{ fontSize: 42, fontWeight: '900', color: overallC, lineHeight: 46 }}>
+              <Text style={{ fontSize: 34, fontWeight: '900', color: overallC, lineHeight: 38 }}>
                 {hasAnyData ? overall.toFixed(1) : '—'}
               </Text>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textSecondary, marginTop: 2 }}>
+              <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary, marginTop: 2 }}>
                 thriving
               </Text>
             </>
@@ -2701,29 +2701,29 @@ const styles = StyleSheet.create({
   arcInfoText: { fontSize: 12, fontWeight: '500' },
 
   // Insight card
-  insightCard: { padding: 20, gap: 14 },
+  insightCard: { padding: 16, gap: 10 },
   insightHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  insightBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 12, borderRadius: 999 },
-  insightBadgeText: { fontSize: 13, fontWeight: '700' },
-  insightDate: { fontSize: 12, fontWeight: '500' },
-  insightMessage: { fontSize: 16, fontWeight: '600', lineHeight: 24 },
-  insightButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 24, alignSelf: 'flex-start' },
-  insightButtonText: { fontSize: 15, fontWeight: '700' },
+  insightBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999 },
+  insightBadgeText: { fontSize: 12, fontWeight: '700' },
+  insightDate: { fontSize: 11, fontWeight: '500' },
+  insightMessage: { fontSize: 14, fontWeight: '600', lineHeight: 21 },
+  insightButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 20, alignSelf: 'flex-start' },
+  insightButtonText: { fontSize: 14, fontWeight: '700' },
 
   // Tips
-  tipsSection: { gap: 14 },
-  tipsSectionHeader: { gap: 4 },
-  tipsSectionTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 2 },
-  tipsSectionSub: { fontSize: 14, fontWeight: '500' },
-  tipsScroll: { gap: 12, paddingRight: 20 },
-  tipCard: { width: 200, padding: 18, gap: 12 },
-  tipIconWrap: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  tipTitle: { fontSize: 16, fontWeight: '800', lineHeight: 22 },
-  tipBody: { fontSize: 13, fontWeight: '500', lineHeight: 19 },
-  tipTapHint: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  tipTapText: { fontSize: 12, fontWeight: '600' },
-  askButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, marginTop: 4 },
-  askButtonText: { fontSize: 16, fontWeight: '700' },
+  tipsSection: { gap: 12 },
+  tipsSectionHeader: { gap: 3 },
+  tipsSectionTitle: { fontSize: 12, fontWeight: '900', letterSpacing: 2 },
+  tipsSectionSub: { fontSize: 13, fontWeight: '500' },
+  tipsScroll: { gap: 10, paddingRight: 16 },
+  tipCard: { width: 180, padding: 14, gap: 10 },
+  tipIconWrap: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  tipTitle: { fontSize: 14, fontWeight: '800', lineHeight: 20 },
+  tipBody: { fontSize: 12, fontWeight: '500', lineHeight: 17 },
+  tipTapHint: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 },
+  tipTapText: { fontSize: 11, fontWeight: '600' },
+  askButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, marginTop: 2 },
+  askButtonText: { fontSize: 15, fontWeight: '700' },
 
   // Pillar section
   pillarSection: { gap: 12 },
