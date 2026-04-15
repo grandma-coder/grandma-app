@@ -1,759 +1,1125 @@
 /**
- * C2 — Pregnancy Home Screen
+ * Pregnancy Home — Command Center
  *
- * 11-section layout:
- * 1. Week counter card
- * 2. Due date countdown
- * 3. Today's tip
- * 4. Upcoming appointment
- * 5. Weight tracking graph
- * 6. Kick counter (week 28+)
- * 7. Birth plan / hospital bag
- * 8. Partner note
- * 9. Quick log row
- * 10. Grandma talk card
- * 11. Insight cards
+ * Sections (top to bottom, scrollable):
+ * 1. BabyHeroCarousel   — swipeable FlatList through all 40 weeks
+ * 2. QuickLogStrip      — today's routine chips (done / pending / overdue)
+ * 3. VitalsGrid         — 2×2 real-data tiles (weight, kicks, water, mood)
+ * 4. MoodPicker         — inline 5-option row, writes pregnancy_logs immediately
+ * 5. ContextualCards    — up to 3 smart cards based on current state
+ * 6. WeightMiniChart    — 6-entry sparkline with LineChart
+ * 7. GrandmaCTA         — static deep-link to grandma-talk
+ * 8. AffirmationCard    — rotating daily from pregnancyAffirmations
+ * 9. DailyTipCard       — momTip from pregnancyData for current week
  */
 
-import { useState } from 'react'
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
-import { router } from 'expo-router'
-import Svg, { Polyline, Circle } from 'react-native-svg'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import {
-  Baby,
-  Calendar,
-  Heart,
-  Scale,
-  Stethoscope,
-  Smile,
-  Frown,
-  Meh,
-  Zap,
-  Moon,
-  ClipboardList,
-  Luggage,
-  Users,
-  MessageCircle,
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Dimensions,
+  ActivityIndicator,
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { router } from 'expo-router'
+import {
   ChevronRight,
-  Hand,
-  Activity,
+  Scale,
+  Droplets,
+  Smile,
+  X,
 } from 'lucide-react-native'
+import { useQueryClient } from '@tanstack/react-query'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
-import { useJourneyStore } from '../../store/useJourneyStore'
 
-// ─── Baby size comparisons by week ─────────────────────────────────────────
+import { supabase } from '../../lib/supabase'
+import { pregnancyWeeks, getDaysToGo } from '../../lib/pregnancyData'
+import type { PregnancyWeekData } from '../../lib/pregnancyData'
+import { getDailyAffirmation } from '../../lib/pregnancyAffirmations'
+import { getUpcomingAppointment } from '../../lib/pregnancyAppointments'
+import { usePregnancyWeightHistory, usePregnancyTodayLogs } from '../../lib/analyticsData'
+import type { TodayLogEntry } from '../../lib/analyticsData'
+import { LineChart } from '../charts/SvgCharts'
+import {
+  PregnancyMoodForm,
+  PregnancySymptomsForm,
+  AppointmentForm,
+  KickCountForm,
+} from '../calendar/PregnancyLogForms'
 
-const BABY_SIZES: Record<number, { size: string; note: string }> = {
-  4: { size: 'a poppy seed', note: 'The neural tube is forming' },
-  5: { size: 'a sesame seed', note: 'The heart begins to beat' },
-  6: { size: 'a lentil', note: 'Nose, mouth, and ears are taking shape' },
-  7: { size: 'a blueberry', note: 'Brain is growing rapidly' },
-  8: { size: 'a raspberry', note: 'Fingers and toes are forming' },
-  9: { size: 'a grape', note: 'All essential organs have begun' },
-  10: { size: 'a kumquat', note: 'Tiny teeth buds are forming under gums' },
-  11: { size: 'a fig', note: 'Baby can open and close fists' },
-  12: { size: 'a lime', note: 'Reflexes are developing' },
-  13: { size: 'a peach', note: 'Fingerprints are forming' },
-  14: { size: 'a lemon', note: 'Baby can squint, frown, and grimace' },
-  15: { size: 'an apple', note: 'Baby can sense light' },
-  16: { size: 'an avocado', note: 'Baby can hear your voice' },
-  17: { size: 'a pear', note: 'Skeleton is hardening from cartilage to bone' },
-  18: { size: 'a bell pepper', note: 'Baby is yawning and hiccuping' },
-  19: { size: 'a mango', note: 'Senses are developing rapidly' },
-  20: { size: 'a banana', note: 'Halfway there! Baby can swallow' },
-  21: { size: 'a carrot', note: 'Baby movements feel stronger' },
-  22: { size: 'a papaya', note: 'Eyes are formed but iris lacks color' },
-  23: { size: 'a grapefruit', note: 'Baby can hear sounds outside the womb' },
-  24: { size: 'a corn cob', note: 'Lungs are developing surfactant' },
-  25: { size: 'a cauliflower', note: 'Baby responds to your voice' },
-  26: { size: 'a lettuce head', note: 'Eyes begin to open' },
-  27: { size: 'a cabbage', note: 'Baby sleeps and wakes regularly' },
-  28: { size: 'an eggplant', note: 'Baby can blink and dream' },
-  29: { size: 'a butternut squash', note: 'Bones are fully developed' },
-  30: { size: 'a cucumber', note: 'Baby is gaining weight rapidly' },
-  31: { size: 'a coconut', note: 'Brain connections are forming fast' },
-  32: { size: 'a jicama', note: 'Toenails are visible' },
-  33: { size: 'a pineapple', note: 'Bones are hardening' },
-  34: { size: 'a cantaloupe', note: 'Central nervous system is maturing' },
-  35: { size: 'a honeydew melon', note: 'Kidneys are fully developed' },
-  36: { size: 'a head of romaine', note: 'Baby is dropping lower into pelvis' },
-  37: { size: 'a bunch of Swiss chard', note: 'Baby is considered early term' },
-  38: { size: 'a leek', note: 'Organs are ready for life outside' },
-  39: { size: 'a watermelon', note: 'Baby is full term!' },
-  40: { size: 'a small pumpkin', note: 'Ready to meet the world!' },
+const SCREEN_W = Dimensions.get('window').width
+
+// ─── Week emoji map ─────────────────────────────────────────────────────────
+
+const WEEK_EMOJI: Record<number, string> = {
+  1: '🌱', 2: '🌱', 3: '🌱', 4: '🫘', 5: '🍎', 6: '🫛', 7: '🫐', 8: '🍇',
+  9: '🍒', 10: '🍓', 11: '🍋', 12: '🍑', 13: '🍑', 14: '🍋', 15: '🍏',
+  16: '🥑', 17: '🍐', 18: '🫑', 19: '🥭', 20: '🍌', 21: '🥕', 22: '🍈',
+  23: '🍊', 24: '🌽', 25: '🫚', 26: '🥬', 27: '🥦', 28: '🍆', 29: '🎃',
+  30: '🥬', 31: '🥥', 32: '🌰', 33: '🍍', 34: '🍈', 35: '🍈', 36: '🥬',
+  37: '🥬', 38: '🌿', 39: '🍉', 40: '🎃',
 }
 
-function getBabySize(week: number) {
-  const clamped = Math.max(4, Math.min(40, week))
-  return BABY_SIZES[clamped] ?? { size: 'a little miracle', note: 'Growing beautifully' }
+// ─── Trimester helper ────────────────────────────────────────────────────────
+
+function getTrimester(week: number): 1 | 2 | 3 {
+  if (week <= 13) return 1
+  if (week <= 26) return 2
+  return 3
 }
 
-// ─── Pregnancy tips ────────────────────────────────────────────────────────
+// ─── Section 1: Baby Hero Carousel ──────────────────────────────────────────
 
-const DAILY_TIPS = [
-  'Your body is doing incredible work. Take a moment to appreciate it.',
-  'Stay hydrated — aim for 10 glasses of water today.',
-  'A short walk can do wonders for your mood and circulation.',
-  'Talk to your baby — they can hear you from week 16 onwards.',
-  'Rest when you need to. Growing a human is no small feat.',
-  'Gentle stretching can help with back pain and stiffness.',
-  'Your little one is dreaming right now. How beautiful is that?',
-]
+interface HeroItem {
+  week: number
+  data: PregnancyWeekData
+}
 
-// ─── Quick log actions ─────────────────────────────────────────────────────
+const HERO_ITEMS: HeroItem[] = pregnancyWeeks.map((w) => ({ week: w.week, data: w }))
 
-const QUICK_LOGS = [
-  { id: 'mood', label: 'Mood', icon: Smile },
-  { id: 'symptoms', label: 'Symptoms', icon: Activity },
-  { id: 'weight', label: 'Weight', icon: Scale },
-  { id: 'appointment', label: 'Appointment', icon: Calendar },
-]
+interface BabyHeroCarouselProps {
+  currentWeek: number
+  daysToGo: number | null
+}
 
-// ─── Mock data ─────────────────────────────────────────────────────────────
+function BabyHeroCarousel({ currentWeek, daysToGo }: BabyHeroCarouselProps) {
+  const flatListRef = useRef<FlatList<HeroItem>>(null)
+  const [visibleWeek, setVisibleWeek] = useState(currentWeek)
 
-const MOCK_WEIGHTS = [62.5, 63.1, 63.8, 64.2, 65.0, 65.5]
-const MOCK_APPOINTMENT = { date: '2026-04-15', type: 'Ultrasound', doctor: 'Dr. Mitchell' }
+  useEffect(() => {
+    const idx = Math.max(0, currentWeek - 1)
+    const timer = setTimeout(() => {
+      flatListRef.current?.scrollToIndex({ index: idx, animated: false })
+    }, 150)
+    return () => clearTimeout(timer)
+  }, [currentWeek])
 
-// ─── Main Component ────────────────────────────────────────────────────────
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: Array<{ item: HeroItem }> }) => {
+      if (viewableItems[0]) {
+        setVisibleWeek(viewableItems[0].item.week)
+      }
+    },
+    []
+  )
 
-export function PregnancyHome() {
-  const { colors, radius } = useTheme()
-  const weekNumber = usePregnancyStore((s) => s.weekNumber) ?? 24
-  const dueDate = usePregnancyStore((s) => s.dueDate)
-  const parentName = useJourneyStore((s) => s.parentName)
+  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current
 
-  const babyInfo = getBabySize(weekNumber)
-  const dailyTip = DAILY_TIPS[new Date().getDay()]
-  const showKickCounter = weekNumber >= 28
-  const daysLeft = dueDate ? daysUntil(dueDate) : null
-  const trimester = weekNumber <= 13 ? 1 : weekNumber <= 26 ? 2 : 3
-  const hasPartner = false // TODO: read from store
+  const renderItem = ({ item }: { item: HeroItem }) => {
+    const isCurrent = item.week === currentWeek
+    const tri = getTrimester(item.week)
+    const emoji = WEEK_EMOJI[item.week] ?? '👶'
+    const progress = item.week / 40
+
+    const gradientColors: [string, string] =
+      tri === 1
+        ? ['#1A2A4A', '#2D4A8A']
+        : tri === 2
+        ? ['#2A1050', '#5C2FA8']
+        : ['#2A0A3A', '#7B1FA2']
+
+    const triLabel = `T${tri} · Week ${item.week}`
+    const daysLabel =
+      isCurrent && daysToGo !== null
+        ? `${daysToGo} days left`
+        : item.week < currentWeek
+        ? 'Past week'
+        : `Week ${item.week - currentWeek} ahead`
+
+    return (
+      <View style={{ width: SCREEN_W, paddingHorizontal: 20 }}>
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroCard}
+        >
+          <View style={styles.heroBadgeRow}>
+            <View style={[styles.heroBadge, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+              <Text style={styles.heroBadgeText}>{triLabel}</Text>
+            </View>
+            {isCurrent && (
+              <View style={[styles.heroBadge, { backgroundColor: brand.pregnancy + '40' }]}>
+                <Text style={[styles.heroBadgeText, { color: brand.pregnancy }]}>
+                  ← swipe weeks →
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.heroEmoji}>{emoji}</Text>
+
+          <Text style={styles.heroWeekText}>Week {item.week}</Text>
+          <Text style={styles.heroSizeText}>
+            Size of a {item.data.babySize.toLowerCase()} · {item.data.babyLength}
+          </Text>
+          <Text style={styles.heroDaysText}>{daysLabel}</Text>
+
+          <Text style={styles.heroFact} numberOfLines={2}>
+            {item.data.developmentFact}
+          </Text>
+
+          <View style={styles.heroProgressContainer}>
+            <View style={styles.heroProgressTrack}>
+              <View style={[styles.heroProgressFill, { width: `${progress * 100}%` }]} />
+            </View>
+            <View style={styles.heroProgressLabels}>
+              <Text style={styles.heroProgressLabel}>T1</Text>
+              <Text style={styles.heroProgressLabel}>T2</Text>
+              <Text style={styles.heroProgressLabel}>T3</Text>
+              <Text style={styles.heroProgressLabel}>40w</Text>
+            </View>
+          </View>
+        </LinearGradient>
+      </View>
+    )
+  }
 
   return (
-    <View style={styles.root}>
-      {/* 1. Week Counter Card */}
-      <View
-        style={[
-          styles.weekCard,
-          { backgroundColor: colors.primary, borderRadius: radius.xl },
-        ]}
-      >
-        <View style={styles.weekCardHeader}>
-          <Baby size={24} color="#FFFFFF" strokeWidth={2} />
-          <Text style={styles.weekCardTrimester}>Trimester {trimester}</Text>
-        </View>
-        <Text style={styles.weekCardTitle}>
-          You are {weekNumber} weeks pregnant
-        </Text>
-        <Text style={styles.weekCardSize}>
-          Your baby is the size of {babyInfo.size}
-        </Text>
-        <Text style={styles.weekCardNote}>{babyInfo.note}</Text>
+    <View>
+      <FlatList
+        ref={flatListRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        data={HERO_ITEMS}
+        keyExtractor={(item) => String(item.week)}
+        renderItem={renderItem}
+        getItemLayout={(_, index) => ({
+          length: SCREEN_W,
+          offset: SCREEN_W * index,
+          index,
+        })}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        initialNumToRender={5}
+        windowSize={5}
+        maxToRenderPerBatch={5}
+      />
+      <View style={styles.heroDotsRow}>
+        {[1, 2, 3].map((tri) => (
+          <View
+            key={tri}
+            style={[
+              styles.heroDot,
+              {
+                backgroundColor:
+                  getTrimester(visibleWeek) === tri
+                    ? brand.pregnancy
+                    : 'rgba(255,255,255,0.2)',
+                width: getTrimester(visibleWeek) === tri ? 16 : 6,
+              },
+            ]}
+          />
+        ))}
       </View>
+    </View>
+  )
+}
 
-      {/* 2. Due Date Countdown */}
-      {daysLeft !== null && (
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: brand.accentTint, borderRadius: radius.xl, borderColor: brand.accent + '30', borderWidth: 1 },
-          ]}
-        >
-          <View style={styles.countdownRow}>
-            <View>
-              <Text style={[styles.countdownNumber, { color: brand.accent }]}>
-                {daysLeft}
-              </Text>
-              <Text style={[styles.countdownLabel, { color: colors.textSecondary }]}>
-                days until your due date
-              </Text>
-            </View>
-            <Calendar size={32} color={brand.accent} strokeWidth={1.5} />
-          </View>
-        </View>
-      )}
+// ─── Routine definitions ─────────────────────────────────────────────────────
 
-      {/* 3. Today's Tip */}
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderRadius: radius.xl },
-        ]}
-      >
-        <Text style={[styles.tipLabel, { color: colors.textMuted }]}>
-          TODAY'S AFFIRMATION
-        </Text>
-        <Text style={[styles.tipText, { color: colors.text }]}>
-          "{dailyTip}"
-        </Text>
-      </View>
+interface RoutineDef {
+  type: string
+  label: string
+  emoji: string
+  goal: number
+  minWeek?: number
+}
 
-      {/* 4. Upcoming Appointment */}
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderRadius: radius.xl },
-        ]}
-      >
-        <View style={styles.appointmentHeader}>
-          <Stethoscope size={18} color={colors.primary} strokeWidth={2} />
-          <Text style={[styles.cardTitle, { color: colors.text, marginBottom: 0 }]}>
-            Next Appointment
-          </Text>
-        </View>
-        <View style={styles.appointmentBody}>
-          <Text style={[styles.appointmentType, { color: colors.text }]}>
-            {MOCK_APPOINTMENT.type}
-          </Text>
-          <Text style={[styles.appointmentDate, { color: colors.textSecondary }]}>
-            {new Date(MOCK_APPOINTMENT.date + 'T00:00:00').toLocaleDateString('en-US', {
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </Text>
-          <Text style={[styles.appointmentDoctor, { color: colors.textMuted }]}>
-            {MOCK_APPOINTMENT.doctor}
-          </Text>
-        </View>
-      </View>
+const ROUTINES: RoutineDef[] = [
+  { type: 'vitamins', label: 'Vitamins', emoji: '💊', goal: 1 },
+  { type: 'water', label: 'Water', emoji: '💧', goal: 8 },
+  { type: 'mood', label: 'Mood', emoji: '😊', goal: 1 },
+  { type: 'symptom', label: 'Symptoms', emoji: '🤒', goal: 1 },
+  { type: 'weight', label: 'Weight', emoji: '⚖️', goal: 1 },
+  { type: 'sleep', label: 'Sleep', emoji: '😴', goal: 1 },
+  { type: 'exercise', label: 'Exercise', emoji: '🧘', goal: 1 },
+  { type: 'kick_count', label: 'Kicks', emoji: '👶', goal: 1, minWeek: 28 },
+  { type: 'nutrition', label: 'Meals', emoji: '🥗', goal: 3 },
+  { type: 'kegel', label: 'Kegel', emoji: '💪', goal: 1 },
+]
 
-      {/* 5. Weight Tracking Graph */}
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderRadius: radius.xl },
-        ]}
-      >
-        <Text style={[styles.cardTitle, { color: colors.text }]}>
-          Weight Tracking
-        </Text>
-        <Text style={[styles.cardSubtitle, { color: colors.textMuted }]}>
-          Last {MOCK_WEIGHTS.length} entries
-        </Text>
-        <WeightChart weights={MOCK_WEIGHTS} />
-      </View>
+// ─── Section 2: Quick Log Strip ──────────────────────────────────────────────
 
-      {/* 6. Kick Counter (week 28+) */}
-      {showKickCounter && (
-        <Pressable
-          onPress={() => {/* TODO: navigate to kick counter */}}
-          style={({ pressed }) => [
-            styles.card,
-            {
-              backgroundColor: brand.pregnancy + '15',
-              borderRadius: radius.xl,
-              borderColor: brand.pregnancy + '30',
-              borderWidth: 1,
-            },
-            pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] },
-          ]}
-        >
-          <View style={styles.kickRow}>
-            <View style={[styles.kickButton, { backgroundColor: brand.pregnancy }]}>
-              <Hand size={28} color="#FFFFFF" strokeWidth={2} />
-            </View>
-            <View style={styles.kickText}>
-              <Text style={[styles.kickTitle, { color: colors.text }]}>
-                Kick Counter
-              </Text>
-              <Text style={[styles.kickSubtitle, { color: colors.textSecondary }]}>
-                Track 10 kicks — tap to start a session
-              </Text>
-            </View>
-            <ChevronRight size={20} color={colors.textMuted} />
-          </View>
-        </Pressable>
-      )}
+interface QuickLogStripProps {
+  todayLogs: Record<string, TodayLogEntry>
+  weekNumber: number
+  onPressRoutine: (type: string) => void
+}
 
-      {/* 7. Birth Plan / Hospital Bag */}
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderRadius: radius.xl },
-        ]}
-      >
-        <View style={styles.birthPlanRow}>
-          {weekNumber >= 32 ? (
-            <>
-              <Luggage size={20} color={brand.accent} strokeWidth={2} />
-              <View style={styles.birthPlanText}>
-                <Text style={[styles.cardTitle, { color: colors.text, marginBottom: 2 }]}>
-                  Hospital Bag Checklist
-                </Text>
-                <Text style={[styles.birthPlanSub, { color: colors.textSecondary }]}>
-                  Time to start packing! Tap to see what you need.
-                </Text>
-              </View>
-            </>
-          ) : (
-            <>
-              <ClipboardList size={20} color={brand.secondary} strokeWidth={2} />
-              <View style={styles.birthPlanText}>
-                <Text style={[styles.cardTitle, { color: colors.text, marginBottom: 2 }]}>
-                  Birth Plan
-                </Text>
-                <Text style={[styles.birthPlanSub, { color: colors.textSecondary }]}>
-                  Start thinking about your birth preferences.
-                </Text>
-              </View>
-            </>
-          )}
-          <ChevronRight size={20} color={colors.textMuted} />
-        </View>
-      </View>
+function QuickLogStrip({ todayLogs, weekNumber, onPressRoutine }: QuickLogStripProps) {
+  const { colors } = useTheme()
+  const visibleRoutines = ROUTINES.filter(
+    (r) => r.minWeek === undefined || weekNumber >= r.minWeek
+  )
 
-      {/* 8. Partner Note */}
-      {hasPartner && (
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.surfaceRaised, borderRadius: radius.xl },
-          ]}
-        >
-          <View style={styles.partnerHeader}>
-            <Users size={18} color={colors.primary} strokeWidth={2} />
-            <Text style={[styles.cardTitle, { color: colors.text, marginBottom: 0 }]}>
-              Partner Note
-            </Text>
-          </View>
-          <Text style={[styles.partnerNote, { color: colors.textSecondary }]}>
-            No shared notes yet. Leave a message for your partner.
-          </Text>
-        </View>
-      )}
-
-      {/* 9. Quick Log Row */}
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>TODAY'S ROUTINES</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.quickLogScroll}
+        contentContainerStyle={styles.quickLogRow}
       >
-        {QUICK_LOGS.map((log) => {
-          const Icon = log.icon
+        {visibleRoutines.map((routine) => {
+          const logged = todayLogs[routine.type]
+          const isDone = !!logged
+          const isKick = routine.type === 'kick_count'
+          const isOverdue = isKick && !isDone
+
+          let chipBg = 'rgba(255,255,255,0.08)'
+          let chipBorder = 'rgba(255,255,255,0.12)'
+          let chipTextColor = colors.text
+
+          if (isDone) {
+            chipBg = '#A2FF8620'
+            chipBorder = '#A2FF8640'
+            chipTextColor = '#A2FF86'
+          } else if (isOverdue) {
+            chipBg = brand.pregnancy + '20'
+            chipBorder = brand.pregnancy + '60'
+            chipTextColor = brand.pregnancy
+          }
+
+          const chipLabel =
+            routine.type === 'water' && logged?.value
+              ? `${routine.emoji} ${logged.value}/8 glasses`
+              : `${routine.emoji} ${isDone ? '✓ ' : '+ '}${routine.label}`
+
           return (
             <Pressable
-              key={log.id}
+              key={routine.type}
+              onPress={() => onPressRoutine(routine.type)}
               style={[
-                styles.quickLogPill,
-                { backgroundColor: colors.primaryTint, borderRadius: radius.full },
+                styles.quickChip,
+                { backgroundColor: chipBg, borderColor: chipBorder },
               ]}
             >
-              <Icon size={16} color={colors.primary} strokeWidth={2} />
-              <Text style={[styles.quickLogText, { color: colors.primary }]}>
-                {log.label}
+              <Text style={[styles.quickChipText, { color: chipTextColor }]}>
+                {chipLabel}
               </Text>
             </Pressable>
           )
         })}
       </ScrollView>
-
-      {/* 10. Grandma Talk Card */}
-      <Pressable
-        onPress={() => router.push('/grandma-talk')}
-        style={({ pressed }) => [
-          styles.card,
-          { backgroundColor: colors.primaryTint, borderRadius: radius.xl },
-          pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] },
-        ]}
-      >
-        <View style={styles.grandmaRow}>
-          <View style={styles.grandmaTextWrap}>
-            <Text style={[styles.grandmaTitle, { color: colors.primary }]}>
-              Ask Grandma anything
-            </Text>
-            <Text style={[styles.grandmaSub, { color: colors.textSecondary }]}>
-              Pregnancy questions, week-by-week guidance, nutrition
-            </Text>
-          </View>
-          <View style={[styles.grandmaIcon, { backgroundColor: colors.primary }]}>
-            <MessageCircle size={20} color="#FFFFFF" strokeWidth={2} />
-          </View>
-        </View>
-      </Pressable>
-
-      {/* 11. Insight Cards */}
-      <View style={styles.insightRow}>
-        <InsightCard
-          title={babyInfo.note}
-          tag={`Week ${weekNumber}`}
-          tagColor={brand.pregnancy}
-        />
-        <InsightCard
-          title={weekNumber >= 28
-            ? 'Count kicks daily — 10 movements in 2 hours is healthy'
-            : 'Eat iron-rich foods to support your growing blood volume'}
-          tag="Tip"
-          tagColor={brand.accent}
-        />
-      </View>
     </View>
   )
 }
 
-// ─── Weight Mini Chart ─────────────────────────────────────────────────────
+// ─── Section 3: Vitals Grid ──────────────────────────────────────────────────
 
-function WeightChart({ weights }: { weights: number[] }) {
+interface VitalsGridProps {
+  todayLogs: Record<string, TodayLogEntry>
+  weekNumber: number
+}
+
+function VitalsGrid({ todayLogs, weekNumber }: VitalsGridProps) {
   const { colors } = useTheme()
 
-  const width = 280
-  const height = 80
-  const padding = 16
-  const minVal = Math.min(...weights) - 1
-  const maxVal = Math.max(...weights) + 1
-  const range = maxVal - minVal || 1
+  const weight = todayLogs['weight']?.value
+    ? `${parseFloat(todayLogs['weight'].value).toFixed(1)} kg`
+    : '—'
+  const kicks = todayLogs['kick_count']?.value ?? '—'
+  const waterRaw = todayLogs['water']?.value ? parseInt(todayLogs['water'].value, 10) : 0
+  const waterText = `${waterRaw} / 8`
+  const waterPct = Math.min(1, waterRaw / 8)
+  const moodMap: Record<string, string> = {
+    excited: '😍',
+    happy: '😊',
+    okay: '😐',
+    anxious: '😰',
+    nauseous: '🤢',
+  }
+  const moodVal = todayLogs['mood']?.notes ?? todayLogs['mood']?.value ?? ''
+  const moodEmoji = moodMap[moodVal] ?? (todayLogs['mood'] ? '😊' : '—')
 
-  const points = weights.map((v, i) => {
-    const x = padding + (i / (weights.length - 1)) * (width - padding * 2)
-    const y = height - padding - ((v - minVal) / range) * (height - padding * 2)
-    return { x, y, v }
-  })
-
-  const polylinePoints = points.map((p) => `${p.x},${p.y}`).join(' ')
+  const tiles = [
+    {
+      icon: <Scale size={18} color={brand.pregnancy} strokeWidth={2} />,
+      label: 'Weight',
+      value: weight,
+      progress: null as number | null,
+    },
+    {
+      icon: <Text style={{ fontSize: 18 }}>👶</Text>,
+      label: weekNumber >= 28 ? 'Kicks today' : 'Kicks (W28+)',
+      value: weekNumber >= 28 ? kicks : 'Soon',
+      progress: null as number | null,
+    },
+    {
+      icon: <Droplets size={18} color="#6AABF7" strokeWidth={2} />,
+      label: 'Hydration',
+      value: waterText,
+      progress: waterPct,
+    },
+    {
+      icon: <Smile size={18} color="#FBBF24" strokeWidth={2} />,
+      label: 'Mood',
+      value: moodEmoji,
+      progress: null as number | null,
+    },
+  ]
 
   return (
-    <View style={styles.chartWrap}>
-      <Svg width={width} height={height}>
-        <Polyline
-          points={polylinePoints}
-          fill="none"
-          stroke={brand.pregnancy}
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        {points.map((p, i) => (
-          <Circle
+    <View style={styles.section}>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>TODAY'S VITALS</Text>
+      <View style={styles.vitalsGrid}>
+        {tiles.map((tile, i) => (
+          <View
             key={i}
-            cx={p.x}
-            cy={p.y}
-            r={4}
-            fill={brand.pregnancy}
-            stroke={colors.surface}
-            strokeWidth={2}
-          />
-        ))}
-      </Svg>
-      <View style={styles.chartLabels}>
-        {weights.map((v, i) => (
-          <Text key={i} style={[styles.chartLabel, { color: colors.textMuted }]}>
-            {v}
-          </Text>
+            style={[styles.vitalsTile, { backgroundColor: colors.surface }]}
+          >
+            {tile.icon}
+            <Text style={[styles.vitalsValue, { color: colors.text }]}>{tile.value}</Text>
+            <Text style={[styles.vitalsLabel, { color: colors.textMuted }]}>{tile.label}</Text>
+            {tile.progress !== null && (
+              <View style={styles.vitalsProgressTrack}>
+                <View
+                  style={[
+                    styles.vitalsProgressFill,
+                    {
+                      width: `${tile.progress * 100}%`,
+                      backgroundColor: '#6AABF7',
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </View>
         ))}
       </View>
     </View>
   )
 }
 
-// ─── Insight Card ──────────────────────────────────────────────────────────
+// ─── Section 4: Inline Mood Picker ──────────────────────────────────────────
 
-function InsightCard({
-  title,
-  tag,
-  tagColor,
-}: {
-  title: string
-  tag: string
-  tagColor: string
-}) {
-  const { colors, radius } = useTheme()
+const MOODS = [
+  { id: 'excited', emoji: '😍', label: 'Radiant' },
+  { id: 'happy', emoji: '😊', label: 'Happy' },
+  { id: 'okay', emoji: '😐', label: 'Okay' },
+  { id: 'anxious', emoji: '😰', label: 'Anxious' },
+  { id: 'nauseous', emoji: '🤢', label: 'Nauseous' },
+]
+
+interface MoodPickerProps {
+  currentMood: string | null
+  onSelect: (moodId: string) => void
+  saving: boolean
+}
+
+function MoodPicker({ currentMood, onSelect, saving }: MoodPickerProps) {
+  const { colors } = useTheme()
 
   return (
-    <View
-      style={[
-        styles.insightCard,
-        { backgroundColor: colors.surface, borderRadius: radius.xl },
-      ]}
-    >
-      <View style={[styles.insightTag, { backgroundColor: tagColor + '20', borderRadius: radius.sm }]}>
-        <Text style={[styles.insightTagText, { color: tagColor }]}>{tag}</Text>
+    <View style={[styles.section, styles.moodCard, { backgroundColor: colors.surface }]}>
+      <View style={styles.moodHeader}>
+        <Text style={[styles.sectionLabel, { color: colors.textMuted, marginBottom: 0 }]}>
+          HOW ARE YOU FEELING?
+        </Text>
+        {saving && <ActivityIndicator size="small" color={brand.pregnancy} />}
       </View>
-      <Text style={[styles.insightTitle, { color: colors.text }]} numberOfLines={3}>
-        {title}
-      </Text>
+      <View style={styles.moodRow}>
+        {MOODS.map((mood) => {
+          const isActive = currentMood === mood.id
+          return (
+            <Pressable
+              key={mood.id}
+              onPress={() => onSelect(mood.id)}
+              style={[
+                styles.moodOption,
+                isActive && {
+                  backgroundColor: brand.pregnancy + '30',
+                  borderColor: brand.pregnancy,
+                },
+              ]}
+            >
+              <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+              <Text
+                style={[
+                  styles.moodLabel,
+                  { color: isActive ? brand.pregnancy : colors.textMuted },
+                ]}
+              >
+                {mood.label}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
     </View>
   )
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+// ─── Section 5: Contextual Smart Cards ───────────────────────────────────────
 
-function daysUntil(dueDateStr: string): number {
-  const due = new Date(dueDateStr + 'T00:00:00')
-  const now = new Date()
-  return Math.max(0, Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+interface ContextCard {
+  key: string
+  color: string
+  emoji: string
+  title: string
+  body: string
+  onPress: () => void
 }
 
-// ─── Styles ────────────────────────────────────────────────────────────────
+interface ContextualCardsProps {
+  cards: ContextCard[]
+}
+
+function ContextualCards({ cards }: ContextualCardsProps) {
+  const { colors } = useTheme()
+  if (cards.length === 0) return null
+
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>RIGHT NOW</Text>
+      {cards.map((card) => (
+        <Pressable
+          key={card.key}
+          onPress={card.onPress}
+          style={[
+            styles.contextCard,
+            {
+              backgroundColor: card.color + '15',
+              borderColor: card.color + '40',
+            },
+          ]}
+        >
+          <Text style={styles.contextEmoji}>{card.emoji}</Text>
+          <View style={styles.contextBody}>
+            <Text style={[styles.contextTitle, { color: card.color }]}>{card.title}</Text>
+            <Text style={[styles.contextText, { color: colors.textSecondary }]}>
+              {card.body}
+            </Text>
+          </View>
+          <ChevronRight size={16} color={card.color} strokeWidth={2} />
+        </Pressable>
+      ))}
+    </View>
+  )
+}
+
+// ─── Section 6: Weight Mini-Chart ────────────────────────────────────────────
+
+interface WeightMiniChartProps {
+  weights: number[]
+  labels: string[]
+}
+
+function WeightMiniChart({ weights, labels }: WeightMiniChartProps) {
+  const { colors } = useTheme()
+  if (weights.length < 2) return null
+
+  return (
+    <Pressable
+      onPress={() => router.push('/insights')}
+      style={[styles.section, styles.chartCard, { backgroundColor: colors.surface }]}
+    >
+      <View style={styles.chartHeader}>
+        <View>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted, marginBottom: 2 }]}>
+            WEIGHT TREND
+          </Text>
+          <Text style={[styles.chartCurrentValue, { color: colors.text }]}>
+            {weights[weights.length - 1].toFixed(1)} kg
+          </Text>
+        </View>
+        <View style={styles.chartCta}>
+          <Text style={[styles.chartCtaText, { color: brand.pregnancy }]}>Details</Text>
+          <ChevronRight size={14} color={brand.pregnancy} strokeWidth={2} />
+        </View>
+      </View>
+      <LineChart
+        data={weights}
+        labels={labels}
+        color={brand.pregnancy}
+        width={SCREEN_W - 80}
+        height={72}
+        unit=" kg"
+      />
+    </Pressable>
+  )
+}
+
+// ─── Section 7: Grandma CTA ──────────────────────────────────────────────────
+
+function GrandmaCTA() {
+  const { colors } = useTheme()
+  return (
+    <Pressable
+      onPress={() => router.push('/grandma-talk')}
+      style={[styles.section, styles.grandmaCard, { backgroundColor: colors.surface }]}
+    >
+      <Text style={styles.grandmaEmoji}>👵</Text>
+      <View style={styles.grandmaBody}>
+        <Text style={[styles.grandmaTitle, { color: colors.text }]}>Ask Grandma</Text>
+        <Text style={[styles.grandmaSubtitle, { color: colors.textSecondary }]}>
+          Questions, worries, or just need a pep talk
+        </Text>
+      </View>
+      <ChevronRight size={20} color={brand.pregnancy} strokeWidth={2} />
+    </Pressable>
+  )
+}
+
+// ─── Section 8: Affirmation ──────────────────────────────────────────────────
+
+function AffirmationCard({ text }: { text: string }) {
+  const { colors } = useTheme()
+  return (
+    <View style={[styles.section, styles.affirmationCard, { backgroundColor: colors.surface }]}>
+      <Text style={[styles.affirmationLabel, { color: colors.textMuted }]}>
+        TODAY'S AFFIRMATION
+      </Text>
+      <Text style={[styles.affirmationText, { color: colors.text }]}>"{text}"</Text>
+    </View>
+  )
+}
+
+// ─── Section 9: Daily Tip ────────────────────────────────────────────────────
+
+function DailyTipCard({ tip }: { tip: string }) {
+  const { colors } = useTheme()
+  return (
+    <View style={[styles.section, styles.tipCard, { backgroundColor: colors.surface }]}>
+      <Text style={[styles.affirmationLabel, { color: colors.textMuted }]}>GRANDMA'S TIP</Text>
+      <Text style={[styles.tipText, { color: colors.text }]}>{tip}</Text>
+    </View>
+  )
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+type InlineLogType = 'mood' | 'symptom' | 'appointment' | 'kick_count' | 'vitamins' | 'water' | 'weight' | 'sleep' | 'exercise' | 'kegel' | 'nutrition' | null
+
+export function PregnancyHome() {
+  const { colors } = useTheme()
+  const insets = useSafeAreaInsets()
+  const queryClient = useQueryClient()
+
+  const weekNumber = usePregnancyStore((s) => s.weekNumber) ?? 24
+  const dueDate = usePregnancyStore((s) => s.dueDate) ?? ''
+  const [activeLog, setActiveLog] = useState<InlineLogType>(null)
+  const [moodSaving, setMoodSaving] = useState(false)
+
+  const [userId, setUserId] = useState<string | undefined>(undefined)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user.id)
+    })
+  }, [])
+
+  const { data: todayLogs = {} } = usePregnancyTodayLogs(userId)
+  const { data: weightHistory = [] } = usePregnancyWeightHistory(userId ?? '', 6)
+
+  const daysToGo = dueDate ? getDaysToGo(dueDate) : null
+  const affirmation = getDailyAffirmation()
+  const weekData = pregnancyWeeks.find((w) => w.week === weekNumber)
+  const upcomingAppt = getUpcomingAppointment(weekNumber)
+
+  // Weight sparkline — PregnancyWeightEntry has { date, weight }
+  const weightValues = (weightHistory as Array<{ date: string; weight: number }>).map((e) => e.weight)
+  const weightLabels = (weightHistory as Array<{ date: string; weight: number }>).map((e) =>
+    new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  )
+
+  const currentMood = todayLogs['mood']?.notes ?? todayLogs['mood']?.value ?? null
+
+  const handleMoodSelect = async (moodId: string) => {
+    if (!userId) return
+    setMoodSaving(true)
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      const { error } = await supabase.from('pregnancy_logs').insert({
+        user_id: userId,
+        log_date: today,
+        log_type: 'mood',
+        value: moodId,
+        notes: null,
+      })
+      if (error) throw error
+      queryClient.invalidateQueries({ queryKey: ['pregnancy-today-logs', userId] })
+    } catch {
+      // silent fail
+    } finally {
+      setMoodSaving(false)
+    }
+  }
+
+  const contextCards: ContextCard[] = []
+
+  if (weekNumber >= 28 && !todayLogs['kick_count']) {
+    contextCards.push({
+      key: 'kicks',
+      color: '#A2FF86',
+      emoji: '👶',
+      title: 'Log kick count',
+      body: 'No kick session recorded today. Track baby movements.',
+      onPress: () => setActiveLog('kick_count'),
+    })
+  }
+
+  if (upcomingAppt) {
+    contextCards.push({
+      key: 'appointment',
+      color: '#FBBF24',
+      emoji: '📅',
+      title: upcomingAppt.name,
+      body: upcomingAppt.prepNote,
+      onPress: () => router.push('/(tabs)/agenda'),
+    })
+  }
+
+  if (weekData && contextCards.length < 3) {
+    contextCards.push({
+      key: 'development',
+      color: brand.pregnancy,
+      emoji: WEEK_EMOJI[weekNumber] ?? '👶',
+      title: `Week ${weekNumber} development`,
+      body: weekData.developmentFact,
+      onPress: () => router.push('/(tabs)/agenda'),
+    })
+  }
+
+  const renderInlineForm = (): React.ReactElement | null => {
+    const today = new Date().toISOString().split('T')[0]
+    const onClose = () => {
+      setActiveLog(null)
+      queryClient.invalidateQueries({ queryKey: ['pregnancy-today-logs', userId] })
+    }
+
+    if (activeLog === 'mood') return <PregnancyMoodForm date={today} onSaved={onClose} />
+    if (activeLog === 'symptom') return <PregnancySymptomsForm date={today} onSaved={onClose} />
+    if (activeLog === 'appointment') return <AppointmentForm date={today} onSaved={onClose} />
+    if (activeLog === 'kick_count') return <KickCountForm date={today} onSaved={onClose} />
+
+    if (activeLog === 'vitamins' || activeLog === 'kegel') {
+      return (
+        <View style={styles.simpleForm}>
+          <Text style={[styles.simpleFormTitle, { color: colors.text }]}>
+            {activeLog === 'vitamins' ? '💊 Mark vitamins taken' : '💪 Log Kegel sets'}
+          </Text>
+          <Pressable
+            onPress={async () => {
+              if (!userId) return
+              const today2 = new Date().toISOString().split('T')[0]
+              await supabase.from('pregnancy_logs').insert({
+                user_id: userId,
+                log_date: today2,
+                log_type: activeLog,
+                value: '1',
+                notes: null,
+              })
+              onClose()
+            }}
+            style={[styles.simpleFormBtn, { backgroundColor: brand.pregnancy }]}
+          >
+            <Text style={styles.simpleFormBtnText}>Mark done</Text>
+          </Pressable>
+        </View>
+      )
+    }
+
+    router.push('/(tabs)/agenda')
+    setActiveLog(null)
+    return null
+  }
+
+  return (
+    <ScrollView
+      style={[styles.root, { backgroundColor: colors.bg }]}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+      showsVerticalScrollIndicator={false}
+    >
+      <BabyHeroCarousel currentWeek={weekNumber} daysToGo={daysToGo} />
+
+      <QuickLogStrip
+        todayLogs={todayLogs}
+        weekNumber={weekNumber}
+        onPressRoutine={(type) => setActiveLog(type as InlineLogType)}
+      />
+
+      <VitalsGrid todayLogs={todayLogs} weekNumber={weekNumber} />
+
+      <MoodPicker
+        currentMood={currentMood}
+        onSelect={handleMoodSelect}
+        saving={moodSaving}
+      />
+
+      <ContextualCards cards={contextCards.slice(0, 3)} />
+
+      {weightValues.length >= 2 && (
+        <WeightMiniChart weights={weightValues} labels={weightLabels} />
+      )}
+
+      <GrandmaCTA />
+
+      <AffirmationCard text={affirmation} />
+
+      {weekData && <DailyTipCard tip={weekData.momTip} />}
+
+      <Modal
+        visible={activeLog !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setActiveLog(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHandle} />
+              <Pressable onPress={() => setActiveLog(null)} style={styles.modalClose}>
+                <X size={20} color={colors.textMuted} strokeWidth={2} />
+              </Pressable>
+            </View>
+            {renderInlineForm()}
+          </View>
+        </View>
+      </Modal>
+    </ScrollView>
+  )
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  root: {
-    gap: 16,
-  },
+  root: { flex: 1 },
 
-  // Shared
-  card: {
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  cardSubtitle: {
-    fontSize: 13,
-    fontWeight: '500',
-    marginTop: -8,
-    marginBottom: 12,
-  },
-
-  // 1. Week card
-  weekCard: {
+  heroCard: {
+    borderRadius: 32,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
+    marginBottom: 8,
+    overflow: 'hidden',
   },
-  weekCardHeader: {
+  heroBadgeRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  weekCardTrimester: {
-    fontSize: 13,
+  heroBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  heroBadgeText: {
+    fontSize: 11,
+    fontFamily: 'Satoshi-Variable',
+    color: 'rgba(255,255,255,0.8)',
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
-    textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  weekCardTitle: {
-    fontSize: 26,
-    fontWeight: '900',
+  heroEmoji: {
+    fontSize: 64,
+    textAlign: 'center',
+    marginVertical: 8,
+  },
+  heroWeekText: {
+    fontSize: 28,
+    fontFamily: 'CabinetGrotesk-Black',
     color: '#FFFFFF',
-    letterSpacing: -0.5,
-    marginBottom: 8,
+    textAlign: 'center',
   },
-  weekCardSize: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.85)',
-    marginBottom: 4,
-  },
-  weekCardNote: {
+  heroSizeText: {
     fontSize: 14,
-    fontWeight: '400',
-    color: 'rgba(255,255,255,0.65)',
-    lineHeight: 20,
+    fontFamily: 'Satoshi-Variable',
+    color: 'rgba(255,255,255,0.75)',
+    textAlign: 'center',
+    marginTop: 4,
   },
-
-  // 2. Countdown
-  countdownRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  countdownNumber: {
-    fontSize: 40,
-    fontWeight: '900',
-    letterSpacing: -1,
-  },
-  countdownLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-
-  // 3. Tip
-  tipLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  },
-  tipText: {
-    fontSize: 16,
-    fontWeight: '500',
-    fontStyle: 'italic',
-    lineHeight: 24,
-  },
-
-  // 4. Appointment
-  appointmentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  appointmentBody: {
-    gap: 2,
-  },
-  appointmentType: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  appointmentDate: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  appointmentDoctor: {
+  heroDaysText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: 'Satoshi-Variable',
+    color: 'rgba(255,255,255,0.55)',
+    textAlign: 'center',
     marginTop: 2,
   },
-
-  // 5. Chart
-  chartWrap: {
-    alignItems: 'center',
-    marginTop: 4,
+  heroFact: {
+    fontSize: 13,
+    fontFamily: 'Satoshi-Variable',
+    color: 'rgba(255,255,255,0.65)',
+    textAlign: 'center',
+    marginTop: 12,
+    lineHeight: 18,
   },
-  chartLabels: {
+  heroProgressContainer: { marginTop: 16 },
+  heroProgressTrack: {
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 2,
+  },
+  heroProgressFill: {
+    height: 4,
+    backgroundColor: '#B983FF',
+    borderRadius: 2,
+  },
+  heroProgressLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: 280,
-    paddingHorizontal: 16,
     marginTop: 4,
   },
-  chartLabel: {
+  heroProgressLabel: {
+    fontSize: 10,
+    fontFamily: 'Satoshi-Variable',
+    color: 'rgba(255,255,255,0.4)',
+  },
+  heroDotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  heroDot: {
+    height: 6,
+    borderRadius: 3,
+  },
+
+  section: { paddingHorizontal: 20, marginTop: 20 },
+  sectionLabel: {
     fontSize: 11,
+    fontFamily: 'Satoshi-Variable',
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 12,
+  },
+
+  quickLogRow: { gap: 8, paddingBottom: 4 },
+  quickChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  quickChipText: {
+    fontSize: 13,
+    fontFamily: 'Satoshi-Variable',
     fontWeight: '600',
   },
 
-  // 6. Kick counter
-  kickRow: {
+  vitalsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  vitalsTile: {
+    width: (SCREEN_W - 52) / 2,
+    borderRadius: 20,
+    padding: 16,
+    gap: 6,
+  },
+  vitalsValue: {
+    fontSize: 22,
+    fontFamily: 'CabinetGrotesk-Black',
+  },
+  vitalsLabel: {
+    fontSize: 12,
+    fontFamily: 'Satoshi-Variable',
+  },
+  vitalsProgressTrack: {
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 2,
+    marginTop: 4,
+  },
+  vitalsProgressFill: {
+    height: 3,
+    borderRadius: 2,
+  },
+
+  moodCard: {
+    borderRadius: 24,
+    padding: 20,
+  },
+  moodHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  moodRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  moodOption: {
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    flex: 1,
+    marginHorizontal: 2,
+  },
+  moodEmoji: { fontSize: 24 },
+  moodLabel: {
+    fontSize: 10,
+    fontFamily: 'Satoshi-Variable',
+    fontWeight: '600',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+
+  contextCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    marginBottom: 10,
+    gap: 12,
   },
-  kickButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  contextEmoji: { fontSize: 28 },
+  contextBody: { flex: 1 },
+  contextTitle: {
+    fontSize: 14,
+    fontFamily: 'Satoshi-Variable',
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  contextText: {
+    fontSize: 12,
+    fontFamily: 'Satoshi-Variable',
+    lineHeight: 16,
+  },
+
+  chartCard: {
+    borderRadius: 24,
+    padding: 20,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  chartCurrentValue: {
+    fontSize: 20,
+    fontFamily: 'CabinetGrotesk-Black',
+  },
+  chartCta: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  kickText: {
-    flex: 1,
     gap: 2,
   },
-  kickTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  kickSubtitle: {
+  chartCtaText: {
     fontSize: 13,
-    fontWeight: '500',
-  },
-
-  // 7. Birth plan
-  birthPlanRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  birthPlanText: {
-    flex: 1,
-  },
-  birthPlanSub: {
-    fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-
-  // 8. Partner
-  partnerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  partnerNote: {
-    fontSize: 14,
-    fontWeight: '500',
-    fontStyle: 'italic',
-    lineHeight: 20,
-  },
-
-  // 9. Quick log
-  quickLogScroll: {
-    gap: 8,
-    paddingVertical: 4,
-  },
-  quickLogPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  quickLogText: {
-    fontSize: 13,
+    fontFamily: 'Satoshi-Variable',
     fontWeight: '600',
   },
 
-  // 10. Grandma
-  grandmaRow: {
+  grandmaCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    borderRadius: 24,
+    padding: 20,
+    gap: 16,
   },
-  grandmaTextWrap: {
-    flex: 1,
-    gap: 4,
-  },
+  grandmaEmoji: { fontSize: 36 },
+  grandmaBody: { flex: 1 },
   grandmaTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 16,
+    fontFamily: 'CabinetGrotesk-Black',
+    marginBottom: 2,
   },
-  grandmaSub: {
+  grandmaSubtitle: {
     fontSize: 13,
-    fontWeight: '500',
-  },
-  grandmaIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
+    fontFamily: 'Satoshi-Variable',
+    lineHeight: 18,
   },
 
-  // 11. Insights
-  insightRow: {
-    flexDirection: 'row',
-    gap: 12,
+  affirmationCard: {
+    borderRadius: 24,
+    padding: 20,
   },
-  insightCard: {
-    flex: 1,
-    padding: 16,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  insightTag: {
-    alignSelf: 'flex-start',
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-  },
-  insightTagText: {
+  affirmationLabel: {
     fontSize: 11,
+    fontFamily: 'Satoshi-Variable',
     fontWeight: '700',
+    letterSpacing: 1,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    marginBottom: 10,
   },
-  insightTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 18,
+  affirmationText: {
+    fontSize: 16,
+    fontFamily: 'Satoshi-Variable',
+    fontWeight: '500',
+    lineHeight: 24,
+    fontStyle: 'italic',
+  },
+
+  tipCard: {
+    borderRadius: 24,
+    padding: 20,
+  },
+  tipText: {
+    fontSize: 15,
+    fontFamily: 'Satoshi-Variable',
+    lineHeight: 22,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingBottom: 40,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    position: 'absolute',
+    top: 12,
+  },
+  modalClose: {
+    position: 'absolute',
+    right: 20,
+    top: 8,
+    padding: 8,
+  },
+
+  simpleForm: {
+    padding: 24,
+    gap: 20,
+    alignItems: 'center',
+  },
+  simpleFormTitle: {
+    fontSize: 18,
+    fontFamily: 'CabinetGrotesk-Black',
+    textAlign: 'center',
+  },
+  simpleFormBtn: {
+    paddingHorizontal: 40,
+    paddingVertical: 16,
+    borderRadius: 999,
+  },
+  simpleFormBtnText: {
+    fontSize: 16,
+    fontFamily: 'Satoshi-Variable',
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 })

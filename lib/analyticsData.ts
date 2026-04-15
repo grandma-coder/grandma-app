@@ -936,3 +936,40 @@ export function usePregnancyNutritionMatrix(userId: string, days = 7) {
     enabled: !!userId,
   })
 }
+
+// ─── Pregnancy — today's log snapshot ─────────────────────────────────────
+
+export interface TodayLogEntry {
+  value: string | null
+  notes: string | null
+  created_at: string
+}
+
+/** Returns today's pregnancy_logs grouped by log_type. Last entry per type wins. */
+export function usePregnancyTodayLogs(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['pregnancy-today-logs', userId],
+    queryFn: async (): Promise<Record<string, TodayLogEntry>> => {
+      if (!userId) return {}
+      const today = new Date().toISOString().split('T')[0]
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('log_type, value, notes, created_at')
+        .eq('user_id', userId)
+        .eq('log_date', today)
+        .order('created_at', { ascending: true })
+      if (error) throw error
+      const grouped: Record<string, TodayLogEntry> = {}
+      for (const row of data ?? []) {
+        grouped[row.log_type] = {
+          value: row.value,
+          notes: row.notes,
+          created_at: row.created_at,
+        }
+      }
+      return grouped
+    },
+    enabled: !!userId,
+    staleTime: 30_000,
+  })
+}
