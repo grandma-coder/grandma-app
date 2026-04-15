@@ -689,7 +689,20 @@ export function PregnancyHome() {
     })
   }
 
+  // Redirect unhandled log types to the agenda via effect (never call router/setState in render)
+  useEffect(() => {
+    const handledTypes: InlineLogType[] = [
+      'mood', 'symptom', 'appointment', 'kick_count', 'vitamins', 'kegel',
+    ]
+    if (activeLog !== null && !handledTypes.includes(activeLog)) {
+      setActiveLog(null)
+      router.push('/(tabs)/agenda')
+    }
+  }, [activeLog])
+
   const renderInlineForm = (): React.ReactElement | null => {
+    if (activeLog === null) return null
+
     const today = new Date().toISOString().split('T')[0]
     const onClose = () => {
       setActiveLog(null)
@@ -728,8 +741,6 @@ export function PregnancyHome() {
       )
     }
 
-    router.push('/(tabs)/agenda')
-    setActiveLog(null)
     return null
   }
 
