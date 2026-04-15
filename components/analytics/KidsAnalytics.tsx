@@ -13,7 +13,7 @@
  *  9. Ask Grandma passes full analytics context automatically
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import Animated, {
   useSharedValue,
   useAnimatedProps,
@@ -501,7 +501,11 @@ export function KidsAnalytics() {
         {analytics && (
           <>
             {/* ── 2. WELLNESS SCORE ARC ── */}
-            <WellnessScoreArc scores={analytics.scores} onInfoPress={() => setShowScoreInfo(true)} />
+            <WellnessScoreArc
+              scores={analytics.scores}
+              onInfoPress={() => setShowScoreInfo(true)}
+              childId={selectedChild?.id ?? ''}
+            />
 
             {/* ── 3. GRANDMA AI INSIGHT ── */}
             <GrandmaInsightCard
@@ -819,159 +823,212 @@ function TipDetailModal({
 // WELLNESS SCORE ARC
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function WellnessScoreArc({ scores, onInfoPress }: { scores: WellnessScores; onInfoPress: () => void }) {
+function WellnessScoreArc({
+  scores,
+  onInfoPress,
+  childId,
+}: {
+  scores: WellnessScores
+  onInfoPress: () => void
+  childId: string
+}) {
   const { colors, radius } = useTheme()
   const [activePillar, setActivePillar] = useState<PillarKey | null>(null)
-  const size = SCREEN_W - 32
-  const cx = size / 2
-  const cy = size / 2
-  const r = size / 2 - 40
 
-  const startAngle = 150
-  const totalSweep = 240
-  const gapDeg = 4
-  const segmentSweep = (totalSweep - gapDeg * 5) / 5
-  const strokeW = 16
-  const bgStrokeW = 12
+  const size   = SCREEN_W - 32
+  const cx     = size / 2
+  const cy     = size / 2
 
-  function arcPath(startDeg: number, sweepDeg: number, arcRadius: number): string {
-    const s = (startDeg * Math.PI) / 180
-    const e = ((startDeg + sweepDeg) * Math.PI) / 180
-    const x1 = cx + arcRadius * Math.cos(s)
-    const y1 = cy + arcRadius * Math.sin(s)
-    const x2 = cx + arcRadius * Math.cos(e)
-    const y2 = cy + arcRadius * Math.sin(e)
-    return `M ${x1} ${y1} A ${arcRadius} ${arcRadius} 0 ${sweepDeg > 180 ? 1 : 0} 1 ${x2} ${y2}`
-  }
+  // Ring radii: evenly spaced from outer to inner, leaving room for centre text
+  const outerR = size / 2 - 20
+  const innerR = 44
+  const gap    = (outerR - innerR) / 5
+  const RADII  = [outerR, outerR - gap, outerR - gap*2, outerR - gap*3, outerR - gap*4, outerR - gap*5]
+  const STROKE_TRACK = 13
+  const STROKE_FILL  = 15
 
-  function iconPos(segIndex: number) {
-    const mid = startAngle + segIndex * (segmentSweep + gapDeg) + segmentSweep / 2
-    const rad = (mid * Math.PI) / 180
-    const iconR = r + 26
-    return { x: cx + iconR * Math.cos(rad), y: cy + iconR * Math.sin(rad) }
-  }
+  // Six shared values — one per ring (React hooks rules: no hooks in loops/maps)
+  const p0 = useSharedValue(0); const p1 = useSharedValue(0)
+  const p2 = useSharedValue(0); const p3 = useSharedValue(0)
+  const p4 = useSharedValue(0); const p5 = useSharedValue(0)
+  const ringProgress = [p0, p1, p2, p3, p4, p5]
+  const scoreOpacity = useSharedValue(0)
+
+  const ap0 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*RADII[0]*(1-p0.value) }))
+  const ap1 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*RADII[1]*(1-p1.value) }))
+  const ap2 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*RADII[2]*(1-p2.value) }))
+  const ap3 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*RADII[3]*(1-p3.value) }))
+  const ap4 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*RADII[4]*(1-p4.value) }))
+  const ap5 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*RADII[5]*(1-p5.value) }))
+  const ringAnimatedProps = [ap0, ap1, ap2, ap3, ap4, ap5]
+
+  const scoreAnimStyle = useAnimatedStyle(() => ({
+    opacity: scoreOpacity.value,
+    transform: [{ scale: 0.85 + 0.15 * scoreOpacity.value }],
+  }))
+
+  useEffect(() => {
+    p0.value = 0; p1.value = 0; p2.value = 0
+    p3.value = 0; p4.value = 0; p5.value = 0
+    scoreOpacity.value = 0
+
+    const targets = PILLAR_ORDER.map((key) => scores[key].hasData ? scores[key].value / 10 : 0)
+    p0.value = withDelay(0,   withSpring(targets[0], { damping: 14, stiffness: 90, mass: 0.8 }))
+    p1.value = withDelay(150, withSpring(targets[1], { damping: 14, stiffness: 90, mass: 0.8 }))
+    p2.value = withDelay(300, withSpring(targets[2], { damping: 14, stiffness: 90, mass: 0.8 }))
+    p3.value = withDelay(450, withSpring(targets[3], { damping: 14, stiffness: 90, mass: 0.8 }))
+    p4.value = withDelay(600, withSpring(targets[4], { damping: 14, stiffness: 90, mass: 0.8 }))
+    p5.value = withDelay(750, withSpring(targets[5], { damping: 14, stiffness: 90, mass: 0.8 }))
+    scoreOpacity.value = withDelay(950, withTiming(1, { duration: 400, easing: Easing.out(Easing.quad) }))
+  }, [childId, scores.overall])
+
+  const hasAnyData = PILLAR_ORDER.some((k) => scores[k].hasData)
+  const overall    = hasAnyData ? scores.overall : 0
+  const overallC   = hasAnyData ? scoreColor(overall) : colors.textMuted
 
   function getPillarExplanation(key: PillarKey): string {
     const score = scores[key]
-    const pct = score.hasData ? Math.round((score.value / 10) * 100) : 0
+    const pct   = score.hasData ? Math.round((score.value / 10) * 100) : 0
     const explanations: Record<PillarKey, string> = {
       nutrition: `${pct}% — tracks meal frequency, eating quality, and food variety this week`,
-      sleep: `${pct}% — measures avg sleep hours vs age target, quality, and consistency`,
-      mood: `${pct}% — based on daily mood logs (happy, calm, energetic, fussy, cranky)`,
-      health: `${pct}% — reflects vaccine completion and health event frequency`,
-      growth: `${pct}% — tracks weight & height measurement regularity`,
-      activity: `${pct}% — based on active days this week and variety of activities logged`,
+      sleep:     `${pct}% — measures avg sleep hours vs age target, quality, and consistency`,
+      mood:      `${pct}% — based on daily mood logs (happy, calm, energetic, fussy, cranky)`,
+      health:    `${pct}% — reflects vaccine completion and health event frequency`,
+      growth:    `${pct}% — tracks weight & height measurement regularity`,
+      activity:  `${pct}% — based on active days this week and variety of activities logged`,
     }
-    return score.hasData ? explanations[key] : 'No data logged yet — start logging to see progress'
+    return score.hasData
+      ? explanations[key]
+      : 'No data logged yet — start logging to see progress'
   }
-
-  const hasAnyData = PILLAR_ORDER.some((k) => scores[k].hasData)
-  const overall = hasAnyData ? scores.overall : 0
-  const overallC = hasAnyData ? scoreColor(overall) : colors.textMuted
 
   return (
     <View style={styles.arcContainer}>
-      <Svg width={size} height={size * 0.75} viewBox={`0 ${size * 0.08} ${size} ${size * 0.75}`}>
-        <Defs>
-          {PILLAR_ORDER.map((key) => (
-            <LinearGradient key={key} id={`grad-${key}`} x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor={PILLAR_CONFIG[key].color} stopOpacity="1" />
-              <Stop offset="1" stopColor={PILLAR_CONFIG[key].color} stopOpacity="0.6" />
-            </LinearGradient>
-          ))}
-        </Defs>
+      <View style={{ width: size, height: size }}>
+        <Svg width={size} height={size}>
+          {PILLAR_ORDER.map((key, i) => {
+            const r     = RADII[i]
+            const circ  = 2 * Math.PI * r
+            const color = PILLAR_CONFIG[key].color
+            const isActive = activePillar === key
+            return (
+              <React.Fragment key={key}>
+                <Circle
+                  cx={cx} cy={cy} r={r}
+                  fill="none"
+                  stroke={color + '1A'}
+                  strokeWidth={STROKE_TRACK}
+                />
+                <AnimatedCircle
+                  cx={cx} cy={cy} r={r}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={isActive ? STROKE_FILL + 4 : STROKE_FILL}
+                  strokeDasharray={circ}
+                  strokeLinecap="round"
+                  transform={`rotate(-90 ${cx} ${cy})`}
+                  opacity={activePillar !== null && !isActive ? 0.35 : 1}
+                  animatedProps={ringAnimatedProps[i]}
+                />
+              </React.Fragment>
+            )
+          })}
+        </Svg>
 
-        {PILLAR_ORDER.map((key, i) => {
-          const segStart = startAngle + i * (segmentSweep + gapDeg)
-          const isActive = activePillar === key
-          return (
-            <Path key={`bg-${key}`} d={arcPath(segStart, segmentSweep, r)} stroke={PILLAR_CONFIG[key].color + (isActive ? '40' : '20')} strokeWidth={isActive ? bgStrokeW + 4 : bgStrokeW} fill="none" strokeLinecap="round" />
-          )
-        })}
+        <Animated.View
+          style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }, scoreAnimStyle]}
+          pointerEvents="none"
+        >
+          <Text style={{ fontSize: 46, fontWeight: '900', color: overallC, lineHeight: 50 }}>
+            {hasAnyData ? overall.toFixed(1) : '—'}
+          </Text>
+          <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginTop: 2 }}>
+            thriving score
+          </Text>
+        </Animated.View>
 
-        {PILLAR_ORDER.map((key, i) => {
-          const score = scores[key]
-          if (!score.hasData) return null
-          const segStart = startAngle + i * (segmentSweep + gapDeg)
-          const fillSweep = (score.value / 10) * segmentSweep
-          if (fillSweep < 1) return null
-          const isActive = activePillar === key
-          return (
-            <Path key={`fill-${key}`} d={arcPath(segStart, fillSweep, r)} stroke={`url(#grad-${key})`} strokeWidth={isActive ? strokeW + 4 : strokeW} fill="none" strokeLinecap="round" />
-          )
-        })}
-
-        {PILLAR_ORDER.map((key, i) => {
-          const pos = iconPos(i)
-          const isActive = activePillar === key
-          const color = scores[key].hasData ? PILLAR_CONFIG[key].color : colors.textMuted
-          return (
-            <G key={`icon-bg-${key}`}>
-              <Circle cx={pos.x} cy={pos.y} r={isActive ? 17 : 14} fill={color + (isActive ? '30' : '15')} stroke={color + (isActive ? '60' : '30')} strokeWidth={isActive ? 2 : 1} />
-            </G>
-          )
-        })}
-
-        <SvgText x={cx} y={cy - 8} textAnchor="middle" fill={overallC} fontSize={48} fontWeight="900">
-          {hasAnyData ? overall.toFixed(1) : '—'}
-        </SvgText>
-        <SvgText x={cx} y={cy + 22} textAnchor="middle" fill={colors.textSecondary} fontSize={13} fontWeight="600">
-          thriving score
-        </SvgText>
-      </Svg>
-
-      {/* Pressable icon overlays */}
-      <View style={StyleSheet.absoluteFill}>
-        {PILLAR_ORDER.map((key, i) => {
-          const pos = iconPos(i)
-          const Icon = PILLAR_CONFIG[key].icon
-          const isActive = activePillar === key
-          const color = scores[key].hasData ? PILLAR_CONFIG[key].color : colors.textMuted
-          return (
-            <Pressable
-              key={`overlay-${key}`}
-              hitSlop={8}
-              onPress={() => setActivePillar(activePillar === key ? null : key)}
-              style={{ position: 'absolute', left: pos.x - 18, top: pos.y - 18 + (-size * 0.08), width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}
-            >
-              <Icon size={18} color={color} strokeWidth={isActive ? 3 : 2} />
-            </Pressable>
-          )
-        })}
+        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+          {[...PILLAR_ORDER].reverse().map((key, revI) => {
+            const i = PILLAR_ORDER.length - 1 - revI
+            const r = RADII[i]
+            return (
+              <Pressable
+                key={key}
+                onPress={() => setActivePillar(activePillar === key ? null : key)}
+                hitSlop={0}
+                style={{
+                  position: 'absolute',
+                  left: cx - r,
+                  top:  cy - r,
+                  width:  r * 2,
+                  height: r * 2,
+                  borderRadius: r,
+                }}
+              />
+            )
+          })}
+        </View>
       </View>
 
-      {/* Legend with individual scores */}
       <View style={styles.arcLegend}>
         {PILLAR_ORDER.map((key) => {
-          const score = scores[key]
+          const score    = scores[key]
           const isActive = activePillar === key
           return (
             <Pressable
               key={key}
               onPress={() => setActivePillar(activePillar === key ? null : key)}
-              style={[styles.legendItem, isActive && { backgroundColor: PILLAR_CONFIG[key].color + '18', borderRadius: radius.full, paddingHorizontal: 8, paddingVertical: 2 }]}
+              style={[
+                styles.legendItem,
+                isActive && {
+                  backgroundColor: PILLAR_CONFIG[key].color + '18',
+                  borderRadius: radius.full,
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                },
+              ]}
             >
               <View style={[styles.legendDot, { backgroundColor: PILLAR_CONFIG[key].color }]} />
-              <Text style={[styles.legendLabel, { color: isActive ? PILLAR_CONFIG[key].color : colors.textMuted, fontWeight: isActive ? '800' : '600' }]}>
-                {PILLAR_CONFIG[key].label}{score.hasData ? ` ${score.value.toFixed(0)}` : ''}
+              <Text
+                style={[
+                  styles.legendLabel,
+                  { color: isActive ? PILLAR_CONFIG[key].color : colors.textMuted,
+                    fontWeight: isActive ? '800' : '600' },
+                ]}
+              >
+                {PILLAR_CONFIG[key].label}
+                {score.hasData ? ` ${score.value.toFixed(0)}` : ''}
               </Text>
             </Pressable>
           )
         })}
       </View>
 
-      {/* Pillar detail tooltip */}
       {activePillar && (
         <Pressable
           onPress={() => setActivePillar(null)}
-          style={[styles.arcTooltip, { backgroundColor: PILLAR_CONFIG[activePillar].color + '15', borderColor: PILLAR_CONFIG[activePillar].color + '40', borderRadius: radius.xl }]}
+          style={[
+            styles.arcTooltip,
+            {
+              backgroundColor: PILLAR_CONFIG[activePillar].color + '15',
+              borderColor:     PILLAR_CONFIG[activePillar].color + '40',
+              borderRadius: radius.xl,
+            },
+          ]}
         >
           <View style={styles.arcTooltipHeader}>
             <View style={[styles.arcTooltipIcon, { backgroundColor: PILLAR_CONFIG[activePillar].color + '25' }]}>
-              {(() => { const Icon = PILLAR_CONFIG[activePillar].icon; return <Icon size={16} color={PILLAR_CONFIG[activePillar].color} strokeWidth={2} /> })()}
+              {(() => {
+                const Icon = PILLAR_CONFIG[activePillar].icon
+                return <Icon size={16} color={PILLAR_CONFIG[activePillar].color} strokeWidth={2} />
+              })()}
             </View>
             <Text style={[styles.arcTooltipTitle, { color: PILLAR_CONFIG[activePillar].color }]}>
-              {PILLAR_CONFIG[activePillar].label} — {scores[activePillar].hasData ? `${scores[activePillar].value.toFixed(1)}/10` : 'No data'}
+              {PILLAR_CONFIG[activePillar].label}
+              {' — '}
+              {scores[activePillar].hasData
+                ? `${scores[activePillar].value.toFixed(1)}/10`
+                : 'No data'}
             </Text>
           </View>
           <Text style={[styles.arcTooltipBody, { color: colors.textSecondary }]}>
@@ -982,7 +1039,9 @@ function WellnessScoreArc({ scores, onInfoPress }: { scores: WellnessScores; onI
 
       <Pressable onPress={onInfoPress} style={styles.arcInfoHint} hitSlop={12}>
         <Info size={12} color={colors.textMuted} strokeWidth={2} />
-        <Text style={[styles.arcInfoText, { color: colors.textMuted }]}>Tap ℹ for score guide</Text>
+        <Text style={[styles.arcInfoText, { color: colors.textMuted }]}>
+          Tap ℹ for score guide
+        </Text>
       </Pressable>
     </View>
   )
