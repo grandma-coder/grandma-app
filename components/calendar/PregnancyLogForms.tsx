@@ -44,8 +44,8 @@ async function savePregnancyLog(
 
   const { error } = await supabase.from('pregnancy_logs').insert({
     user_id: session.user.id,
-    date,
-    type,
+    log_date: date,
+    log_type: type,
     value: value ?? null,
     notes: notes ?? null,
   })
@@ -80,8 +80,8 @@ export function PregnancyMoodForm({
     try {
       await savePregnancyLog(date, 'mood', mood, notes || undefined)
       onSaved()
-    } catch (e: any) {
-      Alert.alert('Error', e.message)
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
     } finally {
       setSaving(false)
     }
@@ -183,8 +183,8 @@ export function PregnancySymptomsForm({
     try {
       await savePregnancyLog(date, 'symptom', selected.join(', '), notes || undefined)
       onSaved()
-    } catch (e: any) {
-      Alert.alert('Error', e.message)
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
     } finally {
       setSaving(false)
     }
@@ -283,8 +283,8 @@ export function AppointmentForm({
         JSON.stringify({ doctor: doctor || undefined, notes: notes || undefined })
       )
       onSaved()
-    } catch (e: any) {
-      Alert.alert('Error', e.message)
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
     } finally {
       setSaving(false)
     }
@@ -387,8 +387,8 @@ export function ExamResultForm({
         JSON.stringify({ result: result || undefined, notes: notes || undefined })
       )
       onSaved()
-    } catch (e: any) {
-      Alert.alert('Error', e.message)
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
     } finally {
       setSaving(false)
     }
@@ -476,8 +476,8 @@ export function KickCountForm({
         JSON.stringify({ durationMinutes: durationMin })
       )
       onSaved()
-    } catch (e: any) {
-      Alert.alert('Error', e.message)
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
     } finally {
       setSaving(false)
     }
@@ -560,6 +560,548 @@ function formatDate(dateStr: string): string {
     month: 'short',
     day: 'numeric',
   })
+}
+
+// ─── Sleep Log Form ────────────────────────────────────────────────────────
+
+export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [hours, setHours] = useState(7)
+  const [quality, setQuality] = useState(5)
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    try {
+      await savePregnancyLog(date, 'sleep', hours.toString(), JSON.stringify({ quality }))
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
+        <Text style={{ fontSize: 20 }}>😴</Text>
+        <Text style={[styles.bannerLabel, { color: colors.text }]}>Sleep on {formatDate(date)}</Text>
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Hours slept</Text>
+      <View style={styles.numberRow}>
+        {[3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => (
+          <Pressable
+            key={h}
+            onPress={() => setHours(h)}
+            style={[
+              styles.numberBtn,
+              {
+                backgroundColor: hours === h ? brand.pregnancy : colors.surface,
+                borderRadius: radius.md,
+                borderColor: hours === h ? brand.pregnancy : colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.numberBtnText, { color: hours === h ? '#fff' : colors.text }]}>{h}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Quality (1–10)</Text>
+      <View style={styles.numberRow}>
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((q) => (
+          <Pressable
+            key={q}
+            onPress={() => setQuality(q)}
+            style={[
+              styles.numberBtn,
+              {
+                backgroundColor: quality === q ? brand.pregnancy : colors.surface,
+                borderRadius: radius.md,
+                borderColor: quality === q ? brand.pregnancy : colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.numberBtnText, { color: quality === q ? '#fff' : colors.text }]}>{q}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <SaveButton onPress={save} saving={saving} disabled={false} />
+    </View>
+  )
+}
+
+// ─── Exercise Log Form ─────────────────────────────────────────────────────
+
+const EXERCISE_TYPES = ['Yoga', 'Walk', 'Swim', 'Stretching', 'Pilates', 'Other']
+
+export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [exerciseType, setExerciseType] = useState<string | null>(null)
+  const [minutes, setMinutes] = useState(30)
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    if (!exerciseType) return
+    setSaving(true)
+    try {
+      await savePregnancyLog(date, 'exercise', minutes.toString(), JSON.stringify({ type: exerciseType }))
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
+        <Text style={{ fontSize: 20 }}>🧘</Text>
+        <Text style={[styles.bannerLabel, { color: colors.text }]}>Exercise on {formatDate(date)}</Text>
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Type</Text>
+      <View style={styles.chipRow}>
+        {EXERCISE_TYPES.map((t) => (
+          <Pressable
+            key={t}
+            onPress={() => setExerciseType(t)}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: exerciseType === t ? brand.pregnancy + '20' : colors.surface,
+                borderColor: exerciseType === t ? brand.pregnancy : colors.border,
+                borderRadius: radius.full,
+              },
+            ]}
+          >
+            <Text style={[styles.chipText, { color: exerciseType === t ? brand.pregnancy : colors.text }]}>{t}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Minutes</Text>
+      <View style={styles.numberRow}>
+        {[15, 20, 30, 45, 60, 90].map((m) => (
+          <Pressable
+            key={m}
+            onPress={() => setMinutes(m)}
+            style={[
+              styles.numberBtn,
+              {
+                backgroundColor: minutes === m ? brand.pregnancy : colors.surface,
+                borderRadius: radius.md,
+                borderColor: minutes === m ? brand.pregnancy : colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.numberBtnText, { color: minutes === m ? '#fff' : colors.text }]}>{m}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <SaveButton onPress={save} saving={saving} disabled={!exerciseType} />
+    </View>
+  )
+}
+
+// ─── Nutrition Log Form ────────────────────────────────────────────────────
+
+const NUTRITION_TAGS = ['Iron', 'Folic acid', 'Protein', 'Calcium', 'DHA', 'Vitamin D']
+
+export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [tags, setTags] = useState<string[]>([])
+  const [nutritionNotes, setNutritionNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  function toggle(tag: string) {
+    setTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])
+  }
+
+  async function save() {
+    if (tags.length === 0) return
+    setSaving(true)
+    try {
+      await savePregnancyLog(date, 'nutrition', tags.join(','), nutritionNotes || undefined)
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
+        <Text style={{ fontSize: 20 }}>🥗</Text>
+        <Text style={[styles.bannerLabel, { color: colors.text }]}>Nutrition on {formatDate(date)}</Text>
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Nutrients covered today</Text>
+      <View style={styles.chipRow}>
+        {NUTRITION_TAGS.map((tag) => {
+          const active = tags.includes(tag)
+          return (
+            <Pressable
+              key={tag}
+              onPress={() => toggle(tag)}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: active ? brand.pregnancy + '20' : colors.surface,
+                  borderColor: active ? brand.pregnancy : colors.border,
+                  borderRadius: radius.full,
+                },
+              ]}
+            >
+              <Text style={[styles.chipText, { color: active ? brand.pregnancy : colors.text }]}>{tag}</Text>
+            </Pressable>
+          )
+        })}
+      </View>
+      <TextInput
+        value={nutritionNotes}
+        onChangeText={setNutritionNotes}
+        placeholder="Notes (optional)"
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+      />
+      <SaveButton onPress={save} saving={saving} disabled={tags.length === 0} />
+    </View>
+  )
+}
+
+// ─── Kegel Log Form ────────────────────────────────────────────────────────
+
+export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [sets, setSets] = useState(3)
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    try {
+      await savePregnancyLog(date, 'kegel', sets.toString(), undefined)
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
+        <Text style={{ fontSize: 20 }}>💪</Text>
+        <Text style={[styles.bannerLabel, { color: colors.text }]}>Kegel exercises</Text>
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Sets completed</Text>
+      <View style={styles.counterRow}>
+        <Pressable onPress={() => setSets((s) => Math.max(1, s - 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
+          <Text style={[styles.counterBtnText, { color: colors.text }]}>−</Text>
+        </Pressable>
+        <Text style={[styles.counterValue, { color: colors.text }]}>{sets}</Text>
+        <Pressable onPress={() => setSets((s) => Math.min(20, s + 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
+          <Text style={[styles.counterBtnText, { color: colors.text }]}>+</Text>
+        </Pressable>
+      </View>
+      <SaveButton onPress={save} saving={saving} disabled={false} />
+    </View>
+  )
+}
+
+// ─── Water Log Form ────────────────────────────────────────────────────────
+
+export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [glasses, setGlasses] = useState(1)
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    try {
+      await savePregnancyLog(date, 'water', glasses.toString(), undefined)
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
+        <Text style={{ fontSize: 20 }}>💧</Text>
+        <Text style={[styles.bannerLabel, { color: colors.text }]}>Water intake</Text>
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Glasses today</Text>
+      <View style={styles.counterRow}>
+        <Pressable onPress={() => setGlasses((g) => Math.max(1, g - 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
+          <Text style={[styles.counterBtnText, { color: colors.text }]}>−</Text>
+        </Pressable>
+        <Text style={[styles.counterValue, { color: colors.text }]}>{glasses}</Text>
+        <Pressable onPress={() => setGlasses((g) => Math.min(20, g + 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
+          <Text style={[styles.counterBtnText, { color: colors.text }]}>+</Text>
+        </Pressable>
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textMuted, textAlign: 'center' }]}>
+        Goal: 8 glasses · {glasses >= 8 ? '🎉 Done!' : `${8 - glasses} more to go`}
+      </Text>
+      <SaveButton onPress={save} saving={saving} disabled={false} />
+    </View>
+  )
+}
+
+// ─── Vitamins Log Form ─────────────────────────────────────────────────────
+
+export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors } = useTheme()
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    try {
+      await savePregnancyLog(date, 'vitamins', '1', undefined)
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
+        <Text style={{ fontSize: 20 }}>💊</Text>
+        <Text style={[styles.bannerLabel, { color: colors.text }]}>Prenatal vitamins</Text>
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign: 'center' }]}>
+        Did you take your prenatal vitamins today?
+      </Text>
+      <SaveButton onPress={save} saving={saving} disabled={false} />
+    </View>
+  )
+}
+
+// ─── Nesting Task Form ─────────────────────────────────────────────────────
+
+const NESTING_CATEGORIES = ['Nursery', 'Cleaning', 'Laundry', 'Shopping', 'Organizing', 'Other']
+
+export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [nestingTitle, setNestingTitle] = useState('')
+  const [nestingCategory, setNestingCategory] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    if (!nestingTitle) return
+    setSaving(true)
+    try {
+      await savePregnancyLog(date, 'nesting', done ? '1' : '0', JSON.stringify({ title: nestingTitle, category: nestingCategory ?? 'Other' }))
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
+        <Text style={{ fontSize: 20 }}>🪺</Text>
+        <Text style={[styles.bannerLabel, { color: colors.text }]}>Nesting task</Text>
+      </View>
+      <TextInput
+        value={nestingTitle}
+        onChangeText={setNestingTitle}
+        placeholder="Task name (e.g. Set up crib)"
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+      />
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Category</Text>
+      <View style={styles.chipRow}>
+        {NESTING_CATEGORIES.map((cat) => (
+          <Pressable
+            key={cat}
+            onPress={() => setNestingCategory(cat)}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: nestingCategory === cat ? brand.pregnancy + '20' : colors.surface,
+                borderColor: nestingCategory === cat ? brand.pregnancy : colors.border,
+                borderRadius: radius.full,
+              },
+            ]}
+          >
+            <Text style={[styles.chipText, { color: nestingCategory === cat ? brand.pregnancy : colors.text }]}>{cat}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Pressable
+        onPress={() => setDone((d) => !d)}
+        style={[styles.toggleRow2, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
+      >
+        <Text style={[styles.toggleLabel, { color: colors.text }]}>Already done?</Text>
+        <View style={[styles.togglePill, { backgroundColor: done ? brand.pregnancy : colors.border }]}>
+          <View style={[styles.toggleThumb, { marginLeft: done ? 20 : 2 }]} />
+        </View>
+      </Pressable>
+      <SaveButton onPress={save} saving={saving} disabled={!nestingTitle} />
+    </View>
+  )
+}
+
+// ─── Birth Prep Task Form ──────────────────────────────────────────────────
+
+const BIRTH_PREP_CATEGORIES = ['Hospital bag', 'Birth plan', 'Classes', 'Postpartum', 'Baby gear', 'Admin', 'Other']
+
+export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [birthPrepTitle, setBirthPrepTitle] = useState('')
+  const [birthPrepCategory, setBirthPrepCategory] = useState<string | null>(null)
+  const [dueWeek, setDueWeek] = useState<number | null>(null)
+  const [done, setDone] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    if (!birthPrepTitle) return
+    setSaving(true)
+    try {
+      await savePregnancyLog(date, 'birth_prep', done ? '1' : '0', JSON.stringify({ title: birthPrepTitle, category: birthPrepCategory ?? 'Other', dueWeek }))
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
+        <Text style={{ fontSize: 20 }}>🏥</Text>
+        <Text style={[styles.bannerLabel, { color: colors.text }]}>Birth prep task</Text>
+      </View>
+      <TextInput
+        value={birthPrepTitle}
+        onChangeText={setBirthPrepTitle}
+        placeholder="Task name (e.g. Pack hospital bag)"
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+      />
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Category</Text>
+      <View style={styles.chipRow}>
+        {BIRTH_PREP_CATEGORIES.map((cat) => (
+          <Pressable
+            key={cat}
+            onPress={() => setBirthPrepCategory(cat)}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: birthPrepCategory === cat ? brand.pregnancy + '20' : colors.surface,
+                borderColor: birthPrepCategory === cat ? brand.pregnancy : colors.border,
+                borderRadius: radius.full,
+              },
+            ]}
+          >
+            <Text style={[styles.chipText, { color: birthPrepCategory === cat ? brand.pregnancy : colors.text }]}>{cat}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Due by week</Text>
+      <View style={styles.numberRow}>
+        {[28, 30, 32, 34, 36, 38, 40].map((w) => (
+          <Pressable
+            key={w}
+            onPress={() => setDueWeek(w)}
+            style={[
+              styles.numberBtn,
+              {
+                backgroundColor: dueWeek === w ? brand.pregnancy : colors.surface,
+                borderRadius: radius.md,
+                borderColor: dueWeek === w ? brand.pregnancy : colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.numberBtnText, { color: dueWeek === w ? '#fff' : colors.text }]}>W{w}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Pressable
+        onPress={() => setDone((d) => !d)}
+        style={[styles.toggleRow2, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
+      >
+        <Text style={[styles.toggleLabel, { color: colors.text }]}>Already done?</Text>
+        <View style={[styles.togglePill, { backgroundColor: done ? brand.pregnancy : colors.border }]}>
+          <View style={[styles.toggleThumb, { marginLeft: done ? 20 : 2 }]} />
+        </View>
+      </Pressable>
+      <SaveButton onPress={save} saving={saving} disabled={!birthPrepTitle} />
+    </View>
+  )
+}
+
+// ─── Contraction Timer Log Form ─────────────────────────────────────────────
+
+export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [durationSec, setDurationSec] = useState(45)
+  const [intervalMin, setIntervalMin] = useState(10)
+  const [contractionNotes, setContractionNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    try {
+      await savePregnancyLog(date, 'contraction', durationSec.toString(), JSON.stringify({ intervalMin, notes: contractionNotes || undefined }))
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
+        <Text style={{ fontSize: 20 }}>⏱️</Text>
+        <Text style={[styles.bannerLabel, { color: colors.text }]}>Contraction on {formatDate(date)}</Text>
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Duration (seconds)</Text>
+      <View style={styles.counterRow}>
+        <Pressable onPress={() => setDurationSec((s) => Math.max(10, s - 5))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
+          <Text style={[styles.counterBtnText, { color: colors.text }]}>−</Text>
+        </Pressable>
+        <Text style={[styles.counterValue, { color: colors.text }]}>{durationSec}s</Text>
+        <Pressable onPress={() => setDurationSec((s) => Math.min(300, s + 5))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
+          <Text style={[styles.counterBtnText, { color: colors.text }]}>+</Text>
+        </Pressable>
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Interval (minutes apart)</Text>
+      <View style={styles.counterRow}>
+        <Pressable onPress={() => setIntervalMin((m) => Math.max(1, m - 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
+          <Text style={[styles.counterBtnText, { color: colors.text }]}>−</Text>
+        </Pressable>
+        <Text style={[styles.counterValue, { color: colors.text }]}>{intervalMin}m</Text>
+        <Pressable onPress={() => setIntervalMin((m) => Math.min(60, m + 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
+          <Text style={[styles.counterBtnText, { color: colors.text }]}>+</Text>
+        </Pressable>
+      </View>
+      <TextInput
+        value={contractionNotes}
+        onChangeText={setContractionNotes}
+        placeholder="Notes (intensity, location)"
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+      />
+      <SaveButton onPress={save} saving={saving} disabled={false} />
+    </View>
+  )
 }
 
 // ─── Styles ────────────────────────────────────────────────────────────────
@@ -654,5 +1196,83 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontFamily: 'Satoshi-Variable',
+    fontWeight: '600',
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  numberRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  numberBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  numberBtnText: {
+    fontSize: 14,
+    fontFamily: 'Satoshi-Variable',
+    fontWeight: '600',
+  },
+  counterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 32,
+    marginVertical: 16,
+  },
+  counterBtn: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  counterBtnText: {
+    fontSize: 28,
+    fontFamily: 'CabinetGrotesk-Black',
+    lineHeight: 32,
+  },
+  counterValue: {
+    fontSize: 48,
+    fontFamily: 'CabinetGrotesk-Black',
+    minWidth: 64,
+    textAlign: 'center',
+  },
+  toggleRow2: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    marginTop: 8,
+  },
+  toggleLabel: {
+    fontSize: 15,
+    fontFamily: 'Satoshi-Variable',
+    fontWeight: '600',
+  },
+  togglePill: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+  },
+  toggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
   },
 })
