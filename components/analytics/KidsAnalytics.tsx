@@ -21,6 +21,7 @@ import Animated, {
   withDelay,
   withSpring,
   withTiming,
+  withRepeat,
   Easing,
 } from 'react-native-reanimated'
 import {
@@ -110,6 +111,12 @@ function hexPath(cx: number, cy: number, r: number): string {
     d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1)
   }
   return d + 'Z'
+}
+
+// Breathing wobble — per-axis phase offset for organic feel (worklet-safe)
+function radarWobble(i: number, phase: number): number {
+  'worklet'
+  return 1 + 0.025 * Math.sin(phase + i * 1.05)
 }
 
 // ─── Pillar Config ─────────────────────────────────────────────────────────
@@ -860,15 +867,18 @@ function WellnessScoreArc({
   const p2 = useSharedValue(0); const p3 = useSharedValue(0)
   const p4 = useSharedValue(0); const p5 = useSharedValue(0)
   const scoreOpacity = useSharedValue(0)
+  // Continuous breathing — phase drives a sine wave per axis
+  const breathe = useSharedValue(0)
 
   // Animated data polygon path
   const dataPathProps = useAnimatedProps(() => {
     'worklet'
     const vals = [p0.value, p1.value, p2.value, p3.value, p4.value, p5.value]
+    const ph = breathe.value
     let d = ''
     for (let i = 0; i < 6; i++) {
       const a = (-90 + i * 60) * (Math.PI / 180)
-      const r = vals[i] * RADAR_R
+      const r = vals[i] * RADAR_R * radarWobble(i, ph)
       const x = RADAR_CX + r * Math.cos(a)
       const y = RADAR_CY + r * Math.sin(a)
       d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1)
@@ -877,12 +887,12 @@ function WellnessScoreArc({
   })
 
   // Animated dot positions — explicit per-axis (hooks rules)
-  const dot0 = useAnimatedProps(() => { const a = -90*(Math.PI/180); return { cx: RADAR_CX+p0.value*RADAR_R*Math.cos(a), cy: RADAR_CY+p0.value*RADAR_R*Math.sin(a) } })
-  const dot1 = useAnimatedProps(() => { const a = -30*(Math.PI/180); return { cx: RADAR_CX+p1.value*RADAR_R*Math.cos(a), cy: RADAR_CY+p1.value*RADAR_R*Math.sin(a) } })
-  const dot2 = useAnimatedProps(() => { const a =  30*(Math.PI/180); return { cx: RADAR_CX+p2.value*RADAR_R*Math.cos(a), cy: RADAR_CY+p2.value*RADAR_R*Math.sin(a) } })
-  const dot3 = useAnimatedProps(() => { const a =  90*(Math.PI/180); return { cx: RADAR_CX+p3.value*RADAR_R*Math.cos(a), cy: RADAR_CY+p3.value*RADAR_R*Math.sin(a) } })
-  const dot4 = useAnimatedProps(() => { const a = 150*(Math.PI/180); return { cx: RADAR_CX+p4.value*RADAR_R*Math.cos(a), cy: RADAR_CY+p4.value*RADAR_R*Math.sin(a) } })
-  const dot5 = useAnimatedProps(() => { const a = 210*(Math.PI/180); return { cx: RADAR_CX+p5.value*RADAR_R*Math.cos(a), cy: RADAR_CY+p5.value*RADAR_R*Math.sin(a) } })
+  const dot0 = useAnimatedProps(() => { const a = -90*(Math.PI/180); const r = p0.value*RADAR_R*radarWobble(0,breathe.value); return { cx: RADAR_CX+r*Math.cos(a), cy: RADAR_CY+r*Math.sin(a) } })
+  const dot1 = useAnimatedProps(() => { const a = -30*(Math.PI/180); const r = p1.value*RADAR_R*radarWobble(1,breathe.value); return { cx: RADAR_CX+r*Math.cos(a), cy: RADAR_CY+r*Math.sin(a) } })
+  const dot2 = useAnimatedProps(() => { const a =  30*(Math.PI/180); const r = p2.value*RADAR_R*radarWobble(2,breathe.value); return { cx: RADAR_CX+r*Math.cos(a), cy: RADAR_CY+r*Math.sin(a) } })
+  const dot3 = useAnimatedProps(() => { const a =  90*(Math.PI/180); const r = p3.value*RADAR_R*radarWobble(3,breathe.value); return { cx: RADAR_CX+r*Math.cos(a), cy: RADAR_CY+r*Math.sin(a) } })
+  const dot4 = useAnimatedProps(() => { const a = 150*(Math.PI/180); const r = p4.value*RADAR_R*radarWobble(4,breathe.value); return { cx: RADAR_CX+r*Math.cos(a), cy: RADAR_CY+r*Math.sin(a) } })
+  const dot5 = useAnimatedProps(() => { const a = 210*(Math.PI/180); const r = p5.value*RADAR_R*radarWobble(5,breathe.value); return { cx: RADAR_CX+r*Math.cos(a), cy: RADAR_CY+r*Math.sin(a) } })
   const dotProps = [dot0, dot1, dot2, dot3, dot4, dot5]
 
   const scoreAnimStyle = useAnimatedStyle(() => ({
@@ -905,6 +915,13 @@ function WellnessScoreArc({
     p4.value = withDelay(400, withSpring(targets[4], spring))
     p5.value = withDelay(500, withSpring(targets[5], spring))
     scoreOpacity.value = withDelay(600, withTiming(1, { duration: 400, easing: Easing.out(Easing.quad) }))
+    // Start continuous breathing after entrance
+    breathe.value = 0
+    breathe.value = withDelay(1000, withRepeat(
+      withTiming(2 * Math.PI, { duration: 4000, easing: Easing.linear }),
+      -1,  // infinite
+      false // restart from 0 each cycle (full sine wave)
+    ))
   }, [childId, scores.overall])
 
   const hasAnyData = PILLAR_ORDER.some((k) => scores[k].hasData)
