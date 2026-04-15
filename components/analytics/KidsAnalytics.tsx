@@ -886,7 +886,7 @@ function WellnessScoreArc({
   })
 
   // Animated icon positions — explicit per-axis (hooks rules)
-  const ICON_HALF = 12  // half the icon container size
+  const ICON_HALF = 16  // half the icon container size
   const is0 = useAnimatedStyle(() => { const a = -90*(Math.PI/180); const r = p0.value*RADAR_R*radarWobble(0,breathe.value); return { left: RADAR_CX+r*Math.cos(a)-ICON_HALF, top: RADAR_CY+r*Math.sin(a)-ICON_HALF } })
   const is1 = useAnimatedStyle(() => { const a = -30*(Math.PI/180); const r = p1.value*RADAR_R*radarWobble(1,breathe.value); return { left: RADAR_CX+r*Math.cos(a)-ICON_HALF, top: RADAR_CY+r*Math.sin(a)-ICON_HALF } })
   const is2 = useAnimatedStyle(() => { const a =  30*(Math.PI/180); const r = p2.value*RADAR_R*radarWobble(2,breathe.value); return { left: RADAR_CX+r*Math.cos(a)-ICON_HALF, top: RADAR_CY+r*Math.sin(a)-ICON_HALF } })
@@ -1003,13 +1003,15 @@ function WellnessScoreArc({
                 width: ICON_HALF * 2,
                 height: ICON_HALF * 2,
                 borderRadius: ICON_HALF,
-                backgroundColor: color + '25',
+                backgroundColor: color + '40',
+                borderWidth: 1.5,
+                borderColor: color + '80',
                 alignItems: 'center',
                 justifyContent: 'center',
                 opacity: !hasData ? 0.3 : activePillar !== null && activePillar !== key ? 0.35 : 1,
               }, iconStyles[i]]}
             >
-              <Icon size={13} color={color} strokeWidth={2.5} />
+              <Icon size={16} color={color} strokeWidth={2.5} />
             </Animated.View>
           )
         })}
