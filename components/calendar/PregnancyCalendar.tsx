@@ -43,6 +43,7 @@ import {
   AppointmentForm,
   ExamResultForm,
   KickCountForm,
+  WeightLogForm,
   SleepLogForm,
   ExerciseLogForm,
   NutritionLogForm,
@@ -70,7 +71,7 @@ const TRIMESTER_COLOR: Record<1 | 2 | 3, string> = {
 
 type ViewTab = 'month' | 'week' | 'journey' | 'appointments'
 type LogFormType =
-  | 'mood' | 'symptom' | 'appointment' | 'exam_result' | 'kick_count'
+  | 'mood' | 'weight' | 'symptom' | 'appointment' | 'exam_result' | 'kick_count'
   | 'sleep' | 'exercise' | 'nutrition' | 'kegel' | 'water' | 'vitamins'
   | 'nesting' | 'birth_prep' | 'contraction'
 
@@ -92,6 +93,7 @@ function LogFormRouter({
   onSaved: () => void
 }): React.ReactElement | null {
   if (type === 'mood') return <PregnancyMoodForm date={date} onSaved={onSaved} />
+  if (type === 'weight') return <WeightLogForm date={date} onSaved={onSaved} />
   if (type === 'symptom') return <PregnancySymptomsForm date={date} onSaved={onSaved} />
   if (type === 'appointment') return <AppointmentForm date={date} onSaved={onSaved} />
   if (type === 'exam_result') return <ExamResultForm date={date} onSaved={onSaved} />

@@ -1104,6 +1104,50 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
   )
 }
 
+// ─── Weight Log Form ──────────────────────────────────────────────────────
+
+export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  const { colors, radius } = useTheme()
+  const [weight, setWeight] = useState('70')
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    const parsed = parseFloat(weight)
+    if (isNaN(parsed) || parsed <= 0) {
+      Alert.alert('Invalid', 'Please enter a valid weight.')
+      return
+    }
+    setSaving(true)
+    try {
+      await savePregnancyLog(date, 'weight', parsed.toString(), undefined)
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
+        <Text style={{ fontSize: 20 }}>⚖️</Text>
+        <Text style={[styles.bannerLabel, { color: colors.text }]}>Weight on {formatDate(date)}</Text>
+      </View>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Weight (kg)</Text>
+      <TextInput
+        value={weight}
+        onChangeText={setWeight}
+        keyboardType="decimal-pad"
+        placeholder="e.g. 68.5"
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+      />
+      <SaveButton onPress={save} saving={saving} disabled={weight.trim() === ''} />
+    </View>
+  )
+}
+
 // ─── Styles ────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
