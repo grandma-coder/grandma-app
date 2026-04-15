@@ -92,6 +92,15 @@ const SCREEN_H = Dimensions.get('window').height
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
+// ─── Wellness Arc — module-level geometry (SCREEN_W is constant) ───────────
+const ARC_SIZE    = SCREEN_W - 32
+const ARC_OUTER_R = ARC_SIZE / 2 - 20
+const ARC_INNER_R = 44
+const ARC_GAP     = (ARC_OUTER_R - ARC_INNER_R) / 5
+const ARC_RADII   = Array.from({ length: 6 }, (_, i) => ARC_OUTER_R - i * ARC_GAP)
+const STROKE_TRACK = 13
+const STROKE_FILL  = 15
+
 // ─── Pillar Config ─────────────────────────────────────────────────────────
 
 const PILLAR_CONFIG = {
@@ -835,31 +844,21 @@ function WellnessScoreArc({
   const { colors, radius } = useTheme()
   const [activePillar, setActivePillar] = useState<PillarKey | null>(null)
 
-  const size   = SCREEN_W - 32
-  const cx     = size / 2
-  const cy     = size / 2
-
-  // Ring radii: evenly spaced from outer to inner, leaving room for centre text
-  const outerR = size / 2 - 20
-  const innerR = 44
-  const gap    = (outerR - innerR) / 5
-  const RADII  = [outerR, outerR - gap, outerR - gap*2, outerR - gap*3, outerR - gap*4, outerR - gap*5]
-  const STROKE_TRACK = 13
-  const STROKE_FILL  = 15
+  const cx     = ARC_SIZE / 2
+  const cy     = ARC_SIZE / 2
 
   // Six shared values — one per ring (React hooks rules: no hooks in loops/maps)
   const p0 = useSharedValue(0); const p1 = useSharedValue(0)
   const p2 = useSharedValue(0); const p3 = useSharedValue(0)
   const p4 = useSharedValue(0); const p5 = useSharedValue(0)
-  const ringProgress = [p0, p1, p2, p3, p4, p5]
   const scoreOpacity = useSharedValue(0)
 
-  const ap0 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*RADII[0]*(1-p0.value) }))
-  const ap1 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*RADII[1]*(1-p1.value) }))
-  const ap2 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*RADII[2]*(1-p2.value) }))
-  const ap3 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*RADII[3]*(1-p3.value) }))
-  const ap4 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*RADII[4]*(1-p4.value) }))
-  const ap5 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*RADII[5]*(1-p5.value) }))
+  const ap0 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*ARC_RADII[0]*(1-p0.value) }))
+  const ap1 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*ARC_RADII[1]*(1-p1.value) }))
+  const ap2 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*ARC_RADII[2]*(1-p2.value) }))
+  const ap3 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*ARC_RADII[3]*(1-p3.value) }))
+  const ap4 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*ARC_RADII[4]*(1-p4.value) }))
+  const ap5 = useAnimatedProps(() => ({ strokeDashoffset: 2*Math.PI*ARC_RADII[5]*(1-p5.value) }))
   const ringAnimatedProps = [ap0, ap1, ap2, ap3, ap4, ap5]
 
   const scoreAnimStyle = useAnimatedStyle(() => ({
@@ -904,10 +903,10 @@ function WellnessScoreArc({
 
   return (
     <View style={styles.arcContainer}>
-      <View style={{ width: size, height: size }}>
-        <Svg width={size} height={size}>
+      <View style={{ width: ARC_SIZE, height: ARC_SIZE }}>
+        <Svg width={ARC_SIZE} height={ARC_SIZE}>
           {PILLAR_ORDER.map((key, i) => {
-            const r     = RADII[i]
+            const r     = ARC_RADII[i]
             const circ  = 2 * Math.PI * r
             const color = PILLAR_CONFIG[key].color
             const isActive = activePillar === key
@@ -950,7 +949,7 @@ function WellnessScoreArc({
         <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
           {[...PILLAR_ORDER].reverse().map((key, revI) => {
             const i = PILLAR_ORDER.length - 1 - revI
-            const r = RADII[i]
+            const r = ARC_RADII[i]
             return (
               <Pressable
                 key={key}
@@ -967,6 +966,18 @@ function WellnessScoreArc({
               />
             )
           })}
+          {/* Deadzone: blocks touches in the centre (score text area) from hitting ring 5 */}
+          <Pressable
+            onPress={() => setActivePillar(null)}
+            style={{
+              position: 'absolute',
+              left: cx - ARC_INNER_R,
+              top:  cy - ARC_INNER_R,
+              width:  ARC_INNER_R * 2,
+              height: ARC_INNER_R * 2,
+              borderRadius: ARC_INNER_R,
+            }}
+          />
         </View>
       </View>
 
