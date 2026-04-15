@@ -30,6 +30,7 @@ import {
 import { usePregnancyStore } from '../../../store/usePregnancyStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
+import { seedPregnancyData } from '../../../lib/pregnancySeeds'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -185,6 +186,10 @@ export default function PregnancyOnboarding() {
         if (store.mood) {
           pregnancyStore.setMood(store.mood as any)
         }
+
+        // Seed 14 days of sample data in background — never blocks onboarding
+        const seedWeek = calcWeekNumber(store.dueDate)
+        seedPregnancyData(userId, seedWeek, store.dueDate).catch(console.warn)
       }
     } catch (e) {
       console.warn('Failed to save pregnancy onboarding:', e)
