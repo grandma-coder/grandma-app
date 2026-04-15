@@ -32,6 +32,14 @@ import {
   fetchBehaviorMetrics,
   type Insight, type InsightType, type BehaviorMetrics,
 } from '../../lib/insights'
+import { usePregnancyStore } from '../../store/usePregnancyStore'
+import { getWeekData } from '../../lib/pregnancyData'
+import { getDailyAffirmation } from '../../lib/pregnancyAffirmations'
+import { getBirthFocusForWeek } from '../../lib/pregnancyInsights'
+import type { BirthFocusCard } from '../../lib/pregnancyInsights'
+import { getUpcomingAppointment } from '../../lib/pregnancyAppointments'
+import { getFeaturedReadForWeek, getReadsByCategory } from '../../lib/pregnancyReads'
+import type { PregnancyRead } from '../../lib/pregnancyReads'
 
 // ─── AI Insight Type Config ───────────────────────────────────────────────
 
@@ -433,6 +441,321 @@ function buildWeekNarrative(metrics: BehaviorMetrics, childName: string): string
 
 type Tab = 'today' | 'reads' | 'history'
 
+// ─── Pregnancy Insights Content ────────────────────────────────────────────
+
+type PregnancyTab = 'today' | 'birth_guide' | 'reads'
+
+interface CollapsibleCardProps {
+  id: string
+  title: string
+  emoji: string
+  color: string
+  defaultOpen?: boolean
+  children: React.ReactNode
+  expandedMap: Record<string, boolean>
+  onToggle: (id: string) => void
+}
+
+function CollapsibleCard({
+  id, title, emoji, color, defaultOpen = false,
+  children, expandedMap, onToggle,
+}: CollapsibleCardProps) {
+  const { colors } = useTheme()
+  const isOpen = expandedMap[id] ?? defaultOpen
+
+  return (
+    <View style={[ci.card, { backgroundColor: colors.surface, borderColor: color + '30' }]}>
+      <Pressable onPress={() => onToggle(id)} style={ci.cardHeader}>
+        <Text style={ci.cardEmoji}>{emoji}</Text>
+        <Text style={[ci.cardTitle, { color: colors.text, flex: 1 }]}>{title}</Text>
+        <Text style={[ci.cardChevron, { color: color }]}>{isOpen ? '▲' : '▼'}</Text>
+      </Pressable>
+      {isOpen && (
+        <View style={[ci.cardBody, { borderTopColor: color + '20' }]}>
+          {children}
+          <Pressable
+            onPress={() => router.push('/grandma-talk')}
+            style={[ci.askCta, { borderColor: color + '40' }]}
+          >
+            <Text style={[ci.askCtaText, { color: color }]}>
+              👵 Ask Grandma about {title.toLowerCase()}
+            </Text>
+          </Pressable>
+        </View>
+      )}
+    </View>
+  )
+}
+
+function PregnancyInsightsContent() {
+  const { colors } = useTheme()
+  const insets = useSafeAreaInsets()
+  const weekNumber = usePregnancyStore((s) => s.weekNumber) ?? 24
+  const parentName = useJourneyStore((s) => s.parentName) ?? 'Mama'
+
+  const [pTab, setPTab] = useState<PregnancyTab>('today')
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({
+    birthFocus: true,
+  })
+
+  function toggleCard(id: string) {
+    setExpandedCards((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
+
+  const weekData = getWeekData(weekNumber)
+  const affirmation = getDailyAffirmation()
+  const birthFocus: BirthFocusCard = getBirthFocusForWeek(weekNumber)
+  const upcomingAppt = getUpcomingAppointment(weekNumber)
+  const featuredRead = getFeaturedReadForWeek(weekNumber)
+  const allReads: PregnancyRead[] = [
+    ...getReadsByCategory('birth_prep'),
+    ...getReadsByCategory('nutrition'),
+    ...getReadsByCategory('mental_health'),
+  ]
+
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+
+  const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: string; content: string[] }> = [
+    {
+      id: 'early_labor', emoji: '🌅', color: '#A2FF86', title: 'Early signs & latent labor',
+      content: [
+        'Cervix dilates from 0–6cm. Contractions are irregular and mild (5–30 min apart).',
+        'Stay home: rest, eat lightly, time contractions, keep busy.',
+        'Partner role: emotional support, back massage, prepare the hospital bag.',
+        'Most first labors: latent phase lasts 6–12 hours. Stay patient.',
+      ],
+    },
+    {
+      id: 'active_labor', emoji: '🌊', color: brand.pregnancy, title: 'Active labor',
+      content: [
+        'Cervix 6–10cm. Contractions every 3–5 min, lasting 60–90 sec, very intense.',
+        '5-1-1 rule: contractions every 5 min, lasting 1 min, for 1 hour → go to hospital.',
+        'Pain relief options: epidural, gas and air, water, hypnobirthing, movement.',
+        'Partner role: breathing cues, position changes, advocate with staff.',
+      ],
+    },
+    {
+      id: 'transition', emoji: '💫', color: '#FBBF24', title: 'Transition & pushing',
+      content: [
+        'Fully dilated (10cm). The hardest but shortest phase — usually 15–60 min.',
+        'Contractions are 2–3 min apart. Intense pressure, shaking, nausea are normal.',
+        'Pushing techniques: directed pushing vs. breathing down. Ask your midwife.',
+        'You can do this. Every contraction brings your baby closer.',
+      ],
+    },
+    {
+      id: 'birth', emoji: '👶', color: '#6AABF7', title: 'Birth & golden hour',
+      content: [
+        "Skin-to-skin immediately: regulates baby's temperature, heart rate, and breathing.",
+        'Delayed cord clamping (1–3 min): transfers 80–100mL of blood = important for iron.',
+        'First breastfeed in the golden hour: colostrum is liquid gold.',
+        'Placenta delivery: 5–30 min after birth. Active or physiological management.',
+      ],
+    },
+    {
+      id: 'postpartum', emoji: '🌸', color: '#FF8AD8', title: 'Recovery & postpartum',
+      content: [
+        'Lochia (postpartum bleeding): red 3–4 days, pink/brown 2 weeks, creamy to week 6.',
+        'Baby blues: days 3–5 as hormones crash. Normal. Postpartum depression: more than 2 weeks → seek help.',
+        '6-week checkup: uterus, stitches, mental health screen, contraception.',
+        'Rest, nourishment, and connection are the only priorities right now.',
+      ],
+    },
+  ]
+
+  const WARNING_SIGNS = [
+    'Water breaks before week 37',
+    'Heavy or unusual bleeding',
+    'Baby not moving for 2+ hours (week 28+)',
+    'Severe headache + vision changes',
+    'Fever above 38°C (100.4°F)',
+  ]
+
+  const renderToday = () => (
+    <>
+      <View style={[ci.greetingCard, { backgroundColor: brand.pregnancy + '12', borderColor: brand.pregnancy + '20' }]}>
+        <Text style={[ci.greetingDate, { color: colors.textMuted }]}>{today}</Text>
+        <Text style={[ci.greetingName, { color: colors.text }]}>Good morning, {parentName} 💜</Text>
+        <Text style={[ci.greetingWeek, { color: brand.pregnancy }]}>Week {weekNumber} · {weekData.babySize}</Text>
+      </View>
+
+      <CollapsibleCard
+        id="weekTip" emoji="💡" color="#FBBF24" title={`Week ${weekNumber} tip`}
+        expandedMap={expandedCards} onToggle={toggleCard}
+      >
+        <Text style={[ci.bodyText, { color: colors.textSecondary }]}>{weekData.momTip}</Text>
+      </CollapsibleCard>
+
+      <CollapsibleCard
+        id="birthFocus" emoji="💜" color={brand.pregnancy}
+        title={birthFocus.title} defaultOpen expandedMap={expandedCards} onToggle={toggleCard}
+      >
+        <Text style={[ci.bodyText, { color: colors.textSecondary }]}>{birthFocus.subtitle}</Text>
+        {birthFocus.bullets.map((b, i) => (
+          <Text key={i} style={[ci.bulletText, { color: colors.textSecondary }]}>
+            {b.icon} {b.text}
+          </Text>
+        ))}
+      </CollapsibleCard>
+
+      <CollapsibleCard
+        id="affirmation" emoji="✨" color="#FF8AD8" title="Today's affirmation"
+        expandedMap={expandedCards} onToggle={toggleCard}
+      >
+        <Text style={[ci.affirmationText, { color: colors.text }]}>"{affirmation}"</Text>
+      </CollapsibleCard>
+
+      {upcomingAppt && (
+        <CollapsibleCard
+          id="appointment" emoji="📅" color="#FBBF24" title={`Next: ${upcomingAppt.name}`}
+          expandedMap={expandedCards} onToggle={toggleCard}
+        >
+          <Text style={[ci.bodyText, { color: colors.textSecondary }]}>
+            {upcomingAppt.prepNote}
+          </Text>
+        </CollapsibleCard>
+      )}
+    </>
+  )
+
+  const renderBirthGuide = () => (
+    <>
+      <View style={[ci.warningCard, { borderColor: '#FF6B3540', backgroundColor: 'rgba(255,107,53,0.08)' }]}>
+        <Text style={[ci.warningTitle, { color: '#FF6B35' }]}>⚠️ Call your provider or go to hospital if:</Text>
+        {WARNING_SIGNS.map((sign, i) => (
+          <Text key={i} style={[ci.warningItem, { color: '#FF6B35' }]}>• {sign}</Text>
+        ))}
+      </View>
+
+      {BIRTH_STAGES.map((stage) => (
+        <CollapsibleCard
+          key={stage.id}
+          id={stage.id}
+          emoji={stage.emoji}
+          color={stage.color}
+          title={stage.title}
+          expandedMap={expandedCards}
+          onToggle={toggleCard}
+        >
+          {stage.content.map((line, i) => (
+            <Text key={i} style={[ci.bulletText, { color: colors.textSecondary }]}>• {line}</Text>
+          ))}
+        </CollapsibleCard>
+      ))}
+    </>
+  )
+
+  const renderReads = () => (
+    <>
+      {featuredRead && (
+        <View style={[ci.featuredCard, { backgroundColor: brand.pregnancy + '15', borderColor: brand.pregnancy + '30' }]}>
+          <Text style={[ci.featuredBadge, { color: brand.pregnancy }]}>FEATURED THIS WEEK</Text>
+          <Text style={[ci.featuredTitle, { color: colors.text }]}>{featuredRead.title}</Text>
+          <Text style={[ci.featuredSummary, { color: colors.textSecondary }]}>{featuredRead.teaser}</Text>
+          <Text style={[ci.featuredMins, { color: colors.textMuted }]}>{featuredRead.readMinutes} min read</Text>
+        </View>
+      )}
+      {allReads.map((read) => (
+        <CollapsibleCard
+          key={read.id}
+          id={`read_${read.id}`}
+          emoji={read.category === 'birth_prep' ? '🏥' : read.category === 'nutrition' ? '🥗' : read.category === 'mental_health' ? '🧠' : '📖'}
+          color={read.category === 'birth_prep' ? '#FBBF24' : read.category === 'nutrition' ? '#A2FF86' : brand.pregnancy}
+          title={read.title}
+          expandedMap={expandedCards}
+          onToggle={toggleCard}
+        >
+          <Text style={[ci.bodyText, { color: colors.textSecondary }]}>{read.teaser}</Text>
+          <Text style={[ci.readMins, { color: colors.textMuted }]}>{read.readMinutes} min read</Text>
+        </CollapsibleCard>
+      ))}
+    </>
+  )
+
+  return (
+    <View style={[ci.root, { backgroundColor: colors.bg }]}>
+      <View style={[ci.tabBar, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
+        {(['today', 'birth_guide', 'reads'] as PregnancyTab[]).map((t) => {
+          const label = t === 'today' ? 'Today' : t === 'birth_guide' ? 'Birth Guide' : 'Reads'
+          return (
+            <Pressable
+              key={t}
+              onPress={() => setPTab(t)}
+              style={[ci.tabBtn, pTab === t && { borderBottomWidth: 2, borderBottomColor: brand.pregnancy }]}
+            >
+              <Text style={[ci.tabLabel, { color: pTab === t ? brand.pregnancy : colors.textMuted }]}>
+                {label}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
+
+      <ScrollView
+        contentContainerStyle={[ci.scroll, { paddingBottom: insets.bottom + 80 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {pTab === 'today' && renderToday()}
+        {pTab === 'birth_guide' && renderBirthGuide()}
+        {pTab === 'reads' && renderReads()}
+      </ScrollView>
+
+      <Pressable
+        onPress={() => router.push('/grandma-talk')}
+        style={[ci.askBar, { backgroundColor: brand.pregnancy, bottom: insets.bottom + 8 }]}
+      >
+        <Text style={ci.askBarEmoji}>👵</Text>
+        <Text style={ci.askBarText}>Ask Grandma anything</Text>
+        <ChevronRight size={18} color="#fff" strokeWidth={2.5} />
+      </Pressable>
+    </View>
+  )
+}
+
+// ─── Pregnancy Insights Styles ────────────────────────────────────────────────
+
+const ci = StyleSheet.create({
+  root: { flex: 1 },
+  tabBar: { flexDirection: 'row', paddingHorizontal: 16, borderBottomWidth: 1 },
+  tabBtn: { flex: 1, paddingVertical: 12, alignItems: 'center' },
+  tabLabel: { fontSize: 12, fontFamily: 'Satoshi-Variable', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  scroll: { padding: 16, gap: 0 },
+
+  greetingCard: { borderRadius: 20, padding: 20, marginBottom: 12, borderWidth: 1 },
+  greetingDate: { fontSize: 12, fontFamily: 'Satoshi-Variable', marginBottom: 4 },
+  greetingName: { fontSize: 20, fontFamily: 'CabinetGrotesk-Black', marginBottom: 4 },
+  greetingWeek: { fontSize: 14, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+
+  card: { borderRadius: 20, marginBottom: 12, borderWidth: 1, overflow: 'hidden' },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
+  cardEmoji: { fontSize: 22 },
+  cardTitle: { fontSize: 15, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  cardChevron: { fontSize: 12 },
+  cardBody: { padding: 16, paddingTop: 12, borderTopWidth: 1, gap: 8 },
+
+  bodyText: { fontSize: 14, fontFamily: 'Satoshi-Variable', lineHeight: 20 },
+  bulletText: { fontSize: 13, fontFamily: 'Satoshi-Variable', lineHeight: 20, paddingLeft: 4 },
+  affirmationText: { fontSize: 16, fontFamily: 'Satoshi-Variable', fontStyle: 'italic', lineHeight: 24, fontWeight: '500' },
+
+  askCta: { marginTop: 12, paddingVertical: 10, borderRadius: 999, borderWidth: 1, alignItems: 'center' },
+  askCtaText: { fontSize: 13, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+
+  warningCard: { borderRadius: 20, padding: 16, marginBottom: 12, borderWidth: 1 },
+  warningTitle: { fontSize: 14, fontFamily: 'Satoshi-Variable', fontWeight: '700', marginBottom: 8 },
+  warningItem: { fontSize: 13, fontFamily: 'Satoshi-Variable', lineHeight: 20 },
+
+  featuredCard: { borderRadius: 20, padding: 20, marginBottom: 12, borderWidth: 1 },
+  featuredBadge: { fontSize: 10, fontFamily: 'Satoshi-Variable', fontWeight: '700', letterSpacing: 1, marginBottom: 8 },
+  featuredTitle: { fontSize: 17, fontFamily: 'CabinetGrotesk-Black', marginBottom: 8 },
+  featuredSummary: { fontSize: 14, fontFamily: 'Satoshi-Variable', lineHeight: 20 },
+  featuredMins: { fontSize: 12, fontFamily: 'Satoshi-Variable', marginTop: 6 },
+  readMins: { fontSize: 11, fontFamily: 'Satoshi-Variable', marginTop: 6 },
+
+  askBar: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', alignItems: 'center', borderRadius: 999, paddingVertical: 14, paddingHorizontal: 20, gap: 10 },
+  askBarEmoji: { fontSize: 20 },
+  askBarText: { flex: 1, fontSize: 15, fontFamily: 'Satoshi-Variable', fontWeight: '700', color: '#fff' },
+})
+
 // ─── Main Screen ──────────────────────────────────────────────────────────
 
 export function InsightsScreen() {
@@ -585,6 +908,8 @@ export function InsightsScreen() {
 
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   const greeting = parentName ? `Hello, ${parentName}` : 'Hello, Parent'
+
+  if (mode === 'pregnancy') return <PregnancyInsightsContent />
 
   return (
     <View style={[s.root, { backgroundColor: colors.bg }]}>
