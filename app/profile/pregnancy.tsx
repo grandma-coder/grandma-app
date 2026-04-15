@@ -45,6 +45,7 @@ interface BirthPreferences {
   atmosphere?: string
   cordCutting?: string
   feedingPlan?: string
+  breastfeedingGoal?: string
   lactationBooked?: boolean
   pumpOrdered?: boolean
   durationGoal?: string
@@ -129,7 +130,7 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
               onPress={() => { onSave(text); onClose() }}
               style={[styles.editBtn, { backgroundColor: brand.pregnancy }]}
             >
-              <Text style={[styles.editBtnText, { color: '#fff' }]}>Save</Text>
+              <Text style={[styles.editBtnText, { color: colors.text }]}>Save</Text>
             </Pressable>
           </View>
         </View>
@@ -199,6 +200,7 @@ export default function PregnancyProfileScreen() {
     lastScanWeek: '',
     position: 'unknown',
   })
+  const [childId, setChildId] = useState<string | null>(null)
 
   const [postpartumDone, setPostpartumDone] = useState<Record<string, boolean>>({})
   const [nestingDone, setNestingDone] = useState<Record<string, boolean>>({})
@@ -236,13 +238,14 @@ export default function PregnancyProfileScreen() {
 
         const { data: childRow } = await supabase
           .from('children')
-          .select('name, baby_position')
+          .select('id, name, baby_position')
           .eq('user_id', session.user.id)
           .order('created_at', { ascending: true })
           .limit(1)
           .maybeSingle()
 
         if (childRow) {
+          setChildId(childRow.id as string)
           setBaby((prev) => ({
             ...prev,
             name: (childRow.name as string | null) ?? babyNameStore,
@@ -295,6 +298,7 @@ export default function PregnancyProfileScreen() {
   }
 
   async function saveBabyField(field: string, value: string) {
+    if (!childId) return
     setSaving(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -302,12 +306,10 @@ export default function PregnancyProfileScreen() {
       const { error } = await supabase
         .from('children')
         .update({ [field]: value })
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: true })
-        .limit(1)
+        .eq('id', childId)
       if (error) throw error
-    } catch {
-      // silent
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
     } finally {
       setSaving(false)
     }
@@ -547,7 +549,7 @@ export default function PregnancyProfileScreen() {
                   },
                 ]}
               >
-                {postpartumDone[item] && <Check size={12} color="#1A1030" strokeWidth={3} />}
+                {postpartumDone[item] && <Check size={12} color={colors.bg} strokeWidth={3} />}
               </View>
               <Text
                 style={[
@@ -568,10 +570,10 @@ export default function PregnancyProfileScreen() {
         <SectionCard title="Breastfeeding Plan">
           <InfoRow
             label="Feeding intention"
-            value={bp.feedingPlan ?? ''}
+            value={bp.breastfeedingGoal ?? ''}
             onEdit={() => setEditField({
-              label: 'Feeding intention', value: bp.feedingPlan ?? '',
-              onSave: (v) => void saveBirthPreferences({ feedingPlan: v }),
+              label: 'Feeding intention', value: bp.breastfeedingGoal ?? '',
+              onSave: (v) => void saveBirthPreferences({ breastfeedingGoal: v }),
             })}
           />
           <InfoRow
@@ -611,7 +613,7 @@ export default function PregnancyProfileScreen() {
                   },
                 ]}
               >
-                {nestingDone[item] && <Check size={12} color="#1A1030" strokeWidth={3} />}
+                {nestingDone[item] && <Check size={12} color={colors.bg} strokeWidth={3} />}
               </View>
               <Text
                 style={[
