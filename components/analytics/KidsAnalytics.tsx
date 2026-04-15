@@ -79,6 +79,7 @@ import { runWellnessNotifications } from '../../lib/notificationEngine'
 import { ChildPill, CHILD_COLORS, formatChildAge as sharedFormatChildAge } from '../ui/ChildPills'
 
 const SCREEN_W = Dimensions.get('window').width
+const SCREEN_H = Dimensions.get('window').height
 
 // ─── Pillar Config ─────────────────────────────────────────────────────────
 
@@ -429,7 +430,7 @@ export function KidsAnalytics() {
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
@@ -665,7 +666,11 @@ function ScoreInfoModal({
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ maxHeight: SCREEN_H * 0.62 }}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+          >
             {scores && (
               <View style={[styles.scoreHighlight, { backgroundColor: colors.primaryTint, borderRadius: radius.xl, borderColor: colors.primary + '30' }]}>
                 <Text style={[styles.scoreHighlightNum, { color: scoreColor(scores.overall) }]}>
@@ -1336,13 +1341,16 @@ function PillarDetailModal({
   const Icon = config.icon
   const score = analytics.scores[pillarKey]
 
+  const sheetH = SCREEN_H * 0.87
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable
-          style={[styles.modalSheet, { backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingBottom: insets.bottom + 20 }]}
-          onPress={() => {}}
-        >
+      <View style={styles.modalOverlay}>
+        {/* Backdrop tap closes modal */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+
+        {/* Sheet — fixed height so ScrollView flex:1 works */}
+        <View style={[styles.modalSheet, { height: sheetH, backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32 }]}>
           {/* Handle bar */}
           <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
@@ -1368,8 +1376,12 @@ function PillarDetailModal({
             </Pressable>
           </View>
 
-          {/* Content */}
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, gap: 16 }}>
+          {/* Scrollable content — flex:1 fills the remaining sheet height */}
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 24, gap: 16 }}
+          >
             <PillarDetail
               pillarKey={pillarKey}
               analytics={analytics}
@@ -1379,8 +1391,8 @@ function PillarDetailModal({
               ageMonths={ageMonths}
             />
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   )
 }
@@ -1472,13 +1484,14 @@ function ActivityModal({
         { rank: 4, label: 'Structured learning', pct: 15, emoji: '📚', tip: 'Reading, puzzles, educational activities' },
       ]
 
+  const sheetH = SCREEN_H * 0.75
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable
-          style={[styles.modalSheet, { backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingBottom: insets.bottom + 20 }]}
-          onPress={() => {}}
-        >
+      <View style={styles.modalOverlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+
+        <View style={[styles.modalSheet, { height: sheetH, backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32 }]}>
           <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
           </View>
@@ -1500,7 +1513,11 @@ function ActivityModal({
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, gap: 12 }}>
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 20, gap: 12 }}
+          >
             {activities.map((item) => (
               <View
                 key={item.rank}
@@ -1512,7 +1529,6 @@ function ActivityModal({
                     <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{item.label}</Text>
                     <Text style={{ color: ACTIVITY_COLOR, fontSize: 18, fontWeight: '900' }}>{item.pct}%</Text>
                   </View>
-                  {/* Progress bar */}
                   <View style={{ height: 6, borderRadius: 3, backgroundColor: ACTIVITY_COLOR + '15', overflow: 'hidden' }}>
                     <View style={{ width: `${item.pct}%`, height: '100%', backgroundColor: ACTIVITY_COLOR + 'CC', borderRadius: 3 }} />
                   </View>
@@ -1521,7 +1537,7 @@ function ActivityModal({
               </View>
             ))}
 
-            <View style={{ backgroundColor: ACTIVITY_COLOR + '10', borderRadius: radius.xl, padding: 16, borderWidth: 1, borderColor: ACTIVITY_COLOR + '25', marginTop: 4 }}>
+            <View style={{ backgroundColor: ACTIVITY_COLOR + '10', borderRadius: radius.xl, padding: 16, borderWidth: 1, borderColor: ACTIVITY_COLOR + '25' }}>
               <Text style={{ color: ACTIVITY_COLOR, fontSize: 13, fontWeight: '700' }}>
                 {ageMonths < 12
                   ? '📋 Aim for 20–30 min tummy time daily, spread across sessions.'
@@ -1531,8 +1547,8 @@ function ActivityModal({
               </Text>
             </View>
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   )
 }
@@ -2679,7 +2695,7 @@ const styles = StyleSheet.create({
 
   // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modalSheet: { maxHeight: '90%', marginHorizontal: 0 },
+  modalSheet: { marginHorizontal: 0 },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12 },
   modalTitle: { fontSize: 20, fontWeight: '800' },
   modalClose: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
