@@ -91,8 +91,7 @@ import { ChildPill, CHILD_COLORS, formatChildAge as sharedFormatChildAge } from 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
 
-const AnimatedPath   = Animated.createAnimatedComponent(Path)
-const AnimatedCircle = Animated.createAnimatedComponent(Circle)
+const AnimatedPath = Animated.createAnimatedComponent(Path)
 
 // ─── Radar Chart — module-level geometry (SCREEN_W is constant) ────────────
 const RADAR_SIZE  = SCREEN_W - 64
@@ -886,14 +885,15 @@ function WellnessScoreArc({
     return { d: d + 'Z' }
   })
 
-  // Animated dot positions — explicit per-axis (hooks rules)
-  const dot0 = useAnimatedProps(() => { const a = -90*(Math.PI/180); const r = p0.value*RADAR_R*radarWobble(0,breathe.value); return { cx: RADAR_CX+r*Math.cos(a), cy: RADAR_CY+r*Math.sin(a) } })
-  const dot1 = useAnimatedProps(() => { const a = -30*(Math.PI/180); const r = p1.value*RADAR_R*radarWobble(1,breathe.value); return { cx: RADAR_CX+r*Math.cos(a), cy: RADAR_CY+r*Math.sin(a) } })
-  const dot2 = useAnimatedProps(() => { const a =  30*(Math.PI/180); const r = p2.value*RADAR_R*radarWobble(2,breathe.value); return { cx: RADAR_CX+r*Math.cos(a), cy: RADAR_CY+r*Math.sin(a) } })
-  const dot3 = useAnimatedProps(() => { const a =  90*(Math.PI/180); const r = p3.value*RADAR_R*radarWobble(3,breathe.value); return { cx: RADAR_CX+r*Math.cos(a), cy: RADAR_CY+r*Math.sin(a) } })
-  const dot4 = useAnimatedProps(() => { const a = 150*(Math.PI/180); const r = p4.value*RADAR_R*radarWobble(4,breathe.value); return { cx: RADAR_CX+r*Math.cos(a), cy: RADAR_CY+r*Math.sin(a) } })
-  const dot5 = useAnimatedProps(() => { const a = 210*(Math.PI/180); const r = p5.value*RADAR_R*radarWobble(5,breathe.value); return { cx: RADAR_CX+r*Math.cos(a), cy: RADAR_CY+r*Math.sin(a) } })
-  const dotProps = [dot0, dot1, dot2, dot3, dot4, dot5]
+  // Animated icon positions — explicit per-axis (hooks rules)
+  const ICON_HALF = 12  // half the icon container size
+  const is0 = useAnimatedStyle(() => { const a = -90*(Math.PI/180); const r = p0.value*RADAR_R*radarWobble(0,breathe.value); return { left: RADAR_CX+r*Math.cos(a)-ICON_HALF, top: RADAR_CY+r*Math.sin(a)-ICON_HALF } })
+  const is1 = useAnimatedStyle(() => { const a = -30*(Math.PI/180); const r = p1.value*RADAR_R*radarWobble(1,breathe.value); return { left: RADAR_CX+r*Math.cos(a)-ICON_HALF, top: RADAR_CY+r*Math.sin(a)-ICON_HALF } })
+  const is2 = useAnimatedStyle(() => { const a =  30*(Math.PI/180); const r = p2.value*RADAR_R*radarWobble(2,breathe.value); return { left: RADAR_CX+r*Math.cos(a)-ICON_HALF, top: RADAR_CY+r*Math.sin(a)-ICON_HALF } })
+  const is3 = useAnimatedStyle(() => { const a =  90*(Math.PI/180); const r = p3.value*RADAR_R*radarWobble(3,breathe.value); return { left: RADAR_CX+r*Math.cos(a)-ICON_HALF, top: RADAR_CY+r*Math.sin(a)-ICON_HALF } })
+  const is4 = useAnimatedStyle(() => { const a = 150*(Math.PI/180); const r = p4.value*RADAR_R*radarWobble(4,breathe.value); return { left: RADAR_CX+r*Math.cos(a)-ICON_HALF, top: RADAR_CY+r*Math.sin(a)-ICON_HALF } })
+  const is5 = useAnimatedStyle(() => { const a = 210*(Math.PI/180); const r = p5.value*RADAR_R*radarWobble(5,breathe.value); return { left: RADAR_CX+r*Math.cos(a)-ICON_HALF, top: RADAR_CY+r*Math.sin(a)-ICON_HALF } })
+  const iconStyles = [is0, is1, is2, is3, is4, is5]
 
   const scoreAnimStyle = useAnimatedStyle(() => ({
     opacity: scoreOpacity.value,
@@ -988,22 +988,31 @@ function WellnessScoreArc({
             strokeWidth={2.5}
             strokeLinejoin="round"
           />
-          {/* Colored dots at each vertex */}
-          {PILLAR_ORDER.map((key, i) => {
-            const hasData = scores[key].hasData
-            return (
-              <AnimatedCircle
-                key={key}
-                r={hasData ? 7 : 3}
-                fill={hasData ? PILLAR_CONFIG[key].color : colors.textMuted}
-                stroke={hasData ? '#0E0B1A' : 'none'}
-                strokeWidth={hasData ? 2.5 : 0}
-                opacity={!hasData ? 0.25 : activePillar !== null && activePillar !== key ? 0.35 : 1}
-                animatedProps={dotProps[i]}
-              />
-            )
-          })}
         </Svg>
+
+        {/* Pillar icons at each vertex */}
+        {PILLAR_ORDER.map((key, i) => {
+          const Icon = PILLAR_CONFIG[key].icon
+          const color = PILLAR_CONFIG[key].color
+          const hasData = scores[key].hasData
+          return (
+            <Animated.View
+              key={key}
+              style={[{
+                position: 'absolute',
+                width: ICON_HALF * 2,
+                height: ICON_HALF * 2,
+                borderRadius: ICON_HALF,
+                backgroundColor: color + '25',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: !hasData ? 0.3 : activePillar !== null && activePillar !== key ? 0.35 : 1,
+              }, iconStyles[i]]}
+            >
+              <Icon size={13} color={color} strokeWidth={2.5} />
+            </Animated.View>
+          )
+        })}
 
         {/* Axis labels — positioned absolutely */}
         {PILLAR_ORDER.map((key, i) => {
