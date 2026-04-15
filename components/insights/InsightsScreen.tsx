@@ -22,7 +22,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, THEME_COLORS } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -487,6 +487,63 @@ function CollapsibleCard({
   )
 }
 
+// Static data hoisted outside component to avoid re-creation on every render
+const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: string; content: string[] }> = [
+  {
+    id: 'early_labor', emoji: '🌅', color: '#A2FF86', title: 'Early signs & latent labor',
+    content: [
+      'Cervix dilates from 0–6cm. Contractions are irregular and mild (5–30 min apart).',
+      'Stay home: rest, eat lightly, time contractions, keep busy.',
+      'Partner role: emotional support, back massage, prepare the hospital bag.',
+      'Most first labors: latent phase lasts 6–12 hours. Stay patient.',
+    ],
+  },
+  {
+    id: 'active_labor', emoji: '🌊', color: '#B983FF', title: 'Active labor',
+    content: [
+      'Cervix 6–10cm. Contractions every 3–5 min, lasting 60–90 sec, very intense.',
+      '5-1-1 rule: contractions every 5 min, lasting 1 min, for 1 hour → go to hospital.',
+      'Pain relief options: epidural, gas and air, water, hypnobirthing, movement.',
+      'Partner role: breathing cues, position changes, advocate with staff.',
+    ],
+  },
+  {
+    id: 'transition', emoji: '💫', color: '#FBBF24', title: 'Transition & pushing',
+    content: [
+      'Fully dilated (10cm). The hardest but shortest phase — usually 15–60 min.',
+      'Contractions are 2–3 min apart. Intense pressure, shaking, nausea are normal.',
+      'Pushing techniques: directed pushing vs. breathing down. Ask your midwife.',
+      'You can do this. Every contraction brings your baby closer.',
+    ],
+  },
+  {
+    id: 'birth', emoji: '👶', color: '#6AABF7', title: 'Birth & golden hour',
+    content: [
+      "Skin-to-skin immediately: regulates baby's temperature, heart rate, and breathing.",
+      'Delayed cord clamping (1–3 min): transfers 80–100mL of blood = important for iron.',
+      'First breastfeed in the golden hour: colostrum is liquid gold.',
+      'Placenta delivery: 5–30 min after birth. Active or physiological management.',
+    ],
+  },
+  {
+    id: 'postpartum', emoji: '🌸', color: '#FF8AD8', title: 'Recovery & postpartum',
+    content: [
+      'Lochia (postpartum bleeding): red 3–4 days, pink/brown 2 weeks, creamy to week 6.',
+      'Baby blues: days 3–5 as hormones crash. Normal. Postpartum depression: more than 2 weeks → seek help.',
+      '6-week checkup: uterus, stitches, mental health screen, contraception.',
+      'Rest, nourishment, and connection are the only priorities right now.',
+    ],
+  },
+]
+
+const WARNING_SIGNS = [
+  'Water breaks before week 37',
+  'Heavy or unusual bleeding',
+  'Baby not moving for 2+ hours (week 28+)',
+  'Severe headache + vision changes',
+  'Fever above 38°C (100.4°F)',
+]
+
 function PregnancyInsightsContent() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
@@ -514,62 +571,6 @@ function PregnancyInsightsContent() {
   ]
 
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-
-  const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: string; content: string[] }> = [
-    {
-      id: 'early_labor', emoji: '🌅', color: '#A2FF86', title: 'Early signs & latent labor',
-      content: [
-        'Cervix dilates from 0–6cm. Contractions are irregular and mild (5–30 min apart).',
-        'Stay home: rest, eat lightly, time contractions, keep busy.',
-        'Partner role: emotional support, back massage, prepare the hospital bag.',
-        'Most first labors: latent phase lasts 6–12 hours. Stay patient.',
-      ],
-    },
-    {
-      id: 'active_labor', emoji: '🌊', color: brand.pregnancy, title: 'Active labor',
-      content: [
-        'Cervix 6–10cm. Contractions every 3–5 min, lasting 60–90 sec, very intense.',
-        '5-1-1 rule: contractions every 5 min, lasting 1 min, for 1 hour → go to hospital.',
-        'Pain relief options: epidural, gas and air, water, hypnobirthing, movement.',
-        'Partner role: breathing cues, position changes, advocate with staff.',
-      ],
-    },
-    {
-      id: 'transition', emoji: '💫', color: '#FBBF24', title: 'Transition & pushing',
-      content: [
-        'Fully dilated (10cm). The hardest but shortest phase — usually 15–60 min.',
-        'Contractions are 2–3 min apart. Intense pressure, shaking, nausea are normal.',
-        'Pushing techniques: directed pushing vs. breathing down. Ask your midwife.',
-        'You can do this. Every contraction brings your baby closer.',
-      ],
-    },
-    {
-      id: 'birth', emoji: '👶', color: '#6AABF7', title: 'Birth & golden hour',
-      content: [
-        "Skin-to-skin immediately: regulates baby's temperature, heart rate, and breathing.",
-        'Delayed cord clamping (1–3 min): transfers 80–100mL of blood = important for iron.',
-        'First breastfeed in the golden hour: colostrum is liquid gold.',
-        'Placenta delivery: 5–30 min after birth. Active or physiological management.',
-      ],
-    },
-    {
-      id: 'postpartum', emoji: '🌸', color: '#FF8AD8', title: 'Recovery & postpartum',
-      content: [
-        'Lochia (postpartum bleeding): red 3–4 days, pink/brown 2 weeks, creamy to week 6.',
-        'Baby blues: days 3–5 as hormones crash. Normal. Postpartum depression: more than 2 weeks → seek help.',
-        '6-week checkup: uterus, stitches, mental health screen, contraception.',
-        'Rest, nourishment, and connection are the only priorities right now.',
-      ],
-    },
-  ]
-
-  const WARNING_SIGNS = [
-    'Water breaks before week 37',
-    'Heavy or unusual bleeding',
-    'Baby not moving for 2+ hours (week 28+)',
-    'Severe headache + vision changes',
-    'Fever above 38°C (100.4°F)',
-  ]
 
   const renderToday = () => (
     <>
@@ -620,10 +621,10 @@ function PregnancyInsightsContent() {
 
   const renderBirthGuide = () => (
     <>
-      <View style={[ci.warningCard, { borderColor: '#FF6B3540', backgroundColor: 'rgba(255,107,53,0.08)' }]}>
-        <Text style={[ci.warningTitle, { color: '#FF6B35' }]}>⚠️ Call your provider or go to hospital if:</Text>
+      <View style={[ci.warningCard, { borderColor: THEME_COLORS.orange + '40', backgroundColor: THEME_COLORS.orange + '14' }]}>
+        <Text style={[ci.warningTitle, { color: THEME_COLORS.orange }]}>⚠️ Call your provider or go to hospital if:</Text>
         {WARNING_SIGNS.map((sign, i) => (
-          <Text key={i} style={[ci.warningItem, { color: '#FF6B35' }]}>• {sign}</Text>
+          <Text key={i} style={[ci.warningItem, { color: THEME_COLORS.orange }]}>• {sign}</Text>
         ))}
       </View>
 
@@ -705,8 +706,8 @@ function PregnancyInsightsContent() {
         style={[ci.askBar, { backgroundColor: brand.pregnancy, bottom: insets.bottom + 8 }]}
       >
         <Text style={ci.askBarEmoji}>👵</Text>
-        <Text style={ci.askBarText}>Ask Grandma anything</Text>
-        <ChevronRight size={18} color="#fff" strokeWidth={2.5} />
+        <Text style={[ci.askBarText, { color: '#FFFFFF' }]}>Ask Grandma anything</Text>
+        <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
       </Pressable>
     </View>
   )
@@ -753,7 +754,7 @@ const ci = StyleSheet.create({
 
   askBar: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', alignItems: 'center', borderRadius: 999, paddingVertical: 14, paddingHorizontal: 20, gap: 10 },
   askBarEmoji: { fontSize: 20 },
-  askBarText: { flex: 1, fontSize: 15, fontFamily: 'Satoshi-Variable', fontWeight: '700', color: '#fff' },
+  askBarText: { flex: 1, fontSize: 15, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
 })
 
 // ─── Main Screen ──────────────────────────────────────────────────────────
