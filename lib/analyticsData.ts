@@ -237,7 +237,7 @@ function buildMoodData(logs: ChildLog[], dates: string[], labels: string[]): Moo
     const mood = (typeof log.value === 'string' ? log.value : parseValue(log.value)) as string
     if (!mood || typeof mood !== 'string') continue
 
-    const moodKey = mood.toLowerCase()
+    const moodKey = mood.toLowerCase().trim().replace(/['"]/g, '')
     moodTotals[moodKey] = (moodTotals[moodKey] || 0) + 1
 
     const dayIdx = dates.indexOf(log.date)
@@ -428,7 +428,25 @@ function scoreMood(data: MoodData): PillarScore {
   const raw = Math.min(weightedSum / totalMoods, 10)
   const value = Math.round(raw * 10) / 10
 
-  return { value, label: scoreLabel(value), trend: 0, hasData: true }
+  // Trend: compare first half vs second half of week using daily counts
+  const moodKeys = Object.keys(data.dailyCounts)
+  let firstHalfScore = 0, firstHalfCount = 0
+  let secondHalfScore = 0, secondHalfCount = 0
+  for (const mood of moodKeys) {
+    const weight = moodWeights[mood] || 5
+    const days = data.dailyCounts[mood]
+    for (let i = 0; i < days.length; i++) {
+      const count = days[i]
+      if (count === 0) continue
+      if (i < 3) { firstHalfScore += weight * count; firstHalfCount += count }
+      else if (i > 3) { secondHalfScore += weight * count; secondHalfCount += count }
+    }
+  }
+  const firstAvg = firstHalfCount > 0 ? firstHalfScore / firstHalfCount : 0
+  const secondAvg = secondHalfCount > 0 ? secondHalfScore / secondHalfCount : 0
+  const trend = firstAvg > 0 ? Math.round(((secondAvg - firstAvg) / firstAvg) * 100) : 0
+
+  return { value, label: scoreLabel(value), trend, hasData: true }
 }
 
 function buildRoutineComplianceData(logs: ChildLog[], dates: string[], labels: string[]): RoutineComplianceData {

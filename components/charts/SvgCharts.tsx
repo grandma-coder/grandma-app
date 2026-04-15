@@ -33,7 +33,7 @@ function formatNum(v: number): string {
 }
 
 /** Build a smooth cubic bezier SVG path through points */
-function smoothPath(pts: { x: number; y: number }[]): string {
+export function smoothPath(pts: { x: number; y: number }[]): string {
   if (pts.length < 2) return ''
   let d = `M ${pts[0].x} ${pts[0].y}`
   for (let i = 0; i < pts.length - 1; i++) {
