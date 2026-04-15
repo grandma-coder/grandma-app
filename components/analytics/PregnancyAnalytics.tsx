@@ -311,8 +311,9 @@ export function PregnancyAnalytics() {
     : []
   const nutritionRowLabels = ['Iron', 'Folic', 'Protein', 'Calcium']
 
-  // Wellbeing values are 0-10, scale to 0-100 for ScoreCircle / DimensionBar
-  const wellbeingOverall = wellbeing ? Math.round(wellbeing.overall * 10) : 0
+  // Wellbeing: overall is already 0-100 (hook returns Math.round(avg * 10))
+  // sleep/mood/nutrition/exercise/hydration are 0-10 — multiply by 10 for display
+  const wellbeingOverall = wellbeing ? wellbeing.overall : 0
   const wellbeingSleep = wellbeing ? Math.round(wellbeing.sleep * 10) : 0
   const wellbeingMood = wellbeing ? Math.round(wellbeing.mood * 10) : 0
   const wellbeingNutrition = wellbeing ? Math.round(wellbeing.nutrition * 10) : 0
@@ -321,11 +322,11 @@ export function PregnancyAnalytics() {
   const wellbeingDelta = wellbeing ? Math.abs(wellbeing.delta * 10) : 0
   const wellbeingTrend = wellbeing && wellbeing.delta >= 0 ? '↑' : '↓'
 
-  // Trimester color
+  // Trimester color — brand.trimester doesn't exist in theme, use direct hex values
   const trimesterColor =
-    trimester === 1 ? brand.trimester.first :
-    trimester === 2 ? brand.trimester.second :
-    brand.trimester.third
+    trimester === 1 ? '#A2FF86' :
+    trimester === 2 ? brand.pregnancy :
+    '#FBBF24'
 
   // Birth prep checklist (static — represents common tasks)
   const birthPlanItems = [
@@ -452,7 +453,7 @@ export function PregnancyAnalytics() {
                   <LineChart
                     data={moodValues}
                     labels={moodLabels}
-                    color="#B983FF"
+                    color={brand.pregnancy}
                     width={chartW}
                     height={140}
                   />
@@ -609,7 +610,7 @@ export function PregnancyAnalytics() {
               ) : (
                 <>
                   <DimensionBar label="Sleep" value={wellbeingSleep} color={brand.pregnancy} />
-                  <DimensionBar label="Mood" value={wellbeingMood} color="#B983FF" />
+                  <DimensionBar label="Mood" value={wellbeingMood} color={brand.pregnancy} />
                   <DimensionBar label="Nutrition" value={wellbeingNutrition} color="#A2FF86" />
                   <DimensionBar label="Hydration" value={wellbeingHydration} color="#6AABF7" />
                   <DimensionBar label="Exercise" value={wellbeingExercise} color="#FBBF24" />
