@@ -1222,7 +1222,7 @@ function HealthTipsSection({
         <Text style={[styles.tipsSectionSub, { color: colors.textMuted }]}>Personalized for {childName} today</Text>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tipsScroll}>
+      <View style={styles.tipsGrid}>
         {tips.map((tip, i) => {
           const Icon = tip.icon
           return (
@@ -1231,23 +1231,25 @@ function HealthTipsSection({
               onPress={() => onTipPress(tip)}
               style={({ pressed }) => [
                 styles.tipCard,
-                { backgroundColor: tip.color + '10', borderRadius: radius.xl, borderWidth: 1, borderColor: tip.color + '20' },
+                { backgroundColor: tip.color + '10', borderRadius: radius.lg, borderWidth: 1, borderColor: tip.color + '20' },
                 pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] },
               ]}
             >
-              <View style={[styles.tipIconWrap, { backgroundColor: tip.color + '20' }]}>
-                <Icon size={18} color={tip.color} strokeWidth={2} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={[styles.tipIconWrap, { backgroundColor: tip.color + '20' }]}>
+                  <Icon size={14} color={tip.color} strokeWidth={2} />
+                </View>
+                <Text style={[styles.tipTitle, { color: colors.text, flex: 1 }]} numberOfLines={2}>{tip.title}</Text>
               </View>
-              <Text style={[styles.tipTitle, { color: colors.text }]} numberOfLines={2}>{tip.title}</Text>
-              <Text style={[styles.tipBody, { color: colors.textSecondary }]} numberOfLines={3}>{tip.body}</Text>
+              <Text style={[styles.tipBody, { color: colors.textSecondary }]} numberOfLines={2}>{tip.body}</Text>
               <View style={styles.tipTapHint}>
-                <ChevronRight size={11} color={tip.color} strokeWidth={2.5} />
+                <ChevronRight size={10} color={tip.color} strokeWidth={2.5} />
                 <Text style={[styles.tipTapText, { color: tip.color }]}>Tap for details</Text>
               </View>
             </Pressable>
           )
         })}
-      </ScrollView>
+      </View>
 
       <Pressable
         onPress={handleAskGrandma}
@@ -2715,13 +2717,13 @@ const styles = StyleSheet.create({
   tipsSectionHeader: { gap: 3 },
   tipsSectionTitle: { fontSize: 12, fontWeight: '900', letterSpacing: 2 },
   tipsSectionSub: { fontSize: 13, fontWeight: '500' },
-  tipsScroll: { gap: 10, paddingRight: 16 },
-  tipCard: { width: 180, padding: 14, gap: 10 },
-  tipIconWrap: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  tipTitle: { fontSize: 14, fontWeight: '800', lineHeight: 20 },
-  tipBody: { fontSize: 12, fontWeight: '500', lineHeight: 17 },
-  tipTapHint: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 },
-  tipTapText: { fontSize: 11, fontWeight: '600' },
+  tipsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tipCard: { width: (SCREEN_W - 40 - 8) / 2, padding: 12, gap: 8 },
+  tipIconWrap: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  tipTitle: { fontSize: 13, fontWeight: '800', lineHeight: 18 },
+  tipBody: { fontSize: 11, fontWeight: '500', lineHeight: 15 },
+  tipTapHint: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 1 },
+  tipTapText: { fontSize: 10, fontWeight: '600' },
   askButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, marginTop: 2 },
   askButtonText: { fontSize: 15, fontWeight: '700' },
 
