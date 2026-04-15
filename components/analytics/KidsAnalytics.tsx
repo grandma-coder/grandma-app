@@ -47,9 +47,6 @@ import Svg, {
   G,
   Text as SvgText,
 } from 'react-native-svg'
-
-const AnimatedCircle = Animated.createAnimatedComponent(Circle)
-
 import {
   MessageCircle,
   ChevronRight,
@@ -92,6 +89,8 @@ import { ChildPill, CHILD_COLORS, formatChildAge as sharedFormatChildAge } from 
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
 // ─── Pillar Config ─────────────────────────────────────────────────────────
 
