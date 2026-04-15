@@ -1,11 +1,13 @@
 /**
- * Pregnancy Log Forms — 5 bottom sheet forms for pregnancy tracking.
+ * Pregnancy Log Forms — 15 log forms for pregnancy tracking.
  *
  * Each form saves to Supabase pregnancy_logs table.
- * Forms: Mood, Symptoms, Appointment, ExamResult, KickCount
+ * Forms: Mood, Symptoms, Appointment, ExamResult, KickCount,
+ *        Sleep, Exercise, Nutrition, Kegel, Water, Vitamins,
+ *        NestingTask, BirthPrepTask, ContractionTimer, Weight
  */
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import {
   View,
   Text,
@@ -382,7 +384,7 @@ export function ExamResultForm({
     try {
       await savePregnancyLog(
         date,
-        'blood_pressure',
+        'exam_result',
         title,
         JSON.stringify({ result: result || undefined, notes: notes || undefined })
       )
@@ -482,8 +484,6 @@ export function KickCountForm({
       setSaving(false)
     }
   }
-
-  const elapsedMin = Math.floor((Date.now() - startTime) / 60000)
 
   return (
     <View style={styles.form}>
