@@ -896,7 +896,8 @@ function WellnessScoreArc({
     scoreOpacity.value = 0
 
     const spring = { damping: 14, stiffness: 90, mass: 0.8 }
-    const targets = PILLAR_ORDER.map((key) => scores[key].hasData ? scores[key].value / 10 : 0)
+    // No-data axes get a small minimum so the polygon doesn't collapse to center
+    const targets = PILLAR_ORDER.map((key) => scores[key].hasData ? scores[key].value / 10 : 0.08)
     p0.value = withDelay(0,   withSpring(targets[0], spring))
     p1.value = withDelay(100, withSpring(targets[1], spring))
     p2.value = withDelay(200, withSpring(targets[2], spring))
@@ -971,15 +972,18 @@ function WellnessScoreArc({
             strokeLinejoin="round"
           />
           {/* Colored dots at each vertex */}
-          {PILLAR_ORDER.map((key, i) => (
-            <AnimatedCircle
-              key={key}
-              r={6}
-              fill={PILLAR_CONFIG[key].color}
-              opacity={activePillar !== null && activePillar !== key ? 0.35 : 1}
-              animatedProps={dotProps[i]}
-            />
-          ))}
+          {PILLAR_ORDER.map((key, i) => {
+            const hasData = scores[key].hasData
+            return (
+              <AnimatedCircle
+                key={key}
+                r={hasData ? 6 : 3}
+                fill={hasData ? PILLAR_CONFIG[key].color : colors.textMuted}
+                opacity={!hasData ? 0.25 : activePillar !== null && activePillar !== key ? 0.35 : 1}
+                animatedProps={dotProps[i]}
+              />
+            )
+          })}
         </Svg>
 
         {/* Axis labels — positioned absolutely */}
