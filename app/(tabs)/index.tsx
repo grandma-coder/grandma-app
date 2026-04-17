@@ -28,6 +28,10 @@ export default function Home() {
         <NotificationBell />
       </View>
 
+      {/* Pregnancy gets its own full-width scroll (hero carousel needs SCREEN_W) */}
+      {mode === 'pregnancy' && <PregnancyHome topInset={insets.top} />}
+
+      {mode !== 'pregnancy' && (
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -36,7 +40,6 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
       >
         {mode === 'pre-pregnancy' && <CycleHome />}
-        {mode === 'pregnancy' && <PregnancyHome />}
         {mode === 'kids' && <KidsHome />}
 
         {/* Empty state — no behavior enrolled */}
@@ -65,6 +68,7 @@ export default function Home() {
           </View>
         )}
       </ScrollView>
+      )}
     </View>
   )
 }

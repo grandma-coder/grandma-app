@@ -85,6 +85,10 @@ BEGIN
      '{"startTime":"19:30","quality":"great"}',
      '{0,1,2,3,4,5,6}', '19:30'),
 
+    (v_rio_id, v_user_id, 'wake_up', 'Wake Up',
+     '{"wakeTime":"06:30"}',
+     '{0,1,2,3,4,5,6}', '06:30'),
+
     -- Weekly activities
     (v_rio_id, v_user_id, 'activity', 'Music class',
      '{"activityType":"music","name":"Music class","startTime":"10:00","endTime":"11:00","duration":"1h"}',
@@ -136,6 +140,10 @@ BEGIN
     (v_bahia_id, v_user_id, 'sleep', 'Bedtime',
      '{"startTime":"20:00","quality":"great"}',
      '{0,1,2,3,4,5,6}', '20:00'),
+
+    (v_bahia_id, v_user_id, 'wake_up', 'Wake Up',
+     '{"wakeTime":"07:00"}',
+     '{0,1,2,3,4,5,6}', '07:00'),
 
     -- Weekly activities
     (v_bahia_id, v_user_id, 'activity', 'Art class',

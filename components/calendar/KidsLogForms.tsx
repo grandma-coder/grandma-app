@@ -2398,6 +2398,150 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
   )
 }
 
+// ─── 8. WAKE UP FORM ──────────────────────────────────────────────────────
+// Finds the last open-ended sleep log (has startTime, no endTime) for the
+// selected child within the past 24h and patches it with wake-up time +
+// calculated duration. No new log is created — it completes the sleep session.
+
+export function WakeUpForm({ onSaved, prefill, onSkip }: {
+  onSaved: () => void
+  prefill?: RoutinePrefill
+  onSkip?: () => void
+}) {
+  const { colors, radius } = useTheme()
+  const children = useChildStore((s) => s.children)
+
+  const [childId, setChildId] = useState(() =>
+    prefill?.childId ?? (children.length === 1 ? (children[0]?.id ?? '') : '')
+  )
+  const [wakeTime, setWakeTime] = useState(() => toTimeStr(new Date()))
+  const [openLog, setOpenLog] = useState<{
+    id: string; startTime: string; date: string; routineName?: string
+  } | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  // Fetch open-ended sleep log whenever child changes
+  useEffect(() => {
+    if (!childId) return
+    setLoading(true)
+    setOpenLog(null)
+    const today = toDateStr(new Date())
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = toDateStr(yesterday)
+    supabase
+      .from('child_logs')
+      .select('id, value, date')
+      .eq('child_id', childId)
+      .eq('type', 'sleep')
+      .in('date', [today, yesterdayStr])
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        const found = (data ?? []).find((log) => {
+          try {
+            const p = JSON.parse(log.value ?? '{}')
+            return !!p.startTime && !p.endTime
+          } catch { return false }
+        })
+        if (found) {
+          try {
+            const p = JSON.parse(found.value ?? '{}')
+            setOpenLog({ id: found.id, startTime: p.startTime, date: found.date, routineName: p.routineName })
+          } catch {}
+        }
+        setLoading(false)
+      })
+  }, [childId])
+
+  const sleepDuration = useMemo(
+    () => (openLog ? calcDuration(openLog.startTime, wakeTime) : ''),
+    [openLog, wakeTime]
+  )
+
+  function bedtimeAgo(): string {
+    if (!openLog) return ''
+    const bedDate = new Date(openLog.date + 'T' + openLog.startTime + ':00')
+    const mins = Math.round((Date.now() - bedDate.getTime()) / 60000)
+    if (mins < 60) return `${mins}m ago`
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    return m > 0 ? `${h}h ${m}m ago` : `${h}h ago`
+  }
+
+  async function save() {
+    if (!openLog || !childId) return
+    setSaving(true)
+    try {
+      const { data: orig } = await supabase
+        .from('child_logs')
+        .select('value, notes')
+        .eq('id', openLog.id)
+        .single()
+      const p = orig?.value ? JSON.parse(orig.value) : {}
+      const newValue = JSON.stringify({ ...p, endTime: wakeTime, duration: sleepDuration || undefined })
+      await updateChildLog(openLog.id, newValue, orig?.notes ?? null)
+      onSaved()
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <ChildSelector selected={childId} onSelect={setChildId} />
+
+      {loading ? (
+        <ActivityIndicator color={colors.primary} style={{ marginVertical: 24 }} />
+      ) : openLog ? (
+        <>
+          {/* Bedtime summary card */}
+          <View style={{ backgroundColor: brand.pregnancy + '18', borderRadius: 16, padding: 16, gap: 6, borderWidth: 1, borderColor: brand.pregnancy + '30' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Moon size={15} color={brand.pregnancy} strokeWidth={2} />
+              <Text style={{ color: brand.pregnancy, fontWeight: '700', fontSize: 14 }}>
+                {openLog.routineName ?? 'Bedtime'} · {formatTimeLabel(openLog.startTime)}
+              </Text>
+            </View>
+            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>
+              {bedtimeAgo()}
+            </Text>
+          </View>
+
+          {/* Wake-up time picker */}
+          <View style={styles.topRow}>
+            <View style={styles.dateTimeRow}>
+              <TimeChip value={wakeTime} onChange={setWakeTime} label="Wake up" />
+            </View>
+          </View>
+
+          {/* Duration preview */}
+          {sleepDuration ? (
+            <View style={{ backgroundColor: brand.pregnancy + '12', borderRadius: 14, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: brand.pregnancy + '25' }}>
+              <Text style={{ color: brand.pregnancy, fontWeight: '800', fontSize: 36, letterSpacing: -1, lineHeight: 40 }}>{sleepDuration}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>total sleep</Text>
+            </View>
+          ) : null}
+
+          <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={onSkip} />
+        </>
+      ) : (
+        <View style={{ paddingVertical: 24, alignItems: 'center', gap: 10 }}>
+          <Moon size={32} color={colors.textMuted} strokeWidth={1.5} />
+          <Text style={{ color: colors.textSecondary, fontSize: 15, fontWeight: '600', textAlign: 'center' }}>
+            No open bedtime found{'\n'}in the last 24 hours
+          </Text>
+          <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 18 }}>
+            Log bedtime first, then use Wake Up{'\n'}to complete the sleep session.
+          </Text>
+        </View>
+      )}
+    </View>
+  )
+}
+
 // ─── Save Button ───────────────────────────────────────────────────────────
 
 function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void; saving: boolean; disabled?: boolean; onSkip?: () => void }) {

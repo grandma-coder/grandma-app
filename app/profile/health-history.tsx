@@ -399,7 +399,7 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
   const Icon = cfg.icon
 
   return (
-    <Modal visible animationType="slide" presentationStyle="pageSheet">
+    <Modal visible animationType="slide" presentationStyle="overFullScreen">
       <View style={[styles.detailRoot, { backgroundColor: colors.bg }]}>
         <View style={[styles.detailHeader, { paddingTop: insets.top + 8 }]}>
           <Text style={[styles.detailTitle, { color: cfg.color }]}>
@@ -414,7 +414,13 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
           <Text style={[styles.detailSummaryLabel, { color: colors.textSecondary }]}>total {cfg.label.toLowerCase()} entries</Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.detailScroll}>
+        <ScrollView
+          style={styles.detailScrollView}
+          contentContainerStyle={styles.detailScroll}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {events.length === 0 && (
             <Text style={[styles.emptyText, { color: colors.textMuted, textAlign: 'center', marginTop: 40 }]}>No {cfg.label.toLowerCase()} entries yet.</Text>
           )}
@@ -681,6 +687,7 @@ const styles = StyleSheet.create({
   detailSummary: { alignItems: 'center', paddingVertical: 16, marginBottom: 12 },
   detailSummaryNum: { fontSize: 32, fontWeight: '800' },
   detailSummaryLabel: { fontSize: 13, fontWeight: '500' },
+  detailScrollView: { flex: 1 },
   detailScroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 8 },
   detailItem: { padding: 14, gap: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
   detailItemTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

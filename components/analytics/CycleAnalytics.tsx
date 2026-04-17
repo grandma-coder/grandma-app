@@ -92,6 +92,7 @@ export function CycleAnalytics() {
           { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
       >
         {/* 1. Period Toggle */}
         <View style={[styles.toggleRow, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>

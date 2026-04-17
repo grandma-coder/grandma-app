@@ -1,16 +1,14 @@
 /**
- * Pregnancy Home — Command Center
+ * Pregnancy Home — Command Center (refactored)
  *
- * Sections (top to bottom, scrollable):
- * 1. BabyHeroCarousel   — swipeable FlatList through all 40 weeks
- * 2. QuickLogStrip      — today's routine chips (done / pending / overdue)
- * 3. VitalsGrid         — 2×2 real-data tiles (weight, kicks, water, mood)
- * 4. MoodPicker         — inline 5-option row, writes pregnancy_logs immediately
- * 5. ContextualCards    — up to 3 smart cards based on current state
- * 6. WeightMiniChart    — 6-entry sparkline with LineChart
- * 7. GrandmaCTA         — static deep-link to grandma-talk
- * 8. AffirmationCard    — rotating daily from pregnancyAffirmations
- * 9. DailyTipCard       — momTip from pregnancyData for current week
+ * Section order (top → bottom):
+ * 1. BabyHeroCarousel   — swipeable FlatList, full-width, tappable → WeekDetailModal
+ * 2. AffirmationRevealCard — glow-burst VFX reveal, Supabase-backed
+ * 3. QuickLogStrip      — today's routine chips with checkmark state
+ * 4. VitalsCarousel     — horizontal scroll of metric cards, each → detail modal
+ * 5. RemindersSection   — upcoming appts + week tips + habit nudges
+ * 6. WeightMiniChart    — 6-entry sparkline
+ * 7. GrandmaCTA         — deep-link to grandma-talk
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
@@ -23,27 +21,17 @@ import {
   Modal,
   StyleSheet,
   Dimensions,
-  ActivityIndicator,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
-import {
-  ChevronRight,
-  Scale,
-  Droplets,
-  Smile,
-  X,
-} from 'lucide-react-native'
+import { ChevronRight, X } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
-
 import { supabase } from '../../lib/supabase'
 import { pregnancyWeeks, getDaysToGo } from '../../lib/pregnancyData'
 import type { PregnancyWeekData } from '../../lib/pregnancyData'
-import { getDailyAffirmation } from '../../lib/pregnancyAffirmations'
-import { getUpcomingAppointment } from '../../lib/pregnancyAppointments'
 import { usePregnancyWeightHistory, usePregnancyTodayLogs } from '../../lib/analyticsData'
 import type { TodayLogEntry } from '../../lib/analyticsData'
 import { LineChart } from '../charts/SvgCharts'
@@ -54,9 +42,14 @@ import {
   KickCountForm,
 } from '../calendar/PregnancyLogForms'
 
+import { AffirmationRevealCard } from './pregnancy/AffirmationRevealCard'
+import { VitalsCarousel } from './pregnancy/VitalsCarousel'
+import { RemindersSection } from './pregnancy/RemindersSection'
+import { WeekDetailModal } from './pregnancy/WeekDetailModal'
+
 const SCREEN_W = Dimensions.get('window').width
 
-// ─── Week emoji map ─────────────────────────────────────────────────────────
+// ─── Week emoji map ────────────────────────────────────────────────────────────
 
 const WEEK_EMOJI: Record<number, string> = {
   1: '🌱', 2: '🌱', 3: '🌱', 4: '🫘', 5: '🍎', 6: '🫛', 7: '🫐', 8: '🍇',
@@ -67,29 +60,24 @@ const WEEK_EMOJI: Record<number, string> = {
   37: '🥬', 38: '🌿', 39: '🍉', 40: '🎃',
 }
 
-// ─── Trimester helper ────────────────────────────────────────────────────────
-
 function getTrimester(week: number): 1 | 2 | 3 {
   if (week <= 13) return 1
   if (week <= 26) return 2
   return 3
 }
 
-// ─── Section 1: Baby Hero Carousel ──────────────────────────────────────────
+// ─── Section 1: Baby Hero Carousel ────────────────────────────────────────────
 
-interface HeroItem {
-  week: number
-  data: PregnancyWeekData
-}
-
+interface HeroItem { week: number; data: PregnancyWeekData }
 const HERO_ITEMS: HeroItem[] = pregnancyWeeks.map((w) => ({ week: w.week, data: w }))
 
 interface BabyHeroCarouselProps {
   currentWeek: number
   daysToGo: number | null
+  onPressWeek: (week: number) => void
 }
 
-function BabyHeroCarousel({ currentWeek, daysToGo }: BabyHeroCarouselProps) {
+function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarouselProps) {
   const flatListRef = useRef<FlatList<HeroItem>>(null)
   const [visibleWeek, setVisibleWeek] = useState(currentWeek)
 
@@ -103,9 +91,7 @@ function BabyHeroCarousel({ currentWeek, daysToGo }: BabyHeroCarouselProps) {
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: Array<{ item: HeroItem }> }) => {
-      if (viewableItems[0]) {
-        setVisibleWeek(viewableItems[0].item.week)
-      }
+      if (viewableItems[0]) setVisibleWeek(viewableItems[0].item.week)
     },
     []
   )
@@ -119,11 +105,9 @@ function BabyHeroCarousel({ currentWeek, daysToGo }: BabyHeroCarouselProps) {
     const progress = item.week / 40
 
     const gradientColors: [string, string] =
-      tri === 1
-        ? ['#1A2A4A', '#2D4A8A']
-        : tri === 2
-        ? ['#2A1050', '#5C2FA8']
-        : ['#2A0A3A', '#7B1FA2']
+      tri === 1 ? ['#1A2A4A', '#2D4A8A']
+      : tri === 2 ? ['#2A1050', '#5C2FA8']
+      : ['#2A0A3A', '#7B1FA2']
 
     const triLabel = `T${tri} · Week ${item.week}`
     const daysLabel =
@@ -134,7 +118,11 @@ function BabyHeroCarousel({ currentWeek, daysToGo }: BabyHeroCarouselProps) {
         : `Week ${item.week - currentWeek} ahead`
 
     return (
-      <View style={{ width: SCREEN_W, paddingHorizontal: 20 }}>
+      // Item is exactly SCREEN_W wide — padding applied to gradient card, not here
+      <Pressable
+        style={{ width: SCREEN_W }}
+        onPress={() => onPressWeek(item.week)}
+      >
         <LinearGradient
           colors={gradientColors}
           start={{ x: 0, y: 0 }}
@@ -147,15 +135,12 @@ function BabyHeroCarousel({ currentWeek, daysToGo }: BabyHeroCarouselProps) {
             </View>
             {isCurrent && (
               <View style={[styles.heroBadge, { backgroundColor: brand.pregnancy + '40' }]}>
-                <Text style={[styles.heroBadgeText, { color: brand.pregnancy }]}>
-                  ← swipe weeks →
-                </Text>
+                <Text style={[styles.heroBadgeText, { color: brand.pregnancy }]}>← swipe weeks →</Text>
               </View>
             )}
           </View>
 
           <Text style={styles.heroEmoji}>{emoji}</Text>
-
           <Text style={styles.heroWeekText}>Week {item.week}</Text>
           <Text style={styles.heroSizeText}>
             Size of a {item.data.babySize.toLowerCase()} · {item.data.babyLength}
@@ -177,8 +162,13 @@ function BabyHeroCarousel({ currentWeek, daysToGo }: BabyHeroCarouselProps) {
               <Text style={styles.heroProgressLabel}>40w</Text>
             </View>
           </View>
+
+          {/* Tap hint */}
+          <View style={styles.heroTapHint}>
+            <Text style={[styles.heroTapText, { color: brand.pregnancy }]}>Tap for details ›</Text>
+          </View>
         </LinearGradient>
-      </View>
+      </Pressable>
     )
   }
 
@@ -202,6 +192,9 @@ function BabyHeroCarousel({ currentWeek, daysToGo }: BabyHeroCarouselProps) {
         initialNumToRender={5}
         windowSize={5}
         maxToRenderPerBatch={5}
+        decelerationRate="fast"
+        snapToInterval={SCREEN_W}
+        snapToAlignment="start"
       />
       <View style={styles.heroDotsRow}>
         {[1, 2, 3].map((tri) => (
@@ -210,10 +203,7 @@ function BabyHeroCarousel({ currentWeek, daysToGo }: BabyHeroCarouselProps) {
             style={[
               styles.heroDot,
               {
-                backgroundColor:
-                  getTrimester(visibleWeek) === tri
-                    ? brand.pregnancy
-                    : 'rgba(255,255,255,0.2)',
+                backgroundColor: getTrimester(visibleWeek) === tri ? brand.pregnancy : 'rgba(255,255,255,0.2)',
                 width: getTrimester(visibleWeek) === tri ? 16 : 6,
               },
             ]}
@@ -224,15 +214,9 @@ function BabyHeroCarousel({ currentWeek, daysToGo }: BabyHeroCarouselProps) {
   )
 }
 
-// ─── Routine definitions ─────────────────────────────────────────────────────
+// ─── Section 3: Quick Log Strip ───────────────────────────────────────────────
 
-interface RoutineDef {
-  type: string
-  label: string
-  emoji: string
-  goal: number
-  minWeek?: number
-}
+interface RoutineDef { type: string; label: string; emoji: string; goal: number; minWeek?: number }
 
 const ROUTINES: RoutineDef[] = [
   { type: 'vitamins', label: 'Vitamins', emoji: '💊', goal: 1 },
@@ -247,8 +231,6 @@ const ROUTINES: RoutineDef[] = [
   { type: 'kegel', label: 'Kegel', emoji: '💪', goal: 1 },
 ]
 
-// ─── Section 2: Quick Log Strip ──────────────────────────────────────────────
-
 interface QuickLogStripProps {
   todayLogs: Record<string, TodayLogEntry>
   weekNumber: number
@@ -257,23 +239,17 @@ interface QuickLogStripProps {
 
 function QuickLogStrip({ todayLogs, weekNumber, onPressRoutine }: QuickLogStripProps) {
   const { colors } = useTheme()
-  const visibleRoutines = ROUTINES.filter(
-    (r) => r.minWeek === undefined || weekNumber >= r.minWeek
-  )
+  const visible = ROUTINES.filter((r) => !r.minWeek || weekNumber >= r.minWeek)
 
   return (
     <View style={styles.section}>
       <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>TODAY'S ROUTINES</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.quickLogRow}
-      >
-        {visibleRoutines.map((routine) => {
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickLogRow}>
+        {visible.map((routine) => {
           const logged = todayLogs[routine.type]
           const isDone = !!logged
-          const isKick = routine.type === 'kick_count'
-          const isOverdue = isKick && !isDone
+          const isWater = routine.type === 'water'
+          const waterCount = isWater && logged?.value ? parseInt(logged.value, 10) : 0
 
           let chipBg = 'rgba(255,255,255,0.08)'
           let chipBorder = 'rgba(255,255,255,0.12)'
@@ -283,29 +259,21 @@ function QuickLogStrip({ todayLogs, weekNumber, onPressRoutine }: QuickLogStripP
             chipBg = '#A2FF8620'
             chipBorder = '#A2FF8640'
             chipTextColor = '#A2FF86'
-          } else if (isOverdue) {
-            chipBg = brand.pregnancy + '20'
-            chipBorder = brand.pregnancy + '60'
-            chipTextColor = brand.pregnancy
           }
 
-          const chipLabel =
-            routine.type === 'water' && logged?.value
-              ? `${routine.emoji} ${logged.value}/8 glasses`
-              : `${routine.emoji} ${isDone ? '✓ ' : '+ '}${routine.label}`
+          const chipLabel = isWater && isDone
+            ? `${routine.emoji} ${waterCount}/8 glasses`
+            : isDone
+            ? `${routine.emoji} ✓ ${routine.label}`
+            : `${routine.emoji} + ${routine.label}`
 
           return (
             <Pressable
               key={routine.type}
               onPress={() => onPressRoutine(routine.type)}
-              style={[
-                styles.quickChip,
-                { backgroundColor: chipBg, borderColor: chipBorder },
-              ]}
+              style={[styles.quickChip, { backgroundColor: chipBg, borderColor: chipBorder }]}
             >
-              <Text style={[styles.quickChipText, { color: chipTextColor }]}>
-                {chipLabel}
-              </Text>
+              <Text style={[styles.quickChipText, { color: chipTextColor }]}>{chipLabel}</Text>
             </Pressable>
           )
         })}
@@ -314,205 +282,9 @@ function QuickLogStrip({ todayLogs, weekNumber, onPressRoutine }: QuickLogStripP
   )
 }
 
-// ─── Section 3: Vitals Grid ──────────────────────────────────────────────────
+// ─── Section 6: Weight Mini-Chart ─────────────────────────────────────────────
 
-interface VitalsGridProps {
-  todayLogs: Record<string, TodayLogEntry>
-  weekNumber: number
-}
-
-function VitalsGrid({ todayLogs, weekNumber }: VitalsGridProps) {
-  const { colors } = useTheme()
-
-  const weight = todayLogs['weight']?.value
-    ? `${parseFloat(todayLogs['weight'].value).toFixed(1)} kg`
-    : '—'
-  const kicks = todayLogs['kick_count']?.value ?? '—'
-  const waterRaw = todayLogs['water']?.value ? parseInt(todayLogs['water'].value, 10) : 0
-  const waterText = `${waterRaw} / 8`
-  const waterPct = Math.min(1, waterRaw / 8)
-  const moodMap: Record<string, string> = {
-    excited: '😍',
-    happy: '😊',
-    okay: '😐',
-    anxious: '😰',
-    nauseous: '🤢',
-  }
-  const moodVal = todayLogs['mood']?.notes ?? todayLogs['mood']?.value ?? ''
-  const moodEmoji = moodMap[moodVal] ?? (todayLogs['mood'] ? '😊' : '—')
-
-  const tiles = [
-    {
-      icon: <Scale size={18} color={brand.pregnancy} strokeWidth={2} />,
-      label: 'Weight',
-      value: weight,
-      progress: null as number | null,
-    },
-    {
-      icon: <Text style={{ fontSize: 18 }}>👶</Text>,
-      label: weekNumber >= 28 ? 'Kicks today' : 'Kicks (W28+)',
-      value: weekNumber >= 28 ? kicks : 'Soon',
-      progress: null as number | null,
-    },
-    {
-      icon: <Droplets size={18} color="#6AABF7" strokeWidth={2} />,
-      label: 'Hydration',
-      value: waterText,
-      progress: waterPct,
-    },
-    {
-      icon: <Smile size={18} color="#FBBF24" strokeWidth={2} />,
-      label: 'Mood',
-      value: moodEmoji,
-      progress: null as number | null,
-    },
-  ]
-
-  return (
-    <View style={styles.section}>
-      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>TODAY'S VITALS</Text>
-      <View style={styles.vitalsGrid}>
-        {tiles.map((tile, i) => (
-          <View
-            key={i}
-            style={[styles.vitalsTile, { backgroundColor: colors.surface }]}
-          >
-            {tile.icon}
-            <Text style={[styles.vitalsValue, { color: colors.text }]}>{tile.value}</Text>
-            <Text style={[styles.vitalsLabel, { color: colors.textMuted }]}>{tile.label}</Text>
-            {tile.progress !== null && (
-              <View style={styles.vitalsProgressTrack}>
-                <View
-                  style={[
-                    styles.vitalsProgressFill,
-                    {
-                      width: `${tile.progress * 100}%`,
-                      backgroundColor: '#6AABF7',
-                    },
-                  ]}
-                />
-              </View>
-            )}
-          </View>
-        ))}
-      </View>
-    </View>
-  )
-}
-
-// ─── Section 4: Inline Mood Picker ──────────────────────────────────────────
-
-const MOODS = [
-  { id: 'excited', emoji: '😍', label: 'Radiant' },
-  { id: 'happy', emoji: '😊', label: 'Happy' },
-  { id: 'okay', emoji: '😐', label: 'Okay' },
-  { id: 'anxious', emoji: '😰', label: 'Anxious' },
-  { id: 'nauseous', emoji: '🤢', label: 'Nauseous' },
-]
-
-interface MoodPickerProps {
-  currentMood: string | null
-  onSelect: (moodId: string) => void
-  saving: boolean
-}
-
-function MoodPicker({ currentMood, onSelect, saving }: MoodPickerProps) {
-  const { colors } = useTheme()
-
-  return (
-    <View style={[styles.section, styles.moodCard, { backgroundColor: colors.surface }]}>
-      <View style={styles.moodHeader}>
-        <Text style={[styles.sectionLabel, { color: colors.textMuted, marginBottom: 0 }]}>
-          HOW ARE YOU FEELING?
-        </Text>
-        {saving && <ActivityIndicator size="small" color={brand.pregnancy} />}
-      </View>
-      <View style={styles.moodRow}>
-        {MOODS.map((mood) => {
-          const isActive = currentMood === mood.id
-          return (
-            <Pressable
-              key={mood.id}
-              onPress={() => onSelect(mood.id)}
-              style={[
-                styles.moodOption,
-                isActive && {
-                  backgroundColor: brand.pregnancy + '30',
-                  borderColor: brand.pregnancy,
-                },
-              ]}
-            >
-              <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-              <Text
-                style={[
-                  styles.moodLabel,
-                  { color: isActive ? brand.pregnancy : colors.textMuted },
-                ]}
-              >
-                {mood.label}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
-    </View>
-  )
-}
-
-// ─── Section 5: Contextual Smart Cards ───────────────────────────────────────
-
-interface ContextCard {
-  key: string
-  color: string
-  emoji: string
-  title: string
-  body: string
-  onPress: () => void
-}
-
-interface ContextualCardsProps {
-  cards: ContextCard[]
-}
-
-function ContextualCards({ cards }: ContextualCardsProps) {
-  const { colors } = useTheme()
-  if (cards.length === 0) return null
-
-  return (
-    <View style={styles.section}>
-      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>RIGHT NOW</Text>
-      {cards.map((card) => (
-        <Pressable
-          key={card.key}
-          onPress={card.onPress}
-          style={[
-            styles.contextCard,
-            {
-              backgroundColor: card.color + '15',
-              borderColor: card.color + '40',
-            },
-          ]}
-        >
-          <Text style={styles.contextEmoji}>{card.emoji}</Text>
-          <View style={styles.contextBody}>
-            <Text style={[styles.contextTitle, { color: card.color }]}>{card.title}</Text>
-            <Text style={[styles.contextText, { color: colors.textSecondary }]}>
-              {card.body}
-            </Text>
-          </View>
-          <ChevronRight size={16} color={card.color} strokeWidth={2} />
-        </Pressable>
-      ))}
-    </View>
-  )
-}
-
-// ─── Section 6: Weight Mini-Chart ────────────────────────────────────────────
-
-interface WeightMiniChartProps {
-  weights: number[]
-  labels: string[]
-}
+interface WeightMiniChartProps { weights: number[]; labels: string[] }
 
 function WeightMiniChart({ weights, labels }: WeightMiniChartProps) {
   const { colors } = useTheme()
@@ -525,9 +297,7 @@ function WeightMiniChart({ weights, labels }: WeightMiniChartProps) {
     >
       <View style={styles.chartHeader}>
         <View>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted, marginBottom: 2 }]}>
-            WEIGHT TREND
-          </Text>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted, marginBottom: 2 }]}>WEIGHT TREND</Text>
           <Text style={[styles.chartCurrentValue, { color: colors.text }]}>
             {weights[weights.length - 1].toFixed(1)} kg
           </Text>
@@ -549,7 +319,7 @@ function WeightMiniChart({ weights, labels }: WeightMiniChartProps) {
   )
 }
 
-// ─── Section 7: Grandma CTA ──────────────────────────────────────────────────
+// ─── Section 7: Grandma CTA ───────────────────────────────────────────────────
 
 function GrandmaCTA() {
   const { colors } = useTheme()
@@ -570,45 +340,26 @@ function GrandmaCTA() {
   )
 }
 
-// ─── Section 8: Affirmation ──────────────────────────────────────────────────
-
-function AffirmationCard({ text }: { text: string }) {
-  const { colors } = useTheme()
-  return (
-    <View style={[styles.section, styles.affirmationCard, { backgroundColor: colors.surface }]}>
-      <Text style={[styles.affirmationLabel, { color: colors.textMuted }]}>
-        TODAY'S AFFIRMATION
-      </Text>
-      <Text style={[styles.affirmationText, { color: colors.text }]}>"{text}"</Text>
-    </View>
-  )
-}
-
-// ─── Section 9: Daily Tip ────────────────────────────────────────────────────
-
-function DailyTipCard({ tip }: { tip: string }) {
-  const { colors } = useTheme()
-  return (
-    <View style={[styles.section, styles.tipCard, { backgroundColor: colors.surface }]}>
-      <Text style={[styles.affirmationLabel, { color: colors.textMuted }]}>GRANDMA'S TIP</Text>
-      <Text style={[styles.tipText, { color: colors.text }]}>{tip}</Text>
-    </View>
-  )
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-type InlineLogType = 'mood' | 'symptom' | 'appointment' | 'kick_count' | 'vitamins' | 'water' | 'weight' | 'sleep' | 'exercise' | 'kegel' | 'nutrition' | null
+type InlineLogType =
+  | 'mood' | 'symptom' | 'appointment' | 'kick_count'
+  | 'vitamins' | 'water' | 'weight' | 'sleep' | 'exercise' | 'kegel' | 'nutrition'
+  | null
 
-export function PregnancyHome() {
+interface PregnancyHomeProps { topInset?: number }
+
+export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const queryClient = useQueryClient()
 
   const weekNumber = usePregnancyStore((s) => s.weekNumber) ?? 24
   const dueDate = usePregnancyStore((s) => s.dueDate) ?? ''
+
   const [activeLog, setActiveLog] = useState<InlineLogType>(null)
-  const [moodSaving, setMoodSaving] = useState(false)
+  const [weekDetailVisible, setWeekDetailVisible] = useState(false)
+  const [detailWeek, setDetailWeek] = useState(weekNumber)
 
   const [userId, setUserId] = useState<string | undefined>(undefined)
   useEffect(() => {
@@ -621,80 +372,21 @@ export function PregnancyHome() {
   const { data: weightHistory = [] } = usePregnancyWeightHistory(userId ?? '', 6)
 
   const daysToGo = dueDate ? getDaysToGo(dueDate) : null
-  const affirmation = getDailyAffirmation()
-  const weekData = pregnancyWeeks.find((w) => w.week === weekNumber)
-  const upcomingAppt = getUpcomingAppointment(weekNumber)
 
-  // Weight sparkline — PregnancyWeightEntry has { date, weight }
-  const weightValues = (weightHistory as Array<{ date: string; weight: number }>).map((e) => e.weight)
-  const weightLabels = (weightHistory as Array<{ date: string; weight: number }>).map((e) =>
+  const weightValues = (weightHistory as Array<{ date: string; weight: number }>).map(e => e.weight)
+  const weightLabels = (weightHistory as Array<{ date: string; weight: number }>).map(e =>
     new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   )
 
-  const currentMood = todayLogs['mood']?.notes ?? todayLogs['mood']?.value ?? null
-
-  const handleMoodSelect = async (moodId: string) => {
-    if (!userId) return
-    setMoodSaving(true)
-    try {
-      const today = new Date().toISOString().split('T')[0]
-      const { error } = await supabase.from('pregnancy_logs').insert({
-        user_id: userId,
-        log_date: today,
-        log_type: 'mood',
-        value: moodId,
-        notes: null,
-      })
-      if (error) throw error
-      queryClient.invalidateQueries({ queryKey: ['pregnancy-today-logs', userId] })
-    } catch {
-      // silent fail
-    } finally {
-      setMoodSaving(false)
-    }
+  const handleHeroPress = (week: number) => {
+    setDetailWeek(week)
+    setWeekDetailVisible(true)
   }
 
-  const contextCards: ContextCard[] = []
-
-  if (weekNumber >= 28 && !todayLogs['kick_count']) {
-    contextCards.push({
-      key: 'kicks',
-      color: '#A2FF86',
-      emoji: '👶',
-      title: 'Log kick count',
-      body: 'No kick session recorded today. Track baby movements.',
-      onPress: () => setActiveLog('kick_count'),
-    })
-  }
-
-  if (upcomingAppt) {
-    contextCards.push({
-      key: 'appointment',
-      color: '#FBBF24',
-      emoji: '📅',
-      title: upcomingAppt.name,
-      body: upcomingAppt.prepNote,
-      onPress: () => router.push('/(tabs)/agenda'),
-    })
-  }
-
-  if (weekData && contextCards.length < 3) {
-    contextCards.push({
-      key: 'development',
-      color: brand.pregnancy,
-      emoji: WEEK_EMOJI[weekNumber] ?? '👶',
-      title: `Week ${weekNumber} development`,
-      body: weekData.developmentFact,
-      onPress: () => router.push('/(tabs)/agenda'),
-    })
-  }
-
-  // Redirect unhandled log types to the agenda via effect (never call router/setState in render)
+  // Redirect unhandled log types to agenda
   useEffect(() => {
-    const handledTypes: InlineLogType[] = [
-      'mood', 'symptom', 'appointment', 'kick_count', 'vitamins', 'kegel',
-    ]
-    if (activeLog !== null && !handledTypes.includes(activeLog)) {
+    const handled: InlineLogType[] = ['mood', 'symptom', 'appointment', 'kick_count', 'vitamins', 'kegel']
+    if (activeLog !== null && !handled.includes(activeLog)) {
       setActiveLog(null)
       router.push('/(tabs)/agenda')
     }
@@ -702,7 +394,6 @@ export function PregnancyHome() {
 
   const renderInlineForm = (): React.ReactElement | null => {
     if (activeLog === null) return null
-
     const today = new Date().toISOString().split('T')[0]
     const onClose = () => {
       setActiveLog(null)
@@ -723,10 +414,9 @@ export function PregnancyHome() {
           <Pressable
             onPress={async () => {
               if (!userId) return
-              const today2 = new Date().toISOString().split('T')[0]
               await supabase.from('pregnancy_logs').insert({
                 user_id: userId,
-                log_date: today2,
+                log_date: today,
                 log_type: activeLog,
                 value: '1',
                 notes: null,
@@ -740,44 +430,75 @@ export function PregnancyHome() {
         </View>
       )
     }
-
     return null
   }
 
   return (
     <ScrollView
       style={[styles.root, { backgroundColor: colors.bg }]}
-      contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+      contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: insets.bottom + 32 }}
       showsVerticalScrollIndicator={false}
     >
-      <BabyHeroCarousel currentWeek={weekNumber} daysToGo={daysToGo} />
+      {/* 1. Hero Carousel — full-width, tappable */}
+      <BabyHeroCarousel
+        currentWeek={weekNumber}
+        daysToGo={daysToGo}
+        onPressWeek={handleHeroPress}
+      />
 
+      {/* 2. Affirmation Reveal */}
+      <View style={styles.section}>
+        <AffirmationRevealCard />
+      </View>
+
+      {/* 3. Routine chips */}
       <QuickLogStrip
         todayLogs={todayLogs}
         weekNumber={weekNumber}
         onPressRoutine={(type) => setActiveLog(type as InlineLogType)}
       />
 
-      <VitalsGrid todayLogs={todayLogs} weekNumber={weekNumber} />
+      {/* 4. Vitals carousel */}
+      <View style={[styles.section, { paddingHorizontal: 0 }]}>
+        <Text style={[styles.sectionLabel, { color: colors.textMuted, paddingHorizontal: 20, marginBottom: 12 }]}>
+          TODAY'S VITALS
+        </Text>
+        <VitalsCarousel
+          todayLogs={todayLogs}
+          weekNumber={weekNumber}
+          userId={userId}
+        />
+      </View>
 
-      <MoodPicker
-        currentMood={currentMood}
-        onSelect={handleMoodSelect}
-        saving={moodSaving}
-      />
+      {/* 5. Reminders */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>REMINDERS</Text>
+        <RemindersSection
+          weekNumber={weekNumber}
+          todayLogs={todayLogs}
+          onOpenWeekDetail={() => {
+            setDetailWeek(weekNumber)
+            setWeekDetailVisible(true)
+          }}
+        />
+      </View>
 
-      <ContextualCards cards={contextCards.slice(0, 3)} />
-
+      {/* 6. Weight chart */}
       {weightValues.length >= 2 && (
         <WeightMiniChart weights={weightValues} labels={weightLabels} />
       )}
 
+      {/* 7. Grandma CTA */}
       <GrandmaCTA />
 
-      <AffirmationCard text={affirmation} />
+      {/* Week detail modal */}
+      <WeekDetailModal
+        visible={weekDetailVisible}
+        week={detailWeek}
+        onClose={() => setWeekDetailVisible(false)}
+      />
 
-      {weekData && <DailyTipCard tip={weekData.momTip} />}
-
+      {/* Inline log forms modal */}
       <Modal
         visible={activeLog !== null}
         transparent
@@ -800,337 +521,79 @@ export function PregnancyHome() {
   )
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
 
+  // Hero
   heroCard: {
-    borderRadius: 32,
-    padding: 24,
+    borderRadius: 24,
+    padding: 20,
+    marginHorizontal: 16,
     marginBottom: 8,
     overflow: 'hidden',
+    position: 'relative',
   },
-  heroBadgeRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-  },
-  heroBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  heroBadgeText: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  heroEmoji: {
-    fontSize: 64,
-    textAlign: 'center',
-    marginVertical: 8,
-  },
-  heroWeekText: {
-    fontSize: 28,
-    fontFamily: 'CabinetGrotesk-Black',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  heroSizeText: {
-    fontSize: 14,
-    fontFamily: 'Satoshi-Variable',
-    color: 'rgba(255,255,255,0.75)',
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  heroDaysText: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    color: 'rgba(255,255,255,0.55)',
-    textAlign: 'center',
-    marginTop: 2,
-  },
-  heroFact: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    color: 'rgba(255,255,255,0.65)',
-    textAlign: 'center',
-    marginTop: 12,
-    lineHeight: 18,
-  },
+  heroBadgeRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  heroBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  heroBadgeText: { fontSize: 11, fontFamily: 'Satoshi-Variable', color: 'rgba(255,255,255,0.8)', fontWeight: '600', letterSpacing: 0.5 },
+  heroEmoji: { fontSize: 64, textAlign: 'center', marginVertical: 8 },
+  heroWeekText: { fontSize: 28, fontFamily: 'CabinetGrotesk-Black', color: '#FFFFFF', textAlign: 'center' },
+  heroSizeText: { fontSize: 14, fontFamily: 'Satoshi-Variable', color: 'rgba(255,255,255,0.75)', textAlign: 'center', marginTop: 4 },
+  heroDaysText: { fontSize: 13, fontFamily: 'Satoshi-Variable', color: 'rgba(255,255,255,0.55)', textAlign: 'center', marginTop: 2 },
+  heroFact: { fontSize: 13, fontFamily: 'Satoshi-Variable', color: 'rgba(255,255,255,0.65)', textAlign: 'center', marginTop: 12, lineHeight: 18 },
   heroProgressContainer: { marginTop: 16 },
-  heroProgressTrack: {
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 2,
+  heroProgressTrack: { height: 4, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 2 },
+  heroProgressFill: { height: 4, backgroundColor: '#B983FF', borderRadius: 2 },
+  heroProgressLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  heroProgressLabel: { fontSize: 10, fontFamily: 'Satoshi-Variable', color: 'rgba(255,255,255,0.4)' },
+  heroTapHint: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(185,131,255,0.15)',
+    borderTopLeftRadius: 12,
+    borderBottomRightRadius: 24,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  heroProgressFill: {
-    height: 4,
-    backgroundColor: '#B983FF',
-    borderRadius: 2,
-  },
-  heroProgressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-  },
-  heroProgressLabel: {
-    fontSize: 10,
-    fontFamily: 'Satoshi-Variable',
-    color: 'rgba(255,255,255,0.4)',
-  },
-  heroDotsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  heroDot: {
-    height: 6,
-    borderRadius: 3,
-  },
+  heroTapText: { fontSize: 11, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  heroDotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 4, marginTop: 8, marginBottom: 4 },
+  heroDot: { height: 6, borderRadius: 3 },
 
+  // Shared section
   section: { paddingHorizontal: 20, marginTop: 20 },
-  sectionLabel: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: 12,
-  },
+  sectionLabel: { fontSize: 11, fontFamily: 'Satoshi-Variable', fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 },
 
+  // Routines
   quickLogRow: { gap: 8, paddingBottom: 4 },
-  quickChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  quickChipText: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '600',
-  },
+  quickChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1 },
+  quickChipText: { fontSize: 13, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
 
-  vitalsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  vitalsTile: {
-    width: (SCREEN_W - 52) / 2,
-    borderRadius: 20,
-    padding: 16,
-    gap: 6,
-  },
-  vitalsValue: {
-    fontSize: 22,
-    fontFamily: 'CabinetGrotesk-Black',
-  },
-  vitalsLabel: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Variable',
-  },
-  vitalsProgressTrack: {
-    height: 3,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 2,
-    marginTop: 4,
-  },
-  vitalsProgressFill: {
-    height: 3,
-    borderRadius: 2,
-  },
+  // Weight chart
+  chartCard: { borderRadius: 24, padding: 20 },
+  chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
+  chartCurrentValue: { fontSize: 20, fontFamily: 'CabinetGrotesk-Black' },
+  chartCta: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  chartCtaText: { fontSize: 13, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
 
-  moodCard: {
-    borderRadius: 24,
-    padding: 20,
-  },
-  moodHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  moodRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  moodOption: {
-    alignItems: 'center',
-    padding: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'transparent',
-    flex: 1,
-    marginHorizontal: 2,
-  },
-  moodEmoji: { fontSize: 24 },
-  moodLabel: {
-    fontSize: 10,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '600',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-
-  contextCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    marginBottom: 10,
-    gap: 12,
-  },
-  contextEmoji: { fontSize: 28 },
-  contextBody: { flex: 1 },
-  contextTitle: {
-    fontSize: 14,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  contextText: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Variable',
-    lineHeight: 16,
-  },
-
-  chartCard: {
-    borderRadius: 24,
-    padding: 20,
-  },
-  chartHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  chartCurrentValue: {
-    fontSize: 20,
-    fontFamily: 'CabinetGrotesk-Black',
-  },
-  chartCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  chartCtaText: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '600',
-  },
-
-  grandmaCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 24,
-    padding: 20,
-    gap: 16,
-  },
+  // Grandma
+  grandmaCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 24, padding: 20, gap: 16 },
   grandmaEmoji: { fontSize: 36 },
   grandmaBody: { flex: 1 },
-  grandmaTitle: {
-    fontSize: 16,
-    fontFamily: 'CabinetGrotesk-Black',
-    marginBottom: 2,
-  },
-  grandmaSubtitle: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    lineHeight: 18,
-  },
+  grandmaTitle: { fontSize: 16, fontFamily: 'CabinetGrotesk-Black', marginBottom: 2 },
+  grandmaSubtitle: { fontSize: 13, fontFamily: 'Satoshi-Variable', lineHeight: 18 },
 
-  affirmationCard: {
-    borderRadius: 24,
-    padding: 20,
-  },
-  affirmationLabel: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: 10,
-  },
-  affirmationText: {
-    fontSize: 16,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '500',
-    lineHeight: 24,
-    fontStyle: 'italic',
-  },
+  // Inline log modal
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
+  modalSheet: { borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingBottom: 40, maxHeight: '80%' },
+  modalHeader: { alignItems: 'center', paddingTop: 12, paddingHorizontal: 20, paddingBottom: 8, flexDirection: 'row', justifyContent: 'center' },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', position: 'absolute', top: 12 },
+  modalClose: { position: 'absolute', right: 20, top: 8, padding: 8 },
 
-  tipCard: {
-    borderRadius: 24,
-    padding: 20,
-  },
-  tipText: {
-    fontSize: 15,
-    fontFamily: 'Satoshi-Variable',
-    lineHeight: 22,
-  },
-
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-  },
-  modalSheet: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingBottom: 40,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    alignItems: 'center',
-    paddingTop: 12,
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    position: 'absolute',
-    top: 12,
-  },
-  modalClose: {
-    position: 'absolute',
-    right: 20,
-    top: 8,
-    padding: 8,
-  },
-
-  simpleForm: {
-    padding: 24,
-    gap: 20,
-    alignItems: 'center',
-  },
-  simpleFormTitle: {
-    fontSize: 18,
-    fontFamily: 'CabinetGrotesk-Black',
-    textAlign: 'center',
-  },
-  simpleFormBtn: {
-    paddingHorizontal: 40,
-    paddingVertical: 16,
-    borderRadius: 999,
-  },
-  simpleFormBtnText: {
-    fontSize: 16,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
+  simpleForm: { padding: 24, gap: 20, alignItems: 'center' },
+  simpleFormTitle: { fontSize: 18, fontFamily: 'CabinetGrotesk-Black', textAlign: 'center' },
+  simpleFormBtn: { paddingHorizontal: 40, paddingVertical: 16, borderRadius: 999 },
+  simpleFormBtnText: { fontSize: 16, fontFamily: 'Satoshi-Variable', fontWeight: '700', color: '#FFFFFF' },
 })

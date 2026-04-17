@@ -12,6 +12,7 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { ArrowLeft } from 'lucide-react-native'
 import { supabase } from '../../lib/supabase'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { SocialAuthButtons } from '../../components/auth/SocialAuthButtons'
@@ -39,11 +40,15 @@ export default function SignIn() {
         <ScrollView
           contentContainerStyle={[
             styles.container,
-            { paddingTop: insets.top + 60, paddingBottom: insets.bottom + 24 },
+            { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 },
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.title}>Welcome back,{'\n'}Dear.</Text>
+          <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
+            <ArrowLeft size={22} color="rgba(255,255,255,0.7)" strokeWidth={2} />
+          </Pressable>
+
+          <Text style={[styles.title, { marginTop: 32 }]}>Welcome back,{'\n'}Dear.</Text>
           <Text style={styles.subtitle}>Sign in to continue your journey</Text>
 
           {/* Social Auth */}
@@ -110,6 +115,14 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: spacing['2xl'],
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 36,

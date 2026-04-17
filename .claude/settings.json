@@ -85,7 +85,24 @@
       "Bash(chmod +x /tmp/count_strings.sh)",
       "Bash(grep -r \"camera\\\\|Camera\\\\|photo\\\\|Photo\\\\|image picker\" /Users/igorcarvalhorodrigues/Projects/grandma-app/app/\\\\\\(tabs\\\\\\)/agenda*)",
       "Bash(claude plugin:*)",
-      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")"
+      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
+      "Bash(bash scripts/start-server.sh --project-dir /Users/igorcarvalhorodrigues/Projects/grandma-app)",
+      "Bash(bash /Users/igorcarvalhorodrigues/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh --project-dir /Users/igorcarvalhorodrigues/Projects/grandma-app)",
+      "Bash(python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); print\\('scripts:', list\\(p.get\\('scripts',{}\\).keys\\(\\)\\)\\); print\\('jest:', p.get\\('jest',{}\\)\\)\")",
+      "Bash(supabase inspect:*)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(echo \"Started on port 8082, PID: $!\")",
+      "Bash(xcrun simctl:*)",
+      "Read(//tmp/**)",
+      "Read(//private/tmp/**)",
+      "Bash(node -e ':*)",
+      "Bash(ls /Users/igorcarvalhorodrigues/Projects/grandma-app/lib/pregnancy*)",
+      "Bash(ls /Users/igorcarvalhorodrigues/Projects/grandma-app/lib/*appoint*)",
+      "Bash(sed -i '' 's/savePregnancyLog\\(date, '\\\\''kegel'\\\\'', sets.toString\\(\\), null\\)/savePregnancyLog\\(date, '\\\\''kegel'\\\\'', sets.toString\\(\\), undefined\\)/' /Users/igorcarvalhorodrigues/Projects/grandma-app/components/calendar/PregnancyLogForms.tsx)",
+      "Bash(sed -i '' 's/savePregnancyLog\\(date, '\\\\''water'\\\\'', glasses.toString\\(\\), null\\)/savePregnancyLog\\(date, '\\\\''water'\\\\'', glasses.toString\\(\\), undefined\\)/' /Users/igorcarvalhorodrigues/Projects/grandma-app/components/calendar/PregnancyLogForms.tsx)",
+      "Bash(sed -i '' \"s/savePregnancyLog\\(date, 'vitamins', '1', null\\)/savePregnancyLog\\(date, 'vitamins', '1', undefined\\)/\" /Users/igorcarvalhorodrigues/Projects/grandma-app/components/calendar/PregnancyLogForms.tsx)",
+      "Bash(node -e \"const l = require\\('/Users/igorcarvalhorodrigues/Projects/grandma-app/node_modules/lucide-react-native'\\); const keys = Object.keys\\(l\\).filter\\(k => k.toLowerCase\\(\\).includes\\('edit'\\)\\); console.log\\(keys.slice\\(0,10\\)\\)\")",
+      "Bash(ls /Users/igorcarvalhorodrigues/Projects/grandma-app/supabase/migrations/20260416*)"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"

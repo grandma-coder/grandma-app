@@ -55,6 +55,7 @@ import {
   MinusCircle,
   Minus,
   Baby,
+  Sun,
 } from 'lucide-react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -66,6 +67,7 @@ import { LogSheet } from './LogSheet'
 import {
   FeedingForm,
   SleepForm,
+  WakeUpForm,
   HealthEventForm,
   KidsMoodForm,
   MemoryForm,
@@ -94,7 +96,7 @@ interface ChildLog {
   logged_by: string | null
 }
 
-type LogType = 'feeding' | 'sleep' | 'health' | 'mood' | 'memory' | 'activity' | 'diaper'
+type LogType = 'feeding' | 'sleep' | 'wake_up' | 'health' | 'mood' | 'memory' | 'activity' | 'diaper'
 
 interface ChildRoutine {
   id: string
@@ -119,6 +121,7 @@ const LOG_META: Record<string, { label: string; icon: typeof Utensils; color: st
   feeding: { label: 'Feeding', icon: Utensils, color: brand.kids },
   food: { label: 'Food', icon: Utensils, color: brand.kids },
   sleep: { label: 'Sleep', icon: Moon, color: brand.pregnancy },
+  wake_up: { label: 'Wake Up', icon: Sun, color: brand.accent },
   health: { label: 'Health', icon: Heart, color: brand.error },
   temperature: { label: 'Temperature', icon: Heart, color: brand.error },
   medicine: { label: 'Medicine', icon: Heart, color: brand.error },
@@ -150,6 +153,7 @@ function isRoutineSkipped(routine: ChildRoutine, dayLogs: ChildLog[] | undefined
 const QUICK_LOGS: { id: LogType; label: string; icon: typeof Utensils; color: string }[] = [
   { id: 'feeding', label: 'Feeding', icon: Utensils, color: brand.kids },
   { id: 'sleep', label: 'Sleep', icon: Moon, color: brand.pregnancy },
+  { id: 'wake_up', label: 'Wake Up', icon: Sun, color: brand.accent },
   { id: 'diaper', label: 'Diaper', icon: Baby, color: brand.secondary },
   { id: 'health', label: 'Health', icon: Heart, color: brand.error },
   { id: 'activity', label: 'Activity', icon: Dumbbell, color: brand.phase.ovulation },
@@ -161,7 +165,7 @@ const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 /** Map routine type → sheet LogType */
 const ROUTINE_SHEET_MAP: Record<string, string> = {
-  feeding: 'feeding', food: 'feeding', sleep: 'sleep',
+  feeding: 'feeding', food: 'feeding', sleep: 'sleep', wake_up: 'wake_up',
   activity: 'activity', mood: 'mood', health: 'health', memory: 'memory', diaper: 'diaper',
 }
 
@@ -286,8 +290,7 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
           if (parsed.startTime && parsed.endTime) parts.push(`${fmtTime(parsed.startTime)}–${fmtTime(parsed.endTime)}`)
           else if (parsed.startTime) parts.push(fmtTime(parsed.startTime))
           if (parsed.duration) {
-            const d = stripUnit(String(parsed.duration), ['hrs', 'hr', 'hours', 'hour', 'h'])
-            parts.push(`${d} hrs`)
+            parts.push(String(parsed.duration))
           }
           if (parsed.quality) parts.push(parsed.quality)
           return parts.join(' · ') || notes || ''
@@ -925,6 +928,25 @@ export function KidsCalendar() {
   const selectedDayLogs = useMemo(() => {
     return logsByDate.get(selectedDate) ?? []
   }, [logsByDate, selectedDate])
+
+  /** Open-ended sleep log for the active child from yesterday or today — used for "still sleeping" banner */
+  const openSleepLogForBanner = useMemo(() => {
+    const todayStr = toDateStr(new Date())
+    const prev = new Date()
+    prev.setDate(prev.getDate() - 1)
+    const yesterdayStr = toDateStr(prev)
+    const candidates = monthLogs.filter((l) =>
+      l.type === 'sleep' &&
+      (l.date === todayStr || l.date === yesterdayStr) &&
+      (selectedChildId === 'all' || l.child_id === selectedChildId)
+    )
+    return candidates.find((l) => {
+      try {
+        const p = JSON.parse(l.value ?? '{}')
+        return !!p.startTime && !p.endTime
+      } catch { return false }
+    }) ?? null
+  }, [monthLogs, selectedChildId])
 
   /** Routines scheduled today that haven't been logged yet and not skipped */
   const pendingRoutines = useMemo(() => {
@@ -2081,6 +2103,37 @@ export function KidsCalendar() {
               </Pressable>
             </View>
 
+            {/* ── Still sleeping banner ──────────────────────────────── */}
+            {openSleepLogForBanner && selectedDate === toDateStr(new Date()) && (() => {
+              let sp: Record<string, any> = {}
+              try { sp = JSON.parse(openSleepLogForBanner.value ?? '{}') } catch {}
+              const childName = children.find((c) => c.id === openSleepLogForBanner.child_id)?.name ?? ''
+              return (
+                <Pressable
+                  onPress={() => { setRoutinePrefill(null); setSheetType('wake_up') }}
+                  style={({ pressed }) => ({
+                    marginHorizontal: 12, marginBottom: 8,
+                    backgroundColor: brand.accent + '15',
+                    borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14,
+                    flexDirection: 'row', alignItems: 'center', gap: 10,
+                    borderWidth: 1, borderColor: brand.accent + '35',
+                    opacity: pressed ? 0.8 : 1,
+                  })}
+                >
+                  <Moon size={16} color={brand.pregnancy} strokeWidth={2} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13 }}>
+                      {childName ? `${childName} is still sleeping` : 'Still sleeping'}
+                    </Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+                      Bedtime {sp.routineName ? `· ${sp.routineName}` : ''} at {fmtTime(sp.startTime)} · tap to log wake up
+                    </Text>
+                  </View>
+                  <Sun size={16} color={brand.accent} strokeWidth={2} />
+                </Pressable>
+              )
+            })()}
+
             {/* Time grid — full 24h, flex height */}
             <ScrollView ref={dayScrollRef} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
               <View style={{ flexDirection: 'row', height: (DAY_VIEW_END - DAY_VIEW_START) * dayZoomH + dayZoomH }}>
@@ -2486,6 +2539,10 @@ export function KidsCalendar() {
 
       <LogSheet visible={sheetType === 'sleep'} title={editingLog ? 'Edit Entry' : (routinePrefill?.name ?? 'Log Sleep')} onClose={closeSheet}>
         <SleepForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} editLog={editingLog ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'sleep', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
+      </LogSheet>
+
+      <LogSheet visible={sheetType === 'wake_up'} title={routinePrefill?.name ?? 'Log Wake Up'} onClose={closeSheet}>
+        <WakeUpForm onSaved={handleSaved} prefill={routinePrefill ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'wake_up', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
       </LogSheet>
 
       <LogSheet visible={sheetType === 'health'} title={editingLog ? 'Edit Entry' : (routinePrefill?.name ?? 'Log Health Event')} onClose={closeSheet}>
@@ -2969,7 +3026,8 @@ export function KidsCalendar() {
                       let sp: Record<string, any> = {}
                       try { sp = JSON.parse(selectedLog.value ?? '{}') } catch {}
                       const sleepColor = '#B983FF'
-                      const durNum = sp.duration ? String(sp.duration).replace(/[^\d.]/g, '') : null
+                      // Duration is stored as "10h 10m", "45m", "2h" — display it directly
+                      const durStr = sp.duration ? String(sp.duration) : null
                       const qualityMap: Record<string, { emoji: string; color: string }> = {
                         great:    { emoji: '😴', color: '#A2FF86' },
                         good:     { emoji: '😊', color: '#4D96FF' },
@@ -2981,11 +3039,8 @@ export function KidsCalendar() {
                         <>
                           <View style={{ backgroundColor: sleepColor + '15', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: sleepColor + '30' }}>
                             <Text style={{ fontSize: 52, lineHeight: 56 }}>🌙</Text>
-                            {durNum ? (
-                              <>
-                                <Text style={{ color: sleepColor, fontSize: 56, fontWeight: '800', lineHeight: 64, letterSpacing: -2, marginTop: 6 }}>{durNum}</Text>
-                                <Text style={{ color: sleepColor, fontSize: 16, fontWeight: '700', marginTop: 2 }}>hours</Text>
-                              </>
+                            {durStr ? (
+                              <Text style={{ color: sleepColor, fontSize: 56, fontWeight: '800', lineHeight: 64, letterSpacing: -2, marginTop: 6 }}>{durStr}</Text>
                             ) : (
                               <Text style={{ color: sleepColor, fontSize: 20, fontWeight: '700', marginTop: 8 }}>Sleep logged</Text>
                             )}
@@ -3370,7 +3425,7 @@ const styles = StyleSheet.create({
   weekRow: { flexDirection: 'row', marginBottom: 8 },
   weekday: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
   dayGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  dayCell: { width: `${100 / 7}%`, aspectRatio: 1, padding: 2 },
+  dayCell: { width: `${100 / 7}%`, aspectRatio: 1.2, padding: 2 },
   dayInner: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2 },
   dayNumber: { fontSize: 14, fontWeight: '600' },
   todayDot: { width: 5, height: 5, borderRadius: 3, position: 'absolute', bottom: 4 },
