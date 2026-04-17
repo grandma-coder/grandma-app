@@ -1,0 +1,230 @@
+<style>
+  body { background: #0E0B1A; color: #fff; font-family: -apple-system, sans-serif; }
+
+  .vfx-grid { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+  .vfx-demo { width: 280px; }
+  .vfx-label { text-align: center; font-size: 13px; font-weight: 700; margin-bottom: 12px; color: rgba(255,255,255,0.8); }
+
+  /* Shared card base */
+  .acard {
+    border-radius: 24px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+  }
+  .atag { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 10px; }
+  .abtn {
+    display: block;
+    margin: 0 auto;
+    margin-top: 12px;
+    padding: 8px 20px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  /* --- Option A: Shimmer Swipe --- */
+  .card-a {
+    background: linear-gradient(135deg, rgba(185,131,255,0.12), rgba(185,131,255,0.06));
+    border: 1px solid rgba(185,131,255,0.3);
+    min-height: 140px;
+  }
+  .card-a .shimmer-text {
+    font-size: 13px;
+    font-style: italic;
+    color: transparent;
+    background: linear-gradient(90deg, rgba(185,131,255,0.3) 0%, #B983FF 30%, #fff 50%, #B983FF 70%, rgba(185,131,255,0.3) 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: shimmer 2.5s linear infinite;
+    line-height: 1.6;
+    display: none;
+  }
+  .card-a .placeholder { font-size: 13px; color: rgba(255,255,255,0.3); font-style: italic; line-height: 1.6; }
+  .card-a .btn-a { background: rgba(185,131,255,0.2); border: 1px solid #B983FF; color: #B983FF; }
+  @keyframes shimmer { to { background-position: 200% center; } }
+
+  /* --- Option B: Glow Burst / Particle --- */
+  .card-b {
+    background: linear-gradient(135deg, rgba(185,131,255,0.08), rgba(92,47,168,0.15));
+    border: 1px solid rgba(185,131,255,0.2);
+    min-height: 140px;
+  }
+  .card-b .locked-icon { font-size: 36px; text-align: center; margin: 8px 0; filter: grayscale(1) opacity(0.4); transition: all 0.5s; }
+  .card-b .revealed-text { font-size: 13px; font-style: italic; line-height: 1.6; color: rgba(255,255,255,0.9); display: none; opacity: 0; transform: scale(0.9); transition: all 0.5s; }
+  .card-b .particles { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+  .card-b .btn-b { background: linear-gradient(135deg, #7048B8, #B983FF); color: #fff; box-shadow: 0 4px 20px rgba(185,131,255,0.4); }
+  .burst { position: absolute; width: 6px; height: 6px; border-radius: 50%; opacity: 0; }
+  .card-b.revealed .locked-icon { filter: none; transform: scale(1.2); opacity: 0; }
+  .card-b.revealed .revealed-text { display: block; opacity: 1; transform: scale(1); }
+
+  /* --- Option C: Flip Card --- */
+  .flip-wrapper { perspective: 800px; height: 160px; }
+  .flip-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 24px; }
+  .flip-inner.flipped { transform: rotateY(180deg); }
+  .flip-front, .flip-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; padding: 20px; box-sizing: border-box; }
+  .flip-front {
+    background: linear-gradient(135deg, rgba(185,131,255,0.1), rgba(92,47,168,0.2));
+    border: 1px solid rgba(185,131,255,0.25);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .flip-back {
+    background: linear-gradient(135deg, rgba(92,47,168,0.4), rgba(185,131,255,0.2));
+    border: 1px solid rgba(185,131,255,0.5);
+    transform: rotateY(180deg);
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .flip-front .lock-emoji { font-size: 32px; margin-bottom: 8px; }
+  .flip-front .flip-hint { font-size: 12px; color: rgba(255,255,255,0.5); }
+  .flip-back .flip-text { font-size: 13px; font-style: italic; line-height: 1.6; color: rgba(255,255,255,0.95); }
+  .btn-c { background: rgba(185,131,255,0.15); border: 1px solid rgba(185,131,255,0.4); color: #B983FF; }
+
+  /* Demo buttons common */
+  .demo-reset { display: block; text-align: center; margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.3); cursor: pointer; }
+</style>
+
+<h2>Affirmation Reveal Effect</h2>
+<p class="subtitle">Click the button on each card to preview the reveal animation</p>
+
+<div class="vfx-grid">
+
+  <!-- Option A: Shimmer Reveal -->
+  <div class="vfx-demo">
+    <div class="vfx-label">A — Shimmer Sweep</div>
+    <div class="acard card-a" id="card-a">
+      <div class="atag">✨ TODAY'S AFFIRMATION</div>
+      <p class="placeholder" id="placeholder-a">Your daily wisdom is waiting for you...</p>
+      <p class="shimmer-text" id="shimmer-text">"Your body knows exactly what to do. Trust it completely."</p>
+      <button class="abtn btn-a" id="btn-a" onclick="revealA()">✨ Reveal Your Daily Wisdom</button>
+    </div>
+    <span class="demo-reset" onclick="resetA()">↺ reset</span>
+    <div class="option" data-choice="a" onclick="toggleSelect(this)" style="margin-top:8px;">
+      <div class="letter">A</div>
+      <div class="content"><h3>Shimmer Sweep</h3><p>Text shimmers into view with a purple glow wave — elegant, minimal</p></div>
+    </div>
+  </div>
+
+  <!-- Option B: Glow Burst -->
+  <div class="vfx-demo">
+    <div class="vfx-label">B — Glow Burst</div>
+    <div class="acard card-b" id="card-b">
+      <div class="atag">✨ TODAY'S AFFIRMATION</div>
+      <div class="locked-icon" id="lock-b">🔮</div>
+      <p class="revealed-text" id="reveal-b">"Your body knows exactly what to do. Trust it completely."</p>
+      <div class="particles" id="particles-b"></div>
+      <button class="abtn btn-b" id="btn-b" onclick="revealB()">✨ Reveal Your Daily Wisdom</button>
+    </div>
+    <span class="demo-reset" onclick="resetB()">↺ reset</span>
+    <div class="option" data-choice="b" onclick="toggleSelect(this)" style="margin-top:8px;">
+      <div class="letter">B</div>
+      <div class="content"><h3>Glow Burst</h3><p>Crystal ball glows and bursts into particles — text fades up dramatically</p></div>
+    </div>
+  </div>
+
+  <!-- Option C: Flip Card -->
+  <div class="vfx-demo">
+    <div class="vfx-label">C — Card Flip</div>
+    <div class="flip-wrapper" id="flip-wrapper">
+      <div class="flip-inner" id="flip-inner">
+        <div class="flip-front">
+          <div class="lock-emoji">🌟</div>
+          <div class="atag" style="margin:0 0 4px;">TODAY'S AFFIRMATION</div>
+          <div class="flip-hint">Tap to flip and reveal</div>
+        </div>
+        <div class="flip-back">
+          <div class="atag" style="margin:0 0 8px;">✨ TODAY'S AFFIRMATION</div>
+          <div class="flip-text">"Your body knows exactly what to do. Trust it completely."</div>
+        </div>
+      </div>
+    </div>
+    <button class="abtn btn-c" onclick="revealC()" id="btn-c" style="margin-top:8px;display:block;width:100%;text-align:center;">✨ Reveal Your Daily Wisdom</button>
+    <span class="demo-reset" onclick="resetC()">↺ reset</span>
+    <div class="option" data-choice="c" onclick="toggleSelect(this)" style="margin-top:8px;">
+      <div class="letter">C</div>
+      <div class="content"><h3>Card Flip</h3><p>Card flips with a 3D rotation — reveals the affirmation on the back face</p></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Option A: Shimmer
+function revealA() {
+  document.getElementById('placeholder-a').style.display = 'none';
+  document.getElementById('shimmer-text').style.display = 'block';
+  document.getElementById('btn-a').style.display = 'none';
+}
+function resetA() {
+  document.getElementById('placeholder-a').style.display = 'block';
+  document.getElementById('shimmer-text').style.display = 'none';
+  document.getElementById('btn-a').style.display = 'block';
+}
+
+// Option B: Glow Burst
+function revealB() {
+  const card = document.getElementById('card-b');
+  const lock = document.getElementById('lock-b');
+  const reveal = document.getElementById('reveal-b');
+  const particles = document.getElementById('particles-b');
+  const btn = document.getElementById('btn-b');
+
+  // Burst particles
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    p.className = 'burst';
+    const colors = ['#B983FF','#FFD700','#FF8AD8','#A2FF86','#fff'];
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.left = (30 + Math.random() * 40) + '%';
+    p.style.top = (20 + Math.random() * 40) + '%';
+    p.style.animation = `burst-anim 0.8s ease-out ${i * 0.05}s forwards`;
+    particles.appendChild(p);
+  }
+
+  // Add burst animation
+  if (!document.getElementById('burst-style')) {
+    const style = document.createElement('style');
+    style.id = 'burst-style';
+    style.textContent = `@keyframes burst-anim {
+      0% { opacity:1; transform: scale(1) translate(0,0); }
+      100% { opacity:0; transform: scale(0.3) translate(${Math.random()*60-30}px, ${Math.random()*60-30}px); }
+    }`;
+    document.head.appendChild(style);
+  }
+
+  lock.style.transition = 'all 0.4s';
+  lock.style.transform = 'scale(1.5)';
+  lock.style.opacity = '0';
+
+  setTimeout(() => {
+    reveal.style.display = 'block';
+    setTimeout(() => { reveal.style.opacity = '1'; reveal.style.transform = 'scale(1)'; }, 50);
+    btn.style.display = 'none';
+  }, 350);
+}
+function resetB() {
+  const lock = document.getElementById('lock-b');
+  const reveal = document.getElementById('reveal-b');
+  const particles = document.getElementById('particles-b');
+  const btn = document.getElementById('btn-b');
+  lock.style.transform = ''; lock.style.opacity = '';
+  reveal.style.display = 'none'; reveal.style.opacity = '0'; reveal.style.transform = 'scale(0.9)';
+  particles.innerHTML = '';
+  btn.style.display = 'block';
+}
+
+// Option C: Flip
+function revealC() {
+  document.getElementById('flip-inner').classList.add('flipped');
+  document.getElementById('btn-c').style.display = 'none';
+}
+function resetC() {
+  document.getElementById('flip-inner').classList.remove('flipped');
+  document.getElementById('btn-c').style.display = 'block';
+}
+</script>

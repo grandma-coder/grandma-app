@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics + Profile</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0E0B1A; color: #fff; font-family: system-ui, sans-serif; padding: 28px 20px 60px; }
+  h2 { color: #B983FF; font-size: 1.3rem; margin-bottom: 4px; text-align: center; }
+  .page-sub { color: rgba(255,255,255,0.5); font-size: 0.82rem; text-align: center; margin-bottom: 32px; }
+
+  .section-header { font-size: 1.05rem; font-weight: 800; color: #B983FF; text-align: center; margin: 32px 0 6px; letter-spacing: -0.3px; }
+  .section-desc { text-align: center; font-size: 0.75rem; color: rgba(255,255,255,0.45); margin-bottom: 20px; }
+
+  .phones-row { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+
+  /* Phone */
+  .phone {
+    width: 240px;
+    background: #0E0B1A;
+    border-radius: 40px;
+    border: 2px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .phone-label { text-align:center; padding:10px 12px 4px; font-size:0.72rem; font-weight:700; color:#B983FF; }
+  .phone-sub { text-align:center; padding:0 12px 12px; font-size:0.6rem; color:rgba(255,255,255,0.4); line-height:1.4; }
+  .status { display:flex; justify-content:space-between; padding:10px 18px 4px; font-size:0.55rem; color:rgba(255,255,255,0.6); }
+
+  /* View tabs */
+  .vtabs { display:flex; border-bottom:1px solid rgba(255,255,255,0.07); background:rgba(255,255,255,0.02); }
+  .vt { flex:1; text-align:center; padding:7px 0; font-size:0.5rem; font-weight:700; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid transparent; }
+  .vt.active { color:#B983FF; border-bottom-color:#B983FF; }
+
+  .sec-lbl { padding:10px 12px 4px; font-size:0.5rem; text-transform:uppercase; letter-spacing:1.2px; color:rgba(255,255,255,0.3); font-weight:700; }
+  .scroll-body { padding-bottom:12px; }
+
+  /* Progress arc */
+  .progress-hero { padding:14px 14px 10px; display:flex; flex-direction:column; align-items:center; }
+  .arc-container { position:relative; width:100px; height:56px; margin-bottom:8px; }
+  .arc-label { position:absolute; bottom:0; left:50%; transform:translateX(-50%); text-align:center; }
+  .arc-num { font-size:1.4rem; font-weight:800; color:#fff; line-height:1; }
+  .arc-sub { font-size:0.5rem; color:rgba(255,255,255,0.5); }
+  .trimester-pills { display:flex; gap:5px; }
+  .t-pill { font-size:0.52rem; padding:3px 8px; border-radius:99px; font-weight:700; }
+  .t-pill.active { background:#B983FF; color:#0E0B1A; }
+  .t-pill.done { background:rgba(162,255,134,0.2); color:#A2FF86; }
+  .t-pill.future { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.35); }
+
+  /* Insight cards row */
+  .insights-row { display:flex; gap:6px; padding:0 10px; }
+  .ins-card { flex:1; border-radius:12px; padding:8px; }
+  .ins-card.green { background:rgba(162,255,134,0.08); border:1px solid rgba(162,255,134,0.2); }
+  .ins-card.purple { background:rgba(185,131,255,0.08); border:1px solid rgba(185,131,255,0.2); }
+  .ins-card .ins-icon { font-size:0.9rem; margin-bottom:3px; }
+  .ins-card .ins-text { font-size:0.55rem; color:rgba(255,255,255,0.75); line-height:1.3; }
+
+  /* Chart card */
+  .chart-card { margin:8px 10px 0; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:10px 12px; }
+  .cc-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .cc-title { font-size:0.65rem; font-weight:700; }
+  .cc-action { font-size:0.52rem; color:#B983FF; }
+  .cc-sub { font-size:0.55rem; color:rgba(255,255,255,0.4); margin-bottom:8px; }
+
+  /* SVG charts */
+  .chart-svg { width:100%; overflow:visible; }
+
+  /* Symptom frequency bars */
+  .sym-bars { display:flex; flex-direction:column; gap:5px; }
+  .sym-row { display:flex; align-items:center; gap:6px; }
+  .sym-name { font-size:0.52rem; color:rgba(255,255,255,0.6); min-width:55px; }
+  .sym-bar-track { flex:1; height:6px; background:rgba(255,255,255,0.06); border-radius:99px; overflow:hidden; }
+  .sym-bar-fill { height:100%; border-radius:99px; }
+  .sym-count { font-size:0.5rem; color:rgba(255,255,255,0.4); min-width:16px; text-align:right; }
+
+  /* Wellbeing scores */
+  .wellbeing-grid { display:flex; flex-direction:column; gap:5px; }
+  .wb-row { display:flex; align-items:center; gap:6px; }
+  .wb-label { font-size:0.52rem; color:rgba(255,255,255,0.6); min-width:60px; }
+  .wb-track { flex:1; height:5px; background:rgba(255,255,255,0.06); border-radius:99px; overflow:hidden; }
+  .wb-fill { height:100%; border-radius:99px; }
+  .wb-score { font-size:0.52rem; color:rgba(255,255,255,0.5); min-width:14px; text-align:right; }
+
+  /* Birth prep checklist */
+  .prep-list { display:flex; flex-direction:column; gap:4px; }
+  .prep-item { display:flex; align-items:center; gap:7px; padding:5px 8px; background:rgba(255,255,255,0.04); border-radius:10px; }
+  .prep-check { width:14px; height:14px; border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:0.6rem; }
+  .prep-check.done { background:rgba(162,255,134,0.2); color:#A2FF86; }
+  .prep-check.todo { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); }
+  .prep-text { font-size:0.58rem; color:rgba(255,255,255,0.75); }
+  .prep-text.done { color:rgba(255,255,255,0.4); text-decoration:line-through; }
+
+  /* Contraction card */
+  .contraction-card { margin:8px 10px 0; background:rgba(255,107,53,0.06); border:1px solid rgba(255,107,53,0.2); border-radius:16px; padding:10px 12px; }
+  .ct-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .ct-title { font-size:0.65rem; font-weight:700; color:#FF6B35; }
+  .ct-rule { font-size:0.55rem; color:rgba(255,255,255,0.45); }
+  .ct-stats { display:flex; gap:8px; }
+  .ct-stat { flex:1; text-align:center; background:rgba(255,255,255,0.04); border-radius:10px; padding:6px 4px; }
+  .ct-val { font-size:0.75rem; font-weight:800; }
+  .ct-lbl { font-size:0.48rem; color:rgba(255,255,255,0.4); margin-top:1px; }
+
+  /* Bottom nav */
+  .bnav { display:flex; background:#0E0B1A; border-top:1px solid rgba(255,255,255,0.07); padding:7px 0 10px; }
+  .bni { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .bni-dot { width:18px; height:18px; background:rgba(255,255,255,0.08); border-radius:5px; }
+  .bni-dot.active { background:#B983FF; }
+  .bni-dot.center { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#7048B8,#B983FF); margin-top:-16px; }
+  .bni-lbl { font-size:0.44rem; color:rgba(255,255,255,0.35); font-weight:700; text-transform:uppercase; }
+  .bni-lbl.active { color:#B983FF; }
+
+  /* ===================== PROFILE ===================== */
+  .profile-hero { background:linear-gradient(135deg,#2A1050,#5C2FA8); padding:16px 14px; display:flex; flex-direction:column; align-items:center; }
+  .pf-avatar { width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,#B983FF,#7048B8); display:flex; align-items:center; justify-content:center; font-size:1.4rem; margin-bottom:6px; box-shadow:0 0 20px rgba(185,131,255,0.4); }
+  .pf-name { font-size:0.9rem; font-weight:800; }
+  .pf-sub { font-size:0.6rem; color:rgba(255,255,255,0.6); margin-top:2px; }
+  .pf-pills { display:flex; gap:5px; margin-top:8px; }
+  .pf-pill { font-size:0.52rem; padding:3px 9px; border-radius:99px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.8); }
+
+  .prof-section { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.06); }
+  .ps-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .ps-title { font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:rgba(255,255,255,0.5); }
+  .ps-edit { font-size:0.55rem; color:#B983FF; }
+
+  .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+  .info-item { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:6px 8px; }
+  .ii-label { font-size:0.48rem; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; }
+  .ii-val { font-size:0.62rem; font-weight:700; color:rgba(255,255,255,0.9); }
+
+  .birth-pref { background:rgba(185,131,255,0.06); border:1px solid rgba(185,131,255,0.15); border-radius:12px; padding:8px 10px; }
+  .bp-row { display:flex; align-items:center; gap:6px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+  .bp-row:last-child { border:none; }
+  .bp-icon { font-size:0.8rem; }
+  .bp-text { flex:1; font-size:0.58rem; color:rgba(255,255,255,0.75); }
+  .bp-val { font-size:0.58rem; color:#B983FF; font-weight:700; }
+
+  .team-list { display:flex; flex-direction:column; gap:5px; }
+  .team-item { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:7px 9px; }
+  .ti-avatar { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem; }
+  .ti-body { flex:1; }
+  .ti-name { font-size:0.6rem; font-weight:700; }
+  .ti-role { font-size:0.52rem; color:rgba(255,255,255,0.4); }
+  .ti-arrow { font-size:0.65rem; color:rgba(255,255,255,0.25); }
+
+  .health-flags { display:flex; flex-wrap:wrap; gap:4px; }
+  .hf-tag { font-size:0.52rem; padding:3px 8px; border-radius:99px; }
+  .hf-tag.alert { background:rgba(255,107,53,0.15); border:1px solid rgba(255,107,53,0.3); color:#FF6B35; }
+  .hf-tag.note { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.6); }
+
+  .postpartum-list { display:flex; flex-direction:column; gap:4px; }
+  .pp-item { display:flex; align-items:center; gap:6px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+  .pp-icon { font-size:0.85rem; }
+  .pp-text { flex:1; font-size:0.58rem; color:rgba(255,255,255,0.7); }
+  .pp-status { font-size:0.5rem; padding:2px 6px; border-radius:99px; }
+  .pp-done { background:rgba(162,255,134,0.15); color:#A2FF86; }
+  .pp-todo { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.4); }
+
+  /* Summary cards */
+  .cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; max-width:900px; margin:0 auto 16px; }
+  .sum-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:14px 16px; }
+  .sc-icon { font-size:1.4rem; margin-bottom:6px; }
+  .sc-title { font-size:0.8rem; font-weight:700; margin-bottom:4px; }
+  .sc-desc { font-size:0.68rem; color:rgba(255,255,255,0.5); line-height:1.4; }
+</style>
+</head>
+<body>
+
+<h2>Analytics + Profile — Full Design</h2>
+<p class="page-sub">Real data from pregnancy_logs · Expanded profile with birth team & postpartum prep</p>
+
+<!-- ==================== ANALYTICS ==================== -->
+<div class="section-header">📊 Analytics — 3 sections</div>
+<div class="section-desc">Overview · Birth Prep · Wellbeing — all pulling from real logged data</div>
+
+<div class="phones-row">
+
+  <!-- ANALYTICS: Overview -->
+  <div class="phone">
+    <div class="status"><span>11:44</span><span>📶</span></div>
+    <div class="vtabs">
+      <div class="vt active">Overview</div>
+      <div class="vt">Birth Prep</div>
+      <div class="vt">Wellbeing</div>
+    </div>
+    <div class="scroll-body">
+
+      <!-- Progress arc -->
+      <div class="progress-hero">
+        <div class="arc-container">
+          <svg viewBox="0 0 100 56" width="100" height="56">
+            <path d="M10,50 A45,45 0 0,1 90,50" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8" stroke-linecap="round"/>
+            <path d="M10,50 A45,45 0 0,1 90,50" fill="none" stroke="url(#arcGrad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="141" stroke-dashoffset="56"/>
+            <defs>
+              <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#A2FF86"/>
+                <stop offset="100%" stop-color="#B983FF"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="arc-label"><div class="arc-num">24</div><div class="arc-sub">of 40 weeks</div></div>
+        </div>
+        <div class="trimester-pills">
+          <div class="t-pill done">T1 ✓</div>
+          <div class="t-pill active">T2 ●</div>
+          <div class="t-pill future">T3</div>
+        </div>
+      </div>
+
+      <!-- AI insights -->
+      <div class="insights-row">
+        <div class="ins-card green"><div class="ins-icon">⚡</div><div class="ins-text">Weight gain on track — within recommended range</div></div>
+        <div class="ins-card purple"><div class="ins-icon">⚡</div><div class="ins-text">Nausea decreased 80% since T1</div></div>
+      </div>
+
+      <!-- Weight chart -->
+      <div class="chart-card">
+        <div class="cc-header"><div class="cc-title">⚖️ Weight Tracking</div><div class="cc-action">Expand ›</div></div>
+        <div class="cc-sub">Recommended gain: 11–16kg for your BMI</div>
+        <svg class="chart-svg" viewBox="0 0 200 50" height="50">
+          <defs>
+            <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#B983FF" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#B983FF" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="10" width="200" height="25" fill="rgba(185,131,255,0.07)" rx="3"/>
+          <text x="2" y="9" font-size="6" fill="rgba(255,255,255,0.25)">max</text>
+          <text x="2" y="38" font-size="6" fill="rgba(255,255,255,0.25)">min</text>
+          <path d="M15,38 L42,36 L70,33 L98,30 L127,26 L160,22 L190,18" fill="none" stroke="#B983FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M15,38 L42,36 L70,33 L98,30 L127,26 L160,22 L190,18 L190,50 L15,50 Z" fill="url(#wGrad)"/>
+          <circle cx="190" cy="18" r="3" fill="#E0AAFF"/>
+          <text x="184" y="14" font-size="6" fill="#E0AAFF">65.5</text>
+        </svg>
+      </div>
+
+      <!-- Mood trend -->
+      <div class="chart-card">
+        <div class="cc-header"><div class="cc-title">😊 Mood Trend — 12 weeks</div><div class="cc-action">Expand ›</div></div>
+        <svg class="chart-svg" viewBox="0 0 200 40" height="40">
+          <defs>
+            <linearGradient id="mGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#FF8AD8" stop-opacity="0.4"/>
+              <stop offset="100%" stop-color="#FF8AD8" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M5,28 L22,25 L40,30 L58,22 L76,20 L94,18 L112,22 L130,16 L148,14 L166,18 L184,15 L198,12" fill="none" stroke="#FF8AD8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5,28 L22,25 L40,30 L58,22 L76,20 L94,18 L112,22 L130,16 L148,14 L166,18 L184,15 L198,12 L198,40 L5,40 Z" fill="url(#mGrad)"/>
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-size:0.48rem;color:rgba(255,255,255,0.3);margin-top:2px;"><span>W12</span><span>W16</span><span>W20</span><span>W24</span></div>
+      </div>
+
+      <!-- Kick count sessions -->
+      <div class="chart-card">
+        <div class="cc-header"><div class="cc-title">👶 Kick Sessions — last 2 weeks</div><div class="cc-action">Expand ›</div></div>
+        <svg class="chart-svg" viewBox="0 0 200 44" height="44">
+          <rect x="8" y="22" width="16" height="20" rx="3" fill="rgba(162,255,134,0.5)"/>
+          <rect x="30" y="16" width="16" height="26" rx="3" fill="rgba(162,255,134,0.5)"/>
+          <rect x="52" y="10" width="16" height="32" rx="3" fill="rgba(162,255,134,0.5)"/>
+          <rect x="74" y="14" width="16" height="28" rx="3" fill="rgba(162,255,134,0.5)"/>
+          <rect x="96" y="18" width="16" height="24" rx="3" fill="rgba(162,255,134,0.5)"/>
+          <rect x="118" y="8" width="16" height="34" rx="3" fill="rgba(162,255,134,0.7)"/>
+          <rect x="140" y="12" width="16" height="30" rx="3" fill="rgba(162,255,134,0.7)"/>
+          <rect x="162" y="6" width="16" height="36" rx="3" fill="#A2FF86"/>
+          <line x1="0" y1="8" x2="200" y2="8" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="3"/>
+          <text x="182" y="6" font-size="6" fill="rgba(162,255,134,0.8)">goal</text>
+        </svg>
+        <div style="font-size:0.52rem;color:rgba(255,255,255,0.4);margin-top:3px;">Average: 12.3 kicks · Best: 18 kicks · All sessions ≥10 ✓</div>
+      </div>
+
+      <!-- Symptom frequency -->
+      <div class="chart-card">
+        <div class="cc-header"><div class="cc-title">🤒 Symptom Frequency</div><div class="cc-action">Expand ›</div></div>
+        <div class="sym-bars">
+          <div class="sym-row"><div class="sym-name">Back pain</div><div class="sym-bar-track"><div class="sym-bar-fill" style="width:82%;background:#FF6B35;"></div></div><div class="sym-count">14</div></div>
+          <div class="sym-row"><div class="sym-name">Fatigue</div><div class="sym-bar-track"><div class="sym-bar-fill" style="width:65%;background:#B983FF;"></div></div><div class="sym-count">11</div></div>
+          <div class="sym-row"><div class="sym-name">Heartburn</div><div class="sym-bar-track"><div class="sym-bar-fill" style="width:47%;background:#FBBF24;"></div></div><div class="sym-count">8</div></div>
+          <div class="sym-row"><div class="sym-name">Nausea</div><div class="sym-bar-track"><div class="sym-bar-fill" style="width:24%;background:#4D96FF;"></div></div><div class="sym-count">4</div></div>
+          <div class="sym-row"><div class="sym-name">Swelling</div><div class="sym-bar-track"><div class="sym-bar-fill" style="width:18%;background:#A2FF86;"></div></div><div class="sym-count">3</div></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="bnav">
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">HOME</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">CAL</div></div>
+      <div class="bni"><div class="bni-dot center"></div><div class="bni-lbl" style="margin-top:6px;">✦</div></div>
+      <div class="bni"><div class="bni-dot active"></div><div class="bni-lbl active">STATS</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">ME</div></div>
+    </div>
+    <div class="phone-label">Analytics — Overview</div>
+    <div class="phone-sub">Progress arc · weight · mood · kicks · symptoms · all real data</div>
+  </div>
+
+  <!-- ANALYTICS: Birth Prep -->
+  <div class="phone">
+    <div class="status"><span>11:44</span><span>📶</span></div>
+    <div class="vtabs">
+      <div class="vt">Overview</div>
+      <div class="vt active">Birth Prep</div>
+      <div class="vt">Wellbeing</div>
+    </div>
+    <div class="scroll-body">
+
+      <!-- Birth plan completion -->
+      <div class="sec-lbl">Birth plan status</div>
+      <div class="chart-card" style="margin-top:0;">
+        <div class="cc-header"><div class="cc-title">🏥 Birth Plan Progress</div><div class="cc-action">Edit ›</div></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="position:relative;width:44px;height:44px;">
+            <svg viewBox="0 0 44 44" width="44" height="44">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"/>
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#B983FF" stroke-width="5" stroke-dasharray="113" stroke-dashoffset="45" stroke-linecap="round" transform="rotate(-90 22 22)"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;color:#B983FF;">60%</div>
+          </div>
+          <div>
+            <div style="font-size:0.65rem;font-weight:700;">6 of 10 decisions made</div>
+            <div style="font-size:0.55rem;color:rgba(255,255,255,0.45);">4 remaining before week 36</div>
+          </div>
+        </div>
+        <div class="prep-list">
+          <div class="prep-item"><div class="prep-check done">✓</div><div class="prep-text done">Birth location chosen — Hospital</div></div>
+          <div class="prep-item"><div class="prep-check done">✓</div><div class="prep-text done">Care provider selected — Dr. Mitchell</div></div>
+          <div class="prep-item"><div class="prep-check done">✓</div><div class="prep-text done">Pain management preference set</div></div>
+          <div class="prep-item"><div class="prep-check todo"></div><div class="prep-text">Who will be in the room?</div></div>
+          <div class="prep-item"><div class="prep-check todo"></div><div class="prep-text">Cord clamping preference</div></div>
+          <div class="prep-item"><div class="prep-check todo"></div><div class="prep-text">Newborn procedures (Vitamin K, etc.)</div></div>
+        </div>
+      </div>
+
+      <!-- Hospital bag -->
+      <div class="chart-card">
+        <div class="cc-header"><div class="cc-title">🧳 Hospital Bag</div><div class="cc-action">View all ›</div></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;"><div style="width:35%;height:100%;background:linear-gradient(90deg,#FBBF24,#FF6B35);border-radius:99px;"></div></div>
+          <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);">7 / 20 packed</div>
+        </div>
+        <div class="prep-list">
+          <div class="prep-item"><div class="prep-check done">✓</div><div class="prep-text done">Insurance card + ID</div></div>
+          <div class="prep-item"><div class="prep-check done">✓</div><div class="prep-text done">Birth plan printed</div></div>
+          <div class="prep-item"><div class="prep-check todo"></div><div class="prep-text">Going-home outfit for baby</div></div>
+          <div class="prep-item"><div class="prep-check todo"></div><div class="prep-text">Nursing bra × 2</div></div>
+        </div>
+      </div>
+
+      <!-- Contraction tracker (T3 preview) -->
+      <div class="contraction-card">
+        <div class="ct-header"><div class="ct-title">⏱️ Contraction Timer</div><div class="ct-rule">5-1-1 rule</div></div>
+        <div style="font-size:0.55rem;color:rgba(255,255,255,0.45);margin-bottom:7px;">Unlocks in T3 (week 28+) · Shows history & patterns</div>
+        <div class="ct-stats">
+          <div class="ct-stat"><div class="ct-val" style="color:rgba(255,255,255,0.3);">—</div><div class="ct-lbl">Sessions</div></div>
+          <div class="ct-stat"><div class="ct-val" style="color:rgba(255,255,255,0.3);">—</div><div class="ct-lbl">Avg duration</div></div>
+          <div class="ct-stat"><div class="ct-val" style="color:rgba(255,255,255,0.3);">—</div><div class="ct-lbl">Avg interval</div></div>
+        </div>
+      </div>
+
+      <!-- Classes & prep tasks -->
+      <div class="chart-card">
+        <div class="cc-header"><div class="cc-title">📚 Prenatal Classes</div><div class="cc-action">Add ›</div></div>
+        <div class="prep-list">
+          <div class="prep-item"><div class="prep-check done">✓</div><div class="prep-text done">Childbirth class (4 sessions)</div></div>
+          <div class="prep-item"><div class="prep-check done">✓</div><div class="prep-text done">Breastfeeding workshop</div></div>
+          <div class="prep-item"><div class="prep-check todo"></div><div class="prep-text">Infant CPR class</div></div>
+          <div class="prep-item"><div class="prep-check todo"></div><div class="prep-text">Hospital tour</div></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="bnav">
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">HOME</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">CAL</div></div>
+      <div class="bni"><div class="bni-dot center"></div><div class="bni-lbl" style="margin-top:6px;">✦</div></div>
+      <div class="bni"><div class="bni-dot active"></div><div class="bni-lbl active">STATS</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">ME</div></div>
+    </div>
+    <div class="phone-label">Analytics — Birth Prep</div>
+    <div class="phone-sub">Birth plan % · hospital bag tracker · contraction history · prenatal classes</div>
+  </div>
+
+  <!-- ANALYTICS: Wellbeing -->
+  <div class="phone">
+    <div class="status"><span>11:44</span><span>📶</span></div>
+    <div class="vtabs">
+      <div class="vt">Overview</div>
+      <div class="vt">Birth Prep</div>
+      <div class="vt active">Wellbeing</div>
+    </div>
+    <div class="scroll-body">
+
+      <!-- Weekly score -->
+      <div class="sec-lbl">This week's wellbeing</div>
+      <div class="chart-card" style="margin-top:0;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+          <div style="width:44px;height:44px;border-radius:50%;background:rgba(162,255,134,0.15);border:2px solid #A2FF86;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;color:#A2FF86;">73%</div>
+          <div><div style="font-size:0.65rem;font-weight:700;">Overall wellbeing</div><div style="font-size:0.55rem;color:rgba(255,255,255,0.45);">Up 8% from last week</div></div>
+        </div>
+        <div class="wellbeing-grid">
+          <div class="wb-row"><div class="wb-label">😴 Sleep</div><div class="wb-track"><div class="wb-fill" style="width:70%;background:#B983FF;"></div></div><div class="wb-score">7/10</div></div>
+          <div class="wb-row"><div class="wb-label">😊 Mood</div><div class="wb-track"><div class="wb-fill" style="width:80%;background:#FF8AD8;"></div></div><div class="wb-score">8/10</div></div>
+          <div class="wb-row"><div class="wb-label">🥗 Nutrition</div><div class="wb-track"><div class="wb-fill" style="width:60%;background:#A2FF86;"></div></div><div class="wb-score">6/10</div></div>
+          <div class="wb-row"><div class="wb-label">🧘 Exercise</div><div class="wb-track"><div class="wb-fill" style="width:50%;background:#4D96FF;"></div></div><div class="wb-score">5/10</div></div>
+          <div class="wb-row"><div class="wb-label">💧 Hydration</div><div class="wb-track"><div class="wb-fill" style="width:75%;background:#6AABF7;"></div></div><div class="wb-score">6/8</div></div>
+        </div>
+      </div>
+
+      <!-- Sleep quality chart -->
+      <div class="chart-card">
+        <div class="cc-header"><div class="cc-title">😴 Sleep Quality — 4 weeks</div><div class="cc-action">Expand ›</div></div>
+        <svg class="chart-svg" viewBox="0 0 200 40" height="40">
+          <path d="M10,28 L30,24 L50,30 L70,22 L90,20 L110,26 L130,18 L150,16 L170,20 L190,14" fill="none" stroke="#B983FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3,2"/>
+          <line x1="0" y1="20" x2="200" y2="20" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+          <text x="2" y="19" font-size="5.5" fill="rgba(255,255,255,0.25)">7h avg</text>
+        </svg>
+        <div style="font-size:0.52rem;color:rgba(255,255,255,0.4);margin-top:3px;">Avg 6.8h · Best 8.5h · Recommended: 7–9h</div>
+      </div>
+
+      <!-- Nutrition tracking -->
+      <div class="chart-card">
+        <div class="cc-header"><div class="cc-title">🥗 Nutrition Log — this week</div><div class="cc-action">Log meal ›</div></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+          <div style="flex:1;min-width:50px;background:rgba(162,255,134,0.08);border:1px solid rgba(162,255,134,0.2);border-radius:10px;padding:5px 6px;text-align:center;"><div style="font-size:0.62rem;font-weight:700;color:#A2FF86;">Iron ✓</div><div style="font-size:0.5rem;color:rgba(255,255,255,0.4);">5/7 days</div></div>
+          <div style="flex:1;min-width:50px;background:rgba(185,131,255,0.08);border:1px solid rgba(185,131,255,0.2);border-radius:10px;padding:5px 6px;text-align:center;"><div style="font-size:0.62rem;font-weight:700;color:#B983FF;">Folic ✓</div><div style="font-size:0.5rem;color:rgba(255,255,255,0.4);">7/7 days</div></div>
+          <div style="flex:1;min-width:50px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:10px;padding:5px 6px;text-align:center;"><div style="font-size:0.62rem;font-weight:700;color:#FBBF24;">Protein</div><div style="font-size:0.5rem;color:rgba(255,255,255,0.4);">3/7 days</div></div>
+        </div>
+        <div style="font-size:0.55rem;color:rgba(255,255,255,0.45);">💡 Tip: Protein intake low this week — try adding eggs or legumes</div>
+      </div>
+
+      <!-- Hydration -->
+      <div class="chart-card">
+        <div class="cc-header"><div class="cc-title">💧 Hydration — last 7 days</div></div>
+        <svg class="chart-svg" viewBox="0 0 200 36" height="36">
+          <rect x="8" y="20" width="18" height="14" rx="2" fill="rgba(106,171,247,0.4)"/>
+          <rect x="32" y="12" width="18" height="22" rx="2" fill="rgba(106,171,247,0.5)"/>
+          <rect x="56" y="8" width="18" height="26" rx="2" fill="rgba(106,171,247,0.7)"/>
+          <rect x="80" y="14" width="18" height="20" rx="2" fill="rgba(106,171,247,0.5)"/>
+          <rect x="104" y="10" width="18" height="24" rx="2" fill="rgba(106,171,247,0.7)"/>
+          <rect x="128" y="16" width="18" height="18" rx="2" fill="rgba(106,171,247,0.4)"/>
+          <rect x="152" y="6" width="18" height="28" rx="2" fill="#6AABF7"/>
+          <line x1="0" y1="8" x2="200" y2="8" stroke="rgba(106,171,247,0.3)" stroke-width="1" stroke-dasharray="3"/>
+          <text x="180" y="6" font-size="5.5" fill="rgba(106,171,247,0.8)">goal 8</text>
+        </svg>
+        <div style="font-size:0.52rem;color:rgba(255,255,255,0.4);margin-top:3px;">Avg 6.1 glasses/day · Goal: 8 glasses</div>
+      </div>
+
+    </div>
+    <div class="bnav">
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">HOME</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">CAL</div></div>
+      <div class="bni"><div class="bni-dot center"></div><div class="bni-lbl" style="margin-top:6px;">✦</div></div>
+      <div class="bni"><div class="bni-dot active"></div><div class="bni-lbl active">STATS</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">ME</div></div>
+    </div>
+    <div class="phone-label">Analytics — Wellbeing</div>
+    <div class="phone-sub">Weekly score · sleep quality · nutrition tracking · hydration · all from logs</div>
+  </div>
+
+</div>
+
+<!-- ==================== PROFILE ==================== -->
+<div class="section-header">👤 Profile — Complete Pregnancy Card</div>
+<div class="section-desc">Medical info · Birth preferences · Birth team · Health flags · Postpartum prep</div>
+
+<div class="phones-row">
+
+  <!-- Profile: Top + Medical -->
+  <div class="phone">
+    <div class="status"><span>11:44</span><span>📶</span></div>
+    <div class="scroll-body">
+      <div class="profile-hero">
+        <div class="pf-avatar">🤰</div>
+        <div class="pf-name">Sofia</div>
+        <div class="pf-sub">Week 24 · Trimester 2 · 112 days to go</div>
+        <div class="pf-pills">
+          <div class="pf-pill">🏥 Hospital birth</div>
+          <div class="pf-pill">👩‍⚕️ Dr. Mitchell</div>
+        </div>
+      </div>
+
+      <div class="prof-section">
+        <div class="ps-header"><div class="ps-title">Pregnancy info</div><div class="ps-edit">Edit</div></div>
+        <div class="info-grid">
+          <div class="info-item"><div class="ii-label">Due date</div><div class="ii-val">Aug 6, 2026</div></div>
+          <div class="info-item"><div class="ii-label">Current week</div><div class="ii-val">Week 24</div></div>
+          <div class="info-item"><div class="ii-label">First pregnancy</div><div class="ii-val">Yes</div></div>
+          <div class="info-item"><div class="ii-label">Blood type</div><div class="ii-val">A+</div></div>
+          <div class="info-item"><div class="ii-label">Pre-preg weight</div><div class="ii-val">53.5 kg</div></div>
+          <div class="info-item"><div class="ii-label">Weight gained</div><div class="ii-val">+12 kg</div></div>
+          <div class="info-item"><div class="ii-label">Height</div><div class="ii-val">165 cm</div></div>
+          <div class="info-item"><div class="ii-label">BMI (pre-preg)</div><div class="ii-val">19.7</div></div>
+        </div>
+      </div>
+
+      <div class="prof-section">
+        <div class="ps-header"><div class="ps-title">Birth preferences</div><div class="ps-edit">Edit</div></div>
+        <div class="birth-pref">
+          <div class="bp-row"><div class="bp-icon">🏥</div><div class="bp-text">Birth location</div><div class="bp-val">Hospital</div></div>
+          <div class="bp-row"><div class="bp-icon">💊</div><div class="bp-text">Pain management</div><div class="bp-val">Epidural OK</div></div>
+          <div class="bp-row"><div class="bp-icon">🎵</div><div class="bp-text">Atmosphere</div><div class="bp-val">Music, dim lights</div></div>
+          <div class="bp-row"><div class="bp-icon">✂️</div><div class="bp-text">Cord cutting</div><div class="bp-val">Partner cuts</div></div>
+          <div class="bp-row"><div class="bp-icon">🤱</div><div class="bp-text">Feeding plan</div><div class="bp-val">Breastfeed</div></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="bnav">
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">HOME</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">CAL</div></div>
+      <div class="bni"><div class="bni-dot center"></div><div class="bni-lbl" style="margin-top:6px;">✦</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">STATS</div></div>
+      <div class="bni"><div class="bni-dot active"></div><div class="bni-lbl active">ME</div></div>
+    </div>
+    <div class="phone-label">Profile — Medical + Birth Prefs</div>
+    <div class="phone-sub">Full pregnancy card · blood type · BMI · birth preferences in one place</div>
+  </div>
+
+  <!-- Profile: Birth Team + Health -->
+  <div class="phone">
+    <div class="status"><span>11:44</span><span>📶</span></div>
+    <div class="scroll-body">
+
+      <div class="prof-section" style="padding-top:14px;">
+        <div class="ps-header"><div class="ps-title">Birth team</div><div class="ps-edit">+ Add</div></div>
+        <div class="team-list">
+          <div class="team-item">
+            <div class="ti-avatar" style="background:rgba(185,131,255,0.2);">👩‍⚕️</div>
+            <div class="ti-body"><div class="ti-name">Dr. Mitchell</div><div class="ti-role">OB-GYN · Primary care</div></div>
+            <div class="ti-arrow">›</div>
+          </div>
+          <div class="team-item">
+            <div class="ti-avatar" style="background:rgba(162,255,134,0.2);">🏥</div>
+            <div class="ti-body"><div class="ti-name">St. Mary's Hospital</div><div class="ti-role">Birth location · Labor & Delivery</div></div>
+            <div class="ti-arrow">›</div>
+          </div>
+          <div class="team-item">
+            <div class="ti-avatar" style="background:rgba(255,138,216,0.2);">👨</div>
+            <div class="ti-body"><div class="ti-name">Marco</div><div class="ti-role">Partner · Birth support person</div></div>
+            <div class="ti-arrow">›</div>
+          </div>
+          <div class="team-item">
+            <div class="ti-avatar" style="background:rgba(251,191,36,0.2);">🌸</div>
+            <div class="ti-body"><div class="ti-name">Sarah</div><div class="ti-role">Doula · Hired for birth</div></div>
+            <div class="ti-arrow">›</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prof-section">
+        <div class="ps-header"><div class="ps-title">Health flags</div><div class="ps-edit">Edit</div></div>
+        <div class="health-flags">
+          <div class="hf-tag alert">⚠️ Iron deficiency (mild)</div>
+          <div class="hf-tag alert">⚠️ Gestational reflux</div>
+          <div class="hf-tag note">Penicillin allergy</div>
+          <div class="hf-tag note">No previous surgeries</div>
+          <div class="hf-tag note">No family history of twins</div>
+        </div>
+      </div>
+
+      <div class="prof-section">
+        <div class="ps-header"><div class="ps-title">Baby info</div><div class="ps-edit">Edit</div></div>
+        <div class="info-grid">
+          <div class="info-item"><div class="ii-label">Baby name</div><div class="ii-val">Rio 💜</div></div>
+          <div class="info-item"><div class="ii-label">Sex</div><div class="ii-val">Not revealed</div></div>
+          <div class="info-item"><div class="ii-label">Last scan</div><div class="ii-val">Week 20</div></div>
+          <div class="info-item"><div class="ii-label">Position</div><div class="ii-val">Cephalic</div></div>
+        </div>
+      </div>
+
+      <div class="prof-section">
+        <div class="ps-header"><div class="ps-title">Emergency contacts</div><div class="ps-edit">Edit</div></div>
+        <div class="team-list">
+          <div class="team-item">
+            <div class="ti-avatar" style="background:rgba(255,107,53,0.2);">📞</div>
+            <div class="ti-body"><div class="ti-name">Marco (Partner)</div><div class="ti-role">+55 11 9 0000-0000 · Primary</div></div>
+          </div>
+          <div class="team-item">
+            <div class="ti-avatar" style="background:rgba(255,107,53,0.15);">📞</div>
+            <div class="ti-body"><div class="ti-name">Dr. Mitchell</div><div class="ti-role">Emergency line · +55 11 0000-0000</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="bnav">
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">HOME</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">CAL</div></div>
+      <div class="bni"><div class="bni-dot center"></div><div class="bni-lbl" style="margin-top:6px;">✦</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">STATS</div></div>
+      <div class="bni"><div class="bni-dot active"></div><div class="bni-lbl active">ME</div></div>
+    </div>
+    <div class="phone-label">Profile — Birth Team + Health</div>
+    <div class="phone-sub">OB-GYN · hospital · partner · doula · health flags · baby info · emergency contacts</div>
+  </div>
+
+  <!-- Profile: Postpartum Prep -->
+  <div class="phone">
+    <div class="status"><span>11:44</span><span>📶</span></div>
+    <div class="scroll-body">
+
+      <div class="prof-section" style="padding-top:14px;">
+        <div class="ps-header"><div class="ps-title">Postpartum prep</div><div class="ps-edit">Edit</div></div>
+        <div style="font-size:0.58rem;color:rgba(255,255,255,0.45);margin-bottom:8px;">Plan ahead for recovery · Start thinking from week 28</div>
+        <div class="postpartum-list">
+          <div class="pp-item"><div class="pp-icon">🥘</div><div class="pp-text">Meal prep frozen meals</div><div><span class="pp-status pp-todo">todo</span></div></div>
+          <div class="pp-item"><div class="pp-icon">👩‍👩‍👦</div><div class="pp-text">Postpartum support person confirmed</div><div><span class="pp-status pp-done">done</span></div></div>
+          <div class="pp-item"><div class="pp-icon">🤱</div><div class="pp-text">Breastfeeding supplies ready</div><div><span class="pp-status pp-todo">todo</span></div></div>
+          <div class="pp-item"><div class="pp-icon">🧠</div><div class="pp-text">Read about baby blues vs PPD</div><div><span class="pp-status pp-done">done</span></div></div>
+          <div class="pp-item"><div class="pp-icon">📅</div><div class="pp-text">6-week checkup scheduled</div><div><span class="pp-status pp-todo">todo</span></div></div>
+          <div class="pp-item"><div class="pp-icon">💊</div><div class="pp-text">Postpartum vitamin plan</div><div><span class="pp-status pp-todo">todo</span></div></div>
+        </div>
+      </div>
+
+      <div class="prof-section">
+        <div class="ps-header"><div class="ps-title">Breastfeeding plan</div><div class="ps-edit">Edit</div></div>
+        <div class="birth-pref">
+          <div class="bp-row"><div class="bp-icon">🤱</div><div class="bp-text">Feeding intention</div><div class="bp-val">Breastfeed first</div></div>
+          <div class="bp-row"><div class="bp-icon">⏱️</div><div class="bp-text">Duration goal</div><div class="bp-val">6+ months</div></div>
+          <div class="bp-row"><div class="bp-icon">🏥</div><div class="bp-text">Lactation consultant</div><div class="bp-val">Booked week 36</div></div>
+          <div class="bp-row"><div class="bp-icon">🛍️</div><div class="bp-text">Pump</div><div class="bp-val">Medela ordered</div></div>
+        </div>
+      </div>
+
+      <div class="prof-section">
+        <div class="ps-header"><div class="ps-title">Nesting checklist</div><div class="ps-edit">Edit</div></div>
+        <div class="prep-list">
+          <div class="prep-item"><div class="prep-check done">✓</div><div class="prep-text done">Nursery painted & ready</div></div>
+          <div class="prep-item"><div class="prep-check done">✓</div><div class="prep-text done">Crib assembled + tested</div></div>
+          <div class="prep-item"><div class="prep-check todo"></div><div class="prep-text">Car seat installed</div></div>
+          <div class="prep-item"><div class="prep-check todo"></div><div class="prep-text">Baby monitor set up</div></div>
+          <div class="prep-item"><div class="prep-check todo"></div><div class="prep-text">Baby-proof outlet covers</div></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="bnav">
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">HOME</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">CAL</div></div>
+      <div class="bni"><div class="bni-dot center"></div><div class="bni-lbl" style="margin-top:6px;">✦</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">STATS</div></div>
+      <div class="bni"><div class="bni-dot active"></div><div class="bni-lbl active">ME</div></div>
+    </div>
+    <div class="phone-label">Profile — Postpartum Prep</div>
+    <div class="phone-sub">Recovery tasks · breastfeeding plan · nesting checklist · 6-week checkup</div>
+  </div>
+
+</div>
+
+</body>
+</html>

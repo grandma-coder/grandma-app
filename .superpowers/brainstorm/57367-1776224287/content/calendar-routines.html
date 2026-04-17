@@ -1,0 +1,198 @@
+<style>
+  body { background: #0E0B1A; color: #fff; font-family: system-ui, sans-serif; }
+  h2 { color: #B983FF; font-size: 1.4rem; margin-bottom: 0.25rem; }
+  .subtitle { color: rgba(255,255,255,0.55); font-size: 0.9rem; margin-bottom: 2rem; }
+
+  .section { margin-bottom: 2.5rem; }
+  .section-title { font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.8); margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem; }
+
+  /* Routine pill grid */
+  .routine-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .routine-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    border-radius: 99px;
+    border: 1.5px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.15s;
+  }
+  .routine-pill:hover { border-color: #B983FF; background: rgba(185,131,255,0.1); }
+  .routine-pill.selected { border-color: #B983FF; background: rgba(185,131,255,0.15); color: #B983FF; }
+  .routine-pill .icon { font-size: 1.1rem; }
+
+  /* Phase tags */
+  .phase-tag { font-size: 0.6rem; padding: 2px 8px; border-radius: 99px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 8px; }
+  .t1 { background: rgba(162,255,134,0.15); color: #A2FF86; }
+  .t2 { background: rgba(185,131,255,0.2); color: #B983FF; }
+  .t3 { background: rgba(255,107,53,0.15); color: #FF6B35; }
+  .all { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+
+  /* Views strip */
+  .views-strip { display: flex; gap: 10px; flex-wrap: wrap; }
+  .view-card {
+    flex: 1; min-width: 140px;
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .view-card:hover, .view-card.selected { border-color: #B983FF; background: rgba(185,131,255,0.1); }
+  .view-card .view-icon { font-size: 1.4rem; margin-bottom: 6px; }
+  .view-card h3 { font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; }
+  .view-card p { font-size: 0.7rem; color: rgba(255,255,255,0.5); line-height: 1.4; margin: 0; }
+
+  /* Log types */
+  .log-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .log-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .log-card:hover, .log-card.selected { border-color: #B983FF; background: rgba(185,131,255,0.08); }
+  .log-card .lc-icon { font-size: 1.3rem; margin-bottom: 4px; }
+  .log-card .lc-name { font-size: 0.75rem; font-weight: 700; margin-bottom: 2px; }
+  .log-card .lc-desc { font-size: 0.62rem; color: rgba(255,255,255,0.45); line-height: 1.3; }
+  .log-card .lc-tag { margin-top: 6px; }
+
+  .note { background: rgba(185,131,255,0.08); border: 1px solid rgba(185,131,255,0.2); border-radius: 12px; padding: 12px 16px; font-size: 0.75rem; color: rgba(255,255,255,0.7); line-height: 1.5; margin-top: 1rem; }
+  .note strong { color: #B983FF; }
+</style>
+
+<h2>Pregnancy Calendar — Routines, Views & Logs</h2>
+<p class="subtitle">Select the routine categories and log types you want to track. I'll use your choices to design the full system. You can pick multiple.</p>
+
+<!-- SECTION 1: CALENDAR VIEWS -->
+<div class="section">
+  <div class="section-title">📅 Calendar Views (like kids has Month + Timeline)</div>
+  <div class="views-strip options" data-multiselect>
+    <div class="view-card option" data-choice="month" onclick="toggleSelect(this)">
+      <div class="view-icon">🗓️</div>
+      <h3>Month</h3>
+      <p>Calendar grid. Days colored by trimester. Shows logs & appointments as dots.</p>
+    </div>
+    <div class="view-card option" data-choice="week" onclick="toggleSelect(this)">
+      <div class="view-icon">📋</div>
+      <h3>Week Timeline</h3>
+      <p>7-day scroll. Each day shows logged entries and what's due today.</p>
+    </div>
+    <div class="view-card option" data-choice="journey" onclick="toggleSelect(this)">
+      <div class="view-icon">🛤️</div>
+      <h3>Journey (weeks 4–40)</h3>
+      <p>Full pregnancy arc. Baby size, milestones, and your logged data per week.</p>
+    </div>
+    <div class="view-card option" data-choice="appointments" onclick="toggleSelect(this)">
+      <div class="view-icon">🏥</div>
+      <h3>Appointments</h3>
+      <p>Dedicated view: past exams, upcoming appointments, results timeline.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2: DAILY ROUTINES (like kids routines) -->
+<div class="section">
+  <div class="section-title">🔁 Daily Routines — tracked every day (like kids' feeding/sleep/diaper)</div>
+  <div class="routine-grid options" data-multiselect>
+    <div class="routine-pill option" data-choice="vitamins" onclick="toggleSelect(this)">
+      <span class="icon">💊</span> Prenatal vitamins
+    </div>
+    <div class="routine-pill option" data-choice="water" onclick="toggleSelect(this)">
+      <span class="icon">💧</span> Water intake
+    </div>
+    <div class="routine-pill option" data-choice="weight" onclick="toggleSelect(this)">
+      <span class="icon">⚖️</span> Weight check
+    </div>
+    <div class="routine-pill option" data-choice="kicks" onclick="toggleSelect(this)">
+      <span class="icon">👶</span> Kick count session
+    </div>
+    <div class="routine-pill option" data-choice="mood" onclick="toggleSelect(this)">
+      <span class="icon">😊</span> Mood check-in
+    </div>
+    <div class="routine-pill option" data-choice="symptoms" onclick="toggleSelect(this)">
+      <span class="icon">🤒</span> Symptoms log
+    </div>
+    <div class="routine-pill option" data-choice="sleep" onclick="toggleSelect(this)">
+      <span class="icon">😴</span> Sleep quality
+    </div>
+    <div class="routine-pill option" data-choice="exercise" onclick="toggleSelect(this)">
+      <span class="icon">🧘</span> Prenatal exercise
+    </div>
+    <div class="routine-pill option" data-choice="bp" onclick="toggleSelect(this)">
+      <span class="icon">🫀</span> Blood pressure
+    </div>
+    <div class="routine-pill option" data-choice="nutrition" onclick="toggleSelect(this)">
+      <span class="icon">🥗</span> Nutrition / meals
+    </div>
+    <div class="routine-pill option" data-choice="kegels" onclick="toggleSelect(this)">
+      <span class="icon">💪</span> Kegel exercises
+    </div>
+    <div class="routine-pill option" data-choice="affirmation" onclick="toggleSelect(this)">
+      <span class="icon">🌸</span> Daily affirmation read
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 3: EVENT LOGS (one-time or occasional) -->
+<div class="section">
+  <div class="section-title">📝 Event Logs — occasional entries (like kids' vaccine/exam/medicine)</div>
+  <div class="log-grid options" data-multiselect>
+    <div class="log-card option" data-choice="appointment" onclick="toggleSelect(this)">
+      <div class="lc-icon">📅</div>
+      <div class="lc-name">Appointment</div>
+      <div class="lc-desc">Type, doctor, notes, results</div>
+      <div class="lc-tag"><span class="phase-tag all">all trimesters</span></div>
+    </div>
+    <div class="log-card option" data-choice="exam_result" onclick="toggleSelect(this)">
+      <div class="lc-icon">🧪</div>
+      <div class="lc-name">Exam Result</div>
+      <div class="lc-desc">Blood tests, glucose, GBS, etc.</div>
+      <div class="lc-tag"><span class="phase-tag all">all trimesters</span></div>
+    </div>
+    <div class="log-card option" data-choice="ultrasound" onclick="toggleSelect(this)">
+      <div class="lc-icon">🔊</div>
+      <div class="lc-name">Ultrasound Note</div>
+      <div class="lc-desc">Week, measurements, photo note</div>
+      <div class="lc-tag"><span class="phase-tag t1">T1</span> <span class="phase-tag t2">T2</span></div>
+    </div>
+    <div class="log-card option" data-choice="contraction" onclick="toggleSelect(this)">
+      <div class="lc-icon">⏱️</div>
+      <div class="lc-name">Contraction Timer</div>
+      <div class="lc-desc">Duration, interval, 5-1-1 rule</div>
+      <div class="lc-tag"><span class="phase-tag t3">T3 only</span></div>
+    </div>
+    <div class="log-card option" data-choice="milestone" onclick="toggleSelect(this)">
+      <div class="lc-icon">🌟</div>
+      <div class="lc-name">Milestone</div>
+      <div class="lc-desc">First kick felt, gender reveal, etc.</div>
+      <div class="lc-tag"><span class="phase-tag all">all trimesters</span></div>
+    </div>
+    <div class="log-card option" data-choice="medicine" onclick="toggleSelect(this)">
+      <div class="lc-icon">💉</div>
+      <div class="lc-name">Medicine / Vaccine</div>
+      <div class="lc-desc">Flu shot, iron supplement, etc.</div>
+      <div class="lc-tag"><span class="phase-tag all">all trimesters</span></div>
+    </div>
+    <div class="log-card option" data-choice="birth_prep" onclick="toggleSelect(this)">
+      <div class="lc-icon">🏥</div>
+      <div class="lc-name">Birth Prep Task</div>
+      <div class="lc-desc">Hospital bag, birth plan progress</div>
+      <div class="lc-tag"><span class="phase-tag t3">T3 only</span></div>
+    </div>
+    <div class="log-card option" data-choice="nesting" onclick="toggleSelect(this)">
+      <div class="lc-icon">🪺</div>
+      <div class="lc-name">Nesting Task</div>
+      <div class="lc-desc">Nursery, baby gear, home prep</div>
+      <div class="lc-tag"><span class="phase-tag t2">T2</span> <span class="phase-tag t3">T3</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>How it maps to kids:</strong> Kids has <em>Routines</em> (daily recurring: feeding/sleep/diaper) + <em>Logs</em> (one-time: vaccines/exams/notes). We'll build the same pattern for pregnancy — daily routines show as a "to-do for today" strip in the calendar, and event logs show as timeline entries. Select everything you want, I'll scope the right ones.
+</div>

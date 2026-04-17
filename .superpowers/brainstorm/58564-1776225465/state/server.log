@@ -1,0 +1,5 @@
+{"type":"server-started","port":50809,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:50809","screen_dir":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/58564-1776225465/content","state_dir":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/58564-1776225465/state"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/58564-1776225465/content/arc-options.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/58564-1776225465/content/arc-options-v2.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/58564-1776225465/content/arc-options-v3.html"}
+{"type":"server-stopped","reason":"idle timeout"}

@@ -1,0 +1,288 @@
+<style>
+  body { background: #0E0B1A; color: #fff; font-family: -apple-system, sans-serif; }
+  .phone { width: 320px; background: #0E0B1A; border-radius: 40px; border: 2px solid rgba(255,255,255,0.15); overflow: hidden; margin: 0 auto; box-shadow: 0 0 60px rgba(185,131,255,0.25); }
+  .phone-inner { padding: 16px 0 24px; }
+  .section-block { margin: 8px 12px; border-radius: 16px; padding: 10px 14px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }
+  .label-tiny { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 4px; }
+  .hero { background: linear-gradient(135deg, #2A1050, #5C2FA8); height: 200px; margin: 0 12px 0; border-radius: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+  .hero .emoji { font-size: 48px; }
+  .hero .week { font-size: 22px; font-weight: 900; color: #fff; }
+  .hero .sub { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  .hero .progress { position: absolute; bottom: 16px; left: 16px; right: 16px; height: 3px; background: rgba(255,255,255,0.15); border-radius: 2px; }
+  .hero .progress-fill { height: 3px; width: 60%; background: #B983FF; border-radius: 2px; }
+  .dots { display: flex; justify-content: center; gap: 4px; margin: 8px 0 4px; }
+  .dot { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.2); }
+  .dot.active { width: 16px; background: #B983FF; }
+
+  .affirm-block { background: linear-gradient(135deg, rgba(185,131,255,0.12), rgba(185,131,255,0.06)); border: 1px solid rgba(185,131,255,0.3); border-radius: 16px; margin: 8px 12px; padding: 12px 14px; }
+  .affirm-reveal { background: rgba(185,131,255,0.2); border: 1px solid #B983FF; border-radius: 999px; padding: 6px 16px; font-size: 11px; font-weight: 700; color: #B983FF; text-align: center; margin-top: 8px; display: inline-block; }
+
+  .routine-strip { display: flex; gap: 6px; padding: 0 12px; overflow: hidden; }
+  .chip { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 5px 10px; font-size: 10px; white-space: nowrap; color: rgba(255,255,255,0.8); }
+  .chip.done { background: rgba(162,255,134,0.1); border-color: rgba(162,255,134,0.3); color: #A2FF86; }
+
+  .vitals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 12px; }
+  .vital-tile { background: #1A1430; border-radius: 16px; padding: 12px; cursor: pointer; transition: all 0.2s; }
+  .vital-tile:hover { background: #231B42; }
+  .vital-value { font-size: 20px; font-weight: 900; margin: 4px 0 2px; }
+  .vital-label { font-size: 10px; color: rgba(255,255,255,0.5); }
+  .vital-progress { height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 6px; }
+  .vital-fill { height: 3px; background: #6AABF7; border-radius: 2px; width: 50%; }
+
+  .reminders-block { margin: 8px 12px; }
+  .reminder-item { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); border-radius: 12px; padding: 8px 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; font-size: 11px; }
+  .reminder-dot { width: 8px; height: 8px; border-radius: 4px; background: #FBBF24; flex-shrink: 0; }
+
+  .weight-block { background: #1A1430; border-radius: 16px; margin: 8px 12px; padding: 12px 14px; }
+  .mini-chart { display: flex; align-items: flex-end; gap: 6px; height: 40px; margin-top: 8px; }
+  .bar { background: rgba(185,131,255,0.4); border-radius: 3px 3px 0 0; width: 16px; }
+
+  .grandma-block { background: #1A1430; border-radius: 16px; margin: 8px 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+
+  .tag { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+  .tag-new { background: rgba(162,255,134,0.15); color: #A2FF86; }
+  .tag-moved { background: rgba(185,131,255,0.15); color: #B983FF; }
+  .tag-fix { background: rgba(251,191,36,0.15); color: #FBBF24; }
+  .tag-removed { background: rgba(255,100,100,0.15); color: #ff7070; }
+  .arrow { color: rgba(255,255,255,0.3); font-size: 10px; }
+
+  .layout-comparison { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+  .layout-col { flex: 0 0 auto; }
+  .layout-title { text-align: center; font-size: 13px; font-weight: 700; margin-bottom: 12px; color: rgba(255,255,255,0.8); }
+  .badge-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+</style>
+
+<h2>New Home Screen Layout</h2>
+<p class="subtitle">Proposed section order with all changes applied — click your preferred version</p>
+
+<div class="layout-comparison">
+  <!-- Option A: Affirmation reveal right after hero -->
+  <div class="layout-col">
+    <div class="layout-title">Option A — Affirm → Routines → Vitals → Reminders</div>
+    <div class="phone">
+      <div class="phone-inner">
+        <!-- Hero -->
+        <div class="hero">
+          <div class="emoji">🌽</div>
+          <div class="week">Week 24</div>
+          <div class="sub">Size of a corn · 30cm</div>
+          <div class="progress"><div class="progress-fill"></div></div>
+        </div>
+        <div class="dots">
+          <div class="dot"></div><div class="dot active"></div><div class="dot"></div>
+        </div>
+
+        <!-- Affirmation MOVED UP -->
+        <div class="affirm-block">
+          <div class="label-tiny">✨ TODAY'S AFFIRMATION</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);font-style:italic;margin-top:4px;">Tap to reveal your daily wisdom...</div>
+          <div style="text-align:center;">
+            <span class="affirm-reveal">✨ Reveal Today's Wisdom</span>
+          </div>
+          <div class="badge-row"><span class="tag tag-moved">MOVED UP</span></div>
+        </div>
+
+        <!-- Routines -->
+        <div style="margin:8px 0 4px 12px;"><span class="label-tiny">TODAY'S ROUTINES</span></div>
+        <div class="routine-strip">
+          <span class="chip done">💊 ✓ Vitamins</span>
+          <span class="chip">💧 + Water</span>
+          <span class="chip">🧘 + Exercise</span>
+        </div>
+
+        <!-- Vitals 2-col -->
+        <div style="margin:8px 0 4px 12px;"><span class="label-tiny">TODAY'S VITALS <span class="tag tag-fix">CLICKABLE</span></span></div>
+        <div class="vitals-grid">
+          <div class="vital-tile">
+            <div class="label-tiny">⚖️ WEIGHT</div>
+            <div class="vital-value">68.5 <span style="font-size:12px;font-weight:400;color:rgba(255,255,255,0.5)">kg</span></div>
+            <div class="vital-label">↑ 0.3 this week</div>
+          </div>
+          <div class="vital-tile">
+            <div class="label-tiny">👶 KICKS</div>
+            <div class="vital-value">12</div>
+            <div class="vital-label">Sessions today</div>
+          </div>
+          <div class="vital-tile">
+            <div class="label-tiny">💧 HYDRATION</div>
+            <div class="vital-value">5<span style="font-size:12px;font-weight:400;color:rgba(255,255,255,0.5)">/8</span></div>
+            <div class="vital-progress"><div class="vital-fill" style="width:62%"></div></div>
+          </div>
+          <div class="vital-tile">
+            <div class="label-tiny">😊 MOOD</div>
+            <div class="vital-value" style="font-size:24px;">😊</div>
+            <div class="vital-label">Happy</div>
+          </div>
+        </div>
+
+        <!-- Reminders NEW -->
+        <div style="margin:8px 0 4px 12px;"><span class="label-tiny">REMINDERS <span class="tag tag-new">NEW</span></span></div>
+        <div class="reminders-block">
+          <div class="reminder-item">
+            <div class="reminder-dot"></div>
+            <div>
+              <div style="font-weight:700;font-size:11px;">OB Appointment</div>
+              <div style="color:rgba(255,255,255,0.5);font-size:10px;">Tomorrow, 10:00 AM</div>
+            </div>
+          </div>
+          <div class="reminder-item" style="border-color:rgba(185,131,255,0.2);background:rgba(185,131,255,0.06);">
+            <div class="reminder-dot" style="background:#B983FF;"></div>
+            <div>
+              <div style="font-weight:700;font-size:11px;">Week 24 Tip</div>
+              <div style="color:rgba(255,255,255,0.5);font-size:10px;">Viability milestone — baby could survive...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weight chart -->
+        <div class="weight-block">
+          <div class="label-tiny">WEIGHT TREND</div>
+          <div style="font-size:18px;font-weight:900;">68.5 kg</div>
+          <div class="mini-chart">
+            <div class="bar" style="height:20px;"></div>
+            <div class="bar" style="height:25px;"></div>
+            <div class="bar" style="height:22px;"></div>
+            <div class="bar" style="height:30px;background:rgba(185,131,255,0.7);"></div>
+            <div class="bar" style="height:35px;background:#B983FF;"></div>
+          </div>
+        </div>
+
+        <!-- Grandma CTA -->
+        <div class="grandma-block">
+          <span style="font-size:28px;">👵</span>
+          <div style="flex:1">
+            <div style="font-weight:800;font-size:13px;">Ask Grandma</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5);">Questions, worries, a pep talk</div>
+          </div>
+          <span style="color:#B983FF;">›</span>
+        </div>
+
+        <div style="height:8px;"></div>
+      </div>
+    </div>
+    <div class="badge-row" style="margin:8px 12px;gap:6px;">
+      <span class="tag tag-removed">❌ Mood Picker removed</span>
+      <span class="tag tag-moved">↑ Affirmation moved up</span>
+      <span class="tag tag-new">+ Reminders added</span>
+      <span class="tag tag-fix">⚡ Vitals clickable</span>
+    </div>
+    <div class="option" data-choice="a" onclick="toggleSelect(this)" style="margin:8px;">
+      <div class="letter">A</div>
+      <div class="content"><h3>Affirm first, then Reminders</h3><p>Emotional boost at the top, practical info below vitals</p></div>
+    </div>
+  </div>
+
+  <!-- Option B: Reminders right after affirmation, before vitals -->
+  <div class="layout-col">
+    <div class="layout-title">Option B — Affirm → Vitals → Reminders → Weight</div>
+    <div class="phone">
+      <div class="phone-inner">
+        <!-- Hero -->
+        <div class="hero">
+          <div class="emoji">🌽</div>
+          <div class="week">Week 24</div>
+          <div class="sub">Size of a corn · 30cm</div>
+          <div class="progress"><div class="progress-fill"></div></div>
+        </div>
+        <div class="dots">
+          <div class="dot"></div><div class="dot active"></div><div class="dot"></div>
+        </div>
+
+        <!-- Affirmation MOVED UP -->
+        <div class="affirm-block">
+          <div class="label-tiny">✨ TODAY'S AFFIRMATION</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);font-style:italic;margin-top:4px;">Tap to reveal your daily wisdom...</div>
+          <div style="text-align:center;margin-top:6px;">
+            <span class="affirm-reveal">✨ Reveal Today's Wisdom</span>
+          </div>
+        </div>
+
+        <!-- Vitals 2-col -->
+        <div style="margin:8px 0 4px 12px;"><span class="label-tiny">TODAY'S VITALS</span></div>
+        <div class="vitals-grid">
+          <div class="vital-tile">
+            <div class="label-tiny">⚖️ WEIGHT</div>
+            <div class="vital-value">68.5<span style="font-size:12px;font-weight:400;color:rgba(255,255,255,0.5)"> kg</span></div>
+            <div class="vital-label">↑ 0.3 this week</div>
+          </div>
+          <div class="vital-tile">
+            <div class="label-tiny">👶 KICKS</div>
+            <div class="vital-value">12</div>
+            <div class="vital-label">Sessions today</div>
+          </div>
+          <div class="vital-tile">
+            <div class="label-tiny">💧 HYDRATION</div>
+            <div class="vital-value">5<span style="font-size:12px;font-weight:400;color:rgba(255,255,255,0.5)">/8</span></div>
+            <div class="vital-progress"><div class="vital-fill" style="width:62%"></div></div>
+          </div>
+          <div class="vital-tile">
+            <div class="label-tiny">😊 MOOD</div>
+            <div class="vital-value" style="font-size:24px;">😊</div>
+            <div class="vital-label">Happy</div>
+          </div>
+        </div>
+
+        <!-- Reminders NEW -->
+        <div style="margin:8px 0 4px 12px;"><span class="label-tiny">REMINDERS + WEEK TIPS</span></div>
+        <div class="reminders-block">
+          <div class="reminder-item">
+            <div class="reminder-dot"></div>
+            <div>
+              <div style="font-weight:700;font-size:11px;">OB Appointment</div>
+              <div style="color:rgba(255,255,255,0.5);font-size:10px;">Tomorrow, 10:00 AM</div>
+            </div>
+          </div>
+          <div class="reminder-item" style="border-color:rgba(185,131,255,0.2);background:rgba(185,131,255,0.06);">
+            <div class="reminder-dot" style="background:#B983FF;"></div>
+            <div>
+              <div style="font-weight:700;font-size:11px;">Week 24 — Viability Milestone</div>
+              <div style="color:rgba(255,255,255,0.5);font-size:10px;">Baby could survive outside with care</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weight chart -->
+        <div class="weight-block">
+          <div class="label-tiny">WEIGHT TREND</div>
+          <div style="font-size:18px;font-weight:900;">68.5 kg</div>
+          <div class="mini-chart">
+            <div class="bar" style="height:20px;"></div>
+            <div class="bar" style="height:25px;"></div>
+            <div class="bar" style="height:22px;"></div>
+            <div class="bar" style="height:30px;background:rgba(185,131,255,0.7);"></div>
+            <div class="bar" style="height:35px;background:#B983FF;"></div>
+          </div>
+        </div>
+
+        <!-- Routines -->
+        <div style="margin:8px 0 4px 12px;"><span class="label-tiny">TODAY'S ROUTINES</span></div>
+        <div class="routine-strip">
+          <span class="chip done">💊 ✓ Vitamins</span>
+          <span class="chip">💧 + Water</span>
+          <span class="chip">🧘 + Exercise</span>
+        </div>
+
+        <!-- Grandma CTA -->
+        <div class="grandma-block" style="margin-top:8px;">
+          <span style="font-size:28px;">👵</span>
+          <div style="flex:1">
+            <div style="font-weight:800;font-size:13px;">Ask Grandma</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5);">Questions, worries, a pep talk</div>
+          </div>
+          <span style="color:#B983FF;">›</span>
+        </div>
+
+        <div style="height:8px;"></div>
+      </div>
+    </div>
+    <div class="badge-row" style="margin:8px 12px;gap:6px;">
+      <span class="tag tag-removed">❌ Mood Picker removed</span>
+      <span class="tag tag-moved">↑ Affirmation moved up</span>
+      <span class="tag tag-new">+ Reminders after vitals</span>
+    </div>
+    <div class="option" data-choice="b" onclick="toggleSelect(this)" style="margin:8px;">
+      <div class="letter">B</div>
+      <div class="content"><h3>Vitals right after affirm, then Reminders</h3><p>Metrics first, then schedule &amp; tips</p></div>
+    </div>
+  </div>
+</div>

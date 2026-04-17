@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pregnancy Home — Combined Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0E0B1A;
+    color: #fff;
+    font-family: system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+
+  h2 { color: #B983FF; font-size: 1.3rem; margin-bottom: 4px; text-align: center; }
+  .page-sub { color: rgba(255,255,255,0.5); font-size: 0.82rem; text-align: center; margin-bottom: 28px; }
+
+  .layout { display: flex; gap: 32px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+
+  /* ---- PHONE SHELL ---- */
+  .phone {
+    width: 300px;
+    background: #0E0B1A;
+    border-radius: 44px;
+    border: 2px solid rgba(255,255,255,0.12);
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+    flex-shrink: 0;
+  }
+  .phone-label {
+    text-align: center;
+    padding: 14px 16px 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #B983FF;
+    letter-spacing: 0.5px;
+  }
+  .phone-sub {
+    text-align: center;
+    padding: 0 16px 14px;
+    font-size: 0.67rem;
+    color: rgba(255,255,255,0.4);
+    line-height: 1.4;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 22px 0;
+    font-size: 0.6rem; color: rgba(255,255,255,0.7);
+  }
+
+  /* ---- HERO — BABY VISUAL SECTION ---- */
+  .hero-baby {
+    position: relative;
+    background: linear-gradient(180deg, #2A1050 0%, #3D1F8B 40%, #5C2FA8 70%, #2A1050 100%);
+    padding: 16px 20px 20px;
+    text-align: center;
+    overflow: hidden;
+    min-height: 220px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  /* Glow blob behind baby */
+  .hero-baby::before {
+    content: '';
+    position: absolute;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(185,131,255,0.35) 0%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    border-radius: 50%;
+  }
+
+  .week-badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 99px;
+    font-size: 0.58rem;
+    padding: 3px 12px;
+    color: rgba(255,255,255,0.85);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Baby illustration (SVG-based fetus silhouette) */
+  .baby-illustration {
+    position: relative;
+    z-index: 2;
+    width: 100px; height: 100px;
+    margin: 4px auto 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .baby-blob {
+    width: 90px; height: 90px;
+    background: radial-gradient(135deg, #e8b4d0 0%, #c97fc0 40%, #9b4fa8 80%);
+    border-radius: 55% 45% 60% 40% / 50% 55% 45% 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem;
+    box-shadow: 0 0 30px rgba(185,131,255,0.5), 0 0 60px rgba(185,131,255,0.2);
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+
+  .week-title {
+    font-size: 1.5rem; font-weight: 800; color: #fff; position: relative; z-index: 1;
+    letter-spacing: -0.5px; line-height: 1;
+  }
+  .week-sub {
+    font-size: 0.65rem; color: rgba(255,255,255,0.7); margin-top: 3px; position: relative; z-index: 1;
+  }
+
+  /* Progress arc bar */
+  .progress-bar {
+    width: 100%; height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 99px;
+    margin-top: 12px;
+    position: relative; z-index: 1;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; width: 60%;
+    background: linear-gradient(90deg, #B983FF, #E0AAFF);
+    border-radius: 99px;
+  }
+  .progress-labels {
+    display: flex; justify-content: space-between;
+    font-size: 0.5rem; color: rgba(255,255,255,0.4);
+    margin-top: 3px; position: relative; z-index: 1;
+    width: 100%;
+  }
+
+  /* Quick log strip */
+  .quick-log {
+    display: flex; gap: 6px; padding: 10px 14px;
+    overflow-x: auto;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .quick-log::-webkit-scrollbar { display: none; }
+  .log-chip {
+    display: flex; align-items: center; gap: 4px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 99px;
+    padding: 5px 10px;
+    font-size: 0.58rem;
+    white-space: nowrap;
+    color: rgba(255,255,255,0.8);
+    flex-shrink: 0;
+  }
+  .log-chip.done { background: rgba(162,255,134,0.1); border-color: rgba(162,255,134,0.3); color: #A2FF86; }
+  .log-chip.urgent { background: rgba(185,131,255,0.15); border-color: #B983FF; color: #B983FF; }
+
+  /* SCROLL BODY */
+  .scroll-body { padding: 0 0 16px; }
+
+  /* Section label */
+  .sec-label {
+    padding: 12px 14px 4px;
+    font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.3); font-weight: 700;
+  }
+
+  /* Vitals grid (2 col) */
+  .vitals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px; }
+  .vital-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 10px 12px;
+  }
+  .vital-card.highlight { background: rgba(185,131,255,0.08); border-color: rgba(185,131,255,0.2); }
+  .vital-icon { font-size: 1rem; margin-bottom: 3px; }
+  .vital-val { font-size: 0.85rem; font-weight: 800; color: #fff; }
+  .vital-label { font-size: 0.55rem; color: rgba(255,255,255,0.45); margin-top: 1px; }
+  .vital-bar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 99px; margin-top: 5px; overflow: hidden; }
+  .vital-bar-fill { height: 100%; border-radius: 99px; }
+
+  /* Contextual cards (C-style) */
+  .ctx-cards { display: flex; flex-direction: column; gap: 8px; padding: 0 12px; }
+  .ctx-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 10px 12px;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .ctx-card.green { background: rgba(162,255,134,0.06); border-color: rgba(162,255,134,0.2); }
+  .ctx-card.purple { background: rgba(185,131,255,0.07); border-color: rgba(185,131,255,0.2); }
+  .ctx-card.amber { background: rgba(251,191,36,0.07); border-color: rgba(251,191,36,0.2); }
+  .ctx-icon { font-size: 1.3rem; margin-top: 1px; flex-shrink: 0; }
+  .ctx-body { flex: 1; min-width: 0; }
+  .ctx-title { font-size: 0.67rem; font-weight: 700; color: #fff; margin-bottom: 1px; }
+  .ctx-card.green .ctx-title { color: #A2FF86; }
+  .ctx-card.purple .ctx-title { color: #B983FF; }
+  .ctx-card.amber .ctx-title { color: #FBBF24; }
+  .ctx-desc { font-size: 0.58rem; color: rgba(255,255,255,0.5); line-height: 1.3; }
+  .ctx-arrow { color: rgba(255,255,255,0.25); font-size: 0.7rem; align-self: center; }
+
+  /* Mood row */
+  .mood-row { display: flex; gap: 6px; padding: 0 12px; }
+  .mood-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px; padding: 8px 4px;
+    font-size: 1.1rem;
+  }
+  .mood-btn span { font-size: 0.5rem; color: rgba(255,255,255,0.4); }
+  .mood-btn.active { background: rgba(185,131,255,0.15); border-color: #B983FF; }
+
+  /* Mini weight chart */
+  .mini-chart {
+    margin: 0 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 10px 12px 8px;
+  }
+  .mini-chart-title { font-size: 0.62rem; font-weight: 700; margin-bottom: 6px; color: rgba(255,255,255,0.8); }
+  .mini-chart-sub { font-size: 0.55rem; color: rgba(255,255,255,0.4); margin-bottom: 6px; }
+  .chart-svg { width: 100%; height: 40px; }
+
+  /* Affirmation */
+  .affirmation {
+    margin: 0 12px;
+    background: linear-gradient(135deg, rgba(185,131,255,0.1), rgba(112,72,184,0.15));
+    border: 1px solid rgba(185,131,255,0.2);
+    border-radius: 16px;
+    padding: 12px 14px;
+  }
+  .aff-label { font-size: 0.5rem; text-transform: uppercase; letter-spacing: 1px; color: #B983FF; margin-bottom: 5px; font-weight: 700; }
+  .aff-text { font-size: 0.65rem; color: rgba(255,255,255,0.85); line-height: 1.5; font-style: italic; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    display: flex;
+    background: #0E0B1A;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding: 8px 0 12px;
+  }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .nav-icon { width: 20px; height: 20px; background: rgba(255,255,255,0.08); border-radius: 6px; }
+  .nav-icon.active { background: #B983FF; box-shadow: 0 0 10px rgba(185,131,255,0.5); }
+  .nav-icon.center {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, #7048B8, #B983FF);
+    box-shadow: 0 4px 16px rgba(185,131,255,0.5);
+    margin-top: -18px;
+  }
+  .nav-lbl { font-size: 0.45rem; color: rgba(255,255,255,0.35); font-weight: 700; text-transform: uppercase; }
+  .nav-lbl.active { color: #B983FF; }
+
+  /* ---- ANNOTATIONS ---- */
+  .annotations { flex: 1; min-width: 260px; max-width: 360px; }
+  .ann-title { font-size: 1rem; font-weight: 700; color: #B983FF; margin-bottom: 14px; }
+  .ann-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .ann-num {
+    width: 22px; height: 22px;
+    background: rgba(185,131,255,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; font-weight: 800; color: #B983FF;
+    flex-shrink: 0;
+  }
+  .ann-text h4 { font-size: 0.78rem; font-weight: 700; margin-bottom: 2px; }
+  .ann-text p { font-size: 0.68rem; color: rgba(255,255,255,0.5); line-height: 1.4; margin: 0; }
+
+  .data-source { margin-top: 20px; }
+  .ds-title { font-size: 0.72rem; font-weight: 700; color: rgba(255,255,255,0.6); margin-bottom: 8px; }
+  .ds-item { font-size: 0.65rem; color: rgba(255,255,255,0.45); padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 8px; }
+  .ds-item strong { color: rgba(255,255,255,0.7); min-width: 80px; }
+</style>
+</head>
+<body>
+
+<h2>Pregnancy Home — Final Design</h2>
+<p class="page-sub">Cute baby visual hero + A+C command center · scroll to see full screen</p>
+
+<div class="layout">
+
+  <!-- PHONE MOCKUP -->
+  <div class="phone">
+    <div class="phone-label">PregnancyHome — Redesigned</div>
+    <div class="phone-sub">Cute visual top · vitals + contextual cards below</div>
+
+    <div class="status-bar">
+      <span>11:44</span>
+      <span>📶 🔋</span>
+    </div>
+
+    <!-- HERO: Cute Baby + Week -->
+    <div class="hero-baby">
+      <div class="week-badge">Trimester 2 · Week 24 of 40</div>
+      <div class="baby-illustration">
+        <div class="baby-blob">🌽</div>
+      </div>
+      <div class="week-title">24 weeks, 3 days</div>
+      <div class="week-sub">Your baby is the size of a corn cob · 112 days left</div>
+      <div class="progress-bar"><div class="progress-fill"></div></div>
+      <div class="progress-labels">
+        <span>Week 1</span>
+        <span>T1 · T2 · T3</span>
+        <span>Week 40</span>
+      </div>
+    </div>
+
+    <!-- Quick log chips -->
+    <div class="quick-log">
+      <div class="log-chip done">✓ Vitamins</div>
+      <div class="log-chip urgent">+ Kicks</div>
+      <div class="log-chip">+ Mood</div>
+      <div class="log-chip">+ Symptoms</div>
+      <div class="log-chip">+ Weight</div>
+      <div class="log-chip done">✓ Water 6/8</div>
+    </div>
+
+    <div class="scroll-body">
+
+      <!-- Vitals grid (A-style) -->
+      <div class="sec-label">Today's vitals</div>
+      <div class="vitals-grid">
+        <div class="vital-card">
+          <div class="vital-icon">⚖️</div>
+          <div class="vital-val">65.5 kg</div>
+          <div class="vital-label">+12kg since start</div>
+          <div class="vital-bar"><div class="vital-bar-fill" style="width:65%;background:linear-gradient(90deg,#B983FF,#7048B8);"></div></div>
+        </div>
+        <div class="vital-card highlight">
+          <div class="vital-icon">👶</div>
+          <div class="vital-val">10 kicks</div>
+          <div class="vital-label">Session overdue today</div>
+          <div class="vital-bar"><div class="vital-bar-fill" style="width:0%;background:#A2FF86;"></div></div>
+        </div>
+        <div class="vital-card">
+          <div class="vital-icon">💧</div>
+          <div class="vital-val">6 / 8</div>
+          <div class="vital-label">Glasses of water</div>
+          <div class="vital-bar"><div class="vital-bar-fill" style="width:75%;background:linear-gradient(90deg,#4D96FF,#6AABF7);"></div></div>
+        </div>
+        <div class="vital-card">
+          <div class="vital-icon">😊</div>
+          <div class="vital-val">Happy</div>
+          <div class="vital-label">Mood · logged 2h ago</div>
+        </div>
+      </div>
+
+      <!-- Mood selector -->
+      <div class="sec-label">How are you feeling?</div>
+      <div class="mood-row">
+        <div class="mood-btn">😍<span>Radiant</span></div>
+        <div class="mood-btn active">😊<span>Happy</span></div>
+        <div class="mood-btn">😐<span>Okay</span></div>
+        <div class="mood-btn">😰<span>Anxious</span></div>
+        <div class="mood-btn">🤢<span>Nauseous</span></div>
+      </div>
+
+      <!-- Contextual cards (C-style) -->
+      <div class="sec-label">Right now</div>
+      <div class="ctx-cards">
+        <div class="ctx-card green">
+          <div class="ctx-icon">👶</div>
+          <div class="ctx-body">
+            <div class="ctx-title">Time for kick count session</div>
+            <div class="ctx-desc">You haven't logged today · 10 kicks in 2 hours guideline</div>
+          </div>
+          <div class="ctx-arrow">›</div>
+        </div>
+        <div class="ctx-card amber">
+          <div class="ctx-icon">📅</div>
+          <div class="ctx-body">
+            <div class="ctx-title">Glucose Test in 10 days</div>
+            <div class="ctx-desc">Apr 24 · Dr. Mitchell · Remember to fast before</div>
+          </div>
+          <div class="ctx-arrow">›</div>
+        </div>
+        <div class="ctx-card purple">
+          <div class="ctx-icon">🌱</div>
+          <div class="ctx-body">
+            <div class="ctx-title">Week 24 · Lungs developing surfactant</div>
+            <div class="ctx-desc">Baby is ~30cm, ~600g · Brain forming taste buds</div>
+          </div>
+          <div class="ctx-arrow">›</div>
+        </div>
+      </div>
+
+      <!-- Mini weight chart -->
+      <div class="sec-label">Weight evolution</div>
+      <div class="mini-chart">
+        <div class="mini-chart-title">Weight Tracking</div>
+        <div class="mini-chart-sub">Last 6 entries · Recommended range ±2kg</div>
+        <svg class="chart-svg" viewBox="0 0 240 40" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#B983FF" stop-opacity="0.4"/>
+              <stop offset="100%" stop-color="#B983FF" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Range band -->
+          <rect x="0" y="8" width="240" height="20" fill="rgba(185,131,255,0.08)" rx="2"/>
+          <!-- Line -->
+          <polyline points="10,28 50,26 90,24 130,22 180,18 230,14" fill="none" stroke="#B983FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Dots -->
+          <circle cx="10" cy="28" r="3" fill="#B983FF"/>
+          <circle cx="50" cy="26" r="3" fill="#B983FF"/>
+          <circle cx="90" cy="24" r="3" fill="#B983FF"/>
+          <circle cx="130" cy="22" r="3" fill="#B983FF"/>
+          <circle cx="180" cy="18" r="3" fill="#B983FF"/>
+          <circle cx="230" cy="14" r="4" fill="#E0AAFF" stroke="#B983FF" stroke-width="1.5"/>
+          <!-- Labels -->
+          <text x="10" y="38" font-size="7" fill="rgba(255,255,255,0.35)" text-anchor="middle">62.5</text>
+          <text x="230" y="38" font-size="7" fill="rgba(255,255,255,0.35)" text-anchor="middle">65.5</text>
+        </svg>
+      </div>
+
+      <!-- Grandma AI -->
+      <div class="sec-label">Grandma says</div>
+      <div class="ctx-cards">
+        <div class="ctx-card purple">
+          <div class="ctx-icon">👵</div>
+          <div class="ctx-body">
+            <div class="ctx-title">Ask Grandma anything</div>
+            <div class="ctx-desc">Week-by-week guidance, nutrition, birth prep, symptoms</div>
+          </div>
+          <div class="ctx-arrow">›</div>
+        </div>
+      </div>
+
+      <!-- Affirmation -->
+      <div class="sec-label">Today's affirmation</div>
+      <div class="affirmation">
+        <div class="aff-label">✨ Daily affirmation</div>
+        <div class="aff-text">"A short walk can do wonders for your mood and circulation. You are strong, capable, and growing life."</div>
+      </div>
+
+      <!-- Daily tip -->
+      <div class="sec-label" style="margin-top:4px;">Daily tip</div>
+      <div class="ctx-cards" style="padding-bottom:8px;">
+        <div class="ctx-card">
+          <div class="ctx-icon">🥗</div>
+          <div class="ctx-body">
+            <div class="ctx-title">Eat iron-rich foods today</div>
+            <div class="ctx-desc">Your blood volume has doubled — leafy greens, lentils, and red meat support your growing baby</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom nav -->
+    <div class="bottom-nav">
+      <div class="nav-item"><div class="nav-icon active"></div><div class="nav-lbl active">HOME</div></div>
+      <div class="nav-item"><div class="nav-icon"></div><div class="nav-lbl">CAL</div></div>
+      <div class="nav-item"><div class="nav-icon center"></div><div class="nav-lbl" style="margin-top:4px;">✦</div></div>
+      <div class="nav-item"><div class="nav-icon"></div><div class="nav-lbl">STATS</div></div>
+      <div class="nav-item"><div class="nav-icon"></div><div class="nav-lbl">ME</div></div>
+    </div>
+  </div>
+
+  <!-- ANNOTATIONS -->
+  <div class="annotations">
+    <div class="ann-title">What's in each section</div>
+
+    <div class="ann-item">
+      <div class="ann-num">1</div>
+      <div class="ann-text">
+        <h4>🌽 Baby Hero (visual + week)</h4>
+        <p>Animated baby blob showing fruit/veggie size comparison. Week X, trimester, days left, progress bar across 40 weeks. Cute & emotional — like your reference app.</p>
+      </div>
+    </div>
+
+    <div class="ann-item">
+      <div class="ann-num">2</div>
+      <div class="ann-text">
+        <h4>⚡ Quick Log Strip</h4>
+        <p>Horizontal scroll of today's routines. Green = done. Purple = urgent/overdue. Tap to log instantly without going to calendar.</p>
+      </div>
+    </div>
+
+    <div class="ann-item">
+      <div class="ann-num">3</div>
+      <div class="ann-text">
+        <h4>📊 Vitals Grid (from A)</h4>
+        <p>4-tile grid: Weight, Kick count, Water intake, Mood — all pulled from real logged data. Mini progress bars. At a glance numbers.</p>
+      </div>
+    </div>
+
+    <div class="ann-item">
+      <div class="ann-num">4</div>
+      <div class="ann-text">
+        <h4>😊 Mood Picker</h4>
+        <p>5 moods inline. Today's selection highlighted. Tap to update. Feeds into mood trend analytics.</p>
+      </div>
+    </div>
+
+    <div class="ann-item">
+      <div class="ann-num">5</div>
+      <div class="ann-text">
+        <h4>🎯 Contextual Cards (from C)</h4>
+        <p>Smart cards surface what matters right now: overdue kick count, upcoming appointment with prep note, weekly baby development. Color-coded by urgency.</p>
+      </div>
+    </div>
+
+    <div class="ann-item">
+      <div class="ann-num">6</div>
+      <div class="ann-text">
+        <h4>📈 Weight Mini-Chart</h4>
+        <p>6-entry sparkline with recommended gain range shaded. Pulls from real pregnancy_logs entries.</p>
+      </div>
+    </div>
+
+    <div class="ann-item">
+      <div class="ann-num">7</div>
+      <div class="ann-text">
+        <h4>👵 Grandma + 🌸 Affirmation + 💡 Tip</h4>
+        <p>Fixed bottom section: AI chat entry point, daily affirmation (rotates daily), pregnancy tip keyed to current week.</p>
+      </div>
+    </div>
+
+    <div class="data-source">
+      <div class="ds-title">Data sources for each section</div>
+      <div class="ds-item"><strong>Baby hero</strong> pregnancyWeeks.ts + usePregnancyStore</div>
+      <div class="ds-item"><strong>Vitals grid</strong> pregnancy_logs table (real data)</div>
+      <div class="ds-item"><strong>Quick log strip</strong> today's routines from pregnancy_logs</div>
+      <div class="ds-item"><strong>Mood</strong> pregnancy_logs (type='mood') + write-back</div>
+      <div class="ds-item"><strong>Contextual cards</strong> pregnancy_logs + profiles + week logic</div>
+      <div class="ds-item"><strong>Weight chart</strong> pregnancy_logs (type='weight')</div>
+      <div class="ds-item"><strong>Affirmation/tip</strong> Static arrays, keyed to week number</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Make mood buttons interactive for demo
+  document.querySelectorAll('.mood-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,361 @@
+<style>
+  body { background: #0E0B1A; color: #fff; font-family: 'Satoshi', system-ui, sans-serif; }
+  h2 { color: #B983FF; font-size: 1.4rem; margin-bottom: 0.25rem; }
+  .subtitle { color: rgba(255,255,255,0.55); font-size: 0.9rem; margin-bottom: 2rem; }
+
+  .phones { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem; }
+
+  .phone {
+    width: 220px;
+    background: #0E0B1A;
+    border-radius: 36px;
+    border: 2px solid rgba(255,255,255,0.12);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+  }
+  .phone:hover { border-color: #B983FF; transform: translateY(-3px); }
+  .phone.selected { border-color: #B983FF; box-shadow: 0 0 24px rgba(185,131,255,0.4); }
+  .phone .badge {
+    position: absolute; top: 10px; right: 10px;
+    background: #B983FF; color: #0E0B1A; font-size: 0.65rem; font-weight: 800;
+    padding: 2px 8px; border-radius: 99px; text-transform: uppercase;
+  }
+
+  .phone-label {
+    text-align: center;
+    padding: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.04);
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .phone-desc {
+    text-align: center;
+    padding: 0 12px 12px;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.04);
+  }
+
+  /* Phone screen internals */
+  .screen { padding: 0; }
+
+  /* Hero card */
+  .hero {
+    background: linear-gradient(135deg, #3D1F8B, #7048B8);
+    padding: 20px 16px 16px;
+    position: relative;
+  }
+  .hero-trim { font-size: 0.6rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .hero-title { font-size: 1.2rem; font-weight: 800; line-height: 1.2; margin-bottom: 2px; }
+  .hero-sub { font-size: 0.65rem; color: rgba(255,255,255,0.7); margin-bottom: 10px; }
+  .hero-ring {
+    position: absolute; right: 14px; top: 14px;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+  }
+  .hero-stats { display: flex; gap: 8px; }
+  .hero-stat {
+    background: rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 5px 8px;
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.85);
+  }
+  .hero-stat span { display: block; font-size: 0.75rem; font-weight: 700; color: #fff; }
+
+  /* Quick log strip */
+  .log-strip { display: flex; gap: 6px; padding: 10px 12px; background: rgba(255,255,255,0.03); overflow-x: auto; }
+  .log-chip {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 99px;
+    padding: 4px 10px;
+    font-size: 0.6rem;
+    white-space: nowrap;
+    color: rgba(255,255,255,0.8);
+  }
+  .log-chip.active { background: rgba(185,131,255,0.2); border-color: #B983FF; color: #B983FF; }
+
+  /* Cards */
+  .cards-grid { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+  .card-sm {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 10px 12px;
+  }
+  .card-sm-title { font-size: 0.7rem; font-weight: 700; margin-bottom: 2px; }
+  .card-sm-sub { font-size: 0.6rem; color: rgba(255,255,255,0.5); }
+  .card-sm-row { display: flex; gap: 6px; }
+  .card-sm-half { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 8px 10px; }
+
+  /* Pulse bar */
+  .pulse-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 99px; margin-top: 6px; overflow: hidden; }
+  .pulse-fill { height: 100%; border-radius: 99px; }
+
+  /* Tab nav */
+  .tab-nav { display: flex; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .tab { flex: 1; text-align: center; padding: 7px 0; font-size: 0.6rem; color: rgba(255,255,255,0.4); font-weight: 700; border-bottom: 2px solid transparent; }
+  .tab.active { color: #B983FF; border-bottom-color: #B983FF; }
+
+  /* bottom nav */
+  .bottom-nav { display: flex; background: #0E0B1A; border-top: 1px solid rgba(255,255,255,0.08); padding: 6px 0; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .nav-dot { width: 16px; height: 16px; background: rgba(255,255,255,0.1); border-radius: 4px; }
+  .nav-dot.active { background: #B983FF; }
+  .nav-lbl { font-size: 0.45rem; color: rgba(255,255,255,0.4); }
+  .nav-lbl.active { color: #B983FF; }
+
+  /* vitals grid */
+  .vitals { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px 12px 0; }
+  .vital { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 8px 10px; }
+  .vital-icon { font-size: 1rem; margin-bottom: 2px; }
+  .vital-val { font-size: 0.8rem; font-weight: 700; }
+  .vital-label { font-size: 0.55rem; color: rgba(255,255,255,0.5); }
+
+  /* ai nudge */
+  .ai-nudge { margin: 10px 12px 0; background: rgba(185,131,255,0.1); border: 1px solid rgba(185,131,255,0.25); border-radius: 14px; padding: 8px 12px; display: flex; align-items: flex-start; gap: 8px; }
+  .ai-nudge-icon { font-size: 1.2rem; margin-top: 1px; }
+  .ai-nudge-text { font-size: 0.6rem; color: rgba(255,255,255,0.8); line-height: 1.4; }
+
+  /* section label */
+  .section-lbl { padding: 10px 12px 4px; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.35); font-weight: 700; }
+
+  /* horiz scroll */
+  .h-scroll { display: flex; gap: 8px; padding: 0 12px 10px; overflow-x: auto; }
+  .h-card { min-width: 90px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 8px; }
+  .h-card-icon { font-size: 1rem; margin-bottom: 3px; }
+  .h-card-val { font-size: 0.75rem; font-weight: 700; }
+  .h-card-lbl { font-size: 0.55rem; color: rgba(255,255,255,0.45); }
+
+  /* chart placeholder */
+  .chart-ph { margin: 0 12px 10px; height: 44px; background: rgba(255,255,255,0.03); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .chart-line { width: 90%; height: 20px; position: relative; }
+  svg.mini { width: 100%; height: 100%; overflow: visible; }
+</style>
+
+<h2>Pregnancy Home — Command Center Layout</h2>
+<p class="subtitle">Which approach feels most like a true command center for pregnancy? Pick the one that best captures what you want.</p>
+
+<div class="phones">
+
+  <!-- OPTION A: Rich Hero + Vitals Grid -->
+  <div class="phone option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="badge">A</div>
+    <div class="screen">
+      <div class="hero">
+        <div class="hero-trim">Trimester 2 · Week 24</div>
+        <div class="hero-title">You are 24 weeks<br>pregnant 🤰</div>
+        <div class="hero-sub">Baby is the size of a corn cob · 112 days left</div>
+        <div class="hero-ring">🌽</div>
+        <div class="hero-stats">
+          <div class="hero-stat"><span>+0.4kg</span>this week</div>
+          <div class="hero-stat"><span>68bpm</span>heart rate</div>
+          <div class="hero-stat"><span>8h</span>sleep</div>
+        </div>
+      </div>
+      <div class="log-strip">
+        <div class="log-chip active">+ Mood</div>
+        <div class="log-chip">+ Symptoms</div>
+        <div class="log-chip">+ Weight</div>
+        <div class="log-chip">+ Kicks</div>
+        <div class="log-chip">+ Appt</div>
+      </div>
+      <div class="vitals">
+        <div class="vital"><div class="vital-icon">⚖️</div><div class="vital-val">65.5 kg</div><div class="vital-label">Weight · +12kg total</div></div>
+        <div class="vital"><div class="vital-icon">🫀</div><div class="vital-val">10 kicks</div><div class="vital-label">Last session · 1h 20m</div></div>
+        <div class="vital"><div class="vital-icon">💊</div><div class="vital-val">✓ Done</div><div class="vital-label">Prenatal vitamins</div></div>
+        <div class="vital"><div class="vital-icon">💧</div><div class="vital-val">6 / 8</div><div class="vital-label">Water glasses today</div></div>
+      </div>
+      <div class="ai-nudge">
+        <div class="ai-nudge-icon">👵</div>
+        <div class="ai-nudge-text">"Iron levels matter a lot now — have you eaten leafy greens today?"</div>
+      </div>
+      <div class="section-lbl">Today's focus</div>
+      <div class="h-scroll">
+        <div class="h-card"><div class="h-card-icon">📅</div><div class="h-card-val">Apr 15</div><div class="h-card-lbl">Ultrasound</div></div>
+        <div class="h-card"><div class="h-card-icon">🥗</div><div class="h-card-val">Iron</div><div class="h-card-lbl">Nutrition tip</div></div>
+        <div class="h-card"><div class="h-card-icon">🧘</div><div class="h-card-val">15min</div><div class="h-card-lbl">Prenatal yoga</div></div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item"><div class="nav-dot active"></div><div class="nav-lbl active">HOME</div></div>
+      <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">CAL</div></div>
+      <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">CHAT</div></div>
+      <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">STATS</div></div>
+      <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">ME</div></div>
+    </div>
+    <div class="phone-label">A — Vitals Command Center</div>
+    <div class="phone-desc">Hero header + real-time vitals grid + AI nudge. Dense but rich.</div>
+  </div>
+
+  <!-- OPTION B: Tabbed sections inside home -->
+  <div class="phone option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="badge">B</div>
+    <div class="screen">
+      <div class="hero">
+        <div class="hero-trim">Week 24 · T2 · 60% complete</div>
+        <div class="hero-title">Good morning,<br>Mama 🌸</div>
+        <div class="hero-sub">Next: Glucose Test — Apr 24</div>
+        <div class="hero-ring">🌽</div>
+        <div class="hero-stats">
+          <div class="hero-stat"><span>112</span>days left</div>
+          <div class="hero-stat"><span>Apr 6</span>due date</div>
+        </div>
+      </div>
+      <div class="tab-nav">
+        <div class="tab active">Today</div>
+        <div class="tab">Body</div>
+        <div class="tab">Baby</div>
+        <div class="tab">Plan</div>
+      </div>
+      <div class="cards-grid">
+        <div class="card-sm">
+          <div class="card-sm-title">☀️ Today's checklist</div>
+          <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:0.6rem;"><span style="color:#A2FF86;">✓</span> Prenatal vitamins taken</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:0.6rem;"><span style="color:#A2FF86;">✓</span> 6 glasses of water</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:0.6rem;"><span style="color:rgba(255,255,255,0.3);">○</span> Log mood & symptoms</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:0.6rem;"><span style="color:rgba(255,255,255,0.3);">○</span> Kick count session</div>
+          </div>
+        </div>
+        <div class="card-sm-row">
+          <div class="card-sm-half"><div style="font-size:0.6rem;color:rgba(255,255,255,0.5);margin-bottom:2px;">Weight</div><div style="font-size:0.85rem;font-weight:700;">65.5kg</div><div class="pulse-bar"><div class="pulse-fill" style="width:72%;background:linear-gradient(90deg,#B983FF,#7048B8);"></div></div></div>
+          <div class="card-sm-half"><div style="font-size:0.6rem;color:rgba(255,255,255,0.5);margin-bottom:2px;">Mood today</div><div style="font-size:0.85rem;font-weight:700;">😊 Happy</div><div style="font-size:0.55rem;color:rgba(255,255,255,0.4);">logged 2h ago</div></div>
+        </div>
+        <div class="card-sm">
+          <div class="card-sm-title">📅 Next appointment</div>
+          <div class="card-sm-sub">Glucose Test · Apr 24 · Dr. Mitchell</div>
+          <div style="margin-top:6px;" class="log-strip" style="padding:0;gap:5px;">
+            <div class="log-chip active">Prepare questions</div>
+            <div class="log-chip">Set reminder</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item"><div class="nav-dot active"></div><div class="nav-lbl active">HOME</div></div>
+      <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">CAL</div></div>
+      <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">CHAT</div></div>
+      <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">STATS</div></div>
+      <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">ME</div></div>
+    </div>
+    <div class="phone-label">B — Tabbed Daily Dashboard</div>
+    <div class="phone-desc">Tabs inside home: Today / Body / Baby / Plan. Daily checklist-driven.</div>
+  </div>
+
+  <!-- OPTION C: Journey arc + contextual smart cards -->
+  <div class="phone option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="badge">C</div>
+    <div class="screen">
+      <div class="hero" style="padding-bottom:24px;">
+        <div class="hero-trim">Trimester 2 of 3</div>
+        <div class="hero-title">Week 24 🌽</div>
+        <div class="hero-sub">Your baby is the size of a corn cob</div>
+        <div class="hero-ring">🌽</div>
+        <!-- Progress arc placeholder -->
+        <div style="margin-top:10px;background:rgba(255,255,255,0.08);border-radius:12px;padding:6px 10px;display:flex;align-items:center;gap:8px;">
+          <div style="flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;">
+            <div style="width:60%;height:100%;background:linear-gradient(90deg,#B983FF,#7048B8);border-radius:99px;"></div>
+          </div>
+          <div style="font-size:0.6rem;color:rgba(255,255,255,0.7);">60% • 112d left</div>
+        </div>
+      </div>
+
+      <!-- Smart contextual cards -->
+      <div class="section-lbl">Right now</div>
+      <div style="padding:0 12px;display:flex;flex-direction:column;gap:8px;">
+        <!-- Kick counter urgent -->
+        <div style="background:rgba(162,255,134,0.08);border:1px solid rgba(162,255,134,0.25);border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+          <div style="font-size:1.3rem;">👶</div>
+          <div>
+            <div style="font-size:0.65rem;font-weight:700;color:#A2FF86;">Time for kick count</div>
+            <div style="font-size:0.58rem;color:rgba(255,255,255,0.55);">You haven't logged today · Tap to start</div>
+          </div>
+        </div>
+        <!-- Appointment soon -->
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:10px 12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:0.65rem;font-weight:700;">Glucose Test</div>
+            <div style="font-size:0.6rem;color:#B983FF;">in 10 days</div>
+          </div>
+          <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);margin-top:2px;">Dr. Mitchell · Fasting required</div>
+        </div>
+        <!-- Development this week -->
+        <div style="background:rgba(185,131,255,0.08);border:1px solid rgba(185,131,255,0.2);border-radius:16px;padding:10px 12px;">
+          <div style="font-size:0.55rem;text-transform:uppercase;letter-spacing:1px;color:#B983FF;margin-bottom:3px;">Week 24 development</div>
+          <div style="font-size:0.65rem;font-weight:700;">Lungs developing surfactant</div>
+          <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);margin-top:2px;">Baby is ~30cm, ~600g · Brain forming taste buds</div>
+        </div>
+        <!-- Grandma -->
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+          <div style="font-size:1.3rem;">👵</div>
+          <div style="flex:1;">
+            <div style="font-size:0.65rem;font-weight:700;">Ask Grandma anything</div>
+            <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);">Week-by-week guidance</div>
+          </div>
+          <div style="font-size:0.7rem;color:rgba(255,255,255,0.3);">›</div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item"><div class="nav-dot active"></div><div class="nav-lbl active">HOME</div></div>
+      <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">CAL</div></div>
+      <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">CHAT</div></div>
+      <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">STATS</div></div>
+      <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">ME</div></div>
+    </div>
+    <div class="phone-label">C — Smart Contextual Feed</div>
+    <div class="phone-desc">Context-aware cards surface what matters right now. Clean & focused.</div>
+  </div>
+
+</div>
+
+<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px 20px;max-width:700px;margin:0 auto;">
+  <div style="font-size:0.75rem;font-weight:700;margin-bottom:10px;color:rgba(255,255,255,0.7);">Quick comparison</div>
+  <table style="width:100%;font-size:0.7rem;border-collapse:collapse;">
+    <tr style="color:rgba(255,255,255,0.45);border-bottom:1px solid rgba(255,255,255,0.08);">
+      <th style="text-align:left;padding:5px 0;"></th>
+      <th style="text-align:center;padding:5px 8px;color:#B983FF;">A</th>
+      <th style="text-align:center;padding:5px 8px;color:#B983FF;">B</th>
+      <th style="text-align:center;padding:5px 8px;color:#B983FF;">C</th>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+      <td style="padding:6px 0;color:rgba(255,255,255,0.65);">Information density</td>
+      <td style="text-align:center;color:#A2FF86;">High</td>
+      <td style="text-align:center;color:#FBBF24;">Medium</td>
+      <td style="text-align:center;color:#4D96FF;">Adaptive</td>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+      <td style="padding:6px 0;color:rgba(255,255,255,0.65);">Daily checklist</td>
+      <td style="text-align:center;">—</td>
+      <td style="text-align:center;color:#A2FF86;">✓</td>
+      <td style="text-align:center;">—</td>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+      <td style="padding:6px 0;color:rgba(255,255,255,0.65);">Contextual urgency</td>
+      <td style="text-align:center;">—</td>
+      <td style="text-align:center;">—</td>
+      <td style="text-align:center;color:#A2FF86;">✓</td>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+      <td style="padding:6px 0;color:rgba(255,255,255,0.65);">Vitals at a glance</td>
+      <td style="text-align:center;color:#A2FF86;">✓</td>
+      <td style="text-align:center;">partial</td>
+      <td style="text-align:center;">—</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 0;color:rgba(255,255,255,0.65);">Cognitive load</td>
+      <td style="text-align:center;color:#FF6B35;">Heavy</td>
+      <td style="text-align:center;color:#FBBF24;">Medium</td>
+      <td style="text-align:center;color:#A2FF86;">Light</td>
+    </tr>
+  </table>
+</div>

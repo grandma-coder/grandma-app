@@ -1,0 +1,349 @@
+<style>
+  body { background: #0E0B1A; color: #fff; font-family: -apple-system, sans-serif; }
+
+  .section-title { font-size: 16px; font-weight: 800; margin: 32px 0 8px; border-left: 3px solid #B983FF; padding-left: 12px; }
+  .section-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 16px; padding-left: 15px; }
+
+  /* Phone shell */
+  .phone { width: 300px; background: #0E0B1A; border-radius: 40px; border: 2px solid rgba(255,255,255,0.12); overflow: hidden; box-shadow: 0 0 50px rgba(185,131,255,0.2); display: inline-block; }
+  .phone-inner { padding: 16px 0 24px; }
+
+  /* Shared utils */
+  .label-tiny { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.35); }
+  .px { padding: 0 14px; }
+
+  /* ── HERO ── */
+  .hero { background: linear-gradient(135deg, #2A1050, #5C2FA8); border-radius: 24px; margin: 0 14px; padding: 20px 18px 16px; position: relative; overflow: hidden; }
+  .hero-badge-row { display: flex; gap: 6px; margin-bottom: 12px; }
+  .hero-badge { background: rgba(255,255,255,0.12); border-radius: 999px; padding: 3px 10px; font-size: 10px; color: rgba(255,255,255,0.8); font-weight: 600; }
+  .hero-badge.accent { background: rgba(185,131,255,0.2); color: #B983FF; }
+  .hero-emoji { font-size: 52px; text-align: center; display: block; margin: 4px 0; }
+  .hero-week { font-size: 24px; font-weight: 900; text-align: center; }
+  .hero-sub { font-size: 11px; color: rgba(255,255,255,0.6); text-align: center; margin-top: 2px; }
+  .hero-fact { font-size: 11px; color: rgba(255,255,255,0.55); text-align: center; margin-top: 10px; line-height: 1.5; }
+  .hero-progress { margin-top: 14px; }
+  .hero-track { height: 3px; background: rgba(255,255,255,0.12); border-radius: 2px; }
+  .hero-fill { height: 3px; width: 60%; background: #B983FF; border-radius: 2px; }
+  .hero-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: 9px; color: rgba(255,255,255,0.35); }
+  .hero-tap { position: absolute; bottom: 0; right: 0; background: rgba(185,131,255,0.15); border-radius: 12px 0 24px 0; padding: 6px 12px; font-size: 10px; color: #B983FF; font-weight: 700; }
+  .dots { display: flex; justify-content: center; gap: 4px; margin: 8px 0 2px; }
+  .dot { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.15); }
+  .dot.on { width: 16px; background: #B983FF; }
+
+  /* ── AFFIRMATION ── */
+  .affirm { background: linear-gradient(135deg, rgba(185,131,255,0.1), rgba(92,47,168,0.12)); border: 1px solid rgba(185,131,255,0.25); border-radius: 20px; margin: 10px 14px; padding: 14px; }
+  .affirm-state-hidden { text-align: center; }
+  .affirm-orb { font-size: 32px; display: block; margin-bottom: 6px; filter: grayscale(0.5); }
+  .affirm-hint { font-size: 11px; color: rgba(255,255,255,0.35); font-style: italic; }
+  .affirm-btn { background: linear-gradient(135deg, #7048B8, #B983FF); border: none; border-radius: 999px; padding: 7px 18px; font-size: 11px; font-weight: 700; color: #fff; margin-top: 8px; box-shadow: 0 4px 16px rgba(185,131,255,0.3); cursor: pointer; }
+
+  /* ── ROUTINES ── */
+  .routine-scroll { display: flex; gap: 6px; padding: 0 14px; overflow-x: auto; scrollbar-width: none; }
+  .chip { border-radius: 999px; padding: 6px 12px; font-size: 10px; font-weight: 600; white-space: nowrap; border: 1px solid; }
+  .chip-done { background: rgba(162,255,134,0.1); border-color: rgba(162,255,134,0.3); color: #A2FF86; }
+  .chip-todo { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+  .chip-overdue { background: rgba(185,131,255,0.1); border-color: rgba(185,131,255,0.3); color: #B983FF; }
+
+  /* ── VITALS CAROUSEL ── */
+  .vitals-scroll { display: flex; gap: 10px; padding: 0 14px; overflow-x: auto; scrollbar-width: none; }
+  .vcard { background: #1A1430; border-radius: 18px; padding: 12px 14px; flex-shrink: 0; width: 120px; cursor: pointer; position: relative; }
+  .vcard:last-child::after { content: ''; position: absolute; right: -10px; width: 1px; }
+  .vcard-icon { font-size: 18px; margin-bottom: 6px; }
+  .vcard-value { font-size: 20px; font-weight: 900; line-height: 1; }
+  .vcard-unit { font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 400; }
+  .vcard-label { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 4px; }
+  .vcard-bar { height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; margin-top: 6px; }
+  .vcard-fill { height: 3px; border-radius: 2px; }
+  .vcard-trend { font-size: 9px; margin-top: 4px; }
+  .vcard-tap { position: absolute; top: 8px; right: 8px; width: 16px; height: 16px; border-radius: 8px; background: rgba(185,131,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 8px; color: #B983FF; }
+
+  /* ── REMINDERS ── */
+  .rcard { border-radius: 14px; padding: 10px 12px; margin: 0 0 6px; display: flex; align-items: flex-start; gap: 10px; border: 1px solid; }
+  .rdot { width: 8px; height: 8px; border-radius: 4px; flex-shrink: 0; margin-top: 3px; }
+  .rtitle { font-size: 12px; font-weight: 700; }
+  .rsub { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+  /* ── WEIGHT CHART ── */
+  .chart-card { background: #1A1430; border-radius: 18px; margin: 10px 14px; padding: 14px; }
+  .mini-chart { display: flex; align-items: flex-end; gap: 5px; height: 36px; margin-top: 8px; }
+  .bar { border-radius: 3px 3px 0 0; flex: 1; }
+
+  /* ── GRANDMA CTA ── */
+  .gcard { background: #1A1430; border-radius: 18px; margin: 10px 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+
+  /* ── WEEK DETAIL MODAL ── */
+  .modal-sheet { background: #140F28; border-radius: 32px 32px 0 0; border-top: 1px solid rgba(255,255,255,0.1); padding: 16px 0 24px; width: 300px; }
+  .modal-handle { width: 36px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; margin: 0 auto 14px; }
+  .modal-hero { background: linear-gradient(135deg, #2A1050, #5C2FA8); margin: 0 14px; border-radius: 20px; padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .modal-section { margin: 14px 14px 0; }
+  .modal-section-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 8px; }
+  .dev-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  .dev-dot { width: 6px; height: 6px; border-radius: 3px; background: #B983FF; flex-shrink: 0; margin-top: 4px; }
+  .dev-text { font-size: 12px; line-height: 1.5; color: rgba(255,255,255,0.8); }
+  .sym-chip { display: inline-block; background: rgba(185,131,255,0.1); border: 1px solid rgba(185,131,255,0.2); border-radius: 999px; padding: 4px 10px; font-size: 10px; color: rgba(255,255,255,0.7); margin: 0 4px 4px 0; }
+  .prep-row { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 8px 10px; margin-bottom: 6px; font-size: 11px; color: rgba(255,255,255,0.75); }
+  .grandma-tip { background: linear-gradient(135deg, rgba(185,131,255,0.1), rgba(92,47,168,0.1)); border: 1px solid rgba(185,131,255,0.2); border-radius: 14px; padding: 10px 12px; font-size: 11px; font-style: italic; color: rgba(255,255,255,0.8); line-height: 1.5; }
+
+  /* ── VITAL DETAIL MODAL ── */
+  .vd-modal { background: #140F28; border-radius: 32px 32px 0 0; border-top: 1px solid rgba(255,255,255,0.1); padding: 16px 0 24px; width: 300px; }
+  .vd-header { padding: 0 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .vd-icon { font-size: 32px; }
+  .vd-value { font-size: 32px; font-weight: 900; }
+  .vd-trend { font-size: 11px; color: #A2FF86; margin-top: 2px; }
+  .vd-chart-area { margin: 0 16px; background: rgba(255,255,255,0.04); border-radius: 14px; padding: 12px; }
+  .vd-bars { display: flex; align-items: flex-end; gap: 6px; height: 60px; }
+  .vd-bar { flex: 1; border-radius: 4px 4px 0 0; }
+  .vd-bar-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: 9px; color: rgba(255,255,255,0.3); }
+  .vd-log-btn { background: linear-gradient(135deg, #7048B8, #4A2880); border: none; border-radius: 999px; padding: 12px; margin: 14px 16px 0; display: block; width: calc(100% - 32px); font-size: 13px; font-weight: 700; color: #fff; text-align: center; cursor: pointer; box-shadow: 0 4px 20px rgba(112,72,184,0.4); }
+
+  /* Layout */
+  .design-row { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; align-items: flex-start; }
+  .design-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .col-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); text-align: center; }
+</style>
+
+<h2>Full Home Screen Design</h2>
+<p class="subtitle">Scroll down to see all sections — Hero, Affirmation, Routines, Vitals, Reminders, Modals</p>
+
+<div class="design-row">
+
+  <!-- LEFT: Full home screen -->
+  <div class="design-col">
+    <div class="col-label">Home Screen (scrollable)</div>
+    <div class="phone">
+      <div class="phone-inner">
+
+        <!-- HERO (fixed, swipeable) -->
+        <div class="hero">
+          <div class="hero-badge-row">
+            <div class="hero-badge">T2 · Week 24</div>
+            <div class="hero-badge accent">← swipe weeks →</div>
+          </div>
+          <span class="hero-emoji">🌽</span>
+          <div class="hero-week">Week 24</div>
+          <div class="hero-sub">Size of a corn · 30cm · 600g</div>
+          <div class="hero-fact">Baby's inner ear is fully developed. They can hear the rhythm of your heartbeat.</div>
+          <div class="hero-progress">
+            <div class="hero-track"><div class="hero-fill"></div></div>
+            <div class="hero-labels"><span>T1</span><span>T2</span><span>T3</span><span>40w</span></div>
+          </div>
+          <div class="hero-tap">Tap for details ›</div>
+        </div>
+        <div class="dots"><div class="dot"></div><div class="dot on"></div><div class="dot"></div></div>
+
+        <!-- AFFIRMATION (moved up, reveal) -->
+        <div class="affirm" style="margin-top:10px;">
+          <div class="label-tiny" style="padding:0 0 8px;">✨ TODAY'S AFFIRMATION</div>
+          <div class="affirm-state-hidden">
+            <span class="affirm-orb">🔮</span>
+            <div class="affirm-hint">Your daily wisdom awaits...</div>
+            <button class="affirm-btn">✨ Reveal Today's Wisdom</button>
+          </div>
+        </div>
+
+        <!-- ROUTINES -->
+        <div style="margin:12px 0 6px;" class="px"><span class="label-tiny">TODAY'S ROUTINES</span></div>
+        <div class="routine-scroll">
+          <span class="chip chip-done">💊 ✓ Vitamins</span>
+          <span class="chip chip-done">💧 ✓ Water 6/8</span>
+          <span class="chip chip-todo">+ Mood</span>
+          <span class="chip chip-todo">🧘 + Exercise</span>
+          <span class="chip chip-overdue">👶 Kicks due</span>
+          <span class="chip chip-todo">🥗 + Meals</span>
+        </div>
+
+        <!-- VITALS CAROUSEL -->
+        <div style="margin:12px 0 6px;" class="px"><span class="label-tiny">TODAY'S VITALS  <span style="color:rgba(185,131,255,0.8);">← scroll →</span></span></div>
+        <div class="vitals-scroll">
+          <div class="vcard">
+            <div class="vcard-tap">›</div>
+            <div class="vcard-icon">⚖️</div>
+            <div class="vcard-value">68.5<span class="vcard-unit"> kg</span></div>
+            <div class="vcard-label">Weight</div>
+            <div class="vcard-trend" style="color:#A2FF86;">↑ +0.3 this week</div>
+          </div>
+          <div class="vcard">
+            <div class="vcard-tap">›</div>
+            <div class="vcard-icon">💧</div>
+            <div class="vcard-value">6<span class="vcard-unit">/8</span></div>
+            <div class="vcard-label">Hydration</div>
+            <div class="vcard-bar"><div class="vcard-fill" style="width:75%;background:#6AABF7;"></div></div>
+          </div>
+          <div class="vcard">
+            <div class="vcard-tap">›</div>
+            <div class="vcard-icon">😴</div>
+            <div class="vcard-value">7.5<span class="vcard-unit">h</span></div>
+            <div class="vcard-label">Sleep</div>
+            <div class="vcard-bar"><div class="vcard-fill" style="width:85%;background:#B983FF;"></div></div>
+          </div>
+          <div class="vcard">
+            <div class="vcard-tap">›</div>
+            <div class="vcard-icon">👶</div>
+            <div class="vcard-value">—</div>
+            <div class="vcard-label">Kicks</div>
+            <div class="vcard-trend" style="color:#B983FF;">Log now</div>
+          </div>
+          <div class="vcard">
+            <div class="vcard-tap">›</div>
+            <div class="vcard-icon">😊</div>
+            <div class="vcard-value" style="font-size:24px;">😊</div>
+            <div class="vcard-label">Mood</div>
+          </div>
+          <div class="vcard">
+            <div class="vcard-tap">›</div>
+            <div class="vcard-icon">🥗</div>
+            <div class="vcard-value">2<span class="vcard-unit">/3</span></div>
+            <div class="vcard-label">Meals</div>
+            <div class="vcard-bar"><div class="vcard-fill" style="width:66%;background:#FF6B35;"></div></div>
+          </div>
+        </div>
+
+        <!-- REMINDERS -->
+        <div style="margin:12px 0 6px;" class="px"><span class="label-tiny">REMINDERS</span></div>
+        <div class="px">
+          <div class="rcard" style="background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.2);">
+            <div class="rdot" style="background:#FBBF24;"></div>
+            <div>
+              <div class="rtitle">OB Appointment</div>
+              <div class="rsub">Tomorrow · 10:00 AM</div>
+            </div>
+          </div>
+          <div class="rcard" style="background:rgba(185,131,255,0.06);border-color:rgba(185,131,255,0.2);">
+            <div class="rdot" style="background:#B983FF;"></div>
+            <div>
+              <div class="rtitle">Week 24 — Viability milestone</div>
+              <div class="rsub">Your baby could survive outside with intensive care</div>
+            </div>
+          </div>
+          <div class="rcard" style="background:rgba(162,255,134,0.05);border-color:rgba(162,255,134,0.15);">
+            <div class="rdot" style="background:#A2FF86;"></div>
+            <div>
+              <div class="rtitle">Start kick counting today</div>
+              <div class="rsub">Week 28+ · set a daily goal</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WEIGHT CHART -->
+        <div class="chart-card">
+          <div class="label-tiny">WEIGHT TREND</div>
+          <div style="font-size:18px;font-weight:900;margin-top:4px;">68.5 kg</div>
+          <div class="mini-chart">
+            <div class="bar" style="height:18px;background:rgba(185,131,255,0.25);"></div>
+            <div class="bar" style="height:24px;background:rgba(185,131,255,0.3);"></div>
+            <div class="bar" style="height:20px;background:rgba(185,131,255,0.35);"></div>
+            <div class="bar" style="height:28px;background:rgba(185,131,255,0.45);"></div>
+            <div class="bar" style="height:32px;background:rgba(185,131,255,0.6);"></div>
+            <div class="bar" style="height:36px;background:#B983FF;"></div>
+          </div>
+        </div>
+
+        <!-- GRANDMA CTA -->
+        <div class="gcard">
+          <span style="font-size:28px;">👵</span>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:800;">Ask Grandma</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.45);">Questions, worries, a pep talk</div>
+          </div>
+          <span style="color:#B983FF;font-size:18px;">›</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Modals -->
+  <div class="design-col">
+
+    <!-- WEEK DETAIL MODAL -->
+    <div class="col-label">Week Detail Modal (hero tap)</div>
+    <div class="phone" style="border-radius:0 0 40px 40px;border-top:none;">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+
+        <!-- Mini hero inside modal -->
+        <div class="modal-hero">
+          <span style="font-size:40px;">🌽</span>
+          <div>
+            <div style="font-size:18px;font-weight:900;">Week 24</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.6);">Corn · 30cm · 600g · T2</div>
+            <div style="font-size:11px;color:#B983FF;margin-top:2px;">Viability milestone 🎯</div>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-title">Baby's Development</div>
+          <div class="dev-row"><div class="dev-dot"></div><div class="dev-text">Inner ear fully developed — can hear your heartbeat</div></div>
+          <div class="dev-row"><div class="dev-dot"></div><div class="dev-text">Eyes can detect light through closed eyelids</div></div>
+          <div class="dev-row"><div class="dev-dot" style="background:#6AABF7;"></div><div class="dev-text">Taste buds continue developing on the tongue</div></div>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-title">Common Symptoms This Week</div>
+          <span class="sym-chip">Backaches</span>
+          <span class="sym-chip">Swollen feet</span>
+          <span class="sym-chip">Braxton Hicks</span>
+          <span class="sym-chip">Heartburn</span>
+          <span class="sym-chip">Vivid dreams</span>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-title">What to Prepare</div>
+          <div class="prep-row">📋 Start drafting your birth plan</div>
+          <div class="prep-row">🏥 Tour the birth center if you haven't</div>
+          <div class="prep-row">💊 Check iron levels at next appointment</div>
+        </div>
+
+        <div class="modal-section">
+          <div class="grandma-tip">👵 "Talk to your baby, dear. They know your voice and find comfort in it already."</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- VITAL DETAIL MODAL (e.g. Weight) -->
+    <div class="col-label" style="margin-top:24px;">Vital Detail Modal (card tap)</div>
+    <div class="phone" style="border-radius:0 0 40px 40px;border-top:none;">
+      <div class="vd-modal">
+        <div class="modal-handle"></div>
+        <div class="vd-header">
+          <div class="vd-icon">⚖️</div>
+          <div>
+            <div class="label-tiny">WEIGHT — LAST 7 DAYS</div>
+            <div class="vd-value">68.5 <span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.4)">kg</span></div>
+            <div class="vd-trend">↑ +0.3 kg this week · on track</div>
+          </div>
+        </div>
+
+        <div class="vd-chart-area">
+          <div class="label-tiny" style="margin-bottom:8px;">7-DAY HISTORY</div>
+          <div class="vd-bars">
+            <div class="vd-bar" style="height:35px;background:rgba(185,131,255,0.25);"></div>
+            <div class="vd-bar" style="height:38px;background:rgba(185,131,255,0.3);"></div>
+            <div class="vd-bar" style="height:36px;background:rgba(185,131,255,0.35);"></div>
+            <div class="vd-bar" style="height:40px;background:rgba(185,131,255,0.4);"></div>
+            <div class="vd-bar" style="height:42px;background:rgba(185,131,255,0.5);"></div>
+            <div class="vd-bar" style="height:45px;background:rgba(185,131,255,0.65);"></div>
+            <div class="vd-bar" style="height:50px;background:#B983FF;"></div>
+          </div>
+          <div class="vd-bar-labels">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Today</span>
+          </div>
+        </div>
+
+        <div style="padding:0 16px;margin-top:12px;">
+          <div class="label-tiny" style="margin-bottom:6px;">RECENT ENTRIES</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.6);line-height:1.8;">
+            Today · 68.5 kg<br>
+            Sat Apr 13 · 68.2 kg<br>
+            Fri Apr 12 · 68.0 kg<br>
+          </div>
+        </div>
+
+        <button class="vd-log-btn">⚖️ Log Weight Today</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>

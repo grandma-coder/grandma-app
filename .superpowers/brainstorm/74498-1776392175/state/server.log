@@ -1,0 +1,6 @@
+{"type":"server-started","port":50208,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:50208","screen_dir":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/74498-1776392175/content","state_dir":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/74498-1776392175/state"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/74498-1776392175/content/screen-layout.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/74498-1776392175/content/affirm-vfx.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/74498-1776392175/content/waiting-1.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/74498-1776392175/content/full-design.html"}
+{"type":"server-stopped","reason":"idle timeout"}

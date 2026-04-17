@@ -1393,10 +1393,10 @@ export function KidsCalendar() {
                         styles.dayCell,
                         {
                           backgroundColor: isSelected
-                            ? colors.primary + '20'
+                            ? colors.primary + '30'
                             : d.isToday
-                              ? brand.accent + '12'
-                              : colors.surface,
+                              ? colors.primary + '20'
+                              : colors.primary + '14',
                           borderRadius: radius.sm,
                           opacity: d.isFuture ? 0.4 : 1,
                         },
@@ -3425,7 +3425,7 @@ const styles = StyleSheet.create({
   weekRow: { flexDirection: 'row', marginBottom: 8 },
   weekday: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
   dayGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  dayCell: { width: `${100 / 7}%`, aspectRatio: 1.2, padding: 2 },
+  dayCell: { width: `${100 / 7}%`, height: 52, padding: 2 },
   dayInner: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2 },
   dayNumber: { fontSize: 14, fontWeight: '600' },
   todayDot: { width: 5, height: 5, borderRadius: 3, position: 'absolute', bottom: 4 },

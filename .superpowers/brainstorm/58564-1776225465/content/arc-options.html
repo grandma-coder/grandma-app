@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arc Graph — Style Options</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0E0B1A;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; color: #fff; letter-spacing: -0.5px; }
+  .subtitle { color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 32px; }
+
+  .cards { display: flex; flex-direction: column; gap: 24px; }
+
+  .card {
+    background: #1A1430;
+    border: 2px solid rgba(255,255,255,0.08);
+    border-radius: 28px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+    user-select: none;
+  }
+  .card:hover { border-color: rgba(112, 72, 184, 0.5); transform: translateY(-2px); }
+  .card.selected { border-color: #A07FDC; }
+
+  .card-label {
+    display: flex; align-items: center; gap: 10px;
+    padding: 20px 24px 0;
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.4); text-transform: uppercase;
+  }
+  .badge {
+    background: rgba(160,127,220,0.2);
+    color: #A07FDC;
+    padding: 2px 10px; border-radius: 999px;
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  }
+  .card-preview {
+    padding: 24px;
+    display: flex; justify-content: center; align-items: center;
+  }
+  .card-body { padding: 0 24px 24px; }
+  .card-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .card-desc { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .pill {
+    font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+  }
+  .pill.green  { background: rgba(162,255,134,0.15); color: #A2FF86; }
+  .pill.purple { background: rgba(160,127,220,0.15); color: #A07FDC; }
+  .pill.blue   { background: rgba(106,171,247,0.15); color: #6AABF7; }
+  .pill.amber  { background: rgba(251,191,36,0.15);  color: #FBBF24; }
+
+  /* ─── OPTION A: Glowing Segments (existing style, animated) ─── */
+  .arc-a { position: relative; width: 300px; height: 220px; }
+  .arc-a svg { width: 100%; height: 100%; }
+
+  @keyframes drawArc {
+    from { stroke-dashoffset: var(--len); }
+    to   { stroke-dashoffset: 0; }
+  }
+  @keyframes glow-pulse {
+    0%,100% { filter: drop-shadow(0 0 4px var(--glow-color)); }
+    50%      { filter: drop-shadow(0 0 12px var(--glow-color)) drop-shadow(0 0 24px var(--glow-color)); }
+  }
+  @keyframes score-pop {
+    0%   { opacity: 0; transform: scale(0.6); }
+    70%  { transform: scale(1.08); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .score-center {
+    position: absolute; left: 50%; top: 44%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    animation: score-pop 0.6s cubic-bezier(0.34,1.56,0.64,1) 1s both;
+  }
+  .score-num { font-size: 44px; font-weight: 900; color: #6AABF7; line-height: 1; }
+  .score-lbl { font-size: 12px; color: rgba(255,255,255,0.45); font-weight: 600; margin-top: 2px; }
+
+  /* ─── OPTION B: Glowing Ring + Score ─── */
+  .arc-b { position: relative; width: 260px; height: 260px; }
+  .arc-b svg { width: 100%; height: 100%; }
+  @keyframes spin-score {
+    from { stroke-dashoffset: 440; }
+    to   { stroke-dashoffset: 120; }
+  }
+  @keyframes ring-appear {
+    from { opacity: 0; stroke-dashoffset: var(--full); }
+    to   { opacity: 1; stroke-dashoffset: var(--partial); }
+  }
+  @keyframes float {
+    0%,100% { transform: translate(-50%,-50%) translateY(0); }
+    50%      { transform: translate(-50%,-50%) translateY(-4px); }
+  }
+  .score-b {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    animation: float 3s ease-in-out infinite;
+  }
+  .score-b .num { font-size: 52px; font-weight: 900; color: #A07FDC; line-height: 1; }
+  .score-b .lbl { font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 600; }
+  .pillars-b {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+    margin-top: 8px;
+  }
+  .pb { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:700; }
+  .pb-dot { width:8px; height:8px; border-radius:50%; }
+
+  /* ─── OPTION C: Concentric Rings ─── */
+  .arc-c { position: relative; width: 280px; height: 280px; }
+  .arc-c svg { width: 100%; height: 100%; }
+  @keyframes ring-draw {
+    from { stroke-dashoffset: var(--full); }
+    to   { stroke-dashoffset: var(--partial); }
+  }
+  .score-c {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .score-c .num { font-size: 38px; font-weight: 900; color: #A2FF86; }
+  .score-c .lbl { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+  .selected-check {
+    position: absolute; top: 20px; right: 20px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #A07FDC;
+    display: none; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .card.selected .selected-check { display: flex; }
+
+  /* Legend A */
+  .legend-a {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 8px 12px; margin-top: 4px;
+  }
+  .la { display:flex; align-items:center; gap:4px; font-size:11px; font-weight:700; }
+  .la-dot { width:8px; height:8px; border-radius:50%; }
+</style>
+</head>
+<body>
+
+<h1>Arc Graph — 3 Style Options</h1>
+<p class="subtitle">All animated. Tap a card to select your preferred direction.</p>
+
+<div class="cards">
+
+  <!-- ═══ OPTION A: Animated Segments + Glow ═══ -->
+  <div class="card" onclick="toggleCard(this,'a')">
+    <div class="selected-check">✓</div>
+    <div class="card-label">
+      Option A
+      <span class="badge">REFINED CURRENT</span>
+    </div>
+    <div class="card-preview">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <div class="arc-a">
+          <svg viewBox="0 0 300 220">
+            <defs>
+              <linearGradient id="gA1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A2FF86"/><stop offset="1" stop-color="#A2FF86" stop-opacity="0.5"/></linearGradient>
+              <linearGradient id="gA2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B983FF"/><stop offset="1" stop-color="#B983FF" stop-opacity="0.5"/></linearGradient>
+              <linearGradient id="gA3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF8AD8"/><stop offset="1" stop-color="#FF8AD8" stop-opacity="0.5"/></linearGradient>
+              <linearGradient id="gA4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4D96FF"/><stop offset="1" stop-color="#4D96FF" stop-opacity="0.5"/></linearGradient>
+              <linearGradient id="gA5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBBF24"/><stop offset="1" stop-color="#FBBF24" stop-opacity="0.5"/></linearGradient>
+              <filter id="glow-green"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+
+            <!-- BG tracks -->
+            <path d="M 67 185 A 110 110 0 0 1 109 71" stroke="#A2FF86" stroke-opacity="0.15" stroke-width="14" fill="none" stroke-linecap="round"/>
+            <path d="M 117 66 A 110 110 0 0 1 175 63" stroke="#B983FF" stroke-opacity="0.15" stroke-width="14" fill="none" stroke-linecap="round"/>
+            <path d="M 183 66 A 110 110 0 0 1 233 119" stroke="#FF8AD8" stroke-opacity="0.15" stroke-width="14" fill="none" stroke-linecap="round"/>
+            <path d="M 237 130 A 110 110 0 0 1 226 181" stroke="#4D96FF" stroke-opacity="0.15" stroke-width="14" fill="none" stroke-linecap="round"/>
+            <path d="M 218 192 A 110 110 0 0 1 150 230" stroke="#FBBF24" stroke-opacity="0.15" stroke-width="14" fill="none" stroke-linecap="round"/>
+
+            <!-- Filled arcs — animated draw-in -->
+            <!-- Nutrition 9/10 -->
+            <path d="M 67 185 A 110 110 0 0 1 109 71" stroke="url(#gA1)" stroke-width="18" fill="none" stroke-linecap="round"
+              style="stroke-dasharray:120;stroke-dashoffset:120;animation:drawArc 0.7s cubic-bezier(0.4,0,0.2,1) 0.2s forwards;--len:120;filter:drop-shadow(0 0 8px #A2FF86)"/>
+            <!-- Sleep 9/10 -->
+            <path d="M 117 66 A 110 110 0 0 1 175 63" stroke="url(#gA2)" stroke-width="18" fill="none" stroke-linecap="round"
+              style="stroke-dasharray:60;stroke-dashoffset:60;animation:drawArc 0.6s cubic-bezier(0.4,0,0.2,1) 0.5s forwards;--len:60;filter:drop-shadow(0 0 8px #B983FF)"/>
+            <!-- Mood 8/10 -->
+            <path d="M 183 66 A 110 110 0 0 1 227 110" stroke="url(#gA3)" stroke-width="18" fill="none" stroke-linecap="round"
+              style="stroke-dasharray:62;stroke-dashoffset:62;animation:drawArc 0.6s cubic-bezier(0.4,0,0.2,1) 0.7s forwards;--len:62;filter:drop-shadow(0 0 8px #FF8AD8)"/>
+            <!-- Health 4/10 -->
+            <path d="M 237 130 A 110 110 0 0 1 234 160" stroke="url(#gA4)" stroke-width="18" fill="none" stroke-linecap="round"
+              style="stroke-dasharray:33;stroke-dashoffset:33;animation:drawArc 0.5s cubic-bezier(0.4,0,0.2,1) 0.9s forwards;--len:33;filter:drop-shadow(0 0 8px #4D96FF)"/>
+            <!-- Growth 5/10 -->
+            <path d="M 218 192 A 110 110 0 0 1 184 220" stroke="url(#gA5)" stroke-width="18" fill="none" stroke-linecap="round"
+              style="stroke-dasharray:40;stroke-dashoffset:40;animation:drawArc 0.5s cubic-bezier(0.4,0,0.2,1) 1.1s forwards;--len:40;filter:drop-shadow(0 0 8px #FBBF24)"/>
+
+            <!-- Icon dots on arc tips -->
+            <circle cx="67" cy="185" r="6" fill="#A2FF86" opacity="0" style="animation:score-pop 0.3s ease 0.9s forwards"/>
+            <circle cx="175" cy="63"  r="6" fill="#B983FF" opacity="0" style="animation:score-pop 0.3s ease 1.1s forwards"/>
+            <circle cx="227" cy="110" r="6" fill="#FF8AD8" opacity="0" style="animation:score-pop 0.3s ease 1.3s forwards"/>
+          </svg>
+
+          <div class="score-center">
+            <div class="score-num">7.6</div>
+            <div class="score-lbl">thriving score</div>
+          </div>
+        </div>
+
+        <div class="legend-a">
+          <span class="la"><span class="la-dot" style="background:#A2FF86"></span><span style="color:#A2FF86">Nutrition 9</span></span>
+          <span class="la"><span class="la-dot" style="background:#B983FF"></span><span style="color:#B983FF">Sleep 9</span></span>
+          <span class="la"><span class="la-dot" style="background:#FF8AD8"></span><span style="color:#FF8AD8">Mood 8</span></span>
+          <span class="la"><span class="la-dot" style="background:#4D96FF"></span><span style="color:#4D96FF">Health 4</span></span>
+          <span class="la"><span class="la-dot" style="background:#FBBF24"></span><span style="color:#FBBF24">Growth 5</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-title">Glowing Segments — Evolved</div>
+      <div class="card-desc">Same 5-segment horseshoe layout, but each arc draws in sequentially with a neon glow. Thicker filled strokes with drop-shadow. Score pops in with a spring animation. Tapping a segment makes it pulse.</div>
+      <div class="pill-row">
+        <span class="pill green">Minimal change</span>
+        <span class="pill purple">Familiar layout</span>
+        <span class="pill blue">Neon glow effect</span>
+        <span class="pill amber">Spring score pop</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ OPTION B: Single Gradient Ring ═══ -->
+  <div class="card" onclick="toggleCard(this,'b')">
+    <div class="selected-check">✓</div>
+    <div class="card-label">
+      Option B
+      <span class="badge">BOLD REDESIGN</span>
+    </div>
+    <div class="card-preview">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <div class="arc-b">
+          <svg viewBox="0 0 260 260">
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%"   stop-color="#A2FF86"/>
+                <stop offset="25%"  stop-color="#B983FF"/>
+                <stop offset="50%"  stop-color="#FF8AD8"/>
+                <stop offset="75%"  stop-color="#4D96FF"/>
+                <stop offset="100%" stop-color="#FBBF24"/>
+              </linearGradient>
+              <linearGradient id="bgRing" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#fff" stop-opacity="0.06"/>
+                <stop offset="100%" stop-color="#fff" stop-opacity="0.02"/>
+              </linearGradient>
+            </defs>
+
+            <!-- BG ring track -->
+            <circle cx="130" cy="130" r="100" fill="none" stroke="url(#bgRing)" stroke-width="20"
+              stroke-dasharray="503" stroke-dashoffset="126" stroke-linecap="round"
+              transform="rotate(135 130 130)"/>
+
+            <!-- Gradient progress ring — 76% filled (7.6/10) -->
+            <circle cx="130" cy="130" r="100" fill="none" stroke="url(#ringGrad)" stroke-width="22"
+              stroke-dasharray="503" stroke-dashoffset="503"
+              stroke-linecap="round"
+              transform="rotate(135 130 130)"
+              style="--full:503;--partial:149;
+                     animation:ring-appear 1.4s cubic-bezier(0.4,0,0.2,1) 0.2s forwards;
+                     filter:drop-shadow(0 0 10px #B983FF) drop-shadow(0 0 20px rgba(162,255,134,0.4))"/>
+
+            <!-- Tick marks at segment boundaries -->
+            <g transform="rotate(135 130 130)">
+              <line x1="230" y1="130" x2="240" y2="130" stroke="rgba(255,255,255,0.3)" stroke-width="2" transform="rotate(48 130 130)"/>
+              <line x1="230" y1="130" x2="240" y2="130" stroke="rgba(255,255,255,0.3)" stroke-width="2" transform="rotate(96 130 130)"/>
+              <line x1="230" y1="130" x2="240" y2="130" stroke="rgba(255,255,255,0.3)" stroke-width="2" transform="rotate(144 130 130)"/>
+              <line x1="230" y1="130" x2="240" y2="130" stroke="rgba(255,255,255,0.3)" stroke-width="2" transform="rotate(192 130 130)"/>
+            </g>
+          </svg>
+          <div class="score-b">
+            <div class="num" style="animation:score-pop 0.6s cubic-bezier(0.34,1.56,0.64,1) 1s both">7.6</div>
+            <div class="lbl">thriving score</div>
+          </div>
+        </div>
+
+        <div class="pillars-b">
+          <span class="pb"><span class="pb-dot" style="background:#A2FF86"></span><span style="color:#A2FF86">Nutrition 9</span></span>
+          <span class="pb"><span class="pb-dot" style="background:#B983FF"></span><span style="color:#B983FF">Sleep 9</span></span>
+          <span class="pb"><span class="pb-dot" style="background:#FF8AD8"></span><span style="color:#FF8AD8">Mood 8</span></span>
+          <span class="pb"><span class="pb-dot" style="background:#4D96FF"></span><span style="color:#4D96FF">Health 4</span></span>
+          <span class="pb"><span class="pb-dot" style="background:#FBBF24"></span><span style="color:#FBBF24">Growth 5</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-title">Rainbow Ring — Full Circle</div>
+      <div class="card-desc">One continuous 270° ring filled with a 5-color gradient (one color per pillar). The ring animates in as a single sweep, ending at the child's score. Subtick marks separate pillars. Score floats gently in the center.</div>
+      <div class="pill-row">
+        <span class="pill green">Striking visual</span>
+        <span class="pill purple">Single sweep animation</span>
+        <span class="pill blue">Floating score</span>
+        <span class="pill amber">Full redesign</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ OPTION C: Concentric Rings ═══ -->
+  <div class="card" onclick="toggleCard(this,'c')">
+    <div class="selected-check">✓</div>
+    <div class="card-label">
+      Option C
+      <span class="badge">DATA-RICH</span>
+    </div>
+    <div class="card-preview">
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div class="arc-c">
+          <svg viewBox="0 0 280 280">
+            <defs>
+              <filter id="glow-c"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+
+            <!-- Ring 1: Nutrition (outermost) — 9/10 = 90% -->
+            <circle cx="140" cy="140" r="120" fill="none" stroke="#A2FF86" stroke-opacity="0.12" stroke-width="12" stroke-dasharray="754" stroke-dashoffset="188" stroke-linecap="round" transform="rotate(-90 140 140)"/>
+            <circle cx="140" cy="140" r="120" fill="none" stroke="#A2FF86" stroke-width="12"
+              stroke-dasharray="754" stroke-dashoffset="754" stroke-linecap="round" transform="rotate(-90 140 140)"
+              style="--full:754;--partial:679;animation:ring-draw 0.8s cubic-bezier(0.4,0,0.2,1) 0.1s forwards;filter:drop-shadow(0 0 6px #A2FF86)"/>
+
+            <!-- Ring 2: Sleep — 9/10 = 90% -->
+            <circle cx="140" cy="140" r="103" fill="none" stroke="#B983FF" stroke-opacity="0.12" stroke-width="12" stroke-dasharray="647" stroke-dashoffset="161" stroke-linecap="round" transform="rotate(-90 140 140)"/>
+            <circle cx="140" cy="140" r="103" fill="none" stroke="#B983FF" stroke-width="12"
+              stroke-dasharray="647" stroke-dashoffset="647" stroke-linecap="round" transform="rotate(-90 140 140)"
+              style="--full:647;--partial:583;animation:ring-draw 0.8s cubic-bezier(0.4,0,0.2,1) 0.25s forwards;filter:drop-shadow(0 0 6px #B983FF)"/>
+
+            <!-- Ring 3: Mood — 8/10 = 80% -->
+            <circle cx="140" cy="140" r="86" fill="none" stroke="#FF8AD8" stroke-opacity="0.12" stroke-width="12" stroke-dasharray="540" stroke-dashoffset="135" stroke-linecap="round" transform="rotate(-90 140 140)"/>
+            <circle cx="140" cy="140" r="86" fill="none" stroke="#FF8AD8" stroke-width="12"
+              stroke-dasharray="540" stroke-dashoffset="540" stroke-linecap="round" transform="rotate(-90 140 140)"
+              style="--full:540;--partial:432;animation:ring-draw 0.8s cubic-bezier(0.4,0,0.2,1) 0.4s forwards;filter:drop-shadow(0 0 6px #FF8AD8)"/>
+
+            <!-- Ring 4: Health — 4/10 = 40% -->
+            <circle cx="140" cy="140" r="69" fill="none" stroke="#4D96FF" stroke-opacity="0.12" stroke-width="12" stroke-dasharray="433" stroke-dashoffset="108" stroke-linecap="round" transform="rotate(-90 140 140)"/>
+            <circle cx="140" cy="140" r="69" fill="none" stroke="#4D96FF" stroke-width="12"
+              stroke-dasharray="433" stroke-dashoffset="433" stroke-linecap="round" transform="rotate(-90 140 140)"
+              style="--full:433;--partial:260;animation:ring-draw 0.8s cubic-bezier(0.4,0,0.2,1) 0.55s forwards;filter:drop-shadow(0 0 6px #4D96FF)"/>
+
+            <!-- Ring 5: Growth — 5/10 = 50% -->
+            <circle cx="140" cy="140" r="52" fill="none" stroke="#FBBF24" stroke-opacity="0.12" stroke-width="12" stroke-dasharray="327" stroke-dashoffset="82" stroke-linecap="round" transform="rotate(-90 140 140)"/>
+            <circle cx="140" cy="140" r="52" fill="none" stroke="#FBBF24" stroke-width="12"
+              stroke-dasharray="327" stroke-dashoffset="327" stroke-linecap="round" transform="rotate(-90 140 140)"
+              style="--full:327;--partial:163;animation:ring-draw 0.8s cubic-bezier(0.4,0,0.2,1) 0.7s forwards;filter:drop-shadow(0 0 6px #FBBF24)"/>
+          </svg>
+
+          <div class="score-c" style="animation:score-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 1.2s both">
+            <div class="num">7.6</div>
+            <div class="lbl">overall</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:6px;width:200px;margin-top:-12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:#A2FF86;display:inline-block"></span><span style="color:rgba(255,255,255,0.6)">Nutrition</span></span>
+            <span style="font-weight:800;color:#A2FF86">9.0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:#B983FF;display:inline-block"></span><span style="color:rgba(255,255,255,0.6)">Sleep</span></span>
+            <span style="font-weight:800;color:#B983FF">9.0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:#FF8AD8;display:inline-block"></span><span style="color:rgba(255,255,255,0.6)">Mood</span></span>
+            <span style="font-weight:800;color:#FF8AD8">8.0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:#4D96FF;display:inline-block"></span><span style="color:rgba(255,255,255,0.6)">Health</span></span>
+            <span style="font-weight:800;color:#4D96FF">4.0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:#FBBF24;display:inline-block"></span><span style="color:rgba(255,255,255,0.6)">Growth</span></span>
+            <span style="font-weight:800;color:#FBBF24">5.0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-title">Concentric Rings — Apple Fitness Style</div>
+      <div class="card-desc">5 full circles, one per pillar, stacked concentrically. Each ring draws in from 12 o'clock at staggered delays, showing how full it is. Legend on the right shows precise scores. No more icon dots cluttering the arc tips.</div>
+      <div class="pill-row">
+        <span class="pill green">Apple Fitness feel</span>
+        <span class="pill purple">Staggered animation</span>
+        <span class="pill blue">Cleaner at a glance</span>
+        <span class="pill amber">Full redesign</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggleCard(el, choice) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  // Report to server if helper is available
+  if (typeof window.__reportSelection === 'function') {
+    window.__reportSelection(choice, el.querySelector('.card-title').textContent);
+  }
+}
+
+// Restart animations when page is visible
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    document.querySelectorAll('[style*="animation"]').forEach(el => {
+      el.style.animation = 'none';
+      el.offsetHeight;
+      el.style.animation = '';
+    });
+  }
+});
+</script>
+</body>
+</html>

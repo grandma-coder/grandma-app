@@ -1,0 +1,51 @@
+{"type":"server-started","port":57635,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:57635","screen_dir":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/57367-1776224287/content","state_dir":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/57367-1776224287/state"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/57367-1776224287/content/home-layout.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/57367-1776224287/content/calendar-routines.html"}
+{"source":"user-event","type":"click","text":"🗓️\n      Month\n      Calendar grid. Days colored by trimester. Shows logs & appointments as dots.","choice":"month","id":null,"timestamp":1776224636391}
+{"source":"user-event","type":"click","text":"🗓️\n      Month\n      Calendar grid. Days colored by trimester. Shows logs & appointments as dots.","choice":"month","id":null,"timestamp":1776224637394}
+{"source":"user-event","type":"click","text":"📋\n      Week Timeline\n      7-day scroll. Each day shows logged entries and what's due today.","choice":"week","id":null,"timestamp":1776224637867}
+{"source":"user-event","type":"click","text":"🗓️\n      Month\n      Calendar grid. Days colored by trimester. Shows logs & appointments as dots.","choice":"month","id":null,"timestamp":1776224638565}
+{"source":"user-event","type":"click","text":"🛤️\n      Journey (weeks 4–40)\n      Full pregnancy arc. Baby size, milestones, and your logged data per week.","choice":"journey","id":null,"timestamp":1776224766508}
+{"source":"user-event","type":"click","text":"🏥\n      Appointments\n      Dedicated view: past exams, upcoming appointments, results timeline.","choice":"appointments","id":null,"timestamp":1776224767263}
+{"source":"user-event","type":"click","text":"📋\n      Week Timeline\n      7-day scroll. Each day shows logged entries and what's due today.","choice":"week","id":null,"timestamp":1776224767745}
+{"source":"user-event","type":"click","text":"🗓️\n      Month\n      Calendar grid. Days colored by trimester. Shows logs & appointments as dots.","choice":"month","id":null,"timestamp":1776224768036}
+{"source":"user-event","type":"click","text":"🗓️\n      Month\n      Calendar grid. Days colored by trimester. Shows logs & appointments as dots.","choice":"month","id":null,"timestamp":1776224768298}
+{"source":"user-event","type":"click","text":"🏥\n      Appointments\n      Dedicated view: past exams, upcoming appointments, results timeline.","choice":"appointments","id":null,"timestamp":1776224768787}
+{"source":"user-event","type":"click","text":"🥗 Nutrition / meals","choice":"nutrition","id":null,"timestamp":1776224858983}
+{"source":"user-event","type":"click","text":"🥗 Nutrition / meals","choice":"nutrition","id":null,"timestamp":1776224859560}
+{"source":"user-event","type":"click","text":"🗓️\n      Month\n      Calendar grid. Days colored by trimester. Shows logs & appointments as dots.","choice":"month","id":null,"timestamp":1776224910741}
+{"source":"user-event","type":"click","text":"🏥\n      Appointments\n      Dedicated view: past exams, upcoming appointments, results timeline.","choice":"appointments","id":null,"timestamp":1776224911747}
+{"source":"user-event","type":"click","text":"🗓️\n      Month\n      Calendar grid. Days colored by trimester. Shows logs & appointments as dots.","choice":"month","id":null,"timestamp":1776224917483}
+{"source":"user-event","type":"click","text":"📋\n      Week Timeline\n      7-day scroll. Each day shows logged entries and what's due today.","choice":"week","id":null,"timestamp":1776224918947}
+{"source":"user-event","type":"click","text":"🛤️\n      Journey (weeks 4–40)\n      Full pregnancy arc. Baby size, milestones, and your logged data per week.","choice":"journey","id":null,"timestamp":1776224919275}
+{"source":"user-event","type":"click","text":"🏥\n      Appointments\n      Dedicated view: past exams, upcoming appointments, results timeline.","choice":"appointments","id":null,"timestamp":1776224919583}
+{"source":"user-event","type":"click","text":"🗓️\n      Month\n      Calendar grid. Days colored by trimester. Shows logs & appointments as dots.","choice":"month","id":null,"timestamp":1776224931067}
+{"source":"user-event","type":"click","text":"📋\n      Week Timeline\n      7-day scroll. Each day shows logged entries and what's due today.","choice":"week","id":null,"timestamp":1776224931493}
+{"source":"user-event","type":"click","text":"💊 Prenatal vitamins","choice":"vitamins","id":null,"timestamp":1776224940397}
+{"source":"user-event","type":"click","text":"💧 Water intake","choice":"water","id":null,"timestamp":1776224941193}
+{"source":"user-event","type":"click","text":"⚖️ Weight check","choice":"weight","id":null,"timestamp":1776224941709}
+{"source":"user-event","type":"click","text":"👶 Kick count session","choice":"kicks","id":null,"timestamp":1776224942265}
+{"source":"user-event","type":"click","text":"😊 Mood check-in","choice":"mood","id":null,"timestamp":1776224942789}
+{"source":"user-event","type":"click","text":"🤒 Symptoms log","choice":"symptoms","id":null,"timestamp":1776224944042}
+{"source":"user-event","type":"click","text":"😴 Sleep quality","choice":"sleep","id":null,"timestamp":1776224944506}
+{"source":"user-event","type":"click","text":"🧘 Prenatal exercise","choice":"exercise","id":null,"timestamp":1776224947200}
+{"source":"user-event","type":"click","text":"🧘 Prenatal exercise","choice":"exercise","id":null,"timestamp":1776224948300}
+{"source":"user-event","type":"click","text":"🧘 Prenatal exercise","choice":"exercise","id":null,"timestamp":1776224951700}
+{"source":"user-event","type":"click","text":"🥗 Nutrition / meals","choice":"nutrition","id":null,"timestamp":1776224953305}
+{"source":"user-event","type":"click","text":"💪 Kegel exercises","choice":"kegels","id":null,"timestamp":1776224959139}
+{"source":"user-event","type":"click","text":"📅\n      Appointment\n      Type, doctor, notes, results\n      all trimesters","choice":"appointment","id":null,"timestamp":1776224967171}
+{"source":"user-event","type":"click","text":"🧪\n      Exam Result\n      Blood tests, glucose, GBS, etc.\n      all trimesters","choice":"exam_result","id":null,"timestamp":1776224967508}
+{"source":"user-event","type":"click","text":"🔊\n      Ultrasound Note\n      Week, measurements, photo note\n      T1 T2","choice":"ultrasound","id":null,"timestamp":1776224968011}
+{"source":"user-event","type":"click","text":"🔊\n      Ultrasound Note\n      Week, measurements, photo note\n      T1 T2","choice":"ultrasound","id":null,"timestamp":1776224970616}
+{"source":"user-event","type":"click","text":"⏱️\n      Contraction Timer\n      Duration, interval, 5-1-1 rule\n      T3 only","choice":"contraction","id":null,"timestamp":1776224972466}
+{"source":"user-event","type":"click","text":"💉\n      Medicine / Vaccine\n      Flu shot, iron supplement, etc.\n      all trimesters","choice":"medicine","id":null,"timestamp":1776224975384}
+{"source":"user-event","type":"click","text":"🏥\n      Birth Prep Task\n      Hospital bag, birth plan progress\n      T3 only","choice":"birth_prep","id":null,"timestamp":1776224977146}
+{"source":"user-event","type":"click","text":"🪺\n      Nesting Task\n      Nursery, baby gear, home prep\n      T2 T3","choice":"nesting","id":null,"timestamp":1776224977755}
+{"source":"user-event","type":"click","text":"🪺\n      Nesting Task\n      Nursery, baby gear, home prep\n      T2 T3","choice":"nesting","id":null,"timestamp":1776224985697}
+{"source":"user-event","type":"click","text":"🪺\n      Nesting Task\n      Nursery, baby gear, home prep\n      T2 T3","choice":"nesting","id":null,"timestamp":1776224986440}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/57367-1776224287/content/home-combined.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/57367-1776224287/content/calendar-design.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/57367-1776224287/content/analytics-profile.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/57367-1776224287/content/insights-design.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/57367-1776224287/content/insights-expandable.html"}
+{"type":"server-stopped","reason":"idle timeout"}

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insights — Expandable Cards</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0E0B1A; color: #fff; font-family: system-ui, sans-serif; padding: 28px 20px 60px; }
+  h2 { color: #B983FF; font-size: 1.3rem; margin-bottom: 4px; text-align: center; }
+  .page-sub { color: rgba(255,255,255,0.5); font-size: 0.82rem; text-align: center; margin-bottom: 32px; }
+
+  .phones-row { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+
+  .phone {
+    width: 252px;
+    background: #0E0B1A;
+    border-radius: 40px;
+    border: 2px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .phone-label { text-align:center; padding:10px 12px 4px; font-size:0.72rem; font-weight:700; color:#B983FF; }
+  .phone-sub { text-align:center; padding:0 12px 12px; font-size:0.6rem; color:rgba(255,255,255,0.4); line-height:1.4; }
+  .status { display:flex; justify-content:space-between; padding:10px 18px 4px; font-size:0.55rem; color:rgba(255,255,255,0.6); }
+
+  .vtabs { display:flex; border-bottom:1px solid rgba(255,255,255,0.07); }
+  .vt { flex:1; text-align:center; padding:7px 0; font-size:0.5rem; font-weight:700; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid transparent; }
+  .vt.active { color:#B983FF; border-bottom-color:#B983FF; }
+
+  .scroll-body { padding: 10px 10px 12px; display:flex; flex-direction:column; gap:8px; }
+
+  /* ---- COLLAPSED CARD ---- */
+  .exp-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .exp-card:hover { border-color: rgba(185,131,255,0.3); }
+  .exp-card.open { border-color: rgba(185,131,255,0.35); background: rgba(185,131,255,0.04); }
+
+  /* Card header — always visible */
+  .card-head {
+    padding: 11px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ch-icon { font-size: 1.3rem; flex-shrink: 0; }
+  .ch-body { flex: 1; min-width: 0; }
+  .ch-label { font-size: 0.48rem; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 2px; }
+  .ch-title { font-size: 0.68rem; font-weight: 800; line-height: 1.2; }
+  .ch-meta { font-size: 0.54rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .ch-chevron { font-size: 0.65rem; color: rgba(255,255,255,0.25); transition: transform 0.2s; flex-shrink:0; }
+  .exp-card.open .ch-chevron { transform: rotate(180deg); color: #B983FF; }
+
+  /* Right badge on collapsed */
+  .ch-badge { font-size: 0.5rem; padding: 2px 7px; border-radius: 99px; font-weight: 700; flex-shrink:0; }
+
+  /* Expanded body — hidden by default */
+  .card-body {
+    display: none;
+    padding: 0 14px 12px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+  .exp-card.open .card-body { display: block; }
+
+  .cb-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 7px 0; }
+
+  .cb-item { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; }
+  .cb-dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .cb-text { font-size: 0.6rem; color: rgba(255,255,255,0.75); line-height: 1.4; }
+  .cb-text strong { color: #fff; font-weight: 700; }
+
+  .cb-tag-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
+  .cb-tag { font-size: 0.5rem; padding: 3px 8px; border-radius: 99px; font-weight: 700; }
+
+  .cb-ask { margin-top:8px; background:rgba(185,131,255,0.12); border:1px solid rgba(185,131,255,0.25); border-radius:99px; padding:5px 10px; text-align:center; font-size:0.58rem; color:#B983FF; font-weight:700; }
+
+  /* Section label */
+  .sec-lbl { font-size:0.5rem; text-transform:uppercase; letter-spacing:1.2px; color:rgba(255,255,255,0.28); font-weight:700; padding: 4px 2px 2px; }
+
+  /* Warning card - always fully visible but compact */
+  .warn-card { background:rgba(255,107,53,0.07); border:1px solid rgba(255,107,53,0.25); border-radius:18px; padding:10px 14px; }
+  .wc-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .wc-icon { font-size:1.1rem; }
+  .wc-title { font-size:0.65rem; font-weight:800; color:#FF6B35; }
+  .wc-item { display:flex; align-items:center; gap:7px; padding:4px 0; border-bottom:1px solid rgba(255,107,53,0.1); font-size:0.58rem; color:rgba(255,255,255,0.7); }
+  .wc-item:last-child { border:none; }
+
+  /* AI insight card - compact */
+  .ai-card { background:rgba(162,255,134,0.06); border:1px solid rgba(162,255,134,0.2); border-radius:18px; padding:10px 14px; display:flex; gap:9px; align-items:flex-start; }
+  .ai-icon { font-size:1.2rem; }
+  .ai-body .ai-label { font-size:0.48rem; text-transform:uppercase; letter-spacing:0.8px; color:#A2FF86; font-weight:700; margin-bottom:3px; }
+  .ai-body .ai-text { font-size:0.6rem; color:rgba(255,255,255,0.8); line-height:1.4; }
+
+  /* Progress row for birth prep card */
+  .prog-row { display:flex; align-items:center; gap:7px; margin-top:7px; }
+  .prog-track { flex:1; height:5px; background:rgba(255,255,255,0.08); border-radius:99px; overflow:hidden; }
+  .prog-fill { height:100%; border-radius:99px; }
+  .prog-label { font-size:0.52rem; color:rgba(255,255,255,0.45); white-space:nowrap; }
+
+  /* Reads article compact */
+  .read-item { display:flex; gap:9px; align-items:flex-start; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+  .read-item:last-child { border:none; }
+  .ri-img { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+  .ri-tag { font-size:0.46rem; padding:2px 6px; border-radius:99px; font-weight:700; display:inline-block; margin-bottom:2px; }
+  .ri-title { font-size:0.6rem; font-weight:700; line-height:1.2; }
+  .ri-min { font-size:0.5rem; color:rgba(255,255,255,0.3); margin-top:2px; }
+
+  /* Ask grandma bar */
+  .ask-bar { margin: 4px 10px 6px; background:linear-gradient(135deg,rgba(112,72,184,0.5),rgba(185,131,255,0.35)); border:1px solid rgba(185,131,255,0.25); border-radius:99px; padding:9px 16px; display:flex; align-items:center; gap:8px; }
+  .ab-icon { font-size:1rem; }
+  .ab-text { flex:1; font-size:0.6rem; font-weight:700; }
+  .ab-arrow { font-size:0.65rem; color:rgba(255,255,255,0.4); }
+
+  /* Bottom nav */
+  .bnav { display:flex; background:#0E0B1A; border-top:1px solid rgba(255,255,255,0.07); padding:7px 0 10px; }
+  .bni { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .bni-dot { width:18px; height:18px; background:rgba(255,255,255,0.08); border-radius:5px; }
+  .bni-dot.active { background:#B983FF; }
+  .bni-dot.center { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#7048B8,#B983FF); margin-top:-16px; }
+  .bni-lbl { font-size:0.44rem; color:rgba(255,255,255,0.35); font-weight:700; text-transform:uppercase; }
+  .bni-lbl.active { color:#B983FF; }
+
+  /* Annotation panel */
+  .anno { max-width:360px; }
+  .anno h3 { color:#B983FF; font-size:0.95rem; font-weight:800; margin-bottom:12px; }
+  .anno-item { padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; gap:10px; }
+  .anno-icon { font-size:1.1rem; flex-shrink:0; }
+  .anno-body h4 { font-size:0.75rem; font-weight:700; margin-bottom:2px; }
+  .anno-body p { font-size:0.65rem; color:rgba(255,255,255,0.5); line-height:1.4; }
+
+  .layout { display:flex; gap:32px; justify-content:center; align-items:flex-start; flex-wrap:wrap; }
+</style>
+<script>
+  function toggle(el) {
+    el.classList.toggle('open');
+  }
+</script>
+</head>
+<body>
+
+<h2>Insights — Expand / Collapse Cards</h2>
+<p class="page-sub">Clean by default · tap any card to reveal full detail · everything is one tap away</p>
+
+<div class="layout">
+
+  <!-- PHONE 1: TODAY TAB — collapsed by default, one open -->
+  <div class="phone">
+    <div class="status"><span>11:44</span><span>📶</span></div>
+    <div class="vtabs">
+      <div class="vt active">Today</div>
+      <div class="vt">Birth Guide</div>
+      <div class="vt">Reads</div>
+    </div>
+    <div class="scroll-body">
+
+      <div class="sec-lbl">Tuesday, April 15 · Week 24</div>
+
+      <!-- Week tip — collapsed -->
+      <div class="exp-card" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">✨</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#B983FF;">Week 24 tip</div>
+            <div class="ch-title">Walking improves circulation and mood</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div style="padding-top:8px;font-size:0.62rem;color:rgba(255,255,255,0.75);line-height:1.5;">A short walk — even 10 minutes — does wonders for swelling, mood, and digestion at this stage. Your body is working hard; gentle movement helps everything keep flowing.</div>
+          <div class="cb-tag-row">
+            <div class="cb-tag" style="background:rgba(185,131,255,0.15);color:#B983FF;">Exercise</div>
+            <div class="cb-tag" style="background:rgba(162,255,134,0.12);color:#A2FF86;">Mood</div>
+          </div>
+          <div class="cb-ask">Ask Grandma about exercise in T2 ›</div>
+        </div>
+      </div>
+
+      <!-- Birth focus this week — OPEN by default -->
+      <div class="exp-card open" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">🏥</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#FBBF24;">This week's birth focus</div>
+            <div class="ch-title">Understanding Labor Signs</div>
+            <div class="ch-meta">Braxton Hicks · water breaking · real contractions</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div class="cb-item"><div class="cb-dot" style="background:#B983FF;"></div><div class="cb-text"><strong>Braxton Hicks</strong> — irregular practice contractions, not painful, no pattern. Normal from week 20+.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#4D96FF;"></div><div class="cb-text"><strong>Water breaking</strong> — can be a trickle or gush. Call your doctor immediately. Don't wait for contractions.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#A2FF86;"></div><div class="cb-text"><strong>Real labor</strong> — contractions are regular, get stronger, closer together, and don't stop when you move.</div></div>
+          <div class="cb-ask">Ask Grandma about labor signs ›</div>
+        </div>
+      </div>
+
+      <!-- AI insight from logs — collapsed -->
+      <div class="ai-card">
+        <div class="ai-icon">📊</div>
+        <div class="ai-body">
+          <div class="ai-label">From your logs</div>
+          <div class="ai-text">Back pain logged 3× this week. Try the prenatal stretch routine tonight — linked in Reads.</div>
+        </div>
+      </div>
+
+      <!-- Affirmation — collapsed -->
+      <div class="exp-card" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">🌸</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#FF8AD8;">Daily affirmation</div>
+            <div class="ch-title">"Your body knows exactly what to do."</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div style="padding-top:8px;font-size:0.65rem;font-style:italic;color:rgba(255,255,255,0.8);line-height:1.6;">"Your body has built a human from scratch. Every cell, every organ, every heartbeat — created by you. Trust it completely."</div>
+          <div style="font-size:0.52rem;color:rgba(255,255,255,0.35);margin-top:5px;">— New affirmation every morning</div>
+        </div>
+      </div>
+
+      <!-- Next appointment reminder -->
+      <div class="exp-card" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">📅</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#FBBF24;">Upcoming</div>
+            <div class="ch-title">Glucose Test · in 9 days</div>
+          </div>
+          <div class="ch-badge" style="background:rgba(251,191,36,0.15);color:#FBBF24;">Apr 24</div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div class="cb-item"><div class="cb-dot" style="background:#FBBF24;"></div><div class="cb-text"><strong>What it is:</strong> 1-hour glucose challenge to screen for gestational diabetes.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#FBBF24;"></div><div class="cb-text"><strong>Prep:</strong> Fast for 8 hours beforehand. Drink the glucose solution within 5 minutes.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#FBBF24;"></div><div class="cb-text"><strong>After:</strong> Results in 24–48h. If high, you'll take a 3-hour follow-up test.</div></div>
+          <div class="cb-ask">Ask Grandma about glucose test ›</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="ask-bar"><div class="ab-icon">💬</div><div class="ab-text">Ask Grandma anything</div><div class="ab-arrow">›</div></div>
+    <div class="bnav">
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">HOME</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">CAL</div></div>
+      <div class="bni"><div class="bni-dot center"></div><div class="bni-lbl" style="margin-top:6px;">✦</div></div>
+      <div class="bni"><div class="bni-dot active"></div><div class="bni-lbl active">STATS</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">ME</div></div>
+    </div>
+    <div class="phone-label">Today — all collapsed</div>
+    <div class="phone-sub">Tap any card to expand · one open by default · screen stays clean</div>
+  </div>
+
+  <!-- PHONE 2: BIRTH GUIDE — all collapsed, interactive -->
+  <div class="phone">
+    <div class="status"><span>11:44</span><span>📶</span></div>
+    <div class="vtabs">
+      <div class="vt">Today</div>
+      <div class="vt active">Birth Guide</div>
+      <div class="vt">Reads</div>
+    </div>
+    <div class="scroll-body">
+
+      <div class="sec-lbl">The birth process — tap to explore each stage</div>
+
+      <!-- Stage 1 -->
+      <div class="exp-card" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">🌅</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#A2FF86;">Stage 1</div>
+            <div class="ch-title">Early signs & latent labor</div>
+            <div class="ch-meta">Cervix 0–6cm · 5–20 min apart · stay home</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div class="cb-item"><div class="cb-dot" style="background:#A2FF86;"></div><div class="cb-text"><strong>Cervix dilates 0–6cm.</strong> Contractions every 5–20 min, lasting 30–45 sec. Can last 6–12 hours for first-time moms.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#A2FF86;"></div><div class="cb-text"><strong>What to do:</strong> Stay home. Eat light, stay hydrated, rest between contractions. Watch a movie, take a bath.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#A2FF86;"></div><div class="cb-text"><strong>Partner role:</strong> Time contractions, keep things calm, prepare the hospital bag, be on standby.</div></div>
+          <div class="cb-tag-row">
+            <div class="cb-tag" style="background:rgba(162,255,134,0.12);color:#A2FF86;">Stay home</div>
+            <div class="cb-tag" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);">Start timer</div>
+          </div>
+          <div class="cb-ask">Ask Grandma about early labor ›</div>
+        </div>
+      </div>
+
+      <!-- Stage 2 - open -->
+      <div class="exp-card open" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">🌊</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#B983FF;">Stage 2</div>
+            <div class="ch-title">Active labor</div>
+            <div class="ch-meta">Cervix 6–10cm · 5-1-1 rule → go to hospital</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div class="cb-item"><div class="cb-dot" style="background:#B983FF;"></div><div class="cb-text"><strong>Contractions every 3–5 min,</strong> lasting 45–60 sec. Intense, regular, can't talk through them.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#B983FF;"></div><div class="cb-text"><strong>5-1-1 rule:</strong> contractions every 5 min, lasting 1 min, for at least 1 hour → head to hospital.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#B983FF;"></div><div class="cb-text"><strong>Pain relief:</strong> Epidural available now. Also: breathing techniques, movement, warm shower, TENS.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#B983FF;"></div><div class="cb-text"><strong>Partner role:</strong> Breathing coach, counter-pressure on back, eye contact, encouragement.</div></div>
+          <div class="cb-ask">Ask Grandma about epidurals ›</div>
+        </div>
+      </div>
+
+      <!-- Stage 3 -->
+      <div class="exp-card" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">💫</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#FBBF24;">Stage 3</div>
+            <div class="ch-title">Transition & pushing</div>
+            <div class="ch-meta">10cm · hardest + shortest · 20 min – 2h pushing</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div class="cb-item"><div class="cb-dot" style="background:#FBBF24;"></div><div class="cb-text"><strong>Cervix fully dilated.</strong> Most intense contractions — 2–3 min apart. Usually 15–60 min for transition.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#FBBF24;"></div><div class="cb-text"><strong>Pushing:</strong> Your doctor guides you. Breathe down vs purple pushing — ask your OB which they prefer.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#FBBF24;"></div><div class="cb-text"><strong>You're almost there.</strong> This is the hardest part but it doesn't last long.</div></div>
+        </div>
+      </div>
+
+      <!-- Stage 4 -->
+      <div class="exp-card" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">👶</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#4D96FF;">Stage 4</div>
+            <div class="ch-title">Birth & golden hour</div>
+            <div class="ch-meta">Skin-to-skin · cord clamping · first feed</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div class="cb-item"><div class="cb-dot" style="background:#4D96FF;"></div><div class="cb-text"><strong>Skin-to-skin immediately</strong> — regulates baby's temperature, heartbeat, and starts bonding.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#4D96FF;"></div><div class="cb-text"><strong>Delayed cord clamping</strong> — waiting 1–3 min transfers extra blood and stem cells to baby.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#4D96FF;"></div><div class="cb-text"><strong>First feed</strong> — colostrum is ready. It's liquid gold, even a few drops matters.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#4D96FF;"></div><div class="cb-text"><strong>Placenta delivery</strong> — usually within 30 min. Mild contractions continue.</div></div>
+        </div>
+      </div>
+
+      <!-- Stage 5 -->
+      <div class="exp-card" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">🌸</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#FF8AD8;">Stage 5</div>
+            <div class="ch-title">Recovery & postpartum</div>
+            <div class="ch-meta">First 6 weeks · body · emotions · feeding</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div class="cb-item"><div class="cb-dot" style="background:#FF8AD8;"></div><div class="cb-text"><strong>Physical recovery:</strong> Bleeding (lochia) up to 6 weeks. Perineal care. Rest is not optional.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#FF8AD8;"></div><div class="cb-text"><strong>Baby blues vs PPD:</strong> Mood dips are normal for 2 weeks. Beyond that, talk to your doctor.</div></div>
+          <div class="cb-item"><div class="cb-dot" style="background:#FF8AD8;"></div><div class="cb-text"><strong>6-week checkup:</strong> Book before you deliver. Incision check, contraception, mental health screening.</div></div>
+          <div class="cb-ask">Ask Grandma about postpartum ›</div>
+        </div>
+      </div>
+
+      <!-- Warning — always compact, no expand needed -->
+      <div class="warn-card">
+        <div class="wc-head"><div class="wc-icon">🚨</div><div class="wc-title">Call your doctor immediately</div></div>
+        <div class="wc-item">💧 Water breaks before week 37</div>
+        <div class="wc-item">🩸 Heavy or unusual bleeding</div>
+        <div class="wc-item">👶 Baby not moving for 2+ hours</div>
+        <div class="wc-item">🤕 Severe headache + vision changes</div>
+      </div>
+
+    </div>
+    <div class="ask-bar"><div class="ab-icon">💬</div><div class="ab-text">Ask Grandma about birth</div><div class="ab-arrow">›</div></div>
+    <div class="bnav">
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">HOME</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">CAL</div></div>
+      <div class="bni"><div class="bni-dot center"></div><div class="bni-lbl" style="margin-top:6px;">✦</div></div>
+      <div class="bni"><div class="bni-dot active"></div><div class="bni-lbl active">STATS</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">ME</div></div>
+    </div>
+    <div class="phone-label">Birth Guide — expand/collapse</div>
+    <div class="phone-sub">5 stages collapsed → tap to expand detail + Ask Grandma inline · warning always visible</div>
+  </div>
+
+  <!-- PHONE 3: READS TAB — compact list, expand for preview -->
+  <div class="phone">
+    <div class="status"><span>11:44</span><span>📶</span></div>
+    <div class="vtabs">
+      <div class="vt">Today</div>
+      <div class="vt">Birth Guide</div>
+      <div class="vt active">Reads</div>
+    </div>
+    <div class="scroll-body">
+
+      <div class="sec-lbl">Curated for week 24</div>
+
+      <!-- Featured expandable -->
+      <div class="exp-card open" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">🏥</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#B983FF;">Featured · Birth prep</div>
+            <div class="ch-title">What actually happens during an epidural</div>
+            <div class="ch-meta">8 min · 1,240 moms read this</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div style="padding-top:6px;font-size:0.62rem;color:rgba(255,255,255,0.7);line-height:1.5;margin-bottom:8px;">Everything you're afraid to ask — placement, timing, side effects, what you'll feel, and how long it lasts. Written by an anesthesiologist.</div>
+          <div class="cb-tag-row">
+            <div class="cb-tag" style="background:rgba(185,131,255,0.15);color:#B983FF;">Birth prep</div>
+            <div class="cb-tag" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);">Pain relief</div>
+          </div>
+          <div class="cb-ask">Read full article ›</div>
+        </div>
+      </div>
+
+      <!-- Article list — compact expandable -->
+      <div class="exp-card" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">🧘</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#A2FF86;">Body</div>
+            <div class="ch-title">5 stretches that ease back pain</div>
+            <div class="ch-meta">5 min</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div style="padding-top:6px;font-size:0.62rem;color:rgba(255,255,255,0.7);line-height:1.5;margin-bottom:6px;">Quick floor routines targeting lower back and hip flexors. Safe for all trimesters. Do them tonight.</div>
+          <div class="cb-ask">Read full article ›</div>
+        </div>
+      </div>
+
+      <div class="exp-card" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">🧠</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#FF8AD8;">Mental health</div>
+            <div class="ch-title">Birth anxiety is real — here's what helps</div>
+            <div class="ch-meta">6 min</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div style="padding-top:6px;font-size:0.62rem;color:rgba(255,255,255,0.7);line-height:1.5;margin-bottom:6px;">Techniques from midwives, doulas, and perinatal psychologists. CBT exercises you can use right now.</div>
+          <div class="cb-ask">Read full article ›</div>
+        </div>
+      </div>
+
+      <div class="exp-card" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">🤱</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#FBBF24;">Postpartum</div>
+            <div class="ch-title">Golden hour: the first 60 min after birth</div>
+            <div class="ch-meta">4 min</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div style="padding-top:6px;font-size:0.62rem;color:rgba(255,255,255,0.7);line-height:1.5;margin-bottom:6px;">Skin-to-skin contact, colostrum, delayed cord clamping — why timing matters and how to advocate for it in the delivery room.</div>
+          <div class="cb-ask">Read full article ›</div>
+        </div>
+      </div>
+
+      <div class="exp-card" onclick="toggle(this)">
+        <div class="card-head">
+          <div class="ch-icon">👨</div>
+          <div class="ch-body">
+            <div class="ch-label" style="color:#4D96FF;">Partner</div>
+            <div class="ch-title">How partners actually help in the delivery room</div>
+            <div class="ch-meta">7 min</div>
+          </div>
+          <div class="ch-chevron">▾</div>
+        </div>
+        <div class="card-body">
+          <div style="padding-top:6px;font-size:0.62rem;color:rgba(255,255,255,0.7);line-height:1.5;margin-bottom:6px;">Practical role, what to say, what NOT to say, when to just hold her hand. A guide partners actually need.</div>
+          <div class="cb-ask">Read full article ›</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="ask-bar"><div class="ab-icon">💬</div><div class="ab-text">Ask Grandma anything</div><div class="ab-arrow">›</div></div>
+    <div class="bnav">
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">HOME</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">CAL</div></div>
+      <div class="bni"><div class="bni-dot center"></div><div class="bni-lbl" style="margin-top:6px;">✦</div></div>
+      <div class="bni"><div class="bni-dot active"></div><div class="bni-lbl active">STATS</div></div>
+      <div class="bni"><div class="bni-dot"></div><div class="bni-lbl">ME</div></div>
+    </div>
+    <div class="phone-label">Reads — expand for preview</div>
+    <div class="phone-sub">Article list clean by default · expand shows teaser + read button · no page jumps</div>
+  </div>
+
+</div>
+
+</body>
+</html>
