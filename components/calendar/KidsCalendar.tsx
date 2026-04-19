@@ -69,6 +69,7 @@ import { ActivityPillCard } from './ActivityPillCard'
 import { LogTile, LogTileGrid } from './LogTile'
 import { SectionHeader } from './SectionHeader'
 import { Display, Body } from '../ui/Typography'
+import { logSticker } from './logStickers'
 import {
   FeedingForm,
   SleepForm,
@@ -443,14 +444,13 @@ function LogActivitySheet({
         <View style={styles.fabSheetBody}>
           <LogTileGrid>
             {QUICK_LOGS.map((log) => {
-              const Icon = log.icon
               const tint = KIDS_TINT_BY_TYPE[log.id] ?? 'activity'
               return (
                 <LogTile
                   key={log.id}
                   label={log.label}
                   tint={tint}
-                  icon={<Icon size={22} color={log.color} strokeWidth={2} />}
+                  icon={logSticker(log.id, 28, isDark)}
                   onPress={() => handleSelect(log.id)}
                 />
               )

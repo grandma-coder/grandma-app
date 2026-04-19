@@ -9,17 +9,7 @@
 
 import { useState, useMemo } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, Modal } from 'react-native'
-import {
-  Droplets,
-  Thermometer,
-  Heart,
-  Smile,
-  Activity,
-  HeartHandshake,
-  X,
-  Check,
-  Circle,
-} from 'lucide-react-native'
+import { X, Check, Circle as CircleIcon } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { getCycleInfo, toDateStr, type CyclePhase } from '../../lib/cycleLogic'
@@ -32,6 +22,7 @@ import { LogTile, LogTileGrid } from './LogTile'
 import { SectionHeader } from './SectionHeader'
 import { PaperCard } from '../ui/PaperCard'
 import { Display, Body } from '../ui/Typography'
+import { logSticker } from './logStickers'
 import {
   PeriodStartForm,
   PeriodEndForm,
@@ -50,18 +41,16 @@ interface LogEntry {
   id: LogType
   label: string
   subtitle: string
-  icon: typeof Droplets
   tint: string
-  color: string
 }
 
 const LOG_ENTRIES: LogEntry[] = [
-  { id: 'basal_temp',    label: 'Log BBT',        subtitle: 'Daily temperature',     icon: Thermometer,    tint: 'temperature', color: brand.secondary },
-  { id: 'symptom',       label: 'Log symptoms',   subtitle: 'How you feel today',    icon: Activity,       tint: 'symptom',     color: brand.accent },
-  { id: 'mood',          label: 'Log mood',       subtitle: 'Today\'s mood check-in', icon: Smile,          tint: 'mood',        color: brand.accent },
-  { id: 'intercourse',   label: 'Log intimacy',   subtitle: 'Track fertile moments', icon: HeartHandshake, tint: 'intimacy',    color: brand.prePregnancy },
-  { id: 'period_start',  label: 'Period start',   subtitle: 'Begin a new cycle',     icon: Droplets,       tint: 'period',      color: brand.phase.menstrual },
-  { id: 'period_end',    label: 'Period end',     subtitle: 'Close out your flow',   icon: Heart,          tint: 'period',      color: brand.phase.menstrual },
+  { id: 'basal_temp',   label: 'Temperature',  subtitle: 'Daily BBT reading',     tint: 'temperature' },
+  { id: 'symptom',      label: 'Symptoms',     subtitle: 'How you feel today',    tint: 'symptom' },
+  { id: 'mood',         label: 'Mood',         subtitle: "Today's mood check-in", tint: 'mood' },
+  { id: 'intercourse',  label: 'Intimacy',     subtitle: 'Track fertile moments', tint: 'intimacy' },
+  { id: 'period_start', label: 'Period start', subtitle: 'Begin a new cycle',     tint: 'period' },
+  { id: 'period_end',   label: 'Period end',   subtitle: 'Close out your flow',   tint: 'period' },
 ]
 
 // ─── Log Activity Sheet (opened by header "+") ─────────────────────────────
@@ -103,18 +92,15 @@ function LogActivitySheet({
         </View>
         <View style={styles.sheetBody}>
           <LogTileGrid>
-            {LOG_ENTRIES.map((e) => {
-              const Icon = e.icon
-              return (
-                <LogTile
-                  key={e.id}
-                  label={e.label.replace(/^Log /, '')}
-                  tint={e.tint}
-                  icon={<Icon size={22} color={e.color} strokeWidth={2} />}
-                  onPress={() => handleSelect(e.id)}
-                />
-              )
-            })}
+            {LOG_ENTRIES.map((e) => (
+              <LogTile
+                key={e.id}
+                label={e.label}
+                tint={e.tint}
+                icon={logSticker(e.id, 28, isDark)}
+                onPress={() => handleSelect(e.id)}
+              />
+            ))}
           </LogTileGrid>
         </View>
       </View>
@@ -212,19 +198,16 @@ export function CycleCalendar() {
             />
 
             <View style={{ gap: 10, marginTop: 8 }}>
-              {LOG_ENTRIES.map((e) => {
-                const Icon = e.icon
-                return (
-                  <ActivityPillCard
-                    key={e.id}
-                    icon={<Icon size={18} color={e.color} strokeWidth={2} />}
-                    title={e.label}
-                    subtitle={e.subtitle}
-                    tint={e.tint}
-                    onPress={() => setSheetType(e.id)}
-                  />
-                )
-              })}
+              {LOG_ENTRIES.map((e) => (
+                <ActivityPillCard
+                  key={e.id}
+                  icon={logSticker(e.id, 26, isDark)}
+                  title={`Log ${e.label.toLowerCase()}`}
+                  subtitle={e.subtitle}
+                  tint={e.tint}
+                  onPress={() => setSheetType(e.id)}
+                />
+              ))}
             </View>
           </>
         )}
@@ -247,7 +230,7 @@ export function CycleCalendar() {
           <PaperCard style={{ marginTop: 4 }}>
             <View style={styles.tabEmpty}>
               <View style={[styles.tabEmptyIcon, { backgroundColor: modeColor + '22' }]}>
-                <Circle size={22} color={modeColor} strokeWidth={2} />
+                <CircleIcon size={22} color={modeColor} strokeWidth={2} />
               </View>
               <Display size={20} color={isDark ? colors.text : '#141313'}>Upcoming visits</Display>
               <Body size={13} color={isDark ? colors.textMuted : '#6E6763'} align="center" style={{ marginTop: 6 }}>

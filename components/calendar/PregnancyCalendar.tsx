@@ -76,6 +76,7 @@ import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
 import { LogTile, LogTileGrid } from './LogTile'
 import { Display, Body } from '../ui/Typography'
+import { logSticker } from './logStickers'
 import {
   PregnancyMoodForm,
   PregnancySymptomsForm,
@@ -343,14 +344,13 @@ function QuickLogSheet({
           <LogTileGrid>
             {ALL_LOG_TYPES.map((type) => {
               const meta = LOG_META[type]
-              const Icon = meta.icon
               const tint = PREG_TINT_BY_TYPE[type] ?? 'activity'
               return (
                 <LogTile
                   key={type}
                   label={meta.label}
                   tint={tint}
-                  icon={<Icon size={22} color={meta.color} strokeWidth={2} />}
+                  icon={logSticker(type, 28, isDark)}
                   onPress={() => { onClose(); onSelect(type) }}
                 />
               )
