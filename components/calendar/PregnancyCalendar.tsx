@@ -72,6 +72,10 @@ import {
 } from '../../lib/analyticsData'
 import type { PregnancyCalendarLog } from '../../lib/analyticsData'
 import { STANDARD_APPOINTMENTS } from '../../lib/pregnancyAppointments'
+import { AgendaHeader } from './AgendaHeader'
+import { SegmentedTabs } from './SegmentedTabs'
+import { LogTile, LogTileGrid } from './LogTile'
+import { Display, Body } from '../ui/Typography'
 import {
   PregnancyMoodForm,
   PregnancySymptomsForm,
@@ -163,6 +167,25 @@ const ALL_LOG_TYPES: LogFormType[] = [
   'kick_count', 'weight', 'appointment', 'exam_result', 'nutrition',
   'kegel', 'nesting', 'birth_prep', 'contraction',
 ]
+
+/** Map pregnancy log types → pastel tint keys in tints.ts */
+const PREG_TINT_BY_TYPE: Record<string, string> = {
+  mood: 'mood',
+  symptom: 'symptom',
+  vitamins: 'vitamins',
+  water: 'water',
+  sleep: 'sleep',
+  exercise: 'exercise',
+  kick_count: 'kicks',
+  weight: 'weight',
+  appointment: 'appointment',
+  exam_result: 'exam',
+  nutrition: 'nutrition',
+  kegel: 'kegel',
+  nesting: 'nesting',
+  birth_prep: 'birthprep',
+  contraction: 'contraction',
+}
 
 function dotColor(type: string): string {
   return LOG_META[type]?.color ?? 'rgba(255,255,255,0.3)'
@@ -294,59 +317,59 @@ function QuickLogSheet({
   onSelect: (type: LogFormType) => void
   onManageRoutines: () => void
 }) {
-  const { colors } = useTheme()
+  const { colors, isDark, font } = useTheme()
   const insets = useSafeAreaInsets()
+
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const bg = isDark ? colors.bg : '#F3ECD9'
+  const ink = isDark ? colors.text : '#141313'
+  const accent = brand.pregnancy
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.fabSheetBackdrop} onPress={onClose} />
-      <View style={[styles.fabSheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.fabSheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }]}>
         <View style={styles.fabSheetHandle}>
-          <View style={[styles.fabSheetHandleBar, { backgroundColor: 'rgba(255,255,255,0.2)' }]} />
+          <View style={[styles.fabSheetHandleBar, { backgroundColor: paperBorder }]} />
         </View>
         <View style={styles.fabSheetHeaderRow}>
-          <Text style={[styles.fabSheetTitle, { color: colors.text }]}>Log something</Text>
-          <Pressable onPress={onClose} style={styles.fabSheetClose}>
-            <X size={20} color={colors.textMuted} strokeWidth={2} />
+          <Display size={22} color={ink}>Log something</Display>
+          <Pressable onPress={onClose} style={[styles.fabSheetClose, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <X size={18} color={ink} strokeWidth={2} />
           </Pressable>
         </View>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.fabSheetGrid}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 14 }}>
+          <LogTileGrid>
             {ALL_LOG_TYPES.map((type) => {
               const meta = LOG_META[type]
               const Icon = meta.icon
+              const tint = PREG_TINT_BY_TYPE[type] ?? 'activity'
               return (
-                <Pressable
+                <LogTile
                   key={type}
+                  label={meta.label}
+                  tint={tint}
+                  icon={<Icon size={22} color={meta.color} strokeWidth={2} />}
                   onPress={() => { onClose(); onSelect(type) }}
-                  style={({ pressed }) => [
-                    styles.fabSheetItem,
-                    { backgroundColor: colors.surfaceRaised ?? colors.surface },
-                    pressed && { opacity: 0.75, transform: [{ scale: 0.96 }] },
-                  ]}
-                >
-                  <View style={[styles.fabSheetIcon, { backgroundColor: meta.color + '18' }]}>
-                    <Icon size={22} color={meta.color} strokeWidth={2} />
-                  </View>
-                  <Text style={[styles.fabSheetLabel, { color: colors.text }]} numberOfLines={1}>
-                    {meta.label}
-                  </Text>
-                </Pressable>
+                />
               )
             })}
-          </View>
+          </LogTileGrid>
 
           <Pressable
             onPress={() => { onClose(); onManageRoutines() }}
             style={({ pressed }) => [
               styles.manageRoutinesBtn,
-              { backgroundColor: colors.surfaceRaised ?? colors.surface, borderColor: colors.border },
-              pressed && { opacity: 0.8 },
+              { backgroundColor: paper, borderColor: paperBorder },
+              pressed && { opacity: 0.85 },
             ]}
           >
-            <Calendar size={18} color={brand.pregnancy} strokeWidth={2} />
-            <Text style={[styles.manageRoutinesBtnText, { color: brand.pregnancy }]}>Manage Routines</Text>
-            <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
+            <Calendar size={18} color={accent} strokeWidth={2} />
+            <Body size={14} color={accent} style={{ fontFamily: font.bodySemiBold, flex: 1 }}>
+              Manage Routines
+            </Body>
+            <ChevronRight size={16} color={ink} strokeWidth={2} />
           </Pressable>
         </ScrollView>
       </View>
@@ -1612,41 +1635,23 @@ export function PregnancyCalendar() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      {/* Header row — FAB lives here, not overlapping tabs */}
-      <View style={[styles.calHeaderRow, { paddingTop: insets.top + 10, backgroundColor: colors.bg }]}>
-        <View style={{ flex: 1 }} />
-        {(view === 'month' || view === 'week') && (
-          <Pressable
-            onPress={() => setShowQuickLog(true)}
-            style={({ pressed }) => [
-              styles.headerFabBtn,
-              { backgroundColor: brand.pregnancy },
-              pressed && { transform: [{ scale: 0.93 }] },
-            ]}
-          >
-            <Plus size={22} color="#fff" strokeWidth={2.5} />
-          </Pressable>
-        )}
+      {/* Header — "Agenda." title + "+" action */}
+      <View style={{ paddingTop: insets.top + 12, paddingHorizontal: 16 }}>
+        <AgendaHeader onAdd={() => setShowQuickLog(true)} />
       </View>
 
-      {/* Segmented control tabs — Kids style */}
+      {/* Segmented tabs — 4 tabs with ink active pill */}
       <View style={[styles.segRow, { backgroundColor: colors.bg }]}>
-        <View style={[styles.segContainer, { backgroundColor: colors.surfaceRaised ?? colors.surface }]}>
-          {(['month', 'week', 'journey', 'appointments'] as ViewTab[]).map((tab) => (
-            <Pressable
-              key={tab}
-              onPress={() => setView(tab)}
-              style={[
-                styles.segBtn,
-                view === tab && { backgroundColor: brand.pregnancy + '25' },
-              ]}
-            >
-              <Text style={[styles.segLabel, { color: view === tab ? brand.pregnancy : colors.textMuted }]}>
-                {tab === 'appointments' ? 'Appts' : tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <SegmentedTabs
+          options={[
+            { key: 'month', label: 'Month' },
+            { key: 'week', label: 'Week' },
+            { key: 'journey', label: 'Journey' },
+            { key: 'appointments', label: 'Appts' },
+          ]}
+          value={view}
+          onChange={(k) => setView(k as ViewTab)}
+        />
       </View>
 
       <ScrollView
