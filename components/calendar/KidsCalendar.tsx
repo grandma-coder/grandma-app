@@ -64,6 +64,11 @@ import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
 import { LogSheet } from './LogSheet'
+import { SegmentedTabs } from './SegmentedTabs'
+import { ActivityPillCard } from './ActivityPillCard'
+import { LogTile, LogTileGrid } from './LogTile'
+import { SectionHeader } from './SectionHeader'
+import { Display, Body } from '../ui/Typography'
 import {
   FeedingForm,
   SleepForm,
@@ -378,85 +383,107 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
   return value
 }
 
-// ─── FAB + Quick Log Sheet ────────────────────────────────────────────────
+// ─── Log Activity Sheet (bottom sheet opened by header "+" button) ─────────
 
-function FabWithSheet({ onSelect, onManageRoutines }: { onSelect: (type: LogType) => void; onManageRoutines: () => void }) {
-  const { colors, radius } = useTheme()
+/** Tint key mapping for kids log types → pastel palette in tints.ts */
+const KIDS_TINT_BY_TYPE: Record<LogType, string> = {
+  feeding: 'feeding',
+  sleep: 'sleep',
+  wake_up: 'wake',
+  health: 'health',
+  mood: 'mood',
+  memory: 'memory',
+  activity: 'activity',
+  diaper: 'diaper',
+}
+
+function LogActivitySheet({
+  open,
+  onClose,
+  onSelect,
+  onManageRoutines,
+}: {
+  open: boolean
+  onClose: () => void
+  onSelect: (type: LogType) => void
+  onManageRoutines: () => void
+}) {
+  const { colors, isDark, font } = useTheme()
   const insets = useSafeAreaInsets()
-  const [open, setOpen] = useState(false)
 
   function handleSelect(type: LogType) {
-    setOpen(false)
+    onClose()
     onSelect(type)
   }
 
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const bg = isDark ? colors.bg : '#F3ECD9'
+  const ink = isDark ? colors.text : '#141313'
+  const accent = isDark ? colors.primary : '#7048B8'
+
   return (
-    <>
-      {/* FAB button */}
-      <Pressable
-        onPress={() => setOpen(true)}
-        style={({ pressed }) => [
-          styles.fabBtn,
-          { backgroundColor: colors.primary, top: insets.top + 12 },
-          pressed && { transform: [{ scale: 0.93 }] },
+    <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
+      <Pressable style={styles.fabSheetBackdrop} onPress={onClose} />
+      <View
+        style={[
+          styles.fabSheet,
+          {
+            backgroundColor: bg,
+            paddingBottom: insets.bottom + 16,
+          },
         ]}
       >
-        <Plus size={26} color="#FFFFFF" strokeWidth={2.5} />
-      </Pressable>
-
-      {/* Quick log sheet */}
-      <Modal visible={open} animationType="slide" transparent onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.fabSheetBackdrop} onPress={() => setOpen(false)} />
-        <View style={[styles.fabSheet, { backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingBottom: insets.bottom + 16 }]}>
-          <View style={styles.fabSheetHandle}>
-            <View style={[styles.fabSheetHandleBar, { backgroundColor: colors.border }]} />
-          </View>
-          <Text style={[styles.fabSheetTitle, { color: colors.text }]}>Log Activity</Text>
-          <View style={styles.fabSheetGrid}>
+        <View style={styles.fabSheetHandle}>
+          <View style={[styles.fabSheetHandleBar, { backgroundColor: paperBorder }]} />
+        </View>
+        <View style={styles.fabSheetTitleWrap}>
+          <Display size={22} color={ink}>Log Activity</Display>
+        </View>
+        <View style={styles.fabSheetBody}>
+          <LogTileGrid>
             {QUICK_LOGS.map((log) => {
               const Icon = log.icon
+              const tint = KIDS_TINT_BY_TYPE[log.id] ?? 'activity'
               return (
-                <Pressable
+                <LogTile
                   key={log.id}
+                  label={log.label}
+                  tint={tint}
+                  icon={<Icon size={22} color={log.color} strokeWidth={2} />}
                   onPress={() => handleSelect(log.id)}
-                  style={({ pressed }) => [
-                    styles.fabSheetItem,
-                    { backgroundColor: colors.surface, borderRadius: radius.xl },
-                    pressed && { opacity: 0.8, transform: [{ scale: 0.96 }] },
-                  ]}
-                >
-                  <View style={[styles.fabSheetIcon, { backgroundColor: log.color + '15' }]}>
-                    <Icon size={22} color={log.color} strokeWidth={2} />
-                  </View>
-                  <Text style={[styles.fabSheetLabel, { color: colors.text }]}>{log.label}</Text>
-                </Pressable>
+                />
               )
             })}
-          </View>
+          </LogTileGrid>
 
-          {/* Manage Routines button */}
           <Pressable
-            onPress={() => { setOpen(false); onManageRoutines() }}
+            onPress={() => { onClose(); onManageRoutines() }}
             style={({ pressed }) => [
-              styles.fabRoutineBtn,
-              { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg },
-              pressed && { opacity: 0.8 },
+              styles.manageRoutinesBtn,
+              {
+                backgroundColor: paper,
+                borderColor: paperBorder,
+                opacity: pressed ? 0.85 : 1,
+              },
             ]}
           >
-            <Repeat size={18} color={colors.primary} strokeWidth={2} />
-            <Text style={[styles.fabRoutineBtnText, { color: colors.primary }]}>Manage Routines</Text>
-            <ChevronRightSmall size={16} color={colors.textMuted} />
+            <Repeat size={18} color={accent} strokeWidth={2} />
+            <Body size={14} color={accent} style={{ fontFamily: font.bodySemiBold, flex: 1 }}>
+              Manage Routines
+            </Body>
+            <ChevronRightSmall size={16} color={ink} />
           </Pressable>
         </View>
-      </Modal>
-    </>
+      </View>
+    </Modal>
   )
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────
 
 export function KidsCalendar() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const insets = useSafeAreaInsets()
 
   const children = useChildStore((s) => s.children)
@@ -465,6 +492,7 @@ export function KidsCalendar() {
 
   const [selectedChildId, setSelectedChildId] = useState<string | 'all'>('all')
   const [view, setView] = useState<'month' | 'day' | 'list'>('month')
+  const [logSheetOpen, setLogSheetOpen] = useState(false)
   const [dayZoomH, setDayZoomH] = useState(DAY_VIEW_DEFAULT_HOUR_H)
   const [viewDate, setViewDate] = useState(() => new Date())
   const [expandedChildren, setExpandedChildren] = useState<Set<string>>(new Set())
@@ -1289,74 +1317,89 @@ export function KidsCalendar() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* 1. Child Selector */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.childSelectorRow}
-        >
+        {/* 1. Child Selector Row — pills + inline "+" add-log button */}
+        <View style={styles.childRowWrap}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.childSelectorRow}
+            style={{ flex: 1 }}
+          >
+            <Pressable
+              onPress={() => setSelectedChildId('all')}
+              style={[
+                styles.childSelectorChip,
+                {
+                  backgroundColor: selectedChildId === 'all'
+                    ? (isDark ? colors.primary + '25' : '#EFE6FF')
+                    : (isDark ? colors.surface : '#FFFEF8'),
+                  borderColor: selectedChildId === 'all'
+                    ? (isDark ? colors.primary : '#B7A6E8')
+                    : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                  borderRadius: radius.full,
+                },
+              ]}
+            >
+              <Text style={[styles.childSelectorText, { color: selectedChildId === 'all' ? (isDark ? colors.primary : '#7048B8') : (isDark ? colors.text : '#141313') }]}>
+                All Kids
+              </Text>
+            </Pressable>
+            {children.map((c, i) => {
+              const active = selectedChildId === c.id
+              return (
+                <Pressable
+                  key={c.id}
+                  onPress={() => {
+                    setSelectedChildId(c.id)
+                    setActiveChild(c)
+                  }}
+                  style={[
+                    styles.childSelectorChip,
+                    {
+                      backgroundColor: active ? childColor(i) + '15' : (isDark ? colors.surface : '#FFFEF8'),
+                      borderColor: active ? childColor(i) : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                      borderRadius: radius.full,
+                    },
+                  ]}
+                >
+                  <View style={[styles.childDot, { backgroundColor: childColor(i) }]} />
+                  <Text style={[styles.childSelectorText, { color: active ? childColor(i) : (isDark ? colors.text : '#141313') }]}>
+                    {c.name}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </ScrollView>
+
+          {/* Add-log "+" — inline with child pills per mock */}
           <Pressable
-            onPress={() => setSelectedChildId('all')}
-            style={[
-              styles.childSelectorChip,
+            onPress={() => setLogSheetOpen(true)}
+            style={({ pressed }) => [
+              styles.addLogBtn,
               {
-                backgroundColor: selectedChildId === 'all' ? colors.primaryTint : colors.surface,
-                borderColor: selectedChildId === 'all' ? colors.primary : colors.border,
-                borderRadius: radius.full,
+                backgroundColor: brand.kids,
+                opacity: pressed ? 0.85 : 1,
+                transform: [{ scale: pressed ? 0.94 : 1 }],
               },
             ]}
           >
-            <Text style={[styles.childSelectorText, { color: selectedChildId === 'all' ? colors.primary : colors.text }]}>
-              All Kids
-            </Text>
+            <Plus size={18} color="#FFFEF8" strokeWidth={2.5} />
           </Pressable>
-          {children.map((c, i) => {
-            const active = selectedChildId === c.id
-            return (
-              <Pressable
-                key={c.id}
-                onPress={() => {
-                  setSelectedChildId(c.id)
-                  setActiveChild(c)
-                }}
-                style={[
-                  styles.childSelectorChip,
-                  {
-                    backgroundColor: active ? childColor(i) + '15' : colors.surface,
-                    borderColor: active ? childColor(i) : colors.border,
-                    borderRadius: radius.full,
-                  },
-                ]}
-              >
-                <View style={[styles.childDot, { backgroundColor: childColor(i) }]} />
-                <Text style={[styles.childSelectorText, { color: active ? childColor(i) : colors.text }]}>
-                  {c.name}
-                </Text>
-              </Pressable>
-            )
-          })}
-        </ScrollView>
+        </View>
 
         {/* 2. View Toggle */}
-        <View style={[styles.toggleRow, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-          <Pressable
-            onPress={() => setView('month')}
-            style={[styles.toggleBtn, { backgroundColor: view === 'month' ? colors.primary : 'transparent', borderRadius: radius.md }]}
-          >
-            <Text style={[styles.toggleText, { color: view === 'month' ? '#FFFFFF' : colors.textSecondary }]}>Month</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setView('day')}
-            style={[styles.toggleBtn, { backgroundColor: view === 'day' ? colors.primary : 'transparent', borderRadius: radius.md }]}
-          >
-            <Text style={[styles.toggleText, { color: view === 'day' ? '#FFFFFF' : colors.textSecondary }]}>Day</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setView('list')}
-            style={[styles.toggleBtn, { backgroundColor: view === 'list' ? colors.primary : 'transparent', borderRadius: radius.md }]}
-          >
-            <Text style={[styles.toggleText, { color: view === 'list' ? '#FFFFFF' : colors.textSecondary }]}>List</Text>
-          </Pressable>
+        <View style={styles.toggleWrap}>
+          <SegmentedTabs
+            options={[
+              { key: 'month', label: 'Month' },
+              { key: 'day', label: 'Day' },
+              { key: 'list', label: 'List' },
+            ]}
+            value={view}
+            onChange={(k) => setView(k as 'month' | 'day' | 'list')}
+            activeBg={isDark ? brand.kids + '40' : '#9EC5FF'}
+            activeFg={isDark ? colors.text : '#141313'}
+          />
         </View>
 
         {view === 'month' ? (
@@ -1449,24 +1492,23 @@ export function KidsCalendar() {
               <ActivityIndicator size="small" color={colors.primary} style={{ marginBottom: 12 }} />
             )}
 
-            {/* 4. Upcoming Highlights Banner */}
+            {/* 4. Upcoming Highlights — pastel activity card */}
             {upcomingHighlights.length > 0 && (() => {
               const h = upcomingHighlights[highlightIndex % upcomingHighlights.length]
               if (!h) return null
               const meta = LOG_META[h.icon] ?? { icon: Calendar, color: brand.accent }
               const HIcon = meta.icon
+              const tintKey = (KIDS_TINT_BY_TYPE as Record<string, string>)[h.icon] ?? 'activity'
               return (
-                <View style={[styles.highlightBanner, { backgroundColor: h.color + '10', borderColor: h.color + '25', borderRadius: radius.xl }]}>
-                  <View style={[styles.highlightIconWrap, { backgroundColor: h.color + '20' }]}>
-                    <HIcon size={18} color={h.color} strokeWidth={2} />
-                  </View>
-                  <View style={styles.highlightContent}>
-                    <Text style={[styles.highlightTitle, { color: colors.text }]} numberOfLines={1}>{h.title}</Text>
-                    <Text style={[styles.highlightDetail, { color: colors.textSecondary }]} numberOfLines={1}>{h.detail}</Text>
-                  </View>
-                  <View style={[styles.highlightChildTag, { backgroundColor: h.childColor + '18' }]}>
-                    <Text style={[styles.highlightChildName, { color: h.childColor }]}>{h.childName}</Text>
-                  </View>
+                <View style={{ marginBottom: 14, gap: 8 }}>
+                  <ActivityPillCard
+                    icon={<HIcon size={18} color={h.color} strokeWidth={2} />}
+                    title={h.title}
+                    subtitle={h.detail}
+                    tint={tintKey}
+                    chip={{ label: h.childName, color: h.childColor }}
+                    noChevron
+                  />
                   {upcomingHighlights.length > 1 && (
                     <View style={styles.highlightDots}>
                       {upcomingHighlights.map((_, i) => (
@@ -2528,8 +2570,13 @@ export function KidsCalendar() {
         )}
       </ScrollView>
 
-      {/* ─── FAB + Quick Log Sheet ─────────────────────────────────────── */}
-      <FabWithSheet onSelect={(type) => { setRoutinePrefill(null); setSheetType(type) }} onManageRoutines={() => setShowRoutineManager(true)} />
+      {/* ─── Log Activity Sheet (opened by header "+") ──────────────────── */}
+      <LogActivitySheet
+        open={logSheetOpen}
+        onClose={() => setLogSheetOpen(false)}
+        onSelect={(type) => { setRoutinePrefill(null); setSheetType(type) }}
+        onManageRoutines={() => setShowRoutineManager(true)}
+      />
 
       {/* ─── Bottom Sheets ────────────────────────────────────────────── */}
 
@@ -3507,8 +3554,14 @@ const styles = StyleSheet.create({
 
   // FAB + Sheet
   fabBtn: { position: 'absolute', right: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 6, zIndex: 10 },
-  fabSheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
-  fabSheet: { position: 'absolute', bottom: 0, left: 0, right: 0 },
+  childRowWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  addLogBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 3 },
+  toggleWrap: { marginBottom: 14 },
+  fabSheetTitleWrap: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 },
+  fabSheetBody: { paddingHorizontal: 20, gap: 14 },
+  manageRoutinesBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 999, borderWidth: 1 },
+  fabSheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,8,6,0.55)' },
+  fabSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '90%', borderTopLeftRadius: 32, borderTopRightRadius: 32 },
   fabSheetHandle: { alignItems: 'center', paddingTop: 12, paddingBottom: 4 },
   fabSheetHandleBar: { width: 36, height: 4, borderRadius: 2 },
   fabSheetTitle: { fontSize: 18, fontWeight: '800', paddingHorizontal: 20, paddingBottom: 16 },
