@@ -1427,17 +1427,24 @@ export function KidsHome() {
         </View>
       </View>
 
-      {/* ─── Hero: Multi-Ring Progress ────────────────────────── */}
-      <MultiRingHero
-        sleepProgress={sleepProgress}
-        nutritionProgress={nutritionProgress}
-        activityProgress={activityProgress}
-        focused={focusedRing}
-        onTapRing={setFocusedRing}
-        centerData={focused}
+      {/* ─── Hero tiles (v1 redesign): LAST SLEEP / MOOD / CALORIES / LEAP ─── */}
+      <HeroTiles
+        sleepTotal={rangeData.sleepTotal}
+        sleepTarget={rangeData.sleepTarget}
+        dominantMood={rangeData.dominantMood}
+        moodCounts={rangeData.moodCounts}
+        caloriesTotal={rangeData.caloriesTotal}
+        caloriesTarget={rangeData.caloriesTarget}
+        feedingCount={rangeData.feedingCount}
+        feedingTarget={rangeData.feedingCountTarget}
+        stage={feedingStage}
+        leap={growthLeap}
+        onPressSleep={() => { setFocusedRing('sleep'); setHealthModalVisible(true) }}
+        onPressMood={() => setMoodModalVisible(true)}
+        onPressCalories={() => setActivityModalVisible(true)}
       />
 
-      {/* ─── Ring Legend ──────────────────────────────────────── */}
+      {/* ─── Ring Legend (detailed stats strip) ──────────────── */}
       {(() => {
         const { days } = getDateRange(dateRange, customRange)
         const rangeLabel = days === 1 ? 'today' : `${days}d`
@@ -1813,6 +1820,200 @@ export function KidsHome() {
 }
 
 // ─── Multi-Ring Hero ────────────────────────────────────────────────────────
+
+// ─── Hero Tiles (v1 redesign): LAST SLEEP / MOOD / CALORIES / LEAP ─────────
+
+function HeroTiles({
+  sleepTotal,
+  sleepTarget,
+  dominantMood,
+  moodCounts,
+  caloriesTotal,
+  caloriesTarget,
+  feedingCount,
+  feedingTarget,
+  stage,
+  leap,
+  onPressSleep,
+  onPressMood,
+  onPressCalories,
+}: {
+  sleepTotal: number
+  sleepTarget: number
+  dominantMood: string
+  moodCounts: Record<string, number>
+  caloriesTotal: number
+  caloriesTarget: number
+  feedingCount: number
+  feedingTarget: number
+  stage: FeedingStage
+  leap: ReturnType<typeof getGrowthLeap>
+  onPressSleep?: () => void
+  onPressMood?: () => void
+  onPressCalories?: () => void
+}) {
+  const { colors, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const lineColor = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+
+  // Sticker-palette soft bgs
+  const blueSoft = isDark ? 'rgba(157,195,232,0.18)' : '#CFE0F0'
+  const yellowSoft = isDark ? 'rgba(245,214,82,0.24)' : '#F5D652'
+  const pinkSoft = isDark ? 'rgba(242,178,199,0.18)' : '#F9D8E2'
+
+  // Last sleep value: show total hours + minutes for the selected range
+  const sleepHours = Math.floor(sleepTotal)
+  const sleepMins = Math.round((sleepTotal - sleepHours) * 60)
+  const sleepLabel = sleepTotal > 0 ? `${sleepHours}h ${String(sleepMins).padStart(2, '0')}` : '—'
+  const sleepSub = sleepTarget > 0 ? `of ${Math.round(sleepTarget)}h target` : 'No goal set'
+
+  // Mood
+  const moodDisplay = dominantMood ? (MOOD_LABELS[dominantMood] ?? 'Content') : 'No data'
+  const moodValues = ['happy', 'calm', 'energetic', 'fussy', 'cranky'].map((m) => moodCounts[m] || 0)
+  const maxMood = Math.max(...moodValues, 1)
+
+  // Calories / feedings
+  const isLiquid = stage === 'liquid' || stage === 'mixed'
+  const calValue = isLiquid
+    ? (feedingCount > 0 ? `${feedingCount}` : '—')
+    : (caloriesTotal > 0 ? caloriesTotal.toLocaleString() : '—')
+  const calTarget = isLiquid ? feedingTarget : caloriesTarget
+  const calPct = calTarget > 0 ? Math.min((isLiquid ? feedingCount : caloriesTotal) / calTarget, 1) : 0
+  const calSub = calTarget > 0 ? `of ${calTarget.toLocaleString()} target` : (isLiquid ? 'Tap for details' : 'Set a target')
+
+  return (
+    <View style={{ gap: 10 }}>
+      {/* Row 1: LAST SLEEP (1.3fr) + MOOD (1fr) */}
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Pressable
+          onPress={onPressSleep}
+          style={{
+            flex: 1.3, padding: 16, borderRadius: 28, borderWidth: 1,
+            backgroundColor: blueSoft, borderColor: lineColor, overflow: 'hidden',
+          }}
+        >
+          <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            LAST SLEEP
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginTop: 6 }}>
+            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: paper, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: lineColor }}>
+              <Moon size={22} color="#9DC3E8" strokeWidth={2} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 28, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.6, lineHeight: 30 }}>
+                {sleepLabel}
+              </Text>
+              <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, marginTop: 2 }}>
+                {sleepSub}
+              </Text>
+            </View>
+          </View>
+        </Pressable>
+
+        <Pressable
+          onPress={onPressMood}
+          style={{
+            flex: 1, padding: 14, borderRadius: 28, borderWidth: 1,
+            backgroundColor: yellowSoft, borderColor: lineColor, overflow: 'hidden',
+          }}
+        >
+          <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: '#3A3533', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            MOOD
+          </Text>
+          <Text style={{ fontSize: 24, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 6, letterSpacing: -0.4 }}>
+            {moodDisplay}
+          </Text>
+          {/* Mood bars */}
+          <View style={{ flexDirection: 'row', gap: 3, marginTop: 10, alignItems: 'flex-end' }}>
+            {moodValues.map((v, i) => {
+              const h = Math.max((v / maxMood) * 34, 4)
+              return (
+                <View
+                  key={i}
+                  style={{
+                    flex: 1,
+                    height: h,
+                    borderRadius: 4,
+                    backgroundColor: i === moodValues.length - 1 ? ink : '#F5B896',
+                  }}
+                />
+              )
+            })}
+          </View>
+        </Pressable>
+      </View>
+
+      {/* Row 2: CALORIES (1fr) + LEAP (1.2fr) */}
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Pressable
+          onPress={onPressCalories}
+          style={{
+            flex: 1, padding: 16, borderRadius: 28, borderWidth: 1,
+            backgroundColor: pinkSoft, borderColor: lineColor,
+          }}
+        >
+          <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            {isLiquid ? 'FEEDINGS' : 'CALORIES'}
+          </Text>
+          <Text style={{ fontSize: 30, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 6, letterSpacing: -0.8, lineHeight: 32 }}>
+            {calValue}
+          </Text>
+          <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, marginTop: 2 }}>
+            {calSub}
+          </Text>
+          {/* Progress bar */}
+          <View style={{ height: 6, borderRadius: 999, backgroundColor: 'rgba(238,123,109,0.18)', marginTop: 10, overflow: 'hidden' }}>
+            <View style={{ width: `${Math.min(calPct, 1) * 100}%`, height: 6, borderRadius: 999, backgroundColor: '#EE7B6D' }} />
+          </View>
+        </Pressable>
+
+        <View
+          style={{
+            flex: 1.2, padding: 14, borderRadius: 28, borderWidth: 1,
+            backgroundColor: paper, borderColor: lineColor, overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            LEAP
+          </Text>
+          <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 6, letterSpacing: -0.3, lineHeight: 22 }} numberOfLines={1}>
+            {leap?.name ?? 'Watching'}
+          </Text>
+          <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, marginTop: 2 }}>
+            {leap
+              ? leap.status === 'active'
+                ? `Leap ${leap.index + 1} · active`
+                : leap.status === 'done'
+                ? 'All leaps complete'
+                : `Leap ${leap.index + 1} · upcoming`
+              : 'Tracking growth'}
+          </Text>
+          <View style={{ position: 'absolute', right: -10, bottom: -10 }}>
+            <SvgStar />
+          </View>
+        </View>
+      </View>
+    </View>
+  )
+}
+
+// Inline star sticker for the LEAP tile corner
+function SvgStar() {
+  return (
+    <Svg width={70} height={70} viewBox="0 0 100 100">
+      <Path
+        d="M50,8 L61,38 L94,40 L68,60 L78,92 L50,72 L22,92 L32,60 L6,40 L39,38 Z"
+        fill="#F5D652"
+        stroke="#141313"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  )
+}
 
 function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, focused, onTapRing, centerData }: {
   sleepProgress: number; nutritionProgress: number; activityProgress: number
