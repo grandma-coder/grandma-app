@@ -1479,9 +1479,11 @@ export function KidsHome() {
       {/* ─── Set Goals Button ─────────────────────────────────── */}
       <Pressable
         onPress={() => setGoalsModalVisible(true)}
-        style={[s.setGoalsBtn, { backgroundColor: colors.surface, borderColor: colors.borderLight, borderRadius: radius.md }]}
+        style={[s.setGoalsBtn, { backgroundColor: colors.primaryTint, borderColor: colors.primary + '40' }]}
       >
-        <Target size={14} color={colors.primary} strokeWidth={2} />
+        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: colors.primary + '22', alignItems: 'center', justifyContent: 'center' }}>
+          <Target size={14} color={colors.primary} strokeWidth={2} />
+        </View>
         <Text style={[s.setGoalsBtnText, { color: colors.primary }]}>Set Goals</Text>
         <Text style={[s.setGoalsBtnHint, { color: colors.textMuted }]}>Customize daily targets</Text>
         <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
@@ -4348,20 +4350,20 @@ const s = StyleSheet.create({
   legendTarget: { fontSize: 11, fontFamily: 'DMSans_400Regular', marginTop: 2 },
 
   // Section header
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  sectionTitle: { fontSize: 17, fontWeight: '700', letterSpacing: -0.2 },
-  sectionLink: { fontSize: 12, fontWeight: '700' },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  sectionTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
+  sectionLink: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
 
-  // Metric cards
+  // Metric cards — paper bg + mono-caps label + Fraunces value + ink-3 sub
   metricsRow: { flexDirection: 'row', gap: 8, paddingVertical: 4 },
   metricsRowItem: { flex: 1 },
-  metricCard: { flex: 1, height: 170, padding: 12, borderWidth: 1, gap: 2 },
+  metricCard: { flex: 1, height: 182, padding: 14, borderWidth: 1, gap: 2, borderRadius: 18 },
   metricHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  metricLabel: { fontSize: 11, fontWeight: '700' },
-  metricValue: { fontSize: 13, fontWeight: '700', marginTop: 4 },
-  metricSmall: { fontSize: 10, fontWeight: '500' },
+  metricLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
+  metricValue: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', marginTop: 6, letterSpacing: -0.2 },
+  metricSmall: { fontSize: 11, fontFamily: 'DMSans_400Regular', marginTop: 2 },
   metricEmpty: { height: 50, alignItems: 'center', justifyContent: 'center' },
-  metricBigNumber: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginVertical: 4, fontFamily: 'Fraunces_600SemiBold' },
+  metricBigNumber: { fontSize: 28, textAlign: 'center', marginVertical: 4, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
 
   // Diaper card
   diaperBar: { flexDirection: 'row', height: 6, width: '100%', overflow: 'hidden', marginTop: 4 },
@@ -4568,9 +4570,9 @@ const s = StyleSheet.create({
   feedingAvgText: { fontSize: 11, fontWeight: '600', textAlign: 'center', marginTop: 8 },
 
   // Set Goals button
-  setGoalsBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 14, borderWidth: 1 },
-  setGoalsBtnText: { fontSize: 13, fontWeight: '700' },
-  setGoalsBtnHint: { flex: 1, fontSize: 11, fontWeight: '500', textAlign: 'right' },
+  setGoalsBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 18, borderWidth: 1, borderRadius: 999 },
+  setGoalsBtnText: { fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
+  setGoalsBtnHint: { flex: 1, fontSize: 12, fontFamily: 'DMSans_400Regular', textAlign: 'right' },
 
   // Goal Setting Modal
   goalSuggestBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, marginBottom: 16 },

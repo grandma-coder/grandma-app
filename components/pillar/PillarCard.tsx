@@ -1,5 +1,14 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+/**
+ * PillarCard — pillar row (Apr 2026 redesign)
+ *
+ * Soft pastel background with sticker-style emoji + Fraunces serif name.
+ * Emoji text keeps the system font (Fraunces has no emoji glyphs).
+ */
+
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 import { Pillar } from '../../types'
+import { Display, Body } from '../ui/Typography'
+import { useTheme } from '../../constants/theme'
 
 interface PillarCardProps {
   pillar: Pillar
@@ -7,20 +16,27 @@ interface PillarCardProps {
 }
 
 export default function PillarCard({ pillar, onPress }: PillarCardProps) {
+  const { colors, isDark } = useTheme()
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+
   return (
     <Pressable
       onPress={() => onPress(pillar)}
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: pillar.color, opacity: pressed ? 0.85 : 1 },
+        { backgroundColor: pillar.color, borderColor: paperBorder, opacity: pressed ? 0.88 : 1 },
       ]}
     >
-      <Text style={styles.icon}>{pillar.icon}</Text>
+      <View style={styles.iconCircle}>
+        <Text style={styles.icon}>{pillar.icon}</Text>
+      </View>
       <View style={styles.textContainer}>
-        <Text style={styles.name}>{pillar.name}</Text>
-        <Text style={styles.description} numberOfLines={2}>
+        <Display size={18} color="#141313" style={{ letterSpacing: -0.3 }}>
+          {pillar.name}
+        </Display>
+        <Body size={12} color="rgba(20,19,19,0.55)" numberOfLines={2} style={{ marginTop: 2, lineHeight: 16 }}>
           {pillar.description}
-        </Text>
+        </Body>
       </View>
     </Pressable>
   )
@@ -30,29 +46,24 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
+    padding: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 12,
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFEF8',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   icon: {
-    fontSize: 36,
-    marginRight: 14, fontFamily: 'Fraunces_600SemiBold' },
+    fontSize: 22,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+  },
   textContainer: {
     flex: 1,
-  },
-  name: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 2,
-  },
-  description: {
-    fontSize: 13,
-    color: '#4B5563',
-    lineHeight: 18,
   },
 })
