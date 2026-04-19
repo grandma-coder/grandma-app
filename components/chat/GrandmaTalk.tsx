@@ -39,9 +39,14 @@ import {
   MessageCircle,
   ChevronDown,
   Check,
+  HelpCircle,
+  Mic,
+  Share2,
+  Moon as MoonIcon,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, stickers as stickerPalette } from '../../constants/theme'
+import { Burst, Heart, Flower } from '../ui/Stickers'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useChildStore } from '../../store/useChildStore'
@@ -251,6 +256,59 @@ function useRotatingThinkingMessage(isThinking: boolean) {
 
   return { message: THINKING_MESSAGES[index], pulseAnim }
 }
+
+// ─── Grandma Orb — concentric rings + moon + status text ─────────────────
+
+interface GrandmaOrbProps {
+  status: string
+  isActive: boolean
+  size?: number
+}
+
+function GrandmaOrb({ status, isActive, size = 260 }: GrandmaOrbProps) {
+  const { colors, font, isDark } = useTheme()
+  const breathe = useRef(new Animated.Value(0.94)).current
+
+  useEffect(() => {
+    if (!isActive) {
+      breathe.setValue(0.94)
+      return
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(breathe, { toValue: 1, duration: 1600, useNativeDriver: true }),
+        Animated.timing(breathe, { toValue: 0.94, duration: 1600, useNativeDriver: true }),
+      ])
+    )
+    loop.start()
+    return () => loop.stop()
+  }, [isActive])
+
+  const ringOuter = isDark ? 'rgba(200,182,232,0.22)' : '#E3D8F2'
+  const ringMid = isDark ? 'rgba(200,182,232,0.38)' : '#D0BFEC'
+  const ringInner = isDark ? 'rgba(200,182,232,0.58)' : '#C8B6E8'
+  const core = isDark ? '#141313' : '#141313'
+
+  const s = size
+  return (
+    <Animated.View style={[orbStyles.root, { width: s, height: s, transform: [{ scale: breathe }] }]}>
+      <View style={[orbStyles.ring, { width: s, height: s, borderRadius: s / 2, backgroundColor: ringOuter }]} />
+      <View style={[orbStyles.ring, { width: s * 0.82, height: s * 0.82, borderRadius: (s * 0.82) / 2, backgroundColor: ringMid }]} />
+      <View style={[orbStyles.ring, { width: s * 0.66, height: s * 0.66, borderRadius: (s * 0.66) / 2, backgroundColor: ringInner }]} />
+      <View style={[orbStyles.core, { width: s * 0.52, height: s * 0.52, borderRadius: (s * 0.52) / 2, backgroundColor: core }]}>
+        <MoonIcon size={28} color={stickerPalette.yellow} fill={stickerPalette.yellow} strokeWidth={1.5} />
+        <Text style={[orbStyles.status, { color: '#F5EDDC', fontFamily: font.italic }]}>{status}</Text>
+      </View>
+    </Animated.View>
+  )
+}
+
+const orbStyles = StyleSheet.create({
+  root: { alignItems: 'center', justifyContent: 'center' },
+  ring: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  core: { alignItems: 'center', justifyContent: 'center', gap: 8 },
+  status: { fontSize: 16, letterSpacing: -0.3 },
+})
 
 // ─── Initial suggestion chips ─────────────────────────────────────────────
 
@@ -553,7 +611,7 @@ const histStyles = StyleSheet.create({
 // ─── Main Component ────────────────────────────────────────────────────────
 
 export function GrandmaTalk() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
   const allBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
@@ -574,6 +632,7 @@ export function GrandmaTalk() {
   const [chatBehavior, setChatBehavior] = useState<string>(mode)
 
   const listRef = useRef<FlatList>(null)
+  const inputRef = useRef<TextInput>(null)
   const sessionIdRef = useRef(newSessionId())
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => [{
@@ -709,49 +768,68 @@ export function GrandmaTalk() {
     }
   }, [insightContext, sendText, isStreaming])
 
+  // Find the index of the last assistant message (for inverted "latest" styling)
+  const lastAssistantIndex = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant') return i
+    }
+    return -1
+  }, [messages])
+
   const renderMessage = useCallback(
-    ({ item }: { item: ChatMessage }) => {
+    ({ item, index }: { item: ChatMessage; index: number }) => {
       const isUser = item.role === 'user'
       const isTyping = item.role === 'assistant' && item.content === '' && isStreaming
+      const isLatestGrandma = !isUser && index === lastAssistantIndex
+
+      const cardBg = isLatestGrandma
+        ? (isDark ? colors.text : '#141313')
+        : colors.surface
+      const textColor = isLatestGrandma ? colors.textInverse : colors.text
+      const labelColor = isLatestGrandma ? 'rgba(245,237,220,0.55)' : colors.textMuted
+
+      const timeAgo = isUser ? 'A MOMENT AGO' : ''
+      const label = isUser ? `YOU, ${timeAgo}` : 'GRANDMA'
 
       return (
-        <View style={[styles.msgRow, isUser && styles.msgRowUser]}>
-          {!isUser && (
-            <View style={[styles.avatarWrap, { shadowColor: colors.primary }]}>
-              <View style={[styles.avatar, { backgroundColor: colors.primaryTint }]}>
-                <Sparkles size={15} color={colors.primary} strokeWidth={2.5} />
-              </View>
+        <View style={[styles.cardWrap, isLatestGrandma && styles.cardWrapLatest]}>
+          {isLatestGrandma && (
+            <View style={styles.cardSticker} pointerEvents="none">
+              <Flower size={72} petal={stickerPalette.lilac} center={stickerPalette.yellow} />
             </View>
           )}
           <View
             style={[
-              styles.bubble,
-              isUser
-                ? [styles.userBubble, { backgroundColor: colors.primary }]
-                : [styles.assistantBubble, { backgroundColor: colors.surface, borderColor: colors.border }],
+              styles.card,
+              {
+                backgroundColor: cardBg,
+                borderColor: isLatestGrandma ? 'transparent' : colors.borderLight,
+                borderWidth: isLatestGrandma ? 0 : 1,
+              },
             ]}
           >
+            <Text style={[styles.cardLabel, { color: labelColor, fontFamily: font.bodySemiBold }]}>
+              {label}
+            </Text>
             {isTyping ? (
-              <View style={styles.typingContainer}>
-                <View style={styles.typingRow}>
-                  <Animated.View style={[styles.dot, { backgroundColor: modeColor, opacity: pulseAnim }]} />
-                  <Animated.View style={[styles.dot, { backgroundColor: modeColor, opacity: pulseAnim, transform: [{ scale: pulseAnim }] }]} />
-                  <Animated.View style={[styles.dot, { backgroundColor: modeColor, opacity: pulseAnim }]} />
-                </View>
-                <Text style={[styles.typingText, { color: colors.textSecondary }]}>{thinkingMessage}</Text>
+              <View style={styles.typingRow}>
+                <Animated.View style={[styles.dot, { backgroundColor: labelColor, opacity: pulseAnim }]} />
+                <Animated.View style={[styles.dot, { backgroundColor: labelColor, opacity: pulseAnim, transform: [{ scale: pulseAnim }] }]} />
+                <Animated.View style={[styles.dot, { backgroundColor: labelColor, opacity: pulseAnim }]} />
+                <Text style={[styles.typingText, { color: textColor, fontFamily: font.italic }]}>{thinkingMessage}</Text>
               </View>
             ) : isUser ? (
-              <Text style={[styles.msgText, { color: '#FFFFFF' }]}>
+              <Text style={[styles.cardBody, { color: textColor, fontFamily: font.body }]}>
                 {item.content}
               </Text>
             ) : (
-              <FormattedText content={item.content} color={colors.text} />
+              <FormattedText content={item.content} color={textColor} />
             )}
           </View>
         </View>
       )
     },
-    [colors, isStreaming, thinkingMessage, pulseAnim, modeColor]
+    [colors, font, isStreaming, thinkingMessage, pulseAnim, lastAssistantIndex, isDark]
   )
 
   // Show the AI follow-up suggestions (after Grandma replies)
@@ -759,40 +837,43 @@ export function GrandmaTalk() {
   // Show the initial suggestions only before any user messages
   const showInitialSuggestions = !hasUserMessages && !isStreaming
 
+  const orbStatus = isStreaming ? thinkingMessage : 'listening…'
+
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10, backgroundColor: colors.bg, borderBottomColor: colors.border }]}>
-        <Pressable onPress={() => router.back()} style={styles.headerBtn} hitSlop={8}>
-          <X size={22} color={colors.textSecondary} />
+      <View style={[styles.header, { paddingTop: insets.top + 10, backgroundColor: colors.bg }]}>
+        <Pressable
+          onPress={() => router.back()}
+          style={[styles.headerCircleBtn, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
+          hitSlop={8}
+        >
+          <X size={18} color={colors.text} strokeWidth={1.75} />
         </Pressable>
-        <View style={styles.headerCenter}>
-          <View style={[styles.headerAvatarRing, { borderColor: modeColor + '55' }]}>
-            <View style={[styles.headerAvatar, { backgroundColor: colors.primaryTint }]}>
-              <Sparkles size={14} color={colors.primary} strokeWidth={2.5} />
-            </View>
-          </View>
-          <View>
-            <View style={styles.headerTitleRow}>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Grandma</Text>
-              {allBehaviors.length > 1 && (
-                <Pressable
-                  onPress={() => setShowBehaviorDropdown((v) => !v)}
-                  style={[styles.behaviorBadge, { backgroundColor: modeColor + '20', borderColor: modeColor + '44' }]}
-                  hitSlop={6}
-                >
-                  <Text style={[styles.behaviorBadgeLabel, { color: modeColor }]}>
-                    {getBehaviorEmoji(chatBehavior)} {getBehaviorLabel(chatBehavior)}
-                  </Text>
-                  <ChevronDown size={11} color={modeColor} strokeWidth={2.5} />
-                </Pressable>
-              )}
-            </View>
-            <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>Always here for you</Text>
-          </View>
+        <View style={styles.headerTitleBlock}>
+          <Text style={[styles.headerTitle, { color: colors.text, fontFamily: font.display }]}>
+            grandma{' '}
+            <Text style={[styles.headerTitleItalic, { fontFamily: font.italic }]}>talk</Text>
+          </Text>
+          {allBehaviors.length > 1 && (
+            <Pressable
+              onPress={() => setShowBehaviorDropdown((v) => !v)}
+              style={[styles.behaviorBadge, { backgroundColor: modeColor + '22', borderColor: modeColor + '44' }]}
+              hitSlop={6}
+            >
+              <Text style={[styles.behaviorBadgeLabel, { color: modeColor, fontFamily: font.bodySemiBold }]}>
+                {getBehaviorLabel(chatBehavior)}
+              </Text>
+              <ChevronDown size={11} color={modeColor} strokeWidth={2.5} />
+            </Pressable>
+          )}
         </View>
-        <Pressable onPress={() => setShowHistory(true)} style={styles.headerBtn} hitSlop={8}>
-          <History size={21} color={colors.textSecondary} strokeWidth={1.75} />
+        <Pressable
+          onPress={() => setShowHistory(true)}
+          style={[styles.headerCircleBtn, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
+          hitSlop={8}
+        >
+          <Share2 size={17} color={colors.text} strokeWidth={1.75} />
         </Pressable>
       </View>
 
@@ -830,18 +911,28 @@ export function GrandmaTalk() {
           renderItem={renderMessage}
           contentContainerStyle={styles.messageList}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <View style={styles.heroWrap}>
+              <View style={[styles.stickerTopLeft]} pointerEvents="none">
+                <Burst size={64} fill={stickerPalette.yellow} points={10} wobble={0.18} />
+              </View>
+              <View style={[styles.stickerTopRight]} pointerEvents="none">
+                <Heart size={52} fill={stickerPalette.pink} />
+              </View>
+              <GrandmaOrb status={orbStatus} isActive={isStreaming || !hasUserMessages} />
+            </View>
+          }
         />
 
         {/* Initial suggestion chips (before first message) */}
         {showInitialSuggestions && (
-          <View style={[styles.suggestionsWrapper, { borderTopColor: colors.border }]}>
-            <Text style={[styles.suggestionsLabel, { color: colors.textMuted }]}>Try asking about</Text>
+          <View style={styles.suggestionsWrapper}>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.suggestionsRow}
             >
-              {suggestions.map((s, i) => (
+              {suggestions.slice(0, 4).map((s, i) => (
                 <Pressable
                   key={i}
                   onPress={() => sendText(s.prompt)}
@@ -849,12 +940,13 @@ export function GrandmaTalk() {
                     styles.chip,
                     {
                       backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-                      borderColor: colors.border,
+                      borderColor: colors.borderLight,
                     },
                   ]}
                 >
-                  <Text style={styles.chipEmoji}>{s.emoji}</Text>
-                  <Text style={[styles.chipLabel, { color: colors.text }]}>{s.label}</Text>
+                  <Text style={[styles.chipLabel, { color: colors.text, fontFamily: font.body }]}>
+                    {s.label}
+                  </Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -863,13 +955,7 @@ export function GrandmaTalk() {
 
         {/* AI follow-up suggestions (after Grandma replies) */}
         {showAiSuggestions && (
-          <View style={[styles.suggestionsWrapper, { borderTopColor: colors.border }]}>
-            <View style={styles.aiSuggestionsHeader}>
-              <Sparkles size={11} color={modeColor} strokeWidth={2.5} />
-              <Text style={[styles.suggestionsLabel, { color: colors.textMuted, marginBottom: 0, paddingHorizontal: 0 }]}>
-                Keep exploring
-              </Text>
-            </View>
+          <View style={styles.suggestionsWrapper}>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -880,14 +966,14 @@ export function GrandmaTalk() {
                   key={i}
                   onPress={() => sendText(s)}
                   style={({ pressed }) => [
-                    styles.aiChip,
+                    styles.chip,
                     {
-                      backgroundColor: pressed ? modeColor + '20' : modeColor + '10',
-                      borderColor: modeColor + '30',
+                      backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+                      borderColor: colors.borderLight,
                     },
                   ]}
                 >
-                  <Text style={[styles.aiChipLabel, { color: colors.text }]} numberOfLines={2}>
+                  <Text style={[styles.chipLabel, { color: colors.text, fontFamily: font.body }]} numberOfLines={1}>
                     {s}
                   </Text>
                 </Pressable>
@@ -896,46 +982,52 @@ export function GrandmaTalk() {
           </View>
         )}
 
-        {/* Input bar */}
-        <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 4), backgroundColor: colors.bg, borderTopColor: colors.border }]}>
-          <TextInput
-            value={input}
-            onChangeText={setInput}
-            placeholder="Ask Grandma anything…"
-            placeholderTextColor={colors.textMuted}
-            multiline
-            maxLength={2000}
+        {/* Input bar — voice-first "Tap to talk" pill + mic */}
+        <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 4), backgroundColor: colors.bg }]}>
+          <View
             style={[
               styles.input,
               {
-                color: colors.text,
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
-                borderRadius: radius.xl,
-              },
-            ]}
-            onSubmitEditing={handleSend}
-            returnKeyType="send"
-            blurOnSubmit={false}
-          />
-          <Pressable
-            onPress={handleSend}
-            disabled={!input.trim() || isStreaming}
-            style={({ pressed }) => [
-              styles.sendBtn,
-              {
-                backgroundColor: input.trim() && !isStreaming ? colors.primary : colors.surfaceRaised,
+                borderColor: colors.borderLight,
                 borderRadius: radius.full,
-                shadowColor: input.trim() && !isStreaming ? colors.primary : 'transparent',
               },
-              pressed && { opacity: 0.8 },
             ]}
           >
-            {isStreaming ? (
-              <Sparkles size={18} color={modeColor} strokeWidth={2} />
-            ) : (
-              <Send size={18} color={input.trim() ? '#FFFFFF' : colors.textMuted} strokeWidth={2} />
+            <TextInput
+              ref={inputRef}
+              value={input}
+              onChangeText={setInput}
+              placeholder="Tap to talk to grandma…"
+              placeholderTextColor={colors.textMuted}
+              multiline
+              maxLength={2000}
+              style={[
+                styles.inputField,
+                { color: colors.text, fontFamily: font.body },
+              ]}
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
+              blurOnSubmit={false}
+            />
+            {input.trim().length > 0 && (
+              <Pressable onPress={handleSend} hitSlop={6} style={styles.inlineSendBtn}>
+                <Send size={16} color={colors.primary} strokeWidth={2} />
+              </Pressable>
             )}
+          </View>
+          <Pressable
+            onPress={() => inputRef.current?.focus()}
+            style={({ pressed }) => [
+              styles.micBtn,
+              {
+                backgroundColor: isDark ? colors.text : '#141313',
+                borderRadius: radius.full,
+              },
+              pressed && { opacity: 0.82 },
+            ]}
+          >
+            <Mic size={20} color={isDark ? colors.bg : '#F5EDDC'} strokeWidth={2} fill={isDark ? colors.bg : '#F5EDDC'} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -1004,36 +1096,27 @@ export function GrandmaTalk() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
 
+  // Header — circular buttons flanking serif title
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
+    paddingBottom: 8,
   },
-  headerBtn: { width: 40, alignItems: 'center', justifyContent: 'center' },
-  headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerAvatarRing: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.5,
+  headerCircleBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
   },
-  headerAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: { fontSize: 16, fontWeight: '700', letterSpacing: -0.3 },
-  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerSubtitle: { fontSize: 11, fontWeight: '500', marginTop: 1 },
+  headerTitleBlock: { alignItems: 'center', gap: 4 },
+  headerTitle: { fontSize: 22, letterSpacing: -0.4 },
+  headerTitleItalic: { fontSize: 22, letterSpacing: -0.2 },
 
-  // Behavior badge (in header, next to title)
+  // Behavior badge (in header, under title)
   behaviorBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1072,7 +1155,6 @@ const styles = StyleSheet.create({
   // Child selector row
   childSelectorRow: {
     paddingVertical: 8,
-    borderBottomWidth: 1,
   },
 
   contextCard: {
@@ -1081,110 +1163,111 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderBottomWidth: 1,
   },
   contextText: { flex: 1, fontSize: 13, fontWeight: '600' },
 
   chatArea: { flex: 1 },
-  messageList: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, gap: 14 },
+  messageList: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, gap: 12 },
 
-  msgRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
-  msgRowUser: { flexDirection: 'row-reverse' },
-  avatarWrap: {
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+  // Hero orb area with stickers
+  heroWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
+    paddingVertical: 24,
+    position: 'relative',
   },
-  bubble: { maxWidth: '78%', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20 },
-  userBubble: {},
-  assistantBubble: { borderWidth: 1 },
-  msgText: { fontSize: 15, fontWeight: '400', lineHeight: 23 },
+  stickerTopLeft: {
+    position: 'absolute',
+    left: 10,
+    top: 18,
+    transform: [{ rotate: '-8deg' }],
+    zIndex: 1,
+  },
+  stickerTopRight: {
+    position: 'absolute',
+    right: 18,
+    top: 32,
+    transform: [{ rotate: '12deg' }],
+    zIndex: 1,
+  },
+
+  // Message cards — labeled rectangles (not bubbles)
+  cardWrap: { position: 'relative' },
+  cardWrapLatest: { paddingRight: 20 },
+  card: {
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  cardLabel: {
+    fontSize: 10,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  cardBody: { fontSize: 15, fontWeight: '400', lineHeight: 23 },
+  cardSticker: {
+    position: 'absolute',
+    right: -18,
+    bottom: -18,
+    zIndex: 2,
+    transform: [{ rotate: '18deg' }],
+  },
 
   // Thinking animation
-  typingContainer: { gap: 6 },
-  typingRow: { flexDirection: 'row', gap: 5, alignItems: 'center' },
-  dot: { width: 7, height: 7, borderRadius: 4 },
-  typingText: { fontSize: 13, fontWeight: '500', fontStyle: 'italic' },
+  typingRow: { flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap' },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  typingText: { fontSize: 14, marginLeft: 4 },
 
-  // Suggestions
+  // Suggestions — pill chips
   suggestionsWrapper: {
-    paddingTop: 10,
-    paddingBottom: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  suggestionsLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingHorizontal: 16,
-    marginBottom: 8,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   suggestionsRow: { paddingHorizontal: 16, gap: 8 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
     borderRadius: 999,
     borderWidth: 1,
   },
-  chipEmoji: { fontSize: 14 },
-  chipLabel: { fontSize: 13, fontWeight: '600' },
+  chipLabel: { fontSize: 14, fontWeight: '500' },
 
-  // AI follow-up suggestions
-  aiSuggestionsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-  aiChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 16,
-    borderWidth: 1,
-    maxWidth: 220,
-  },
-  aiChipLabel: { fontSize: 13, fontWeight: '500', lineHeight: 18 },
-
+  // Input bar — "Tap to talk" pill + mic
   inputBar: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
+    alignItems: 'center',
+    gap: 10,
     paddingHorizontal: 16,
     paddingTop: 10,
-    borderTopWidth: 1,
   },
   input: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 15,
-    fontWeight: '500',
-    maxHeight: 120,
-    minHeight: 44,
+    paddingHorizontal: 20,
+    paddingVertical: 4,
+    minHeight: 50,
   },
-  sendBtn: {
-    width: 44,
-    height: 44,
+  inputField: {
+    flex: 1,
+    fontSize: 15,
+    paddingVertical: 10,
+    maxHeight: 120,
+  },
+  inlineSendBtn: {
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
+  },
+  micBtn: {
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 })

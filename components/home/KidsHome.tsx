@@ -1454,44 +1454,7 @@ export function KidsHome() {
         onPressCalories={() => setActivityModalVisible(true)}
       />
 
-      {/* ─── Ring Legend (detailed stats strip) ──────────────── */}
-      {(() => {
-        const { days } = getDateRange(dateRange, customRange)
-        const rangeLabel = days === 1 ? 'today' : `${days}d`
-        const sleepGoalScaled = Math.round(goals.sleep * days * 10) / 10
-        const calGoalScaled = goals.calories * days
-        const feedGoalScaled = goals.feedings * days
-        const actGoalScaled = goals.activity * days
-        return (
-          <View style={s.legendRow}>
-            {([
-              { key: 'sleep' as const, label: 'Sleep', value: rangeData.sleepTotal > 0 ? `${rangeData.sleepTotal.toFixed(1)}h` : '—', target: days === 1 ? `Goal: ${goals.sleep}h` : `${goals.sleep}h/day · ${sleepGoalScaled}h ${rangeLabel}` },
-              { key: 'nutrition' as const, label: nutritionLabel, value: feedingStage === 'solids' ? (rangeData.caloriesTotal > 0 ? rangeData.caloriesTotal.toLocaleString() : '—') : (rangeData.feedingCount > 0 ? `${rangeData.feedingCount}` : '—'), target: feedingStage === 'solids' ? (days === 1 ? `Goal: ${goals.calories.toLocaleString()}` : `${goals.calories.toLocaleString()}/day · ${calGoalScaled.toLocaleString()} ${rangeLabel}`) : (days === 1 ? `Goal: ${goals.feedings}` : `${goals.feedings}/day · ${feedGoalScaled} ${rangeLabel}`) },
-              { key: 'activity' as const, label: 'Activity', value: rangeData.activityCount > 0 ? `${rangeData.activityCount}` : '—', target: days === 1 ? `Goal: ${goals.activity}` : `${goals.activity}/day · ${actGoalScaled} ${rangeLabel}` },
-            ]).map((item) => (
-              <Pressable
-                key={item.key}
-                onPress={() => setFocusedRing(item.key)}
-                style={[
-                  s.legendItem,
-                  {
-                    backgroundColor: focusedRing === item.key ? PILLAR_COLORS[item.key] + '18' : colors.surface,
-                    borderColor: focusedRing === item.key ? PILLAR_COLORS[item.key] + '40' : colors.border,
-                    borderRadius: 16,
-                  },
-                ]}
-              >
-                <View style={s.legendDotRow}>
-                  <View style={[s.legendDot, { backgroundColor: PILLAR_COLORS[item.key] }]} />
-                  <Text style={[s.legendLabel, { color: colors.textMuted }]}>{item.label}</Text>
-                </View>
-                <Text style={[s.legendValue, { color: focusedRing === item.key ? PILLAR_COLORS[item.key] : colors.text }]}>{item.value}</Text>
-                <Text style={[s.legendTarget, { color: colors.textMuted }]} numberOfLines={2}>{item.target}</Text>
-              </Pressable>
-            ))}
-          </View>
-        )
-      })()}
+      {/* (Ring legend / stats strip removed — hero tiles + detail modals cover this) */}
 
       {/* ─── Set Goals Button ─────────────────────────────────── */}
       <Pressable
@@ -2968,7 +2931,12 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
+            nestedScrollEnabled
+          >
             {/* Sleep summary banner — sticker-blue soft */}
             <View style={{
               flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -3721,7 +3689,7 @@ function DraggableReminderList({
   }
 
   return (
-    <View style={[s.remindersCard, { backgroundColor: '#1A1530', borderColor: colors.borderLight, borderRadius: radius.lg }]}>
+    <View style={[s.remindersCard, { backgroundColor: colors.surface, borderColor: colors.borderLight, borderRadius: radius.lg }]}>
       {localItems.map((r, i) => {
         const isDragging = draggingId === r.id
         const pr = getOrCreatePanResponder(r.id)
@@ -3862,11 +3830,11 @@ function RemindersModal({
                     paddingHorizontal: 16,
                     borderRadius: radius.full,
                     borderWidth: 1,
-                    backgroundColor: isActive ? colors.primary : colors.primary + '18',
-                    borderColor: isActive ? colors.primary : colors.primary + '50',
+                    backgroundColor: isActive ? colors.primary : colors.primaryTint,
+                    borderColor: colors.primary + '50',
                   }}
                 >
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: isActive ? '#FFF' : colors.primary }}>All</Text>
+                  <Text style={{ fontSize: 14, fontFamily: 'DMSans_600SemiBold', color: isActive ? '#FFF' : colors.primary }}>All</Text>
                 </Pressable>
               )
             })()}
@@ -3885,11 +3853,11 @@ function RemindersModal({
                     paddingHorizontal: 16,
                     borderRadius: radius.full,
                     borderWidth: 1,
-                    backgroundColor: isActive ? kidColor : kidColor + '18',
+                    backgroundColor: isActive ? kidColor : kidColor + '2E',
                     borderColor: isActive ? kidColor : kidColor + '50',
                   }}
                 >
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: isActive ? '#FFF' : kidColor }}>{c.name}</Text>
+                  <Text style={{ fontSize: 14, fontFamily: 'DMSans_600SemiBold', color: isActive ? '#141313' : kidColor }}>{c.name}</Text>
                 </Pressable>
               )
             })}
@@ -3951,8 +3919,8 @@ function RemindersModal({
           ) : (
             archivedByDate.map(({ label, items }) => (
               <View key={label} style={{ marginHorizontal: 16, marginTop: 16 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>{label}</Text>
-                <View style={[s.remindersCard, { backgroundColor: '#1A1530', borderColor: colors.borderLight, borderRadius: radius.lg }]}>
+                <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8 }}>{label}</Text>
+                <View style={[s.remindersCard, { backgroundColor: colors.surface, borderColor: colors.borderLight, borderRadius: radius.lg }]}>
                   {items.map((r, i) => (
                     <ReminderRow
                       key={r.id}
@@ -4799,7 +4767,7 @@ const s = StyleSheet.create({
 
   // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(10,8,6,0.55)', justifyContent: 'flex-end' },
-  modalContent: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 40, maxHeight: '90%', borderTopLeftRadius: 28, borderTopRightRadius: 28 },
+  modalContent: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 40, height: '92%', borderTopLeftRadius: 28, borderTopRightRadius: 28 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   modalTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
   modalClose: { width: 32, height: 32, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
