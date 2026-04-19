@@ -1427,6 +1427,16 @@ export function KidsHome() {
         </View>
       </View>
 
+      {/* ─── Multi-Ring Wheel Hero (big concentric arcs) ─────── */}
+      <MultiRingHero
+        sleepProgress={sleepProgress}
+        nutritionProgress={nutritionProgress}
+        activityProgress={activityProgress}
+        focused={focusedRing}
+        onTapRing={setFocusedRing}
+        centerData={focused}
+      />
+
       {/* ─── Hero tiles (v1 redesign): LAST SLEEP / MOOD / CALORIES / LEAP ─── */}
       <HeroTiles
         sleepTotal={rangeData.sleepTotal}
@@ -1496,36 +1506,17 @@ export function KidsHome() {
         <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
       </Pressable>
 
-      {/* ─── Metric Cards ────────────────────────────────────── */}
+      {/* ─── Health + Diaper (Mood + Calories live in hero tiles now) ─── */}
       <View style={s.sectionHeader}>
-        <Text style={[s.sectionTitle, { color: colors.text }]}>Daily Metrics</Text>
+        <Text style={[s.sectionTitle, { color: colors.text }]}>Health & Care</Text>
         <Pressable onPress={() => router.push('/profile/health-history' as any)}>
           <Text style={[s.sectionLink, { color: colors.primary }]}>Insights</Text>
         </Pressable>
       </View>
 
-      <View style={s.metricsRow}>
-        <Pressable style={s.metricsRowItem} onPress={() => setMoodModalVisible(true)}>
-          <MoodCard moodCounts={rangeData.moodCounts} dominantMood={rangeData.dominantMood} />
-        </Pressable>
-        <Pressable style={s.metricsRowItem} onPress={() => setActivityModalVisible(true)}>
-          <NutritionCard
-            stage={feedingStage}
-            caloriesTotal={rangeData.caloriesTotal}
-            caloriesTarget={rangeData.caloriesTarget}
-            feedingCount={rangeData.feedingCount}
-            feedingTarget={rangeData.feedingCountTarget}
-            feedingMl={rangeData.feedingMl}
-            feedingBreast={rangeData.feedingBreast}
-            feedingBottle={rangeData.feedingBottle}
-            avgMl={rangeData.avgFeedingMl}
-            meals={rangeData.mealsToday}
-          />
-        </Pressable>
-        <Pressable style={s.metricsRowItem} onPress={() => setHealthModalVisible(true)}>
-          <HealthCard reminders={reminders} healthHistory={healthHistory} child={child} />
-        </Pressable>
-      </View>
+      <Pressable onPress={() => setHealthModalVisible(true)}>
+        <HealthCard reminders={reminders} healthHistory={healthHistory} child={child} />
+      </Pressable>
       {rangeData.diaperCount > 0 && (
         <Pressable onPress={() => setDiaperModalVisible(true)} style={{ marginTop: 10 }}>
           <DiaperCard count={rangeData.diaperCount} pee={rangeData.diaperPee} poop={rangeData.diaperPoop} mixed={rangeData.diaperMixed} diaperByDay={rangeData.diaperByDay} startDate={getDateRange(dateRange, customRange).startDate} endDate={getDateRange(dateRange, customRange).endDate} />
@@ -1682,32 +1673,31 @@ export function KidsHome() {
         allChildren={children}
       />
 
-      {/* ─── Ask Grandma ─────────────────────────────────────── */}
+      {/* ─── Ask Grandma (lavender soft with sparkle) ─────────── */}
       <Pressable
         onPress={() => router.push('/grandma-talk' as any)}
         style={({ pressed }) => [
           s.grandmaCard,
-          { borderRadius: radius.lg, opacity: pressed ? 0.92 : 1 },
+          { opacity: pressed ? 0.92 : 1 },
         ]}
       >
-        {/* decorative glow blob */}
         <View style={s.grandmaBlob} />
-        <View style={[s.grandmaIconWrap, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
-          <Sparkles size={22} color="#FFF" strokeWidth={2} />
+        <View style={s.grandmaIconWrap}>
+          <Sparkles size={22} color="#7048B8" strokeWidth={2} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={s.grandmaTitle}>Grandma knows best</Text>
           <Text style={s.grandmaDesc}>Sleep, feeding, milestones & more</Text>
         </View>
-        <View style={[s.grandmaArrow, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
-          <ChevronRight size={16} color="#FFF" strokeWidth={2.5} />
+        <View style={s.grandmaArrow}>
+          <ChevronRight size={16} color="#141313" strokeWidth={2.5} />
         </View>
       </Pressable>
 
       {/* ─── Rewards Card ────────────────────────────────────── */}
       <Pressable
         onPress={() => router.push('/daily-rewards' as any)}
-        style={({ pressed }) => [s.rewardsCard, { borderRadius: radius.lg, opacity: pressed ? 0.92 : 1 }]}
+        style={({ pressed }) => [s.rewardsCard, { opacity: pressed ? 0.92 : 1 }]}
       >
         <View style={s.rewardsBlob} />
         <View style={[s.rewardsIconWrap, { backgroundColor: 'rgba(251,191,36,0.18)' }]}>
@@ -2370,7 +2360,7 @@ function HealthCard({ reminders, healthHistory, child }: {
 
 // ─── Diaper Card (full-width, tappable) ────────────────────────────────────
 
-const DIAPER_COLORS = { pee: '#93C5FD', poop: '#D97706', mixed: '#FBBF24' } as const
+const DIAPER_COLORS = { pee: '#9DC3E8', poop: '#F5B896', mixed: '#F5D652' } as const
 
 function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }: {
   count: number; pee: number; poop: number; mixed: number
@@ -2398,12 +2388,14 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
   }), 1)
 
   return (
-    <View style={[s.diaperFullCard, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.borderLight }]}>
+    <View style={[s.diaperFullCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       {/* Header */}
       <View style={s.diaperCardHeader}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Baby size={15} color={DIAPER_COLORS.pee} strokeWidth={2} />
-          <Text style={[s.diaperCardTitle, { color: colors.textSecondary }]}>Diapers</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: DIAPER_COLORS.pee + '22', alignItems: 'center', justifyContent: 'center' }}>
+            <Baby size={12} color={DIAPER_COLORS.pee} strokeWidth={2} />
+          </View>
+          <Text style={[s.diaperCardTitle, { color: colors.textMuted }]}>DIAPERS</Text>
         </View>
         <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
       </View>
@@ -3816,33 +3808,35 @@ function RemindersModal({
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={[s.reminderModalOverlay]}>
-      <View style={[s.reminderModal, { backgroundColor: '#0E0B1A' }]}>
+      <View style={[s.reminderModal, { backgroundColor: colors.bg }]}>
         {/* Drag handle */}
         <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 4 }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)' }} />
+          <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
         </View>
         {/* Header */}
         <View style={[s.reminderModalHeader, { borderBottomColor: colors.border }]}>
-          <Text style={[s.reminderModalTitle]}>Reminders</Text>
+          <Text style={[s.reminderModalTitle, { color: colors.text }]}>Reminders</Text>
           <Pressable onPress={onClose} hitSlop={12}>
-            <X size={20} color={colors.textSecondary} strokeWidth={2} />
+            <View style={{ width: 34, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+              <X size={16} color={colors.text} strokeWidth={2} />
+            </View>
           </Pressable>
         </View>
 
         {/* Completion metric strip */}
-        <View style={[s.reminderMetricStrip, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+        <View style={[s.reminderMetricStrip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={s.reminderMetricItem}>
             <Text style={[s.reminderMetricVal, { color: colors.text }]}>{active.length}</Text>
             <Text style={[s.reminderMetricLabel, { color: colors.textMuted }]}>Active</Text>
           </View>
           <View style={[s.reminderMetricDivider, { backgroundColor: colors.border }]} />
           <View style={s.reminderMetricItem}>
-            <Text style={[s.reminderMetricVal, { color: brand.success }]}>{thisWeek}</Text>
+            <Text style={[s.reminderMetricVal, { color: '#BDD48C' }]}>{thisWeek}</Text>
             <Text style={[s.reminderMetricLabel, { color: colors.textMuted }]}>Done this week</Text>
           </View>
           <View style={[s.reminderMetricDivider, { backgroundColor: colors.border }]} />
           <View style={s.reminderMetricItem}>
-            <Text style={[s.reminderMetricVal, { color: brand.kids }]}>{completionRate}%</Text>
+            <Text style={[s.reminderMetricVal, { color: '#9DC3E8' }]}>{completionRate}%</Text>
             <Text style={[s.reminderMetricLabel, { color: colors.textMuted }]}>Completion</Text>
           </View>
         </View>
@@ -3985,7 +3979,7 @@ function RemindersModal({
 // ─── Growth Leap Card ───────────────────────────────────────────────────────
 
 function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<typeof getGrowthLeap>>; childName: string }) {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const [showDetail, setShowDetail] = useState(false)
   const isActive = leap.status === 'active'
   const isDone = leap.status === 'done'
@@ -3993,12 +3987,24 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
   const phaseIndex = isActive ? (leap.phaseIndex ?? 0) : -1
   const currentPhaseName = phaseIndex >= 0 ? (leap.phases[phaseIndex]?.label ?? '') : ''
 
+  // Sticker-green soft for "done", mode-color soft for active, paper otherwise
+  const bg = isDone
+    ? (isDark ? 'rgba(189,212,140,0.16)' : '#DDE7BB')
+    : isActive
+      ? leapColor + '18'
+      : (isDark ? colors.surface : '#FFFEF8')
+  const border = isDone
+    ? (isDark ? 'rgba(189,212,140,0.35)' : 'rgba(189,212,140,0.6)')
+    : isActive
+      ? leapColor + '40'
+      : (isDark ? colors.border : 'rgba(20,19,19,0.08)')
+
   return (
     <View>
       {/* ── Compact card ── */}
       <Pressable
         onPress={() => setShowDetail(true)}
-        style={[s.leapCard, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg, borderColor: isActive ? leapColor + '35' : isDone ? brand.success + '35' : colors.borderLight }]}
+        style={[s.leapCard, { backgroundColor: bg, borderColor: border }]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <View style={[s.leapNumCircle, { backgroundColor: isDone ? brand.success + '20' : leapColor + '20', borderColor: isDone ? brand.success + '50' : leapColor + '50' }]}>
@@ -4620,18 +4626,18 @@ const s = StyleSheet.create({
   diaperLegend: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 6 },
   diaperLegendText: { fontSize: 10, fontWeight: '600' },
   // Full-width diaper card
-  diaperFullCard: { padding: 16, borderWidth: 1, marginHorizontal: 0 },
+  diaperFullCard: { padding: 16, borderWidth: 1, marginHorizontal: 0, borderRadius: 20 },
   diaperCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
-  diaperCardTitle: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  diaperBigCount: { fontSize: 40, fontWeight: '900', letterSpacing: -1, lineHeight: 44, fontFamily: 'Fraunces_600SemiBold' },
+  diaperCardTitle: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
+  diaperBigCount: { fontSize: 40, letterSpacing: -1, lineHeight: 44, fontFamily: 'Fraunces_600SemiBold' },
   diaperMainRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   diaperChips: { flex: 1, flexDirection: 'row', gap: 6 },
-  diaperChip: { flex: 1, flexDirection: 'column', alignItems: 'center', paddingVertical: 6, borderRadius: 12, borderWidth: 1, gap: 1 },
-  diaperChipLabel: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
-  diaperChipCount: { fontSize: 15, fontWeight: '800' },
+  diaperChip: { flex: 1, flexDirection: 'column', alignItems: 'center', paddingVertical: 8, borderRadius: 14, borderWidth: 1, gap: 2 },
+  diaperChipLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1 },
+  diaperChipCount: { fontSize: 16, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.2 },
   diaperSparkRow: { flexDirection: 'row', gap: 2, marginTop: 10, alignItems: 'flex-end' },
   diaperSparkCol: { flex: 1, alignItems: 'center', gap: 3 },
-  diaperSparkLabel: { fontSize: 8, fontWeight: '700', textTransform: 'uppercase' },
+  diaperSparkLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 0.6 },
 
   // Mood bars
   moodBars: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 50, marginBottom: 4 },
@@ -4655,14 +4661,14 @@ const s = StyleSheet.create({
   quickLabel: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
 
   // Growth leap
-  leapCard: { padding: 14, gap: 10, borderWidth: 1 },
+  leapCard: { padding: 16, gap: 12, borderWidth: 1, borderRadius: 22 },
   leapHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  leapNumCircle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, flexShrink: 0 },
-  leapNumText: { fontSize: 16, fontWeight: '900' },
-  leapTitle: { fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
-  leapDesc: { fontSize: 11, fontWeight: '500', marginTop: 1 },
-  leapBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1 },
-  leapBadgeText: { fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
+  leapNumCircle: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 1, flexShrink: 0 },
+  leapNumText: { fontSize: 17, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
+  leapTitle: { fontSize: 17, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 },
+  leapDesc: { fontSize: 12, fontFamily: 'DMSans_400Regular', marginTop: 2, lineHeight: 16 },
+  leapBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: 1 },
+  leapBadgeText: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 0.6 },
   leapAllDots: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
   leapAllDot: { width: 12, height: 12, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   leapAllDotsLabel: { fontSize: 9, fontWeight: '600', textAlign: 'center', color: 'rgba(255,255,255,0.35)' },
@@ -4718,59 +4724,78 @@ const s = StyleSheet.create({
   remindersEmpty: { alignItems: 'center', padding: 24, gap: 6, borderWidth: 1 },
   remindersEmptyText: { fontSize: 14, fontWeight: '600' },
   remindersEmptyHint: { fontSize: 11, fontWeight: '500', textAlign: 'center' },
-  // Reminders modal
-  reminderModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  reminderModal: { height: '90%', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden' },
-  reminderModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 14, borderBottomWidth: 1 },
-  reminderModalTitle: { fontSize: 18, fontWeight: '800', color: '#FFF' },
-  reminderMetricStrip: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginTop: 14, borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
-  reminderMetricItem: { flex: 1, alignItems: 'center', paddingVertical: 12, gap: 2 },
-  reminderMetricVal: { fontSize: 18, fontWeight: '800' },
-  reminderMetricLabel: { fontSize: 10, fontWeight: '600' },
-  reminderMetricDivider: { width: 1, height: 36 },
-  reminderTabs: { flexDirection: 'row', borderBottomWidth: 1, marginTop: 14 },
+  // Reminders modal — cream bottom sheet
+  reminderModalOverlay: { flex: 1, backgroundColor: 'rgba(10,8,6,0.55)', justifyContent: 'flex-end' },
+  reminderModal: { height: '90%', borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden' },
+  reminderModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 10, paddingBottom: 14, borderBottomWidth: 1 },
+  reminderModalTitle: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
+  reminderMetricStrip: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 24, marginTop: 16, borderRadius: 20, borderWidth: 1, overflow: 'hidden' },
+  reminderMetricItem: { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 2 },
+  reminderMetricVal: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
+  reminderMetricLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
+  reminderMetricDivider: { width: 1, height: 40 },
+  reminderTabs: { flexDirection: 'row', borderBottomWidth: 1, marginTop: 16 },
   reminderTab: { flex: 1, alignItems: 'center', paddingBottom: 12, paddingTop: 4 },
-  reminderTabText: { fontSize: 13 },
+  reminderTabText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
   reminderTabLine: { height: 2, width: '60%', borderRadius: 2, marginTop: 8 },
   reminderModalEmpty: { alignItems: 'center', paddingVertical: 48, gap: 8 },
 
-  // Grandma
+  // Grandma CTA — lavender soft bg with ink text and sparkle sticker
   grandmaCard: {
     flexDirection: 'row', alignItems: 'center', padding: 18, gap: 14,
     overflow: 'hidden',
-    backgroundColor: '#7048B8',
-    shadowColor: '#7048B8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8,
+    backgroundColor: '#E0D5F3',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(183,166,232,0.5)',
   },
   grandmaBlob: {
-    position: 'absolute', right: -20, top: -20,
-    width: 100, height: 100, borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    position: 'absolute', right: -24, top: -24,
+    width: 120, height: 120, borderRadius: 60,
+    backgroundColor: 'rgba(183,166,232,0.28)',
   },
-  grandmaIconWrap: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  grandmaArrow: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  grandmaTitle: { fontSize: 16, fontWeight: '800', color: '#FFF', letterSpacing: -0.2 },
-  grandmaDesc: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.75)', marginTop: 2 },
+  grandmaIconWrap: {
+    width: 46, height: 46, borderRadius: 23,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#FFFEF8',
+    borderWidth: 1,
+    borderColor: 'rgba(20,19,19,0.08)',
+  },
+  grandmaArrow: {
+    width: 30, height: 30, borderRadius: 999,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#FFFEF8',
+    borderWidth: 1,
+    borderColor: 'rgba(20,19,19,0.08)',
+  },
+  grandmaTitle: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: '#141313', letterSpacing: -0.3 },
+  grandmaDesc: { fontSize: 12, fontFamily: 'DMSans_400Regular', color: '#3A3533', marginTop: 2 },
 
-  // Rewards
+  // Rewards — dark ink card with yellow stars
   rewardsCard: {
     flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12,
     overflow: 'hidden',
-    backgroundColor: '#1A1430',
-    borderWidth: 1, borderColor: 'rgba(251,191,36,0.2)',
-    shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 4,
+    backgroundColor: '#141313',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(245,214,82,0.22)',
   },
   rewardsBlob: {
     position: 'absolute', right: -20, top: -20,
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: 'rgba(251,191,36,0.06)',
+    width: 90, height: 90, borderRadius: 45,
+    backgroundColor: 'rgba(245,214,82,0.08)',
   },
-  rewardsIconWrap: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  rewardsArrow: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  rewardsTitle: { fontSize: 14, fontWeight: '800', color: '#FFF', letterSpacing: -0.2 },
-  rewardsDesc: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.55)', marginTop: 1 },
+  rewardsIconWrap: {
+    width: 42, height: 42, borderRadius: 21,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(245,214,82,0.18)',
+  },
+  rewardsArrow: { width: 28, height: 28, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+  rewardsTitle: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: '#F5EDDC', letterSpacing: -0.2 },
+  rewardsDesc: { fontSize: 11, fontFamily: 'DMSans_400Regular', color: 'rgba(245,237,220,0.6)', marginTop: 2 },
   rewardsStats: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   rewardsStat: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  rewardsStatNum: { fontSize: 13, fontWeight: '800' },
+  rewardsStatNum: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
 
   // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(10,8,6,0.55)', justifyContent: 'flex-end' },
