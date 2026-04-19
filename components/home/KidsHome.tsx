@@ -1980,18 +1980,26 @@ function MiniRing({ label, progress, color, isToday, hasData }: {
 // ─── Mood Card ──────────────────────────────────────────────────────────────
 
 function MoodCard({ moodCounts, dominantMood }: { moodCounts: Record<string, number>; dominantMood: string }) {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const moods = ['happy', 'calm', 'energetic', 'fussy', 'cranky']
   const maxCount = Math.max(...Object.values(moodCounts), 1)
   const hasMoods = Object.values(moodCounts).some((v) => v > 0)
   const dominantLabel = MOOD_LABELS[dominantMood] || 'No data'
 
+  // Pastel-soft yellow tile (sticker palette)
+  const tileBg = isDark ? 'rgba(245,214,82,0.16)' : '#FBEA9E'
+  const tileBorder = isDark ? 'rgba(245,214,82,0.28)' : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+
   return (
-    <View style={[s.metricCard, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.borderLight }]}>
+    <View style={[s.metricCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
       <View style={s.metricHeader}>
-        <Smile size={14} color={brand.accent} strokeWidth={2} />
-        <Text style={[s.metricLabel, { color: colors.textSecondary }]}>Mood</Text>
-        <ChevronRight size={12} color={colors.textMuted} strokeWidth={2} style={{ marginLeft: 'auto' }} />
+        <View style={[s.metricHeaderIcon, { borderColor: '#F5D652', backgroundColor: 'rgba(245,214,82,0.35)' }]}>
+          <Smile size={12} color="#141313" strokeWidth={2} />
+        </View>
+        <Text style={[s.metricLabel, { color: ink3 }]}>MOOD</Text>
+        <ChevronRight size={12} color={ink3} strokeWidth={2} style={{ marginLeft: 'auto' }} />
       </View>
       {hasMoods ? (
         <>
@@ -2001,21 +2009,21 @@ function MoodCard({ moodCounts, dominantMood }: { moodCounts: Record<string, num
               const height = Math.max((count / maxCount) * 50, 3)
               return (
                 <View key={m} style={s.moodBarCol}>
-                  <View style={[s.moodBar, { height, backgroundColor: MOOD_COLORS[m] || colors.textMuted, borderRadius: 4 }]} />
+                  <View style={[s.moodBar, { height, backgroundColor: MOOD_COLORS[m] || ink3, borderRadius: 4 }]} />
                 </View>
               )
             })}
           </View>
-          <Text style={[s.metricValue, { color: colors.text }]}>Mostly {dominantLabel}</Text>
-          <Text style={[s.metricSmall, { color: colors.textMuted }]}>Tap for details</Text>
+          <Text style={[s.metricValue, { color: ink }]}>Mostly {dominantLabel}</Text>
+          <Text style={[s.metricSmall, { color: ink3 }]}>Tap for details</Text>
         </>
       ) : (
         <>
           <View style={s.metricEmpty}>
-            <Smile size={20} color={colors.textMuted} strokeWidth={1.5} />
+            <Smile size={20} color={ink3} strokeWidth={1.5} />
           </View>
-          <Text style={[s.metricValue, { color: colors.textSecondary }]}>No moods yet</Text>
-          <Text style={[s.metricSmall, { color: colors.textMuted }]}>Log a mood</Text>
+          <Text style={[s.metricValue, { color: ink }]}>No moods yet</Text>
+          <Text style={[s.metricSmall, { color: ink3 }]}>Log a mood</Text>
         </>
       )}
     </View>
@@ -2030,12 +2038,11 @@ function NutritionCard({ stage, caloriesTotal, caloriesTarget, feedingCount, fee
   feedingCount: number; feedingTarget: number; feedingMl: number
   feedingBreast: number; feedingBottle: number; avgMl: number; meals: number
 }) {
-  const { colors, radius } = useTheme()
-  const ringSize = 56
-  const ringR = 22
+  const { colors, isDark } = useTheme()
+  const ringSize = 60
+  const ringR = 24
   const ringCircumference = 2 * Math.PI * ringR
 
-  // For liquid/mixed: track feedings count; for solids: track calories
   const isLiquid = stage === 'liquid' || stage === 'mixed'
   const current = isLiquid ? feedingCount : caloriesTotal
   const target = isLiquid ? feedingTarget : caloriesTarget
@@ -2043,42 +2050,49 @@ function NutritionCard({ stage, caloriesTotal, caloriesTarget, feedingCount, fee
   const ringOffset = ringCircumference * (1 - pct)
 
   const Icon = isLiquid ? Droplets : Utensils
-  const label = stage === 'liquid' ? 'Feedings' : stage === 'mixed' ? 'Nutrition' : 'Calories'
+  const label = stage === 'liquid' ? 'FEEDINGS' : stage === 'mixed' ? 'NUTRITION' : 'CALORIES'
+
+  // Pastel-soft pink tile
+  const tileBg = isDark ? 'rgba(242,178,199,0.14)' : '#F9D8E2'
+  const tileBorder = isDark ? 'rgba(242,178,199,0.28)' : 'rgba(20,19,19,0.08)'
+  const coral = '#EE7B6D'
+  const ink = isDark ? colors.text : '#141313'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
 
   return (
-    <View style={[s.metricCard, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.borderLight }]}>
+    <View style={[s.metricCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
       <View style={s.metricHeader}>
-        <Icon size={14} color={PILLAR_COLORS.nutrition} strokeWidth={2} />
-        <Text style={[s.metricLabel, { color: colors.textSecondary }]}>{label}</Text>
-        <ChevronRight size={12} color={colors.textMuted} strokeWidth={2} style={{ marginLeft: 'auto' }} />
+        <Icon size={14} color={coral} strokeWidth={2} />
+        <Text style={[s.metricLabel, { color: ink3 }]}>{label}</Text>
+        <ChevronRight size={12} color={ink3} strokeWidth={2} style={{ marginLeft: 'auto' }} />
       </View>
       <View style={s.calorieRingWrap}>
         <Svg width={ringSize} height={ringSize}>
-          <SvgCircle cx={ringSize / 2} cy={ringSize / 2} r={ringR} fill="none" stroke={PILLAR_COLORS.nutrition + '18'} strokeWidth={5} />
-          <SvgCircle cx={ringSize / 2} cy={ringSize / 2} r={ringR} fill="none" stroke={PILLAR_COLORS.nutrition} strokeWidth={5}
+          <SvgCircle cx={ringSize / 2} cy={ringSize / 2} r={ringR} fill="none" stroke="rgba(238,123,109,0.18)" strokeWidth={5} />
+          <SvgCircle cx={ringSize / 2} cy={ringSize / 2} r={ringR} fill="none" stroke={coral} strokeWidth={5}
             strokeDasharray={`${ringCircumference}`} strokeDashoffset={ringOffset}
             strokeLinecap="round" rotation="-90" origin={`${ringSize / 2}, ${ringSize / 2}`}
           />
         </Svg>
-        <Text style={[s.calorieNumber, { color: colors.text }]}>
+        <Text style={[s.calorieNumber, { color: ink }]}>
           {isLiquid ? (feedingCount > 0 ? `${feedingCount}` : '—') : (caloriesTotal > 0 ? caloriesTotal.toLocaleString() : '—')}
         </Text>
       </View>
       {isLiquid ? (
         <>
-          <Text style={[s.metricValue, { color: colors.text }]}>
+          <Text style={[s.metricValue, { color: coral }]}>
             {feedingCount > 0 ? `${feedingBreast} breast · ${feedingBottle} bottle` : 'No feeds yet'}
           </Text>
-          <Text style={[s.metricSmall, { color: colors.textMuted }]}>
+          <Text style={[s.metricSmall, { color: ink3 }]}>
             {feedingMl > 0 ? `${feedingMl}ml total · ${avgMl}ml avg` : 'Tap for details'}
           </Text>
         </>
       ) : (
         <>
-          <Text style={[s.metricValue, { color: colors.text }]}>
+          <Text style={[s.metricValue, { color: coral }]}>
             {caloriesTotal > 0 ? `${Math.round(pct * 100)}% of daily` : `${meals} meals`}
           </Text>
-          <Text style={[s.metricSmall, { color: colors.textMuted }]}>
+          <Text style={[s.metricSmall, { color: ink3 }]}>
             {feedingCount > 0 ? `+ ${feedingCount} bottles (${feedingMl}ml)` : 'Tap for breakdown'}
           </Text>
         </>
@@ -2094,7 +2108,7 @@ function HealthCard({ reminders, healthHistory, child }: {
   healthHistory: HealthHistoryData
   child: ChildWithRole
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const activeReminders = reminders.filter(r => !r.done).length
   const lastVaccine = healthHistory.vaccines[0]
   const { weight, height } = parseGrowthValue(healthHistory.growth)
@@ -2102,46 +2116,52 @@ function HealthCard({ reminders, healthHistory, child }: {
   const upcomingCount = getNextDueVaccines(child.birthDate ?? '', healthHistory.vaccines, child.countryCode ?? 'US').length
   const overdueCount = getNextDueVaccines(child.birthDate ?? '', healthHistory.vaccines, child.countryCode ?? 'US').filter(v => v.overdue).length
 
+  const tileBg = isDark ? colors.surface : '#FFFEF8'
+  const tileBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const green = '#BDD48C'
+  const ink = isDark ? colors.text : '#141313'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+
   return (
-    <View style={[s.metricCard, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.borderLight }]}>
+    <View style={[s.metricCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
       <View style={s.metricHeader}>
-        <Heart size={14} color={brand.success} strokeWidth={2} />
-        <Text style={[s.metricLabel, { color: colors.textSecondary }]}>Health</Text>
-        <ChevronRight size={12} color={colors.textMuted} strokeWidth={2} style={{ marginLeft: 'auto' }} />
+        <Heart size={14} color={green} strokeWidth={2} />
+        <Text style={[s.metricLabel, { color: ink3 }]}>HEALTH</Text>
+        <ChevronRight size={12} color={ink3} strokeWidth={2} style={{ marginLeft: 'auto' }} />
       </View>
       <View style={s.healthList}>
         {lastVaccine ? (
           <View style={s.healthRow}>
-            <Syringe size={9} color={brand.success} strokeWidth={2} />
-            <Text style={[s.healthLabel, { color: colors.textSecondary }]} numberOfLines={1}>
+            <Syringe size={9} color={green} strokeWidth={2} />
+            <Text style={[s.healthLabel, { color: ink3 }]} numberOfLines={1}>
               {lastVaccine.value.split(/[,(]/)[0].trim()}
             </Text>
           </View>
         ) : (
           <View style={s.healthRow}>
-            <Syringe size={9} color={colors.textMuted} strokeWidth={2} />
-            <Text style={[s.healthLabel, { color: colors.textMuted }]} numberOfLines={1}>No vaccines</Text>
+            <Syringe size={9} color={ink3} strokeWidth={2} />
+            <Text style={[s.healthLabel, { color: ink3 }]} numberOfLines={1}>No vaccines</Text>
           </View>
         )}
         {growthSummary ? (
           <View style={s.healthRow}>
-            <TrendingUp size={9} color={brand.kids} strokeWidth={2} />
-            <Text style={[s.healthLabel, { color: colors.textSecondary }]} numberOfLines={1}>{growthSummary}</Text>
+            <TrendingUp size={9} color="#9DC3E8" strokeWidth={2} />
+            <Text style={[s.healthLabel, { color: ink3 }]} numberOfLines={1}>{growthSummary}</Text>
           </View>
         ) : null}
         {activeReminders > 0 && (
           <View style={s.healthRow}>
-            <Bell size={10} color={brand.warning} strokeWidth={2} />
-            <Text style={[s.healthLabel, { color: brand.warning }]} numberOfLines={1}>{activeReminders} reminder{activeReminders !== 1 ? 's' : ''}</Text>
+            <Bell size={10} color="#F5D652" strokeWidth={2} />
+            <Text style={[s.healthLabel, { color: ink }]} numberOfLines={1}>{activeReminders} reminder{activeReminders !== 1 ? 's' : ''}</Text>
           </View>
         )}
       </View>
       {overdueCount > 0 ? (
         <Text style={[s.metricValue, { color: brand.error }]}>{overdueCount} overdue</Text>
       ) : upcomingCount > 0 ? (
-        <Text style={[s.metricValue, { color: brand.accent }]}>{upcomingCount} due soon</Text>
+        <Text style={[s.metricValue, { color: '#F5D652' }]}>{upcomingCount} due soon</Text>
       ) : (
-        <Text style={[s.metricValue, { color: brand.success }]}>Up to date</Text>
+        <Text style={[s.metricValue, { color: green }]}>Up to date</Text>
       )}
     </View>
   )
@@ -4359,6 +4379,7 @@ const s = StyleSheet.create({
   metricsRowItem: { flex: 1 },
   metricCard: { flex: 1, height: 182, padding: 14, borderWidth: 1, gap: 2, borderRadius: 18 },
   metricHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  metricHeaderIcon: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   metricLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
   metricValue: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', marginTop: 6, letterSpacing: -0.2 },
   metricSmall: { fontSize: 11, fontFamily: 'DMSans_400Regular', marginTop: 2 },
