@@ -21,7 +21,7 @@ The header "+" circle is the **only** entry point to log activities. It opens th
 ## Shared primitives (new)
 
 ### `components/calendar/SegmentedTabs.tsx`
-3-option pill segmented control. Inactive = text only. Active = filled pill.
+Pill segmented control supporting 3 or 4 options (pregnancy uses 4). Inactive = text only. Active = filled pill. Segments share equal width; labels shrink/truncate on 4-tab layout.
 - Active bg per mode: `kids → #9EC5FF` (blue), `pregnancy → #1A1430` (ink), `pre-pregnancy → #1A1430` (ink) — matches mocks exactly
 - Active text: white on ink, ink on blue
 - Props: `options: {key, label}[]`, `value: string`, `onChange: (key) => void`, `activeBg?: string`, `activeFg?: string`
@@ -74,17 +74,15 @@ All three share the same vertical structure:
 
 ### PregnancyCalendar
 
-**Tabs:** `Timeline` | `Symptoms` | `Kicks` (ink active pill)
-Drops current 4-tab (Month/Week/Journey/Appts) approach.
+**Tabs:** `Month` | `Week` | `Journey` | `Appts` (ink active pill — 4 tabs preserved)
 
-- **Timeline tab (default):**
-  - `<AgendaWeekStrip>` (purple mode color) with Week N caption linking to Journey modal
-  - "Today · Apr 17" section header
-  - `<ActivityPillCard>` list for the selected date — pulled from `usePregnancyTodayLogs` (yoga, OB check-in, kicks, water, vitamins, etc.)
-  - Existing "Journey" and "Month" views keep their logic but move behind an optional expand button inside Timeline, or get removed if redundant (confirm during impl — but default: hide them; they exist in Insights already)
-- **Symptoms tab:** reuse existing symptoms log body; wrap in cream shell
-- **Kicks tab:** reuse existing `KickCounter` component; wrap in cream shell
-- FAB: the header "+" opens the Log Activity sheet — reuse existing `renderQuickLogSheet` grid but restyled via `<LogTileGrid>`
+SegmentedTabs supports 4 options (layout switches to equal-width segments when >3). Keeps all existing tab bodies and logic — only the outer shell and cards restyle.
+
+- **Month tab (default):** existing month grid restyled to pastel cells w/ dots (same treatment as KidsCalendar month view); trimester tints retained
+- **Week tab:** `<AgendaWeekStrip>` (purple) + "Today · Apr 17" `<SectionHeader>` + `<ActivityPillCard>` list from `usePregnancyTodayLogs` (yoga, OB check-in, kicks, water, vitamins, etc.)
+- **Journey tab:** existing 40-week summary list, cards restyled to PaperCard w/ Fraunces titles
+- **Appts tab:** existing appointment timeline, cards restyled to `<ActivityPillCard>`
+- FAB: header "+" opens Log Activity sheet — reuse existing `renderQuickLogSheet` grid but restyled via `<LogTileGrid>`
 
 ### KidsCalendar
 
@@ -141,7 +139,7 @@ Using existing `constants/theme.ts` cream-paper tokens:
 
 ## Risk & rollback
 
-- **Risk:** removing pregnancy Journey/Appts tabs may surface data users rely on. **Mitigation:** Journey content already lives in Insights; Appts still accessible via "Visits"-style list inside Timeline. If user pushes back during review, preserve as a fourth tab.
+- **Risk:** 4-tab segmented layout on pregnancy may crowd labels on small screens. **Mitigation:** equal-width segments + 12–13px font; truncate if necessary.
 - **Rollback:** revert the three calendar files; primitives are additive so leaving them in place causes no harm.
 
 ## Acceptance
