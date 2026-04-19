@@ -448,9 +448,9 @@ function toDateStr(d: any): string {
 
 // Ring colors for the 3 pillars
 const PILLAR_COLORS = {
-  sleep: '#4D96FF',
-  nutrition: '#FF6B6B',
-  activity: '#6EC96E',
+  sleep: '#9DC3E8',       // sticker blue
+  nutrition: '#EE7B6D',   // sticker coral
+  activity: '#BDD48C',    // sticker green
 }
 
 // ─── Date Range ─────────────────────────────────────────────────────────────
@@ -1167,14 +1167,14 @@ export function KidsHome() {
             return (
               <Pressable key={c.id} onPress={() => setActiveChild(c)}
                 style={[s.childPill, {
-                  backgroundColor: active ? kidColor : kidColor + '18',
+                  backgroundColor: kidColor + (active ? 'FF' : '2E'),
                   borderRadius: radius.full,
                   borderWidth: 1,
-                  borderColor: active ? kidColor : kidColor + '50',
+                  borderColor: active ? kidColor : kidColor + '40',
                 }]}
               >
-                <Text style={[s.pillName, { color: active ? '#FFF' : kidColor }]}>{c.name}</Text>
-                <Text style={[s.pillAge, { color: active ? 'rgba(255,255,255,0.7)' : kidColor + 'AA' }]}>{formatAge(c.birthDate)}</Text>
+                <Text style={[s.pillName, { color: active ? '#141313' : kidColor }]}>{c.name}</Text>
+                <Text style={[s.pillAge, { color: active ? 'rgba(20,19,19,0.7)' : kidColor + 'AA' }]}>{formatAge(c.birthDate)}</Text>
               </Pressable>
             )
           })}
@@ -1242,11 +1242,12 @@ export function KidsHome() {
                 }
               }}
               style={[s.dateRangePill, {
-                backgroundColor: active ? colors.primary : 'rgba(255,255,255,0.05)',
+                backgroundColor: active ? colors.primaryTint : 'transparent',
+                borderColor: active ? colors.primary : colors.border,
                 borderRadius: radius.full,
               }]}
             >
-              <Text style={[s.dateRangeText, { color: active ? '#FFF' : colors.textMuted }]}>
+              <Text style={[s.dateRangeText, { color: active ? colors.primary : colors.textMuted }]}>
                 {opt.key === 'custom' && customRange
                   ? `${fmtShortDate(customRange.start)}–${fmtShortDate(customRange.end)}`
                   : opt.label}
@@ -1385,21 +1386,24 @@ export function KidsHome() {
         <View style={s.miniRingsHeader}>
           <Text style={[s.miniRingsTitle, { color: colors.textSecondary }]}>Past 7 Days</Text>
           <View style={s.miniMetricPicker}>
-            {(['sleep', 'nutrition', 'activity'] as MiniRingMetric[]).map((m) => (
-              <Pressable
-                key={m}
-                onPress={() => setMiniRingMetric(m)}
-                style={[s.miniMetricBtn, {
-                  backgroundColor: miniRingMetric === m ? PILLAR_COLORS[m] + '20' : 'transparent',
-                  borderRadius: 8,
-                }]}
-              >
-                <View style={[s.miniMetricDot, { backgroundColor: PILLAR_COLORS[m] }]} />
-                <Text style={[s.miniMetricLabel, { color: miniRingMetric === m ? '#FFF' : colors.textMuted }]}>
-                  {m === 'sleep' ? 'Sleep' : m === 'nutrition' ? nutritionLabel : 'Activity'}
-                </Text>
-              </Pressable>
-            ))}
+            {(['sleep', 'nutrition', 'activity'] as MiniRingMetric[]).map((m) => {
+              const on = miniRingMetric === m
+              return (
+                <Pressable
+                  key={m}
+                  onPress={() => setMiniRingMetric(m)}
+                  style={[s.miniMetricBtn, {
+                    backgroundColor: on ? PILLAR_COLORS[m] + '22' : 'transparent',
+                    borderColor: on ? 'transparent' : colors.border,
+                  }]}
+                >
+                  <View style={[s.miniMetricDot, { backgroundColor: PILLAR_COLORS[m] }]} />
+                  <Text style={[s.miniMetricLabel, { color: on ? colors.text : colors.textMuted }]}>
+                    {m === 'sleep' ? 'Sleep' : m === 'nutrition' ? nutritionLabel : 'Activity'}
+                  </Text>
+                </Pressable>
+              )
+            })}
           </View>
         </View>
         <View style={s.miniRingsRow}>
@@ -1451,14 +1455,21 @@ export function KidsHome() {
               <Pressable
                 key={item.key}
                 onPress={() => setFocusedRing(item.key)}
-                style={[s.legendItem, focusedRing === item.key && { backgroundColor: PILLAR_COLORS[item.key] + '12' }, { borderRadius: radius.md }]}
+                style={[
+                  s.legendItem,
+                  {
+                    backgroundColor: focusedRing === item.key ? PILLAR_COLORS[item.key] + '18' : colors.surface,
+                    borderColor: focusedRing === item.key ? PILLAR_COLORS[item.key] + '40' : colors.border,
+                    borderRadius: 16,
+                  },
+                ]}
               >
-                <View style={[s.legendDot, { backgroundColor: PILLAR_COLORS[item.key] }]} />
-                <View style={{ flex: 1 }}>
+                <View style={s.legendDotRow}>
+                  <View style={[s.legendDot, { backgroundColor: PILLAR_COLORS[item.key] }]} />
                   <Text style={[s.legendLabel, { color: colors.textMuted }]}>{item.label}</Text>
-                  <Text style={[s.legendValue, { color: focusedRing === item.key ? PILLAR_COLORS[item.key] : colors.text }]}>{item.value}</Text>
-                  <Text style={[s.legendTarget, { color: colors.textMuted }]} numberOfLines={1}>{item.target}</Text>
                 </View>
+                <Text style={[s.legendValue, { color: focusedRing === item.key ? PILLAR_COLORS[item.key] : colors.text }]}>{item.value}</Text>
+                <Text style={[s.legendTarget, { color: colors.textMuted }]} numberOfLines={2}>{item.target}</Text>
               </Pressable>
             ))}
           </View>
@@ -1871,15 +1882,15 @@ function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, foc
           <Defs>
             <LinearGradient id="sleepGrad" x1="0" y1="0" x2="1" y2="1">
               <Stop offset="0" stopColor={PILLAR_COLORS.sleep} />
-              <Stop offset="1" stopColor="#2D7AFF" />
+              <Stop offset="1" stopColor={PILLAR_COLORS.sleep} />
             </LinearGradient>
             <LinearGradient id="calGrad" x1="0" y1="0" x2="1" y2="1">
               <Stop offset="0" stopColor={PILLAR_COLORS.nutrition} />
-              <Stop offset="1" stopColor="#FF4444" />
+              <Stop offset="1" stopColor={PILLAR_COLORS.nutrition} />
             </LinearGradient>
             <LinearGradient id="actGrad" x1="0" y1="0" x2="1" y2="1">
               <Stop offset="0" stopColor={PILLAR_COLORS.activity} />
-              <Stop offset="1" stopColor="#3DAA6E" />
+              <Stop offset="1" stopColor={PILLAR_COLORS.activity} />
             </LinearGradient>
           </Defs>
           {ringKeys.map((key, i) => {
@@ -1888,21 +1899,21 @@ function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, foc
               <SvgCircle
                 key={key + '-bg'}
                 cx={center} cy={center} r={RING_R[i]}
-                stroke="rgba(255,255,255,0.04)"
-                strokeWidth={14}
+                stroke={colors.border}
+                strokeWidth={6}
                 fill="none"
               />,
               <AnimatedSvgCircle
                 key={key + '-fg'}
                 cx={center} cy={center} r={RING_R[i]}
                 stroke={`url(#${gradIds[i]})`}
-                strokeWidth={isFocused ? 16 : 14}
+                strokeWidth={isFocused ? 7 : 6}
                 fill="none"
                 strokeDasharray={`${RING_CIRC[i]}`}
                 strokeLinecap="round"
                 rotation={-90}
                 origin={`${center}, ${center}`}
-                opacity={isFocused ? 1 : 0.6}
+                opacity={isFocused ? 1 : 0.88}
                 animatedProps={ringAnimProps[i]}
               />,
             ]
@@ -1952,11 +1963,11 @@ function MiniRing({ label, progress, color, isToday, hasData }: {
           )}
         </Svg>
         {hasData ? (
-          <Text style={{ fontSize: 8, fontWeight: '800', color: isToday ? color : color + 'CC' }}>
+          <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: isToday ? color : color + 'CC' }}>
             {pct >= 100 ? '✓' : `${pct}%`}
           </Text>
         ) : (
-          <Text style={{ fontSize: 9, color: 'rgba(255,255,255,0.15)', fontWeight: '700' }}>—</Text>
+          <Text style={{ fontSize: 11, color: colors.textFaint, fontFamily: 'DMSans_500Medium' }}>—</Text>
         )}
       </View>
       <Text style={[s.miniRingLabel, { color: isToday ? color : colors.textMuted }]}>{label}</Text>
@@ -4294,48 +4305,47 @@ const s = StyleSheet.create({
   greeting: { fontSize: 20, fontWeight: '700', letterSpacing: -0.3 },
   subtitle: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 2 },
 
-  // Child pills
+  // Child pills — soft tint inactive, colored bg active
   childPills: { flexDirection: 'row', gap: 8, paddingHorizontal: 2, marginBottom: 4, flexWrap: 'nowrap', alignItems: 'center' },
   childPill: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, paddingHorizontal: 16 },
-  pillName: { fontSize: 14, fontWeight: '700' },
-  pillAge: { fontSize: 10, fontWeight: '500' },
+  pillName: { fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
+  pillAge: { fontSize: 11, fontFamily: 'DMSans_500Medium', opacity: 0.75 },
   addChildBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 
-  // Date range picker
-  dateRangeRow: { flexDirection: 'row', gap: 8, marginBottom: 4, paddingLeft: 2, paddingRight: 16 },
-  dateRangePill: { paddingVertical: 6, paddingHorizontal: 14 },
-  dateRangeText: { fontSize: 12, fontWeight: '700' },
+  // Date range picker — text-only inactive, soft-accent pill active
+  dateRangeRow: { flexDirection: 'row', gap: 6, marginBottom: 6, paddingLeft: 2, paddingRight: 16, paddingVertical: 8 },
+  dateRangePill: { paddingVertical: 7, paddingHorizontal: 12, borderWidth: 1 },
+  dateRangeText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
 
-  // Custom range modal
-
-  // Mini rings
-  miniRingsCard: { padding: 14, borderWidth: 1, gap: 10 },
+  // Past 7 days card — paper bg with Fraunces title + chip legend
+  miniRingsCard: { padding: 14, borderWidth: 1, gap: 12, borderRadius: 20 },
   miniRingsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  miniRingsTitle: { fontSize: 12, fontWeight: '700' },
-  miniMetricPicker: { flexDirection: 'row', gap: 4 },
-  miniMetricBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 8 },
+  miniRingsTitle: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.2 },
+  miniMetricPicker: { flexDirection: 'row', gap: 6 },
+  miniMetricBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 3, paddingHorizontal: 8, borderRadius: 999, borderWidth: 1 },
   miniMetricDot: { width: 6, height: 6, borderRadius: 3 },
-  miniMetricLabel: { fontSize: 10, fontWeight: '700' },
+  miniMetricLabel: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
   miniRingsRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 },
-  miniRingCol: { alignItems: 'center', gap: 4 },
+  miniRingCol: { alignItems: 'center', gap: 6 },
   miniRingOuter: { alignItems: 'center', justifyContent: 'center' },
-  miniRingLabel: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase' },
+  miniRingLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
 
-  // Hero
-  heroWrap: { alignItems: 'center', paddingVertical: 4 },
-  heroCenter: { alignItems: 'center', gap: 2 },
-  heroNumber: { fontSize: 40, fontWeight: '800', letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' },
-  heroUnit: { fontSize: 9, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
+  // Hero — concentric rings + Fraunces number + mono-caps unit + orange-soft pill
+  heroWrap: { alignItems: 'center', paddingVertical: 8 },
+  heroCenter: { alignItems: 'center', gap: 4 },
+  heroNumber: { fontSize: 44, letterSpacing: -1.2, fontFamily: 'Fraunces_600SemiBold' },
+  heroUnit: { fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', fontFamily: 'DMSans_600SemiBold' },
   heroBadge: { marginTop: 6, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 },
-  heroBadgeText: { fontSize: 10, fontWeight: '700' },
+  heroBadgeText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
 
-  // Legend
+  // Legend — paper stat tiles: dot + MONO-CAPS label / Fraunces value / small sub
   legendRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  legendItem: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 12 },
+  legendItem: { flex: 1, gap: 2, paddingVertical: 12, paddingHorizontal: 12, borderWidth: 1 },
+  legendDotRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendLabel: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  legendValue: { fontSize: 14, fontWeight: '800', marginTop: 1 },
-  legendTarget: { fontSize: 9, fontWeight: '600', marginTop: 1 },
+  legendLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
+  legendValue: { fontSize: 22, letterSpacing: -0.4, marginTop: 2, fontFamily: 'Fraunces_600SemiBold' },
+  legendTarget: { fontSize: 11, fontFamily: 'DMSans_400Regular', marginTop: 2 },
 
   // Section header
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },

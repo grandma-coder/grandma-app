@@ -1,8 +1,9 @@
 /**
- * HomeGreeting — "Hi, {name}" serif greeting + MONO-CAPS date/mode micro-label.
+ * HomeGreeting — "Hi, {name}" serif greeting with mono-caps sub-label below.
  *
- * Shared across CycleHome, PregnancyHome, KidsHome so they all share
- * the same top-of-screen pattern in the redesign.
+ * Matches kids-home-v2 structure from the redesign bundle:
+ *   Hi, {name}   ← Fraunces 28, italic name
+ *   MONO-CAPS    ← ink-3, 10px, uppercase
  */
 
 import { View, StyleSheet } from 'react-native'
@@ -10,26 +11,26 @@ import { Display, DisplayItalic, MonoCaps } from '../ui/Typography'
 import { useTheme } from '../../constants/theme'
 
 interface HomeGreetingProps {
-  /** Parent first name — falls back to "dear" */
   name?: string | null
-  /** Micro-label above greeting — e.g. "WEEK 24 · FRIDAY", "JUNO · 5 MONTHS" */
+  /** Sub-label rendered below greeting — e.g. "RIO'S WEEK", "WEEK 24 · FRIDAY" */
   microLabel?: string
+  size?: number
 }
 
-export function HomeGreeting({ name, microLabel }: HomeGreetingProps) {
+export function HomeGreeting({ name, microLabel, size = 30 }: HomeGreetingProps) {
   const { colors, isDark } = useTheme()
   const ink = isDark ? colors.text : '#141313'
   const displayName = name?.trim() || 'dear'
 
   return (
     <View style={styles.wrap}>
-      {microLabel ? <MonoCaps style={{ marginBottom: 6 }}>{microLabel}</MonoCaps> : null}
       <View style={styles.row}>
-        <Display size={32} color={ink}>Hi,</Display>
-        <DisplayItalic size={32} color={ink} style={{ marginLeft: 8 }}>
+        <Display size={size} color={ink}>Hi,</Display>
+        <DisplayItalic size={size} color={ink} style={{ marginLeft: 8 }}>
           {displayName}
         </DisplayItalic>
       </View>
+      {microLabel ? <MonoCaps style={{ marginTop: 2 }}>{microLabel}</MonoCaps> : null}
     </View>
   )
 }

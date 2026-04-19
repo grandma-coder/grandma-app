@@ -13,18 +13,18 @@
  */
 
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
-import { brand } from '../../constants/theme'
+import { stickers } from '../../constants/theme'
 import { useTheme } from '../../constants/theme'
 
-// ─── Shared child color palette ───────────────────────────────────────────
+// ─── Shared child color palette (redesign sticker palette) ────────────────
 
 export const CHILD_COLORS = [
-  brand.kids,
-  brand.prePregnancy,
-  brand.accent,
-  brand.phase.ovulation,
-  brand.pregnancy,
-  brand.secondary,
+  stickers.blue,
+  stickers.pink,
+  stickers.peach,
+  stickers.yellow,
+  stickers.lilac,
+  stickers.green,
 ] as const
 
 export function childColor(index: number): string {
