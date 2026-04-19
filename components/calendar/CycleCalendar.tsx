@@ -1,27 +1,37 @@
 /**
- * C4 — Cycle Calendar Screen
+ * C4 — Cycle Calendar (cream-paper redesign, Apr 2026)
  *
- * Full month grid with phase coloring, dot indicators, phase banner,
- * quick log buttons, and bottom sheet log forms.
+ * 3-tab shell: Cycle / Checklist / Visits (ink active pill).
+ * Cycle tab: week strip + Today section with pastel ActivityPillCards for each
+ * loggable type. Tapping a card opens the matching LogSheet form.
+ * "+" in header opens a Log Activity sheet with all quick-log tiles.
  */
 
-import { useState, useMemo, useCallback } from 'react'
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
+import { useState, useMemo } from 'react'
+import { View, Text, Pressable, ScrollView, StyleSheet, Modal } from 'react-native'
 import {
-  ChevronLeft,
-  ChevronRight,
   Droplets,
   Thermometer,
   Heart,
   Smile,
   Activity,
   HeartHandshake,
+  X,
+  Check,
+  Circle,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { getCycleInfo, toDateStr, type CyclePhase } from '../../lib/cycleLogic'
 import { LogSheet } from './LogSheet'
 import { AgendaHeader } from './AgendaHeader'
+import { SegmentedTabs } from './SegmentedTabs'
+import { AgendaWeekStrip } from './AgendaWeekStrip'
+import { ActivityPillCard } from './ActivityPillCard'
+import { LogTile, LogTileGrid } from './LogTile'
+import { SectionHeader } from './SectionHeader'
+import { PaperCard } from '../ui/PaperCard'
+import { Display, Body } from '../ui/Typography'
 import {
   PeriodStartForm,
   PeriodEndForm,
@@ -33,47 +43,95 @@ import {
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-const PHASE_TINT: Record<CyclePhase, string> = {
-  menstruation: brand.phase.menstrual + '18',
-  follicular: brand.prePregnancy + '12',
-  ovulation: brand.phase.luteal + '18',
-  luteal: brand.kids + '12',
-}
-
-const PHASE_DOT: Record<CyclePhase, string> = {
-  menstruation: brand.phase.menstrual,
-  follicular: brand.prePregnancy,
-  ovulation: brand.phase.ovulation,
-  luteal: brand.phase.luteal,
-}
-
 type LogType = 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp' | 'intercourse'
+type ViewTab = 'cycle' | 'checklist' | 'visits'
 
-const QUICK_LOGS: { id: LogType; label: string; icon: typeof Droplets; color: string }[] = [
-  { id: 'period_start', label: 'Period Start', icon: Droplets, color: brand.phase.menstrual },
-  { id: 'period_end', label: 'Period End', icon: Droplets, color: brand.phase.menstrual },
-  { id: 'symptom', label: 'Symptoms', icon: Activity, color: brand.accent },
-  { id: 'mood', label: 'Mood', icon: Smile, color: brand.phase.ovulation },
-  { id: 'basal_temp', label: 'Temperature', icon: Thermometer, color: brand.secondary },
-  { id: 'intercourse', label: 'Intimacy', icon: HeartHandshake, color: brand.prePregnancy },
+interface LogEntry {
+  id: LogType
+  label: string
+  subtitle: string
+  icon: typeof Droplets
+  tint: string
+  color: string
+}
+
+const LOG_ENTRIES: LogEntry[] = [
+  { id: 'basal_temp',    label: 'Log BBT',        subtitle: 'Daily temperature',     icon: Thermometer,    tint: 'temperature', color: brand.secondary },
+  { id: 'symptom',       label: 'Log symptoms',   subtitle: 'How you feel today',    icon: Activity,       tint: 'symptom',     color: brand.accent },
+  { id: 'mood',          label: 'Log mood',       subtitle: 'Today\'s mood check-in', icon: Smile,          tint: 'mood',        color: brand.accent },
+  { id: 'intercourse',   label: 'Log intimacy',   subtitle: 'Track fertile moments', icon: HeartHandshake, tint: 'intimacy',    color: brand.prePregnancy },
+  { id: 'period_start',  label: 'Period start',   subtitle: 'Begin a new cycle',     icon: Droplets,       tint: 'period',      color: brand.phase.menstrual },
+  { id: 'period_end',    label: 'Period end',     subtitle: 'Close out your flow',   icon: Heart,          tint: 'period',      color: brand.phase.menstrual },
 ]
+
+// ─── Log Activity Sheet (opened by header "+") ─────────────────────────────
+
+function LogActivitySheet({
+  open,
+  onClose,
+  onSelect,
+}: {
+  open: boolean
+  onClose: () => void
+  onSelect: (type: LogType) => void
+}) {
+  const { colors, isDark } = useTheme()
+  const insets = useSafeAreaInsets()
+
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const bg = isDark ? colors.bg : '#F3ECD9'
+  const ink = isDark ? colors.text : '#141313'
+
+  function handleSelect(type: LogType) {
+    onClose()
+    onSelect(type)
+  }
+
+  return (
+    <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
+      <Pressable style={styles.sheetBackdrop} onPress={onClose} />
+      <View style={[styles.sheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }]}>
+        <View style={styles.handleWrap}>
+          <View style={[styles.handle, { backgroundColor: paperBorder }]} />
+        </View>
+        <View style={styles.sheetHeader}>
+          <Display size={22} color={ink}>Log Activity</Display>
+          <Pressable onPress={onClose} style={[styles.closeBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <X size={18} color={ink} />
+          </Pressable>
+        </View>
+        <View style={styles.sheetBody}>
+          <LogTileGrid>
+            {LOG_ENTRIES.map((e) => {
+              const Icon = e.icon
+              return (
+                <LogTile
+                  key={e.id}
+                  label={e.label.replace(/^Log /, '')}
+                  tint={e.tint}
+                  icon={<Icon size={22} color={e.color} strokeWidth={2} />}
+                  onPress={() => handleSelect(e.id)}
+                />
+              )
+            })}
+          </LogTileGrid>
+        </View>
+      </View>
+    </Modal>
+  )
+}
 
 // ─── Main Component ────────────────────────────────────────────────────────
 
 export function CycleCalendar() {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
 
-  // Month navigation
-  const [viewDate, setViewDate] = useState(() => new Date())
-  const year = viewDate.getFullYear()
-  const month = viewDate.getMonth()
-
-  // Selected date + sheet state
+  const [tab, setTab] = useState<ViewTab>('cycle')
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
-  const [sheetType, setSheetType] = useState<LogType | 'day_view' | null>(null)
+  const [sheetType, setSheetType] = useState<LogType | null>(null)
+  const [logSheetOpen, setLogSheetOpen] = useState(false)
 
   // Cycle config (mock — will come from Supabase)
   const cycleConfig = useMemo(() => {
@@ -82,64 +140,12 @@ export function CycleCalendar() {
     return { lastPeriodStart: toDateStr(d), cycleLength: 28, periodLength: 5 }
   }, [])
 
-  const todayStr = toDateStr(new Date())
   const selectedInfo = getCycleInfo(cycleConfig, selectedDate)
-
-  // Build calendar grid
-  const calendarDays = useMemo(() => {
-    const firstDay = new Date(year, month, 1).getDay()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const days: { date: string; day: number; inMonth: boolean; phase: CyclePhase; isToday: boolean; isFuture: boolean }[] = []
-
-    // Leading empty days
-    for (let i = 0; i < firstDay; i++) {
-      days.push({ date: '', day: 0, inMonth: false, phase: 'follicular', isToday: false, isFuture: false })
-    }
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-      const info = getCycleInfo(cycleConfig, dateStr)
-      const isFuture = dateStr > todayStr
-      days.push({
-        date: dateStr,
-        day: d,
-        inMonth: true,
-        phase: info.phase,
-        isToday: dateStr === todayStr,
-        isFuture,
-      })
-    }
-
-    return days
-  }, [year, month, cycleConfig, todayStr])
-
-  function prevMonth() {
-    setViewDate(new Date(year, month - 1, 1))
-  }
-  function nextMonth() {
-    setViewDate(new Date(year, month + 1, 1))
-  }
-
-  function handleDayPress(date: string) {
-    setSelectedDate(date)
-    setSheetType('day_view')
-  }
-
-  function handleDayLongPress(date: string) {
-    setSelectedDate(date)
-    setSheetType('mood')
-  }
-
-  function handleQuickLog(type: LogType) {
-    setSheetType(type)
-  }
+  const modeColor = brand.prePregnancy
 
   function handleSaved() {
     setSheetType(null)
-    // TODO: invalidate queries to refresh dots
   }
-
-  const monthLabel = new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -150,212 +156,152 @@ export function CycleCalendar() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Agenda title */}
-        <AgendaHeader />
+        <AgendaHeader onAdd={() => setLogSheetOpen(true)} />
 
-        {/* 1. Month Header */}
-        <View style={styles.monthHeader}>
-          <Pressable onPress={prevMonth} style={styles.chevron}>
-            <ChevronLeft size={24} color={colors.text} />
-          </Pressable>
-          <Text style={[styles.monthLabel, { color: colors.text }]}>{monthLabel}</Text>
-          <Pressable onPress={nextMonth} style={styles.chevron}>
-            <ChevronRight size={24} color={colors.text} />
-          </Pressable>
+        <View style={{ marginBottom: 14 }}>
+          <SegmentedTabs
+            options={[
+              { key: 'cycle', label: 'Cycle' },
+              { key: 'checklist', label: 'Checklist' },
+              { key: 'visits', label: 'Visits' },
+            ]}
+            value={tab}
+            onChange={(k) => setTab(k as ViewTab)}
+          />
         </View>
 
-        {/* 2. Calendar Grid */}
-        <View style={styles.calendarWrap}>
-          {/* Weekday headers */}
-          <View style={styles.weekRow}>
-            {WEEKDAYS.map((w) => (
-              <Text key={w} style={[styles.weekday, { color: colors.textMuted }]}>
-                {w}
-              </Text>
-            ))}
-          </View>
+        {tab === 'cycle' && (
+          <>
+            <View style={{ marginBottom: 14 }}>
+              <AgendaWeekStrip
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+                modeColor={modeColor}
+              />
+            </View>
 
-          {/* Day cells */}
-          <View style={styles.dayGrid}>
-            {calendarDays.map((d, i) => {
-              if (!d.inMonth) {
-                return <View key={`empty-${i}`} style={styles.dayCell} />
-              }
-              const isSelected = d.date === selectedDate
-              return (
-                <Pressable
-                  key={d.date}
-                  onPress={() => handleDayPress(d.date)}
-                  onLongPress={() => handleDayLongPress(d.date)}
-                  style={[
-                    styles.dayCell,
-                    {
-                      backgroundColor: PHASE_TINT[d.phase],
-                      borderRadius: radius.sm,
-                      opacity: d.isFuture ? 0.45 : 1,
-                    },
-                  ]}
-                >
+            {/* Phase pill */}
+            <PaperCard style={{ marginBottom: 14 }}>
+              <View style={styles.phaseRow}>
+                <View style={[styles.phaseDot, { backgroundColor: phaseColor(selectedInfo.phase) }]} />
+                <Body size={13} color={isDark ? colors.text : '#141313'} style={{ flex: 1, fontWeight: '600' }}>
+                  {selectedInfo.phaseLabel} · Day {selectedInfo.cycleDay}
+                </Body>
+                {selectedInfo.conceptionProbability !== 'none' ? (
                   <View
                     style={[
-                      styles.dayInner,
-                      d.isToday && {
-                        borderWidth: 2,
-                        borderColor: colors.primary,
-                        borderRadius: radius.sm,
-                      },
-                      isSelected && !d.isToday && {
-                        borderWidth: 1.5,
-                        borderColor: colors.textSecondary,
-                        borderRadius: radius.sm,
-                      },
+                      styles.fertilityTag,
+                      { backgroundColor: phaseColor(selectedInfo.phase) + '22', borderColor: phaseColor(selectedInfo.phase) + '40' },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.dayNumber,
-                        { color: d.isToday ? colors.primary : colors.text },
-                        d.isToday && { fontWeight: '800' },
-                      ]}
-                    >
-                      {d.day}
+                    <Text style={[styles.fertilityTagText, { color: phaseColor(selectedInfo.phase) }]}>
+                      {selectedInfo.conceptionProbability.toUpperCase()} CHANCE
                     </Text>
-                    {/* Phase dot */}
-                    <View style={[styles.phaseDot, { backgroundColor: PHASE_DOT[d.phase] }]} />
                   </View>
-                </Pressable>
-              )
-            })}
-          </View>
-        </View>
-
-        {/* 3. Phase Banner */}
-        <View
-          style={[
-            styles.phaseBanner,
-            {
-              backgroundColor: PHASE_TINT[selectedInfo.phase],
-              borderRadius: radius.xl,
-              borderColor: PHASE_DOT[selectedInfo.phase] + '30',
-              borderWidth: 1,
-            },
-          ]}
-        >
-          <View style={styles.phaseBannerHeader}>
-            <Text style={[styles.phaseName, { color: PHASE_DOT[selectedInfo.phase] }]}>
-              {selectedInfo.phaseLabel}
-            </Text>
-            {selectedInfo.conceptionProbability !== 'none' && (
-              <View
-                style={[
-                  styles.fertilityTag,
-                  {
-                    backgroundColor: PHASE_DOT[selectedInfo.phase] + '20',
-                    borderRadius: radius.full,
-                  },
-                ]}
-              >
-                <Text style={[styles.fertilityTagText, { color: PHASE_DOT[selectedInfo.phase] }]}>
-                  {selectedInfo.conceptionProbability.toUpperCase()} CHANCE
-                </Text>
+                ) : null}
               </View>
-            )}
-          </View>
-          <Text style={[styles.phaseDesc, { color: colors.textSecondary }]}>
-            {selectedInfo.phaseDescription}
-          </Text>
-        </View>
+              <Body size={13} color={isDark ? colors.textSecondary : '#3A3533'} style={{ marginTop: 6 }}>
+                {selectedInfo.phaseDescription}
+              </Body>
+            </PaperCard>
 
-        {/* 4. Quick Log Buttons — 2x3 grid */}
-        <View style={styles.quickLogGrid}>
-          {QUICK_LOGS.map((log) => {
-            const Icon = log.icon
-            return (
-              <Pressable
-                key={log.id}
-                onPress={() => handleQuickLog(log.id)}
-                style={({ pressed }) => [
-                  styles.quickLogBtn,
-                  {
-                    backgroundColor: colors.surface,
-                    borderRadius: radius.xl,
-                  },
-                  pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] },
-                ]}
-              >
-                <View style={[styles.quickLogIcon, { backgroundColor: log.color + '15' }]}>
-                  <Icon size={20} color={log.color} strokeWidth={2} />
-                </View>
-                <Text style={[styles.quickLogLabel, { color: colors.text }]}>{log.label}</Text>
-              </Pressable>
-            )
-          })}
-        </View>
+            <SectionHeader
+              title={`Today · ${formatDayShort(selectedDate)}`}
+              right={`${LOG_ENTRIES.length} to log`}
+              iconColor={modeColor}
+            />
+
+            <View style={{ gap: 10, marginTop: 8 }}>
+              {LOG_ENTRIES.map((e) => {
+                const Icon = e.icon
+                return (
+                  <ActivityPillCard
+                    key={e.id}
+                    icon={<Icon size={18} color={e.color} strokeWidth={2} />}
+                    title={e.label}
+                    subtitle={e.subtitle}
+                    tint={e.tint}
+                    onPress={() => setSheetType(e.id)}
+                  />
+                )
+              })}
+            </View>
+          </>
+        )}
+
+        {tab === 'checklist' && (
+          <PaperCard style={{ marginTop: 4 }}>
+            <View style={styles.tabEmpty}>
+              <View style={[styles.tabEmptyIcon, { backgroundColor: modeColor + '22' }]}>
+                <Check size={22} color={modeColor} strokeWidth={2} />
+              </View>
+              <Display size={20} color={isDark ? colors.text : '#141313'}>Fertility checklist</Display>
+              <Body size={13} color={isDark ? colors.textMuted : '#6E6763'} align="center" style={{ marginTop: 6 }}>
+                Build your cycle routine: folate, BBT logging, ovulation tests, and stress care. We'll track your progress here.
+              </Body>
+            </View>
+          </PaperCard>
+        )}
+
+        {tab === 'visits' && (
+          <PaperCard style={{ marginTop: 4 }}>
+            <View style={styles.tabEmpty}>
+              <View style={[styles.tabEmptyIcon, { backgroundColor: modeColor + '22' }]}>
+                <Circle size={22} color={modeColor} strokeWidth={2} />
+              </View>
+              <Display size={20} color={isDark ? colors.text : '#141313'}>Upcoming visits</Display>
+              <Body size={13} color={isDark ? colors.textMuted : '#6E6763'} align="center" style={{ marginTop: 6 }}>
+                Doctor appointments, fertility consults, and labs go here. Tap "+" above to add one.
+              </Body>
+            </View>
+          </PaperCard>
+        )}
       </ScrollView>
 
-      {/* ─── Bottom Sheets ─────────────────────────────────────────────── */}
+      {/* ─── Bottom sheets per log type ────────────────────────────────── */}
 
-      {/* Day view sheet */}
-      <LogSheet
-        visible={sheetType === 'day_view'}
-        title={`Logs for ${formatDateLong(selectedDate)}`}
-        onClose={() => setSheetType(null)}
-      >
-        <View style={styles.dayViewSheet}>
-          <View style={[styles.dayViewPhase, { backgroundColor: PHASE_TINT[selectedInfo.phase], borderRadius: radius.lg }]}>
-            <Text style={[styles.dayViewPhaseText, { color: PHASE_DOT[selectedInfo.phase] }]}>
-              {selectedInfo.phaseLabel} — Day {selectedInfo.cycleDay}
-            </Text>
-          </View>
-          <Text style={[styles.dayViewDesc, { color: colors.textSecondary }]}>
-            {selectedInfo.phaseDescription}
-          </Text>
-          <Text style={[styles.dayViewHint, { color: colors.textMuted }]}>
-            Tap a quick log button above to add an entry for this date.
-          </Text>
-        </View>
-      </LogSheet>
-
-      {/* Period Start */}
       <LogSheet visible={sheetType === 'period_start'} title="Log Period Start" onClose={() => setSheetType(null)}>
         <PeriodStartForm date={selectedDate} onSaved={handleSaved} />
       </LogSheet>
-
-      {/* Period End */}
       <LogSheet visible={sheetType === 'period_end'} title="Log Period End" onClose={() => setSheetType(null)}>
         <PeriodEndForm date={selectedDate} onSaved={handleSaved} />
       </LogSheet>
-
-      {/* Symptoms */}
       <LogSheet visible={sheetType === 'symptom'} title="Log Symptoms" onClose={() => setSheetType(null)}>
         <SymptomsForm date={selectedDate} onSaved={handleSaved} />
       </LogSheet>
-
-      {/* Mood */}
       <LogSheet visible={sheetType === 'mood'} title="Log Mood" onClose={() => setSheetType(null)}>
         <MoodForm date={selectedDate} onSaved={handleSaved} />
       </LogSheet>
-
-      {/* Temperature */}
       <LogSheet visible={sheetType === 'basal_temp'} title="Log Temperature" onClose={() => setSheetType(null)}>
         <TemperatureForm date={selectedDate} onSaved={handleSaved} />
       </LogSheet>
-
-      {/* Intimacy */}
       <LogSheet visible={sheetType === 'intercourse'} title="Log Intimacy" onClose={() => setSheetType(null)}>
         <IntimacyForm date={selectedDate} onSaved={handleSaved} />
       </LogSheet>
+
+      {/* Log Activity sheet (opened by header "+") */}
+      <LogActivitySheet
+        open={logSheetOpen}
+        onClose={() => setLogSheetOpen(false)}
+        onSelect={(type) => setSheetType(type)}
+      />
     </View>
   )
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-function formatDateLong(dateStr: string): string {
+function phaseColor(phase: CyclePhase): string {
+  if (phase === 'menstruation') return brand.phase.menstrual
+  if (phase === 'follicular') return brand.prePregnancy
+  if (phase === 'ovulation') return brand.phase.ovulation
+  return brand.phase.luteal
+}
+
+function formatDayShort(dateStr: string): string {
   if (!dateStr) return ''
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
   })
 }
@@ -363,152 +309,74 @@ function formatDateLong(dateStr: string): string {
 // ─── Styles ────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  scroll: {
-    paddingHorizontal: 16,
-  },
+  root: { flex: 1 },
+  scroll: { paddingHorizontal: 16 },
 
-  // Month header
-  monthHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    marginBottom: 16,
-  },
-  chevron: {
-    padding: 8,
-  },
-  monthLabel: {
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-
-  // Calendar grid
-  calendarWrap: {
-    marginBottom: 16,
-  },
-  weekRow: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  weekday: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  dayGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  dayCell: {
-    width: `${100 / 7}%`,
-    aspectRatio: 1,
-    padding: 2,
-  },
-  dayInner: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-  },
-  dayNumber: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  phaseDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-  },
-
-  // Phase banner
-  phaseBanner: {
-    padding: 20,
-    marginBottom: 16,
-  },
-  phaseBannerHeader: {
+  phaseRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 8,
   },
-  phaseName: {
-    fontSize: 18,
-    fontWeight: '800',
+  phaseDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   fertilityTag: {
-    paddingVertical: 3,
-    paddingHorizontal: 10,
+    paddingVertical: 2,
+    paddingHorizontal: 9,
+    borderRadius: 999,
+    borderWidth: 1,
   },
   fertilityTagText: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
-  phaseDesc: {
-    fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 20,
+
+  tabEmpty: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 12,
+    gap: 4,
+  },
+  tabEmptyIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
 
-  // Quick log grid
-  quickLogGrid: {
+  // Sheet
+  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,8,6,0.55)' },
+  sheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    maxHeight: '85%',
+  },
+  handleWrap: { alignItems: 'center', paddingTop: 10, paddingBottom: 6 },
+  handle: { width: 42, height: 4, borderRadius: 2 },
+  sheetHeader: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  quickLogBtn: {
-    width: '31%',
-    flexGrow: 1,
     alignItems: 'center',
-    paddingVertical: 16,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
-  quickLogIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  closeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quickLogLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-
-  // Day view sheet
-  dayViewSheet: {
-    gap: 12,
-    paddingBottom: 8,
-  },
-  dayViewPhase: {
-    padding: 12,
-  },
-  dayViewPhaseText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  dayViewDesc: {
-    fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 20,
-  },
-  dayViewHint: {
-    fontSize: 13,
-    fontWeight: '500',
-    fontStyle: 'italic',
-  },
+  sheetBody: { paddingHorizontal: 20 },
 })
