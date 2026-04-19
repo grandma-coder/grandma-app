@@ -97,7 +97,7 @@ function LogActivitySheet({
                 key={e.id}
                 label={e.label}
                 tint={e.tint}
-                icon={logSticker(e.id, 28, isDark)}
+                icon={logSticker(e.id, 36, isDark)}
                 onPress={() => handleSelect(e.id)}
               />
             ))}
@@ -201,7 +201,7 @@ export function CycleCalendar() {
               {LOG_ENTRIES.map((e) => (
                 <ActivityPillCard
                   key={e.id}
-                  icon={logSticker(e.id, 26, isDark)}
+                  icon={logSticker(e.id, 28, isDark)}
                   title={`Log ${e.label.toLowerCase()}`}
                   subtitle={e.subtitle}
                   tint={e.tint}

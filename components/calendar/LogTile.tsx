@@ -61,8 +61,7 @@ const styles = StyleSheet.create({
   },
   tile: {
     width: '31.5%',
-    flexGrow: 1,
-    aspectRatio: 1.05,
+    aspectRatio: 1,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -70,10 +69,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   iconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
 })

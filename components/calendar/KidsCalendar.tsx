@@ -450,7 +450,7 @@ function LogActivitySheet({
                   key={log.id}
                   label={log.label}
                   tint={tint}
-                  icon={logSticker(log.id, 28, isDark)}
+                  icon={logSticker(log.id, 36, isDark)}
                   onPress={() => handleSelect(log.id)}
                 />
               )

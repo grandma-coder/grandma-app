@@ -350,7 +350,7 @@ function QuickLogSheet({
                   key={type}
                   label={meta.label}
                   tint={tint}
-                  icon={logSticker(type, 28, isDark)}
+                  icon={logSticker(type, 36, isDark)}
                   onPress={() => { onClose(); onSelect(type) }}
                 />
               )
