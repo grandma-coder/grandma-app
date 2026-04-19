@@ -541,7 +541,14 @@ const GREETINGS_PREPREG = [
   () => "Hello! The trying-to-conceive journey can be a rollercoaster. I'm right here with you. What can I help with?",
 ]
 
-function getGreeting(behavior: string, childName?: string, insightContext?: string): string {
+interface GreetingCtx {
+  behavior: string
+  childName?: string
+  allChildNames?: string[]
+  insightContext?: string
+}
+
+function getGreeting({ behavior, childName, allChildNames, insightContext }: GreetingCtx): string {
   if (insightContext) {
     const openers = [
       `Oh, I see you have a question about "${insightContext}" — let's dig into that! What would you like to know?`,
@@ -550,14 +557,19 @@ function getGreeting(behavior: string, childName?: string, insightContext?: stri
     ]
     return openers[Math.floor(Math.random() * openers.length)]
   }
-  const name = childName ?? ''
   switch (behavior) {
     case 'pre-pregnancy':
       return GREETINGS_PREPREG[Math.floor(Math.random() * GREETINGS_PREPREG.length)]()
     case 'pregnancy':
       return GREETINGS_PREGNANCY[Math.floor(Math.random() * GREETINGS_PREGNANCY.length)]()
-    default:
-      return GREETINGS_KIDS[Math.floor(Math.random() * GREETINGS_KIDS.length)](name)
+    default: {
+      const names = allChildNames ?? []
+      const active = childName ?? names[0] ?? ''
+      if (names.length > 1) {
+        return GREETINGS_KIDS_MULTI[Math.floor(Math.random() * GREETINGS_KIDS_MULTI.length)](names, active)
+      }
+      return GREETINGS_KIDS_SINGLE[Math.floor(Math.random() * GREETINGS_KIDS_SINGLE.length)](active)
+    }
   }
 }
 
@@ -788,10 +800,12 @@ export function GrandmaTalk() {
   const inputRef = useRef<TextInput>(null)
   const sessionIdRef = useRef(newSessionId())
 
+  const allChildNames = children.map((c) => c.name)
+
   const [messages, setMessages] = useState<ChatMessage[]>(() => [{
     id: nextId(),
     role: 'assistant' as const,
-    content: getGreeting(mode, childName, insightContext),
+    content: getGreeting({ behavior: mode, childName, allChildNames, insightContext }),
   }])
 
   const [input, setInput] = useState('')
@@ -843,17 +857,27 @@ export function GrandmaTalk() {
     upsertSession(session)
   }, [messages])
 
+  // Refresh greeting when behavior or active child changes — only if user hasn't sent anything yet
+  useEffect(() => {
+    if (hasUserMessages || insightContext) return
+    setMessages([{
+      id: nextId(),
+      role: 'assistant' as const,
+      content: getGreeting({ behavior: chatBehavior, childName, allChildNames, insightContext }),
+    }])
+  }, [chatBehavior, childName, allChildNames.join('|')])
+
   const startNewChat = useCallback(() => {
     sessionIdRef.current = newSessionId()
     setMessages([{
       id: nextId(),
       role: 'assistant' as const,
-      content: getGreeting(chatBehavior, childName, insightContext),
+      content: getGreeting({ behavior: chatBehavior, childName, allChildNames, insightContext }),
     }])
     setInput('')
     setAiSuggestions([])
     setShowHistory(false)
-  }, [chatBehavior, childName, insightContext])
+  }, [chatBehavior, childName, allChildNames.join('|'), insightContext])
 
   const loadSession = useCallback((session: ChatSession) => {
     sessionIdRef.current = session.id

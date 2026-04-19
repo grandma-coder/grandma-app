@@ -33,7 +33,7 @@ import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { HomeGreeting } from './HomeGreeting'
-import { Heart as HeartSticker, Flower as FlowerSticker } from '../ui/Stickers'
+import { Heart as HeartSticker, Flower as FlowerSticker, Burst as BurstSticker } from '../ui/Stickers'
 import { useGoalsStore, getSuggestedGoals, getFeedingStage, getNutritionLabel, getAgeMonths, type MetricGoals, type FeedingStage } from '../../store/useGoalsStore'
 import { useBadgeStore } from '../../store/useBadgeStore'
 import { supabase } from '../../lib/supabase'
@@ -1646,35 +1646,34 @@ export function KidsHome() {
         allChildren={children}
       />
 
-      {/* ─── Ask Grandma (lavender soft with sparkle) ─────────── */}
+      {/* ─── Ask Grandma (lavender soft + blue burst sticker) ──── */}
       <Pressable
         onPress={() => router.push('/grandma-talk' as any)}
-        style={({ pressed }) => [
-          s.grandmaCard,
-          { opacity: pressed ? 0.92 : 1 },
-        ]}
+        style={({ pressed }) => [s.grandmaCard, { opacity: pressed ? 0.92 : 1 }]}
       >
-        <View style={s.grandmaBlob} />
+        {/* Blue burst sticker in corner */}
+        <View style={s.grandmaBurst}>
+          <BurstSticker size={86} fill="#9DC3E8" stroke="#141313" />
+        </View>
         <View style={s.grandmaIconWrap}>
-          <Sparkles size={22} color="#7048B8" strokeWidth={2} />
+          <Sparkles size={20} color="#7048B8" strokeWidth={2.2} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={s.grandmaTitle}>Grandma knows best</Text>
           <Text style={s.grandmaDesc}>Sleep, feeding, milestones & more</Text>
         </View>
         <View style={s.grandmaArrow}>
-          <ChevronRight size={16} color="#141313" strokeWidth={2.5} />
+          <ChevronRight size={15} color="#141313" strokeWidth={2.5} />
         </View>
       </Pressable>
 
-      {/* ─── Rewards Card ────────────────────────────────────── */}
+      {/* ─── Rewards Card (paper cream) ──────────────────────── */}
       <Pressable
         onPress={() => router.push('/daily-rewards' as any)}
         style={({ pressed }) => [s.rewardsCard, { opacity: pressed ? 0.92 : 1 }]}
       >
-        <View style={s.rewardsBlob} />
-        <View style={[s.rewardsIconWrap, { backgroundColor: 'rgba(251,191,36,0.18)' }]}>
-          <Trophy size={20} color="#FBBF24" strokeWidth={2} />
+        <View style={s.rewardsIconWrap}>
+          <Trophy size={18} color="#F5D652" strokeWidth={2} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={s.rewardsTitle}>Your Rewards</Text>
@@ -1682,21 +1681,19 @@ export function KidsHome() {
         </View>
         <View style={s.rewardsStats}>
           <View style={s.rewardsStat}>
-            <Flame size={12} color="#FB923C" strokeWidth={2} />
-            <Text style={[s.rewardsStatNum, { color: '#FB923C' }]}>{currentStreak}</Text>
+            <Flame size={12} color="#EE7B6D" strokeWidth={2} />
+            <Text style={[s.rewardsStatNum, { color: '#EE7B6D' }]}>{currentStreak}</Text>
           </View>
           <View style={s.rewardsStat}>
-            <Star size={12} color="#FBBF24" strokeWidth={2} />
-            <Text style={[s.rewardsStatNum, { color: '#FBBF24' }]}>{totalPoints}</Text>
+            <Star size={12} color="#F5D652" strokeWidth={2} />
+            <Text style={[s.rewardsStatNum, { color: '#F5D652' }]}>{totalPoints}</Text>
           </View>
           <View style={s.rewardsStat}>
-            <Trophy size={12} color="#A2FF86" strokeWidth={2} />
-            <Text style={[s.rewardsStatNum, { color: '#A2FF86' }]}>{earnedBadges.length}</Text>
+            <Trophy size={12} color="#BDD48C" strokeWidth={2} />
+            <Text style={[s.rewardsStatNum, { color: '#BDD48C' }]}>{earnedBadges.length}</Text>
           </View>
         </View>
-        <View style={[s.rewardsArrow, { backgroundColor: 'rgba(251,191,36,0.15)' }]}>
-          <ChevronRight size={16} color="#FBBF24" strokeWidth={2.5} />
-        </View>
+        <ChevronRight size={14} color={colors.textMuted} strokeWidth={2.5} />
       </Pressable>
 
       {/* ─── Detail Modals ───────────────────────────────────── */}
@@ -4718,22 +4715,24 @@ const s = StyleSheet.create({
   reminderTabLine: { height: 2, width: '60%', borderRadius: 2, marginTop: 8 },
   reminderModalEmpty: { alignItems: 'center', paddingVertical: 48, gap: 8 },
 
-  // Grandma CTA — lavender soft bg with ink text and sparkle sticker
+  // Grandma CTA — lavender soft bg with blue burst sticker + ink text
   grandmaCard: {
-    flexDirection: 'row', alignItems: 'center', padding: 18, gap: 14,
+    flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12,
     overflow: 'hidden',
     backgroundColor: '#E0D5F3',
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(183,166,232,0.5)',
   },
-  grandmaBlob: {
-    position: 'absolute', right: -24, top: -24,
-    width: 120, height: 120, borderRadius: 60,
-    backgroundColor: 'rgba(183,166,232,0.28)',
+  grandmaBurst: {
+    position: 'absolute',
+    right: -18,
+    top: -18,
+    transform: [{ rotate: '14deg' }],
+    opacity: 0.95,
   },
   grandmaIconWrap: {
-    width: 46, height: 46, borderRadius: 23,
+    width: 44, height: 44, borderRadius: 22,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: '#FFFEF8',
     borderWidth: 1,
@@ -4746,32 +4745,27 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(20,19,19,0.08)',
   },
-  grandmaTitle: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: '#141313', letterSpacing: -0.3 },
+  grandmaTitle: { fontSize: 17, fontFamily: 'Fraunces_600SemiBold', color: '#141313', letterSpacing: -0.3 },
   grandmaDesc: { fontSize: 12, fontFamily: 'DMSans_400Regular', color: '#3A3533', marginTop: 2 },
 
-  // Rewards — dark ink card with yellow stars
+  // Rewards — paper cream card with ink text and sticker-color stats
   rewardsCard: {
-    flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12,
+    flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12,
     overflow: 'hidden',
-    backgroundColor: '#141313',
+    backgroundColor: '#FFFEF8',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(245,214,82,0.22)',
-  },
-  rewardsBlob: {
-    position: 'absolute', right: -20, top: -20,
-    width: 90, height: 90, borderRadius: 45,
-    backgroundColor: 'rgba(245,214,82,0.08)',
+    borderColor: 'rgba(20,19,19,0.08)',
+    marginTop: 10,
   },
   rewardsIconWrap: {
-    width: 42, height: 42, borderRadius: 21,
+    width: 44, height: 44, borderRadius: 22,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(245,214,82,0.18)',
+    backgroundColor: '#FBEA9E',
   },
-  rewardsArrow: { width: 28, height: 28, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-  rewardsTitle: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: '#F5EDDC', letterSpacing: -0.2 },
-  rewardsDesc: { fontSize: 11, fontFamily: 'DMSans_400Regular', color: 'rgba(245,237,220,0.6)', marginTop: 2 },
-  rewardsStats: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  rewardsTitle: { fontSize: 16, fontFamily: 'Fraunces_600SemiBold', color: '#141313', letterSpacing: -0.3 },
+  rewardsDesc: { fontSize: 11, fontFamily: 'DMSans_400Regular', color: '#6E6763', marginTop: 1 },
+  rewardsStats: { flexDirection: 'row', gap: 8, alignItems: 'center', marginRight: 4 },
   rewardsStat: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   rewardsStatNum: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
 
