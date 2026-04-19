@@ -199,47 +199,91 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
-// ─── Funny thinking messages ──────────────────────────────────────────────
+// ─── Orb state-driven messages ────────────────────────────────────────────
 
-const THINKING_MESSAGES = [
-  'Flipping through my recipe book…',
-  'Asking my knitting circle…',
-  'Checking my old journals…',
-  'Let me put on my reading glasses…',
-  'Brewing some wisdom tea…',
-  'Consulting the ancestors…',
-  'Digging through decades of experience…',
-  'Warming up the good advice oven…',
-  'Untangling the yarn of knowledge…',
-  'Polishing my grandmother crystals…',
-  'Stirring the pot of wisdom…',
-  'Pulling out the big recipe book…',
-  'Calling my wise friend Google Scholar…',
-  'Dusting off the old family wisdom…',
-  'Cross-referencing with 40 years of babies…',
-  'Checking what the elders say…',
-  'Rummaging through my brain pantry…',
-  'Heating up the advice casserole…',
-  'Leafing through my notes from the doula days…',
-  'Channeling my inner encyclopedia…',
+export type OrbState = 'idle-empty' | 'idle-ready' | 'typing' | 'thinking'
+
+// Shown before user has sent anything — invite them to start
+const IDLE_EMPTY_MESSAGES = [
+  'ask me anything…',
+  "I'm all ears…",
+  "what's on your mind?",
+  'tell me, dear…',
+  "don't be shy…",
+  'I\'m here, honey…',
+  'got a question?',
+  'talk to grandma…',
 ]
 
-function useRotatingThinkingMessage(isThinking: boolean) {
-  const [index, setIndex] = useState(() => Math.floor(Math.random() * THINKING_MESSAGES.length))
+// Shown after a reply — waiting for next message
+const IDLE_READY_MESSAGES = [
+  'what else?',
+  "anything else, love?",
+  "I'm still here…",
+  'keep going, dear…',
+  'more questions?',
+  'ready when you are…',
+]
+
+// Shown while user is actively typing
+const TYPING_MESSAGES = [
+  'listening…',
+  'go on, dear…',
+  "I'm listening…",
+  'take your time…',
+  'mm-hmm…',
+  'tell me more…',
+]
+
+// Funny thinking messages while Grandma composes a reply
+const THINKING_MESSAGES = [
+  'flipping through my recipe book…',
+  'asking my knitting circle…',
+  'checking my old journals…',
+  'let me put on my reading glasses…',
+  'brewing some wisdom tea…',
+  'consulting the ancestors…',
+  'digging through decades of experience…',
+  'warming up the good advice oven…',
+  'untangling the yarn of knowledge…',
+  'polishing my grandmother crystals…',
+  'stirring the pot of wisdom…',
+  'pulling out the big recipe book…',
+  'dusting off the old family wisdom…',
+  'cross-referencing 40 years of babies…',
+  'checking what the elders say…',
+  'rummaging through my brain pantry…',
+  'heating up the advice casserole…',
+  'leafing through my doula notes…',
+  'channeling my inner encyclopedia…',
+]
+
+function messagePoolFor(state: OrbState): string[] {
+  switch (state) {
+    case 'idle-empty': return IDLE_EMPTY_MESSAGES
+    case 'idle-ready': return IDLE_READY_MESSAGES
+    case 'typing': return TYPING_MESSAGES
+    case 'thinking': return THINKING_MESSAGES
+  }
+}
+
+function useOrbMessage(state: OrbState) {
+  const [index, setIndex] = useState(() => Math.floor(Math.random() * 6))
   const pulseAnim = useRef(new Animated.Value(0.4)).current
 
+  // Rotate interval tuned per state: snappier for active states
+  const interval = state === 'thinking' ? 2600 : state === 'typing' ? 2200 : 3400
+
   useEffect(() => {
-    if (!isThinking) return
+    // Pick a new random starter when state changes
+    const pool = messagePoolFor(state)
+    setIndex(Math.floor(Math.random() * pool.length))
 
-    // Pick a new random message on start
-    setIndex(Math.floor(Math.random() * THINKING_MESSAGES.length))
+    const id = setInterval(() => {
+      setIndex((prev) => (prev + 1) % messagePoolFor(state).length)
+    }, interval)
 
-    // Rotate every 3 seconds
-    const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % THINKING_MESSAGES.length)
-    }, 3000)
-
-    // Pulse animation for dots
+    // Pulse dots (used for thinking state typing indicator)
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
@@ -249,40 +293,135 @@ function useRotatingThinkingMessage(isThinking: boolean) {
     pulse.start()
 
     return () => {
-      clearInterval(interval)
+      clearInterval(id)
       pulse.stop()
     }
-  }, [isThinking])
+  }, [state, interval])
 
-  return { message: THINKING_MESSAGES[index], pulseAnim }
+  const pool = messagePoolFor(state)
+  return { message: pool[index % pool.length], pulseAnim }
+}
+
+// ─── Animated stickers ──────────────────────────────────────────────────
+
+/** Slow rotation loop (like the sun spinning). */
+function useRotateAnim(duration = 18000, reverse = false) {
+  const v = useRef(new Animated.Value(0)).current
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(v, { toValue: 1, duration, useNativeDriver: true, isInteraction: false })
+    )
+    loop.start()
+    return () => loop.stop()
+  }, [duration])
+  return v.interpolate({
+    inputRange: [0, 1],
+    outputRange: reverse ? ['0deg', '-360deg'] : ['0deg', '360deg'],
+  })
+}
+
+/** Heartbeat pulse — scale 1 → 1.12 → 1 with a rest, looping. */
+function useHeartbeatAnim() {
+  const v = useRef(new Animated.Value(1)).current
+  useEffect(() => {
+    const beat = Animated.sequence([
+      Animated.timing(v, { toValue: 1.15, duration: 140, useNativeDriver: true }),
+      Animated.timing(v, { toValue: 1.0, duration: 180, useNativeDriver: true }),
+      Animated.timing(v, { toValue: 1.12, duration: 140, useNativeDriver: true }),
+      Animated.timing(v, { toValue: 1.0, duration: 180, useNativeDriver: true }),
+      Animated.delay(900),
+    ])
+    const loop = Animated.loop(beat)
+    loop.start()
+    return () => loop.stop()
+  }, [])
+  return v
+}
+
+/** Gentle sway — rotate between two angles with easing. */
+function useSwayAnim(minDeg = -8, maxDeg = 14, duration = 2400) {
+  const v = useRef(new Animated.Value(0)).current
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(v, { toValue: 1, duration, useNativeDriver: true }),
+        Animated.timing(v, { toValue: 0, duration, useNativeDriver: true }),
+      ])
+    )
+    loop.start()
+    return () => loop.stop()
+  }, [duration])
+  return v.interpolate({ inputRange: [0, 1], outputRange: [`${minDeg}deg`, `${maxDeg}deg`] })
+}
+
+// ─── Animated sticker wrappers ──────────────────────────────────────────
+
+function SpinningSun() {
+  const rotate = useRotateAnim(22000)
+  return (
+    <Animated.View style={[styles.stickerTopLeft, { transform: [{ rotate }] }]} pointerEvents="none">
+      <Burst size={64} fill={stickerPalette.yellow} points={10} wobble={0.18} />
+    </Animated.View>
+  )
+}
+
+function BeatingHeart() {
+  const scale = useHeartbeatAnim()
+  const sway = useSwayAnim(6, 16, 2800)
+  return (
+    <Animated.View
+      style={[styles.stickerTopRight, { transform: [{ rotate: sway }, { scale }] }]}
+      pointerEvents="none"
+    >
+      <Heart size={52} fill={stickerPalette.pink} />
+    </Animated.View>
+  )
+}
+
+function SwayingFlower() {
+  const sway = useSwayAnim(-12, 22, 2200)
+  return (
+    <Animated.View style={[styles.cardSticker, { transform: [{ rotate: sway }] }]} pointerEvents="none">
+      <Flower size={72} petal={stickerPalette.lilac} center={stickerPalette.yellow} />
+    </Animated.View>
+  )
 }
 
 // ─── Grandma Orb — concentric rings + moon + status text ─────────────────
 
 interface GrandmaOrbProps {
   status: string
-  isActive: boolean
+  state: OrbState
   size?: number
 }
 
-function GrandmaOrb({ status, isActive, size = 260 }: GrandmaOrbProps) {
-  const { colors, font, isDark } = useTheme()
+function GrandmaOrb({ status, state, size = 260 }: GrandmaOrbProps) {
+  const { font, isDark } = useTheme()
   const breathe = useRef(new Animated.Value(0.94)).current
 
+  // Motion tuned per state:
+  //  idle-empty → slow gentle breath (patient invitation)
+  //  idle-ready → slow breath (relaxed waiting)
+  //  typing     → medium breath (alert, engaged)
+  //  thinking   → faster, larger swell (active processing)
+  const motion = {
+    'idle-empty': { duration: 2200, min: 0.93, max: 1.0 },
+    'idle-ready': { duration: 2000, min: 0.94, max: 1.0 },
+    'typing':     { duration: 1300, min: 0.95, max: 1.02 },
+    'thinking':   { duration: 900,  min: 0.92, max: 1.04 },
+  }[state]
+
   useEffect(() => {
-    if (!isActive) {
-      breathe.setValue(0.94)
-      return
-    }
+    breathe.setValue(motion.min)
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(breathe, { toValue: 1, duration: 1600, useNativeDriver: true }),
-        Animated.timing(breathe, { toValue: 0.94, duration: 1600, useNativeDriver: true }),
+        Animated.timing(breathe, { toValue: motion.max, duration: motion.duration, useNativeDriver: true }),
+        Animated.timing(breathe, { toValue: motion.min, duration: motion.duration, useNativeDriver: true }),
       ])
     )
     loop.start()
     return () => loop.stop()
-  }, [isActive])
+  }, [state])
 
   const ringOuter = isDark ? 'rgba(200,182,232,0.22)' : '#E3D8F2'
   const ringMid = isDark ? 'rgba(200,182,232,0.38)' : '#D0BFEC'
@@ -367,12 +506,26 @@ function getSuggestions(
 
 // ─── Greeting ──────────────────────────────────────────────────────────────
 
-const GREETINGS_KIDS = [
-  (name: string) => `Hey there! How are the little ones doing today? I'm here for anything — ${name ? name + ', ' : ''}feeding, sleep, those mystery rashes, you name it.`,
-  (name: string) => `Well hello, mama! What's on your mind today? Whether it's ${name ? name + "'s schedule" : 'baby questions'} or just needing someone to talk to — I'm all ears.`,
-  (name: string) => `Good to see you! Tell me what's going on with ${name ? name : 'the kiddos'}. No question is too small or too weird, trust me — I've heard them all!`,
-  (name: string) => `Hi sweetheart! Ready to tackle whatever parenthood threw at you today. ${name ? `How's ${name} doing?` : "How are the little ones?"} Let's chat.`,
+const GREETINGS_KIDS_SINGLE = [
+  (name: string) => `Hey there! How's ${name || 'the little one'} doing today? I'm here for anything — feeding, sleep, mystery rashes, you name it.`,
+  (name: string) => `Well hello, mama! What's going on with ${name || 'baby'}? I'm all ears.`,
+  (name: string) => `Good to see you! Tell me what's happening with ${name || 'the kiddo'}. No question is too small — trust me, I've heard them all.`,
+  (name: string) => `Hi sweetheart! How's ${name || 'your little one'} doing? Let's chat.`,
 ]
+
+const GREETINGS_KIDS_MULTI = [
+  (names: string[], active: string) => `Hey there! Got all ${names.length} of yours on my mind — ${names.join(', ')}. We're on ${active} right now. What's up?`,
+  (names: string[], active: string) => `Well hello, mama! ${formatNameList(names)} — you're busy! Tap a pill above to switch kids. Right now we're talking about ${active}.`,
+  (names: string[], active: string) => `Good to see you! I know ${formatNameList(names)} are all different beasts — tell me what's going on with ${active}.`,
+  (names: string[], active: string) => `Hi love! Three (or more!) little humans to keep up with — ${formatNameList(names)}. What's ${active} up to today?`,
+]
+
+function formatNameList(names: string[]): string {
+  if (names.length === 0) return ''
+  if (names.length === 1) return names[0]
+  if (names.length === 2) return `${names[0]} and ${names[1]}`
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
+}
 
 const GREETINGS_PREGNANCY = [
   () => 'Hello, mama-to-be! How are you and that little one feeling today? I have decades of wisdom ready for whatever you need.',
@@ -651,8 +804,16 @@ export function GrandmaTalk() {
   const suggestions = getSuggestions(allBehaviors, chatBehavior, childName, childAge)
   const modeColor = getBehaviorColor(chatBehavior)
 
-  // Thinking message hook
-  const { message: thinkingMessage, pulseAnim } = useRotatingThinkingMessage(isStreaming)
+  // Orb state — drives text and motion
+  const orbState: OrbState = isStreaming
+    ? 'thinking'
+    : input.trim().length > 0
+      ? 'typing'
+      : hasUserMessages
+        ? 'idle-ready'
+        : 'idle-empty'
+
+  const { message: orbMessage, pulseAnim } = useOrbMessage(orbState)
 
   // Scroll to bottom on new message
   useEffect(() => {
@@ -793,11 +954,7 @@ export function GrandmaTalk() {
 
       return (
         <View style={[styles.cardWrap, isLatestGrandma && styles.cardWrapLatest]}>
-          {isLatestGrandma && (
-            <View style={styles.cardSticker} pointerEvents="none">
-              <Flower size={72} petal={stickerPalette.lilac} center={stickerPalette.yellow} />
-            </View>
-          )}
+          {isLatestGrandma && <SwayingFlower />}
           <View
             style={[
               styles.card,
@@ -816,7 +973,7 @@ export function GrandmaTalk() {
                 <Animated.View style={[styles.dot, { backgroundColor: labelColor, opacity: pulseAnim }]} />
                 <Animated.View style={[styles.dot, { backgroundColor: labelColor, opacity: pulseAnim, transform: [{ scale: pulseAnim }] }]} />
                 <Animated.View style={[styles.dot, { backgroundColor: labelColor, opacity: pulseAnim }]} />
-                <Text style={[styles.typingText, { color: textColor, fontFamily: font.italic }]}>{thinkingMessage}</Text>
+                <Text style={[styles.typingText, { color: textColor, fontFamily: font.italic }]}>{orbMessage}</Text>
               </View>
             ) : isUser ? (
               <Text style={[styles.cardBody, { color: textColor, fontFamily: font.body }]}>
@@ -829,7 +986,7 @@ export function GrandmaTalk() {
         </View>
       )
     },
-    [colors, font, isStreaming, thinkingMessage, pulseAnim, lastAssistantIndex, isDark]
+    [colors, font, isStreaming, orbMessage, pulseAnim, lastAssistantIndex, isDark]
   )
 
   // Show the AI follow-up suggestions (after Grandma replies)
@@ -837,7 +994,6 @@ export function GrandmaTalk() {
   // Show the initial suggestions only before any user messages
   const showInitialSuggestions = !hasUserMessages && !isStreaming
 
-  const orbStatus = isStreaming ? thinkingMessage : 'listening…'
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -913,13 +1069,9 @@ export function GrandmaTalk() {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <View style={styles.heroWrap}>
-              <View style={[styles.stickerTopLeft]} pointerEvents="none">
-                <Burst size={64} fill={stickerPalette.yellow} points={10} wobble={0.18} />
-              </View>
-              <View style={[styles.stickerTopRight]} pointerEvents="none">
-                <Heart size={52} fill={stickerPalette.pink} />
-              </View>
-              <GrandmaOrb status={orbStatus} isActive={isStreaming || !hasUserMessages} />
+              <SpinningSun />
+              <BeatingHeart />
+              <GrandmaOrb status={orbMessage} state={orbState} />
             </View>
           }
         />
@@ -1180,14 +1332,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 10,
     top: 18,
-    transform: [{ rotate: '-8deg' }],
     zIndex: 1,
   },
   stickerTopRight: {
     position: 'absolute',
     right: 18,
     top: 32,
-    transform: [{ rotate: '12deg' }],
     zIndex: 1,
   },
 
@@ -1211,7 +1361,6 @@ const styles = StyleSheet.create({
     right: -18,
     bottom: -18,
     zIndex: 2,
-    transform: [{ rotate: '18deg' }],
   },
 
   // Thinking animation

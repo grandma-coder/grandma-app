@@ -33,6 +33,7 @@ import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { HomeGreeting } from './HomeGreeting'
+import { Heart as HeartSticker, Flower as FlowerSticker } from '../ui/Stickers'
 import { useGoalsStore, getSuggestedGoals, getFeedingStage, getNutritionLabel, getAgeMonths, type MetricGoals, type FeedingStage } from '../../store/useGoalsStore'
 import { useBadgeStore } from '../../store/useBadgeStore'
 import { supabase } from '../../lib/supabase'
@@ -1471,7 +1472,12 @@ export function KidsHome() {
 
       {/* ─── Health + Diaper (Mood + Calories live in hero tiles now) ─── */}
       <View style={s.sectionHeader}>
-        <Text style={[s.sectionTitle, { color: colors.text }]}>Health & Care</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ transform: [{ rotate: '-8deg' }] }}>
+            <HeartSticker size={28} fill="#EE7B6D" />
+          </View>
+          <Text style={[s.sectionTitle, { color: colors.text }]}>Health & Care</Text>
+        </View>
         <Pressable onPress={() => router.push('/profile/health-history' as any)}>
           <Text style={[s.sectionLink, { color: colors.primary }]}>Insights</Text>
         </Pressable>
@@ -1491,8 +1497,10 @@ export function KidsHome() {
 
       {/* ─── Reminders ────────────────────────────────────────── */}
       <View style={s.sectionHeader}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Bell size={15} color={colors.primary} strokeWidth={2} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ transform: [{ rotate: '10deg' }] }}>
+            <FlowerSticker size={28} petal="#C8B6E8" center="#F5D652" />
+          </View>
           <Text style={[s.sectionTitle, { color: colors.text }]}>Reminders</Text>
         </View>
         <Pressable
@@ -1588,9 +1596,11 @@ export function KidsHome() {
         const preview = active.slice(0, 4)
         const hasMore = active.length > 4
         if (reminders.length === 0) return (
-          <View style={[s.remindersEmpty, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.borderLight }]}>
-            <Bell size={20} color={colors.textMuted} strokeWidth={1.5} />
-            <Text style={[s.remindersEmptyText, { color: colors.textSecondary }]}>No reminders yet</Text>
+          <View style={[s.remindersEmpty, { backgroundColor: colors.surface, borderRadius: 20, borderColor: colors.border }]}>
+            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(245,214,82,0.24)', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+              <Bell size={20} color="#EE7B6D" strokeWidth={2} />
+            </View>
+            <Text style={[s.remindersEmptyText, { color: colors.text, fontFamily: 'Fraunces_600SemiBold' }]}>No reminders yet</Text>
             <Text style={[s.remindersEmptyHint, { color: colors.textMuted }]}>Add notes, tasks or things to remember</Text>
           </View>
         )
@@ -4676,15 +4686,15 @@ const s = StyleSheet.create({
   reminderInputActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   reminderDateBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, flex: 1 },
   reminderDateBtnText: { fontSize: 11, fontWeight: '600', flex: 1 },
-  reminderSaveBtn: { paddingHorizontal: 14, paddingVertical: 8 },
-  reminderSaveBtnText: { fontSize: 12, fontWeight: '700', color: '#FFF' },
+  reminderSaveBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
+  reminderSaveBtnText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold', color: '#FFF' },
   remindersCard: { borderWidth: 1, overflow: 'hidden' },
   reminderRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
-  reminderCheck: { width: 18, height: 18, borderRadius: 5, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  reminderText: { fontSize: 13, fontWeight: '500', lineHeight: 18 },
-  reminderDueText: { fontSize: 10, fontWeight: '600' },
-  reminderChildTag: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 20, borderWidth: 1 },
-  reminderChildTagText: { fontSize: 10, fontWeight: '700' },
+  reminderCheck: { width: 22, height: 22, borderRadius: 6, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  reminderText: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 20 },
+  reminderDueText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  reminderChildTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1 },
+  reminderChildTagText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
   childTagChip: { paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1 },
   childTagChipText: { fontSize: 11, fontWeight: '600' },
   reminderSeeAll: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 11, paddingHorizontal: 16 },
