@@ -1,3 +1,7 @@
+/**
+ * Sign Up — paper card form (Apr 2026 redesign)
+ */
+
 import { useState } from 'react'
 import {
   View,
@@ -12,13 +16,14 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
-import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { SocialAuthButtons } from '../../components/auth/SocialAuthButtons'
-import { colors, THEME_COLORS, spacing, borderRadius, shadows } from '../../constants/theme'
+import { useTheme, stickers } from '../../constants/theme'
+import { Squishy, Heart } from '../../components/ui/Stickers'
 
 export default function SignUp() {
   const insets = useSafeAreaInsets()
+  const { colors, font, isDark } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -35,8 +40,23 @@ export default function SignUp() {
     setLoading(false)
   }
 
+  const bg = isDark ? colors.bg : '#F3ECD9'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const ink4 = isDark ? colors.textFaint : '#A69E93'
+
   return (
-    <CosmicBackground>
+    <View style={[styles.root, { backgroundColor: bg }]}>
+      {/* Decorative stickers */}
+      <View style={[styles.stickerTR, { transform: [{ rotate: '-8deg' }] }]}>
+        <Squishy w={110} h={70} fill={isDark ? stickers.yellow : '#F5D652'} />
+      </View>
+      <View style={[styles.stickerTR2, { transform: [{ rotate: '16deg' }] }]}>
+        <Heart size={40} fill={isDark ? stickers.pink : '#F2B2C7'} />
+      </View>
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -44,168 +64,188 @@ export default function SignUp() {
         <ScrollView
           contentContainerStyle={[
             styles.container,
-            { paddingTop: insets.top + 60, paddingBottom: insets.bottom + 24 },
+            { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 32 },
           ]}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title}>Begin Your{'\n'}Journey.</Text>
-          <Text style={styles.subtitle}>
-            Create your account and meet Grandma
+          {/* Back button */}
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <View style={[styles.backBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <Ionicons name="chevron-back" size={20} color={ink} />
+            </View>
+          </Pressable>
+
+          {/* Heading */}
+          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
+            What should
+          </Text>
+          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
+            grandma
+          </Text>
+          <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>
+            call you?
+          </Text>
+          <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
+            Create an account to start your journey.
           </Text>
 
-          {/* Social Auth */}
-          <View style={styles.socialSection}>
-            <SocialAuthButtons />
+          {/* Paper card inputs */}
+          <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
+              EMAIL
+            </Text>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={[styles.inputText, { fontFamily: font.display, color: ink }]}
+              selectionColor={ink}
+              placeholder="your@email.com"
+              placeholderTextColor={ink4}
+            />
           </View>
 
-          {/* Divider */}
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or sign up with email</Text>
-            <View style={styles.dividerLine} />
+          <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
+              PASSWORD
+            </Text>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              style={[styles.inputText, { fontFamily: font.display, color: ink }]}
+              selectionColor={ink}
+              placeholder="min 6 characters"
+              placeholderTextColor={ink4}
+            />
           </View>
-
-          {/* Inputs */}
-          <TextInput
-            style={styles.input}
-            selectionColor={THEME_COLORS.yellow}
-            placeholder="Email address"
-            placeholderTextColor="rgba(255,255,255,0.25)"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
-
-          <TextInput
-            style={styles.input}
-            selectionColor={THEME_COLORS.yellow}
-            placeholder="Password (min 6 characters)"
-            placeholderTextColor="rgba(255,255,255,0.25)"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
 
           {/* CTA */}
           <Pressable
             onPress={signUp}
             disabled={loading}
             style={({ pressed }) => [
-              styles.ctaButton,
-              pressed && { transform: [{ scale: 0.98 }] },
-              loading && { opacity: 0.6 },
+              styles.cta,
+              {
+                backgroundColor: ink,
+                opacity: pressed ? 0.88 : loading ? 0.6 : 1,
+                transform: [{ scale: pressed ? 0.98 : 1 }],
+              },
             ]}
           >
-            <Text style={styles.ctaText}>
-              {loading ? 'Creating...' : 'Create Account'}
+            <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
+              {loading ? 'Creating…' : 'Continue →'}
             </Text>
           </Pressable>
 
-          <Pressable onPress={() => router.back()}>
-            <Text style={styles.switchLink}>
+          {/* Switch */}
+          <Pressable onPress={() => router.push('/(auth)/sign-in')}>
+            <Text style={[styles.switchLink, { fontFamily: font.body, color: ink3 }]}>
               Already have an account?{' '}
-              <Text style={styles.switchBold}>Sign in</Text>
+              <Text style={{ fontFamily: font.bodySemiBold, color: ink }}>Sign in</Text>
             </Text>
           </Pressable>
 
-          <Text style={styles.termsText}>
-            By creating an account, you agree to Grandma's{' '}
-            <Text style={styles.termsLink}>Terms of Serenity</Text> and{' '}
-            <Text style={styles.termsLink}>Privacy Policy</Text>.
+          {/* Terms */}
+          <Text style={[styles.terms, { fontFamily: font.body, color: ink4 }]}>
+            By continuing, you agree to Grandma's{' '}
+            <Text style={{ textDecorationLine: 'underline' }}>Terms of Serenity</Text>
+            {' '}and{' '}
+            <Text style={{ textDecorationLine: 'underline' }}>Privacy Policy</Text>.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
-    </CosmicBackground>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, overflow: 'hidden' },
+
+  stickerTR: {
+    position: 'absolute',
+    top: 80,
+    right: 20,
+    zIndex: 0,
+  },
+  stickerTR2: {
+    position: 'absolute',
+    top: 130,
+    right: 70,
+    zIndex: 0,
+  },
+
   container: {
     flexGrow: 1,
-    paddingHorizontal: spacing['2xl'],
+    paddingHorizontal: 24,
+    zIndex: 1,
   },
-  title: {
-    fontSize: 36,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -0.8,
-    lineHeight: 40,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.55)',
-    marginBottom: 32,
-  },
-  socialSection: {
-    marginBottom: 24,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  dividerText: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.35)',
-  },
-  input: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 36,
-    paddingHorizontal: 28,
-    height: 72,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 12,
-  },
-  ctaButton: {
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: THEME_COLORS.yellow,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
-    shadowColor: THEME_COLORS.yellow,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 30,
+    marginBottom: 20,
   },
-  ctaText: {
+
+  heading: {
+    fontSize: 40,
+    lineHeight: 42,
+    letterSpacing: -1,
+  },
+  headingItalic: {
+    fontSize: 40,
+    lineHeight: 42,
+    letterSpacing: -0.5,
+    marginBottom: 10,
+  },
+  sub: {
+    fontSize: 15,
+    marginBottom: 28,
+  },
+
+  inputCard: {
+    borderRadius: 20,
+    padding: 14,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  inputLabel: {
+    fontSize: 10,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  inputText: {
     fontSize: 18,
-    fontWeight: '800',
-    color: '#1A1030',
-    letterSpacing: 0.5,
+    letterSpacing: -0.3,
   },
+
+  cta: {
+    height: 58,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  ctaText: { fontSize: 16 },
+
   switchLink: {
     textAlign: 'center',
-    marginTop: 24,
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
+    marginBottom: 16,
   },
-  switchBold: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  termsText: {
+
+  terms: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.3)',
     textAlign: 'center',
     lineHeight: 18,
-    marginTop: 24,
-  },
-  termsLink: {
-    textDecorationLine: 'underline',
-    color: 'rgba(255,255,255,0.5)',
+    paddingHorizontal: 16,
   },
 })

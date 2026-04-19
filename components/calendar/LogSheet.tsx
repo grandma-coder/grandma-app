@@ -1,14 +1,15 @@
 /**
- * LogSheet — modal bottom sheet for cycle log forms.
+ * LogSheet (Apr 2026 redesign) — bottom sheet shell used by every log form.
  *
- * Uses React Native Modal with slide-up animation.
- * Wraps any child form content.
+ * Paper bg, drag handle, Fraunces serif title, paper close circle,
+ * warm dark overlay.
  */
 
-import { View, Text, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
-import { X } from 'lucide-react-native'
+import { View, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
+import { Display } from '../ui/Typography'
 
 interface LogSheetProps {
   visible: boolean
@@ -18,16 +19,16 @@ interface LogSheetProps {
 }
 
 export function LogSheet({ visible, title, onClose, children }: LogSheetProps) {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
 
+  const bg = isDark ? colors.bg : '#F3ECD9'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -37,27 +38,24 @@ export function LogSheet({ visible, title, onClose, children }: LogSheetProps) {
           style={[
             styles.sheet,
             {
-              backgroundColor: colors.bg,
-              borderTopLeftRadius: radius.xl,
-              borderTopRightRadius: radius.xl,
+              backgroundColor: bg,
               paddingBottom: insets.bottom + 16,
             },
           ]}
         >
-          {/* Handle */}
           <View style={styles.handleWrap}>
-            <View style={[styles.handle, { backgroundColor: colors.border }]} />
+            <View style={[styles.handle, { backgroundColor: paperBorder }]} />
           </View>
 
-          {/* Header */}
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-            <Pressable onPress={onClose} style={styles.closeBtn}>
-              <X size={20} color={colors.textMuted} />
+            <Display size={22} color={ink}>{title}</Display>
+            <Pressable onPress={onClose} hitSlop={8}>
+              <View style={[styles.closeBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+                <Ionicons name="close" size={18} color={ink} />
+              </View>
             </Pressable>
           </View>
 
-          {/* Content */}
           <View style={styles.content}>{children}</View>
         </View>
       </KeyboardAvoidingView>
@@ -69,21 +67,21 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
+    backgroundColor: 'rgba(10,8,6,0.55)',
   },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
+  backdrop: { ...StyleSheet.absoluteFillObject },
   sheet: {
     maxHeight: '95%',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
   },
   handleWrap: {
     alignItems: 'center',
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingTop: 10,
+    paddingBottom: 6,
   },
   handle: {
-    width: 36,
+    width: 42,
     height: 4,
     borderRadius: 2,
   },
@@ -91,17 +89,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   closeBtn: {
-    padding: 4,
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
 })

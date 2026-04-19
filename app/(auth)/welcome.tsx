@@ -1,8 +1,8 @@
 /**
- * A4 — Welcome + Auth Screen
+ * Welcome screen — sticker collage aesthetic (Apr 2026 redesign)
  *
- * Animated GRANDMA wordmark, taglines, Apple + Google OAuth.
- * Auth state changes trigger route guard in _layout.tsx automatically.
+ * Cream canvas · Fraunces display · decorative stickers
+ * "grandma / sees you." headline + Apple/Google auth
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -16,10 +16,12 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useTheme, brand } from '../../constants/theme'
+import { router } from 'expo-router'
+import { useTheme, stickers } from '../../constants/theme'
+import { Burst, Blob, Heart, Flower } from '../../components/ui/Stickers'
+import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
 import {
   signInWithApple,
   signInWithGoogle,
@@ -28,52 +30,18 @@ import {
 
 export default function Welcome() {
   const insets = useSafeAreaInsets()
-  const { colors, fontSize, fontWeight, radius, spacing } = useTheme()
+  const { colors, font, isDark } = useTheme()
 
-  // ─── Animated logo ──────────────────────────────────────────────────────
-  const logoOpacity = useRef(new Animated.Value(0)).current
-  const logoScale = useRef(new Animated.Value(0.8)).current
+  // ─── Entrance animation ─────────────────────────────────────────────────
+  const fadeIn = useRef(new Animated.Value(0)).current
+  const slideUp = useRef(new Animated.Value(24)).current
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(logoOpacity, {
-        toValue: 1,
-        duration: 2000,
-        useNativeDriver: true,
-      }),
-      Animated.spring(logoScale, {
-        toValue: 1,
-        tension: 20,
-        friction: 7,
-        useNativeDriver: true,
-      }),
+      Animated.timing(fadeIn, { toValue: 1, duration: 700, useNativeDriver: true }),
+      Animated.spring(slideUp, { toValue: 0, tension: 60, friction: 14, useNativeDriver: true }),
     ]).start()
   }, [])
-
-  // ─── Background pulse ───────────────────────────────────────────────────
-  const pulseAnim = useRef(new Animated.Value(0)).current
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 4000,
-          useNativeDriver: false,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0,
-          duration: 4000,
-          useNativeDriver: false,
-        }),
-      ])
-    ).start()
-  }, [])
-
-  const bgOpacity = pulseAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.6, 1],
-  })
 
   // ─── Auth state ─────────────────────────────────────────────────────────
   const [appleAvailable, setAppleAvailable] = useState(false)
@@ -87,11 +55,8 @@ export default function Welcome() {
     try {
       setLoading('apple')
       await signInWithApple()
-      // Route guard in _layout.tsx handles navigation
     } catch (e: any) {
-      if (e.code !== 'ERR_REQUEST_CANCELED') {
-        Alert.alert('Sign-In Error', e.message)
-      }
+      if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert('Sign-In Error', e.message)
     } finally {
       setLoading(null)
     }
@@ -101,118 +66,142 @@ export default function Welcome() {
     try {
       setLoading('google')
       await signInWithGoogle()
-      // Route guard in _layout.tsx handles navigation
     } catch (e: any) {
-      if (e.message !== 'Google sign-in was cancelled or failed') {
-        Alert.alert('Sign-In Error', e.message)
-      }
+      if (e.message !== 'Google sign-in was cancelled or failed') Alert.alert('Sign-In Error', e.message)
     } finally {
       setLoading(null)
     }
   }
 
+  const bg = isDark ? colors.bg : '#F3ECD9'
+  const ink = isDark ? colors.text : '#141313'
+  const ink2 = isDark ? colors.textSecondary : '#3A3533'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      {/* Animated gradient background */}
-      <Animated.View style={[StyleSheet.absoluteFill, { opacity: bgOpacity }]}>
-        <LinearGradient
-          colors={[brand.primaryDark, colors.bg, brand.primaryTint]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
+    <View style={[styles.root, { backgroundColor: bg }]}>
+      {/* ── Decorative stickers (positioned absolutely) ── */}
+      <View style={[styles.stickerTL, { transform: [{ rotate: '-18deg' }] }]}>
+        <Blob size={110} fill={isDark ? stickers.yellow : '#F5D652'} variant={1} />
+      </View>
+      <View style={[styles.stickerTR, { transform: [{ rotate: '24deg' }] }]}>
+        <Burst size={90} fill={isDark ? stickers.pink : '#F2B2C7'} />
+      </View>
+      <View style={[styles.stickerMidL, { transform: [{ rotate: '-8deg' }] }]}>
+        <Flower
+          size={80}
+          petal={isDark ? stickers.lilac : '#C8B6E8'}
+          center={isDark ? stickers.yellow : '#F5D652'}
         />
+      </View>
+      <View style={styles.stickerMidR}>
+        <Heart size={70} fill={isDark ? stickers.blue : '#9DC3E8'} />
+      </View>
+
+      {/* ── Content ── */}
+      <Animated.View
+        style={[
+          styles.content,
+          { paddingTop: insets.top + 220, opacity: fadeIn, transform: [{ translateY: slideUp }] },
+        ]}
+      >
+        {/* Heart-eye logo */}
+        <View style={{ marginBottom: 18 }}>
+          <GrandmaLogo
+            size={104}
+            body={isDark ? stickers.yellow : '#F5D652'}
+            outline={ink}
+            accent={stickers.coral}
+          />
+        </View>
+
+        {/* Italic welcome line */}
+        <Text style={[styles.welcomeLine, { fontFamily: font.italic, color: ink3 }]}>
+          welcome to
+        </Text>
+
+        {/* Main wordmark */}
+        <Text style={[styles.wordmark, { fontFamily: font.display, color: ink }]}>
+          grandma
+        </Text>
+
+        {/* Italic tagline */}
+        <Text style={[styles.seesYou, { fontFamily: font.italic, color: stickers.coral }]}>
+          sees you.
+        </Text>
+
+        {/* Body */}
+        <Text style={[styles.body, { fontFamily: font.body, color: ink2 }]}>
+          Your wise companion through trying, pregnancy, and the first years.
+        </Text>
       </Animated.View>
 
-      <View style={[styles.container, { paddingTop: insets.top + 80 }]}>
-        {/* Animated GRANDMA wordmark */}
-        <Animated.Text
-          style={[
-            styles.wordmark,
-            {
-              color: colors.primary,
-              opacity: logoOpacity,
-              transform: [{ scale: logoScale }],
-            },
-          ]}
-        >
-          GRANDMA
-        </Animated.Text>
-
-        {/* Tagline 1 */}
-        <Text style={[styles.tagline, { color: colors.textSecondary }]}>
-          Your favorite parents tracker and community builder
-        </Text>
-
-        {/* Tagline 2 */}
-        <Text style={[styles.taglineItalic, { color: colors.textMuted }]}>
-          Your support system for the most beautiful journey of your life.
-        </Text>
-
-        {/* Spacer */}
-        <View style={{ flex: 1 }} />
-
-        {/* Auth buttons */}
-        <View style={[styles.authSection, { paddingBottom: insets.bottom + 24 }]}>
-          {/* Apple Sign In */}
-          {appleAvailable && (
-            <Pressable
-              onPress={handleApple}
-              disabled={loading !== null}
-              style={({ pressed }) => [
-                styles.authButton,
-                styles.appleButton,
-                { borderRadius: radius.lg },
-                pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
-                loading === 'apple' && { opacity: 0.6 },
-              ]}
-            >
-              {loading === 'apple' ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <>
-                  <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
-                  <Text style={styles.appleText}>Continue with Apple</Text>
-                </>
-              )}
-            </Pressable>
-          )}
-
-          {/* Google Sign In */}
+      {/* ── Auth buttons ── */}
+      <Animated.View
+        style={[
+          styles.authSection,
+          { paddingBottom: insets.bottom + 24, opacity: fadeIn },
+        ]}
+      >
+        {appleAvailable && (
           <Pressable
-            onPress={handleGoogle}
+            onPress={handleApple}
             disabled={loading !== null}
             style={({ pressed }) => [
-              styles.authButton,
-              styles.googleButton,
-              { borderRadius: radius.lg, borderColor: colors.border },
-              pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
-              loading === 'google' && { opacity: 0.6 },
+              styles.authBtn,
+              { backgroundColor: ink, opacity: pressed ? 0.88 : loading === 'apple' ? 0.6 : 1 },
             ]}
           >
-            {loading === 'google' ? (
-              <ActivityIndicator color="#1A1A2E" />
+            {loading === 'apple' ? (
+              <ActivityIndicator color={bg} />
             ) : (
               <>
-                <Ionicons name="logo-google" size={18} color="#1A1A2E" />
-                <Text style={styles.googleText}>Continue with Google</Text>
+                <Ionicons name="logo-apple" size={18} color={bg} />
+                <Text style={[styles.authBtnText, { fontFamily: font.bodyMedium, color: bg }]}>
+                  Continue with Apple
+                </Text>
               </>
             )}
           </Pressable>
+        )}
 
-          {/* Terms */}
-          <Text style={[styles.terms, { color: colors.textMuted }]}>
-            By continuing, you agree to Grandma's{' '}
-            <Text style={{ color: colors.textSecondary, textDecorationLine: 'underline' }}>
-              Terms of Service
-            </Text>{' '}
-            and{' '}
-            <Text style={{ color: colors.textSecondary, textDecorationLine: 'underline' }}>
-              Privacy Policy
-            </Text>
-            .
+        <Pressable
+          onPress={handleGoogle}
+          disabled={loading !== null}
+          style={({ pressed }) => [
+            styles.authBtn,
+            {
+              backgroundColor: paper,
+              borderWidth: 1,
+              borderColor: paperBorder,
+              opacity: pressed ? 0.88 : loading === 'google' ? 0.6 : 1,
+            },
+          ]}
+        >
+          {loading === 'google' ? (
+            <ActivityIndicator color={ink} />
+          ) : (
+            <>
+              <Ionicons name="logo-google" size={18} color={ink} />
+              <Text style={[styles.authBtnText, { fontFamily: font.bodyMedium, color: ink }]}>
+                Continue with Google
+              </Text>
+            </>
+          )}
+        </Pressable>
+
+        <Text style={[styles.signInLink, { fontFamily: font.body, color: ink3 }]}>
+          Have an account?{' '}
+          <Text
+            onPress={() => router.push('/(auth)/sign-in')}
+            style={{ color: ink, fontFamily: font.bodySemiBold }}
+          >
+            Sign in
           </Text>
-        </View>
-      </View>
+        </Text>
+      </Animated.View>
     </View>
   )
 }
@@ -220,81 +209,85 @@ export default function Welcome() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
-    alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
   },
 
-  // Wordmark
+  // Sticker positions
+  stickerTL: {
+    position: 'absolute',
+    top: 72,
+    left: -20,
+  },
+  stickerTR: {
+    position: 'absolute',
+    top: 100,
+    right: -10,
+  },
+  stickerMidL: {
+    position: 'absolute',
+    top: 250,
+    left: 30,
+  },
+  stickerMidR: {
+    position: 'absolute',
+    top: 220,
+    right: 24,
+  },
+
+  // Text content
+  content: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    paddingHorizontal: 28,
+    textAlign: 'left',
+  },
+  welcomeLine: {
+    fontSize: 18,
+    marginBottom: 6,
+  },
   wordmark: {
-    fontSize: 48,
-    fontWeight: '900',
-    letterSpacing: 6,
-    marginBottom: 24,
+    fontSize: 68,
+    fontWeight: '700',
+    lineHeight: 64,
+    letterSpacing: -2,
   },
-
-  // Taglines
-  tagline: {
-    fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'center',
+  seesYou: {
+    fontSize: 32,
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  body: {
+    fontSize: 15,
     lineHeight: 22,
-    marginBottom: 8,
-    paddingHorizontal: 16,
-  },
-  taglineItalic: {
-    fontSize: 14,
-    fontWeight: '400',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: 24,
+    maxWidth: 280,
   },
 
   // Auth section
   authSection: {
-    width: '100%',
-    gap: 12,
+    position: 'absolute',
+    bottom: 0,
+    left: 20,
+    right: 20,
+    gap: 10,
     alignItems: 'center',
   },
-  authButton: {
+  authBtn: {
     width: '100%',
-    height: 56,
+    height: 58,
+    borderRadius: 999,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
   },
-
-  // Apple
-  appleButton: {
-    backgroundColor: '#000000',
-  },
-  appleText: {
+  authBtnText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontWeight: '500',
   },
-
-  // Google
-  googleButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-  },
-  googleText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A2E',
-  },
-
-  // Terms
-  terms: {
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 18,
-    paddingHorizontal: 16,
-    marginTop: 8,
+  signInLink: {
+    fontSize: 13,
+    marginTop: 6,
   },
 })

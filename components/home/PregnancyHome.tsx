@@ -29,6 +29,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
+import { useJourneyStore } from '../../store/useJourneyStore'
+import { HomeGreeting } from './HomeGreeting'
 import { supabase } from '../../lib/supabase'
 import { pregnancyWeeks, getDaysToGo } from '../../lib/pregnancyData'
 import type { PregnancyWeekData } from '../../lib/pregnancyData'
@@ -140,7 +142,7 @@ function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarous
             )}
           </View>
 
-          <Text style={styles.heroEmoji}>{emoji}</Text>
+          <Text style={{ fontSize: 64, textAlign: 'center', marginVertical: 8 }}>{emoji}</Text>
           <Text style={styles.heroWeekText}>Week {item.week}</Text>
           <Text style={styles.heroSizeText}>
             Size of a {item.data.babySize.toLowerCase()} · {item.data.babyLength}
@@ -261,19 +263,18 @@ function QuickLogStrip({ todayLogs, weekNumber, onPressRoutine }: QuickLogStripP
             chipTextColor = '#A2FF86'
           }
 
-          const chipLabel = isWater && isDone
-            ? `${routine.emoji} ${waterCount}/8 glasses`
-            : isDone
-            ? `${routine.emoji} ✓ ${routine.label}`
-            : `${routine.emoji} + ${routine.label}`
-
           return (
             <Pressable
               key={routine.type}
               onPress={() => onPressRoutine(routine.type)}
               style={[styles.quickChip, { backgroundColor: chipBg, borderColor: chipBorder }]}
             >
-              <Text style={[styles.quickChipText, { color: chipTextColor }]}>{chipLabel}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={{ fontSize: 13 }}>{routine.emoji}</Text>
+                <Text style={[styles.quickChipText, { color: chipTextColor }]}>
+                  {isWater && isDone ? `${waterCount}/8 glasses` : isDone ? `✓ ${routine.label}` : `+ ${routine.label}`}
+                </Text>
+              </View>
             </Pressable>
           )
         })}
@@ -356,6 +357,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
 
   const weekNumber = usePregnancyStore((s) => s.weekNumber) ?? 24
   const dueDate = usePregnancyStore((s) => s.dueDate) ?? ''
+  const parentName = useJourneyStore((s) => s.parentName)
 
   const [activeLog, setActiveLog] = useState<InlineLogType>(null)
   const [weekDetailVisible, setWeekDetailVisible] = useState(false)
@@ -433,12 +435,24 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
     return null
   }
 
+  const weekdayLabel = new Date()
+    .toLocaleDateString('en-US', { weekday: 'long' })
+    .toUpperCase()
+
   return (
     <ScrollView
       style={[styles.root, { backgroundColor: colors.bg }]}
       contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: insets.bottom + 32 }}
       showsVerticalScrollIndicator={false}
     >
+      {/* Greeting */}
+      <View style={{ paddingHorizontal: 20, marginBottom: 12 }}>
+        <HomeGreeting
+          name={parentName}
+          microLabel={`WEEK ${weekNumber} · ${weekdayLabel}`}
+        />
+      </View>
+
       {/* 1. Hero Carousel — full-width, tappable */}
       <BabyHeroCarousel
         currentWeek={weekNumber}
@@ -538,7 +552,7 @@ const styles = StyleSheet.create({
   heroBadgeRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   heroBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
   heroBadgeText: { fontSize: 11, fontFamily: 'Satoshi-Variable', color: 'rgba(255,255,255,0.8)', fontWeight: '600', letterSpacing: 0.5 },
-  heroEmoji: { fontSize: 64, textAlign: 'center', marginVertical: 8 },
+  heroEmoji: { fontSize: 64, textAlign: 'center', marginVertical: 8, fontFamily: undefined },
   heroWeekText: { fontSize: 28, fontFamily: 'CabinetGrotesk-Black', color: '#FFFFFF', textAlign: 'center' },
   heroSizeText: { fontSize: 14, fontFamily: 'Satoshi-Variable', color: 'rgba(255,255,255,0.75)', textAlign: 'center', marginTop: 4 },
   heroDaysText: { fontSize: 13, fontFamily: 'Satoshi-Variable', color: 'rgba(255,255,255,0.55)', textAlign: 'center', marginTop: 2 },

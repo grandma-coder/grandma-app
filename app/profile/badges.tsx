@@ -5,22 +5,21 @@
 import {
   View,
   Text,
-  Pressable,
   ScrollView,
   StyleSheet,
   Platform,
 } from 'react-native'
-import { router } from 'expo-router'
-import { ArrowLeft, Lock } from 'lucide-react-native'
+import { Lock } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
 import {
   useBadgeStore,
   BADGE_DEFS,
-  getBadgeDef,
   getTierColor,
   type BadgeCategory,
 } from '../../store/useBadgeStore'
+import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { Display, MonoCaps } from '../../components/ui/Typography'
 
 const SECTIONS: { key: BadgeCategory; label: string; color: string }[] = [
   { key: 'streak',    label: 'Streaks',    color: '#F59E0B' },
@@ -35,7 +34,7 @@ const SECTIONS: { key: BadgeCategory; label: string; color: string }[] = [
 ]
 
 export default function BadgeWalletScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, font, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const earnedBadges = useBadgeStore((s) => s.earnedBadges)
   const totalPoints = useBadgeStore((s) => s.totalPoints)
@@ -44,38 +43,39 @@ export default function BadgeWalletScreen() {
   const earnedCount = earnedBadges.length
   const totalCount = BADGE_DEFS.length
 
+  const bg = isDark ? colors.bg : '#F3ECD9'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: bg }]}>
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+        <ScreenHeader title="Badge Wallet" />
+      </View>
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 },
+          { paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <ArrowLeft size={24} color={colors.text} />
-          </Pressable>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Badge Wallet</Text>
-        </View>
-
-        {/* Summary */}
-        <View style={[styles.summary, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+        {/* Summary paper card */}
+        <View style={[styles.summary, { backgroundColor: paper, borderColor: paperBorder }]}>
           <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: '#FFD700' }]}>{earnedCount}</Text>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Earned</Text>
+            <Display size={28} color={ink}>{earnedCount}</Display>
+            <MonoCaps color={ink3}>Earned</MonoCaps>
           </View>
-          <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+          <View style={[styles.summaryDivider, { backgroundColor: paperBorder }]} />
           <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: colors.textSecondary }]}>{totalCount - earnedCount}</Text>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Locked</Text>
+            <Display size={28} color={ink3}>{totalCount - earnedCount}</Display>
+            <MonoCaps color={ink3}>Locked</MonoCaps>
           </View>
-          <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+          <View style={[styles.summaryDivider, { backgroundColor: paperBorder }]} />
           <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: '#FFD700' }]}>{totalPoints}</Text>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Points</Text>
+            <Display size={28} color={ink}>{totalPoints}</Display>
+            <MonoCaps color={ink3}>Points</MonoCaps>
           </View>
         </View>
 
@@ -106,7 +106,7 @@ export default function BadgeWalletScreen() {
                         {
                           backgroundColor: isEarned ? def.color + '10' : colors.surfaceRaised,
                           borderColor: isEarned ? def.color + '25' : colors.border,
-                          borderRadius: radius.xl,
+                          borderRadius: 20,
                         },
                       ]}
                     >
@@ -153,15 +153,16 @@ export default function BadgeWalletScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  scroll: { paddingHorizontal: 16, gap: 20 },
+  headerWrap: { paddingHorizontal: 16 },
+  scroll: { paddingHorizontal: 16, paddingTop: 12, gap: 20 },
 
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headerTitle: { fontSize: 22, fontWeight: '800' },
-
-  summary: { flexDirection: 'row', padding: 16 },
+  summary: {
+    flexDirection: 'row',
+    padding: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+  },
   summaryItem: { flex: 1, alignItems: 'center', gap: 4 },
-  summaryValue: { fontSize: 24, fontWeight: '900' },
-  summaryLabel: { fontSize: 12, fontWeight: '600' },
   summaryDivider: { width: 1, height: 36 },
 
   section: { gap: 10 },

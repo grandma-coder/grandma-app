@@ -1,49 +1,59 @@
+/**
+ * Child Profile (Apr 2026 redesign) — "About your little one."
+ *
+ * Cream canvas, Fraunces display + italic, paper card rows with
+ * sticker icon + label + value, ink pill CTA, terms microcopy footer.
+ */
+
 import { useState } from 'react'
 import {
   View,
-  Text,
   TextInput,
   Alert,
   StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from 'react-native'
 import { router } from 'expo-router'
-import { Pressable } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useModeStore } from '../../store/useModeStore'
-import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { GradientButton } from '../../components/ui/GradientButton'
+import { useTheme, stickers } from '../../constants/theme'
 import DatePickerField from '../../components/ui/DatePickerField'
-import { colors, typography, spacing, borderRadius } from '../../constants/theme'
+import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
+import { PillButton } from '../../components/ui/PillButton'
+import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { Star, Heart, Drop, Leaf } from '../../components/ui/Stickers'
 
 export default function ChildProfile() {
   const insets = useSafeAreaInsets()
+  const { colors, font, isDark } = useTheme()
   const setChildren = useChildStore((s) => s.setChildren)
   const mode = useModeStore((s) => s.mode)
-  const { parentName, babyName } = useJourneyStore()
+  const { babyName } = useJourneyStore()
 
   const [name, setName] = useState(babyName || '')
   const [birthDate, setBirthDate] = useState('')
-  const [weight, setWeight] = useState('')
+  const [bloodType, setBloodType] = useState('')
   const [allergies, setAllergies] = useState('')
   const [loading, setLoading] = useState(false)
 
   const isPregnancy = mode === 'pregnancy' || mode === 'pre-pregnancy'
 
+  const bg = isDark ? colors.bg : '#F3ECD9'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const ink4 = isDark ? colors.textFaint : '#A69E93'
+
   async function save() {
     if (!isPregnancy && !name.trim()) {
       Alert.alert('Required', "What's your little one's name?")
-      return
-    }
-
-    if (weight && (isNaN(parseFloat(weight)) || parseFloat(weight) <= 0)) {
-      Alert.alert('Invalid weight', 'Please enter a valid weight in kg')
       return
     }
 
@@ -64,8 +74,10 @@ export default function ChildProfile() {
           parent_id: user.id,
           name: childName,
           birth_date: birthDate || null,
-          weight_kg: weight ? parseFloat(weight) : null,
-          allergies: allergies ? allergies.split(',').map(a => a.trim()).filter(Boolean) : [],
+          blood_type: bloodType || null,
+          allergies: allergies
+            ? allergies.split(',').map((a) => a.trim()).filter(Boolean)
+            : [],
         })
         .select()
         .single()
@@ -89,8 +101,16 @@ export default function ChildProfile() {
         birthDate: data.birth_date ?? '',
         weightKg: data.weight_kg ?? 0,
         heightCm: data.height_cm ?? 0,
+        sex: data.sex ?? '',
+        bloodType: data.blood_type ?? '',
         allergies: data.allergies ?? [],
         medications: data.medications ?? [],
+        conditions: data.conditions ?? [],
+        dietaryRestrictions: data.dietary_restrictions ?? [],
+        preferredFoods: data.preferred_foods ?? [],
+        dislikedFoods: data.disliked_foods ?? [],
+        pediatrician: data.pediatrician ?? null,
+        notes: data.notes ?? '',
         countryCode: data.country_code ?? 'US',
         caregiverRole: 'parent',
         permissions: { view: true, log_activity: true, chat: true },
@@ -105,145 +125,226 @@ export default function ChildProfile() {
   }
 
   return (
-    <CosmicBackground>
+    <View style={[styles.root, { backgroundColor: bg }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
           contentContainerStyle={[
-            styles.scrollContent,
-            { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 },
+            styles.scroll,
+            { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 120 },
           ]}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
-          </Pressable>
+          <ScreenHeader
+            title="4 / 10"
+            right={
+              <Pressable onPress={save} hitSlop={8}>
+                <Body color={ink3} size={13}>Skip</Body>
+              </Pressable>
+            }
+          />
 
-          <Text style={styles.title}>
-            {isPregnancy ? "Almost there,\ndear." : "Tell Grandma about\nyour little one"}
-          </Text>
-          <Text style={styles.subtitle}>
+          <View style={{ marginTop: 24 }}>
+            <Display size={34} color={ink}>About</Display>
+            <DisplayItalic size={34} color={ink}>
+              {isPregnancy ? 'you both.' : 'your little one.'}
+            </DisplayItalic>
+          </View>
+
+          <Body color={ink3} style={styles.subtitle}>
             {isPregnancy
-              ? 'Just a few more details to personalize your experience'
-              : 'This helps her give personalized advice'}
-          </Text>
+              ? 'Just a few more details to personalize your experience.'
+              : 'This helps Grandma give personalized advice.'}
+          </Body>
 
           {!isPregnancy && (
-            <>
-              <Text style={styles.label}>CHILD'S NAME *</Text>
-              <TextInput
-                style={styles.input}
-                selectionColor={colors.neon.blue}
-                placeholder="e.g. Sofia"
-                placeholderTextColor={colors.textTertiary}
-                value={name}
-                onChangeText={setName}
-              />
-            </>
-          )}
-
-          {!isPregnancy && (
-            <DatePickerField
-              label="BIRTH DATE"
-              value={birthDate}
-              onChange={setBirthDate}
-              placeholder="Tap to select"
-              maximumDate={new Date()}
+            <Card
+              sticker={<Star size={28} fill={isDark ? stickers.yellow : '#F5D652'} />}
+              paper={paper}
+              paperBorder={paperBorder}
+              ink={ink}
+              ink4={ink4}
+              font={font}
+              label="CHILD'S NAME"
+              placeholder="Juno"
+              value={name}
+              onChangeText={setName}
             />
           )}
 
           {!isPregnancy && (
-            <>
-              <Text style={styles.label}>WEIGHT (kg)</Text>
-              <TextInput
-                style={styles.input}
-                selectionColor={colors.neon.blue}
-                placeholder="e.g. 7.5"
-                placeholderTextColor={colors.textTertiary}
-                value={weight}
-                onChangeText={setWeight}
-                keyboardType="decimal-pad"
-              />
-            </>
+            <View style={[styles.dateCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <View style={styles.dateRow}>
+                <View style={[styles.stickerCircle, { backgroundColor: isDark ? stickers.pinkSoft : '#F9D8E2' }]}>
+                  <Heart size={26} fill={isDark ? stickers.pink : '#F2B2C7'} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <MonoCaps color={ink4} style={{ marginBottom: 2 }}>DATE OF BIRTH</MonoCaps>
+                  <DatePickerField
+                    label=""
+                    value={birthDate}
+                    onChange={setBirthDate}
+                    placeholder="Tap to select"
+                    maximumDate={new Date()}
+                  />
+                </View>
+              </View>
+            </View>
           )}
 
-          <Text style={styles.label}>KNOWN ALLERGIES</Text>
-          <TextInput
-            style={styles.input}
-            selectionColor={colors.neon.blue}
-            placeholder="e.g. dairy, peanuts (comma separated)"
-            placeholderTextColor={colors.textTertiary}
+          <Card
+            sticker={<Drop size={26} fill={isDark ? stickers.pink : '#F2B2C7'} />}
+            stickerBg={isDark ? stickers.pinkSoft : '#F9D8E2'}
+            paper={paper}
+            paperBorder={paperBorder}
+            ink={ink}
+            ink4={ink4}
+            font={font}
+            label="BLOOD TYPE"
+            placeholder="O+"
+            value={bloodType}
+            onChangeText={setBloodType}
+          />
+
+          <Card
+            sticker={<Leaf size={26} fill={isDark ? stickers.green : '#BDD48C'} />}
+            stickerBg={isDark ? stickers.greenSoft : '#DDE7BB'}
+            paper={paper}
+            paperBorder={paperBorder}
+            ink={ink}
+            ink4={ink4}
+            font={font}
+            label="ALLERGIES"
+            placeholder="None known"
             value={allergies}
             onChangeText={setAllergies}
           />
 
-          <View style={{ marginTop: 24 }}>
-            <GradientButton
-              title="Begin My Journey"
-              onPress={save}
-              loading={loading}
-            />
-          </View>
-
-          <Text style={styles.termsText}>
+          <Body size={12} color={ink4} align="center" style={styles.terms}>
             By continuing, you agree to Grandma's{' '}
-            <Text style={styles.termsLink}>Terms of Serenity</Text> and{' '}
-            <Text style={styles.termsLink}>Privacy Policy</Text>.
-          </Text>
+            <Body size={12} color={ink3} style={{ textDecorationLine: 'underline' }}>Terms of Serenity</Body>
+            {' '}and{' '}
+            <Body size={12} color={ink3} style={{ textDecorationLine: 'underline' }}>Privacy Policy</Body>.
+          </Body>
         </ScrollView>
+
+        <View style={[styles.bottom, { paddingBottom: insets.bottom + 16, backgroundColor: bg }]}>
+          <PillButton
+            label="Begin my journey →"
+            onPress={save}
+            variant="ink"
+            loading={loading}
+          />
+        </View>
       </KeyboardAvoidingView>
-    </CosmicBackground>
+    </View>
+  )
+}
+
+function Card({
+  sticker,
+  stickerBg,
+  paper,
+  paperBorder,
+  ink,
+  ink4,
+  font,
+  label,
+  placeholder,
+  value,
+  onChangeText,
+}: {
+  sticker: React.ReactNode
+  stickerBg?: string
+  paper: string
+  paperBorder: string
+  ink: string
+  ink4: string
+  font: any
+  label: string
+  placeholder: string
+  value: string
+  onChangeText: (t: string) => void
+}) {
+  return (
+    <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
+      <View style={[styles.stickerCircle, { backgroundColor: stickerBg ?? '#FBEA9E' }]}>
+        {sticker}
+      </View>
+      <View style={{ flex: 1 }}>
+        <MonoCaps color={ink4} style={{ marginBottom: 2 }}>{label}</MonoCaps>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={ink4}
+          selectionColor={ink}
+          style={[styles.cardInput, { fontFamily: font.display, color: ink }]}
+        />
+      </View>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingHorizontal: spacing['2xl'],
+  root: { flex: 1 },
+  scroll: { paddingHorizontal: 24 },
+
+  subtitle: {
+    marginTop: 10,
+    marginBottom: 22,
+    maxWidth: 320,
+    lineHeight: 22,
   },
-  backButton: {
+
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 10,
+  },
+  dateCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 10,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  stickerCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surfaceGlass,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
-    borderWidth: 1,
-    borderColor: colors.border,
+    justifyContent: 'center',
   },
-  title: {
-    ...typography.heading,
-    marginBottom: 8,
+  cardInput: {
+    fontSize: 18,
+    letterSpacing: -0.2,
+    paddingVertical: 0,
   },
-  subtitle: {
-    ...typography.bodySecondary,
-    marginBottom: 32,
-  },
-  label: {
-    ...typography.label,
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: colors.surfaceGlass,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    padding: 16,
-    fontSize: 16,
-    color: colors.text,
-    marginBottom: 16,
-  },
-  termsText: {
-    fontSize: 12,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: 18,
+
+  terms: {
     marginTop: 20,
+    lineHeight: 18,
+    paddingHorizontal: 16,
   },
-  termsLink: {
-    textDecorationLine: 'underline',
-    color: colors.textSecondary,
+
+  bottom: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 24,
+    paddingTop: 12,
   },
 })

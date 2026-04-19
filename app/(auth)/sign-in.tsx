@@ -1,4 +1,10 @@
-import { useState } from 'react'
+/**
+ * Sign In — paper card form (Apr 2026 redesign)
+ *
+ * Cream canvas · Fraunces display · paper-card inputs
+ */
+
+import { useEffect, useState } from 'react'
 import {
   View,
   Text,
@@ -12,17 +18,24 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ArrowLeft } from 'lucide-react-native'
 import { supabase } from '../../lib/supabase'
-import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { SocialAuthButtons } from '../../components/auth/SocialAuthButtons'
-import { THEME_COLORS, spacing } from '../../constants/theme'
+import { useTheme, stickers } from '../../constants/theme'
+import { Burst } from '../../components/ui/Stickers'
+import { signInWithApple, signInWithGoogle, isAppleSignInAvailable } from '../../lib/auth-providers'
+import { Ionicons } from '@expo/vector-icons'
 
 export default function SignIn() {
   const insets = useSafeAreaInsets()
+  const { colors, font, isDark } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [appleAvailable, setAppleAvailable] = useState(false)
+  const [oauthLoading, setOauthLoading] = useState<'apple' | 'google' | null>(null)
+
+  useEffect(() => {
+    isAppleSignInAvailable().then(setAppleAvailable)
+  }, [])
 
   async function signIn() {
     setLoading(true)
@@ -31,8 +44,43 @@ export default function SignIn() {
     setLoading(false)
   }
 
+  async function handleApple() {
+    try {
+      setOauthLoading('apple')
+      await signInWithApple()
+    } catch (e: any) {
+      if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert('Sign-In Error', e.message)
+    } finally {
+      setOauthLoading(null)
+    }
+  }
+
+  async function handleGoogle() {
+    try {
+      setOauthLoading('google')
+      await signInWithGoogle()
+    } catch (e: any) {
+      if (e.message !== 'Google sign-in was cancelled or failed') Alert.alert('Sign-In Error', e.message)
+    } finally {
+      setOauthLoading(null)
+    }
+  }
+
+  const bg = isDark ? colors.bg : '#F3ECD9'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+  const ink2 = isDark ? colors.textSecondary : '#3A3533'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const ink4 = isDark ? colors.textFaint : '#A69E93'
+
   return (
-    <CosmicBackground>
+    <View style={[styles.root, { backgroundColor: bg }]}>
+      {/* Decorative sticker */}
+      <View style={styles.stickerTR}>
+        <Burst size={80} fill={isDark ? stickers.yellow : '#F5D652'} />
+      </View>
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -40,160 +88,269 @@ export default function SignIn() {
         <ScrollView
           contentContainerStyle={[
             styles.container,
-            { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 },
+            { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 32 },
           ]}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
-            <ArrowLeft size={22} color="rgba(255,255,255,0.7)" strokeWidth={2} />
+          {/* Back button */}
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <View style={[styles.backBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <Ionicons name="chevron-back" size={20} color={ink} />
+            </View>
           </Pressable>
 
-          <Text style={[styles.title, { marginTop: 32 }]}>Welcome back,{'\n'}Dear.</Text>
-          <Text style={styles.subtitle}>Sign in to continue your journey</Text>
+          {/* Heading */}
+          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
+            Welcome
+          </Text>
+          <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>
+            back, dear.
+          </Text>
+          <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
+            Grandma's been waiting.
+          </Text>
 
-          {/* Social Auth */}
-          <View style={styles.socialSection}>
-            <SocialAuthButtons />
-          </View>
+          {/* Social auth */}
+          {appleAvailable && (
+            <Pressable
+              onPress={handleApple}
+              disabled={oauthLoading !== null}
+              style={({ pressed }) => [
+                styles.socialBtn,
+                { backgroundColor: ink, opacity: pressed ? 0.88 : oauthLoading === 'apple' ? 0.6 : 1 },
+              ]}
+            >
+              <Ionicons name="logo-apple" size={18} color={bg} />
+              <Text style={[styles.socialBtnText, { fontFamily: font.bodyMedium, color: bg }]}>
+                Continue with Apple
+              </Text>
+            </Pressable>
+          )}
+          <Pressable
+            onPress={handleGoogle}
+            disabled={oauthLoading !== null}
+            style={({ pressed }) => [
+              styles.socialBtn,
+              {
+                backgroundColor: paper,
+                borderWidth: 1,
+                borderColor: paperBorder,
+                opacity: pressed ? 0.88 : oauthLoading === 'google' ? 0.6 : 1,
+              },
+            ]}
+          >
+            <Ionicons name="logo-google" size={18} color={ink} />
+            <Text style={[styles.socialBtnText, { fontFamily: font.bodyMedium, color: ink }]}>
+              Continue with Google
+            </Text>
+          </Pressable>
 
           {/* Divider */}
           <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or sign in with email</Text>
-            <View style={styles.dividerLine} />
+            <View style={[styles.dividerLine, { backgroundColor: paperBorder }]} />
+            <Text style={[styles.dividerText, { fontFamily: font.body, color: ink4 }]}>
+              or sign in with email
+            </Text>
+            <View style={[styles.dividerLine, { backgroundColor: paperBorder }]} />
           </View>
 
-          {/* Inputs */}
-          <TextInput
-            style={styles.input}
-            selectionColor={THEME_COLORS.yellow}
-            placeholder="Email address"
-            placeholderTextColor="rgba(255,255,255,0.25)"
+          {/* Paper card inputs */}
+          <InputField
+            label="EMAIL"
             value={email}
             onChangeText={setEmail}
-            autoCapitalize="none"
             keyboardType="email-address"
+            autoCapitalize="none"
+            paper={paper}
+            paperBorder={paperBorder}
+            ink={ink}
+            ink4={ink4}
+            font={font}
           />
-
-          <TextInput
-            style={styles.input}
-            selectionColor={THEME_COLORS.yellow}
-            placeholder="Password"
-            placeholderTextColor="rgba(255,255,255,0.25)"
+          <InputField
+            label="PASSWORD"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            paper={paper}
+            paperBorder={paperBorder}
+            ink={ink}
+            ink4={ink4}
+            font={font}
           />
+
+          {/* Forgot */}
+          <Text style={[styles.forgot, { fontFamily: font.body, color: ink3 }]}>
+            Forgot password?
+          </Text>
 
           {/* CTA */}
           <Pressable
             onPress={signIn}
             disabled={loading}
             style={({ pressed }) => [
-              styles.ctaButton,
-              pressed && { transform: [{ scale: 0.98 }] },
-              loading && { opacity: 0.6 },
+              styles.cta,
+              {
+                backgroundColor: ink,
+                opacity: pressed ? 0.88 : loading ? 0.6 : 1,
+                transform: [{ scale: pressed ? 0.98 : 1 }],
+              },
             ]}
           >
-            <Text style={styles.ctaText}>
-              {loading ? 'Signing in...' : 'Sign In'}
+            <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
+              {loading ? 'Signing in…' : 'Sign in →'}
             </Text>
           </Pressable>
 
+          {/* Switch */}
           <Pressable onPress={() => router.push('/(auth)/sign-up')}>
-            <Text style={styles.switchLink}>
-              New here? <Text style={styles.switchBold}>Create account</Text>
+            <Text style={[styles.switchLink, { fontFamily: font.body, color: ink3 }]}>
+              New here?{' '}
+              <Text style={{ fontFamily: font.bodySemiBold, color: ink }}>
+                Create account
+              </Text>
             </Text>
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
-    </CosmicBackground>
+    </View>
+  )
+}
+
+function InputField({
+  label,
+  value,
+  onChangeText,
+  secureTextEntry,
+  keyboardType,
+  autoCapitalize,
+  paper,
+  paperBorder,
+  ink,
+  ink4,
+  font,
+}: any) {
+  return (
+    <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+      <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
+        {label}
+      </Text>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        secureTextEntry={secureTextEntry}
+        keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
+        style={[styles.inputText, { fontFamily: font.display, color: ink }]}
+        selectionColor={ink}
+        placeholderTextColor={ink4}
+      />
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, overflow: 'hidden' },
+
+  stickerTR: {
+    position: 'absolute',
+    top: 80,
+    right: 10,
+    transform: [{ rotate: '14deg' }],
+    zIndex: 0,
+  },
+
   container: {
     flexGrow: 1,
-    paddingHorizontal: spacing['2xl'],
+    paddingHorizontal: 24,
+    zIndex: 1,
   },
+
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 20,
   },
-  title: {
-    fontSize: 36,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -0.8,
-    lineHeight: 40,
+
+  heading: {
+    fontSize: 40,
+    lineHeight: 42,
+    letterSpacing: -1,
+    marginTop: 10,
+  },
+  headingItalic: {
+    fontSize: 40,
+    lineHeight: 42,
+    letterSpacing: -0.5,
     marginBottom: 8,
   },
-  subtitle: {
+  sub: {
+    fontSize: 15,
+    marginBottom: 28,
+  },
+
+  socialBtn: {
+    height: 58,
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
+  socialBtnText: {
     fontSize: 16,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.55)',
-    marginBottom: 32,
   },
-  socialSection: {
-    marginBottom: 24,
-  },
+
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 24,
+    marginVertical: 20,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  dividerText: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.35)',
-  },
-  input: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+  dividerLine: { flex: 1, height: 1 },
+  dividerText: { fontSize: 13 },
+
+  inputCard: {
+    borderRadius: 20,
+    padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 36,
-    paddingHorizontal: 28,
-    height: 72,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
     marginBottom: 12,
   },
-  ctaButton: {
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: THEME_COLORS.yellow,
+  inputLabel: {
+    fontSize: 10,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  inputText: {
+    fontSize: 18,
+    letterSpacing: -0.3,
+  },
+
+  forgot: {
+    fontSize: 13,
+    textAlign: 'right',
+    marginBottom: 24,
+  },
+
+  cta: {
+    height: 58,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
-    shadowColor: THEME_COLORS.yellow,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 25,
+    marginBottom: 16,
   },
-  ctaText: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1A1030',
-    letterSpacing: 0.5,
-  },
+  ctaText: { fontSize: 16 },
+
   switchLink: {
     textAlign: 'center',
-    marginTop: 24,
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.5)',
-  },
-  switchBold: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    fontSize: 14,
+    marginTop: 8,
   },
 })

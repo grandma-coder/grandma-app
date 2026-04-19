@@ -102,7 +102,15 @@
       "Bash(sed -i '' 's/savePregnancyLog\\(date, '\\\\''water'\\\\'', glasses.toString\\(\\), null\\)/savePregnancyLog\\(date, '\\\\''water'\\\\'', glasses.toString\\(\\), undefined\\)/' /Users/igorcarvalhorodrigues/Projects/grandma-app/components/calendar/PregnancyLogForms.tsx)",
       "Bash(sed -i '' \"s/savePregnancyLog\\(date, 'vitamins', '1', null\\)/savePregnancyLog\\(date, 'vitamins', '1', undefined\\)/\" /Users/igorcarvalhorodrigues/Projects/grandma-app/components/calendar/PregnancyLogForms.tsx)",
       "Bash(node -e \"const l = require\\('/Users/igorcarvalhorodrigues/Projects/grandma-app/node_modules/lucide-react-native'\\); const keys = Object.keys\\(l\\).filter\\(k => k.toLowerCase\\(\\).includes\\('edit'\\)\\); console.log\\(keys.slice\\(0,10\\)\\)\")",
-      "Bash(ls /Users/igorcarvalhorodrigues/Projects/grandma-app/supabase/migrations/20260416*)"
+      "Bash(ls /Users/igorcarvalhorodrigues/Projects/grandma-app/supabase/migrations/20260416*)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:v for k,v in d.get\\('dependencies',{}\\).items\\(\\)}, indent=2\\)\\)\")",
+      "Bash(npm view *)",
+      "Bash(node -e \"const f = require\\('@expo-google-fonts/fraunces'\\); console.log\\(Object.keys\\(f\\).filter\\(k=>!k.startsWith\\('__'\\)\\).slice\\(0,15\\)\\)\")",
+      "Bash(node -e \"const f = require\\('@expo-google-fonts/dm-sans'\\); console.log\\(Object.keys\\(f\\).filter\\(k=>!k.startsWith\\('__'\\)\\).slice\\(0,15\\)\\)\")",
+      "Bash(node -e \"const f = require\\('@expo-google-fonts/instrument-serif'\\); console.log\\(Object.keys\\(f\\).filter\\(k=>!k.startsWith\\('__'\\)\\).slice\\(0,15\\)\\)\")",
+      "Bash(xxd)",
+      "WebFetch(domain:26a54b71-f6c0-403a-a2e6-68588162a85c.claudeusercontent.com)"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"

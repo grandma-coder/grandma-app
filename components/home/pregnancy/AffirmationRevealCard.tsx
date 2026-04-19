@@ -200,7 +200,10 @@ export function AffirmationRevealCard() {
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: 'rgba(185,131,255,0.2)' }]}>
-      <Text style={[styles.cardLabel, { color: colors.textMuted }]}>✨ TODAY'S AFFIRMATION</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+        <Text style={{ fontSize: 11 }}>✨</Text>
+        <Text style={[styles.cardLabel, { color: colors.textMuted, marginBottom: 0 }]}>TODAY'S AFFIRMATION</Text>
+      </View>
 
       {/* Glow burst overlay */}
       <Animated.View
@@ -217,7 +220,7 @@ export function AffirmationRevealCard() {
         <View style={styles.hiddenState}>
           {/* Orb */}
           <Animated.Text
-            style={[styles.orb, { opacity: orbOpacity, transform: [{ scale: orbScale }] }]}
+            style={[{ fontSize: 40 }, { opacity: orbOpacity, transform: [{ scale: orbScale }] }]}
           >
             🔮
           </Animated.Text>
@@ -230,7 +233,10 @@ export function AffirmationRevealCard() {
             onPress={handleReveal}
             style={({ pressed }) => [styles.revealBtn, { opacity: pressed ? 0.8 : 1 }]}
           >
-            <Text style={styles.revealBtnText}>✨ Reveal Today's Wisdom</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontSize: 13 }}>✨</Text>
+              <Text style={styles.revealBtnText}>Reveal Today's Wisdom</Text>
+            </View>
           </Pressable>
         </View>
       ) : (

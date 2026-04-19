@@ -1,10 +1,14 @@
 /**
- * grandma.app — Dual-Mode Design Token System
+ * grandma.app — Design Token System
  *
  * Stack: React Native + Expo Router + TypeScript + NativeWind
  * State: Zustand v5. Data fetching: React Query. Backend: Supabase.
  *
  * RULE: Components NEVER hardcode hex values — always use semantic tokens.
+ *
+ * Design language (Apr 2026 redesign):
+ *   Light default — cream paper canvas, editorial serif display, sticker accents
+ *   Dark  — warm ink on dark parchment, same stickers
  */
 
 import { useColorScheme } from 'react-native'
@@ -28,10 +32,20 @@ export const brand = {
   warning: '#FF9800',
   error: '#F44336',
 
-  // Journey mode colors
-  prePregnancy: '#FF8AD8',
-  pregnancy: '#B983FF',
-  kids: '#4D96FF',
+  // Journey mode colors — softer pastels (2026 redesign)
+  prePregnancy: '#E58BB4',   // rose
+  pregnancy: '#B7A6E8',      // lavender
+  kids: '#8BB8E8',           // powder blue
+
+  // Journey mode soft tints
+  prePregnancySoft: '#F7CFDD',
+  pregnancySoft: '#E0D5F3',
+  kidsSoft: '#D4E3F3',
+
+  // Legacy mode colors kept for any components not yet migrated
+  prePregnancyLegacy: '#FF8AD8',
+  pregnancyLegacy: '#B983FF',
+  kidsLegacy: '#4D96FF',
 
   // Cycle phase colors
   phase: {
@@ -49,25 +63,66 @@ export const brand = {
   },
 } as const
 
-// ─── LIGHT MODE TOKENS ─────────────────────────────────────────────────────
+// ─── STICKER PALETTE (always available, used as accents) ────────────────────
+
+export const stickers = {
+  yellow: '#F5D652',
+  yellowSoft: '#FBEA9E',
+  blue: '#9DC3E8',
+  blueSoft: '#CFE0F0',
+  pink: '#F2B2C7',
+  pinkSoft: '#F9D8E2',
+  green: '#BDD48C',
+  greenSoft: '#DDE7BB',
+  lilac: '#C8B6E8',
+  lilacSoft: '#E3D8F2',
+  peach: '#F5B896',
+  peachSoft: '#F9D6C0',
+  coral: '#EE7B6D',
+  charcoal: '#2A2624',
+} as const
+
+// Dark mode sticker overrides (slightly brighter)
+export const stickersDark = {
+  yellow: '#F0CE4C',
+  yellowSoft: '#3A3116',
+  blue: '#A5C8EC',
+  blueSoft: '#1C2A3A',
+  pink: '#F5BBCF',
+  pinkSoft: '#36222A',
+  green: '#C5DA98',
+  greenSoft: '#283016',
+  lilac: '#D0BFEC',
+  lilacSoft: '#2A2340',
+  peach: '#F7C09D',
+  peachSoft: '#3A2618',
+  coral: '#F29082',
+  charcoal: '#F5EDDC',
+} as const
+
+// ─── LIGHT MODE TOKENS — cream paper canvas ─────────────────────────────────
 
 export const lightTokens = {
-  bg: '#FBF9FF',
-  bgWarm: '#F5EEFF',
+  // Canvas
+  bg: '#F3ECD9',             // cream
+  bgWarm: '#EFE5CC',         // slightly deeper cream
+  surface: '#FFFEF8',        // card paper white
+  surfaceRaised: '#F7F0DF',  // nested cards
+  surfaceGlass: 'rgba(20,19,19,0.04)',
 
-  surface: '#FFFFFF',
-  surfaceRaised: '#F3EBF9',
-  surfaceGlass: 'rgba(107,72,184,0.06)',
+  // Borders
+  border: 'rgba(20,19,19,0.08)',
+  borderLight: 'rgba(20,19,19,0.05)',
+  borderStrong: 'rgba(20,19,19,0.14)',
 
-  border: '#E6DAFB',
-  borderLight: '#F0E8FF',
-  borderStrong: '#C4A8F0',
+  // Text — near-black ink on cream
+  text: '#141313',
+  textSecondary: '#3A3533',
+  textMuted: '#6E6763',
+  textFaint: '#A69E93',
+  textInverse: '#F5EDDC',
 
-  text: '#1E1440',
-  textSecondary: '#6B5A8A',
-  textMuted: '#A393C0',
-  textInverse: '#FFFFFF',
-
+  // Interactive
   primary: '#7048B8',
   primaryLight: '#9B70D4',
   primaryTint: '#EFE6FF',
@@ -75,74 +130,80 @@ export const lightTokens = {
   secondary: '#3B7DD8',
   secondaryTint: '#E3EDFF',
 
-  accent: '#F59E0B',
-  accentTint: '#FEF5E1',
+  accent: brand.pregnancy,   // mode-driven — lavender default
+  accentSoft: brand.pregnancySoft,
 
   success: '#2E7D32',
   successTint: '#E8F5E9',
   warning: '#E65100',
   error: '#C62828',
 
-  tabBg: '#FFFFFF',
-  tabBorder: 'rgba(0,0,0,0.08)',
-  tabActive: '#7048B8',
-  tabInactive: '#A393C0',
+  // Tab bar
+  tabBg: 'rgba(20,19,19,0.96)',
+  tabBorder: 'rgba(20,19,19,0.06)',
+  tabActive: brand.pregnancy,
+  tabInactive: 'rgba(245,237,220,0.55)',
 } as const
 
-// ─── DARK MODE TOKENS ──────────────────────────────────────────────────────
+// ─── DARK MODE TOKENS — warm ink on parchment ──────────────────────────────
 
 export const darkTokens = {
-  bg: '#0E0B1A',
-  bgWarm: '#140F28',
+  // Canvas
+  bg: '#1A1713',             // warm dark
+  bgWarm: '#13110E',         // deeper warm dark
+  surface: '#232019',        // card parchment
+  surfaceRaised: '#2C2820',  // elevated cards
+  surfaceGlass: 'rgba(245,237,220,0.06)',
 
-  surface: '#1A1430',
-  surfaceRaised: '#231B42',
-  surfaceGlass: 'rgba(255,255,255,0.06)',
+  // Borders
+  border: 'rgba(245,237,220,0.08)',
+  borderLight: 'rgba(245,237,220,0.05)',
+  borderStrong: 'rgba(245,237,220,0.14)',
 
-  border: 'rgba(255,255,255,0.12)',
-  borderLight: 'rgba(255,255,255,0.06)',
-  borderStrong: 'rgba(255,255,255,0.24)',
+  // Text — cream on dark
+  text: '#F5EDDC',
+  textSecondary: '#D6CCB5',
+  textMuted: '#9E9684',
+  textFaint: '#6E6757',
+  textInverse: '#141313',
 
-  text: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.65)',
-  textMuted: 'rgba(255,255,255,0.35)',
-  textInverse: '#1E1440',
+  // Interactive
+  primary: '#C4B5EF',        // lavender brightened for dark
+  primaryLight: '#D8CCFA',
+  primaryTint: 'rgba(196,181,239,0.15)',
 
-  primary: '#A07FDC',
-  primaryLight: '#C4A8F0',
-  primaryTint: 'rgba(160,127,220,0.15)',
+  secondary: '#A5C9F0',
+  secondaryTint: 'rgba(165,201,240,0.15)',
 
-  secondary: '#6AABF7',
-  secondaryTint: 'rgba(106,171,247,0.15)',
-
-  accent: '#FBBF24',
-  accentTint: 'rgba(251,191,36,0.15)',
+  accent: '#C4B5EF',
+  accentSoft: '#2D2842',
 
   success: '#6EC96E',
   successTint: 'rgba(110,201,110,0.15)',
   warning: '#FFB347',
   error: '#FF7070',
 
-  tabBg: '#0E0B1A',
-  tabBorder: 'rgba(255,255,255,0.06)',
-  tabActive: '#A07FDC',
-  tabInactive: 'rgba(255,255,255,0.40)',
+  // Tab bar
+  tabBg: 'rgba(26,23,19,0.96)',
+  tabBorder: 'rgba(245,237,220,0.06)',
+  tabActive: '#C4B5EF',
+  tabInactive: 'rgba(245,237,220,0.45)',
 } as const
 
 // ─── COLOR TOKEN TYPE ──────────────────────────────────────────────────────
 
-// Structural type so light and dark tokens are interchangeable
 export type ColorTokens = { [K in keyof typeof lightTokens]: string }
 
 // ─── STATIC TOKENS (same in both modes) ────────────────────────────────────
 
 export const radius = {
   sm: 12,
-  md: 16,
-  lg: 32,
-  xl: 48,
+  md: 20,
+  lg: 28,
+  xl: 36,
+  xxl: 48,
   full: 999,
-  // Legacy alias
+  // Legacy aliases
   '2xl': 48,
 } as const
 
@@ -153,7 +214,7 @@ export const spacing = {
   lg: 24,
   xl: 32,
   xxl: 48,
-  // Legacy aliases (used by existing code)
+  // Legacy aliases
   '2xl': 24,
   '3xl': 32,
   '4xl': 40,
@@ -180,9 +241,16 @@ export const fontWeight = {
   black: '900' as const,
 }
 
+// 2026 redesign fonts
 export const font = {
-  display: 'CabinetGrotesk-Black',
-  body: 'Satoshi-Variable',
+  display: 'Fraunces_600SemiBold',         // serif editorial display
+  italic: 'InstrumentSerif_400Regular_Italic', // italic accent
+  body: 'DMSans_400Regular',               // UI body
+  bodyMedium: 'DMSans_500Medium',          // medium weight UI
+  bodySemiBold: 'DMSans_600SemiBold',      // semibold UI labels
+  // Legacy — kept for screens not yet migrated
+  displayLegacy: 'CabinetGrotesk-Black',
+  bodyLegacy: 'Satoshi-Variable',
 } as const
 
 // ─── useTheme() HOOK ───────────────────────────────────────────────────────
@@ -192,13 +260,14 @@ export function useTheme() {
   const storeTheme = useThemeStore((s) => s.theme)
   const hydrated = useThemeStore((s) => s.hydrated)
 
-  // Use store preference if hydrated, otherwise fall back to system
   const isDark = hydrated ? storeTheme === 'dark' : systemScheme === 'dark'
   const colors: ColorTokens = isDark ? darkTokens : lightTokens
+  const st = isDark ? stickersDark : stickers
 
   return {
     colors,
     brand,
+    stickers: st,
     radius,
     spacing,
     fontSize,
@@ -208,16 +277,31 @@ export function useTheme() {
   }
 }
 
+// ─── MODE COLOR HELPERS ────────────────────────────────────────────────────
+
+export function getModeColor(mode: 'pre' | 'preg' | 'kids' | string, isDark = false): string {
+  if (mode === 'pre' || mode === 'pre-pregnancy') return isDark ? '#EFA2C2' : brand.prePregnancy
+  if (mode === 'preg' || mode === 'pregnancy') return isDark ? '#C4B5EF' : brand.pregnancy
+  if (mode === 'kids') return isDark ? '#A5C9F0' : brand.kids
+  return isDark ? '#C4B5EF' : brand.pregnancy
+}
+
+export function getModeColorSoft(mode: 'pre' | 'preg' | 'kids' | string, isDark = false): string {
+  if (mode === 'pre' || mode === 'pre-pregnancy') return isDark ? '#3A2730' : brand.prePregnancySoft
+  if (mode === 'preg' || mode === 'pregnancy') return isDark ? '#2D2842' : brand.pregnancySoft
+  if (mode === 'kids') return isDark ? '#1F2A3A' : brand.kidsSoft
+  return isDark ? '#2D2842' : brand.pregnancySoft
+}
+
 // ─── LEGACY EXPORTS ────────────────────────────────────────────────────────
-// These keep existing components working while we migrate to useTheme().
-// TODO: Remove once all components use useTheme() hook.
+// Kept for existing components. Prefer useTheme() for new code.
 
 export const THEME_COLORS = {
-  yellow: brand.accent,
+  yellow: stickers.yellow,
   pink: brand.prePregnancy,
-  orange: '#FF6B35',
+  orange: stickers.coral,
   blue: brand.kids,
-  green: '#A2FF86',
+  green: stickers.green,
   purple: brand.pregnancy,
   dark: darkTokens.bg,
 } as const
@@ -244,15 +328,15 @@ export const colors = {
   warning: darkTokens.warning,
   info: darkTokens.secondary,
   pillar: {
-    milk: brand.kids,
+    milk: brand.kidsLegacy,
     food: '#A2FF86',
-    nutrition: brand.accent,
-    vaccines: brand.prePregnancy,
+    nutrition: '#F59E0B',
+    vaccines: brand.prePregnancyLegacy,
     clothes: '#FF6B35',
     recipes: darkTokens.surface,
     habits: '#A2FF86',
-    milestones: brand.pregnancy,
-    medicine: brand.prePregnancy,
+    milestones: brand.pregnancyLegacy,
+    medicine: brand.prePregnancyLegacy,
   },
   role: {
     parent: 'rgba(162, 255, 134, 0.15)',
@@ -270,28 +354,27 @@ export type AppColors = {
 }
 
 export function getColors(theme: 'dark' | 'light'): AppColors {
-  // Legacy: returns the old-format colors object. Prefer useTheme() for new code.
   return colors as unknown as AppColors
 }
 
 export const gradients = {
-  background: [darkTokens.bg, '#0A0714', '#08061A'] as const,
+  background: [darkTokens.bg, '#13110E', '#0D0B08'] as const,
   card: [darkTokens.surface, darkTokens.bg] as const,
   cardHover: [darkTokens.surfaceRaised, darkTokens.surface] as const,
   accent: [brand.primary, brand.primaryDark] as const,
   accentSoft: ['rgba(112,72,184,0.15)', 'rgba(59,125,216,0.08)'] as const,
-  glass: ['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.02)'] as const,
-  pregnancy: [darkTokens.bg, '#0D0A20'] as const,
-  insight: [brand.secondary, brand.prePregnancy, brand.pregnancy] as const,
+  glass: ['rgba(245, 237, 220, 0.06)', 'rgba(245, 237, 220, 0.02)'] as const,
+  pregnancy: [darkTokens.bg, '#1A1520'] as const,
+  insight: [darkTokens.secondary, brand.prePregnancy, brand.pregnancy] as const,
 } as const
 
 export const lightGradients = {
-  background: [lightTokens.bg, '#F5F0FF', '#EFE8FF'] as const,
+  background: [lightTokens.bg, '#EFE5CC', '#E8DFC2'] as const,
   card: [lightTokens.surface, lightTokens.surfaceRaised] as const,
-  cardHover: [lightTokens.surfaceRaised, '#ECE2F8'] as const,
+  cardHover: [lightTokens.surfaceRaised, '#ECE2C8'] as const,
   accent: [brand.primary, brand.primaryDark] as const,
-  accentSoft: ['rgba(112,72,184,0.08)', 'rgba(59,125,216,0.04)'] as const,
-  glass: ['rgba(107,72,184,0.04)', 'rgba(107,72,184,0.02)'] as const,
+  accentSoft: ['rgba(183,166,232,0.15)', 'rgba(139,184,232,0.08)'] as const,
+  glass: ['rgba(20,19,19,0.04)', 'rgba(20,19,19,0.02)'] as const,
   pregnancy: [lightTokens.bg, '#F0E8FF'] as const,
   insight: [brand.secondary, brand.prePregnancy, brand.pregnancy] as const,
 } as const
@@ -303,39 +386,42 @@ export function getGradients(theme: 'dark' | 'light') {
 // Legacy aliases
 export const borderRadius = radius
 export const typography = {
-  hero: { fontSize: fontSize.hero, fontWeight: fontWeight.black, color: colors.text, letterSpacing: -1, textTransform: 'uppercase' as const },
-  heading: { fontSize: fontSize.display, fontWeight: fontWeight.black, color: colors.text, letterSpacing: -0.8, textTransform: 'uppercase' as const },
-  title: { fontSize: fontSize.xl, fontWeight: fontWeight.black, color: colors.text, letterSpacing: -0.3, textTransform: 'uppercase' as const },
-  subtitle: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
-  body: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.text, lineHeight: 24 },
-  bodySecondary: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textSecondary, lineHeight: 24 },
-  caption: { fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.textTertiary, letterSpacing: 2, textTransform: 'uppercase' as const },
-  label: { fontSize: 10 as number, fontWeight: fontWeight.black, color: colors.textTertiary, letterSpacing: 3, textTransform: 'uppercase' as const },
+  hero: { fontSize: fontSize.hero, fontFamily: font.display, color: colors.text, letterSpacing: -1 },
+  heading: { fontSize: fontSize.display, fontFamily: font.display, color: colors.text, letterSpacing: -0.8 },
+  title: { fontSize: fontSize.xl, fontFamily: font.display, color: colors.text, letterSpacing: -0.3 },
+  subtitle: { fontSize: fontSize.lg, fontFamily: font.bodySemiBold, color: colors.text },
+  body: { fontSize: fontSize.md, fontFamily: font.body, color: colors.text, lineHeight: 24 },
+  bodySecondary: { fontSize: fontSize.md, fontFamily: font.body, color: colors.textSecondary, lineHeight: 24 },
+  caption: { fontSize: fontSize.xs, fontFamily: font.bodySemiBold, color: colors.textTertiary, letterSpacing: 2, textTransform: 'uppercase' as const },
+  label: { fontSize: 10 as number, fontFamily: font.bodySemiBold, color: colors.textTertiary, letterSpacing: 3, textTransform: 'uppercase' as const },
 } as const
 
 export const shadows = {
-  card: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 10 },
+  card: { shadowColor: '#141313', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 0, elevation: 2,
+          // second shadow via iOS only
+  },
+  cardPop: { shadowColor: '#141313', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.12, shadowRadius: 24, elevation: 10 },
+  pop: { shadowColor: '#141313', shadowOffset: { width: 0, height: 18 }, shadowOpacity: 0.22, shadowRadius: 36, elevation: 14 },
+  // Legacy glow shadows
   glow: { shadowColor: brand.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 25, elevation: 12 },
   glowPink: { shadowColor: brand.prePregnancy, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
   glowBlue: { shadowColor: brand.kids, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
-  glowGreen: { shadowColor: '#A2FF86', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
-  glowOrange: { shadowColor: '#FF6B35', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
-  subtle: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
+  subtle: { shadowColor: '#141313', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 6 },
 } as const
 
 export const fonts = font
 export const inputStyles = {
   selectionColor: brand.secondary,
-  placeholderTextColor: colors.textTertiary,
+  placeholderTextColor: lightTokens.textMuted,
   field: {
-    backgroundColor: colors.surfaceGlass,
+    backgroundColor: lightTokens.surface,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.full,
+    borderColor: lightTokens.border,
+    borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
-    height: 72,
+    height: 64,
     fontSize: fontSize.md,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
+    fontFamily: font.bodyMedium,
+    color: lightTokens.text,
   },
 } as const

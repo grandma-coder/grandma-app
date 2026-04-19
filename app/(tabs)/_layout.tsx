@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
 import { getModeConfig } from '../../lib/modeConfig'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, getModeColor } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 
 const SCREEN_W = Dimensions.get('window').width
@@ -41,6 +41,8 @@ const ITEM_SIZE = 56
 function CenterTabButton() {
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
+  const mode = useModeStore((s) => s.mode)
+  const accentColor = getModeColor(mode)
   const [open, setOpen] = useState(false)
 
   // Animated values
@@ -88,7 +90,7 @@ function CenterTabButton() {
           <Animated.View
             style={[
               styles.centerButtonInner,
-              { backgroundColor: brand.primary, transform: [{ rotate: rotation }, { scale: pulse }] },
+              { backgroundColor: accentColor, shadowColor: accentColor, transform: [{ rotate: rotation }, { scale: pulse }] },
             ]}
           >
             <Sparkles size={28} color="#FFFFFF" strokeWidth={2.5} />
@@ -201,9 +203,9 @@ export default function TabLayout() {
           tabBarActiveTintColor: colors.tabActive,
           tabBarInactiveTintColor: colors.tabInactive,
           tabBarLabelStyle: {
-            fontSize: 10,
-            fontWeight: '700',
-            letterSpacing: 0.3,
+            fontSize: 9,
+            fontFamily: 'DMSans_600SemiBold',
+            letterSpacing: 0.8,
             textTransform: 'uppercase',
           },
         }}
@@ -277,14 +279,13 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: brand.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 16,
     elevation: 12,
   },
   overlay: {
-    backgroundColor: 'rgba(10, 8, 20, 0.80)',
+    backgroundColor: 'rgba(10,8,6,0.55)',
   },
   arcItemWrap: {
     position: 'absolute',

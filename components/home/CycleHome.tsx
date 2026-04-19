@@ -34,6 +34,7 @@ import {
 import { useTheme, brand } from '../../constants/theme'
 import { getCycleInfo, toDateStr, type CycleInfo } from '../../lib/cycleLogic'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { HomeGreeting } from './HomeGreeting'
 
 // ─── Phase colors ──────────────────────────────────────────────────────────
 
@@ -104,9 +105,10 @@ export function CycleHome() {
   return (
     <View style={styles.root}>
       {/* 1. Greeting Header */}
-      <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-        {greeting}, {parentName ?? 'dear'}
-      </Text>
+      <HomeGreeting
+        name={parentName}
+        microLabel={`${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()} · CYCLE`}
+      />
 
       {/* 2. Phase Card */}
       <View

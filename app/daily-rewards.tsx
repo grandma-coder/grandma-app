@@ -35,7 +35,11 @@ import {
   Lock,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../constants/theme'
+import { useTheme, brand, stickers, getModeColor } from '../constants/theme'
+import { Display, DisplayItalic, Body } from '../components/ui/Typography'
+import { ScreenHeader } from '../components/ui/ScreenHeader'
+import { Star as StarSticker, Burst } from '../components/ui/Stickers'
+import { useModeStore } from '../store/useModeStore'
 import {
   useBadgeStore,
   DAILY_REWARDS,
@@ -63,8 +67,10 @@ const CATEGORY_CONFIG: { key: BadgeCategory; label: string; color: string }[] = 
 ]
 
 export default function DailyRewardsScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const insets = useSafeAreaInsets()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getModeColor(mode, isDark)
 
   const checkIn = useBadgeStore((s) => s.checkIn)
   const currentStreak = useBadgeStore((s) => s.currentStreak)
@@ -125,23 +131,50 @@ export default function DailyRewardsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <ArrowLeft size={24} color={colors.text} />
-          </Pressable>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Daily Rewards</Text>
-          <View style={styles.pointsBadge}>
-            <Star size={14} color="#FFD700" fill="#FFD700" />
-            <Text style={[styles.pointsText, { color: '#FFD700' }]}>{totalPoints}</Text>
+        <ScreenHeader
+          title=""
+          right={
+            <View style={styles.pointsBadge}>
+              <Star size={14} color={colors.text} fill={colors.text} />
+              <Text style={[styles.pointsText, { color: colors.text }]}>{totalPoints}</Text>
+            </View>
+          }
+        />
+
+        {/* Title + streak circle (redesigned) */}
+        <View style={styles.titleRow}>
+          <View style={styles.titleStickerLeft}>
+            <StarSticker size={36} fill={stickers.yellow} />
+          </View>
+          <View style={styles.titleCol}>
+            <View style={styles.titleInline}>
+              <Display size={30} color={colors.text}>{currentStreak} day</Display>
+              <DisplayItalic size={30} color={stickers.coral} style={{ marginLeft: 8 }}>
+                streak
+              </DisplayItalic>
+            </View>
+            <Body size={13} color={colors.textMuted} align="center" style={{ marginTop: 4 }}>
+              Grandma is proud of you, dear.
+            </Body>
+          </View>
+          <View style={styles.titleStickerRight}>
+            <Burst size={42} fill={stickers.pink} points={10} />
           </View>
         </View>
 
         {/* Streak Circle */}
         <View style={styles.streakSection}>
-          <View style={[styles.streakCircle, { borderColor: '#F59E0B' + '30' }]}>
-            <Flame size={36} color="#F59E0B" strokeWidth={2} />
+          <View
+            style={[
+              styles.streakCircle,
+              {
+                borderColor: accent,
+                borderStyle: 'dashed',
+                backgroundColor: accent + '20',
+              },
+            ]}
+          >
             <Text style={[styles.streakNumber, { color: colors.text }]}>{currentStreak}</Text>
-            <Text style={[styles.streakLabel, { color: colors.textMuted }]}>day streak</Text>
           </View>
 
           <View style={styles.streakStats}>
@@ -500,8 +533,21 @@ const styles = StyleSheet.create({
   // Header
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerTitle: { fontSize: 22, fontWeight: '800', flex: 1, marginLeft: 12 },
-  pointsBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 12, backgroundColor: '#FFD700' + '15', borderRadius: 999 },
+  pointsBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999 },
   pointsText: { fontSize: 14, fontWeight: '800' },
+
+  // Redesigned title row
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  titleCol: { alignItems: 'center' },
+  titleInline: { flexDirection: 'row', alignItems: 'baseline' },
+  titleStickerLeft: { marginRight: 10, transform: [{ rotate: '-12deg' }] },
+  titleStickerRight: { marginLeft: 10, transform: [{ rotate: '14deg' }] },
 
   // Streak
   streakSection: { alignItems: 'center', gap: 16 },

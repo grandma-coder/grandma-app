@@ -1,157 +1,127 @@
+/**
+ * Parent Name (Apr 2026 redesign) — "What should grandma call you?"
+ *
+ * Cream canvas, Fraunces display headline + italic accent,
+ * paper card input with MONO-CAPS label and serif value.
+ */
+
 import { useState } from 'react'
-import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native'
+import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useModeStore } from '../../store/useModeStore'
-import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { THEME_COLORS, spacing, borderRadius } from '../../constants/theme'
+import { useTheme, stickers } from '../../constants/theme'
+import { Squishy, Heart } from '../../components/ui/Stickers'
+import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
+import { PillButton } from '../../components/ui/PillButton'
+import { ScreenHeader } from '../../components/ui/ScreenHeader'
 
 export default function ParentName() {
   const insets = useSafeAreaInsets()
+  const { colors, font, isDark } = useTheme()
   const setParentName = useJourneyStore((s) => s.setParentName)
   const mode = useModeStore((s) => s.mode)
   const [name, setName] = useState('')
 
+  const bg = isDark ? colors.bg : '#F3ECD9'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const ink4 = isDark ? colors.textFaint : '#A69E93'
+
   function handleContinue() {
-    if (name.trim()) {
-      setParentName(name.trim())
-    }
-    if (mode === 'pregnancy') {
-      router.push('/onboarding/due-date')
-    } else {
-      router.push('/onboarding/baby-name')
-    }
+    if (name.trim()) setParentName(name.trim())
+    if (mode === 'pregnancy') router.push('/onboarding/due-date')
+    else router.push('/onboarding/baby-name')
   }
 
   return (
-    <CosmicBackground>
-      <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-        {/* Back */}
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color="rgba(255,255,255,0.6)" />
-        </Pressable>
-
-        {/* Content */}
-        <View style={styles.content}>
-          <Text style={styles.title}>
-            How shall I{'\n'}call you, dear?
-          </Text>
-          <Text style={styles.subtitle}>
-            Grandma likes to know who she's talking to
-          </Text>
-
-          <Text style={styles.label}>PARENT'S NAME</Text>
-          <TextInput
-            style={styles.input}
-            selectionColor={THEME_COLORS.yellow}
-            placeholder="How shall I call you?"
-            placeholderTextColor="rgba(255,255,255,0.2)"
-            value={name}
-            onChangeText={setName}
-            autoFocus={false}
-          />
-        </View>
-
-        {/* Bottom */}
-        <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
-          <Pressable
-            onPress={handleContinue}
-            style={({ pressed }) => [
-              styles.ctaButton,
-              pressed && { transform: [{ scale: 0.95 }] },
-            ]}
-          >
-            <Text style={styles.ctaText}>Continue</Text>
-          </Pressable>
-
-          <Pressable onPress={handleContinue}>
-            <Text style={styles.skipText}>Skip for now</Text>
-          </Pressable>
-        </View>
+    <View style={[styles.root, { backgroundColor: bg }]}>
+      {/* Decorative stickers */}
+      <View style={[styles.stickerTR, { transform: [{ rotate: '-8deg' }] }]}>
+        <Squishy w={110} h={70} fill={isDark ? stickers.yellow : '#F5D652'} />
       </View>
-    </CosmicBackground>
+      <View style={[styles.stickerTR2, { transform: [{ rotate: '16deg' }] }]}>
+        <Heart size={40} fill={isDark ? stickers.pink : '#F2B2C7'} />
+      </View>
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
+          <ScreenHeader title="2 / 10" right={<Body color={ink3} size={13}>Skip</Body>} />
+
+          <View style={styles.content}>
+            <Display size={40} color={ink} style={{ marginTop: 40 }}>
+              What should
+            </Display>
+            <Display size={40} color={ink}>
+              grandma
+            </Display>
+            <DisplayItalic size={40} color={ink} style={{ marginBottom: 28 }}>
+              call you?
+            </DisplayItalic>
+
+            {/* Paper card input */}
+            <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <MonoCaps color={ink4} style={{ marginBottom: 8 }}>YOUR NAME</MonoCaps>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="Amelia"
+                placeholderTextColor={ink4}
+                selectionColor={ink}
+                autoCapitalize="words"
+                style={[styles.inputText, { fontFamily: font.display, color: ink }]}
+              />
+            </View>
+
+            <Body size={13} color={ink3} style={styles.helper}>
+              Grandma will use this in her notes to you.
+            </Body>
+          </View>
+
+          <View style={{ paddingBottom: insets.bottom + 24 }}>
+            <PillButton
+              label="Continue →"
+              onPress={handleContinue}
+              variant="ink"
+            />
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, overflow: 'hidden' },
+  stickerTR: { position: 'absolute', top: 80, right: 20, zIndex: 0 },
+  stickerTR2: { position: 'absolute', top: 130, right: 70, zIndex: 0 },
+
   container: {
     flex: 1,
-    paddingHorizontal: spacing['2xl'],
+    paddingHorizontal: 24,
+    zIndex: 1,
   },
-  backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+
+  content: { flex: 1 },
+
+  inputCard: {
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 32,
+    paddingHorizontal: 22,
+    paddingVertical: 18,
   },
-  content: {
-    flex: 1,
+  inputText: {
+    fontSize: 26,
+    letterSpacing: -0.4,
   },
-  title: {
-    fontSize: 34,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -0.5,
-    lineHeight: 38,
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.55)',
-    marginBottom: 40,
-  },
-  label: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: 'rgba(255,255,255,0.35)',
-    letterSpacing: 3,
-    textTransform: 'uppercase',
-    marginBottom: 12,
-  },
-  input: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: borderRadius.full,
-    paddingHorizontal: 28,
-    height: 72,
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  bottom: {
-    gap: 16,
-    alignItems: 'center',
-  },
-  ctaButton: {
-    width: '100%',
-    height: 64,
-    borderRadius: borderRadius.full,
-    backgroundColor: THEME_COLORS.yellow,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: THEME_COLORS.yellow,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 30,
-  },
-  ctaText: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1A1030',
-    letterSpacing: 0.5,
-  },
-  skipText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.4)',
+  helper: {
+    marginTop: 12,
+    letterSpacing: 0.1,
   },
 })

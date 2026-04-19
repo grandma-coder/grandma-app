@@ -152,7 +152,7 @@ function VitalDetailModal({ card, userId, weekNumber, onClose, onLog }: DetailMo
 
       {/* Header */}
       <View style={styles.detailHeader}>
-        <Text style={styles.detailIcon}>{card.icon}</Text>
+        <Text style={{ fontSize: 40 }}>{card.icon}</Text>
         <View>
           <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{card.label.toUpperCase()}</Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>{card.value}</Text>
@@ -211,7 +211,10 @@ function VitalDetailModal({ card, userId, weekNumber, onClose, onLog }: DetailMo
         onPress={() => onLog(card.logType as LogFormType)}
         style={[styles.logBtn, { backgroundColor: card.color + '20', borderColor: card.color + '60' }]}
       >
-        <Text style={[styles.logBtnText, { color: card.color }]}>{card.icon} {logLabel}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={{ fontSize: 15 }}>{card.icon}</Text>
+          <Text style={[styles.logBtnText, { color: card.color }]}>{logLabel}</Text>
+        </View>
       </Pressable>
     </View>
   )
@@ -361,7 +364,7 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
               <ChevronRight size={10} color={card.color} strokeWidth={2.5} />
             </View>
 
-            <Text style={styles.cardIcon}>{card.icon}</Text>
+            <Text style={{ fontSize: 20, marginBottom: 2 }}>{card.icon}</Text>
             <Text style={[styles.cardValue, { color: colors.text }]}>{card.value}</Text>
             {card.subLabel && (
               <Text style={[styles.cardSubLabel, { color: colors.textMuted }]} numberOfLines={1}>
@@ -520,7 +523,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardIcon: { fontSize: 20, marginBottom: 2 },
+  cardIcon: { fontSize: 20, marginBottom: 2, fontFamily: undefined },
   cardValue: {
     fontSize: 22,
     fontFamily: 'CabinetGrotesk-Black',
@@ -564,7 +567,7 @@ const styles = StyleSheet.create({
   detailHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 24, marginBottom: 16,
   },
-  detailIcon: { fontSize: 40 },
+  detailIcon: { fontSize: 40, fontFamily: undefined },
   detailLabel: {
     fontSize: 11, fontFamily: 'Satoshi-Variable', fontWeight: '700',
     letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2,

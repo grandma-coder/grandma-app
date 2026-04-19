@@ -29,7 +29,7 @@ import {
   Phone,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, stickers } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
 import { useChildStore } from '../../store/useChildStore'
@@ -37,6 +37,9 @@ import { supabase } from '../../lib/supabase'
 import { MyJourneys } from '../../components/profile/MyJourneys'
 import { useDevPanel } from '../../context/DevPanelContext'
 import { useTranslation } from '../../lib/i18n'
+import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
+import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
+import { Squishy, Heart as HeartSticker } from '../../components/ui/Stickers'
 
 // ─── Section config ────────────────────────────────────────────────────────
 
@@ -169,16 +172,30 @@ export default function ProfileScreen() {
       >
         {/* 1. User Header */}
         <View style={styles.header}>
-          <View style={[styles.avatar, { backgroundColor: colors.primaryTint }]}>
-            <User size={32} color={colors.primary} strokeWidth={1.5} />
+          {/* Decorative sticker accents around avatar */}
+          <View style={styles.avatarStickerLeft}>
+            <Squishy w={58} h={40} fill={stickers.yellow} />
           </View>
-          <Text style={[styles.userName, { color: colors.text }]}>
-            {userName ?? t('home_greeting')}
-          </Text>
+          <View style={styles.avatarStickerRight}>
+            <HeartSticker size={36} fill={stickers.pink} />
+          </View>
+
+          <View style={styles.avatarWrap}>
+            <GrandmaLogo size={96} body={stickers.yellow} accent={stickers.coral} motion="default" />
+          </View>
+
+          <View style={styles.nameRow}>
+            <Display size={26} color={colors.text}>{userName?.split(' ')[0] ?? 'Hi'}</Display>
+            {userName?.includes(' ') && (
+              <DisplayItalic size={26} color={colors.text} style={{ marginLeft: 6 }}>
+                {userName.split(' ').slice(1).join(' ')}
+              </DisplayItalic>
+            )}
+          </View>
           {userEmail && (
-            <Text style={[styles.userEmail, { color: colors.textMuted }]}>
+            <Body size={12} color={colors.textMuted}>
               {userEmail}
-            </Text>
+            </Body>
           )}
           <Pressable
             onPress={handleBadgePress}
@@ -266,8 +283,23 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20 },
 
   // Header
-  header: { alignItems: 'center', marginBottom: 24, gap: 6 },
-  avatar: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  header: { alignItems: 'center', marginBottom: 24, gap: 6, position: 'relative' },
+  avatarWrap: { marginBottom: 12 },
+  avatarStickerLeft: {
+    position: 'absolute',
+    top: 8,
+    left: '25%',
+    transform: [{ rotate: '-12deg' }],
+    zIndex: 0,
+  },
+  avatarStickerRight: {
+    position: 'absolute',
+    top: 0,
+    right: '20%',
+    transform: [{ rotate: '14deg' }],
+    zIndex: 0,
+  },
+  nameRow: { flexDirection: 'row', alignItems: 'baseline' },
   userName: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
   userEmail: { fontSize: 13, fontWeight: '500' },
   badgeRow: { flexDirection: 'row', gap: 6, marginTop: 8 },

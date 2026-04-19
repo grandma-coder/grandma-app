@@ -32,6 +32,7 @@ import * as Haptics from 'expo-haptics'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { HomeGreeting } from './HomeGreeting'
 import { useGoalsStore, getSuggestedGoals, getFeedingStage, getNutritionLabel, getAgeMonths, type MetricGoals, type FeedingStage } from '../../store/useGoalsStore'
 import { useBadgeStore } from '../../store/useBadgeStore'
 import { supabase } from '../../lib/supabase'
@@ -1151,10 +1152,10 @@ export function KidsHome() {
     <View style={s.root}>
       {/* ─── Header ──────────────────────────────────────────── */}
       <View style={s.header}>
-        <View>
-          <Text style={[s.greeting, { color: colors.text }]}>Hi, {firstName}</Text>
-          <Text style={[s.subtitle, { color: colors.textMuted }]}>{subtitleForRange(dateRange, child.name, customRange)}</Text>
-        </View>
+        <HomeGreeting
+          name={firstName}
+          microLabel={subtitleForRange(dateRange, child.name, customRange)?.toUpperCase?.()}
+        />
       </View>
 
       {/* ─── Child Selector ──────────────────────────────────── */}

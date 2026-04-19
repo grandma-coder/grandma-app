@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { getCycleInfo, toDateStr, type CyclePhase } from '../../lib/cycleLogic'
 import { LogSheet } from './LogSheet'
+import { AgendaHeader } from './AgendaHeader'
 import {
   PeriodStartForm,
   PeriodEndForm,
@@ -149,6 +150,9 @@ export function CycleCalendar() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Agenda title */}
+        <AgendaHeader />
+
         {/* 1. Month Header */}
         <View style={styles.monthHeader}>
           <Pressable onPress={prevMonth} style={styles.chevron}>
