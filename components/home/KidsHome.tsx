@@ -2739,33 +2739,61 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
   const [pickerDate, setPickerDate] = useState(new Date())
   const [activityBreakdownVisible, setActivityBreakdownVisible] = useState(false)
 
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
+  const ink3 = colors.textMuted
+
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={s.modalOverlay}>
-        <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
-          <View style={s.modalHeader}>
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={[s.modalTitle, { color: colors.text }]}>Health Overview</Text>
+      <Pressable style={s.modalOverlay} onPress={onClose}>
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          style={[s.modalContent, { backgroundColor: colors.bg }]}
+        >
+          {/* Drag handle */}
+          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 6 }}>
+            <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: paperBorder }} />
+          </View>
+
+          {/* Sheet header with Fraunces title + child chip + close */}
+          <View style={[s.modalHeader, { gap: 10 }]}>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Text style={{ color: ink, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>
+                Health Overview
+              </Text>
               {childColor && (
-                <View style={{ backgroundColor: childColor + '25', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: childColor + '60' }}>
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: childColor }}>{child.name}</Text>
+                <View style={{ backgroundColor: childColor + '22', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, borderWidth: 1, borderColor: childColor + '40' }}>
+                  <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: childColor }}>{child.name}</Text>
                 </View>
               )}
             </View>
-            <Pressable onPress={onClose} style={[s.modalClose, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
-              <X size={18} color={colors.textMuted} strokeWidth={2} />
+            <Pressable onPress={onClose} hitSlop={8}>
+              <View style={[s.modalClose, { backgroundColor: paper, borderWidth: 1, borderColor: paperBorder }]}>
+                <X size={16} color={ink} strokeWidth={2} />
+              </View>
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Sleep summary */}
-            <View style={[s.modalStatCard, { backgroundColor: PILLAR_COLORS.sleep + '10', borderRadius: radius.md }]}>
-              <Moon size={18} color={PILLAR_COLORS.sleep} strokeWidth={2} />
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+            {/* Sleep summary banner — sticker-blue soft */}
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', gap: 12,
+              backgroundColor: 'rgba(157,195,232,0.18)', borderColor: 'rgba(157,195,232,0.35)',
+              borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 14,
+            }}>
+              <Moon size={20} color="#9DC3E8" strokeWidth={2} />
               <View style={{ flex: 1 }}>
-                <Text style={[s.modalStatLabel, { color: colors.textMuted }]}>Sleep Quality</Text>
-                <Text style={[s.modalStatValue, { color: colors.text }]}>{sleepQuality}</Text>
+                <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                  Sleep Quality
+                </Text>
+                <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 2 }}>
+                  {sleepQuality}
+                </Text>
               </View>
-              <Text style={[s.modalStatExtra, { color: PILLAR_COLORS.sleep }]}>{sleepTotal.toFixed(1)}h / {sleepTarget.toFixed(0)}h</Text>
+              <Text style={{ fontSize: 12, fontFamily: 'DMSans_600SemiBold', color: '#9DC3E8' }}>
+                {sleepTotal.toFixed(1)}h / {sleepTarget.toFixed(0)}h
+              </Text>
             </View>
 
             {/* Allergies */}
@@ -2959,8 +2987,8 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
               <ChevronRight size={14} color={colors.primary} strokeWidth={2} />
             </Pressable>
           </ScrollView>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
       <ActivityBreakdownModal
         visible={activityBreakdownVisible}
         onClose={() => setActivityBreakdownVisible(false)}
@@ -4544,11 +4572,11 @@ const s = StyleSheet.create({
   rewardsStatNum: { fontSize: 13, fontWeight: '800' },
 
   // Modals
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modalContent: { padding: 24, paddingBottom: 40, maxHeight: '80%' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  modalTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
-  modalClose: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(10,8,6,0.55)', justifyContent: 'flex-end' },
+  modalContent: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 40, maxHeight: '90%', borderTopLeftRadius: 28, borderTopRightRadius: 28 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  modalTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
+  modalClose: { width: 32, height: 32, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   modalSubtitle: { fontSize: 12, fontWeight: '600', marginBottom: 20 },
 
   // Mood modal — line chart
@@ -4567,16 +4595,16 @@ const s = StyleSheet.create({
   modalEmptyHint: { fontSize: 12, fontWeight: '500', textAlign: 'center' },
 
   // Health/Activity modal
-  modalStatCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, marginTop: 12 },
-  modalStatLabel: { fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
-  modalStatValue: { fontSize: 16, fontWeight: '800', marginTop: 2 },
-  modalStatExtra: { fontSize: 11, fontWeight: '700' },
-  modalSectionTitle: { fontSize: 14, fontWeight: '700', marginTop: 20, marginBottom: 8 },
+  modalStatCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, marginTop: 12, borderRadius: 16, borderWidth: 1 },
+  modalStatLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
+  modalStatValue: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', marginTop: 2, letterSpacing: -0.2 },
+  modalStatExtra: { fontSize: 12, fontFamily: 'DMSans_600SemiBold' },
+  modalSectionTitle: { fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginTop: 20, marginBottom: 10, letterSpacing: -0.2 },
 
   modalTaskRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderBottomWidth: 1 },
-  modalTaskCheck: { width: 20, height: 20, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
-  modalTaskLabel: { flex: 1, fontSize: 14, fontWeight: '600' },
-  modalTaskStatus: { fontSize: 11, fontWeight: '700' },
+  modalTaskCheck: { width: 20, height: 20, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+  modalTaskLabel: { flex: 1, fontSize: 14, fontFamily: 'DMSans_500Medium' },
+  modalTaskStatus: { fontSize: 12, fontFamily: 'DMSans_600SemiBold' },
 
   modalCatRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 },
   modalCatDot: { width: 10, height: 10, borderRadius: 5 },
@@ -4621,8 +4649,8 @@ const s = StyleSheet.create({
 
   // Health tags (allergies)
   healthTagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 4 },
-  healthTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 8 },
-  healthTagText: { fontSize: 11, fontWeight: '700' },
+  healthTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999 },
+  healthTagText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
 
   // View Full History button
   healthHistoryBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 14, borderWidth: 1, marginTop: 20, marginBottom: 8 },
