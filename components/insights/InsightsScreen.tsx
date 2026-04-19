@@ -1566,7 +1566,7 @@ const s = StyleSheet.create({
   scroll: { paddingHorizontal: 20 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   backBtn: { padding: 4 },
-  heading: { fontSize: 32, fontWeight: '900', letterSpacing: -0.8, marginBottom: 4 },
+  heading: { fontSize: 32, fontWeight: '900', letterSpacing: -0.8, marginBottom: 4, fontFamily: 'Fraunces_600SemiBold' },
   subtitle: { fontSize: 14, fontWeight: '500', lineHeight: 20, marginBottom: 20 },
 
   // Tabs

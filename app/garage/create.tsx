@@ -898,7 +898,7 @@ const s = StyleSheet.create({
   contentInner: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 40 },
 
   stepContainer: { gap: 12 },
-  stepTitle: { fontSize: 24, fontWeight: '800', letterSpacing: -0.3 },
+  stepTitle: { fontSize: 24, fontWeight: '800', letterSpacing: -0.3, fontFamily: 'Fraunces_600SemiBold' },
   stepHint: { fontSize: 14, fontWeight: '500', lineHeight: 20, marginBottom: 8 },
 
   // Field labels

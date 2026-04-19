@@ -290,8 +290,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: -0.5,
-    marginBottom: 4,
-  },
+    marginBottom: 4, fontFamily: 'Fraunces_600SemiBold' },
   modalSubtitle: {
     fontSize: 14,
     fontWeight: '500',

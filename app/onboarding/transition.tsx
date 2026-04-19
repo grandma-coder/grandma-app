@@ -238,8 +238,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     textAlign: 'center',
     letterSpacing: -0.5,
-    lineHeight: 36,
-  },
+    lineHeight: 36, fontFamily: 'Fraunces_600SemiBold' },
   subtext: {
     fontSize: 15,
     fontWeight: '500',

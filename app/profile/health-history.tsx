@@ -685,7 +685,7 @@ const styles = StyleSheet.create({
   detailHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
   detailTitle: { fontSize: 20, fontWeight: '700' },
   detailSummary: { alignItems: 'center', paddingVertical: 16, marginBottom: 12 },
-  detailSummaryNum: { fontSize: 32, fontWeight: '800' },
+  detailSummaryNum: { fontSize: 32, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' },
   detailSummaryLabel: { fontSize: 13, fontWeight: '500' },
   detailScrollView: { flex: 1 },
   detailScroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 8 },

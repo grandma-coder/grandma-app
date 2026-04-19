@@ -4324,7 +4324,7 @@ const s = StyleSheet.create({
   // Hero
   heroWrap: { alignItems: 'center', paddingVertical: 4 },
   heroCenter: { alignItems: 'center', gap: 2 },
-  heroNumber: { fontSize: 40, fontWeight: '800', letterSpacing: -1 },
+  heroNumber: { fontSize: 40, fontWeight: '800', letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' },
   heroUnit: { fontSize: 9, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
   heroBadge: { marginTop: 6, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 },
   heroBadgeText: { fontSize: 10, fontWeight: '700' },
@@ -4351,7 +4351,7 @@ const s = StyleSheet.create({
   metricValue: { fontSize: 13, fontWeight: '700', marginTop: 4 },
   metricSmall: { fontSize: 10, fontWeight: '500' },
   metricEmpty: { height: 50, alignItems: 'center', justifyContent: 'center' },
-  metricBigNumber: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginVertical: 4 },
+  metricBigNumber: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginVertical: 4, fontFamily: 'Fraunces_600SemiBold' },
 
   // Diaper card
   diaperBar: { flexDirection: 'row', height: 6, width: '100%', overflow: 'hidden', marginTop: 4 },
@@ -4361,7 +4361,7 @@ const s = StyleSheet.create({
   diaperFullCard: { padding: 16, borderWidth: 1, marginHorizontal: 0 },
   diaperCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   diaperCardTitle: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  diaperBigCount: { fontSize: 40, fontWeight: '900', letterSpacing: -1, lineHeight: 44 },
+  diaperBigCount: { fontSize: 40, fontWeight: '900', letterSpacing: -1, lineHeight: 44, fontFamily: 'Fraunces_600SemiBold' },
   diaperMainRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   diaperChips: { flex: 1, flexDirection: 'row', gap: 6 },
   diaperChip: { flex: 1, flexDirection: 'column', alignItems: 'center', paddingVertical: 6, borderRadius: 12, borderWidth: 1, gap: 1 },

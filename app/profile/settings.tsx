@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     gap: 14,
   },
-  langFlag: { fontSize: 28 },
+  langFlag: { fontSize: 28, fontFamily: 'Fraunces_600SemiBold' },
   langTextWrap: { flex: 1, gap: 2 },
   langNative: { fontSize: 16, fontWeight: '700' },
   langName: { fontSize: 13, fontWeight: '500' },

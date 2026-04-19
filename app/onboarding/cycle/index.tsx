@@ -759,8 +759,7 @@ const stepStyles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
     width: 60,
-    textAlign: 'center',
-  },
+    textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' },
   unitLabel: {
     fontSize: 16,
     fontWeight: '500',
@@ -854,8 +853,7 @@ const completeStyles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    letterSpacing: -0.5,
-  },
+    letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' },
   message: {
     fontSize: 16,
     fontWeight: '500',

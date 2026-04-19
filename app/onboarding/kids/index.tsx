@@ -1107,8 +1107,7 @@ const stepStyles = StyleSheet.create({
   },
   counterNumber: {
     fontSize: 40,
-    fontWeight: '900',
-  },
+    fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' },
   countryRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1208,8 +1207,7 @@ const completeStyles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '900',
     letterSpacing: -0.5,
-    marginBottom: 12,
-  },
+    marginBottom: 12, fontFamily: 'Fraunces_600SemiBold' },
   message: {
     fontSize: 16,
     fontWeight: '500',

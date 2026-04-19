@@ -220,8 +220,7 @@ const styles = StyleSheet.create({
     fontSize: 64,
     fontWeight: '900',
     color: THEME_COLORS.yellow,
-    letterSpacing: 2,
-  },
+    letterSpacing: 2, fontFamily: 'Fraunces_600SemiBold' },
   timerLabel: {
     fontSize: 10,
     fontWeight: '800',

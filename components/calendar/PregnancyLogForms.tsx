@@ -1224,8 +1224,7 @@ const styles = StyleSheet.create({
   },
   kickCount: {
     fontSize: 32,
-    fontWeight: '900',
-  },
+    fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' },
   kickGoal: {
     fontSize: 14,
     fontWeight: '500',

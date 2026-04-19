@@ -2917,7 +2917,7 @@ export function KidsCalendar() {
                           {cals !== null && (
                             <View style={{ backgroundColor: '#FF6B3515', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: '#FF6B3530' }}>
                               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4 }}>
-                                <Text style={{ color: '#FF6B35', fontSize: 64, fontWeight: '800', lineHeight: 68, letterSpacing: -2 }}>{cals}</Text>
+                                <Text style={{ color: '#FF6B35', fontSize: 64, fontWeight: '800', lineHeight: 68, letterSpacing: -2, fontFamily: 'Fraunces_600SemiBold' }}>{cals}</Text>
                                 <Text style={{ color: '#FF6B35', fontSize: 20, fontWeight: '700', marginBottom: 10 }}>kcal</Text>
                               </View>
                               <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>Estimated calories</Text>
@@ -2990,13 +2990,13 @@ export function KidsCalendar() {
                           <View style={{ backgroundColor: accentColor + '15', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: accentColor + '30' }}>
                             {isBreast ? (
                               <>
-                                <Text style={{ color: accentColor, fontSize: 48, fontWeight: '800', lineHeight: 52 }}>{fp.duration ? `${fp.duration}` : '—'}</Text>
+                                <Text style={{ color: accentColor, fontSize: 48, fontWeight: '800', lineHeight: 52, fontFamily: 'Fraunces_600SemiBold' }}>{fp.duration ? `${fp.duration}` : '—'}</Text>
                                 <Text style={{ color: accentColor, fontSize: 16, fontWeight: '700', marginTop: 2 }}>minutes</Text>
                                 <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Breastfeeding</Text>
                               </>
                             ) : (
                               <>
-                                <Text style={{ color: accentColor, fontSize: 48, fontWeight: '800', lineHeight: 52 }}>{fp.amount ? `${fp.amount}` : '—'}</Text>
+                                <Text style={{ color: accentColor, fontSize: 48, fontWeight: '800', lineHeight: 52, fontFamily: 'Fraunces_600SemiBold' }}>{fp.amount ? `${fp.amount}` : '—'}</Text>
                                 <Text style={{ color: accentColor, fontSize: 16, fontWeight: '700', marginTop: 2 }}>ml</Text>
                                 <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Bottle feeding</Text>
                               </>
@@ -3040,7 +3040,7 @@ export function KidsCalendar() {
                           <View style={{ backgroundColor: sleepColor + '15', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: sleepColor + '30' }}>
                             <Text style={{ fontSize: 52, lineHeight: 56 }}>🌙</Text>
                             {durStr ? (
-                              <Text style={{ color: sleepColor, fontSize: 56, fontWeight: '800', lineHeight: 64, letterSpacing: -2, marginTop: 6 }}>{durStr}</Text>
+                              <Text style={{ color: sleepColor, fontSize: 56, fontWeight: '800', lineHeight: 64, letterSpacing: -2, marginTop: 6, fontFamily: 'Fraunces_600SemiBold' }}>{durStr}</Text>
                             ) : (
                               <Text style={{ color: sleepColor, fontSize: 20, fontWeight: '700', marginTop: 8 }}>Sleep logged</Text>
                             )}
@@ -3081,7 +3081,7 @@ export function KidsCalendar() {
                           <View style={{ backgroundColor: actColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: actColor + '30' }}>
                             <Text style={{ fontSize: 52, lineHeight: 56 }}>{emoji}</Text>
                             {ap.name ? (
-                              <Text style={{ color: actColor, fontSize: 26, fontWeight: '800', marginTop: 10, textAlign: 'center' }}>{ap.name}</Text>
+                              <Text style={{ color: actColor, fontSize: 26, fontWeight: '800', marginTop: 10, textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' }}>{ap.name}</Text>
                             ) : null}
                             {durUnit && (
                               <>
@@ -3122,7 +3122,7 @@ export function KidsCalendar() {
                         <>
                           <View style={{ backgroundColor: diaperColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: diaperColor + '30' }}>
                             <Text style={{ fontSize: 64, lineHeight: 68 }}>{dt?.emoji ?? '🍼'}</Text>
-                            <Text style={{ color: diaperColor, fontSize: 24, fontWeight: '800', marginTop: 8 }}>{dt?.label ?? 'Diaper'}</Text>
+                            <Text style={{ color: diaperColor, fontSize: 24, fontWeight: '800', marginTop: 8, fontFamily: 'Fraunces_600SemiBold' }}>{dt?.label ?? 'Diaper'}</Text>
                             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Diaper change</Text>
                           </View>
                           {(dp.color || dp.consistency) && (
@@ -3157,7 +3157,7 @@ export function KidsCalendar() {
                       return (
                         <View style={{ backgroundColor: m.color + '12', borderRadius: 24, paddingVertical: 32, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: m.color + '30' }}>
                           <Text style={{ fontSize: 72, lineHeight: 80 }}>{m.emoji}</Text>
-                          <Text style={{ color: m.color, fontSize: 32, fontWeight: '800', marginTop: 10, letterSpacing: -1 }}>{m.label}</Text>
+                          <Text style={{ color: m.color, fontSize: 32, fontWeight: '800', marginTop: 10, letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' }}>{m.label}</Text>
                           <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 1, textTransform: 'uppercase' }}>Today's mood</Text>
                         </View>
                       )
@@ -3181,7 +3181,7 @@ export function KidsCalendar() {
                           <View style={{ backgroundColor: healthColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: healthColor + '30' }}>
                             <Text style={{ fontSize: 52, lineHeight: 56 }}>{emoji}</Text>
                             {displayVal && displayVal !== selectedLog.type ? (
-                              <Text style={{ color: healthColor, fontSize: 32, fontWeight: '800', marginTop: 10, textAlign: 'center', letterSpacing: -1 }}>{displayVal}</Text>
+                              <Text style={{ color: healthColor, fontSize: 32, fontWeight: '800', marginTop: 10, textAlign: 'center', letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' }}>{displayVal}</Text>
                             ) : null}
                             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 1, textTransform: 'uppercase' }}>
                               {selectedLog.type.charAt(0).toUpperCase() + selectedLog.type.slice(1)}
@@ -3336,10 +3336,10 @@ export function KidsCalendar() {
             <View style={{ backgroundColor: colors.surface, borderRadius: 32, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: brand.accent + '40' }}>
               {/* Star burst */}
               <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: brand.accent + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 2, borderColor: brand.accent + '50' }}>
-                <Text style={{ fontSize: 40 }}>🌟</Text>
+                <Text style={{ fontSize: 40, fontFamily: 'Fraunces_600SemiBold' }}>🌟</Text>
               </View>
 
-              <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8, textAlign: 'center' }}>
+              <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8, textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' }}>
                 Amazing job!
               </Text>
               <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', textAlign: 'center', marginBottom: 6 }}>
@@ -3361,17 +3361,17 @@ export function KidsCalendar() {
                 return (
                   <View style={{ flexDirection: 'row', gap: 12, marginBottom: 28, width: '100%' }}>
                     <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
-                      <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '800' }}>{loggedToday.length}</Text>
+                      <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' }}>{loggedToday.length}</Text>
                       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>Activities</Text>
                     </View>
                     {totalCals > 0 && (
                       <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
-                        <Text style={{ color: '#FF6B35', fontSize: 28, fontWeight: '800' }}>{totalCals}</Text>
+                        <Text style={{ color: '#FF6B35', fontSize: 28, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' }}>{totalCals}</Text>
                         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>kcal today</Text>
                       </View>
                     )}
                     <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
-                      <Text style={{ color: '#A2FF86', fontSize: 28, fontWeight: '800' }}>{selectedDayRoutines.length > 0 ? selectedDayRoutines.length : loggedToday.length}</Text>
+                      <Text style={{ color: '#A2FF86', fontSize: 28, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' }}>{selectedDayRoutines.length > 0 ? selectedDayRoutines.length : loggedToday.length}</Text>
                       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>Routines</Text>
                     </View>
                   </View>

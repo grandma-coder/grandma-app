@@ -164,14 +164,12 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: '700',
     color: '#FFFFFF',
-    letterSpacing: -0.5,
-  },
+    letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' },
   titleLine2: {
     fontSize: 30,
     fontWeight: '700',
     color: '#F4FD50',
-    letterSpacing: -0.5,
-  },
+    letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' },
   // matches HTML: w-12 h-12 rounded-full bg-[#F4FD50] shadow-lg shadow-[#F4FD50]/20
   addBtn: {
     width: 48,
@@ -267,8 +265,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 12,
-    textAlign: 'center',
-  },
+    textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' },
   // matches HTML: text-white/60 text-sm leading-relaxed mb-8
   emptySubtitle: {
     fontSize: 14,

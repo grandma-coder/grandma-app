@@ -443,8 +443,7 @@ const styles = StyleSheet.create({
     fontSize: 56,
     fontWeight: '900',
     color: THEME_COLORS.yellow,
-    marginBottom: 4,
-  },
+    marginBottom: 4, fontFamily: 'Fraunces_600SemiBold' },
   dayViewWeekday: {
     fontSize: 16,
     fontWeight: '700',

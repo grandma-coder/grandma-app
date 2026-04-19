@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
     width: 140, height: 140, borderRadius: 70,
     borderWidth: 3, alignItems: 'center', justifyContent: 'center', gap: 2,
   },
-  streakNumber: { fontSize: 36, fontWeight: '900', marginTop: 4 },
+  streakNumber: { fontSize: 36, fontWeight: '900', marginTop: 4, fontFamily: 'Fraunces_600SemiBold' },
   streakLabel: { fontSize: 12, fontWeight: '600' },
   streakStats: { flexDirection: 'row', alignItems: 'center', gap: 0 },
   streakStatItem: { alignItems: 'center', paddingHorizontal: 20, gap: 2 },

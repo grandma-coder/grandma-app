@@ -210,8 +210,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 6,
-  },
+    marginBottom: 6, fontFamily: 'Fraunces_600SemiBold' },
   subtitle: {
     fontSize: 15,
     color: colors.textSecondary,
@@ -249,7 +248,7 @@ const styles = StyleSheet.create({
   },
   packageTitle: { fontSize: 14, fontWeight: '600', color: colors.textTertiary, marginBottom: 4 },
   packageTitleSelected: { color: colors.text },
-  packagePrice: { fontSize: 24, fontWeight: '800', color: colors.textTertiary },
+  packagePrice: { fontSize: 24, fontWeight: '800', color: colors.textTertiary, fontFamily: 'Fraunces_600SemiBold' },
   packagePriceSelected: { color: colors.text },
   packagePeriod: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
 

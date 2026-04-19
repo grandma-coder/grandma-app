@@ -196,14 +196,12 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 40,
     lineHeight: 42,
-    letterSpacing: -1,
-  },
+    letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' },
   headingItalic: {
     fontSize: 40,
     lineHeight: 42,
     letterSpacing: -0.5,
-    marginBottom: 10,
-  },
+    marginBottom: 10, fontFamily: 'Fraunces_600SemiBold' },
   sub: {
     fontSize: 15,
     marginBottom: 28,

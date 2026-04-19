@@ -150,7 +150,7 @@ export default function Library() {
         <Text style={styles.pillarsLabel}>COMMUNITY CHANNELS</Text>
         <GlassCard>
           <View style={styles.channelPlaceholder}>
-            <Text style={{ fontSize: 28, marginBottom: 8 }}>💬</Text>
+            <Text style={{ fontSize: 28, marginBottom: 8, fontFamily: 'Fraunces_600SemiBold' }}>💬</Text>
             <Text style={styles.channelTitle}>Coming Soon</Text>
             <Text style={styles.channelSubtitle}>
               Join channels for birth stories, breastfeeding support, recipes, and local meetups.
@@ -278,8 +278,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: -0.5,
-    marginBottom: 12,
-  },
+    marginBottom: 12, fontFamily: 'Fraunces_600SemiBold' },
   // matches HTML: text-purple-100/70 text-[15px] leading-relaxed max-w-[280px]
   emptySubtitle: {
     fontSize: 15,

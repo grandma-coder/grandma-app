@@ -204,8 +204,7 @@ const styles = StyleSheet.create({
   displayNumber: {
     fontSize: 48,
     fontWeight: '900',
-    color: THEME_COLORS.yellow,
-  },
+    color: THEME_COLORS.yellow, fontFamily: 'Fraunces_600SemiBold' },
   displayLabel: {
     fontSize: 10,
     fontWeight: '800',

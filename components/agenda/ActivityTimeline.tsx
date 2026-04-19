@@ -164,8 +164,7 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     fontSize: 36,
-    marginBottom: 4,
-  },
+    marginBottom: 4, fontFamily: 'Fraunces_600SemiBold' },
   emptyTitle: {
     fontSize: 15,
     fontWeight: '600',

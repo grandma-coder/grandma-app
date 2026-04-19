@@ -424,8 +424,7 @@ const styles = StyleSheet.create({
   tempInput: {
     flex: 1,
     fontSize: 24,
-    fontWeight: '800',
-  },
+    fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' },
   tempUnit: {
     fontSize: 18,
     fontWeight: '600',

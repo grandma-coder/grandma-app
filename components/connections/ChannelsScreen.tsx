@@ -394,7 +394,7 @@ function ChannelCardCompact({ channel, joined }: { channel: Channel; joined: boo
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   scroll: { paddingHorizontal: 20, paddingBottom: 40 },
-  heading: { fontSize: 24, fontWeight: '800', letterSpacing: -0.3, marginBottom: 16 },
+  heading: { fontSize: 24, fontWeight: '800', letterSpacing: -0.3, marginBottom: 16, fontFamily: 'Fraunces_600SemiBold' },
 
   // Banner carousel
   bannerContainer: { marginBottom: 16 },

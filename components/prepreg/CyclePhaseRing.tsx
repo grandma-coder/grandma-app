@@ -192,8 +192,7 @@ const styles = StyleSheet.create({
   countdownNumber: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#FFFFFF',
-  },
+    color: '#FFFFFF', fontFamily: 'Fraunces_600SemiBold' },
   // matches HTML: text-lg ml-1
   countdownUnit: {
     fontSize: 18,

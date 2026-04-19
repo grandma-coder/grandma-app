@@ -2520,7 +2520,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
           {/* Duration preview */}
           {sleepDuration ? (
             <View style={{ backgroundColor: brand.pregnancy + '12', borderRadius: 14, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: brand.pregnancy + '25' }}>
-              <Text style={{ color: brand.pregnancy, fontWeight: '800', fontSize: 36, letterSpacing: -1, lineHeight: 40 }}>{sleepDuration}</Text>
+              <Text style={{ color: brand.pregnancy, fontWeight: '800', fontSize: 36, letterSpacing: -1, lineHeight: 40, fontFamily: 'Fraunces_600SemiBold' }}>{sleepDuration}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>total sleep</Text>
             </View>
           ) : null}
@@ -2680,7 +2680,7 @@ const styles = StyleSheet.create({
   timerWrap: { padding: 20, alignItems: 'center', gap: 16 },
   timerSideIndicator: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   timerSideLabel: { fontSize: 16, fontWeight: '700' },
-  timerDisplay: { fontSize: 56, fontWeight: '200', letterSpacing: 2, fontVariant: ['tabular-nums'] },
+  timerDisplay: { fontSize: 56, fontWeight: '200', letterSpacing: 2, fontVariant: ['tabular-nums'], fontFamily: 'Fraunces_600SemiBold' },
   timerBreakdown: { flexDirection: 'row', gap: 12, width: '100%' },
   timerBreakdownItem: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10 },
   timerBreakdownDot: { width: 8, height: 8, borderRadius: 4 },

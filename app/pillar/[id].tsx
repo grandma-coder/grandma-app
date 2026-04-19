@@ -111,14 +111,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   icon: {
-    fontSize: 32,
-  },
+    fontSize: 32, fontFamily: 'Fraunces_600SemiBold' },
   name: {
     fontSize: 28,
     fontWeight: '800',
     color: colors.text,
-    marginBottom: 6,
-  },
+    marginBottom: 6, fontFamily: 'Fraunces_600SemiBold' },
   description: {
     fontSize: 15,
     color: colors.textSecondary,

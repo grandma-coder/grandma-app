@@ -139,8 +139,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 6,
-  },
+    marginBottom: 6, fontFamily: 'Fraunces_600SemiBold' },
   price: {
     fontSize: 22,
     fontWeight: '700',

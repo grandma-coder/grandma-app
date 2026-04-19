@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
   scroll: { padding: 20, gap: 0 },
 
   heroCard: { borderRadius: 24, padding: 24, marginBottom: 20, alignItems: 'center', borderWidth: 1 },
-  heroEmoji: { fontSize: 48, marginBottom: 8 },
+  heroEmoji: { fontSize: 48, marginBottom: 8, fontFamily: 'Fraunces_600SemiBold' },
   heroName: { fontSize: 22, fontFamily: 'CabinetGrotesk-Black' },
   heroWeek: { fontSize: 16, fontFamily: 'Satoshi-Variable', fontWeight: '700', marginTop: 4 },
   heroDays: { fontSize: 14, fontFamily: 'Satoshi-Variable', marginTop: 2 },

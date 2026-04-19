@@ -220,7 +220,7 @@ export function AffirmationRevealCard() {
         <View style={styles.hiddenState}>
           {/* Orb */}
           <Animated.Text
-            style={[{ fontSize: 40 }, { opacity: orbOpacity, transform: [{ scale: orbScale }] }]}
+            style={[{ fontSize: 40, fontFamily: 'Fraunces_600SemiBold' }, { opacity: orbOpacity, transform: [{ scale: orbScale }] }]}
           >
             🔮
           </Animated.Text>
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   },
 
   hiddenState: { alignItems: 'center', gap: 10, paddingBottom: 4 },
-  orb: { fontSize: 40 },
+  orb: { fontSize: 40, fontFamily: 'Fraunces_600SemiBold' },
   hiddenHint: {
     fontSize: 13,
     fontFamily: 'Satoshi-Variable',

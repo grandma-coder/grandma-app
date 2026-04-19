@@ -115,8 +115,7 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     fontSize: 48,
-    marginBottom: 12,
-  },
+    marginBottom: 12, fontFamily: 'Fraunces_600SemiBold' },
   emptyTitle: {
     ...typography.title,
     marginBottom: 8,

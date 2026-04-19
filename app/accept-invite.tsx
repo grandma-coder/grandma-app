@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border,
   },
   emoji: { fontSize: 56, marginBottom: 20 },
-  title: { fontSize: 26, fontWeight: '700', color: colors.text, marginBottom: 8, textAlign: 'center' },
+  title: { fontSize: 26, fontWeight: '700', color: colors.text, marginBottom: 8, textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' },
   subtitle: { fontSize: 15, color: colors.textTertiary, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
   permissionsCard: {
     width: '100%', backgroundColor: colors.surface, borderRadius: 16, padding: 20,

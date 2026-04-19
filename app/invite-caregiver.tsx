@@ -187,8 +187,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textTransform: 'uppercase',
     lineHeight: 50,
-    letterSpacing: -1,
-  },
+    letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' },
   subtitle: {
     fontSize: 15,
     color: colors.textTertiary,
@@ -291,8 +290,7 @@ const styles = StyleSheet.create({
   },
   successEmoji: {
     fontSize: 48,
-    marginBottom: 16,
-  },
+    marginBottom: 16, fontFamily: 'Fraunces_600SemiBold' },
   linkCard: {
     flexDirection: 'row',
     alignItems: 'center',

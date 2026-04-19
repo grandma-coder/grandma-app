@@ -81,8 +81,7 @@ const styles = StyleSheet.create({
   weekNumber: {
     fontSize: 72,
     lineHeight: 76,
-    letterSpacing: -2,
-  },
+    letterSpacing: -2, fontFamily: 'Fraunces_600SemiBold' },
   sizeChip: {
     marginTop: 16,
     alignSelf: 'flex-start',

@@ -322,8 +322,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: -0.5,
-    marginBottom: 24,
-  },
+    marginBottom: 24, fontFamily: 'Fraunces_600SemiBold' },
   modalLabel: {
     fontSize: 10,
     fontWeight: '900',

@@ -152,7 +152,7 @@ function VitalDetailModal({ card, userId, weekNumber, onClose, onLog }: DetailMo
 
       {/* Header */}
       <View style={styles.detailHeader}>
-        <Text style={{ fontSize: 40 }}>{card.icon}</Text>
+        <Text style={{ fontSize: 40, fontFamily: 'Fraunces_600SemiBold' }}>{card.icon}</Text>
         <View>
           <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{card.label.toUpperCase()}</Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>{card.value}</Text>

@@ -106,8 +106,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     letterSpacing: -1,
     lineHeight: 38,
-    marginBottom: 16,
-  },
+    marginBottom: 16, fontFamily: 'Fraunces_600SemiBold' },
   body: {
     fontSize: 16,
     fontWeight: '500',

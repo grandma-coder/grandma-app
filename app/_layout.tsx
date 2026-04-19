@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { View, ActivityIndicator } from 'react-native'
+import { View, ActivityIndicator, Text as RNText, TextInput as RNTextInput } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as Font from 'expo-font'
@@ -35,6 +35,26 @@ import type { ChildWithRole, CaregiverPermissions } from '../types'
 
 const queryClient = new QueryClient()
 
+/**
+ * Set the default font family on every <Text> and <TextInput> once
+ * the redesign fonts are loaded. Individual screens can still override
+ * via `fontFamily` to use Fraunces (display) or Instrument Serif (italic).
+ */
+function applyDefaultFontFamily() {
+  const Text = RNText as any
+  const TextInput = RNTextInput as any
+  Text.defaultProps = Text.defaultProps || {}
+  Text.defaultProps.style = [
+    { fontFamily: 'DMSans_400Regular' },
+    Text.defaultProps.style,
+  ]
+  TextInput.defaultProps = TextInput.defaultProps || {}
+  TextInput.defaultProps.style = [
+    { fontFamily: 'DMSans_400Regular' },
+    TextInput.defaultProps.style,
+  ]
+}
+
 const DEFAULT_PERMISSIONS: CaregiverPermissions = { view: true, log_activity: true, chat: true }
 
 export default function RootLayout() {
@@ -49,6 +69,12 @@ export default function RootLayout() {
     DMSans_500Medium,
     DMSans_600SemiBold,
   })
+
+  // Apply DM Sans as the default for every Text / TextInput once fonts load.
+  useEffect(() => {
+    if (fontsLoaded) applyDefaultFontFamily()
+  }, [fontsLoaded])
+
   const router = useRouter()
   const segments = useSegments()
 

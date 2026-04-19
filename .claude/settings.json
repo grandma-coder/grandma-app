@@ -110,7 +110,8 @@
       "Bash(node -e \"const f = require\\('@expo-google-fonts/dm-sans'\\); console.log\\(Object.keys\\(f\\).filter\\(k=>!k.startsWith\\('__'\\)\\).slice\\(0,15\\)\\)\")",
       "Bash(node -e \"const f = require\\('@expo-google-fonts/instrument-serif'\\); console.log\\(Object.keys\\(f\\).filter\\(k=>!k.startsWith\\('__'\\)\\).slice\\(0,15\\)\\)\")",
       "Bash(xxd)",
-      "WebFetch(domain:26a54b71-f6c0-403a-a2e6-68588162a85c.claudeusercontent.com)"
+      "WebFetch(domain:26a54b71-f6c0-403a-a2e6-68588162a85c.claudeusercontent.com)",
+      "Bash(python3)"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"

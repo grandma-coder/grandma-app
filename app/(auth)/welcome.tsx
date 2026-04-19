@@ -251,13 +251,11 @@ const styles = StyleSheet.create({
     fontSize: 68,
     fontWeight: '700',
     lineHeight: 64,
-    letterSpacing: -2,
-  },
+    letterSpacing: -2, fontFamily: 'Fraunces_600SemiBold' },
   seesYou: {
     fontSize: 32,
     marginTop: 4,
-    marginBottom: 16,
-  },
+    marginBottom: 16, fontFamily: 'Fraunces_600SemiBold' },
   body: {
     fontSize: 15,
     lineHeight: 22,

@@ -75,8 +75,7 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 36,
-    marginBottom: 12,
-  },
+    marginBottom: 12, fontFamily: 'Fraunces_600SemiBold' },
   resultText: {
     fontSize: 15,
     color: colors.textSecondary,

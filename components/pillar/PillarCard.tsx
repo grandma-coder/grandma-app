@@ -40,8 +40,7 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 36,
-    marginRight: 14,
-  },
+    marginRight: 14, fontFamily: 'Fraunces_600SemiBold' },
   textContainer: {
     flex: 1,
   },

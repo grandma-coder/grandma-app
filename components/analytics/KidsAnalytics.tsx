@@ -1057,7 +1057,7 @@ function WellnessScoreArc({
         >
           {activePillar ? (
             <>
-              <Text style={{ fontSize: 34, fontWeight: '900', color: PILLAR_CONFIG[activePillar].color, lineHeight: 38 }}>
+              <Text style={{ fontSize: 34, fontWeight: '900', color: PILLAR_CONFIG[activePillar].color, lineHeight: 38, fontFamily: 'Fraunces_600SemiBold' }}>
                 {scores[activePillar].hasData ? scores[activePillar].value.toFixed(1) : '—'}
               </Text>
               <Text style={{ fontSize: 10, fontWeight: '700', color: PILLAR_CONFIG[activePillar].color + 'AA', marginTop: 2, letterSpacing: 0.5 }}>
@@ -1066,7 +1066,7 @@ function WellnessScoreArc({
             </>
           ) : (
             <>
-              <Text style={{ fontSize: 34, fontWeight: '900', color: overallC, lineHeight: 38 }}>
+              <Text style={{ fontSize: 34, fontWeight: '900', color: overallC, lineHeight: 38, fontFamily: 'Fraunces_600SemiBold' }}>
                 {hasAnyData ? overall.toFixed(1) : '—'}
               </Text>
               <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary, marginTop: 2 }}>
@@ -1341,11 +1341,11 @@ function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
         <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, borderWidth: 1, borderColor: SKIP_COLOR + '20', marginTop: 2, padding: 20, gap: 18 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={{ color: adherenceRate >= 70 ? '#A2FF86' : SKIP_COLOR, fontSize: 28, fontWeight: '900' }}>{adherenceRate}%</Text>
+              <Text style={{ color: adherenceRate >= 70 ? '#A2FF86' : SKIP_COLOR, fontSize: 28, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' }}>{adherenceRate}%</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500', marginTop: 4 }}>adherence this week</Text>
             </View>
             <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={{ color: SKIP_COLOR, fontSize: 28, fontWeight: '900' }}>{data.totalSkips}</Text>
+              <Text style={{ color: SKIP_COLOR, fontSize: 28, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' }}>{data.totalSkips}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500', marginTop: 4 }}>total skips (7d)</Text>
             </View>
           </View>
@@ -2711,7 +2711,7 @@ const styles = StyleSheet.create({
 
   // Header
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  screenTitle: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
+  screenTitle: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' },
   screenSub: { fontSize: 14, fontWeight: '500', marginTop: 2 },
   infoBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
 
@@ -2824,7 +2824,7 @@ const styles = StyleSheet.create({
   // Stat row
   statRow: { flexDirection: 'row', gap: 12, padding: 8 },
   statPill: { flex: 1, alignItems: 'center', padding: 16, gap: 6 },
-  statValue: { fontSize: 24, fontWeight: '900' },
+  statValue: { fontSize: 24, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' },
   statLabel: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
 
   // Loading / Error / Empty
@@ -2848,7 +2848,7 @@ const styles = StyleSheet.create({
 
   // Score info modal
   scoreHighlight: { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 20, marginHorizontal: 20, marginBottom: 20, borderWidth: 1 },
-  scoreHighlightNum: { fontSize: 44, fontWeight: '900' },
+  scoreHighlightNum: { fontSize: 44, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' },
   scoreHighlightLabel: { fontSize: 16, fontWeight: '700' },
   scoreHighlightSub: { fontSize: 13, fontWeight: '500', marginTop: 2 },
   infoSectionLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 1.5, marginHorizontal: 20, marginBottom: 10 },

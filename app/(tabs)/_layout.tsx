@@ -170,8 +170,9 @@ export default function TabLayout() {
   const mode = useModeStore((s) => s.mode)
   const currentBehavior = useBehaviorStore((s) => s.currentBehavior)
   const config = getModeConfig(mode)
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   const { t } = useTranslation()
+  const activeTint = getModeColor(mode, isDark)
 
   // Fade transition on behavior switch
   const fadeAnim = useRef(new Animated.Value(1)).current
@@ -200,7 +201,7 @@ export default function TabLayout() {
             paddingBottom: 34,
             paddingTop: 8,
           },
-          tabBarActiveTintColor: colors.tabActive,
+          tabBarActiveTintColor: activeTint,
           tabBarInactiveTintColor: colors.tabInactive,
           tabBarLabelStyle: {
             fontSize: 9,

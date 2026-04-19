@@ -775,8 +775,7 @@ const stepStyles = StyleSheet.create({
     gap: 6,
   },
   moodEmoji: {
-    fontSize: 32,
-  },
+    fontSize: 32, fontFamily: 'Fraunces_600SemiBold' },
   moodLabel: {
     fontSize: 13,
     fontWeight: '600',
@@ -840,8 +839,7 @@ const completeStyles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    letterSpacing: -0.5,
-  },
+    letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' },
   message: {
     fontSize: 16,
     fontWeight: '500',
@@ -858,8 +856,7 @@ const completeStyles = StyleSheet.create({
   countdownDays: {
     fontSize: 56,
     fontWeight: '900',
-    letterSpacing: -2,
-  },
+    letterSpacing: -2, fontFamily: 'Fraunces_600SemiBold' },
   countdownLabel: {
     fontSize: 15,
     fontWeight: '600',

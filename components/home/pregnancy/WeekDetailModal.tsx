@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 16,
   },
-  miniHeroEmoji: { fontSize: 48 },
+  miniHeroEmoji: { fontSize: 48, fontFamily: 'Fraunces_600SemiBold' },
   miniHeroText: { flex: 1 },
   miniHeroWeek: {
     fontSize: 20,
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
   },
-  grandmaEmoji: { fontSize: 28 },
+  grandmaEmoji: { fontSize: 28, fontFamily: 'Fraunces_600SemiBold' },
   grandmaTipText: {
     flex: 1,
     fontSize: 14,
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
   },
-  prepDetailIcon: { fontSize: 36 },
+  prepDetailIcon: { fontSize: 36, fontFamily: 'Fraunces_600SemiBold' },
   prepDetailHeaderText: { flex: 1 },
   prepDetailTitle: {
     fontSize: 16,

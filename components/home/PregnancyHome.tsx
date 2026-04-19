@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
 
   // Grandma
   grandmaCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 24, padding: 20, gap: 16 },
-  grandmaEmoji: { fontSize: 36 },
+  grandmaEmoji: { fontSize: 36, fontFamily: 'Fraunces_600SemiBold' },
   grandmaBody: { flex: 1 },
   grandmaTitle: { fontSize: 16, fontFamily: 'CabinetGrotesk-Black', marginBottom: 2 },
   grandmaSubtitle: { fontSize: 13, fontFamily: 'Satoshi-Variable', lineHeight: 18 },
