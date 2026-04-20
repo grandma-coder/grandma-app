@@ -373,7 +373,7 @@ function FertileDetail() {
   return (
     <View style={{ gap: 18 }}>
       <View style={[fertStyles.currentCard, { backgroundColor: stickers.pinkSoft, borderColor: colors.border }]}>
-        <View style={fertStyles.currentChip}>
+        <View style={[fertStyles.currentChip, { backgroundColor: colors.surface }]}>
           <Flower size={40} petal={stickers.pink} center={stickers.yellow} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
@@ -426,7 +426,6 @@ const fertStyles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 999,
-    backgroundColor: '#FFFEF8',
     alignItems: 'center',
     justifyContent: 'center',
   },
