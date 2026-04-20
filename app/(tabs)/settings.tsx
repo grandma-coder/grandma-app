@@ -29,16 +29,20 @@ import { supabase } from '../../lib/supabase'
 import { useTranslation } from '../../lib/i18n'
 import { useDevPanel } from '../../context/DevPanelContext'
 import { getSubtitleFor } from '../../lib/profileStatus'
-import { ProfileHero } from '../../components/profile/ProfileHero'
+import { ProfileHero, type KidPill } from '../../components/profile/ProfileHero'
 import { BadgesStrip, type BadgeEntry } from '../../components/profile/BadgesStrip'
 import { MyJourneyPillGrid } from '../../components/profile/MyJourneyPillGrid'
 import { StatRow } from '../../components/ui/StatRow'
+import { childColor } from '../../components/ui/ChildPills'
 import {
   Heart as HeartSticker,
   Star as StarSticker,
   Leaf as LeafSticker,
   Cross as CrossSticker,
   Burst as BurstSticker,
+  Flower as FlowerSticker,
+  Drop as DropSticker,
+  Moon as MoonSticker,
 } from '../../components/ui/Stickers'
 
 // ─── Badge sticker mapping ─────────────────────────────────────────────────
@@ -60,6 +64,7 @@ export default function ProfileScreen() {
   const mode = useModeStore((s) => s.mode)
   const currentBehavior = useBehaviorStore((s) => s.currentBehavior)
   const children = useChildStore((s) => s.children)
+  const setActiveChild = useChildStore((s) => s.setActiveChild)
   const earnedBadges = useBadgeStore((s) => s.earnedBadges)
 
   const [userName, setUserName] = useState<string | null>(null)
@@ -67,12 +72,12 @@ export default function ProfileScreen() {
   const [joinedYear, setJoinedYear] = useState<number | null>(null)
   const [careCircleCount, setCareCircleCount] = useState<number>(0)
 
-  // Dev-panel 5-tap trigger
+  // Dev-panel 5-tap trigger on the version text (bottom of screen)
   const { openDevPanel } = useDevPanel()
   const tapCount = useRef(0)
   const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  function handleHeroPress() {
+  function handleVersionPress() {
     if (!__DEV__ && process.env.EXPO_PUBLIC_ENABLE_DEV_PANEL !== 'true') return
     tapCount.current += 1
     if (tapTimer.current) clearTimeout(tapTimer.current)
@@ -157,6 +162,18 @@ export default function ProfileScreen() {
   const hasChildren = children.length > 0
   const hasEmergency = false // Wave 2 wires real emergency status
 
+  const kidPills: KidPill[] = children.map((c, i) => ({
+    id: c.id,
+    name: c.name,
+    color: childColor(i),
+  }))
+
+  function handleKidPillPress(id: string) {
+    const child = children.find((c) => c.id === id)
+    if (child) setActiveChild(child)
+    router.push('/profile/kids')
+  }
+
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <ScrollView
@@ -181,15 +198,16 @@ export default function ProfileScreen() {
         </View>
 
         {/* Hero */}
-        <Pressable onPress={handleHeroPress}>
-          <ProfileHero
-            initial={initial}
-            firstName={firstName}
-            lastName={lastName}
-            subtitle={subtitle}
-            accentColor={accent}
-          />
-        </Pressable>
+        <ProfileHero
+          initial={initial}
+          firstName={firstName}
+          lastName={lastName}
+          subtitle={subtitle}
+          accentColor={accent}
+          onAvatarPress={() => router.push('/profile/personal')}
+          kidPills={kidPills}
+          onKidPillPress={handleKidPillPress}
+        />
 
         {/* Badges */}
         <BadgesStrip
@@ -220,6 +238,14 @@ export default function ProfileScreen() {
           />
           {hasChildren && (
             <StatRow
+              icon={<FlowerSticker size={18} petal="#9DC3E8" center="#F5D652" />}
+              label="Kids Profile"
+              value={children.length === 1 ? '1 child' : `${children.length} children`}
+              onPress={() => router.push('/profile/kids')}
+            />
+          )}
+          {hasChildren && (
+            <StatRow
               icon={<StarSticker size={18} fill="#F5D652" />}
               label={t('profile_memories')}
               value="—"
@@ -239,6 +265,21 @@ export default function ProfileScreen() {
             label={t('profile_emergencyInsurance')}
             value={hasEmergency ? 'Ready' : 'Not set'}
             onPress={() => router.push('/profile/emergency-insurance')}
+          />
+          <StatRow
+            icon={<DropSticker size={18} fill="#F5D652" />}
+            label={t('profile_notifications')}
+            onPress={() => router.push('/profile/notifications')}
+          />
+          <StatRow
+            icon={<MoonSticker size={18} fill="#C8B6E8" />}
+            label={t('profile_accountSecurity')}
+            onPress={() => router.push('/profile/account')}
+          />
+          <StatRow
+            icon={<LeafSticker size={18} fill="#BDD48C" />}
+            label={t('profile_dataPrivacy')}
+            onPress={() => router.push('/profile/privacy')}
           />
           <StatRow
             icon={<BurstSticker size={18} fill="#C8B6E8" />}
@@ -264,9 +305,11 @@ export default function ProfileScreen() {
           </Text>
         </Pressable>
 
-        <Text style={[styles.version, { color: colors.textMuted }]}>
-          {t('profile_version')}
-        </Text>
+        <Pressable onPress={handleVersionPress} hitSlop={8}>
+          <Text style={[styles.version, { color: colors.textMuted }]}>
+            {t('profile_version')}
+          </Text>
+        </Pressable>
       </ScrollView>
     </View>
   )

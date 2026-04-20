@@ -1,6 +1,12 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useTheme } from '../../constants/theme'
 import { Heart as HeartSticker, Squishy, Star as StarSticker } from '../ui/Stickers'
+
+export interface KidPill {
+  id: string
+  name: string
+  color: string
+}
 
 interface ProfileHeroProps {
   initial: string
@@ -8,6 +14,9 @@ interface ProfileHeroProps {
   lastName?: string
   subtitle?: string
   accentColor: string
+  onAvatarPress?: () => void
+  kidPills?: KidPill[]
+  onKidPillPress?: (id: string) => void
 }
 
 /**
@@ -23,8 +32,36 @@ export function ProfileHero({
   lastName,
   subtitle,
   accentColor,
+  onAvatarPress,
+  kidPills,
+  onKidPillPress,
 }: ProfileHeroProps) {
   const { colors, stickers, font } = useTheme()
+
+  const avatarNode = (
+    <View
+      style={[
+        styles.avatar,
+        {
+          backgroundColor: accentColor,
+          borderColor: colors.text,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          styles.initial,
+          { fontFamily: font.display, color: colors.text },
+        ]}
+        allowFontScaling={false}
+      >
+        {initial}
+      </Text>
+      <View style={styles.avatarStar}>
+        <StarSticker size={38} fill={stickers.yellow} />
+      </View>
+    </View>
+  )
 
   return (
     <View style={styles.root}>
@@ -35,28 +72,17 @@ export function ProfileHero({
         <HeartSticker size={40} fill={stickers.pink} />
       </View>
 
-      <View
-        style={[
-          styles.avatar,
-          {
-            backgroundColor: accentColor,
-            borderColor: colors.text,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.initial,
-            { fontFamily: font.display, color: colors.text },
-          ]}
-          allowFontScaling={false}
+      {onAvatarPress ? (
+        <Pressable
+          onPress={onAvatarPress}
+          hitSlop={6}
+          style={({ pressed }) => [pressed && { opacity: 0.85 }]}
         >
-          {initial}
-        </Text>
-        <View style={styles.avatarStar}>
-          <StarSticker size={38} fill={stickers.yellow} />
-        </View>
-      </View>
+          {avatarNode}
+        </Pressable>
+      ) : (
+        avatarNode
+      )}
 
       <View style={styles.nameRow}>
         <Text
@@ -83,6 +109,30 @@ export function ProfileHero({
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
           {subtitle}
         </Text>
+      ) : null}
+
+      {kidPills && kidPills.length > 0 ? (
+        <View style={styles.kidPillsRow}>
+          {kidPills.map((k) => (
+            <Pressable
+              key={k.id}
+              onPress={() => onKidPillPress?.(k.id)}
+              hitSlop={4}
+              style={({ pressed }) => [
+                styles.kidPill,
+                {
+                  backgroundColor: k.color + '25',
+                  borderColor: k.color + '60',
+                },
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <Text style={[styles.kidPillText, { color: k.color }]} numberOfLines={1}>
+                {k.name}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       ) : null}
     </View>
   )
@@ -125,4 +175,20 @@ const styles = StyleSheet.create({
   firstName: { fontSize: 28, fontWeight: '600', letterSpacing: -0.3 },
   lastName: { fontSize: 28, fontWeight: '400', fontStyle: 'italic', letterSpacing: -0.2 },
   subtitle: { fontSize: 13, marginTop: 2, fontWeight: '500' },
+
+  kidPillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 10,
+    paddingHorizontal: 8,
+  },
+  kidPill: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  kidPillText: { fontSize: 12, fontWeight: '700' },
 })
