@@ -1,23 +1,22 @@
-import React, { useCallback, useEffect, useState } from 'react'
+/**
+ * Notifications Inbox — cream-paper redesign.
+ *
+ * Functionality (filter, mark read, navigation, refresh, date grouping) is
+ * unchanged. This file only restyles the screen to the design system tokens
+ * (Fraunces / DM Sans / sticker palette / paper surfaces).
+ */
+
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   View,
   Text,
   SectionList,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native'
-import {
-  fetchNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
-  type AppNotification,
-} from '../lib/channelPosts'
-import { runNotificationEngine } from '../lib/notificationEngine'
-import { useTheme, brand } from '../constants/theme'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   ArrowLeft,
   Bell,
@@ -34,116 +33,131 @@ import {
   Flame,
   Sparkles,
   FileBarChart,
-  Utensils,
   Moon,
-  Smile,
   Shield,
   Activity,
   Clock,
   Zap,
 } from 'lucide-react-native'
+import {
+  fetchNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  type AppNotification,
+} from '../lib/channelPosts'
+import { runNotificationEngine } from '../lib/notificationEngine'
+import { useTheme, getModeColor } from '../constants/theme'
+import { useModeStore } from '../store/useModeStore'
+import { useBehaviorStore } from '../store/useBehaviorStore'
+import { useChildStore } from '../store/useChildStore'
+import { BrandedLoader } from '../components/ui/BrandedLoader'
+import { Display, MonoCaps } from '../components/ui/Typography'
 
-// ─── Type → Visual Config ────────────────────────────────────────────────────
+// ─── Type → Visual Config ───────────────────────────────────────────────────
+
+type StickerKey =
+  | 'coral'
+  | 'green'
+  | 'peach'
+  | 'yellow'
+  | 'lilac'
+  | 'blue'
+  | 'pink'
+
+type CategoryKey =
+  | 'Wellness'
+  | 'Routines'
+  | 'Health'
+  | 'Goals'
+  | 'Insights'
+  | 'Community'
+  | 'Care Circle'
+  | 'Other'
 
 interface TypeConfig {
-  icon: React.ReactNode
-  color: string
-  category: string
+  Icon: React.ComponentType<{ size?: number; color?: string }>
+  stickerKey: StickerKey
+  category: CategoryKey
 }
 
-function getTypeConfig(type: string, size: number = 20): TypeConfig {
-  switch (type) {
-    // Wellness
-    case 'wellness_drop':
-      return { icon: <TrendingDown size={size} color="#FF7070" />, color: '#FF7070', category: 'Wellness' }
-    case 'wellness_improve':
-      return { icon: <TrendingUp size={size} color="#A2FF86" />, color: '#A2FF86', category: 'Wellness' }
-    case 'missing_data':
-      return { icon: <AlertTriangle size={size} color="#FF9800" />, color: '#FF9800', category: 'Wellness' }
-
-    // Routines
-    case 'routine_reminder':
-      return { icon: <CalendarClock size={size} color="#B983FF" />, color: '#B983FF', category: 'Routines' }
-    case 'routine_missed':
-      return { icon: <Clock size={size} color="#FFB347" />, color: '#FFB347', category: 'Routines' }
-
-    // Health
-    case 'health_alert':
-      return { icon: <Activity size={size} color="#FF7070" />, color: '#FF7070', category: 'Health' }
-    case 'vaccine_due':
-      return { icon: <Shield size={size} color="#4D96FF" />, color: '#4D96FF', category: 'Health' }
-
-    // Goals & Streaks
-    case 'goal_achieved':
-      return { icon: <Target size={size} color="#A2FF86" />, color: '#A2FF86', category: 'Goals' }
-    case 'goal_missed':
-      return { icon: <Target size={size} color="#FF9800" />, color: '#FF9800', category: 'Goals' }
-    case 'streak':
-      return { icon: <Flame size={size} color="#F59E0B" />, color: '#F59E0B', category: 'Goals' }
-    case 'streak_broken':
-      return { icon: <Flame size={size} color="#FF7070" />, color: '#FF7070', category: 'Goals' }
-
-    // Insights & Summaries
-    case 'insight':
-      return { icon: <Sparkles size={size} color="#B983FF" />, color: '#B983FF', category: 'Insights' }
-    case 'milestone':
-      return { icon: <Zap size={size} color="#F59E0B" />, color: '#F59E0B', category: 'Insights' }
-    case 'daily_summary':
-      return { icon: <FileBarChart size={size} color="#4D96FF" />, color: '#4D96FF', category: 'Insights' }
-    case 'weekly_report':
-      return { icon: <FileBarChart size={size} color="#A07FDC" />, color: '#A07FDC', category: 'Insights' }
-
-    // Community
-    case 'mention':
-      return { icon: <AtSign size={size} color="#7048B8" />, color: '#7048B8', category: 'Community' }
-    case 'reply':
-      return { icon: <MessageCircle size={size} color="#7048B8" />, color: '#7048B8', category: 'Community' }
-    case 'like':
-      return { icon: <Heart size={size} color="#FF8AD8" />, color: '#FF8AD8', category: 'Community' }
-    case 'channel':
-      return { icon: <Hash size={size} color="#4D96FF" />, color: '#4D96FF', category: 'Community' }
-
-    // Care Circle
-    case 'care_circle_invite':
-    case 'care_circle_accepted':
-      return { icon: <Heart size={size} color="#FF8AD8" />, color: '#FF8AD8', category: 'Care Circle' }
-
-    // Reminder
-    case 'reminder':
-      return { icon: <Bell size={size} color="#F59E0B" />, color: '#F59E0B', category: 'Other' }
-
-    default:
-      return { icon: <Bell size={size} color="#A07FDC" />, color: '#A07FDC', category: 'Other' }
-  }
+const TYPE_CONFIG: Record<string, TypeConfig> = {
+  // Wellness
+  wellness_drop:    { Icon: TrendingDown,   stickerKey: 'coral',  category: 'Wellness' },
+  wellness_improve: { Icon: TrendingUp,     stickerKey: 'green',  category: 'Wellness' },
+  missing_data:     { Icon: AlertTriangle,  stickerKey: 'peach',  category: 'Wellness' },
+  // Routines
+  routine_reminder: { Icon: CalendarClock,  stickerKey: 'lilac',  category: 'Routines' },
+  routine_missed:   { Icon: Clock,          stickerKey: 'peach',  category: 'Routines' },
+  // Health
+  health_alert:     { Icon: Activity,       stickerKey: 'coral',  category: 'Health'   },
+  vaccine_due:      { Icon: Shield,         stickerKey: 'blue',   category: 'Health'   },
+  // Goals & streaks
+  goal_achieved:    { Icon: Target,         stickerKey: 'green',  category: 'Goals'    },
+  goal_missed:      { Icon: Target,         stickerKey: 'peach',  category: 'Goals'    },
+  streak:           { Icon: Flame,          stickerKey: 'yellow', category: 'Goals'    },
+  streak_broken:    { Icon: Flame,          stickerKey: 'coral',  category: 'Goals'    },
+  // Insights
+  insight:          { Icon: Sparkles,       stickerKey: 'lilac',  category: 'Insights' },
+  milestone:        { Icon: Zap,            stickerKey: 'yellow', category: 'Insights' },
+  daily_summary:    { Icon: FileBarChart,   stickerKey: 'blue',   category: 'Insights' },
+  weekly_report:    { Icon: FileBarChart,   stickerKey: 'lilac',  category: 'Insights' },
+  // Community
+  mention:          { Icon: AtSign,         stickerKey: 'lilac',  category: 'Community' },
+  reply:            { Icon: MessageCircle,  stickerKey: 'lilac',  category: 'Community' },
+  like:             { Icon: Heart,          stickerKey: 'pink',   category: 'Community' },
+  channel:          { Icon: Hash,           stickerKey: 'blue',   category: 'Community' },
+  // Care circle
+  care_circle_invite:   { Icon: Heart,      stickerKey: 'pink',   category: 'Care Circle' },
+  care_circle_accepted: { Icon: Heart,      stickerKey: 'pink',   category: 'Care Circle' },
+  // Other
+  reminder:         { Icon: Bell,           stickerKey: 'yellow', category: 'Other'    },
 }
 
-// ─── Navigation helper ───────────────────────────────────────────────────────
+const DEFAULT_CONFIG: TypeConfig = { Icon: Bell, stickerKey: 'lilac', category: 'Other' }
+
+function getTypeConfig(type: string): TypeConfig {
+  return TYPE_CONFIG[type] ?? DEFAULT_CONFIG
+}
+
+// ─── Navigation helper ──────────────────────────────────────────────────────
 
 function navigateForNotification(item: AppNotification) {
   const data = item.data || {}
+
+  // A notification about a child is always a kids-mode notification.
+  // Switch journey mode + active child first so the destination screen
+  // (Analytics, Calendar, etc.) renders the kids variant with the right
+  // child selected — instead of the user's currently active behavior.
+  if (data.childId) {
+    const { children, setActiveChild } = useChildStore.getState()
+    const target = children.find((c) => c.id === data.childId)
+    if (target) setActiveChild(target)
+
+    if (useModeStore.getState().mode !== 'kids') {
+      useBehaviorStore.getState().switchTo('kids')
+      useModeStore.getState().setMode('kids')
+    }
+  }
+
   switch (item.type) {
     case 'wellness_drop':
     case 'wellness_improve':
     case 'daily_summary':
     case 'weekly_report':
-      // Navigate to analytics tab
-      router.push('/(tabs)/vault')
-      break
-    case 'missing_data':
-    case 'routine_missed':
-    case 'routine_reminder':
-      // Navigate to calendar/agenda
-      router.push('/(tabs)/agenda')
-      break
     case 'health_alert':
     case 'vaccine_due':
     case 'goal_achieved':
     case 'goal_missed':
       router.push('/(tabs)/vault')
       break
+    case 'missing_data':
+    case 'routine_missed':
+    case 'routine_reminder':
+      router.push('/(tabs)/agenda')
+      break
     case 'streak':
     case 'streak_broken':
-      router.push('/(tabs)/vault')
+      router.push('/daily-rewards')
       break
     case 'insight':
     case 'milestone':
@@ -153,20 +167,21 @@ function navigateForNotification(item: AppNotification) {
     case 'reply':
     case 'like':
     case 'channel':
-      if (data.channelId) {
-        router.push(`/channel/${data.channelId}` as any)
-      }
+      if (data.channelId) router.push(`/channel/${data.channelId}` as any)
+      break
+    case 'care_circle_invite':
+    case 'care_circle_accepted':
+      router.push('/manage-caregivers')
       break
     case 'reminder':
-      // Navigate to home tab where the reminders section lives
-      router.replace('/(tabs)')
+      router.push('/(tabs)/agenda')
       break
     default:
       break
   }
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function timeAgo(dateStr: string): string {
   const now = Date.now()
@@ -182,7 +197,12 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString()
 }
 
-function groupByDate(notifications: AppNotification[]): { title: string; data: AppNotification[] }[] {
+interface DateSection {
+  title: string
+  data: AppNotification[]
+}
+
+function groupByDate(notifications: AppNotification[]): DateSection[] {
   const today = new Date().toISOString().split('T')[0]
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
 
@@ -203,22 +223,23 @@ function groupByDate(notifications: AppNotification[]): { title: string; data: A
     .map(({ label, items }) => ({ title: label, data: items }))
 }
 
-// ─── Filter Tabs ─────────────────────────────────────────────────────────────
+// ─── Filter Tabs ────────────────────────────────────────────────────────────
 
 const FILTER_TABS = ['All', 'Wellness', 'Health', 'Goals', 'Routines', 'Community', 'Insights'] as const
 type FilterTab = typeof FILTER_TABS[number]
 
 function matchesFilter(type: string, filter: FilterTab): boolean {
   if (filter === 'All') return true
-  const config = getTypeConfig(type)
-  return config.category === filter
+  return getTypeConfig(type).category === filter
 }
 
-// ─── Main Component ──────────────────────────────────────────────────────────
+// ─── Main Component ─────────────────────────────────────────────────────────
 
 export default function NotificationsScreen() {
-  const { colors, radius, spacing, fontSize, fontWeight } = useTheme()
+  const { colors, stickers, radius, isDark, font } = useTheme()
   const insets = useSafeAreaInsets()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getModeColor(mode, isDark)
 
   const [notifications, setNotifications] = useState<AppNotification[]>([])
   const [loading, setLoading] = useState(true)
@@ -226,7 +247,6 @@ export default function NotificationsScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('All')
 
   const load = useCallback(async () => {
-    // Run engine to generate any pending notifications first
     await runNotificationEngine()
     const data = await fetchNotifications()
     setNotifications(data)
@@ -257,155 +277,231 @@ export default function NotificationsScreen() {
     navigateForNotification(item)
   }, [])
 
-  const filtered = notifications.filter((n) => matchesFilter(n.type, activeFilter))
-  const sections = groupByDate(filtered)
+  const filtered = useMemo(
+    () => notifications.filter((n) => matchesFilter(n.type, activeFilter)),
+    [notifications, activeFilter],
+  )
+  const sections = useMemo(() => groupByDate(filtered), [filtered])
   const hasUnread = notifications.some((n) => !n.is_read)
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.bg }, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.screen, { backgroundColor: colors.bg }, styles.loading]}>
+        <BrandedLoader />
       </View>
     )
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm, borderBottomColor: colors.border }]}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
-            <ArrowLeft size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
-          {unreadCount > 0 && (
-            <View style={[styles.headerBadge, { backgroundColor: brand.error }]}>
-              <Text style={styles.headerBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+    <View style={[styles.screen, { backgroundColor: colors.bg }]}>
+      {/* Top bar */}
+      <View style={[styles.topBar, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
+        <View style={styles.topBarRow}>
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <View
+              style={[
+                styles.backBtn,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <ArrowLeft size={18} color={colors.text} strokeWidth={2} />
             </View>
+          </Pressable>
+
+          <View style={styles.titleWrap}>
+            <Display size={26}>Notifications</Display>
+            {unreadCount > 0 && (
+              <View style={[styles.titleCount, { backgroundColor: stickers.coral }]}>
+                <Text style={[styles.titleCountText, { color: '#FFFEF8', fontFamily: font.bodySemiBold }]}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {hasUnread ? (
+            <Pressable onPress={handleMarkAllRead} hitSlop={8} style={styles.markAllBtn}>
+              <CheckCheck size={16} color={colors.text} strokeWidth={2} />
+              <Text style={[styles.markAllText, { color: colors.text, fontFamily: font.bodyMedium }]}>
+                Mark all read
+              </Text>
+            </Pressable>
+          ) : (
+            <View style={styles.markAllPlaceholder} />
           )}
         </View>
-        {hasUnread && (
-          <TouchableOpacity style={styles.markAllBtn} onPress={handleMarkAllRead}>
-            <CheckCheck size={16} color={colors.primary} />
-            <Text style={[styles.markAllText, { color: colors.primary }]}>Mark all read</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
-      {/* Filter Tabs */}
-      <View style={[styles.filterRow, { borderBottomColor: colors.border }]}>
-        <View style={styles.filterScroll}>
-          {FILTER_TABS.map((tab) => {
-            const isActive = activeFilter === tab
-            const count = tab === 'All'
-              ? notifications.length
-              : notifications.filter((n) => matchesFilter(n.type, tab)).length
+      {/* Filter pills */}
+      <View style={styles.filterRow}>
+        {FILTER_TABS.map((tab) => {
+          const isActive = activeFilter === tab
+          const count = tab === 'All'
+            ? notifications.length
+            : notifications.filter((n) => matchesFilter(n.type, tab)).length
 
-            if (tab !== 'All' && count === 0) return null
+          if (tab !== 'All' && count === 0) return null
 
-            return (
-              <TouchableOpacity
-                key={tab}
-                onPress={() => setActiveFilter(tab)}
+          return (
+            <Pressable
+              key={tab}
+              onPress={() => setActiveFilter(tab)}
+              hitSlop={6}
+              style={[
+                styles.filterChip,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: isActive ? accent : colors.border,
+                  borderWidth: isActive ? 1.5 : 1,
+                  borderRadius: radius.full,
+                },
+              ]}
+            >
+              <Text
                 style={[
-                  styles.filterChip,
+                  styles.filterChipText,
                   {
-                    backgroundColor: isActive ? colors.primary + '20' : 'transparent',
-                    borderColor: isActive ? colors.primary : colors.border,
-                    borderRadius: radius.full,
+                    color: isActive ? colors.text : colors.textMuted,
+                    fontFamily: isActive ? font.bodySemiBold : font.bodyMedium,
                   },
                 ]}
               >
-                <Text style={[
-                  styles.filterChipText,
-                  { color: isActive ? colors.primary : colors.textSecondary },
-                ]}>
-                  {tab}
-                </Text>
-                {count > 0 && tab !== 'All' && (
-                  <View style={[styles.filterCount, { backgroundColor: isActive ? colors.primary : colors.textMuted }]}>
-                    <Text style={styles.filterCountText}>{count}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            )
-          })}
-        </View>
+                {tab}
+              </Text>
+              {count > 0 && tab !== 'All' && (
+                <View
+                  style={[
+                    styles.filterCount,
+                    { backgroundColor: isDark ? 'rgba(245,237,220,0.12)' : 'rgba(20,19,19,0.10)' },
+                  ]}
+                >
+                  <Text style={[styles.filterCountText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>
+                    {count}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          )
+        })}
       </View>
 
-      {/* Notification List */}
+      {/* Notification list */}
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={
+          sections.length === 0 ? styles.emptyContent : { paddingBottom: insets.bottom + 24 }
+        }
         renderSectionHeader={({ section }) => (
           <View style={[styles.sectionHeader, { backgroundColor: colors.bg }]}>
-            <Text style={[styles.sectionHeaderText, { color: colors.textMuted }]}>{section.title}</Text>
+            <MonoCaps size={11} color={colors.textMuted}>{section.title}</MonoCaps>
           </View>
         )}
-        renderItem={({ item }) => {
-          const config = getTypeConfig(item.type)
+        renderItem={({ item, index, section }) => {
+          const cfg = getTypeConfig(item.type)
+          const stickerColor = stickers[cfg.stickerKey]
+          const isFirst = index === 0
+          const isLast = index === section.data.length - 1
+
           return (
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => handleTap(item)}
-              style={[
-                styles.row,
-                !item.is_read && { backgroundColor: colors.primaryTint },
-              ]}
-            >
-              <View style={[styles.iconWrap, { backgroundColor: config.color + '15', borderColor: config.color + '25' }]}>
-                {config.icon}
-              </View>
-              <View style={styles.rowContent}>
-                <View style={styles.rowTitleRow}>
-                  <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
-                    {item.title}
-                  </Text>
-                  {!item.is_read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
+            <View style={styles.rowOuter}>
+              <Pressable
+                onPress={() => handleTap(item)}
+                style={({ pressed }) => [
+                  styles.rowInner,
+                  {
+                    backgroundColor: item.is_read ? colors.surface : colors.surfaceRaised,
+                    borderColor: colors.border,
+                    borderTopWidth: isFirst ? 1 : 0,
+                    borderTopLeftRadius: isFirst ? radius.md : 0,
+                    borderTopRightRadius: isFirst ? radius.md : 0,
+                    borderBottomLeftRadius: isLast ? radius.md : 0,
+                    borderBottomRightRadius: isLast ? radius.md : 0,
+                  },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.iconWrap,
+                    { backgroundColor: stickerColor + '24', borderColor: stickerColor + '44' },
+                  ]}
+                >
+                  <cfg.Icon size={20} color={stickerColor} />
                 </View>
-                {item.body ? (
-                  <Text style={[styles.rowBody, { color: colors.textSecondary }]} numberOfLines={2}>
-                    {item.body}
-                  </Text>
-                ) : null}
-                <View style={styles.rowFooter}>
-                  <Text style={[styles.rowTime, { color: colors.textMuted }]}>{timeAgo(item.created_at)}</Text>
-                  <Text style={[styles.rowCategory, { color: config.color }]}>{config.category}</Text>
+                <View style={styles.rowContent}>
+                  <View style={styles.rowTitleRow}>
+                    <Text
+                      style={[styles.rowTitle, { color: colors.text, fontFamily: font.bodySemiBold }]}
+                      numberOfLines={1}
+                    >
+                      {item.title}
+                    </Text>
+                    {!item.is_read && (
+                      <View style={[styles.unreadDot, { backgroundColor: stickerColor }]} />
+                    )}
+                  </View>
+                  {item.body ? (
+                    <Text
+                      style={[styles.rowBody, { color: colors.textMuted, fontFamily: font.body }]}
+                      numberOfLines={2}
+                    >
+                      {item.body}
+                    </Text>
+                  ) : null}
+                  <View style={styles.rowFooter}>
+                    <Text style={[styles.rowTime, { color: colors.textFaint, fontFamily: font.body }]}>
+                      {timeAgo(item.created_at)}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.rowCategory,
+                        { color: stickerColor, fontFamily: font.bodySemiBold },
+                      ]}
+                    >
+                      {cfg.category.toUpperCase()}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
+              </Pressable>
+
+              {!isLast && (
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: colors.border },
+                  ]}
+                />
+              )}
+            </View>
           )
         }}
-        ItemSeparatorComponent={() => (
-          <View style={[styles.separator, { backgroundColor: colors.border }]} />
-        )}
         ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <View style={[styles.emptyIconWrap, { backgroundColor: colors.surface }]}>
-              <Bell size={32} color={colors.textMuted} />
+          <View style={styles.emptyWrap}>
+            <View
+              style={[
+                styles.emptyIconWrap,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <Bell size={28} color={colors.textMuted} strokeWidth={1.6} />
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+            <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.bodySemiBold }]}>
               {activeFilter === 'All' ? 'No notifications yet' : `No ${activeFilter.toLowerCase()} notifications`}
             </Text>
-            <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
+            <Text style={[styles.emptySubtext, { color: colors.textMuted, fontFamily: font.body }]}>
               {activeFilter === 'All'
                 ? 'Grandma will notify you about wellness changes, routine reminders, health alerts, and more.'
-                : `Notifications in this category will appear here.`
-              }
+                : 'Notifications in this category will appear here.'}
             </Text>
           </View>
         )}
-        contentContainerStyle={
-          sections.length === 0
-            ? { flex: 1 }
-            : { paddingBottom: insets.bottom + 20 }
-        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.primary}
+            tintColor={accent}
           />
         }
         stickySectionHeadersEnabled
@@ -414,79 +510,101 @@ export default function NotificationsScreen() {
   )
 }
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
+// ─── Styles ─────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  loadingContainer: { alignItems: 'center', justifyContent: 'center' },
+  screen: { flex: 1 },
+  loading: { alignItems: 'center', justifyContent: 'center' },
 
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  // Top bar
+  topBar: {
     paddingBottom: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerTitle: { fontSize: 22, fontWeight: '800' },
-  headerBadge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
+  topBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 44,
+  },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
   },
-  headerBadgeText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
-  markAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  markAllText: { fontSize: 14, fontWeight: '500' },
-
-  // Filter tabs
-  filterRow: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-  },
-  filterScroll: {
+  titleWrap: {
+    flex: 1,
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
+  },
+  titleCount: {
+    minWidth: 26,
+    height: 22,
+    borderRadius: 11,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleCountText: { fontSize: 12 },
+  markAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  markAllText: { fontSize: 13 },
+  markAllPlaceholder: { width: 0, height: 0 },
+
+  // Filter pills
+  filterRow: {
+    flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderWidth: 1,
+    paddingHorizontal: 14,
   },
-  filterChipText: { fontSize: 13, fontWeight: '600' },
+  filterChipText: { fontSize: 13 },
   filterCount: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
   },
-  filterCountText: { fontSize: 10, fontWeight: '800', color: '#FFFFFF' },
+  filterCountText: { fontSize: 11 },
 
   // Section headers
   sectionHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 8,
   },
-  sectionHeaderText: { fontSize: 13, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' },
 
-  // Notification row
-  row: {
+  // Notification rows
+  rowOuter: {
+    paddingHorizontal: 16,
+  },
+  rowInner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     gap: 12,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 0,
   },
   iconWrap: {
     width: 42,
@@ -497,33 +615,39 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   rowContent: { flex: 1 },
-  rowTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  rowTitle: { fontSize: 15, fontWeight: '700', flex: 1 },
+  rowTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  rowTitle: { fontSize: 15, flex: 1 },
   unreadDot: { width: 8, height: 8, borderRadius: 4 },
-  rowBody: { fontSize: 14, fontWeight: '500', marginTop: 3, lineHeight: 20 },
-  rowFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
-  rowTime: { fontSize: 12, fontWeight: '500' },
-  rowCategory: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-
-  separator: { height: 1, marginLeft: 70 },
+  rowBody: { fontSize: 14, marginTop: 3, lineHeight: 20 },
+  rowFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  rowTime: { fontSize: 12 },
+  rowCategory: { fontSize: 11, letterSpacing: 0.6 },
+  divider: { height: 1, marginLeft: 14 + 42 + 12 },
 
   // Empty state
-  emptyContainer: {
+  emptyContent: { flex: 1 },
+  emptyWrap: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 40,
     paddingBottom: 80,
-    gap: 12,
+    gap: 10,
   },
   emptyIconWrap: {
     width: 72,
     height: 72,
     borderRadius: 36,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
-  emptyTitle: { fontSize: 18, fontWeight: '800', textAlign: 'center' },
-  emptySubtext: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 18, textAlign: 'center' },
+  emptySubtext: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
 })

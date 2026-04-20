@@ -1,14 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   View, Text, TextInput, Pressable, ScrollView, Alert, StyleSheet,
-  KeyboardAvoidingView, Platform, Image, Modal,
+  KeyboardAvoidingView, Platform, Image, Modal, Animated, Easing,
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ArrowLeft, Hash, Check, Camera, Lock, Globe } from 'lucide-react-native'
-import { useTheme, brand } from '../../constants/theme'
+import { ArrowLeft, Check, Camera, Lock, Globe } from 'lucide-react-native'
+import { useTheme } from '../../constants/theme'
 import { createChannel } from '../../lib/channelPosts'
+import {
+  STICKER_PRESETS,
+  stickerByNameColor,
+  encodeStickerUrl,
+} from '../../lib/channelSticker'
+
+const CREAM = '#F5EFE3'
+const INK = '#1A1430'
 
 const CATEGORIES = [
   'Parenting',
@@ -24,15 +32,19 @@ const CATEGORIES = [
 
 type Category = (typeof CATEGORIES)[number]
 
+type IconChoice =
+  | { kind: 'sticker'; index: number }
+  | { kind: 'photo'; uri: string }
+
 export default function CreateChannel() {
   const insets = useSafeAreaInsets()
-  const { colors, radius, spacing } = useTheme()
+  const { colors, radius, spacing, isDark } = useTheme()
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState<Category | null>(null)
   const [customCategory, setCustomCategory] = useState('')
-  const [channelPhoto, setChannelPhoto] = useState<string | null>(null)
+  const [icon, setIcon] = useState<IconChoice>({ kind: 'sticker', index: 0 })
   const [isPrivate, setIsPrivate] = useState(false)
   const [loading, setLoading] = useState(false)
   const [createdChannelId, setCreatedChannelId] = useState<string | null>(null)
@@ -42,9 +54,16 @@ export default function CreateChannel() {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({})
       if (!result.canceled && result.assets?.[0]) {
-        setChannelPhoto(result.assets[0].uri)
+        setIcon({ kind: 'photo', uri: result.assets[0].uri })
       }
     } catch {}
+  }
+
+  /** Resolved avatar URI to pass to createChannel: sticker URL or photo URI. */
+  function resolveAvatarUri(): string {
+    if (icon.kind === 'photo') return icon.uri
+    const preset = STICKER_PRESETS[icon.index]
+    return encodeStickerUrl(preset.name, preset.color)
   }
 
   async function handleCreate() {
@@ -65,7 +84,7 @@ export default function CreateChannel() {
         name: trimmedName,
         description: description.trim() || undefined,
         category: finalCategory.toLowerCase(),
-        avatarUri: channelPhoto ?? undefined,
+        avatarUri: resolveAvatarUri(),
         channelType: isPrivate ? 'private' : 'public',
       })
       setCreatedChannelId(id)
@@ -101,17 +120,62 @@ export default function CreateChannel() {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Channel photo/icon */}
-          <Pressable onPress={pickChannelPhoto} style={styles.iconPreview}>
-            {channelPhoto ? (
-              <Image source={{ uri: channelPhoto }} style={styles.iconImage} />
-            ) : (
-              <Hash size={28} color={colors.primary} />
-            )}
-            <View style={[styles.cameraOverlay, { backgroundColor: colors.primary }]}>
-              <Camera size={12} color="#FFF" strokeWidth={2} />
-            </View>
-          </Pressable>
+          {/* Channel icon — preview */}
+          <View style={styles.iconPreviewWrap}>
+            {(() => {
+              if (icon.kind === 'photo') {
+                return (
+                  <View style={[styles.iconPreview, { backgroundColor: colors.surfaceRaised }]}>
+                    <Image source={{ uri: icon.uri }} style={styles.iconImage} />
+                  </View>
+                )
+              }
+              const preset = STICKER_PRESETS[icon.index]
+              const s = stickerByNameColor(preset.name, preset.color, isDark)
+              const Icon = s.Component
+              return (
+                <View style={[styles.iconPreview, { backgroundColor: s.tint }]}>
+                  <Icon size={48} fill={s.fill} />
+                </View>
+              )
+            })()}
+          </View>
+
+          {/* Sticker picker row + camera */}
+          <View style={styles.stickerRow}>
+            {STICKER_PRESETS.map((preset, i) => {
+              const s = stickerByNameColor(preset.name, preset.color, isDark)
+              const Icon = s.Component
+              const selected = icon.kind === 'sticker' && icon.index === i
+              return (
+                <Pressable
+                  key={preset.name}
+                  onPress={() => setIcon({ kind: 'sticker', index: i })}
+                  style={[
+                    styles.stickerTile,
+                    {
+                      backgroundColor: selected ? s.tint : 'transparent',
+                      borderColor: selected ? s.fill : colors.border,
+                    },
+                  ]}
+                >
+                  <Icon size={26} fill={s.fill} />
+                </Pressable>
+              )
+            })}
+            <Pressable
+              onPress={pickChannelPhoto}
+              style={[
+                styles.stickerTile,
+                {
+                  backgroundColor: icon.kind === 'photo' ? colors.surfaceRaised : 'transparent',
+                  borderColor: icon.kind === 'photo' ? CREAM : colors.border,
+                },
+              ]}
+            >
+              <Camera size={22} color={colors.textSecondary} strokeWidth={2} />
+            </Pressable>
+          </View>
 
           {/* Name */}
           <Text style={styles.label}>CHANNEL NAME *</Text>
@@ -225,34 +289,136 @@ export default function CreateChannel() {
       </KeyboardAvoidingView>
 
       {/* Success modal */}
-      <Modal visible={showSuccess} transparent animationType="fade">
-        <View style={styles.successOverlay}>
-          <View style={[styles.successCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-            <View style={[styles.successIcon, { backgroundColor: brand.success + '20' }]}>
-              <Check size={32} color={brand.success} strokeWidth={3} />
-            </View>
-            <Text style={[styles.successTitle, { color: colors.text }]}>
-              Channel Created!
-            </Text>
-            <Text style={[styles.successDesc, { color: colors.textSecondary }]}>
-              Your channel <Text style={{ fontWeight: '700', color: colors.text }}>#{name.trim()}</Text> is live.{'\n'}
-              Invite friends and start the conversation!
-            </Text>
-            <Pressable
-              onPress={() => {
-                setShowSuccess(false)
-                if (createdChannelId) router.replace(`/channel/${createdChannelId}`)
-              }}
-              style={[styles.successBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}
-            >
-              <Text style={styles.successBtnText}>Go to Channel</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+      <ChannelCreatedModal
+        visible={showSuccess}
+        channelName={name.trim()}
+        onGo={() => {
+          setShowSuccess(false)
+          if (createdChannelId) router.replace(`/channel/${createdChannelId}`)
+        }}
+      />
     </View>
   )
 }
+
+// ─── Channel Created animated modal ────────────────────────────────────────
+
+function ChannelCreatedModal({
+  visible,
+  channelName,
+  onGo,
+}: {
+  visible: boolean
+  channelName: string
+  onGo: () => void
+}) {
+  const { colors, radius, isDark } = useTheme()
+
+  // Hero = Heart, satellites = Star / Leaf / Moon (distinct colors)
+  const heroAnim = useRef(new Animated.Value(0)).current
+  const satAnims = useRef([0, 1, 2].map(() => new Animated.Value(0))).current
+
+  useEffect(() => {
+    if (!visible) {
+      heroAnim.setValue(0)
+      satAnims.forEach((a) => a.setValue(0))
+      return
+    }
+    Animated.spring(heroAnim, {
+      toValue: 1, friction: 5, tension: 120, useNativeDriver: true,
+    }).start()
+    satAnims.forEach((a, i) => {
+      Animated.spring(a, {
+        toValue: 1, friction: 5, tension: 110, delay: 120 + i * 90, useNativeDriver: true,
+      }).start()
+    })
+  }, [visible])
+
+  const hero = stickerByNameColor('heart', 'pink', isDark)
+  const HeroIcon = hero.Component
+
+  // satellites: star/yellow top-left, leaf/green top-right, moon/lilac bottom-center
+  const satellites: { name: Parameters<typeof stickerByNameColor>[0]; color: Parameters<typeof stickerByNameColor>[1]; x: number; y: number }[] = [
+    { name: 'star', color: 'yellow', x: -58, y: -46 },
+    { name: 'leaf', color: 'green', x: 58, y: -40 },
+    { name: 'moon', color: 'lilac', x: 0, y: 64 },
+  ]
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onGo}>
+      <View style={modalStyles.overlay}>
+        <View style={[modalStyles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+          {/* Sticker cluster */}
+          <View style={modalStyles.clusterWrap}>
+            {/* hero */}
+            <Animated.View
+              style={{
+                transform: [
+                  { scale: heroAnim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) },
+                  { rotate: heroAnim.interpolate({ inputRange: [0, 1], outputRange: ['-18deg', '0deg'] }) },
+                ],
+                opacity: heroAnim,
+              }}
+            >
+              <View style={[modalStyles.heroBg, { backgroundColor: hero.tint }]}>
+                <HeroIcon size={64} fill={hero.fill} />
+              </View>
+            </Animated.View>
+            {/* satellites */}
+            {satellites.map((sat, i) => {
+              const s = stickerByNameColor(sat.name, sat.color, isDark)
+              const Icon = s.Component
+              const anim = satAnims[i]
+              return (
+                <Animated.View
+                  key={sat.name}
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    left: '50%', top: '50%',
+                    marginLeft: -18, marginTop: -18,
+                    transform: [
+                      { translateX: anim.interpolate({ inputRange: [0, 1], outputRange: [0, sat.x] }) },
+                      { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [0, sat.y] }) },
+                      { scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }) },
+                    ],
+                    opacity: anim,
+                  }}
+                >
+                  <Icon size={36} fill={s.fill} />
+                </Animated.View>
+              )
+            })}
+          </View>
+
+          <Text style={[modalStyles.title, { color: colors.text }]}>Channel Created!</Text>
+          <Text style={[modalStyles.desc, { color: colors.textSecondary }]}>
+            Your channel{' '}
+            <Text style={{ fontWeight: '800', color: colors.text }}>#{channelName}</Text>
+            {' '}is live.{'\n'}Invite friends and start the conversation.
+          </Text>
+          <Pressable
+            onPress={onGo}
+            style={[modalStyles.cta, { backgroundColor: CREAM, borderRadius: radius.full }]}
+          >
+            <Text style={[modalStyles.ctaText, { color: INK }]}>Go to Channel</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
+const modalStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  card: { width: '100%', maxWidth: 340, padding: 28, alignItems: 'center' },
+  clusterWrap: { width: 200, height: 180, alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 6 },
+  heroBg: { width: 104, height: 104, borderRadius: 52, alignItems: 'center', justifyContent: 'center' },
+  title: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, marginTop: 4, textAlign: 'center' },
+  desc: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20, marginTop: 10, marginBottom: 20 },
+  cta: { width: '100%', paddingVertical: 14, alignItems: 'center' },
+  ctaText: { fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
+})
 
 function makeStyles(
   colors: ReturnType<typeof useTheme>['colors'],
@@ -282,41 +448,43 @@ function makeStyles(
     },
     headerTitle: {
       fontSize: 18,
-      fontWeight: '900',
+      fontFamily: 'Fraunces_600SemiBold',
+      fontWeight: '700',
       color: colors.text,
-      letterSpacing: -0.3,
+      letterSpacing: 0.5,
       textTransform: 'uppercase',
     },
     content: {
       paddingHorizontal: spacing['2xl'],
       paddingTop: 16,
     },
+    iconPreviewWrap: { alignItems: 'center', marginBottom: 14, marginTop: 4 },
     iconPreview: {
-      width: 72,
-      height: 72,
-      borderRadius: 36,
-      backgroundColor: colors.primaryTint,
+      width: 92,
+      height: 92,
+      borderRadius: 46,
       alignItems: 'center',
       justifyContent: 'center',
-      alignSelf: 'center',
-      marginBottom: 24,
       overflow: 'hidden',
-      position: 'relative',
     },
     iconImage: {
-      width: 72,
-      height: 72,
-      borderRadius: 36,
+      width: 92,
+      height: 92,
+      borderRadius: 46,
     },
-    cameraOverlay: {
-      position: 'absolute',
-      bottom: 0,
-      right: 0,
-      width: 24,
-      height: 24,
-      borderRadius: 12,
+    stickerRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 10,
+      marginBottom: 20,
+    },
+    stickerTile: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
       alignItems: 'center',
       justifyContent: 'center',
+      borderWidth: 1.5,
     },
     label: {
       fontSize: 11,
@@ -384,9 +552,9 @@ function makeStyles(
       borderTopColor: colors.borderLight,
     },
     createBtn: {
-      backgroundColor: colors.primary,
+      backgroundColor: CREAM,
       paddingVertical: 16,
-      borderRadius: radius.lg,
+      borderRadius: radius.full,
       alignItems: 'center',
     },
     createBtnDisabled: {
@@ -395,53 +563,9 @@ function makeStyles(
     createBtnText: {
       fontSize: 16,
       fontWeight: '800',
-      color: colors.textInverse,
+      color: INK,
       letterSpacing: 0.5,
       textTransform: 'uppercase',
-    },
-    // Success modal
-    successOverlay: {
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: 'rgba(0,0,0,0.6)',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 100,
-    } as any,
-    successCard: {
-      width: 300,
-      padding: 32,
-      alignItems: 'center',
-      gap: 16,
-    },
-    successIcon: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    successTitle: {
-      fontSize: 22,
-      fontWeight: '800',
-    },
-    successDesc: {
-      fontSize: 14,
-      fontWeight: '500',
-      textAlign: 'center',
-      lineHeight: 20,
-    },
-    successBtn: {
-      width: '100%',
-      paddingVertical: 16,
-      alignItems: 'center',
-      marginTop: 8,
-    },
-    successBtnText: {
-      fontSize: 16,
-      fontWeight: '800',
-      color: '#FFFFFF',
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
     },
   })
 }

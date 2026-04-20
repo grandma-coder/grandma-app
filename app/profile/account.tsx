@@ -1,22 +1,34 @@
 /**
- * Account & Security — email, password, linked accounts, sessions.
+ * Account & Security — cream-paper redesign.
  */
 
 import { useState, useEffect } from 'react'
 import {
-  View, Text, TextInput, Pressable, ScrollView, Alert, StyleSheet, Switch,
+  View, TextInput, Pressable, ScrollView, Alert, StyleSheet, Text,
 } from 'react-native'
 import { router } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import {
-  ArrowLeft, Mail, Lock, Key, Smartphone, Shield, LogOut, Trash2, Eye, EyeOff, ChevronRight,
+  Mail, Lock, Smartphone, Trash2, Eye, EyeOff, ChevronRight,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
+import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { PillButton } from '../../components/ui/PillButton'
+import { MonoCaps, Body } from '../../components/ui/Typography'
+import { useSavedToast } from '../../components/ui/SavedToast'
 
 export default function AccountScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark } = useTheme()
   const insets = useSafeAreaInsets()
+  const toast = useSavedToast()
+
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const danger = stickers.coral
+  const dangerText = isDark ? stickers.coral : '#B43E2E'
+  const dangerLabel = isDark ? '#F29082' : '#B43E2E'
 
   const [email, setEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -35,7 +47,7 @@ export default function AccountScreen() {
     try {
       const { error } = await supabase.auth.updateUser({ email: email.trim() })
       if (error) throw error
-      Alert.alert('Verification Sent', 'Check your new email for a confirmation link.')
+      toast.show({ title: 'Verification Sent', message: 'Check your new email for a confirmation link.', autoDismiss: 0 })
     } catch (e: any) { Alert.alert('Error', e.message) }
     finally { setSaving(false) }
   }
@@ -47,7 +59,7 @@ export default function AccountScreen() {
       const { error } = await supabase.auth.updateUser({ password: newPassword })
       if (error) throw error
       setNewPassword('')
-      Alert.alert('Password Updated', 'Your password has been changed.')
+      toast.show({ title: 'Password Updated', message: 'Your password has been changed.' })
     } catch (e: any) { Alert.alert('Error', e.message) }
     finally { setSaving(false) }
   }
@@ -85,19 +97,15 @@ export default function AccountScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} style={styles.headerBtn}>
-          <ArrowLeft size={24} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Account & Security</Text>
-        <View style={styles.headerBtn} />
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+        <ScreenHeader title="Account & Security" />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Email */}
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>EMAIL</Text>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-          <View style={styles.inputRow}>
+        <View style={{ marginTop: 8 }}><MonoCaps color={colors.textMuted}>Email</MonoCaps></View>
+        <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={[styles.inputRow, { borderBottomColor: paperBorder }]}>
             <Mail size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={email}
@@ -106,20 +114,23 @@ export default function AccountScreen() {
               placeholderTextColor={colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
-              style={[styles.inputText, { color: colors.text }]}
+              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
             />
           </View>
-          <Pressable onPress={handleChangeEmail} disabled={saving}
-            style={[styles.actionBtn, { backgroundColor: colors.primaryTint, borderRadius: radius.lg }]}
-          >
-            <Text style={[styles.actionBtnText, { color: colors.primary }]}>Update Email</Text>
-          </Pressable>
+          <PillButton
+            label={saving ? 'Saving…' : 'Update Email'}
+            variant="accent"
+            accentColor={stickers.lilac}
+            onPress={handleChangeEmail}
+            disabled={saving}
+            height={48}
+          />
         </View>
 
         {/* Password */}
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>PASSWORD</Text>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-          <View style={styles.inputRow}>
+        <View style={{ marginTop: 18 }}><MonoCaps color={colors.textMuted}>Password</MonoCaps></View>
+        <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={[styles.inputRow, { borderBottomColor: paperBorder }]}>
             <Lock size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={newPassword}
@@ -127,41 +138,45 @@ export default function AccountScreen() {
               placeholder="New password"
               placeholderTextColor={colors.textMuted}
               secureTextEntry={!showPassword}
-              style={[styles.inputText, { color: colors.text }]}
+              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
             />
             <Pressable onPress={() => setShowPassword(!showPassword)}>
               {showPassword ? <EyeOff size={18} color={colors.textMuted} /> : <Eye size={18} color={colors.textMuted} />}
             </Pressable>
           </View>
-          <Text style={[styles.hint, { color: colors.textMuted }]}>Minimum 6 characters</Text>
-          <Pressable onPress={handleChangePassword} disabled={saving || newPassword.length < 6}
-            style={[styles.actionBtn, { backgroundColor: colors.primaryTint, borderRadius: radius.lg, opacity: newPassword.length < 6 ? 0.5 : 1 }]}
-          >
-            <Text style={[styles.actionBtnText, { color: colors.primary }]}>Change Password</Text>
-          </Pressable>
+          <Body size={12} color={colors.textMuted}>Minimum 6 characters</Body>
+          <PillButton
+            label={saving ? 'Saving…' : 'Change Password'}
+            variant="accent"
+            accentColor={stickers.lilac}
+            onPress={handleChangePassword}
+            disabled={saving || newPassword.length < 6}
+            height={48}
+          />
         </View>
 
         {/* Sessions */}
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>SESSIONS</Text>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+        <View style={{ marginTop: 18 }}><MonoCaps color={colors.textMuted}>Sessions</MonoCaps></View>
+        <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
           <Pressable onPress={handleSignOutAll} style={styles.row}>
             <View style={styles.rowLeft}>
-              <Smartphone size={18} color={brand.accent} strokeWidth={2} />
-              <Text style={[styles.rowLabel, { color: colors.text }]}>Sign Out All Devices</Text>
+              <Smartphone size={18} color={isDark ? stickers.peach : '#A6532A'} strokeWidth={2} />
+              <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodyMedium }]}>Sign Out All Devices</Text>
             </View>
             <ChevronRight size={16} color={colors.textMuted} />
           </Pressable>
         </View>
 
         {/* Danger zone */}
-        <Text style={[styles.sectionLabel, { color: brand.error }]}>DANGER ZONE</Text>
-        <Pressable onPress={handleDeleteAccount}
-          style={[styles.dangerBtn, { backgroundColor: brand.error + '08', borderColor: brand.error + '20', borderRadius: radius.xl }]}
+        <View style={{ marginTop: 22 }}><MonoCaps color={dangerLabel}>Danger Zone</MonoCaps></View>
+        <Pressable
+          onPress={handleDeleteAccount}
+          style={[styles.dangerBtn, { backgroundColor: danger + (isDark ? '18' : '14'), borderColor: danger + '50' }]}
         >
-          <Trash2 size={18} color={brand.error} strokeWidth={2} />
-          <Text style={[styles.dangerText, { color: brand.error }]}>Delete Account</Text>
+          <Trash2 size={18} color={dangerText} strokeWidth={2} />
+          <Text style={[styles.dangerTextBtn, { color: dangerText, fontFamily: font.bodySemiBold }]}>Delete Account</Text>
         </Pressable>
-        <Text style={[styles.dangerHint, { color: colors.textMuted }]}>
+        <Text style={[styles.dangerHint, { color: colors.textMuted, fontFamily: font.body }]}>
           This permanently deletes your account, all children profiles, care circle members, memories, and health records.
         </Text>
       </ScrollView>
@@ -171,21 +186,41 @@ export default function AccountScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 12 },
-  headerBtn: { width: 40, alignItems: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
-  scroll: { paddingHorizontal: 20, paddingBottom: 40 },
-  sectionLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 1, marginTop: 20, marginBottom: 8, paddingLeft: 4 },
-  card: { padding: 16, gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)', paddingBottom: 12 },
-  inputText: { flex: 1, fontSize: 15, fontWeight: '500' },
-  hint: { fontSize: 12, fontWeight: '500' },
-  actionBtn: { alignItems: 'center', paddingVertical: 12 },
-  actionBtnText: { fontSize: 14, fontWeight: '700' },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 4 },
+  headerWrap: { paddingHorizontal: 16 },
+  scroll: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40 },
+  card: {
+    padding: 18,
+    gap: 12,
+    marginTop: 8,
+    borderRadius: 28,
+    borderWidth: 1,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderBottomWidth: 1,
+    paddingBottom: 12,
+  },
+  inputText: { flex: 1, fontSize: 15 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4, paddingHorizontal: 0 },
   rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  rowLabel: { fontSize: 15, fontWeight: '600' },
-  dangerBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderWidth: 1 },
-  dangerText: { fontSize: 15, fontWeight: '700' },
-  dangerHint: { fontSize: 12, fontWeight: '500', textAlign: 'center', marginTop: 8, lineHeight: 18, paddingHorizontal: 20 },
+  rowLabel: { fontSize: 15 },
+  dangerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderRadius: 22,
+    marginTop: 8,
+  },
+  dangerTextBtn: { fontSize: 15 },
+  dangerHint: { fontSize: 12, textAlign: 'center', marginTop: 12, lineHeight: 18, paddingHorizontal: 20 },
 })

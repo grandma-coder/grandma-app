@@ -12,7 +12,6 @@ import {
   Image,
   Alert,
   StyleSheet,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native'
@@ -32,6 +31,7 @@ import {
   type ChannelPost,
 } from '../../../lib/channelPosts'
 import { supabase } from '../../../lib/supabase'
+import { BrandedLoader } from '../../../components/ui/BrandedLoader'
 
 export default function ThreadView() {
   const { colors, radius } = useTheme()
@@ -111,7 +111,7 @@ export default function ThreadView() {
   if (loading) {
     return (
       <View style={[s.center, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator color={colors.primary} />
+        <BrandedLoader />
       </View>
     )
   }
@@ -206,9 +206,9 @@ export default function ThreadView() {
           <Pressable
             onPress={handleSend}
             disabled={!text.trim() || sending}
-            style={[s.sendBtn, { backgroundColor: colors.primary, borderRadius: radius.full, opacity: text.trim() ? 1 : 0.3 }]}
+            style={[s.sendBtn, { backgroundColor: '#F5EFE3', borderRadius: radius.full, opacity: text.trim() ? 1 : 0.3 }]}
           >
-            <Send size={18} color="#FFF" strokeWidth={2} />
+            <Send size={18} color="#1A1430" strokeWidth={2} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -232,7 +232,7 @@ const s = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
   headerBtn: { width: 40, alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700' },
+  headerTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', fontWeight: '700', letterSpacing: -0.3 },
 
   list: { padding: 16, paddingBottom: 20 },
 

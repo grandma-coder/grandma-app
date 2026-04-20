@@ -118,6 +118,9 @@ interface ChildRoutine {
 // ─── Child colors (shared palette) ────────────────────────────────────────
 
 import { CHILD_COLORS, childColor } from '../ui/ChildPills'
+import { MoodFace } from '../stickers/RewardStickers'
+import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
+import { Emoji } from '../ui/Emoji'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -3085,7 +3088,7 @@ export function KidsCalendar() {
                       return (
                         <>
                           <View style={{ backgroundColor: sleepColor + '15', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: sleepColor + '30' }}>
-                            <Text style={{ fontSize: 52, lineHeight: 56 }}>🌙</Text>
+                            <Emoji size={52}>🌙</Emoji>
                             {durStr ? (
                               <Text style={{ color: sleepColor, fontSize: 56, fontWeight: '800', lineHeight: 64, letterSpacing: -2, marginTop: 6, fontFamily: 'Fraunces_600SemiBold' }}>{durStr}</Text>
                             ) : (
@@ -3168,7 +3171,7 @@ export function KidsCalendar() {
                       return (
                         <>
                           <View style={{ backgroundColor: diaperColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: diaperColor + '30' }}>
-                            <Text style={{ fontSize: 64, lineHeight: 68 }}>{dt?.emoji ?? '🍼'}</Text>
+                            <Emoji size={64}>{dt?.emoji ?? '🍼'}</Emoji>
                             <Text style={{ color: diaperColor, fontSize: 24, fontWeight: '800', marginTop: 8, fontFamily: 'Fraunces_600SemiBold' }}>{dt?.label ?? 'Diaper'}</Text>
                             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Diaper change</Text>
                           </View>
@@ -3193,17 +3196,17 @@ export function KidsCalendar() {
                     {/* ── Mood Rich Card ── */}
                     {selectedLog.type === 'mood' && (() => {
                       const moodVal = selectedLog.value ?? ''
-                      const moodMap: Record<string, { emoji: string; label: string; color: string }> = {
-                        happy:     { emoji: '😄', label: 'Happy',     color: '#A2FF86' },
-                        calm:      { emoji: '😌', label: 'Calm',      color: '#4D96FF' },
-                        fussy:     { emoji: '😤', label: 'Fussy',     color: '#F4FD50' },
-                        cranky:    { emoji: '😠', label: 'Cranky',    color: '#FF6B35' },
-                        energetic: { emoji: '⚡', label: 'Energetic', color: '#B983FF' },
+                      const moodMeta: Record<string, { label: string; color: string }> = {
+                        happy:     { label: 'Happy',     color: '#A2FF86' },
+                        calm:      { label: 'Calm',      color: '#4D96FF' },
+                        fussy:     { label: 'Fussy',     color: '#F4FD50' },
+                        cranky:    { label: 'Cranky',    color: '#FF6B35' },
+                        energetic: { label: 'Energetic', color: '#B983FF' },
                       }
-                      const m = moodMap[moodVal] ?? { emoji: '🙂', label: moodVal, color: brand.accent }
+                      const m = moodMeta[moodVal] ?? { label: moodVal || 'Mood', color: brand.accent }
                       return (
                         <View style={{ backgroundColor: m.color + '12', borderRadius: 24, paddingVertical: 32, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: m.color + '30' }}>
-                          <Text style={{ fontSize: 72, lineHeight: 80 }}>{m.emoji}</Text>
+                          <MoodFace size={84} variant={moodFaceVariant(moodVal)} fill={moodFaceFill(moodVal)} />
                           <Text style={{ color: m.color, fontSize: 32, fontWeight: '800', marginTop: 10, letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' }}>{m.label}</Text>
                           <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 1, textTransform: 'uppercase' }}>Today's mood</Text>
                         </View>
@@ -3383,7 +3386,7 @@ export function KidsCalendar() {
             <View style={{ backgroundColor: colors.surface, borderRadius: 32, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: brand.accent + '40' }}>
               {/* Star burst */}
               <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: brand.accent + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 2, borderColor: brand.accent + '50' }}>
-                <Text style={{ fontSize: 40, fontFamily: 'Fraunces_600SemiBold' }}>🌟</Text>
+                <Emoji size={40}>🌟</Emoji>
               </View>
 
               <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8, textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' }}>
@@ -3435,7 +3438,10 @@ export function KidsCalendar() {
                   opacity: pressed ? 0.9 : 1,
                 })}
               >
-                <Text style={{ color: '#1A1030', fontSize: 16, fontWeight: '800' }}>Awesome! 🎉</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{ color: '#1A1030', fontSize: 16, fontWeight: '800' }}>Awesome!</Text>
+                  <Emoji size={18}>🎉</Emoji>
+                </View>
               </Pressable>
             </View>
           </Pressable>

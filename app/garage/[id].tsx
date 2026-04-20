@@ -32,6 +32,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import {
   fetchPost,
   fetchComments,
@@ -187,7 +188,7 @@ export default function PostDetail() {
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator color={colors.primary} />
+        <BrandedLoader />
       </View>
     )
   }

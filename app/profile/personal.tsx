@@ -1,17 +1,15 @@
 /**
- * Personal Profile — edit basic info + health profile.
+ * Personal Profile — cream-paper redesign.
  *
- * Enhanced inputs:
- * 1. Location — autocomplete via OpenStreetMap Nominatim
- * 2. Language — dropdown picker
- * 3. Health Notes — example placeholder
- * 4. Allergies — autocomplete from common allergy list
+ * - Avatar with photo upload + sticker fallback (Star sticker corner accent)
+ * - Fraunces / DM Sans typography via Display / MonoCaps / Body
+ * - Cream paper inputs, ink CTA via PillButton
+ * - Location autocomplete (OpenStreetMap), language picker, allergies
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   View,
-  Text,
   TextInput,
   Pressable,
   ScrollView,
@@ -21,21 +19,25 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native'
 import { router } from 'expo-router'
-import {
-  ArrowLeft,
-  Save,
-  MapPin,
-  Globe,
-  ChevronDown,
-  X,
-  Search,
-  Check,
-} from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import * as ImagePicker from 'expo-image-picker'
+import { useTheme } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
+import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { PillButton } from '../../components/ui/PillButton'
+import { Display, MonoCaps, Body } from '../../components/ui/Typography'
+import {
+  Star as StarSticker,
+  Heart as HeartSticker,
+  Squishy,
+  Flower as FlowerSticker,
+} from '../../components/ui/Stickers'
+import { AvatarView, AvatarPickerModal, isIconAvatar } from '../../components/ui/AvatarPicker'
+import { useSavedToast } from '../../components/ui/SavedToast'
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -72,32 +74,155 @@ const LANGUAGES = [
 ]
 
 const COMMON_ALLERGIES = [
-  // Food
   'Peanuts', 'Tree nuts', 'Milk', 'Eggs', 'Wheat', 'Soy', 'Fish',
   'Shellfish', 'Sesame', 'Gluten', 'Lactose', 'Corn', 'Mustard',
   'Celery', 'Lupin', 'Mollusks', 'Sulfites', 'Coconut', 'Banana',
   'Avocado', 'Kiwi', 'Mango', 'Strawberry', 'Citrus fruits',
-  // Medications
   'Penicillin', 'Amoxicillin', 'Aspirin', 'Ibuprofen', 'Sulfa drugs',
   'Codeine', 'Morphine', 'Insulin', 'Contrast dye',
-  // Environmental
   'Latex', 'Bee stings', 'Wasp stings', 'Dust mites', 'Mold',
   'Pet dander', 'Cat dander', 'Dog dander', 'Pollen', 'Grass pollen',
   'Cockroach', 'Feathers',
-  // Contact / Skin
   'Nickel', 'Fragrance', 'Dyes', 'Lanolin', 'Formaldehyde',
   'Urticaria', 'Dermatitis', 'Eczema',
-  // Other
   'Sunlight', 'Cold temperature', 'Exercise-induced',
 ]
+
+// ─── Avatar with photo upload + sticker fallback ──────────────────────────
+
+function PhotoAvatar({
+  value,
+  initial,
+  accentColor,
+  onChange,
+}: {
+  value: string | null
+  initial: string
+  accentColor: string
+  onChange: (newValue: string | null) => void
+}) {
+  const { colors, stickers } = useTheme()
+  const [pickerOpen, setPickerOpen] = useState(false)
+
+  async function pickPhoto() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== 'granted') {
+      return Alert.alert(
+        'Permission needed',
+        'Please allow access to your photo library.'
+      )
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    })
+    if (!result.canceled && result.assets[0]) {
+      onChange(result.assets[0].uri)
+    }
+  }
+
+  return (
+    <View style={avatarStyles.container}>
+      <View style={avatarStyles.stickerLeft}>
+        <Squishy w={56} h={38} fill={stickers.yellow} />
+      </View>
+      <View style={avatarStyles.stickerRight}>
+        <HeartSticker size={32} fill={stickers.pink} />
+      </View>
+
+      <Pressable
+        onPress={() => setPickerOpen(true)}
+        style={({ pressed }) => [pressed && { opacity: 0.85 }]}
+      >
+        <AvatarView
+          value={value}
+          size={110}
+          accent={accentColor}
+          initial={initial}
+          borderColor={colors.text}
+        />
+        <View style={avatarStyles.starAccent}>
+          <StarSticker size={32} fill={stickers.yellow} />
+        </View>
+        <View
+          style={[
+            avatarStyles.cameraBadge,
+            { backgroundColor: colors.text, borderColor: colors.bg },
+          ]}
+        >
+          <Ionicons name="camera" size={14} color={colors.bg} />
+        </View>
+      </Pressable>
+
+      <AvatarPickerModal
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onPickPhoto={pickPhoto}
+        onPickIcon={(iconValue) => onChange(iconValue)}
+        onRemove={value ? () => onChange(null) : undefined}
+      />
+    </View>
+  )
+}
+
+const avatarStyles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    position: 'relative',
+  },
+  stickerLeft: {
+    position: 'absolute',
+    top: 14,
+    left: '28%',
+    transform: [{ rotate: '-12deg' }],
+    zIndex: 0,
+  },
+  stickerRight: {
+    position: 'absolute',
+    top: 16,
+    right: '28%',
+    transform: [{ rotate: '14deg' }],
+    zIndex: 0,
+  },
+  avatar: {
+    width: 110,
+    height: 110,
+    borderRadius: 999,
+    borderWidth: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'visible',
+  },
+  starAccent: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: -2,
+    left: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+})
 
 // ─── Main Component ────────────────────────────────────────────────────────
 
 export default function PersonalProfile() {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
+  const toast = useSavedToast()
 
   const [name, setName] = useState('')
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [location, setLocation] = useState('')
   const [language, setLanguage] = useState('en')
   const [healthNotes, setHealthNotes] = useState('')
@@ -114,16 +239,50 @@ export default function PersonalProfile() {
 
     const { data } = await supabase
       .from('profiles')
-      .select('name, location, language, health_notes, allergies')
+      .select('name, photo_url, location, language, health_notes, allergies')
       .eq('id', session.user.id)
       .single()
 
     if (data) {
       setName(data.name ?? '')
+      setPhotoUrl(data.photo_url ?? null)
       setLocation(data.location ?? '')
       setLanguage(data.language ?? 'en')
       setHealthNotes(data.health_notes ?? '')
       setAllergies(data.allergies ?? [])
+    }
+  }
+
+  async function uploadPhoto(localUri: string): Promise<string> {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    const ext = localUri.split('.').pop()?.split('?')[0] ?? 'jpg'
+    const path = `profiles/${session.user.id}/${Date.now()}.${ext}`
+    const response = await fetch(localUri)
+    const blob = await response.blob()
+
+    const { error } = await supabase.storage
+      .from('garage-photos')
+      .upload(path, blob, { contentType: `image/${ext}`, upsert: true })
+
+    if (error) throw error
+    const { data } = supabase.storage.from('garage-photos').getPublicUrl(path)
+    return data.publicUrl
+  }
+
+  async function handleAvatarChange(value: string | null) {
+    // Icon values ("icon:bear") or removal (null) are saved directly — no upload needed.
+    if (value === null || isIconAvatar(value)) {
+      setPhotoUrl(value)
+      return
+    }
+    setPhotoUrl(value) // optimistic (local URI)
+    try {
+      const url = await uploadPhoto(value)
+      setPhotoUrl(url)
+    } catch (e: any) {
+      Alert.alert('Upload failed', e.message)
     }
   }
 
@@ -136,6 +295,7 @@ export default function PersonalProfile() {
       const { error } = await supabase.from('profiles').upsert({
         id: session.user.id,
         name: name || null,
+        photo_url: photoUrl,
         location: location || null,
         language,
         health_notes: healthNotes || null,
@@ -143,8 +303,13 @@ export default function PersonalProfile() {
       }, { onConflict: 'id' })
 
       if (error) throw error
-      Alert.alert('Saved', 'Your profile has been updated.')
-      router.back()
+      toast.show({
+        title: 'Saved',
+        message: 'Your profile has been updated.',
+        autoDismiss: 1600,
+      })
+      // Let the toast breathe before the screen pops
+      setTimeout(() => router.back(), 900)
     } catch (e: any) {
       Alert.alert('Error', e.message)
     } finally {
@@ -152,14 +317,13 @@ export default function PersonalProfile() {
     }
   }
 
+  const initial = (name.trim()[0] ?? 'I').toUpperCase()
+  const accentColor = isDark ? '#C4B5EF' : '#B7A6E8'
+
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={24} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.title, { color: colors.text }]}>My Profile</Text>
-        <View style={styles.backBtn} />
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+        <ScreenHeader title="My Profile" />
       </View>
 
       <KeyboardAvoidingView
@@ -171,75 +335,104 @@ export default function PersonalProfile() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Hero with photo / initial avatar */}
+          <PhotoAvatar
+            value={photoUrl}
+            initial={initial}
+            accentColor={accentColor}
+            onChange={handleAvatarChange}
+          />
+          <Display size={28} align="center" color={colors.text}>
+            {name || 'Your name'}
+          </Display>
+          <Body
+            size={13}
+            align="center"
+            color={colors.textMuted}
+            style={{ marginTop: 4, marginBottom: 8 }}
+          >
+            Tap the avatar to change photo or pick an icon
+          </Body>
+
+          <View style={styles.divider}>
+            <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
+            <MonoCaps color={colors.textMuted}>About you</MonoCaps>
+            <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
+          </View>
+
           {/* Name */}
-          <Field
+          <PaperField
             label="Name"
             value={name}
             onChangeText={setName}
             placeholder="Your name"
-            colors={colors}
-            radius={radius}
           />
 
-          {/* Location — autocomplete */}
-          <LocationField
-            value={location}
-            onChange={setLocation}
-            colors={colors}
-            radius={radius}
-          />
+          {/* Location */}
+          <LocationField value={location} onChange={setLocation} />
 
-          {/* Language — dropdown */}
-          <LanguageField
-            value={language}
-            onChange={setLanguage}
-            colors={colors}
-            radius={radius}
-          />
+          {/* Language */}
+          <LanguageField value={language} onChange={setLanguage} />
+
+          <View style={styles.divider}>
+            <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
+            <MonoCaps color={colors.textMuted}>Health</MonoCaps>
+            <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
+          </View>
 
           {/* Health Notes */}
-          <Field
+          <PaperField
             label="Health Notes"
             value={healthNotes}
             onChangeText={setHealthNotes}
-            placeholder="e.g. Gestational diabetes, hypothyroidism, asthma, high blood pressure..."
+            placeholder="e.g. Gestational diabetes, hypothyroidism, asthma..."
             multiline
-            colors={colors}
-            radius={radius}
           />
 
-          {/* Allergies — autocomplete chips */}
-          <AllergyField
-            value={allergies}
-            onChange={setAllergies}
-            colors={colors}
-            radius={radius}
-          />
+          {/* Allergies */}
+          <AllergyField value={allergies} onChange={setAllergies} />
 
-          <Pressable
+          <PillButton
+            label={saving ? 'Saving…' : 'Save Changes'}
+            variant="ink"
             onPress={handleSave}
             disabled={saving}
-            style={({ pressed }) => [
-              styles.saveBtn,
-              { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: saving ? 0.6 : 1 },
-              pressed && { transform: [{ scale: 0.98 }] },
-            ]}
-          >
-            <Save size={18} color="#FFFFFF" strokeWidth={2} />
-            <Text style={styles.saveBtnText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
-          </Pressable>
+            leading={
+              <Ionicons
+                name="checkmark-circle"
+                size={18}
+                color={isDark ? '#1A1713' : '#F3ECD9'}
+              />
+            }
+            style={{ marginTop: 16 }}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
   )
 }
 
-// ─── Basic Field ──────────────────────────────────────────────────────────
+// ─── Reusable paper-field ─────────────────────────────────────────────────
 
-function Field({ label, value, onChangeText, placeholder, multiline, colors, radius }: any) {
+function PaperField({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  multiline,
+}: {
+  label: string
+  value: string
+  onChangeText: (t: string) => void
+  placeholder: string
+  multiline?: boolean
+}) {
+  const { colors, font, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
   return (
     <View style={styles.field}>
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{label}</Text>
+      <MonoCaps color={colors.textMuted}>{label}</MonoCaps>
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -247,33 +440,37 @@ function Field({ label, value, onChangeText, placeholder, multiline, colors, rad
         placeholderTextColor={colors.textMuted}
         multiline={multiline}
         style={[
-          styles.fieldInput,
+          styles.input,
           {
             color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
+            backgroundColor: paper,
+            borderColor: border,
+            fontFamily: font.body,
           },
-          multiline && { height: 90, textAlignVertical: 'top', paddingTop: 12 },
+          multiline && { height: 96, textAlignVertical: 'top', paddingTop: 14 },
         ]}
       />
     </View>
   )
 }
 
-// ─── Location Autocomplete ────────────────────────────────────────────────
+// ─── Location autocomplete ────────────────────────────────────────────────
 
 interface LocationResult {
   display_name: string
   place_id: number
 }
 
-function LocationField({ value, onChange, colors, radius }: {
+function LocationField({
+  value,
+  onChange,
+}: {
   value: string
   onChange: (v: string) => void
-  colors: any
-  radius: any
 }) {
+  const { colors, font, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
   const [query, setQuery] = useState(value)
   const [results, setResults] = useState<LocationResult[]>([])
   const [showResults, setShowResults] = useState(false)
@@ -307,7 +504,6 @@ function LocationField({ value, onChange, colors, radius }: {
   }, [])
 
   function selectLocation(item: LocationResult) {
-    // Simplify: take "City, State, Country" from full display name
     const parts = item.display_name.split(', ')
     const short = parts.length >= 3
       ? `${parts[0]}, ${parts[parts.length - 1]}`
@@ -320,36 +516,65 @@ function LocationField({ value, onChange, colors, radius }: {
 
   return (
     <View style={[styles.field, { zIndex: 10 }]}>
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Location</Text>
-      <View style={[styles.fieldInputRow, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
-        <MapPin size={18} color={colors.textMuted} strokeWidth={2} />
+      <MonoCaps color={colors.textMuted}>Location</MonoCaps>
+      <View
+        style={[
+          styles.inputRow,
+          { backgroundColor: paper, borderColor: border },
+        ]}
+      >
+        <Ionicons name="location-outline" size={18} color={colors.textMuted} />
         <TextInput
           value={query}
           onChangeText={search}
-          placeholder="Search city or country..."
+          placeholder="Search city or country…"
           placeholderTextColor={colors.textMuted}
-          style={[styles.fieldInputInner, { color: colors.text }]}
+          style={[styles.inputInner, { color: colors.text, fontFamily: font.body }]}
           onFocus={() => { if (results.length > 0) setShowResults(true) }}
           onBlur={() => setTimeout(() => setShowResults(false), 200)}
         />
         {query.length > 0 && (
-          <Pressable onPress={() => { setQuery(''); onChange(''); setResults([]); setShowResults(false) }}>
-            <X size={16} color={colors.textMuted} />
+          <Pressable
+            onPress={() => {
+              setQuery('')
+              onChange('')
+              setResults([])
+              setShowResults(false)
+            }}
+          >
+            <Ionicons name="close" size={16} color={colors.textMuted} />
           </Pressable>
         )}
       </View>
       {showResults && (
-        <View style={[styles.dropdownAbsolute, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+        <View
+          style={[
+            styles.dropdownAbsolute,
+            { backgroundColor: paper, borderColor: border },
+          ]}
+        >
           {results.map((item) => (
             <Pressable
               key={item.place_id}
               onPress={() => selectLocation(item)}
-              style={({ pressed }) => [styles.dropdownItem, pressed && { backgroundColor: colors.surfaceRaised }]}
+              style={({ pressed }) => [
+                styles.dropdownItem,
+                pressed && { backgroundColor: colors.surfaceRaised },
+              ]}
             >
-              <MapPin size={14} color={colors.textSecondary} strokeWidth={2} />
-              <Text style={[styles.dropdownText, { color: colors.text }]} numberOfLines={2}>
+              <Ionicons
+                name="location-outline"
+                size={14}
+                color={colors.textSecondary}
+              />
+              <Body
+                size={14}
+                color={colors.text}
+                numberOfLines={2}
+                style={{ flex: 1 }}
+              >
                 {item.display_name}
-              </Text>
+              </Body>
             </Pressable>
           ))}
         </View>
@@ -358,57 +583,89 @@ function LocationField({ value, onChange, colors, radius }: {
   )
 }
 
-// ─── Language Dropdown ────────────────────────────────────────────────────
+// ─── Language picker (modal) ──────────────────────────────────────────────
 
-function LanguageField({ value, onChange, colors, radius }: {
+function LanguageField({
+  value,
+  onChange,
+}: {
   value: string
   onChange: (v: string) => void
-  colors: any
-  radius: any
 }) {
+  const { colors, font, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const insets = useSafeAreaInsets()
+
   const [modalVisible, setModalVisible] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const insets = useSafeAreaInsets()
 
   const current = LANGUAGES.find((l) => l.code === value)
   const filtered = searchQuery
-    ? LANGUAGES.filter((l) =>
-        l.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        l.code.toLowerCase().includes(searchQuery.toLowerCase())
+    ? LANGUAGES.filter(
+        (l) =>
+          l.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          l.code.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : LANGUAGES
 
   return (
     <View style={styles.field}>
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Language</Text>
+      <MonoCaps color={colors.textMuted}>Language</MonoCaps>
       <Pressable
         onPress={() => setModalVisible(true)}
-        style={[styles.fieldInputRow, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        style={[
+          styles.inputRow,
+          { backgroundColor: paper, borderColor: border },
+        ]}
       >
-        <Globe size={18} color={colors.textMuted} strokeWidth={2} />
-        <Text style={[styles.fieldInputInner, { color: colors.text, paddingVertical: 0 }]}>
+        <Ionicons name="globe-outline" size={18} color={colors.textMuted} />
+        <Body
+          size={15}
+          color={colors.text}
+          style={{ flex: 1, fontFamily: font.body }}
+        >
           {current ? `${current.label} (${current.code})` : value}
-        </Text>
-        <ChevronDown size={18} color={colors.textMuted} />
+        </Body>
+        <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
       </Pressable>
 
-      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
         <View style={[styles.modalRoot, { backgroundColor: colors.bg }]}>
           <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Select Language</Text>
-            <Pressable onPress={() => { setModalVisible(false); setSearchQuery('') }}>
-              <X size={24} color={colors.text} />
+            <Display size={20} color={colors.text}>
+              Select Language
+            </Display>
+            <Pressable
+              onPress={() => {
+                setModalVisible(false)
+                setSearchQuery('')
+              }}
+            >
+              <Ionicons name="close" size={24} color={colors.text} />
             </Pressable>
           </View>
 
-          <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
-            <Search size={18} color={colors.textMuted} strokeWidth={2} />
+          <View
+            style={[
+              styles.searchBar,
+              { backgroundColor: paper, borderColor: border },
+            ]}
+          >
+            <Ionicons name="search" size={18} color={colors.textMuted} />
             <TextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Search language..."
+              placeholder="Search language…"
               placeholderTextColor={colors.textMuted}
-              style={[styles.searchInput, { color: colors.text }]}
+              style={[
+                styles.inputInner,
+                { color: colors.text, fontFamily: font.body },
+              ]}
               autoFocus
             />
           </View>
@@ -430,15 +687,25 @@ function LanguageField({ value, onChange, colors, radius }: {
                   style={({ pressed }) => [
                     styles.langRow,
                     { borderBottomColor: colors.borderLight },
-                    isSelected && { backgroundColor: colors.primaryTint },
+                    isSelected && { backgroundColor: colors.surfaceRaised },
                     pressed && { opacity: 0.7 },
                   ]}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.langLabel, { color: colors.text }]}>{item.label}</Text>
-                    <Text style={[styles.langCode, { color: colors.textMuted }]}>{item.code}</Text>
+                    <Body size={16} color={colors.text} style={{ fontFamily: font.bodySemiBold }}>
+                      {item.label}
+                    </Body>
+                    <Body size={13} color={colors.textMuted}>
+                      {item.code}
+                    </Body>
                   </View>
-                  {isSelected && <Check size={20} color={colors.primary} strokeWidth={2.5} />}
+                  {isSelected && (
+                    <Ionicons
+                      name="checkmark"
+                      size={20}
+                      color={colors.text}
+                    />
+                  )}
                 </Pressable>
               )
             }}
@@ -449,27 +716,35 @@ function LanguageField({ value, onChange, colors, radius }: {
   )
 }
 
-// ─── Allergies Autocomplete with Chips ────────────────────────────────────
+// ─── Allergies (chips + autocomplete) ─────────────────────────────────────
 
-function AllergyField({ value, onChange, colors, radius }: {
+function AllergyField({
+  value,
+  onChange,
+}: {
   value: string[]
   onChange: (v: string[]) => void
-  colors: any
-  radius: any
 }) {
+  const { colors, font, stickers, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const chipBg = stickers.coral + (isDark ? '24' : '22')
+  const chipFg = isDark ? stickers.coral : '#B43E2E'
+
   const [query, setQuery] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
 
-  const suggestions = query.length >= 1
-    ? COMMON_ALLERGIES.filter(
-        (a) => a.toLowerCase().includes(query.toLowerCase()) && !value.includes(a)
-      ).slice(0, 6)
-    : []
+  const suggestions =
+    query.length >= 1
+      ? COMMON_ALLERGIES.filter(
+          (a) =>
+            a.toLowerCase().includes(query.toLowerCase()) &&
+            !value.includes(a)
+        ).slice(0, 6)
+      : []
 
   function addAllergy(allergy: string) {
-    if (!value.includes(allergy)) {
-      onChange([...value, allergy])
-    }
+    if (!value.includes(allergy)) onChange([...value, allergy])
     setQuery('')
     setShowSuggestions(false)
   }
@@ -480,70 +755,98 @@ function AllergyField({ value, onChange, colors, radius }: {
 
   function handleSubmit() {
     const trimmed = query.trim()
-    if (trimmed && !value.includes(trimmed)) {
-      onChange([...value, trimmed])
-    }
+    if (trimmed && !value.includes(trimmed)) onChange([...value, trimmed])
     setQuery('')
     setShowSuggestions(false)
   }
 
   return (
     <View style={styles.field}>
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Allergies</Text>
+      <MonoCaps color={colors.textMuted}>Allergies</MonoCaps>
 
-      {/* Chips */}
       {value.length > 0 && (
         <View style={styles.chipWrap}>
           {value.map((a) => (
-            <View key={a} style={[styles.chip, { backgroundColor: brand.error + '15', borderRadius: radius.full }]}>
-              <Text style={[styles.chipText, { color: brand.error }]}>{a}</Text>
+            <View
+              key={a}
+              style={[styles.chip, { backgroundColor: chipBg }]}
+            >
+              <Body size={13} color={chipFg} style={{ fontFamily: font.bodySemiBold }}>
+                {a}
+              </Body>
               <Pressable onPress={() => removeAllergy(a)} hitSlop={6}>
-                <X size={14} color={brand.error} strokeWidth={2.5} />
+                <Ionicons name="close" size={14} color={chipFg} />
               </Pressable>
             </View>
           ))}
         </View>
       )}
 
-      {/* Input */}
-      <View style={[styles.fieldInputRow, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
-        <Search size={18} color={colors.textMuted} strokeWidth={2} />
+      <View
+        style={[
+          styles.inputRow,
+          { backgroundColor: paper, borderColor: border },
+        ]}
+      >
+        <Ionicons name="search" size={18} color={colors.textMuted} />
         <TextInput
           value={query}
           onChangeText={(t) => {
             setQuery(t)
             setShowSuggestions(t.length >= 1)
           }}
-          placeholder="Type to search allergies..."
+          placeholder="Type to search allergies…"
           placeholderTextColor={colors.textMuted}
-          style={[styles.fieldInputInner, { color: colors.text }]}
+          style={[styles.inputInner, { color: colors.text, fontFamily: font.body }]}
           onSubmitEditing={handleSubmit}
           returnKeyType="done"
-          onFocus={() => { if (query.length >= 1) setShowSuggestions(true) }}
+          onFocus={() => {
+            if (query.length >= 1) setShowSuggestions(true)
+          }}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
         />
       </View>
 
-      {/* Suggestions */}
       {showSuggestions && query.trim().length > 0 && (
-        <View style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+        <View
+          style={[
+            styles.dropdown,
+            { backgroundColor: paper, borderColor: border },
+          ]}
+        >
           {suggestions.map((s) => (
             <Pressable
               key={s}
               onPress={() => addAllergy(s)}
-              style={({ pressed }) => [styles.dropdownItem, pressed && { backgroundColor: colors.surfaceRaised }]}
+              style={({ pressed }) => [
+                styles.dropdownItem,
+                pressed && { backgroundColor: colors.surfaceRaised },
+              ]}
             >
-              <Text style={[styles.dropdownText, { color: colors.text }]}>{s}</Text>
+              <Body size={14} color={colors.text} style={{ flex: 1 }}>
+                {s}
+              </Body>
             </Pressable>
           ))}
-          {!value.includes(query.trim()) && !COMMON_ALLERGIES.some((a) => a.toLowerCase() === query.trim().toLowerCase() && value.includes(a)) && (
+          {!value.includes(query.trim()) && (
             <Pressable
               onPress={handleSubmit}
-              style={({ pressed }) => [styles.dropdownItem, { borderTopWidth: suggestions.length > 0 ? 1 : 0, borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceRaised }]}
+              style={({ pressed }) => [
+                styles.dropdownItem,
+                {
+                  borderTopWidth: suggestions.length > 0 ? 1 : 0,
+                  borderTopColor: border,
+                },
+                pressed && { backgroundColor: colors.surfaceRaised },
+              ]}
             >
-              <Text style={[styles.dropdownText, { color: colors.primary, fontWeight: '600' }]}>
-                + Add "{query.trim()}"
-              </Text>
+              <Body
+                size={14}
+                color={colors.text}
+                style={{ flex: 1, fontFamily: font.bodySemiBold }}
+              >
+                + Add &quot;{query.trim()}&quot;
+              </Body>
             </Pressable>
           )}
         </View>
@@ -556,68 +859,62 @@ function AllergyField({ value, onChange, colors, radius }: {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  backBtn: { width: 40, alignItems: 'center' },
-  title: { fontSize: 18, fontWeight: '700' },
-  scroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 16 },
+  headerWrap: { paddingHorizontal: 16, paddingBottom: 6 },
+  scroll: { paddingHorizontal: 20, paddingBottom: 60, gap: 14 },
 
-  // Field
-  field: { gap: 6 },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 18,
+    marginBottom: 4,
   },
-  fieldInput: {
+  dividerLine: { flex: 1, height: 1 },
+
+  field: { gap: 8 },
+  input: {
     borderWidth: 1,
-    paddingHorizontal: 16,
-    height: 48,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    height: 56,
     fontSize: 15,
-    fontWeight: '500',
   },
-  fieldInputRow: {
+  inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    paddingHorizontal: 14,
-    height: 48,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    height: 56,
     gap: 10,
   },
-  fieldInputInner: {
+  inputInner: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '500',
     paddingVertical: 0,
   },
 
-  // Dropdown (inline for allergies)
   dropdown: {
     borderWidth: 1,
+    borderRadius: 20,
     marginTop: 4,
     overflow: 'hidden',
-    maxHeight: 240,
+    maxHeight: 260,
   },
-  // Dropdown (absolute overlay for location)
   dropdownAbsolute: {
     position: 'absolute',
     top: '100%',
     left: 0,
     right: 0,
     borderWidth: 1,
+    borderRadius: 20,
     marginTop: 4,
     overflow: 'hidden',
-    maxHeight: 240,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
+    maxHeight: 260,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 16,
     elevation: 8,
   },
   dropdownItem: {
@@ -627,19 +924,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     gap: 10,
   },
-  dropdownText: {
-    fontSize: 14,
-    fontWeight: '500',
-    flex: 1,
-  },
 
-  // Chips
-  chipWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 4,
-  },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -647,13 +933,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingLeft: 12,
     paddingRight: 8,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '600',
+    borderRadius: 999,
   },
 
-  // Language modal
   modalRoot: { flex: 1 },
   modalHeader: {
     flexDirection: 'row',
@@ -662,22 +944,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
   },
-  modalTitle: { fontSize: 20, fontWeight: '700' },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 20,
-    marginBottom: 8,
+    marginBottom: 12,
     borderWidth: 1,
+    borderRadius: 20,
     paddingHorizontal: 14,
-    height: 44,
+    height: 50,
     gap: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '500',
-    paddingVertical: 0,
   },
   langRow: {
     flexDirection: 'row',
@@ -686,17 +962,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderBottomWidth: 1,
   },
-  langLabel: { fontSize: 16, fontWeight: '600' },
-  langCode: { fontSize: 13, fontWeight: '500', marginTop: 2 },
-
-  // Save
-  saveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 52,
-    marginTop: 8,
-  },
-  saveBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 })

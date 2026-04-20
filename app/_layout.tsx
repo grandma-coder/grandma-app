@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { View, ActivityIndicator, Text as RNText, TextInput as RNTextInput } from 'react-native'
+import { Text as RNText, TextInput as RNTextInput } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as Font from 'expo-font'
@@ -28,8 +28,9 @@ import { initRevenueCat } from '../lib/revenue'
 import { runNotificationEngine } from '../lib/notificationEngine'
 import { syncBadgesFromSupabase } from '../lib/badgeSync'
 import { ThemeProvider } from '../components/ui/ThemeProvider'
-import { useTheme } from '../constants/theme'
+import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { DevPanelProvider } from '../context/DevPanelContext'
+import { SavedToastProvider } from '../components/ui/SavedToast'
 import type { Session } from '@supabase/supabase-js'
 import type { ChildWithRole, CaregiverPermissions } from '../types'
 
@@ -230,6 +231,7 @@ export default function RootLayout() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <DevPanelProvider>
+        <SavedToastProvider>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
@@ -253,6 +255,7 @@ export default function RootLayout() {
           <Stack.Screen name="garage" />
           <Stack.Screen name="channel" />
         </Stack>
+        </SavedToastProvider>
         </DevPanelProvider>
       </QueryClientProvider>
     </ThemeProvider>
@@ -260,10 +263,5 @@ export default function RootLayout() {
 }
 
 function LoadingScreen() {
-  const { colors } = useTheme()
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg }}>
-      <ActivityIndicator size="large" color={colors.primary} />
-    </View>
-  )
+  return <BrandedLoader fullscreen />
 }

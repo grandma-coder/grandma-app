@@ -16,7 +16,6 @@ import {
   Alert,
   Share,
   StyleSheet,
-  ActivityIndicator,
   Dimensions,
   Animated,
   RefreshControl,
@@ -32,8 +31,10 @@ import {
   User,
   MoreHorizontal,
   Play,
+  Search,
 } from 'lucide-react-native'
 import { useTheme, brand } from '../../constants/theme'
+import { BrandedLoader } from '../ui/BrandedLoader'
 import {
   fetchFeed,
   toggleLike,
@@ -45,7 +46,15 @@ import {
 import { supabase } from '../../lib/supabase'
 
 const SCREEN_W = Dimensions.get('window').width
-const MEDIA_HEIGHT = SCREEN_W * 1.1 // Slightly taller than square, like IG
+const CARD_H_MARGIN = 12
+const MEDIA_WIDTH = SCREEN_W - CARD_H_MARGIN * 2
+const MEDIA_HEIGHT = MEDIA_WIDTH * 1.1 // Slightly taller than square, like IG
+
+// Cream accent (matches the "paper" aesthetic used on Agenda/Kids Home)
+const CREAM = '#F5EFE3'
+
+// Pastel neon palette — cycles per card for the glowing border effect
+const CARD_BORDER_COLORS = ['#FBBF24', '#FF8AD8', '#A2FF86', '#4D96FF']
 
 // ─── Feed Categories ──────────────────────────────────────────────────────
 
@@ -203,7 +212,7 @@ export function GarageScreen() {
       {/* Feed */}
       {loading && posts.length === 0 ? (
         <View style={styles.center}>
-          <ActivityIndicator color={colors.primary} />
+          <BrandedLoader />
         </View>
       ) : (
         <FlatList
@@ -220,17 +229,59 @@ export function GarageScreen() {
           }
           ListHeaderComponent={
             <View>
+              {/* Garage header — title + subtitle + search/add actions */}
+              <View style={styles.headerRow}>
+                <View style={{ flex: 1, paddingRight: 12 }}>
+                  <Text style={[styles.headerTitle, { color: colors.text }]}>Garage.</Text>
+                  <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
+                    Gift, trade, and pass on baby things.
+                  </Text>
+                </View>
+                <View style={styles.headerActions}>
+                  <Pressable
+                    hitSlop={8}
+                    style={({ pressed }) => [
+                      styles.headerCircleBtn,
+                      { backgroundColor: CREAM, borderRadius: radius.full },
+                      pressed && { opacity: 0.85 },
+                    ]}
+                  >
+                    <Search size={18} color="#1A1430" strokeWidth={2.5} />
+                  </Pressable>
+                  <Pressable
+                    hitSlop={8}
+                    onPress={() => router.push('/garage/create' as any)}
+                    style={({ pressed }) => [
+                      styles.headerCircleBtn,
+                      { backgroundColor: CREAM, borderRadius: radius.full },
+                      pressed && { opacity: 0.85 },
+                    ]}
+                  >
+                    <Plus size={20} color="#1A1430" strokeWidth={2.5} />
+                  </Pressable>
+                </View>
+              </View>
+
               <FeedFilters
                 active={activeFilter}
                 onSelect={setActiveFilter}
               />
-              {/* My Garage profile button */}
+
+              {/* My Garage profile button — outlined cream pill */}
               <Pressable
                 onPress={() => router.push('/garage/profile' as any)}
-                style={[styles.profileBtn, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}
+                style={({ pressed }) => [
+                  styles.profileBtn,
+                  {
+                    backgroundColor: 'transparent',
+                    borderColor: CREAM + '55',
+                    borderRadius: radius.full,
+                  },
+                  pressed && { opacity: 0.7 },
+                ]}
               >
-                <User size={16} color={colors.primary} strokeWidth={2} />
-                <Text style={[styles.profileBtnText, { color: colors.primary }]}>My Garage</Text>
+                <User size={14} color={CREAM} strokeWidth={2} />
+                <Text style={[styles.profileBtnText, { color: CREAM }]}>My Garage</Text>
               </Pressable>
             </View>
           }
@@ -253,9 +304,10 @@ export function GarageScreen() {
               </Pressable>
             </View>
           }
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => (
             <FeedPost
               post={item}
+              index={index}
               isOwner={currentUserId === item.author_id}
               onLike={() => handleLike(item.id)}
               onSave={() => handleSave(item.id)}
@@ -267,16 +319,16 @@ export function GarageScreen() {
         />
       )}
 
-      {/* FAB */}
+      {/* FAB — cream on dark, matches header action buttons */}
       <Pressable
         onPress={() => router.push('/garage/create' as any)}
         style={({ pressed }) => [
           styles.fab,
-          { backgroundColor: colors.primary, borderRadius: radius.full },
+          { backgroundColor: CREAM, borderRadius: radius.full, shadowColor: CREAM },
           pressed && { transform: [{ scale: 0.93 }] },
         ]}
       >
-        <Plus size={26} color="#FFFFFF" strokeWidth={2.5} />
+        <Plus size={26} color="#1A1430" strokeWidth={2.5} />
       </Pressable>
     </View>
   )
@@ -302,8 +354,8 @@ function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: strin
             style={[
               styles.filterChip,
               {
-                backgroundColor: isActive ? colors.primary : colors.surface,
-                borderColor: isActive ? colors.primary : colors.border,
+                backgroundColor: isActive ? CREAM : 'transparent',
+                borderColor: isActive ? CREAM : 'rgba(255,255,255,0.15)',
                 borderRadius: radius.full,
               },
             ]}
@@ -311,7 +363,10 @@ function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: strin
             <Text
               style={[
                 styles.filterText,
-                { color: isActive ? '#FFFFFF' : colors.textSecondary },
+                {
+                  color: isActive ? '#1A1430' : colors.textSecondary,
+                  fontWeight: isActive ? '800' : '600',
+                },
               ]}
             >
               {f}
@@ -327,6 +382,7 @@ function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: strin
 
 function FeedPost({
   post,
+  index,
   isOwner,
   onLike,
   onSave,
@@ -335,6 +391,7 @@ function FeedPost({
   onShare,
 }: {
   post: GaragePost
+  index: number
   isOwner: boolean
   onLike: () => void
   onSave: () => void
@@ -346,6 +403,7 @@ function FeedPost({
   const [mediaIndex, setMediaIndex] = useState(0)
   const [captionExpanded, setCaptionExpanded] = useState(false)
   const likeScale = useRef(new Animated.Value(1)).current
+  const borderColor = CARD_BORDER_COLORS[index % CARD_BORDER_COLORS.length]
 
   function animateLike() {
     onLike()
@@ -359,7 +417,17 @@ function FeedPost({
   const captionShort = post.caption && post.caption.length > 120
 
   return (
-    <View style={[styles.postCard, { borderBottomColor: colors.borderLight }]}>
+    <View
+      style={[
+        styles.postCard,
+        {
+          borderColor: borderColor,
+          borderRadius: radius.lg,
+          shadowColor: borderColor,
+          backgroundColor: colors.surface,
+        },
+      ]}
+    >
       {/* Header: Author */}
       <View style={styles.postHeader}>
         <Pressable style={styles.postAuthorRow}>
@@ -405,7 +473,7 @@ function FeedPost({
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={(e) => {
-              setMediaIndex(Math.round(e.nativeEvent.contentOffset.x / SCREEN_W))
+              setMediaIndex(Math.round(e.nativeEvent.contentOffset.x / MEDIA_WIDTH))
             }}
           >
             {post.media.map((item, i) => (
@@ -566,14 +634,47 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
+  // Header
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 14,
+  },
+  headerTitle: {
+    fontSize: 36,
+    fontFamily: 'Fraunces_600SemiBold',
+    letterSpacing: -1,
+    lineHeight: 40,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    paddingTop: 4,
+  },
+  headerCircleBtn: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   // Filters
   filterBar: { gap: 8, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 16 },
   filterChip: { paddingVertical: 8, paddingHorizontal: 18, borderWidth: 1 },
   filterText: { fontSize: 13, fontWeight: '600' },
 
   // My Garage button
-  profileBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginLeft: 16, marginBottom: 12, paddingVertical: 8, paddingHorizontal: 14 },
-  profileBtnText: { fontSize: 13, fontWeight: '700' },
+  profileBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginLeft: 16, marginBottom: 12, paddingVertical: 7, paddingHorizontal: 12, borderWidth: 1 },
+  profileBtnText: { fontSize: 12, fontWeight: '700' },
 
   // Empty state
   emptyState: { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40, gap: 12 },
@@ -583,8 +684,18 @@ const styles = StyleSheet.create({
   emptyBtn: { marginTop: 12, paddingVertical: 12, paddingHorizontal: 32 },
   emptyBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 
-  // Post card
-  postCard: { borderBottomWidth: 1, paddingBottom: 16, marginBottom: 8 },
+  // Post card — colored glow border, clipped media
+  postCard: {
+    marginHorizontal: CARD_H_MARGIN,
+    marginBottom: 14,
+    paddingBottom: 14,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 6,
+  },
 
   // Post header
   postHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10 },
@@ -594,7 +705,7 @@ const styles = StyleSheet.create({
   categoryLabel: { fontSize: 11, fontWeight: '500', marginTop: 1 },
 
   // Media
-  mediaContainer: { width: SCREEN_W, height: MEDIA_HEIGHT },
+  mediaContainer: { width: MEDIA_WIDTH, height: MEDIA_HEIGHT },
   mediaImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   dotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: 10 },
   dot: { width: 6, height: 6, borderRadius: 3 },
@@ -630,10 +741,9 @@ const styles = StyleSheet.create({
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
     elevation: 8,
   },
 })

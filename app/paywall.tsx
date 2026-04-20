@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   View,
-  Text,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Alert,
   StyleSheet,
@@ -12,16 +11,30 @@ import { Ionicons } from '@expo/vector-icons'
 import { PurchasesPackage } from 'react-native-purchases'
 import { getOfferings, purchasePackage, restorePurchases } from '../lib/revenue'
 import { supabase } from '../lib/supabase'
-import { colors } from '../constants/theme'
+import { useTheme } from '../constants/theme'
+import { Display, MonoCaps, Body } from '../components/ui/Typography'
+import { PillButton } from '../components/ui/PillButton'
+import { GrandmaEye } from '../components/ui/Stickers'
+import { BrandedLoader } from '../components/ui/BrandedLoader'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const FEATURES = [
-  { icon: 'scan-outline', text: 'Unlimited medicine & food scans' },
-  { icon: 'chatbubble-ellipses-outline', text: 'Unlimited Grandma conversations' },
-  { icon: 'notifications-outline', text: 'Vaccine reminders' },
-  { icon: 'star-outline', text: 'Priority responses' },
+  { icon: 'scan-outline' as const, text: 'Unlimited medicine & food scans' },
+  { icon: 'chatbubble-ellipses-outline' as const, text: 'Unlimited Grandma conversations' },
+  { icon: 'notifications-outline' as const, text: 'Vaccine reminders' },
+  { icon: 'star-outline' as const, text: 'Priority responses' },
 ]
 
 export default function Paywall() {
+  const { colors, font, stickers, isDark } = useTheme()
+  const insets = useSafeAreaInsets()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+  const inkText = isDark ? colors.bg : '#F3ECD9'
+  const accent = stickers.lilac
+  const accentText = isDark ? stickers.lilac : '#3A2A6E'
+
   const [packages, setPackages] = useState<PurchasesPackage[]>([])
   const [loading, setLoading] = useState(true)
   const [purchasing, setPurchasing] = useState(false)
@@ -29,10 +42,9 @@ export default function Paywall() {
 
   useEffect(() => {
     getOfferings()
-      .then(pkgs => {
+      .then((pkgs) => {
         setPackages(pkgs)
-        // Default select annual if available
-        const annualIdx = pkgs.findIndex(p => p.packageType === 'ANNUAL')
+        const annualIdx = pkgs.findIndex((p) => p.packageType === 'ANNUAL')
         if (annualIdx >= 0) setSelectedIndex(annualIdx)
       })
       .catch(() => {})
@@ -45,7 +57,6 @@ export default function Paywall() {
     try {
       const customerInfo = await purchasePackage(packages[selectedIndex])
       if (customerInfo.entitlements.active['premium']) {
-        // Update Supabase profile
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           await supabase
@@ -92,183 +103,178 @@ export default function Paywall() {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Close button */}
-      <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
-        <Ionicons name="close" size={24} color={colors.textTertiary} />
-      </TouchableOpacity>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.bg, paddingTop: insets.top + 28, paddingBottom: insets.bottom + 16 },
+      ]}
+    >
+      <Pressable
+        onPress={() => router.back()}
+        hitSlop={10}
+        style={[styles.closeButton, { backgroundColor: paper, borderColor: paperBorder, top: insets.top + 12 }]}
+      >
+        <Ionicons name="close" size={20} color={colors.text} />
+      </Pressable>
 
-      {/* Header */}
-      <Text style={styles.emoji}>👵</Text>
-      <Text style={styles.title}>Unlock Grandma Premium</Text>
-      <Text style={styles.subtitle}>7-day free trial, cancel anytime</Text>
+      <View style={styles.heroBlock}>
+        <GrandmaEye size={88} body={stickers.yellow} accent={stickers.coral} outline={ink} />
+        <Display size={28} align="center" color={colors.text} style={{ marginTop: 14 }}>
+          Unlock Grandma Premium
+        </Display>
+        <Body size={14} align="center" color={colors.textSecondary} style={{ marginTop: 6 }}>
+          7-day free trial, cancel anytime
+        </Body>
+      </View>
 
-      {/* Features */}
       <View style={styles.features}>
         {FEATURES.map((f, i) => (
           <View key={i} style={styles.featureRow}>
-            <Ionicons name={f.icon as any} size={20} color={colors.accent} />
-            <Text style={styles.featureText}>{f.text}</Text>
+            <View style={[styles.featureIcon, { backgroundColor: accent + (isDark ? '28' : '32') }]}>
+              <Ionicons name={f.icon} size={18} color={accentText} />
+            </View>
+            <Body size={15} color={colors.text} style={{ flex: 1, fontFamily: font.bodyMedium }}>
+              {f.text}
+            </Body>
           </View>
         ))}
       </View>
 
-      {/* Pricing cards */}
       {loading ? (
-        <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 24 }} />
+        <View style={{ marginTop: 24 }}>
+          <BrandedLoader logoSize={72} />
+        </View>
       ) : packages.length > 0 ? (
         <View style={styles.packages}>
           {packages.map((pkg, idx) => {
             const isSelected = idx === selectedIndex
             const isAnnual = pkg.packageType === 'ANNUAL'
             return (
-              <TouchableOpacity
+              <Pressable
                 key={pkg.identifier}
                 onPress={() => setSelectedIndex(idx)}
-                style={[styles.packageCard, isSelected && styles.packageCardSelected]}
+                style={[
+                  styles.packageCard,
+                  {
+                    backgroundColor: isSelected ? accent + (isDark ? '24' : '32') : paper,
+                    borderColor: isSelected ? accentText : paperBorder,
+                  },
+                ]}
               >
-                {isAnnual && <Text style={styles.saveBadge}>BEST VALUE</Text>}
-                <Text style={[styles.packageTitle, isSelected && styles.packageTitleSelected]}>
+                {isAnnual && (
+                  <View style={[styles.saveBadge, { backgroundColor: ink }]}>
+                    <Body size={10} color={inkText} style={{ fontFamily: font.bodySemiBold, letterSpacing: 1 }}>
+                      BEST VALUE
+                    </Body>
+                  </View>
+                )}
+                <Body size={14} color={isSelected ? accentText : colors.textSecondary} style={{ fontFamily: font.bodyMedium, marginBottom: 4 }}>
                   {isAnnual ? 'Annual' : 'Monthly'}
-                </Text>
-                <Text style={[styles.packagePrice, isSelected && styles.packagePriceSelected]}>
+                </Body>
+                <Display size={26} align="center" color={isSelected ? colors.text : colors.textSecondary}>
                   {pkg.product.priceString}
-                </Text>
-                <Text style={styles.packagePeriod}>
+                </Display>
+                <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>
                   {isAnnual ? '/year' : '/month'}
-                </Text>
-              </TouchableOpacity>
+                </Body>
+              </Pressable>
             )
           })}
         </View>
       ) : (
         <View style={styles.packages}>
-          {/* Fallback when no offerings available (sandbox/test) */}
-          <View style={[styles.packageCard, styles.packageCardSelected]}>
-            <Text style={styles.saveBadge}>BEST VALUE</Text>
-            <Text style={[styles.packageTitle, styles.packageTitleSelected]}>Annual</Text>
-            <Text style={[styles.packagePrice, styles.packagePriceSelected]}>$69.99</Text>
-            <Text style={styles.packagePeriod}>/year</Text>
+          <View
+            style={[
+              styles.packageCard,
+              { backgroundColor: accent + (isDark ? '24' : '32'), borderColor: accentText },
+            ]}
+          >
+            <View style={[styles.saveBadge, { backgroundColor: ink }]}>
+              <Body size={10} color={inkText} style={{ fontFamily: font.bodySemiBold, letterSpacing: 1 }}>
+                BEST VALUE
+              </Body>
+            </View>
+            <Body size={14} color={accentText} style={{ fontFamily: font.bodyMedium, marginBottom: 4 }}>
+              Annual
+            </Body>
+            <Display size={26} align="center" color={colors.text}>$69.99</Display>
+            <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>
+              /year
+            </Body>
           </View>
-          <View style={styles.packageCard}>
-            <Text style={styles.packageTitle}>Monthly</Text>
-            <Text style={styles.packagePrice}>$9.99</Text>
-            <Text style={styles.packagePeriod}>/month</Text>
+          <View style={[styles.packageCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <Body size={14} color={colors.textSecondary} style={{ fontFamily: font.bodyMedium, marginBottom: 4 }}>
+              Monthly
+            </Body>
+            <Display size={26} align="center" color={colors.textSecondary}>$9.99</Display>
+            <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>
+              /month
+            </Body>
           </View>
         </View>
       )}
 
-      {/* CTA */}
-      <TouchableOpacity
+      <PillButton
+        label={purchasing ? '…' : 'Start free trial'}
+        variant="ink"
         onPress={handlePurchase}
         disabled={purchasing || packages.length === 0}
-        style={[styles.ctaButton, (purchasing || packages.length === 0) && { opacity: 0.6 }]}
-      >
-        {purchasing ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.ctaText}>Start free trial</Text>
-        )}
-      </TouchableOpacity>
+      />
 
-      {/* Restore */}
-      <TouchableOpacity onPress={handleRestore} disabled={purchasing} style={styles.restoreButton}>
-        <Text style={styles.restoreText}>Restore purchases</Text>
-      </TouchableOpacity>
+      <Pressable onPress={handleRestore} disabled={purchasing} style={styles.restoreButton} hitSlop={8}>
+        <Body size={14} color={colors.text} style={{ fontFamily: font.bodyMedium, textDecorationLine: 'underline' }}>
+          Restore purchases
+        </Body>
+      </Pressable>
 
-      <Text style={styles.disclaimer}>
+      <Body size={11} align="center" color={colors.textMuted} style={{ marginTop: 16, lineHeight: 16, paddingHorizontal: 12 }}>
         Payment will be charged to your App Store account. Subscription auto-renews unless cancelled 24 hours before the end of the current period.
-      </Text>
+      </Body>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    paddingHorizontal: 24,
-    paddingTop: 60,
-  },
+  container: { flex: 1, paddingHorizontal: 24 },
   closeButton: {
     position: 'absolute',
-    top: 56,
     right: 20,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.surfaceGlass,
+    width: 38,
+    height: 38,
+    borderRadius: 999,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
     borderWidth: 1,
-    borderColor: colors.border,
   },
-  emoji: { fontSize: 48, textAlign: 'center', marginBottom: 12 },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 6, fontFamily: 'Fraunces_600SemiBold' },
-  subtitle: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 28,
-  },
-  features: { gap: 14, marginBottom: 28 },
+  heroBlock: { alignItems: 'center', marginTop: 32, marginBottom: 24 },
+  features: { gap: 14, marginBottom: 26 },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  featureText: { fontSize: 15, color: colors.text },
+  featureIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-  packages: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  packages: { flexDirection: 'row', gap: 12, marginBottom: 18 },
   packageCard: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 24,
+    padding: 18,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: colors.border,
-  },
-  packageCardSelected: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentMuted,
+    minHeight: 132,
+    justifyContent: 'center',
   },
   saveBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.textOnAccent,
-    backgroundColor: colors.accent,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginBottom: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginBottom: 10,
     overflow: 'hidden',
   },
-  packageTitle: { fontSize: 14, fontWeight: '600', color: colors.textTertiary, marginBottom: 4 },
-  packageTitleSelected: { color: colors.text },
-  packagePrice: { fontSize: 24, fontWeight: '800', color: colors.textTertiary, fontFamily: 'Fraunces_600SemiBold' },
-  packagePriceSelected: { color: colors.text },
-  packagePeriod: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
 
-  ctaButton: {
-    backgroundColor: colors.accent,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  ctaText: { color: colors.textOnAccent, fontSize: 17, fontWeight: '700' },
-
-  restoreButton: { alignItems: 'center', paddingVertical: 8 },
-  restoreText: { color: colors.accent, fontSize: 14 },
-
-  disclaimer: {
-    fontSize: 11,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    marginTop: 16,
-    lineHeight: 16,
-  },
+  restoreButton: { alignItems: 'center', paddingVertical: 12 },
 })

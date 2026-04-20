@@ -16,11 +16,11 @@ import {
   TextInput,
   Dimensions,
   Share,
+  Modal,
 } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import {
   ArrowLeft,
-  Hash,
   Users,
   Star,
   Crown,
@@ -46,6 +46,10 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../../constants/theme'
+import { channelSticker } from '../../../lib/channelSticker'
+
+const CREAM = '#F5EFE3'
+const INK = '#1A1430'
 import { getChannels, type Channel } from '../../../lib/channels'
 import {
   isChannelMember,
@@ -62,14 +66,19 @@ import {
   type ChannelMetrics,
 } from '../../../lib/channelPosts'
 import { supabase } from '../../../lib/supabase'
+import { BrandedLoader } from '../../../components/ui/BrandedLoader'
 
 const SCREEN_W = Dimensions.get('window').width
 const MEDIA_THUMB = (SCREEN_W - 48 - 8) / 4 // 4 columns
 
 export default function ChannelInfoScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
+
+  // Delete confirm modal state
+  const [showDelete, setShowDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const [channel, setChannel] = useState<Channel | null>(null)
   const [loading, setLoading] = useState(true)
@@ -212,26 +221,21 @@ export default function ChannelInfoScreen() {
     }
   }
 
-  async function handleDeleteChannel() {
-    Alert.alert(
-      'Delete Channel',
-      'This will permanently delete this channel and all its messages. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete Forever',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await supabase.from('channels').delete().eq('id', id)
-              router.replace('/connections' as any)
-            } catch (e: any) {
-              Alert.alert('Error', e.message)
-            }
-          },
-        },
-      ]
-    )
+  function handleDeleteChannel() {
+    setShowDelete(true)
+  }
+
+  async function confirmDeleteChannel() {
+    setDeleting(true)
+    try {
+      await supabase.from('channels').delete().eq('id', id)
+      setShowDelete(false)
+      router.replace('/connections' as any)
+    } catch (e: any) {
+      Alert.alert('Error', e.message)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   async function handleDeleteMessage(msgId: string) {
@@ -388,7 +392,7 @@ export default function ChannelInfoScreen() {
   if (loading) {
     return (
       <View style={[s.center, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator color={colors.primary} />
+        <BrandedLoader />
       </View>
     )
   }
@@ -415,9 +419,15 @@ export default function ChannelInfoScreen() {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* Channel icon + name */}
         <View style={s.channelHeader}>
-          <View style={[s.channelIcon, { backgroundColor: colors.primaryTint }]}>
-            <Hash size={36} color={colors.primary} strokeWidth={2} />
-          </View>
+          {(() => {
+            const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
+            const StickerIcon = sticker.Component
+            return (
+              <View style={[s.channelIcon, { backgroundColor: sticker.tint }]}>
+                <StickerIcon size={52} fill={sticker.fill} />
+              </View>
+            )
+          })()}
 
           {editing ? (
             <View style={s.editSection}>
@@ -441,11 +451,11 @@ export default function ChannelInfoScreen() {
                   <X size={16} color={colors.textSecondary} />
                   <Text style={[s.editCancelText, { color: colors.textSecondary }]}>Cancel</Text>
                 </Pressable>
-                <Pressable onPress={handleSaveEdit} disabled={saving} style={[s.editSaveBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}>
-                  {saving ? <ActivityIndicator color="#FFF" size="small" /> : (
+                <Pressable onPress={handleSaveEdit} disabled={saving} style={[s.editSaveBtn, { backgroundColor: CREAM, borderRadius: radius.full }]}>
+                  {saving ? <ActivityIndicator color={INK} size="small" /> : (
                     <>
-                      <Check size={16} color="#FFF" />
-                      <Text style={s.editSaveText}>Save</Text>
+                      <Check size={16} color={INK} />
+                      <Text style={[s.editSaveText, { color: INK }]}>Save</Text>
                     </>
                   )}
                 </Pressable>
@@ -495,11 +505,15 @@ export default function ChannelInfoScreen() {
           <View style={s.section}>
             <Pressable
               onPress={handleShareChannel}
-              style={[s.shareBtn, { backgroundColor: colors.primaryTint, borderRadius: radius.xl }]}
+              style={({ pressed }) => [
+                s.shareBtn,
+                { backgroundColor: CREAM + '14', borderWidth: 1, borderColor: CREAM + '40', borderRadius: radius.full },
+                pressed && { opacity: 0.85 },
+              ]}
             >
-              <Share2 size={18} color={colors.primary} strokeWidth={2} />
+              <Share2 size={18} color={CREAM} strokeWidth={2} />
               <View style={{ flex: 1 }}>
-                <Text style={[s.shareBtnText, { color: colors.primary }]}>Share Channel</Text>
+                <Text style={[s.shareBtnText, { color: CREAM }]}>Share Channel</Text>
                 <Text style={[s.shareBtnSub, { color: colors.textMuted }]}>
                   {channel.channelType === 'private'
                     ? 'Invite link — only members can share'
@@ -715,7 +729,78 @@ export default function ChannelInfoScreen() {
           </Pressable>
         )}
       </ScrollView>
+
+      {/* Delete confirm sheet */}
+      <DeleteChannelSheet
+        visible={showDelete}
+        channelName={channel?.name ?? 'this channel'}
+        deleting={deleting}
+        onCancel={() => setShowDelete(false)}
+        onConfirm={confirmDeleteChannel}
+      />
     </View>
+  )
+}
+
+// ─── Delete channel confirm sheet ────────────────────────────────────────
+
+function DeleteChannelSheet({
+  visible,
+  channelName,
+  deleting,
+  onCancel,
+  onConfirm,
+}: {
+  visible: boolean
+  channelName: string
+  deleting: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const { colors, radius } = useTheme()
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+      <Pressable style={s.deleteOverlay} onPress={onCancel}>
+        <Pressable
+          style={[s.deleteSheet, { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <View style={[s.deleteHandle, { backgroundColor: colors.textMuted + '55' }]} />
+
+          <View style={[s.deleteIcon, { backgroundColor: brand.error + '1A' }]}>
+            <Trash2 size={26} color={brand.error} strokeWidth={2} />
+          </View>
+          <Text style={[s.deleteTitle, { color: colors.text }]}>Delete channel?</Text>
+          <Text style={[s.deleteBody, { color: colors.textSecondary }]}>
+            This permanently deletes{' '}
+            <Text style={{ fontWeight: '800', color: colors.text }}>#{channelName}</Text>
+            {' '}and all its messages. This can't be undone.
+          </Text>
+
+          <Pressable
+            onPress={onConfirm}
+            disabled={deleting}
+            style={({ pressed }) => [
+              s.deleteConfirmBtn,
+              { backgroundColor: brand.error, borderRadius: radius.full },
+              pressed && { opacity: 0.85 },
+              deleting && { opacity: 0.6 },
+            ]}
+          >
+            {deleting ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <Text style={s.deleteConfirmText}>Delete Forever</Text>
+            )}
+          </Pressable>
+
+          <Pressable onPress={onCancel} style={s.deleteCancel}>
+            <Text style={[s.deleteCancelText, { color: colors.textMuted }]}>Keep Channel</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
   )
 }
 
@@ -725,14 +810,14 @@ const s = StyleSheet.create({
 
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
   headerBtn: { width: 40, alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700' },
+  headerTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', fontWeight: '700', letterSpacing: -0.3 },
 
   scroll: { paddingBottom: 60 },
 
   // Channel header
   channelHeader: { alignItems: 'center', paddingVertical: 28, paddingHorizontal: 20, gap: 10 },
   channelIcon: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  channelName: { fontSize: 22, fontWeight: '800', textAlign: 'center' },
+  channelName: { fontSize: 28, fontFamily: 'Fraunces_600SemiBold', fontWeight: '700', letterSpacing: -0.5, textAlign: 'center' },
   channelDesc: { fontSize: 14, fontWeight: '400', textAlign: 'center', lineHeight: 20 },
   channelCategory: { fontSize: 12, fontWeight: '600', textTransform: 'capitalize' },
 
@@ -744,7 +829,7 @@ const s = StyleSheet.create({
   editCancelBtn: { flex: 1, flexDirection: 'row', height: 44, alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1 },
   editCancelText: { fontSize: 14, fontWeight: '600' },
   editSaveBtn: { flex: 1, flexDirection: 'row', height: 44, alignItems: 'center', justifyContent: 'center', gap: 6 },
-  editSaveText: { fontSize: 14, fontWeight: '700', color: '#FFF' },
+  editSaveText: { fontSize: 14, fontWeight: '800' },
 
   // Stats
   statsRow: { flexDirection: 'row', marginHorizontal: 20, padding: 16 },
@@ -812,4 +897,16 @@ const s = StyleSheet.create({
   requestsTitle: { fontSize: 14, fontWeight: '700' },
   requestRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 10, borderTopWidth: 1 },
   requestActionBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+
+  // Delete confirm sheet
+  deleteOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
+  deleteSheet: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 34, alignItems: 'center' },
+  deleteHandle: { width: 44, height: 4, borderRadius: 2, marginBottom: 14 },
+  deleteIcon: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  deleteTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, textAlign: 'center' },
+  deleteBody: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20, marginTop: 8, marginBottom: 20, paddingHorizontal: 8 },
+  deleteConfirmBtn: { width: '100%', paddingVertical: 15, alignItems: 'center', justifyContent: 'center' },
+  deleteConfirmText: { fontSize: 15, fontWeight: '800', color: '#FFFFFF' },
+  deleteCancel: { alignItems: 'center', paddingVertical: 14, marginTop: 4 },
+  deleteCancelText: { fontSize: 14, fontWeight: '600' },
 })

@@ -1,5 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { GlassCard } from '../ui/GlassCard'
+import { Emoji } from '../ui/Emoji'
 import { colors, borderRadius } from '../../constants/theme'
 
 const MOMENTS = [
@@ -26,7 +27,7 @@ export function MomentsOfCare() {
           <GlassCard style={styles.card}>
             <View style={styles.cardRow}>
               <View style={styles.iconCircle}>
-                <Text style={styles.icon}>{moment.icon}</Text>
+                <Emoji style={styles.icon}>{moment.icon}</Emoji>
               </View>
               <View style={styles.cardText}>
                 <Text style={styles.cardTitle}>{moment.title}</Text>

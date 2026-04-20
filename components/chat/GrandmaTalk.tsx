@@ -41,7 +41,7 @@ import {
   Check,
   HelpCircle,
   Mic,
-  Share2,
+  MessagesSquare,
   Moon as MoonIcon,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -1052,8 +1052,9 @@ export function GrandmaTalk() {
           onPress={() => setShowHistory(true)}
           style={[styles.headerCircleBtn, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
           hitSlop={8}
+          accessibilityLabel="Past conversations"
         >
-          <Share2 size={17} color={colors.text} strokeWidth={1.75} />
+          <MessagesSquare size={18} color={colors.text} strokeWidth={1.75} />
         </Pressable>
       </View>
 

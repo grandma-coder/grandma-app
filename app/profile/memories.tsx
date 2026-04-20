@@ -26,7 +26,6 @@ import * as ImagePicker from 'expo-image-picker'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { router, useFocusEffect } from 'expo-router'
 import {
-  ArrowLeft,
   Plus,
   Camera,
   Image as ImageIcon,
@@ -39,12 +38,16 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
-  Share2,
 } from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
+import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { PillButton } from '../../components/ui/PillButton'
+import { Display, MonoCaps, Body } from '../../components/ui/Typography'
+import { Heart as HeartSticker, Flower as FlowerSticker, Star as StarSticker } from '../../components/ui/Stickers'
 
 const SCREEN_W = Dimensions.get('window').width
 const GRID_GAP = 3
@@ -60,9 +63,11 @@ interface MemoryPost {
 }
 
 export default function MemoriesScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
 
   const [allPosts, setAllPosts] = useState<MemoryPost[]>([])
   const [loading, setLoading] = useState(true)
@@ -96,7 +101,7 @@ export default function MemoriesScreen() {
     if (!session) return
 
     const childIds = children.map((c) => c.id)
-    if (childIds.length === 0) { setAllMemories([]); setLoading(false); return }
+    if (childIds.length === 0) { setAllPosts([]); setLoading(false); return }
 
     const { data } = await supabase
       .from('child_logs')
@@ -292,25 +297,28 @@ export default function MemoriesScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} style={styles.headerBtn}>
-          <ArrowLeft size={24} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Memories</Text>
-        <Pressable onPress={pickPhotos} style={styles.headerBtn}>
-          <Plus size={22} color={colors.primary} />
-        </Pressable>
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+        <ScreenHeader
+          title="Memories"
+          right={
+            <Pressable onPress={pickPhotos} hitSlop={10}>
+              <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+                <Ionicons name="add" size={20} color={colors.text} />
+              </View>
+            </Pressable>
+          }
+        />
       </View>
 
       {/* Search bar */}
-      <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg, marginHorizontal: 20 }]}>
+      <View style={[styles.searchBar, { backgroundColor: paper, borderColor: paperBorder, marginHorizontal: 20 }]}>
         <Search size={16} color={colors.textMuted} strokeWidth={2} />
         <TextInput
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search by caption, child, or date..."
+          placeholder="Search by caption, child, or date…"
           placeholderTextColor={colors.textMuted}
-          style={[styles.searchInput, { color: colors.text }]}
+          style={[styles.searchInput, { color: colors.text, fontFamily: font.body }]}
         />
         {searchQuery.length > 0 && (
           <Pressable onPress={() => setSearchQuery('')}>
@@ -324,17 +332,23 @@ export default function MemoriesScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
           <Pressable
             onPress={() => setFilterChild(null)}
-            style={[styles.chip, { backgroundColor: !filterChild ? colors.primaryTint : colors.surface, borderColor: !filterChild ? colors.primary : colors.border, borderRadius: radius.full }]}
+            style={[styles.chip, {
+              backgroundColor: !filterChild ? stickers.lilac + (isDark ? '32' : '40') : paper,
+              borderColor: !filterChild ? (isDark ? stickers.lilac : '#3A2A6E') : paperBorder,
+            }]}
           >
-            <Text style={[styles.chipText, { color: !filterChild ? colors.primary : colors.text }]}>All Kids</Text>
+            <Text style={[styles.chipText, { color: !filterChild ? (isDark ? stickers.lilac : '#3A2A6E') : colors.text, fontFamily: font.bodySemiBold }]}>All Kids</Text>
           </Pressable>
           {children.map((c) => (
             <Pressable
               key={c.id}
               onPress={() => setFilterChild(filterChild === c.id ? null : c.id)}
-              style={[styles.chip, { backgroundColor: filterChild === c.id ? brand.kids + '15' : colors.surface, borderColor: filterChild === c.id ? brand.kids : colors.border, borderRadius: radius.full }]}
+              style={[styles.chip, {
+                backgroundColor: filterChild === c.id ? stickers.blue + (isDark ? '32' : '40') : paper,
+                borderColor: filterChild === c.id ? (isDark ? stickers.blue : '#1F4A7A') : paperBorder,
+              }]}
             >
-              <Text style={[styles.chipText, { color: filterChild === c.id ? brand.kids : colors.text }]}>{c.name}</Text>
+              <Text style={[styles.chipText, { color: filterChild === c.id ? (isDark ? stickers.blue : '#1F4A7A') : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -355,16 +369,19 @@ export default function MemoriesScreen() {
               ]
               Alert.alert('Filter by Month', undefined, options)
             }}
-            style={[styles.monthDropdown, { backgroundColor: filterMonth ? brand.accent + '12' : colors.surface, borderColor: filterMonth ? brand.accent : colors.border, borderRadius: radius.full }]}
+            style={[styles.monthDropdown, {
+              backgroundColor: filterMonth ? stickers.yellow + (isDark ? '28' : '40') : paper,
+              borderColor: filterMonth ? (isDark ? '#F0CE4C' : '#7C5E0F') : paperBorder,
+            }]}
           >
-            <Calendar size={14} color={filterMonth ? brand.accent : colors.textMuted} strokeWidth={2} />
-            <Text style={[styles.monthDropdownText, { color: filterMonth ? brand.accent : colors.text }]}>
+            <Calendar size={14} color={filterMonth ? (isDark ? '#F0CE4C' : '#7C5E0F') : colors.textMuted} strokeWidth={2} />
+            <Text style={[styles.monthDropdownText, { color: filterMonth ? (isDark ? '#F0CE4C' : '#7C5E0F') : colors.text, fontFamily: font.bodySemiBold }]}>
               {filterMonth ? formatMonth(filterMonth) : 'All Time'}
             </Text>
             <ChevronRight size={14} color={colors.textMuted} style={{ transform: [{ rotate: '90deg' }] }} />
           </Pressable>
         )}
-        <Text style={[styles.countText, { color: colors.textMuted }]}>
+        <Text style={[styles.countText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
           {filtered.length} {filtered.length === 1 ? 'memory' : 'memories'} · {totalPhotos} photos
         </Text>
       </View>
@@ -372,22 +389,25 @@ export default function MemoriesScreen() {
       {/* Gallery */}
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {!loading && filtered.length === 0 && (
-          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-            <ImageIcon size={40} color={colors.textMuted} strokeWidth={1.5} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No memories yet</Text>
-            <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
+          <View style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <HeartSticker size={64} fill={stickers.pink} />
+            <Display size={20} align="center" color={colors.text}>No memories yet</Display>
+            <Body size={14} align="center" color={colors.textSecondary}>
               Capture special moments with your children.
-            </Text>
-            <Pressable onPress={pickPhotos} style={[styles.addFirstBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}>
-              <Camera size={16} color="#FFF" strokeWidth={2} />
-              <Text style={styles.addFirstText}>Add First Memory</Text>
-            </Pressable>
+            </Body>
+            <PillButton
+              label="Add First Memory"
+              variant="ink"
+              onPress={pickPhotos}
+              leading={<Camera size={16} color={colors.bg} strokeWidth={2} />}
+              style={{ marginTop: 8 }}
+            />
           </View>
         )}
 
         {sections.map(([month, posts]) => (
           <View key={month} style={styles.monthSection}>
-            <Text style={[styles.monthTitle, { color: colors.textSecondary }]}>{month}</Text>
+            <Text style={[styles.monthTitle, { color: colors.text, fontFamily: font.display }]}>{month}</Text>
             <View style={styles.grid}>
               {posts.map((p) => (
                 <Pressable
@@ -504,47 +524,48 @@ export default function MemoriesScreen() {
       <Modal visible={showAddSheet} animationType="slide" presentationStyle="pageSheet">
         <View style={[styles.sheetRoot, { backgroundColor: colors.bg }]}>
           <View style={[styles.sheetHeader, { paddingTop: insets.top + 8 }]}>
-            <Pressable onPress={() => { setShowAddSheet(false); setPendingPhotos([]) }}>
-              <X size={24} color={colors.text} />
+            <Pressable onPress={() => { setShowAddSheet(false); setPendingPhotos([]) }} hitSlop={10}>
+              <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+                <Ionicons name="close" size={20} color={colors.text} />
+              </View>
             </Pressable>
-            <Text style={[styles.sheetTitle, { color: colors.text }]}>New Memory</Text>
-            <View style={{ width: 24 }} />
+            <Display size={20} color={colors.text}>New Memory</Display>
+            <View style={{ width: 38 }} />
           </View>
 
           <ScrollView contentContainerStyle={styles.sheetScroll} keyboardShouldPersistTaps="handled">
-            {/* Previews */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.previewRow}>
               {pendingPhotos.map((uri, i) => (
-                <View key={i} style={[styles.previewItem, { borderRadius: radius.lg }]}>
-                  <Image source={{ uri }} style={[styles.previewImage, { borderRadius: radius.lg }]} />
-                  <Pressable onPress={() => setPendingPhotos(pendingPhotos.filter((_, j) => j !== i))} style={[styles.previewRemove, { borderRadius: 12 }]}>
+                <View key={i} style={styles.previewItem}>
+                  <Image source={{ uri }} style={styles.previewImage} />
+                  <Pressable onPress={() => setPendingPhotos(pendingPhotos.filter((_, j) => j !== i))} style={styles.previewRemove}>
                     <X size={14} color="#FFF" strokeWidth={2.5} />
                   </Pressable>
                 </View>
               ))}
-              <Pressable onPress={pickPhotos} style={[styles.previewAdd, { borderColor: colors.border, borderRadius: radius.lg }]}>
+              <Pressable onPress={pickPhotos} style={[styles.previewAdd, { borderColor: paperBorder }]}>
                 <Plus size={24} color={colors.textMuted} />
-                <Text style={[styles.previewAddText, { color: colors.textMuted }]}>Add</Text>
+                <Text style={[styles.previewAddText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>Add</Text>
               </Pressable>
             </ScrollView>
 
-            {/* Caption */}
-            <Text style={[styles.sheetLabel, { color: colors.textSecondary }]}>CAPTION</Text>
+            <MonoCaps color={colors.textMuted}>Caption</MonoCaps>
             <TextInput
-              value={caption} onChangeText={setCaption}
+              value={caption}
+              onChangeText={setCaption}
               placeholder="What's happening in this moment?"
-              placeholderTextColor={colors.textMuted} multiline
-              style={[styles.captionInput, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+              placeholderTextColor={colors.textMuted}
+              multiline
+              style={[styles.captionInput, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
             />
 
-            {/* Date picker */}
-            <Text style={[styles.sheetLabel, { color: colors.textSecondary }]}>DATE</Text>
+            <MonoCaps color={colors.textMuted}>Date</MonoCaps>
             <Pressable
               onPress={() => setShowDatePicker(!showDatePicker)}
-              style={[styles.dateBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+              style={[styles.dateBtn, { backgroundColor: paper, borderColor: paperBorder }]}
             >
               <Calendar size={16} color={colors.textMuted} strokeWidth={2} />
-              <Text style={[styles.dateBtnText, { color: colors.text }]}>
+              <Text style={[styles.dateBtnText, { color: colors.text, fontFamily: font.body }]}>
                 {memoryDate.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
               </Text>
             </Pressable>
@@ -555,7 +576,7 @@ export default function MemoriesScreen() {
                 maximumDate={new Date()}
                 minimumDate={new Date(2015, 0, 1)}
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                themeVariant="light"
+                themeVariant={isDark ? 'dark' : 'light'}
                 onChange={(_, d) => {
                   if (Platform.OS === 'android') setShowDatePicker(false)
                   if (d) setMemoryDate(d)
@@ -563,30 +584,34 @@ export default function MemoriesScreen() {
               />
             )}
 
-            {/* Child */}
-            <Text style={[styles.sheetLabel, { color: colors.textSecondary }]}>WHICH CHILD?</Text>
+            <MonoCaps color={colors.textMuted}>Which child?</MonoCaps>
             <View style={styles.childChips}>
               {children.map((c) => {
                 const active = selectedChild === c.id
                 return (
-                  <Pressable key={c.id} onPress={() => setSelectedChild(c.id)}
-                    style={[styles.childChip, { backgroundColor: active ? brand.kids + '15' : colors.surface, borderColor: active ? brand.kids : colors.border, borderRadius: radius.full }]}
+                  <Pressable
+                    key={c.id}
+                    onPress={() => setSelectedChild(c.id)}
+                    style={[styles.childChip, {
+                      backgroundColor: active ? stickers.blue + (isDark ? '32' : '40') : paper,
+                      borderColor: active ? (isDark ? stickers.blue : '#1F4A7A') : paperBorder,
+                    }]}
                   >
-                    {active && <Check size={14} color={brand.kids} strokeWidth={3} />}
-                    <Text style={[styles.childChipText, { color: active ? brand.kids : colors.text }]}>{c.name}</Text>
+                    {active && <Check size={14} color={isDark ? stickers.blue : '#1F4A7A'} strokeWidth={3} />}
+                    <Text style={[styles.childChipText, { color: active ? (isDark ? stickers.blue : '#1F4A7A') : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
                   </Pressable>
                 )
               })}
             </View>
 
-            <Pressable onPress={handleSave} disabled={uploading || !selectedChild || pendingPhotos.length === 0}
-              style={({ pressed }) => [styles.saveBtn, { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: uploading || !selectedChild ? 0.5 : 1 }, pressed && { transform: [{ scale: 0.98 }] }]}
-            >
-              {uploading
-                ? <><ActivityIndicator size="small" color="#FFF" /><Text style={styles.saveBtnText}>Uploading...</Text></>
-                : <><Camera size={18} color="#FFF" strokeWidth={2} /><Text style={styles.saveBtnText}>Save Memory</Text></>
-              }
-            </Pressable>
+            <PillButton
+              label={uploading ? 'Uploading…' : 'Save Memory'}
+              variant="ink"
+              onPress={handleSave}
+              disabled={uploading || !selectedChild || pendingPhotos.length === 0}
+              leading={uploading ? <ActivityIndicator size="small" color={colors.bg} /> : <Camera size={18} color={colors.bg} strokeWidth={2} />}
+              style={{ marginTop: 8 }}
+            />
           </ScrollView>
         </View>
       </Modal>
@@ -596,36 +621,66 @@ export default function MemoriesScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 8 },
-  headerBtn: { width: 40, alignItems: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
+  headerWrap: { paddingHorizontal: 16, paddingBottom: 6 },
+  headerAddBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-  // Search
-  searchBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, height: 40, borderWidth: 1, marginBottom: 8 },
-  searchInput: { flex: 1, fontSize: 14, fontWeight: '500', paddingVertical: 0 },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    height: 48,
+    borderWidth: 1,
+    borderRadius: 24,
+    marginBottom: 12,
+  },
+  searchInput: { flex: 1, fontSize: 14, paddingVertical: 0 },
 
-  // Filters
-  filterRow: { height: 36, marginBottom: 6 },
+  filterRow: { height: 40, marginBottom: 6 },
   filterContent: { paddingHorizontal: 20, gap: 6, alignItems: 'center' },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1 },
-  chipText: { fontSize: 12, fontWeight: '600' },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  chipText: { fontSize: 12 },
 
-  monthRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 8 },
-  monthDropdown: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 14, borderWidth: 1 },
-  monthDropdownText: { fontSize: 13, fontWeight: '600' },
-  countText: { fontSize: 11, fontWeight: '600' },
+  monthRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 10 },
+  monthDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  monthDropdownText: { fontSize: 13 },
+  countText: { fontSize: 11 },
 
   scroll: { paddingHorizontal: 20, paddingBottom: 40 },
 
-  emptyCard: { alignItems: 'center', padding: 32, gap: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: '700' },
-  emptyBody: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20 },
-  addFirstBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 20, marginTop: 4 },
-  addFirstText: { fontSize: 14, fontWeight: '700', color: '#FFF' },
+  emptyCard: {
+    alignItems: 'center',
+    padding: 32,
+    gap: 14,
+    borderRadius: 28,
+    borderWidth: 1,
+  },
 
-  // Grid
   monthSection: { marginBottom: 16 },
-  monthTitle: { fontSize: 13, fontWeight: '700', marginBottom: 8 },
+  monthTitle: { fontSize: 18, marginBottom: 10, letterSpacing: -0.2 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP },
   gridItem: { width: PHOTO_SIZE, height: PHOTO_SIZE, borderRadius: 6, overflow: 'hidden' },
   gridImage: { width: '100%', height: '100%' },
@@ -663,25 +718,63 @@ const styles = StyleSheet.create({
   // Add sheet
   sheetRoot: { flex: 1 },
   sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 12 },
-  sheetTitle: { fontSize: 18, fontWeight: '700' },
-  sheetScroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 16 },
-  sheetLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
+  sheetScroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 12 },
 
-  previewRow: { gap: 8 },
-  previewItem: { width: 100, height: 100, overflow: 'hidden' },
-  previewImage: { width: '100%', height: '100%' },
-  previewRemove: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
-  previewAdd: { width: 100, height: 100, borderWidth: 2, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 4 },
-  previewAddText: { fontSize: 11, fontWeight: '600' },
+  previewRow: { gap: 10, paddingBottom: 4 },
+  previewItem: { width: 110, height: 110, overflow: 'hidden', borderRadius: 22 },
+  previewImage: { width: '100%', height: '100%', borderRadius: 22 },
+  previewRemove: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 24,
+    height: 24,
+    backgroundColor: 'rgba(20,19,19,0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+  },
+  previewAdd: {
+    width: 110,
+    height: 110,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    borderRadius: 22,
+  },
+  previewAddText: { fontSize: 12 },
 
-  captionInput: { borderWidth: 1, paddingHorizontal: 16, paddingVertical: 12, minHeight: 70, fontSize: 15, fontWeight: '500', textAlignVertical: 'top' },
-  dateBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, height: 48, borderWidth: 1 },
-  dateBtnText: { fontSize: 15, fontWeight: '500' },
+  captionInput: {
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    minHeight: 90,
+    fontSize: 15,
+    textAlignVertical: 'top',
+    borderRadius: 22,
+  },
+  dateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    height: 52,
+    borderWidth: 1,
+    borderRadius: 18,
+  },
+  dateBtnText: { fontSize: 15 },
 
   childChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  childChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1 },
-  childChipText: { fontSize: 14, fontWeight: '600' },
-
-  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 52, marginTop: 8 },
-  saveBtnText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
+  childChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  childChipText: { fontSize: 14 },
 })

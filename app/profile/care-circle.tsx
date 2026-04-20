@@ -24,14 +24,12 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import {
-  ArrowLeft,
   UserPlus,
-  Users,
   Shield,
   Clock,
   Check,
-  X,
   Pause,
   Pencil,
   Trash2,
@@ -40,10 +38,10 @@ import {
   Link2,
   ChevronRight,
   User,
-  Baby,
   Utensils,
   Moon as MoonIcon,
   Heart,
+  Baby,
   Smile,
   Camera,
   Dumbbell,
@@ -54,6 +52,18 @@ import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { LogSheet } from '../../components/calendar/LogSheet'
+import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { PillButton } from '../../components/ui/PillButton'
+import { Display, MonoCaps, Body } from '../../components/ui/Typography'
+import { useSavedToast } from '../../components/ui/SavedToast'
+import {
+  Heart as HeartSticker,
+  Flower as FlowerSticker,
+  Star as StarSticker,
+  Burst as BurstSticker,
+  Cross as CrossSticker,
+  Drop as DropSticker,
+} from '../../components/ui/Stickers'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -291,8 +301,9 @@ function friendlyTypeLabel(type: string, value: string | null): string {
 
 // ─── Photo Picker ─────────────────────────────────────────────────────────
 
-function PhotoPickerAvatar({ uri, onPick, size = 80 }: { uri: string; onPick: (newUri: string) => void; size?: number }) {
-  const { colors, radius } = useTheme()
+function PhotoPickerAvatar({ uri, onPick, size = 96 }: { uri: string; onPick: (newUri: string) => void; size?: number }) {
+  const { colors, stickers, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
 
   async function pickPhoto() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -311,14 +322,26 @@ function PhotoPickerAvatar({ uri, onPick, size = 80 }: { uri: string; onPick: (n
   }
 
   return (
-    <Pressable onPress={pickPhoto} style={[photoStyles.wrap, { width: size, height: size, borderRadius: size / 2, backgroundColor: colors.surfaceRaised }]}>
+    <Pressable
+      onPress={pickPhoto}
+      style={[
+        photoStyles.wrap,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: stickers.lilac + (isDark ? '32' : '40'),
+          borderColor: ink,
+        },
+      ]}
+    >
       {uri ? (
         <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} />
       ) : (
-        <User size={size * 0.4} color={colors.textMuted} strokeWidth={1.5} />
+        <FlowerSticker size={size * 0.55} petal={stickers.lilac} center={stickers.yellow} />
       )}
-      <View style={[photoStyles.badge, { backgroundColor: colors.primary, borderRadius: 12 }]}>
-        <Camera size={12} color="#FFF" strokeWidth={2.5} />
+      <View style={[photoStyles.badge, { backgroundColor: stickers.lilac, borderRadius: 14, borderColor: ink, borderWidth: 1.5 }]}>
+        <Camera size={12} color={ink} strokeWidth={2.5} />
       </View>
     </Pressable>
   )
@@ -343,14 +366,28 @@ async function uploadCaregiverPhoto(localUri: string, userId: string): Promise<s
 }
 
 const photoStyles = StyleSheet.create({
-  wrap: { alignSelf: 'center', alignItems: 'center', justifyContent: 'center', marginBottom: 12, overflow: 'hidden' },
-  badge: { position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
+  wrap: {
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    borderWidth: 2,
+  },
+  badge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 })
 
 // ─── Main Component ────────────────────────────────────────────────────────
 
 export default function CareCircleScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
 
@@ -596,27 +633,58 @@ export default function CareCircleScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} style={styles.headerBtn}>
-          <ArrowLeft size={24} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Care Circle</Text>
-        <View style={styles.headerBtn} />
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+        <ScreenHeader title="Care Circle" />
       </View>
 
       {/* Tab Toggle */}
-      <View style={[styles.toggleRow, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg, marginHorizontal: 20 }]}>
+      <View
+        style={[
+          styles.toggleRow,
+          {
+            backgroundColor: isDark ? colors.surface : '#F7F0DF',
+            borderColor: isDark ? colors.border : 'rgba(20,19,19,0.06)',
+            marginHorizontal: 20,
+          },
+        ]}
+      >
         <Pressable
           onPress={() => setTab('members')}
-          style={[styles.toggleBtn, { backgroundColor: tab === 'members' ? colors.primary : 'transparent', borderRadius: radius.md }]}
+          style={[
+            styles.toggleBtn,
+            { backgroundColor: tab === 'members' ? stickers.lilac : 'transparent' },
+          ]}
         >
-          <Text style={[styles.toggleText, { color: tab === 'members' ? '#FFFFFF' : colors.textSecondary }]}>Members</Text>
+          <Text
+            style={[
+              styles.toggleText,
+              {
+                color: tab === 'members' ? '#141313' : colors.textSecondary,
+                fontFamily: tab === 'members' ? font.bodySemiBold : font.bodyMedium,
+              },
+            ]}
+          >
+            Members
+          </Text>
         </Pressable>
         <Pressable
           onPress={() => setTab('activity')}
-          style={[styles.toggleBtn, { backgroundColor: tab === 'activity' ? colors.primary : 'transparent', borderRadius: radius.md }]}
+          style={[
+            styles.toggleBtn,
+            { backgroundColor: tab === 'activity' ? stickers.lilac : 'transparent' },
+          ]}
         >
-          <Text style={[styles.toggleText, { color: tab === 'activity' ? '#FFFFFF' : colors.textSecondary }]}>Activity</Text>
+          <Text
+            style={[
+              styles.toggleText,
+              {
+                color: tab === 'activity' ? '#141313' : colors.textSecondary,
+                fontFamily: tab === 'activity' ? font.bodySemiBold : font.bodyMedium,
+              },
+            ]}
+          >
+            Activity
+          </Text>
         </Pressable>
       </View>
 
@@ -624,62 +692,103 @@ export default function CareCircleScreen() {
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* Empty state */}
           {members.length === 0 && !loading && (
-            <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <Users size={32} color={colors.textMuted} strokeWidth={1.5} />
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No caregivers yet</Text>
-              <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
+            <View
+              style={[
+                styles.emptyCard,
+                {
+                  backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                  borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                },
+              ]}
+            >
+              <FlowerSticker size={64} petal={stickers.pink} center={stickers.yellow} />
+              <Display size={20} align="center" color={colors.text}>
+                No caregivers yet
+              </Display>
+              <Body size={14} align="center" color={colors.textSecondary}>
                 Invite a partner, nanny, or family member to share access.
-              </Text>
+              </Body>
             </View>
           )}
 
           {/* Member cards */}
           {members.map((m) => {
-            const roleColor = ROLE_COLORS[m.role] ?? colors.textSecondary
+            const roleColor = ROLE_COLORS[m.role] ?? stickers.lilac
             const isPending = m.status === 'pending'
             const childNames = getChildNames(m.childIds)
             const permKeys = Object.entries(m.permissions).filter(([k, v]) => v === true && !k.startsWith('_')).map(([k]) => k)
             const title = m.displayName || m.role.charAt(0).toUpperCase() + m.role.slice(1)
             const isPaused = m.permissions._paused === true
+            const statusColor = isPaused ? stickers.coral : '#7BB36F'
+            const pendingColor = '#E8A435'
 
             return (
               <View
                 key={m.email || m.rowIds[0]}
-                style={[styles.memberCard, { backgroundColor: colors.surface, borderRadius: radius.xl, opacity: isPaused ? 0.65 : 1 }]}
+                style={[
+                  styles.memberCard,
+                  {
+                    backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                    borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                    opacity: isPaused ? 0.7 : 1,
+                  },
+                ]}
               >
                 {/* Status dot — top right */}
-                <View style={[styles.statusDot, { backgroundColor: isPaused ? brand.error : brand.success }]}>
-                  <View style={[styles.statusDotInner, { backgroundColor: isPaused ? brand.error : brand.success }]} />
-                </View>
+                <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
 
                 {/* Top row */}
                 <View style={styles.memberTop}>
-                  <View style={[styles.memberAvatar, { backgroundColor: roleColor + '20' }]}>
+                  <View
+                    style={[
+                      styles.memberAvatar,
+                      {
+                        backgroundColor: roleColor + (isDark ? '30' : '40'),
+                        borderColor: colors.text,
+                      },
+                    ]}
+                  >
                     {m.photoUrl ? (
                       <Image source={{ uri: m.photoUrl }} style={styles.memberPhoto} />
                     ) : (
-                      <User size={20} color={roleColor} strokeWidth={2} />
+                      <FlowerSticker size={26} petal={roleColor} center={stickers.yellow} />
                     )}
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.memberName, { color: colors.text }]}>
+                    <Text style={[styles.memberName, { color: colors.text, fontFamily: font.display }]}>
                       {title}
                     </Text>
                     {m.email ? (
-                      <Text style={[styles.memberEmail, { color: colors.textMuted }]} numberOfLines={1}>{m.email}</Text>
+                      <Text style={[styles.memberEmail, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>{m.email}</Text>
                     ) : null}
                     <View style={styles.memberBadges}>
-                      <View style={[styles.badge, { backgroundColor: roleColor + '20', borderRadius: radius.full }]}>
-                        <Text style={[styles.badgeText, { color: roleColor }]}>
+                      <View style={[styles.badge, { backgroundColor: roleColor + (isDark ? '32' : '38') }]}>
+                        <Text style={[styles.badgeText, { color: isDark ? roleColor : '#3A3533', fontFamily: font.bodySemiBold }]}>
                           {m.role.charAt(0).toUpperCase() + m.role.slice(1)}
                         </Text>
                       </View>
                       <View style={[styles.badge, {
-                        backgroundColor: isPaused ? brand.error + '20' : isPending ? brand.accent + '20' : brand.success + '20',
-                        borderRadius: radius.full,
+                        backgroundColor: isPaused
+                          ? stickers.coral + (isDark ? '32' : '32')
+                          : isPending
+                          ? stickers.yellow + (isDark ? '32' : '50')
+                          : stickers.green + (isDark ? '32' : '50'),
                       }]}>
-                        {isPaused ? <Pause size={10} color={brand.error} /> : isPending ? <Clock size={10} color={brand.accent} /> : <Check size={10} color={brand.success} />}
-                        <Text style={[styles.badgeText, { color: isPaused ? brand.error : isPending ? brand.accent : brand.success }]}>
+                        {isPaused ? (
+                          <Pause size={10} color={isDark ? stickers.coral : '#B43E2E'} />
+                        ) : isPending ? (
+                          <Clock size={10} color={isDark ? '#F0CE4C' : '#7C5E0F'} />
+                        ) : (
+                          <Check size={10} color={isDark ? '#C5DA98' : '#3F5919'} />
+                        )}
+                        <Text style={[styles.badgeText, {
+                          color: isPaused
+                            ? (isDark ? stickers.coral : '#B43E2E')
+                            : isPending
+                            ? (isDark ? '#F0CE4C' : '#7C5E0F')
+                            : (isDark ? '#C5DA98' : '#3F5919'),
+                          fontFamily: font.bodySemiBold,
+                        }]}>
                           {isPaused ? 'Paused' : m.status}
                         </Text>
                       </View>
@@ -691,9 +800,9 @@ export default function CareCircleScreen() {
                 {childNames.length > 0 && (
                   <View style={styles.childChipRow}>
                     {childNames.map((name, i) => (
-                      <View key={i} style={[styles.childChip, { backgroundColor: brand.kids + '15', borderRadius: radius.full }]}>
-                        <Baby size={12} color={brand.kids} strokeWidth={2} />
-                        <Text style={[styles.childChipText, { color: brand.kids }]}>{name}</Text>
+                      <View key={i} style={[styles.childChip, { backgroundColor: stickers.blue + (isDark ? '28' : '40') }]}>
+                        <FlowerSticker size={12} petal={stickers.blue} center={stickers.yellow} />
+                        <Text style={[styles.childChipText, { color: isDark ? stickers.blue : '#1F4A7A', fontFamily: font.bodySemiBold }]}>{name}</Text>
                       </View>
                     ))}
                   </View>
@@ -702,9 +811,9 @@ export default function CareCircleScreen() {
                 {/* Permissions */}
                 <View style={styles.permRow}>
                   {permKeys.map((p) => (
-                    <View key={p} style={[styles.permChip, { backgroundColor: colors.surfaceRaised, borderRadius: radius.full }]}>
+                    <View key={p} style={[styles.permChip, { backgroundColor: colors.surfaceRaised }]}>
                       <Shield size={10} color={colors.textMuted} />
-                      <Text style={[styles.permText, { color: colors.textMuted }]}>{p.replace('_', ' ')}</Text>
+                      <Text style={[styles.permText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{p.replace('_', ' ')}</Text>
                     </View>
                   ))}
                 </View>
@@ -713,26 +822,35 @@ export default function CareCircleScreen() {
                 {isPending && (
                   <Pressable
                     onPress={() => resendInvite(m)}
-                    style={[styles.resendBtn, { backgroundColor: colors.primaryTint, borderRadius: radius.lg }]}
+                    style={[styles.resendBtn, { backgroundColor: stickers.lilac + (isDark ? '28' : '38') }]}
                   >
-                    <Mail size={14} color={colors.primary} strokeWidth={2} />
-                    <Text style={[styles.resendText, { color: colors.primary }]}>Resend Invite</Text>
+                    <Mail size={14} color={isDark ? stickers.lilac : '#3A2A6E'} strokeWidth={2} />
+                    <Text style={[styles.resendText, { color: isDark ? stickers.lilac : '#3A2A6E', fontFamily: font.bodySemiBold }]}>Resend Invite</Text>
                   </Pressable>
                 )}
 
                 {/* Actions row 2 */}
                 <View style={styles.actionRow}>
-                  <Pressable style={[styles.actionBtn, { borderColor: colors.primary + '30' }]} onPress={() => setEditingMember(m)}>
-                    <Pencil size={14} color={colors.primary} />
-                    <Text style={[styles.actionText, { color: colors.primary }]}>Edit</Text>
+                  <Pressable
+                    style={[styles.actionBtn, { borderColor: isDark ? colors.border : 'rgba(20,19,19,0.14)' }]}
+                    onPress={() => setEditingMember(m)}
+                  >
+                    <Pencil size={14} color={colors.text} />
+                    <Text style={[styles.actionText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Edit</Text>
                   </Pressable>
-                  <Pressable style={[styles.actionBtn, { borderColor: isPaused ? brand.success + '30' : colors.border }]} onPress={() => pauseMember(m)}>
-                    {isPaused ? <Check size={14} color={brand.success} /> : <Pause size={14} color={brand.accent} />}
-                    <Text style={[styles.actionText, { color: isPaused ? brand.success : brand.accent }]}>{isPaused ? 'Activate' : 'Pause'}</Text>
+                  <Pressable
+                    style={[styles.actionBtn, { borderColor: isDark ? colors.border : 'rgba(20,19,19,0.14)' }]}
+                    onPress={() => pauseMember(m)}
+                  >
+                    {isPaused ? <Check size={14} color={isDark ? stickers.green : '#3F5919'} /> : <Pause size={14} color={isDark ? '#F0CE4C' : '#7C5E0F'} />}
+                    <Text style={[styles.actionText, { color: isPaused ? (isDark ? stickers.green : '#3F5919') : (isDark ? '#F0CE4C' : '#7C5E0F'), fontFamily: font.bodySemiBold }]}>{isPaused ? 'Activate' : 'Pause'}</Text>
                   </Pressable>
-                  <Pressable style={[styles.actionBtn, { borderColor: brand.error + '30' }]} onPress={() => removeMember(m)}>
-                    <Trash2 size={14} color={brand.error} />
-                    <Text style={[styles.actionText, { color: brand.error }]}>Remove</Text>
+                  <Pressable
+                    style={[styles.actionBtn, { borderColor: stickers.coral + '40' }]}
+                    onPress={() => removeMember(m)}
+                  >
+                    <Trash2 size={14} color={stickers.coral} />
+                    <Text style={[styles.actionText, { color: stickers.coral, fontFamily: font.bodySemiBold }]}>Remove</Text>
                   </Pressable>
                 </View>
               </View>
@@ -740,17 +858,13 @@ export default function CareCircleScreen() {
           })}
 
           {/* Add button */}
-          <Pressable
+          <PillButton
+            label="Add to Care Circle"
+            variant="ink"
             onPress={() => setShowAddSheet(true)}
-            style={({ pressed }) => [
-              styles.addBtn,
-              { backgroundColor: colors.primary, borderRadius: radius.lg },
-              pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
-            ]}
-          >
-            <UserPlus size={20} color="#FFFFFF" strokeWidth={2} />
-            <Text style={styles.addBtnText}>Add to Care Circle</Text>
-          </Pressable>
+            leading={<Ionicons name="person-add" size={18} color={colors.bg} />}
+            style={{ marginTop: 6 }}
+          />
         </ScrollView>
       ) : (
         /* Activity Feed */
@@ -796,12 +910,22 @@ export default function CareCircleScreen() {
 
             if (filtered.length === 0) {
               return (
-                <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-                  <Clock size={28} color={colors.textMuted} strokeWidth={1.5} />
-                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No activity yet</Text>
-                  <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
+                <View
+                  style={[
+                    styles.emptyCard,
+                    {
+                      backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                      borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                    },
+                  ]}
+                >
+                  <DropSticker size={56} fill={stickers.blue} />
+                  <Display size={20} align="center" color={colors.text}>
+                    No activity yet
+                  </Display>
+                  <Body size={14} align="center" color={colors.textSecondary}>
                     Activities logged by caregivers will appear here.
-                  </Text>
+                  </Body>
                 </View>
               )
             }
@@ -817,42 +941,51 @@ export default function CareCircleScreen() {
 
             return Array.from(grouped.entries()).map(([dateLabel, items]) => (
               <View key={dateLabel}>
-                <Text style={[styles.dateHeader, { color: colors.textMuted }]}>{dateLabel}</Text>
+                <Text style={[styles.dateHeader, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{dateLabel}</Text>
                 {items.map((a) => {
-                  const Icon = EVENT_ICONS[a.type] ?? Heart
+                  const Icon = EVENT_ICONS[a.type] ?? HeartSticker
                   const color = EVENT_COLORS[a.type] ?? colors.textMuted
                   const summary = formatActivitySummary(a.type, a.value, a.notes)
                   const typeLabel = friendlyTypeLabel(a.type, a.value)
                   return (
-                    <View key={a.id} style={[styles.activityItem, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-                      <View style={[styles.activityIcon, { backgroundColor: color + '15' }]}>
+                    <View
+                      key={a.id}
+                      style={[
+                        styles.activityItem,
+                        {
+                          backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                          borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                        },
+                      ]}
+                    >
+                      <View style={[styles.activityIcon, { backgroundColor: color + (isDark ? '24' : '32') }]}>
                         <Icon size={18} color={color} strokeWidth={2} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <View style={styles.activityTopRow}>
-                          <Text style={[styles.activityType, { color: colors.text }]}>
+                          <Text style={[styles.activityType, { color: colors.text, fontFamily: font.display }]}>
                             {typeLabel}
                           </Text>
-                          <View style={[styles.loggerBadge, { backgroundColor: colors.surfaceRaised, borderRadius: radius.full }]}>
-                            <Text style={[styles.loggerText, { color: colors.textSecondary }]}>{a.loggedByName}</Text>
+                          <View style={[styles.loggerBadge, { backgroundColor: colors.surfaceRaised }]}>
+                            <Text style={[styles.loggerText, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>{a.loggedByName}</Text>
                           </View>
                         </View>
                         {summary !== '' && (
-                          <Text style={[styles.activityValue, { color: colors.textSecondary }]} numberOfLines={2}>
+                          <Text style={[styles.activityValue, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>
                             {summary}
                           </Text>
                         )}
                         {a.notes && summary !== a.notes && (
-                          <Text style={[styles.activityNotes, { color: colors.textMuted }]} numberOfLines={1}>
+                          <Text style={[styles.activityNotes, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>
                             {a.notes}
                           </Text>
                         )}
                         <View style={styles.activityFooter}>
-                          <View style={[styles.childTag, { backgroundColor: brand.kids + '12', borderRadius: radius.full }]}>
-                            <Baby size={10} color={brand.kids} strokeWidth={2} />
-                            <Text style={[styles.childTagText, { color: brand.kids }]}>{a.childName}</Text>
+                          <View style={[styles.childTag, { backgroundColor: stickers.blue + (isDark ? '28' : '40') }]}>
+                            <FlowerSticker size={10} petal={stickers.blue} center={stickers.yellow} />
+                            <Text style={[styles.childTagText, { color: isDark ? stickers.blue : '#1F4A7A', fontFamily: font.bodySemiBold }]}>{a.childName}</Text>
                           </View>
-                          <Text style={[styles.activityTime, { color: colors.textMuted }]}>{a.date}</Text>
+                          <Text style={[styles.activityTime, { color: colors.textMuted, fontFamily: font.body }]}>{a.date}</Text>
                         </View>
                       </View>
                     </View>
@@ -889,17 +1022,16 @@ export default function CareCircleScreen() {
 // ─── Filter Chip ───────────────────────────────────────────────────────────
 
 function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, font, isDark, stickers } = useTheme()
   return (
     <Pressable
       onPress={onPress}
       style={[styles.filterChip, {
-        backgroundColor: active ? colors.primaryTint : colors.surface,
-        borderColor: active ? colors.primary : colors.border,
-        borderRadius: radius.full,
+        backgroundColor: active ? stickers.lilac + (isDark ? '28' : '40') : (isDark ? colors.surface : '#FFFEF8'),
+        borderColor: active ? (isDark ? stickers.lilac : '#3A2A6E') : (isDark ? colors.border : 'rgba(20,19,19,0.14)'),
       }]}
     >
-      <Text style={[styles.filterChipText, { color: active ? colors.primary : colors.text }]}>{label}</Text>
+      <Text style={[styles.filterChipText, { color: active ? (isDark ? stickers.lilac : '#3A2A6E') : colors.text, fontFamily: font.bodySemiBold }]}>{label}</Text>
     </Pressable>
   )
 }
@@ -907,8 +1039,13 @@ function FilterChip({ label, active, onPress }: { label: string; active: boolean
 // ─── Add Member Sheet (4-step) ─────────────────────────────────────────────
 
 function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark, radius } = useTheme()
   const allChildren = useChildStore((s) => s.children)
+  const toast = useSavedToast()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const inkActiveBg = stickers.lilac + (isDark ? '32' : '40')
+  const inkActiveText = isDark ? stickers.lilac : '#3A2A6E'
 
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
@@ -1024,7 +1161,11 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
         await Share.share({ message: msg }).catch(() => {})
       }
 
-      Alert.alert('Invite Sent!', `${name.trim() || 'Caregiver'} will appear as "Pending" until they accept.`)
+      toast.show({
+        title: 'Invite Sent!',
+        message: `${name.trim() || 'Caregiver'} will appear as "Pending" until they accept.`,
+        autoDismiss: 2600,
+      })
       reset()
       onSaved()
     } catch (e: any) {
@@ -1043,7 +1184,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {/* Progress dots */}
           <View style={sheetStyles.progressRow}>
             {[1, 2, 3, 4].map((s) => (
-              <View key={s} style={[sheetStyles.progressDot, { backgroundColor: s <= step ? colors.primary : colors.border }]} />
+              <View key={s} style={[sheetStyles.progressDot, { backgroundColor: s <= step ? (isDark ? stickers.lilac : '#3A2A6E') : colors.borderLight }]} />
             ))}
           </View>
 
@@ -1051,15 +1192,15 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {step === 1 && (
             <>
               <PhotoPickerAvatar uri={photoUri} onPick={setPhotoUri} />
-              <Text style={[sheetStyles.label, { color: colors.textSecondary }]}>NAME</Text>
+              <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Name</MonoCaps></View>
               <TextInput
                 value={name}
                 onChangeText={setName}
                 placeholder="Caregiver's name"
                 placeholderTextColor={colors.textMuted}
-                style={[sheetStyles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+                style={[sheetStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
               />
-              <Text style={[sheetStyles.label, { color: colors.textSecondary }]}>ROLE</Text>
+              <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Role</MonoCaps></View>
               <View style={sheetStyles.chipGrid}>
                 {ROLES.map((r) => {
                   const active = role === r.id
@@ -1068,12 +1209,11 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       key={r.id}
                       onPress={() => setRole(r.id)}
                       style={[sheetStyles.chip, {
-                        backgroundColor: active ? colors.primaryTint : colors.surface,
-                        borderColor: active ? colors.primary : colors.border,
-                        borderRadius: radius.full,
+                        backgroundColor: active ? inkActiveBg : paper,
+                        borderColor: active ? inkActiveText : paperBorder,
                       }]}
                     >
-                      <Text style={[sheetStyles.chipText, { color: active ? colors.primary : colors.text }]}>{r.label}</Text>
+                      <Text style={[sheetStyles.chipText, { color: active ? inkActiveText : colors.text, fontFamily: font.bodySemiBold }]}>{r.label}</Text>
                     </Pressable>
                   )
                 })}
@@ -1096,20 +1236,19 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       key={c.id}
                       onPress={() => toggleChild(c.id)}
                       style={[sheetStyles.chip, {
-                        backgroundColor: active ? brand.kids + '15' : colors.surface,
-                        borderColor: active ? brand.kids : colors.border,
-                        borderRadius: radius.full,
+                        backgroundColor: active ? stickers.blue + (isDark ? '32' : '40') : paper,
+                        borderColor: active ? (isDark ? stickers.blue : '#1F4A7A') : paperBorder,
                       }]}
                     >
-                      {active && <Check size={12} color={brand.kids} strokeWidth={3} />}
-                      <Text style={[sheetStyles.chipText, { color: active ? brand.kids : colors.text }]}>{c.name}</Text>
+                      {active && <Check size={12} color={isDark ? stickers.blue : '#1F4A7A'} strokeWidth={3} />}
+                      <Text style={[sheetStyles.chipText, { color: active ? (isDark ? stickers.blue : '#1F4A7A') : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
                     </Pressable>
                   )
                 })}
               </View>
               <View style={sheetStyles.btnRow}>
-                <Pressable onPress={() => setStep(1)} style={[sheetStyles.backBtn, { borderColor: colors.border, borderRadius: radius.lg }]}>
-                  <Text style={[sheetStyles.backBtnText, { color: colors.textSecondary }]}>Back</Text>
+                <Pressable onPress={() => setStep(1)} style={[sheetStyles.backBtn, { borderColor: paperBorder }]}>
+                  <Text style={[sheetStyles.backBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Back</Text>
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <SheetButton label="Next — Permissions" onPress={() => setStep(3)} disabled={selectedChildren.length === 0} />
@@ -1131,19 +1270,18 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                     key={p.id}
                     onPress={() => setPermLevel(p.id)}
                     style={[sheetStyles.permCard, {
-                      backgroundColor: active ? colors.primaryTint : colors.surface,
-                      borderColor: active ? colors.primary : colors.border,
-                      borderRadius: radius.xl,
+                      backgroundColor: active ? inkActiveBg : paper,
+                      borderColor: active ? inkActiveText : paperBorder,
                     }]}
                   >
-                    <Text style={[sheetStyles.permLabel, { color: active ? colors.primary : colors.text }]}>{p.label}</Text>
-                    <Text style={[sheetStyles.permDesc, { color: colors.textMuted }]}>{p.desc}</Text>
+                    <Text style={[sheetStyles.permLabel, { color: active ? inkActiveText : colors.text, fontFamily: font.display }]}>{p.label}</Text>
+                    <Text style={[sheetStyles.permDesc, { color: colors.textMuted, fontFamily: font.body }]}>{p.desc}</Text>
                   </Pressable>
                 )
               })}
               <View style={sheetStyles.btnRow}>
-                <Pressable onPress={() => setStep(2)} style={[sheetStyles.backBtn, { borderColor: colors.border, borderRadius: radius.lg }]}>
-                  <Text style={[sheetStyles.backBtnText, { color: colors.textSecondary }]}>Back</Text>
+                <Pressable onPress={() => setStep(2)} style={[sheetStyles.backBtn, { borderColor: paperBorder }]}>
+                  <Text style={[sheetStyles.backBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Back</Text>
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <SheetButton label="Next — Send Invite" onPress={() => setStep(4)} />
@@ -1169,12 +1307,11 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       key={m}
                       onPress={() => setSendMethod(m)}
                       style={[sheetStyles.chip, {
-                        backgroundColor: active ? colors.primaryTint : colors.surface,
-                        borderColor: active ? colors.primary : colors.border,
-                        borderRadius: radius.full,
+                        backgroundColor: active ? inkActiveBg : paper,
+                        borderColor: active ? inkActiveText : paperBorder,
                       }]}
                     >
-                      <Text style={[sheetStyles.chipText, { color: active ? colors.primary : colors.text }]}>{labels[m]}</Text>
+                      <Text style={[sheetStyles.chipText, { color: active ? inkActiveText : colors.text, fontFamily: font.bodySemiBold }]}>{labels[m]}</Text>
                     </Pressable>
                   )
                 })}
@@ -1183,7 +1320,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               {/* Email field */}
               {sendMethod === 'email' && (
                 <>
-                  <Text style={[sheetStyles.label, { color: colors.textSecondary }]}>EMAIL ADDRESS</Text>
+                  <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Email address</MonoCaps></View>
                   <TextInput
                     value={inviteEmail}
                     onChangeText={setInviteEmail}
@@ -1191,7 +1328,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                     placeholderTextColor={colors.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    style={[sheetStyles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+                    style={[sheetStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
                   />
                 </>
               )}
@@ -1199,14 +1336,14 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               {/* SMS fields */}
               {sendMethod === 'sms' && (
                 <>
-                  <Text style={[sheetStyles.label, { color: colors.textSecondary }]}>PHONE NUMBER</Text>
+                  <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Phone number</MonoCaps></View>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <Pressable
                       onPress={() => setShowCountryPicker(!showCountryPicker)}
-                      style={[sheetStyles.countryBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+                      style={[sheetStyles.countryBtn, { backgroundColor: paper, borderColor: paperBorder }]}
                     >
                       <Text style={{ fontSize: 16 }}>{COUNTRY_CODES.find((c) => c.code === countryCode)?.flag ?? '🌍'}</Text>
-                      <Text style={[sheetStyles.countryCode, { color: colors.text }]}>{countryCode}</Text>
+                      <Text style={[sheetStyles.countryCode, { color: colors.text, fontFamily: font.bodySemiBold }]}>{countryCode}</Text>
                       <ChevronRight size={14} color={colors.textMuted} style={{ transform: [{ rotate: showCountryPicker ? '90deg' : '0deg' }] }} />
                     </Pressable>
                     <TextInput
@@ -1215,11 +1352,11 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       placeholder="Phone number"
                       placeholderTextColor={colors.textMuted}
                       keyboardType="phone-pad"
-                      style={[sheetStyles.input, { flex: 1, color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+                      style={[sheetStyles.input, { flex: 1, color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
                     />
                   </View>
                   {showCountryPicker && (
-                    <ScrollView style={[sheetStyles.countryList, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]} nestedScrollEnabled>
+                    <ScrollView style={[sheetStyles.countryList, { backgroundColor: paper, borderColor: paperBorder }]} nestedScrollEnabled>
                       {COUNTRY_CODES.map((c) => (
                         <Pressable
                           key={`${c.flag}${c.code}`}
@@ -1227,8 +1364,8 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                           style={({ pressed }) => [sheetStyles.countryRow, pressed && { backgroundColor: colors.surfaceRaised }]}
                         >
                           <Text style={{ fontSize: 18 }}>{c.flag}</Text>
-                          <Text style={[sheetStyles.countryLabel, { color: colors.text }]}>{c.label}</Text>
-                          <Text style={[sheetStyles.countryCodeText, { color: colors.textMuted }]}>{c.code}</Text>
+                          <Text style={[sheetStyles.countryLabel, { color: colors.text, fontFamily: font.body }]}>{c.label}</Text>
+                          <Text style={[sheetStyles.countryCodeText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{c.code}</Text>
                         </Pressable>
                       ))}
                     </ScrollView>
@@ -1238,17 +1375,17 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
 
               {/* Share link — no extra fields */}
               {sendMethod === 'link' && (
-                <Text style={[sheetStyles.stepDesc, { color: colors.textMuted }]}>
+                <Text style={[sheetStyles.stepDesc, { color: colors.textMuted, fontFamily: font.body }]}>
                   A share sheet will open so you can send the invite link via any app.
                 </Text>
               )}
 
               <View style={sheetStyles.btnRow}>
-                <Pressable onPress={() => setStep(3)} style={[sheetStyles.backBtn, { borderColor: colors.border, borderRadius: radius.lg }]}>
-                  <Text style={[sheetStyles.backBtnText, { color: colors.textSecondary }]}>Back</Text>
+                <Pressable onPress={() => setStep(3)} style={[sheetStyles.backBtn, { borderColor: paperBorder }]}>
+                  <Text style={[sheetStyles.backBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Back</Text>
                 </Pressable>
                 <View style={{ flex: 1 }}>
-                  <SheetButton label={saving ? 'Sending...' : `Send Invite ${sendMethod === 'email' ? '📧' : sendMethod === 'sms' ? '💬' : '🔗'}`} onPress={handleSendInvite} disabled={saving} />
+                  <SheetButton label={saving ? 'Sending…' : 'Send Invite'} onPress={handleSendInvite} disabled={saving} />
                 </View>
               </View>
             </>
@@ -1260,18 +1397,20 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
 }
 
 function SheetButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
-  const { colors, radius } = useTheme()
+  const { colors, font, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
+  const inkText = isDark ? colors.bg : '#F3ECD9'
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
         sheetStyles.sheetBtn,
-        { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: disabled ? 0.4 : 1 },
+        { backgroundColor: ink, opacity: disabled ? 0.45 : 1 },
         pressed && !disabled && { transform: [{ scale: 0.98 }] },
       ]}
     >
-      <Text style={sheetStyles.sheetBtnText}>{label}</Text>
+      <Text style={[sheetStyles.sheetBtnText, { color: inkText, fontFamily: font.bodySemiBold }]}>{label}</Text>
     </Pressable>
   )
 }
@@ -1297,7 +1436,11 @@ function EditMemberSheet({ member, onClose, onSaved }: {
   onClose: () => void
   onSaved: (updates: { displayName?: string; photoUrl?: string; role?: string; permLevel?: string }) => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const inkActiveBg = stickers.lilac + (isDark ? '32' : '40')
+  const inkActiveText = isDark ? stickers.lilac : '#3A2A6E'
 
   const [editName, setEditName] = useState(member.displayName)
   const [editPhotoUri, setEditPhotoUri] = useState(member.photoUrl)
@@ -1315,23 +1458,23 @@ function EditMemberSheet({ member, onClose, onSaved }: {
         <View style={sheetStyles.form}>
           <PhotoPickerAvatar uri={editPhotoUri} onPick={setEditPhotoUri} />
 
-          <Text style={[sheetStyles.label, { color: colors.textSecondary }]}>NAME</Text>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Name</MonoCaps></View>
           <TextInput
             value={editName}
             onChangeText={setEditName}
             placeholder="Caregiver name"
             placeholderTextColor={colors.textMuted}
-            style={[sheetStyles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+            style={[sheetStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
           />
 
           {member.email ? (
             <>
-              <Text style={[sheetStyles.label, { color: colors.textSecondary }]}>EMAIL</Text>
-              <Text style={[sheetStyles.readOnly, { color: colors.textMuted }]}>{member.email}</Text>
+              <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Email</MonoCaps></View>
+              <Text style={[sheetStyles.readOnly, { color: colors.textMuted, fontFamily: font.body }]}>{member.email}</Text>
             </>
           ) : null}
 
-          <Text style={[sheetStyles.label, { color: colors.textSecondary }]}>ROLE</Text>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Role</MonoCaps></View>
           <View style={sheetStyles.chipGrid}>
             {ROLES.map((r) => {
               const active = editRole === r.id || editRole === ((r as any).dbRole ?? r.id)
@@ -1340,18 +1483,17 @@ function EditMemberSheet({ member, onClose, onSaved }: {
                   key={r.id}
                   onPress={() => setEditRole(r.id)}
                   style={[sheetStyles.chip, {
-                    backgroundColor: active ? colors.primaryTint : colors.surface,
-                    borderColor: active ? colors.primary : colors.border,
-                    borderRadius: radius.full,
+                    backgroundColor: active ? inkActiveBg : paper,
+                    borderColor: active ? inkActiveText : paperBorder,
                   }]}
                 >
-                  <Text style={[sheetStyles.chipText, { color: active ? colors.primary : colors.text }]}>{r.label}</Text>
+                  <Text style={[sheetStyles.chipText, { color: active ? inkActiveText : colors.text, fontFamily: font.bodySemiBold }]}>{r.label}</Text>
                 </Pressable>
               )
             })}
           </View>
 
-          <Text style={[sheetStyles.label, { color: colors.textSecondary }]}>PERMISSION LEVEL</Text>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Permission level</MonoCaps></View>
           {PERMISSION_LEVELS.map((p) => {
             const active = editPermLevel === p.id
             return (
@@ -1359,27 +1501,20 @@ function EditMemberSheet({ member, onClose, onSaved }: {
                 key={p.id}
                 onPress={() => setEditPermLevel(p.id)}
                 style={[sheetStyles.permCard, {
-                  backgroundColor: active ? colors.primaryTint : colors.surface,
-                  borderColor: active ? colors.primary : colors.border,
-                  borderRadius: radius.xl,
+                  backgroundColor: active ? inkActiveBg : paper,
+                  borderColor: active ? inkActiveText : paperBorder,
                 }]}
               >
-                <Text style={[sheetStyles.permLabel, { color: active ? colors.primary : colors.text }]}>{p.label}</Text>
-                <Text style={[sheetStyles.permDesc, { color: colors.textMuted }]}>{p.desc}</Text>
+                <Text style={[sheetStyles.permLabel, { color: active ? inkActiveText : colors.text, fontFamily: font.display }]}>{p.label}</Text>
+                <Text style={[sheetStyles.permDesc, { color: colors.textMuted, fontFamily: font.body }]}>{p.desc}</Text>
               </Pressable>
             )
           })}
 
-          <Pressable
+          <SheetButton
+            label="Save Changes"
             onPress={() => onSaved({ displayName: editName.trim(), photoUrl: editPhotoUri, role: editRole, permLevel: editPermLevel })}
-            style={({ pressed }) => [
-              sheetStyles.sheetBtn,
-              { backgroundColor: colors.primary, borderRadius: radius.lg },
-              pressed && { transform: [{ scale: 0.98 }] },
-            ]}
-          >
-            <Text style={sheetStyles.sheetBtnText}>Save Changes</Text>
-          </Pressable>
+          />
         </View>
       </ScrollView>
     </LogSheet>
@@ -1390,104 +1525,176 @@ function EditMemberSheet({ member, onClose, onSaved }: {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 12 },
-  headerBtn: { width: 40, alignItems: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
-  toggleRow: { flexDirection: 'row', padding: 4, marginBottom: 16 },
-  toggleBtn: { flex: 1, alignItems: 'center', paddingVertical: 10 },
-  toggleText: { fontSize: 14, fontWeight: '700' },
-  scroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 12 },
+  headerWrap: { paddingHorizontal: 16, paddingBottom: 6 },
+  toggleRow: {
+    flexDirection: 'row',
+    padding: 4,
+    marginBottom: 18,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  toggleBtn: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 999 },
+  toggleText: { fontSize: 14 },
+  scroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 14 },
 
-  // Empty
-  emptyCard: { alignItems: 'center', padding: 32, gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
-  emptyTitle: { fontSize: 18, fontWeight: '700' },
-  emptyBody: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20 },
+  emptyCard: {
+    alignItems: 'center',
+    padding: 32,
+    gap: 14,
+    borderRadius: 28,
+    borderWidth: 1,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
 
-  // Member card
-  memberCard: { padding: 16, gap: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2, position: 'relative' as const, overflow: 'hidden' as const },
-  statusDot: { position: 'absolute' as const, top: 14, right: 14, width: 10, height: 10, borderRadius: 5, zIndex: 1 },
-  statusDotInner: { width: 10, height: 10, borderRadius: 5, opacity: 0.5 },
+  memberCard: {
+    padding: 18,
+    gap: 12,
+    borderRadius: 28,
+    borderWidth: 1,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+    position: 'relative' as const,
+    overflow: 'hidden' as const,
+  },
+  statusDot: { position: 'absolute' as const, top: 16, right: 16, width: 10, height: 10, borderRadius: 5, zIndex: 1 },
   memberTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  memberAvatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' as const },
-  memberPhoto: { width: 44, height: 44, borderRadius: 22 },
-  memberName: { fontSize: 16, fontWeight: '700' },
-  memberEmail: { fontSize: 13, fontWeight: '500', marginTop: 1 },
-  memberBadges: { flexDirection: 'row', gap: 6, marginTop: 4 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 2, paddingHorizontal: 8 },
-  badgeText: { fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  memberAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden' as const,
+    borderWidth: 1.5,
+  },
+  memberPhoto: { width: 48, height: 48, borderRadius: 999 },
+  memberName: { fontSize: 18, letterSpacing: -0.2 },
+  memberEmail: { fontSize: 13, marginTop: 2 },
+  memberBadges: { flexDirection: 'row', gap: 6, marginTop: 6 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999 },
+  badgeText: { fontSize: 11, textTransform: 'capitalize' },
 
-  // Children chips
   childChipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  childChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 10 },
-  childChipText: { fontSize: 12, fontWeight: '600' },
+  childChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999 },
+  childChipText: { fontSize: 12 },
 
-  // Permissions
-  permRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  permChip: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingVertical: 2, paddingHorizontal: 8 },
-  permText: { fontSize: 10, fontWeight: '600', textTransform: 'capitalize' },
+  permRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 },
+  permChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 3,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+  },
+  permText: { fontSize: 10, textTransform: 'capitalize' },
 
-  // Resend
-  resendBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, marginTop: 2 },
-  resendText: { fontSize: 13, fontWeight: '700' },
+  resendBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    marginTop: 2,
+    borderRadius: 999,
+  },
+  resendText: { fontSize: 13 },
 
-  // Actions
   actionRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
-  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8, borderWidth: 1, borderRadius: 10 },
-  actionText: { fontSize: 12, fontWeight: '600' },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  actionText: { fontSize: 12 },
 
-  // Add button
-  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 52, marginTop: 8 },
-  addBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
-
-  // Filter
   filterBar: { gap: 8, paddingBottom: 12 },
-  filterChip: { paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1 },
-  filterChipText: { fontSize: 13, fontWeight: '600' },
+  filterChip: { paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1, borderRadius: 999 },
+  filterChipText: { fontSize: 13 },
 
-  // Activity
-  dateHeader: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 8, marginBottom: 4 },
-  activityItem: { flexDirection: 'row', alignItems: 'flex-start', padding: 14, gap: 12, marginBottom: 10 },
-  activityIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  dateHeader: {
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginTop: 8,
+    marginBottom: 6,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 16,
+    gap: 12,
+    marginBottom: 10,
+    borderRadius: 28,
+    borderWidth: 1,
+  },
+  activityIcon: { width: 40, height: 40, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   activityTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  activityType: { fontSize: 15, fontWeight: '700' },
-  loggerBadge: { paddingHorizontal: 8, paddingVertical: 3 },
-  loggerText: { fontSize: 10, fontWeight: '600' },
-  activityValue: { fontSize: 13, fontWeight: '500', marginTop: 4, lineHeight: 18 },
-  activityNotes: { fontSize: 12, fontWeight: '400', fontStyle: 'italic', marginTop: 3, lineHeight: 17 },
+  activityType: { fontSize: 15, letterSpacing: -0.1 },
+  loggerBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
+  loggerText: { fontSize: 10 },
+  activityValue: { fontSize: 13, marginTop: 4, lineHeight: 18 },
+  activityNotes: { fontSize: 12, fontStyle: 'italic', marginTop: 3, lineHeight: 17 },
   activityFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
-  childTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3 },
-  childTagText: { fontSize: 10, fontWeight: '700' },
-  activityTime: { fontSize: 10, fontWeight: '500' },
+  childTag: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
+  childTagText: { fontSize: 10 },
+  activityTime: { fontSize: 10 },
 })
 
 const sheetStyles = StyleSheet.create({
-  form: { gap: 16, paddingBottom: 8 },
-  label: { fontSize: 12, fontWeight: '700', letterSpacing: 1 },
-  input: { borderWidth: 1, paddingHorizontal: 16, height: 48, fontSize: 15, fontWeight: '500' },
+  form: { gap: 14, paddingBottom: 12 },
+  input: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 16, height: 52, fontSize: 15 },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1 },
-  chipText: { fontSize: 13, fontWeight: '600' },
-  permCard: { padding: 14, borderWidth: 1, gap: 4 },
-  permLabel: { fontSize: 15, fontWeight: '700' },
-  permDesc: { fontSize: 12, fontWeight: '400' },
-  progressRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginBottom: 4 },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  chipText: { fontSize: 13 },
+  permCard: { padding: 16, borderWidth: 1, gap: 4, borderRadius: 22 },
+  permLabel: { fontSize: 17 },
+  permDesc: { fontSize: 13 },
+  progressRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 8 },
   progressDot: { width: 8, height: 8, borderRadius: 4 },
-  stepDesc: { fontSize: 14, fontWeight: '500', lineHeight: 20, marginBottom: 4 },
-  btnRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
-  backBtn: { paddingHorizontal: 20, height: 48, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  backBtnText: { fontSize: 14, fontWeight: '600' },
-  sheetBtn: { height: 48, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  sheetBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+  stepDesc: { fontSize: 14, lineHeight: 20, marginBottom: 4 },
+  btnRow: { flexDirection: 'row', gap: 10, marginTop: 6 },
+  backBtn: {
+    paddingHorizontal: 20,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  backBtnText: { fontSize: 14 },
+  sheetBtn: { height: 52, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderRadius: 999 },
+  sheetBtnText: { fontSize: 15 },
   inviteRow: { flexDirection: 'row', gap: 10 },
-  readOnly: { fontSize: 15, fontWeight: '500', paddingVertical: 4 },
-  inviteBtn: { flex: 1, alignItems: 'center', paddingVertical: 20, gap: 8, borderWidth: 1 },
-  inviteBtnText: { fontSize: 13, fontWeight: '700' },
+  readOnly: { fontSize: 15, paddingVertical: 4 },
+  inviteBtn: { flex: 1, alignItems: 'center', paddingVertical: 20, gap: 8, borderWidth: 1, borderRadius: 22 },
+  inviteBtnText: { fontSize: 13 },
 
   // Country code picker
-  countryBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 48, borderWidth: 1 },
-  countryCode: { fontSize: 14, fontWeight: '600' },
-  countryList: { maxHeight: 180, borderWidth: 1, marginTop: -4 },
-  countryRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 14 },
-  countryLabel: { fontSize: 14, fontWeight: '600', flex: 1 },
-  countryCodeText: { fontSize: 13, fontWeight: '500' },
+  countryBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, height: 52, borderWidth: 1, borderRadius: 18 },
+  countryCode: { fontSize: 14 },
+  countryList: { maxHeight: 200, borderWidth: 1, marginTop: -4, borderRadius: 18 },
+  countryRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14 },
+  countryLabel: { fontSize: 14, flex: 1 },
+  countryCodeText: { fontSize: 13 },
 })

@@ -20,10 +20,27 @@ interface ChildLog {
   created_at: string
 }
 
+/**
+ * Nutrition analytics adapt to the child's age:
+ *  - "milk"   (<6 months)      → breast + bottle feed frequency, amount, no solids
+ *  - "mixed"  (6–12 months)    → milk feeds + introducing solids (variety matters)
+ *  - "solids" (12+ months)     → meal quality, variety, and frequency
+ */
+export type NutritionMode = 'milk' | 'mixed' | 'solids'
+
 export interface NutritionData {
-  eatQuality: { good: number[]; little: number[]; none: number[] }
+  mode: NutritionMode
+  /** Meal frequency per day — for milk phase this is breast+bottle sessions. */
   mealFrequency: number[]
+  /** Quality counts per day (eaten well / a little / refused). Solids only. */
+  eatQuality: { good: number[]; little: number[]; none: number[] }
   topFoods: { label: string; count: number }[]
+  /** Milk-phase extras — breast sessions + bottle volume per day. */
+  breastSessions: number[]
+  bottleSessions: number[]
+  bottleMlPerDay: number[]
+  /** Target feeds/day for the child's age (used to score frequency). */
+  feedTarget: number
   weekLabels: string[]
   hasData: boolean
 }
@@ -124,16 +141,43 @@ function localDateStr(d: Date): string {
 }
 
 function getLast7Days(): { dates: string[]; labels: string[] } {
+  return getLastNDays(7)
+}
+
+/**
+ * Build a list of the last N days with appropriate labels.
+ * - N <= 14: day-of-week labels (Sun..Sat)
+ * - N <= 35: short date labels (Apr 5)
+ * - N > 35: date labels every ~N/7 days, others blank
+ */
+function getLastNDays(n: number, until?: Date): { dates: string[]; labels: string[] } {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   const dates: string[] = []
   const labels: string[] = []
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date()
+  const stride = n > 35 ? Math.ceil(n / 7) : 1
+  const end = until ?? new Date()
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(end)
     d.setDate(d.getDate() - i)
     dates.push(localDateStr(d))
-    labels.push(dayNames[d.getDay()])
+    if (n <= 14) {
+      labels.push(dayNames[d.getDay()])
+    } else if (n <= 35) {
+      const mo = d.toLocaleDateString('en-US', { month: 'short' })
+      labels.push(`${mo} ${d.getDate()}`)
+    } else {
+      labels.push(i % stride === 0 ? `${d.getMonth() + 1}/${d.getDate()}` : '')
+    }
   }
   return { dates, labels }
+}
+
+/** Build a date range between two inclusive dates (YYYY-MM-DD output). */
+function getRangeDays(fromISO: string, toISO: string): { dates: string[]; labels: string[] } {
+  const from = new Date(fromISO)
+  const to = new Date(toISO)
+  const diffDays = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86400000) + 1)
+  return getLastNDays(diffDays, to)
 }
 
 function parseValue(value: string | null): any {
@@ -147,16 +191,58 @@ function parseValue(value: string | null): any {
 
 // ─── Transform Functions ──────────────────────────────────────────────────────
 
-function buildNutritionData(logs: ChildLog[], dates: string[], labels: string[]): NutritionData {
+/**
+ * Pick the right nutrition mode + feed-target for an age (in months).
+ * - Milk phase: 0-1mo ~10 feeds, 1-3mo ~8, 3-6mo ~6.
+ * - Mixed phase (6-12mo): ~5 feeds + solid intro.
+ * - Solids (12+mo): treat as meals (target 4 incl. snacks).
+ */
+function getNutritionModeForAge(ageMonths: number): { mode: NutritionMode; feedTarget: number } {
+  if (ageMonths < 6) {
+    if (ageMonths < 1) return { mode: 'milk', feedTarget: 10 }
+    if (ageMonths < 3) return { mode: 'milk', feedTarget: 8 }
+    return { mode: 'milk', feedTarget: 6 }
+  }
+  if (ageMonths < 12) return { mode: 'mixed', feedTarget: 5 }
+  return { mode: 'solids', feedTarget: 4 }
+}
+
+function buildNutritionData(
+  logs: ChildLog[],
+  dates: string[],
+  labels: string[],
+  ageMonths: number,
+): NutritionData {
   const foodLogs = logs.filter((l) => l.type === 'food' || l.type === 'feeding')
-  if (foodLogs.length === 0) {
-    return { eatQuality: { good: [0,0,0,0,0,0,0], little: [0,0,0,0,0,0,0], none: [0,0,0,0,0,0,0] }, mealFrequency: [0,0,0,0,0,0,0], topFoods: [], weekLabels: labels, hasData: false }
+  const { mode, feedTarget } = getNutritionModeForAge(ageMonths)
+
+  const emptyBase = {
+    mode,
+    feedTarget,
+    mealFrequency: Array.from({ length: dates.length }, () => 0),
+    eatQuality: {
+      good: Array.from({ length: dates.length }, () => 0),
+      little: Array.from({ length: dates.length }, () => 0),
+      none: Array.from({ length: dates.length }, () => 0),
+    },
+    topFoods: [] as { label: string; count: number }[],
+    breastSessions: Array.from({ length: dates.length }, () => 0),
+    bottleSessions: Array.from({ length: dates.length }, () => 0),
+    bottleMlPerDay: Array.from({ length: dates.length }, () => 0),
+    weekLabels: labels,
   }
 
-  const good = new Array(7).fill(0)
-  const little = new Array(7).fill(0)
-  const none = new Array(7).fill(0)
-  const mealFreq = new Array(7).fill(0)
+  if (foodLogs.length === 0) {
+    return { ...emptyBase, hasData: false }
+  }
+
+  const good = new Array(dates.length).fill(0)
+  const little = new Array(dates.length).fill(0)
+  const none = new Array(dates.length).fill(0)
+  const mealFreq = new Array(dates.length).fill(0)
+  const breastSessions = new Array(dates.length).fill(0)
+  const bottleSessions = new Array(dates.length).fill(0)
+  const bottleMl = new Array(dates.length).fill(0)
   const foodCounts: Record<string, number> = {}
 
   for (const log of foodLogs) {
@@ -166,18 +252,29 @@ function buildNutritionData(logs: ChildLog[], dates: string[], labels: string[])
     mealFreq[dayIdx]++
     const val = parseValue(log.value)
 
+    const feedType: 'breast' | 'bottle' | 'solids' | undefined =
+      val && typeof val === 'object' ? val.feedType : undefined
+
+    if (feedType === 'breast') {
+      breastSessions[dayIdx]++
+    } else if (feedType === 'bottle') {
+      bottleSessions[dayIdx]++
+      const amount = parseFloat(val?.amount ?? '')
+      if (!isNaN(amount)) bottleMl[dayIdx] += amount
+    }
+
+    // Solids quality — only meaningful for mixed/solids phases.
     if (val && typeof val === 'object' && val.quality) {
       if (val.quality === 'ate_well') good[dayIdx]++
       else if (val.quality === 'ate_little') little[dayIdx]++
       else if (val.quality === 'did_not_eat') none[dayIdx]++
 
-      // Track food names from notes or newFoodName
       if (val.newFoodName) {
         foodCounts[val.newFoodName] = (foodCounts[val.newFoodName] || 0) + 1
       }
     }
 
-    // Track foods from notes field
+    // Track foods from notes field (legacy 'food' logs)
     if (log.notes && log.type === 'food') {
       const name = log.notes.split(',')[0].trim()
       if (name.length > 0 && name.length < 30) {
@@ -191,16 +288,27 @@ function buildNutritionData(logs: ChildLog[], dates: string[], labels: string[])
     .sort((a, b) => b.count - a.count)
     .slice(0, 6)
 
-  return { eatQuality: { good, little, none }, mealFrequency: mealFreq, topFoods, weekLabels: labels, hasData: true }
+  return {
+    mode,
+    feedTarget,
+    mealFrequency: mealFreq,
+    eatQuality: { good, little, none },
+    topFoods,
+    breastSessions,
+    bottleSessions,
+    bottleMlPerDay: bottleMl,
+    weekLabels: labels,
+    hasData: true,
+  }
 }
 
 function buildSleepData(logs: ChildLog[], dates: string[], labels: string[]): SleepData {
   const sleepLogs = logs.filter((l) => l.type === 'sleep')
   if (sleepLogs.length === 0) {
-    return { dailyHours: [0,0,0,0,0,0,0], qualityCounts: { great: 0, good: 0, restless: 0, poor: 0 }, weekLabels: labels, avgHours: 0, hasData: false }
+    return { dailyHours: Array.from({ length: dates.length }, () => 0), qualityCounts: { great: 0, good: 0, restless: 0, poor: 0 }, weekLabels: labels, avgHours: 0, hasData: false }
   }
 
-  const dailyHours = new Array(7).fill(0)
+  const dailyHours = new Array(dates.length).fill(0)
   const qualityCounts = { great: 0, good: 0, restless: 0, poor: 0 }
   let totalHours = 0
   let sleepDays = 0
@@ -242,7 +350,7 @@ function buildMoodData(logs: ChildLog[], dates: string[], labels: string[]): Moo
 
   const allMoods = ['happy', 'calm', 'energetic', 'fussy', 'cranky']
   const dailyCounts: Record<string, number[]> = {}
-  for (const m of allMoods) dailyCounts[m] = new Array(7).fill(0)
+  for (const m of allMoods) dailyCounts[m] = new Array(dates.length).fill(0)
   const moodTotals: Record<string, number> = {}
 
   for (const log of moodLogs) {
@@ -269,7 +377,7 @@ function buildHealthData(logs: ChildLog[], dates: string[], labels: string[]): H
   const healthTypes = ['temperature', 'vaccine', 'medicine', 'note']
   const healthLogs = logs.filter((l) => healthTypes.includes(l.type))
 
-  const weeklyFreq = new Array(7).fill(0)
+  const weeklyFreq = new Array(dates.length).fill(0)
   const recentEvents: HealthData['recentEvents'] = []
   const vaccineNames = new Set<string>()
 
@@ -329,10 +437,10 @@ function buildGrowthData(logs: ChildLog[]): GrowthData {
 function buildDiaperData(logs: ChildLog[], dates: string[], labels: string[]): DiaperData {
   const diaperLogs = logs.filter((l) => l.type === 'diaper')
   if (diaperLogs.length === 0) {
-    return { dailyCounts: [0,0,0,0,0,0,0], typeCounts: { pee: 0, poop: 0, mixed: 0 }, colorCounts: {}, weekLabels: labels, totalCount: 0, hasData: false }
+    return { dailyCounts: Array.from({ length: dates.length }, () => 0), typeCounts: { pee: 0, poop: 0, mixed: 0 }, colorCounts: {}, weekLabels: labels, totalCount: 0, hasData: false }
   }
 
-  const dailyCounts = new Array(7).fill(0)
+  const dailyCounts = new Array(dates.length).fill(0)
   const typeCounts = { pee: 0, poop: 0, mixed: 0 }
   const colorCounts: Record<string, number> = {}
 
@@ -369,28 +477,63 @@ function scoreNutrition(data: NutritionData): PillarScore {
   if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false }
 
   const totalMeals = data.mealFrequency.reduce((a, b) => a + b, 0)
-  const totalGood = data.eatQuality.good.reduce((a, b) => a + b, 0)
-  const totalLittle = data.eatQuality.little.reduce((a, b) => a + b, 0)
-  const totalNone = data.eatQuality.none.reduce((a, b) => a + b, 0)
-
   if (totalMeals === 0) return { value: 0, label: 'no data', trend: 0, hasData: false }
 
-  // Quality score (0-10): good=10pts, little=5pts, none=0pts
-  const qualityScore = ((totalGood * 10 + totalLittle * 5) / totalMeals)
-
-  // Frequency bonus: log at least 2 meals/day for 7 days = 14 total
+  const windowDays = Math.max(1, data.mealFrequency.length)
   const daysWithData = data.mealFrequency.filter((m) => m > 0).length
-  const freqBonus = Math.min(daysWithData / 7, 1) * 1.5 // up to 1.5 bonus
 
-  // Variety bonus: more unique foods = better
+  // ── MILK phase: score purely on feeding frequency vs age-appropriate target.
+  // Quality/variety don't apply to breast/bottle feeds.
+  if (data.mode === 'milk') {
+    const avgFeedsPerLoggedDay = daysWithData > 0 ? totalMeals / daysWithData : 0
+    // Frequency score: reach target → 8pts, exceed target (up to 1.2×) → 9pts.
+    const freqRatio = Math.min(avgFeedsPerLoggedDay / Math.max(1, data.feedTarget), 1.2)
+    const freqScore = Math.min(freqRatio / 1.2, 1) * 8
+    // Consistency bonus: logging rate across the window (max 2 pts).
+    const consistencyBonus = Math.min(daysWithData / windowDays, 1) * 2
+    const raw = Math.min(freqScore + consistencyBonus, 10)
+    const value = Math.round(raw * 10) / 10
+    // Trend: compare first vs second half of the window.
+    const half = Math.floor(windowDays / 2)
+    const first = data.mealFrequency.slice(0, half).reduce((a, b) => a + b, 0)
+    const second = data.mealFrequency.slice(half).reduce((a, b) => a + b, 0)
+    const trend = first > 0 ? Math.round(((second - first) / first) * 100) : 0
+    return { value, label: scoreLabel(value), trend, hasData: true }
+  }
+
+  // ── MIXED phase (6–12mo): milk frequency (60%) + solid introduction variety (40%).
+  if (data.mode === 'mixed') {
+    const avgFeedsPerLoggedDay = daysWithData > 0 ? totalMeals / daysWithData : 0
+    const freqRatio = Math.min(avgFeedsPerLoggedDay / Math.max(1, data.feedTarget), 1)
+    const freqScore = freqRatio * 10  // 10 pts max, weighted below
+
+    // Variety: target is 3+ distinct foods introduced this window (lower than toddler).
+    const varietyScore = Math.min(data.topFoods.length / 3, 1) * 10
+
+    const raw = Math.min(freqScore * 0.6 + varietyScore * 0.4, 10)
+    const value = Math.round(raw * 10) / 10
+
+    const half = Math.floor(windowDays / 2)
+    const first = data.mealFrequency.slice(0, half).reduce((a, b) => a + b, 0)
+    const second = data.mealFrequency.slice(half).reduce((a, b) => a + b, 0)
+    const trend = first > 0 ? Math.round(((second - first) / first) * 100) : 0
+    return { value, label: scoreLabel(value), trend, hasData: true }
+  }
+
+  // ── SOLIDS phase (12+mo): current quality + frequency + variety logic.
+  const totalGood = data.eatQuality.good.reduce((a, b) => a + b, 0)
+  const totalLittle = data.eatQuality.little.reduce((a, b) => a + b, 0)
+
+  const qualityScore = ((totalGood * 10 + totalLittle * 5) / totalMeals)
+  const freqBonus = Math.min(daysWithData / windowDays, 1) * 1.5
   const varietyBonus = Math.min(data.topFoods.length / 5, 1) * 1.0
 
   const raw = Math.min(qualityScore + freqBonus + varietyBonus, 10)
   const value = Math.round(raw * 10) / 10
 
-  // Simple trend: compare first half vs second half of week
-  const firstHalf = data.eatQuality.good.slice(0, 3).reduce((a, b) => a + b, 0)
-  const secondHalf = data.eatQuality.good.slice(4).reduce((a, b) => a + b, 0)
+  const half = Math.floor(windowDays / 2)
+  const firstHalf = data.eatQuality.good.slice(0, half).reduce((a, b) => a + b, 0)
+  const secondHalf = data.eatQuality.good.slice(half).reduce((a, b) => a + b, 0)
   const trend = firstHalf > 0 ? Math.round(((secondHalf - firstHalf) / firstHalf) * 100) : 0
 
   return { value, label: scoreLabel(value), trend, hasData: true }
@@ -410,9 +553,10 @@ function scoreSleep(data: SleepData): PillarScore {
     data.qualityCounts.poor * 1
   ) / total
 
-  // Consistency bonus: more days logged = better
+  // Consistency bonus: days-with-sleep rate scaled to the window size
+  const windowDays = Math.max(1, data.dailyHours.length)
   const daysWithSleep = data.dailyHours.filter((h) => h > 0).length
-  const consistencyBonus = Math.min(daysWithSleep / 7, 1) * 1.5
+  const consistencyBonus = Math.min(daysWithSleep / windowDays, 1) * 1.5
 
   const raw = Math.min(qualityScore * 0.85 + consistencyBonus, 10)
   const value = Math.round(raw * 10) / 10
@@ -464,10 +608,10 @@ function scoreMood(data: MoodData): PillarScore {
 function buildRoutineComplianceData(logs: ChildLog[], dates: string[], labels: string[]): RoutineComplianceData {
   const skippedLogs = logs.filter((l) => l.type === 'skipped')
   if (skippedLogs.length === 0) {
-    return { weeklySkips: [0,0,0,0,0,0,0], totalSkips: 0, skipRate: 0, mostSkipped: [], weekLabels: labels, hasData: false }
+    return { weeklySkips: Array.from({ length: dates.length }, () => 0), totalSkips: 0, skipRate: 0, mostSkipped: [], weekLabels: labels, hasData: false }
   }
 
-  const weeklySkips = new Array(7).fill(0)
+  const weeklySkips = new Array(dates.length).fill(0)
   const routineSkipCounts: Record<string, number> = {}
 
   for (const log of skippedLogs) {
@@ -534,10 +678,10 @@ function scoreGrowth(data: GrowthData): PillarScore {
 
 function buildActivityData(logs: ChildLog[], dates: string[], labels: string[]): ActivityData {
   const activityLogs = logs.filter((l) => l.type === 'activity' && dates.includes(l.date))
-  const empty: ActivityData = { activeDays: 0, totalSessions: 0, totalMinutes: 0, uniqueTypes: [], dailySessions: new Array(7).fill(0), weekLabels: labels, hasData: false }
+  const empty: ActivityData = { activeDays: 0, totalSessions: 0, totalMinutes: 0, uniqueTypes: [], dailySessions: new Array(dates.length).fill(0), weekLabels: labels, hasData: false }
   if (activityLogs.length === 0) return empty
 
-  const dailySessions = new Array(7).fill(0)
+  const dailySessions = new Array(dates.length).fill(0)
   let totalMinutes = 0
   const typeSet = new Set<string>()
 
@@ -568,8 +712,9 @@ function buildActivityData(logs: ChildLog[], dates: string[], labels: string[]):
 function scoreActivity(data: ActivityData): PillarScore {
   if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false }
 
-  // Base: active days this week (0–7) → 0–9 pts
-  const base = (data.activeDays / 7) * 9
+  // Base: active-day rate → 0–9 pts. dailySessions.length is the window size.
+  const windowDays = Math.max(1, data.dailySessions.length)
+  const base = (data.activeDays / windowDays) * 9
   // Variety bonus: up to +1 for logging 3+ different activity types
   const varietyBonus = Math.min(data.uniqueTypes.length / 3, 1)
   const value = Math.round(Math.min(base + varietyBonus, 10) * 10) / 10
@@ -608,19 +753,49 @@ function buildScores(nutrition: NutritionData, sleep: SleepData, mood: MoodData,
 
 // ─── Main Query Hook ──────────────────────────────────────────────────────────
 
-export function useKidsAnalytics(childId: string | 'all') {
+export type AnalyticsRange =
+  | { kind: 'last'; days: number }
+  | { kind: 'custom'; from: string; to: string }
+
+/** Compute the date window (dates[], labels[], sinceDate) for a given range. */
+function computeWindow(range: AnalyticsRange): { dates: string[]; labels: string[]; sinceDate: string; toDate: string } {
+  if (range.kind === 'custom') {
+    const { dates, labels } = getRangeDays(range.from, range.to)
+    return { dates, labels, sinceDate: range.from, toDate: range.to }
+  }
+  const days = Math.max(1, range.days)
+  const { dates, labels } = getLastNDays(days)
+  const since = new Date()
+  since.setDate(since.getDate() - (days - 1))
+  return { dates, labels, sinceDate: localDateStr(since), toDate: localDateStr(new Date()) }
+}
+
+export function useKidsAnalytics(
+  childId: string | 'all',
+  range: AnalyticsRange = { kind: 'last', days: 7 },
+) {
   const children = useChildStore((s) => s.children)
 
+  // Window for the selected range. Fetch at least 30 days for longer-term context
+  // (growth trend), but scoring & charts use the explicit window.
+  const window = computeWindow(range)
+  const minFetchSince = (() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 30)
+    const fallback = localDateStr(d)
+    return window.sinceDate < fallback ? window.sinceDate : fallback
+  })()
+
   return useQuery<AnalyticsData>({
-    queryKey: ['kids-analytics', childId],
+    queryKey: [
+      'kids-analytics',
+      childId,
+      range.kind,
+      range.kind === 'custom' ? `${range.from}_${range.to}` : String(range.days),
+    ],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Not authenticated')
-
-      // Get 30 days of data for broader context, 7-day window for charts
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-      const sinceDate = localDateStr(thirtyDaysAgo)
 
       const childIds = childId === 'all'
         ? children.map((c) => c.id)
@@ -634,16 +809,29 @@ export function useKidsAnalytics(childId: string | 'all') {
         .from('child_logs')
         .select('id, child_id, date, type, value, notes, photos, created_at')
         .in('child_id', childIds)
-        .gte('date', sinceDate)
+        .gte('date', minFetchSince)
+        .lte('date', window.toDate)
         .order('created_at', { ascending: true })
-        .limit(1000)
+        .limit(2000)
 
       if (error) throw error
 
       const allLogs: ChildLog[] = (logs ?? []) as ChildLog[]
-      const { dates, labels } = getLast7Days()
+      const { dates, labels } = window
 
-      const nutrition = buildNutritionData(allLogs, dates, labels)
+      // Derive the age of the child we're analyzing (single-child only).
+      // Used to pick the right nutrition scoring mode (milk / mixed / solids).
+      const selectedChild = childId === 'all' ? null : children.find((c) => c.id === childId)
+      const ageMonths = selectedChild?.birthDate
+        ? (() => {
+            const d = new Date(selectedChild.birthDate)
+            if (isNaN(d.getTime())) return 24
+            const now = new Date()
+            return Math.max(0, (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()))
+          })()
+        : 24
+
+      const nutrition = buildNutritionData(allLogs, dates, labels, ageMonths)
       const sleep = buildSleepData(allLogs, dates, labels)
       const mood = buildMoodData(allLogs, dates, labels)
       const health = buildHealthData(allLogs, dates, labels)
@@ -664,7 +852,7 @@ export function useKidsAnalytics(childId: string | 'all') {
         routineCompliance,
         scores,
         totalLogs: allLogs.filter((l) => l.type !== 'skipped').length,
-        dateRange: { from: sinceDate, to: localDateStr(new Date()) },
+        dateRange: { from: window.sinceDate, to: window.toDate },
       }
     },
     staleTime: 60 * 1000,        // 1 min — charts feel live

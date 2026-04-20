@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View, ScrollView, Pressable } from 'react-native'
 import { colors, borderRadius } from '../../constants/theme'
+import { Emoji } from './Emoji'
 
 interface ResultCardProps {
   result: string
@@ -25,7 +26,7 @@ export default function ResultCard({ result, scanType, onClose }: ResultCardProp
           </Pressable>
         </View>
         <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-          <Text style={styles.emoji}>👵</Text>
+          <Emoji size={36} style={styles.emoji}>👵</Emoji>
           <Text style={styles.resultText}>{result}</Text>
         </ScrollView>
       </View>

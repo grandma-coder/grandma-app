@@ -49,6 +49,7 @@ import {
   X,
 } from 'lucide-react-native'
 import { useTheme, brand } from '../../constants/theme'
+import { MoodFace } from '../stickers/RewardStickers'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodCalories'
@@ -1792,12 +1793,14 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
 
 // ─── 4. MOOD FORM ──────────────────────────────────────────────────────────
 
-const MOODS = [
-  { id: 'happy', icon: Laugh, label: 'Happy' },
-  { id: 'calm', icon: Smile, label: 'Calm' },
-  { id: 'fussy', icon: Meh, label: 'Fussy' },
-  { id: 'cranky', icon: Frown, label: 'Cranky' },
-  { id: 'energetic', icon: Zap, label: 'Energetic' },
+// Brand mood stickers with tinted fills per variant — hand-drawn faces from
+// the sticker-collage design system replace the generic lucide icons.
+const MOODS: { id: 'happy' | 'calm' | 'fussy' | 'cranky' | 'energetic'; label: string; fill: string }[] = [
+  { id: 'happy',     label: 'Happy',     fill: '#FBEA9E' }, // yellow soft
+  { id: 'calm',      label: 'Calm',      fill: '#CFE0F0' }, // blue soft
+  { id: 'fussy',     label: 'Fussy',     fill: '#F9D6C0' }, // peach soft
+  { id: 'cranky',    label: 'Cranky',    fill: '#F9D8E2' }, // pink soft
+  { id: 'energetic', label: 'Energetic', fill: '#F5D652' }, // yellow bright
 ]
 
 export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
@@ -1872,7 +1875,6 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
       </View>
       <View style={styles.moodRow}>
         {MOODS.map((m) => {
-          const Icon = m.icon
           const active = mood === m.id
           return (
             <Pressable
@@ -1883,7 +1885,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
                 borderRadius: radius.lg,
               }]}
             >
-              <Icon size={24} color={active ? colors.primary : colors.textMuted} strokeWidth={2} />
+              <MoodFace variant={m.id} fill={m.fill} size={44} />
               <Text style={[styles.moodLabel, { color: active ? colors.primary : colors.textMuted }]}>{m.label}</Text>
             </Pressable>
           )
@@ -2001,6 +2003,9 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
 
 const ACTIVITY_TYPES = [
   { id: 'class', label: 'Class' },
+  { id: 'school', label: 'School' },
+  { id: 'study', label: 'Study' },
+  { id: 'reading', label: 'Reading' },
   { id: 'sport', label: 'Sport' },
   { id: 'swim', label: 'Swimming' },
   { id: 'dance', label: 'Dance' },
@@ -2010,7 +2015,6 @@ const ACTIVITY_TYPES = [
   { id: 'walk', label: 'Walk' },
   { id: 'therapy', label: 'Therapy' },
   { id: 'playdate', label: 'Playdate' },
-  { id: 'other', label: 'Other' },
 ]
 
 export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {

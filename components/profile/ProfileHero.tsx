@@ -1,6 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useTheme } from '../../constants/theme'
 import { Heart as HeartSticker, Squishy, Star as StarSticker } from '../ui/Stickers'
+import { AvatarView } from '../ui/AvatarPicker'
 
 export interface KidPill {
   id: string
@@ -14,6 +15,8 @@ interface ProfileHeroProps {
   lastName?: string
   subtitle?: string
   accentColor: string
+  /** photo URL, "icon:<key>" value, or null for initial fallback */
+  photoUrl?: string | null
   onAvatarPress?: () => void
   kidPills?: KidPill[]
   onKidPillPress?: (id: string) => void
@@ -32,6 +35,7 @@ export function ProfileHero({
   lastName,
   subtitle,
   accentColor,
+  photoUrl,
   onAvatarPress,
   kidPills,
   onKidPillPress,
@@ -39,24 +43,15 @@ export function ProfileHero({
   const { colors, stickers, font } = useTheme()
 
   const avatarNode = (
-    <View
-      style={[
-        styles.avatar,
-        {
-          backgroundColor: accentColor,
-          borderColor: colors.text,
-        },
-      ]}
-    >
-      <Text
-        style={[
-          styles.initial,
-          { fontFamily: font.display, color: colors.text },
-        ]}
-        allowFontScaling={false}
-      >
-        {initial}
-      </Text>
+    <View style={{ position: 'relative' }}>
+      <AvatarView
+        value={photoUrl ?? null}
+        size={108}
+        accent={accentColor}
+        initial={initial}
+        borderColor={colors.text}
+        borderWidth={3}
+      />
       <View style={styles.avatarStar}>
         <StarSticker size={38} fill={stickers.yellow} />
       </View>

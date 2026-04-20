@@ -16,13 +16,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   Share,
+  Modal,
+  Animated,
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import {
   ArrowLeft,
-  Hash,
   Users,
   Heart,
   MessageCircle,
@@ -44,6 +45,11 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { channelSticker } from '../../lib/channelSticker'
+
+// Cream paper-aesthetic CTA shared with Garage & Channels
+const CREAM = '#F5EFE3'
+const INK = '#1A1430'
 import { getChannels, type Channel } from '../../lib/channels'
 import {
   sendMessage,
@@ -70,11 +76,12 @@ import {
 } from '../../lib/channelPosts'
 import { supabase } from '../../lib/supabase'
 import { checkPhotoSafety } from '../../lib/photoSafety'
+import { BrandedLoader } from '../../components/ui/BrandedLoader'
 
 // ─── Main Component ───────────────────────────────────────────────────────
 
 export default function ChannelChat() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
 
@@ -108,6 +115,13 @@ export default function ChannelChat() {
   const [myRating, setMyRating] = useState(0)
   const [myReview, setMyReview] = useState('')
   const [savingRating, setSavingRating] = useState(false)
+
+  // Share sheet state
+  const [showShare, setShowShare] = useState(false)
+
+  // Leave confirm state
+  const [showLeave, setShowLeave] = useState(false)
+  const [leaving, setLeaving] = useState(false)
 
   // Owner state
   const [isOwner, setIsOwner] = useState(false)
@@ -490,27 +504,8 @@ export default function ChannelChat() {
     }
 
     if (isMember) {
-      // Non-owner: confirm leave
-      Alert.alert(
-        'Leave Channel',
-        `Are you sure you want to leave #${channel?.name ?? 'this channel'}?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Leave',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await leaveChannel(id)
-                setIsMember(false)
-                load()
-              } catch {
-                Alert.alert('Error', 'Failed to leave channel')
-              }
-            },
-          },
-        ]
-      )
+      // Non-owner: confirm leave via custom modal
+      setShowLeave(true)
     } else if (channel?.channelType === 'private') {
       // Private channel: request to join
       if (myRequest?.status === 'pending') {
@@ -581,33 +576,41 @@ export default function ChannelChat() {
       return
     }
 
+    setShowShare(true)
+  }
+
+  async function handleCopyLink() {
+    if (!id) return
     const channelUrl = `grandma-app://channel/${id}`
-    const channelName = channel.name
+    const { setStringAsync } = await import('expo-clipboard')
+    await setStringAsync(channelUrl)
+    setShowShare(false)
+    Alert.alert('Copied!', 'Channel link copied to clipboard.')
+  }
+
+  async function confirmLeave() {
+    if (!id) return
+    setLeaving(true)
+    try {
+      await leaveChannel(id)
+      setIsMember(false)
+      setShowLeave(false)
+      load()
+    } catch {
+      Alert.alert('Error', 'Failed to leave channel')
+    } finally {
+      setLeaving(false)
+    }
+  }
+
+  async function handleShareExternal() {
+    if (!id || !channel) return
+    const channelUrl = `grandma-app://channel/${id}`
     const desc = channel.description ? `\n${channel.description}` : ''
     const privacy = channel.channelType === 'private' ? ' (Private)' : ''
-    const shareMessage = `Join #${channelName}${privacy} on grandma.app!${desc}\n\n${channelUrl}`
-
-    Alert.alert('Share Channel', '', [
-      {
-        text: 'Copy Link',
-        onPress: () => {
-          import('expo-clipboard').then(({ setStringAsync }) => {
-            setStringAsync(channelUrl)
-            Alert.alert('Copied!', 'Channel link copied to clipboard.')
-          })
-        },
-      },
-      {
-        text: 'Share...',
-        onPress: () => {
-          Share.share({
-            message: shareMessage,
-            title: `#${channelName}`,
-          })
-        },
-      },
-      { text: 'Cancel', style: 'cancel' },
-    ])
+    const shareMessage = `Join #${channel.name}${privacy} on grandma.app!${desc}\n\n${channelUrl}`
+    setShowShare(false)
+    await Share.share({ message: shareMessage, title: `#${channel.name}` })
   }
 
   function handleDeleteMessage(msgId: string, authorId: string) {
@@ -651,7 +654,7 @@ export default function ChannelChat() {
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator color={colors.primary} />
+        <BrandedLoader />
       </View>
     )
   }
@@ -675,10 +678,18 @@ export default function ChannelChat() {
           style={styles.headerCenter}
         >
           {channel?.channelType === 'private' ? (
-            <Lock size={16} color={colors.primary} strokeWidth={2} />
-          ) : (
-            <Hash size={18} color={colors.primary} strokeWidth={2} />
-          )}
+            <Lock size={16} color={colors.textMuted} strokeWidth={2} />
+          ) : channel ? (
+            (() => {
+              const s = channelSticker(channel.id, isDark, channel.avatarUrl)
+              const Icon = s.Component
+              return (
+                <View style={{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon size={22} fill={s.fill} />
+                </View>
+              )
+            })()
+          ) : null}
           <Text
             style={[styles.headerTitle, { color: colors.text }]}
             numberOfLines={1}
@@ -710,15 +721,17 @@ export default function ChannelChat() {
           style={[
             styles.joinLeaveBtn,
             {
-              backgroundColor: isMember ? colors.surfaceRaised : colors.primary,
-              borderRadius: radius.lg,
+              backgroundColor: isMember ? 'transparent' : CREAM,
+              borderWidth: isMember ? 1 : 0,
+              borderColor: isMember ? CREAM + '55' : 'transparent',
+              borderRadius: radius.full,
             },
           ]}
         >
           <Text
             style={[
               styles.joinLeaveText,
-              { color: isMember ? colors.textSecondary : '#FFFFFF' },
+              { color: isMember ? CREAM : INK },
             ]}
           >
             {isMember && isOwner
@@ -760,7 +773,7 @@ export default function ChannelChat() {
               <Text style={[styles.rateBarPrompt, { color: colors.textMuted }]}>No ratings yet</Text>
             )}
           </View>
-          <Text style={[styles.rateBarAction, { color: colors.primary }]}>
+          <Text style={[styles.rateBarAction, { color: CREAM }]}>
             {myRating > 0 ? 'Edit Rating' : 'Rate Channel'}
           </Text>
         </Pressable>
@@ -961,18 +974,18 @@ export default function ChannelChat() {
                 styles.sendBtn,
                 {
                   backgroundColor:
-                    text.trim() || photos.length > 0 ? colors.primary : colors.surfaceRaised,
+                    text.trim() || photos.length > 0 ? CREAM : colors.surfaceRaised,
                   borderRadius: radius.full,
                 },
                 pressed && { opacity: 0.8 },
               ]}
             >
               {sending ? (
-                <ActivityIndicator color="#FFF" size="small" />
+                <ActivityIndicator color={INK} size="small" />
               ) : (
                 <Send
                   size={18}
-                  color={text.trim() || photos.length > 0 ? '#FFFFFF' : colors.textMuted}
+                  color={text.trim() || photos.length > 0 ? INK : colors.textMuted}
                   strokeWidth={2}
                 />
               )}
@@ -994,9 +1007,9 @@ export default function ChannelChat() {
             </Text>
             <Pressable
               onPress={handleJoinLeave}
-              style={[styles.joinPromptBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}
+              style={[styles.joinPromptBtn, { backgroundColor: CREAM, borderRadius: radius.full }]}
             >
-              <Text style={styles.joinPromptBtnText}>Join Channel</Text>
+              <Text style={[styles.joinPromptBtnText, { color: INK }]}>Join Channel</Text>
             </Pressable>
           </View>
         )}
@@ -1006,24 +1019,26 @@ export default function ChannelChat() {
       {showRating && (
         <View style={styles.ratingOverlay}>
           <View style={[styles.ratingCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-            <Text style={[styles.ratingTitle, { color: colors.text }]}>Rate this channel</Text>
+            {/* Sticker accent — channel's own sticker */}
+            {channel && (() => {
+              const s = channelSticker(channel.id, isDark, channel.avatarUrl)
+              const Icon = s.Component
+              return (
+                <View style={[styles.ratingStickerBubble, { backgroundColor: s.tint }]}>
+                  <Icon size={34} fill={s.fill} />
+                </View>
+              )
+            })()}
+
+            <Text style={[styles.ratingTitle, { color: colors.text }]}>
+              How was #{channel?.name}?
+            </Text>
             <Text style={[styles.ratingSubtitle, { color: colors.textMuted }]}>
-              #{channel?.name}
+              Help others discover great channels
             </Text>
 
             {/* Star selector */}
-            <View style={styles.ratingStars}>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Pressable key={i} onPress={() => setMyRating(i)} hitSlop={8}>
-                  <Star
-                    size={36}
-                    color={brand.accent}
-                    strokeWidth={2}
-                    fill={i <= myRating ? brand.accent : 'none'}
-                  />
-                </Pressable>
-              ))}
-            </View>
+            <AnimatedStarRow value={myRating} onChange={setMyRating} />
 
             {/* Review text */}
             <TextInput
@@ -1046,19 +1061,189 @@ export default function ChannelChat() {
               <Pressable
                 onPress={handleSubmitRating}
                 disabled={myRating === 0 || savingRating}
-                style={[styles.ratingSubmitBtn, { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: myRating === 0 ? 0.4 : 1 }]}
+                style={[styles.ratingSubmitBtn, { backgroundColor: CREAM, borderRadius: radius.full, opacity: myRating === 0 ? 0.4 : 1 }]}
               >
                 {savingRating ? (
-                  <ActivityIndicator color="#FFF" size="small" />
+                  <ActivityIndicator color={INK} size="small" />
                 ) : (
-                  <Text style={styles.ratingSubmitText}>Submit</Text>
+                  <Text style={[styles.ratingSubmitText, { color: INK }]}>Submit</Text>
                 )}
               </Pressable>
             </View>
           </View>
         </View>
       )}
+
+      {/* Share sheet */}
+      <ShareChannelSheet
+        visible={showShare}
+        onClose={() => setShowShare(false)}
+        onCopy={handleCopyLink}
+        onShare={handleShareExternal}
+      />
+
+      {/* Leave confirm sheet */}
+      <LeaveChannelSheet
+        visible={showLeave}
+        channelName={channel?.name ?? 'this channel'}
+        leaving={leaving}
+        onCancel={() => setShowLeave(false)}
+        onConfirm={confirmLeave}
+      />
     </View>
+  )
+}
+
+// ─── Animated star selector ──────────────────────────────────────────────
+
+function AnimatedStarRow({
+  value,
+  onChange,
+}: {
+  value: number
+  onChange: (n: number) => void
+}) {
+  const anims = useRef([1, 2, 3, 4, 5].map(() => new Animated.Value(1))).current
+
+  function tap(i: number) {
+    onChange(i)
+    Animated.sequence([
+      Animated.spring(anims[i - 1], { toValue: 1.35, friction: 4, tension: 220, useNativeDriver: true }),
+      Animated.spring(anims[i - 1], { toValue: 1, friction: 3, tension: 160, useNativeDriver: true }),
+    ]).start()
+  }
+
+  return (
+    <View style={styles.ratingStars}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Pressable key={i} onPress={() => tap(i)} hitSlop={8}>
+          <Animated.View style={{ transform: [{ scale: anims[i - 1] }] }}>
+            <Star
+              size={40}
+              color={brand.accent}
+              strokeWidth={2}
+              fill={i <= value ? brand.accent : 'none'}
+            />
+          </Animated.View>
+        </Pressable>
+      ))}
+    </View>
+  )
+}
+
+// ─── Share channel bottom sheet ───────────────────────────────────────────
+
+function ShareChannelSheet({
+  visible,
+  onClose,
+  onCopy,
+  onShare,
+}: {
+  visible: boolean
+  onClose: () => void
+  onCopy: () => void
+  onShare: () => void
+}) {
+  const { colors, radius } = useTheme()
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.shareOverlay} onPress={onClose}>
+        <Pressable
+          style={[styles.shareSheet, { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <View style={[styles.shareHandle, { backgroundColor: colors.textMuted + '55' }]} />
+          <Text style={[styles.shareTitle, { color: colors.text }]}>Share Channel</Text>
+
+          <Pressable
+            onPress={onCopy}
+            style={({ pressed }) => [
+              styles.shareAction,
+              { borderColor: CREAM + '55', borderRadius: radius.full },
+              pressed && { opacity: 0.75 },
+            ]}
+          >
+            <Copy size={18} color={CREAM} strokeWidth={2} />
+            <Text style={[styles.shareActionText, { color: CREAM }]}>Copy Link</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={onShare}
+            style={({ pressed }) => [
+              styles.shareActionFilled,
+              { backgroundColor: CREAM, borderRadius: radius.full },
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Share2 size={18} color={INK} strokeWidth={2.5} />
+            <Text style={[styles.shareActionTextFilled, { color: INK }]}>Share…</Text>
+          </Pressable>
+
+          <Pressable onPress={onClose} style={styles.shareCancel}>
+            <Text style={[styles.shareCancelText, { color: colors.textMuted }]}>Cancel</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  )
+}
+
+// ─── Leave channel confirm sheet ──────────────────────────────────────────
+
+function LeaveChannelSheet({
+  visible,
+  channelName,
+  leaving,
+  onCancel,
+  onConfirm,
+}: {
+  visible: boolean
+  channelName: string
+  leaving: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const { colors, radius } = useTheme()
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+      <Pressable style={styles.shareOverlay} onPress={onCancel}>
+        <Pressable
+          style={[styles.shareSheet, { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <View style={[styles.shareHandle, { backgroundColor: colors.textMuted + '55' }]} />
+          <Text style={[styles.shareTitle, { color: colors.text }]}>Leave channel?</Text>
+          <Text style={[styles.leaveBody, { color: colors.textSecondary }]}>
+            You'll stop receiving updates from{' '}
+            <Text style={{ fontWeight: '800', color: colors.text }}>#{channelName}</Text>
+            . You can rejoin any time.
+          </Text>
+
+          <Pressable
+            onPress={onConfirm}
+            disabled={leaving}
+            style={({ pressed }) => [
+              styles.leaveConfirmBtn,
+              { backgroundColor: brand.error, borderRadius: radius.full },
+              pressed && { opacity: 0.85 },
+              leaving && { opacity: 0.6 },
+            ]}
+          >
+            {leaving ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <Text style={styles.leaveConfirmText}>Leave Channel</Text>
+            )}
+          </Pressable>
+
+          <Pressable onPress={onCancel} style={styles.shareCancel}>
+            <Text style={[styles.shareCancelText, { color: colors.textMuted }]}>Stay</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
   )
 }
 
@@ -1353,7 +1538,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     marginRight: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', flexShrink: 1 },
+  headerTitle: { fontSize: 20, fontWeight: '700', flexShrink: 1, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 },
   memberCount: { fontSize: 12, fontWeight: '600', marginLeft: 2 },
   headerActions: {
     flexDirection: 'row',
@@ -1388,16 +1573,34 @@ const styles = StyleSheet.create({
 
   // Rating overlay
   ratingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  ratingCard: { width: 300, padding: 28, gap: 16, alignItems: 'center' },
-  ratingTitle: { fontSize: 20, fontWeight: '800' },
-  ratingSubtitle: { fontSize: 14, fontWeight: '500' },
-  ratingStars: { flexDirection: 'row', gap: 8 },
+  ratingCard: { width: 320, padding: 28, gap: 14, alignItems: 'center' },
+  ratingStickerBubble: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  ratingTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, textAlign: 'center' },
+  ratingSubtitle: { fontSize: 13, fontWeight: '500', textAlign: 'center' },
+  ratingStars: { flexDirection: 'row', gap: 10, marginTop: 4 },
+
+  // Share sheet
+  shareOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
+  shareSheet: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 34 },
+  shareHandle: { width: 44, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 18 },
+  shareTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, textAlign: 'center', marginBottom: 18 },
+  shareAction: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 15, borderWidth: 1, marginBottom: 12 },
+  shareActionText: { fontSize: 15, fontWeight: '700' },
+  shareActionFilled: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 15 },
+  shareActionTextFilled: { fontSize: 15, fontWeight: '800' },
+  shareCancel: { alignItems: 'center', paddingVertical: 14, marginTop: 4 },
+  shareCancelText: { fontSize: 14, fontWeight: '600' },
+
+  // Leave confirm
+  leaveBody: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20, marginBottom: 18, paddingHorizontal: 8 },
+  leaveConfirmBtn: { paddingVertical: 15, alignItems: 'center', justifyContent: 'center' },
+  leaveConfirmText: { fontSize: 15, fontWeight: '800', color: '#FFFFFF' },
   ratingInput: { width: '100%', padding: 14, fontSize: 14, fontWeight: '500', minHeight: 80, textAlignVertical: 'top' },
   ratingButtons: { flexDirection: 'row', gap: 12, width: '100%' },
   ratingCancelBtn: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   ratingCancelText: { fontSize: 14, fontWeight: '600' },
   ratingSubmitBtn: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center' },
-  ratingSubmitText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  ratingSubmitText: { fontSize: 14, fontWeight: '800' },
 
   // Pinned banner
   pinnedBanner: {
@@ -1562,6 +1765,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   joinPromptText: { fontSize: 14, fontWeight: '500' },
-  joinPromptBtn: { paddingVertical: 10, paddingHorizontal: 28 },
-  joinPromptBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  joinPromptBtn: { paddingVertical: 11, paddingHorizontal: 30 },
+  joinPromptBtnText: { fontSize: 14, fontWeight: '800' },
 })

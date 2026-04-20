@@ -18,6 +18,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { ArrowLeft, Hash, Check } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
+import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { getChannels, type Channel } from '../../lib/channels'
 import { sendMessage, getMyChannelIds } from '../../lib/channelPosts'
 import { fetchPost, type GaragePost } from '../../lib/garagePosts'
@@ -122,7 +123,7 @@ export default function ShareToChannel() {
 
       {loading ? (
         <View style={s.center}>
-          <ActivityIndicator color={colors.primary} />
+          <BrandedLoader />
         </View>
       ) : (
         <FlatList

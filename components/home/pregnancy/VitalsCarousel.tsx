@@ -11,7 +11,12 @@ import {
 } from 'react-native'
 import { X, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
-import { useTheme, brand } from '../../../constants/theme'
+import { useTheme } from '../../../constants/theme'
+import { Emoji } from '../../ui/Emoji'
+import { PaperCard } from '../../ui/PaperCard'
+import { Display, MonoCaps, Body } from '../../ui/Typography'
+import { MoodFace } from '../../stickers/RewardStickers'
+import { moodFaceVariant, moodFaceFill } from '../../../lib/moodFace'
 import { supabase } from '../../../lib/supabase'
 import { LineChart } from '../../charts/SvgCharts'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
@@ -36,7 +41,9 @@ interface VitalCard {
   trend?: 'up' | 'down' | 'neutral'
   trendLabel?: string
   color: string
+  tint: string            // soft sticker tint for paper-card bg
   logType: string
+  moodKey?: string        // pregnancy mood key, mood card only
 }
 
 type LogFormType = 'mood' | 'symptom' | 'kick_count' | 'weight' | 'water' | 'sleep' | 'exercise' | 'nutrition' | null
@@ -99,7 +106,7 @@ interface DetailModalProps {
 }
 
 function VitalDetailModal({ card, userId, weekNumber, onClose, onLog }: DetailModalProps) {
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
   const [history, setHistory] = React.useState<HistoryPoint[]>([])
   const [loading, setLoading] = React.useState(true)
 
@@ -113,6 +120,11 @@ function VitalDetailModal({ card, userId, weekNumber, onClose, onLog }: DetailMo
   const { values, labels } = buildChartDays(history)
   const hasData = values.some(v => v > 0)
 
+  // Most recent mood key (for MoodFace rendering in detail sheet)
+  const latestMoodKey = card.logType === 'mood' && history.length > 0
+    ? String(history[history.length - 1]?.value ?? '')
+    : ''
+
   const moodMap: Record<string, string> = {
     excited: '😍', happy: '😊', okay: '😐', anxious: '😰', nauseous: '🤢',
   }
@@ -122,9 +134,10 @@ function VitalDetailModal({ card, userId, weekNumber, onClose, onLog }: DetailMo
     .slice(0, 5)
     .map(h => ({
       dateLabel: new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      moodKey: card.logType === 'mood' ? String(h.value) : undefined,
       displayValue:
         card.logType === 'mood'
-          ? (moodMap[String(h.value)] ?? '😊')
+          ? String(h.value).charAt(0).toUpperCase() + String(h.value).slice(1)
           : card.logType === 'weight'
           ? `${h.value.toFixed(1)} kg`
           : card.logType === 'water'
@@ -152,17 +165,21 @@ function VitalDetailModal({ card, userId, weekNumber, onClose, onLog }: DetailMo
 
       {/* Header */}
       <View style={styles.detailHeader}>
-        <Text style={{ fontSize: 40, fontFamily: 'Fraunces_600SemiBold' }}>{card.icon}</Text>
+        {card.id === 'mood' ? (
+          <MoodFace size={44} variant={moodFaceVariant(latestMoodKey)} fill={moodFaceFill(latestMoodKey)} />
+        ) : (
+          <Emoji size={40}>{card.icon}</Emoji>
+        )}
         <View>
-          <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{card.label.toUpperCase()}</Text>
-          <Text style={[styles.detailValue, { color: colors.text }]}>{card.value}</Text>
+          <MonoCaps size={10} color={colors.textMuted}>{card.label.toUpperCase()}</MonoCaps>
+          <Text style={[styles.detailValue, { color: colors.text, marginTop: 2 }]}>{card.value}</Text>
           {card.trendLabel && (
             <View style={styles.trendRow}>
-              {card.trend === 'up' && <TrendingUp size={12} color="#A2FF86" strokeWidth={2} />}
-              {card.trend === 'down' && <TrendingDown size={12} color="#FF8AD8" strokeWidth={2} />}
+              {card.trend === 'up' && <TrendingUp size={12} color={stickers.green} strokeWidth={2} />}
+              {card.trend === 'down' && <TrendingDown size={12} color={stickers.coral} strokeWidth={2} />}
               {card.trend === 'neutral' && <Minus size={12} color={colors.textMuted} strokeWidth={2} />}
               <Text style={[styles.trendText, {
-                color: card.trend === 'up' ? '#A2FF86' : card.trend === 'down' ? '#FF8AD8' : colors.textMuted
+                color: card.trend === 'up' ? stickers.green : card.trend === 'down' ? stickers.coral : colors.textMuted
               }]}>{card.trendLabel}</Text>
             </View>
           )}
@@ -176,7 +193,7 @@ function VitalDetailModal({ card, userId, weekNumber, onClose, onLog }: DetailMo
         </View>
       ) : hasData ? (
         <View style={[styles.chartBox, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.chartBoxLabel, { color: colors.textMuted }]}>7-DAY HISTORY</Text>
+          <MonoCaps size={10} color={colors.textMuted} style={{ marginBottom: 8 }}>7-DAY HISTORY</MonoCaps>
           <LineChart
             data={values}
             labels={labels}
@@ -196,11 +213,16 @@ function VitalDetailModal({ card, userId, weekNumber, onClose, onLog }: DetailMo
       {/* Recent entries */}
       {recentEntries.length > 0 && (
         <View style={styles.recentSection}>
-          <Text style={[styles.recentLabel, { color: colors.textMuted }]}>RECENT ENTRIES</Text>
+          <MonoCaps size={10} color={colors.textMuted} style={{ marginBottom: 8 }}>RECENT ENTRIES</MonoCaps>
           {recentEntries.map((e, i) => (
             <View key={i} style={[styles.recentRow, { borderBottomColor: colors.borderLight }]}>
               <Text style={[styles.recentDate, { color: colors.textMuted }]}>{e.dateLabel}</Text>
-              <Text style={[styles.recentValue, { color: colors.text }]}>{e.displayValue}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {e.moodKey && (
+                  <MoodFace size={18} variant={moodFaceVariant(e.moodKey)} fill={moodFaceFill(e.moodKey)} />
+                )}
+                <Text style={[styles.recentValue, { color: colors.text }]}>{e.displayValue}</Text>
+              </View>
             </View>
           ))}
         </View>
@@ -212,7 +234,7 @@ function VitalDetailModal({ card, userId, weekNumber, onClose, onLog }: DetailMo
         style={[styles.logBtn, { backgroundColor: card.color + '20', borderColor: card.color + '60' }]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ fontSize: 15 }}>{card.icon}</Text>
+          <Emoji size={15}>{card.icon}</Emoji>
           <Text style={[styles.logBtnText, { color: card.color }]}>{logLabel}</Text>
         </View>
       </Pressable>
@@ -229,7 +251,7 @@ interface Props {
 }
 
 export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
   const queryClient = useQueryClient()
   const [selectedCard, setSelectedCard] = useState<VitalCard | null>(null)
   const [activeLog, setActiveLog] = useState<LogFormType>(null)
@@ -243,8 +265,8 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
   const nutritionVal = todayLogs['nutrition']?.value ? parseInt(todayLogs['nutrition'].value, 10) : 0
   const exerciseLogged = !!todayLogs['exercise']
 
-  const moodEmojis: Record<string, string> = {
-    excited: '😍', happy: '😊', okay: '😐', anxious: '😰', nauseous: '🤢',
+  const moodLabels: Record<string, string> = {
+    excited: 'Excited', happy: 'Happy', okay: 'Okay', anxious: 'Anxious', nauseous: 'Nauseous', energetic: 'Energetic', sad: 'Sad',
   }
 
   const cards: VitalCard[] = [
@@ -253,7 +275,8 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
       icon: '⚖️',
       label: 'Weight',
       value: weightVal !== null ? `${weightVal.toFixed(1)} kg` : '—',
-      color: brand.pregnancy,
+      color: stickers.lilac,
+      tint: stickers.lilacSoft,
       logType: 'weight',
       trend: 'up',
       trendLabel: 'Log to see trend',
@@ -265,7 +288,8 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
       value: `${waterVal}/8`,
       subLabel: 'glasses today',
       progress: Math.min(1, waterVal / 8),
-      color: '#6AABF7',
+      color: stickers.blue,
+      tint: stickers.blueSoft,
       logType: 'water',
     },
     {
@@ -274,7 +298,8 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
       label: 'Sleep',
       value: sleepVal !== null ? `${sleepVal.toFixed(1)}h` : '—',
       progress: sleepVal !== null ? Math.min(1, sleepVal / 9) : 0,
-      color: '#C4A8F0',
+      color: stickers.lilac,
+      tint: stickers.lilacSoft,
       logType: 'sleep',
     },
     ...(weekNumber >= 28
@@ -284,7 +309,8 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
           label: 'Kicks',
           value: kicksVal !== null ? String(kicksVal) : '—',
           subLabel: 'Count today',
-          color: '#A2FF86',
+          color: stickers.green,
+          tint: stickers.greenSoft,
           logType: 'kick_count',
           trend: kicksVal === null ? ('neutral' as const) : ('up' as const),
           trendLabel: kicksVal === null ? 'Log kicks' : 'sessions today',
@@ -294,10 +320,12 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
       id: 'mood',
       icon: '😊',
       label: 'Mood',
-      value: moodVal ? (moodEmojis[moodVal] ?? '😊') : '—',
-      subLabel: moodVal ?? 'Not logged',
-      color: '#FBBF24',
+      value: moodVal ? (moodLabels[moodVal] ?? moodVal) : '—',
+      subLabel: moodVal ? 'Today' : 'Not logged',
+      color: stickers.yellow,
+      tint: stickers.yellowSoft,
       logType: 'mood',
+      moodKey: moodVal ?? undefined,
     },
     {
       id: 'nutrition',
@@ -305,7 +333,8 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
       label: 'Meals',
       value: `${nutritionVal}/3`,
       progress: Math.min(1, nutritionVal / 3),
-      color: '#FF6B35',
+      color: stickers.peach,
+      tint: stickers.peachSoft,
       logType: 'nutrition',
     },
     {
@@ -314,7 +343,8 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
       label: 'Exercise',
       value: exerciseLogged ? '✓' : '—',
       subLabel: exerciseLogged ? 'Done today' : 'Not logged',
-      color: '#A2FF86',
+      color: stickers.pink,
+      tint: stickers.pinkSoft,
       logType: 'exercise',
     },
   ]
@@ -354,30 +384,29 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
           <Pressable
             key={card.id}
             onPress={() => userId && setSelectedCard(card)}
-            style={({ pressed }) => [
-              styles.card,
-              { backgroundColor: colors.surface, opacity: pressed ? 0.8 : 1 },
-            ]}
+            style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
           >
-            {/* Tap hint */}
-            <View style={[styles.tapHint, { backgroundColor: card.color + '20' }]}>
-              <ChevronRight size={10} color={card.color} strokeWidth={2.5} />
-            </View>
-
-            <Text style={{ fontSize: 20, marginBottom: 2 }}>{card.icon}</Text>
-            <Text style={[styles.cardValue, { color: colors.text }]}>{card.value}</Text>
-            {card.subLabel && (
-              <Text style={[styles.cardSubLabel, { color: colors.textMuted }]} numberOfLines={1}>
-                {card.subLabel}
-              </Text>
-            )}
-            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>{card.label}</Text>
-
-            {card.progress !== undefined && (
-              <View style={[styles.progressTrack, { backgroundColor: colors.surfaceGlass }]}>
-                <View style={[styles.progressFill, { width: `${card.progress * 100}%`, backgroundColor: card.color }]} />
+            <PaperCard tint={card.tint} radius={20} padding={14} style={styles.card}>
+              <MonoCaps size={10} color={colors.textMuted}>{card.label.toUpperCase()}</MonoCaps>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 4 }}>
+                {card.id === 'mood' ? (
+                  <MoodFace size={22} variant={moodFaceVariant(card.moodKey)} fill={moodFaceFill(card.moodKey)} />
+                ) : null}
+                <Display size={card.id === 'mood' ? 18 : 26} color={colors.text}>
+                  {card.value}
+                </Display>
               </View>
-            )}
+              {card.subLabel && (
+                <Body size={11} color={colors.textMuted} numberOfLines={1} style={{ marginTop: 2 }}>
+                  {card.subLabel}
+                </Body>
+              )}
+              {card.progress !== undefined && (
+                <View style={[styles.progressTrack, { backgroundColor: 'rgba(20,19,19,0.08)' }]}>
+                  <View style={[styles.progressFill, { width: `${card.progress * 100}%`, backgroundColor: card.color }]} />
+                </View>
+              )}
+            </PaperCard>
           </Pressable>
         ))}
       </ScrollView>
@@ -434,7 +463,7 @@ interface SimpleLogFormProps {
 }
 
 function SimpleLogForm({ type, userId, onSaved }: SimpleLogFormProps) {
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
   const [value, setValue] = React.useState('')
   const [saving, setSaving] = React.useState(false)
 
@@ -491,12 +520,12 @@ function SimpleLogForm({ type, userId, onSaved }: SimpleLogFormProps) {
       </View>
       <Pressable
         onPress={handleSave}
-        style={[styles.saveBtn, { backgroundColor: brand.pregnancy }]}
+        style={[styles.saveBtn, { backgroundColor: colors.primary }]}
         disabled={saving || !value.trim()}
       >
         {saving
-          ? <ActivityIndicator color="#fff" />
-          : <Text style={styles.saveBtnText}>Save</Text>
+          ? <ActivityIndicator color={colors.textInverse} />
+          : <Text style={[styles.saveBtnText, { color: colors.textInverse }]}>Save</Text>
         }
       </Pressable>
     </View>
@@ -508,47 +537,18 @@ const styles = StyleSheet.create({
 
   card: {
     width: CARD_W,
-    borderRadius: 20,
-    padding: 14,
-    gap: 4,
     position: 'relative',
-  },
-  tapHint: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardIcon: { fontSize: 20, marginBottom: 2, fontFamily: undefined },
-  cardValue: {
-    fontSize: 22,
-    fontFamily: 'CabinetGrotesk-Black',
-    lineHeight: 26,
-  },
-  cardSubLabel: {
-    fontSize: 10,
-    fontFamily: 'Satoshi-Variable',
-    lineHeight: 14,
-  },
-  cardLabel: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '600',
   },
   progressTrack: {
     height: 3,
     borderRadius: 2,
-    marginTop: 6,
+    marginTop: 8,
     overflow: 'hidden',
   },
   progressFill: { height: 3, borderRadius: 2 },
 
   overlay: { flex: 1, justifyContent: 'flex-end' },
-  overlayBg: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)' },
+  overlayBg: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,19,19,0.55)' },
 
   detailSheet: {
     borderTopLeftRadius: 32,
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
   },
   handle: {
     width: 40, height: 4, borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(245,237,220,0.2)',
     alignSelf: 'center', marginBottom: 16,
   },
   closeBtn: { position: 'absolute', top: 12, right: 20, padding: 8, zIndex: 10 },
@@ -567,45 +567,33 @@ const styles = StyleSheet.create({
   detailHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 24, marginBottom: 16,
   },
-  detailIcon: { fontSize: 40, fontFamily: undefined },
-  detailLabel: {
-    fontSize: 11, fontFamily: 'Satoshi-Variable', fontWeight: '700',
-    letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2,
-  },
-  detailValue: { fontSize: 32, fontFamily: 'CabinetGrotesk-Black' },
+  detailValue: { fontSize: 32, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 },
   trendRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  trendText: { fontSize: 12, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
+  trendText: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
 
   chartLoadingBox: {
     height: 100, alignItems: 'center', justifyContent: 'center', marginHorizontal: 20, marginBottom: 16,
   },
   chartBox: {
-    marginHorizontal: 20, borderRadius: 16, padding: 16, marginBottom: 16,
-  },
-  chartBoxLabel: {
-    fontSize: 10, fontFamily: 'Satoshi-Variable', fontWeight: '700',
-    letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8,
+    marginHorizontal: 20, borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1,
+    borderColor: 'rgba(20,19,19,0.08)',
   },
   chartEmpty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 24 },
-  chartEmptyText: { fontSize: 13, fontFamily: 'Satoshi-Variable', textAlign: 'center' },
+  chartEmptyText: { fontSize: 13, fontFamily: 'DMSans_400Regular', textAlign: 'center' },
 
   recentSection: { paddingHorizontal: 24, marginBottom: 16 },
-  recentLabel: {
-    fontSize: 10, fontFamily: 'Satoshi-Variable', fontWeight: '700',
-    letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8,
-  },
   recentRow: {
     flexDirection: 'row', justifyContent: 'space-between',
-    paddingVertical: 8, borderBottomWidth: 1,
+    paddingVertical: 10, borderBottomWidth: 1,
   },
-  recentDate: { fontSize: 13, fontFamily: 'Satoshi-Variable' },
-  recentValue: { fontSize: 13, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  recentDate: { fontSize: 13, fontFamily: 'DMSans_400Regular' },
+  recentValue: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
 
   logBtn: {
     marginHorizontal: 20, borderRadius: 999, paddingVertical: 14,
     alignItems: 'center', borderWidth: 1,
   },
-  logBtnText: { fontSize: 15, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  logBtnText: { fontSize: 15, fontFamily: 'DMSans_600SemiBold' },
 
   logFormSheet: {
     borderTopLeftRadius: 32, borderTopRightRadius: 32,
@@ -613,21 +601,21 @@ const styles = StyleSheet.create({
   },
 
   simpleForm: { padding: 24, gap: 16 },
-  simpleFormTitle: { fontSize: 18, fontFamily: 'CabinetGrotesk-Black', textAlign: 'center' },
+  simpleFormTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', textAlign: 'center' },
   simpleInput: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     borderRadius: 16, paddingHorizontal: 20, paddingVertical: 14, borderWidth: 1,
   },
-  simpleInputText: { fontSize: 18, fontFamily: 'CabinetGrotesk-Black', flex: 1 },
-  simpleUnit: { fontSize: 13, fontFamily: 'Satoshi-Variable' },
+  simpleInputText: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', flex: 1 },
+  simpleUnit: { fontSize: 13, fontFamily: 'DMSans_400Regular' },
   simpleNumpad: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   numpadKey: {
     width: (SCREEN_W - 48 - 16) / 3 - 6,
     paddingVertical: 14, borderRadius: 12, alignItems: 'center',
   },
-  numpadKeyText: { fontSize: 18, fontFamily: 'CabinetGrotesk-Black' },
+  numpadKeyText: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold' },
   saveBtn: {
     borderRadius: 999, paddingVertical: 16, alignItems: 'center',
   },
-  saveBtnText: { fontSize: 16, fontFamily: 'Satoshi-Variable', fontWeight: '700', color: '#fff' },
+  saveBtnText: { fontSize: 16, fontFamily: 'DMSans_600SemiBold' },
 })

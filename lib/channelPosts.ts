@@ -92,22 +92,27 @@ export async function createChannel(opts: {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
 
-  // Upload avatar if provided
+  // Resolve avatar — either a "sticker://name/color" identifier (stored as-is)
+  // or a local photo URI (uploaded to storage, stored as public URL).
   let avatarUrl: string | null = null
   if (opts.avatarUri) {
-    try {
-      const ext = opts.avatarUri.split('.').pop()?.toLowerCase() ?? 'jpg'
-      const path = `channels/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`
-      const formData = new FormData()
-      formData.append('', { uri: opts.avatarUri, name: path.split('/').pop(), type: `image/${ext}` } as any)
-      const { error: uploadErr } = await supabase.storage
-        .from('garage-media')
-        .upload(path, formData, { contentType: 'multipart/form-data', upsert: true })
-      if (!uploadErr) {
-        const { data: urlData } = supabase.storage.from('garage-media').getPublicUrl(path)
-        avatarUrl = urlData.publicUrl
-      }
-    } catch {}
+    if (opts.avatarUri.startsWith('sticker://')) {
+      avatarUrl = opts.avatarUri
+    } else {
+      try {
+        const ext = opts.avatarUri.split('.').pop()?.toLowerCase() ?? 'jpg'
+        const path = `channels/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`
+        const formData = new FormData()
+        formData.append('', { uri: opts.avatarUri, name: path.split('/').pop(), type: `image/${ext}` } as any)
+        const { error: uploadErr } = await supabase.storage
+          .from('garage-media')
+          .upload(path, formData, { contentType: 'multipart/form-data', upsert: true })
+        if (!uploadErr) {
+          const { data: urlData } = supabase.storage.from('garage-media').getPublicUrl(path)
+          avatarUrl = urlData.publicUrl
+        }
+      } catch {}
+    }
   }
 
   const { data, error } = await supabase

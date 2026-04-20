@@ -1,240 +1,66 @@
 /**
- * D2 — Pregnancy Analytics (v2)
+ * PregnancyAnalytics — 2026 cream-paper redesign with tappable stat cards
  *
- * 3-tab layout:
- * 1. Overview    — progress arc + weight chart + mood trend + kicks + symptoms
- * 2. Birth Prep  — birth plan progress + hospital bag + classes checklist
- * 3. Wellbeing   — overall score + sleep + nutrition + hydration
+ * Layout:
+ *   1. Title "Pregnancy, week over week." + PeriodSelector
+ *   2. BigChartCard — weight gain hero (tap → Weight detail modal)
+ *   3. 2×2 grid — Kicks/Day · Symptoms · Sleep · Wellbeing (all tappable)
+ *   4. Mini charts section — Mood trend, Hydration, Top symptoms
  *
- * All charts use real data from pregnancy query hooks.
+ * All data from `pregnancy_logs` table via hooks in `lib/analyticsData.ts`.
+ * Detail modals render per-metric breakdowns with the full dataset.
  */
 
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  Dimensions,
-  StyleSheet,
-  ActivityIndicator,
+  View, Text, ScrollView, StyleSheet, Modal, Pressable, Dimensions,
 } from 'react-native'
-import { router } from 'expo-router'
-import Svg, {
-  Circle as SvgCircle,
-  Text as SvgText,
-} from 'react-native-svg'
-import { ChevronRight } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
-import { usePregnancyStore } from '../../store/usePregnancyStore'
+import Svg, { Path, Circle as SvgCircle, Line as SvgLine, Text as SvgText } from 'react-native-svg'
+import { X } from 'lucide-react-native'
+
+import { useTheme } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
+import { usePregnancyStore } from '../../store/usePregnancyStore'
 import {
   usePregnancyWeightHistory,
-  usePregnancyMoodTrend,
   usePregnancyKickSessions,
   usePregnancySymptomFrequency,
-  usePregnancyWellbeingScore,
   usePregnancySleepHistory,
+  usePregnancyWellbeingScore,
+  usePregnancyMoodTrend,
   usePregnancyHydrationHistory,
-  usePregnancyNutritionMatrix,
 } from '../../lib/analyticsData'
-import { LineChart, BarChart, HeatmapGrid } from '../charts/SvgCharts'
 
-const SCREEN_W = Dimensions.get('window').width
+import { AnalyticsHeader } from './shared/AnalyticsHeader'
+import { AnalyticsTitle } from './shared/AnalyticsTitle'
+import { PeriodSelector, type Period } from './shared/PeriodSelector'
+import { BigChartCard } from './shared/BigChartCard'
+import { MiniStatTile } from './shared/MiniStatTile'
+import { MiniLineChart, MiniBarChart } from './shared/MiniCharts'
+import { Display, Body, MonoCaps } from '../ui/Typography'
+import {
+  Heart, Moon, Leaf, Drop, Bolt, Sparkle, Flower,
+} from '../ui/Stickers'
+import { MoodFace } from '../stickers/RewardStickers'
+import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 
-type AnalyticsTab = 'overview' | 'birth_prep' | 'wellbeing'
+const SCREEN_H = Dimensions.get('window').height
 
-// ─── Progress Arc ─────────────────────────────────────────────────────────────
+// ─── Metric types ──────────────────────────────────────────────────────────
 
-interface ProgressArcProps {
-  week: number
-  progress: number
-}
+type MetricKey = 'weight' | 'kicks' | 'symptoms' | 'sleep' | 'wellbeing'
 
-function ProgressArc({ week, progress }: ProgressArcProps) {
-  const size = 140
-  const cx = size / 2
-  const cy = size / 2
-  const r = 56
-  const strokeW = 10
-  const circumference = 2 * Math.PI * r
-  const dashOffset = circumference * (1 - progress)
-
-  return (
-    <Svg width={size} height={size}>
-      <SvgCircle cx={cx} cy={cy} r={r} stroke="rgba(255,255,255,0.08)" strokeWidth={strokeW} fill="none" />
-      <SvgCircle
-        cx={cx} cy={cy} r={r}
-        stroke={brand.pregnancy}
-        strokeWidth={strokeW}
-        fill="none"
-        strokeDasharray={`${circumference}`}
-        strokeDashoffset={dashOffset}
-        strokeLinecap="round"
-        rotation="-90"
-        origin={`${cx},${cy}`}
-      />
-      <SvgText
-        x={cx} y={cy - 8}
-        textAnchor="middle"
-        fill="#FFFFFF"
-        fontSize="22"
-        fontWeight="900"
-        fontFamily="CabinetGrotesk-Black"
-      >
-        {week}
-      </SvgText>
-      <SvgText
-        x={cx} y={cy + 12}
-        textAnchor="middle"
-        fill="rgba(255,255,255,0.55)"
-        fontSize="11"
-        fontFamily="Satoshi-Variable"
-      >
-        of 40 weeks
-      </SvgText>
-    </Svg>
-  )
-}
-
-// ─── Wellbeing score circle ───────────────────────────────────────────────────
-
-interface ScoreCircleProps {
-  score: number
-  label: string
-}
-
-function ScoreCircle({ score, label }: ScoreCircleProps) {
-  const size = 100
-  const cx = size / 2
-  const cy = size / 2
-  const r = 40
-  const circumference = 2 * Math.PI * r
-  const dashOffset = circumference * (1 - score / 100)
-  const color = score >= 70 ? '#A2FF86' : score >= 40 ? '#FBBF24' : '#FF6B35'
-
-  return (
-    <View style={{ alignItems: 'center' }}>
-      <Svg width={size} height={size}>
-        <SvgCircle cx={cx} cy={cy} r={r} stroke="rgba(255,255,255,0.08)" strokeWidth={8} fill="none" />
-        <SvgCircle
-          cx={cx} cy={cy} r={r}
-          stroke={color}
-          strokeWidth={8}
-          fill="none"
-          strokeDasharray={`${circumference}`}
-          strokeDashoffset={dashOffset}
-          strokeLinecap="round"
-          rotation="-90"
-          origin={`${cx},${cy}`}
-        />
-        <SvgText
-          x={cx} y={cy + 5}
-          textAnchor="middle"
-          fill="#FFFFFF"
-          fontSize="18"
-          fontWeight="900"
-          fontFamily="CabinetGrotesk-Black"
-        >
-          {score}
-        </SvgText>
-      </Svg>
-      <Text style={{ fontSize: 12, fontFamily: 'Satoshi-Variable', color: 'rgba(255,255,255,0.55)', marginTop: 4 }}>
-        {label}
-      </Text>
-    </View>
-  )
-}
-
-// ─── Dimension bar ────────────────────────────────────────────────────────────
-
-interface DimensionBarProps {
-  label: string
-  value: number
-  color: string
-}
-
-function DimensionBar({ label, value, color }: DimensionBarProps) {
-  const { colors } = useTheme()
-  return (
-    <View style={{ marginBottom: 12 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-        <Text style={{ fontSize: 13, fontFamily: 'Satoshi-Variable', fontWeight: '600', color: colors.text }}>{label}</Text>
-        <Text style={{ fontSize: 13, fontFamily: 'Satoshi-Variable', color }}>{value}%</Text>
-      </View>
-      <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3 }}>
-        <View style={{ width: `${Math.min(value, 100)}%`, height: 6, backgroundColor: color, borderRadius: 3 }} />
-      </View>
-    </View>
-  )
-}
-
-// ─── Section Card ─────────────────────────────────────────────────────────────
-
-interface SectionCardProps {
-  title: string
-  children: React.ReactNode
-}
-
-function SectionCard({ title, children }: SectionCardProps) {
-  const { colors } = useTheme()
-  return (
-    <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
-      {children}
-    </View>
-  )
-}
-
-// ─── Checklist Item ───────────────────────────────────────────────────────────
-
-interface ChecklistItemProps {
-  label: string
-  done: boolean
-  color: string
-}
-
-function ChecklistItem({ label, done, color }: ChecklistItemProps) {
-  const { colors } = useTheme()
-  return (
-    <View style={styles.checklistRow}>
-      <View style={[styles.checkDot, { backgroundColor: done ? color : 'transparent', borderColor: done ? color : colors.border }]} />
-      <Text style={[styles.checkLabel, { color: done ? colors.text : colors.textSecondary, textDecorationLine: done ? 'line-through' : 'none' }]}>
-        {label}
-      </Text>
-    </View>
-  )
-}
-
-// ─── Empty State ──────────────────────────────────────────────────────────────
-
-interface EmptyStateProps {
-  message: string
-}
-
-function EmptyState({ message }: EmptyStateProps) {
-  const { colors } = useTheme()
-  return (
-    <View style={styles.emptyState}>
-      <Text style={[styles.emptyText, { color: colors.textMuted }]}>{message}</Text>
-    </View>
-  )
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Main Screen ───────────────────────────────────────────────────────────
 
 export function PregnancyAnalytics() {
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
   const insets = useSafeAreaInsets()
 
   const weekNumber = usePregnancyStore((s) => s.weekNumber) ?? 24
-  const trimester = weekNumber <= 13 ? 1 : weekNumber <= 26 ? 2 : 3
-  const progress = weekNumber / 40
-  const showKicks = weekNumber >= 28
-
-  const [activeTab, setActiveTab] = useState<AnalyticsTab>('overview')
+  const [period, setPeriod] = useState<Period>('month')
   const [userId, setUserId] = useState<string | undefined>(undefined)
+  const [openMetric, setOpenMetric] = useState<MetricKey | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -242,686 +68,687 @@ export function PregnancyAnalytics() {
     })
   }, [])
 
-  const chartW = SCREEN_W - 72
+  const uid = userId ?? ''
 
-  // ── Data hooks ──────────────────────────────────────────────────────────────
-  const { data: weightHistory = [], isLoading: loadingWeight } = usePregnancyWeightHistory(userId ?? '', 12)
-  const { data: moodRaw = [], isLoading: loadingMood } = usePregnancyMoodTrend(userId ?? '', 12)
-  const { data: kickSessions = [], isLoading: loadingKicks } = usePregnancyKickSessions(userId ?? '', 14)
-  const { data: symptomFreq = [], isLoading: loadingSymptoms } = usePregnancySymptomFrequency(userId ?? '')
-  const { data: wellbeing, isLoading: loadingWellbeing } = usePregnancyWellbeingScore(userId ?? '')
-  const { data: sleepHistory = [], isLoading: loadingSleep } = usePregnancySleepHistory(userId ?? '', 4)
-  const { data: hydration = [], isLoading: loadingHydration } = usePregnancyHydrationHistory(userId ?? '', 7)
-  const { data: nutritionMatrix, isLoading: loadingNutrition } = usePregnancyNutritionMatrix(userId ?? '', 14)
+  // Real data hooks
+  const { data: weightHistory = [] } = usePregnancyWeightHistory(uid, 20)
+  const { data: kickSessions = [] } = usePregnancyKickSessions(uid, 14)
+  const { data: symptomFreq = [] } = usePregnancySymptomFrequency(uid)
+  const { data: sleepHistory = [] } = usePregnancySleepHistory(uid, 4)
+  const { data: wellbeing } = usePregnancyWellbeingScore(uid)
+  const { data: moodTrend = [] } = usePregnancyMoodTrend(uid, 4)
+  const { data: hydrationHistory = [] } = usePregnancyHydrationHistory(uid, 7)
 
-  // ── Derived chart data ──────────────────────────────────────────────────────
+  // ─── Derived values ──────────────────────────────────────────────────────
 
-  // Weight chart — use e.weight (not e.weight_kg), e.date for labels
-  const weightValues = weightHistory.map((e) => e.weight)
-  const weightLabels = weightHistory.map((e) => {
-    const d = new Date(e.date)
-    return `${d.getMonth() + 1}/${d.getDate()}`
-  })
+  const weights = weightHistory.map((e) => e.weight).filter((w) => w > 0)
+  const latestWeight = weights.length ? weights[weights.length - 1] : null
+  const firstWeight = weights.length ? weights[0] : null
+  const weeklyGain =
+    firstWeight && latestWeight && weights.length > 1
+      ? (latestWeight - firstWeight) / Math.max(1, weights.length - 1)
+      : null
 
-  // Mood trend — use e.value (not e.notes), e.log_date (not e.date)
-  const moodMap: Record<string, number> = { excited: 5, happy: 4, okay: 3, anxious: 2, nauseous: 1 }
-  const moodValues = moodRaw.map((e) => {
-    const key = (e.value ?? '').toLowerCase()
-    return moodMap[key] ?? 3
-  })
-  const moodLabels = moodRaw.map((e) => {
-    const d = new Date(e.log_date)
-    return `${d.getMonth() + 1}/${d.getDate()}`
-  })
+  const weightValue = latestWeight ? latestWeight.toFixed(1) : '—'
+  const weightUnit = weeklyGain !== null
+    ? `kg · ${weeklyGain >= 0 ? '+' : ''}${weeklyGain.toFixed(1)} / wk`
+    : 'kg'
 
-  // Kick sessions — use e.kicks (not e.count), e.date is correct
-  const kickValues = kickSessions.map((e) => e.kicks)
-  const kickLabels = kickSessions.map((e) => {
-    const d = new Date(e.date)
-    return `${d.getMonth() + 1}/${d.getDate()}`
-  })
+  const avgKicks = kickSessions.length > 0
+    ? Math.round(kickSessions.reduce((a, b) => a + b.kicks, 0) / kickSessions.length)
+    : 0
 
-  // Sleep history
-  const sleepValues = sleepHistory.map((e) => e.hours)
-  const sleepLabels = sleepHistory.map((e) => {
-    const d = new Date(e.date)
-    return `${d.getMonth() + 1}/${d.getDate()}`
-  })
+  const symptomCount = symptomFreq.reduce((a, b) => a + b.count, 0)
+  const topSymptom = symptomFreq[0]
 
-  // Hydration history
-  const hydrationValues = hydration.map((e) => e.glasses)
-  const hydrationLabels = hydration.map((e) => {
-    const d = new Date(e.date)
-    return `${d.getMonth() + 1}/${d.getDate()}`
-  })
+  const sleepAvg = wellbeing
+    ? wellbeing.sleep.toFixed(1) + 'h'
+    : sleepHistory.length > 0
+    ? (sleepHistory.reduce((a, b) => a + b.hours, 0) / sleepHistory.length).toFixed(1) + 'h'
+    : '—'
 
-  // Nutrition heatmap — use nutritionMatrix.dates (not nutritionMatrix.days)
-  // HeatmapGrid expects data: number[][], rowLabels, colLabels, color
-  const nutritionHeatRows: number[][] = nutritionMatrix ? [
-    nutritionMatrix.iron.map((v) => (v ? 1 : 0)),
-    nutritionMatrix.folic.map((v) => (v ? 1 : 0)),
-    nutritionMatrix.protein.map((v) => (v ? 1 : 0)),
-    nutritionMatrix.calcium.map((v) => (v ? 1 : 0)),
-  ] : []
-  const nutritionColLabels = nutritionMatrix
-    ? nutritionMatrix.dates.map((d) => {
-        const date = new Date(d)
-        return `${date.getDate()}`
-      })
-    : []
-  const nutritionRowLabels = ['Iron', 'Folic', 'Protein', 'Calcium']
-
-  // Wellbeing: overall is already 0-100 (hook returns Math.round(avg * 10))
-  // sleep/mood/nutrition/exercise/hydration are 0-10 — multiply by 10 for display
-  const wellbeingOverall = wellbeing ? wellbeing.overall : 0
-  const wellbeingSleep = wellbeing ? Math.round(wellbeing.sleep * 10) : 0
-  const wellbeingMood = wellbeing ? Math.round(wellbeing.mood * 10) : 0
-  const wellbeingNutrition = wellbeing ? Math.round(wellbeing.nutrition * 10) : 0
-  const wellbeingHydration = wellbeing ? Math.round(wellbeing.hydration * 10) : 0
-  const wellbeingExercise = wellbeing ? Math.round(wellbeing.exercise * 10) : 0
-  const wellbeingDelta = wellbeing ? Math.abs(wellbeing.delta * 10) : 0
-  const wellbeingTrend = wellbeing && wellbeing.delta >= 0 ? '↑' : '↓'
-
-  // Trimester color — brand.trimester doesn't exist in theme, use direct hex values
-  const trimesterColor =
-    trimester === 1 ? '#A2FF86' :
-    trimester === 2 ? brand.pregnancy :
-    '#FBBF24'
-
-  // Birth prep checklist (static — represents common tasks)
-  const birthPlanItems = [
-    { label: 'Birth preferences documented', done: weekNumber >= 32 },
-    { label: 'Hospital/birth center chosen', done: weekNumber >= 28 },
-    { label: 'Birth partner briefed', done: weekNumber >= 30 },
-    { label: 'Pain management options reviewed', done: weekNumber >= 34 },
-    { label: 'Cord blood decision made', done: weekNumber >= 36 },
-  ]
-  const birthPlanDone = birthPlanItems.filter((i) => i.done).length
-
-  const hospitalBagItems = [
-    { label: 'ID & insurance card', done: weekNumber >= 36 },
-    { label: 'Birth plan printout', done: weekNumber >= 37 },
-    { label: 'Comfortable clothes & toiletries', done: weekNumber >= 37 },
-    { label: 'Newborn outfit & blanket', done: weekNumber >= 38 },
-    { label: 'Car seat installed', done: weekNumber >= 38 },
-    { label: 'Snacks & entertainment', done: weekNumber >= 38 },
-  ]
-  const bagDone = hospitalBagItems.filter((i) => i.done).length
-
-  const classItems = [
-    { label: 'Childbirth education class', done: weekNumber >= 28 },
-    { label: 'Breastfeeding class', done: weekNumber >= 30 },
-    { label: 'Infant CPR course', done: weekNumber >= 32 },
-    { label: 'Newborn care basics', done: weekNumber >= 33 },
-  ]
-  const classesDone = classItems.filter((i) => i.done).length
-
-  // Tab definitions
-  const tabs: { key: AnalyticsTab; label: string }[] = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'birth_prep', label: 'Birth Prep' },
-    { key: 'wellbeing', label: 'Wellbeing' },
-  ]
-
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const hydrationData = hydrationHistory.map((h) => h.glasses)
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
-
-      {/* Tab Bar */}
-      <View style={[styles.tabBar, { borderBottomColor: colors.border }]}>
-        {tabs.map((tab) => (
-          <Pressable
-            key={tab.key}
-            style={[styles.tabItem, activeTab === tab.key && styles.tabItemActive]}
-            onPress={() => setActiveTab(tab.key)}
-          >
-            <Text style={[
-              styles.tabLabel,
-              { color: activeTab === tab.key ? brand.pregnancy : colors.textMuted },
-            ]}>
-              {tab.label}
-            </Text>
-            {activeTab === tab.key && (
-              <View style={[styles.tabUnderline, { backgroundColor: brand.pregnancy }]} />
-            )}
-          </Pressable>
-        ))}
-      </View>
-
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: insets.bottom + 100 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
+        <AnalyticsHeader hide />
 
-        {/* ── Overview Tab ─────────────────────────────────────────── */}
-        {activeTab === 'overview' && (
-          <>
-            {/* Progress header */}
-            <View style={[styles.headerCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <View style={styles.headerRow}>
-                <ProgressArc week={weekNumber} progress={progress} />
-                <View style={styles.headerMeta}>
-                  <Text style={[styles.trimesterBadge, { color: trimesterColor, borderColor: trimesterColor + '44', backgroundColor: trimesterColor + '18' }]}>
-                    T{trimester} · Week {weekNumber}
-                  </Text>
-                  <Text style={[styles.headerTitle, { color: colors.text }]}>
-                    {Math.round(progress * 100)}% complete
-                  </Text>
-                  <Text style={[styles.headerSub, { color: colors.textSecondary }]}>
-                    {40 - weekNumber} weeks remaining
-                  </Text>
-                  <Pressable
-                    style={[styles.cta, { backgroundColor: brand.pregnancy + '20', borderColor: brand.pregnancy + '40' }]}
-                    onPress={() => router.push('/(tabs)/agenda')}
-                  >
-                    <Text style={[styles.ctaText, { color: brand.pregnancy }]}>Log today</Text>
-                    <ChevronRight size={14} color={brand.pregnancy} />
-                  </Pressable>
-                </View>
-              </View>
-            </View>
+        <AnalyticsTitle primary="Pregnancy," italic="week over week." />
 
-            {/* Weight history */}
-            <SectionCard title="Weight Gain">
-              {loadingWeight ? (
-                <ActivityIndicator color={brand.pregnancy} style={styles.loader} />
-              ) : weightValues.length < 2 ? (
-                <EmptyState message="No weight logs yet. Start logging in the agenda." />
-              ) : (
-                <LineChart
-                  data={weightValues}
-                  labels={weightLabels}
-                  color={brand.pregnancy}
-                  width={chartW}
-                  height={160}
-                  showAverage
-                  unit=" kg"
-                />
-              )}
-            </SectionCard>
+        <PeriodSelector value={period} onChange={setPeriod} showCustom={false} />
 
-            {/* Mood trend */}
-            <SectionCard title="Mood Trend">
-              {loadingMood ? (
-                <ActivityIndicator color={brand.pregnancy} style={styles.loader} />
-              ) : moodValues.length < 2 ? (
-                <EmptyState message="No mood logs yet. Track daily in the agenda." />
-              ) : (
-                <>
-                  <LineChart
-                    data={moodValues}
-                    labels={moodLabels}
-                    color={brand.pregnancy}
-                    width={chartW}
-                    height={140}
-                  />
-                  <View style={styles.moodLegend}>
-                    {Object.entries(moodMap).map(([label, val]) => (
-                      <View key={label} style={styles.legendItem}>
-                        <View style={[styles.legendDot, { backgroundColor: brand.pregnancy, opacity: val / 5 }]} />
-                        <Text style={[styles.legendText, { color: colors.textMuted }]}>{label}</Text>
-                      </View>
-                    ))}
+        {/* Hero: Weight gain — tap to expand */}
+        <BigChartCard
+          label={`WEIGHT GAIN · WEEK ${weekNumber}`}
+          value={weightValue}
+          unit={weightUnit}
+          blobColor={stickers.lilacSoft}
+          onPress={() => setOpenMetric('weight')}
+        >
+          <MiniLineChart data={weights} color={stickers.lilac} />
+        </BigChartCard>
+
+        {/* 2×2 tappable stat grid */}
+        <View style={styles.grid}>
+          <View style={styles.row}>
+            <MiniStatTile
+              label="KICKS / DAY"
+              value={avgKicks ? String(avgKicks) : '—'}
+              sticker={<Heart size={28} fill={stickers.pink} />}
+              tint={stickers.pinkSoft}
+              onPress={() => setOpenMetric('kicks')}
+            />
+            <MiniStatTile
+              label="SYMPTOMS"
+              value={symptomCount > 0 ? `${symptomCount} logged` : 'None'}
+              sticker={<Bolt size={28} fill={stickers.yellow} />}
+              tint={stickers.yellowSoft}
+              onPress={() => setOpenMetric('symptoms')}
+            />
+          </View>
+          <View style={styles.row}>
+            <MiniStatTile
+              label="SLEEP"
+              value={sleepAvg}
+              sticker={<Moon size={28} fill={stickers.lilac} />}
+              tint={stickers.lilacSoft}
+              onPress={() => setOpenMetric('sleep')}
+            />
+            <MiniStatTile
+              label="WELLBEING"
+              value={wellbeing ? `${wellbeing.overall}%` : '—'}
+              sticker={<Leaf size={28} fill={stickers.green} />}
+              tint={stickers.greenSoft}
+              onPress={() => setOpenMetric('wellbeing')}
+            />
+          </View>
+        </View>
+
+        {/* Mood trend — past 4 weeks */}
+        {moodTrend.length > 0 && (
+          <Section title="Mood Trend" subtitle={`Past 4 weeks — ${moodTrend.length} logged`}>
+            <MoodTrendStrip data={moodTrend} stickers={stickers} colors={colors} />
+          </Section>
+        )}
+
+        {/* Hydration — past 7 days */}
+        {hydrationData.some((v) => v > 0) && (
+          <Section title="Hydration" subtitle="Glasses per day · target 8">
+            <MiniBarChart
+              data={hydrationData.length > 0 ? hydrationData : [0]}
+              labels={hydrationHistory.map((h) => shortDay(h.date))}
+              color={stickers.blue}
+            />
+          </Section>
+        )}
+
+        {/* Top symptoms list */}
+        {symptomFreq.length > 0 && (
+          <Section title="Top Symptoms" subtitle={`${symptomFreq.length} unique this period`}>
+            <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              {symptomFreq.map((s, i) => (
+                <View
+                  key={s.symptom}
+                  style={[
+                    styles.listRow,
+                    i < symptomFreq.length - 1 && { borderBottomColor: colors.borderLight, borderBottomWidth: StyleSheet.hairlineWidth },
+                  ]}
+                >
+                  <View style={[styles.rank, { backgroundColor: stickers.yellowSoft, borderColor: colors.border }]}>
+                    <Text style={[styles.rankText, { color: colors.text }]}>{i + 1}</Text>
                   </View>
-                </>
-              )}
-            </SectionCard>
-
-            {/* Kick counter (T3 only) */}
-            {showKicks && (
-              <SectionCard title="Kick Sessions">
-                {loadingKicks ? (
-                  <ActivityIndicator color={brand.pregnancy} style={styles.loader} />
-                ) : kickValues.length === 0 ? (
-                  <EmptyState message="No kick sessions logged yet. Start counting kicks from the agenda." />
-                ) : (
-                  <BarChart
-                    data={kickValues}
-                    labels={kickLabels}
-                    color="#A2FF86"
-                    width={chartW}
-                    height={150}
-                    showValues
-                  />
-                )}
-              </SectionCard>
-            )}
-
-            {/* Symptom frequency */}
-            <SectionCard title="Top Symptoms">
-              {loadingSymptoms ? (
-                <ActivityIndicator color={brand.pregnancy} style={styles.loader} />
-              ) : symptomFreq.length === 0 ? (
-                <EmptyState message="No symptoms logged yet." />
-              ) : (
-                <View style={styles.symptomList}>
-                  {symptomFreq.map((s, i) => (
-                    <View key={s.symptom} style={styles.symptomRow}>
-                      <View style={styles.symptomRank}>
-                        <Text style={[styles.symptomRankText, { color: brand.pregnancy }]}>{i + 1}</Text>
-                      </View>
-                      <Text style={[styles.symptomName, { color: colors.text }]}>{s.symptom}</Text>
-                      <View style={styles.symptomBar}>
-                        <View style={[styles.symptomFill, {
-                          width: `${Math.min((s.count / (symptomFreq[0]?.count ?? 1)) * 100, 100)}%`,
-                          backgroundColor: brand.pregnancy,
-                        }]} />
-                      </View>
-                      <Text style={[styles.symptomCount, { color: colors.textMuted }]}>{s.count}x</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </SectionCard>
-          </>
-        )}
-
-        {/* ── Birth Prep Tab ───────────────────────────────────────── */}
-        {activeTab === 'birth_prep' && (
-          <>
-            {/* Progress summary */}
-            <View style={[styles.headerCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 12 }]}>Birth Prep Progress</Text>
-              <View style={styles.prepSummaryRow}>
-                <View style={styles.prepStat}>
-                  <Text style={[styles.prepStatNum, { color: brand.pregnancy }]}>{birthPlanDone}/{birthPlanItems.length}</Text>
-                  <Text style={[styles.prepStatLabel, { color: colors.textMuted }]}>Birth Plan</Text>
-                </View>
-                <View style={styles.prepDivider} />
-                <View style={styles.prepStat}>
-                  <Text style={[styles.prepStatNum, { color: brand.pregnancy }]}>{bagDone}/{hospitalBagItems.length}</Text>
-                  <Text style={[styles.prepStatLabel, { color: colors.textMuted }]}>Hospital Bag</Text>
-                </View>
-                <View style={styles.prepDivider} />
-                <View style={styles.prepStat}>
-                  <Text style={[styles.prepStatNum, { color: brand.pregnancy }]}>{classesDone}/{classItems.length}</Text>
-                  <Text style={[styles.prepStatLabel, { color: colors.textMuted }]}>Classes</Text>
-                </View>
-              </View>
-              <Pressable
-                style={[styles.cta, { backgroundColor: brand.pregnancy + '20', borderColor: brand.pregnancy + '40', marginTop: 12 }]}
-                onPress={() => router.push('/(tabs)/vault')}
-              >
-                <Text style={[styles.ctaText, { color: brand.pregnancy }]}>Open Vault</Text>
-                <ChevronRight size={14} color={brand.pregnancy} />
-              </Pressable>
-            </View>
-
-            {/* Birth plan checklist */}
-            <SectionCard title="Birth Plan">
-              {birthPlanItems.map((item, i) => (
-                <ChecklistItem key={i} label={item.label} done={item.done} color={brand.pregnancy} />
-              ))}
-              <Text style={[styles.checklistNote, { color: colors.textMuted }]}>
-                Items auto-check based on your current week.
-              </Text>
-            </SectionCard>
-
-            {/* Hospital bag */}
-            <SectionCard title="Hospital Bag">
-              {hospitalBagItems.map((item, i) => (
-                <ChecklistItem key={i} label={item.label} done={item.done} color="#FBBF24" />
-              ))}
-            </SectionCard>
-
-            {/* Classes */}
-            <SectionCard title="Prenatal Classes">
-              {classItems.map((item, i) => (
-                <ChecklistItem key={i} label={item.label} done={item.done} color="#A2FF86" />
-              ))}
-            </SectionCard>
-          </>
-        )}
-
-        {/* ── Wellbeing Tab ────────────────────────────────────────── */}
-        {activeTab === 'wellbeing' && (
-          <>
-            {/* Overall score */}
-            <View style={[styles.headerCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              {loadingWellbeing ? (
-                <ActivityIndicator color={brand.pregnancy} style={styles.loader} />
-              ) : (
-                <View style={styles.wellbeingHeader}>
-                  <ScoreCircle score={wellbeingOverall} label="Overall" />
-                  <View style={styles.wellbeingHeaderMeta}>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>Wellbeing Score</Text>
-                    <Text style={[styles.headerSub, { color: colors.textSecondary }]}>Based on last 7 days</Text>
-                    {wellbeing && (
-                      <Text style={[styles.trendBadge, {
-                        color: wellbeing.delta >= 0 ? '#A2FF86' : '#FF6B35',
-                        backgroundColor: (wellbeing.delta >= 0 ? '#A2FF86' : '#FF6B35') + '18',
-                      }]}>
-                        {wellbeingTrend} {wellbeingDelta.toFixed(0)} pts vs last week
-                      </Text>
-                    )}
+                  <Text style={[styles.listLabel, { color: colors.text }]}>{s.symptom}</Text>
+                  <View style={[styles.countChip, { backgroundColor: stickers.yellowSoft, borderColor: colors.border }]}>
+                    <Text style={[styles.countText, { color: colors.text }]}>×{s.count}</Text>
                   </View>
                 </View>
-              )}
+              ))}
             </View>
-
-            {/* Dimension breakdown */}
-            <SectionCard title="Dimensions">
-              {loadingWellbeing ? (
-                <ActivityIndicator color={brand.pregnancy} style={styles.loader} />
-              ) : !wellbeing ? (
-                <EmptyState message="Log your wellbeing daily in the agenda to see scores." />
-              ) : (
-                <>
-                  <DimensionBar label="Sleep" value={wellbeingSleep} color={brand.pregnancy} />
-                  <DimensionBar label="Mood" value={wellbeingMood} color={brand.pregnancy} />
-                  <DimensionBar label="Nutrition" value={wellbeingNutrition} color="#A2FF86" />
-                  <DimensionBar label="Hydration" value={wellbeingHydration} color="#6AABF7" />
-                  <DimensionBar label="Exercise" value={wellbeingExercise} color="#FBBF24" />
-                </>
-              )}
-            </SectionCard>
-
-            {/* Sleep history */}
-            <SectionCard title="Sleep History">
-              {loadingSleep ? (
-                <ActivityIndicator color={brand.pregnancy} style={styles.loader} />
-              ) : sleepValues.length < 2 ? (
-                <EmptyState message="No sleep logs found in the last 4 weeks." />
-              ) : (
-                <LineChart
-                  data={sleepValues}
-                  labels={sleepLabels}
-                  color={brand.pregnancy}
-                  width={chartW}
-                  height={150}
-                  showAverage
-                  unit="h"
-                />
-              )}
-            </SectionCard>
-
-            {/* Hydration history */}
-            <SectionCard title="Daily Hydration">
-              {loadingHydration ? (
-                <ActivityIndicator color={brand.pregnancy} style={styles.loader} />
-              ) : hydrationValues.length === 0 ? (
-                <EmptyState message="No hydration logs found this week." />
-              ) : (
-                <BarChart
-                  data={hydrationValues}
-                  labels={hydrationLabels}
-                  color="#6AABF7"
-                  width={chartW}
-                  height={150}
-                  showValues
-                />
-              )}
-            </SectionCard>
-
-            {/* Nutrition matrix */}
-            <SectionCard title="Nutrient Tracking">
-              {loadingNutrition ? (
-                <ActivityIndicator color={brand.pregnancy} style={styles.loader} />
-              ) : !nutritionMatrix || nutritionMatrix.dates.length === 0 ? (
-                <EmptyState message="No nutrition logs found. Track nutrients in the agenda." />
-              ) : (
-                <HeatmapGrid
-                  data={nutritionHeatRows}
-                  rowLabels={nutritionRowLabels}
-                  colLabels={nutritionColLabels}
-                  color={brand.pregnancy}
-                />
-              )}
-            </SectionCard>
-          </>
+          </Section>
         )}
-
       </ScrollView>
+
+      {/* Detail modals */}
+      <MetricDetailModal
+        metric={openMetric}
+        onClose={() => setOpenMetric(null)}
+        weightHistory={weightHistory}
+        kickSessions={kickSessions}
+        symptomFreq={symptomFreq}
+        sleepHistory={sleepHistory}
+        wellbeing={wellbeing ?? null}
+        weekNumber={weekNumber}
+      />
     </View>
   )
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Section wrapper ───────────────────────────────────────────────────────
+
+function Section({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string
+  subtitle?: string
+  children: React.ReactNode
+}) {
+  const { colors } = useTheme()
+  return (
+    <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+      <Display size={20} color={colors.text} style={{ marginBottom: 2 }}>
+        {title}
+      </Display>
+      {subtitle && (
+        <Body size={12} color={colors.textMuted} style={{ marginBottom: 10 }}>
+          {subtitle}
+        </Body>
+      )}
+      {children}
+    </View>
+  )
+}
+
+// ─── Mood strip ────────────────────────────────────────────────────────────
+
+function MoodTrendStrip({
+  data,
+  stickers,
+  colors,
+}: {
+  data: { log_date: string; value: string | null }[]
+  stickers: ReturnType<typeof useTheme>['stickers']
+  colors: ReturnType<typeof useTheme>['colors']
+}) {
+  // Last 12 entries, most recent right
+  const entries = data.slice(-12)
+  return (
+    <View style={[styles.moodStripCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={styles.moodStripRow}>
+        {entries.map((e, i) => (
+          <View key={i} style={{ alignItems: 'center', gap: 4 }}>
+            <MoodFace
+              size={28}
+              variant={moodFaceVariant(e.value ?? undefined)}
+              fill={moodFaceFill(e.value ?? undefined)}
+            />
+            <Text style={{ fontSize: 9, color: colors.textMuted, fontFamily: 'DMSans_500Medium' }}>
+              {shortDay(e.log_date)}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  )
+}
+
+// ─── Detail modal ──────────────────────────────────────────────────────────
+
+interface DetailProps {
+  metric: MetricKey | null
+  onClose: () => void
+  weightHistory: { date: string; weight: number }[]
+  kickSessions: { date: string; kicks: number }[]
+  symptomFreq: { symptom: string; count: number }[]
+  sleepHistory: { date: string; hours: number }[]
+  wellbeing: {
+    sleep: number; mood: number; nutrition: number; exercise: number; hydration: number;
+    overall: number
+  } | null
+  weekNumber: number
+}
+
+function MetricDetailModal(props: DetailProps) {
+  const { metric, onClose } = props
+  const { colors, stickers, font } = useTheme()
+  const insets = useSafeAreaInsets()
+
+  if (!metric) return null
+
+  const config = getMetricConfig(metric, stickers)
+  const sheetH = SCREEN_H * 0.85
+
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          style={[
+            styles.modalSheet,
+            { height: sheetH, backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32 },
+          ]}
+        >
+          <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
+            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
+          </View>
+
+          {/* Header */}
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+              <View
+                style={[
+                  styles.modalChip,
+                  { backgroundColor: config.tint, borderColor: colors.border },
+                ]}
+              >
+                {config.sticker}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Display size={22} color={colors.text}>{config.title}</Display>
+                <Body size={12} color={colors.textMuted}>{config.subtitle}</Body>
+              </View>
+            </View>
+            <Pressable onPress={onClose} hitSlop={10} style={[styles.modalClose, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <X size={16} color={colors.text} strokeWidth={2} />
+            </Pressable>
+          </View>
+
+          {/* Body */}
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 24, gap: 16 }}
+          >
+            {metric === 'weight' && <WeightDetail {...props} />}
+            {metric === 'kicks' && <KicksDetail {...props} />}
+            {metric === 'symptoms' && <SymptomsDetail {...props} />}
+            {metric === 'sleep' && <SleepDetail {...props} />}
+            {metric === 'wellbeing' && <WellbeingDetail {...props} />}
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  )
+}
+
+function getMetricConfig(metric: MetricKey, stickers: ReturnType<typeof useTheme>['stickers']) {
+  switch (metric) {
+    case 'weight':
+      return { title: 'Weight Gain', subtitle: 'Week-over-week change', sticker: <Sparkle size={26} fill={stickers.lilac} />, tint: stickers.lilacSoft }
+    case 'kicks':
+      return { title: 'Baby Kicks', subtitle: 'Counts per session', sticker: <Heart size={26} fill={stickers.pink} />, tint: stickers.pinkSoft }
+    case 'symptoms':
+      return { title: 'Symptoms', subtitle: 'Frequency & breakdown', sticker: <Bolt size={26} fill={stickers.yellow} />, tint: stickers.yellowSoft }
+    case 'sleep':
+      return { title: 'Sleep', subtitle: 'Hours per night, past 4 weeks', sticker: <Moon size={26} fill={stickers.lilac} />, tint: stickers.lilacSoft }
+    case 'wellbeing':
+      return { title: 'Wellbeing', subtitle: 'Five-pillar score', sticker: <Leaf size={26} fill={stickers.green} />, tint: stickers.greenSoft }
+  }
+}
+
+// ─── Metric detail bodies ──────────────────────────────────────────────────
+
+function WeightDetail({ weightHistory, weekNumber }: DetailProps) {
+  const { colors, stickers } = useTheme()
+  const weights = weightHistory.map((e) => e.weight).filter((w) => w > 0)
+  const firstW = weights[0]
+  const lastW = weights[weights.length - 1]
+  const totalGain = firstW && lastW ? lastW - firstW : null
+  const avgWeekly = totalGain !== null && weights.length > 1 ? totalGain / (weights.length - 1) : null
+
+  return (
+    <>
+      <StatRow
+        items={[
+          { label: 'Latest', value: lastW ? `${lastW.toFixed(1)} kg` : '—' },
+          { label: 'Total gain', value: totalGain !== null ? `${totalGain >= 0 ? '+' : ''}${totalGain.toFixed(1)} kg` : '—' },
+          { label: 'Per week', value: avgWeekly !== null ? `${avgWeekly >= 0 ? '+' : ''}${avgWeekly.toFixed(2)} kg` : '—' },
+        ]}
+      />
+
+      <CardWrap title="Weight over time">
+        {weights.length >= 2 ? (
+          <MiniLineChart data={weights} color={stickers.lilac} height={180} />
+        ) : (
+          <Body size={13} color={colors.textMuted}>Log weight for at least 2 weeks to see trend.</Body>
+        )}
+      </CardWrap>
+
+      <CardWrap title={`Healthy range · Week ${weekNumber}`}>
+        <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+          Typical gain in the second trimester is 0.3–0.5 kg per week. Trimester 3 often slows to 0.2–0.4 kg per week. Your numbers are a reference — your provider is the final say.
+        </Body>
+      </CardWrap>
+    </>
+  )
+}
+
+function KicksDetail({ kickSessions }: DetailProps) {
+  const { colors, stickers } = useTheme()
+  const avg = kickSessions.length > 0
+    ? Math.round(kickSessions.reduce((a, b) => a + b.kicks, 0) / kickSessions.length)
+    : 0
+  const max = kickSessions.length > 0 ? Math.max(...kickSessions.map((k) => k.kicks)) : 0
+  const kickValues = kickSessions.map((k) => k.kicks)
+  const kickLabels = kickSessions.map((k) => shortDay(k.date))
+
+  return (
+    <>
+      <StatRow
+        items={[
+          { label: 'Avg / session', value: avg ? String(avg) : '—' },
+          { label: 'Peak', value: max ? String(max) : '—' },
+          { label: 'Sessions', value: String(kickSessions.length) },
+        ]}
+      />
+
+      <CardWrap title="Recent kick counts">
+        {kickSessions.length > 0 ? (
+          <MiniBarChart data={kickValues} labels={kickLabels} color={stickers.pink} />
+        ) : (
+          <Body size={13} color={colors.textMuted}>No kick sessions yet — log one from the home screen.</Body>
+        )}
+      </CardWrap>
+
+      <CardWrap title="When to call your provider">
+        <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+          From week 28, aim for 10 kicks in under 2 hours. Less than that warrants a call to your OB. Babies are most active after meals and in the evening.
+        </Body>
+      </CardWrap>
+    </>
+  )
+}
+
+function SymptomsDetail({ symptomFreq }: DetailProps) {
+  const { colors, stickers } = useTheme()
+  const total = symptomFreq.reduce((a, b) => a + b.count, 0)
+
+  return (
+    <>
+      <StatRow
+        items={[
+          { label: 'Total logged', value: String(total) },
+          { label: 'Unique', value: String(symptomFreq.length) },
+          { label: 'Most common', value: symptomFreq[0]?.symptom ?? '—' },
+        ]}
+      />
+
+      <CardWrap title="Breakdown">
+        {symptomFreq.length > 0 ? (
+          <View style={{ gap: 8 }}>
+            {symptomFreq.map((s) => {
+              const pct = Math.round((s.count / Math.max(total, 1)) * 100)
+              return (
+                <View key={s.symptom}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <Text style={{ color: colors.text, fontSize: 13, fontFamily: 'DMSans_500Medium' }}>{s.symptom}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{s.count} · {pct}%</Text>
+                  </View>
+                  <View style={{ height: 6, borderRadius: 3, backgroundColor: stickers.yellowSoft, overflow: 'hidden' }}>
+                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: stickers.yellow, borderRadius: 3 }} />
+                  </View>
+                </View>
+              )
+            })}
+          </View>
+        ) : (
+          <Body size={13} color={colors.textMuted}>No symptoms logged yet.</Body>
+        )}
+      </CardWrap>
+    </>
+  )
+}
+
+function SleepDetail({ sleepHistory }: DetailProps) {
+  const { colors, stickers } = useTheme()
+  const hours = sleepHistory.map((s) => s.hours)
+  const labels = sleepHistory.map((s) => shortDay(s.date))
+  const avg = hours.length > 0 ? hours.reduce((a, b) => a + b, 0) / hours.length : 0
+  const best = hours.length > 0 ? Math.max(...hours) : 0
+  const worst = hours.length > 0 ? Math.min(...hours) : 0
+
+  return (
+    <>
+      <StatRow
+        items={[
+          { label: 'Average', value: avg ? `${avg.toFixed(1)}h` : '—' },
+          { label: 'Best', value: best ? `${best.toFixed(1)}h` : '—' },
+          { label: 'Worst', value: worst ? `${worst.toFixed(1)}h` : '—' },
+        ]}
+      />
+
+      <CardWrap title="Sleep hours per night">
+        {hours.length > 0 ? (
+          <MiniBarChart data={hours} labels={labels} color={stickers.lilac} />
+        ) : (
+          <Body size={13} color={colors.textMuted}>Log sleep from the pregnancy calendar to track.</Body>
+        )}
+      </CardWrap>
+
+      <CardWrap title="Gentle target">
+        <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+          Aim for 7–9 hours a night. In the third trimester, waking to pee and back aches often disrupt sleep — short afternoon naps count toward your total.
+        </Body>
+      </CardWrap>
+    </>
+  )
+}
+
+function WellbeingDetail({ wellbeing }: DetailProps) {
+  const { colors, stickers } = useTheme()
+  if (!wellbeing) {
+    return <Body size={13} color={colors.textMuted}>Not enough data to compute wellbeing yet. Keep logging.</Body>
+  }
+
+  const pillars: { key: keyof typeof wellbeing; label: string; color: string }[] = [
+    { key: 'sleep', label: 'Sleep', color: stickers.lilac },
+    { key: 'mood', label: 'Mood', color: stickers.pink },
+    { key: 'nutrition', label: 'Nutrition', color: stickers.green },
+    { key: 'exercise', label: 'Exercise', color: stickers.coral },
+    { key: 'hydration', label: 'Hydration', color: stickers.blue },
+  ]
+
+  return (
+    <>
+      <View style={[styles.wellbeingHero, { backgroundColor: stickers.greenSoft, borderColor: colors.border }]}>
+        <Display size={48} color={colors.text}>{wellbeing.overall}%</Display>
+        <Body size={12} color={colors.textMuted}>Overall — last 7 days</Body>
+      </View>
+
+      <CardWrap title="Five pillars">
+        <View style={{ gap: 12 }}>
+          {pillars.map((p) => {
+            const v = wellbeing[p.key] as number
+            const pct = Math.round((v / 10) * 100)
+            return (
+              <View key={p.key}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <Text style={{ color: colors.text, fontSize: 13, fontFamily: 'DMSans_500Medium' }}>{p.label}</Text>
+                  <Text style={{ color: p.color, fontSize: 12, fontFamily: 'DMSans_600SemiBold' }}>{v.toFixed(1)} / 10</Text>
+                </View>
+                <View style={{ height: 7, borderRadius: 4, backgroundColor: p.color + '22', overflow: 'hidden' }}>
+                  <View style={{ width: `${pct}%`, height: '100%', backgroundColor: p.color, borderRadius: 4 }} />
+                </View>
+              </View>
+            )
+          })}
+        </View>
+      </CardWrap>
+
+      <CardWrap title="How it's computed">
+        <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+          Each pillar scores 0–10 from your last 7 days of logs. Sleep maps hours against a 9h target. Mood counts positive entries. Nutrition, exercise and hydration each weight logs-per-day against healthy pregnancy targets. Overall = average × 10.
+        </Body>
+      </CardWrap>
+    </>
+  )
+}
+
+// ─── Reusable sub-components ───────────────────────────────────────────────
+
+function StatRow({ items }: { items: { label: string; value: string }[] }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={styles.statRow}>
+      {items.map((it, i) => (
+        <View
+          key={it.label}
+          style={[
+            styles.statCell,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+            i < items.length - 1 && { marginRight: 8 },
+          ]}
+        >
+          <Text style={{ fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.textMuted, fontFamily: font.bodySemiBold }}>
+            {it.label}
+          </Text>
+          <Text style={{ fontSize: 22, color: colors.text, fontFamily: font.display, marginTop: 2 }}>
+            {it.value}
+          </Text>
+        </View>
+      ))}
+    </View>
+  )
+}
+
+function CardWrap({ title, children }: { title: string; children: React.ReactNode }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={[styles.cardWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <Text style={{ fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: colors.textMuted, fontFamily: font.bodySemiBold, marginBottom: 10 }}>
+        {title}
+      </Text>
+      {children}
+    </View>
+  )
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+function shortDay(isoDate: string): string {
+  try {
+    const d = new Date(isoDate + 'T12:00:00')
+    return d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1)
+  } catch {
+    return ''
+  }
+}
+
+// ─── Styles ────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  root: { flex: 1 },
+  scroll: { paddingTop: 0 },
+  grid: {
+    paddingHorizontal: 20,
+    marginTop: 10,
+    gap: 10,
   },
-  tabBar: {
+  row: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    paddingHorizontal: 16,
+    gap: 10,
   },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    position: 'relative',
-  },
-  tabItemActive: {},
-  tabLabel: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  tabUnderline: {
-    position: 'absolute',
-    bottom: 0,
-    left: '20%',
-    right: '20%',
-    height: 2,
-    borderRadius: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 12,
-  },
-  headerCard: {
-    borderRadius: 24,
-    padding: 20,
+  listCard: {
     borderWidth: 1,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  headerMeta: {
-    flex: 1,
-    gap: 4,
-  },
-  trimesterBadge: {
-    alignSelf: 'flex-start',
-    fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 999,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: 'CabinetGrotesk-Black',
-    fontWeight: '900',
-  },
-  headerSub: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-  },
-  cta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    alignSelf: 'flex-start',
+    borderRadius: 22,
     paddingHorizontal: 14,
-    paddingVertical: 7,
+  },
+  listRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+  },
+  rank: {
+    width: 24,
+    height: 24,
     borderRadius: 999,
     borderWidth: 1,
-    marginTop: 4,
-  },
-  ctaText: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
-  },
-  sectionCard: {
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontFamily: 'CabinetGrotesk-Black',
-    fontWeight: '900',
-    marginBottom: 14,
-    letterSpacing: 0.3,
-  },
-  loader: {
-    marginVertical: 24,
-  },
-  emptyState: {
-    paddingVertical: 20,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  moodLegend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendText: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-  },
-  symptomList: {
-    gap: 10,
-  },
-  symptomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  symptomRank: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(185,131,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  symptomRankText: {
+  rankText: {
     fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
+    fontFamily: 'Fraunces_600SemiBold',
   },
-  symptomName: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '600',
+  listLabel: {
     flex: 1,
+    fontSize: 14,
+    fontFamily: 'DMSans_500Medium',
+    textTransform: 'capitalize',
   },
-  symptomBar: {
-    width: 60,
-    height: 5,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  symptomFill: {
-    height: 5,
-    borderRadius: 3,
-  },
-  symptomCount: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Variable',
-    width: 28,
-    textAlign: 'right',
-  },
-  prepSummaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  prepStat: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
-  },
-  prepStatNum: {
-    fontSize: 22,
-    fontFamily: 'CabinetGrotesk-Black',
-    fontWeight: '900',
-  },
-  prepStatLabel: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '600',
-  },
-  prepDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-  },
-  checklistRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 6,
-  },
-  checkDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 1.5,
-  },
-  checkLabel: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    flex: 1,
-  },
-  checklistNote: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-    marginTop: 8,
-    lineHeight: 16,
-  },
-  wellbeingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 20,
-  },
-  wellbeingHeaderMeta: {
-    flex: 1,
-    gap: 4,
-  },
-  trendBadge: {
-    alignSelf: 'flex-start',
-    fontSize: 12,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
+  countChip: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
-    overflow: 'hidden',
-    marginTop: 4,
+    borderWidth: 1,
+  },
+  countText: {
+    fontSize: 11,
+    fontFamily: 'DMSans_600SemiBold',
+  },
+  moodStripCard: {
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 14,
+  },
+  moodStripRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  modalChip: {
+    width: 46,
+    height: 46,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalClose: {
+    width: 32,
+    height: 32,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  statRow: {
+    flexDirection: 'row',
+  },
+  statCell: {
+    flex: 1,
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+  },
+  cardWrap: {
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 16,
+  },
+
+  wellbeingHero: {
+    borderWidth: 1,
+    borderRadius: 24,
+    padding: 22,
+    alignItems: 'center',
   },
 })

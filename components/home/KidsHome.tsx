@@ -34,6 +34,9 @@ import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { HomeGreeting } from './HomeGreeting'
 import { Heart as HeartSticker, Flower as FlowerSticker, Burst as BurstSticker } from '../ui/Stickers'
+import { Emoji } from '../ui/Emoji'
+import { MoodFace } from '../stickers/RewardStickers'
+import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 import { useGoalsStore, getSuggestedGoals, getFeedingStage, getNutritionLabel, getAgeMonths, type MetricGoals, type FeedingStage } from '../../store/useGoalsStore'
 import { useBadgeStore } from '../../store/useBadgeStore'
 import { supabase } from '../../lib/supabase'
@@ -565,6 +568,19 @@ interface RangeData {
   feedingBottle: number
   avgFeedingMl: number
   activityBreakdown: Record<string, number>
+  activityEntries: ActivityEntry[]
+  activityActiveDays: number
+  activityRangeDays: number
+}
+
+interface ActivityEntry {
+  id: string
+  type: string
+  date: string
+  startTime?: string
+  endTime?: string
+  name?: string
+  notes?: string
 }
 
 interface Reminder {
@@ -621,6 +637,7 @@ export function KidsHome() {
   const [moodModalVisible, setMoodModalVisible] = useState(false)
   const [healthModalVisible, setHealthModalVisible] = useState(false)
   const [activityModalVisible, setActivityModalVisible] = useState(false)
+  const [activitiesDetailVisible, setActivitiesDetailVisible] = useState(false)
   const [diaperModalVisible, setDiaperModalVisible] = useState(false)
   const [goalsModalVisible, setGoalsModalVisible] = useState(false)
 
@@ -875,6 +892,9 @@ export function KidsHome() {
     feedingBottle: 0,
     avgFeedingMl: 0,
     activityBreakdown: {},
+    activityEntries: [],
+    activityActiveDays: 0,
+    activityRangeDays: 0,
   })
 
   useEffect(() => {
@@ -1032,14 +1052,41 @@ export function KidsHome() {
       }
     }
 
-    // ── Activity (mood logs + feeding + any other logged actions) ──
-    const activityLogs = rangeLogs.filter((l) => ['mood', 'food', 'feeding', 'medicine', 'vaccine', 'growth', 'temperature', 'diaper'].includes(l.type))
+    // ── Activity (activity-form logs only: class, sport, swim, dance, music, art, playground, walk, therapy, playdate, other) ──
+    const activityLogs = rangeLogs.filter((l) => l.type === 'activity')
     const activityCount = activityLogs.length
     const activityTarget = g.activity * days
     const activityBreakdown: Record<string, number> = {}
+    const activityEntries: ActivityEntry[] = []
     for (const log of activityLogs) {
-      activityBreakdown[log.type] = (activityBreakdown[log.type] || 0) + 1
+      let explicitType = 'other'
+      let name: string | undefined
+      let startTime: string | undefined
+      let endTime: string | undefined
+      try {
+        const parsed = typeof log.value === 'string' ? JSON.parse(log.value) : log.value
+        if (parsed?.activityType) explicitType = String(parsed.activityType)
+        if (parsed?.name) name = String(parsed.name)
+        if (parsed?.startTime) startTime = String(parsed.startTime)
+        if (parsed?.endTime) endTime = String(parsed.endTime)
+      } catch {}
+      // Every log maps to exactly one pillar (movement/creative/learning/social/care/therapy).
+      const pillar = getActivityPillar(explicitType, name)
+      activityBreakdown[pillar] = (activityBreakdown[pillar] || 0) + 1
+      activityEntries.push({
+        id: (log as any).id ?? `${log.date}-${(log as any).created_at ?? ''}-${activityEntries.length}`,
+        type: pillar,
+        date: log.date,
+        startTime, endTime, name,
+        notes: log.notes || undefined,
+      })
     }
+    activityEntries.sort((a, b) => {
+      if (a.date !== b.date) return b.date.localeCompare(a.date)
+      return (b.startTime ?? '').localeCompare(a.startTime ?? '')
+    })
+    const activityActiveDays = new Set(activityLogs.map((l) => l.date)).size
+    const activityRangeDays = days
 
     // ── Health tasks ──
     const healthTasks: { label: string; done: boolean }[] = []
@@ -1119,7 +1166,8 @@ export function KidsHome() {
       moodByDay, sleepQuality,
       mealsToday: foodLogs.filter((l) => l.date === today).length,
       calorieCategories,
-      feedingBreast, feedingBottle, avgFeedingMl, activityBreakdown,
+      feedingBreast, feedingBottle, avgFeedingMl, activityBreakdown, activityEntries,
+      activityActiveDays, activityRangeDays,
     })
   }
 
@@ -1438,7 +1486,7 @@ export function KidsHome() {
         centerData={focused}
       />
 
-      {/* ─── Hero tiles (v1 redesign): LAST SLEEP / MOOD / CALORIES / LEAP ─── */}
+      {/* ─── Hero tiles: LAST SLEEP / MOOD / CALORIES / ACTIVITIES ─── */}
       <HeroTiles
         sleepTotal={rangeData.sleepTotal}
         sleepTarget={rangeData.sleepTarget}
@@ -1449,10 +1497,19 @@ export function KidsHome() {
         feedingCount={rangeData.feedingCount}
         feedingTarget={rangeData.feedingCountTarget}
         stage={feedingStage}
-        leap={growthLeap}
+        activityCount={rangeData.activityCount}
+        activityActiveDays={rangeData.activityActiveDays}
+        activityRangeDays={rangeData.activityRangeDays}
+        activityTopLabel={(() => {
+          const entries = Object.entries(rangeData.activityBreakdown).filter(([, c]) => c > 0).sort(([, a], [, b]) => b - a)
+          const top = entries[0]
+          return top ? (ACTIVITY_TYPE_META[top[0]]?.label ?? top[0]) : undefined
+        })()}
+        activityTypesCount={Object.values(rangeData.activityBreakdown).filter((c) => c > 0).length}
         onPressSleep={() => { setFocusedRing('sleep'); setHealthModalVisible(true) }}
         onPressMood={() => setMoodModalVisible(true)}
         onPressCalories={() => setActivityModalVisible(true)}
+        onPressActivity={() => setActivitiesDetailVisible(true)}
       />
 
       {/* (Ring legend / stats strip removed — hero tiles + detail modals cover this) */}
@@ -1765,6 +1822,17 @@ export function KidsHome() {
         childName={child?.name}
         childColor={CHILD_COLORS[children.findIndex(c => c.id === child?.id) % CHILD_COLORS.length]}
       />
+      <ActivitiesDetailModal
+        visible={activitiesDetailVisible}
+        onClose={() => setActivitiesDetailVisible(false)}
+        activityCount={rangeData.activityCount}
+        activeDays={rangeData.activityActiveDays}
+        rangeDays={rangeData.activityRangeDays}
+        breakdown={rangeData.activityBreakdown}
+        entries={rangeData.activityEntries}
+        childName={child?.name}
+        childColor={CHILD_COLORS[children.findIndex(c => c.id === child?.id) % CHILD_COLORS.length]}
+      />
       {child && (
         <GoalSettingModal
           visible={goalsModalVisible}
@@ -1793,10 +1861,15 @@ function HeroTiles({
   feedingCount,
   feedingTarget,
   stage,
-  leap,
+  activityCount,
+  activityActiveDays,
+  activityRangeDays,
+  activityTopLabel,
+  activityTypesCount,
   onPressSleep,
   onPressMood,
   onPressCalories,
+  onPressActivity,
 }: {
   sleepTotal: number
   sleepTarget: number
@@ -1807,10 +1880,15 @@ function HeroTiles({
   feedingCount: number
   feedingTarget: number
   stage: FeedingStage
-  leap: ReturnType<typeof getGrowthLeap>
+  activityCount: number
+  activityActiveDays: number
+  activityRangeDays: number
+  activityTopLabel?: string
+  activityTypesCount: number
   onPressSleep?: () => void
   onPressMood?: () => void
   onPressCalories?: () => void
+  onPressActivity?: () => void
 }) {
   const { colors, isDark } = useTheme()
   const ink = isDark ? colors.text : '#141313'
@@ -1822,6 +1900,17 @@ function HeroTiles({
   const blueSoft = isDark ? 'rgba(157,195,232,0.18)' : '#CFE0F0'
   const yellowSoft = isDark ? 'rgba(245,214,82,0.24)' : '#F5D652'
   const pinkSoft = isDark ? 'rgba(242,178,199,0.18)' : '#F9D8E2'
+  const greenSoft = isDark ? 'rgba(189,212,140,0.18)' : '#DDE7BB'
+
+  // Activity — engagement ratio (active days over range) is the meaningful metric
+  const activityEngagement = activityRangeDays > 0 ? Math.min(activityActiveDays / activityRangeDays, 1) : 0
+  const activityValueLabel = activityCount > 0 ? `${activityCount}` : '—'
+  const activitySub = activityCount > 0
+    ? (activityRangeDays > 0 ? `${activityActiveDays}/${activityRangeDays} active days` : `${activityActiveDays} active days`)
+    : 'Log an activity'
+  const activityMeta = activityCount > 0
+    ? `${activityTypesCount} type${activityTypesCount !== 1 ? 's' : ''}${activityTopLabel ? ` · Top: ${activityTopLabel}` : ''}`
+    : ''
 
   // Last sleep value: show total hours + minutes for the selected range
   const sleepHours = Math.floor(sleepTotal)
@@ -1829,10 +1918,14 @@ function HeroTiles({
   const sleepLabel = sleepTotal > 0 ? `${sleepHours}h ${String(sleepMins).padStart(2, '0')}` : '—'
   const sleepSub = sleepTarget > 0 ? `of ${Math.round(sleepTarget)}h target` : 'No goal set'
 
-  // Mood
-  const moodDisplay = dominantMood ? (MOOD_LABELS[dominantMood] ?? 'Content') : 'No data'
-  const moodValues = ['happy', 'calm', 'energetic', 'fussy', 'cranky'].map((m) => moodCounts[m] || 0)
+  // Mood — each bar reflects its count, colored by mood, dominant bar highlighted
+  const moodKeys = ['happy', 'calm', 'energetic', 'fussy', 'cranky'] as const
+  const moodValues = moodKeys.map((m) => moodCounts[m] || 0)
+  const totalMoodLogs = moodValues.reduce((a, b) => a + b, 0)
   const maxMood = Math.max(...moodValues, 1)
+  const hasMoods = totalMoodLogs > 0
+  const moodDisplay = hasMoods && dominantMood ? (MOOD_LABELS[dominantMood] ?? 'Content') : 'No data'
+  const moodEmoji = hasMoods && dominantMood ? (MOOD_EMOJI[dominantMood] ?? '🙂') : '—'
 
   // Calories / feedings
   const isLiquid = stage === 'liquid' || stage === 'mixed'
@@ -1882,26 +1975,40 @@ function HeroTiles({
           <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: '#3A3533', letterSpacing: 1.2, textTransform: 'uppercase' }}>
             MOOD
           </Text>
-          <Text style={{ fontSize: 24, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 6, letterSpacing: -0.4 }}>
-            {moodDisplay}
-          </Text>
-          {/* Mood bars */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
+            {hasMoods && dominantMood ? (
+              <MoodFace size={26} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} />
+            ) : (
+              <Text style={{ fontSize: 22, color: ink3 }}>—</Text>
+            )}
+            <Text style={{ fontSize: 22, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.4, flex: 1 }} numberOfLines={1}>
+              {moodDisplay}
+            </Text>
+          </View>
+          {/* Mood bars — colored by each mood; dominant is full opacity */}
           <View style={{ flexDirection: 'row', gap: 3, marginTop: 10, alignItems: 'flex-end' }}>
             {moodValues.map((v, i) => {
+              const key = moodKeys[i]
               const h = Math.max((v / maxMood) * 34, 4)
+              const isDominant = hasMoods && key === dominantMood
+              const baseColor = MOOD_COLORS[key] ?? '#6E6763'
               return (
                 <View
-                  key={i}
+                  key={key}
                   style={{
                     flex: 1,
                     height: h,
                     borderRadius: 4,
-                    backgroundColor: i === moodValues.length - 1 ? ink : '#F5B896',
+                    backgroundColor: baseColor,
+                    opacity: !hasMoods ? 0.25 : isDominant ? 1 : v > 0 ? 0.55 : 0.2,
                   }}
                 />
               )
             })}
           </View>
+          <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: ink3, marginTop: 6, letterSpacing: 0.3 }}>
+            {hasMoods ? `${totalMoodLogs} log${totalMoodLogs !== 1 ? 's' : ''}` : 'Log a mood'}
+          </Text>
         </Pressable>
       </View>
 
@@ -1929,32 +2036,33 @@ function HeroTiles({
           </View>
         </Pressable>
 
-        <View
+        <Pressable
+          onPress={onPressActivity}
           style={{
-            flex: 1.2, padding: 14, borderRadius: 28, borderWidth: 1,
-            backgroundColor: paper, borderColor: lineColor, overflow: 'hidden',
-            position: 'relative',
+            flex: 1.2, padding: 16, borderRadius: 28, borderWidth: 1,
+            backgroundColor: greenSoft, borderColor: lineColor, overflow: 'hidden',
           }}
         >
           <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-            LEAP
+            ACTIVITIES
           </Text>
-          <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 6, letterSpacing: -0.3, lineHeight: 22 }} numberOfLines={1}>
-            {leap?.name ?? 'Watching'}
-          </Text>
-          <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, marginTop: 2 }}>
-            {leap
-              ? leap.status === 'active'
-                ? `Leap ${leap.index + 1} · active`
-                : leap.status === 'done'
-                ? 'All leaps complete'
-                : `Leap ${leap.index + 1} · upcoming`
-              : 'Tracking growth'}
-          </Text>
-          <View style={{ position: 'absolute', right: -10, bottom: -10 }}>
-            <SvgStar />
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 6 }}>
+            <ActivityPctRing pct={activityEngagement} size={52} color="#8BB356" trackColor="rgba(139,179,86,0.20)" />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 28, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.6, lineHeight: 30 }}>
+                {activityValueLabel}
+              </Text>
+              <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, marginTop: 2 }} numberOfLines={1}>
+                {activitySub}
+              </Text>
+            </View>
           </View>
-        </View>
+          {activityMeta ? (
+            <Text style={{ fontSize: 11, fontFamily: 'DMSans_500Medium', color: ink3, marginTop: 8, letterSpacing: 0.2 }} numberOfLines={1}>
+              {activityMeta}
+            </Text>
+          ) : null}
+        </Pressable>
       </View>
     </View>
   )
@@ -1975,6 +2083,32 @@ function SvgStar() {
   )
 }
 
+// Small circular progress ring used inside the Activity hero tile
+function ActivityPctRing({ pct, size, color, trackColor }: { pct: number; size: number; color: string; trackColor: string }) {
+  const stroke = 5
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  const offset = c * (1 - Math.max(0, Math.min(pct, 1)))
+  return (
+    <Svg width={size} height={size}>
+      <SvgCircle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={trackColor} strokeWidth={stroke} />
+      <SvgCircle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeDasharray={`${c}`}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        rotation={-90}
+        origin={`${size / 2}, ${size / 2}`}
+      />
+    </Svg>
+  )
+}
+
 function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, focused, onTapRing, centerData }: {
   sleepProgress: number; nutritionProgress: number; activityProgress: number
   focused: 'sleep' | 'nutrition' | 'activity'
@@ -1982,11 +2116,11 @@ function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, foc
   centerData: { value: string; unit: string; pct: number; icon: typeof Moon; color: string }
 }) {
   const { colors } = useTheme()
-  const size = SW - 80
+  const size = Math.min(SW - 140, 260)
   const center = size / 2
 
-  // Ring geometry
-  const RING_R = [(size - 20) / 2, (size - 60) / 2, (size - 100) / 2]
+  // Ring geometry — tighter ring spacing to match compact reference
+  const RING_R = [(size - 14) / 2, (size - 42) / 2, (size - 70) / 2]
   const RING_CIRC = RING_R.map((r) => 2 * Math.PI * r)
 
   // Animated shared values — one per ring (hooks rules: no loops)
@@ -2063,14 +2197,14 @@ function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, foc
                 key={key + '-bg'}
                 cx={center} cy={center} r={RING_R[i]}
                 stroke={colors.border}
-                strokeWidth={6}
+                strokeWidth={5}
                 fill="none"
               />,
               <AnimatedSvgCircle
                 key={key + '-fg'}
                 cx={center} cy={center} r={RING_R[i]}
                 stroke={`url(#${gradIds[i]})`}
-                strokeWidth={isFocused ? 7 : 6}
+                strokeWidth={isFocused ? 6 : 5}
                 fill="none"
                 strokeDasharray={`${RING_CIRC[i]}`}
                 strokeLinecap="round"
@@ -2084,7 +2218,7 @@ function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, foc
         </Svg>
 
         <Reanimated.View style={[s.heroCenter, centerAnimStyle]}>
-          <Icon size={20} color={centerData.color} strokeWidth={2} />
+          <Icon size={16} color={centerData.color} strokeWidth={2} />
           <Text style={[s.heroNumber, { color: colors.text }]}>{centerData.value}</Text>
           <Text style={[s.heroUnit, { color: colors.textMuted }]}>{centerData.unit.toUpperCase()}</Text>
           {centerData.pct > 0 && (
@@ -2156,8 +2290,8 @@ function MoodCard({ moodCounts, dominantMood }: { moodCounts: Record<string, num
   return (
     <View style={[s.metricCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
       <View style={s.metricHeader}>
-        <View style={[s.metricHeaderIcon, { borderColor: '#F5D652', backgroundColor: 'rgba(245,214,82,0.35)' }]}>
-          <Smile size={12} color="#141313" strokeWidth={2} />
+        <View style={[s.metricHeaderIcon, { borderColor: '#F5D652', backgroundColor: 'rgba(245,214,82,0.35)', overflow: 'hidden' }]}>
+          <MoodFace size={18} variant="happy" fill="#FBEA9E" />
         </View>
         <Text style={[s.metricLabel, { color: ink3 }]}>MOOD</Text>
         <ChevronRight size={12} color={ink3} strokeWidth={2} style={{ marginLeft: 'auto' }} />
@@ -2181,7 +2315,7 @@ function MoodCard({ moodCounts, dominantMood }: { moodCounts: Record<string, num
       ) : (
         <>
           <View style={s.metricEmpty}>
-            <Smile size={20} color={ink3} strokeWidth={1.5} />
+            <MoodFace size={28} variant="okay" fill="#F5EDDC" />
           </View>
           <Text style={[s.metricValue, { color: ink }]}>No moods yet</Text>
           <Text style={[s.metricSmall, { color: ink3 }]}>Log a mood</Text>
@@ -2380,7 +2514,7 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
             { label: 'Mixed', count: mixed, color: DIAPER_COLORS.mixed, emoji: '🔄' },
           ].map(({ label, count: c, color, emoji }) => (
             <View key={label} style={[s.diaperChip, { backgroundColor: color + '18', borderColor: color + '50' }]}>
-              <Text style={{ fontSize: 12 }}>{emoji}</Text>
+              <Emoji size={12}>{emoji}</Emoji>
               <Text style={[s.diaperChipLabel, { color }]}>{label}</Text>
               <Text style={[s.diaperChipCount, { color }]}>{c}</Text>
             </View>
@@ -2530,7 +2664,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
               { label: 'Mixed', count: mixed, color: DIAPER_COLORS.mixed, emoji: '🔄' },
             ].map(({ label, count: c, color, emoji }) => (
               <View key={label} style={{ flex: 1, backgroundColor: color + '15', borderRadius: radius.md, borderWidth: 1, borderColor: color + '40', padding: 10, alignItems: 'center', gap: 2 }}>
-                <Text style={{ fontSize: 20 }}>{emoji}</Text>
+                <Emoji size={20}>{emoji}</Emoji>
                 <Text style={{ color, fontSize: 18, fontWeight: '800' }}>{c}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 10 }}>{total > 0 ? Math.round((c / total) * 100) : 0}%</Text>
@@ -2718,7 +2852,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
 
           {totalMoods > 0 ? (
             <>
-              {/* Emoji mood chart */}
+              {/* Mood-face chart */}
               <View style={[s.moodChartWrap, { backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: radius.md }]}>
                 <Svg width={chartW} height={chartH}>
                   {/* 5-level grid lines */}
@@ -2745,16 +2879,6 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
                     />
                   )}
 
-                  {/* Emoji nodes */}
-                  {dominantPerDay.flatMap((pt, i) => {
-                    if (!pt) return []
-                    return [
-                      <SvgCircle key={`bg-${i}`} cx={pt.x} cy={pt.y} r={15} fill={pt.color + '28'} />,
-                      <SvgCircle key={`ring-${i}`} cx={pt.x} cy={pt.y} r={15} fill="none" stroke={pt.color} strokeWidth={1.5} />,
-                      <SvgText key={`emoji-${i}`} x={pt.x} y={pt.y + 6} textAnchor="middle" fontSize={15}>{pt.emoji}</SvgText>,
-                    ]
-                  })}
-
                   {/* Day/week labels */}
                   {chartDays.map((day, i) => (
                     <SvgText
@@ -2769,14 +2893,31 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
                     </SvgText>
                   ))}
                 </Svg>
+
+                {/* MoodFace stickers overlaid on chart positions */}
+                {dominantPerDay.map((pt, i) => {
+                  if (!pt) return null
+                  const faceSize = 30
+                  return (
+                    <View
+                      key={`face-${i}`}
+                      pointerEvents="none"
+                      style={{
+                        position: 'absolute',
+                        left: pt.x - faceSize / 2,
+                        top: pt.y - faceSize / 2,
+                        width: faceSize,
+                        height: faceSize,
+                      }}
+                    >
+                      <MoodFace size={faceSize} variant={moodFaceVariant(pt.mood)} fill={moodFaceFill(pt.mood)} />
+                    </View>
+                  )
+                })}
               </View>
 
               {/* Mood count chips */}
-              <ScrollView
-                horizontal showsHorizontalScrollIndicator={false}
-                contentContainerStyle={s.moodChipsRow}
-                style={{ marginTop: 14 }}
-              >
+              <View style={[s.moodChipsRow, { marginTop: 14 }]}>
                 {moods.filter(m => (moodCounts[m] || 0) > 0).map((m) => {
                   const count = moodCounts[m] || 0
                   const color = MOOD_COLORS[m]
@@ -2789,13 +2930,13 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
                         borderRadius: radius.full,
                       }]}
                     >
-                      <Text style={{ fontSize: 13 }}>{MOOD_EMOJI[m]}</Text>
+                      <MoodFace size={16} variant={moodFaceVariant(m)} fill={moodFaceFill(m)} />
                       <Text style={[s.moodChipLabel, { color }]}>{MOOD_LABELS[m]}</Text>
                       <Text style={[s.moodChipCount, { color }]}>{count}</Text>
                     </View>
                   )
                 })}
-              </ScrollView>
+              </View>
 
               {/* Summary */}
               <View style={[s.modalSummary, {
@@ -2803,7 +2944,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
                 borderRadius: radius.md,
                 marginTop: 16,
               }]}>
-                <Smile size={18} color={MOOD_COLORS[dominantMood] || brand.accent} strokeWidth={2} />
+                <MoodFace size={22} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} />
                 <Text style={[s.modalSummaryText, { color: colors.text }]}>
                   Mostly{' '}
                   <Text style={{ color: MOOD_COLORS[dominantMood] || brand.accent, fontWeight: '800' }}>
@@ -2815,7 +2956,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
             </>
           ) : (
             <View style={s.modalEmpty}>
-              <Smile size={32} color={colors.textMuted} strokeWidth={1.5} />
+              <MoodFace size={44} variant="okay" fill="#F5EDDC" />
               <Text style={[s.modalEmptyText, { color: colors.textSecondary }]}>No moods logged yet</Text>
               <Text style={[s.modalEmptyHint, { color: colors.textMuted }]}>Log moods to see trends over time</Text>
             </View>
@@ -2828,14 +2969,100 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
 
 // ─── Health Detail Modal ────────────────────────────────────────────────────
 
-const ACTIVITY_TYPE_META: Record<string, { label: string; color: string }> = {
-  mood:        { label: 'Mood Logs',    color: '#B983FF' },
-  food:        { label: 'Food Logs',    color: '#A2FF86' },
-  feeding:     { label: 'Feedings',     color: '#4D96FF' },
-  medicine:    { label: 'Medicine',     color: '#FF8AD8' },
-  vaccine:     { label: 'Vaccines',     color: '#67E8F9' },
-  growth:      { label: 'Growth',       color: '#FBBF24' },
-  temperature: { label: 'Temperature',  color: '#FF6B35' },
+// Activity pillars — every logged activity maps to exactly one of these groups.
+// No "Other" bucket by design: the pattern list is broad enough to catch anything,
+// and `care` is the last-resort default for generic daily entries.
+type ActivityPillarId = 'movement' | 'creative' | 'learning' | 'social' | 'care' | 'therapy'
+
+const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string; types: string[]; patterns: RegExp[] }> = {
+  movement: {
+    label: 'Movement',
+    color: '#BDD48C', // sticker green
+    types: ['sport', 'swim', 'walk', 'playground', 'dance'],
+    patterns: [
+      /\b(soccer|football|basketball|tennis|baseball|karate|judo|gym|workout|run(ning)?|ski|cycling|bike|biking|skating|scooter)\b/,
+      /\b(swim(ming)?|pool)\b/,
+      /\b(walk|stroll(er)?|hike|hiking|outdoor)\b/,
+      /\b(playground|park|slide|climb(ing)?)\b/,
+      /\b(dance|ballet|tap|zumba)\b/,
+      /\btummy\s?time\b/,
+    ],
+  },
+  creative: {
+    label: 'Creative',
+    color: '#F5D652', // sticker yellow
+    types: ['art', 'music'],
+    patterns: [
+      /\b(art|paint(ing)?|craft(s)?|draw(ing)?|clay|pottery|color(ing)?)\b/,
+      /\b(music|piano|guitar|violin|drum|singing|choir|sing\s?along)\b/,
+    ],
+  },
+  learning: {
+    label: 'Learning',
+    color: '#7A9BD0', // deep blue
+    types: ['class', 'school', 'study', 'reading'],
+    patterns: [
+      /\b(school|kindergarten|preschool|daycare|nursery)\b/,
+      /\b(homework|study|tutor(ing)?|lesson|class)\b/,
+      /\b(reading|book|story\s?time)\b/,
+    ],
+  },
+  social: {
+    label: 'Social',
+    color: '#E58BB4', // rose
+    types: ['playdate'],
+    patterns: [
+      /\bplaydate\b/,
+      /\b(party|playgroup|visit|friends|meetup|family\s?time|grandma|grandpa|cousin)\b/,
+    ],
+  },
+  care: {
+    label: 'Care',
+    color: '#F5B896', // peach
+    types: [],
+    patterns: [
+      /\bbath(\s?time)?\b/,
+      /\bskin\s?to\s?skin\b/,
+      /\bmassage\b/,
+      /\bdiaper\b/,
+      /\bnap\b/,
+      /\b(cuddle|hug|rocking|lullaby)\b/,
+    ],
+  },
+  therapy: {
+    label: 'Therapy',
+    color: '#B7A6E8', // lavender
+    types: ['therapy'],
+    patterns: [
+      /\b(therapy|speech|occupational|physio|physical\s?therapy)\b/,
+      /\b(checkup|doctor|pediatrician|dentist)\b/,
+      /\b(ot|pt)\b/,
+    ],
+  },
+}
+
+// Backwards-compat meta lookup: modal code still does `ACTIVITY_TYPE_META[key]`.
+// Bucket keys are now pillar ids.
+const ACTIVITY_TYPE_META: Record<string, { label: string; color: string }> = Object.fromEntries(
+  Object.entries(ACTIVITY_PILLARS).map(([id, p]) => [id, { label: p.label, color: p.color }])
+)
+
+function getActivityPillar(explicitType: string | undefined, name?: string): ActivityPillarId {
+  // 1) Map from explicit activityType saved on the log.
+  if (explicitType && explicitType !== 'other') {
+    for (const [id, p] of Object.entries(ACTIVITY_PILLARS)) {
+      if (p.types.includes(explicitType)) return id as ActivityPillarId
+    }
+  }
+  // 2) Fall back to matching the free-text name against pillar keywords.
+  const n = (name ?? '').toLowerCase().trim()
+  if (n) {
+    for (const [id, p] of Object.entries(ACTIVITY_PILLARS)) {
+      if (p.patterns.some((rx) => rx.test(n))) return id as ActivityPillarId
+    }
+  }
+  // 3) Last-resort default — generic parenting entries land in Care.
+  return 'care'
 }
 
 function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, radius }: {
@@ -3027,7 +3254,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                           </Text>
                           {apptDate && (
                             <Text style={[s.modalTaskStatus, { color: brand.success, marginTop: 2 }]}>
-                              📅 Appt: {formatHealthDate(apptDate)}
+                              <Emoji>📅</Emoji> Appt: {formatHealthDate(apptDate)}
                             </Text>
                           )}
                         </View>
@@ -3259,6 +3486,191 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
             </>
           )}
 
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
+// ─── Activities Detail Modal ────────────────────────────────────────────────
+
+function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, rangeDays, breakdown, entries, childName, childColor }: {
+  visible: boolean; onClose: () => void
+  activityCount: number; activeDays: number; rangeDays: number
+  breakdown: Record<string, number>
+  entries: ActivityEntry[]
+  childName?: string; childColor?: string
+}) {
+  const { colors, radius } = useTheme()
+  const [expandedType, setExpandedType] = useState<string | null>(null)
+
+  // Reset expansion each time modal opens
+  useEffect(() => {
+    if (!visible) setExpandedType(null)
+  }, [visible])
+
+  const avgPerActiveDay = activeDays > 0 ? Math.round((activityCount / activeDays) * 10) / 10 : 0
+  const ranked = Object.entries(breakdown)
+    .filter(([, count]) => count > 0)
+    .sort(([, a], [, b]) => b - a)
+  const topEntry = ranked[0]
+  const topMeta = topEntry ? (ACTIVITY_TYPE_META[topEntry[0]] ?? { label: topEntry[0], color: PILLAR_COLORS.activity }) : null
+  const topPct = topEntry && activityCount > 0 ? Math.round((topEntry[1] / activityCount) * 100) : 0
+  const distinctTypes = ranked.length
+
+  function formatEntryDate(dateStr: string): string {
+    const d = new Date(dateStr + 'T00:00:00')
+    if (isNaN(d.getTime())) return dateStr
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  }
+
+  function formatEntryTime(start?: string, end?: string): string {
+    if (!start) return ''
+    const toLabel = (t: string) => {
+      const [hStr, mStr] = t.split(':')
+      const h = Number(hStr), m = Number(mStr ?? 0)
+      if (isNaN(h)) return t
+      const ampm = h >= 12 ? 'PM' : 'AM'
+      const hh = ((h + 11) % 12) + 1
+      return `${hh}:${String(m).padStart(2, '0')} ${ampm}`
+    }
+    return end ? `${toLabel(start)} – ${toLabel(end)}` : toLabel(start)
+  }
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={s.modalOverlay}>
+        <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
+          <View style={s.modalHeader}>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={[s.modalTitle, { color: colors.text }]}>Activities</Text>
+              {childName && childColor && (
+                <View style={{ backgroundColor: childColor + '25', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: childColor + '60' }}>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: childColor }}>{childName}</Text>
+                </View>
+              )}
+            </View>
+            <Pressable onPress={onClose} style={[s.modalClose, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
+              <X size={18} color={colors.textMuted} strokeWidth={2} />
+            </Pressable>
+          </View>
+
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+            {/* Top stat card — activities + context */}
+            <View style={[s.modalStatCard, { backgroundColor: PILLAR_COLORS.activity + '10', borderRadius: radius.md }]}>
+              <Zap size={18} color={PILLAR_COLORS.activity} strokeWidth={2} />
+              <View style={{ flex: 1 }}>
+                <Text style={[s.modalStatLabel, { color: colors.textMuted }]}>Activities</Text>
+                <Text style={[s.modalStatValue, { color: colors.text }]}>{activityCount > 0 ? activityCount.toLocaleString() : '—'} total</Text>
+              </View>
+              {activeDays > 0 && rangeDays > 0 && (
+                <Text style={[s.modalStatExtra, { color: PILLAR_COLORS.activity }]}>
+                  {activeDays}/{rangeDays} days
+                </Text>
+              )}
+            </View>
+
+            {/* 3-tile analytics row */}
+            <View style={s.feedingBreakdownRow}>
+              <View style={[s.feedingBreakdownCard, { backgroundColor: PILLAR_COLORS.activity + '10', borderRadius: radius.md }]}>
+                <Clock size={20} color={PILLAR_COLORS.activity} strokeWidth={1.8} />
+                <Text style={[s.feedingBreakdownValue, { color: colors.text }]}>
+                  {activeDays}{rangeDays > 0 ? `/${rangeDays}` : ''}
+                </Text>
+                <Text style={[s.feedingBreakdownLabel, { color: colors.textMuted }]}>Active Days</Text>
+              </View>
+              <View style={[s.feedingBreakdownCard, { backgroundColor: (topMeta?.color ?? PILLAR_COLORS.activity) + '14', borderRadius: radius.md }]}>
+                <TrendingUp size={20} color={topMeta?.color ?? PILLAR_COLORS.activity} strokeWidth={1.8} />
+                <Text style={[s.feedingBreakdownValue, { color: colors.text }]} numberOfLines={1}>
+                  {topMeta ? topMeta.label.split(' ')[0] : '—'}
+                </Text>
+                <Text style={[s.feedingBreakdownLabel, { color: colors.textMuted }]}>Top</Text>
+              </View>
+              <View style={[s.feedingBreakdownCard, { backgroundColor: PILLAR_COLORS.activity + '08', borderRadius: radius.md }]}>
+                <Sparkles size={20} color={PILLAR_COLORS.activity} strokeWidth={1.8} />
+                <Text style={[s.feedingBreakdownValue, { color: colors.text }]}>{distinctTypes}</Text>
+                <Text style={[s.feedingBreakdownLabel, { color: colors.textMuted }]}>Types</Text>
+              </View>
+            </View>
+            {activityCount > 0 && (
+              <Text style={[s.feedingAvgText, { color: colors.textMuted }]}>
+                {avgPerActiveDay} activities per active day
+                {topMeta ? ` · ${topMeta.label} leads (${topPct}%)` : ''}
+              </Text>
+            )}
+
+            {/* Ranking */}
+            {ranked.length > 0 ? (
+              <>
+                <Text style={[s.modalSectionTitle, { color: colors.text }]}>Activity Ranking</Text>
+                {ranked.map(([type, count]) => {
+                  const meta = ACTIVITY_TYPE_META[type] ?? { label: type, color: PILLAR_COLORS.activity }
+                  const typePct = activityCount > 0 ? Math.round((count / activityCount) * 100) : 0
+                  const isOpen = expandedType === type
+                  const typeEntries = entries.filter((e) => e.type === type)
+                  return (
+                    <View key={type} style={{ paddingVertical: 6 }}>
+                      <Pressable
+                        onPress={() => setExpandedType(isOpen ? null : type)}
+                        style={{ paddingVertical: 4 }}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                          <View style={[s.modalCatDot, { backgroundColor: meta.color }]} />
+                          <Text style={[s.modalCatLabel, { color: colors.textSecondary }]}>{meta.label}</Text>
+                          <Text style={[s.modalCatValue, { color: colors.text }]}>{count.toLocaleString()}</Text>
+                          <Text style={{ color: meta.color, fontSize: 12, fontFamily: 'DMSans_600SemiBold', minWidth: 40, textAlign: 'right' }}>{typePct}%</Text>
+                          <ChevronRight
+                            size={14}
+                            color={colors.textMuted}
+                            strokeWidth={2}
+                            style={{ transform: [{ rotate: isOpen ? '90deg' : '0deg' }], marginLeft: 2 }}
+                          />
+                        </View>
+                        <View style={{ height: 4, borderRadius: 2, backgroundColor: meta.color + '22', overflow: 'hidden' }}>
+                          <View style={{ width: `${typePct}%`, height: 4, borderRadius: 2, backgroundColor: meta.color }} />
+                        </View>
+                      </Pressable>
+                      {isOpen && (
+                        <View style={{ marginTop: 10, marginLeft: 18, gap: 8, borderLeftWidth: 1, borderLeftColor: meta.color + '40', paddingLeft: 12 }}>
+                          {typeEntries.length === 0 ? (
+                            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'DMSans_500Medium' }}>
+                              No entries in this range
+                            </Text>
+                          ) : typeEntries.map((entry) => {
+                            const timeLabel = formatEntryTime(entry.startTime, entry.endTime)
+                            return (
+                              <View key={entry.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+                                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: meta.color, marginTop: 6 }} />
+                                <View style={{ flex: 1 }}>
+                                  <Text style={{ color: colors.text, fontSize: 13, fontFamily: 'DMSans_600SemiBold' }}>
+                                    {entry.name || meta.label}
+                                  </Text>
+                                  <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'DMSans_500Medium', marginTop: 1 }}>
+                                    {formatEntryDate(entry.date)}{timeLabel ? ` · ${timeLabel}` : ''}
+                                  </Text>
+                                  {entry.notes ? (
+                                    <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: 'DMSans_400Regular', marginTop: 3, fontStyle: 'italic' }} numberOfLines={2}>
+                                      {entry.notes}
+                                    </Text>
+                                  ) : null}
+                                </View>
+                              </View>
+                            )
+                          })}
+                        </View>
+                      )}
+                    </View>
+                  )
+                })}
+              </>
+            ) : (
+              <View style={{ marginTop: 24, padding: 20, alignItems: 'center' }}>
+                <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: 'DMSans_500Medium', textAlign: 'center' }}>
+                  No activities logged in this period
+                </Text>
+              </View>
+            )}
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -4043,6 +4455,10 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
   )
 }
 
+// Emojis per leap (used as paper "stickers" in detail modals)
+const LEAP_EMOJI = ['👁️', '🔁', '💫', '🎬', '🔗', '📚', '🔢', '🧩', '⚖️', '🌍']
+const PHASE_EMOJI = ['🌧️', '🚀', '🌟']
+
 function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIndex, leapColor }: {
   visible: boolean
   onClose: () => void
@@ -4052,7 +4468,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
   phaseIndex: number
   leapColor: string
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const [selectedLeapIdx, setSelectedLeapIdx] = useState<number | null>(null)
   const gl = GROWTH_LEAPS[leap.index]
   if (!gl) return null
@@ -4061,196 +4477,281 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
   const phaseDone = [phaseIndex > 0, phaseIndex > 1, false]
   const phaseCurrent = [phaseIndex === 0, phaseIndex === 1, phaseIndex === 2]
 
-  const heroBadgeText = isActive ? 'IN PROGRESS' : isDone ? 'ALL DONE' : `In ${(leap as any).weeksUntil ?? '?'}w`
-  const heroBadgeColor = isActive ? leapColor : isDone ? brand.success : colors.textMuted
-  const heroBadgeBg = isActive ? leapColor + '22' : isDone ? brand.success + '22' : colors.surfaceGlass
-  const heroBadgeBorder = isActive ? leapColor + '60' : isDone ? brand.success + '60' : colors.border
+  // Paper tokens
+  const paperBg = isDark ? colors.bg : '#F3ECD9'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const ink = isDark ? colors.text : '#141313'
+  const ink2 = isDark ? colors.textSecondary : '#3A3533'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const line = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const yellowSoft = isDark ? 'rgba(245,214,82,0.20)' : '#FBEA9E'
+  const pinkSoft = isDark ? 'rgba(242,178,199,0.20)' : '#F9D8E2'
+  const blueSoft = isDark ? 'rgba(157,195,232,0.20)' : '#CFE0F0'
+  const greenSoft = isDark ? 'rgba(189,212,140,0.20)' : '#DDE7BB'
+  const lilacSoft = isDark ? 'rgba(200,182,232,0.20)' : '#E3D8F2'
+
+  // Hero badge
+  const heroBadgeText = isActive ? 'IN PROGRESS' : isDone ? 'ALL DONE' : `IN ${(leap as any).weeksUntil ?? '?'}W`
+  const heroBadgeBg = isActive ? yellowSoft : isDone ? greenSoft : blueSoft
+  const heroBadgeInk = isDone ? '#4A6F1D' : isActive ? '#6B5500' : '#1F4C7A'
+
+  const heroEmoji = isDone ? '🎉' : LEAP_EMOJI[leap.index] ?? '✨'
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        {/* Header */}
-        <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-          <Pressable onPress={onClose} style={[s.modalClose, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
-            <X size={18} color={colors.textMuted} strokeWidth={2} />
+      <View style={{ flex: 1, backgroundColor: paperBg }}>
+        {/* Header — paper with soft divider */}
+        <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1, borderBottomColor: line }}>
+          <Pressable onPress={onClose} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: paper, borderWidth: 1, borderColor: line, alignItems: 'center', justifyContent: 'center' }}>
+            <X size={16} color={ink2} strokeWidth={2} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>Growth Leaps</Text>
-            <Text style={{ fontSize: 11, color: colors.textMuted }}>{childName} · Week {leap.weekAge}</Text>
+            <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>Growth Leaps</Text>
+            <Text style={{ fontSize: 11, fontFamily: 'DMSans_500Medium', color: ink3, marginTop: 1 }}>{childName} · Week {leap.weekAge}</Text>
           </View>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
-          {/* Current leap hero */}
-          <View style={{ margin: 16, gap: 16 }}>
-            <View style={{ backgroundColor: leapColor + '12', borderRadius: radius.lg, borderWidth: 1, borderColor: leapColor + '30', padding: 18, gap: 14 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: leapColor, textTransform: 'uppercase', letterSpacing: 0.5 }}>Leap #{leap.index + 1}</Text>
-                  <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text }}>{isDone ? 'All Leaps Complete' : gl.name}</Text>
-                  <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>{isDone ? `${childName} has completed all 10 Wonder Weeks` : gl.desc}</Text>
-                </View>
-                <View style={[s.leapBadge, { backgroundColor: heroBadgeBg, borderColor: heroBadgeBorder }]}>
-                  <Text style={[s.leapBadgeText, { color: heroBadgeColor }]}>{heroBadgeText}</Text>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 56 }}>
+          {/* Hero card — paper with sticker emoji corner */}
+          <View style={{ margin: 16, gap: 14 }}>
+            <View style={{
+              backgroundColor: isDone ? greenSoft : lilacSoft,
+              borderRadius: 24, borderWidth: 1, borderColor: line,
+              padding: 18, gap: 12, position: 'relative', overflow: 'hidden',
+            }}>
+              {/* sticker emoji */}
+              <View style={{ position: 'absolute', right: -6, top: -8, transform: [{ rotate: '12deg' }] }}>
+                <Emoji size={72} style={{ opacity: 0.85 }}>{heroEmoji}</Emoji>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                  Leap #{leap.index + 1}
+                </Text>
+                <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: heroBadgeBg, borderWidth: 1, borderColor: line }}>
+                  <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: heroBadgeInk, letterSpacing: 0.8 }}>
+                    {heroBadgeText}
+                  </Text>
                 </View>
               </View>
 
-              {/* Age & duration row */}
-              {!isDone && (
-                <View style={{ flexDirection: 'row', gap: 12 }}>
-                  <View style={{ flex: 1, backgroundColor: colors.surfaceGlass, borderRadius: radius.sm, padding: 10, gap: 2 }}>
-                    <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Typical Age</Text>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>{gl.ageRange}</Text>
-                  </View>
-                  <View style={{ flex: 1, backgroundColor: colors.surfaceGlass, borderRadius: radius.sm, padding: 10, gap: 2 }}>
-                    <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Duration</Text>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>{gl.duration}</Text>
-                  </View>
-                </View>
-              )}
-
-              {/* Brain note */}
-              {!isDone && (
-                <View style={{ gap: 6 }}>
-                  <Text style={[s.leapSectionLabel, { color: colors.textMuted }]}>What's happening in the brain</Text>
-                  <Text style={{ fontSize: 13, color: colors.textSecondary, lineHeight: 20 }}>{gl.brainNote}</Text>
-                </View>
-              )}
-
-              {/* Phase checklist */}
-              {!isDone && (
-                <View style={{ gap: 10 }}>
-                  <Text style={[s.leapSectionLabel, { color: colors.textMuted }]}>The 3 Phases</Text>
-                  {gl.phases.map((phase, pi) => {
-                    const done = phaseDone[pi]
-                    const current = phaseCurrent[pi] && isActive
-                    return (
-                      <View key={pi} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-                        <View style={[s.leapPhaseIcon, {
-                          marginTop: 2,
-                          backgroundColor: done ? brand.success + '25' : current ? leapColor + '25' : colors.surfaceGlass,
-                          borderWidth: current ? 1.5 : 0,
-                          borderColor: leapColor,
-                        }]}>
-                          {done
-                            ? <Check size={10} color={brand.success} strokeWidth={3} />
-                            : <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: current ? leapColor : colors.border }} />
-                          }
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: done ? brand.success : current ? leapColor : colors.textMuted }}>
-                            {phase.label}{current ? '  ← now' : ''}
-                          </Text>
-                          <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2, lineHeight: 18 }}>{phase.desc}</Text>
-                        </View>
-                      </View>
-                    )
-                  })}
-                </View>
-              )}
+              <Text style={{ fontSize: 28, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.6, lineHeight: 32, maxWidth: '78%' }}>
+                {isDone ? 'All Leaps Complete' : gl.name}
+              </Text>
+              <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, lineHeight: 19, maxWidth: '85%' }}>
+                {isDone ? `${childName} has completed all 10 Wonder Weeks` : gl.desc}
+              </Text>
             </View>
 
-            {/* Signs */}
+            {/* Age & Duration pastel tile row */}
             {!isDone && (
-              <View style={{ gap: 8 }}>
-                <Text style={[s.leapSectionLabel, { color: colors.textMuted }]}>
-                  {isActive ? `Signs ${childName} may show` : 'Signs to expect'}
-                </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {gl.signs.map((sign, i) => (
-                    <View key={i} style={[s.leapSignChip, { backgroundColor: leapColor + '12', borderColor: leapColor + '35' }]}>
-                      <Text style={[s.leapSignText, { color: leapColor }]}>{sign}</Text>
-                    </View>
-                  ))}
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <View style={{ flex: 1, backgroundColor: pinkSoft, borderRadius: 20, borderWidth: 1, borderColor: line, padding: 14 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Emoji size={14}>📅</Emoji>
+                    <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Typical Age</Text>
+                  </View>
+                  <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 4, letterSpacing: -0.3 }}>{gl.ageRange}</Text>
+                </View>
+                <View style={{ flex: 1, backgroundColor: blueSoft, borderRadius: 20, borderWidth: 1, borderColor: line, padding: 14 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Emoji size={14}>⏱️</Emoji>
+                    <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Duration</Text>
+                  </View>
+                  <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 4, letterSpacing: -0.3 }}>{gl.duration}</Text>
                 </View>
               </View>
             )}
 
-            {/* Skills */}
+            {/* Brain note — paper card with 🧠 sticker header */}
             {!isDone && (
-              <View style={{ gap: 8 }}>
-                <Text style={[s.leapSectionLabel, { color: colors.textMuted }]}>
-                  {isActive ? 'Skills emerging now' : 'Skills that will emerge'}
-                </Text>
-                <View style={{ backgroundColor: colors.surface, borderRadius: radius.md, padding: 14, gap: 10, borderWidth: 1, borderColor: colors.borderLight }}>
-                  {gl.skills.map((skill, i) => (
-                    <View key={i} style={s.leapSkillRow}>
-                      <View style={[s.leapSkillDot, { backgroundColor: leapColor }]} />
-                      <Text style={[s.leapSkillText, { color: colors.textSecondary }]}>{skill}</Text>
-                    </View>
-                  ))}
+              <View style={{ backgroundColor: paper, borderRadius: 22, borderWidth: 1, borderColor: line, padding: 16, gap: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View style={{ transform: [{ rotate: '-6deg' }] }}>
+                    <Emoji size={22}>🧠</Emoji>
+                  </View>
+                  <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+                    What's happening in the brain
+                  </Text>
                 </View>
+                <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, lineHeight: 20 }}>
+                  {gl.brainNote}
+                </Text>
               </View>
             )}
 
-            {/* Activities */}
+            {/* Phase checklist — sticker-emoji card row */}
             {!isDone && (
               <View style={{ gap: 8 }}>
-                <Text style={[s.leapSectionLabel, { color: colors.textMuted }]}>Activities to support this leap</Text>
-                <View style={{ backgroundColor: colors.surface, borderRadius: radius.md, padding: 14, gap: 10, borderWidth: 1, borderColor: colors.borderLight }}>
-                  {gl.activities.map((act, i) => (
-                    <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: leapColor + '20', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '800', color: leapColor }}>{i + 1}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                  <Emoji size={20}>🌊</Emoji>
+                  <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>The 3 Phases</Text>
+                </View>
+                {gl.phases.map((phase, pi) => {
+                  const done = phaseDone[pi]
+                  const current = phaseCurrent[pi] && isActive
+                  const phaseBg = current ? yellowSoft : done ? greenSoft : paper
+                  return (
+                    <View key={pi} style={{
+                      backgroundColor: phaseBg,
+                      borderRadius: 18, borderWidth: 1, borderColor: line,
+                      padding: 14, flexDirection: 'row', gap: 12, alignItems: 'center',
+                    }}>
+                      <Emoji size={28}>{done ? '✅' : PHASE_EMOJI[pi]}</Emoji>
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={{ fontSize: 14, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+                          {phase.label}{current ? '  · now' : ''}
+                        </Text>
+                        <Text style={{ fontSize: 12, fontFamily: 'DMSans_400Regular', color: ink3, lineHeight: 17 }}>
+                          {phase.desc}
+                        </Text>
                       </View>
-                      <Text style={{ fontSize: 13, color: colors.textSecondary, flex: 1, lineHeight: 19 }}>{act}</Text>
+                    </View>
+                  )
+                })}
+              </View>
+            )}
+
+            {/* Signs — coral sticker chips */}
+            {!isDone && (
+              <View style={{ gap: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Emoji size={20}>👀</Emoji>
+                  <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+                    {isActive ? `Signs ${childName} may show` : 'Signs to expect'}
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                  {gl.signs.map((sign, i) => (
+                    <View key={i} style={{
+                      paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
+                      backgroundColor: pinkSoft, borderWidth: 1, borderColor: line,
+                    }}>
+                      <Text style={{ fontSize: 12, fontFamily: 'DMSans_500Medium', color: ink2 }}>
+                        {sign}
+                      </Text>
                     </View>
                   ))}
                 </View>
               </View>
             )}
 
-            {/* Tip */}
+            {/* Skills — paper bullet card */}
             {!isDone && (
-              <View style={[s.leapTip, { backgroundColor: brand.warning + '10', borderColor: brand.warning + '25' }]}>
-                <View style={[s.leapTipIcon, { backgroundColor: brand.warning + '18' }]}>
-                  <Sparkles size={14} color={brand.warning} strokeWidth={2} />
+              <View style={{ gap: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Emoji size={20}>💪</Emoji>
+                  <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+                    {isActive ? 'Skills emerging now' : 'Skills that will emerge'}
+                  </Text>
                 </View>
-                <Text style={[s.leapTipText, { color: colors.textSecondary }]}>{gl.tip}</Text>
+                <View style={{ backgroundColor: paper, borderRadius: 22, borderWidth: 1, borderColor: line, padding: 16, gap: 10 }}>
+                  {gl.skills.map((skill, i) => (
+                    <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+                      <Emoji size={14} style={{ marginTop: 1 }}>✨</Emoji>
+                      <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, flex: 1, lineHeight: 19 }}>
+                        {skill}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Activities — numbered pastel cards */}
+            {!isDone && (
+              <View style={{ gap: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Emoji size={20}>🎯</Emoji>
+                  <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+                    Activities to support this leap
+                  </Text>
+                </View>
+                <View style={{ gap: 8 }}>
+                  {gl.activities.map((act, i) => (
+                    <View key={i} style={{
+                      backgroundColor: paper, borderRadius: 20, borderWidth: 1, borderColor: line,
+                      padding: 14, flexDirection: 'row', gap: 12, alignItems: 'flex-start',
+                    }}>
+                      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: greenSoft, borderWidth: 1, borderColor: line, alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ fontSize: 12, fontFamily: 'Fraunces_600SemiBold', color: ink }}>{i + 1}</Text>
+                      </View>
+                      <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, flex: 1, lineHeight: 19 }}>{act}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Tip — yellow sticker card */}
+            {!isDone && (
+              <View style={{
+                backgroundColor: yellowSoft, borderRadius: 22, borderWidth: 1, borderColor: line,
+                padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center',
+              }}>
+                <Emoji size={30}>💡</Emoji>
+                <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: ink, flex: 1, lineHeight: 19 }}>{gl.tip}</Text>
+              </View>
+            )}
+
+            {/* Done celebration */}
+            {isDone && (
+              <View style={{
+                backgroundColor: greenSoft, borderRadius: 22, borderWidth: 1, borderColor: line,
+                padding: 18, flexDirection: 'row', gap: 12, alignItems: 'center',
+              }}>
+                <Emoji size={34}>🎉</Emoji>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+                    Way to go, {childName}!
+                  </Text>
+                  <Text style={{ fontSize: 12, fontFamily: 'DMSans_400Regular', color: ink3, marginTop: 2 }}>
+                    All 10 Wonder Weeks leaps complete.
+                  </Text>
+                </View>
               </View>
             )}
           </View>
 
-          {/* All leaps list */}
-          <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16, marginBottom: 16 }} />
-          <Text style={[s.leapSectionLabel, { color: colors.textMuted, paddingHorizontal: 20, marginBottom: 8 }]}>All 10 Leaps</Text>
-          {GROWTH_LEAPS.map((g, i) => {
-            const done = i < leap.completedCount
-            const active = i === leap.index && isActive
-            const upcoming = i === leap.index && !isActive && !isDone
-            const allDone = isDone
-            const gc = g.color || brand.kids
-            return (
-              <Pressable
-                key={i}
-                onPress={() => setSelectedLeapIdx(i)}
-                style={[s.leapModalRow, {
-                  backgroundColor: active ? gc + '10' : done ? 'rgba(255,255,255,0.02)' : 'transparent',
-                  borderLeftColor: done || allDone ? brand.success : active ? gc : upcoming ? gc + '55' : colors.border,
-                  opacity: !done && !active && !upcoming && !allDone ? 0.5 : 1,
-                }]}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <View style={[s.leapModalNum, { backgroundColor: done || allDone ? brand.success : active ? gc : colors.border }]}>
-                    {done || allDone
-                      ? <Check size={9} color="#000" strokeWidth={3} />
-                      : <Text style={{ fontSize: 8, fontWeight: '900', color: active ? '#fff' : colors.textMuted }}>{i + 1}</Text>
-                    }
+          {/* All leaps list — paper rows with emoji stickers */}
+          <View style={{ marginHorizontal: 16, marginTop: 12, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Emoji size={20}>📖</Emoji>
+            <Text style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>All 10 Leaps</Text>
+          </View>
+          <View style={{ marginHorizontal: 16, gap: 6 }}>
+            {GROWTH_LEAPS.map((g, i) => {
+              const done = i < leap.completedCount
+              const active = i === leap.index && isActive
+              const allDone = isDone
+              const rowEmoji = LEAP_EMOJI[i] ?? '✨'
+              const badge = (done || allDone) ? 'DONE' : active ? 'NOW' : `WK ${g.week}`
+              const badgeBg = (done || allDone) ? greenSoft : active ? yellowSoft : blueSoft
+              const badgeInk = (done || allDone) ? '#4A6F1D' : active ? '#6B5500' : '#1F4C7A'
+              return (
+                <Pressable
+                  key={i}
+                  onPress={() => setSelectedLeapIdx(i)}
+                  style={{
+                    backgroundColor: active ? yellowSoft : paper,
+                    borderRadius: 18, borderWidth: 1, borderColor: line,
+                    padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10,
+                    opacity: !done && !active && !allDone ? 0.78 : 1,
+                  }}
+                >
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? colors.surface : '#FFFEF8', borderWidth: 1, borderColor: line, alignItems: 'center', justifyContent: 'center' }}>
+                    <Emoji size={18}>{done || allDone ? '✅' : rowEmoji}</Emoji>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[s.leapModalName, { color: done || allDone ? colors.textSecondary : active ? colors.text : colors.textMuted }]}>{g.name}</Text>
-                    <Text style={s.leapModalDesc}>{g.desc}</Text>
+                    <Text style={{ fontSize: 14, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>{g.name}</Text>
+                    <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, marginTop: 1 }} numberOfLines={1}>{g.desc}</Text>
                   </View>
-                  <View style={{ alignItems: 'flex-end', gap: 3 }}>
-                    {(done || allDone) && <View style={[s.leapBadge, { backgroundColor: brand.success + '18', borderColor: brand.success + '35' }]}><Text style={[s.leapBadgeText, { color: brand.success }]}>DONE</Text></View>}
-                    {active && <View style={[s.leapBadge, { backgroundColor: gc + '22', borderColor: gc + '50' }]}><Text style={[s.leapBadgeText, { color: gc }]}>NOW</Text></View>}
-                    {!done && !active && !allDone && <Text style={[s.leapWeekLabel, { color: colors.textMuted }]}>Wk {g.week}</Text>}
-                    <ChevronRight size={12} color={colors.textMuted} strokeWidth={2} />
+                  <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: badgeBg, borderWidth: 1, borderColor: line }}>
+                    <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: badgeInk, letterSpacing: 0.8 }}>{badge}</Text>
                   </View>
-                </View>
-              </Pressable>
-            )
-          })}
+                </Pressable>
+              )
+            })}
+          </View>
         </ScrollView>
       </View>
 
@@ -4277,143 +4778,202 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
   childName: string
   onClose: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const g = GROWTH_LEAPS[leapIdx]
   if (!g) return null
 
-  const gc = g.color || brand.kids
   const isThisActive = leapIdx === currentLeap.index && isCurrentActive
   const isThisDone = leapIdx < currentLeap.completedCount
-  const isThisUpcoming = !isThisActive && !isThisDone
 
   const phaseDone = isThisActive ? [(currentPhaseIndex > 0), (currentPhaseIndex > 1), false] : isThisDone ? [true, true, true] : [false, false, false]
   const phaseCurrent = isThisActive ? [(currentPhaseIndex === 0), (currentPhaseIndex === 1), (currentPhaseIndex === 2)] : [false, false, false]
 
-  const badgeText = isThisActive ? 'IN PROGRESS' : isThisDone ? 'DONE' : `Week ${g.week}`
-  const badgeColor = isThisActive ? gc : isThisDone ? brand.success : colors.textMuted
-  const badgeBg = isThisActive ? gc + '22' : isThisDone ? brand.success + '22' : colors.surfaceGlass
-  const badgeBorder = isThisActive ? gc + '60' : isThisDone ? brand.success + '60' : colors.border
+  // Paper tokens
+  const paperBg = isDark ? colors.bg : '#F3ECD9'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const ink = isDark ? colors.text : '#141313'
+  const ink2 = isDark ? colors.textSecondary : '#3A3533'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const line = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const yellowSoft = isDark ? 'rgba(245,214,82,0.20)' : '#FBEA9E'
+  const pinkSoft = isDark ? 'rgba(242,178,199,0.20)' : '#F9D8E2'
+  const blueSoft = isDark ? 'rgba(157,195,232,0.20)' : '#CFE0F0'
+  const greenSoft = isDark ? 'rgba(189,212,140,0.20)' : '#DDE7BB'
+  const lilacSoft = isDark ? 'rgba(200,182,232,0.20)' : '#E3D8F2'
+
+  const badgeText = isThisActive ? 'IN PROGRESS' : isThisDone ? 'DONE' : `WEEK ${g.week}`
+  const badgeBg = isThisActive ? yellowSoft : isThisDone ? greenSoft : blueSoft
+  const badgeInk = isThisDone ? '#4A6F1D' : isThisActive ? '#6B5500' : '#1F4C7A'
+
+  const heroEmoji = LEAP_EMOJI[leapIdx] ?? '✨'
 
   return (
     <Modal visible animationType="slide" transparent={false} onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        {/* Header */}
-        <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-          <Pressable onPress={onClose} style={[s.modalClose, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
-            <X size={18} color={colors.textMuted} strokeWidth={2} />
+      <View style={{ flex: 1, backgroundColor: paperBg }}>
+        {/* Header — paper */}
+        <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1, borderBottomColor: line }}>
+          <Pressable onPress={onClose} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: paper, borderWidth: 1, borderColor: line, alignItems: 'center', justifyContent: 'center' }}>
+            <X size={16} color={ink2} strokeWidth={2} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: gc, textTransform: 'uppercase', letterSpacing: 0.5 }}>Leap #{leapIdx + 1}</Text>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text }}>{g.name}</Text>
+            <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+              Leap #{leapIdx + 1}
+            </Text>
+            <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>{g.name}</Text>
           </View>
-          <View style={[s.leapBadge, { backgroundColor: badgeBg, borderColor: badgeBorder }]}>
-            <Text style={[s.leapBadgeText, { color: badgeColor }]}>{badgeText}</Text>
+          <View style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: badgeBg, borderWidth: 1, borderColor: line }}>
+            <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: badgeInk, letterSpacing: 0.8 }}>{badgeText}</Text>
           </View>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 56, gap: 16 }}>
-          {/* Age & duration */}
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <View style={{ flex: 1, backgroundColor: gc + '12', borderRadius: radius.md, padding: 12, gap: 3, borderWidth: 1, borderColor: gc + '25' }}>
-              <Text style={{ fontSize: 9, fontWeight: '700', color: gc, textTransform: 'uppercase', letterSpacing: 0.5 }}>Typical Age</Text>
-              <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>{g.ageRange}</Text>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 56, gap: 14 }}>
+          {/* Hero card — paper with sticker emoji */}
+          <View style={{
+            backgroundColor: isThisDone ? greenSoft : lilacSoft,
+            borderRadius: 24, borderWidth: 1, borderColor: line,
+            padding: 18, gap: 8, position: 'relative', overflow: 'hidden',
+          }}>
+            <View style={{ position: 'absolute', right: -4, top: -6, transform: [{ rotate: '12deg' }] }}>
+              <Emoji size={72} style={{ opacity: 0.85 }}>{heroEmoji}</Emoji>
             </View>
-            <View style={{ flex: 1, backgroundColor: gc + '12', borderRadius: radius.md, padding: 12, gap: 3, borderWidth: 1, borderColor: gc + '25' }}>
-              <Text style={{ fontSize: 9, fontWeight: '700', color: gc, textTransform: 'uppercase', letterSpacing: 0.5 }}>Duration</Text>
-              <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>{g.duration}</Text>
-            </View>
+            <Text style={{ fontSize: 22, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.4, lineHeight: 26, maxWidth: '78%' }}>
+              {g.desc}
+            </Text>
+            <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, lineHeight: 20, marginTop: 4, maxWidth: '92%' }}>
+              {g.brainNote}
+            </Text>
           </View>
 
-          {/* Description */}
-          <View style={{ backgroundColor: colors.surface, borderRadius: radius.md, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.borderLight }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>{g.desc}</Text>
-            <Text style={{ fontSize: 13, color: colors.textSecondary, lineHeight: 20 }}>{g.brainNote}</Text>
+          {/* Age & Duration row */}
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1, backgroundColor: pinkSoft, borderRadius: 20, borderWidth: 1, borderColor: line, padding: 14 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Emoji size={14}>📅</Emoji>
+                <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Typical Age</Text>
+              </View>
+              <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 4, letterSpacing: -0.3 }}>{g.ageRange}</Text>
+            </View>
+            <View style={{ flex: 1, backgroundColor: blueSoft, borderRadius: 20, borderWidth: 1, borderColor: line, padding: 14 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Emoji size={14}>⏱️</Emoji>
+                <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Duration</Text>
+              </View>
+              <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 4, letterSpacing: -0.3 }}>{g.duration}</Text>
+            </View>
           </View>
 
           {/* Phases */}
-          <View style={{ gap: 10 }}>
-            <Text style={[s.leapSectionLabel, { color: colors.textMuted }]}>The 3 Phases</Text>
+          <View style={{ gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+              <Emoji size={20}>🌊</Emoji>
+              <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>The 3 Phases</Text>
+            </View>
             {g.phases.map((phase, pi) => {
               const done = phaseDone[pi]
               const current = phaseCurrent[pi]
+              const phaseBg = current ? yellowSoft : done ? greenSoft : paper
               return (
-                <View key={pi} style={{ backgroundColor: done ? brand.success + '08' : current ? gc + '10' : colors.surface, borderRadius: radius.md, padding: 14, borderWidth: 1, borderColor: done ? brand.success + '25' : current ? gc + '35' : colors.borderLight, flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: done ? brand.success + '25' : current ? gc + '25' : colors.surfaceGlass, alignItems: 'center', justifyContent: 'center', marginTop: 1, borderWidth: current ? 1.5 : 0, borderColor: gc }}>
-                    {done
-                      ? <Check size={11} color={brand.success} strokeWidth={3} />
-                      : <Text style={{ fontSize: 9, fontWeight: '900', color: current ? gc : colors.textMuted }}>{pi + 1}</Text>
-                    }
-                  </View>
-                  <View style={{ flex: 1, gap: 3 }}>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: done ? brand.success : current ? gc : colors.text }}>
+                <View key={pi} style={{
+                  backgroundColor: phaseBg,
+                  borderRadius: 18, borderWidth: 1, borderColor: line,
+                  padding: 14, flexDirection: 'row', gap: 12, alignItems: 'center',
+                }}>
+                  <Emoji size={28}>{done ? '✅' : PHASE_EMOJI[pi]}</Emoji>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={{ fontSize: 14, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
                       {phase.label}{current ? '  · happening now' : ''}
                     </Text>
-                    <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>{phase.desc}</Text>
+                    <Text style={{ fontSize: 12, fontFamily: 'DMSans_400Regular', color: ink3, lineHeight: 17 }}>
+                      {phase.desc}
+                    </Text>
                   </View>
                 </View>
               )
             })}
           </View>
 
-          {/* Signs */}
+          {/* Signs — pink chips */}
           <View style={{ gap: 8 }}>
-            <Text style={[s.leapSectionLabel, { color: colors.textMuted }]}>
-              {isThisActive ? `Signs ${childName} may show` : 'Signs to watch for'}
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Emoji size={20}>👀</Emoji>
+              <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+                {isThisActive ? `Signs ${childName} may show` : 'Signs to watch for'}
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {g.signs.map((sign, i) => (
-                <View key={i} style={[s.leapSignChip, { backgroundColor: gc + '12', borderColor: gc + '35' }]}>
-                  <Text style={[s.leapSignText, { color: gc }]}>{sign}</Text>
+                <View key={i} style={{
+                  paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
+                  backgroundColor: pinkSoft, borderWidth: 1, borderColor: line,
+                }}>
+                  <Text style={{ fontSize: 12, fontFamily: 'DMSans_500Medium', color: ink2 }}>
+                    {sign}
+                  </Text>
                 </View>
               ))}
             </View>
           </View>
 
-          {/* Skills */}
+          {/* Skills — paper bullet list */}
           <View style={{ gap: 8 }}>
-            <Text style={[s.leapSectionLabel, { color: colors.textMuted }]}>
-              {isThisDone ? 'Skills gained' : isThisActive ? 'Skills emerging now' : 'Skills that will emerge'}
-            </Text>
-            <View style={{ backgroundColor: colors.surface, borderRadius: radius.md, padding: 14, gap: 10, borderWidth: 1, borderColor: colors.borderLight }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Emoji size={20}>💪</Emoji>
+              <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+                {isThisDone ? 'Skills gained' : isThisActive ? 'Skills emerging now' : 'Skills that will emerge'}
+              </Text>
+            </View>
+            <View style={{ backgroundColor: paper, borderRadius: 22, borderWidth: 1, borderColor: line, padding: 16, gap: 10 }}>
               {g.skills.map((skill, i) => (
-                <View key={i} style={s.leapSkillRow}>
-                  <View style={[s.leapSkillDot, { backgroundColor: isThisDone ? brand.success : gc }]} />
-                  <Text style={[s.leapSkillText, { color: colors.textSecondary }]}>{skill}</Text>
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+                  <Emoji size={14} style={{ marginTop: 1 }}>{isThisDone ? '✅' : '✨'}</Emoji>
+                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, flex: 1, lineHeight: 19 }}>
+                    {skill}
+                  </Text>
                 </View>
               ))}
             </View>
           </View>
 
-          {/* Activities */}
+          {/* Activities — numbered paper cards */}
           <View style={{ gap: 8 }}>
-            <Text style={[s.leapSectionLabel, { color: colors.textMuted }]}>Activities to support this leap</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Emoji size={20}>🎯</Emoji>
+              <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+                Activities to support this leap
+              </Text>
+            </View>
             <View style={{ gap: 8 }}>
               {g.activities.map((act, i) => (
-                <View key={i} style={{ backgroundColor: colors.surface, borderRadius: radius.md, padding: 14, flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderWidth: 1, borderColor: colors.borderLight }}>
-                  <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: gc + '20', alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 11, fontWeight: '900', color: gc }}>{i + 1}</Text>
+                <View key={i} style={{
+                  backgroundColor: paper, borderRadius: 20, borderWidth: 1, borderColor: line,
+                  padding: 14, flexDirection: 'row', gap: 12, alignItems: 'flex-start',
+                }}>
+                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: greenSoft, borderWidth: 1, borderColor: line, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 12, fontFamily: 'Fraunces_600SemiBold', color: ink }}>{i + 1}</Text>
                   </View>
-                  <Text style={{ fontSize: 13, color: colors.textSecondary, flex: 1, lineHeight: 20 }}>{act}</Text>
+                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, flex: 1, lineHeight: 20 }}>{act}</Text>
                 </View>
               ))}
             </View>
           </View>
 
-          {/* Tip */}
-          <View style={[s.leapTip, { backgroundColor: brand.warning + '10', borderColor: brand.warning + '25' }]}>
-            <View style={[s.leapTipIcon, { backgroundColor: brand.warning + '18' }]}>
-              <Sparkles size={14} color={brand.warning} strokeWidth={2} />
-            </View>
-            <Text style={[s.leapTipText, { color: colors.textSecondary }]}>{g.tip}</Text>
+          {/* Tip — yellow sticker */}
+          <View style={{
+            backgroundColor: yellowSoft, borderRadius: 22, borderWidth: 1, borderColor: line,
+            padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center',
+          }}>
+            <Emoji size={30}>💡</Emoji>
+            <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: ink, flex: 1, lineHeight: 19 }}>{g.tip}</Text>
           </View>
 
-          {/* Status footer for done leaps */}
+          {/* Done celebration */}
           {isThisDone && (
-            <View style={{ backgroundColor: brand.success + '10', borderRadius: radius.md, padding: 14, borderWidth: 1, borderColor: brand.success + '25', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: brand.success + '25', alignItems: 'center', justifyContent: 'center' }}>
-                <Check size={14} color={brand.success} strokeWidth={3} />
-              </View>
-              <Text style={{ fontSize: 13, color: brand.success, flex: 1, fontWeight: '600' }}>
+            <View style={{
+              backgroundColor: greenSoft, borderRadius: 22, borderWidth: 1, borderColor: line,
+              padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center',
+            }}>
+              <Emoji size={30}>🎉</Emoji>
+              <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, flex: 1, letterSpacing: -0.2 }}>
                 {childName} has completed this leap!
               </Text>
             </View>
@@ -4563,12 +5123,12 @@ const s = StyleSheet.create({
   miniRingLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
 
   // Hero — concentric rings + Fraunces number + mono-caps unit + orange-soft pill
-  heroWrap: { alignItems: 'center', paddingVertical: 8 },
-  heroCenter: { alignItems: 'center', gap: 4 },
-  heroNumber: { fontSize: 44, letterSpacing: -1.2, fontFamily: 'Fraunces_600SemiBold' },
-  heroUnit: { fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', fontFamily: 'DMSans_600SemiBold' },
-  heroBadge: { marginTop: 6, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 },
-  heroBadgeText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  heroWrap: { alignItems: 'center', paddingVertical: 4 },
+  heroCenter: { alignItems: 'center', gap: 2 },
+  heroNumber: { fontSize: 38, letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' },
+  heroUnit: { fontSize: 9, letterSpacing: 1.8, textTransform: 'uppercase', fontFamily: 'DMSans_600SemiBold' },
+  heroBadge: { marginTop: 4, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999 },
+  heroBadgeText: { fontSize: 10, fontFamily: 'DMSans_600SemiBold' },
 
   // Legend — paper stat tiles: dot + MONO-CAPS label / Fraunces value / small sub
   legendRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
@@ -4779,7 +5339,7 @@ const s = StyleSheet.create({
 
   // Mood modal — line chart
   moodChartWrap: { padding: 8, overflow: 'hidden' },
-  moodChipsRow: { gap: 6, paddingHorizontal: 2, paddingBottom: 2 },
+  moodChipsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingHorizontal: 2, paddingBottom: 2 },
   moodChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 7, paddingHorizontal: 11, borderWidth: 1 },
   moodChipDot: { width: 7, height: 7, borderRadius: 4 },
   moodChipLabel: { fontSize: 12, fontWeight: '700' },

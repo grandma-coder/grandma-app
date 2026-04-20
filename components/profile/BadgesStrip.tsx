@@ -1,21 +1,10 @@
-import React from 'react'
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
+import React, { useEffect, useRef } from 'react'
+import { View, Text, Pressable, ScrollView, StyleSheet, Animated, Easing } from 'react-native'
 import { useTheme } from '../../constants/theme'
-import * as Stickers from '../ui/Stickers'
-
-export type StickerName =
-  | 'Burst'
-  | 'Heart'
-  | 'Drop'
-  | 'Star'
-  | 'Moon'
-  | 'Leaf'
-  | 'Flower'
-  | 'Cross'
+import { BadgeIcon } from '../stickers/BadgeIcon'
 
 export interface BadgeEntry {
-  color: string
-  sticker: StickerName
+  badgeId: string
   label: string
 }
 
@@ -27,7 +16,7 @@ interface BadgesStripProps {
 
 /**
  * Paper card with "BADGES" header + "All N →" link, followed by a
- * horizontal row of 58px circles each containing a sticker + day label.
+ * horizontal row of 58px circles each containing the badge's own sticker.
  */
 export function BadgesStrip({ badges, total, onSeeAll }: BadgesStripProps) {
   const { colors, radius } = useTheme()
@@ -70,31 +59,63 @@ export function BadgesStrip({ badges, total, onSeeAll }: BadgesStripProps) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {badges.map((b, i) => {
-            const Sticker = Stickers[b.sticker] as React.ComponentType<{ size?: number; fill?: string }>
-            return (
-              <View key={i} style={styles.item}>
-                <View
-                  style={[
-                    styles.circle,
-                    {
-                      backgroundColor: colors.surfaceRaised,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <Sticker size={40} fill={b.color} />
-                </View>
-                <Text style={[styles.dayLabel, { color: colors.textMuted }]}>
-                  {b.label}
-                </Text>
+          {badges.map((b) => (
+            <View key={b.badgeId} style={styles.item}>
+              <View
+                style={[
+                  styles.circle,
+                  {
+                    backgroundColor: colors.surfaceRaised,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <BreathingBadge>
+                  <BadgeIcon badgeId={b.badgeId} size={40} />
+                </BreathingBadge>
               </View>
-            )
-          })}
+              <Text style={[styles.dayLabel, { color: colors.textMuted }]}>
+                {b.label}
+              </Text>
+            </View>
+          ))}
         </ScrollView>
       )}
     </View>
   )
+}
+
+/** Subtle scale-breathe wrapper. Random phase delay so badges don't pulse together. */
+function BreathingBadge({ children }: { children: React.ReactNode }) {
+  const v = useRef(new Animated.Value(0)).current
+  const delay = useRef(Math.random() * 2200).current
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(v, {
+          toValue: 1,
+          duration: 2200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(v, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+      ])
+    )
+    const t = setTimeout(() => loop.start(), delay)
+    return () => {
+      clearTimeout(t)
+      loop.stop()
+    }
+  }, [v, delay])
+
+  const scale = v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.05, 1] })
+
+  return <Animated.View style={{ transform: [{ scale }] }}>{children}</Animated.View>
 }
 
 const styles = StyleSheet.create({

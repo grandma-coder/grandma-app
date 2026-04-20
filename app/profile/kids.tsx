@@ -18,23 +18,11 @@ import {
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { router } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import {
-  ArrowLeft,
-  User,
-  Plus,
   Pencil,
   Trash2,
-  Save,
-  X,
-  AlertTriangle,
-  ThumbsUp,
-  ThumbsDown,
-  Pill,
   Stethoscope,
-  StickyNote,
-  Baby,
-  Droplet,
-  ShieldAlert,
   Search,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -42,6 +30,17 @@ import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { LogSheet } from '../../components/calendar/LogSheet'
+import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { PillButton } from '../../components/ui/PillButton'
+import { Display, MonoCaps, Body } from '../../components/ui/Typography'
+import {
+  Flower as FlowerSticker,
+  Heart as HeartSticker,
+  Star as StarSticker,
+  Cross as CrossSticker,
+  Drop as DropSticker,
+  Squishy,
+} from '../../components/ui/Stickers'
 import type { ChildWithRole } from '../../types'
 
 // ─── Constants ────────────────────────────────────────────────────────────
@@ -125,7 +124,7 @@ function mapDbChild(c: any): ChildWithRole {
 // ─── Main Screen ──────────────────────────────────────────────────────────
 
 export default function KidsProfileScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, isDark, stickers } = useTheme()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
   const setChildren = useChildStore((s) => s.setChildren)
@@ -157,47 +156,57 @@ export default function KidsProfileScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} style={styles.headerBtn}>
-          <ArrowLeft size={24} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Kids Profile</Text>
-        <Pressable onPress={() => setShowAddSheet(true)} style={styles.headerBtn}>
-          <Plus size={22} color={colors.primary} />
-        </Pressable>
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+        <ScreenHeader
+          title="Kids Profile"
+          right={
+            <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10}>
+              <View
+                style={[
+                  styles.headerAddBtn,
+                  {
+                    backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                    borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                  },
+                ]}
+              >
+                <Ionicons name="add" size={20} color={colors.text} />
+              </View>
+            </Pressable>
+          }
+        />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {children.length === 0 && (
-          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-            <Baby size={36} color={colors.textMuted} strokeWidth={1.5} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No children added</Text>
-            <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
+          <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
+            <FlowerSticker size={64} petal={stickers.pink} center={stickers.yellow} />
+            <Display size={20} align="center" color={colors.text}>
+              No children added
+            </Display>
+            <Body size={14} align="center" color={colors.textSecondary}>
               Add your children to start tracking their health, food preferences, and growth.
-            </Text>
+            </Body>
           </View>
         )}
 
-        {children.map((child) => (
+        {children.map((child, i) => (
           <ChildCard
             key={child.id}
             child={child}
+            index={i}
             onEdit={() => setEditingChild(child)}
             onDelete={() => handleDelete(child)}
           />
         ))}
 
-        <Pressable
+        <PillButton
+          label="Add a Child"
+          variant="ink"
           onPress={() => setShowAddSheet(true)}
-          style={({ pressed }) => [
-            styles.addBtn,
-            { backgroundColor: colors.primary, borderRadius: radius.lg },
-            pressed && { opacity: 0.9 },
-          ]}
-        >
-          <Plus size={20} color="#FFFFFF" strokeWidth={2} />
-          <Text style={styles.addBtnText}>Add a Child</Text>
-        </Pressable>
+          leading={<Ionicons name="add" size={18} color={isDark ? '#1A1713' : '#F3ECD9'} />}
+          style={{ marginTop: 8 }}
+        />
       </ScrollView>
 
       {editingChild && (
@@ -225,16 +234,19 @@ export default function KidsProfileScreen() {
 
 // ─── Child Card (Compact) ─────────────────────────────────────────────────
 
-function ChildCard({ child, onEdit, onDelete }: { child: ChildWithRole; onEdit: () => void; onDelete: () => void }) {
-  const { colors, radius } = useTheme()
+const KID_COLORS = ['#9DC3E8', '#F2B2C7', '#BDD48C', '#C8B6E8', '#F5D652', '#F5B896']
 
-  // Collect summary tags: max 6 visible, inline
+function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; index: number; onEdit: () => void; onDelete: () => void }) {
+  const { colors, font, stickers, isDark } = useTheme()
+  const accent = KID_COLORS[index % KID_COLORS.length]
+
+  // Collect summary tags
   const tags: { label: string; color: string }[] = []
-  if (child.bloodType) tags.push({ label: child.bloodType, color: brand.error })
-  child.allergies.forEach((a) => tags.push({ label: a, color: brand.error }))
-  child.conditions.forEach((c) => tags.push({ label: c, color: brand.warning }))
-  child.medications.forEach((m) => tags.push({ label: m, color: brand.secondary }))
-  child.dietaryRestrictions.forEach((r) => tags.push({ label: r, color: brand.accent }))
+  if (child.bloodType) tags.push({ label: child.bloodType, color: stickers.coral })
+  child.allergies.forEach((a) => tags.push({ label: a, color: stickers.coral }))
+  child.conditions.forEach((c) => tags.push({ label: c, color: '#E8A435' }))
+  child.medications.forEach((m) => tags.push({ label: m, color: stickers.blue }))
+  child.dietaryRestrictions.forEach((r) => tags.push({ label: r, color: '#E8A435' }))
   const uniqueTags = tags.filter((t, i, arr) => arr.findIndex((x) => x.label === t.label) === i)
   const visibleTags = uniqueTags.slice(0, 5)
   const extraCount = uniqueTags.length - visibleTags.length
@@ -245,6 +257,9 @@ function ChildCard({ child, onEdit, onDelete }: { child: ChildWithRole; onEdit: 
   if (child.dislikedFoods.length > 0) foodParts.push(`Avoids: ${child.dislikedFoods.slice(0, 3).join(', ')}`)
   const foodSummary = foodParts.join(' · ')
 
+  const sexLabel = child.sex === 'male' ? 'Boy' : child.sex === 'female' ? 'Girl' : 'Other'
+  const sexColor = child.sex === 'male' ? stickers.blue : child.sex === 'female' ? stickers.pink : stickers.lilac
+
   return (
     <Pressable
       onPress={onEdit}
@@ -252,33 +267,59 @@ function ChildCard({ child, onEdit, onDelete }: { child: ChildWithRole; onEdit: 
       delayLongPress={600}
       style={({ pressed }) => [
         styles.childCard,
-        { backgroundColor: colors.surface, borderRadius: radius.xl },
-        pressed && { opacity: 0.85 },
+        {
+          backgroundColor: isDark ? colors.surface : '#FFFEF8',
+          borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+        },
+        pressed && { opacity: 0.9 },
       ]}
     >
-      {/* Row 1: Avatar + Name + Age + Edit arrow */}
+      {/* Row 1: Sticker avatar + Name + Age + actions */}
       <View style={styles.childHeader}>
-        <View style={[styles.childAvatar, { backgroundColor: child.sex === 'male' ? '#4D96FF15' : child.sex === 'female' ? '#FF8AD815' : colors.surfaceRaised }]}>
-          <User size={22} color={child.sex === 'male' ? '#4D96FF' : child.sex === 'female' ? '#FF8AD8' : colors.textMuted} strokeWidth={1.5} />
+        <View
+          style={[
+            styles.childAvatar,
+            { backgroundColor: accent + '40', borderColor: colors.text },
+          ]}
+        >
+          <FlowerSticker size={28} petal={accent} center={stickers.yellow} />
         </View>
         <View style={styles.childInfo}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={[styles.childName, { color: colors.text }]}>{child.name}</Text>
+            <Text
+              style={[
+                styles.childName,
+                { color: colors.text, fontFamily: font.display },
+              ]}
+            >
+              {child.name}
+            </Text>
             {child.sex ? (
-              <View style={[styles.sexBadge, { backgroundColor: child.sex === 'male' ? '#4D96FF20' : child.sex === 'female' ? '#FF8AD820' : '#9B70D420' }]}>
-                <Text style={[styles.sexBadgeText, { color: child.sex === 'male' ? '#4D96FF' : child.sex === 'female' ? '#FF8AD8' : '#9B70D4' }]}>
-                  {child.sex === 'male' ? 'Boy' : child.sex === 'female' ? 'Girl' : 'Other'}
+              <View style={[styles.sexBadge, { backgroundColor: sexColor + '30' }]}>
+                <Text
+                  style={[
+                    styles.sexBadgeText,
+                    { color: isDark ? sexColor : '#3A3533', fontFamily: font.bodySemiBold },
+                  ]}
+                >
+                  {sexLabel}
                 </Text>
               </View>
             ) : null}
           </View>
-          <Text style={[styles.childAge, { color: colors.textSecondary }]} numberOfLines={1}>
+          <Text
+            style={[
+              styles.childAge,
+              { color: colors.textSecondary, fontFamily: font.body },
+            ]}
+            numberOfLines={1}
+          >
             {child.birthDate ? `${formatAge(child.birthDate)} — Born ${new Date(child.birthDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'No birth date set'}
           </Text>
         </View>
         <View style={styles.cardActions}>
           <Pressable onPress={onEdit} hitSlop={8}>
-            <Pencil size={16} color={colors.primary} strokeWidth={2} />
+            <Pencil size={16} color={colors.text} strokeWidth={2} />
           </Pressable>
           <Pressable onPress={onDelete} hitSlop={8}>
             <Trash2 size={15} color={colors.textMuted} strokeWidth={2} />
@@ -286,34 +327,40 @@ function ChildCard({ child, onEdit, onDelete }: { child: ChildWithRole; onEdit: 
         </View>
       </View>
 
-      {/* Row 2: Inline tags (allergies, blood type, conditions, meds) */}
       {visibleTags.length > 0 && (
         <View style={styles.tagRow}>
           {visibleTags.map((t, i) => (
-            <View key={`${t.label}-${i}`} style={[styles.miniChip, { backgroundColor: t.color + '12' }]}>
-              <Text style={[styles.miniChipText, { color: t.color }]}>{t.label}</Text>
+            <View key={`${t.label}-${i}`} style={[styles.miniChip, { backgroundColor: t.color + (isDark ? '24' : '20') }]}>
+              <Text
+                style={[
+                  styles.miniChipText,
+                  { color: isDark ? t.color : '#3A3533', fontFamily: font.bodySemiBold },
+                ]}
+              >
+                {t.label}
+              </Text>
             </View>
           ))}
           {extraCount > 0 && (
             <View style={[styles.miniChip, { backgroundColor: colors.surfaceRaised }]}>
-              <Text style={[styles.miniChipText, { color: colors.textSecondary }]}>+{extraCount}</Text>
+              <Text style={[styles.miniChipText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>
+                +{extraCount}
+              </Text>
             </View>
           )}
         </View>
       )}
 
-      {/* Row 3: Food summary (one line) */}
       {foodSummary ? (
-        <Text style={[styles.foodLine, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.foodLine, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={1}>
           {foodSummary}
         </Text>
       ) : null}
 
-      {/* Row 4: Pediatrician (one line) */}
       {child.pediatrician?.name ? (
         <View style={styles.pedRow}>
           <Stethoscope size={12} color={colors.textMuted} strokeWidth={2} />
-          <Text style={[styles.pedText, { color: colors.textMuted }]} numberOfLines={1}>
+          <Text style={[styles.pedText, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>
             {child.pediatrician.name}{child.pediatrician.phone ? ` · ${child.pediatrician.phone}` : ''}
           </Text>
         </View>
@@ -332,7 +379,10 @@ function ChipInput({ label, value, onChange, suggestions, chipColor, placeholder
   chipColor: string
   placeholder: string
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, font, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const chipFg = isDark ? chipColor : '#3A3533'
   const [query, setQuery] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
 
@@ -359,29 +409,29 @@ function ChipInput({ label, value, onChange, suggestions, chipColor, placeholder
 
   return (
     <View style={formStyles.field}>
-      <Text style={[formStyles.label, { color: colors.textSecondary }]}>{label.toUpperCase()}</Text>
+      <MonoCaps color={colors.textMuted}>{label}</MonoCaps>
 
       {value.length > 0 && (
         <View style={formStyles.chipRow}>
           {value.map((item) => (
-            <View key={item} style={[formStyles.chipTag, { backgroundColor: chipColor + '15', borderRadius: radius.full }]}>
-              <Text style={[formStyles.chipTagText, { color: chipColor }]}>{item}</Text>
+            <View key={item} style={[formStyles.chipTag, { backgroundColor: chipColor + (isDark ? '28' : '24') }]}>
+              <Text style={[formStyles.chipTagText, { color: chipFg, fontFamily: font.bodySemiBold }]}>{item}</Text>
               <Pressable onPress={() => remove(item)} hitSlop={6}>
-                <X size={13} color={chipColor} strokeWidth={2.5} />
+                <Ionicons name="close" size={13} color={chipFg} />
               </Pressable>
             </View>
           ))}
         </View>
       )}
 
-      <View style={[formStyles.inputRow, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+      <View style={[formStyles.inputRow, { backgroundColor: paper, borderColor: border }]}>
         <Search size={16} color={colors.textMuted} strokeWidth={2} />
         <TextInput
           value={query}
           onChangeText={(t) => { setQuery(t); setShowSuggestions(t.length >= 1) }}
           placeholder={placeholder}
           placeholderTextColor={colors.textMuted}
-          style={[formStyles.inputInner, { color: colors.text }]}
+          style={[formStyles.inputInner, { color: colors.text, fontFamily: font.body }]}
           onSubmitEditing={handleSubmit}
           returnKeyType="done"
           onFocus={() => { if (query.length >= 1) setShowSuggestions(true) }}
@@ -390,18 +440,18 @@ function ChipInput({ label, value, onChange, suggestions, chipColor, placeholder
       </View>
 
       {showSuggestions && query.trim().length > 0 && (
-        <View style={[formStyles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+        <View style={[formStyles.dropdown, { backgroundColor: paper, borderColor: border }]}>
           {filtered.map((s) => (
             <Pressable key={s} onPress={() => add(s)} style={({ pressed }) => [formStyles.dropdownItem, pressed && { backgroundColor: colors.surfaceRaised }]}>
-              <Text style={[formStyles.dropdownText, { color: colors.text }]}>{s}</Text>
+              <Text style={[formStyles.dropdownText, { color: colors.text, fontFamily: font.body }]}>{s}</Text>
             </Pressable>
           ))}
           {!value.includes(query.trim()) && !suggestions.some((s) => s.toLowerCase() === query.trim().toLowerCase() && value.includes(s)) && (
             <Pressable
               onPress={handleSubmit}
-              style={({ pressed }) => [formStyles.dropdownItem, filtered.length > 0 && { borderTopWidth: 1, borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceRaised }]}
+              style={({ pressed }) => [formStyles.dropdownItem, filtered.length > 0 && { borderTopWidth: 1, borderTopColor: border }, pressed && { backgroundColor: colors.surfaceRaised }]}
             >
-              <Text style={[formStyles.dropdownText, { color: colors.primary, fontWeight: '600' }]}>
+              <Text style={[formStyles.dropdownText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
                 + Add &quot;{query.trim()}&quot;
               </Text>
             </Pressable>
@@ -423,7 +473,7 @@ function EditChildSheet({
   onClose: () => void
   onSaved: (updated: ChildWithRole) => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark } = useTheme()
 
   const [name, setName] = useState(child.name)
   const [birthDate, setBirthDate] = useState(child.birthDate)
@@ -507,23 +557,29 @@ function EditChildSheet({
           <SectionHeader label="Basic Info" />
           <FormField label="Name *" value={name} onChangeText={setName} placeholder="Child name" />
 
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>SEX *</Text>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Sex *</MonoCaps></View>
           <View style={formStyles.optionRow}>
             {SEX_OPTIONS.map((opt) => (
               <Pressable
                 key={opt.value}
                 onPress={() => setSex(sex === opt.value ? '' : opt.value)}
-                style={[formStyles.optionBtn, { backgroundColor: sex === opt.value ? colors.primary + '15' : colors.surface, borderColor: sex === opt.value ? colors.primary : colors.border, borderRadius: radius.lg }]}
+                style={[
+                  formStyles.optionBtn,
+                  {
+                    backgroundColor: sex === opt.value ? colors.text : (isDark ? colors.surface : '#FFFEF8'),
+                    borderColor: sex === opt.value ? colors.text : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                  },
+                ]}
               >
-                <Text style={[formStyles.optionText, { color: sex === opt.value ? colors.primary : colors.text }]}>{opt.label}</Text>
+                <Text style={[formStyles.optionText, { color: sex === opt.value ? colors.bg : colors.text, fontFamily: font.bodyMedium }]}>{opt.label}</Text>
               </Pressable>
             ))}
           </View>
 
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>BIRTH DATE *</Text>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Birth Date *</MonoCaps></View>
           {birthDate ? (
-            <View style={[formStyles.ageBadge, { backgroundColor: colors.primary + '15', borderRadius: radius.lg }]}>
-              <Text style={[formStyles.ageBadgeText, { color: colors.primary }]}>
+            <View style={[formStyles.ageBadge, { backgroundColor: stickers.lilac + (isDark ? '28' : '40') }]}>
+              <Text style={[formStyles.ageBadgeText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
                 {formatAge(birthDate)}
               </Text>
             </View>
@@ -531,9 +587,15 @@ function EditChildSheet({
           {Platform.OS === 'android' && !showDatePicker && (
             <Pressable
               onPress={() => setShowDatePicker(true)}
-              style={[formStyles.dateBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+              style={[
+                formStyles.dateBtn,
+                {
+                  backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                  borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                },
+              ]}
             >
-              <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted }]}>
+              <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }]}>
                 {birthDate ? new Date(birthDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Select date'}
               </Text>
             </Pressable>
@@ -545,7 +607,7 @@ function EditChildSheet({
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               maximumDate={new Date()}
               minimumDate={new Date(2005, 0, 1)}
-              themeVariant="dark"
+              themeVariant={isDark ? 'dark' : 'light'}
               onChange={(_, d) => {
                 if (Platform.OS === 'android') setShowDatePicker(false)
                 if (d) setBirthDate(d.toISOString().split('T')[0])
@@ -553,22 +615,36 @@ function EditChildSheet({
             />
           )}
 
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>BLOOD TYPE</Text>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Blood Type</MonoCaps></View>
           <View style={formStyles.optionRow}>
             {BLOOD_TYPES.map((bt) => (
               <Pressable
                 key={bt}
                 onPress={() => setBloodType(bloodType === bt ? '' : bt)}
-                style={[formStyles.bloodBtn, { backgroundColor: bloodType === bt ? brand.error + '15' : colors.surface, borderColor: bloodType === bt ? brand.error : colors.border, borderRadius: radius.md }]}
+                style={[
+                  formStyles.bloodBtn,
+                  {
+                    backgroundColor: bloodType === bt ? stickers.coral + (isDark ? '32' : '28') : (isDark ? colors.surface : '#FFFEF8'),
+                    borderColor: bloodType === bt ? stickers.coral : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                  },
+                ]}
               >
-                <Text style={[formStyles.bloodText, { color: bloodType === bt ? brand.error : colors.text }]}>{bt}</Text>
+                <Text style={[formStyles.bloodText, { color: bloodType === bt ? stickers.coral : colors.text, fontFamily: font.bodySemiBold }]}>{bt}</Text>
               </Pressable>
             ))}
           </View>
 
-          <Text style={[formStyles.label, { color: colors.textSecondary, marginTop: 8 }]}>COUNTRY (VACCINE SCHEDULE)</Text>
+          <View style={{ marginTop: 8 }}><MonoCaps color={colors.textMuted}>Country (vaccine schedule)</MonoCaps></View>
           <View>
-            <View style={[formStyles.inputRow, { borderRadius: radius.lg, borderColor: countryDropdownOpen ? colors.primary : colors.border }]}>
+            <View
+              style={[
+                formStyles.inputRow,
+                {
+                  backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                  borderColor: countryDropdownOpen ? colors.text : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                },
+              ]}
+            >
               <Search size={16} color={colors.textMuted} strokeWidth={2} />
               <TextInput
                 value={countryQuery}
@@ -576,10 +652,10 @@ function EditChildSheet({
                 onFocus={() => setCountryDropdownOpen(true)}
                 placeholder="Search country..."
                 placeholderTextColor={colors.textMuted}
-                style={[formStyles.inputInner, { color: colors.text }]}
+                style={[formStyles.inputInner, { color: colors.text, fontFamily: font.body }]}
               />
               {countryCode && (
-                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primary }}>
+                <Text style={{ fontSize: 13, color: colors.text, fontFamily: font.bodySemiBold }}>
                   {COUNTRY_OPTIONS.find(c => c.code === countryCode)?.code}
                 </Text>
               )}
@@ -589,7 +665,15 @@ function EditChildSheet({
               const matches = COUNTRY_OPTIONS.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
               if (matches.length === 0) return null
               return (
-                <View style={[formStyles.dropdown, { borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.lg }]}>
+                <View
+                  style={[
+                    formStyles.dropdown,
+                    {
+                      backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                      borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                    },
+                  ]}
+                >
                   {matches.map((c) => (
                     <Pressable
                       key={c.code}
@@ -598,9 +682,9 @@ function EditChildSheet({
                         setCountryQuery(c.name)
                         setCountryDropdownOpen(false)
                       }}
-                      style={[formStyles.dropdownItem, { backgroundColor: c.code === countryCode ? colors.primary + '15' : 'transparent' }]}
+                      style={[formStyles.dropdownItem, { backgroundColor: c.code === countryCode ? colors.surfaceRaised : 'transparent' }]}
                     >
-                      <Text style={[formStyles.dropdownText, { color: c.code === countryCode ? colors.primary : colors.text }]}>
+                      <Text style={[formStyles.dropdownText, { color: colors.text, fontFamily: c.code === countryCode ? font.bodySemiBold : font.body }]}>
                         {c.name}
                       </Text>
                     </Pressable>
@@ -632,14 +716,14 @@ function EditChildSheet({
           <SectionHeader label="Additional Notes" />
           <FormField label="Notes" value={notes} onChangeText={setNotes} placeholder="Any important information..." multiline />
 
-          <Pressable
+          <PillButton
+            label={saving ? 'Saving…' : 'Save Changes'}
+            variant="ink"
             onPress={handleSave}
             disabled={saving || !canSave}
-            style={({ pressed }) => [formStyles.saveBtn, { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: saving || !canSave ? 0.4 : 1 }, pressed && { transform: [{ scale: 0.98 }] }]}
-          >
-            <Save size={18} color="#FFFFFF" strokeWidth={2} />
-            <Text style={formStyles.saveBtnText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
-          </Pressable>
+            leading={<Ionicons name="checkmark-circle" size={18} color={colors.bg} />}
+            style={{ marginTop: 8 }}
+          />
         </View>
       </ScrollView>
     </LogSheet>
@@ -657,7 +741,7 @@ function AddChildSheet({
   onClose: () => void
   onAdded: (child: ChildWithRole) => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark } = useTheme()
 
   const [name, setName] = useState('')
   const [birthDate, setBirthDate] = useState<string | null>(null)
@@ -736,23 +820,29 @@ function AddChildSheet({
           <SectionHeader label="Basic Info" />
           <FormField label="Name *" value={name} onChangeText={setName} placeholder="Child's name" />
 
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>SEX *</Text>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Sex *</MonoCaps></View>
           <View style={formStyles.optionRow}>
             {SEX_OPTIONS.map((opt) => (
               <Pressable
                 key={opt.value}
                 onPress={() => setSex(sex === opt.value ? '' : opt.value)}
-                style={[formStyles.optionBtn, { backgroundColor: sex === opt.value ? colors.primary + '15' : colors.surface, borderColor: sex === opt.value ? colors.primary : colors.border, borderRadius: radius.lg }]}
+                style={[
+                  formStyles.optionBtn,
+                  {
+                    backgroundColor: sex === opt.value ? colors.text : (isDark ? colors.surface : '#FFFEF8'),
+                    borderColor: sex === opt.value ? colors.text : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                  },
+                ]}
               >
-                <Text style={[formStyles.optionText, { color: sex === opt.value ? colors.primary : colors.text }]}>{opt.label}</Text>
+                <Text style={[formStyles.optionText, { color: sex === opt.value ? colors.bg : colors.text, fontFamily: font.bodyMedium }]}>{opt.label}</Text>
               </Pressable>
             ))}
           </View>
 
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>BIRTH DATE *</Text>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Birth Date *</MonoCaps></View>
           {birthDate ? (
-            <View style={[formStyles.ageBadge, { backgroundColor: colors.primary + '15', borderRadius: radius.lg }]}>
-              <Text style={[formStyles.ageBadgeText, { color: colors.primary }]}>
+            <View style={[formStyles.ageBadge, { backgroundColor: stickers.lilac + (isDark ? '28' : '40') }]}>
+              <Text style={[formStyles.ageBadgeText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
                 {formatAge(birthDate)}
               </Text>
             </View>
@@ -760,9 +850,15 @@ function AddChildSheet({
           {Platform.OS === 'android' && !showDatePicker && (
             <Pressable
               onPress={() => setShowDatePicker(true)}
-              style={[formStyles.dateBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+              style={[
+                formStyles.dateBtn,
+                {
+                  backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                  borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                },
+              ]}
             >
-              <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted }]}>
+              <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }]}>
                 {birthDate ? new Date(birthDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Select date'}
               </Text>
             </Pressable>
@@ -774,7 +870,7 @@ function AddChildSheet({
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               maximumDate={new Date()}
               minimumDate={new Date(2005, 0, 1)}
-              themeVariant="dark"
+              themeVariant={isDark ? 'dark' : 'light'}
               onChange={(_, d) => {
                 if (Platform.OS === 'android') setShowDatePicker(false)
                 if (d) setBirthDate(d.toISOString().split('T')[0])
@@ -782,15 +878,21 @@ function AddChildSheet({
             />
           )}
 
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>BLOOD TYPE</Text>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Blood Type</MonoCaps></View>
           <View style={formStyles.optionRow}>
             {BLOOD_TYPES.map((bt) => (
               <Pressable
                 key={bt}
                 onPress={() => setBloodType(bloodType === bt ? '' : bt)}
-                style={[formStyles.bloodBtn, { backgroundColor: bloodType === bt ? brand.error + '15' : colors.surface, borderColor: bloodType === bt ? brand.error : colors.border, borderRadius: radius.md }]}
+                style={[
+                  formStyles.bloodBtn,
+                  {
+                    backgroundColor: bloodType === bt ? stickers.coral + (isDark ? '32' : '28') : (isDark ? colors.surface : '#FFFEF8'),
+                    borderColor: bloodType === bt ? stickers.coral : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                  },
+                ]}
               >
-                <Text style={[formStyles.bloodText, { color: bloodType === bt ? brand.error : colors.text }]}>{bt}</Text>
+                <Text style={[formStyles.bloodText, { color: bloodType === bt ? stickers.coral : colors.text, fontFamily: font.bodySemiBold }]}>{bt}</Text>
               </Pressable>
             ))}
           </View>
@@ -813,14 +915,14 @@ function AddChildSheet({
           <SectionHeader label="Additional Notes" />
           <FormField label="Notes" value={notes} onChangeText={setNotes} placeholder="Any important information..." multiline />
 
-          <Pressable
+          <PillButton
+            label={saving ? 'Adding…' : 'Add Child'}
+            variant="ink"
             onPress={handleSave}
             disabled={saving || !canSave}
-            style={({ pressed }) => [formStyles.saveBtn, { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: saving || !canSave ? 0.4 : 1 }, pressed && { transform: [{ scale: 0.98 }] }]}
-          >
-            <Plus size={18} color="#FFFFFF" strokeWidth={2} />
-            <Text style={formStyles.saveBtnText}>{saving ? 'Adding...' : 'Add Child'}</Text>
-          </Pressable>
+            leading={<Ionicons name="add" size={18} color={colors.bg} />}
+            style={{ marginTop: 8 }}
+          />
         </View>
       </ScrollView>
     </LogSheet>
@@ -833,9 +935,9 @@ function SectionHeader({ label }: { label: string }) {
   const { colors } = useTheme()
   return (
     <View style={formStyles.sectionHeader}>
-      <View style={[formStyles.sectionLine, { backgroundColor: colors.border }]} />
-      <Text style={[formStyles.sectionLabel, { color: colors.textMuted }]}>{label}</Text>
-      <View style={[formStyles.sectionLine, { backgroundColor: colors.border }]} />
+      <View style={[formStyles.sectionLine, { backgroundColor: colors.borderLight }]} />
+      <MonoCaps color={colors.textMuted}>{label}</MonoCaps>
+      <View style={[formStyles.sectionLine, { backgroundColor: colors.borderLight }]} />
     </View>
   )
 }
@@ -845,10 +947,12 @@ function SectionHeader({ label }: { label: string }) {
 function FormField({ label, value, onChangeText, placeholder, multiline, hint, keyboardType }: {
   label: string; value: string; onChangeText: (t: string) => void; placeholder: string; multiline?: boolean; hint?: string; keyboardType?: any
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, font, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
   return (
     <View style={formStyles.field}>
-      <Text style={[formStyles.label, { color: colors.textSecondary }]}>{label.toUpperCase()}</Text>
+      <MonoCaps color={colors.textMuted}>{label}</MonoCaps>
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -858,11 +962,11 @@ function FormField({ label, value, onChangeText, placeholder, multiline, hint, k
         keyboardType={keyboardType}
         style={[
           formStyles.input,
-          { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg },
-          multiline && { height: 80, textAlignVertical: 'top', paddingTop: 12 },
+          { color: colors.text, backgroundColor: paper, borderColor: border, fontFamily: font.body },
+          multiline && { height: 96, textAlignVertical: 'top', paddingTop: 14 },
         ]}
       />
-      {hint && <Text style={[formStyles.hint, { color: colors.textMuted }]}>{hint}</Text>}
+      {hint && <Text style={[formStyles.hint, { color: colors.textMuted, fontFamily: font.body }]}>{hint}</Text>}
     </View>
   )
 }
@@ -871,69 +975,112 @@ function FormField({ label, value, onChangeText, placeholder, multiline, hint, k
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 12 },
-  headerBtn: { width: 40, alignItems: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
-  scroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 16 },
+  headerWrap: { paddingHorizontal: 16, paddingBottom: 6 },
+  headerAddBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 14 },
 
-  emptyCard: { alignItems: 'center', padding: 32, gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
-  emptyTitle: { fontSize: 18, fontWeight: '700' },
-  emptyBody: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20 },
+  emptyCard: {
+    alignItems: 'center',
+    padding: 32,
+    gap: 14,
+    borderRadius: 28,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 2,
+  },
 
-  childCard: { padding: 14, gap: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+  childCard: {
+    padding: 16,
+    gap: 10,
+    borderRadius: 28,
+    borderWidth: 1,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
   childHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  childAvatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  childInfo: { flex: 1, gap: 1 },
-  childName: { fontSize: 16, fontWeight: '700' },
-  childAge: { fontSize: 13, fontWeight: '500' },
-  sexBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 },
-  sexBadgeText: { fontSize: 10, fontWeight: '700' },
+  childAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+  },
+  childInfo: { flex: 1, gap: 2 },
+  childName: { fontSize: 18, letterSpacing: -0.2 },
+  childAge: { fontSize: 13 },
+  sexBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
+  sexBadgeText: { fontSize: 10 },
   cardActions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
 
-  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 },
-  miniChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
-  miniChipText: { fontSize: 11, fontWeight: '600' },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  miniChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  miniChipText: { fontSize: 11 },
 
-  foodLine: { fontSize: 12, fontWeight: '500' },
-  pedRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  pedText: { fontSize: 12, fontWeight: '500', flex: 1 },
-
-  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 52, marginTop: 4 },
-  addBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+  foodLine: { fontSize: 13 },
+  pedRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pedText: { fontSize: 12, flex: 1 },
 })
 
 const formStyles = StyleSheet.create({
-  form: { gap: 12, paddingBottom: 8 },
-  field: { gap: 4 },
-  label: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-  hint: { fontSize: 11, fontWeight: '500', marginTop: 2 },
-  input: { borderWidth: 1, paddingHorizontal: 16, height: 48, fontSize: 15, fontWeight: '500' },
-  dateBtn: { paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1 },
-  dateText: { fontSize: 15, fontWeight: '500' },
-  ageBadge: { alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 14, marginBottom: 4 },
-  ageBadgeText: { fontSize: 14, fontWeight: '800', letterSpacing: 0.3 },
+  form: { gap: 12, paddingBottom: 12 },
+  field: { gap: 6 },
+  hint: { fontSize: 11, marginTop: 2 },
+  input: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 16, height: 52, fontSize: 15 },
+  dateBtn: { paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, borderRadius: 18 },
+  dateText: { fontSize: 15 },
+  ageBadge: {
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginBottom: 4,
+    borderRadius: 999,
+  },
+  ageBadgeText: { fontSize: 13, letterSpacing: 0.2 },
 
-  countryRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1 },
   optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-  optionBtn: { paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1 },
-  optionText: { fontSize: 14, fontWeight: '600' },
-  bloodBtn: { paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1 },
-  bloodText: { fontSize: 13, fontWeight: '600' },
+  optionBtn: { paddingVertical: 10, paddingHorizontal: 18, borderWidth: 1, borderRadius: 999 },
+  optionText: { fontSize: 14 },
+  bloodBtn: { paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1, borderRadius: 999 },
+  bloodText: { fontSize: 13 },
 
-  // Chip input
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 2 },
-  chipTag: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 5, paddingLeft: 10, paddingRight: 7 },
-  chipTagText: { fontSize: 12, fontWeight: '600' },
-  inputRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, paddingHorizontal: 12, height: 44, gap: 8 },
-  inputInner: { flex: 1, fontSize: 14, fontWeight: '500', paddingVertical: 0 },
-  dropdown: { borderWidth: 1, marginTop: 4, overflow: 'hidden', maxHeight: 200 },
-  dropdownItem: { paddingVertical: 10, paddingHorizontal: 14 },
-  dropdownText: { fontSize: 14, fontWeight: '500' },
+  chipTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 5,
+    paddingLeft: 12,
+    paddingRight: 8,
+    borderRadius: 999,
+  },
+  chipTagText: { fontSize: 12 },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    height: 48,
+    gap: 8,
+  },
+  inputInner: { flex: 1, fontSize: 14, paddingVertical: 0 },
+  dropdown: { borderWidth: 1, borderRadius: 18, marginTop: 4, overflow: 'hidden', maxHeight: 220 },
+  dropdownItem: { paddingVertical: 12, paddingHorizontal: 14 },
+  dropdownText: { fontSize: 14 },
 
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 },
   sectionLine: { flex: 1, height: 1 },
-  sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
-
-  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 52, marginTop: 8 },
-  saveBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 })

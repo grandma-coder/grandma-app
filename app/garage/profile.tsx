@@ -11,7 +11,6 @@ import {
   Image,
   Alert,
   StyleSheet,
-  ActivityIndicator,
   Dimensions,
 } from 'react-native'
 import { router } from 'expo-router'
@@ -25,6 +24,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { supabase } from '../../lib/supabase'
 import { deletePost, toggleSave, type GaragePost } from '../../lib/garagePosts'
 
@@ -212,7 +212,7 @@ export default function GarageProfileScreen() {
       {/* Content */}
       {loading ? (
         <View style={s.center}>
-          <ActivityIndicator color={colors.primary} />
+          <BrandedLoader />
         </View>
       ) : currentData.length === 0 ? (
         <View style={s.emptyState}>

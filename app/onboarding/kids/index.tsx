@@ -25,6 +25,7 @@ import { Star, Camera, User, Plus, Minus, Check } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
 import { useTheme, brand } from '../../../constants/theme'
+import { AvatarView, AvatarPickerModal, isIconAvatar } from '../../../components/ui/AvatarPicker'
 import {
   useKidsOnboardingStore,
   type CaregiverRole,
@@ -653,6 +654,9 @@ function StepChildPhoto({
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
   const childName = child?.name || `Child ${childIdx + 1}`
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const childInitial = (childName[0] ?? 'K').toUpperCase()
+  const childAccent = colors.primary
 
   async function pickImage() {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -670,16 +674,20 @@ function StepChildPhoto({
     <OnboardingStep
       step={step}
       total={total}
-      question={`Upload a photo of ${childName}`}
+      question={`Pick a photo or icon for ${childName}`}
       onContinue={onContinue}
       onSkip={onSkip}
     >
       <View style={stepStyles.centered}>
-        <Pressable onPress={pickImage}>
+        <Pressable onPress={() => setPickerOpen(true)}>
           {child?.photoUri ? (
-            <Image
-              source={{ uri: child.photoUri }}
-              style={[stepStyles.photoPreview, { borderRadius: radius.xl }]}
+            <AvatarView
+              value={child.photoUri}
+              size={160}
+              accent={childAccent}
+              initial={childInitial}
+              borderColor={colors.text}
+              borderWidth={3}
             />
           ) : (
             <View
@@ -694,11 +702,18 @@ function StepChildPhoto({
             >
               <Camera size={36} color={colors.textMuted} strokeWidth={1.5} />
               <Text style={[stepStyles.photoHint, { color: colors.textMuted }]}>
-                Tap to choose a photo
+                Tap to choose photo or icon
               </Text>
             </View>
           )}
         </Pressable>
+        <AvatarPickerModal
+          visible={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onPickPhoto={pickImage}
+          onPickIcon={(iconValue) => updateChild(childIdx, { photoUri: iconValue })}
+          onRemove={child?.photoUri ? () => updateChild(childIdx, { photoUri: null as any }) : undefined}
+        />
       </View>
     </OnboardingStep>
   )

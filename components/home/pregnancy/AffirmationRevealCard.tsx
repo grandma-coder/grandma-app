@@ -8,7 +8,9 @@ import {
   Easing,
 } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useTheme, brand } from '../../../constants/theme'
+import { useTheme } from '../../../constants/theme'
+import { MonoCaps, Body } from '../../ui/Typography'
+import { Heart as HeartSticker } from '../../stickers/BrandStickers'
 import { supabase } from '../../../lib/supabase'
 
 // ─── Fetch daily affirmation from Supabase ────────────────────────────────────
@@ -126,7 +128,7 @@ function Particle({ color, startX, startY, delay }: ParticleProps) {
 // ─── AffirmationRevealCard ────────────────────────────────────────────────────
 
 export function AffirmationRevealCard() {
-  const { colors } = useTheme()
+  const { stickers } = useTheme()
   const [text, setText] = useState<string | null>(null)
   const [revealed, setRevealed] = useState(false)
   const [showParticles, setShowParticles] = useState(false)
@@ -137,6 +139,13 @@ export function AffirmationRevealCard() {
   const textOpacity = useRef(new Animated.Value(0)).current
   const textScale = useRef(new Animated.Value(0.85)).current
   const glowOpacity = useRef(new Animated.Value(0)).current
+
+  // Card always renders as cream paper (even in dark mode) — the "paper pop" pattern.
+  const paperBg = '#FFFEF8'
+  const inkText = '#141313'
+  const inkMuted = '#6E6763'
+  const lilac = stickers.lilac
+  const lilacSoft = stickers.lilacSoft
 
   useEffect(() => {
     loadDailyAffirmation().then(setText)
@@ -168,12 +177,12 @@ export function AffirmationRevealCard() {
 
     // Glow burst
     Animated.sequence([
-      Animated.timing(glowOpacity, { toValue: 0.6, duration: 200, useNativeDriver: true }),
+      Animated.timing(glowOpacity, { toValue: 0.4, duration: 200, useNativeDriver: true }),
       Animated.timing(glowOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
     ]).start()
 
     // Generate particles
-    const colors2 = [brand.pregnancy, '#FFD700', '#FF8AD8', '#A2FF86', '#FFFFFF', '#6AABF7']
+    const colors2 = [stickers.lilac, stickers.yellow, stickers.pink, stickers.green, stickers.peach, stickers.blue]
     const newParticles = Array.from({ length: 16 }, (_, i) => ({
       id: i,
       color: colors2[Math.floor(Math.random() * colors2.length)],
@@ -199,15 +208,19 @@ export function AffirmationRevealCard() {
   }
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: 'rgba(185,131,255,0.2)' }]}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
-        <Text style={{ fontSize: 11 }}>✨</Text>
-        <Text style={[styles.cardLabel, { color: colors.textMuted, marginBottom: 0 }]}>TODAY'S AFFIRMATION</Text>
+    <View style={[styles.card, { backgroundColor: paperBg, borderColor: 'rgba(20,19,19,0.08)' }]}>
+      {/* Floating heart sticker on the right */}
+      <View style={styles.heartSticker} pointerEvents="none">
+        <HeartSticker size={110} fill={stickers.pinkSoft} stroke="#141313" />
       </View>
+
+      <MonoCaps size={10} color={lilac} style={{ marginBottom: 12 }}>
+        DAILY AFFIRMATION
+      </MonoCaps>
 
       {/* Glow burst overlay */}
       <Animated.View
-        style={[styles.glowBurst, { opacity: glowOpacity }]}
+        style={[styles.glowBurst, { opacity: glowOpacity, backgroundColor: lilac }]}
         pointerEvents="none"
       />
 
@@ -218,35 +231,28 @@ export function AffirmationRevealCard() {
 
       {!revealed ? (
         <View style={styles.hiddenState}>
-          {/* Orb */}
-          <Animated.Text
-            style={[{ fontSize: 40, fontFamily: 'Fraunces_600SemiBold' }, { opacity: orbOpacity, transform: [{ scale: orbScale }] }]}
-          >
-            🔮
-          </Animated.Text>
-
-          <Text style={[styles.hiddenHint, { color: colors.textMuted }]}>
+          <Body size={14} color={inkMuted} style={styles.hiddenHint}>
             Your daily wisdom awaits...
-          </Text>
+          </Body>
 
           <Pressable
             onPress={handleReveal}
-            style={({ pressed }) => [styles.revealBtn, { opacity: pressed ? 0.8 : 1 }]}
+            style={({ pressed }) => [
+              styles.revealBtn,
+              { backgroundColor: lilacSoft, opacity: pressed ? 0.8 : 1 },
+            ]}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={{ fontSize: 13 }}>✨</Text>
-              <Text style={styles.revealBtnText}>Reveal Today's Wisdom</Text>
-            </View>
+            <Text style={[styles.revealBtnText, { color: inkText }]}>Reveal today's →</Text>
           </Pressable>
         </View>
       ) : (
         <Animated.View style={[styles.revealedState, { opacity: textOpacity, transform: [{ scale: textScale }] }]}>
-          <Text style={[styles.affirmationText, { color: colors.text }]}>
-            "{text ?? '...'}"
+          <Text style={[styles.affirmationText, { color: inkText }]}>
+            {text ?? '...'}
           </Text>
-          <Text style={[styles.revealedHint, { color: colors.textMuted }]}>
+          <Body size={11} color={inkMuted} style={{ marginTop: 10 }}>
             Come back tomorrow for a new affirmation
-          </Text>
+          </Body>
         </Animated.View>
       )}
     </View>
@@ -255,20 +261,19 @@ export function AffirmationRevealCard() {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 24,
-    padding: 20,
+    borderRadius: 28,
+    padding: 22,
     borderWidth: 1,
     overflow: 'hidden',
-    minHeight: 140,
+    minHeight: 160,
     position: 'relative',
   },
-  cardLabel: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: 16,
+
+  heartSticker: {
+    position: 'absolute',
+    right: -18,
+    bottom: -18,
+    opacity: 0.9,
   },
 
   glowBurst: {
@@ -277,8 +282,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: brand.pregnancy,
-    borderRadius: 24,
+    borderRadius: 28,
   },
 
   particle: {
@@ -288,43 +292,29 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
 
-  hiddenState: { alignItems: 'center', gap: 10, paddingBottom: 4 },
-  orb: { fontSize: 40, fontFamily: 'Fraunces_600SemiBold' },
+  hiddenState: { gap: 14, paddingBottom: 4 },
   hiddenHint: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    fontStyle: 'italic',
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 20,
+    lineHeight: 26,
+    letterSpacing: -0.3,
   },
   revealBtn: {
-    backgroundColor: brand.pregnancy,
+    alignSelf: 'flex-start',
     borderRadius: 999,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    shadowColor: brand.pregnancy,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
-    marginTop: 4,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
   },
   revealBtnText: {
     fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontFamily: 'DMSans_600SemiBold',
   },
 
-  revealedState: { gap: 10 },
+  revealedState: { gap: 6, paddingRight: 60 },
   affirmationText: {
-    fontSize: 16,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '500',
-    lineHeight: 24,
-    fontStyle: 'italic',
-  },
-  revealedHint: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-    marginTop: 4,
+    fontSize: 22,
+    fontFamily: 'Fraunces_600SemiBold',
+    lineHeight: 28,
+    letterSpacing: -0.4,
   },
 })

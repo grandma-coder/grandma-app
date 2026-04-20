@@ -20,6 +20,7 @@ import { router, useFocusEffect } from 'expo-router'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Settings as SettingsIcon, LogOut } from 'lucide-react-native'
+import { NotificationBell } from '../../components/ui/NotificationBell'
 import { useTheme, brand, getModeColor } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
@@ -34,27 +35,7 @@ import { BadgesStrip, type BadgeEntry } from '../../components/profile/BadgesStr
 import { MyJourneyPillGrid } from '../../components/profile/MyJourneyPillGrid'
 import { StatRow } from '../../components/ui/StatRow'
 import { childColor } from '../../components/ui/ChildPills'
-import {
-  Heart as HeartSticker,
-  Star as StarSticker,
-  Leaf as LeafSticker,
-  Cross as CrossSticker,
-  Burst as BurstSticker,
-  Flower as FlowerSticker,
-  Drop as DropSticker,
-  Moon as MoonSticker,
-} from '../../components/ui/Stickers'
-
-// ─── Badge sticker mapping ─────────────────────────────────────────────────
-
-type BadgeTheme = { color: string; sticker: BadgeEntry['sticker'] }
-const BADGE_THEMES: BadgeTheme[] = [
-  { color: '#F5D652', sticker: 'Burst' },
-  { color: '#F2B2C7', sticker: 'Heart' },
-  { color: '#9DC3E8', sticker: 'Drop' },
-  { color: '#BDD48C', sticker: 'Star' },
-  { color: '#C8B6E8', sticker: 'Moon' },
-]
+import { AnimatedSticker } from '../../components/ui/AnimatedSticker'
 
 export default function ProfileScreen() {
   const { colors, radius, isDark } = useTheme()
@@ -69,6 +50,7 @@ export default function ProfileScreen() {
 
   const [userName, setUserName] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null)
   const [joinedYear, setJoinedYear] = useState<number | null>(null)
   const [careCircleCount, setCareCircleCount] = useState<number>(0)
 
@@ -105,7 +87,7 @@ export default function ProfileScreen() {
     const [{ data: profile }, { count }] = await Promise.all([
       supabase
         .from('profiles')
-        .select('name, created_at')
+        .select('name, photo_url, created_at')
         .eq('id', session.user.id)
         .single(),
       supabase
@@ -115,6 +97,7 @@ export default function ProfileScreen() {
     ])
 
     if (profile?.name) setUserName(profile.name)
+    setUserPhotoUrl(profile?.photo_url ?? null)
     if (profile?.created_at) setJoinedYear(new Date(profile.created_at).getFullYear())
     setCareCircleCount(count ?? 0)
   }
@@ -144,18 +127,16 @@ export default function ProfileScreen() {
 
   const accent = getModeColor(mode, isDark)
 
-  // Badges: pick up to 5 most recently earned, map to BadgeEntry by theme rotation
+  // Badges: 5 most recently earned, each mapped to its real definition
   const recentBadges: BadgeEntry[] = earnedBadges
     .slice()
     .sort((a, b) => new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime())
     .slice(0, 5)
-    .map((eb, i) => {
+    .map((eb) => {
       const def = BADGE_DEFS.find((d) => d.id === eb.badgeId)
-      const theme = BADGE_THEMES[i % BADGE_THEMES.length]
       return {
-        color: theme.color,
-        sticker: theme.sticker,
-        label: def?.name ?? `day ${i + 7}`,
+        badgeId: eb.badgeId,
+        label: def?.name ?? eb.badgeId,
       }
     })
 
@@ -183,8 +164,9 @@ export default function ProfileScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Top bar — settings gear only (root of tab, no back) */}
+        {/* Top bar — bell + settings gear (root of tab, no back) */}
         <View style={styles.topBar}>
+          <NotificationBell />
           <Pressable
             onPress={() => router.push('/profile/settings')}
             style={[
@@ -204,6 +186,7 @@ export default function ProfileScreen() {
           lastName={lastName}
           subtitle={subtitle}
           accentColor={accent}
+          photoUrl={userPhotoUrl}
           onAvatarPress={() => router.push('/profile/personal')}
           kidPills={kidPills}
           onKidPillPress={handleKidPillPress}
@@ -231,14 +214,14 @@ export default function ProfileScreen() {
           ]}
         >
           <StatRow
-            icon={<HeartSticker size={18} fill="#F2B2C7" />}
+            icon={<AnimatedSticker type="Heart" size={18} fill="#F2B2C7" />}
             label={t('profile_careCircle')}
             value={careCircleCount === 1 ? '1 person' : `${careCircleCount} people`}
             onPress={() => router.push('/profile/care-circle')}
           />
           {hasChildren && (
             <StatRow
-              icon={<FlowerSticker size={18} petal="#9DC3E8" center="#F5D652" />}
+              icon={<AnimatedSticker type="Flower" size={18} petal="#9DC3E8" center="#F5D652" />}
               label="Kids Profile"
               value={children.length === 1 ? '1 child' : `${children.length} children`}
               onPress={() => router.push('/profile/kids')}
@@ -246,7 +229,7 @@ export default function ProfileScreen() {
           )}
           {hasChildren && (
             <StatRow
-              icon={<StarSticker size={18} fill="#F5D652" />}
+              icon={<AnimatedSticker type="Star" size={18} fill="#F5D652" />}
               label={t('profile_memories')}
               value="—"
               onPress={() => router.push('/profile/memories')}
@@ -254,35 +237,35 @@ export default function ProfileScreen() {
           )}
           {hasChildren && (
             <StatRow
-              icon={<LeafSticker size={18} fill="#BDD48C" />}
+              icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
               label={t('profile_healthHistory')}
               value={joinedYear ? `Since ${joinedYear}` : '—'}
               onPress={() => router.push('/profile/health-history')}
             />
           )}
           <StatRow
-            icon={<CrossSticker size={18} fill="#EE7B6D" />}
+            icon={<AnimatedSticker type="Cross" size={18} fill="#EE7B6D" />}
             label={t('profile_emergencyInsurance')}
             value={hasEmergency ? 'Ready' : 'Not set'}
             onPress={() => router.push('/profile/emergency-insurance')}
           />
           <StatRow
-            icon={<DropSticker size={18} fill="#F5D652" />}
+            icon={<AnimatedSticker type="Drop" size={18} fill="#F5D652" />}
             label={t('profile_notifications')}
             onPress={() => router.push('/profile/notifications')}
           />
           <StatRow
-            icon={<MoonSticker size={18} fill="#C8B6E8" />}
+            icon={<AnimatedSticker type="Moon" size={18} fill="#C8B6E8" />}
             label={t('profile_accountSecurity')}
             onPress={() => router.push('/profile/account')}
           />
           <StatRow
-            icon={<LeafSticker size={18} fill="#BDD48C" />}
+            icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
             label={t('profile_dataPrivacy')}
             onPress={() => router.push('/profile/privacy')}
           />
           <StatRow
-            icon={<BurstSticker size={18} fill="#C8B6E8" />}
+            icon={<AnimatedSticker type="Burst" size={18} fill="#C8B6E8" />}
             label={t('profile_subscription')}
             value="Upgrade"
             onPress={() => router.push('/paywall')}
@@ -323,6 +306,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 10,
     marginBottom: 4,
   },
   gearBtn: {

@@ -27,13 +27,18 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { router } from 'expo-router'
-import { ArrowLeft, Edit2, Check, ChevronRight } from 'lucide-react-native'
+import { Edit2, Check, ChevronRight } from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { supabase } from '../../lib/supabase'
 import { getDaysToGo } from '../../lib/pregnancyData'
+import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { Display, MonoCaps, Body } from '../../components/ui/Typography'
+import { Heart as HeartSticker, Squishy, Star as StarSticker } from '../../components/ui/Stickers'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,15 +102,19 @@ interface EditFieldModalProps {
 }
 
 function EditFieldModal({ visible, label, value, onSave, onClose, multiline = false }: EditFieldModalProps) {
-  const { colors } = useTheme()
+  const { colors, font, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+  const inkText = isDark ? colors.bg : '#F3ECD9'
   const [text, setText] = useState(value)
   useEffect(() => { setText(value) }, [value])
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.editOverlay}>
-        <View style={[styles.editSheet, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.editLabel, { color: colors.text }]}>{label}</Text>
+        <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }]}>
+          <Display size={18} color={colors.text}>{label}</Display>
           <TextInput
             value={text}
             onChangeText={setText}
@@ -114,23 +123,24 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
               styles.editInput,
               {
                 color: colors.text,
-                backgroundColor: colors.surfaceGlass,
-                borderColor: colors.border,
-                height: multiline ? 100 : 52,
+                backgroundColor: colors.surfaceRaised,
+                borderColor: paperBorder,
+                height: multiline ? 110 : 56,
+                fontFamily: font.body,
               },
             ]}
             autoFocus
             placeholderTextColor={colors.textMuted}
           />
           <View style={styles.editButtons}>
-            <Pressable onPress={onClose} style={[styles.editBtn, { backgroundColor: colors.surfaceGlass }]}>
-              <Text style={[styles.editBtnText, { color: colors.textSecondary }]}>Cancel</Text>
+            <Pressable onPress={onClose} style={[styles.editBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: paperBorder }]}>
+              <Text style={[styles.editBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Cancel</Text>
             </Pressable>
             <Pressable
               onPress={() => { onSave(text); onClose() }}
-              style={[styles.editBtn, { backgroundColor: brand.pregnancy }]}
+              style={[styles.editBtn, { backgroundColor: ink }]}
             >
-              <Text style={[styles.editBtnText, { color: colors.text }]}>Save</Text>
+              <Text style={[styles.editBtnText, { color: inkText, fontFamily: font.bodySemiBold }]}>Save</Text>
             </Pressable>
           </View>
         </View>
@@ -142,10 +152,14 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
 // ─── Section card ─────────────────────────────────────────────────────────────
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
   return (
-    <View style={[styles.sectionCard, { backgroundColor: colors.surface }]}>
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{title.toUpperCase()}</Text>
+    <View style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+      <View style={{ marginBottom: 8 }}>
+        <MonoCaps color={colors.textMuted}>{title}</MonoCaps>
+      </View>
       {children}
     </View>
   )
@@ -158,15 +172,15 @@ interface InfoRowProps {
 }
 
 function InfoRow({ label, value, onEdit }: InfoRowProps) {
-  const { colors } = useTheme()
+  const { colors, font } = useTheme()
   return (
     <Pressable
       onPress={onEdit}
       style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}
     >
-      <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{label}</Text>
+      <Text style={[styles.infoLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{label}</Text>
       <View style={styles.infoRight}>
-        <Text style={[styles.infoValue, { color: colors.text }]}>{value || '—'}</Text>
+        <Text style={[styles.infoValue, { color: colors.text, fontFamily: font.bodySemiBold }]}>{value || '—'}</Text>
         {onEdit && <Edit2 size={14} color={colors.textMuted} strokeWidth={2} />}
       </View>
     </Pressable>
@@ -176,7 +190,7 @@ function InfoRow({ label, value, onEdit }: InfoRowProps) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PregnancyProfileScreen() {
-  const { colors } = useTheme()
+  const { colors, font, stickers, isDark } = useTheme()
   const insets = useSafeAreaInsets()
 
   const weekNumber = usePregnancyStore((s) => s.weekNumber) ?? 24
@@ -318,7 +332,7 @@ export default function PregnancyProfileScreen() {
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator color={brand.pregnancy} size="large" />
+        <BrandedLoader />
       </View>
     )
   }
@@ -328,12 +342,11 @@ export default function PregnancyProfileScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={22} color={colors.text} strokeWidth={2} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Pregnancy Profile</Text>
-        {saving && <ActivityIndicator color={brand.pregnancy} size="small" />}
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+        <ScreenHeader
+          title="Pregnancy Profile"
+          right={saving ? <ActivityIndicator color={colors.text} size="small" /> : undefined}
+        />
       </View>
 
       <ScrollView
@@ -341,22 +354,25 @@ export default function PregnancyProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* 1. Hero */}
-        <View style={[styles.heroCard, { backgroundColor: brand.pregnancy + '20', borderColor: brand.pregnancy + '30' }]}>
-          <Text style={styles.heroEmoji}>🤰</Text>
-          <Text style={[styles.heroName, { color: colors.text }]}>{profile.name}</Text>
-          <Text style={[styles.heroWeek, { color: brand.pregnancy }]}>
+        <View style={[styles.heroCard, { backgroundColor: stickers.lilac + (isDark ? '24' : '32'), borderColor: stickers.lilac + '50' }]}>
+          <View style={styles.heroSticker}>
+            <HeartSticker size={48} fill={stickers.pink} />
+          </View>
+          <Display size={28} color={colors.text}>{profile.name || 'You'}</Display>
+          <Text style={[styles.heroWeek, { color: isDark ? stickers.lilac : '#3A2A6E', fontFamily: font.bodySemiBold }]}>
             Week {weekNumber} · T{trimester}
           </Text>
           {daysToGo !== null && (
-            <Text style={[styles.heroDays, { color: colors.textSecondary }]}>
+            <Text style={[styles.heroDays, { color: colors.textSecondary, fontFamily: font.body }]}>
               {daysToGo} days to go
             </Text>
           )}
           {bp.birthLocation ? (
             <View style={styles.heroPills}>
-              <View style={[styles.heroPill, { backgroundColor: colors.surfaceGlass }]}>
-                <Text style={[styles.heroPillText, { color: colors.textSecondary }]}>
-                  📍 {bp.birthLocation}
+              <View style={[styles.heroPill, { backgroundColor: colors.surfaceRaised }]}>
+                <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
+                <Text style={[styles.heroPillText, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
+                  {bp.birthLocation}
                 </Text>
               </View>
             </View>
@@ -650,44 +666,43 @@ export default function PregnancyProfileScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    gap: 12,
+  headerWrap: { paddingHorizontal: 16, paddingBottom: 6 },
+  scroll: { paddingHorizontal: 20, paddingTop: 8 },
+
+  heroCard: { borderRadius: 32, padding: 28, marginBottom: 18, alignItems: 'center', borderWidth: 1, position: 'relative' as const },
+  heroSticker: { marginBottom: 8 },
+  heroWeek: { fontSize: 16, marginTop: 6 },
+  heroDays: { fontSize: 14, marginTop: 4 },
+  heroPills: { flexDirection: 'row', gap: 8, marginTop: 14, flexWrap: 'wrap', justifyContent: 'center' },
+  heroPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
+  heroPillText: { fontSize: 12 },
+
+  sectionCard: {
+    borderRadius: 28,
+    padding: 18,
+    marginBottom: 14,
+    borderWidth: 1,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
   },
-  backBtn: { padding: 8 },
-  headerTitle: { fontSize: 18, fontFamily: 'CabinetGrotesk-Black', flex: 1 },
-  scroll: { padding: 20, gap: 0 },
 
-  heroCard: { borderRadius: 24, padding: 24, marginBottom: 20, alignItems: 'center', borderWidth: 1 },
-  heroEmoji: { fontSize: 48, marginBottom: 8, fontFamily: 'Fraunces_600SemiBold' },
-  heroName: { fontSize: 22, fontFamily: 'CabinetGrotesk-Black' },
-  heroWeek: { fontSize: 16, fontFamily: 'Satoshi-Variable', fontWeight: '700', marginTop: 4 },
-  heroDays: { fontSize: 14, fontFamily: 'Satoshi-Variable', marginTop: 2 },
-  heroPills: { flexDirection: 'row', gap: 8, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' },
-  heroPill: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 },
-  heroPillText: { fontSize: 12, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
-
-  sectionCard: { borderRadius: 20, padding: 16, marginBottom: 16 },
-  sectionTitle: { fontSize: 11, fontFamily: 'Satoshi-Variable', fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 },
-
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1 },
-  infoLabel: { fontSize: 13, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1 },
+  infoLabel: { fontSize: 13 },
   infoRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  infoValue: { fontSize: 14, fontFamily: 'Satoshi-Variable', maxWidth: 180, textAlign: 'right' },
+  infoValue: { fontSize: 14, maxWidth: 180, textAlign: 'right' },
   linkRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 },
 
-  checkRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 1 },
+  checkRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1 },
   checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, justifyContent: 'center', alignItems: 'center' },
-  checkLabel: { fontSize: 14, fontFamily: 'Satoshi-Variable', fontWeight: '500', flex: 1 },
+  checkLabel: { fontSize: 14, flex: 1 },
 
-  editOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
+  editOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(20,19,19,0.6)' },
   editSheet: { padding: 24, borderTopLeftRadius: 32, borderTopRightRadius: 32 },
-  editLabel: { fontSize: 16, fontFamily: 'CabinetGrotesk-Black', marginBottom: 12 },
-  editInput: { borderRadius: 16, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16, fontFamily: 'Satoshi-Variable' },
+  editInput: { borderRadius: 18, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, marginTop: 12 },
   editButtons: { flexDirection: 'row', gap: 12, marginTop: 16 },
   editBtn: { flex: 1, paddingVertical: 14, borderRadius: 999, alignItems: 'center' },
-  editBtnText: { fontSize: 15, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  editBtnText: { fontSize: 15 },
 })

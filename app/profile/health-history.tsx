@@ -21,15 +21,25 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { router, useFocusEffect } from 'expo-router'
 import {
-  ArrowLeft, Plus, Syringe, Thermometer, Pill, Stethoscope,
-  TrendingUp, Baby, Calendar, Activity, AlertTriangle, FileText,
-  Heart, ChevronDown, ChevronRight, Check, Save, X, Star,
+  Syringe, Thermometer, Pill, TrendingUp, Calendar,
+  AlertTriangle, FileText, ChevronRight, Check, Star,
 } from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { LogSheet } from '../../components/calendar/LogSheet'
+import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { PillButton } from '../../components/ui/PillButton'
+import { Display, MonoCaps, Body } from '../../components/ui/Typography'
+import {
+  Cross as CrossSticker,
+  Heart as HeartSticker,
+  Star as StarSticker,
+  Drop as DropSticker,
+  Flower as FlowerSticker,
+} from '../../components/ui/Stickers'
 
 const SCREEN_W = Dimensions.get('window').width
 
@@ -66,9 +76,11 @@ const VACCINE_SCHEDULE = [
 // ─── Main Screen ──────────────────────────────────────────────────────────
 
 export default function HealthHistoryScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
 
   const [events, setEvents] = useState<HealthEvent[]>([])
   const [filterChild, setFilterChild] = useState<string | null>(null)
@@ -118,28 +130,42 @@ export default function HealthHistoryScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} style={styles.headerBtn}>
-          <ArrowLeft size={24} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Health History</Text>
-        <Pressable onPress={() => setShowAddSheet(true)} style={styles.headerBtn}>
-          <Plus size={22} color={colors.primary} />
-        </Pressable>
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+        <ScreenHeader
+          title="Health History"
+          right={
+            <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10}>
+              <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+                <Ionicons name="add" size={20} color={colors.text} />
+              </View>
+            </Pressable>
+          }
+        />
       </View>
 
       {/* Child filter */}
       {children.length > 1 && (
         <View style={styles.filterRow}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
-            <Pressable onPress={() => setFilterChild(null)} style={[styles.chip, { backgroundColor: !filterChild ? colors.primaryTint : colors.surface, borderColor: !filterChild ? colors.primary : colors.border, borderRadius: radius.full }]}>
-              <Text style={[styles.chipText, { color: !filterChild ? colors.primary : colors.text }]}>All Kids</Text>
+            <Pressable
+              onPress={() => setFilterChild(null)}
+              style={[styles.chip, {
+                backgroundColor: !filterChild ? stickers.lilac + (isDark ? '32' : '40') : paper,
+                borderColor: !filterChild ? (isDark ? stickers.lilac : '#3A2A6E') : paperBorder,
+              }]}
+            >
+              <Text style={[styles.chipText, { color: !filterChild ? (isDark ? stickers.lilac : '#3A2A6E') : colors.text, fontFamily: font.bodySemiBold }]}>All Kids</Text>
             </Pressable>
             {children.map((c) => (
-              <Pressable key={c.id} onPress={() => setFilterChild(filterChild === c.id ? null : c.id)}
-                style={[styles.chip, { backgroundColor: filterChild === c.id ? brand.kids + '15' : colors.surface, borderColor: filterChild === c.id ? brand.kids : colors.border, borderRadius: radius.full }]}
+              <Pressable
+                key={c.id}
+                onPress={() => setFilterChild(filterChild === c.id ? null : c.id)}
+                style={[styles.chip, {
+                  backgroundColor: filterChild === c.id ? stickers.blue + (isDark ? '32' : '40') : paper,
+                  borderColor: filterChild === c.id ? (isDark ? stickers.blue : '#1F4A7A') : paperBorder,
+                }]}
               >
-                <Text style={[styles.chipText, { color: filterChild === c.id ? brand.kids : colors.text }]}>{c.name}</Text>
+                <Text style={[styles.chipText, { color: filterChild === c.id ? (isDark ? stickers.blue : '#1F4A7A') : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -149,79 +175,79 @@ export default function HealthHistoryScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* ─── Quick Stats ──────────────────────────────────────────── */}
         <View style={styles.statsRow}>
-          <StatCard icon={Syringe} color={brand.success} num={vaccines.length} label="Vaccines" onPress={() => setDetailSection('vaccine')} />
-          <StatCard icon={Pill} color={brand.secondary} num={medications.length} label="Meds" onPress={() => setDetailSection('medicine')} />
-          <StatCard icon={Thermometer} color={brand.error} num={temperatures.length} label="Temps" onPress={() => setDetailSection('temperature')} />
-          <StatCard icon={Star} color={brand.accent} num={milestones.length} label="Milestones" onPress={() => setDetailSection('milestone')} />
+          <StatCard icon={Syringe} color={isDark ? stickers.green : '#3F5919'} bg={stickers.green} num={vaccines.length} label="Vaccines" onPress={() => setDetailSection('vaccine')} />
+          <StatCard icon={Pill} color={isDark ? stickers.blue : '#1F4A7A'} bg={stickers.blue} num={medications.length} label="Meds" onPress={() => setDetailSection('medicine')} />
+          <StatCard icon={Thermometer} color={isDark ? stickers.coral : '#B43E2E'} bg={stickers.coral} num={temperatures.length} label="Temps" onPress={() => setDetailSection('temperature')} />
+          <StatCard icon={Star} color={isDark ? '#F0CE4C' : '#7C5E0F'} bg={stickers.yellow} num={milestones.length} label="Milestones" onPress={() => setDetailSection('milestone')} />
         </View>
 
         {/* ─── Vaccine Tracker ──────────────────────────────────────── */}
-        <Pressable onPress={() => setDetailSection('vaccine')} style={[styles.sectionCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+        <Pressable onPress={() => setDetailSection('vaccine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
           <View style={styles.sectionHeader}>
             <Syringe size={18} color={brand.success} strokeWidth={2} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Vaccines</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>Vaccines</Text>
             <ChevronRight size={16} color={colors.textMuted} />
           </View>
           {vaccines.length > 0 ? (
             <View style={styles.vaccineList}>
               {vaccines.slice(0, 3).map((v) => (
                 <View key={v.id} style={styles.vaccineItem}>
-                  <Check size={14} color={brand.success} strokeWidth={2.5} />
-                  <Text style={[styles.vaccineText, { color: colors.text }]}>{v.value}</Text>
-                  <Text style={[styles.vaccineDate, { color: colors.textMuted }]}>{new Date(v.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</Text>
+                  <Check size={14} color={isDark ? stickers.green : '#3F5919'} strokeWidth={2.5} />
+                  <Text style={[styles.vaccineText, { color: colors.text, fontFamily: font.bodyMedium }]}>{v.value}</Text>
+                  <Text style={[styles.vaccineDate, { color: colors.textMuted, fontFamily: font.body }]}>{new Date(v.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</Text>
                 </View>
               ))}
-              {vaccines.length > 3 && <Text style={[styles.moreText, { color: colors.primary }]}>+{vaccines.length - 3} more</Text>}
+              {vaccines.length > 3 && <Text style={[styles.moreText, { color: colors.text, fontFamily: font.bodySemiBold }]}>+{vaccines.length - 3} more</Text>}
             </View>
           ) : (
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No vaccines logged yet. Tap + to add.</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No vaccines logged yet. Tap + to add.</Text>
           )}
           {/* Next recommended */}
-          <View style={[styles.nextVaccine, { backgroundColor: brand.success + '08', borderRadius: radius.lg }]}>
-            <Text style={[styles.nextLabel, { color: brand.success }]}>Recommended Schedule</Text>
-            <Text style={[styles.nextText, { color: colors.textSecondary }]}>
+          <View style={[styles.nextVaccine, { backgroundColor: stickers.green + (isDark ? '20' : '30') }]}>
+            <Text style={[styles.nextLabel, { color: isDark ? stickers.green : '#3F5919', fontFamily: font.bodySemiBold }]}>Recommended Schedule</Text>
+            <Text style={[styles.nextText, { color: colors.textSecondary, fontFamily: font.body }]}>
               {VACCINE_SCHEDULE.filter((v) => !givenVaccineNames.has(v.name)).slice(0, 2).map((v) => `${v.name} (${v.ages[0]})`).join(', ') || 'All up to date!'}
             </Text>
           </View>
         </Pressable>
 
         {/* ─── Medications ──────────────────────────────────────────── */}
-        <Pressable onPress={() => setDetailSection('medicine')} style={[styles.sectionCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+        <Pressable onPress={() => setDetailSection('medicine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
           <View style={styles.sectionHeader}>
             <Pill size={18} color={brand.secondary} strokeWidth={2} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Medications</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>Medications</Text>
             <ChevronRight size={16} color={colors.textMuted} />
           </View>
           {medications.length > 0 ? (
             medications.slice(0, 3).map((m) => (
               <View key={m.id} style={styles.medItem}>
-                <View style={[styles.medDot, { backgroundColor: brand.secondary }]} />
+                <View style={[styles.medDot, { backgroundColor: stickers.blue }]} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.medName, { color: colors.text }]}>{m.value}</Text>
-                  {m.notes ? <Text style={[styles.medNotes, { color: colors.textMuted }]} numberOfLines={1}>{m.notes}</Text> : null}
+                  <Text style={[styles.medName, { color: colors.text, fontFamily: font.bodyMedium }]}>{m.value}</Text>
+                  {m.notes ? <Text style={[styles.medNotes, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>{m.notes}</Text> : null}
                 </View>
-                <Text style={[styles.medDate, { color: colors.textMuted }]}>{new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
+                <Text style={[styles.medDate, { color: colors.textMuted, fontFamily: font.body }]}>{new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
               </View>
             ))
           ) : (
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No medications logged.</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No medications logged.</Text>
           )}
           {/* Active meds from child profiles */}
           {children.some((c) => c.medications.length > 0) && (
-            <View style={[styles.activeMeds, { backgroundColor: brand.secondary + '08', borderRadius: radius.lg }]}>
-              <Text style={[styles.nextLabel, { color: brand.secondary }]}>Current Medications</Text>
+            <View style={[styles.activeMeds, { backgroundColor: stickers.blue + (isDark ? '20' : '30') }]}>
+              <Text style={[styles.nextLabel, { color: isDark ? stickers.blue : '#1F4A7A', fontFamily: font.bodySemiBold }]}>Current Medications</Text>
               {children.filter((c) => c.medications.length > 0).map((c) => (
-                <Text key={c.id} style={[styles.nextText, { color: colors.textSecondary }]}>{c.name}: {c.medications.join(', ')}</Text>
+                <Text key={c.id} style={[styles.nextText, { color: colors.textSecondary, fontFamily: font.body }]}>{c.name}: {c.medications.join(', ')}</Text>
               ))}
             </View>
           )}
         </Pressable>
 
         {/* ─── Growth ───────────────────────────────────────────────── */}
-        <Pressable onPress={() => setDetailSection('growth')} style={[styles.sectionCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+        <Pressable onPress={() => setDetailSection('growth')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
           <View style={styles.sectionHeader}>
             <TrendingUp size={18} color={brand.kids} strokeWidth={2} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Growth</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>Growth</Text>
             <ChevronRight size={16} color={colors.textMuted} />
           </View>
           {growthEntries.length > 0 ? (
@@ -233,21 +259,23 @@ export default function HealthHistoryScreen() {
                 const latestWeight = growthEntries.find((g) => g.value.toLowerCase().includes('weight'))
                 const latestHeight = growthEntries.find((g) => g.value.toLowerCase().includes('height'))
 
+                const wColor = isDark ? stickers.blue : '#1F4A7A'
+                const hColor = isDark ? stickers.peach : '#A6532A'
                 return (
                   <>
                     {/* Weight bars */}
                     {weights.length > 0 && (
                       <>
-                        <Text style={[styles.chartSubtitle, { color: brand.kids }]}>Weight (kg)</Text>
+                        <Text style={[styles.chartSubtitle, { color: wColor, fontFamily: font.bodySemiBold }]}>Weight (kg)</Text>
                         <View style={styles.miniChart}>
                           {weights.map((g) => {
                             const num = parseFloat(g.value.replace(/[^0-9.]/g, '')) || 5
                             const h = Math.min(50, Math.max(10, (num / 20) * 50))
                             return (
                               <View key={g.id} style={styles.barCol}>
-                                <Text style={[styles.barValue, { color: brand.kids }]}>{num}</Text>
-                                <View style={[styles.bar, { height: h, backgroundColor: brand.kids + '40', borderRadius: 4 }]} />
-                                <Text style={[styles.barLabel, { color: colors.textMuted }]}>{new Date(g.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
+                                <Text style={[styles.barValue, { color: wColor, fontFamily: font.bodySemiBold }]}>{num}</Text>
+                                <View style={[styles.bar, { height: h, backgroundColor: stickers.blue + (isDark ? '40' : '60'), borderRadius: 4 }]} />
+                                <Text style={[styles.barLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
                               </View>
                             )
                           })}
@@ -257,23 +285,23 @@ export default function HealthHistoryScreen() {
                     {/* Height bars */}
                     {heights.length > 0 && (
                       <>
-                        <Text style={[styles.chartSubtitle, { color: brand.accent }]}>Height (cm)</Text>
+                        <Text style={[styles.chartSubtitle, { color: hColor, fontFamily: font.bodySemiBold }]}>Height (cm)</Text>
                         <View style={styles.miniChart}>
                           {heights.map((g) => {
                             const num = parseFloat(g.value.replace(/[^0-9.]/g, '')) || 50
                             const h = Math.min(50, Math.max(10, (num / 120) * 50))
                             return (
                               <View key={g.id} style={styles.barCol}>
-                                <Text style={[styles.barValue, { color: brand.accent }]}>{num}</Text>
-                                <View style={[styles.bar, { height: h, backgroundColor: brand.accent + '40', borderRadius: 4 }]} />
-                                <Text style={[styles.barLabel, { color: colors.textMuted }]}>{new Date(g.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
+                                <Text style={[styles.barValue, { color: hColor, fontFamily: font.bodySemiBold }]}>{num}</Text>
+                                <View style={[styles.bar, { height: h, backgroundColor: stickers.peach + (isDark ? '40' : '60'), borderRadius: 4 }]} />
+                                <Text style={[styles.barLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
                               </View>
                             )
                           })}
                         </View>
                       </>
                     )}
-                    <Text style={[styles.lastMeasure, { color: colors.textSecondary }]}>
+                    <Text style={[styles.lastMeasure, { color: colors.textSecondary, fontFamily: font.body }]}>
                       {latestWeight ? `Weight: ${latestWeight.value.replace(/weight:?\s*/i, '')}` : ''}
                       {latestWeight && latestHeight ? '  ·  ' : ''}
                       {latestHeight ? `Height: ${latestHeight.value.replace(/height:?\s*/i, '')}` : ''}
@@ -283,25 +311,25 @@ export default function HealthHistoryScreen() {
               })()}
             </>
           ) : (
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No growth entries. Log weight and height to track progress.</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No growth entries. Log weight and height to track progress.</Text>
           )}
         </Pressable>
 
         {/* ─── Milestones ───────────────────────────────────────────── */}
-        <Pressable onPress={() => setDetailSection('milestone')} style={[styles.sectionCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+        <Pressable onPress={() => setDetailSection('milestone')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
           <View style={styles.sectionHeader}>
             <Star size={18} color={brand.accent} strokeWidth={2} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Milestones</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>Milestones</Text>
             <ChevronRight size={16} color={colors.textMuted} />
           </View>
           {milestones.length > 0 ? (
             <View style={styles.milestoneList}>
               {milestones.slice(0, 4).map((m) => (
                 <View key={m.id} style={styles.milestoneItem}>
-                  <View style={[styles.milestoneDot, { backgroundColor: brand.accent }]} />
+                  <View style={[styles.milestoneDot, { backgroundColor: stickers.yellow }]} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.milestoneText, { color: colors.text }]}>{m.value}</Text>
-                    <Text style={[styles.milestoneDate, { color: colors.textMuted }]}>
+                    <Text style={[styles.milestoneText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{m.value}</Text>
+                    <Text style={[styles.milestoneDate, { color: colors.textMuted, fontFamily: font.body }]}>
                       {m.childName} · {new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </Text>
                   </View>
@@ -309,7 +337,7 @@ export default function HealthHistoryScreen() {
               ))}
             </View>
           ) : (
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No milestones yet. Celebrate every first!</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No milestones yet. Celebrate every first!</Text>
           )}
         </Pressable>
 
@@ -324,19 +352,19 @@ export default function HealthHistoryScreen() {
           )
           if (alertKids.length === 0) return null
           return (
-          <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+          <View style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
             <View style={styles.sectionHeader}>
-              <AlertTriangle size={18} color={brand.error} strokeWidth={2} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Allergies & Alerts</Text>
+              <AlertTriangle size={18} color={stickers.coral} strokeWidth={2} />
+              <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>Allergies & Alerts</Text>
             </View>
             {alertKids.map((c) => (
               <View key={c.id} style={styles.refChild}>
-                <Text style={[styles.refChildName, { color: colors.text }]}>{c.name}</Text>
+                <Text style={[styles.refChildName, { color: colors.text, fontFamily: font.display }]}>{c.name}</Text>
                 {c.allergies.filter((a) => a && a.toLowerCase() !== 'no').length > 0 && (
                   <View style={styles.refChipRow}>
                     {c.allergies.filter((a) => a && a.toLowerCase() !== 'no').map((a) => (
-                      <View key={a} style={[styles.refChip, { backgroundColor: brand.error + '12', borderRadius: radius.full }]}>
-                        <Text style={[styles.refChipText, { color: brand.error }]}>{a}</Text>
+                      <View key={a} style={[styles.refChip, { backgroundColor: stickers.coral + (isDark ? '28' : '32') }]}>
+                        <Text style={[styles.refChipText, { color: isDark ? stickers.coral : '#B43E2E', fontFamily: font.bodySemiBold }]}>{a}</Text>
                       </View>
                     ))}
                   </View>
@@ -344,9 +372,9 @@ export default function HealthHistoryScreen() {
                 {c.medications.length > 0 && (
                   <View style={styles.refChipRow}>
                     {c.medications.map((m) => (
-                      <View key={m} style={[styles.refChip, { backgroundColor: brand.secondary + '12', borderRadius: radius.full }]}>
-                        <Pill size={10} color={brand.secondary} strokeWidth={2} />
-                        <Text style={[styles.refChipText, { color: brand.secondary }]}>{m}</Text>
+                      <View key={m} style={[styles.refChip, { backgroundColor: stickers.blue + (isDark ? '28' : '32') }]}>
+                        <Pill size={10} color={isDark ? stickers.blue : '#1F4A7A'} strokeWidth={2} />
+                        <Text style={[styles.refChipText, { color: isDark ? stickers.blue : '#1F4A7A', fontFamily: font.bodySemiBold }]}>{m}</Text>
                       </View>
                     ))}
                   </View>
@@ -379,13 +407,22 @@ export default function HealthHistoryScreen() {
 
 // ─── Stat Card ────────────────────────────────────────────────────────────
 
-function StatCard({ icon: Icon, color, num, label, onPress }: any) {
-  const { colors, radius } = useTheme()
+function StatCard({ icon: Icon, color, bg, num, label, onPress }: any) {
+  const { colors, font, isDark } = useTheme()
   return (
-    <Pressable onPress={onPress} style={[styles.statCard, { backgroundColor: color + '10', borderRadius: radius.lg }]}>
-      <Icon size={16} color={color} strokeWidth={2} />
-      <Text style={[styles.statNum, { color }]}>{num}</Text>
-      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.statCard,
+        {
+          backgroundColor: bg + (isDark ? '24' : '32'),
+          borderColor: bg + (isDark ? '28' : '50'),
+        },
+      ]}
+    >
+      <Icon size={18} color={color} strokeWidth={2} />
+      <Text style={[styles.statNum, { color, fontFamily: font.display }]}>{num}</Text>
+      <Text style={[styles.statLabel, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>{label}</Text>
     </Pressable>
   )
 }
@@ -393,25 +430,32 @@ function StatCard({ icon: Icon, color, num, label, onPress }: any) {
 // ─── Detail Popup ─────────────────────────────────────────────────────────
 
 function DetailPopup({ section, events, onClose }: { section: string; events: HealthEvent[]; onClose: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark } = useTheme()
   const insets = useSafeAreaInsets()
-  const cfg = TYPE_CFG[section] ?? { label: section, icon: FileText, color: colors.textMuted }
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const cfg = TYPE_CFG[section] ?? { label: section, icon: FileText, color: colors.textMuted, placeholder: '' }
   const Icon = cfg.icon
 
   return (
     <Modal visible animationType="slide" presentationStyle="overFullScreen">
       <View style={[styles.detailRoot, { backgroundColor: colors.bg }]}>
         <View style={[styles.detailHeader, { paddingTop: insets.top + 8 }]}>
-          <Text style={[styles.detailTitle, { color: cfg.color }]}>
-            <Icon size={20} color={cfg.color} strokeWidth={2} /> {cfg.label} History
-          </Text>
-          <Pressable onPress={onClose}><X size={24} color={colors.text} /></Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Icon size={20} color={cfg.color} strokeWidth={2} />
+            <Display size={22} color={colors.text}>{cfg.label}</Display>
+          </View>
+          <Pressable onPress={onClose} hitSlop={10}>
+            <View style={[styles.detailClose, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <Ionicons name="close" size={20} color={colors.text} />
+            </View>
+          </Pressable>
         </View>
 
         {/* Summary */}
-        <View style={[styles.detailSummary, { backgroundColor: cfg.color + '10', borderRadius: radius.xl, marginHorizontal: 20 }]}>
-          <Text style={[styles.detailSummaryNum, { color: cfg.color }]}>{events.length}</Text>
-          <Text style={[styles.detailSummaryLabel, { color: colors.textSecondary }]}>total {cfg.label.toLowerCase()} entries</Text>
+        <View style={[styles.detailSummary, { backgroundColor: cfg.color + (isDark ? '20' : '20'), borderColor: cfg.color + '40', marginHorizontal: 20 }]}>
+          <Text style={[styles.detailSummaryNum, { color: cfg.color, fontFamily: font.display }]}>{events.length}</Text>
+          <Text style={[styles.detailSummaryLabel, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>total {cfg.label.toLowerCase()} entries</Text>
         </View>
 
         <ScrollView
@@ -422,18 +466,26 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
           keyboardShouldPersistTaps="handled"
         >
           {events.length === 0 && (
-            <Text style={[styles.emptyText, { color: colors.textMuted, textAlign: 'center', marginTop: 40 }]}>No {cfg.label.toLowerCase()} entries yet.</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted, textAlign: 'center', marginTop: 40, fontFamily: font.body }]}>No {cfg.label.toLowerCase()} entries yet.</Text>
           )}
           {events.map((e) => (
-            <View key={e.id} style={[styles.detailItem, { backgroundColor: colors.surface, borderRadius: radius.lg, borderLeftColor: cfg.color, borderLeftWidth: 3 }]}>
+            <View
+              key={e.id}
+              style={[styles.detailItem, {
+                backgroundColor: paper,
+                borderColor: paperBorder,
+                borderLeftColor: cfg.color,
+                borderLeftWidth: 3,
+              }]}
+            >
               <View style={styles.detailItemTop}>
-                <Text style={[styles.detailItemValue, { color: colors.text }]}>{e.value}</Text>
-                <View style={[styles.detailChildBadge, { backgroundColor: brand.kids + '12', borderRadius: radius.full }]}>
-                  <Text style={[styles.detailChildText, { color: brand.kids }]}>{e.childName}</Text>
+                <Text style={[styles.detailItemValue, { color: colors.text, fontFamily: font.display }]}>{e.value}</Text>
+                <View style={[styles.detailChildBadge, { backgroundColor: stickers.blue + (isDark ? '28' : '40') }]}>
+                  <Text style={[styles.detailChildText, { color: isDark ? stickers.blue : '#1F4A7A', fontFamily: font.bodySemiBold }]}>{e.childName}</Text>
                 </View>
               </View>
-              {e.notes ? <Text style={[styles.detailItemNotes, { color: colors.textMuted }]}>{e.notes}</Text> : null}
-              <Text style={[styles.detailItemDate, { color: colors.textMuted }]}>
+              {e.notes ? <Text style={[styles.detailItemNotes, { color: colors.textMuted, fontFamily: font.body }]}>{e.notes}</Text> : null}
+              <Text style={[styles.detailItemDate, { color: colors.textMuted, fontFamily: font.body }]}>
                 {new Date(e.date).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
               </Text>
             </View>
@@ -449,8 +501,10 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
 const ADD_TYPES = Object.entries(TYPE_CFG).map(([id, cfg]) => ({ id, ...cfg }))
 
 function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
 
   const [eventType, setEventType] = useState<string | null>(null)
   const [selectedChild, setSelectedChild] = useState(children.length === 1 ? children[0]?.id ?? '' : '')
@@ -526,16 +580,26 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
     <LogSheet visible={visible} title="Log Health Event" onClose={() => { reset(); onClose() }}>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={formStyles.form}>
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>TYPE</Text>
+          <MonoCaps color={colors.textMuted}>Type</MonoCaps>
           <View style={formStyles.typeGrid}>
             {ADD_TYPES.map((t) => {
               const active = eventType === t.id
+              const tintBg = active ? (paper) : paper
               return (
-                <Pressable key={t.id} onPress={() => setEventType(t.id)}
-                  style={[formStyles.typeBtn, { backgroundColor: active ? t.color + '15' : colors.surface, borderColor: active ? t.color : colors.border, borderRadius: radius.lg }]}
+                <Pressable
+                  key={t.id}
+                  onPress={() => setEventType(t.id)}
+                  style={[
+                    formStyles.typeBtn,
+                    {
+                      backgroundColor: tintBg,
+                      borderColor: active ? colors.text : paperBorder,
+                      borderWidth: active ? 1.5 : 1,
+                    },
+                  ]}
                 >
-                  <t.icon size={18} color={active ? t.color : colors.textMuted} strokeWidth={2} />
-                  <Text style={[formStyles.typeLabel, { color: active ? t.color : colors.text }]}>{t.label}</Text>
+                  <t.icon size={20} color={active ? colors.text : colors.textMuted} strokeWidth={2} />
+                  <Text style={[formStyles.typeLabel, { color: active ? colors.text : colors.textSecondary, fontFamily: active ? font.bodySemiBold : font.bodyMedium }]}>{t.label}</Text>
                 </Pressable>
               )
             })}
@@ -543,16 +607,21 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
 
           {children.length > 1 && (
             <>
-              <Text style={[formStyles.label, { color: colors.textSecondary }]}>CHILD</Text>
+              <MonoCaps color={colors.textMuted}>Child</MonoCaps>
               <View style={formStyles.childRow}>
                 {children.map((c) => {
                   const active = selectedChild === c.id
                   return (
-                    <Pressable key={c.id} onPress={() => setSelectedChild(c.id)}
-                      style={[formStyles.childChip, { backgroundColor: active ? brand.kids + '15' : colors.surface, borderColor: active ? brand.kids : colors.border, borderRadius: radius.full }]}
+                    <Pressable
+                      key={c.id}
+                      onPress={() => setSelectedChild(c.id)}
+                      style={[formStyles.childChip, {
+                        backgroundColor: active ? stickers.blue + (isDark ? '32' : '40') : paper,
+                        borderColor: active ? (isDark ? stickers.blue : '#1F4A7A') : paperBorder,
+                      }]}
                     >
-                      {active && <Check size={12} color={brand.kids} strokeWidth={3} />}
-                      <Text style={[formStyles.childText, { color: active ? brand.kids : colors.text }]}>{c.name}</Text>
+                      {active && <Check size={12} color={isDark ? stickers.blue : '#1F4A7A'} strokeWidth={3} />}
+                      <Text style={[formStyles.childText, { color: active ? (isDark ? stickers.blue : '#1F4A7A') : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
                     </Pressable>
                   )
                 })}
@@ -560,52 +629,78 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
             </>
           )}
 
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>DATE</Text>
-          <Pressable onPress={() => setShowDatePicker(!showDatePicker)} style={[formStyles.dateBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+          <MonoCaps color={colors.textMuted}>Date</MonoCaps>
+          <Pressable
+            onPress={() => setShowDatePicker(!showDatePicker)}
+            style={[formStyles.dateBtn, { backgroundColor: paper, borderColor: paperBorder }]}
+          >
             <Calendar size={16} color={colors.textMuted} strokeWidth={2} />
-            <Text style={[formStyles.dateBtnText, { color: colors.text }]}>{eventDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</Text>
+            <Text style={[formStyles.dateBtnText, { color: colors.text, fontFamily: font.body }]}>{eventDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</Text>
           </Pressable>
           {showDatePicker && (
-            <DateTimePicker value={eventDate} mode="date" maximumDate={new Date()} minimumDate={new Date(2015, 0, 1)}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'} themeVariant="light"
+            <DateTimePicker
+              value={eventDate}
+              mode="date"
+              maximumDate={new Date()}
+              minimumDate={new Date(2015, 0, 1)}
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              themeVariant={isDark ? 'dark' : 'light'}
               onChange={(_, d) => { if (Platform.OS === 'android') setShowDatePicker(false); if (d) setEventDate(d) }}
             />
           )}
 
-          {/* Growth: separate weight + height fields */}
           {eventType === 'growth' ? (
             <>
-              <Text style={[formStyles.label, { color: colors.textSecondary }]}>WEIGHT (KG)</Text>
-              <TextInput value={weight} onChangeText={setWeight} placeholder="e.g. 10.5" placeholderTextColor={colors.textMuted}
+              <MonoCaps color={colors.textMuted}>Weight (kg)</MonoCaps>
+              <TextInput
+                value={weight}
+                onChangeText={setWeight}
+                placeholder="e.g. 10.5"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="decimal-pad"
-                style={[formStyles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+                style={[formStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
               />
-              <Text style={[formStyles.label, { color: colors.textSecondary }]}>HEIGHT (CM)</Text>
-              <TextInput value={height} onChangeText={setHeight} placeholder="e.g. 78" placeholderTextColor={colors.textMuted}
+              <MonoCaps color={colors.textMuted}>Height (cm)</MonoCaps>
+              <TextInput
+                value={height}
+                onChangeText={setHeight}
+                placeholder="e.g. 78"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="decimal-pad"
-                style={[formStyles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+                style={[formStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
               />
             </>
           ) : (
             <>
-              <Text style={[formStyles.label, { color: colors.textSecondary }]}>{selCfg?.label?.toUpperCase() ?? 'DETAILS'}</Text>
-              <TextInput value={value} onChangeText={setValue} placeholder={selCfg?.placeholder ?? 'Describe...'} placeholderTextColor={colors.textMuted}
-                style={[formStyles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+              <MonoCaps color={colors.textMuted}>Details</MonoCaps>
+              <TextInput
+                value={value}
+                onChangeText={setValue}
+                placeholder={selCfg?.placeholder ?? 'Describe…'}
+                placeholderTextColor={colors.textMuted}
+                style={[formStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
               />
             </>
           )}
 
-          <Text style={[formStyles.label, { color: colors.textSecondary }]}>NOTES (OPTIONAL)</Text>
-          <TextInput value={notes} onChangeText={setNotes} placeholder="Additional details..." placeholderTextColor={colors.textMuted} multiline
-            style={[formStyles.inputMulti, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+          <MonoCaps color={colors.textMuted}>Notes (optional)</MonoCaps>
+          <TextInput
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Additional details…"
+            placeholderTextColor={colors.textMuted}
+            multiline
+            style={[formStyles.inputMulti, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
           />
 
-          <Pressable onPress={handleSave} disabled={saving}
-            style={({ pressed }) => [formStyles.saveBtn, { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: saving ? 0.5 : 1 }, pressed && { transform: [{ scale: 0.98 }] }]}
-          >
-            <Save size={18} color="#FFF" strokeWidth={2} />
-            <Text style={formStyles.saveBtnText}>{saving ? 'Saving...' : 'Save'}</Text>
-          </Pressable>
+          <PillButton
+            label={saving ? 'Saving…' : 'Save'}
+            variant="ink"
+            onPress={handleSave}
+            disabled={saving}
+            leading={<Ionicons name="save-outline" size={18} color={colors.bg} />}
+            style={{ marginTop: 6 }}
+          />
         </View>
       </ScrollView>
     </LogSheet>
@@ -616,101 +711,171 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 8 },
-  headerBtn: { width: 40, alignItems: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
+  headerWrap: { paddingHorizontal: 16, paddingBottom: 6 },
+  headerAddBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-  filterRow: { height: 40, marginBottom: 8 },
+  filterRow: { height: 44, marginBottom: 8 },
   filterContent: { paddingHorizontal: 20, gap: 8, alignItems: 'center' },
-  chip: { paddingVertical: 7, paddingHorizontal: 14, borderWidth: 1 },
-  chipText: { fontSize: 12, fontWeight: '600' },
+  chip: { paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1, borderRadius: 999 },
+  chipText: { fontSize: 13 },
 
-  scroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 12 },
+  scroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 14 },
 
-  // Stats
   statsRow: { flexDirection: 'row', gap: 8 },
-  statCard: { flex: 1, alignItems: 'center', paddingVertical: 12, gap: 2 },
-  statNum: { fontSize: 20, fontWeight: '800' },
-  statLabel: { fontSize: 10, fontWeight: '600' },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    gap: 4,
+    borderRadius: 22,
+    borderWidth: 1,
+  },
+  statNum: { fontSize: 24, letterSpacing: -0.5 },
+  statLabel: { fontSize: 10 },
 
-  // Section cards
-  sectionCard: { padding: 16, gap: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  sectionCard: {
+    padding: 18,
+    gap: 12,
+    borderRadius: 28,
+    borderWidth: 1,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', flex: 1 },
-  emptyText: { fontSize: 13, fontWeight: '500', lineHeight: 18 },
+  sectionTitle: { fontSize: 18, flex: 1, letterSpacing: -0.2 },
+  emptyText: { fontSize: 13, lineHeight: 18 },
 
-  // Vaccines
-  vaccineList: { gap: 6 },
+  vaccineList: { gap: 8 },
   vaccineItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  vaccineText: { fontSize: 14, fontWeight: '600', flex: 1 },
-  vaccineDate: { fontSize: 11, fontWeight: '500' },
-  nextVaccine: { padding: 10, marginTop: 4 },
-  nextLabel: { fontSize: 11, fontWeight: '700', marginBottom: 4 },
-  nextText: { fontSize: 12, fontWeight: '500', lineHeight: 17 },
-  moreText: { fontSize: 12, fontWeight: '600', marginTop: 4 },
+  vaccineText: { fontSize: 14, flex: 1 },
+  vaccineDate: { fontSize: 11 },
+  nextVaccine: { padding: 12, marginTop: 4, borderRadius: 18 },
+  nextLabel: { fontSize: 12, marginBottom: 4 },
+  nextText: { fontSize: 13, lineHeight: 18 },
+  moreText: { fontSize: 13, marginTop: 4 },
 
-  // Medications
   medItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
-  medDot: { width: 6, height: 6, borderRadius: 3 },
-  medName: { fontSize: 14, fontWeight: '600' },
-  medNotes: { fontSize: 12, fontWeight: '400' },
-  medDate: { fontSize: 11, fontWeight: '500' },
-  activeMeds: { padding: 10, marginTop: 4 },
+  medDot: { width: 8, height: 8, borderRadius: 4 },
+  medName: { fontSize: 14 },
+  medNotes: { fontSize: 12 },
+  medDate: { fontSize: 11 },
+  activeMeds: { padding: 12, marginTop: 4, borderRadius: 18 },
 
-  // Growth mini chart
-  chartSubtitle: { fontSize: 11, fontWeight: '700', marginTop: 4 },
+  chartSubtitle: { fontSize: 12, marginTop: 4 },
   miniChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 70, paddingTop: 8 },
   barCol: { flex: 1, alignItems: 'center', gap: 2 },
-  barValue: { fontSize: 9, fontWeight: '700' },
+  barValue: { fontSize: 10 },
   bar: { width: '100%' },
-  barLabel: { fontSize: 9, fontWeight: '600' },
-  lastMeasure: { fontSize: 12, fontWeight: '500', marginTop: 6 },
+  barLabel: { fontSize: 10 },
+  lastMeasure: { fontSize: 12, marginTop: 6 },
 
-  // Milestones
-  milestoneList: { gap: 8 },
+  milestoneList: { gap: 10 },
   milestoneItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  milestoneDot: { width: 8, height: 8, borderRadius: 4, marginTop: 5 },
-  milestoneText: { fontSize: 14, fontWeight: '600' },
-  milestoneDate: { fontSize: 11, fontWeight: '500' },
+  milestoneDot: { width: 10, height: 10, borderRadius: 5, marginTop: 5 },
+  milestoneText: { fontSize: 14 },
+  milestoneDate: { fontSize: 11 },
 
-  // Quick Reference
-  refChild: { gap: 6, marginTop: 4 },
-  refChildName: { fontSize: 14, fontWeight: '700' },
+  refChild: { gap: 6, marginTop: 6 },
+  refChildName: { fontSize: 16 },
   refChipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  refChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4 },
-  refChipText: { fontSize: 11, fontWeight: '600' },
+  refChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  refChipText: { fontSize: 11 },
 
-  // Detail popup
   detailRoot: { flex: 1 },
-  detailHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
-  detailTitle: { fontSize: 20, fontWeight: '700' },
-  detailSummary: { alignItems: 'center', paddingVertical: 16, marginBottom: 12 },
-  detailSummaryNum: { fontSize: 32, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' },
-  detailSummaryLabel: { fontSize: 13, fontWeight: '500' },
+  detailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+  },
+  detailClose: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailSummary: {
+    alignItems: 'center',
+    paddingVertical: 18,
+    marginBottom: 12,
+    borderRadius: 22,
+    borderWidth: 1,
+  },
+  detailSummaryNum: { fontSize: 36, letterSpacing: -1 },
+  detailSummaryLabel: { fontSize: 13 },
   detailScrollView: { flex: 1 },
-  detailScroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 8 },
-  detailItem: { padding: 14, gap: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
-  detailItemTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  detailItemValue: { fontSize: 15, fontWeight: '700', flex: 1 },
-  detailChildBadge: { paddingHorizontal: 8, paddingVertical: 2 },
-  detailChildText: { fontSize: 10, fontWeight: '600' },
-  detailItemNotes: { fontSize: 13, fontWeight: '400' },
-  detailItemDate: { fontSize: 11, fontWeight: '500', marginTop: 2 },
+  detailScroll: { paddingHorizontal: 20, paddingBottom: 40, gap: 10 },
+  detailItem: {
+    padding: 16,
+    gap: 6,
+    borderRadius: 22,
+    borderWidth: 1,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 1,
+  },
+  detailItemTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  detailItemValue: { fontSize: 16, flex: 1, letterSpacing: -0.1 },
+  detailChildBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
+  detailChildText: { fontSize: 10 },
+  detailItemNotes: { fontSize: 13 },
+  detailItemDate: { fontSize: 11, marginTop: 2 },
 })
 
 const formStyles = StyleSheet.create({
-  form: { gap: 14, paddingBottom: 40 },
-  label: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
+  form: { gap: 12, paddingBottom: 40 },
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  typeBtn: { width: '31%', alignItems: 'center', paddingVertical: 14, gap: 6, borderWidth: 1 },
-  typeLabel: { fontSize: 11, fontWeight: '700' },
+  typeBtn: {
+    width: '31.5%',
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 6,
+    borderRadius: 22,
+  },
+  typeLabel: { fontSize: 12 },
   childRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  childChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1 },
-  childText: { fontSize: 14, fontWeight: '600' },
-  dateBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, height: 48, borderWidth: 1 },
-  dateBtnText: { fontSize: 15, fontWeight: '500' },
-  input: { borderWidth: 1, paddingHorizontal: 16, height: 48, fontSize: 15, fontWeight: '500' },
-  inputMulti: { borderWidth: 1, paddingHorizontal: 16, paddingVertical: 12, minHeight: 70, fontSize: 15, fontWeight: '500', textAlignVertical: 'top' },
-  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 52, marginTop: 4 },
-  saveBtnText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
+  childChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  childText: { fontSize: 14 },
+  dateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    height: 52,
+    borderWidth: 1,
+    borderRadius: 18,
+  },
+  dateBtnText: { fontSize: 15 },
+  input: { borderWidth: 1, paddingHorizontal: 16, height: 52, fontSize: 15, borderRadius: 18 },
+  inputMulti: { borderWidth: 1, paddingHorizontal: 16, paddingVertical: 14, minHeight: 80, fontSize: 15, textAlignVertical: 'top', borderRadius: 18 },
 })

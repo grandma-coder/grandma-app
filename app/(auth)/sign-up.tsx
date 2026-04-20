@@ -20,10 +20,12 @@ import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useTheme, stickers } from '../../constants/theme'
 import { Squishy, Heart } from '../../components/ui/Stickers'
+import { useSavedToast } from '../../components/ui/SavedToast'
 
 export default function SignUp() {
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
+  const toast = useSavedToast()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -34,8 +36,12 @@ export default function SignUp() {
     if (error) {
       Alert.alert('Error', error.message)
     } else {
-      Alert.alert('Success', 'Check your email to confirm your account!')
-      router.replace('/(auth)/sign-in')
+      toast.show({
+        title: 'Welcome aboard!',
+        message: 'Check your email to confirm your account, then sign in.',
+        autoDismiss: 2800,
+      })
+      setTimeout(() => router.replace('/(auth)/sign-in'), 1200)
     }
     setLoading(false)
   }

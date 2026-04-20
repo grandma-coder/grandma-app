@@ -30,6 +30,7 @@ import {
 } from 'lucide-react-native'
 import { useTheme, brand } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
+import { Emoji } from '../ui/Emoji'
 
 // ─── Shared save helper ────────────────────────────────────────────────────
 
@@ -585,7 +586,7 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
   return (
     <View style={styles.form}>
       <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Text style={{ fontSize: 20 }}>😴</Text>
+        <Emoji size={20}>😴</Emoji>
         <Text style={[styles.bannerLabel, { color: colors.text }]}>Sleep on {formatDate(date)}</Text>
       </View>
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Hours slept</Text>
@@ -657,7 +658,7 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
   return (
     <View style={styles.form}>
       <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Text style={{ fontSize: 20 }}>🧘</Text>
+        <Emoji size={20}>🧘</Emoji>
         <Text style={[styles.bannerLabel, { color: colors.text }]}>Exercise on {formatDate(date)}</Text>
       </View>
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Type</Text>
@@ -733,7 +734,7 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
   return (
     <View style={styles.form}>
       <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Text style={{ fontSize: 20 }}>🥗</Text>
+        <Emoji size={20}>🥗</Emoji>
         <Text style={[styles.bannerLabel, { color: colors.text }]}>Nutrition on {formatDate(date)}</Text>
       </View>
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Nutrients covered today</Text>
@@ -792,7 +793,7 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
   return (
     <View style={styles.form}>
       <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Text style={{ fontSize: 20 }}>💪</Text>
+        <Emoji size={20}>💪</Emoji>
         <Text style={[styles.bannerLabel, { color: colors.text }]}>Kegel exercises</Text>
       </View>
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Sets completed</Text>
@@ -832,7 +833,7 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
   return (
     <View style={styles.form}>
       <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Text style={{ fontSize: 20 }}>💧</Text>
+        <Emoji size={20}>💧</Emoji>
         <Text style={[styles.bannerLabel, { color: colors.text }]}>Water intake</Text>
       </View>
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Glasses today</Text>
@@ -874,7 +875,7 @@ export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () =
   return (
     <View style={styles.form}>
       <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Text style={{ fontSize: 20 }}>💊</Text>
+        <Emoji size={20}>💊</Emoji>
         <Text style={[styles.bannerLabel, { color: colors.text }]}>Prenatal vitamins</Text>
       </View>
       <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign: 'center' }]}>
@@ -912,7 +913,7 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
   return (
     <View style={styles.form}>
       <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Text style={{ fontSize: 20 }}>🪺</Text>
+        <Emoji size={20}>🪺</Emoji>
         <Text style={[styles.bannerLabel, { color: colors.text }]}>Nesting task</Text>
       </View>
       <TextInput
@@ -983,7 +984,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
   return (
     <View style={styles.form}>
       <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Text style={{ fontSize: 20 }}>🏥</Text>
+        <Emoji size={20}>🏥</Emoji>
         <Text style={[styles.bannerLabel, { color: colors.text }]}>Birth prep task</Text>
       </View>
       <TextInput
@@ -1069,7 +1070,7 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
   return (
     <View style={styles.form}>
       <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Text style={{ fontSize: 20 }}>⏱️</Text>
+        <Emoji size={20}>⏱️</Emoji>
         <Text style={[styles.bannerLabel, { color: colors.text }]}>Contraction on {formatDate(date)}</Text>
       </View>
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Duration (seconds)</Text>
@@ -1131,7 +1132,7 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
   return (
     <View style={styles.form}>
       <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Text style={{ fontSize: 20 }}>⚖️</Text>
+        <Emoji size={20}>⚖️</Emoji>
         <Text style={[styles.bannerLabel, { color: colors.text }]}>Weight on {formatDate(date)}</Text>
       </View>
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Weight (kg)</Text>

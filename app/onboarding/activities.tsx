@@ -16,6 +16,7 @@ import { useTheme } from '../../constants/theme'
 import { Display, DisplayItalic, Body } from '../../components/ui/Typography'
 import { PillButton } from '../../components/ui/PillButton'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { Emoji } from '../../components/ui/Emoji'
 
 const ACTIVITIES = [
   { id: 'feeding', emoji: '🍼', label: 'Feeding', subtitle: 'Breast, bottle, solids' },
@@ -122,7 +123,7 @@ export default function Activities() {
               ]}
             >
               <View style={[styles.emojiCircle, { backgroundColor: tint }]}>
-                <Text style={styles.cardEmoji}>{item.emoji}</Text>
+                <Emoji size={30}>{item.emoji}</Emoji>
               </View>
               <View style={styles.cardText}>
                 <Text style={[styles.cardLabel, { fontFamily: font.bodySemiBold, color: ink }]}>

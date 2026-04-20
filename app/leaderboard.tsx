@@ -1,8 +1,9 @@
 /**
- * Leaderboard Screen — full community rankings with role tabs.
+ * Leaderboard — cream-paper sticker-collage redesign.
  *
  * Tabs: All | Moms | Caregivers | Partners
- * Tap user → profile popup modal
+ * Top 3 podium + ranked list + pinned "you" row.
+ * Tap a row → paper profile sheet with sticker accents.
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -12,29 +13,41 @@ import {
   Pressable,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
   Modal,
   RefreshControl,
   Image,
+  ScrollView,
 } from 'react-native'
-import { router } from 'expo-router'
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withDelay,
+  Easing,
+  interpolate,
+} from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
-  ArrowLeft,
-  Crown,
-  Medal,
   User,
   X,
-  Trophy,
   MessageCircle,
   Heart,
   Calendar,
-  Flame,
   Hash,
-  Info,
 } from 'lucide-react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../constants/theme'
+import { useTheme } from '../constants/theme'
 import { supabase } from '../lib/supabase'
+import { BrandedLoader } from '../components/ui/BrandedLoader'
+import { ScreenHeader } from '../components/ui/ScreenHeader'
+import { Display, MonoCaps, Body } from '../components/ui/Typography'
+import {
+  Star as StarSticker,
+  Burst as BurstSticker,
+  Heart as HeartSticker,
+  Flower as FlowerSticker,
+  Moon as MoonSticker,
+} from '../components/ui/Stickers'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -56,11 +69,11 @@ interface LeaderEntry {
 
 type TabKey = 'all' | 'moms' | 'caregivers' | 'partners'
 
-const TABS: { key: TabKey; label: string; color: string }[] = [
-  { key: 'all', label: 'All', color: '#FFD700' },
-  { key: 'moms', label: 'Moms', color: '#FF8AD8' },
-  { key: 'caregivers', label: 'Caregivers', color: '#4D96FF' },
-  { key: 'partners', label: 'Partners', color: '#B983FF' },
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'moms', label: 'Moms' },
+  { key: 'caregivers', label: 'Caregivers' },
+  { key: 'partners', label: 'Partners' },
 ]
 
 // ─── Data Fetching ────────────────────────────────────────────────────────────
@@ -69,7 +82,6 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return []
 
-  // Get all profiles with roles
   const { data: profiles } = await supabase
     .from('profiles')
     .select('id, name, photo_url, user_role')
@@ -77,7 +89,6 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
 
   if (!profiles || profiles.length === 0) return []
 
-  // Get caregiver roles
   const { data: caregiverLinks } = await supabase
     .from('child_caregivers')
     .select('user_id, role')
@@ -85,13 +96,11 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
 
   const caregiverRoleMap = new Map<string, string>()
   for (const link of caregiverLinks ?? []) {
-    // Keep the most specific role
     if (!caregiverRoleMap.has(link.user_id) || link.role !== 'parent') {
       caregiverRoleMap.set(link.user_id, link.role)
     }
   }
 
-  // Get garage stats
   const { data: garagePosts } = await supabase
     .from('garage_posts')
     .select('author_id, like_count, comment_count')
@@ -104,11 +113,10 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
     garageByUser.set(p.author_id, cur)
   }
 
-  // Get channel stats
   const { data: channelPosts } = await supabase
     .from('channel_posts')
     .select('author_id, reaction_count, reply_count')
-    .is('reply_to_id', null) // only top-level
+    .is('reply_to_id', null)
 
   const channelByUser = new Map<string, { posts: number; reactions: number }>()
   for (const p of channelPosts ?? []) {
@@ -118,7 +126,6 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
     channelByUser.set(p.author_id, cur)
   }
 
-  // Get channel membership counts
   const { data: memberships } = await supabase
     .from('channel_members')
     .select('user_id')
@@ -128,7 +135,6 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
     membershipCount.set(m.user_id, (membershipCount.get(m.user_id) || 0) + 1)
   }
 
-  // Get child log counts (last 90 days)
   const ninetyDaysAgo = new Date()
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
   const { data: logs } = await supabase
@@ -141,7 +147,6 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
     logCount.set(l.user_id, (logCount.get(l.user_id) || 0) + 1)
   }
 
-  // Build entries
   const entries: LeaderEntry[] = profiles.map((p: any) => {
     const garage = garageByUser.get(p.id) || { posts: 0, likes: 0 }
     const channel = channelByUser.get(p.id) || { posts: 0, reactions: 0 }
@@ -173,7 +178,6 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
     }
   })
 
-  // Sort and assign ranks
   entries.sort((a, b) => b.total_points - a.total_points)
   entries.forEach((e, i) => { e.rank = i + 1 })
 
@@ -188,11 +192,162 @@ function filterByTab(entries: LeaderEntry[], tab: TabKey): LeaderEntry[] {
   return entries
 }
 
+// ─── Podium — sticker accents per rank ──────────────────────────────────────
+
+function rankSticker(rank: number, size: number, fill: string) {
+  if (rank === 1) return <StarSticker size={size} fill={fill} />
+  if (rank === 2) return <BurstSticker size={size} fill={fill} points={8} />
+  return <FlowerSticker size={size} petal={fill} />
+}
+
+// ─── Floating Sticker — ambient animated decoration ─────────────────────────
+
+type FloatVariant = 'bob' | 'sway' | 'spin' | 'pulse'
+
+function FloatingSticker({
+  children, top, left, right, bottom, size = 48, variant = 'bob', delay = 0, duration = 3200, opacity = 0.5,
+}: {
+  children: React.ReactNode
+  top?: number
+  left?: number
+  right?: number
+  bottom?: number
+  size?: number
+  variant?: FloatVariant
+  delay?: number
+  duration?: number
+  opacity?: number
+}) {
+  const progress = useSharedValue(0)
+
+  useEffect(() => {
+    progress.value = withDelay(
+      delay,
+      withRepeat(
+        withTiming(1, { duration, easing: Easing.inOut(Easing.quad) }),
+        -1,
+        true,
+      ),
+    )
+  }, [progress, duration, delay])
+
+  const style = useAnimatedStyle(() => {
+    const p = progress.value
+    switch (variant) {
+      case 'bob':
+        return {
+          transform: [
+            { translateY: interpolate(p, [0, 1], [-6, 6]) },
+            { rotate: `${interpolate(p, [0, 1], [-4, 4])}deg` },
+          ],
+        }
+      case 'sway':
+        return {
+          transform: [
+            { translateX: interpolate(p, [0, 1], [-8, 8]) },
+            { rotate: `${interpolate(p, [0, 1], [-6, 6])}deg` },
+          ],
+        }
+      case 'spin':
+        return {
+          transform: [
+            { rotate: `${interpolate(p, [0, 1], [-12, 12])}deg` },
+            { scale: interpolate(p, [0, 1], [0.92, 1.06]) },
+          ],
+        }
+      case 'pulse':
+        return {
+          transform: [{ scale: interpolate(p, [0, 1], [0.9, 1.1]) }],
+        }
+    }
+  })
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        {
+          position: 'absolute',
+          top,
+          left,
+          right,
+          bottom,
+          width: size,
+          height: size,
+          opacity,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </Animated.View>
+  )
+}
+
+// ─── Scene Stickers — ambient background constellation ──────────────────────
+
+function SceneStickers() {
+  const { stickers } = useTheme()
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <FloatingSticker top={120} right={24} size={42} variant="bob" delay={0} duration={3400} opacity={0.55}>
+        <StarSticker size={42} fill={stickers.yellow} />
+      </FloatingSticker>
+      <FloatingSticker top={220} left={18} size={52} variant="sway" delay={400} duration={4200} opacity={0.45}>
+        <HeartSticker size={52} fill={stickers.coral} />
+      </FloatingSticker>
+      <FloatingSticker top={360} right={60} size={48} variant="spin" delay={800} duration={3800} opacity={0.5}>
+        <BurstSticker size={48} fill={stickers.lilac} points={10} />
+      </FloatingSticker>
+      <FloatingSticker top={500} left={40} size={46} variant="bob" delay={200} duration={3000} opacity={0.5}>
+        <FlowerSticker size={46} petal={stickers.peach} />
+      </FloatingSticker>
+      <FloatingSticker top={640} right={30} size={40} variant="sway" delay={600} duration={3600} opacity={0.4}>
+        <MoonSticker size={40} fill={stickers.blue} />
+      </FloatingSticker>
+      <FloatingSticker bottom={120} left={60} size={56} variant="spin" delay={1000} duration={4600} opacity={0.35}>
+        <StarSticker size={56} fill={stickers.green} />
+      </FloatingSticker>
+      <FloatingSticker bottom={240} right={40} size={44} variant="pulse" delay={300} duration={2800} opacity={0.45}>
+        <HeartSticker size={44} fill={stickers.pink} />
+      </FloatingSticker>
+    </View>
+  )
+}
+
+// ─── Animated rank-pill Star (gentle continuous pulse + wobble) ─────────────
+
+function AnimatedStarIcon({ size, fill }: { size: number; fill: string }) {
+  const progress = useSharedValue(0)
+  useEffect(() => {
+    progress.value = withRepeat(
+      withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.quad) }),
+      -1,
+      true,
+    )
+  }, [progress])
+  const style = useAnimatedStyle(() => ({
+    transform: [
+      { scale: interpolate(progress.value, [0, 1], [0.88, 1.12]) },
+      { rotate: `${interpolate(progress.value, [0, 1], [-8, 8])}deg` },
+    ],
+  }))
+  return (
+    <Animated.View style={style}>
+      <StarSticker size={size} fill={fill} />
+    </Animated.View>
+  )
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function LeaderboardScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, stickers, font, isDark } = useTheme()
   const insets = useSafeAreaInsets()
+
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
 
   const [entries, setEntries] = useState<LeaderEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -220,122 +375,53 @@ export default function LeaderboardScreen() {
   }, [load])
 
   const filtered = filterByTab(entries, activeTab)
-  // Re-rank within the filtered set
   const ranked = filtered.map((e, i) => ({ ...e, rank: i + 1 }))
-
   const myEntry = entries.find((e) => e.user_id === myUserId)
+  const myRankedEntry = ranked.find((e) => e.user_id === myUserId)
 
-  const renderItem = useCallback(({ item, index }: { item: LeaderEntry; index: number }) => {
-    const isMe = item.user_id === myUserId
-    const rankColor = index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : colors.textMuted
-    const tabColor = TABS.find((t) => t.key === activeTab)?.color || '#FFD700'
-
-    return (
-      <Pressable
-        onPress={() => setSelectedUser(item)}
-        style={({ pressed }) => [
-          styles.row,
-          {
-            backgroundColor: isMe ? brand.primary + '10' : colors.surface,
-            borderColor: isMe ? brand.primary + '25' : colors.border,
-            borderRadius: radius.xl,
-          },
-          pressed && { opacity: 0.85 },
-        ]}
-      >
-        {/* Rank */}
-        <View style={styles.rankWrap}>
-          {index < 3 ? (
-            <View style={[styles.rankMedal, { backgroundColor: rankColor + '20' }]}>
-              {index === 0 ? <Crown size={16} color={rankColor} strokeWidth={2.5} /> :
-               <Medal size={16} color={rankColor} strokeWidth={2} />}
-            </View>
-          ) : (
-            <Text style={[styles.rankNum, { color: colors.textMuted }]}>#{item.rank}</Text>
-          )}
-        </View>
-
-        {/* Avatar */}
-        {item.photo_url ? (
-          <Image source={{ uri: item.photo_url }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, { backgroundColor: isMe ? brand.primary + '20' : colors.surfaceRaised }]}>
-            <User size={16} color={isMe ? brand.primary : colors.textMuted} strokeWidth={2} />
-          </View>
-        )}
-
-        {/* Info */}
-        <View style={styles.info}>
-          <View style={styles.nameRow}>
-            <Text style={[styles.name, { color: isMe ? brand.primary : colors.text }]} numberOfLines={1}>
-              {isMe ? `${item.name} (You)` : item.name}
-            </Text>
-          </View>
-          <View style={styles.statsRow}>
-            {item.child_logs > 0 && (
-              <View style={styles.statChip}>
-                <Calendar size={10} color={colors.textMuted} />
-                <Text style={[styles.statText, { color: colors.textMuted }]}>{item.child_logs}</Text>
-              </View>
-            )}
-            {item.garage_posts + item.channel_posts > 0 && (
-              <View style={styles.statChip}>
-                <MessageCircle size={10} color={colors.textMuted} />
-                <Text style={[styles.statText, { color: colors.textMuted }]}>{item.garage_posts + item.channel_posts}</Text>
-              </View>
-            )}
-            {item.garage_likes + item.channel_reactions > 0 && (
-              <View style={styles.statChip}>
-                <Heart size={10} color={colors.textMuted} />
-                <Text style={[styles.statText, { color: colors.textMuted }]}>{item.garage_likes + item.channel_reactions}</Text>
-              </View>
-            )}
-            {item.channels_joined > 0 && (
-              <View style={styles.statChip}>
-                <Hash size={10} color={colors.textMuted} />
-                <Text style={[styles.statText, { color: colors.textMuted }]}>{item.channels_joined}</Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* Points */}
-        <View style={styles.ptsWrap}>
-          <Text style={[styles.ptsValue, { color: index < 3 ? rankColor : tabColor }]}>{item.total_points}</Text>
-          <Text style={[styles.ptsLabel, { color: colors.textMuted }]}>pts</Text>
-        </View>
-      </Pressable>
-    )
-  }, [myUserId, colors, radius, activeTab])
+  const podium = ranked.slice(0, 3)
+  const rest = ranked.slice(3)
 
   if (loading) {
     return (
       <View style={[styles.root, { backgroundColor: colors.bg }, styles.center]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <BrandedLoader />
       </View>
     )
   }
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
+      {/* Ambient sticker constellation — lives behind everything */}
+      <SceneStickers />
+
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 12, borderBottomColor: colors.border }]}>
-        <View style={styles.headerLeft}>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <ArrowLeft size={24} color={colors.text} />
-          </Pressable>
-          <Crown size={22} color="#FFD700" strokeWidth={2} />
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Leaderboard</Text>
-        </View>
-        {myEntry && (
-          <View style={[styles.myRankPill, { backgroundColor: '#FFD700' + '15' }]}>
-            <Text style={[styles.myRankText, { color: '#FFD700' }]}>#{myEntry.rank}</Text>
-          </View>
-        )}
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+        <ScreenHeader
+          title="Leaderboard"
+          right={
+            myEntry ? (
+              <View
+                style={[
+                  styles.rankPill,
+                  {
+                    backgroundColor: stickers.yellowSoft,
+                    borderColor: paperBorder,
+                  },
+                ]}
+              >
+                <AnimatedStarIcon size={14} fill={stickers.yellow} />
+                <Text style={[styles.rankPillText, { color: ink, fontFamily: font.display }]}>
+                  #{myEntry.rank}
+                </Text>
+              </View>
+            ) : undefined
+          }
+        />
       </View>
 
-      {/* Tabs */}
-      <View style={[styles.tabRow, { borderBottomColor: colors.border }]}>
+      {/* Tabs — paper pills */}
+      <View style={styles.tabsRow}>
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key
           const count = filterByTab(entries, tab.key).length
@@ -344,14 +430,34 @@ export default function LeaderboardScreen() {
               key={tab.key}
               onPress={() => setActiveTab(tab.key)}
               style={[
-                styles.tab,
-                isActive && { borderBottomWidth: 2, borderBottomColor: tab.color },
+                styles.tabPill,
+                {
+                  backgroundColor: isActive ? ink : paper,
+                  borderColor: isActive ? ink : paperBorder,
+                  borderRadius: radius.full,
+                },
               ]}
             >
-              <Text style={[styles.tabText, { color: isActive ? tab.color : colors.textMuted }]}>
+              <Text
+                style={[
+                  styles.tabPillText,
+                  {
+                    color: isActive ? (isDark ? colors.bg : '#FFFEF8') : colors.textSecondary,
+                    fontFamily: font.bodySemiBold,
+                  },
+                ]}
+              >
                 {tab.label}
               </Text>
-              <Text style={[styles.tabCount, { color: isActive ? tab.color : colors.textMuted }]}>
+              <Text
+                style={[
+                  styles.tabPillCount,
+                  {
+                    color: isActive ? (isDark ? colors.bg : '#FFFEF8') : colors.textMuted,
+                    fontFamily: font.body,
+                  },
+                ]}
+              >
                 {count}
               </Text>
             </Pressable>
@@ -359,120 +465,464 @@ export default function LeaderboardScreen() {
         })}
       </View>
 
-      {/* Top 3 Podium */}
-      {ranked.length >= 3 && (
-        <View style={styles.podium}>
-          {[1, 0, 2].map((idx) => {
-            const entry = ranked[idx]
-            if (!entry) return null
-            const isCenter = idx === 0
-            const podiumColor = idx === 0 ? '#FFD700' : idx === 1 ? '#C0C0C0' : '#CD7F32'
-            return (
-              <Pressable
-                key={entry.user_id}
-                onPress={() => setSelectedUser(entry)}
-                style={[styles.podiumItem, isCenter && styles.podiumCenter]}
-              >
-                <View style={[styles.podiumAvatar, { borderColor: podiumColor, width: isCenter ? 56 : 44, height: isCenter ? 56 : 44, borderRadius: isCenter ? 28 : 22 }]}>
-                  {entry.photo_url ? (
-                    <Image source={{ uri: entry.photo_url }} style={{ width: '100%', height: '100%', borderRadius: isCenter ? 28 : 22 }} />
-                  ) : (
-                    <User size={isCenter ? 22 : 18} color={podiumColor} strokeWidth={2} />
-                  )}
-                </View>
-                <View style={[styles.podiumRank, { backgroundColor: podiumColor }]}>
-                  <Text style={styles.podiumRankText}>{entry.rank}</Text>
-                </View>
-                <Text style={[styles.podiumName, { color: colors.text }]} numberOfLines={1}>
-                  {entry.user_id === myUserId ? 'You' : entry.name.split(' ')[0]}
-                </Text>
-                <Text style={[styles.podiumPts, { color: podiumColor }]}>{entry.total_points} pts</Text>
-              </Pressable>
-            )
-          })}
-        </View>
-      )}
-
-      {/* List (from #4 onward, or all if <3) */}
       <FlatList
-        data={ranked.length >= 3 ? ranked.slice(3) : ranked}
+        data={rest}
         keyExtractor={(item) => item.user_id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 20, gap: 8 }}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyWrap}>
-            <Trophy size={32} color={colors.textMuted} />
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No one here yet. Be the first!</Text>
-          </View>
+        renderItem={({ item }) => (
+          <LeaderRow
+            entry={item}
+            isMe={item.user_id === myUserId}
+            onPress={() => setSelectedUser(item)}
+          />
         )}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: insets.bottom + 24,
+          gap: 10,
+        }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ink} />
+        }
+        ListHeaderComponent={
+          <View style={{ gap: 14, paddingBottom: 10 }}>
+            {/* Podium — only when there are 3+ */}
+            {podium.length >= 3 ? (
+              <Podium entries={podium} myUserId={myUserId} onPress={setSelectedUser} />
+            ) : podium.length > 0 ? (
+              <View style={{ gap: 10 }}>
+                {podium.map((e) => (
+                  <LeaderRow
+                    key={e.user_id}
+                    entry={e}
+                    isMe={e.user_id === myUserId}
+                    onPress={() => setSelectedUser(e)}
+                  />
+                ))}
+              </View>
+            ) : null}
+
+            {/* "You" pinned card — shown if user exists and isn't already in podium */}
+            {myRankedEntry && podium.length >= 3 && myRankedEntry.rank > 3 && (
+              <YouCard entry={myRankedEntry} onPress={() => setSelectedUser(myRankedEntry)} />
+            )}
+          </View>
+        }
+        ListEmptyComponent={
+          podium.length === 0 ? (
+            <EmptyState />
+          ) : null
         }
       />
 
-      {/* User Profile Popup */}
-      <Modal visible={!!selectedUser} transparent animationType="fade" onRequestClose={() => setSelectedUser(null)}>
+      {/* Profile sheet */}
+      <Modal
+        visible={!!selectedUser}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedUser(null)}
+      >
         <Pressable style={styles.modalOverlay} onPress={() => setSelectedUser(null)}>
-          <View style={[styles.profileModal, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-            {selectedUser && (
-              <>
-                <Pressable onPress={() => setSelectedUser(null)} style={styles.profileClose} hitSlop={12}>
-                  <X size={20} color={colors.textMuted} />
-                </Pressable>
-
-                {/* Avatar */}
-                <View style={styles.profileAvatarWrap}>
-                  {selectedUser.photo_url ? (
-                    <Image source={{ uri: selectedUser.photo_url }} style={styles.profileAvatar} />
-                  ) : (
-                    <View style={[styles.profileAvatar, { backgroundColor: colors.surfaceRaised }]}>
-                      <User size={32} color={colors.textMuted} strokeWidth={1.5} />
-                    </View>
-                  )}
-                  <View style={[styles.profileRankBadge, { backgroundColor: selectedUser.rank <= 3 ? (selectedUser.rank === 1 ? '#FFD700' : selectedUser.rank === 2 ? '#C0C0C0' : '#CD7F32') : brand.primary }]}>
-                    <Text style={styles.profileRankText}>#{selectedUser.rank}</Text>
-                  </View>
-                </View>
-
-                {/* Name & Role */}
-                <Text style={[styles.profileName, { color: colors.text }]}>{selectedUser.name}</Text>
-                <Text style={[styles.profileRole, { color: colors.textMuted }]}>
-                  {selectedUser.caregiver_role === 'nanny' ? 'Caregiver' :
-                   selectedUser.caregiver_role === 'family' ? 'Family Member' :
-                   'Parent'}
-                </Text>
-
-                {/* Points */}
-                <View style={[styles.profilePointsPill, { backgroundColor: '#FFD700' + '15' }]}>
-                  <Trophy size={16} color="#FFD700" strokeWidth={2} />
-                  <Text style={[styles.profilePointsText, { color: '#FFD700' }]}>{selectedUser.total_points} points</Text>
-                </View>
-
-                {/* Stats Grid */}
-                <View style={styles.profileStatsGrid}>
-                  <ProfileStat label="Child Logs" value={selectedUser.child_logs} icon={<Calendar size={14} color="#F59E0B" />} color="#F59E0B" />
-                  <ProfileStat label="Posts" value={selectedUser.garage_posts + selectedUser.channel_posts} icon={<MessageCircle size={14} color="#4D96FF" />} color="#4D96FF" />
-                  <ProfileStat label="Reactions" value={selectedUser.garage_likes + selectedUser.channel_reactions} icon={<Heart size={14} color="#FF8AD8" />} color="#FF8AD8" />
-                  <ProfileStat label="Channels" value={selectedUser.channels_joined} icon={<Hash size={14} color="#B983FF" />} color="#B983FF" />
-                </View>
-              </>
-            )}
-          </View>
+          <Pressable
+            style={[
+              styles.profileSheet,
+              {
+                backgroundColor: paper,
+                borderRadius: radius.xl,
+                borderColor: paperBorder,
+                paddingBottom: insets.bottom + 24,
+              },
+            ]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            {selectedUser && <ProfileSheet entry={selectedUser} onClose={() => setSelectedUser(null)} />}
+          </Pressable>
         </Pressable>
       </Modal>
     </View>
   )
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// ─── Podium ──────────────────────────────────────────────────────────────────
 
-function ProfileStat({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode; color: string }) {
-  const { colors, radius } = useTheme()
+function Podium({
+  entries, myUserId, onPress,
+}: {
+  entries: LeaderEntry[]
+  myUserId: string | null
+  onPress: (e: LeaderEntry) => void
+}) {
+  const { colors, stickers, font, radius, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+
+  // Reorder for visual: [2, 1, 3]
+  const order = [entries[1], entries[0], entries[2]].filter(Boolean)
+
+  const stickerFills = {
+    1: stickers.yellow,
+    2: stickers.lilac,
+    3: stickers.peach,
+  } as const
+
   return (
-    <View style={[styles.profileStat, { backgroundColor: color + '10', borderRadius: radius.lg }]}>
+    <View style={styles.podiumRow}>
+      {order.map((entry) => {
+        const rank = entry.rank as 1 | 2 | 3
+        const isCenter = rank === 1
+        const fill = stickerFills[rank]
+        const isMe = entry.user_id === myUserId
+
+        return (
+          <Pressable
+            key={entry.user_id}
+            onPress={() => onPress(entry)}
+            style={({ pressed }) => [
+              styles.podiumCard,
+              {
+                backgroundColor: paper,
+                borderColor: paperBorder,
+                borderRadius: radius.lg,
+                transform: [{ translateY: isCenter ? -8 : 0 }],
+              },
+              pressed && { opacity: 0.9 },
+            ]}
+          >
+            <View style={[styles.podiumStickerWrap, { backgroundColor: fill + (isDark ? '33' : '44') }]}>
+              {rankSticker(rank, isCenter ? 36 : 30, fill)}
+            </View>
+
+            {entry.photo_url ? (
+              <Image source={{ uri: entry.photo_url }} style={styles.podiumAvatar} />
+            ) : (
+              <View style={[styles.podiumAvatar, { backgroundColor: fill + (isDark ? '22' : '33'), alignItems: 'center', justifyContent: 'center' }]}>
+                <User size={isCenter ? 20 : 16} color={ink} strokeWidth={1.8} />
+              </View>
+            )}
+
+            <Text
+              style={[styles.podiumName, { color: ink, fontFamily: font.bodySemiBold }]}
+              numberOfLines={1}
+            >
+              {isMe ? 'You' : entry.name.split(' ')[0]}
+            </Text>
+
+            <View style={styles.podiumPtsRow}>
+              <Text style={[styles.podiumPts, { color: ink, fontFamily: font.display }]}>
+                {entry.total_points}
+              </Text>
+              <Text style={[styles.podiumPtsLabel, { color: colors.textMuted, fontFamily: font.body }]}>
+                pts
+              </Text>
+            </View>
+          </Pressable>
+        )
+      })}
+    </View>
+  )
+}
+
+// ─── Leader Row — paper card ─────────────────────────────────────────────────
+
+function LeaderRow({
+  entry, isMe, onPress,
+}: {
+  entry: LeaderEntry
+  isMe: boolean
+  onPress: () => void
+}) {
+  const { colors, stickers, font, radius, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+
+  const meTint = isDark ? stickers.pinkSoft : stickers.pinkSoft
+  const meBorder = stickers.coral
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.row,
+        {
+          backgroundColor: isMe ? meTint : paper,
+          borderColor: isMe ? meBorder : paperBorder,
+          borderRadius: radius.lg,
+        },
+        pressed && { opacity: 0.9 },
+      ]}
+    >
+      <View style={styles.rowRank}>
+        <Text style={[styles.rowRankText, { color: colors.textMuted, fontFamily: font.display }]}>
+          {entry.rank}
+        </Text>
+      </View>
+
+      {entry.photo_url ? (
+        <Image source={{ uri: entry.photo_url }} style={styles.rowAvatar} />
+      ) : (
+        <View
+          style={[
+            styles.rowAvatar,
+            {
+              backgroundColor: isMe ? stickers.coral + '33' : stickers.yellowSoft,
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+          ]}
+        >
+          <User size={18} color={ink} strokeWidth={1.8} />
+        </View>
+      )}
+
+      <View style={styles.rowInfo}>
+        <Text
+          style={[styles.rowName, { color: ink, fontFamily: font.bodySemiBold }]}
+          numberOfLines={1}
+        >
+          {isMe ? `${entry.name} (You)` : entry.name}
+        </Text>
+        <View style={styles.rowStats}>
+          {entry.child_logs > 0 && (
+            <StatChip icon={<Calendar size={10} color={colors.textMuted} strokeWidth={2} />} value={entry.child_logs} />
+          )}
+          {entry.garage_posts + entry.channel_posts > 0 && (
+            <StatChip icon={<MessageCircle size={10} color={colors.textMuted} strokeWidth={2} />} value={entry.garage_posts + entry.channel_posts} />
+          )}
+          {entry.garage_likes + entry.channel_reactions > 0 && (
+            <StatChip icon={<Heart size={10} color={colors.textMuted} strokeWidth={2} />} value={entry.garage_likes + entry.channel_reactions} />
+          )}
+          {entry.channels_joined > 0 && (
+            <StatChip icon={<Hash size={10} color={colors.textMuted} strokeWidth={2} />} value={entry.channels_joined} />
+          )}
+        </View>
+      </View>
+
+      <View style={styles.rowPts}>
+        <Text style={[styles.rowPtsValue, { color: ink, fontFamily: font.display }]}>
+          {entry.total_points}
+        </Text>
+        <Text style={[styles.rowPtsLabel, { color: colors.textMuted, fontFamily: font.body }]}>
+          pts
+        </Text>
+      </View>
+    </Pressable>
+  )
+}
+
+function StatChip({ icon, value }: { icon: React.ReactNode; value: number }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={styles.statChip}>
       {icon}
-      <Text style={[styles.profileStatValue, { color: colors.text }]}>{value}</Text>
-      <Text style={[styles.profileStatLabel, { color: colors.textMuted }]}>{label}</Text>
+      <Text style={[styles.statChipText, { color: colors.textMuted, fontFamily: font.body }]}>
+        {value}
+      </Text>
+    </View>
+  )
+}
+
+// ─── You Card — pinned if user outside top 3 ─────────────────────────────────
+
+function YouCard({ entry, onPress }: { entry: LeaderEntry; onPress: () => void }) {
+  const { colors, stickers, font, radius, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.youCard,
+        {
+          backgroundColor: stickers.pinkSoft,
+          borderColor: stickers.coral,
+          borderRadius: radius.lg,
+        },
+        pressed && { opacity: 0.92 },
+      ]}
+    >
+      <View style={styles.youStickerBg} pointerEvents="none">
+        <HeartSticker size={110} fill={stickers.coral} />
+      </View>
+
+      <View style={{ flex: 1, gap: 4 }}>
+        <MonoCaps color={colors.textMuted}>Your spot</MonoCaps>
+        <Text style={[styles.youName, { color: ink, fontFamily: font.display }]}>
+          {entry.name.split(' ')[0]}, you're #{entry.rank}
+        </Text>
+        <Text style={[styles.youSub, { color: colors.textSecondary, fontFamily: font.italic }]}>
+          {entry.total_points} points this season
+        </Text>
+      </View>
+    </Pressable>
+  )
+}
+
+// ─── Empty State ─────────────────────────────────────────────────────────────
+
+function EmptyState() {
+  const { colors, stickers, font } = useTheme()
+  return (
+    <View style={styles.emptyWrap}>
+      <View style={styles.emptyStickerWrap}>
+        <MoonSticker size={96} fill={stickers.lilac} />
+      </View>
+      <Display size={22} align="center" color={colors.text}>
+        Just you here, champ
+      </Display>
+      <Text style={[styles.emptyItalic, { color: colors.textSecondary, fontFamily: font.italic }]}>
+        Invite caregivers and post in channels to climb the board.
+      </Text>
+    </View>
+  )
+}
+
+// ─── Profile Sheet ───────────────────────────────────────────────────────────
+
+function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => void }) {
+  const { colors, stickers, font, radius, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+
+  const rankFill =
+    entry.rank === 1 ? stickers.yellow :
+    entry.rank === 2 ? stickers.lilac :
+    entry.rank === 3 ? stickers.peach :
+    stickers.blue
+
+  const roleLabel =
+    entry.caregiver_role === 'nanny' ? 'Caregiver' :
+    entry.caregiver_role === 'family' ? 'Family Member' :
+    'Parent'
+
+  return (
+    <>
+      <Pressable onPress={onClose} style={styles.profileClose} hitSlop={12}>
+        <X size={20} color={colors.textMuted} />
+      </Pressable>
+
+      <View style={styles.profileStickerBg} pointerEvents="none">
+        {rankSticker(entry.rank, 150, rankFill)}
+      </View>
+
+      <View style={styles.profileAvatarWrap}>
+        {entry.photo_url ? (
+          <Image source={{ uri: entry.photo_url }} style={styles.profileAvatar} />
+        ) : (
+          <View
+            style={[
+              styles.profileAvatar,
+              {
+                backgroundColor: rankFill + (isDark ? '33' : '44'),
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+            ]}
+          >
+            <User size={36} color={ink} strokeWidth={1.5} />
+          </View>
+        )}
+        <View
+          style={[
+            styles.profileRankBadge,
+            {
+              backgroundColor: rankFill,
+              borderColor: paperBorder,
+            },
+          ]}
+        >
+          <Text style={[styles.profileRankText, { color: ink, fontFamily: font.display }]}>
+            #{entry.rank}
+          </Text>
+        </View>
+      </View>
+
+      <Display size={26} align="center" color={ink}>
+        {entry.name}
+      </Display>
+      <Text style={[styles.profileRole, { color: colors.textSecondary, fontFamily: font.italic }]}>
+        {roleLabel}
+      </Text>
+
+      <View
+        style={[
+          styles.profilePointsPill,
+          {
+            backgroundColor: stickers.yellowSoft,
+            borderColor: paperBorder,
+            borderRadius: radius.full,
+          },
+        ]}
+      >
+        <StarSticker size={18} fill={stickers.yellow} />
+        <Text style={[styles.profilePointsText, { color: ink, fontFamily: font.display }]}>
+          {entry.total_points}
+        </Text>
+        <Text style={[styles.profilePointsLabel, { color: colors.textSecondary, fontFamily: font.body }]}>
+          points
+        </Text>
+      </View>
+
+      <View style={styles.profileStatsGrid}>
+        <ProfileStat
+          label="Child Logs"
+          value={entry.child_logs}
+          sticker={<FlowerSticker size={28} petal={stickers.peach} />}
+          tint={isDark ? stickers.peachSoft : stickers.peachSoft}
+        />
+        <ProfileStat
+          label="Posts"
+          value={entry.garage_posts + entry.channel_posts}
+          sticker={<BurstSticker size={28} fill={stickers.blue} points={8} />}
+          tint={isDark ? stickers.blueSoft : stickers.blueSoft}
+        />
+        <ProfileStat
+          label="Reactions"
+          value={entry.garage_likes + entry.channel_reactions}
+          sticker={<HeartSticker size={28} fill={stickers.coral} />}
+          tint={isDark ? stickers.pinkSoft : stickers.pinkSoft}
+        />
+        <ProfileStat
+          label="Channels"
+          value={entry.channels_joined}
+          sticker={<StarSticker size={28} fill={stickers.lilac} />}
+          tint={isDark ? stickers.lilacSoft : stickers.lilacSoft}
+        />
+      </View>
+    </>
+  )
+}
+
+function ProfileStat({
+  label, value, sticker, tint,
+}: {
+  label: string
+  value: number
+  sticker: React.ReactNode
+  tint: string
+}) {
+  const { colors, font, radius, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+
+  return (
+    <View
+      style={[
+        styles.profileStat,
+        {
+          backgroundColor: tint,
+          borderColor: paperBorder,
+          borderRadius: radius.lg,
+        },
+      ]}
+    >
+      <View style={styles.profileStatSticker}>{sticker}</View>
+      <Text style={[styles.profileStatValue, { color: ink, fontFamily: font.display }]}>
+        {value}
+      </Text>
+      <Text style={[styles.profileStatLabel, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>
+        {label.toUpperCase()}
+      </Text>
     </View>
   )
 }
@@ -483,68 +933,190 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   center: { alignItems: 'center', justifyContent: 'center' },
 
-  // Header
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingBottom: 12, paddingHorizontal: 16, borderBottomWidth: 1,
+  headerWrap: { paddingHorizontal: 16, paddingBottom: 8 },
+
+  rankPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerTitle: { fontSize: 22, fontWeight: '800' },
-  myRankPill: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999 },
-  myRankText: { fontSize: 14, fontWeight: '900' },
+  rankPillText: { fontSize: 14, letterSpacing: -0.3 },
 
-  // Tabs
-  tabRow: { flexDirection: 'row', paddingHorizontal: 16, borderBottomWidth: 1 },
-  tab: { flex: 1, alignItems: 'center', paddingVertical: 12, gap: 2 },
-  tabText: { fontSize: 13, fontWeight: '700' },
-  tabCount: { fontSize: 11, fontWeight: '600' },
+  tabsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  tabPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+  },
+  tabPillText: { fontSize: 13 },
+  tabPillCount: { fontSize: 12, opacity: 0.85 },
 
-  // Podium
-  podium: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingVertical: 20, paddingHorizontal: 16, gap: 12 },
-  podiumItem: { alignItems: 'center', gap: 6, width: 80 },
-  podiumCenter: { marginBottom: 12 },
-  podiumAvatar: { borderWidth: 2.5, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  podiumRank: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginTop: -12 },
-  podiumRankText: { fontSize: 11, fontWeight: '900', color: '#FFFFFF' },
-  podiumName: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
-  podiumPts: { fontSize: 12, fontWeight: '800' },
+  podiumRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+    paddingTop: 6,
+  },
+  podiumCard: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 14,
+    gap: 8,
+    borderWidth: 1,
+  },
+  podiumStickerWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  podiumAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
+  },
+  podiumName: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  podiumPtsRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 3,
+  },
+  podiumPts: { fontSize: 22, letterSpacing: -0.5 },
+  podiumPtsLabel: { fontSize: 11 },
 
-  // List row
-  row: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10, borderWidth: 1 },
-  rankWrap: { width: 32, alignItems: 'center' },
-  rankMedal: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  rankNum: { fontSize: 14, fontWeight: '800' },
-  avatar: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  info: { flex: 1, gap: 4 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  name: { fontSize: 15, fontWeight: '700', flex: 1 },
-  statsRow: { flexDirection: 'row', gap: 10 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    gap: 12,
+    borderWidth: 1,
+  },
+  rowRank: { width: 28, alignItems: 'center' },
+  rowRankText: { fontSize: 18, letterSpacing: -0.3 },
+  rowAvatar: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden' },
+  rowInfo: { flex: 1, gap: 4 },
+  rowName: { fontSize: 15 },
+  rowStats: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   statChip: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  statText: { fontSize: 11, fontWeight: '600' },
-  ptsWrap: { alignItems: 'center', gap: 1 },
-  ptsValue: { fontSize: 18, fontWeight: '900' },
-  ptsLabel: { fontSize: 10, fontWeight: '600' },
+  statChipText: { fontSize: 11 },
+  rowPts: { alignItems: 'center', gap: 0 },
+  rowPtsValue: { fontSize: 20, letterSpacing: -0.5 },
+  rowPtsLabel: { fontSize: 10 },
 
-  // Empty
-  emptyWrap: { alignItems: 'center', gap: 10, paddingVertical: 40 },
-  emptyText: { fontSize: 15, fontWeight: '600' },
+  youCard: {
+    padding: 18,
+    borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  youStickerBg: {
+    position: 'absolute',
+    right: -14,
+    bottom: -18,
+    opacity: 0.85,
+  },
+  youName: { fontSize: 22, lineHeight: 26 },
+  youSub: { fontSize: 14, lineHeight: 20 },
 
-  // Modal overlay
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  emptyWrap: {
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+  },
+  emptyStickerWrap: { marginBottom: 6 },
+  emptyItalic: { fontSize: 15, textAlign: 'center', lineHeight: 22 },
 
-  // Profile modal
-  profileModal: { width: '100%', padding: 24, alignItems: 'center', gap: 12 },
-  profileClose: { position: 'absolute', top: 16, right: 16 },
-  profileAvatarWrap: { alignItems: 'center', marginTop: 8 },
-  profileAvatar: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  profileRankBadge: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', marginTop: -14 },
-  profileRankText: { fontSize: 11, fontWeight: '900', color: '#FFFFFF' },
-  profileName: { fontSize: 20, fontWeight: '900', marginTop: 4 },
-  profileRole: { fontSize: 14, fontWeight: '600', textTransform: 'capitalize' },
-  profilePointsPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, marginTop: 4 },
-  profilePointsText: { fontSize: 16, fontWeight: '800' },
-  profileStatsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8, width: '100%' },
-  profileStat: { width: '47%', padding: 12, alignItems: 'center', gap: 4 },
-  profileStatValue: { fontSize: 20, fontWeight: '900' },
-  profileStatLabel: { fontSize: 11, fontWeight: '600' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(20,19,19,0.5)',
+    justifyContent: 'flex-end',
+  },
+  profileSheet: {
+    marginHorizontal: 12,
+    marginBottom: 12,
+    padding: 22,
+    paddingTop: 26,
+    borderWidth: 1,
+    gap: 8,
+    alignItems: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  profileStickerBg: {
+    position: 'absolute',
+    right: -32,
+    top: -30,
+    opacity: 0.18,
+  },
+  profileClose: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 10,
+  },
+  profileAvatarWrap: { alignItems: 'center', marginTop: 4 },
+  profileAvatar: { width: 84, height: 84, borderRadius: 42, overflow: 'hidden' },
+  profileRankBadge: {
+    minWidth: 40,
+    paddingHorizontal: 10,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -14,
+    borderWidth: 1,
+  },
+  profileRankText: { fontSize: 13, letterSpacing: -0.2 },
+  profileRole: { fontSize: 15, marginTop: -4 },
+
+  profilePointsPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    marginTop: 6,
+  },
+  profilePointsText: { fontSize: 22, letterSpacing: -0.3 },
+  profilePointsLabel: { fontSize: 13 },
+
+  profileStatsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 12,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  profileStat: {
+    width: '47%',
+    padding: 14,
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+  },
+  profileStatSticker: { marginBottom: 2 },
+  profileStatValue: { fontSize: 24, letterSpacing: -0.5 },
+  profileStatLabel: { fontSize: 10, letterSpacing: 1.5 },
 })

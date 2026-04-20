@@ -37,6 +37,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { createGaragePost } from '../../lib/garagePosts'
 
 const SCREEN_W = Dimensions.get('window').width
@@ -396,7 +397,7 @@ export default function CreatePostScreen() {
             {uploadProgress >= 1 ? (
               <Check size={32} color={brand.success} strokeWidth={2.5} />
             ) : (
-              <ActivityIndicator color={colors.primary} size="large" />
+              <BrandedLoader logoSize={64} />
             )}
             <Text style={[s.uploadStatusText, { color: colors.text }]}>
               {uploadStatus}

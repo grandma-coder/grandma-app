@@ -7,7 +7,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Platform,
 } from 'react-native'
 import { Lock } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -20,6 +19,7 @@ import {
 } from '../../store/useBadgeStore'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, MonoCaps } from '../../components/ui/Typography'
+import { BadgeIcon } from '../../components/stickers/BadgeIcon'
 
 const SECTIONS: { key: BadgeCategory; label: string; color: string }[] = [
   { key: 'streak',    label: 'Streaks',    color: '#F59E0B' },
@@ -88,8 +88,8 @@ export default function BadgeWalletScreen() {
             <View key={section.key} style={styles.section}>
               <View style={styles.sectionHeader}>
                 <View style={[styles.sectionDot, { backgroundColor: section.color }]} />
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.label}</Text>
-                <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
+                <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>{section.label}</Text>
+                <Text style={[styles.sectionCount, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
                   {badges.filter((d) => earnedSet.has(d.id)).length}/{badges.length}
                 </Text>
               </View>
@@ -111,31 +111,33 @@ export default function BadgeWalletScreen() {
                       ]}
                     >
                       {isEarned ? (
-                        <Text style={styles.badgeEmoji}>{def.icon}</Text>
+                        <View style={styles.badgeStickerWrap}>
+                          <BadgeIcon badgeId={def.id} size={48} />
+                        </View>
                       ) : (
                         <View style={[styles.lockedIcon, { backgroundColor: colors.surface }]}>
                           <Lock size={16} color={colors.textMuted} strokeWidth={2} />
                         </View>
                       )}
                       <Text
-                        style={[styles.badgeName, { color: isEarned ? colors.text : colors.textMuted }]}
+                        style={[styles.badgeName, { color: isEarned ? colors.text : colors.textMuted, fontFamily: font.bodySemiBold }]}
                         numberOfLines={1}
                       >
                         {def.name}
                       </Text>
                       <Text
-                        style={[styles.badgeDesc, { color: isEarned ? colors.textSecondary : colors.textMuted }]}
+                        style={[styles.badgeDesc, { color: isEarned ? colors.textSecondary : colors.textMuted, fontFamily: font.body }]}
                         numberOfLines={2}
                       >
                         {def.description}
                       </Text>
-                      <View style={[styles.tierPill, { backgroundColor: isEarned ? getTierColor(def.tier) + '20' : 'transparent' }]}>
-                        <Text style={[styles.tierText, { color: isEarned ? getTierColor(def.tier) : colors.textMuted }]}>
+                      <View style={[styles.tierPill, { backgroundColor: isEarned ? getTierColor(def.tier) + '24' : 'transparent' }]}>
+                        <Text style={[styles.tierText, { color: isEarned ? getTierColor(def.tier) : colors.textMuted, fontFamily: font.bodySemiBold }]}>
                           {def.tier}
                         </Text>
                       </View>
                       {isEarned && earned && (
-                        <Text style={[styles.earnedDate, { color: colors.textMuted }]}>
+                        <Text style={[styles.earnedDate, { color: colors.textMuted, fontFamily: font.body }]}>
                           {new Date(earned.earnedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </Text>
                       )}
@@ -168,16 +170,16 @@ const styles = StyleSheet.create({
   section: { gap: 10 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionDot: { width: 8, height: 8, borderRadius: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: '800', flex: 1 },
-  sectionCount: { fontSize: 13, fontWeight: '600' },
+  sectionTitle: { fontSize: 18, flex: 1, letterSpacing: -0.2 },
+  sectionCount: { fontSize: 13 },
 
   badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  badgeCard: { width: '31.5%', padding: 12, alignItems: 'center', gap: 6, borderWidth: 1 },
-  badgeEmoji: { fontSize: 28, fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif' },
-  lockedIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  badgeName: { fontSize: 12, fontWeight: '800', textAlign: 'center' },
-  badgeDesc: { fontSize: 10, fontWeight: '500', textAlign: 'center', lineHeight: 14 },
-  tierPill: { paddingVertical: 2, paddingHorizontal: 8, borderRadius: 999 },
-  tierText: { fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
-  earnedDate: { fontSize: 9, fontWeight: '600' },
+  badgeCard: { width: '31.5%', padding: 14, alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 22 },
+  badgeStickerWrap: { width: 54, height: 54, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
+  lockedIcon: { width: 36, height: 36, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+  badgeName: { fontSize: 12, textAlign: 'center' },
+  badgeDesc: { fontSize: 10, textAlign: 'center', lineHeight: 14 },
+  tierPill: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: 999 },
+  tierText: { fontSize: 9, textTransform: 'uppercase', letterSpacing: 1 },
+  earnedDate: { fontSize: 9 },
 })

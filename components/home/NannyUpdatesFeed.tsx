@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { GlassCard } from '../ui/GlassCard'
+import { Emoji } from '../ui/Emoji'
 import { colors, borderRadius } from '../../constants/theme'
 
 interface NannyUpdate {
@@ -23,7 +24,7 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
         </View>
         <GlassCard>
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>👩‍👦</Text>
+            <Emoji size={36} style={styles.emptyIcon}>👩‍👦</Emoji>
             <Text style={styles.emptyText}>No nanny updates yet</Text>
             <Text style={styles.emptySubtext}>
               Invite a caregiver to start seeing their notes here
@@ -45,7 +46,7 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
         <GlassCard key={update.id} style={styles.updateCard}>
           <View style={styles.updateHeader}>
             <View style={styles.avatar}>
-              <Text style={{ fontSize: 16 }}>👩</Text>
+              <Emoji size={16}>👩</Emoji>
             </View>
             <Text style={styles.nannyName}>{update.name}</Text>
             <Text style={styles.timeAgo}>{update.timeAgo}</Text>

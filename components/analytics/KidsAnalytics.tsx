@@ -23,6 +23,8 @@ import Animated, {
   withTiming,
   withRepeat,
   Easing,
+  FadeIn,
+  FadeInDown,
 } from 'react-native-reanimated'
 import {
   View,
@@ -87,6 +89,25 @@ import {
 import { supabase } from '../../lib/supabase'
 import { runWellnessNotifications } from '../../lib/notificationEngine'
 import { ChildPill, CHILD_COLORS, formatChildAge as sharedFormatChildAge } from '../ui/ChildPills'
+import { AnalyticsTitle } from './shared/AnalyticsTitle'
+import { MoodFace } from '../stickers/RewardStickers'
+import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
+import { Emoji } from '../ui/Emoji'
+import { PeriodSelector, type Period } from './shared/PeriodSelector'
+import { BigChartCard } from './shared/BigChartCard'
+import { HealthScoreRing, type RingSegment } from './shared/HealthScoreRing'
+import { CustomRangeModal } from './shared/CustomRangeModal'
+import {
+  Heart as StickerHeart,
+  Moon as StickerMoon,
+  Drop as StickerDrop,
+  Cross as StickerCross,
+  Leaf as StickerLeaf,
+  Burst as StickerBurst,
+  Star as StickerStar,
+  Flower as StickerFlower,
+} from '../ui/Stickers'
+import { BrandedLoader } from '../ui/BrandedLoader'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -131,6 +152,48 @@ const PILLAR_CONFIG = {
 
 type PillarKey = keyof typeof PILLAR_CONFIG
 const PILLAR_ORDER: PillarKey[] = ['nutrition', 'sleep', 'mood', 'health', 'growth', 'activity']
+
+// Maps each pillar to a sticker component and the paper-palette tint used for
+// the 2026 redesign (soft pastel bg + vivid chip color).
+type StickerVariant = 'leaf' | 'moon' | 'heart' | 'cross' | 'drop' | 'burst' | 'star' | 'flower'
+function stickerForPillar(key: PillarKey): StickerVariant {
+  switch (key) {
+    case 'nutrition': return 'leaf'
+    case 'sleep':     return 'moon'
+    case 'mood':      return 'heart'
+    case 'health':    return 'cross'
+    case 'growth':    return 'star'
+    case 'activity':  return 'burst'
+  }
+}
+
+function renderPillarSticker(kind: StickerVariant, color: string, size = 24) {
+  switch (kind) {
+    case 'leaf':   return <StickerLeaf size={size} fill={color} />
+    case 'moon':   return <StickerMoon size={size} fill={color} />
+    case 'heart':  return <StickerHeart size={size} fill={color} />
+    case 'cross':  return <StickerCross size={size} fill={color} />
+    case 'drop':   return <StickerDrop size={size} fill={color} />
+    case 'burst':  return <StickerBurst size={size} fill={color} points={8} />
+    case 'star':   return <StickerStar size={size} fill={color} />
+    case 'flower': return <StickerFlower size={size} petal={color} />
+  }
+}
+
+interface PillarPalette { bar: string; tint: string; chip: string }
+function pillarPalette(
+  key: PillarKey,
+  st: { green: string; greenSoft: string; lilac: string; lilacSoft: string; pink: string; pinkSoft: string; yellow: string; yellowSoft: string; blue: string; blueSoft: string; coral: string; peachSoft: string },
+): PillarPalette {
+  switch (key) {
+    case 'nutrition': return { bar: st.green,  tint: st.greenSoft,  chip: st.green  }
+    case 'sleep':     return { bar: st.lilac,  tint: st.lilacSoft,  chip: st.lilac  }
+    case 'mood':      return { bar: st.pink,   tint: st.pinkSoft,   chip: st.pink   }
+    case 'health':    return { bar: st.yellow, tint: st.yellowSoft, chip: st.yellow }
+    case 'growth':    return { bar: st.blue,   tint: st.blueSoft,   chip: st.blue   }
+    case 'activity':  return { bar: st.coral,  tint: st.peachSoft,  chip: st.coral  }
+  }
+}
 
 function formatChildAge(bd: string): string {
   if (!bd) return ''
@@ -190,6 +253,29 @@ interface TipData {
   detail: string
   color: string
   icon: any
+  /** Which pillar this tip belongs to. Optional for backwards compatibility. */
+  pillar?: PillarKey
+}
+
+// Tips in getHealthTips() are distinguished only by their lucide icon. Map back
+// to a pillar so we can fold each tip into its matching thriving-breakdown row.
+function tipPillarFromIcon(tip: TipData): PillarKey | undefined {
+  if (tip.icon === Moon)       return 'sleep'
+  if (tip.icon === Utensils)   return 'nutrition'
+  if (tip.icon === Smile)      return 'mood'
+  if (tip.icon === Heart)      return 'health'
+  if (tip.icon === TrendingUp) return 'growth'
+  if (tip.icon === Zap)        return 'activity'
+  return undefined
+}
+
+function tipByPillar(tips: TipData[]): Partial<Record<PillarKey, TipData>> {
+  const map: Partial<Record<PillarKey, TipData>> = {}
+  for (const tip of tips) {
+    const key = tip.pillar ?? tipPillarFromIcon(tip)
+    if (key && !map[key]) map[key] = tip
+  }
+  return map
 }
 
 // ─── Health Tips (data-driven, age-aware) ─────────────────────────────────
@@ -415,8 +501,42 @@ export function KidsAnalytics() {
   const [selectedPillar, setSelectedPillar] = useState<PillarKey | null>(null)
   const [fullScreen, setFullScreen] = useState<string | null>(null)
   const [showScoreInfo, setShowScoreInfo] = useState(false)
-  const [selectedTip, setSelectedTip] = useState<TipData | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [period, setPeriod] = useState<Period>('week')
+  const [customRange, setCustomRange] = useState<{ from: string; to: string } | null>(null)
+  const [showCustomModal, setShowCustomModal] = useState(false)
+
+  // Map the selected period to an analytics window.
+  const analyticsRange = (() => {
+    if (period === 'custom' && customRange) {
+      return { kind: 'custom' as const, from: customRange.from, to: customRange.to }
+    }
+    const days = period === 'week' ? 7 : period === 'month' ? 30 : period === '3mo' ? 90 : period === 'year' ? 365 : 7
+    return { kind: 'last' as const, days }
+  })()
+
+  const customLabel = customRange
+    ? (() => {
+        const f = new Date(customRange.from)
+        const t = new Date(customRange.to)
+        const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
+        return `${f.toLocaleDateString('en-US', opts)} – ${t.toLocaleDateString('en-US', opts)}`
+      })()
+    : undefined
+
+  function handlePeriodChange(next: Period) {
+    if (next === 'custom') {
+      setShowCustomModal(true)
+      return
+    }
+    setPeriod(next)
+  }
+
+  function handleCustomApply(from: string, to: string) {
+    setCustomRange({ from, to })
+    setPeriod('custom')
+    setShowCustomModal(false)
+  }
 
   // Default to first child when children load
   useEffect(() => {
@@ -426,7 +546,10 @@ export function KidsAnalytics() {
     }
   }, [children, selectedChildId, setActiveChild])
 
-  const { data: analytics, isLoading, error, refetch } = useKidsAnalytics(selectedChildId)
+  const { data: analytics, isLoading, error, refetch } = useKidsAnalytics(
+    selectedChildId,
+    analyticsRange,
+  )
 
   const selectedChild = children.find((c) => c.id === selectedChildId) ?? children[0] ?? null
   const ageMonths = selectedChild?.birthDate ? getAgeMonths(selectedChild.birthDate) : 12
@@ -472,26 +595,40 @@ export function KidsAnalytics() {
         nestedScrollEnabled={true}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
       >
-        {/* ── HEADER ── */}
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={[styles.screenTitle, { color: colors.text }]}>Analytics</Text>
-            <Text style={[styles.screenSub, { color: colors.textSecondary }]}>
-              {childName} · {getAgeLabel(ageMonths)}
+        {/* ── HEADER (2026 redesign) ── */}
+        <View style={styles.headerEditorial}>
+          <View style={{ flex: 1 }}>
+            <AnalyticsTitle
+              primary={`${childName}'s patterns`}
+              italic="so far."
+            />
+            <Text
+              style={[
+                styles.headerSub,
+                { color: colors.textSecondary, fontFamily: 'DMSans_400Regular' },
+              ]}
+            >
+              {getAgeLabel(ageMonths)}
             </Text>
           </View>
           <Pressable
             onPress={() => setShowScoreInfo(true)}
             hitSlop={10}
             style={({ pressed }) => [
-              styles.infoBtn,
-              { backgroundColor: colors.primaryTint, borderRadius: radius.full, borderColor: colors.primary + '30' },
+              styles.infoBtnNew,
+              { backgroundColor: colors.surface, borderColor: colors.border },
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Info size={18} color={colors.primary} strokeWidth={2} />
+            <Info size={16} color={colors.text} strokeWidth={2} />
           </Pressable>
         </View>
+
+        <PeriodSelector
+          value={period}
+          onChange={handlePeriodChange}
+          customLabel={customLabel}
+        />
 
         {/* ── 1. CHILD SELECTOR ── */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childRow}>
@@ -509,8 +646,7 @@ export function KidsAnalytics() {
 
         {isLoading && (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading analytics…</Text>
+            <BrandedLoader logoSize={72} motion="blinkOnly" label="Loading analytics…" />
           </View>
         )}
 
@@ -526,11 +662,10 @@ export function KidsAnalytics() {
 
         {analytics && (
           <>
-            {/* ── 2. WELLNESS SCORE ARC ── */}
-            <WellnessScoreArc
+            {/* ── 2. WELLNESS RING (2026 redesign) ── */}
+            <KidsWellnessRingCard
               scores={analytics.scores}
-              onInfoPress={() => setShowScoreInfo(true)}
-              childId={selectedChild?.id ?? ''}
+              onPillarPress={setSelectedPillar}
             />
 
             {/* ── 3. GRANDMA AI INSIGHT ── */}
@@ -541,29 +676,28 @@ export function KidsAnalytics() {
               ageMonths={ageMonths}
             />
 
-            {/* ── 4. HEALTH TIPS ── */}
-            <HealthTipsSection
-              tips={getHealthTips(analytics.scores, analytics, ageMonths, childName)}
-              scores={analytics.scores}
-              analytics={analytics}
-              childName={childName}
-              ageMonths={ageMonths}
-              onTipPress={setSelectedTip}
-            />
-
-            {/* ── 5. PILLAR BREAKDOWN ── */}
-            <View style={styles.pillarSection}>
-              <Text style={[styles.pillarSectionTitle, { color: colors.text }]}>THRIVING BREAKDOWN</Text>
-              {PILLAR_ORDER.map((key) => (
-                <PillarRow
-                  key={key}
-                  pillarKey={key}
-                  score={analytics.scores[key]}
-                  onPress={() => setSelectedPillar(key)}
-                />
-              ))}
-              <RoutineComplianceSection data={analytics.routineCompliance} />
-            </View>
+            {/* ── 4. THRIVING BREAKDOWN (tips folded into each pillar row) ── */}
+            {(() => {
+              const tips = getHealthTips(analytics.scores, analytics, ageMonths, childName)
+              const tipMap = tipByPillar(tips)
+              return (
+                <View style={styles.pillarSection}>
+                  <Text style={[styles.pillarSectionTitle, { color: colors.text }]}>
+                    THRIVING BREAKDOWN
+                  </Text>
+                  {PILLAR_ORDER.map((key) => (
+                    <PillarRow
+                      key={key}
+                      pillarKey={key}
+                      score={analytics.scores[key]}
+                      tip={tipMap[key]}
+                      onPress={() => setSelectedPillar(key)}
+                    />
+                  ))}
+                  <RoutineComplianceSection data={analytics.routineCompliance} />
+                </View>
+              )
+            })()}
           </>
         )}
 
@@ -644,17 +778,15 @@ export function KidsAnalytics() {
         onClose={() => setShowScoreInfo(false)}
       />
 
-      {/* ── Tip Detail Modal ── */}
-      {selectedTip && (
-        <TipDetailModal
-          tip={selectedTip}
-          childName={childName}
-          analytics={analytics ?? null}
-          scores={analytics?.scores ?? null}
-          ageMonths={ageMonths}
-          onClose={() => setSelectedTip(null)}
-        />
-      )}
+      {/* ── Custom Range Modal ── */}
+      <CustomRangeModal
+        visible={showCustomModal}
+        initialFrom={customRange?.from}
+        initialTo={customRange?.to}
+        onClose={() => setShowCustomModal(false)}
+        onApply={handleCustomApply}
+      />
+
     </View>
   )
 }
@@ -842,6 +974,54 @@ function TipDetailModal({
         </Pressable>
       </Pressable>
     </Modal>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WELLNESS RING (2026 redesign) — paper card with 6-arc HealthScoreRing + mini stats
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function KidsWellnessRingCard({
+  scores,
+  onPillarPress,
+}: {
+  scores: WellnessScores
+  onPillarPress: (key: PillarKey) => void
+}) {
+  const { stickers } = useTheme()
+
+  // Map pillars → ring segments (clockwise from top). The `id` routes taps
+  // back to the matching pillar detail modal via onPillarPress.
+  const segments: RingSegment[] = [
+    { sticker: 'leaf',   color: stickers.green,  id: 'nutrition' },
+    { sticker: 'cross',  color: stickers.yellow, id: 'health'    },
+    { sticker: 'heart',  color: stickers.pink,   id: 'mood'      },
+    { sticker: 'burst',  color: stickers.coral,  id: 'activity'  },
+    { sticker: 'moon',   color: stickers.lilac,  id: 'sleep'     },
+    { sticker: 'drop',   color: stickers.blue,   id: 'growth'    },
+  ]
+
+  const hasAnyData = PILLAR_ORDER.some((k) => scores[k].hasData)
+  const rawOverall = hasAnyData ? scores.overall : 0
+  const overall = Number.isFinite(rawOverall) ? rawOverall : 0
+  const caption = overall >= 8.5 ? 'thriving' : overall >= 7 ? 'on track' : overall >= 5 ? 'developing' : 'needs care'
+
+  return (
+    <View style={{ gap: 12 }}>
+      <BigChartCard
+        label="CHILD WELLNESS"
+        blobColor={stickers.pinkSoft}
+        labelAlign="center"
+      >
+        <HealthScoreRing
+          score={Number(overall.toFixed(1))}
+          caption={caption}
+          segments={segments}
+          size={220}
+          onSegmentPress={(id) => onPillarPress(id as PillarKey)}
+        />
+      </BigChartCard>
+    </View>
   )
 }
 
@@ -1060,7 +1240,7 @@ function WellnessScoreArc({
               <Text style={{ fontSize: 34, fontWeight: '900', color: PILLAR_CONFIG[activePillar].color, lineHeight: 38, fontFamily: 'Fraunces_600SemiBold' }}>
                 {scores[activePillar].hasData ? scores[activePillar].value.toFixed(1) : '—'}
               </Text>
-              <Text style={{ fontSize: 10, fontWeight: '700', color: PILLAR_CONFIG[activePillar].color + 'AA', marginTop: 2, letterSpacing: 0.5 }}>
+              <Text style={{ fontSize: 10, fontWeight: '700', fontFamily: 'DMSans_600SemiBold', color: PILLAR_CONFIG[activePillar].color + 'AA', marginTop: 2, letterSpacing: 0.5 }}>
                 {PILLAR_CONFIG[activePillar].label.toLowerCase()}
               </Text>
             </>
@@ -1069,7 +1249,7 @@ function WellnessScoreArc({
               <Text style={{ fontSize: 34, fontWeight: '900', color: overallC, lineHeight: 38, fontFamily: 'Fraunces_600SemiBold' }}>
                 {hasAnyData ? overall.toFixed(1) : '—'}
               </Text>
-              <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary, marginTop: 2 }}>
+              <Text style={{ fontSize: 10, fontWeight: '600', fontFamily: 'DMSans_600SemiBold', color: colors.textSecondary, marginTop: 2 }}>
                 thriving
               </Text>
             </>
@@ -1125,16 +1305,24 @@ function WellnessScoreArc({
 // GRANDMA AI INSIGHT CARD
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function GrandmaInsightCard({
-  scores, analytics, childName, ageMonths,
-}: {
-  scores: WellnessScores
-  analytics: AnalyticsData
-  childName: string
-  ageMonths: number
-}) {
-  const { colors, radius } = useTheme()
+type InsightHighlight = { pillar: PillarKey; score: number; reason: string }
+type InsightTrend = { pillar: PillarKey; direction: 'improving' | 'declining'; delta: number }
+type InsightHighlights = {
+  message: string
+  overallLabel: string
+  overallScore: number
+  strength: InsightHighlight | null
+  concern: InsightHighlight | null
+  trend: InsightTrend | null
+  actions: string[]
+}
 
+function buildInsightHighlights(
+  scores: WellnessScores,
+  analytics: AnalyticsData,
+  childName: string,
+  ageMonths: number,
+): InsightHighlights {
   const lowest = PILLAR_ORDER.reduce<PillarKey | null>((min, key) => {
     if (!scores[key].hasData) return min
     if (!min || scores[key].value < scores[min].value) return key
@@ -1147,80 +1335,500 @@ function GrandmaInsightCard({
     return max
   }, null)
 
-  // Overall score line
-  const overallLabel = scores.overall >= 8.5 ? 'excellent' : scores.overall >= 7 ? 'on track' : scores.overall >= 5 ? 'developing' : 'needs attention'
+  const overallLabel =
+    scores.overall >= 8.5 ? 'excellent' :
+    scores.overall >= 7 ? 'on track' :
+    scores.overall >= 5 ? 'developing' :
+    'needs attention'
+
   const parts: string[] = [`${childName} is ${overallLabel} at ${scores.overall.toFixed(1)}/10 overall.`]
 
-  // Highlight the lowest pillar with specific data
+  let concern: InsightHighlight | null = null
   if (lowest && scores[lowest].value < 7) {
+    let reason = `${PILLAR_CONFIG[lowest].label} is the main area to work on at ${scores[lowest].value.toFixed(1)}/10.`
     if (lowest === 'sleep' && analytics.sleep.hasData) {
       const target = getAgeSleepTarget(ageMonths)
       const deficit = (target - analytics.sleep.avgHours).toFixed(1)
-      parts.push(`Sleep is the main focus — averaging ${analytics.sleep.avgHours.toFixed(1)}h vs ${target}h target (${deficit}h short).`)
+      reason = `Sleep is the main focus — averaging ${analytics.sleep.avgHours.toFixed(1)}h vs ${target}h target (${deficit}h short).`
     } else if (lowest === 'nutrition' && analytics.nutrition.hasData) {
       const total = analytics.nutrition.mealFrequency.reduce((a, b) => a + b, 0)
       const good = analytics.nutrition.eatQuality.good.reduce((a, b) => a + b, 0)
       const pct = total > 0 ? Math.round((good / total) * 100) : 0
-      parts.push(`Nutrition needs attention — ${pct}% of meals eaten well this week (score: ${scores.nutrition.value.toFixed(1)}/10).`)
-    } else {
-      parts.push(`${PILLAR_CONFIG[lowest].label} is the main area to work on at ${scores[lowest].value.toFixed(1)}/10.`)
+      reason = `Nutrition needs attention — ${pct}% of meals eaten well this week (score: ${scores.nutrition.value.toFixed(1)}/10).`
     }
+    parts.push(reason)
+    concern = { pillar: lowest, score: scores[lowest].value, reason }
   }
 
-  // Highlight the highest pillar
+  let strength: InsightHighlight | null = null
   if (highest && scores[highest].value >= 8 && highest !== lowest) {
+    let reason = `${PILLAR_CONFIG[highest].label} is a strength at ${scores[highest].value.toFixed(1)}/10.`
     if (highest === 'sleep' && analytics.sleep.hasData) {
-      parts.push(`Sleep is a strength — ${analytics.sleep.avgHours.toFixed(1)}h avg with great consistency!`)
+      reason = `Sleep is a strength — ${analytics.sleep.avgHours.toFixed(1)}h avg with great consistency!`
     } else if (highest === 'nutrition' && analytics.nutrition.hasData) {
       const total = analytics.nutrition.mealFrequency.reduce((a, b) => a + b, 0)
       const good = analytics.nutrition.eatQuality.good.reduce((a, b) => a + b, 0)
       const pct = total > 0 ? Math.round((good / total) * 100) : 0
-      parts.push(`Nutrition is a strength — ${pct}% of meals eaten well (${scores.nutrition.value.toFixed(1)}/10).`)
-    } else {
-      parts.push(`${PILLAR_CONFIG[highest].label} is a strength at ${scores[highest].value.toFixed(1)}/10.`)
+      reason = `Nutrition is a strength — ${pct}% of meals eaten well (${scores.nutrition.value.toFixed(1)}/10).`
     }
+    parts.push(reason)
+    strength = { pillar: highest, score: scores[highest].value, reason }
   }
 
-  // Trend note
+  let trend: InsightTrend | null = null
   const trendPillar = PILLAR_ORDER.find((k) => scores[k].hasData && Math.abs(scores[k].trend) >= 10)
   if (trendPillar) {
-    const dir = scores[trendPillar].trend > 0 ? 'improving' : 'declining'
-    parts.push(`${PILLAR_CONFIG[trendPillar].label} ${dir} ${Math.abs(scores[trendPillar].trend)}% this week.`)
+    const direction: 'improving' | 'declining' = scores[trendPillar].trend > 0 ? 'improving' : 'declining'
+    const delta = Math.abs(scores[trendPillar].trend)
+    parts.push(`${PILLAR_CONFIG[trendPillar].label} ${direction} ${delta}% this week.`)
+    trend = { pillar: trendPillar, direction, delta }
   }
 
-  const message = parts.join(' ')
+  return {
+    message: parts.join(' '),
+    overallLabel,
+    overallScore: scores.overall,
+    strength,
+    concern,
+    trend,
+    actions: buildInsightActions(concern, trend, analytics, ageMonths),
+  }
+}
 
-  function handleDiscuss() {
+function buildInsightActions(
+  concern: InsightHighlight | null,
+  trend: InsightTrend | null,
+  analytics: AnalyticsData,
+  ageMonths: number,
+): string[] {
+  const actions: string[] = []
+  if (concern) {
+    switch (concern.pillar) {
+      case 'sleep': {
+        const target = getAgeSleepTarget(ageMonths)
+        actions.push(`Aim for ${target}h tonight — try bringing bedtime 30 min earlier.`)
+        actions.push('Keep the last hour calm: dim lights, wind-down routine, no screens.')
+        break
+      }
+      case 'nutrition':
+        actions.push('Offer a protein + veg combo at the next meal — small portions, no pressure.')
+        actions.push('Plan 2 snack windows between meals so appetite is stronger at mealtime.')
+        break
+      case 'activity':
+        actions.push('Fit in 30 min of outdoor play — even a short walk counts.')
+        actions.push('Break up screen time with active bursts: dancing, stretches, chase games.')
+        break
+      case 'mood':
+        actions.push('Look for patterns — tired, hungry, overstimulated? Address the trigger first.')
+        actions.push('Carve out 15 min of one-on-one connection time today.')
+        break
+      case 'health':
+        actions.push('Log any symptoms in the calendar so the pattern is easy to spot.')
+        actions.push('If anything persists beyond 48h, book a pediatrician check-in.')
+        break
+      case 'growth':
+        actions.push('Keep logging weight + height weekly — trend matters more than a single point.')
+        break
+    }
+  }
+  if (trend && trend.direction === 'declining' && (!concern || trend.pillar !== concern.pillar)) {
+    actions.push(`${PILLAR_CONFIG[trend.pillar].label} dropped ${trend.delta}% this week — worth a closer look.`)
+  }
+  return actions.slice(0, 2)
+}
+
+function GrandmaInsightCard({
+  scores, analytics, childName, ageMonths,
+}: {
+  scores: WellnessScores
+  analytics: AnalyticsData
+  childName: string
+  ageMonths: number
+}) {
+  const { colors, stickers, font } = useTheme()
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
+  const highlights = buildInsightHighlights(scores, analytics, childName, ageMonths)
+
+  function handleDiscussPress() {
+    setConfirmOpen(true)
+  }
+
+  function handleConfirmYes() {
     const ctx = buildGrandmaContext(scores, analytics, childName, ageMonths)
-    router.push({ pathname: '/grandma-talk', params: { insightContext: ctx } } as any)
+    setConfirmOpen(false)
+    setTimeout(() => {
+      router.push({ pathname: '/grandma-talk', params: { insightContext: ctx } } as any)
+    }, 150)
   }
 
   return (
-    <Pressable
-      onPress={handleDiscuss}
-      style={({ pressed }) => [
-        styles.insightCard,
-        { backgroundColor: colors.primaryTint, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.primary + '30' },
-        pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
-      ]}
-    >
-      <View style={styles.insightHeader}>
-        <View style={[styles.insightBadge, { backgroundColor: colors.primary + '20' }]}>
-          <Sparkles size={14} color={colors.primary} strokeWidth={2} />
-          <Text style={[styles.insightBadgeText, { color: colors.primary }]}>Grandma insight</Text>
+    <>
+      <Pressable
+        onPress={() => setDetailOpen(true)}
+        style={({ pressed }) => [
+          styles.grandmaInsightPaper,
+          { backgroundColor: colors.accentSoft, borderColor: colors.border },
+          pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] },
+        ]}
+      >
+        {/* Big Heart sticker tucked into the bottom-right corner */}
+        <View style={styles.grandmaInsightStickerBg} pointerEvents="none">
+          <StickerHeart size={150} fill={stickers.pink} />
         </View>
-        <Text style={[styles.insightDate, { color: colors.textMuted }]}>
-          {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+
+        {/* Header: label + date */}
+        <View style={styles.grandmaInsightHeader}>
+          <Animated.View entering={FadeIn.duration(400)}>
+            <Text
+              style={[
+                styles.grandmaInsightLabel,
+                { color: colors.textMuted, fontFamily: font.bodySemiBold },
+              ]}
+            >
+              GRANDMA SAYS
+            </Text>
+          </Animated.View>
+          <Text
+            style={[
+              styles.grandmaInsightDate,
+              { color: colors.textMuted, fontFamily: font.body },
+            ]}
+          >
+            {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </Text>
+        </View>
+
+        {/* Word-by-word animated reveal — staggered fade-in for a delightful feel */}
+        <Animated.View
+          entering={FadeInDown.duration(500).delay(120)}
+          style={styles.grandmaInsightMessageWrap}
+        >
+          <Text
+            style={[
+              styles.grandmaInsightMessage,
+              { color: colors.text, fontFamily: font.body },
+            ]}
+          >
+            {highlights.message}
+          </Text>
+        </Animated.View>
+
+        {/* "Let's discuss →" ink-dark pill button — opens confirm sheet */}
+        <Animated.View entering={FadeIn.duration(400).delay(500)}>
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation?.()
+              handleDiscussPress()
+            }}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.grandmaInsightBtn,
+              { backgroundColor: colors.text },
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Text
+              style={[
+                styles.grandmaInsightBtnText,
+                { color: colors.bg, fontFamily: font.bodyMedium },
+              ]}
+            >
+              Let's discuss →
+            </Text>
+          </Pressable>
+        </Animated.View>
+      </Pressable>
+
+      {detailOpen && (
+        <GrandmaInsightDetailSheet
+          highlights={highlights}
+          childName={childName}
+          onClose={() => setDetailOpen(false)}
+          onDiscuss={() => {
+            setDetailOpen(false)
+            setTimeout(() => setConfirmOpen(true), 150)
+          }}
+        />
+      )}
+
+      {confirmOpen && (
+        <DiscussConfirmSheet
+          childName={childName}
+          onClose={() => setConfirmOpen(false)}
+          onConfirm={handleConfirmYes}
+        />
+      )}
+    </>
+  )
+}
+
+// ─── Grandma Insight Detail Sheet ──────────────────────────────────────────
+
+function GrandmaInsightDetailSheet({
+  highlights, childName, onClose, onDiscuss,
+}: {
+  highlights: InsightHighlights
+  childName: string
+  onClose: () => void
+  onDiscuss: () => void
+}) {
+  const { colors, radius, stickers, font } = useTheme()
+  const insets = useSafeAreaInsets()
+
+  return (
+    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <Pressable
+          style={[
+            styles.insightDetailSheet,
+            {
+              backgroundColor: colors.surface,
+              borderRadius: radius.xl,
+              paddingBottom: insets.bottom + 20,
+            },
+          ]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <View style={styles.insightDetailHeaderRow}>
+            <View style={styles.insightDetailLabelWrap}>
+              <Text
+                style={[
+                  styles.grandmaInsightLabel,
+                  { color: colors.textMuted, fontFamily: font.bodySemiBold },
+                ]}
+              >
+                GRANDMA SAYS
+              </Text>
+              <Text
+                style={[
+                  styles.insightDetailOverall,
+                  { color: colors.text, fontFamily: font.display },
+                ]}
+              >
+                {childName} is {highlights.overallLabel}
+              </Text>
+              <Text
+                style={[
+                  styles.insightDetailOverallSub,
+                  { color: colors.textSecondary, fontFamily: font.body },
+                ]}
+              >
+                Overall {highlights.overallScore.toFixed(1)}/10 this week
+              </Text>
+            </View>
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+              style={[styles.modalClose, { backgroundColor: colors.surfaceRaised }]}
+            >
+              <X size={18} color={colors.textMuted} />
+            </Pressable>
+          </View>
+
+          {highlights.strength && (
+            <HighlightRow
+              icon={<StickerBurst size={28} fill={stickers.yellow} points={8} />}
+              label="STRENGTH"
+              labelColor={colors.textMuted}
+              title={PILLAR_CONFIG[highlights.strength.pillar].label}
+              titleColor={PILLAR_CONFIG[highlights.strength.pillar].color}
+              body={highlights.strength.reason}
+              bodyColor={colors.textSecondary}
+              bgColor={colors.surfaceRaised}
+              radius={radius.lg}
+              font={font}
+            />
+          )}
+
+          {highlights.concern && (
+            <HighlightRow
+              icon={<StickerHeart size={28} fill={stickers.pink} />}
+              label="AREA TO WORK ON"
+              labelColor={colors.textMuted}
+              title={PILLAR_CONFIG[highlights.concern.pillar].label}
+              titleColor={PILLAR_CONFIG[highlights.concern.pillar].color}
+              body={highlights.concern.reason}
+              bodyColor={colors.textSecondary}
+              bgColor={colors.surfaceRaised}
+              radius={radius.lg}
+              font={font}
+            />
+          )}
+
+          {highlights.trend && (
+            <HighlightRow
+              icon={
+                highlights.trend.direction === 'improving'
+                  ? <ArrowUpRight size={24} color={colors.success} strokeWidth={2.2} />
+                  : <ArrowDownRight size={24} color={colors.error} strokeWidth={2.2} />
+              }
+              label="TREND"
+              labelColor={colors.textMuted}
+              title={`${PILLAR_CONFIG[highlights.trend.pillar].label} ${highlights.trend.direction}`}
+              titleColor={highlights.trend.direction === 'improving' ? colors.success : colors.error}
+              body={`${highlights.trend.delta}% week-over-week change.`}
+              bodyColor={colors.textSecondary}
+              bgColor={colors.surfaceRaised}
+              radius={radius.lg}
+              font={font}
+            />
+          )}
+
+          {highlights.actions.length > 0 && (
+            <View style={styles.insightActionsBlock}>
+              <Text
+                style={[
+                  styles.grandmaInsightLabel,
+                  { color: colors.textMuted, fontFamily: font.bodySemiBold },
+                ]}
+              >
+                SUGGESTED NEXT STEPS
+              </Text>
+              {highlights.actions.map((a, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.insightActionRow,
+                    { backgroundColor: colors.primaryTint, borderRadius: radius.md },
+                  ]}
+                >
+                  <Lightbulb size={16} color={colors.primary} strokeWidth={2} />
+                  <Text
+                    style={[
+                      styles.insightActionText,
+                      { color: colors.text, fontFamily: font.body },
+                    ]}
+                  >
+                    {a}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {!highlights.strength && !highlights.concern && !highlights.trend && (
+            <View style={[styles.insightEmpty, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
+              <Text style={[styles.insightEmptyText, { color: colors.textSecondary, fontFamily: font.body }]}>
+                Keep logging — more detailed highlights appear once there's a full week of data.
+              </Text>
+            </View>
+          )}
+
+          <Pressable
+            onPress={onDiscuss}
+            style={({ pressed }) => [
+              styles.insightDetailCta,
+              { backgroundColor: colors.text, borderRadius: radius.full },
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Sparkles size={16} color={colors.bg} strokeWidth={2} />
+            <Text style={[styles.insightDetailCtaText, { color: colors.bg, fontFamily: font.bodySemiBold }]}>
+              Let's discuss →
+            </Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  )
+}
+
+function HighlightRow({
+  icon, label, labelColor, title, titleColor, body, bodyColor, bgColor, radius, font,
+}: {
+  icon: React.ReactNode
+  label: string
+  labelColor: string
+  title: string
+  titleColor: string
+  body: string
+  bodyColor: string
+  bgColor: string
+  radius: number
+  font: { body: string; bodyMedium: string; bodySemiBold: string; display: string }
+}) {
+  return (
+    <View style={[styles.insightHighlightRow, { backgroundColor: bgColor, borderRadius: radius }]}>
+      <View style={styles.insightHighlightIcon}>{icon}</View>
+      <View style={styles.insightHighlightBody}>
+        <Text style={[styles.insightHighlightLabel, { color: labelColor, fontFamily: font.bodySemiBold }]}>
+          {label}
+        </Text>
+        <Text style={[styles.insightHighlightTitle, { color: titleColor, fontFamily: font.bodySemiBold }]}>
+          {title}
+        </Text>
+        <Text style={[styles.insightHighlightText, { color: bodyColor, fontFamily: font.body }]}>
+          {body}
         </Text>
       </View>
+    </View>
+  )
+}
 
-      <Text style={[styles.insightMessage, { color: colors.text }]}>{message}</Text>
+// ─── Discuss Confirm Sheet ─────────────────────────────────────────────────
 
-      <View style={[styles.insightButton, { backgroundColor: colors.primary + '20', borderRadius: radius.full }]}>
-        <Text style={[styles.insightButtonText, { color: colors.primary }]}>Let's discuss</Text>
-        <MessageCircle size={14} color={colors.primary} strokeWidth={2} />
-      </View>
-    </Pressable>
+function DiscussConfirmSheet({
+  childName, onClose, onConfirm,
+}: {
+  childName: string
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  const { colors, radius, stickers, font } = useTheme()
+  const insets = useSafeAreaInsets()
+
+  return (
+    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={[styles.modalOverlay, styles.confirmOverlay]} onPress={onClose}>
+        <Pressable
+          style={[
+            styles.confirmSheet,
+            { backgroundColor: colors.surface, borderRadius: radius.xl, paddingBottom: insets.bottom + 20 },
+          ]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <View style={styles.confirmIconWrap} pointerEvents="none">
+            <StickerHeart size={72} fill={stickers.pink} />
+          </View>
+
+          <Text style={[styles.confirmTitle, { color: colors.text, fontFamily: font.display }]}>
+            Share with Grandma?
+          </Text>
+          <Text style={[styles.confirmBody, { color: colors.textSecondary, fontFamily: font.body }]}>
+            We'll send {childName}'s wellness metrics to Grandma so she can walk through them with you.
+          </Text>
+
+          <Pressable
+            onPress={onConfirm}
+            style={({ pressed }) => [
+              styles.confirmPrimary,
+              { backgroundColor: colors.text, borderRadius: radius.full },
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Sparkles size={16} color={colors.bg} strokeWidth={2} />
+            <Text style={[styles.confirmPrimaryText, { color: colors.bg, fontFamily: font.bodySemiBold }]}>
+              Yes, share & chat
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={onClose}
+            style={({ pressed }) => [
+              styles.confirmSecondary,
+              { borderRadius: radius.full, borderColor: colors.border },
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <Text style={[styles.confirmSecondaryText, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
+              Not now
+            </Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
   )
 }
 
@@ -1301,66 +1909,297 @@ function HealthTipsSection({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
-  const { colors, radius } = useTheme()
-  const [expanded, setExpanded] = useState(false)
-  const SKIP_COLOR = '#FF8C42'
+  const { colors, stickers, font } = useTheme()
+  const [showModal, setShowModal] = useState(false)
   const adherenceRate = 100 - data.skipRate
+  const adherenceColor =
+    adherenceRate >= 70 ? stickers.green :
+    adherenceRate >= 40 ? stickers.coral :
+    stickers.coral
+  const tint = adherenceRate >= 70 ? stickers.greenSoft : stickers.peachSoft
 
   return (
-    <View style={{ marginTop: 8 }}>
+    <View style={{ marginTop: 2 }}>
       <Pressable
-        onPress={() => setExpanded((v) => !v)}
+        onPress={() => setShowModal(true)}
         style={({ pressed }) => [
-          {
-            backgroundColor: colors.surface, borderRadius: radius.xl, borderWidth: 1,
-            borderColor: expanded ? SKIP_COLOR + '30' : colors.border,
-            padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14,
-          },
-          pressed && { opacity: 0.9 },
+          styles.pillarPaper,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+          pressed && { opacity: 0.92 },
         ]}
       >
-        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: SKIP_COLOR + '15', alignItems: 'center', justifyContent: 'center' }}>
-          <SkipForward size={20} color={SKIP_COLOR} strokeWidth={2} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>Routine Compliance</Text>
-          <View style={{ height: 8, borderRadius: 4, marginTop: 8, overflow: 'hidden', backgroundColor: SKIP_COLOR + '15' }}>
-            <View style={{ width: `${adherenceRate}%`, height: '100%', backgroundColor: adherenceRate >= 70 ? '#A2FF86' : adherenceRate >= 40 ? SKIP_COLOR : '#FF7070', borderRadius: 4 }} />
+        <View style={styles.pillarPaperHead}>
+          <View
+            style={[
+              styles.pillarStickerChip,
+              { backgroundColor: tint, borderColor: colors.border },
+            ]}
+          >
+            <StickerFlower size={26} petal={stickers.coral} />
+          </View>
+
+          <View style={{ flex: 1 }}>
+            <View style={styles.pillarPaperTitleRow}>
+              <Text
+                style={[
+                  styles.pillarPaperName,
+                  { color: colors.text, fontFamily: font.display },
+                ]}
+              >
+                Routine Compliance
+              </Text>
+            </View>
+
+            <View
+              style={[styles.pillarPaperBarBg, { backgroundColor: tint }]}
+            >
+              <View
+                style={[
+                  styles.pillarPaperBarFill,
+                  { width: `${adherenceRate}%`, backgroundColor: adherenceColor },
+                ]}
+              />
+            </View>
+          </View>
+
+          <View style={styles.pillarPaperScore}>
+            {data.hasData ? (
+              <>
+                <Text
+                  style={[
+                    styles.pillarPaperValue,
+                    { color: colors.text, fontFamily: font.display },
+                  ]}
+                >
+                  {data.totalSkips}
+                </Text>
+                <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
+                  {' '}skips
+                </Text>
+              </>
+            ) : (
+              <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
+                —
+              </Text>
+            )}
           </View>
         </View>
-        <View style={{ alignItems: 'flex-end' }}>
+
+        <Text
+          style={[
+            styles.pillarPaperBody,
+            { color: colors.textSecondary, fontFamily: font.body },
+          ]}
+        >
           {data.hasData
-            ? <><Text style={{ color: SKIP_COLOR, fontSize: 22, fontWeight: '900' }}>{data.totalSkips}</Text><Text style={{ color: colors.textMuted, fontSize: 12 }}>skips</Text></>
-            : <Text style={{ color: colors.textMuted, fontSize: 13 }}>No skips</Text>
-          }
+            ? `${adherenceRate}% adherence this week — ${data.totalSkips} total skip${data.totalSkips === 1 ? '' : 's'}.`
+            : 'No routines tracked yet — add skips in the calendar.'}
+        </Text>
+
+        <View style={styles.pillarPaperFooter}>
+          <Text
+            style={[
+              styles.pillarPaperFooterText,
+              { color: adherenceColor, fontFamily: font.bodySemiBold },
+            ]}
+          >
+            Tap for details
+          </Text>
+          <ChevronRight size={14} color={adherenceColor} strokeWidth={2.5} />
         </View>
-        {expanded ? <ChevronUp size={20} color={colors.textMuted} /> : <ChevronRight size={20} color={colors.textMuted} />}
       </Pressable>
 
-      {expanded && (
-        <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, borderWidth: 1, borderColor: SKIP_COLOR + '20', marginTop: 2, padding: 20, gap: 18 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={{ color: adherenceRate >= 70 ? '#A2FF86' : SKIP_COLOR, fontSize: 28, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' }}>{adherenceRate}%</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500', marginTop: 4 }}>adherence this week</Text>
+      <RoutineComplianceModal
+        visible={showModal}
+        data={data}
+        adherenceRate={adherenceRate}
+        adherenceColor={adherenceColor}
+        tint={tint}
+        onClose={() => setShowModal(false)}
+      />
+    </View>
+  )
+}
+
+function RoutineComplianceModal({
+  visible, data, adherenceRate, adherenceColor, tint, onClose,
+}: {
+  visible: boolean
+  data: RoutineComplianceData
+  adherenceRate: number
+  adherenceColor: string
+  tint: string
+  onClose: () => void
+}) {
+  const { colors, stickers, font } = useTheme()
+  const insets = useSafeAreaInsets()
+  const sheetH = SCREEN_H * 0.78
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+
+        <View
+          style={[
+            styles.modalSheet,
+            { height: sheetH, backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32 },
+          ]}
+        >
+          {/* Handle */}
+          <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
+            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
+          </View>
+
+          {/* Header */}
+          <View
+            style={[
+              styles.modalHeader,
+              {
+                borderBottomWidth: StyleSheet.hairlineWidth,
+                borderBottomColor: colors.border,
+                paddingBottom: 16,
+              },
+            ]}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 999,
+                  backgroundColor: tint,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <StickerFlower size={26} petal={stickers.coral} />
+              </View>
+              <View>
+                <Text
+                  style={[
+                    styles.modalTitle,
+                    { color: colors.text, fontFamily: font.display },
+                  ]}
+                >
+                  Routine Compliance
+                </Text>
+                <Text
+                  style={{
+                    color: colors.textSecondary,
+                    fontSize: 13,
+                    fontFamily: font.body,
+                  }}
+                >
+                  {data.hasData
+                    ? `${adherenceRate}% adherence · ${data.totalSkips} skip${data.totalSkips === 1 ? '' : 's'}`
+                    : 'No routines tracked yet'}
+                </Text>
+              </View>
             </View>
-            <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={{ color: SKIP_COLOR, fontSize: 28, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' }}>{data.totalSkips}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500', marginTop: 4 }}>total skips (7d)</Text>
+            <Pressable
+              onPress={onClose}
+              hitSlop={10}
+              style={[
+                styles.modalClose,
+                { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+              ]}
+            >
+              <X size={16} color={colors.text} strokeWidth={2} />
+            </Pressable>
+          </View>
+
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: 20,
+              paddingTop: 16,
+              paddingBottom: insets.bottom + 24,
+              gap: 16,
+            }}
+          >
+            <View
+              style={[
+                styles.routineExpand,
+                { backgroundColor: colors.surface, borderColor: colors.border, marginTop: 0 },
+              ]}
+            >
+              <View style={styles.routineStatRow}>
+            <View style={styles.routineStatCell}>
+              <Text
+                style={[
+                  styles.routineStatValue,
+                  { color: colors.text, fontFamily: font.display },
+                ]}
+              >
+                {adherenceRate}%
+              </Text>
+              <Text
+                style={[
+                  styles.routineStatLabel,
+                  { color: colors.textMuted, fontFamily: font.body },
+                ]}
+              >
+                adherence
+              </Text>
+            </View>
+            <View style={styles.routineStatCell}>
+              <Text
+                style={[
+                  styles.routineStatValue,
+                  { color: colors.text, fontFamily: font.display },
+                ]}
+              >
+                {data.totalSkips}
+              </Text>
+              <Text
+                style={[
+                  styles.routineStatLabel,
+                  { color: colors.textMuted, fontFamily: font.body },
+                ]}
+              >
+                total skips
+              </Text>
             </View>
           </View>
 
           {data.hasData && (
             <View>
-              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>SKIPS PER DAY</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 56 }}>
+              <Text
+                style={[
+                  styles.routineSubheader,
+                  { color: colors.textMuted, fontFamily: font.bodySemiBold },
+                ]}
+              >
+                SKIPS PER DAY
+              </Text>
+              <View style={styles.routineBarsRow}>
                 {data.weeklySkips.map((count, i) => {
                   const maxV = Math.max(...data.weeklySkips, 1)
                   const barH = count > 0 ? Math.max((count / maxV) * 44, 10) : 4
                   return (
-                    <View key={i} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
-                      <View style={{ width: '80%', height: barH, backgroundColor: count > 0 ? SKIP_COLOR + 'CC' : colors.border, borderRadius: 4 }} />
-                      <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500' }}>{data.weekLabels[i]}</Text>
+                    <View key={i} style={styles.routineBarCell}>
+                      <View
+                        style={{
+                          width: '80%',
+                          height: barH,
+                          backgroundColor: count > 0 ? stickers.coral : colors.border,
+                          borderRadius: 4,
+                        }}
+                      />
+                      <Text
+                        style={{
+                          color: colors.textMuted,
+                          fontFamily: font.body,
+                          fontSize: 11,
+                          marginTop: 6,
+                        }}
+                      >
+                        {data.weekLabels[i]}
+                      </Text>
                     </View>
                   )
                 })}
@@ -1370,24 +2209,62 @@ function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
 
           {data.mostSkipped.length > 0 && (
             <View>
-              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>MOST SKIPPED</Text>
+              <Text
+                style={[
+                  styles.routineSubheader,
+                  { color: colors.textMuted, fontFamily: font.bodySemiBold },
+                ]}
+              >
+                MOST SKIPPED
+              </Text>
               <View style={{ gap: 10 }}>
                 {data.mostSkipped.map((item, i) => (
-                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <MinusCircle size={16} color={SKIP_COLOR} strokeWidth={2} />
-                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: '500', flex: 1 }}>{item.name}</Text>
-                    <View style={{ backgroundColor: SKIP_COLOR + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
-                      <Text style={{ color: SKIP_COLOR, fontSize: 14, fontWeight: '700' }}>{item.count}×</Text>
+                  <View key={i} style={styles.routineSkipRow}>
+                    <MinusCircle size={16} color={stickers.coral} strokeWidth={2} />
+                    <Text
+                      style={{
+                        color: colors.text,
+                        fontFamily: font.body,
+                        fontSize: 14,
+                        flex: 1,
+                      }}
+                    >
+                      {item.name}
+                    </Text>
+                    <View style={[styles.routineSkipBadge, { backgroundColor: stickers.peachSoft }]}>
+                      <Text
+                        style={{
+                          color: stickers.coral,
+                          fontFamily: font.bodySemiBold,
+                          fontSize: 13,
+                        }}
+                      >
+                        {item.count}×
+                      </Text>
                     </View>
                   </View>
                 ))}
               </View>
             </View>
           )}
-          {!data.hasData && <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center' }}>No skipped routines this week</Text>}
+
+          {!data.hasData && (
+            <Text
+              style={{
+                color: colors.textMuted,
+                fontFamily: font.body,
+                fontSize: 13,
+                textAlign: 'center',
+              }}
+            >
+              No skipped routines this week
+            </Text>
+          )}
+            </View>
+          </ScrollView>
         </View>
-      )}
-    </View>
+      </View>
+    </Modal>
   )
 }
 
@@ -1395,71 +2272,142 @@ function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
 // PILLAR ROW — score bar with trend + takeaway
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function PillarRow({ pillarKey, score, onPress }: {
-  pillarKey: PillarKey; score: PillarScore; onPress: () => void
+function PillarRow({ pillarKey, score, tip, onPress }: {
+  pillarKey: PillarKey
+  score: PillarScore
+  tip?: TipData
+  onPress: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, stickers, font } = useTheme()
   const config = PILLAR_CONFIG[pillarKey]
-  const Icon = config.icon
-  const pct = score.hasData ? (score.value / 10) * 100 : 0
+  const safeValue = Number.isFinite(score.value) ? score.value : 0
+  const pct = score.hasData ? Math.max(0, Math.min(100, (safeValue / 10) * 100)) : 0
+  const palette = pillarPalette(pillarKey, stickers)
 
-  const TAKEAWAY: Record<string, string> = {
-    excellent: 'Excellent — keep it up!',
-    good: 'Good — small wins add up.',
-    fair: 'Fair — room to improve.',
-    'needs attention': 'Needs attention — check details.',
-    low: 'Low — action needed.',
-    'no data': 'No data logged yet.',
-  }
+  // Prefer the data-driven tip body; fall back to a generic takeaway.
+  const body = tip
+    ? tip.body
+    : score.hasData
+    ? 'Tap to see details.'
+    : 'No data logged yet.'
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
-        styles.pillarRow,
-        { backgroundColor: colors.surface, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border },
-        pressed && { opacity: 0.9 },
+        styles.pillarPaper,
+        { backgroundColor: colors.surface, borderColor: colors.border },
+        pressed && { opacity: 0.92 },
       ]}
     >
-      <View style={[styles.pillarIcon, { backgroundColor: config.color + '15' }]}>
-        <Icon size={20} color={config.color} strokeWidth={2} />
-      </View>
+      <View style={styles.pillarPaperHead}>
+        <View
+          style={[
+            styles.pillarStickerChip,
+            { backgroundColor: palette.tint, borderColor: colors.border },
+          ]}
+        >
+          {renderPillarSticker(stickerForPillar(pillarKey), palette.chip, 26)}
+        </View>
 
-      <View style={styles.pillarInfo}>
-        <View style={styles.pillarNameRow}>
-          <Text style={[styles.pillarName, { color: colors.text }]}>{config.label}</Text>
-          {score.hasData && score.trend !== 0 && (
-            <View style={styles.trendBadge}>
-              {score.trend > 0
-                ? <ArrowUpRight size={12} color={brand.success} strokeWidth={2.5} />
-                : <ArrowDownRight size={12} color={brand.error} strokeWidth={2.5} />
-              }
-              <Text style={[styles.trendText, { color: score.trend > 0 ? brand.success : brand.error }]}>
-                {Math.abs(score.trend)}%
+        <View style={{ flex: 1 }}>
+          <View style={styles.pillarPaperTitleRow}>
+            <Text
+              style={[
+                styles.pillarPaperName,
+                { color: colors.text, fontFamily: font.display },
+              ]}
+            >
+              {config.label}
+            </Text>
+            {score.hasData && score.trend !== 0 && (
+              <View style={styles.trendBadge}>
+                {score.trend > 0
+                  ? <ArrowUpRight size={12} color={brand.success} strokeWidth={2.5} />
+                  : <ArrowDownRight size={12} color={brand.error} strokeWidth={2.5} />}
+                <Text
+                  style={[
+                    styles.trendText,
+                    { color: score.trend > 0 ? brand.success : brand.error },
+                  ]}
+                >
+                  {Math.abs(score.trend)}%
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View
+            style={[
+              styles.pillarPaperBarBg,
+              { backgroundColor: palette.tint },
+            ]}
+          >
+            <View
+              style={[
+                styles.pillarPaperBarFill,
+                { width: `${pct}%`, backgroundColor: palette.bar },
+              ]}
+            />
+          </View>
+        </View>
+
+        <View style={styles.pillarPaperScore}>
+          {score.hasData && Number.isFinite(score.value) ? (
+            <>
+              <Text
+                style={[
+                  styles.pillarPaperValue,
+                  { color: colors.text, fontFamily: font.display },
+                ]}
+              >
+                {score.value.toFixed(1)}
               </Text>
-            </View>
+              <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
+                /10
+              </Text>
+            </>
+          ) : (
+            <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
+              —
+            </Text>
           )}
         </View>
-        <View style={[styles.pillarBarBg, { backgroundColor: config.color + '15', borderRadius: radius.full }]}>
-          <View style={[styles.pillarBarFill, { width: `${pct}%`, backgroundColor: config.color, borderRadius: radius.full }]} />
-        </View>
-        <Text style={[styles.pillarTakeaway, { color: colors.textMuted }]}>
-          {TAKEAWAY[score.label] ?? score.label}
+      </View>
+
+      {/* Integrated tip body — replaces the old "Health Tips" cards. */}
+      {tip && (
+        <Text
+          style={[
+            styles.pillarPaperTipTitle,
+            { color: colors.text, fontFamily: font.bodySemiBold },
+          ]}
+          numberOfLines={1}
+        >
+          {tip.title}
         </Text>
-      </View>
+      )}
+      <Text
+        style={[
+          styles.pillarPaperBody,
+          { color: colors.textSecondary, fontFamily: font.body },
+        ]}
+        numberOfLines={3}
+      >
+        {body}
+      </Text>
 
-      <View style={styles.pillarScoreWrap}>
-        {score.hasData ? (
-          <>
-            <Text style={[styles.pillarScoreValue, { color: scoreColor(score.value) }]}>{score.value.toFixed(1)}</Text>
-            <Text style={[styles.pillarScoreOf, { color: colors.textMuted }]}>/10</Text>
-          </>
-        ) : (
-          <Text style={[styles.pillarScoreOf, { color: colors.textMuted }]}>—</Text>
-        )}
+      <View style={styles.pillarPaperFooter}>
+        <Text
+          style={[
+            styles.pillarPaperFooterText,
+            { color: palette.bar, fontFamily: font.bodySemiBold },
+          ]}
+        >
+          Tap for details
+        </Text>
+        <ChevronRight size={14} color={palette.bar} strokeWidth={2.5} />
       </View>
-
-      <ChevronRight size={18} color={colors.textMuted} />
     </Pressable>
   )
 }
@@ -1480,12 +2428,12 @@ function PillarDetailModal({
   onClose: () => void
   onFullScreen: (id: string) => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, stickers, font } = useTheme()
   const insets = useSafeAreaInsets()
   if (!pillarKey) return null
   const config = PILLAR_CONFIG[pillarKey]
-  const Icon = config.icon
   const score = analytics.scores[pillarKey]
+  const palette = pillarPalette(pillarKey, stickers)
 
   const sheetH = SCREEN_H * 0.87
 
@@ -1502,23 +2450,47 @@ function PillarDetailModal({
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
           </View>
 
-          {/* Header */}
+          {/* Header — paper-sticker redesign */}
           <View style={[styles.modalHeader, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, paddingBottom: 16 }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: config.color + '20', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon size={20} color={config.color} strokeWidth={2} />
+              <View
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 999,
+                  backgroundColor: palette.tint,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {renderPillarSticker(stickerForPillar(pillarKey), palette.chip, 26)}
               </View>
               <View>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>{config.label}</Text>
+                <Text
+                  style={[
+                    styles.modalTitle,
+                    { color: colors.text, fontFamily: font.display },
+                  ]}
+                >
+                  {config.label}
+                </Text>
                 {score.hasData && (
-                  <Text style={{ color: scoreColor(score.value), fontSize: 14, fontWeight: '700' }}>
+                  <Text
+                    style={{
+                      color: colors.textSecondary,
+                      fontSize: 13,
+                      fontFamily: font.body,
+                    }}
+                  >
                     {score.value.toFixed(1)}/10 — {score.label}
                   </Text>
                 )}
               </View>
             </View>
-            <Pressable onPress={onClose} hitSlop={10} style={[styles.modalClose, { backgroundColor: colors.surfaceRaised }]}>
-              <X size={18} color={colors.textMuted} strokeWidth={2} />
+            <Pressable onPress={onClose} hitSlop={10} style={[styles.modalClose, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }]}>
+              <X size={16} color={colors.text} strokeWidth={2} />
             </Pressable>
           </View>
 
@@ -1580,7 +2552,7 @@ function ActivitySection({ ageMonths, childName }: { ageMonths: number; childNam
         <View style={styles.pillarInfo}>
           <Text style={[styles.pillarName, { color: colors.text }]}>Activity</Text>
           <Text style={[styles.pillarTakeaway, { color: colors.textMuted }]} numberOfLines={2}>{target}</Text>
-          <Text style={[{ fontSize: 11, fontWeight: '500', color: colors.textMuted, marginTop: 2 }]} numberOfLines={2}>{tip}</Text>
+          <Text style={[{ fontSize: 11, fontWeight: '500', fontFamily: 'DMSans_500Medium', color: colors.textMuted, marginTop: 2 }]} numberOfLines={2}>{tip}</Text>
         </View>
         <ChevronRight size={18} color={colors.textMuted} />
       </Pressable>
@@ -1649,7 +2621,7 @@ function ActivityModal({
               </View>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>Activity Guide</Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500' }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500', fontFamily: 'DMSans_500Medium' }}>
                   {childName} · recommended split
                 </Text>
               </View>
@@ -1669,33 +2641,122 @@ function ActivityModal({
                 key={item.rank}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.surface, borderRadius: radius.xl, padding: 16, borderWidth: 1, borderColor: colors.border }}
               >
-                <Text style={{ fontSize: 26 }}>{item.emoji}</Text>
+                <Emoji size={26}>{item.emoji}</Emoji>
                 <View style={{ flex: 1, gap: 6 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{item.label}</Text>
-                    <Text style={{ color: ACTIVITY_COLOR, fontSize: 18, fontWeight: '900' }}>{item.pct}%</Text>
+                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }}>{item.label}</Text>
+                    <Text style={{ color: ACTIVITY_COLOR, fontSize: 18, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' }}>{item.pct}%</Text>
                   </View>
                   <View style={{ height: 6, borderRadius: 3, backgroundColor: ACTIVITY_COLOR + '15', overflow: 'hidden' }}>
                     <View style={{ width: `${item.pct}%`, height: '100%', backgroundColor: ACTIVITY_COLOR + 'CC', borderRadius: 3 }} />
                   </View>
-                  <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500' }}>{item.tip}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500', fontFamily: 'DMSans_500Medium' }}>{item.tip}</Text>
                 </View>
               </View>
             ))}
 
-            <View style={{ backgroundColor: ACTIVITY_COLOR + '10', borderRadius: radius.xl, padding: 16, borderWidth: 1, borderColor: ACTIVITY_COLOR + '25' }}>
-              <Text style={{ color: ACTIVITY_COLOR, fontSize: 13, fontWeight: '700' }}>
+            <View style={{ backgroundColor: ACTIVITY_COLOR + '10', borderRadius: radius.xl, padding: 16, borderWidth: 1, borderColor: ACTIVITY_COLOR + '25', flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+              <Emoji size={18}>💡</Emoji>
+              <Text style={{ flex: 1, color: ACTIVITY_COLOR, fontSize: 13, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }}>
                 {ageMonths < 12
-                  ? '📋 Aim for 20–30 min tummy time daily, spread across sessions.'
+                  ? 'Aim for 20–30 min tummy time daily, spread across sessions.'
                   : ageMonths < 36
-                  ? '📋 WHO recommends 180 min of activity/day for toddlers, spread throughout.'
-                  : '📋 WHO recommends 60 min of moderate-to-vigorous activity daily for children 3+.'}
+                  ? 'WHO recommends 180 min of activity/day for toddlers, spread throughout.'
+                  : 'WHO recommends 60 min of moderate-to-vigorous activity daily for children 3+.'}
               </Text>
             </View>
           </ScrollView>
         </View>
       </View>
     </Modal>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCORE MATH BREAKDOWN — shows the step-by-step formula & numbers per pillar
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface MathStep {
+  label: string      // "Quality" / "Consistency bonus"
+  formula: string    // "(good × 10 + little × 5) / meals"
+  value: string      // "7.5"
+}
+
+function ScoreMathCard({ title, steps, final, color }: {
+  title: string
+  steps: MathStep[]
+  final: { label: string; value: string }
+  color: string
+}) {
+  const { colors, font } = useTheme()
+  return (
+    <View
+      style={{
+        backgroundColor: colors.surface,
+        borderRadius: 26,
+        padding: 16,
+        gap: 12,
+        borderWidth: 1,
+        borderColor: colors.border,
+      }}
+    >
+      <Text
+        style={{
+          color: colors.textMuted,
+          fontFamily: font.bodySemiBold,
+          fontSize: 10,
+          letterSpacing: 2,
+          textTransform: 'uppercase',
+        }}
+      >
+        Score math
+      </Text>
+      <Text
+        style={{
+          color: colors.text,
+          fontFamily: font.display,
+          fontSize: 20,
+          lineHeight: 24,
+        }}
+      >
+        {title}
+      </Text>
+      <View style={{ gap: 10, marginTop: 4 }}>
+        {steps.map((s, i) => (
+          <View key={i} style={{ gap: 3 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <Text style={{ color: colors.textSecondary, fontFamily: font.bodySemiBold, fontSize: 13 }}>
+                {s.label}
+              </Text>
+              <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 16 }}>
+                {s.value}
+              </Text>
+            </View>
+            <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 12, lineHeight: 16 }}>
+              {s.formula}
+            </Text>
+          </View>
+        ))}
+      </View>
+      <View
+        style={{
+          marginTop: 6,
+          paddingTop: 12,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+        }}
+      >
+        <Text style={{ color: colors.text, fontFamily: font.bodySemiBold, fontSize: 14 }}>
+          {final.label}
+        </Text>
+        <Text style={{ color, fontFamily: font.display, fontSize: 26 }}>
+          {final.value}
+        </Text>
+      </View>
+    </View>
   )
 }
 
@@ -1716,61 +2777,251 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
   switch (pillarKey) {
     case 'nutrition': {
-      const totalMeals = analytics.nutrition.mealFrequency.reduce((a, b) => a + b, 0)
-      const totalGood = analytics.nutrition.eatQuality.good.reduce((a, b) => a + b, 0)
-      const totalLittle = analytics.nutrition.eatQuality.little.reduce((a, b) => a + b, 0)
-      const totalNone = analytics.nutrition.eatQuality.none.reduce((a, b) => a + b, 0)
-      const daysLogged = analytics.nutrition.mealFrequency.filter((m) => m > 0).length
-      const avgMealsPerDay = daysLogged > 0 ? (totalMeals / daysLogged).toFixed(1) : '—'
+      const nutr = analytics.nutrition
+      const mode = nutr.mode
+      const totalMeals = nutr.mealFrequency.reduce((a, b) => a + b, 0)
+      const windowDays = Math.max(1, nutr.mealFrequency.length)
+      const daysLogged = nutr.mealFrequency.filter((m) => m > 0).length
+      const avgPerDay = daysLogged > 0 ? (totalMeals / daysLogged).toFixed(1) : '—'
+      const score = analytics.scores.nutrition
+      const variety = nutr.topFoods.length
+
+      const totalBreast = nutr.breastSessions.reduce((a, b) => a + b, 0)
+      const totalBottle = nutr.bottleSessions.reduce((a, b) => a + b, 0)
+      const totalBottleMl = nutr.bottleMlPerDay.reduce((a, b) => a + b, 0)
+
+      const totalGood = nutr.eatQuality.good.reduce((a, b) => a + b, 0)
+      const totalLittle = nutr.eatQuality.little.reduce((a, b) => a + b, 0)
+      const totalNone = nutr.eatQuality.none.reduce((a, b) => a + b, 0)
       const pctGood = totalMeals > 0 ? Math.round((totalGood / totalMeals) * 100) : 0
       const pctLittle = totalMeals > 0 ? Math.round((totalLittle / totalMeals) * 100) : 0
       const pctNone = totalMeals > 0 ? Math.round((totalNone / totalMeals) * 100) : 0
-      const variety = analytics.nutrition.topFoods.length
-      const score = analytics.scores.nutrition
 
-      return analytics.nutrition.hasData ? (
+      // Mode-specific stat pills + explainer + math card.
+      const isMilkPhase = mode === 'milk'
+      const isMixedPhase = mode === 'mixed'
+
+      return nutr.hasData ? (
         <View style={styles.detailBody}>
-          {/* Summary stats */}
+          {/* Summary stats — differ by age mode */}
           <View style={[styles.statRow, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-            <StatPill label="Ate well" value={`${pctGood}%`} color={brand.success} />
-            <StatPill label="Avg meals/day" value={avgMealsPerDay} color={PILLAR_CONFIG.nutrition.color} />
-            <StatPill label="Foods variety" value={`${variety}`} color={brand.secondary} />
+            {isMilkPhase ? (
+              <>
+                <StatPill label="Avg feeds/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
+                <StatPill label="Breast sessions" value={`${totalBreast}`} color={brand.secondary} />
+                <StatPill
+                  label="Bottle total"
+                  value={totalBottleMl > 0 ? `${Math.round(totalBottleMl)}ml` : `${totalBottle}×`}
+                  color={brand.accent}
+                />
+              </>
+            ) : isMixedPhase ? (
+              <>
+                <StatPill label="Avg feeds/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
+                <StatPill label="Milk feeds" value={`${totalBreast + totalBottle}`} color={brand.secondary} />
+                <StatPill label="Foods tried" value={`${variety}`} color={brand.accent} />
+              </>
+            ) : (
+              <>
+                <StatPill label="Ate well" value={`${pctGood}%`} color={brand.success} />
+                <StatPill label="Avg meals/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
+                <StatPill label="Foods variety" value={`${variety}`} color={brand.secondary} />
+              </>
+            )}
           </View>
 
-          {/* Explanation */}
+          {/* Explanation — different copy per mode */}
           <View style={[{ backgroundColor: colors.surfaceRaised, borderRadius: radius.xl, padding: 16, gap: 8 }]}>
-            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700' }]}>
+            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }]}>
               How this score works
             </Text>
-            <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
-              {`${pctGood}% of ${totalMeals} meals this week were eaten well. ${pctLittle > 0 ? `${pctLittle}% were eaten partially. ` : ''}${pctNone > 0 ? `${pctNone}% were refused. ` : ''}${daysLogged < 7 ? `Only ${daysLogged} of 7 days logged — consistent logging improves accuracy.` : 'Great logging consistency this week!'}`}
-            </Text>
-            {variety < 5 && (
-              <Text style={[styles.detailExplain, { color: brand.accent }]}>
-                {`${variety} unique food${variety !== 1 ? 's' : ''} logged. Aim for 5+ different foods/week to boost the variety bonus.`}
-              </Text>
+            {isMilkPhase ? (
+              <>
+                <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+                  {`At ${getAgeLabel(ageMonths)}, ${childName} is on milk feeds only. Score reflects feed frequency vs the age target of ${nutr.feedTarget} feeds/day, and how consistently you're logging.`}
+                </Text>
+                <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+                  {`${totalBreast} breast session${totalBreast !== 1 ? 's' : ''} · ${totalBottle} bottle${totalBottle !== 1 ? 's' : ''}${totalBottleMl > 0 ? ` (${Math.round(totalBottleMl)}ml total)` : ''} logged across ${daysLogged} of ${windowDays} days.`}
+                </Text>
+                {daysLogged < Math.min(5, windowDays) && (
+                  <Text style={[styles.detailExplain, { color: brand.accent }]}>
+                    Log every feed to keep this score accurate — newborns feed 6–10× per day.
+                  </Text>
+                )}
+              </>
+            ) : isMixedPhase ? (
+              <>
+                <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+                  {`At ${getAgeLabel(ageMonths)}, ${childName} is transitioning to solids. Score = milk feed frequency (60%) + solid-food variety (40%).`}
+                </Text>
+                <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+                  {`${totalBreast + totalBottle} milk feed${totalBreast + totalBottle !== 1 ? 's' : ''}, ${variety} unique solid food${variety !== 1 ? 's' : ''} tried this window.`}
+                </Text>
+                {variety < 3 && (
+                  <Text style={[styles.detailExplain, { color: brand.accent }]}>
+                    {`Aim for 3+ distinct first foods per week — variety builds a safer, broader palate.`}
+                  </Text>
+                )}
+              </>
+            ) : (
+              <>
+                <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+                  {`${pctGood}% of ${totalMeals} meals this week were eaten well. ${pctLittle > 0 ? `${pctLittle}% were eaten partially. ` : ''}${pctNone > 0 ? `${pctNone}% were refused. ` : ''}${daysLogged < windowDays ? `Only ${daysLogged} of ${windowDays} days logged — consistent logging improves accuracy.` : 'Great logging consistency!'}`}
+                </Text>
+                {variety < 5 && (
+                  <Text style={[styles.detailExplain, { color: brand.accent }]}>
+                    {`${variety} unique food${variety !== 1 ? 's' : ''} logged. Aim for 5+ different foods to boost the variety bonus.`}
+                  </Text>
+                )}
+              </>
             )}
             {score.trend !== 0 && (
               <Text style={[styles.detailExplain, { color: score.trend > 0 ? brand.success : brand.error }]}>
-                {`Nutrition ${score.trend > 0 ? '↑ improving' : '↓ declining'} ${Math.abs(score.trend)}% compared to the start of the week.`}
+                {`Nutrition ${score.trend > 0 ? '↑ improving' : '↓ declining'} ${Math.abs(score.trend)}% vs the start of the window.`}
               </Text>
             )}
           </View>
-          <ChartCard title="Weekly Eat Quality" onExpand={() => onFullScreen('eat_quality')}>
-            <EatQualityBubbles
-              good={analytics.nutrition.eatQuality.good}
-              little={analytics.nutrition.eatQuality.little}
-              none={analytics.nutrition.eatQuality.none}
-            />
-          </ChartCard>
-          <ChartCard title="Meals per Day" onExpand={() => onFullScreen('meal_freq')}>
-            <MealsLineChart
-              data={analytics.nutrition.mealFrequency}
-              labels={analytics.nutrition.weekLabels}
-              width={chartW}
-            />
-          </ChartCard>
-          {analytics.nutrition.topFoods.length > 0 && (
+
+          {/* Math breakdown — branches on mode */}
+          {(() => {
+            const avgFeedsLogged = daysLogged > 0 ? totalMeals / daysLogged : 0
+
+            if (isMilkPhase) {
+              const freqRatio = Math.min(avgFeedsLogged / Math.max(1, nutr.feedTarget), 1.2)
+              const freqScore = Math.min(freqRatio / 1.2, 1) * 8
+              const consistencyBonus = Math.min(daysLogged / windowDays, 1) * 2
+              return (
+                <ScoreMathCard
+                  title={`Nutrition · ${Number.isFinite(score.value) ? score.value.toFixed(1) : '—'}/10`}
+                  color={PILLAR_CONFIG.nutrition.color}
+                  steps={[
+                    {
+                      label: 'Feed frequency',
+                      formula: `${avgFeedsLogged.toFixed(1)} feeds/day ÷ target ${nutr.feedTarget} × 8`,
+                      value: freqScore.toFixed(1),
+                    },
+                    {
+                      label: 'Consistency bonus',
+                      formula: `min(${daysLogged} / ${windowDays} days, 1) × 2`,
+                      value: `+${consistencyBonus.toFixed(1)}`,
+                    },
+                  ]}
+                  final={{
+                    label: 'Score = min(sum, 10)',
+                    value: Number.isFinite(score.value) ? score.value.toFixed(1) : '—',
+                  }}
+                />
+              )
+            }
+
+            if (isMixedPhase) {
+              const freqRatio = Math.min(avgFeedsLogged / Math.max(1, nutr.feedTarget), 1)
+              const freqScore = freqRatio * 10
+              const varietyScore = Math.min(variety / 3, 1) * 10
+              return (
+                <ScoreMathCard
+                  title={`Nutrition · ${Number.isFinite(score.value) ? score.value.toFixed(1) : '—'}/10`}
+                  color={PILLAR_CONFIG.nutrition.color}
+                  steps={[
+                    {
+                      label: 'Feed frequency (×0.6)',
+                      formula: `${avgFeedsLogged.toFixed(1)} feeds/day ÷ target ${nutr.feedTarget}`,
+                      value: (freqScore * 0.6).toFixed(1),
+                    },
+                    {
+                      label: 'Solid variety (×0.4)',
+                      formula: `min(${variety} foods / 3, 1) × 10`,
+                      value: (varietyScore * 0.4).toFixed(1),
+                    },
+                  ]}
+                  final={{
+                    label: 'Score = weighted sum',
+                    value: Number.isFinite(score.value) ? score.value.toFixed(1) : '—',
+                  }}
+                />
+              )
+            }
+
+            // Solids phase (12+)
+            const qualityScore = totalMeals > 0 ? (totalGood * 10 + totalLittle * 5) / totalMeals : 0
+            const freqBonus = Math.min(daysLogged / windowDays, 1) * 1.5
+            const varietyBonus = Math.min(variety / 5, 1) * 1.0
+            return (
+              <ScoreMathCard
+                title={`Nutrition · ${Number.isFinite(score.value) ? score.value.toFixed(1) : '—'}/10`}
+                color={PILLAR_CONFIG.nutrition.color}
+                steps={[
+                  {
+                    label: 'Quality',
+                    formula: `(${totalGood} × 10 + ${totalLittle} × 5) ÷ ${totalMeals} meals`,
+                    value: qualityScore.toFixed(1),
+                  },
+                  {
+                    label: 'Frequency bonus',
+                    formula: `min(${daysLogged} / ${windowDays} days, 1) × 1.5`,
+                    value: `+${freqBonus.toFixed(1)}`,
+                  },
+                  {
+                    label: 'Variety bonus',
+                    formula: `min(${variety} foods / 5, 1) × 1.0`,
+                    value: `+${varietyBonus.toFixed(1)}`,
+                  },
+                ]}
+                final={{
+                  label: 'Score = min(sum, 10)',
+                  value: Number.isFinite(score.value) ? score.value.toFixed(1) : '—',
+                }}
+              />
+            )
+          })()}
+          {/* Mode-specific charts */}
+          {isMilkPhase && (
+            <ChartCard title="Feeds per Day" onExpand={() => onFullScreen('meal_freq')}>
+              <MealsLineChart
+                data={analytics.nutrition.mealFrequency}
+                labels={analytics.nutrition.weekLabels}
+                width={chartW}
+              />
+            </ChartCard>
+          )}
+
+          {isMilkPhase && (totalBreast > 0 || totalBottle > 0) && (
+            <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+              <Text style={[styles.chartTitle, { color: colors.text }]}>Breast vs Bottle</Text>
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
+                <View style={{ flex: 1, alignItems: 'center', padding: 16, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }}>
+                  <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 28, fontFamily: 'Fraunces_600SemiBold' }}>{totalBreast}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 4 }}>breast sessions</Text>
+                </View>
+                <View style={{ flex: 1, alignItems: 'center', padding: 16, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }}>
+                  <Text style={{ color: brand.secondary, fontSize: 28, fontFamily: 'Fraunces_600SemiBold' }}>{totalBottle}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 4 }}>
+                    {totalBottleMl > 0 ? `${Math.round(totalBottleMl)}ml total` : 'bottles'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {!isMilkPhase && (
+            <ChartCard title="Weekly Eat Quality" onExpand={() => onFullScreen('eat_quality')}>
+              <EatQualityBubbles
+                good={analytics.nutrition.eatQuality.good}
+                little={analytics.nutrition.eatQuality.little}
+                none={analytics.nutrition.eatQuality.none}
+              />
+            </ChartCard>
+          )}
+          {!isMilkPhase && (
+            <ChartCard title="Meals per Day" onExpand={() => onFullScreen('meal_freq')}>
+              <MealsLineChart
+                data={analytics.nutrition.mealFrequency}
+                labels={analytics.nutrition.weekLabels}
+                width={chartW}
+              />
+            </ChartCard>
+          )}
+          {!isMilkPhase && analytics.nutrition.topFoods.length > 0 && (
             <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
               <Text style={[styles.chartTitle, { color: colors.text }]}>Most Logged Foods</Text>
               <View style={{ gap: 0 }}>
@@ -1785,11 +3036,11 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                     }}
                   >
                     <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: rankColor(i) + '25', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: rankColor(i), fontSize: 12, fontWeight: '900' }}>#{i + 1}</Text>
+                      <Text style={{ color: rankColor(i), fontSize: 12, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' }}>#{i + 1}</Text>
                     </View>
-                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{food.label}</Text>
+                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: 'DMSans_600SemiBold', flex: 1 }}>{food.label}</Text>
                     <View style={{ backgroundColor: PILLAR_CONFIG.nutrition.color + '20', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 }}>
-                      <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 14, fontWeight: '800' }}>×{food.count}</Text>
+                      <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 14, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' }}>×{food.count}</Text>
                     </View>
                   </View>
                 ))}
@@ -1823,7 +3074,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Explanation */}
           <View style={[{ backgroundColor: colors.surfaceRaised, borderRadius: radius.xl, padding: 16, gap: 8 }]}>
-            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700' }]}>
+            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }]}>
               How this score works
             </Text>
             <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
@@ -1839,7 +3090,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             )}
             {sleepScore.trend !== 0 && (
               <Text style={[styles.detailExplain, { color: sleepScore.trend > 0 ? brand.success : brand.error }]}>
-                {`Sleep ${sleepScore.trend > 0 ? '↑ improving' : '↓ declining'} ${Math.abs(sleepScore.trend)}% vs the start of the week.`}
+                {`Sleep ${sleepScore.trend > 0 ? '↑ improving' : '↓ declining'} ${Math.abs(sleepScore.trend)}% vs the start of the window.`}
               </Text>
             )}
             {daysLogged < 5 && (
@@ -1848,6 +3099,44 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               </Text>
             )}
           </View>
+
+          {(() => {
+            const qc = analytics.sleep.qualityCounts
+            const totalQ = qc.great + qc.good + qc.restless + qc.poor
+            const qualityScore = totalQ > 0
+              ? (qc.great * 10 + qc.good * 7.5 + qc.restless * 4 + qc.poor * 1) / totalQ
+              : 0
+            const windowDays = Math.max(1, analytics.sleep.dailyHours.length)
+            const daysWithSleep = analytics.sleep.dailyHours.filter((h) => h > 0).length
+            const consistencyBonus = Math.min(daysWithSleep / windowDays, 1) * 1.5
+            return (
+              <ScoreMathCard
+                title={`Sleep · ${Number.isFinite(sleepScore.value) ? sleepScore.value.toFixed(1) : '—'}/10`}
+                color={PILLAR_CONFIG.sleep.color}
+                steps={[
+                  {
+                    label: 'Quality',
+                    formula: `(great·10 + good·7.5 + restless·4 + poor·1) ÷ ${totalQ} sessions`,
+                    value: qualityScore.toFixed(1),
+                  },
+                  {
+                    label: 'Quality × 0.85',
+                    formula: 'weighting to leave room for the consistency bonus',
+                    value: (qualityScore * 0.85).toFixed(1),
+                  },
+                  {
+                    label: 'Consistency bonus',
+                    formula: `min(${daysWithSleep} / ${windowDays} days, 1) × 1.5`,
+                    value: `+${consistencyBonus.toFixed(1)}`,
+                  },
+                ]}
+                final={{
+                  label: 'Score = min(sum, 10)',
+                  value: Number.isFinite(sleepScore.value) ? sleepScore.value.toFixed(1) : '—',
+                }}
+              />
+            )
+          })()}
 
           {/* Highlighted bar chart */}
           <ChartCard title="Daily Sleep Hours" onExpand={() => onFullScreen('sleep_weekly')}>
@@ -1867,12 +3156,34 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       ) : <EmptyDetail pillar="sleep" />
     }
 
-    case 'mood':
+    case 'mood': {
+      const moodWeights: Record<string, number> = { happy: 10, calm: 9, energetic: 8, fussy: 3, cranky: 1 }
+      const totalMoods = analytics.mood.dominantMoods.reduce((a, m) => a + m.count, 0)
+      const moodScore = analytics.scores.mood
       return analytics.mood.hasData ? (
         <View style={styles.detailBody}>
           <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
             Mood score weights: happy/calm = positive, energetic = neutral-positive, fussy/cranky = negative. More consistent logging improves accuracy.
           </Text>
+
+          <ScoreMathCard
+            title={`Mood · ${Number.isFinite(moodScore.value) ? moodScore.value.toFixed(1) : '—'}/10`}
+            color={PILLAR_CONFIG.mood.color}
+            steps={analytics.mood.dominantMoods.map((m) => ({
+              label: `${m.mood} × ${m.count}`,
+              formula: `weight ${moodWeights[m.mood] ?? 5} per log`,
+              value: `${((moodWeights[m.mood] ?? 5) * m.count).toFixed(0)}`,
+            })).concat([{
+              label: 'Total logs',
+              formula: 'sum of mood counts',
+              value: String(totalMoods),
+            }])}
+            final={{
+              label: 'Score = weighted sum ÷ total',
+              value: Number.isFinite(moodScore.value) ? moodScore.value.toFixed(1) : '—',
+            }}
+          />
+
           <ChartCard title="Mood Distribution This Week" onExpand={() => onFullScreen('mood_dist')}>
             <MoodDistribution moods={analytics.mood.dominantMoods} />
           </ChartCard>
@@ -1881,6 +3192,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           </ChartCard>
         </View>
       ) : <EmptyDetail pillar="mood" />
+    }
 
     case 'health': {
       const doneVaccines = analytics.health.vaccines.filter((v) => v.done).length
@@ -1906,11 +3218,42 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Health score explanation */}
           <View style={[{ backgroundColor: colors.surfaceRaised, borderRadius: radius.xl, padding: 16, gap: 8 }]}>
-            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700' }]}>How this score works</Text>
+            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }]}>How this score works</Text>
             <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
               {`Health score = vaccine completion (60%) + low health incidents (40%). ${doneVaccines}/${totalVaccines} vaccines logged. ${totalEvents === 0 ? 'No health events this week — great!' : `${totalEvents} health event${totalEvents !== 1 ? 's' : ''} logged this week.`}`}
             </Text>
           </View>
+
+          {(() => {
+            const healthScore = analytics.scores.health
+            const vaccineScore = totalVaccines > 0 ? (doneVaccines / totalVaccines) * 10 : 5
+            const eventPenalty = Math.min(totalEvents * 0.8, 5)
+            const eventScore = Math.max(10 - eventPenalty, 2)
+            return (
+              <ScoreMathCard
+                title={`Health · ${Number.isFinite(healthScore.value) ? healthScore.value.toFixed(1) : '—'}/10`}
+                color={PILLAR_CONFIG.health.color}
+                steps={[
+                  {
+                    label: 'Vaccine score (×0.6)',
+                    formula: totalVaccines > 0
+                      ? `${doneVaccines}/${totalVaccines} vaccines × 10 = ${vaccineScore.toFixed(1)}`
+                      : 'no vaccines logged — default 5.0',
+                    value: (vaccineScore * 0.6).toFixed(1),
+                  },
+                  {
+                    label: 'Event score (×0.4)',
+                    formula: `max(10 − ${totalEvents} events × 0.8, 2) = ${eventScore.toFixed(1)}`,
+                    value: (eventScore * 0.4).toFixed(1),
+                  },
+                ]}
+                final={{
+                  label: 'Score = weighted sum',
+                  value: Number.isFinite(healthScore.value) ? healthScore.value.toFixed(1) : '—',
+                }}
+              />
+            )
+          })()}
 
           {/* Recent events by type */}
           {analytics.health.hasData && analytics.health.recentEvents.length > 0 && (
@@ -1918,9 +3261,12 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               <Text style={[styles.chartTitle, { color: colors.text }]}>Recent Events</Text>
               {Object.entries(eventsByType).map(([type, events]) => (
                 <View key={type} style={{ marginBottom: 12 }}>
-                  <Text style={{ color: getEventColor(type), fontSize: 12, fontWeight: '800', letterSpacing: 1, marginBottom: 8 }}>
-                    {getHealthEventLabel(type).toUpperCase()}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <Emoji size={14}>{getHealthEventEmoji(type)}</Emoji>
+                    <Text style={{ color: getEventColor(type), fontSize: 12, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold', letterSpacing: 1 }}>
+                      {getHealthEventLabel(type).toUpperCase()}
+                    </Text>
+                  </View>
                   {events.map((e, i) => (
                     <View
                       key={i}
@@ -1985,6 +3331,40 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
             Track {childName}'s weight and height over time. Log measurements after each pediatrician visit for the most accurate growth chart.
           </Text>
+
+          {(() => {
+            const growthScore = analytics.scores.growth
+            const totalMeasurements = analytics.growth.weights.length + analytics.growth.heights.length
+            const measureScore = Math.min(totalMeasurements / 4, 1) * 7
+            const sevenDaysAgo = new Date()
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+            const recentDate = sevenDaysAgo.toISOString().split('T')[0]
+            const hasRecent = analytics.growth.weights.some((w) => w.date >= recentDate)
+              || analytics.growth.heights.some((h) => h.date >= recentDate)
+            const recencyBonus = hasRecent ? 3 : 1
+            return (
+              <ScoreMathCard
+                title={`Growth · ${Number.isFinite(growthScore.value) ? growthScore.value.toFixed(1) : '—'}/10`}
+                color={PILLAR_CONFIG.growth.color}
+                steps={[
+                  {
+                    label: 'Measurement score',
+                    formula: `min(${totalMeasurements} logs / 4, 1) × 7`,
+                    value: measureScore.toFixed(1),
+                  },
+                  {
+                    label: 'Recency bonus',
+                    formula: hasRecent ? 'logged in the last 7 days: +3' : 'no recent logs: +1',
+                    value: `+${recencyBonus}`,
+                  },
+                ]}
+                final={{
+                  label: 'Score = min(sum, 10)',
+                  value: Number.isFinite(growthScore.value) ? growthScore.value.toFixed(1) : '—',
+                }}
+              />
+            )
+          })()}
 
           {/* Latest measurements — always shown */}
           {(analytics.growth.weights.length >= 1 || analytics.growth.heights.length >= 1) && (
@@ -2085,16 +3465,45 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Explanation */}
           <View style={[{ backgroundColor: colors.surfaceRaised, borderRadius: radius.xl, padding: 16, gap: 8 }]}>
-            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700' }]}>How this score works</Text>
+            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }]}>How this score works</Text>
             <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
               {act.hasData
-                ? `${childName} was active on ${act.activeDays} of 7 days this week (${act.totalSessions} session${act.totalSessions !== 1 ? 's' : ''}, ${act.uniqueTypes.length} unique type${act.uniqueTypes.length !== 1 ? 's' : ''}). Score = active days × 1.3 + variety bonus.`
-                : `No activity logs found this week. Log sessions from Calendar → Activity to track ${childName}'s movement.`}
+                ? `${childName} was active on ${act.activeDays} of ${act.dailySessions.length} days (${act.totalSessions} session${act.totalSessions !== 1 ? 's' : ''}, ${act.uniqueTypes.length} unique type${act.uniqueTypes.length !== 1 ? 's' : ''}).`
+                : `No activity logs found. Log sessions from Calendar → Activity to track ${childName}'s movement.`}
             </Text>
             <Text style={[styles.detailExplain, { color: colors.textMuted }]}>
               {`Target for ${ageLabel}: ${weeklyTarget}`}
             </Text>
           </View>
+
+          {act.hasData && (() => {
+            const activityScore = analytics.scores.activity
+            const windowDays = Math.max(1, act.dailySessions.length)
+            const base = (act.activeDays / windowDays) * 9
+            const varietyBonus = Math.min(act.uniqueTypes.length / 3, 1)
+            return (
+              <ScoreMathCard
+                title={`Activity · ${Number.isFinite(activityScore.value) ? activityScore.value.toFixed(1) : '—'}/10`}
+                color={COLOR}
+                steps={[
+                  {
+                    label: 'Active-day rate',
+                    formula: `${act.activeDays} / ${windowDays} days × 9`,
+                    value: base.toFixed(1),
+                  },
+                  {
+                    label: 'Variety bonus',
+                    formula: `min(${act.uniqueTypes.length} types / 3, 1)`,
+                    value: `+${varietyBonus.toFixed(1)}`,
+                  },
+                ]}
+                final={{
+                  label: 'Score = min(sum, 10)',
+                  value: Number.isFinite(activityScore.value) ? activityScore.value.toFixed(1) : '—',
+                }}
+              />
+            )
+          })()}
 
           {/* Weekly sessions bar chart */}
           {act.hasData && (
@@ -2114,22 +3523,22 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             <View style={{ gap: 12, marginTop: 4 }}>
               {guideItems.map((item) => (
                 <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <Text style={{ fontSize: 22 }}>{item.emoji}</Text>
+                  <Emoji size={22}>{item.emoji}</Emoji>
                   <View style={{ flex: 1, gap: 4 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700' }}>{item.label}</Text>
-                      <Text style={{ color: COLOR, fontSize: 15, fontWeight: '900' }}>{item.pct}%</Text>
+                      <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }}>{item.label}</Text>
+                      <Text style={{ color: COLOR, fontSize: 15, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' }}>{item.pct}%</Text>
                     </View>
                     <View style={{ height: 5, borderRadius: 3, backgroundColor: COLOR + '18', overflow: 'hidden' }}>
                       <View style={{ width: `${item.pct}%`, height: '100%', backgroundColor: COLOR + 'CC', borderRadius: 3 }} />
                     </View>
-                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '500' }}>{item.tip}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '500', fontFamily: 'DMSans_500Medium' }}>{item.tip}</Text>
                   </View>
                 </View>
               ))}
             </View>
             <View style={{ backgroundColor: COLOR + '10', borderRadius: 12, padding: 12, marginTop: 12, borderWidth: 1, borderColor: COLOR + '25' }}>
-              <Text style={{ color: COLOR, fontSize: 12, fontWeight: '700' }}>
+              <Text style={{ color: COLOR, fontSize: 12, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }}>
                 {ageMonths < 12
                   ? '📋 Aim for 20–30 min tummy time daily, spread across sessions.'
                   : ageMonths < 36
@@ -2353,11 +3762,11 @@ function EatQualityBubbles({
                 alignItems: 'center', justifyContent: 'center',
               }}
             >
-              <Text style={{ color: item.color, fontSize: size > 80 ? 20 : 16, fontWeight: '900' }}>
+              <Text style={{ color: item.color, fontSize: size > 80 ? 20 : 16, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' }}>
                 {item.pct}%
               </Text>
             </View>
-            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', textAlign: 'center', maxWidth: size + 8 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', fontFamily: 'DMSans_600SemiBold', textAlign: 'center', maxWidth: size + 8 }}>
               {item.label}
             </Text>
           </View>
@@ -2427,7 +3836,7 @@ function MealsLineChart({
             0
           </SvgText>
 
-          {/* Point circles */}
+          {/* Point circles — outer ring + filled inner dot (no SVG emoji, not reliable) */}
           {pts.map((p, i) => (
             <G key={i}>
               <Circle
@@ -2436,10 +3845,10 @@ function MealsLineChart({
                 stroke={selectedDay === i ? color : color + '60'}
                 strokeWidth={1.5}
               />
-              {/* Fork & knife emoji via SvgText */}
-              <SvgText x={p.x} y={p.y + 6} textAnchor="middle" fontSize={15}>
-                🍽️
-              </SvgText>
+              <Circle
+                cx={p.x} cy={p.y} r={selectedDay === i ? 6 : 4.5}
+                fill={color}
+              />
             </G>
           ))}
         </Svg>
@@ -2474,8 +3883,8 @@ function MealsLineChart({
       {/* Tap tooltip */}
       {selectedDay !== null && (
         <View style={{ backgroundColor: color + '15', borderRadius: 12, padding: 12, marginTop: 10, borderWidth: 1, borderColor: color + '30' }}>
-          <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
-            <Text style={{ color, fontWeight: '800' }}>{labels[selectedDay]}: </Text>
+          <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', fontFamily: 'DMSans_600SemiBold' }}>
+            <Text style={{ color, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' }}>{labels[selectedDay]}: </Text>
             {data[selectedDay] === 0
               ? 'No meals logged'
               : `${data[selectedDay]} meal${data[selectedDay] !== 1 ? 's' : ''} logged`}
@@ -2600,7 +4009,7 @@ function SleepQualityChart({ counts }: { counts: { great: number; good: number; 
         if (item.count === 0) return null
         return (
           <View key={i} style={styles.qualityRow}>
-            <Text style={styles.qualityEmoji}>{item.emoji}</Text>
+            <Emoji size={22}>{item.emoji}</Emoji>
             <Text style={[styles.qualityLabel, { color: colors.textSecondary }]}>{item.label}</Text>
             <View style={[styles.qualityBarBg, { backgroundColor: colors.surfaceRaised, borderRadius: radius.full }]}>
               <View style={[styles.qualityBarFill, { width: `${pct}%`, backgroundColor: item.color, borderRadius: radius.full }]} />
@@ -2621,10 +4030,9 @@ function MoodDistribution({ moods }: { moods: { mood: string; count: number }[] 
       {moods.map((m, i) => {
         const pct = Math.round((m.count / total) * 100)
         const color = MOOD_COLORS[m.mood] || colors.primary
-        const emoji = MOOD_EMOJI[m.mood] || '🙂'
         return (
           <View key={i} style={[styles.moodChip, { backgroundColor: color + '15', borderColor: color + '30', borderRadius: radius.xl }]}>
-            <Text style={styles.moodEmoji}>{emoji}</Text>
+            <MoodFace size={18} variant={moodFaceVariant(m.mood)} fill={moodFaceFill(m.mood)} />
             <Text style={[styles.moodLabel, { color }]}>{m.mood}</Text>
             <Text style={[styles.moodPct, { color: colors.textSecondary }]}>{pct}%</Text>
           </View>
@@ -2650,8 +4058,8 @@ function MoodDailyChart({ dailyCounts, labels, width }: { dailyCounts: Record<st
                 const count = dailyCounts[mood][dayIdx]
                 const color = MOOD_COLORS[mood] || colors.primary
                 return Array.from({ length: Math.min(count, 3) }).map((_, dotIdx) => (
-                  <View key={`${mood}-${dotIdx}`} style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color + '30', borderWidth: 1.5, borderColor: color + '50', alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 13 }}>{MOOD_EMOJI[mood]}</Text>
+                  <View key={`${mood}-${dotIdx}`} style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color + '30', borderWidth: 1.5, borderColor: color + '50', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <MoodFace size={20} variant={moodFaceVariant(mood)} fill={moodFaceFill(mood)} />
                   </View>
                 ))
               }) : (
@@ -2689,11 +4097,21 @@ function getEventColor(type: string): string {
 
 function getHealthEventLabel(type: string): string {
   switch (type.toLowerCase()) {
-    case 'temperature': return '🌡️ Temperature'
-    case 'medicine': return '💊 Medicine'
-    case 'vaccine': return '💉 Vaccine'
-    case 'note': return '📝 Note'
+    case 'temperature': return 'Temperature'
+    case 'medicine': return 'Medicine'
+    case 'vaccine': return 'Vaccine'
+    case 'note': return 'Note'
     default: return type
+  }
+}
+
+function getHealthEventEmoji(type: string): string {
+  switch (type.toLowerCase()) {
+    case 'temperature': return '🌡️'
+    case 'medicine': return '💊'
+    case 'vaccine': return '💉'
+    case 'note': return '📝'
+    default: return ''
   }
 }
 
@@ -2712,14 +4130,48 @@ const styles = StyleSheet.create({
   // Header
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   screenTitle: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' },
-  screenSub: { fontSize: 14, fontWeight: '500', marginTop: 2 },
+  screenSub: { fontSize: 14, fontWeight: '500', fontFamily: 'DMSans_500Medium', marginTop: 2 },
   infoBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+
+  // Header — 2026 redesign
+  headerEditorial: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginHorizontal: -20,
+  },
+  headerSub: {
+    fontSize: 14,
+    paddingHorizontal: 24,
+    marginTop: -4,
+    marginBottom: 2,
+  },
+  infoBtnNew: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    marginRight: 20,
+  },
+
+  // 2x2 mini stat grid
+  miniStatGrid: {
+    gap: 10,
+    marginTop: 2,
+  },
+  miniStatRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
 
   // Child selector
   childRow: { gap: 10, paddingVertical: 4 },
   childChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 18, borderWidth: 1 },
-  childChipName: { fontSize: 15, fontWeight: '700' },
-  childChipAge: { fontSize: 12, fontWeight: '500' },
+  childChipName: { fontSize: 15, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' },
+  childChipAge: { fontSize: 12, fontWeight: '500', fontFamily: 'DMSans_500Medium' },
 
   // Arc
   arcContainer: { alignItems: 'center', marginTop: 8, overflow: 'visible' },
@@ -2727,155 +4179,354 @@ const styles = StyleSheet.create({
   arcTooltip: { marginTop: 10, padding: 16, borderWidth: 1, gap: 8, width: '100%' },
   arcTooltipHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   arcTooltipIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  arcTooltipTitle: { fontSize: 16, fontWeight: '800' },
-  arcTooltipBody: { fontSize: 14, fontWeight: '500', lineHeight: 20 },
+  arcTooltipTitle: { fontSize: 16, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' },
+  arcTooltipBody: { fontSize: 14, fontWeight: '500', fontFamily: 'DMSans_500Medium', lineHeight: 20 },
   arcInfoHint: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 10, paddingVertical: 4 },
-  arcInfoText: { fontSize: 12, fontWeight: '500' },
+  arcInfoText: { fontSize: 12, fontWeight: '500', fontFamily: 'DMSans_500Medium' },
 
   // Insight card
   insightCard: { padding: 16, gap: 10 },
   insightHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   insightBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999 },
-  insightBadgeText: { fontSize: 12, fontWeight: '700' },
-  insightDate: { fontSize: 11, fontWeight: '500' },
-  insightMessage: { fontSize: 14, fontWeight: '600', lineHeight: 21 },
+  insightBadgeText: { fontSize: 12, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' },
+  insightDate: { fontSize: 11, fontWeight: '500', fontFamily: 'DMSans_500Medium' },
+  insightMessage: { fontSize: 14, fontWeight: '600', fontFamily: 'DMSans_600SemiBold', lineHeight: 21 },
   insightButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 20, alignSelf: 'flex-start' },
-  insightButtonText: { fontSize: 14, fontWeight: '700' },
+  insightButtonText: { fontSize: 14, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' },
+
+  // Grandma insight — 2026 paper redesign
+  grandmaInsightPaper: {
+    borderRadius: 26,
+    padding: 18,
+    paddingBottom: 20,
+    borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  grandmaInsightStickerBg: {
+    position: 'absolute',
+    right: -20,
+    bottom: -28,
+    opacity: 0.85,
+  },
+  grandmaInsightHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  grandmaInsightLabel: {
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+  grandmaInsightDate: {
+    fontSize: 11,
+  },
+  grandmaInsightMessageWrap: {
+    marginTop: 10,
+    marginBottom: 14,
+    maxWidth: SCREEN_W * 0.68,
+  },
+  grandmaInsightMessage: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  grandmaInsightBtn: {
+    alignSelf: 'flex-start',
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+  },
+  grandmaInsightBtnText: {
+    fontSize: 13,
+  },
 
   // Tips
   tipsSection: { gap: 12 },
   tipsSectionHeader: { gap: 3 },
-  tipsSectionTitle: { fontSize: 12, fontWeight: '900', letterSpacing: 2 },
-  tipsSectionSub: { fontSize: 13, fontWeight: '500' },
+  tipsSectionTitle: { fontSize: 12, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold', letterSpacing: 2 },
+  tipsSectionSub: { fontSize: 13, fontWeight: '500', fontFamily: 'DMSans_500Medium' },
   tipsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tipCard: { width: (SCREEN_W - 40 - 8) / 2, padding: 12, gap: 8 },
   tipIconWrap: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  tipTitle: { fontSize: 13, fontWeight: '800', lineHeight: 18 },
-  tipBody: { fontSize: 11, fontWeight: '500', lineHeight: 15 },
+  tipTitle: { fontSize: 13, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold', lineHeight: 18 },
+  tipBody: { fontSize: 11, fontWeight: '500', fontFamily: 'DMSans_500Medium', lineHeight: 15 },
   tipTapHint: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 1 },
-  tipTapText: { fontSize: 10, fontWeight: '600' },
+  tipTapText: { fontSize: 10, fontWeight: '600', fontFamily: 'DMSans_600SemiBold' },
   askButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, marginTop: 2 },
-  askButtonText: { fontSize: 15, fontWeight: '700' },
+  askButtonText: { fontSize: 15, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' },
 
   // Pillar section
   pillarSection: { gap: 12 },
-  pillarSectionTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 2, marginBottom: 4 },
+  pillarSectionTitle: { fontSize: 13, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold', letterSpacing: 2, marginBottom: 4 },
   pillarRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
   pillarIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   pillarInfo: { flex: 1, gap: 6 },
   pillarNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  pillarName: { fontSize: 16, fontWeight: '700' },
+  pillarName: { fontSize: 16, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' },
   trendBadge: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  trendText: { fontSize: 12, fontWeight: '700' },
+  trendText: { fontSize: 12, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' },
   pillarBarBg: { height: 8, width: '100%', overflow: 'hidden' },
   pillarBarFill: { height: '100%' },
-  pillarTakeaway: { fontSize: 12, fontWeight: '500' },
+  pillarTakeaway: { fontSize: 12, fontWeight: '500', fontFamily: 'DMSans_500Medium' },
   pillarScoreWrap: { flexDirection: 'row', alignItems: 'baseline', marginRight: 4 },
-  pillarScoreValue: { fontSize: 22, fontWeight: '900' },
-  pillarScoreOf: { fontSize: 12, fontWeight: '600' },
+  pillarScoreValue: { fontSize: 22, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' },
+  pillarScoreOf: { fontSize: 12, fontWeight: '600', fontFamily: 'DMSans_600SemiBold' },
+
+  // Pillar row — 2026 paper redesign
+  pillarPaper: {
+    borderRadius: 26,
+    borderWidth: 1,
+    padding: 16,
+    gap: 10,
+  },
+  pillarPaperHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  pillarStickerChip: {
+    width: 46,
+    height: 46,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pillarPaperTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  pillarPaperName: {
+    fontSize: 20,
+    lineHeight: 22,
+  },
+  pillarPaperBarBg: {
+    height: 8,
+    width: '100%',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  pillarPaperBarFill: {
+    height: '100%',
+    borderRadius: 999,
+  },
+  pillarPaperScore: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginLeft: 4,
+  },
+  pillarPaperValue: {
+    fontSize: 24,
+    lineHeight: 26,
+  },
+  pillarPaperOf: {
+    fontSize: 11,
+    marginLeft: 1,
+  },
+  pillarPaperTipTitle: {
+    fontSize: 14,
+    marginTop: 2,
+  },
+  pillarPaperBody: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  pillarPaperFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: 2,
+  },
+  pillarPaperFooterText: {
+    fontSize: 12,
+  },
+
+  // Routine compliance expand
+  routineExpand: {
+    marginTop: 6,
+    padding: 18,
+    borderRadius: 22,
+    borderWidth: 1,
+    gap: 16,
+  },
+  routineStatRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  routineStatCell: {
+    alignItems: 'center',
+  },
+  routineStatValue: {
+    fontSize: 28,
+    lineHeight: 30,
+  },
+  routineStatLabel: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  routineSubheader: {
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  routineBarsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 6,
+    height: 60,
+  },
+  routineBarCell: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  routineSkipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  routineSkipBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
 
   // Detail body
   detailBody: { gap: 16, paddingTop: 8 },
-  detailExplain: { fontSize: 13, fontWeight: '500', lineHeight: 19, paddingHorizontal: 4 },
+  detailExplain: { fontSize: 13, fontFamily: 'DMSans_400Regular', lineHeight: 19, paddingHorizontal: 4 },
 
   // Chart card
   card: { padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 3 },
   chartHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-  chartTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
+  chartTitle: { fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginBottom: 8 },
   chartBody: { alignItems: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 
 
   // Labels & Legend
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  label: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  label: { fontSize: 12, fontFamily: 'DMSans_500Medium', textAlign: 'center' },
   legendRow: { flexDirection: 'row', gap: 16, marginTop: 12, justifyContent: 'center' },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendLabel: { fontSize: 12, fontWeight: '600' },
+  legendLabel: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
 
   // Events
   eventRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   eventDot: { width: 12, height: 12, borderRadius: 6 },
-  eventLabel: { fontSize: 15, fontWeight: '600' },
-  eventDate: { fontSize: 13, fontWeight: '500' },
+  eventLabel: { fontSize: 15, fontFamily: 'DMSans_500Medium' },
+  eventDate: { fontSize: 13, fontFamily: 'DMSans_400Regular' },
 
   // Vaccines
   vaccineGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 },
   vaccineChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1 },
-  vaccineText: { fontSize: 14, fontWeight: '600' },
+  vaccineText: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
 
   // Sleep quality bars
   qualityWrap: { width: '100%', gap: 12, paddingVertical: 6 },
   qualityRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   qualityEmoji: { fontSize: 18, width: 28, textAlign: 'center' },
-  qualityLabel: { fontSize: 14, fontWeight: '600', width: 64 },
+  qualityLabel: { fontSize: 14, fontFamily: 'DMSans_500Medium', width: 64 },
   qualityBarBg: { flex: 1, height: 16, overflow: 'hidden' },
   qualityBarFill: { height: '100%' },
-  qualityPct: { fontSize: 14, fontWeight: '800', width: 44, textAlign: 'right' },
+  qualityPct: { fontSize: 14, fontFamily: 'Fraunces_600SemiBold', width: 44, textAlign: 'right' },
 
   // Mood
   moodDistWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
   moodChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1 },
   moodEmoji: { fontSize: 18 },
-  moodLabel: { fontSize: 14, fontWeight: '700', textTransform: 'capitalize' },
-  moodPct: { fontSize: 13, fontWeight: '600' },
+  moodLabel: { fontSize: 14, fontFamily: 'DMSans_600SemiBold', textTransform: 'capitalize' },
+  moodPct: { fontSize: 13, fontFamily: 'DMSans_500Medium' },
 
   // Stat row
   statRow: { flexDirection: 'row', gap: 12, padding: 8 },
   statPill: { flex: 1, alignItems: 'center', padding: 16, gap: 6 },
-  statValue: { fontSize: 24, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' },
-  statLabel: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  statValue: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold' },
+  statLabel: { fontSize: 12, fontFamily: 'DMSans_500Medium', textAlign: 'center' },
 
   // Loading / Error / Empty
   loadingWrap: { alignItems: 'center', gap: 10, paddingVertical: 32 },
-  loadingText: { fontSize: 14, fontWeight: '500' },
+  loadingText: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
   errorCard: { padding: 20, alignItems: 'center', gap: 10 },
-  errorText: { fontSize: 15, fontWeight: '700' },
-  errorRetry: { fontSize: 14, fontWeight: '600' },
+  errorText: { fontSize: 15, fontFamily: 'DMSans_600SemiBold' },
+  errorRetry: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
   emptyCard: { padding: 24, alignItems: 'center', gap: 10 },
-  emptyText: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20 },
+  emptyText: { fontSize: 14, fontFamily: 'DMSans_500Medium', textAlign: 'center', lineHeight: 20 },
   emptyAll: { padding: 40, alignItems: 'center', gap: 14, marginTop: 16 },
-  emptyAllTitle: { fontSize: 20, fontWeight: '800' },
-  emptyAllSub: { fontSize: 15, fontWeight: '500', textAlign: 'center', lineHeight: 22 },
+  emptyAllTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold' },
+  emptyAllSub: { fontSize: 15, fontFamily: 'DMSans_400Regular', textAlign: 'center', lineHeight: 22 },
 
   // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   modalSheet: { marginHorizontal: 0 },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12 },
-  modalTitle: { fontSize: 20, fontWeight: '800' },
+  modalTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold' },
   modalClose: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 
   // Score info modal
   scoreHighlight: { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 20, marginHorizontal: 20, marginBottom: 20, borderWidth: 1 },
-  scoreHighlightNum: { fontSize: 44, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' },
-  scoreHighlightLabel: { fontSize: 16, fontWeight: '700' },
-  scoreHighlightSub: { fontSize: 13, fontWeight: '500', marginTop: 2 },
-  infoSectionLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 1.5, marginHorizontal: 20, marginBottom: 10 },
+  scoreHighlightNum: { fontSize: 44, fontFamily: 'Fraunces_600SemiBold' },
+  scoreHighlightLabel: { fontSize: 16, fontFamily: 'DMSans_600SemiBold' },
+  scoreHighlightSub: { fontSize: 13, fontFamily: 'DMSans_400Regular', marginTop: 2 },
+  infoSectionLabel: { fontSize: 12, fontFamily: 'DMSans_600SemiBold', letterSpacing: 1.5, marginHorizontal: 20, marginBottom: 10 },
   bandRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20 },
   bandDot: { width: 12, height: 12, borderRadius: 6 },
-  bandLabel: { flex: 1, fontSize: 15, fontWeight: '600' },
-  bandRange: { fontSize: 14, fontWeight: '500' },
+  bandLabel: { flex: 1, fontSize: 15, fontFamily: 'DMSans_500Medium' },
+  bandRange: { fontSize: 14, fontFamily: 'DMSans_400Regular' },
   pillarInfoCard: { marginHorizontal: 20, padding: 16, gap: 10 },
   pillarInfoHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pillarInfoIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  pillarInfoName: { flex: 1, fontSize: 15, fontWeight: '700' },
-  pillarInfoWeight: { fontSize: 13, fontWeight: '600' },
+  pillarInfoName: { flex: 1, fontSize: 15, fontFamily: 'DMSans_600SemiBold' },
+  pillarInfoWeight: { fontSize: 13, fontFamily: 'DMSans_500Medium' },
   pillarInfoScoreBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
-  pillarInfoScoreText: { fontSize: 14, fontWeight: '800' },
-  pillarInfoBody: { fontSize: 13, fontWeight: '500', lineHeight: 19 },
+  pillarInfoScoreText: { fontSize: 14, fontFamily: 'Fraunces_600SemiBold' },
+  pillarInfoBody: { fontSize: 13, fontFamily: 'DMSans_400Regular', lineHeight: 19 },
   ageBanner: { marginHorizontal: 20, marginBottom: 10, padding: 18, borderWidth: 1, gap: 8 },
-  ageBannerTitle: { fontSize: 15, fontWeight: '800' },
-  ageBannerBody: { fontSize: 14, fontWeight: '500', lineHeight: 21 },
+  ageBannerTitle: { fontSize: 15, fontFamily: 'DMSans_600SemiBold' },
+  ageBannerBody: { fontSize: 14, fontFamily: 'DMSans_400Regular', lineHeight: 21 },
+
+  // Grandma insight detail sheet
+  insightDetailSheet: { marginHorizontal: 16, marginBottom: 16, padding: 22, gap: 14 },
+  insightDetailHeaderRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
+  insightDetailLabelWrap: { flex: 1, gap: 4 },
+  insightDetailOverall: { fontSize: 22, lineHeight: 26, marginTop: 4 },
+  insightDetailOverallSub: { fontSize: 13, lineHeight: 18 },
+  insightHighlightRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, padding: 14 },
+  insightHighlightIcon: { width: 36, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  insightHighlightBody: { flex: 1, gap: 4 },
+  insightHighlightLabel: { fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' },
+  insightHighlightTitle: { fontSize: 15, lineHeight: 20 },
+  insightHighlightText: { fontSize: 14, lineHeight: 20 },
+  insightActionsBlock: { gap: 8, marginTop: 2 },
+  insightActionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 12, paddingHorizontal: 14 },
+  insightActionText: { flex: 1, fontSize: 14, lineHeight: 20 },
+  insightEmpty: { padding: 16 },
+  insightEmptyText: { fontSize: 14, lineHeight: 20, textAlign: 'center' },
+  insightDetailCta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, marginTop: 6 },
+  insightDetailCtaText: { fontSize: 15 },
+
+  // Discuss confirm sheet
+  confirmOverlay: { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+  confirmSheet: { width: '100%', maxWidth: 420, padding: 26, paddingTop: 28, gap: 12, alignItems: 'center' },
+  confirmIconWrap: { marginBottom: 4 },
+  confirmTitle: { fontSize: 22, lineHeight: 28, textAlign: 'center' },
+  confirmBody: { fontSize: 15, lineHeight: 22, textAlign: 'center', marginBottom: 10 },
+  confirmPrimary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, paddingHorizontal: 22, alignSelf: 'stretch' },
+  confirmPrimaryText: { fontSize: 15 },
+  confirmSecondary: { paddingVertical: 12, paddingHorizontal: 22, alignSelf: 'stretch', alignItems: 'center', borderWidth: 1 },
+  confirmSecondaryText: { fontSize: 14 },
 
   // Tip detail modal
   tipModalContent: { marginHorizontal: 20, marginBottom: 20, padding: 24, gap: 16 },
   tipModalHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   tipModalIconWrap: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-  tipModalTitle: { fontSize: 22, fontWeight: '900', lineHeight: 28 },
+  tipModalTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', lineHeight: 28 },
   tipModalSummary: { padding: 14 },
-  tipModalSummaryText: { fontSize: 15, fontWeight: '600', lineHeight: 22 },
-  tipModalDetail: { fontSize: 15, fontWeight: '500', lineHeight: 23 },
+  tipModalSummaryText: { fontSize: 15, fontFamily: 'DMSans_500Medium', lineHeight: 22 },
+  tipModalDetail: { fontSize: 15, fontFamily: 'DMSans_400Regular', lineHeight: 23 },
   tipAskBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderWidth: 1, marginTop: 4 },
-  tipAskBtnText: { fontSize: 16, fontWeight: '700' },
+  tipAskBtnText: { fontSize: 16, fontFamily: 'DMSans_600SemiBold' },
 })

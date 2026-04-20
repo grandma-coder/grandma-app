@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Pressable,
-  ActivityIndicator,
   Alert,
   Image,
   StyleSheet,
@@ -19,6 +18,7 @@ import { supabase } from '../lib/supabase'
 import { checkPremium } from '../lib/revenue'
 import { CosmicBackground } from '../components/ui/CosmicBackground'
 import ResultCard from '../components/ui/ResultCard'
+import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { colors, spacing, borderRadius } from '../constants/theme'
 
 const FREE_SCAN_LIMIT = 3
@@ -171,8 +171,7 @@ export default function Scan() {
           )}
           {loading && (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color={colors.accent} />
-              <Text style={styles.loadingText}>Grandma is looking...</Text>
+              <BrandedLoader logoSize={72} sublabel="Grandma is looking..." />
             </View>
           )}
         </View>

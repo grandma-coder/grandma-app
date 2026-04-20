@@ -2,7 +2,9 @@ import React from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { router } from 'expo-router'
-import { useTheme, brand } from '../../../constants/theme'
+import { useTheme } from '../../../constants/theme'
+import { Emoji } from '../../ui/Emoji'
+import { PaperCard } from '../../ui/PaperCard'
 import { getUpcomingAppointment } from '../../../lib/pregnancyAppointments'
 import { getWeekData } from '../../../lib/pregnancyData'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
@@ -12,7 +14,8 @@ interface ReminderItem {
   icon: string
   title: string
   subtitle: string
-  color: string
+  tint: string
+  accent: string
   onPress: () => void
 }
 
@@ -23,7 +26,7 @@ interface Props {
 }
 
 export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Props) {
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
 
   const items: ReminderItem[] = []
 
@@ -35,7 +38,8 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
       icon: '📅',
       title: appt.name,
       subtitle: `Week ${appt.week} · ${appt.prepNote}`,
-      color: '#FBBF24',
+      tint: stickers.yellowSoft,
+      accent: stickers.yellow,
       onPress: () => router.push('/(tabs)/agenda'),
     })
   }
@@ -48,7 +52,8 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
       icon: '💡',
       title: `Week ${weekNumber} Tip`,
       subtitle: weekData.momTip,
-      color: brand.pregnancy,
+      tint: stickers.lilacSoft,
+      accent: stickers.lilac,
       onPress: onOpenWeekDetail,
     })
   }
@@ -60,7 +65,8 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
       icon: '👶',
       title: 'Log your kick count',
       subtitle: 'Track 10 movements — aim to finish within 2 hours',
-      color: '#A2FF86',
+      tint: stickers.greenSoft,
+      accent: stickers.green,
       onPress: () => router.push('/(tabs)/agenda'),
     })
   }
@@ -73,7 +79,8 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
       icon: '💧',
       title: 'Stay hydrated',
       subtitle: `You've had ${waterVal}/8 glasses today — keep going`,
-      color: '#6AABF7',
+      tint: stickers.blueSoft,
+      accent: stickers.blue,
       onPress: () => {},
     })
   }
@@ -85,7 +92,8 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
       icon: '💊',
       title: 'Take your prenatal vitamins',
       subtitle: 'Best taken with food to avoid nausea',
-      color: '#FF8AD8',
+      tint: stickers.pinkSoft,
+      accent: stickers.pink,
       onPress: () => {},
     })
   }
@@ -98,25 +106,20 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
         <Pressable
           key={item.id}
           onPress={item.onPress}
-          style={({ pressed }) => [
-            styles.item,
-            {
-              backgroundColor: item.color + '0D',
-              borderColor: item.color + '30',
-              opacity: pressed ? 0.75 : 1,
-            },
-          ]}
+          style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
         >
-          <Text style={styles.itemIcon}>{item.icon}</Text>
-          <View style={styles.itemBody}>
-            <Text style={[styles.itemTitle, { color: colors.text }]} numberOfLines={1}>
-              {item.title}
-            </Text>
-            <Text style={[styles.itemSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
-              {item.subtitle}
-            </Text>
-          </View>
-          <ChevronRight size={14} color={item.color} strokeWidth={2} />
+          <PaperCard tint={item.tint} radius={20} padding={14} flat style={styles.item}>
+            <Emoji style={styles.itemIcon}>{item.icon}</Emoji>
+            <View style={styles.itemBody}>
+              <Text style={[styles.itemTitle, { color: colors.text }]} numberOfLines={1}>
+                {item.title}
+              </Text>
+              <Text style={[styles.itemSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
+                {item.subtitle}
+              </Text>
+            </View>
+            <ChevronRight size={14} color={item.accent} strokeWidth={2} />
+          </PaperCard>
         </Pressable>
       ))}
     </View>
@@ -124,26 +127,22 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
 }
 
 const styles = StyleSheet.create({
-  root: { gap: 8 },
+  root: { gap: 10 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
     gap: 12,
   },
   itemIcon: { fontSize: 22, flexShrink: 0 },
   itemBody: { flex: 1 },
   itemTitle: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
+    fontSize: 14,
+    fontFamily: 'DMSans_600SemiBold',
     marginBottom: 2,
   },
   itemSubtitle: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-    lineHeight: 15,
+    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    lineHeight: 16,
   },
 })

@@ -1,6 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { GlassCard } from '../ui/GlassCard'
+import { Emoji } from '../ui/Emoji'
 import { colors, borderRadius } from '../../constants/theme'
 
 const FEED_TYPES = [
@@ -32,7 +33,7 @@ export function MilkTracker({ onLog }: MilkTrackerProps) {
               pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] },
             ]}
           >
-            <Text style={styles.feedIcon}>{type.icon}</Text>
+            <Emoji style={styles.feedIcon}>{type.icon}</Emoji>
             <Text style={styles.feedLabel}>{type.label}</Text>
           </Pressable>
         ))}

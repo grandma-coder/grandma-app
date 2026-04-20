@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { View, Text, Pressable, FlatList, Alert, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, Pressable, FlatList, Alert, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { colors } from '../constants/theme'
+import { BrandedLoader } from '../components/ui/BrandedLoader'
 
 interface CaregiverRow {
   id: string
@@ -85,7 +86,9 @@ export default function ManageCaregivers() {
       </Pressable>
 
       {loading ? (
-        <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 40 }} />
+        <View style={{ marginTop: 40 }}>
+          <BrandedLoader logoSize={72} />
+        </View>
       ) : (
         <FlatList
           data={caregivers}

@@ -23,6 +23,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTheme, brand, THEME_COLORS } from '../../constants/theme'
+import { Emoji } from '../ui/Emoji'
 import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -576,7 +577,10 @@ function PregnancyInsightsContent() {
     <>
       <View style={[ci.greetingCard, { backgroundColor: brand.pregnancy + '12', borderColor: brand.pregnancy + '20' }]}>
         <Text style={[ci.greetingDate, { color: colors.textMuted }]}>{today}</Text>
-        <Text style={[ci.greetingName, { color: colors.text }]}>Good morning, {parentName} 💜</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={[ci.greetingName, { color: colors.text }]}>Good morning, {parentName}</Text>
+          <Emoji size={20}>💜</Emoji>
+        </View>
         <Text style={[ci.greetingWeek, { color: brand.pregnancy }]}>Week {weekNumber} · {weekData.babySize}</Text>
       </View>
 
@@ -622,7 +626,10 @@ function PregnancyInsightsContent() {
   const renderBirthGuide = () => (
     <>
       <View style={[ci.warningCard, { borderColor: THEME_COLORS.orange + '40', backgroundColor: THEME_COLORS.orange + '14' }]}>
-        <Text style={[ci.warningTitle, { color: THEME_COLORS.orange }]}>⚠️ Call your provider or go to hospital if:</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Emoji size={16}>⚠️</Emoji>
+          <Text style={[ci.warningTitle, { color: THEME_COLORS.orange }]}>Call your provider or go to hospital if:</Text>
+        </View>
         {WARNING_SIGNS.map((sign, i) => (
           <Text key={i} style={[ci.warningItem, { color: THEME_COLORS.orange }]}>• {sign}</Text>
         ))}
@@ -705,7 +712,7 @@ function PregnancyInsightsContent() {
         onPress={() => router.push('/grandma-talk')}
         style={[ci.askBar, { backgroundColor: brand.pregnancy, bottom: insets.bottom + 8 }]}
       >
-        <Text style={ci.askBarEmoji}>👵</Text>
+        <Emoji size={22}>👵</Emoji>
         <Text style={[ci.askBarText, { color: '#FFFFFF' }]}>Ask Grandma anything</Text>
         <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
       </Pressable>

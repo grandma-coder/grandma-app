@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { X, ChevronRight, ArrowLeft } from 'lucide-react-native'
 import { useTheme, brand } from '../../../constants/theme'
+import { Emoji } from '../../ui/Emoji'
 import { getWeekDetail, PrepItem } from '../../../lib/weekDetailData'
 import { getWeekData } from '../../../lib/pregnancyData'
 
@@ -118,14 +119,15 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {/* Mini hero */}
                 <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.miniHero}>
-                  <Text style={styles.miniHeroEmoji}>{emoji}</Text>
+                  <Emoji style={styles.miniHeroEmoji}>{emoji}</Emoji>
                   <View style={styles.miniHeroText}>
                     <Text style={styles.miniHeroWeek}>Week {week}</Text>
                     <Text style={styles.miniHeroSub}>
                       {weekData.babySize} · {weekData.babyLength} · {weekData.babyWeight}
                     </Text>
                     <Text style={[styles.miniHeroTri, { color: brand.pregnancy }]}>
-                      {tri === 1 ? '🌱 First Trimester' : tri === 2 ? '🌙 Second Trimester' : '⭐ Third Trimester'}
+                      <Emoji>{tri === 1 ? '🌱' : tri === 2 ? '🌙' : '⭐'}</Emoji>
+                      {tri === 1 ? ' First Trimester' : tri === 2 ? ' Second Trimester' : ' Third Trimester'}
                     </Text>
                   </View>
                 </LinearGradient>
@@ -166,7 +168,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                           { backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 },
                         ]}
                       >
-                        <Text style={styles.prepIcon}>{item.icon}</Text>
+                        <Emoji style={styles.prepIcon}>{item.icon}</Emoji>
                         <View style={styles.prepBody}>
                           <Text style={[styles.prepTitle, { color: colors.text }]}>{item.title}</Text>
                           <Text style={[styles.prepSummary, { color: colors.textMuted }]}>{item.summary}</Text>
@@ -180,7 +182,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                 {/* Grandma's tip */}
                 <View style={styles.section}>
                   <View style={[styles.grandmaTip, { backgroundColor: colors.surfaceGlass, borderColor: 'rgba(185,131,255,0.2)' }]}>
-                    <Text style={styles.grandmaEmoji}>👵</Text>
+                    <Emoji style={styles.grandmaEmoji}>👵</Emoji>
                     <Text style={[styles.grandmaTipText, { color: colors.textSecondary }]}>
                       "{detail.grandmaTip}"
                     </Text>

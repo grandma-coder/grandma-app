@@ -24,11 +24,9 @@ import {
 } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
 import {
-  ArrowLeft,
   Phone,
   Mail,
   User,
-  Heart,
   Shield,
   Plus,
   Trash2,
@@ -39,12 +37,23 @@ import {
   Building2,
   CreditCard,
   FileText,
-  Users,
   Camera,
   ImageIcon,
 } from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { PillButton } from '../../components/ui/PillButton'
+import { BrandedLoader } from '../../components/ui/BrandedLoader'
+import { Display, MonoCaps, Body } from '../../components/ui/Typography'
+import { useSavedToast } from '../../components/ui/SavedToast'
+import {
+  Cross as CrossSticker,
+  Heart as HeartSticker,
+  Squishy,
+  Star as StarSticker,
+} from '../../components/ui/Stickers'
 
 /** Neon orange — insurance accent per design system */
 const INSURANCE_ORANGE = '#FF6B35'
@@ -93,8 +102,11 @@ function planTypeLabel(t: InsurancePlanType): string {
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export default function EmergencyInsuranceScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark, radius } = useTheme()
   const insets = useSafeAreaInsets()
+  const toast = useSavedToast()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
 
   const store = useEmergencyInsuranceStore()
   const [loading, setLoading] = useState(true)
@@ -201,19 +213,13 @@ export default function EmergencyInsuranceScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} style={styles.headerBtn}>
-          <ArrowLeft size={24} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          Emergency & Insurance
-        </Text>
-        <View style={styles.headerBtn} />
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+        <ScreenHeader title="Emergency & Insurance" />
       </View>
 
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <BrandedLoader />
         </View>
       ) : (
         <ScrollView
@@ -222,13 +228,11 @@ export default function EmergencyInsuranceScreen() {
         >
           {/* ── Emergency Contacts Section ───────────────────────────── */}
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-              EMERGENCY CONTACTS
-            </Text>
+            <MonoCaps color={colors.textMuted}>Emergency Contacts</MonoCaps>
             <Pressable onPress={openAddContact} hitSlop={8}>
-              <View style={[styles.addPill, { backgroundColor: colors.primaryTint, borderRadius: radius.full }]}>
-                <Plus size={14} color={colors.primary} strokeWidth={3} />
-                <Text style={[styles.addPillText, { color: colors.primary }]}>Add</Text>
+              <View style={[styles.addPill, { backgroundColor: stickers.coral + (isDark ? '32' : '32') }]}>
+                <Plus size={14} color={isDark ? stickers.coral : '#B43E2E'} strokeWidth={3} />
+                <Text style={[styles.addPillText, { color: isDark ? stickers.coral : '#B43E2E', fontFamily: font.bodySemiBold }]}>Add</Text>
               </View>
             </Pressable>
           </View>
@@ -236,20 +240,18 @@ export default function EmergencyInsuranceScreen() {
           {store.contacts.length === 0 ? (
             <Pressable
               onPress={openAddContact}
-              style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.xl, borderColor: colors.border }]}
+              style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder }]}
             >
-              <View style={[styles.emptyIcon, { backgroundColor: brand.error + '15' }]}>
-                <Phone size={24} color={brand.error} strokeWidth={1.5} />
-              </View>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              <CrossSticker size={56} fill={stickers.coral} />
+              <Display size={20} align="center" color={colors.text}>
                 No emergency contacts yet
-              </Text>
-              <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
+              </Display>
+              <Body size={14} align="center" color={colors.textMuted}>
                 Add people to call in case of an emergency. Grandma wants you safe.
-              </Text>
+              </Body>
             </Pressable>
           ) : (
-            <View style={[styles.cardGroup, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+            <View style={[styles.cardGroup, { backgroundColor: paper, borderColor: paperBorder }]}>
               {store.contacts.map((contact, idx) => (
                 <Pressable
                   key={contact.id}
@@ -262,25 +264,25 @@ export default function EmergencyInsuranceScreen() {
                     },
                   ]}
                 >
-                  <View style={[styles.contactAvatar, { backgroundColor: brand.error + '15' }]}>
-                    <User size={18} color={brand.error} strokeWidth={2} />
+                  <View style={[styles.contactAvatar, { backgroundColor: stickers.coral + (isDark ? '32' : '40') }]}>
+                    <CrossSticker size={20} fill={stickers.coral} />
                   </View>
                   <View style={styles.contactInfo}>
                     <View style={styles.contactNameRow}>
-                      <Text style={[styles.contactName, { color: colors.text }]}>
+                      <Text style={[styles.contactName, { color: colors.text, fontFamily: font.display }]}>
                         {contact.name}
                       </Text>
                       {contact.isPrimary && (
-                        <View style={[styles.primaryBadge, { backgroundColor: brand.accent + '20', borderRadius: radius.full }]}>
-                          <Star size={10} color={brand.accent} strokeWidth={2.5} fill={brand.accent} />
-                          <Text style={[styles.primaryText, { color: brand.accent }]}>Primary</Text>
+                        <View style={[styles.primaryBadge, { backgroundColor: stickers.yellow + (isDark ? '32' : '50') }]}>
+                          <Star size={10} color={isDark ? '#F0CE4C' : '#7C5E0F'} strokeWidth={2.5} fill={isDark ? '#F0CE4C' : '#7C5E0F'} />
+                          <Text style={[styles.primaryText, { color: isDark ? '#F0CE4C' : '#7C5E0F', fontFamily: font.bodySemiBold }]}>Primary</Text>
                         </View>
                       )}
                     </View>
-                    <Text style={[styles.contactMeta, { color: colors.textSecondary }]}>
+                    <Text style={[styles.contactMeta, { color: colors.textSecondary, fontFamily: font.body }]}>
                       {relationshipLabel(contact.relationship)}
                     </Text>
-                    <Text style={[styles.contactPhone, { color: colors.primary }]}>
+                    <Text style={[styles.contactPhone, { color: colors.text, fontFamily: font.bodySemiBold }]}>
                       {contact.phone}
                     </Text>
                   </View>
@@ -294,13 +296,11 @@ export default function EmergencyInsuranceScreen() {
 
           {/* ── Insurance Plans Section ──────────────────────────────── */}
           <View style={[styles.sectionHeader, { marginTop: 28 }]}>
-            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-              INSURANCE PLANS
-            </Text>
+            <MonoCaps color={colors.textMuted}>Insurance Plans</MonoCaps>
             <Pressable onPress={openAddPlan} hitSlop={8}>
-              <View style={[styles.addPill, { backgroundColor: INSURANCE_ORANGE + '15', borderRadius: radius.full }]}>
-                <Plus size={14} color={INSURANCE_ORANGE} strokeWidth={3} />
-                <Text style={[styles.addPillText, { color: INSURANCE_ORANGE }]}>Add</Text>
+              <View style={[styles.addPill, { backgroundColor: stickers.peach + (isDark ? '32' : '40') }]}>
+                <Plus size={14} color={isDark ? stickers.peach : '#A6532A'} strokeWidth={3} />
+                <Text style={[styles.addPillText, { color: isDark ? stickers.peach : '#A6532A', fontFamily: font.bodySemiBold }]}>Add</Text>
               </View>
             </Pressable>
           </View>
@@ -308,17 +308,15 @@ export default function EmergencyInsuranceScreen() {
           {store.plans.length === 0 ? (
             <Pressable
               onPress={openAddPlan}
-              style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.xl, borderColor: colors.border }]}
+              style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder }]}
             >
-              <View style={[styles.emptyIcon, { backgroundColor: INSURANCE_ORANGE + '15' }]}>
-                <CreditCard size={24} color={INSURANCE_ORANGE} strokeWidth={1.5} />
-              </View>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              <Squishy w={64} h={42} fill={stickers.peach} />
+              <Display size={20} align="center" color={colors.text}>
                 No insurance plans yet
-              </Text>
-              <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
+              </Display>
+              <Body size={14} align="center" color={colors.textMuted}>
                 Keep your health, dental, and vision plans handy in one place.
-              </Text>
+              </Body>
             </Pressable>
           ) : (
             <View style={styles.planCards}>
@@ -326,18 +324,18 @@ export default function EmergencyInsuranceScreen() {
                 <Pressable
                   key={plan.id}
                   onPress={() => openEditPlan(plan)}
-                  style={[styles.planCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
+                  style={[styles.planCard, { backgroundColor: paper, borderColor: paperBorder }]}
                 >
                   <View style={styles.planHeader}>
-                    <View style={[styles.planTypeIcon, { backgroundColor: INSURANCE_ORANGE + '15' }]}>
-                      <Building2 size={18} color={INSURANCE_ORANGE} strokeWidth={2} />
+                    <View style={[styles.planTypeIcon, { backgroundColor: stickers.peach + (isDark ? '32' : '40') }]}>
+                      <Building2 size={18} color={isDark ? stickers.peach : '#A6532A'} strokeWidth={2} />
                     </View>
                     <View style={styles.planHeaderText}>
-                      <Text style={[styles.planProvider, { color: colors.text }]}>
+                      <Text style={[styles.planProvider, { color: colors.text, fontFamily: font.display }]}>
                         {plan.providerName}
                       </Text>
-                      <View style={[styles.planTypeBadge, { backgroundColor: INSURANCE_ORANGE + '15', borderRadius: radius.full }]}>
-                        <Text style={[styles.planTypeText, { color: INSURANCE_ORANGE }]}>
+                      <View style={[styles.planTypeBadge, { backgroundColor: stickers.peach + (isDark ? '32' : '40') }]}>
+                        <Text style={[styles.planTypeText, { color: isDark ? stickers.peach : '#A6532A', fontFamily: font.bodySemiBold }]}>
                           {planTypeLabel(plan.planType)}
                         </Text>
                       </View>
@@ -350,19 +348,19 @@ export default function EmergencyInsuranceScreen() {
                   {/* Plan details */}
                   <View style={styles.planDetails}>
                     {plan.planName && (
-                      <PlanField label="Plan" value={plan.planName} colors={colors} />
+                      <PlanField label="Plan" value={plan.planName} />
                     )}
                     {plan.policyNumber && (
-                      <PlanField label="Policy #" value={plan.policyNumber} colors={colors} />
+                      <PlanField label="Policy #" value={plan.policyNumber} />
                     )}
                     {plan.groupNumber && (
-                      <PlanField label="Group #" value={plan.groupNumber} colors={colors} />
+                      <PlanField label="Group #" value={plan.groupNumber} />
                     )}
                     {plan.memberId && (
-                      <PlanField label="Member ID" value={plan.memberId} colors={colors} />
+                      <PlanField label="Member ID" value={plan.memberId} />
                     )}
                     {plan.phone && (
-                      <PlanField label="Phone" value={plan.phone} colors={colors} />
+                      <PlanField label="Phone" value={plan.phone} />
                     )}
                   </View>
                 </Pressable>
@@ -416,11 +414,12 @@ export default function EmergencyInsuranceScreen() {
 
 // ─── Plan Field ─────────────────────────────────────────────────────────────
 
-function PlanField({ label, value, colors }: { label: string; value: string; colors: any }) {
+function PlanField({ label, value }: { label: string; value: string }) {
+  const { colors, font } = useTheme()
   return (
     <View style={styles.planField}>
-      <Text style={[styles.planFieldLabel, { color: colors.textMuted }]}>{label}</Text>
-      <Text style={[styles.planFieldValue, { color: colors.text }]}>{value}</Text>
+      <MonoCaps color={colors.textMuted}>{label}</MonoCaps>
+      <Text style={[styles.planFieldValue, { color: colors.text, fontFamily: font.bodyMedium }]}>{value}</Text>
     </View>
   )
 }
@@ -446,8 +445,10 @@ function ContactFormModal({
     notes?: string | null
   }) => Promise<void>
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark } = useTheme()
   const insets = useSafeAreaInsets()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
   const isEdit = !!contact
 
   const [name, setName] = useState('')
@@ -517,13 +518,15 @@ function ContactFormModal({
       >
         {/* Modal header */}
         <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
-          <Pressable onPress={onClose} style={styles.headerBtn}>
-            <X size={24} color={colors.textMuted} />
+          <Pressable onPress={onClose} hitSlop={10}>
+            <View style={[styles.modalHeaderBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <Ionicons name="close" size={20} color={colors.text} />
+            </View>
           </Pressable>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
+          <Display size={20} color={colors.text}>
             {isEdit ? 'Edit Contact' : 'Add Contact'}
-          </Text>
-          <View style={styles.headerBtn} />
+          </Display>
+          <View style={styles.modalHeaderBtn} />
         </View>
 
         <ScrollView
@@ -531,44 +534,42 @@ function ContactFormModal({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Name */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>NAME</Text>
-          <View style={[styles.inputRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}>
+          <MonoCaps color={colors.textMuted}>Name</MonoCaps>
+          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <User size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={name}
               onChangeText={setName}
               placeholder="Contact name"
               placeholderTextColor={colors.textMuted}
-              style={[styles.inputText, { color: colors.text }]}
+              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
               autoCapitalize="words"
             />
           </View>
 
-          {/* Relationship */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>RELATIONSHIP</Text>
+          <MonoCaps color={colors.textMuted}>Relationship</MonoCaps>
           <Pressable
             onPress={() => setShowRelPicker(!showRelPicker)}
-            style={[styles.inputRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}
+            style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}
           >
-            <Users size={18} color={colors.textMuted} strokeWidth={2} />
-            <Text style={[styles.inputText, { color: colors.text, flex: 1 }]}>
+            <Ionicons name="people-outline" size={18} color={colors.textMuted} />
+            <Text style={[styles.inputText, { color: colors.text, flex: 1, fontFamily: font.body }]}>
               {relationshipLabel(relationship)}
             </Text>
             <ChevronDown size={18} color={colors.textMuted} />
           </Pressable>
           {showRelPicker && (
-            <View style={[styles.pickerList, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
+            <View style={[styles.pickerList, { backgroundColor: paper, borderColor: paperBorder }]}>
               {RELATIONSHIPS.map((rel) => (
                 <Pressable
                   key={rel.id}
                   onPress={() => { setRelationship(rel.id); setShowRelPicker(false) }}
                   style={[
                     styles.pickerItem,
-                    relationship === rel.id && { backgroundColor: colors.primaryTint },
+                    relationship === rel.id && { backgroundColor: colors.surfaceRaised },
                   ]}
                 >
-                  <Text style={[styles.pickerItemText, { color: relationship === rel.id ? colors.primary : colors.text }]}>
+                  <Text style={[styles.pickerItemText, { color: colors.text, fontFamily: relationship === rel.id ? font.bodySemiBold : font.body }]}>
                     {rel.label}
                   </Text>
                 </Pressable>
@@ -576,9 +577,8 @@ function ContactFormModal({
             </View>
           )}
 
-          {/* Phone */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>PHONE</Text>
-          <View style={[styles.inputRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}>
+          <MonoCaps color={colors.textMuted}>Phone</MonoCaps>
+          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Phone size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={phone}
@@ -586,13 +586,12 @@ function ContactFormModal({
               placeholder="Phone number"
               placeholderTextColor={colors.textMuted}
               keyboardType="phone-pad"
-              style={[styles.inputText, { color: colors.text }]}
+              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
             />
           </View>
 
-          {/* Email (optional) */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>EMAIL (OPTIONAL)</Text>
-          <View style={[styles.inputRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}>
+          <MonoCaps color={colors.textMuted}>Email (optional)</MonoCaps>
+          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Mail size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={email}
@@ -601,69 +600,54 @@ function ContactFormModal({
               placeholderTextColor={colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
-              style={[styles.inputText, { color: colors.text }]}
+              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
             />
           </View>
 
-          {/* Primary toggle */}
           <Pressable
             onPress={() => setIsPrimary(!isPrimary)}
-            style={[styles.toggleRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}
+            style={[styles.toggleRow, { backgroundColor: paper, borderColor: paperBorder }]}
           >
             <Star
               size={18}
-              color={isPrimary ? brand.accent : colors.textMuted}
+              color={isPrimary ? (isDark ? '#F0CE4C' : '#7C5E0F') : colors.textMuted}
               strokeWidth={2}
-              fill={isPrimary ? brand.accent : 'transparent'}
+              fill={isPrimary ? (isDark ? '#F0CE4C' : '#7C5E0F') : 'transparent'}
             />
-            <Text style={[styles.toggleLabel, { color: colors.text }]}>Primary contact</Text>
+            <Text style={[styles.toggleLabel, { color: colors.text, fontFamily: font.bodyMedium }]}>Primary contact</Text>
             <View
               style={[
                 styles.toggleDot,
                 {
-                  backgroundColor: isPrimary ? colors.primary : colors.border,
-                  borderRadius: radius.full,
+                  backgroundColor: isPrimary ? colors.text : colors.borderLight,
                 },
               ]}
             >
-              {isPrimary && <View style={[styles.toggleDotInner, { backgroundColor: '#FFFFFF' }]} />}
+              {isPrimary && <View style={[styles.toggleDotInner, { backgroundColor: colors.bg }]} />}
             </View>
           </Pressable>
 
-          {/* Notes (optional) */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>NOTES (OPTIONAL)</Text>
-          <View style={[styles.inputRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border, minHeight: 80, alignItems: 'flex-start', paddingTop: 14 }]}>
+          <MonoCaps color={colors.textMuted}>Notes (optional)</MonoCaps>
+          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder, minHeight: 96, alignItems: 'flex-start', paddingTop: 16 }]}>
             <TextInput
               value={notes}
               onChangeText={setNotes}
-              placeholder="Any notes..."
+              placeholder="Any notes…"
               placeholderTextColor={colors.textMuted}
               multiline
-              style={[styles.inputText, { color: colors.text, textAlignVertical: 'top' }]}
+              style={[styles.inputText, { color: colors.text, textAlignVertical: 'top', fontFamily: font.body }]}
             />
           </View>
         </ScrollView>
 
-        {/* Save button */}
         <View style={[styles.modalBottom, { paddingBottom: insets.bottom + 16 }]}>
-          <Pressable
+          <PillButton
+            label={saving ? 'Saving…' : (isEdit ? 'Save Changes' : 'Add Contact')}
+            variant="ink"
             onPress={handleSave}
             disabled={saving}
-            style={({ pressed }) => [
-              styles.saveBtn,
-              { backgroundColor: colors.primary, borderRadius: radius.lg },
-              pressed && { transform: [{ scale: 0.98 }] },
-              saving && { opacity: 0.6 },
-            ]}
-          >
-            {saving ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.saveBtnText}>
-                {isEdit ? 'Save Changes' : 'Add Contact'}
-              </Text>
-            )}
-          </Pressable>
+            leading={<Ionicons name={isEdit ? 'checkmark-circle' : 'add'} size={18} color={colors.bg} />}
+          />
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -693,8 +677,13 @@ function PlanFormModal({
     notes?: string | null
   }) => Promise<void>
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, font, stickers, isDark } = useTheme()
   const insets = useSafeAreaInsets()
+  const toast = useSavedToast()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const accent = isDark ? stickers.peach : '#A6532A'
+  const accentBg = stickers.peach + (isDark ? '32' : '40')
   const isEdit = !!plan
 
   const [planType, setPlanType] = useState<InsurancePlanType>('health')
@@ -737,7 +726,7 @@ function PlanFormModal({
       const data = await pickAndScanInsuranceCard(useCamera)
       if (data) {
         applyScannedData(data)
-        Alert.alert('Card scanned', 'Fields have been filled in. Please review and adjust if needed.')
+        toast.show({ title: 'Card Scanned', message: 'Fields have been filled in. Please review and adjust if needed.' })
       }
     } catch (e: any) {
       Alert.alert('Scan failed', e.message)
@@ -780,13 +769,15 @@ function PlanFormModal({
       >
         {/* Modal header */}
         <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
-          <Pressable onPress={onClose} style={styles.headerBtn}>
-            <X size={24} color={colors.textMuted} />
+          <Pressable onPress={onClose} hitSlop={10}>
+            <View style={[styles.modalHeaderBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <Ionicons name="close" size={20} color={colors.text} />
+            </View>
           </Pressable>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
+          <Display size={20} color={colors.text}>
             {isEdit ? 'Edit Plan' : 'Add Insurance Plan'}
-          </Text>
-          <View style={styles.headerBtn} />
+          </Display>
+          <View style={styles.modalHeaderBtn} />
         </View>
 
         <ScrollView
@@ -795,14 +786,14 @@ function PlanFormModal({
           keyboardShouldPersistTaps="handled"
         >
           {/* Scan card banner */}
-          <View style={[styles.scanBanner, { backgroundColor: INSURANCE_ORANGE + '10', borderColor: INSURANCE_ORANGE + '30', borderRadius: radius.xl }]}>
+          <View style={[styles.scanBanner, { backgroundColor: accentBg, borderColor: accent + '50' }]}>
             <View style={styles.scanBannerContent}>
-              <CreditCard size={20} color={INSURANCE_ORANGE} strokeWidth={2} />
+              <CreditCard size={20} color={accent} strokeWidth={2} />
               <View style={styles.scanBannerText}>
-                <Text style={[styles.scanBannerTitle, { color: colors.text }]}>
+                <Text style={[styles.scanBannerTitle, { color: colors.text, fontFamily: font.display }]}>
                   Scan your card
                 </Text>
-                <Text style={[styles.scanBannerSubtitle, { color: colors.textSecondary }]}>
+                <Text style={[styles.scanBannerSubtitle, { color: colors.textSecondary, fontFamily: font.body }]}>
                   Take a photo or upload and auto-fill all fields
                 </Text>
               </View>
@@ -813,40 +804,39 @@ function PlanFormModal({
                 disabled={scanning}
                 style={({ pressed }) => [
                   styles.scanBtn,
-                  { backgroundColor: INSURANCE_ORANGE, borderRadius: radius.lg },
+                  { backgroundColor: accent },
                   pressed && { opacity: 0.85 },
                   scanning && { opacity: 0.5 },
                 ]}
               >
-                <Camera size={16} color="#FFFFFF" strokeWidth={2.5} />
-                <Text style={styles.scanBtnText}>Camera</Text>
+                <Camera size={16} color={isDark ? '#1A1713' : '#FFFEF8'} strokeWidth={2.5} />
+                <Text style={[styles.scanBtnText, { color: isDark ? '#1A1713' : '#FFFEF8', fontFamily: font.bodySemiBold }]}>Camera</Text>
               </Pressable>
               <Pressable
                 onPress={() => handleScanCard(false)}
                 disabled={scanning}
                 style={({ pressed }) => [
                   styles.scanBtn,
-                  { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: INSURANCE_ORANGE + '40' },
+                  { backgroundColor: paper, borderWidth: 1, borderColor: accent + '50' },
                   pressed && { opacity: 0.85 },
                   scanning && { opacity: 0.5 },
                 ]}
               >
-                <ImageIcon size={16} color={INSURANCE_ORANGE} strokeWidth={2.5} />
-                <Text style={[styles.scanBtnText, { color: INSURANCE_ORANGE }]}>Gallery</Text>
+                <ImageIcon size={16} color={accent} strokeWidth={2.5} />
+                <Text style={[styles.scanBtnText, { color: accent, fontFamily: font.bodySemiBold }]}>Gallery</Text>
               </Pressable>
             </View>
             {scanning && (
               <View style={styles.scanningRow}>
-                <ActivityIndicator size="small" color={INSURANCE_ORANGE} />
-                <Text style={[styles.scanningText, { color: colors.textSecondary }]}>
-                  Reading your card...
+                <ActivityIndicator size="small" color={accent} />
+                <Text style={[styles.scanningText, { color: colors.textSecondary, fontFamily: font.body }]}>
+                  Reading your card…
                 </Text>
               </View>
             )}
           </View>
 
-          {/* Plan type chips */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>TYPE</Text>
+          <MonoCaps color={colors.textMuted}>Type</MonoCaps>
           <View style={styles.chipRow}>
             {PLAN_TYPES.map((t) => {
               const active = planType === t.id
@@ -857,13 +847,12 @@ function PlanFormModal({
                   style={[
                     styles.typeChip,
                     {
-                      backgroundColor: active ? INSURANCE_ORANGE + '20' : colors.surface,
-                      borderColor: active ? INSURANCE_ORANGE : colors.border,
-                      borderRadius: radius.full,
+                      backgroundColor: active ? accentBg : paper,
+                      borderColor: active ? accent : paperBorder,
                     },
                   ]}
                 >
-                  <Text style={[styles.typeChipText, { color: active ? INSURANCE_ORANGE : colors.text }]}>
+                  <Text style={[styles.typeChipText, { color: active ? accent : colors.text, fontFamily: active ? font.bodySemiBold : font.bodyMedium }]}>
                     {t.label}
                   </Text>
                 </Pressable>
@@ -871,77 +860,72 @@ function PlanFormModal({
             })}
           </View>
 
-          {/* Provider name */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>PROVIDER</Text>
-          <View style={[styles.inputRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}>
+          <MonoCaps color={colors.textMuted}>Provider</MonoCaps>
+          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Building2 size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={providerName}
               onChangeText={setProviderName}
               placeholder="e.g. Blue Cross Blue Shield"
               placeholderTextColor={colors.textMuted}
-              style={[styles.inputText, { color: colors.text }]}
+              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
               autoCapitalize="words"
             />
           </View>
 
-          {/* Plan name */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>PLAN NAME (OPTIONAL)</Text>
-          <View style={[styles.inputRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}>
+          <MonoCaps color={colors.textMuted}>Plan name (optional)</MonoCaps>
+          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <FileText size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={planName}
               onChangeText={setPlanName}
               placeholder="e.g. PPO Gold Family"
               placeholderTextColor={colors.textMuted}
-              style={[styles.inputText, { color: colors.text }]}
+              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
             />
           </View>
 
-          {/* Policy number */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>POLICY NUMBER</Text>
-          <View style={[styles.inputRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}>
+          <MonoCaps color={colors.textMuted}>Policy number</MonoCaps>
+          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <CreditCard size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={policyNumber}
               onChangeText={setPolicyNumber}
               placeholder="Policy number"
               placeholderTextColor={colors.textMuted}
-              style={[styles.inputText, { color: colors.text }]}
+              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
             />
           </View>
 
-          {/* Group number + Member ID in a row */}
           <View style={styles.twoCol}>
             <View style={styles.twoColItem}>
-              <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>GROUP #</Text>
-              <View style={[styles.inputRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}>
+              <MonoCaps color={colors.textMuted}>Group #</MonoCaps>
+              <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
                 <TextInput
                   value={groupNumber}
                   onChangeText={setGroupNumber}
                   placeholder="Group #"
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.inputText, { color: colors.text }]}
+                  style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
                 />
               </View>
             </View>
             <View style={styles.twoColItem}>
-              <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>MEMBER ID</Text>
-              <View style={[styles.inputRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}>
+              <MonoCaps color={colors.textMuted}>Member ID</MonoCaps>
+              <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
                 <TextInput
                   value={memberId}
                   onChangeText={setMemberId}
                   placeholder="Member ID"
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.inputText, { color: colors.text }]}
+                  style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
                 />
               </View>
             </View>
           </View>
 
-          {/* Insurance phone */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>INSURANCE PHONE</Text>
-          <View style={[styles.inputRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}>
+          <MonoCaps color={colors.textMuted}>Insurance phone</MonoCaps>
+          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Phone size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={phone}
@@ -949,44 +933,31 @@ function PlanFormModal({
               placeholder="Customer service number"
               placeholderTextColor={colors.textMuted}
               keyboardType="phone-pad"
-              style={[styles.inputText, { color: colors.text }]}
+              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
             />
           </View>
 
-          {/* Notes */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>NOTES (OPTIONAL)</Text>
-          <View style={[styles.inputRow, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border, minHeight: 80, alignItems: 'flex-start', paddingTop: 14 }]}>
+          <MonoCaps color={colors.textMuted}>Notes (optional)</MonoCaps>
+          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder, minHeight: 96, alignItems: 'flex-start', paddingTop: 16 }]}>
             <TextInput
               value={notes}
               onChangeText={setNotes}
               placeholder="Coverage details, co-pays, etc."
               placeholderTextColor={colors.textMuted}
               multiline
-              style={[styles.inputText, { color: colors.text, textAlignVertical: 'top' }]}
+              style={[styles.inputText, { color: colors.text, textAlignVertical: 'top', fontFamily: font.body }]}
             />
           </View>
         </ScrollView>
 
-        {/* Save button */}
         <View style={[styles.modalBottom, { paddingBottom: insets.bottom + 16 }]}>
-          <Pressable
+          <PillButton
+            label={saving ? 'Saving…' : (isEdit ? 'Save Changes' : 'Add Plan')}
+            variant="ink"
             onPress={handleSave}
             disabled={saving}
-            style={({ pressed }) => [
-              styles.saveBtn,
-              { backgroundColor: INSURANCE_ORANGE, borderRadius: radius.lg },
-              pressed && { transform: [{ scale: 0.98 }] },
-              saving && { opacity: 0.6 },
-            ]}
-          >
-            {saving ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.saveBtnText}>
-                {isEdit ? 'Save Changes' : 'Add Plan'}
-              </Text>
-            )}
-          </Pressable>
+            leading={<Ionicons name={isEdit ? 'checkmark-circle' : 'add'} size={18} color={colors.bg} />}
+          />
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -998,13 +969,23 @@ function PlanFormModal({
 const styles = StyleSheet.create({
   root: { flex: 1 },
 
-  // Header
+  headerWrap: { paddingHorizontal: 16, paddingBottom: 6 },
+
+  // Legacy header (unused — kept harmless)
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingBottom: 12,
+  },
+  modalHeaderBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerBtn: { width: 40, alignItems: 'center' },
   headerTitle: { fontSize: 18, fontWeight: '700' },
@@ -1019,86 +1000,79 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 20,
-    marginBottom: 10,
+    marginBottom: 12,
     paddingLeft: 4,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
   },
   addPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    gap: 5,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 999,
   },
-  addPillText: { fontSize: 13, fontWeight: '700' },
+  addPillText: { fontSize: 13 },
 
   // Empty state
   emptyCard: {
     alignItems: 'center',
     padding: 32,
-    gap: 10,
+    gap: 12,
     borderWidth: 1,
     borderStyle: 'dashed',
-  },
-  emptyIcon: {
-    width: 56,
-    height: 56,
     borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
   },
-  emptyTitle: { fontSize: 16, fontWeight: '700' },
-  emptySubtitle: { fontSize: 13, fontWeight: '500', textAlign: 'center', lineHeight: 18 },
 
   // Contact list
   cardGroup: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    borderRadius: 28,
+    borderWidth: 1,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.06,
-    shadowRadius: 8,
+    shadowRadius: 12,
     elevation: 2,
+    overflow: 'hidden',
   },
   contactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
     gap: 12,
   },
   contactAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  contactInfo: { flex: 1, gap: 2 },
+  contactInfo: { flex: 1, gap: 3 },
   contactNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  contactName: { fontSize: 15, fontWeight: '700' },
+  contactName: { fontSize: 16, letterSpacing: -0.2 },
   primaryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
     paddingVertical: 2,
     paddingHorizontal: 8,
+    borderRadius: 999,
   },
-  primaryText: { fontSize: 10, fontWeight: '700' },
-  contactMeta: { fontSize: 13, fontWeight: '500' },
-  contactPhone: { fontSize: 13, fontWeight: '600' },
+  primaryText: { fontSize: 10 },
+  contactMeta: { fontSize: 13 },
+  contactPhone: { fontSize: 13 },
 
   // Plan cards
   planCards: { gap: 12 },
   planCard: {
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    padding: 18,
+    borderRadius: 28,
+    borderWidth: 1,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.06,
-    shadowRadius: 8,
+    shadowRadius: 12,
     elevation: 2,
   },
   planHeader: {
@@ -1108,20 +1082,19 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   planTypeIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 42,
+    height: 42,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
   planHeaderText: { flex: 1, gap: 4 },
-  planProvider: { fontSize: 16, fontWeight: '700' },
-  planTypeBadge: { alignSelf: 'flex-start', paddingVertical: 2, paddingHorizontal: 10 },
-  planTypeText: { fontSize: 11, fontWeight: '700' },
+  planProvider: { fontSize: 17 },
+  planTypeBadge: { alignSelf: 'flex-start', paddingVertical: 3, paddingHorizontal: 10, borderRadius: 999 },
+  planTypeText: { fontSize: 11 },
   planDetails: { gap: 8 },
   planField: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  planFieldLabel: { fontSize: 13, fontWeight: '500' },
-  planFieldValue: { fontSize: 13, fontWeight: '600' },
+  planFieldValue: { fontSize: 13 },
 
   // Modal
   modalRoot: { flex: 1 },
@@ -1130,20 +1103,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 16,
   },
-  modalScroll: { paddingHorizontal: 20, paddingBottom: 20 },
-  modalBottom: { paddingHorizontal: 20 },
+  modalScroll: { paddingHorizontal: 20, paddingBottom: 20, gap: 8 },
+  modalBottom: { paddingHorizontal: 20, paddingTop: 8 },
 
-  // Form fields
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginTop: 16,
-    marginBottom: 6,
-    paddingLeft: 4,
-  },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1151,15 +1115,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1,
+    borderRadius: 22,
+    marginBottom: 4,
   },
-  inputText: { flex: 1, fontSize: 15, fontWeight: '500' },
+  inputText: { flex: 1, fontSize: 15 },
 
-  // Relationship picker
-  pickerList: { marginTop: 4, overflow: 'hidden' },
+  pickerList: { marginTop: 4, overflow: 'hidden', borderWidth: 1, borderRadius: 22 },
   pickerItem: { paddingVertical: 12, paddingHorizontal: 16 },
-  pickerItemText: { fontSize: 15, fontWeight: '500' },
+  pickerItemText: { fontSize: 15 },
 
-  // Toggle
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1167,33 +1131,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1,
+    borderRadius: 22,
     marginTop: 16,
   },
-  toggleLabel: { flex: 1, fontSize: 15, fontWeight: '600' },
+  toggleLabel: { flex: 1, fontSize: 15 },
   toggleDot: {
     width: 24,
     height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   toggleDotInner: { width: 10, height: 10, borderRadius: 5 },
 
-  // Chips
-  chipRow: { flexDirection: 'row', gap: 10 },
+  chipRow: { flexDirection: 'row', gap: 10, marginBottom: 8 },
   typeChip: {
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
     borderWidth: 1,
+    borderRadius: 999,
   },
-  typeChipText: { fontSize: 14, fontWeight: '700' },
+  typeChipText: { fontSize: 14 },
 
-  // Scan banner
   scanBanner: {
     padding: 16,
     borderWidth: 1,
-    marginBottom: 4,
+    marginBottom: 8,
     gap: 14,
+    borderRadius: 22,
   },
   scanBannerContent: {
     flexDirection: 'row',
@@ -1201,8 +1167,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   scanBannerText: { flex: 1, gap: 2 },
-  scanBannerTitle: { fontSize: 15, fontWeight: '700' },
-  scanBannerSubtitle: { fontSize: 12, fontWeight: '500' },
+  scanBannerTitle: { fontSize: 17 },
+  scanBannerSubtitle: { fontSize: 12 },
   scanBannerButtons: {
     flexDirection: 'row',
     gap: 10,
@@ -1213,35 +1179,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 10,
+    paddingVertical: 12,
+    borderRadius: 999,
   },
-  scanBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
+  scanBtnText: { fontSize: 13 },
   scanningRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  scanningText: { fontSize: 13, fontWeight: '500' },
+  scanningText: { fontSize: 13 },
 
-  // Two columns
   twoCol: { flexDirection: 'row', gap: 12 },
   twoColItem: { flex: 1 },
-
-  // Save button
-  saveBtn: {
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
 })
