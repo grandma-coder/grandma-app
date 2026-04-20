@@ -136,3 +136,57 @@ export function useRegularity() {
 
   return { ...rest, data: { percent, deviations } satisfies Regularity }
 }
+
+// ─── PMS Stats ────────────────────────────────────────────────────────────
+
+export interface PMSStats {
+  avgDays: number | null
+  topSymptoms: Array<{ name: string; count: number }>
+}
+
+function computePMSStats(logs: CycleLogRow[], history: CycleHistory): PMSStats {
+  const symptomLogs = logs.filter((l) => l.type === 'symptom')
+
+  // Top symptoms — split comma-separated values (SymptomsForm saves them joined)
+  const counts = new Map<string, number>()
+  for (const log of symptomLogs) {
+    if (!log.value) continue
+    for (const raw of log.value.split(',')) {
+      const name = raw.trim()
+      if (!name) continue
+      counts.set(name, (counts.get(name) ?? 0) + 1)
+    }
+  }
+  const topSymptoms = [...counts.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+
+  // Avg PMS days: for each closed cycle, count distinct dates with a symptom log
+  // in the last 7 days of the cycle.
+  const closedCycles = history.cycles.filter((c) => c.lengthDays !== null && c.endDate !== null)
+  if (closedCycles.length === 0) return { avgDays: null, topSymptoms }
+
+  let totalPmsDays = 0
+  for (const cycle of closedCycles) {
+    const end = new Date(cycle.endDate as string + 'T00:00:00')
+    const pmsStart = new Date(end.getTime() - 6 * 86400000) // last 7 days inclusive
+    const pmsSet = new Set<string>()
+    for (const log of symptomLogs) {
+      const d = new Date(log.date + 'T00:00:00')
+      if (d >= pmsStart && d <= end) pmsSet.add(log.date)
+    }
+    totalPmsDays += pmsSet.size
+  }
+
+  const avgDays = Math.round((totalPmsDays / closedCycles.length) * 10) / 10
+
+  return { avgDays, topSymptoms }
+}
+
+export function usePMSStats() {
+  const { data: logs, ...rest } = useCycleLogs()
+  const { data: history } = useCycleHistory()
+  if (!logs || !history) return { ...rest, data: undefined }
+  return { ...rest, data: computePMSStats(logs, history) }
+}
