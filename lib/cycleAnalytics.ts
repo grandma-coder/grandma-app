@@ -239,3 +239,61 @@ export function useFertileWindow() {
 
   return { ...rest, data: { current, history: pastWindows } satisfies FertileWindow }
 }
+
+// ─── Mood Stats ───────────────────────────────────────────────────────────
+
+export type MoodId = 'great' | 'energetic' | 'good' | 'okay' | 'low'
+
+export interface MoodStats {
+  /** 0–5 scale. Display as `*2` for "out of 10" if UI needs it. */
+  avgScore: number | null
+  distribution: Array<{ mood: MoodId; count: number }>
+  recent: Array<{ mood: MoodId; date: string }>
+}
+
+const MOOD_SCORES: Record<MoodId, number> = {
+  great: 5,
+  energetic: 5,
+  good: 4,
+  okay: 3,
+  low: 2,
+}
+const MOOD_ORDER: MoodId[] = ['great', 'energetic', 'good', 'okay', 'low']
+
+export function useMoodStats() {
+  const { data: logs, ...rest } = useCycleLogs()
+  if (!logs) return { ...rest, data: undefined }
+
+  const moodLogs = logs.filter((l) => l.type === 'mood' && l.value)
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000)
+
+  const recent30 = moodLogs.filter((l) => new Date(l.date + 'T00:00:00') >= thirtyDaysAgo)
+
+  const validMoods = recent30
+    .map((l) => l.value as MoodId)
+    .filter((m): m is MoodId => m in MOOD_SCORES)
+
+  const avgScore =
+    validMoods.length > 0
+      ? Math.round((validMoods.reduce((a, m) => a + MOOD_SCORES[m], 0) / validMoods.length) * 10) / 10
+      : null
+
+  const counts = new Map<MoodId, number>()
+  MOOD_ORDER.forEach((m) => counts.set(m, 0))
+  for (const l of moodLogs) {
+    const m = l.value as MoodId
+    if (m in MOOD_SCORES) counts.set(m, (counts.get(m) ?? 0) + 1)
+  }
+  const distribution = MOOD_ORDER.map((mood) => ({ mood, count: counts.get(mood) ?? 0 }))
+
+  const recent = moodLogs
+    .slice(-7)
+    .reverse()
+    .map((l) => ({ mood: l.value as MoodId, date: l.date }))
+    .filter((r) => r.mood in MOOD_SCORES)
+
+  return {
+    ...rest,
+    data: { avgScore, distribution, recent } satisfies MoodStats,
+  }
+}
