@@ -9,8 +9,8 @@ import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-nat
 import { useTheme } from '../../constants/theme'
 import { LogSheet } from '../calendar/LogSheet'
 import { Body, Display } from '../ui/Typography'
-import { useCycleHistory, useRegularity, usePMSStats } from '../../lib/cycleAnalytics'
-import { Burst } from '../ui/Stickers'
+import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow } from '../../lib/cycleAnalytics'
+import { Burst, Flower } from '../ui/Stickers'
 import { MiniBarChart } from './shared/MiniCharts'
 
 export type CycleDetailType =
@@ -360,7 +360,78 @@ const pmsStyles = StyleSheet.create({
   },
 })
 
-function FertileDetail() { return <Loading /> }
+function FertileDetail() {
+  const { colors, stickers, font } = useTheme()
+  const { data, isLoading, error } = useFertileWindow()
+
+  if (isLoading) return <Loading />
+  if (error) return <ErrorState />
+  if (!data || !data.current) {
+    return <EmptyState copy="Log your last period to see your fertile window predictions." />
+  }
+
+  return (
+    <View style={{ gap: 18 }}>
+      <View style={[fertStyles.currentCard, { backgroundColor: stickers.pinkSoft, borderColor: colors.border }]}>
+        <View style={fertStyles.currentChip}>
+          <Flower size={40} petal={stickers.pink} center={stickers.yellow} />
+        </View>
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+            THIS CYCLE
+          </Text>
+          <Display size={22} color={colors.text}>
+            {formatShort(data.current.start)} – {formatShort(data.current.end)}
+          </Display>
+          <Body size={13} color={colors.textSecondary}>
+            {data.current.daysLeft > 0
+              ? `${data.current.daysLeft} day${data.current.daysLeft === 1 ? '' : 's'} left`
+              : 'Window closed'}
+          </Body>
+        </View>
+      </View>
+
+      {data.history.length > 0 && (
+        <View style={{ gap: 6 }}>
+          <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+            PAST WINDOWS
+          </Text>
+          {data.history.map((w) => (
+            <View
+              key={w.cycleIdx}
+              style={[detailStyles.historyRow, { borderColor: colors.borderLight }]}
+            >
+              <Body size={13} color={colors.text}>Cycle {w.cycleIdx}</Body>
+              <Body size={13} color={colors.textSecondary}>
+                {formatShort(w.start)} – {formatShort(w.end)}
+              </Body>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  )
+}
+
+const fertStyles = StyleSheet.create({
+  currentCard: {
+    flexDirection: 'row',
+    gap: 16,
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 22,
+    borderWidth: 1,
+  },
+  currentChip: {
+    width: 56,
+    height: 56,
+    borderRadius: 999,
+    backgroundColor: '#FFFEF8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+})
+
 function MoodDetail() { return <Loading /> }
 
 // ─── Shared UI helpers ────────────────────────────────────────────────────
