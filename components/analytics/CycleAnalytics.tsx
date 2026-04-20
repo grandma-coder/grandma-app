@@ -135,8 +135,12 @@ function formatFertile(current: { start: string; end: string } | null | undefine
   if (!current) return '—'
   const s = new Date(current.start + 'T00:00:00')
   const e = new Date(current.end + 'T00:00:00')
-  const month = s.toLocaleDateString('en-US', { month: 'short' })
-  return `${month} ${s.getDate()}–${e.getDate()}`
+  const sMonth = s.toLocaleDateString('en-US', { month: 'short' })
+  const eMonth = e.toLocaleDateString('en-US', { month: 'short' })
+  if (sMonth === eMonth) {
+    return `${sMonth} ${s.getDate()}–${e.getDate()}`
+  }
+  return `${sMonth} ${s.getDate()} – ${eMonth} ${e.getDate()}`
 }
 
 const styles = StyleSheet.create({
