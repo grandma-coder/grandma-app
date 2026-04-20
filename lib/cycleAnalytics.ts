@@ -36,7 +36,9 @@ export interface CycleLogRow {
 // ─── Fetch ────────────────────────────────────────────────────────────────
 
 async function fetchCycleLogs(): Promise<CycleLogRow[]> {
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError) throw sessionError
+  const session = sessionData.session
   if (!session) return []
 
   const { data, error } = await supabase
@@ -186,10 +188,18 @@ function computePMSStats(logs: CycleLogRow[], history: CycleHistory): PMSStats {
 }
 
 export function usePMSStats() {
-  const { data: logs, ...rest } = useCycleLogs()
-  const { data: history } = useCycleHistory()
-  if (!logs || !history) return { ...rest, data: undefined }
-  return { ...rest, data: computePMSStats(logs, history) }
+  const logsQuery = useCycleLogs()
+  const historyResult = useCycleHistory()
+  const isLoading = logsQuery.isLoading || historyResult.isLoading
+  const error = logsQuery.error ?? historyResult.error
+  if (!logsQuery.data || !historyResult.data) {
+    return { data: undefined, isLoading, error }
+  }
+  return {
+    data: computePMSStats(logsQuery.data, historyResult.data),
+    isLoading,
+    error,
+  }
 }
 
 // ─── Fertile Window ───────────────────────────────────────────────────────
