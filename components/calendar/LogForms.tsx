@@ -8,26 +8,23 @@
 import { useState } from 'react'
 import { View, Text, TextInput, Pressable, Alert, StyleSheet, ActivityIndicator } from 'react-native'
 import {
-  Droplets,
-  Thermometer,
-  Heart,
   Smile,
   Frown,
   Meh,
   Laugh,
   Zap,
-  Moon,
   Check,
 } from 'lucide-react-native'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, stickers as stickersLight, stickersDark } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
+import { LogFormSticker } from './LogFormSticker'
 
 // ─── Shared save helper ────────────────────────────────────────────────────
 
 async function saveCycleLog(
   date: string,
   type: string,
-  value?: string,
+  value?: string | null,
   notes?: string
 ) {
   const { data: { session } } = await supabase.auth.getSession()
@@ -46,9 +43,10 @@ async function saveCycleLog(
 // ─── Period Start Form ─────────────────────────────────────────────────────
 
 export function PeriodStartForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const s = isDark ? stickersDark : stickersLight
 
   async function save() {
     setSaving(true)
@@ -64,10 +62,11 @@ export function PeriodStartForm({ date, onSaved }: { date: string; onSaved: () =
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconRow, { backgroundColor: brand.phase.menstrual + '15' }]}>
-        <Droplets size={24} color={brand.phase.menstrual} strokeWidth={2} />
-        <Text style={[styles.formLabel, { color: colors.text }]}>Period started on {formatDate(date)}</Text>
-      </View>
+      <LogFormSticker
+        type="period_start"
+        label={`Period started on ${formatDate(date)}`}
+        tint={s.pinkSoft}
+      />
       <TextInput
         value={notes}
         onChangeText={setNotes}
@@ -83,8 +82,9 @@ export function PeriodStartForm({ date, onSaved }: { date: string; onSaved: () =
 // ─── Period End Form ───────────────────────────────────────────────────────
 
 export function PeriodEndForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { isDark } = useTheme()
   const [saving, setSaving] = useState(false)
+  const s = isDark ? stickersDark : stickersLight
 
   async function save() {
     setSaving(true)
@@ -100,10 +100,11 @@ export function PeriodEndForm({ date, onSaved }: { date: string; onSaved: () => 
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconRow, { backgroundColor: brand.phase.menstrual + '15' }]}>
-        <Droplets size={24} color={brand.phase.menstrual} strokeWidth={2} />
-        <Text style={[styles.formLabel, { color: colors.text }]}>Period ended on {formatDate(date)}</Text>
-      </View>
+      <LogFormSticker
+        type="period_end"
+        label={`Period ended on ${formatDate(date)}`}
+        tint={s.pinkSoft}
+      />
       <SaveButton onPress={save} saving={saving} />
     </View>
   )
@@ -117,14 +118,15 @@ const SYMPTOMS = [
 ]
 
 export function SymptomsForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const [selected, setSelected] = useState<string[]>([])
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const s = isDark ? stickersDark : stickersLight
 
-  function toggle(s: string) {
+  function toggle(sym: string) {
     setSelected((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+      prev.includes(sym) ? prev.filter((x) => x !== sym) : [...prev, sym]
     )
   }
 
@@ -143,13 +145,18 @@ export function SymptomsForm({ date, onSaved }: { date: string; onSaved: () => v
 
   return (
     <View style={styles.form}>
+      <LogFormSticker
+        type="symptom"
+        label="How's your body feeling today?"
+        tint={s.peachSoft}
+      />
       <View style={styles.chipGrid}>
-        {SYMPTOMS.map((s) => {
-          const active = selected.includes(s)
+        {SYMPTOMS.map((sym) => {
+          const active = selected.includes(sym)
           return (
             <Pressable
-              key={s}
-              onPress={() => toggle(s)}
+              key={sym}
+              onPress={() => toggle(sym)}
               style={[
                 styles.chip,
                 {
@@ -160,7 +167,7 @@ export function SymptomsForm({ date, onSaved }: { date: string; onSaved: () => v
               ]}
             >
               {active && <Check size={12} color={colors.primary} strokeWidth={3} />}
-              <Text style={[styles.chipText, { color: active ? colors.primary : colors.text }]}>{s}</Text>
+              <Text style={[styles.chipText, { color: active ? colors.primary : colors.text }]}>{sym}</Text>
             </Pressable>
           )
         })}
@@ -188,10 +195,11 @@ const MOODS = [
 ]
 
 export function MoodForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const [mood, setMood] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const s = isDark ? stickersDark : stickersLight
 
   async function save() {
     if (!mood) return
@@ -208,6 +216,11 @@ export function MoodForm({ date, onSaved }: { date: string; onSaved: () => void 
 
   return (
     <View style={styles.form}>
+      <LogFormSticker
+        type="mood"
+        label="How's your mood today?"
+        tint={s.yellowSoft}
+      />
       <View style={styles.moodRow}>
         {MOODS.map((m) => {
           const Icon = m.icon
@@ -245,10 +258,11 @@ export function MoodForm({ date, onSaved }: { date: string; onSaved: () => void 
 // ─── Temperature Form ──────────────────────────────────────────────────────
 
 export function TemperatureForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const [temp, setTemp] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const s = isDark ? stickersDark : stickersLight
 
   async function save() {
     if (!temp) return
@@ -265,10 +279,11 @@ export function TemperatureForm({ date, onSaved }: { date: string; onSaved: () =
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconRow, { backgroundColor: brand.accent + '15' }]}>
-        <Thermometer size={24} color={brand.accent} strokeWidth={2} />
-        <Text style={[styles.formLabel, { color: colors.text }]}>Basal Temperature</Text>
-      </View>
+      <LogFormSticker
+        type="basal_temp"
+        label="Basal Temperature"
+        tint={s.blueSoft}
+      />
       <View style={[styles.tempRow, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
         <TextInput
           value={temp}
@@ -295,9 +310,10 @@ export function TemperatureForm({ date, onSaved }: { date: string; onSaved: () =
 // ─── Intimacy Form ─────────────────────────────────────────────────────────
 
 export function IntimacyForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const s = isDark ? stickersDark : stickersLight
 
   async function save() {
     setSaving(true)
@@ -313,10 +329,11 @@ export function IntimacyForm({ date, onSaved }: { date: string; onSaved: () => v
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconRow, { backgroundColor: brand.prePregnancy + '15' }]}>
-        <Heart size={24} color={brand.prePregnancy} strokeWidth={2} />
-        <Text style={[styles.formLabel, { color: colors.text }]}>Intimacy logged for {formatDate(date)}</Text>
-      </View>
+      <LogFormSticker
+        type="intercourse"
+        label={`Intimacy logged for ${formatDate(date)}`}
+        tint={s.pinkSoft}
+      />
       <TextInput
         value={notes}
         onChangeText={setNotes}
@@ -364,17 +381,6 @@ const styles = StyleSheet.create({
   form: {
     gap: 16,
     paddingBottom: 8,
-  },
-  iconRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 14,
-    borderRadius: 12,
-  },
-  formLabel: {
-    fontSize: 15,
-    fontWeight: '600',
   },
   input: {
     borderWidth: 1,
@@ -424,7 +430,9 @@ const styles = StyleSheet.create({
   tempInput: {
     flex: 1,
     fontSize: 24,
-    fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' },
+    fontWeight: '800',
+    fontFamily: 'Fraunces_600SemiBold',
+  },
   tempUnit: {
     fontSize: 18,
     fontWeight: '600',
