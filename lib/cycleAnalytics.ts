@@ -105,3 +105,34 @@ export function useCycleHistory() {
     data: logs ? computeCycleHistory(logs) : undefined,
   }
 }
+
+// ─── Regularity ───────────────────────────────────────────────────────────
+
+export interface Regularity {
+  percent: number | null
+  deviations: Array<{ cycleIdx: number; delta: number; lengthDays: number }>
+}
+
+export function useRegularity() {
+  const { data: history, ...rest } = useCycleHistory()
+  if (!history) return { ...rest, data: undefined }
+
+  const closed = history.cycles
+    .map((c, idx) => ({ c, idx }))
+    .filter(({ c }) => c.lengthDays !== null)
+
+  if (closed.length < 3 || history.avg === null) {
+    return { ...rest, data: { percent: null, deviations: [] } satisfies Regularity }
+  }
+
+  const deviations = closed.map(({ c, idx }) => ({
+    cycleIdx: idx + 1,
+    delta: Math.abs((c.lengthDays as number) - (history.avg as number)),
+    lengthDays: c.lengthDays as number,
+  }))
+
+  const regularCount = deviations.filter((d) => d.delta <= 2).length
+  const percent = Math.round((regularCount / closed.length) * 100)
+
+  return { ...rest, data: { percent, deviations } satisfies Regularity }
+}
