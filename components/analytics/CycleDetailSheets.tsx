@@ -9,7 +9,8 @@ import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-nat
 import { useTheme } from '../../constants/theme'
 import { LogSheet } from '../calendar/LogSheet'
 import { Body, Display } from '../ui/Typography'
-import { useCycleHistory, useRegularity } from '../../lib/cycleAnalytics'
+import { useCycleHistory, useRegularity, usePMSStats } from '../../lib/cycleAnalytics'
+import { Burst } from '../ui/Stickers'
 import { MiniBarChart } from './shared/MiniCharts'
 
 export type CycleDetailType =
@@ -270,7 +271,95 @@ const regStyles = StyleSheet.create({
   },
 })
 
-function PMSDetail() { return <Loading /> }
+function PMSDetail() {
+  const { colors, stickers, font } = useTheme()
+  const { data, isLoading, error } = usePMSStats()
+
+  if (isLoading) return <Loading />
+  if (error) return <ErrorState />
+  if (!data || (data.avgDays === null && data.topSymptoms.length === 0)) {
+    return <EmptyState copy="Log symptoms on the Agenda tab to start tracking PMS trends." />
+  }
+
+  const maxCount = data.topSymptoms[0]?.count ?? 1
+
+  return (
+    <View style={{ gap: 18 }}>
+      {data.avgDays !== null && (
+        <View style={detailStyles.heroRow}>
+          <Display size={40} color={colors.text}>{data.avgDays}</Display>
+          <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>
+            days of symptoms / cycle
+          </Text>
+        </View>
+      )}
+
+      <View style={{ gap: 8 }}>
+        <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          TOP SYMPTOMS
+        </Text>
+        {data.topSymptoms.length === 0 ? (
+          <Body size={13} color={colors.textMuted}>No symptoms logged yet.</Body>
+        ) : (
+          data.topSymptoms.map((s) => {
+            const pct = (s.count / maxCount) * 100
+            return (
+              <View key={s.name} style={pmsStyles.symptomRow}>
+                <View style={pmsStyles.symptomLeft}>
+                  <View style={[pmsStyles.chip, { backgroundColor: stickers.peachSoft, borderColor: colors.border }]}>
+                    <Burst size={20} fill={stickers.peach} points={8} wobble={0.2} />
+                  </View>
+                  <Body size={14} color={colors.text}>{s.name}</Body>
+                </View>
+                <View style={pmsStyles.symptomRight}>
+                  <View style={[pmsStyles.bar, { width: `${pct}%`, backgroundColor: stickers.peachSoft }]} />
+                  <Body size={13} color={colors.textSecondary}>{s.count}</Body>
+                </View>
+              </View>
+            )
+          })
+        )}
+      </View>
+    </View>
+  )
+}
+
+const pmsStyles = StyleSheet.create({
+  symptomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  symptomLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  symptomRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    width: 120,
+  },
+  chip: {
+    width: 32,
+    height: 32,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bar: {
+    height: 8,
+    borderRadius: 4,
+    flex: 1,
+    maxWidth: 80,
+  },
+})
+
 function FertileDetail() { return <Loading /> }
 function MoodDetail() { return <Loading /> }
 
