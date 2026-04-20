@@ -9,7 +9,7 @@ import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-nat
 import { useTheme } from '../../constants/theme'
 import { LogSheet } from '../calendar/LogSheet'
 import { Body, Display } from '../ui/Typography'
-import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow } from '../../lib/cycleAnalytics'
+import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow, useMoodStats, type MoodId } from '../../lib/cycleAnalytics'
 import { Burst, Flower } from '../ui/Stickers'
 import { MiniBarChart } from './shared/MiniCharts'
 
@@ -432,7 +432,92 @@ const fertStyles = StyleSheet.create({
   },
 })
 
-function MoodDetail() { return <Loading /> }
+const MOOD_LABELS: Record<MoodId, string> = {
+  great: 'Great',
+  energetic: 'Energetic',
+  good: 'Good',
+  okay: 'Okay',
+  low: 'Low',
+}
+
+function MoodDetail() {
+  const { colors, stickers, font } = useTheme()
+  const { data, isLoading, error } = useMoodStats()
+
+  if (isLoading) return <Loading />
+  if (error) return <ErrorState />
+  if (!data || data.avgScore === null) {
+    return <EmptyState copy="Log your mood on the Agenda tab to see mood trends." />
+  }
+
+  const maxCount = Math.max(1, ...data.distribution.map((d) => d.count))
+
+  return (
+    <View style={{ gap: 18 }}>
+      <View style={detailStyles.heroRow}>
+        <Display size={40} color={colors.text}>{data.avgScore}</Display>
+        <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>/ 5 avg</Text>
+      </View>
+
+      <View style={{ gap: 8 }}>
+        <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          DISTRIBUTION
+        </Text>
+        {data.distribution.map((row) => {
+          const pct = (row.count / maxCount) * 100
+          return (
+            <View key={row.mood} style={moodStyles.row}>
+              <Body size={13} color={colors.text} style={{ width: 80 }}>
+                {MOOD_LABELS[row.mood]}
+              </Body>
+              <View style={moodStyles.barTrack}>
+                <View style={[moodStyles.barFill, { width: `${pct}%`, backgroundColor: stickers.pink }]} />
+              </View>
+              <Body size={13} color={colors.textSecondary} style={{ width: 30, textAlign: 'right' }}>
+                {row.count}
+              </Body>
+            </View>
+          )
+        })}
+      </View>
+
+      {data.recent.length > 0 && (
+        <View style={{ gap: 6 }}>
+          <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+            LAST {data.recent.length} ENTRIES
+          </Text>
+          {data.recent.map((r, i) => (
+            <View
+              key={`${r.date}-${i}`}
+              style={[detailStyles.historyRow, { borderColor: colors.borderLight }]}
+            >
+              <Body size={13} color={colors.text}>{formatShort(r.date)}</Body>
+              <Body size={13} color={colors.textSecondary}>{MOOD_LABELS[r.mood]}</Body>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  )
+}
+
+const moodStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 4,
+  },
+  barTrack: {
+    flex: 1,
+    height: 10,
+    backgroundColor: 'transparent',
+  },
+  barFill: {
+    height: 10,
+    borderRadius: 5,
+  },
+})
 
 // ─── Shared UI helpers ────────────────────────────────────────────────────
 
