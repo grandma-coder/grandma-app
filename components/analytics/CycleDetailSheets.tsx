@@ -9,7 +9,7 @@ import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-nat
 import { useTheme } from '../../constants/theme'
 import { LogSheet } from '../calendar/LogSheet'
 import { Body, Display } from '../ui/Typography'
-import { useCycleHistory } from '../../lib/cycleAnalytics'
+import { useCycleHistory, useRegularity } from '../../lib/cycleAnalytics'
 import { MiniBarChart } from './shared/MiniCharts'
 
 export type CycleDetailType =
@@ -182,7 +182,94 @@ const detailStyles = StyleSheet.create({
   },
 })
 
-function RegularityDetail() { return <Loading /> }
+function RegularityDetail() {
+  const { colors, stickers, font } = useTheme()
+  const { data, isLoading, error } = useRegularity()
+
+  if (isLoading) return <Loading />
+  if (error) return <ErrorState />
+  if (!data || data.percent === null) {
+    return <EmptyState copy="We need at least 3 complete cycles to measure regularity." />
+  }
+
+  return (
+    <View style={{ gap: 18 }}>
+      <View style={detailStyles.heroRow}>
+        <Display size={56} color={colors.text}>{data.percent}%</Display>
+        <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>regular</Text>
+      </View>
+
+      <View style={{ gap: 6 }}>
+        <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          LEGEND
+        </Text>
+        <View style={regStyles.legendRow}>
+          <LegendDot color={stickers.green} text="≤ 2 days" />
+          <LegendDot color={stickers.yellow} text="≤ 4 days" />
+          <LegendDot color={stickers.coral} text="> 4 days" />
+        </View>
+      </View>
+
+      <View style={{ gap: 6 }}>
+        <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          PER-CYCLE DEVIATION
+        </Text>
+        {data.deviations.slice(-10).map((d) => {
+          const dotColor =
+            d.delta <= 2 ? stickers.green : d.delta <= 4 ? stickers.yellow : stickers.coral
+          return (
+            <View
+              key={d.cycleIdx}
+              style={[detailStyles.historyRow, { borderColor: colors.borderLight }]}
+            >
+              <View style={regStyles.rowLeft}>
+                <View style={[regStyles.dot, { backgroundColor: dotColor }]} />
+                <Body size={13} color={colors.text}>Cycle {d.cycleIdx}</Body>
+              </View>
+              <Body size={13} color={colors.textSecondary}>
+                {d.lengthDays}d · {d.delta === 0 ? 'on avg' : `±${d.delta}d`}
+              </Body>
+            </View>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
+function LegendDot({ color, text }: { color: string; text: string }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={regStyles.legendItem}>
+      <View style={[regStyles.dot, { backgroundColor: color }]} />
+      <Text style={{ fontSize: 12, color: colors.textMuted, fontFamily: font.body }}>{text}</Text>
+    </View>
+  )
+}
+
+const regStyles = StyleSheet.create({
+  legendRow: {
+    flexDirection: 'row',
+    gap: 16,
+    flexWrap: 'wrap',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+})
+
 function PMSDetail() { return <Loading /> }
 function FertileDetail() { return <Loading /> }
 function MoodDetail() { return <Loading /> }
