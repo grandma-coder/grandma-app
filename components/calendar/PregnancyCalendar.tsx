@@ -75,8 +75,15 @@ import { STANDARD_APPOINTMENTS } from '../../lib/pregnancyAppointments'
 import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
 import { LogTile, LogTileGrid } from './LogTile'
-import { Display, Body } from '../ui/Typography'
+import { ActivityPillCard } from './ActivityPillCard'
+import { AgendaWeekStrip } from './AgendaWeekStrip'
+import { AppointmentDetailModal } from './AppointmentDetailModal'
+import { Display, Body, MonoCaps } from '../ui/Typography'
 import { logSticker } from './logStickers'
+import { MoodFace } from '../stickers/RewardStickers'
+import { WeekDetailModal } from '../home/pregnancy/WeekDetailModal'
+import type { StandardAppointment } from '../../lib/pregnancyAppointments'
+import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 import {
   PregnancyMoodForm,
   PregnancySymptomsForm,
@@ -122,7 +129,8 @@ const TRIMESTER_COLOR: Record<1 | 2 | 3, string> = {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ViewTab = 'month' | 'week' | 'journey' | 'appointments'
+type ViewTab = 'timeline' | 'journey' | 'appointments'
+type TimelineMode = 'cards' | 'hours'
 type LogFormType =
   | 'mood' | 'weight' | 'symptom' | 'appointment' | 'exam_result' | 'kick_count'
   | 'sleep' | 'exercise' | 'nutrition' | 'kegel' | 'water' | 'vitamins'
@@ -161,6 +169,10 @@ const LOG_META: Record<string, { label: string; icon: typeof Smile; color: strin
 
 const MOOD_EMOJI: Record<string, string> = {
   excited: '🤩', happy: '😊', okay: '😐', anxious: '😰', energetic: '⚡', sad: '😢',
+}
+
+const MOOD_LABEL: Record<string, string> = {
+  excited: 'Excited', happy: 'Happy', okay: 'Okay', anxious: 'Anxious', energetic: 'Energetic', sad: 'Sad',
 }
 
 const ALL_LOG_TYPES: LogFormType[] = [
@@ -620,7 +632,8 @@ function LogDetailPopup({
   function getBigDisplay(): { metric: string; unit: string; sublabel: string; isText: boolean } {
     const isMood = log.log_type === 'mood'
     if (isMood) {
-      return { metric: MOOD_EMOJI[rawValue.toLowerCase()] ?? '😊', unit: '', sublabel: (rawValue || 'mood').toUpperCase() + ' MOOD', isText: false }
+      const key = rawValue.toLowerCase()
+      return { metric: MOOD_LABEL[key] ?? rawValue, unit: '', sublabel: (rawValue || 'mood').toUpperCase() + ' MOOD', isText: true }
     }
     switch (log.log_type) {
       case 'sleep':       return { metric: rawValue, unit: 'h', sublabel: 'SLEEP', isText: false }
@@ -692,7 +705,11 @@ function LogDetailPopup({
 
       {/* Big metric card */}
       <View style={[styles.detailMetricCard, { backgroundColor: meta.color + '10', borderColor: meta.color + '20' }]}>
-        <Icon size={28} color={meta.color + '70'} strokeWidth={2} />
+        {log.log_type === 'mood' ? (
+          <MoodFace size={64} variant={moodFaceVariant(rawValue.toLowerCase())} fill={moodFaceFill(rawValue.toLowerCase())} />
+        ) : (
+          <Icon size={28} color={meta.color + '70'} strokeWidth={2} />
+        )}
         {isText ? (
           <Text style={[styles.detailMetricText, { color: meta.color }]}>{metric}</Text>
         ) : (
@@ -988,19 +1005,22 @@ function DayDetailPanel({
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export function PregnancyCalendar() {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
 
   const weekNumber = usePregnancyStore((s) => s.weekNumber) ?? 24
   const dueDate = usePregnancyStore((s) => s.dueDate) ?? ''
 
-  const [view, setView] = useState<ViewTab>('month')
+  const [view, setView] = useState<ViewTab>('timeline')
+  const [timelineMode, setTimelineMode] = useState<TimelineMode>('cards')
   const [viewDate, setViewDate] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
   const [logForm, setLogForm] = useState<{ type: LogFormType; date: string } | null>(null)
   const [showQuickLog, setShowQuickLog] = useState(false)
   const [showRoutineManager, setShowRoutineManager] = useState(false)
   const [selectedLog, setSelectedLog] = useState<PregnancyCalendarLog | null>(null)
+  const [selectedJourneyWeek, setSelectedJourneyWeek] = useState<number | null>(null)
+  const [selectedAppt, setSelectedAppt] = useState<StandardAppointment | null>(null)
 
   const [dayZoomH, setDayZoomH] = useState(DAY_VIEW_DEFAULT_HOUR_H)
   const dayScrollRef = useRef<ScrollView>(null)
@@ -1059,16 +1079,16 @@ export function PregnancyCalendar() {
     setSelectedDate(toDateStr(d))
   }
 
-  // Auto-scroll day timeline to current time / morning
+  // Auto-scroll day timeline to current time / morning (Hours mode only)
   useEffect(() => {
-    if (view !== 'week') return
+    if (view !== 'timeline' || timelineMode !== 'hours') return
     const now = new Date()
     const targetHours = selectedDate === todayStr
       ? Math.max(DAY_VIEW_START, now.getHours() + now.getMinutes() / 60 - 2)
       : 6
     const scrollY = Math.max(0, (targetHours - DAY_VIEW_START) * dayZoomH)
     setTimeout(() => dayScrollRef.current?.scrollTo({ y: scrollY, animated: false }), 80)
-  }, [view, selectedDate, todayStr, dayZoomH])
+  }, [view, timelineMode, selectedDate, todayStr, dayZoomH])
 
   // ── Pending routines for selected date ────────────────────────────────────
 
@@ -1180,158 +1200,180 @@ export function PregnancyCalendar() {
     })
   }, [calLogs, todayStr])
 
-  const monthLabel = new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  // ── Render: Timeline View (Cards or Hours) ───────────────────────────────
 
-  // ── Render: Month View ────────────────────────────────────────────────────
+  function renderTimelineView() {
+    return timelineMode === 'cards' ? renderTimelineCards() : renderTimelineHours()
+  }
 
-  function renderMonthView() {
-    const selLogs = calLogs[selectedDate] ?? []
+  function renderModeToggle() {
+    return (
+      <View style={[styles.modeToggle, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
+        {(['cards', 'hours'] as TimelineMode[]).map((m) => {
+          const active = timelineMode === m
+          return (
+            <Pressable
+              key={m}
+              onPress={() => setTimelineMode(m)}
+              style={[
+                styles.modeToggleBtn,
+                active && { backgroundColor: brand.pregnancy },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.modeToggleLabel,
+                  { color: active ? '#fff' : colors.textSecondary },
+                ]}
+              >
+                {m === 'cards' ? 'Cards' : 'Hours'}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
+    )
+  }
+
+  // Build dotsByDate for the week strip — one color per unique log type per day
+  const dotsByDate = useMemo<Record<string, string[]>>(() => {
+    const out: Record<string, string[]> = {}
+    for (const [date, logs] of Object.entries(calLogs)) {
+      const types = [...new Set(logs.map((l) => l.log_type))].slice(0, 3)
+      out[date] = types.map((t) => dotColor(t))
+    }
+    return out
+  }, [calLogs])
+
+  // ── Cards mode ────────────────────────────────────────────────────────────
+
+  function renderTimelineCards() {
+    const selLogs = (calLogs[selectedDate] ?? []).filter((l) => l.log_type !== 'skipped')
     const selPending = pendingRoutinesForDate(selectedDate)
+    const selDow = new Date(selectedDate + 'T12:00:00').getDay()
+    const dayLabel = formatDayLabel(selectedDate, todayStr)
+    const summary = [
+      selPending.length > 0 && `${selPending.length} pending`,
+      selLogs.length > 0 && `${selLogs.length} logged`,
+    ].filter(Boolean).join(' · ') || 'Nothing planned'
+
+    interface Row {
+      key: string
+      time: string  // display label for left gutter (e.g. "08:00", "—")
+      sortHours: number
+      title: string
+      subtitle?: string
+      tint: string
+      icon: React.ReactNode
+      onPress: () => void
+    }
+
+    const rows: Row[] = []
+
+    // Pending routines for selected day
+    for (const r of selPending) {
+      const tintKey = PREG_TINT_BY_TYPE[r.type] ?? 'activity'
+      const sortHours = r.time ? timeStrToHours(r.time) : 25
+      rows.push({
+        key: `r-${r.id}`,
+        time: r.time ? fmtTime(r.time) : '—',
+        sortHours,
+        title: r.name,
+        subtitle: 'Tap to log',
+        tint: tintKey,
+        icon: logSticker(r.type, 28, isDark),
+        onPress: () => setLogForm({ type: r.type as LogFormType, date: selectedDate }),
+      })
+    }
+
+    // Logged entries
+    for (const log of selLogs) {
+      const tintKey = PREG_TINT_BY_TYPE[log.log_type] ?? 'activity'
+      const meta = LOG_META[log.log_type] ?? { label: log.log_type, icon: Calendar, color: brand.pregnancy }
+      const sortHours = activityTimeHoursPreg(log)
+      const summaryStr = formatLogValue(log)
+      rows.push({
+        key: `l-${log.id}`,
+        time: formatTime(log.created_at),
+        sortHours,
+        title: meta.label,
+        subtitle: summaryStr || 'Logged',
+        tint: tintKey,
+        icon: logSticker(log.log_type, 28, isDark),
+        onPress: () => setSelectedLog(log),
+      })
+    }
+
+    // Standard appointments occurring this week (based on weekNumber)
+    for (const appt of STANDARD_APPOINTMENTS) {
+      const isThisWeek = appt.week === weekNumber
+      if (!isThisWeek) continue
+      // Surface on Mondays of the selected day's week (avoid duplication across days)
+      if (selDow !== 1) continue
+      rows.push({
+        key: `a-${appt.id}`,
+        time: `W${appt.week}`,
+        sortHours: -1,  // pin to top
+        title: appt.name,
+        subtitle: appt.prepNote.length > 70 ? appt.prepNote.slice(0, 67) + '…' : appt.prepNote,
+        tint: 'appointment',
+        icon: logSticker('appointment', 28, isDark),
+        onPress: () => setSelectedAppt(appt),
+      })
+    }
+
+    rows.sort((a, b) => a.sortHours - b.sortHours)
 
     return (
       <>
-        <View style={styles.monthNav}>
-          <Pressable onPress={() => setViewDate(new Date(year, month - 1, 1))} style={styles.navBtn}>
-            <ChevronLeft size={22} color={colors.text} strokeWidth={2} />
-          </Pressable>
-          <Text style={[styles.monthLabel, { color: colors.text }]}>{monthLabel}</Text>
-          <Pressable onPress={() => setViewDate(new Date(year, month + 1, 1))} style={styles.navBtn}>
-            <ChevronRight size={22} color={colors.text} strokeWidth={2} />
-          </Pressable>
-        </View>
-        <View style={styles.weekdayRow}>
-          {WEEKDAYS.map((w) => (
-            <Text key={w} style={[styles.weekdayLabel, { color: colors.textMuted }]}>{w}</Text>
-          ))}
-        </View>
-        <View style={styles.dayGrid}>
-          {calendarDays.map((d, i) => {
-            if (!d.inMonth) return <View key={`e-${i}`} style={styles.dayCell} />
-            const isSelected = d.date === selectedDate
-            const uniqueTypes = [...new Set(d.logs.map((l) => l.log_type))].slice(0, 3)
-            return (
-              <Pressable
-                key={d.date}
-                onPress={() => {
-                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-                  setSelectedDate(d.date)
-                }}
-                style={[
-                  styles.dayCell,
-                  {
-                    backgroundColor: isSelected
-                      ? brand.pregnancy + '30'
-                      : d.isToday
-                      ? brand.pregnancy + '15'
-                      : TRIMESTER_TINT[d.trimester],
-                    borderRadius: 12,
-                    borderWidth: isSelected || d.isToday ? 1 : 0,
-                    borderColor: isSelected ? brand.pregnancy : brand.pregnancy + '60',
-                    opacity: d.isFuture ? 0.4 : 1,
-                  },
-                ]}
-              >
-                <Text style={[styles.dayNum, { color: d.isToday ? brand.pregnancy : colors.text }]}>
-                  {d.day}
-                </Text>
-                <View style={styles.dotRow}>
-                  {uniqueTypes.map((t) => (
-                    <View key={t} style={[styles.dot, { backgroundColor: dotColor(t) }]} />
-                  ))}
-                </View>
-              </Pressable>
-            )
-          })}
+        <View style={styles.timelineHeader}>
+          <Display size={22} color={colors.text}>{dayLabel}</Display>
+          <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>{summary}</Body>
         </View>
 
-        {/* Upcoming Highlights Banner */}
-        {upcomingHighlights.length > 0 && view === 'month' && (() => {
-          const h = upcomingHighlights[highlightIndex % upcomingHighlights.length]
-          if (!h) return null
-          const HIcon = h.icon
-          return (
-            <View style={[styles.highlightBanner, { backgroundColor: h.color + '10', borderColor: h.color + '25' }]}>
-              <View style={[styles.highlightIconWrap, { backgroundColor: h.color + '20' }]}>
-                <HIcon size={18} color={h.color} strokeWidth={2} />
-              </View>
-              <View style={styles.highlightContent}>
-                <Text style={[styles.highlightTitle, { color: colors.text }]} numberOfLines={1}>{h.title}</Text>
-                <Text style={[styles.highlightDetail, { color: colors.textSecondary }]} numberOfLines={1}>{h.detail}</Text>
-              </View>
-              {upcomingHighlights.length > 1 && (
-                <View style={styles.highlightDots}>
-                  {upcomingHighlights.map((_, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.highlightDot,
-                        { backgroundColor: i === (highlightIndex % upcomingHighlights.length) ? brand.pregnancy : colors.border },
-                      ]}
-                    />
-                  ))}
+        {rows.length === 0 ? (
+          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Body size={14} color={colors.textSecondary} align="center">
+              Nothing planned for this day.
+            </Body>
+            <Body size={12} color={colors.textMuted} align="center" style={{ marginTop: 4 }}>
+              Tap + above to log something.
+            </Body>
+          </View>
+        ) : (
+          <View style={{ gap: 10 }}>
+            {rows.map((r) => (
+              <View key={r.key} style={styles.timelineRow}>
+                <View style={styles.timelineGutter}>
+                  <Text style={[styles.timelineTime, { color: colors.textMuted }]}>{r.time}</Text>
                 </View>
-              )}
-            </View>
-          )
-        })()}
-
-        {/* Day Detail Panel */}
-        {selectedDate ? (
-          <DayDetailPanel
-            dateStr={selectedDate}
-            todayStr={todayStr}
-            logs={selLogs}
-            pendingRoutines={selPending}
-            onOpenLog={setSelectedLog}
-            onDeleteLog={handleDeleteLog}
-            onOpenRoutine={(type) => setLogForm({ type, date: selectedDate })}
-          />
-        ) : null}
+                <View style={{ flex: 1 }}>
+                  <ActivityPillCard
+                    icon={r.icon}
+                    title={r.title}
+                    subtitle={r.subtitle}
+                    tint={r.tint}
+                    onPress={r.onPress}
+                  />
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
       </>
     )
   }
 
-  // ── Render: Week View (Day Timeline) ─────────────────────────────────────
 
-  function renderWeekView() {
+  // ── Render: Timeline Hours mode (day grid) ──────────────────────────────
+
+  function renderTimelineHours() {
     const selLogs = calLogs[selectedDate] ?? []
     const selPending = pendingRoutinesForDate(selectedDate)
     const loggedLogs = selLogs.filter((l) => l.log_type !== 'skipped')
 
     return (
       <>
-        {/* Week strip */}
-        <View style={styles.weekStrip}>
-          {weekDays.map((d) => (
-            <Pressable
-              key={d.dateStr}
-              onPress={() => setSelectedDate(d.dateStr)}
-              style={[
-                styles.weekDayBtn,
-                {
-                  backgroundColor:
-                    selectedDate === d.dateStr
-                      ? brand.pregnancy
-                      : d.isToday
-                      ? brand.pregnancy + '20'
-                      : 'transparent',
-                  borderRadius: 12,
-                },
-              ]}
-            >
-              <Text style={[styles.weekDayName, { color: selectedDate === d.dateStr ? '#fff' : colors.textMuted }]}>
-                {d.dayLabel}
-              </Text>
-              <Text style={[styles.weekDayNum, { color: selectedDate === d.dateStr ? '#fff' : colors.text }]}>
-                {d.dayNum}
-              </Text>
-              {d.logs.length > 0 && (
-                <View style={[styles.weekDotIndicator, { backgroundColor: selectedDate === d.dateStr ? '#fff' : brand.pregnancy }]} />
-              )}
-            </Pressable>
-          ))}
-        </View>
-
         {/* Day Timeline Card */}
         <View style={[styles.dayTimelineCard, { backgroundColor: colors.surface }]}>
           {/* Day nav header */}
@@ -1531,92 +1573,103 @@ export function PregnancyCalendar() {
     )
   }
 
-  // ── Render: Journey View (UNCHANGED) ─────────────────────────────────────
+  // ── Render: Journey View (cards) ─────────────────────────────────────────
 
   function renderJourneyView() {
     return (
-      <>
+      <View style={{ gap: 10 }}>
         {pregnancyWeeks.map((wkData) => {
           const isCurrent = wkData.week === weekNumber
           const isPast = wkData.week < weekNumber
           const tri = getTrimester(wkData.week) as 1 | 2 | 3
-          return (
+          const triColor = TRIMESTER_COLOR[tri]
+          const firstSentence = wkData.developmentFact.split('. ')[0] + (wkData.developmentFact.includes('. ') ? '.' : '')
+
+          const wrappedIcon = (
             <View
-              key={wkData.week}
-              style={[
-                styles.journeyRow,
-                {
-                  backgroundColor: isCurrent ? TRIMESTER_TINT[tri] : colors.surface,
-                  borderLeftWidth: isCurrent ? 3 : 0,
-                  borderLeftColor: TRIMESTER_COLOR[tri],
-                  opacity: isPast || isCurrent ? 1 : 0.4,
-                },
-              ]}
+              style={{
+                width: 40, height: 40, borderRadius: 20,
+                alignItems: 'center', justifyContent: 'center',
+                backgroundColor: isPast || isCurrent ? triColor : triColor + '20',
+              }}
             >
-              <View style={[styles.journeyWeekBadge, { backgroundColor: TRIMESTER_COLOR[tri] + '20' }]}>
-                <Text style={[styles.journeyWeekNum, { color: TRIMESTER_COLOR[tri] }]}>{wkData.week}</Text>
-              </View>
-              <View style={styles.journeyContent}>
-                <Text style={[styles.journeySize, { color: colors.text }]}>
-                  {wkData.babySize} · {wkData.babyLength}
-                </Text>
-                <Text style={[styles.journeyFact, { color: colors.textSecondary }]} numberOfLines={1}>
-                  {wkData.developmentFact}
-                </Text>
-              </View>
-              {isCurrent && (
-                <View style={[styles.currentBadge, { backgroundColor: brand.pregnancy }]}>
-                  <Text style={styles.currentBadgeText}>Now</Text>
-                </View>
-              )}
+              <Text style={{ fontFamily: 'CabinetGrotesk-Black', fontSize: 16, color: isPast || isCurrent ? '#fff' : triColor }}>
+                {wkData.week}
+              </Text>
+            </View>
+          )
+
+          return (
+            <View key={wkData.week} style={{ opacity: isPast || isCurrent ? 1 : 0.55 }}>
+              <ActivityPillCard
+                icon={wrappedIcon}
+                title={`${wkData.babySize} · ${wkData.babyLength}`}
+                subtitle={firstSentence}
+                tint={tri === 1 ? 'memory' : tri === 2 ? 'sleep' : 'mood'}
+                chip={
+                  isCurrent
+                    ? { label: 'Now', color: brand.pregnancy }
+                    : isPast
+                    ? { label: 'Done', color: COLOR_GREEN }
+                    : undefined
+                }
+                onPress={() => setSelectedJourneyWeek(wkData.week)}
+              />
             </View>
           )
         })}
-      </>
+      </View>
     )
   }
 
-  // ── Render: Appointments View (UNCHANGED) ────────────────────────────────
+  // ── Render: Appointments View (cards) ───────────────────────────────────
 
   function renderAppointmentsView() {
     return (
-      <>
-        {STANDARD_APPOINTMENTS.map((appt, i) => {
+      <View style={{ gap: 10 }}>
+        {STANDARD_APPOINTMENTS.map((appt) => {
           const isDone = weekNumber > appt.week
           const isNext = !isDone && weekNumber >= appt.week - 2
-          const color = isDone ? COLOR_GREEN : isNext ? COLOR_AMBER : colors.textMuted
+          const status: 'done' | 'next' | 'future' = isDone ? 'done' : isNext ? 'next' : 'future'
+
+          const ringColor = isDone ? COLOR_GREEN : isNext ? COLOR_AMBER : colors.textMuted
+          const ringBg = isDone ? COLOR_GREEN : isNext ? COLOR_AMBER : 'transparent'
+
+          const wrappedIcon = (
+            <View
+              style={{
+                width: 40, height: 40, borderRadius: 20,
+                alignItems: 'center', justifyContent: 'center',
+                backgroundColor: ringBg,
+                borderWidth: isDone || isNext ? 0 : 2,
+                borderColor: ringColor,
+              }}
+            >
+              {isDone ? (
+                <Check size={18} color="#fff" strokeWidth={3} />
+              ) : (
+                <Text style={{ fontFamily: 'CabinetGrotesk-Black', fontSize: 12, color: isNext ? '#fff' : ringColor }}>
+                  W{appt.week}
+                </Text>
+              )}
+            </View>
+          )
+
+          const subtitle =
+            isDone
+              ? `Done · Week ${appt.week}`
+              : `Week ${appt.week} · ${appt.prepNote.length > 60 ? appt.prepNote.slice(0, 57) + '…' : appt.prepNote}`
+
           return (
-            <View key={appt.id} style={styles.apptRow}>
-              <View style={styles.apptTimelineLeft}>
-                <View
-                  style={[
-                    styles.apptDot,
-                    {
-                      backgroundColor: isDone ? COLOR_GREEN : isNext ? COLOR_AMBER : colors.surface,
-                      borderColor: color,
-                    },
-                  ]}
-                >
-                  {isDone && <Check size={10} color="#1A1030" strokeWidth={3} />}
-                </View>
-                {i < STANDARD_APPOINTMENTS.length - 1 && (
-                  <View style={[styles.apptLine, { backgroundColor: colors.border }]} />
-                )}
-              </View>
-              <View style={[styles.apptCard, { backgroundColor: colors.surface, borderColor: isNext ? COLOR_AMBER + '40' : 'transparent', borderWidth: isNext ? 1 : 0 }]}>
-                <View style={styles.apptCardHeader}>
-                  <Text style={[styles.apptName, { color: isDone ? colors.textSecondary : isNext ? COLOR_AMBER : colors.text }]}>
-                    {appt.name}
-                  </Text>
-                  <Text style={[styles.apptWeek, { color: colors.textMuted }]}>W{appt.week}</Text>
-                </View>
-                {isNext ? (
-                  <Text style={[styles.apptPrep, { color: COLOR_AMBER }]}>{appt.prepNote}</Text>
-                ) : null}
-                {isDone ? (
-                  <Text style={[styles.apptDone, { color: COLOR_GREEN }]}>Done</Text>
-                ) : null}
-              </View>
+            <View key={appt.id} style={{ opacity: status === 'future' ? 0.7 : 1 }}>
+              <ActivityPillCard
+                icon={wrappedIcon}
+                title={appt.name}
+                subtitle={subtitle}
+                tint={isNext ? 'appointment' : 'activity'}
+                chip={isNext ? { label: 'Soon', color: COLOR_AMBER } : undefined}
+                onPress={() => setSelectedAppt(appt)}
+              />
             </View>
           )
         })}
@@ -1627,7 +1680,7 @@ export function PregnancyCalendar() {
           <Plus size={18} color="#fff" strokeWidth={3} />
           <Text style={styles.addApptBtnText}>Add appointment / exam</Text>
         </Pressable>
-      </>
+      </View>
     )
   }
 
@@ -1640,12 +1693,11 @@ export function PregnancyCalendar() {
         <AgendaHeader onAdd={() => setShowQuickLog(true)} />
       </View>
 
-      {/* Segmented tabs — 4 tabs with ink active pill */}
+      {/* Segmented tabs — 3 tabs */}
       <View style={[styles.segRow, { backgroundColor: colors.bg }]}>
         <SegmentedTabs
           options={[
-            { key: 'month', label: 'Month' },
-            { key: 'week', label: 'Week' },
+            { key: 'timeline', label: 'Timeline' },
             { key: 'journey', label: 'Journey' },
             { key: 'appointments', label: 'Appts' },
           ]}
@@ -1658,8 +1710,21 @@ export function PregnancyCalendar() {
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
-        {view === 'month' && renderMonthView()}
-        {view === 'week' && renderWeekView()}
+        {view === 'timeline' && (
+          <>
+            <AgendaWeekStrip
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+              dotsByDate={dotsByDate}
+              weekLabel={`Week ${weekNumber}`}
+              modeColor={brand.pregnancy}
+            />
+            <View style={{ height: 12 }} />
+            {renderModeToggle()}
+            <View style={{ height: 12 }} />
+            {renderTimelineView()}
+          </>
+        )}
         {view === 'journey' && renderJourneyView()}
         {view === 'appointments' && renderAppointmentsView()}
       </ScrollView>
@@ -1731,6 +1796,38 @@ export function PregnancyCalendar() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Journey Week Detail Modal */}
+      <WeekDetailModal
+        visible={selectedJourneyWeek !== null}
+        week={selectedJourneyWeek ?? weekNumber}
+        onClose={() => setSelectedJourneyWeek(null)}
+      />
+
+      {/* Appointment Detail Modal */}
+      <AppointmentDetailModal
+        appointment={selectedAppt}
+        status={
+          selectedAppt
+            ? weekNumber > selectedAppt.week
+              ? 'done'
+              : weekNumber >= selectedAppt.week - 2
+              ? 'next'
+              : 'future'
+            : 'future'
+        }
+        onClose={() => setSelectedAppt(null)}
+        onMarkDone={() => {
+          if (!selectedAppt) return
+          setSelectedAppt(null)
+          setLogForm({ type: 'appointment', date: todayStr })
+        }}
+        onAddToLogs={() => {
+          if (!selectedAppt) return
+          setSelectedAppt(null)
+          setLogForm({ type: 'appointment', date: todayStr })
+        }}
+      />
     </View>
   )
 }
@@ -2065,7 +2162,53 @@ const styles = StyleSheet.create({
   },
   detailActionText: { fontSize: 15, fontFamily: 'Satoshi-Variable', fontWeight: '700', color: '#fff' },
 
-  // Day Timeline (Week view)
+  // Timeline (Cards mode)
+  modeToggle: {
+    flexDirection: 'row',
+    alignSelf: 'flex-end',
+    borderRadius: 999,
+    borderWidth: 1,
+    padding: 3,
+    gap: 2,
+  },
+  modeToggleBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  modeToggleLabel: {
+    fontSize: 12,
+    fontFamily: 'Satoshi-Variable',
+    fontWeight: '700',
+  },
+  timelineHeader: {
+    marginBottom: 14,
+    paddingHorizontal: 4,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  timelineGutter: {
+    width: 56,
+    alignItems: 'flex-end',
+    paddingRight: 4,
+  },
+  timelineTime: {
+    fontSize: 12,
+    fontFamily: 'Satoshi-Variable',
+    fontWeight: '600',
+  },
+  emptyCard: {
+    borderWidth: 1,
+    borderRadius: 24,
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    marginTop: 8,
+  },
+
+  // Day Timeline (Hours mode)
   dayTimelineCard: {
     borderRadius: 20,
     overflow: 'hidden',
