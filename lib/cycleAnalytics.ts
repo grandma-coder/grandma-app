@@ -8,6 +8,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from './supabase'
+import { getCycleInfo, toDateStr } from './cycleLogic'
 
 // ─── Raw row shape ────────────────────────────────────────────────────────
 
@@ -189,4 +190,52 @@ export function usePMSStats() {
   const { data: history } = useCycleHistory()
   if (!logs || !history) return { ...rest, data: undefined }
   return { ...rest, data: computePMSStats(logs, history) }
+}
+
+// ─── Fertile Window ───────────────────────────────────────────────────────
+
+export interface FertileWindow {
+  current: { start: string; end: string; daysLeft: number } | null
+  history: Array<{ start: string; end: string; cycleIdx: number }>
+}
+
+function formatFromCycleDay(cycleStart: string, dayOffset: number): string {
+  const d = new Date(cycleStart + 'T00:00:00')
+  d.setDate(d.getDate() + dayOffset)
+  return toDateStr(d)
+}
+
+export function useFertileWindow() {
+  const { data: history, ...rest } = useCycleHistory()
+  if (!history || history.cycles.length === 0) {
+    return { ...rest, data: { current: null, history: [] } satisfies FertileWindow }
+  }
+
+  const avgLen = history.avg ?? 28
+  const today = toDateStr(new Date())
+  const latestCycle = history.cycles[history.cycles.length - 1]
+
+  const info = getCycleInfo(
+    { lastPeriodStart: latestCycle.startDate, cycleLength: avgLen },
+    today
+  )
+
+  const currentStart = formatFromCycleDay(latestCycle.startDate, info.fertileStart - 1)
+  const currentEnd = formatFromCycleDay(latestCycle.startDate, info.fertileEnd - 1)
+  const todayD = new Date(today + 'T00:00:00')
+  const endD = new Date(currentEnd + 'T00:00:00')
+  const daysLeft = Math.max(0, Math.round((endD.getTime() - todayD.getTime()) / 86400000))
+
+  const current = { start: currentStart, end: currentEnd, daysLeft }
+
+  const pastWindows = history.cycles
+    .slice(-4, -1) // last 3 closed cycles
+    .filter((c) => c.lengthDays !== null)
+    .map((c) => ({
+      start: formatFromCycleDay(c.startDate, (c.lengthDays as number) - 14 - 5 - 1),
+      end: formatFromCycleDay(c.startDate, (c.lengthDays as number) - 14 + 1 - 1),
+      cycleIdx: history.cycles.indexOf(c) + 1,
+    }))
+
+  return { ...rest, data: { current, history: pastWindows } satisfies FertileWindow }
 }
