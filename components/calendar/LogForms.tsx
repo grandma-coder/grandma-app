@@ -7,6 +7,7 @@
 
 import { useState } from 'react'
 import { View, Text, TextInput, Pressable, Alert, StyleSheet, ActivityIndicator } from 'react-native'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Smile,
   Frown,
@@ -44,6 +45,7 @@ async function saveCycleLog(
 
 export function PeriodStartForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const queryClient = useQueryClient()
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const s = isDark ? stickersDark : stickersLight
@@ -52,6 +54,7 @@ export function PeriodStartForm({ date, onSaved }: { date: string; onSaved: () =
     setSaving(true)
     try {
       await saveCycleLog(date, 'period_start', null, notes || undefined)
+      await queryClient.invalidateQueries({ queryKey: ['cycleLogs'] })
       onSaved()
     } catch (e: any) {
       Alert.alert('Error', e.message)
@@ -83,6 +86,7 @@ export function PeriodStartForm({ date, onSaved }: { date: string; onSaved: () =
 
 export function PeriodEndForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { isDark } = useTheme()
+  const queryClient = useQueryClient()
   const [saving, setSaving] = useState(false)
   const s = isDark ? stickersDark : stickersLight
 
@@ -90,6 +94,7 @@ export function PeriodEndForm({ date, onSaved }: { date: string; onSaved: () => 
     setSaving(true)
     try {
       await saveCycleLog(date, 'period_end')
+      await queryClient.invalidateQueries({ queryKey: ['cycleLogs'] })
       onSaved()
     } catch (e: any) {
       Alert.alert('Error', e.message)
@@ -119,6 +124,7 @@ const SYMPTOMS = [
 
 export function SymptomsForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const queryClient = useQueryClient()
   const [selected, setSelected] = useState<string[]>([])
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -135,6 +141,7 @@ export function SymptomsForm({ date, onSaved }: { date: string; onSaved: () => v
     setSaving(true)
     try {
       await saveCycleLog(date, 'symptom', selected.join(', '), notes || undefined)
+      await queryClient.invalidateQueries({ queryKey: ['cycleLogs'] })
       onSaved()
     } catch (e: any) {
       Alert.alert('Error', e.message)
@@ -196,6 +203,7 @@ const MOODS = [
 
 export function MoodForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const queryClient = useQueryClient()
   const [mood, setMood] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -206,6 +214,7 @@ export function MoodForm({ date, onSaved }: { date: string; onSaved: () => void 
     setSaving(true)
     try {
       await saveCycleLog(date, 'mood', mood, notes || undefined)
+      await queryClient.invalidateQueries({ queryKey: ['cycleLogs'] })
       onSaved()
     } catch (e: any) {
       Alert.alert('Error', e.message)
@@ -259,6 +268,7 @@ export function MoodForm({ date, onSaved }: { date: string; onSaved: () => void 
 
 export function TemperatureForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const queryClient = useQueryClient()
   const [temp, setTemp] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -269,6 +279,7 @@ export function TemperatureForm({ date, onSaved }: { date: string; onSaved: () =
     setSaving(true)
     try {
       await saveCycleLog(date, 'basal_temp', temp, notes || undefined)
+      await queryClient.invalidateQueries({ queryKey: ['cycleLogs'] })
       onSaved()
     } catch (e: any) {
       Alert.alert('Error', e.message)
@@ -311,6 +322,7 @@ export function TemperatureForm({ date, onSaved }: { date: string; onSaved: () =
 
 export function IntimacyForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const queryClient = useQueryClient()
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const s = isDark ? stickersDark : stickersLight
@@ -319,6 +331,7 @@ export function IntimacyForm({ date, onSaved }: { date: string; onSaved: () => v
     setSaving(true)
     try {
       await saveCycleLog(date, 'intercourse', 'yes', notes || undefined)
+      await queryClient.invalidateQueries({ queryKey: ['cycleLogs'] })
       onSaved()
     } catch (e: any) {
       Alert.alert('Error', e.message)
