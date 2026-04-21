@@ -149,3 +149,181 @@ export async function seedCycleData(): Promise<{ inserted: number }> {
 
   return { inserted: rows.length }
 }
+
+// ─── Kids seed ────────────────────────────────────────────────────────────
+
+export async function seedKidsData(): Promise<{ childId: string; inserted: number }> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError) throw new Error(`Session error: ${sessionError.message ?? sessionError}`)
+  const session = sessionData.session
+  if (!session) throw new Error('Not authenticated')
+  const userId = session.user.id
+
+  // Ensure a demo child exists — if any child belongs to this user, reuse the first one.
+  const { data: existingChildren, error: childQueryError } = await supabase
+    .from('children')
+    .select('id')
+    .eq('user_id', userId)
+    .limit(1)
+  if (childQueryError) throw new Error(`Child query failed: ${childQueryError.message ?? childQueryError}`)
+
+  let childId: string
+  if (existingChildren && existingChildren.length > 0) {
+    childId = existingChildren[0].id
+  } else {
+    const twoYearsAgo = new Date()
+    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
+    const { data: newChild, error: childInsertError } = await supabase
+      .from('children')
+      .insert({
+        user_id: userId,
+        name: 'Demo Kid',
+        dob: dateStr(twoYearsAgo),
+        gender: 'other',
+      })
+      .select('id')
+      .single()
+    if (childInsertError) throw new Error(`Child insert failed: ${childInsertError.message ?? childInsertError}`)
+    childId = newChild.id
+  }
+
+  // Wipe existing logs for this child
+  const { error: delError } = await supabase.from('child_logs').delete().eq('child_id', childId)
+  if (delError) throw new Error(`Delete failed: ${delError.message ?? delError}`)
+
+  // Insert 30 days of activity
+  const rows: Array<{
+    user_id: string; child_id: string; date: string; type: string; value: string | null; notes: string | null
+  }> = []
+  const today = new Date()
+  for (let i = 0; i < 30; i++) {
+    const date = dateStr(addDays(today, -i))
+    // Feeding — 4 per day
+    for (let f = 0; f < 4; f++) {
+      rows.push({
+        user_id: userId, child_id: childId, date, type: 'feeding',
+        value: JSON.stringify({ amount: 120 + Math.floor(Math.random() * 60), kind: 'bottle' }),
+        notes: null,
+      })
+    }
+    // Sleep — 2 per day
+    rows.push({ user_id: userId, child_id: childId, date, type: 'sleep', value: JSON.stringify({ hours: 10 + Math.random() * 2 }), notes: null })
+    // Diaper — 5 per day
+    for (let d = 0; d < 5; d++) {
+      rows.push({
+        user_id: userId, child_id: childId, date, type: 'diaper',
+        value: randFrom(['pee', 'poop', 'mixed']), notes: null,
+      })
+    }
+    // Mood — every other day
+    if (i % 2 === 0) {
+      rows.push({
+        user_id: userId, child_id: childId, date, type: 'mood',
+        value: randFrom(['happy', 'calm', 'fussy']), notes: null,
+      })
+    }
+  }
+
+  const BATCH = 100
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const { error: insError } = await supabase.from('child_logs').insert(rows.slice(i, i + BATCH))
+    if (insError) throw new Error(`Insert failed: ${insError.message ?? insError}`)
+  }
+
+  return { childId, inserted: rows.length }
+}
+
+// ─── Pregnancy seed ───────────────────────────────────────────────────────
+
+export async function seedPregnancyData(): Promise<{ inserted: number }> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError) throw new Error(`Session error: ${sessionError.message ?? sessionError}`)
+  const session = sessionData.session
+  if (!session) throw new Error('Not authenticated')
+  const userId = session.user.id
+
+  // Wipe existing
+  const { error: delError } = await supabase.from('pregnancy_logs').delete().eq('user_id', userId)
+  if (delError) throw new Error(`Delete failed: ${delError.message ?? delError}`)
+
+  const rows: Array<{ user_id: string; date: string; type: string; value: string | null; notes: string | null }> = []
+  const today = new Date()
+  const startWeight = 62
+
+  // 60 days of logs: weight weekly, symptoms daily-ish, kicks near term, mood sporadic
+  for (let i = 0; i < 60; i++) {
+    const d = addDays(today, -i)
+    const date = dateStr(d)
+
+    // Weight — every 7 days, gradual gain
+    if (i % 7 === 0) {
+      const weeksAgo = Math.floor(i / 7)
+      rows.push({
+        user_id: userId, date, type: 'weight',
+        value: (startWeight - weeksAgo * 0.3 + (Math.random() - 0.5) * 0.4).toFixed(1),
+        notes: null,
+      })
+    }
+
+    // Symptoms — 3 per week-ish
+    if (i % 2 === 0) {
+      rows.push({
+        user_id: userId, date, type: 'symptom',
+        value: randFrom(['Nausea', 'Fatigue', 'Back pain', 'Heartburn', 'Swelling']),
+        notes: null,
+      })
+    }
+
+    // Mood — 2 per week
+    if (i % 3 === 0) {
+      rows.push({
+        user_id: userId, date, type: 'mood',
+        value: randFrom(['great', 'good', 'okay', 'low']),
+        notes: null,
+      })
+    }
+
+    // Kicks — last 14 days, a couple per day
+    if (i < 14) {
+      rows.push({
+        user_id: userId, date, type: 'kick_count',
+        value: String(8 + Math.floor(Math.random() * 6)),
+        notes: null,
+      })
+    }
+  }
+
+  const BATCH = 100
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const { error: insError } = await supabase.from('pregnancy_logs').insert(rows.slice(i, i + BATCH))
+    if (insError) throw new Error(`Insert failed: ${insError.message ?? insError}`)
+  }
+
+  return { inserted: rows.length }
+}
+
+// ─── Wipe all dev data ────────────────────────────────────────────────────
+
+export async function wipeAllDemoData(): Promise<void> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError) throw new Error(`Session error: ${sessionError.message ?? sessionError}`)
+  const session = sessionData.session
+  if (!session) throw new Error('Not authenticated')
+  const userId = session.user.id
+
+  // cycle_logs
+  const { error: cErr } = await supabase.from('cycle_logs').delete().eq('user_id', userId)
+  if (cErr) throw new Error(`cycle_logs delete failed: ${cErr.message ?? cErr}`)
+
+  // pregnancy_logs
+  const { error: pErr } = await supabase.from('pregnancy_logs').delete().eq('user_id', userId)
+  if (pErr) throw new Error(`pregnancy_logs delete failed: ${pErr.message ?? pErr}`)
+
+  // child_logs (per-child cascade via children delete)
+  const { data: kids, error: kidErr } = await supabase.from('children').select('id').eq('user_id', userId)
+  if (kidErr) throw new Error(`children query failed: ${kidErr.message ?? kidErr}`)
+  for (const kid of kids ?? []) {
+    const { error: clErr } = await supabase.from('child_logs').delete().eq('child_id', kid.id)
+    if (clErr) throw new Error(`child_logs delete failed: ${clErr.message ?? clErr}`)
+  }
+}
