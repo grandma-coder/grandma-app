@@ -20,6 +20,7 @@ import { useTheme } from '../../constants/theme'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
 import { YourCycleCard } from './cycle/YourCycleCard'
 import { HormonesCard } from './cycle/HormonesCard'
@@ -57,6 +58,8 @@ export function CycleHome() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const parentName = useJourneyStore((s) => s.parentName)
+  const { data: profile } = useProfile()
+  const displayName = profile?.name ?? parentName
   const { data: history } = useCycleHistory()
 
   // Derive cycle config from latest history, or fall back to a demo
@@ -86,7 +89,7 @@ export function CycleHome() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.greetingWrap}>
-          <HomeGreeting name={parentName} microLabel={getMicroLabel()} />
+          <HomeGreeting name={displayName} microLabel={getMicroLabel()} />
         </View>
 
         <YourCycleCard
