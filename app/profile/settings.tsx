@@ -65,7 +65,16 @@ export default function SettingsScreen() {
               await queryClient.invalidateQueries({ queryKey: ['cycleLogs'] })
               Alert.alert('Done', `Inserted ${inserted} cycle logs.`)
             } catch (e: unknown) {
-              Alert.alert('Error', e instanceof Error ? e.message : String(e))
+              console.error('[seedCycleData] failed', e)
+              const message =
+                e instanceof Error
+                  ? e.message
+                  : typeof e === 'object' && e !== null && 'message' in e
+                  ? String((e as { message: unknown }).message)
+                  : typeof e === 'string'
+                  ? e
+                  : JSON.stringify(e)
+              Alert.alert('Seed failed', message || 'Unknown error')
             }
           },
         },

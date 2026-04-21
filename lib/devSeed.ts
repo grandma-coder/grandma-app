@@ -38,14 +38,14 @@ function bbtFor(cycleDay: number, cycleLength: number): string {
 
 export async function seedCycleData(): Promise<{ inserted: number }> {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-  if (sessionError) throw sessionError
+  if (sessionError) throw new Error(`Session error: ${sessionError.message ?? sessionError}`)
   const session = sessionData.session
   if (!session) throw new Error('Not authenticated')
   const userId = session.user.id
 
   // Wipe existing
   const { error: delError } = await supabase.from('cycle_logs').delete().eq('user_id', userId)
-  if (delError) throw delError
+  if (delError) throw new Error(`Delete failed: ${delError.message ?? delError}`)
 
   const rows: Array<{ user_id: string; date: string; type: string; value: string | null; notes: string | null }> = []
   const today = new Date()
@@ -135,12 +135,17 @@ export async function seedCycleData(): Promise<{ inserted: number }> {
   }
 
   // Insert in batches of 100
+  console.log('[seedCycleData] inserting', rows.length, 'rows for user', userId)
   const BATCH = 100
   for (let i = 0; i < rows.length; i += BATCH) {
     const chunk = rows.slice(i, i + BATCH)
     const { error: insError } = await supabase.from('cycle_logs').insert(chunk)
-    if (insError) throw insError
+    if (insError) {
+      console.error('[seedCycleData] insert failed', insError)
+      throw new Error(`Insert failed: ${insError.message ?? insError}`)
+    }
   }
+  console.log('[seedCycleData] done, inserted', rows.length, 'rows')
 
   return { inserted: rows.length }
 }
