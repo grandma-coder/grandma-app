@@ -32,9 +32,21 @@ import * as Haptics from 'expo-haptics'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
 import { Heart as HeartSticker, Flower as FlowerSticker, Burst as BurstSticker } from '../ui/Stickers'
-import { Emoji } from '../ui/Emoji'
+import { stickerForEmoji } from '../../lib/emojiToSticker'
+import {
+  NotifyAppointmentDue, NotifyRoutine, NotifyInsight, NotifyGoalAchieved,
+  TipRead, LogWater, LogUltrasound,
+  LogExercise, LogMilestone, LogNote, LogKicks,
+} from '../stickers/RewardStickers'
+
+// Drop-in replacement for the old <EmojiSticker> component that renders a sticker.
+function EmojiSticker({ size = 20, children, style }: { size?: number; children: string | undefined; style?: any }) {
+  const S = stickerForEmoji(children ?? '')
+  return <View style={style}><S size={size} /></View>
+}
 import { MoodFace } from '../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 import { useGoalsStore, getSuggestedGoals, getFeedingStage, getNutritionLabel, getAgeMonths, type MetricGoals, type FeedingStage } from '../../store/useGoalsStore'
@@ -618,7 +630,8 @@ export function KidsHome() {
   const activeChild = useChildStore((s) => s.activeChild)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
   const parentName = useJourneyStore((s) => s.parentName)
-  const [profileName, setProfileName] = useState<string | null>(null)
+  const { data: profile } = useProfile()
+  const profileName = profile?.name ?? null
   const getGoals = useGoalsStore((s) => s.getGoals)
   const syncGoals = useGoalsStore((s) => s.syncFromSupabase)
   const currentStreak = useBadgeStore((s) => s.currentStreak)
@@ -687,16 +700,6 @@ export function KidsHome() {
   useEffect(() => {
     if (child) syncGoals(child.id)
   }, [child?.id])
-
-  // Load profile name from Supabase
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return
-      supabase.from('profiles').select('name').eq('id', session.user.id).single().then(({ data }) => {
-        if (data?.name) setProfileName(data.name)
-      })
-    })
-  }, [])
 
   // Load reminders from AsyncStorage (seed realistic data once on first run)
   useEffect(() => {
@@ -2512,13 +2515,16 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
             { label: 'Pee', count: pee, color: DIAPER_COLORS.pee, emoji: '💧' },
             { label: 'Poop', count: poop, color: DIAPER_COLORS.poop, emoji: '💩' },
             { label: 'Mixed', count: mixed, color: DIAPER_COLORS.mixed, emoji: '🔄' },
-          ].map(({ label, count: c, color, emoji }) => (
-            <View key={label} style={[s.diaperChip, { backgroundColor: color + '18', borderColor: color + '50' }]}>
-              <Emoji size={12}>{emoji}</Emoji>
-              <Text style={[s.diaperChipLabel, { color }]}>{label}</Text>
-              <Text style={[s.diaperChipCount, { color }]}>{c}</Text>
-            </View>
-          ))}
+          ].map(({ label, count: c, color, emoji }) => {
+            const ChipSticker = stickerForEmoji(emoji)
+            return (
+              <View key={label} style={[s.diaperChip, { backgroundColor: color + '18', borderColor: color + '50' }]}>
+                <ChipSticker size={14} />
+                <Text style={[s.diaperChipLabel, { color }]}>{label}</Text>
+                <Text style={[s.diaperChipCount, { color }]}>{c}</Text>
+              </View>
+            )
+          })}
         </View>
       </View>
 
@@ -2662,14 +2668,17 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
               { label: 'Pee', count: pee, color: DIAPER_COLORS.pee, emoji: '💧' },
               { label: 'Poop', count: poop, color: DIAPER_COLORS.poop, emoji: '💩' },
               { label: 'Mixed', count: mixed, color: DIAPER_COLORS.mixed, emoji: '🔄' },
-            ].map(({ label, count: c, color, emoji }) => (
+            ].map(({ label, count: c, color, emoji }) => {
+              const CellSticker = stickerForEmoji(emoji)
+              return (
               <View key={label} style={{ flex: 1, backgroundColor: color + '15', borderRadius: radius.md, borderWidth: 1, borderColor: color + '40', padding: 10, alignItems: 'center', gap: 2 }}>
-                <Emoji size={20}>{emoji}</Emoji>
+                <CellSticker size={24} />
                 <Text style={{ color, fontSize: 18, fontWeight: '800' }}>{c}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 10 }}>{total > 0 ? Math.round((c / total) * 100) : 0}%</Text>
               </View>
-            ))}
+              )
+            })}
           </View>
 
           {/* Proportion bar */}
@@ -3253,9 +3262,12 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                             {uv.overdue ? 'Overdue · ' : 'Due: '}{uv.dueAge}
                           </Text>
                           {apptDate && (
-                            <Text style={[s.modalTaskStatus, { color: brand.success, marginTop: 2 }]}>
-                              <Emoji>📅</Emoji> Appt: {formatHealthDate(apptDate)}
-                            </Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                              <NotifyAppointmentDue size={14} />
+                              <Text style={[s.modalTaskStatus, { color: brand.success }]}>
+                                Appt: {formatHealthDate(apptDate)}
+                              </Text>
+                            </View>
                           )}
                         </View>
                         {apptDate ? (
@@ -4521,7 +4533,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
             }}>
               {/* sticker emoji */}
               <View style={{ position: 'absolute', right: -6, top: -8, transform: [{ rotate: '12deg' }] }}>
-                <Emoji size={72} style={{ opacity: 0.85 }}>{heroEmoji}</Emoji>
+                <EmojiSticker size={72} style={{ opacity: 0.85 }}>{heroEmoji}</EmojiSticker>
               </View>
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -4548,14 +4560,14 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <View style={{ flex: 1, backgroundColor: pinkSoft, borderRadius: 20, borderWidth: 1, borderColor: line, padding: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Emoji size={14}>📅</Emoji>
+                    <EmojiSticker size={14}>📅</EmojiSticker>
                     <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Typical Age</Text>
                   </View>
                   <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 4, letterSpacing: -0.3 }}>{gl.ageRange}</Text>
                 </View>
                 <View style={{ flex: 1, backgroundColor: blueSoft, borderRadius: 20, borderWidth: 1, borderColor: line, padding: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Emoji size={14}>⏱️</Emoji>
+                    <EmojiSticker size={14}>⏱️</EmojiSticker>
                     <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Duration</Text>
                   </View>
                   <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 4, letterSpacing: -0.3 }}>{gl.duration}</Text>
@@ -4568,7 +4580,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
               <View style={{ backgroundColor: paper, borderRadius: 22, borderWidth: 1, borderColor: line, padding: 16, gap: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <View style={{ transform: [{ rotate: '-6deg' }] }}>
-                    <Emoji size={22}>🧠</Emoji>
+                    <EmojiSticker size={22}>🧠</EmojiSticker>
                   </View>
                   <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
                     What's happening in the brain
@@ -4584,7 +4596,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
             {!isDone && (
               <View style={{ gap: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <Emoji size={20}>🌊</Emoji>
+                  <EmojiSticker size={20}>🌊</EmojiSticker>
                   <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>The 3 Phases</Text>
                 </View>
                 {gl.phases.map((phase, pi) => {
@@ -4597,7 +4609,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
                       borderRadius: 18, borderWidth: 1, borderColor: line,
                       padding: 14, flexDirection: 'row', gap: 12, alignItems: 'center',
                     }}>
-                      <Emoji size={28}>{done ? '✅' : PHASE_EMOJI[pi]}</Emoji>
+                      <EmojiSticker size={28}>{done ? '✅' : PHASE_EMOJI[pi]}</EmojiSticker>
                       <View style={{ flex: 1, gap: 2 }}>
                         <Text style={{ fontSize: 14, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
                           {phase.label}{current ? '  · now' : ''}
@@ -4616,7 +4628,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
             {!isDone && (
               <View style={{ gap: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Emoji size={20}>👀</Emoji>
+                  <EmojiSticker size={20}>👀</EmojiSticker>
                   <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
                     {isActive ? `Signs ${childName} may show` : 'Signs to expect'}
                   </Text>
@@ -4640,7 +4652,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
             {!isDone && (
               <View style={{ gap: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Emoji size={20}>💪</Emoji>
+                  <EmojiSticker size={20}>💪</EmojiSticker>
                   <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
                     {isActive ? 'Skills emerging now' : 'Skills that will emerge'}
                   </Text>
@@ -4648,7 +4660,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
                 <View style={{ backgroundColor: paper, borderRadius: 22, borderWidth: 1, borderColor: line, padding: 16, gap: 10 }}>
                   {gl.skills.map((skill, i) => (
                     <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-                      <Emoji size={14} style={{ marginTop: 1 }}>✨</Emoji>
+                      <EmojiSticker size={14} style={{ marginTop: 1 }}>✨</EmojiSticker>
                       <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, flex: 1, lineHeight: 19 }}>
                         {skill}
                       </Text>
@@ -4662,7 +4674,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
             {!isDone && (
               <View style={{ gap: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Emoji size={20}>🎯</Emoji>
+                  <EmojiSticker size={20}>🎯</EmojiSticker>
                   <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
                     Activities to support this leap
                   </Text>
@@ -4689,7 +4701,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
                 backgroundColor: yellowSoft, borderRadius: 22, borderWidth: 1, borderColor: line,
                 padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center',
               }}>
-                <Emoji size={30}>💡</Emoji>
+                <EmojiSticker size={30}>💡</EmojiSticker>
                 <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: ink, flex: 1, lineHeight: 19 }}>{gl.tip}</Text>
               </View>
             )}
@@ -4700,7 +4712,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
                 backgroundColor: greenSoft, borderRadius: 22, borderWidth: 1, borderColor: line,
                 padding: 18, flexDirection: 'row', gap: 12, alignItems: 'center',
               }}>
-                <Emoji size={34}>🎉</Emoji>
+                <EmojiSticker size={34}>🎉</EmojiSticker>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
                     Way to go, {childName}!
@@ -4715,7 +4727,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
 
           {/* All leaps list — paper rows with emoji stickers */}
           <View style={{ marginHorizontal: 16, marginTop: 12, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Emoji size={20}>📖</Emoji>
+            <EmojiSticker size={20}>📖</EmojiSticker>
             <Text style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>All 10 Leaps</Text>
           </View>
           <View style={{ marginHorizontal: 16, gap: 6 }}>
@@ -4739,7 +4751,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
                   }}
                 >
                   <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? colors.surface : '#FFFEF8', borderWidth: 1, borderColor: line, alignItems: 'center', justifyContent: 'center' }}>
-                    <Emoji size={18}>{done || allDone ? '✅' : rowEmoji}</Emoji>
+                    <EmojiSticker size={18}>{done || allDone ? '✅' : rowEmoji}</EmojiSticker>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 14, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>{g.name}</Text>
@@ -4834,7 +4846,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
             padding: 18, gap: 8, position: 'relative', overflow: 'hidden',
           }}>
             <View style={{ position: 'absolute', right: -4, top: -6, transform: [{ rotate: '12deg' }] }}>
-              <Emoji size={72} style={{ opacity: 0.85 }}>{heroEmoji}</Emoji>
+              <EmojiSticker size={72} style={{ opacity: 0.85 }}>{heroEmoji}</EmojiSticker>
             </View>
             <Text style={{ fontSize: 22, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.4, lineHeight: 26, maxWidth: '78%' }}>
               {g.desc}
@@ -4848,14 +4860,14 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <View style={{ flex: 1, backgroundColor: pinkSoft, borderRadius: 20, borderWidth: 1, borderColor: line, padding: 14 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Emoji size={14}>📅</Emoji>
+                <EmojiSticker size={14}>📅</EmojiSticker>
                 <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Typical Age</Text>
               </View>
               <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 4, letterSpacing: -0.3 }}>{g.ageRange}</Text>
             </View>
             <View style={{ flex: 1, backgroundColor: blueSoft, borderRadius: 20, borderWidth: 1, borderColor: line, padding: 14 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Emoji size={14}>⏱️</Emoji>
+                <EmojiSticker size={14}>⏱️</EmojiSticker>
                 <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Duration</Text>
               </View>
               <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 4, letterSpacing: -0.3 }}>{g.duration}</Text>
@@ -4865,7 +4877,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
           {/* Phases */}
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-              <Emoji size={20}>🌊</Emoji>
+              <EmojiSticker size={20}>🌊</EmojiSticker>
               <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>The 3 Phases</Text>
             </View>
             {g.phases.map((phase, pi) => {
@@ -4878,7 +4890,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
                   borderRadius: 18, borderWidth: 1, borderColor: line,
                   padding: 14, flexDirection: 'row', gap: 12, alignItems: 'center',
                 }}>
-                  <Emoji size={28}>{done ? '✅' : PHASE_EMOJI[pi]}</Emoji>
+                  <EmojiSticker size={28}>{done ? '✅' : PHASE_EMOJI[pi]}</EmojiSticker>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text style={{ fontSize: 14, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
                       {phase.label}{current ? '  · happening now' : ''}
@@ -4895,7 +4907,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
           {/* Signs — pink chips */}
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Emoji size={20}>👀</Emoji>
+              <EmojiSticker size={20}>👀</EmojiSticker>
               <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
                 {isThisActive ? `Signs ${childName} may show` : 'Signs to watch for'}
               </Text>
@@ -4917,7 +4929,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
           {/* Skills — paper bullet list */}
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Emoji size={20}>💪</Emoji>
+              <EmojiSticker size={20}>💪</EmojiSticker>
               <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
                 {isThisDone ? 'Skills gained' : isThisActive ? 'Skills emerging now' : 'Skills that will emerge'}
               </Text>
@@ -4925,7 +4937,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
             <View style={{ backgroundColor: paper, borderRadius: 22, borderWidth: 1, borderColor: line, padding: 16, gap: 10 }}>
               {g.skills.map((skill, i) => (
                 <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-                  <Emoji size={14} style={{ marginTop: 1 }}>{isThisDone ? '✅' : '✨'}</Emoji>
+                  <EmojiSticker size={14} style={{ marginTop: 1 }}>{isThisDone ? '✅' : '✨'}</EmojiSticker>
                   <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, flex: 1, lineHeight: 19 }}>
                     {skill}
                   </Text>
@@ -4937,7 +4949,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
           {/* Activities — numbered paper cards */}
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Emoji size={20}>🎯</Emoji>
+              <EmojiSticker size={20}>🎯</EmojiSticker>
               <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
                 Activities to support this leap
               </Text>
@@ -4962,7 +4974,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
             backgroundColor: yellowSoft, borderRadius: 22, borderWidth: 1, borderColor: line,
             padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center',
           }}>
-            <Emoji size={30}>💡</Emoji>
+            <EmojiSticker size={30}>💡</EmojiSticker>
             <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: ink, flex: 1, lineHeight: 19 }}>{g.tip}</Text>
           </View>
 
@@ -4972,7 +4984,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
               backgroundColor: greenSoft, borderRadius: 22, borderWidth: 1, borderColor: line,
               padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center',
             }}>
-              <Emoji size={30}>🎉</Emoji>
+              <EmojiSticker size={30}>🎉</EmojiSticker>
               <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, flex: 1, letterSpacing: -0.2 }}>
                 {childName} has completed this leap!
               </Text>

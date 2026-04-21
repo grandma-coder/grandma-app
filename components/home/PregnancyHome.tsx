@@ -29,29 +29,38 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
-import { Emoji } from '../ui/Emoji'
 import { PaperCard } from '../ui/PaperCard'
-import { Display, DisplayItalic, MonoCaps, Body } from '../ui/Typography'
+import { Display, MonoCaps, Body } from '../ui/Typography'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
-import { Burst, Heart as HeartSticker } from '../stickers/BrandStickers'
 import { supabase } from '../../lib/supabase'
 import { pregnancyWeeks, getDaysToGo } from '../../lib/pregnancyData'
 import type { PregnancyWeekData } from '../../lib/pregnancyData'
-import { usePregnancyWeightHistory, usePregnancyTodayLogs } from '../../lib/analyticsData'
+import { usePregnancyTodayLogs } from '../../lib/analyticsData'
 import type { TodayLogEntry } from '../../lib/analyticsData'
-import { LineChart } from '../charts/SvgCharts'
 import {
   PregnancyMoodForm,
   PregnancySymptomsForm,
   AppointmentForm,
   KickCountForm,
 } from '../calendar/PregnancyLogForms'
+import { SimplePregnancyLogForm } from '../calendar/SimplePregnancyLogForm'
 
+import { WeekCard } from './pregnancy/WeekCard'
+import {
+  LogVitamins, LogWater, LogMood, LogSymptom, LogWeight, LogSleep,
+  LogExercise, LogKicks, LogNutrition, LogKegel,
+} from '../stickers/RewardStickers'
 import { AffirmationRevealCard } from './pregnancy/AffirmationRevealCard'
 import { VitalsCarousel } from './pregnancy/VitalsCarousel'
 import { RemindersSection } from './pregnancy/RemindersSection'
+import type { ReminderLogType } from './pregnancy/RemindersSection'
 import { WeekDetailModal } from './pregnancy/WeekDetailModal'
+import { WeightTrendCard } from './pregnancy/WeightTrendCard'
+import { BirthGuidePreview } from './pregnancy/BirthGuidePreview'
+import { AppointmentDetailModal } from './pregnancy/AppointmentDetailModal'
+import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 
 const SCREEN_W = Dimensions.get('window').width
 
@@ -73,7 +82,7 @@ interface BabyHeroCarouselProps {
 }
 
 function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarouselProps) {
-  const { colors, isDark, stickers } = useTheme()
+  const { colors } = useTheme()
   const flatListRef = useRef<FlatList<HeroItem>>(null)
   const [visibleWeek, setVisibleWeek] = useState(currentWeek)
 
@@ -94,14 +103,8 @@ function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarous
 
   const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current
 
-  // Hero card tint — soft lavender paper in both themes
-  const heroTint = stickers.lilacSoft
-  const pillBg = isDark ? 'rgba(20,19,19,0.35)' : 'rgba(20,19,19,0.06)'
-  const triNames = ['first', 'second', 'third'] as const
-
   const renderItem = ({ item }: { item: HeroItem }) => {
     const isCurrent = item.week === currentWeek
-    const tri = getTrimester(item.week)
     const daysLabel =
       isCurrent && daysToGo !== null
         ? `${daysToGo} days to go`
@@ -110,45 +113,14 @@ function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarous
         : `${item.week - currentWeek} weeks ahead`
 
     return (
-      <Pressable
-        style={{ width: SCREEN_W, paddingHorizontal: 20 }}
-        onPress={() => onPressWeek(item.week)}
-      >
-        <PaperCard tint={heroTint} radius={28} padding={24} style={styles.heroCard}>
-          {/* Corner sticker cluster — yellow Burst + pink Heart */}
-          <View style={styles.heroSticker} pointerEvents="none">
-            <Burst size={120} fill={stickers.yellow} stroke="#141313" points={11} wobble={0.2} />
-            <View style={styles.heroStickerHeart}>
-              <HeartSticker size={40} fill={stickers.pink} stroke="#141313" />
-            </View>
-          </View>
-
-          <MonoCaps size={10} color={colors.textMuted}>WEEK</MonoCaps>
-          <Display size={72} color={colors.text} style={{ marginTop: 2 }}>
-            {item.week}
-          </Display>
-          <DisplayItalic size={22} color={colors.text} style={{ marginTop: 2, opacity: 0.85 }}>
-            {triNames[tri - 1]} trimester
-          </DisplayItalic>
-
-          {/* Size pill */}
-          <View style={[styles.heroPill, { backgroundColor: pillBg }]}>
-            <View style={[styles.heroPillDot, { backgroundColor: stickers.peach }]} />
-            <Text style={[styles.heroPillText, { color: colors.text }]} numberOfLines={1}>
-              Baby is the size of a{' '}
-              <Text style={{ fontFamily: 'DMSans_600SemiBold' }}>
-                {item.data.babySize.toLowerCase()}
-              </Text>
-            </Text>
-          </View>
-
-          {/* Days + tap hint footer */}
-          <View style={styles.heroFooter}>
-            <MonoCaps size={10} color={colors.textMuted}>{daysLabel}</MonoCaps>
-            <Text style={[styles.heroTapText, { color: colors.textMuted }]}>Tap for details ›</Text>
-          </View>
-        </PaperCard>
-      </Pressable>
+      <View style={{ width: SCREEN_W, paddingHorizontal: 20 }}>
+        <WeekCard
+          week={item.week}
+          daysLabel={daysLabel}
+          width={SCREEN_W - 40}
+          onPress={() => onPressWeek(item.week)}
+        />
+      </View>
     )
   }
 
@@ -200,19 +172,20 @@ function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarous
 
 // ─── Section 3: Quick Log Strip ───────────────────────────────────────────────
 
-interface RoutineDef { type: string; label: string; emoji: string; goal: number; minWeek?: number }
+type StickerFn = (props: { size?: number; fill?: string; stroke?: string }) => React.ReactElement
+interface RoutineDef { type: string; label: string; Sticker: StickerFn; goal: number; minWeek?: number }
 
 const ROUTINES: RoutineDef[] = [
-  { type: 'vitamins', label: 'Vitamins', emoji: '💊', goal: 1 },
-  { type: 'water', label: 'Water', emoji: '💧', goal: 8 },
-  { type: 'mood', label: 'Mood', emoji: '😊', goal: 1 },
-  { type: 'symptom', label: 'Symptoms', emoji: '🤒', goal: 1 },
-  { type: 'weight', label: 'Weight', emoji: '⚖️', goal: 1 },
-  { type: 'sleep', label: 'Sleep', emoji: '😴', goal: 1 },
-  { type: 'exercise', label: 'Exercise', emoji: '🧘', goal: 1 },
-  { type: 'kick_count', label: 'Kicks', emoji: '👶', goal: 1, minWeek: 28 },
-  { type: 'nutrition', label: 'Meals', emoji: '🥗', goal: 3 },
-  { type: 'kegel', label: 'Kegel', emoji: '💪', goal: 1 },
+  { type: 'vitamins', label: 'Vitamins', Sticker: LogVitamins, goal: 1 },
+  { type: 'water', label: 'Water', Sticker: LogWater, goal: 8 },
+  { type: 'mood', label: 'Mood', Sticker: LogMood, goal: 1 },
+  { type: 'symptom', label: 'Symptoms', Sticker: LogSymptom, goal: 1 },
+  { type: 'weight', label: 'Weight', Sticker: LogWeight, goal: 1 },
+  { type: 'sleep', label: 'Sleep', Sticker: LogSleep, goal: 1 },
+  { type: 'exercise', label: 'Exercise', Sticker: LogExercise, goal: 1 },
+  { type: 'kick_count', label: 'Kicks', Sticker: LogKicks, goal: 1, minWeek: 28 },
+  { type: 'nutrition', label: 'Meals', Sticker: LogNutrition, goal: 3 },
+  { type: 'kegel', label: 'Kegel', Sticker: LogKegel, goal: 1 },
 ]
 
 interface QuickLogStripProps {
@@ -253,8 +226,8 @@ function QuickLogStrip({ todayLogs, weekNumber, onPressRoutine }: QuickLogStripP
               onPress={() => onPressRoutine(routine.type)}
               style={[styles.quickChip, { backgroundColor: chipBg, borderColor: chipBorder }]}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Emoji size={14}>{routine.emoji}</Emoji>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <routine.Sticker size={18} />
                 <Text style={[styles.quickChipText, { color: chipTextColor }]}>
                   {isWater && isDone ? `${waterCount}/8 glasses` : isDone ? `✓ ${routine.label}` : `+ ${routine.label}`}
                 </Text>
@@ -263,45 +236,6 @@ function QuickLogStrip({ todayLogs, weekNumber, onPressRoutine }: QuickLogStripP
           )
         })}
       </ScrollView>
-    </View>
-  )
-}
-
-// ─── Section 6: Weight Mini-Chart ─────────────────────────────────────────────
-
-interface WeightMiniChartProps { weights: number[]; labels: string[] }
-
-function WeightMiniChart({ weights, labels }: WeightMiniChartProps) {
-  const { colors, stickers } = useTheme()
-  if (weights.length < 2) return null
-
-  return (
-    <View style={styles.section}>
-      <Pressable onPress={() => router.push('/insights')}>
-        <PaperCard radius={24} padding={20}>
-          <View style={styles.chartHeader}>
-            <View>
-              <MonoCaps style={{ marginBottom: 4 }}>WEIGHT TREND</MonoCaps>
-              <Display size={26} color={colors.text}>
-                {weights[weights.length - 1].toFixed(1)}
-                <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: 14, color: colors.textMuted }}> kg</Text>
-              </Display>
-            </View>
-            <View style={styles.chartCta}>
-              <Body size={13} color={stickers.lilac} style={{ fontFamily: 'DMSans_600SemiBold' }}>Details</Body>
-              <ChevronRight size={14} color={stickers.lilac} strokeWidth={2} />
-            </View>
-          </View>
-          <LineChart
-            data={weights}
-            labels={labels}
-            color={stickers.lilac}
-            width={SCREEN_W - 80}
-            height={72}
-            unit=" kg"
-          />
-        </PaperCard>
-      </Pressable>
     </View>
   )
 }
@@ -316,10 +250,9 @@ function GrandmaCTA() {
         <PaperCard radius={24} padding={18} style={styles.grandmaCard}>
           <GrandmaLogo
             size={44}
-            body={stickers.yellow}
-            accent={stickers.coral}
+            palette="lilac"
             outline={isDark ? colors.text : '#141313'}
-            motion="default"
+            motion="float"
           />
           <View style={styles.grandmaBody}>
             <Display size={18} color={colors.text}>Ask Grandma</Display>
@@ -351,10 +284,13 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
   const weekNumber = usePregnancyStore((s) => s.weekNumber) ?? 24
   const dueDate = usePregnancyStore((s) => s.dueDate) ?? ''
   const parentName = useJourneyStore((s) => s.parentName)
+  const { data: profile } = useProfile()
+  const displayName = profile?.name ?? parentName
 
   const [activeLog, setActiveLog] = useState<InlineLogType>(null)
   const [weekDetailVisible, setWeekDetailVisible] = useState(false)
   const [detailWeek, setDetailWeek] = useState(weekNumber)
+  const [apptDetail, setApptDetail] = useState<StandardAppointment | null>(null)
 
   const [userId, setUserId] = useState<string | undefined>(undefined)
   useEffect(() => {
@@ -364,28 +300,13 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
   }, [])
 
   const { data: todayLogs = {} } = usePregnancyTodayLogs(userId)
-  const { data: weightHistory = [] } = usePregnancyWeightHistory(userId ?? '', 6)
 
   const daysToGo = dueDate ? getDaysToGo(dueDate) : null
-
-  const weightValues = (weightHistory as Array<{ date: string; weight: number }>).map(e => e.weight)
-  const weightLabels = (weightHistory as Array<{ date: string; weight: number }>).map(e =>
-    new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  )
 
   const handleHeroPress = (week: number) => {
     setDetailWeek(week)
     setWeekDetailVisible(true)
   }
-
-  // Redirect unhandled log types to agenda
-  useEffect(() => {
-    const handled: InlineLogType[] = ['mood', 'symptom', 'appointment', 'kick_count', 'vitamins', 'kegel']
-    if (activeLog !== null && !handled.includes(activeLog)) {
-      setActiveLog(null)
-      router.push('/(tabs)/agenda')
-    }
-  }, [activeLog])
 
   const renderInlineForm = (): React.ReactElement | null => {
     if (activeLog === null) return null
@@ -399,6 +320,11 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
     if (activeLog === 'symptom') return <PregnancySymptomsForm date={today} onSaved={onClose} />
     if (activeLog === 'appointment') return <AppointmentForm date={today} onSaved={onClose} />
     if (activeLog === 'kick_count') return <KickCountForm date={today} onSaved={onClose} />
+
+    if (activeLog === 'water' || activeLog === 'weight' || activeLog === 'sleep'
+        || activeLog === 'exercise' || activeLog === 'nutrition') {
+      return <SimplePregnancyLogForm type={activeLog} userId={userId} onSaved={onClose} />
+    }
 
     if (activeLog === 'vitamins' || activeLog === 'kegel') {
       return (
@@ -441,7 +367,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
       {/* Greeting */}
       <View style={{ paddingHorizontal: 20, marginBottom: 12 }}>
         <HomeGreeting
-          name={parentName}
+          name={displayName}
           microLabel={`WEEK ${weekNumber} · ${weekdayLabel}`}
         />
       </View>
@@ -487,15 +413,23 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
             setDetailWeek(weekNumber)
             setWeekDetailVisible(true)
           }}
+          onLog={(type: ReminderLogType) => setActiveLog(type as InlineLogType)}
+          onOpenAppointment={(appt) => setApptDetail(appt)}
         />
       </View>
 
-      {/* 6. Weight chart */}
-      {weightValues.length >= 2 && (
-        <WeightMiniChart weights={weightValues} labels={weightLabels} />
-      )}
+      {/* 6. Weight trend — rich card with IOM target band */}
+      <View style={styles.section}>
+        <WeightTrendCard userId={userId} weekNumber={weekNumber} />
+      </View>
 
-      {/* 7. Grandma CTA */}
+      {/* 7. Birth guide — collapsible cards inline */}
+      <View style={styles.section}>
+        <MonoCaps style={{ marginBottom: 12 }}>BIRTH GUIDE</MonoCaps>
+        <BirthGuidePreview />
+      </View>
+
+      {/* 8. Grandma CTA */}
       <GrandmaCTA />
 
       {/* Week detail modal */}
@@ -503,6 +437,14 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
         visible={weekDetailVisible}
         week={detailWeek}
         onClose={() => setWeekDetailVisible(false)}
+      />
+
+      {/* Appointment detail modal */}
+      <AppointmentDetailModal
+        visible={apptDetail !== null}
+        appointment={apptDetail}
+        currentWeek={weekNumber}
+        onClose={() => setApptDetail(null)}
       />
 
       {/* Inline log forms modal */}
@@ -534,43 +476,6 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
 
   // Hero
-  heroCard: {
-    overflow: 'hidden',
-    position: 'relative',
-    minHeight: 220,
-  },
-  heroSticker: {
-    position: 'absolute',
-    top: -24,
-    right: -24,
-    width: 140,
-    height: 140,
-  },
-  heroStickerHeart: {
-    position: 'absolute',
-    top: 44,
-    left: 44,
-  },
-  heroPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 10,
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginTop: 18,
-    maxWidth: '92%',
-  },
-  heroPillDot: { width: 10, height: 10, borderRadius: 5 },
-  heroPillText: { fontSize: 13, fontFamily: 'DMSans_400Regular', flexShrink: 1 },
-  heroFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  heroTapText: { fontSize: 11, fontFamily: 'DMSans_500Medium', letterSpacing: 0.5 },
   heroDotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 4, marginTop: 12, marginBottom: 4 },
   heroDot: { height: 6, borderRadius: 3 },
 
@@ -583,9 +488,6 @@ const styles = StyleSheet.create({
   quickChipText: { fontSize: 13, fontFamily: 'DMSans_500Medium' },
 
   // Weight chart
-  chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  chartCta: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-
   // Grandma
   grandmaCard: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   grandmaBody: { flex: 1 },
