@@ -65,8 +65,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 10,
     paddingHorizontal: 6,
+    paddingVertical: 14,
   },
   iconWrap: {
     width: 48,
