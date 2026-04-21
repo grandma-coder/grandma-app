@@ -171,14 +171,15 @@ export default function RootLayout() {
         }
 
         // Restore enrolled behaviors from Supabase if local store is empty
-        // (handles app reinstall / cleared storage scenarios)
+        // (handles app reinstall / cleared storage scenarios).
+        // We intentionally don't filter by `active` — any behavior row means the user
+        // has data for that journey and should see it in the switcher.
         const localBehaviors = useBehaviorStore.getState().enrolledBehaviors
         if (localBehaviors.length === 0) {
           const { data: dbBehaviors } = await supabase
             .from('behaviors')
             .select('type')
             .eq('user_id', session.user.id)
-            .eq('active', true)
           if (dbBehaviors && dbBehaviors.length > 0) {
             const types = dbBehaviors.map((b: any) => b.type === 'cycle' ? 'pre-pregnancy' : b.type)
             useBehaviorStore.getState().setBehaviors(types)
