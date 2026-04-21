@@ -18,6 +18,22 @@ function dateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+function formatSupabaseError(err: unknown): string {
+  if (!err) return 'Unknown error'
+  if (typeof err === 'string') return err
+  if (typeof err === 'object' && err !== null) {
+    const anyErr = err as { message?: string; code?: string; details?: string; hint?: string }
+    const parts = [anyErr.message, anyErr.details, anyErr.hint, anyErr.code].filter(Boolean)
+    if (parts.length > 0) return parts.join(' · ')
+    try {
+      return JSON.stringify(err)
+    } catch {
+      return String(err)
+    }
+  }
+  return String(err)
+}
+
 function addDays(base: Date, days: number): Date {
   const d = new Date(base)
   d.setDate(d.getDate() + days)
@@ -38,14 +54,14 @@ function bbtFor(cycleDay: number, cycleLength: number): string {
 
 export async function seedCycleData(): Promise<{ inserted: number }> {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-  if (sessionError) throw new Error(`Session error: ${sessionError.message ?? sessionError}`)
+  if (sessionError) throw new Error(`Session error: ${formatSupabaseError(sessionError)}`)
   const session = sessionData.session
   if (!session) throw new Error('Not authenticated')
   const userId = session.user.id
 
   // Wipe existing
   const { error: delError } = await supabase.from('cycle_logs').delete().eq('user_id', userId)
-  if (delError) throw new Error(`Delete failed: ${delError.message ?? delError}`)
+  if (delError) throw new Error(`Delete failed: ${formatSupabaseError(delError)}`)
 
   const rows: Array<{ user_id: string; date: string; type: string; value: string | null; notes: string | null }> = []
   const today = new Date()
@@ -142,7 +158,7 @@ export async function seedCycleData(): Promise<{ inserted: number }> {
     const { error: insError } = await supabase.from('cycle_logs').insert(chunk)
     if (insError) {
       console.error('[seedCycleData] insert failed', insError)
-      throw new Error(`Insert failed: ${insError.message ?? insError}`)
+      throw new Error(`Insert failed: ${formatSupabaseError(insError)}`)
     }
   }
   console.log('[seedCycleData] done, inserted', rows.length, 'rows')
@@ -154,7 +170,7 @@ export async function seedCycleData(): Promise<{ inserted: number }> {
 
 export async function seedKidsData(): Promise<{ childId: string; inserted: number }> {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-  if (sessionError) throw new Error(`Session error: ${sessionError.message ?? sessionError}`)
+  if (sessionError) throw new Error(`Session error: ${formatSupabaseError(sessionError)}`)
   const session = sessionData.session
   if (!session) throw new Error('Not authenticated')
   const userId = session.user.id
@@ -163,9 +179,9 @@ export async function seedKidsData(): Promise<{ childId: string; inserted: numbe
   const { data: existingChildren, error: childQueryError } = await supabase
     .from('children')
     .select('id')
-    .eq('user_id', userId)
+    .eq('parent_id', userId)
     .limit(1)
-  if (childQueryError) throw new Error(`Child query failed: ${childQueryError.message ?? childQueryError}`)
+  if (childQueryError) throw new Error(`Child query failed: ${formatSupabaseError(childQueryError)}`)
 
   let childId: string
   if (existingChildren && existingChildren.length > 0) {
@@ -176,20 +192,20 @@ export async function seedKidsData(): Promise<{ childId: string; inserted: numbe
     const { data: newChild, error: childInsertError } = await supabase
       .from('children')
       .insert({
-        user_id: userId,
+        parent_id: userId,
         name: 'Demo Kid',
-        dob: dateStr(twoYearsAgo),
-        gender: 'other',
+        birth_date: dateStr(twoYearsAgo),
+        sex: 'other',
       })
       .select('id')
       .single()
-    if (childInsertError) throw new Error(`Child insert failed: ${childInsertError.message ?? childInsertError}`)
+    if (childInsertError) throw new Error(`Child insert failed: ${formatSupabaseError(childInsertError)}`)
     childId = newChild.id
   }
 
   // Wipe existing logs for this child
   const { error: delError } = await supabase.from('child_logs').delete().eq('child_id', childId)
-  if (delError) throw new Error(`Delete failed: ${delError.message ?? delError}`)
+  if (delError) throw new Error(`Delete failed: ${formatSupabaseError(delError)}`)
 
   // Insert 30 days of activity
   const rows: Array<{
@@ -227,7 +243,7 @@ export async function seedKidsData(): Promise<{ childId: string; inserted: numbe
   const BATCH = 100
   for (let i = 0; i < rows.length; i += BATCH) {
     const { error: insError } = await supabase.from('child_logs').insert(rows.slice(i, i + BATCH))
-    if (insError) throw new Error(`Insert failed: ${insError.message ?? insError}`)
+    if (insError) throw new Error(`Insert failed: ${formatSupabaseError(insError)}`)
   }
 
   return { childId, inserted: rows.length }
@@ -237,14 +253,14 @@ export async function seedKidsData(): Promise<{ childId: string; inserted: numbe
 
 export async function seedPregnancyData(): Promise<{ inserted: number }> {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-  if (sessionError) throw new Error(`Session error: ${sessionError.message ?? sessionError}`)
+  if (sessionError) throw new Error(`Session error: ${formatSupabaseError(sessionError)}`)
   const session = sessionData.session
   if (!session) throw new Error('Not authenticated')
   const userId = session.user.id
 
   // Wipe existing
   const { error: delError } = await supabase.from('pregnancy_logs').delete().eq('user_id', userId)
-  if (delError) throw new Error(`Delete failed: ${delError.message ?? delError}`)
+  if (delError) throw new Error(`Delete failed: ${formatSupabaseError(delError)}`)
 
   const rows: Array<{ user_id: string; date: string; type: string; value: string | null; notes: string | null }> = []
   const today = new Date()
@@ -296,7 +312,7 @@ export async function seedPregnancyData(): Promise<{ inserted: number }> {
   const BATCH = 100
   for (let i = 0; i < rows.length; i += BATCH) {
     const { error: insError } = await supabase.from('pregnancy_logs').insert(rows.slice(i, i + BATCH))
-    if (insError) throw new Error(`Insert failed: ${insError.message ?? insError}`)
+    if (insError) throw new Error(`Insert failed: ${formatSupabaseError(insError)}`)
   }
 
   return { inserted: rows.length }
@@ -320,7 +336,7 @@ import { useBehaviorStore } from '../store/useBehaviorStore'
  */
 export async function repairBehaviorsFromData(): Promise<{ enrolled: string[] }> {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-  if (sessionError) throw new Error(`Session error: ${sessionError.message ?? sessionError}`)
+  if (sessionError) throw new Error(`Session error: ${formatSupabaseError(sessionError)}`)
   const session = sessionData.session
   if (!session) throw new Error('Not authenticated')
   const userId = session.user.id
@@ -331,8 +347,8 @@ export async function repairBehaviorsFromData(): Promise<{ enrolled: string[] }>
   const { count: kidsCount, error: kidsErr } = await supabase
     .from('children')
     .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-  if (kidsErr) throw new Error(`children query failed: ${kidsErr.message ?? kidsErr}`)
+    .eq('parent_id', userId)
+  if (kidsErr) throw new Error(`children query failed: ${formatSupabaseError(kidsErr)}`)
   if ((kidsCount ?? 0) > 0) inferred.push('kids')
 
   // Pregnancy
@@ -340,7 +356,7 @@ export async function repairBehaviorsFromData(): Promise<{ enrolled: string[] }>
     .from('pregnancy_logs')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
-  if (pregErr) throw new Error(`pregnancy_logs query failed: ${pregErr.message ?? pregErr}`)
+  if (pregErr) throw new Error(`pregnancy_logs query failed: ${formatSupabaseError(pregErr)}`)
   if ((pregCount ?? 0) > 0) inferred.push('pregnancy')
 
   // Pre-pregnancy
@@ -348,7 +364,7 @@ export async function repairBehaviorsFromData(): Promise<{ enrolled: string[] }>
     .from('cycle_logs')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
-  if (cycleErr) throw new Error(`cycle_logs query failed: ${cycleErr.message ?? cycleErr}`)
+  if (cycleErr) throw new Error(`cycle_logs query failed: ${formatSupabaseError(cycleErr)}`)
   if ((cycleCount ?? 0) > 0) inferred.push('pre-pregnancy')
 
   if (inferred.length === 0) return { enrolled: [] }
@@ -392,24 +408,24 @@ export async function repairBehaviorsFromData(): Promise<{ enrolled: string[] }>
 
 export async function wipeAllDemoData(): Promise<void> {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-  if (sessionError) throw new Error(`Session error: ${sessionError.message ?? sessionError}`)
+  if (sessionError) throw new Error(`Session error: ${formatSupabaseError(sessionError)}`)
   const session = sessionData.session
   if (!session) throw new Error('Not authenticated')
   const userId = session.user.id
 
   // cycle_logs
   const { error: cErr } = await supabase.from('cycle_logs').delete().eq('user_id', userId)
-  if (cErr) throw new Error(`cycle_logs delete failed: ${cErr.message ?? cErr}`)
+  if (cErr) throw new Error(`cycle_logs delete failed: ${formatSupabaseError(cErr)}`)
 
   // pregnancy_logs
   const { error: pErr } = await supabase.from('pregnancy_logs').delete().eq('user_id', userId)
-  if (pErr) throw new Error(`pregnancy_logs delete failed: ${pErr.message ?? pErr}`)
+  if (pErr) throw new Error(`pregnancy_logs delete failed: ${formatSupabaseError(pErr)}`)
 
   // child_logs (per-child cascade via children delete)
-  const { data: kids, error: kidErr } = await supabase.from('children').select('id').eq('user_id', userId)
-  if (kidErr) throw new Error(`children query failed: ${kidErr.message ?? kidErr}`)
+  const { data: kids, error: kidErr } = await supabase.from('children').select('id').eq('parent_id', userId)
+  if (kidErr) throw new Error(`children query failed: ${formatSupabaseError(kidErr)}`)
   for (const kid of kids ?? []) {
     const { error: clErr } = await supabase.from('child_logs').delete().eq('child_id', kid.id)
-    if (clErr) throw new Error(`child_logs delete failed: ${clErr.message ?? clErr}`)
+    if (clErr) throw new Error(`child_logs delete failed: ${formatSupabaseError(clErr)}`)
   }
 }
