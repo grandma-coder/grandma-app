@@ -31,6 +31,7 @@ import { ThemeProvider } from '../components/ui/ThemeProvider'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { DevPanelProvider } from '../context/DevPanelContext'
 import { SavedToastProvider } from '../components/ui/SavedToast'
+import { DevModeBanner } from '../components/ui/DevModeBanner'
 import type { Session } from '@supabase/supabase-js'
 import type { ChildWithRole, CaregiverPermissions } from '../types'
 
@@ -255,6 +256,7 @@ export default function RootLayout() {
           <Stack.Screen name="garage" />
           <Stack.Screen name="channel" />
         </Stack>
+        <DevModeBanner />
         </SavedToastProvider>
         </DevPanelProvider>
       </QueryClientProvider>
