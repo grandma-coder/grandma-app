@@ -14,7 +14,8 @@
  *     (keeps the screen populated and prevents ugly zero-state on first launch)
  */
 
-import { View, ScrollView, StyleSheet } from 'react-native'
+import { useState } from 'react'
+import { View, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
@@ -27,6 +28,7 @@ import { HormonesCard } from './cycle/HormonesCard'
 import { WisdomCard } from './cycle/WisdomCard'
 import { FertileWindowStrip } from './cycle/FertileWindowStrip'
 import { CyclePillarsGrid } from './cycle/CyclePillarsGrid'
+import { CycleHomeDetailSheet, type CycleHomeDetailType } from './cycle/CycleHomeDetailSheets'
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -61,6 +63,7 @@ export function CycleHome() {
   const { data: profile } = useProfile()
   const displayName = profile?.name ?? parentName
   const { data: history } = useCycleHistory()
+  const [detailType, setDetailType] = useState<CycleHomeDetailType | null>(null)
 
   // Derive cycle config from latest history, or fall back to a demo
   // (10 days ago, 28-day cycle). This keeps the hero populated when
@@ -92,23 +95,37 @@ export function CycleHome() {
           <HomeGreeting name={displayName} microLabel={getMicroLabel()} />
         </View>
 
-        <YourCycleCard
-          cycleDay={info.cycleDay}
-          cycleLength={info.cycleLength}
-          phaseLabel={phaseLabel}
-          isFertile={info.isFertile}
-          statusLine={getStatusLine(info)}
-        />
+        <Pressable onPress={() => setDetailType('cycle')}>
+          <YourCycleCard
+            cycleDay={info.cycleDay}
+            cycleLength={info.cycleLength}
+            phaseLabel={phaseLabel}
+            isFertile={info.isFertile}
+            statusLine={getStatusLine(info)}
+          />
+        </Pressable>
 
         <View style={styles.duoRow}>
-          <HormonesCard cycleDay={info.cycleDay} cycleLength={info.cycleLength} />
-          <WisdomCard phase={info.phase as CyclePhase} />
+          <Pressable style={{ flex: 1 }} onPress={() => setDetailType('hormones')}>
+            <HormonesCard cycleDay={info.cycleDay} cycleLength={info.cycleLength} />
+          </Pressable>
+          <Pressable style={{ flex: 1 }} onPress={() => setDetailType('wisdom')}>
+            <WisdomCard phase={info.phase as CyclePhase} />
+          </Pressable>
         </View>
 
-        <FertileWindowStrip cycleConfig={cycleConfig} />
+        <Pressable onPress={() => setDetailType('fertile')}>
+          <FertileWindowStrip cycleConfig={cycleConfig} />
+        </Pressable>
 
         <CyclePillarsGrid />
       </ScrollView>
+
+      <CycleHomeDetailSheet
+        type={detailType}
+        onClose={() => setDetailType(null)}
+        cycleConfig={cycleConfig}
+      />
     </View>
   )
 }
