@@ -241,7 +241,7 @@ function StepLastPeriod({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const date = useCycleOnboardingStore((s) => s.lastPeriodDate)
   const setDate = useCycleOnboardingStore((s) => s.setLastPeriodDate)
 
@@ -278,7 +278,7 @@ function StepLastPeriod({
               if (Platform.OS === 'android') setShowPicker(false)
               if (selected) setDate(selected.toISOString().split('T')[0])
             }}
-            themeVariant="light"
+            themeVariant={isDark ? 'dark' : 'light'}
           />
         )}
       </View>

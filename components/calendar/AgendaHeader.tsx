@@ -9,14 +9,17 @@ import { View, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Display } from '../ui/Typography'
 import { useTheme } from '../../constants/theme'
+import { NotificationBell } from '../ui/NotificationBell'
 
 interface AgendaHeaderProps {
   onFilter?: () => void
   onAdd?: () => void
   right?: ReactNode
+  /** Show the notification bell in the header's action cluster. Defaults to true. */
+  showBell?: boolean
 }
 
-export function AgendaHeader({ onFilter, onAdd, right }: AgendaHeaderProps) {
+export function AgendaHeader({ onFilter, onAdd, right, showBell = true }: AgendaHeaderProps) {
   const { colors, isDark } = useTheme()
   const ink = isDark ? colors.text : '#141313'
   const paper = isDark ? colors.surface : '#FFFEF8'
@@ -29,6 +32,7 @@ export function AgendaHeader({ onFilter, onAdd, right }: AgendaHeaderProps) {
 
       <View style={styles.actions}>
         {right}
+        {showBell && <NotificationBell />}
         {onFilter && (
           <Pressable onPress={onFilter} hitSlop={8}>
             <View style={[styles.circleBtn, { backgroundColor: paper, borderColor: paperBorder }]}>

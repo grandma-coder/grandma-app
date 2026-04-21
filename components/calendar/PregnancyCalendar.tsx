@@ -78,6 +78,7 @@ import { LogTile, LogTileGrid } from './LogTile'
 import { ActivityPillCard } from './ActivityPillCard'
 import { AgendaWeekStrip } from './AgendaWeekStrip'
 import { AppointmentDetailModal } from './AppointmentDetailModal'
+import { LogSheet } from './LogSheet'
 import { Display, Body, MonoCaps } from '../ui/Typography'
 import { logSticker } from './logStickers'
 import { MoodFace } from '../stickers/RewardStickers'
@@ -135,6 +136,24 @@ type LogFormType =
   | 'mood' | 'weight' | 'symptom' | 'appointment' | 'exam_result' | 'kick_count'
   | 'sleep' | 'exercise' | 'nutrition' | 'kegel' | 'water' | 'vitamins'
   | 'nesting' | 'birth_prep' | 'contraction'
+
+const LOG_FORM_TITLE: Record<LogFormType, string> = {
+  mood: 'Log Mood',
+  weight: 'Log Weight',
+  symptom: 'Log Symptoms',
+  appointment: 'Log Appointment',
+  exam_result: 'Log Exam Result',
+  kick_count: 'Count Kicks',
+  sleep: 'Log Sleep',
+  exercise: 'Log Movement',
+  nutrition: 'Log Nutrition',
+  kegel: 'Log Kegel',
+  water: 'Log Water',
+  vitamins: 'Log Vitamins',
+  nesting: 'Nesting Task',
+  birth_prep: 'Birth Prep',
+  contraction: 'Log Contraction',
+}
 
 interface PregnancyRoutine {
   id: string
@@ -1593,7 +1612,7 @@ export function PregnancyCalendar() {
                 backgroundColor: isPast || isCurrent ? triColor : triColor + '20',
               }}
             >
-              <Text style={{ fontFamily: 'CabinetGrotesk-Black', fontSize: 16, color: isPast || isCurrent ? '#fff' : triColor }}>
+              <Text style={{ fontFamily: 'Fraunces_800ExtraBold', fontSize: 16, color: isPast || isCurrent ? '#fff' : triColor }}>
                 {wkData.week}
               </Text>
             </View>
@@ -1648,7 +1667,7 @@ export function PregnancyCalendar() {
               {isDone ? (
                 <Check size={18} color="#fff" strokeWidth={3} />
               ) : (
-                <Text style={{ fontFamily: 'CabinetGrotesk-Black', fontSize: 12, color: isNext ? '#fff' : ringColor }}>
+                <Text style={{ fontFamily: 'Fraunces_800ExtraBold', fontSize: 12, color: isNext ? '#fff' : ringColor }}>
                   W{appt.week}
                 </Text>
               )}
@@ -1746,27 +1765,22 @@ export function PregnancyCalendar() {
         onDeleted={() => { void fetchRoutines() }}
       />
 
-      {/* Log Form Modal */}
-      <Modal
+      {/* Log Form Sheet */}
+      <LogSheet
         visible={logForm !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setLogForm(null)}
+        title={logForm ? LOG_FORM_TITLE[logForm.type] : ''}
+        onClose={() => setLogForm(null)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-            <View style={styles.modalHandle} />
-            <Pressable onPress={() => setLogForm(null)} style={styles.modalClose}>
-              <X size={20} color={colors.textMuted} strokeWidth={2} />
-            </Pressable>
-            <ScrollView>
-              {logForm !== null && (
-                <LogFormRouter type={logForm.type} date={logForm.date} onSaved={handleSaved} />
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.logFormScroll}
+        >
+          {logForm !== null && (
+            <LogFormRouter type={logForm.type} date={logForm.date} onSaved={handleSaved} />
+          )}
+        </ScrollView>
+      </LogSheet>
 
       {/* Log Detail Popup */}
       <Modal
@@ -1865,19 +1879,19 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   segBtn: { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 10 },
-  segLabel: { fontSize: 12, fontFamily: 'Satoshi-Variable', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
+  segLabel: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
 
   scroll: { padding: 16 },
 
   // Month grid
   monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   navBtn: { padding: 8 },
-  monthLabel: { fontSize: 18, fontFamily: 'CabinetGrotesk-Black' },
+  monthLabel: { fontSize: 18, fontFamily: 'Fraunces_800ExtraBold' },
   weekdayRow: { flexDirection: 'row', marginBottom: 8 },
-  weekdayLabel: { flex: 1, textAlign: 'center', fontSize: 11, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  weekdayLabel: { flex: 1, textAlign: 'center', fontSize: 11, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
   dayGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   dayCell: { width: '14.28%', aspectRatio: 1, padding: 4, alignItems: 'center' },
-  dayNum: { fontSize: 14, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  dayNum: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
   dotRow: { flexDirection: 'row', gap: 2, marginTop: 2 },
   dot: { width: 4, height: 4, borderRadius: 2 },
 
@@ -1894,8 +1908,8 @@ const styles = StyleSheet.create({
   },
   highlightIconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   highlightContent: { flex: 1 },
-  highlightTitle: { fontSize: 13, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
-  highlightDetail: { fontSize: 11, fontFamily: 'Satoshi-Variable', marginTop: 1 },
+  highlightTitle: { fontSize: 13, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
+  highlightDetail: { fontSize: 11, fontFamily: 'DMSans_500Medium', marginTop: 1 },
   highlightDots: { flexDirection: 'row', gap: 4, alignItems: 'center' },
   highlightDot: { width: 5, height: 5, borderRadius: 3 },
 
@@ -1903,14 +1917,14 @@ const styles = StyleSheet.create({
   dayPanel: { borderRadius: 20, padding: 16, marginTop: 12 },
   dayPanelHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   dayPanelDateRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  dayPanelDate: { fontSize: 14, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
-  dayPanelCount: { fontSize: 12, fontFamily: 'Satoshi-Variable' },
-  emptyDay: { fontSize: 13, fontFamily: 'Satoshi-Variable', textAlign: 'center', paddingVertical: 8 },
+  dayPanelDate: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
+  dayPanelCount: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
+  emptyDay: { fontSize: 13, fontFamily: 'DMSans_500Medium', textAlign: 'center', paddingVertical: 8 },
   listDivider: { height: 1, marginVertical: 8 },
 
   // Section toggle (pending / logged headers)
   sectionToggleRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 6 },
-  sectionToggleLabel: { fontSize: 12, fontFamily: 'Satoshi-Variable', fontWeight: '700', flex: 1 },
+  sectionToggleLabel: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '700', flex: 1 },
 
   // Type group rows (Kids-style: Icon | Label | Count | Chevron)
   typeGroupHeader: {
@@ -1922,8 +1936,8 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 2,
   },
-  typeGroupLabel: { flex: 1, fontSize: 13, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
-  typeGroupCount: { fontSize: 11, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
+  typeGroupLabel: { flex: 1, fontSize: 13, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
+  typeGroupCount: { fontSize: 11, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
 
   // Routine items
   routineItem: {
@@ -1937,9 +1951,9 @@ const styles = StyleSheet.create({
   },
   routineItemIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   routineItemContent: { flex: 1 },
-  routineItemName: { fontSize: 13, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
-  routineItemSub: { fontSize: 11, fontFamily: 'Satoshi-Variable', marginTop: 1 },
-  routineItemTime: { fontSize: 11, fontFamily: 'Satoshi-Variable' },
+  routineItemName: { fontSize: 13, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
+  routineItemSub: { fontSize: 11, fontFamily: 'DMSans_500Medium', marginTop: 1 },
+  routineItemTime: { fontSize: 11, fontFamily: 'DMSans_500Medium' },
 
   // Logged sub-items (inside type group)
   loggedItem: {
@@ -1953,25 +1967,25 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   loggedItemContent: { flex: 1 },
-  loggedItemValue: { fontSize: 12, fontFamily: 'Satoshi-Variable', color: 'rgba(255,255,255,0.65)' },
-  loggedItemTime: { fontSize: 11, fontFamily: 'Satoshi-Variable' },
+  loggedItemValue: { fontSize: 12, fontFamily: 'DMSans_500Medium', color: 'rgba(255,255,255,0.65)' },
+  loggedItemTime: { fontSize: 11, fontFamily: 'DMSans_500Medium' },
 
   // Week strip
   weekStrip: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   weekDayBtn: { flex: 1, alignItems: 'center', paddingVertical: 10, marginHorizontal: 2 },
-  weekDayName: { fontSize: 10, fontFamily: 'Satoshi-Variable', fontWeight: '700', marginBottom: 2 },
-  weekDayNum: { fontSize: 16, fontFamily: 'CabinetGrotesk-Black' },
+  weekDayName: { fontSize: 10, fontFamily: 'DMSans_500Medium', fontWeight: '700', marginBottom: 2 },
+  weekDayNum: { fontSize: 16, fontFamily: 'Fraunces_800ExtraBold' },
   weekDotIndicator: { width: 4, height: 4, borderRadius: 2, marginTop: 3 },
 
   // Journey
   journeyRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, padding: 12, marginBottom: 8, gap: 12 },
   journeyWeekBadge: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  journeyWeekNum: { fontSize: 14, fontFamily: 'CabinetGrotesk-Black' },
+  journeyWeekNum: { fontSize: 14, fontFamily: 'Fraunces_800ExtraBold' },
   journeyContent: { flex: 1 },
-  journeySize: { fontSize: 14, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
-  journeyFact: { fontSize: 12, fontFamily: 'Satoshi-Variable', marginTop: 1 },
+  journeySize: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
+  journeyFact: { fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 1 },
   currentBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  currentBadgeText: { fontSize: 10, fontFamily: 'Satoshi-Variable', fontWeight: '700', color: '#fff' },
+  currentBadgeText: { fontSize: 10, fontFamily: 'DMSans_500Medium', fontWeight: '700', color: '#fff' },
 
   // Appointments
   apptRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
@@ -1980,18 +1994,19 @@ const styles = StyleSheet.create({
   apptLine: { width: 2, flex: 1, marginTop: 2 },
   apptCard: { flex: 1, borderRadius: 16, padding: 12, marginBottom: 8 },
   apptCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  apptName: { fontSize: 14, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
-  apptWeek: { fontSize: 12, fontFamily: 'Satoshi-Variable' },
-  apptPrep: { fontSize: 12, fontFamily: 'Satoshi-Variable', marginTop: 4 },
-  apptDone: { fontSize: 12, fontFamily: 'Satoshi-Variable', marginTop: 4 },
+  apptName: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
+  apptWeek: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
+  apptPrep: { fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 4 },
+  apptDone: { fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 4 },
   addApptBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 999, marginTop: 16 },
-  addApptBtnText: { fontSize: 15, fontFamily: 'Satoshi-Variable', fontWeight: '700', color: '#fff' },
+  addApptBtnText: { fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '700', color: '#fff' },
 
   // Modals
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
   modalSheet: { borderTopLeftRadius: 32, borderTopRightRadius: 32, maxHeight: '85%' },
   modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'center', marginTop: 12 },
   modalClose: { position: 'absolute', right: 16, top: 12, padding: 8, zIndex: 10 },
+  logFormScroll: { paddingBottom: 24 },
 
   // Quick Log Sheet
   fabSheetBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
@@ -2005,7 +2020,7 @@ const styles = StyleSheet.create({
   fabSheetHandle: { alignItems: 'center', paddingVertical: 8 },
   fabSheetHandleBar: { width: 40, height: 4, borderRadius: 2 },
   fabSheetHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-  fabSheetTitle: { fontSize: 18, fontFamily: 'CabinetGrotesk-Black' },
+  fabSheetTitle: { fontSize: 18, fontFamily: 'Fraunces_800ExtraBold' },
   fabSheetClose: { padding: 6 },
   fabSheetGrid: {
     flexDirection: 'row',
@@ -2021,7 +2036,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fabSheetIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  fabSheetLabel: { fontSize: 11, fontFamily: 'Satoshi-Variable', fontWeight: '700', textAlign: 'center' },
+  fabSheetLabel: { fontSize: 11, fontFamily: 'DMSans_500Medium', fontWeight: '700', textAlign: 'center' },
 
   // Manage Routines button inside sheet
   manageRoutinesBtn: {
@@ -2033,7 +2048,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
   },
-  manageRoutinesBtnText: { flex: 1, fontSize: 14, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  manageRoutinesBtnText: { flex: 1, fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
 
   // Routine Manager
   routineManagerSheet: {
@@ -2050,7 +2065,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
-  routineManagerTitle: { flex: 1, fontSize: 18, fontFamily: 'CabinetGrotesk-Black' },
+  routineManagerTitle: { flex: 1, fontSize: 18, fontFamily: 'Fraunces_800ExtraBold' },
   routineManagerScroll: { paddingHorizontal: 16, paddingTop: 12 },
   routineRow: {
     flexDirection: 'row',
@@ -2063,10 +2078,10 @@ const styles = StyleSheet.create({
   },
   routineIconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   routineInfo: { flex: 1 },
-  routineName: { fontSize: 14, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
-  routineDetail: { fontSize: 11, fontFamily: 'Satoshi-Variable', marginTop: 2 },
+  routineName: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
+  routineDetail: { fontSize: 11, fontFamily: 'DMSans_500Medium', marginTop: 2 },
   routineDeleteBtn: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  emptyText: { fontSize: 13, fontFamily: 'Satoshi-Variable', textAlign: 'center', paddingVertical: 12 },
+  emptyText: { fontSize: 13, fontFamily: 'DMSans_500Medium', textAlign: 'center', paddingVertical: 12 },
 
   // Add routine form
   addRoutineForm: {
@@ -2077,15 +2092,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     gap: 10,
   },
-  addRoutineTitle: { fontSize: 14, fontFamily: 'CabinetGrotesk-Black' },
-  addRoutineLabel: { fontSize: 12, fontFamily: 'Satoshi-Variable', fontWeight: '700', marginTop: 4 },
+  addRoutineTitle: { fontSize: 14, fontFamily: 'Fraunces_800ExtraBold' },
+  addRoutineLabel: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '700', marginTop: 4 },
   routineInput: {
     height: 48,
     borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 14,
     fontSize: 14,
-    fontFamily: 'Satoshi-Variable',
+    fontFamily: 'DMSans_500Medium',
   },
   typePill: {
     paddingHorizontal: 12,
@@ -2093,7 +2108,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
   },
-  typePillText: { fontSize: 12, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
+  typePillText: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
   daysRow: { flexDirection: 'row', gap: 6 },
   dayPill: {
     width: 34,
@@ -2103,9 +2118,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayPillText: { fontSize: 12, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  dayPillText: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
   saveRoutineBtn: { paddingVertical: 14, borderRadius: 999, alignItems: 'center', marginTop: 4 },
-  saveRoutineBtnText: { fontSize: 15, fontFamily: 'Satoshi-Variable', fontWeight: '700', color: '#fff' },
+  saveRoutineBtnText: { fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '700', color: '#fff' },
 
   // Log Detail Bottom Sheet (Kids style)
   detailSheet: {
@@ -2123,22 +2138,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', marginBottom: 14,
   },
-  detailTitle: { fontSize: 22, fontFamily: 'CabinetGrotesk-Black' },
+  detailTitle: { fontSize: 22, fontFamily: 'Fraunces_800ExtraBold' },
   detailClose: { padding: 8 },
   detailInfoRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     borderRadius: 14, padding: 12, marginBottom: 10,
   },
-  detailInfoText: { fontSize: 13, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
+  detailInfoText: { fontSize: 13, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
   detailMetricCard: {
     borderRadius: 24, borderWidth: 1, padding: 24,
     alignItems: 'center', gap: 6, marginBottom: 14,
   },
-  detailMetricBig: { fontSize: 52, fontFamily: 'CabinetGrotesk-Black', letterSpacing: -2 },
-  detailMetricText: { fontSize: 22, fontFamily: 'CabinetGrotesk-Black', textAlign: 'center' },
-  detailMetricUnit: { fontSize: 20, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
+  detailMetricBig: { fontSize: 52, fontFamily: 'Fraunces_800ExtraBold', letterSpacing: -2 },
+  detailMetricText: { fontSize: 22, fontFamily: 'Fraunces_800ExtraBold', textAlign: 'center' },
+  detailMetricUnit: { fontSize: 20, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
   detailMetricLabel: {
-    fontSize: 11, fontFamily: 'Satoshi-Variable', fontWeight: '700',
+    fontSize: 11, fontFamily: 'DMSans_500Medium', fontWeight: '700',
     letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 2,
   },
   detailPillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
@@ -2146,9 +2161,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 6,
     borderRadius: 999, borderWidth: 1,
   },
-  detailPillText: { fontSize: 12, fontFamily: 'Satoshi-Variable', fontWeight: '600' },
+  detailPillText: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
   detailNotesBox: { borderRadius: 14, padding: 14, marginBottom: 14 },
-  detailNotesText: { fontSize: 14, fontFamily: 'Satoshi-Variable' },
+  detailNotesText: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
   detailActions: { flexDirection: 'row', gap: 12, marginTop: 4 },
   detailEditBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
@@ -2160,7 +2175,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', gap: 8,
     paddingVertical: 16, borderRadius: 999, borderWidth: 1,
   },
-  detailActionText: { fontSize: 15, fontFamily: 'Satoshi-Variable', fontWeight: '700', color: '#fff' },
+  detailActionText: { fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '700', color: '#fff' },
 
   // Timeline (Cards mode)
   modeToggle: {
@@ -2178,7 +2193,7 @@ const styles = StyleSheet.create({
   },
   modeToggleLabel: {
     fontSize: 12,
-    fontFamily: 'Satoshi-Variable',
+    fontFamily: 'DMSans_500Medium',
     fontWeight: '700',
   },
   timelineHeader: {
@@ -2197,7 +2212,7 @@ const styles = StyleSheet.create({
   },
   timelineTime: {
     fontSize: 12,
-    fontFamily: 'Satoshi-Variable',
+    fontFamily: 'DMSans_500Medium',
     fontWeight: '600',
   },
   emptyCard: {
@@ -2228,7 +2243,7 @@ const styles = StyleSheet.create({
   },
   dayTimelineSub: {
     fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
+    fontFamily: 'DMSans_500Medium',
   },
   dayZoomRow: {
     flexDirection: 'row',
@@ -2251,6 +2266,6 @@ const styles = StyleSheet.create({
   dayHourLabel: {
     fontSize: 10,
     fontWeight: '600',
-    fontFamily: 'Satoshi-Variable',
+    fontFamily: 'DMSans_500Medium',
   },
 })

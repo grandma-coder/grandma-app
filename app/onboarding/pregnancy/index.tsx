@@ -256,7 +256,7 @@ function StepDueDate({
   setShowPicker: (v: boolean) => void
   onContinue: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const dueDate = usePregnancyOnboardingStore((s) => s.dueDate)
   const setDueDate = usePregnancyOnboardingStore((s) => s.setDueDate)
 
@@ -317,7 +317,7 @@ function StepDueDate({
               if (Platform.OS === 'android') setShowPicker(false)
               if (selected) setDueDate(selected.toISOString().split('T')[0])
             }}
-            themeVariant="light"
+            themeVariant={isDark ? 'dark' : 'light'}
           />
         )}
 

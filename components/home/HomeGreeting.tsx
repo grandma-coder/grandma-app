@@ -9,7 +9,7 @@
 import { View, StyleSheet } from 'react-native'
 import { Display, DisplayItalic, MonoCaps } from '../ui/Typography'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
-import { useTheme, stickers } from '../../constants/theme'
+import { useTheme } from '../../constants/theme'
 
 interface HomeGreetingProps {
   name?: string | null
@@ -38,9 +38,8 @@ export function HomeGreeting({
         <View style={styles.logo}>
           <GrandmaLogo
             size={logoSize}
-            body={isDark ? stickers.yellow : '#F5D652'}
+            mode="auto"
             outline={ink}
-            accent={stickers.coral}
             motion="default"
           />
         </View>

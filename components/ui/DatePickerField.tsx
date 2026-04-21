@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { View, Text, Pressable, Platform, StyleSheet } from 'react-native'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
-import { colors, borderRadius, typography } from '../../constants/theme'
+import { colors, borderRadius, typography, useTheme } from '../../constants/theme'
 
 interface DatePickerFieldProps {
   label: string
@@ -28,6 +28,7 @@ export default function DatePickerField({
   minimumDate,
 }: DatePickerFieldProps) {
   const [show, setShow] = useState(false)
+  const { isDark } = useTheme()
 
   const currentDate = value ? new Date(value) : new Date()
 
@@ -63,7 +64,7 @@ export default function DatePickerField({
             onChange={handleChange}
             maximumDate={maximumDate}
             minimumDate={minimumDate}
-            themeVariant="light"
+            themeVariant={isDark ? 'dark' : 'light'}
           />
           {Platform.OS === 'ios' && (
             <Pressable onPress={handleConfirm} style={styles.doneButton}>

@@ -1,14 +1,17 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
+import type { ComponentType } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 import { GlassCard } from '../ui/GlassCard'
-import { Emoji } from '../ui/Emoji'
+import { PillarBreastfeeding, LogFeeding, NotifyRoutine } from '../stickers/RewardStickers'
 import { colors, borderRadius } from '../../constants/theme'
 
-const FEED_TYPES = [
-  { id: 'breast_left', icon: '🤱', label: 'Left' },
-  { id: 'breast_right', icon: '🤱', label: 'Right' },
-  { id: 'bottle', icon: '🍼', label: 'Bottle' },
-  { id: 'pump', icon: '⏱️', label: 'Pump' },
+type StickerFn = ComponentType<{ size?: number; fill?: string; stroke?: string }>
+
+const FEED_TYPES: Array<{ id: string; Sticker: StickerFn; label: string }> = [
+  { id: 'breast_left', Sticker: PillarBreastfeeding, label: 'Left' },
+  { id: 'breast_right', Sticker: PillarBreastfeeding, label: 'Right' },
+  { id: 'bottle', Sticker: LogFeeding, label: 'Bottle' },
+  { id: 'pump', Sticker: NotifyRoutine, label: 'Pump' },
 ]
 
 interface MilkTrackerProps {
@@ -33,7 +36,7 @@ export function MilkTracker({ onLog }: MilkTrackerProps) {
               pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] },
             ]}
           >
-            <Emoji style={styles.feedIcon}>{type.icon}</Emoji>
+            <type.Sticker size={32} />
             <Text style={styles.feedLabel}>{type.label}</Text>
           </Pressable>
         ))}

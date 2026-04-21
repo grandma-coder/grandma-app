@@ -31,10 +31,11 @@ import {
   TemperatureForm,
   IntimacyForm,
 } from './LogForms'
+import { ExamForm } from '../exams/ExamForm'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-type LogType = 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp' | 'intercourse'
+type LogType = 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp' | 'intercourse' | 'exam'
 type ViewTab = 'cycle' | 'checklist' | 'visits'
 
 interface LogEntry {
@@ -51,6 +52,7 @@ const LOG_ENTRIES: LogEntry[] = [
   { id: 'intercourse',  label: 'Intimacy',     subtitle: 'Track fertile moments', tint: 'intimacy' },
   { id: 'period_start', label: 'Period start', subtitle: 'Begin a new cycle',     tint: 'period' },
   { id: 'period_end',   label: 'Period end',   subtitle: 'Close out your flow',   tint: 'period' },
+  { id: 'exam',         label: 'Exam result',  subtitle: 'Lab or fertility test', tint: 'exam' },
 ]
 
 // ─── Log Activity Sheet (opened by header "+") ─────────────────────────────
@@ -260,6 +262,9 @@ export function CycleCalendar() {
       </LogSheet>
       <LogSheet visible={sheetType === 'intercourse'} title="Log Intimacy" onClose={() => setSheetType(null)}>
         <IntimacyForm date={selectedDate} onSaved={handleSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'exam'} title="Log Exam Result" onClose={() => setSheetType(null)}>
+        <ExamForm behavior="pre-pregnancy" date={selectedDate} onSaved={() => setSheetType(null)} />
       </LogSheet>
 
       {/* Log Activity sheet (opened by header "+") */}

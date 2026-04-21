@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { GlassCard } from '../ui/GlassCard'
-import { Emoji } from '../ui/Emoji'
+import { RoleNanny, RoleFamily } from '../stickers/RewardStickers'
 import { colors, borderRadius } from '../../constants/theme'
 
 interface NannyUpdate {
@@ -24,7 +24,7 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
         </View>
         <GlassCard>
           <View style={styles.empty}>
-            <Emoji size={36} style={styles.emptyIcon}>👩‍👦</Emoji>
+            <View style={styles.emptyIcon}><RoleFamily size={48} /></View>
             <Text style={styles.emptyText}>No nanny updates yet</Text>
             <Text style={styles.emptySubtext}>
               Invite a caregiver to start seeing their notes here
@@ -46,7 +46,7 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
         <GlassCard key={update.id} style={styles.updateCard}>
           <View style={styles.updateHeader}>
             <View style={styles.avatar}>
-              <Emoji size={16}>👩</Emoji>
+              <RoleNanny size={26} />
             </View>
             <Text style={styles.nannyName}>{update.name}</Text>
             <Text style={styles.timeAgo}>{update.timeAgo}</Text>
@@ -144,8 +144,8 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   emptyIcon: {
-    fontSize: 36,
-    marginBottom: 8, fontFamily: 'Fraunces_600SemiBold' },
+    marginBottom: 8,
+  },
   emptyText: {
     fontSize: 15,
     fontWeight: '600',

@@ -9,6 +9,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 import { Pillar } from '../../types'
 import { Display, Body } from '../ui/Typography'
 import { useTheme } from '../../constants/theme'
+import { getPillarSticker } from '../../lib/pillarStickerMap'
 
 interface PillarCardProps {
   pillar: Pillar
@@ -18,6 +19,7 @@ interface PillarCardProps {
 export default function PillarCard({ pillar, onPress }: PillarCardProps) {
   const { colors, isDark } = useTheme()
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const Sticker = getPillarSticker(pillar.id)
 
   return (
     <Pressable
@@ -28,7 +30,7 @@ export default function PillarCard({ pillar, onPress }: PillarCardProps) {
       ]}
     >
       <View style={styles.iconCircle}>
-        <Text style={styles.icon}>{pillar.icon}</Text>
+        {Sticker ? <Sticker size={34} /> : <Text style={styles.icon}>{pillar.icon}</Text>}
       </View>
       <View style={styles.textContainer}>
         <Display size={18} color="#141313" style={{ letterSpacing: -0.3 }}>

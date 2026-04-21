@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { colors } from '../constants/theme'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
+import { SubscriptionTier, TIER_SEAT_LIMIT } from '../lib/revenue'
 
 interface CaregiverRow {
   id: string
@@ -13,6 +14,7 @@ interface CaregiverRow {
   role: string
   status: string
   created_at: string
+  is_locked: boolean
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -30,21 +32,35 @@ const STATUS_TEXT_COLORS: Record<string, string> = {
 export default function ManageCaregivers() {
   const child = useChildStore((s) => s.activeChild)
   const [caregivers, setCaregivers] = useState<CaregiverRow[]>([])
+  const [tier, setTier] = useState<SubscriptionTier>('free')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!child?.id) return
-    supabase
-      .from('child_caregivers')
-      .select('id, email, role, status, created_at')
-      .eq('child_id', child.id)
-      .neq('role', 'parent')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setCaregivers(data ?? [])
-        setLoading(false)
-      })
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      const [{ data: rows }, { data: profile }] = await Promise.all([
+        supabase
+          .from('child_caregivers')
+          .select('id, email, role, status, created_at, is_locked')
+          .eq('child_id', child.id)
+          .neq('role', 'parent')
+          .order('created_at', { ascending: false }),
+        user
+          ? supabase.from('profiles').select('subscription_tier').eq('id', user.id).single()
+          : Promise.resolve({ data: null }),
+      ])
+      setCaregivers(rows ?? [])
+      setTier((profile?.subscription_tier as SubscriptionTier) ?? 'free')
+      setLoading(false)
+    })()
   }, [child?.id])
+
+  const seatLimit = TIER_SEAT_LIMIT[tier]
+  const activeSeats = caregivers.filter((c) => c.status === 'accepted' && !c.is_locked).length
+  const atLimit = activeSeats >= seatLimit
+  const nextTierLabel = tier === 'free' ? 'Premium Solo' : tier === 'premium_solo' ? 'Family' : null
+  const nextTierRoute = tier === 'premium_family' ? null : (tier === 'premium_solo' ? 'premium_family' : 'premium_solo')
 
   async function revoke(id: string) {
     Alert.alert('Revoke access', 'This person will lose access to your child\'s data.', [
@@ -77,13 +93,32 @@ export default function ManageCaregivers() {
         People who can help care for {child?.name ?? 'your child'}
       </Text>
 
-      <Pressable
-        onPress={() => router.push('/invite-caregiver')}
-        style={styles.inviteButton}
-      >
-        <Ionicons name="person-add-outline" size={20} color={colors.textOnAccent} />
-        <Text style={styles.inviteText}>Invite a caregiver</Text>
-      </Pressable>
+      <View style={styles.seatCounter}>
+        <Ionicons name="people-outline" size={16} color={colors.textTertiary} />
+        <Text style={styles.seatCounterText}>
+          {seatLimit === 0
+            ? 'Upgrade to invite caregivers'
+            : `${activeSeats} of ${seatLimit} seat${seatLimit === 1 ? '' : 's'} used`}
+        </Text>
+      </View>
+
+      {atLimit && nextTierRoute ? (
+        <Pressable
+          onPress={() => router.push(`/paywall?tier=${nextTierRoute}`)}
+          style={[styles.inviteButton, { backgroundColor: colors.accent }]}
+        >
+          <Ionicons name="arrow-up-circle-outline" size={20} color={colors.textOnAccent} />
+          <Text style={styles.inviteText}>Upgrade to {nextTierLabel} for more seats</Text>
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={() => router.push('/invite-caregiver')}
+          style={styles.inviteButton}
+        >
+          <Ionicons name="person-add-outline" size={20} color={colors.textOnAccent} />
+          <Text style={styles.inviteText}>Invite a caregiver</Text>
+        </Pressable>
+      )}
 
       {loading ? (
         <View style={{ marginTop: 40 }}>
@@ -109,13 +144,18 @@ export default function ManageCaregivers() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.email}>{item.email}</Text>
-                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
                     <Text style={styles.role}>{item.role}</Text>
                     <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status] ?? colors.surfaceLight }]}>
                       <Text style={[styles.statusText, { color: STATUS_TEXT_COLORS[item.status] ?? colors.textTertiary }]}>
                         {item.status}
                       </Text>
                     </View>
+                    {item.is_locked && (
+                      <View style={[styles.statusBadge, { backgroundColor: 'rgba(253, 186, 116, 0.15)' }]}>
+                        <Text style={[styles.statusText, { color: colors.warning }]}>read-only</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               </View>
@@ -143,7 +183,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border,
   },
   title: { fontSize: 18, fontWeight: '700', color: colors.text },
-  subtitle: { fontSize: 14, color: colors.textTertiary, paddingHorizontal: 24, marginBottom: 20 },
+  subtitle: { fontSize: 14, color: colors.textTertiary, paddingHorizontal: 24, marginBottom: 12 },
+  seatCounter: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 24, marginBottom: 16,
+  },
+  seatCounterText: { fontSize: 13, color: colors.textTertiary, fontWeight: '500' },
   inviteButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: colors.accent, borderRadius: 16, paddingVertical: 14,

@@ -18,19 +18,20 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import {
-  Smile,
-  Frown,
-  Meh,
-  Laugh,
-  Zap,
   Check,
-  Calendar,
-  FlaskConical,
   Hand,
 } from 'lucide-react-native'
-import { useTheme, brand } from '../../constants/theme'
+import {
+  useTheme,
+  brand,
+  stickers as stickersLight,
+  stickersDark,
+} from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
-import { Emoji } from '../ui/Emoji'
+import { LogFormSticker } from './LogFormSticker'
+import { MoodFace } from '../stickers/RewardStickers'
+import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
+import { ExamForm } from '../exams/ExamForm'
 
 // ─── Shared save helper ────────────────────────────────────────────────────
 
@@ -58,12 +59,12 @@ async function savePregnancyLog(
 // ─── Mood Form ─────────────────────────────────────────────────────────────
 
 const MOODS = [
-  { id: 'excited', icon: Laugh, label: 'Excited' },
-  { id: 'happy', icon: Smile, label: 'Happy' },
-  { id: 'okay', icon: Meh, label: 'Okay' },
-  { id: 'anxious', icon: Frown, label: 'Anxious' },
-  { id: 'energetic', icon: Zap, label: 'Energetic' },
-]
+  { id: 'excited', label: 'Excited' },
+  { id: 'happy', label: 'Happy' },
+  { id: 'okay', label: 'Okay' },
+  { id: 'anxious', label: 'Anxious' },
+  { id: 'energetic', label: 'Energetic' },
+] as const
 
 export function PregnancyMoodForm({
   date,
@@ -72,7 +73,8 @@ export function PregnancyMoodForm({
   date: string
   onSaved: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [mood, setMood] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -92,9 +94,13 @@ export function PregnancyMoodForm({
 
   return (
     <View style={styles.form}>
+      <LogFormSticker
+        type="mood"
+        label="How are you feeling today?"
+        tint={s.yellowSoft}
+      />
       <View style={styles.moodRow}>
         {MOODS.map((m) => {
-          const Icon = m.icon
           const active = mood === m.id
           return (
             <Pressable
@@ -104,19 +110,20 @@ export function PregnancyMoodForm({
                 styles.moodBtn,
                 {
                   backgroundColor: active ? colors.primaryTint : colors.surface,
+                  borderColor: active ? colors.primary : colors.border,
                   borderRadius: radius.lg,
                 },
               ]}
             >
-              <Icon
-                size={24}
-                color={active ? colors.primary : colors.textMuted}
-                strokeWidth={2}
+              <MoodFace
+                variant={moodFaceVariant(m.id)}
+                fill={moodFaceFill(m.id)}
+                size={44}
               />
               <Text
                 style={[
                   styles.moodLabel,
-                  { color: active ? colors.primary : colors.textMuted },
+                  { color: active ? colors.primary : colors.textSecondary },
                 ]}
               >
                 {m.label}
@@ -169,14 +176,15 @@ export function PregnancySymptomsForm({
   date: string
   onSaved: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [selected, setSelected] = useState<string[]>([])
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
 
-  function toggle(s: string) {
+  function toggle(sym: string) {
     setSelected((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+      prev.includes(sym) ? prev.filter((x) => x !== sym) : [...prev, sym]
     )
   }
 
@@ -195,13 +203,18 @@ export function PregnancySymptomsForm({
 
   return (
     <View style={styles.form}>
+      <LogFormSticker
+        type="symptom"
+        label="What's going on with your body?"
+        tint={s.peachSoft}
+      />
       <View style={styles.chipGrid}>
-        {SYMPTOMS.map((s) => {
-          const active = selected.includes(s)
+        {SYMPTOMS.map((sym) => {
+          const active = selected.includes(sym)
           return (
             <Pressable
-              key={s}
-              onPress={() => toggle(s)}
+              key={sym}
+              onPress={() => toggle(sym)}
               style={[
                 styles.chip,
                 {
@@ -220,7 +233,7 @@ export function PregnancySymptomsForm({
                   { color: active ? colors.primary : colors.text },
                 ]}
               >
-                {s}
+                {sym}
               </Text>
             </Pressable>
           )
@@ -269,7 +282,8 @@ export function AppointmentForm({
   date: string
   onSaved: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [type, setType] = useState<string | null>(null)
   const [doctor, setDoctor] = useState('')
   const [notes, setNotes] = useState('')
@@ -295,12 +309,11 @@ export function AppointmentForm({
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconBanner, { backgroundColor: brand.secondary + '15' }]}>
-        <Calendar size={20} color={brand.secondary} strokeWidth={2} />
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>
-          Appointment on {formatDate(date)}
-        </Text>
-      </View>
+      <LogFormSticker
+        type="appointment"
+        label={`Visit on ${formatDate(date)}`}
+        tint={s.yellowSoft}
+      />
       <View style={styles.chipGrid}>
         {APPOINTMENT_TYPES.map((t) => {
           const active = type === t
@@ -365,92 +378,11 @@ export function AppointmentForm({
 }
 
 // ─── Exam Result Form ──────────────────────────────────────────────────────
+// Delegates to the shared cross-behavior ExamForm (photo + AI extract + save
+// into the unified `exams` table).
 
-export function ExamResultForm({
-  date,
-  onSaved,
-}: {
-  date: string
-  onSaved: () => void
-}) {
-  const { colors, radius } = useTheme()
-  const [title, setTitle] = useState('')
-  const [result, setResult] = useState('')
-  const [notes, setNotes] = useState('')
-  const [saving, setSaving] = useState(false)
-
-  async function save() {
-    if (!title) return
-    setSaving(true)
-    try {
-      await savePregnancyLog(
-        date,
-        'exam_result',
-        title,
-        JSON.stringify({ result: result || undefined, notes: notes || undefined })
-      )
-      onSaved()
-    } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <View style={styles.form}>
-      <View style={[styles.iconBanner, { backgroundColor: brand.phase.ovulation + '15' }]}>
-        <FlaskConical size={20} color={brand.phase.ovulation} strokeWidth={2} />
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Exam / Test Result</Text>
-      </View>
-      <TextInput
-        value={title}
-        onChangeText={setTitle}
-        placeholder="Test name (e.g. Blood work, Glucose)"
-        placeholderTextColor={colors.textMuted}
-        style={[
-          styles.input,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
-          },
-        ]}
-      />
-      <TextInput
-        value={result}
-        onChangeText={setResult}
-        placeholder="Result (e.g. Normal, 120/80)"
-        placeholderTextColor={colors.textMuted}
-        style={[
-          styles.input,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
-          },
-        ]}
-      />
-      <TextInput
-        value={notes}
-        onChangeText={setNotes}
-        placeholder="Notes (optional)"
-        placeholderTextColor={colors.textMuted}
-        style={[
-          styles.input,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
-          },
-        ]}
-      />
-      <SaveButton onPress={save} saving={saving} disabled={!title} />
-    </View>
-  )
+export function ExamResultForm({ date, onSaved }: { date: string; onSaved: () => void }) {
+  return <ExamForm behavior="pregnancy" date={date} onSaved={onSaved} />
 }
 
 // ─── Kick Count Form ───────────────────────────────────────────────────────
@@ -462,7 +394,8 @@ export function KickCountForm({
   date: string
   onSaved: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [count, setCount] = useState(0)
   const [startTime] = useState(() => Date.now())
   const [saving, setSaving] = useState(false)
@@ -488,6 +421,11 @@ export function KickCountForm({
 
   return (
     <View style={styles.form}>
+      <LogFormSticker
+        type="kick_count"
+        label="Count baby's kicks"
+        tint={s.pinkSoft}
+      />
       <View style={styles.kickCenter}>
         <Pressable
           onPress={() => setCount((c) => c + 1)}
@@ -566,7 +504,8 @@ function formatDate(dateStr: string): string {
 // ─── Sleep Log Form ────────────────────────────────────────────────────────
 
 export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [hours, setHours] = useState(7)
   const [quality, setQuality] = useState(5)
   const [saving, setSaving] = useState(false)
@@ -585,10 +524,11 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Emoji size={20}>😴</Emoji>
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Sleep on {formatDate(date)}</Text>
-      </View>
+      <LogFormSticker
+        type="sleep"
+        label={`Sleep on ${formatDate(date)}`}
+        tint={s.lilacSoft}
+      />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Hours slept</Text>
       <View style={styles.numberRow}>
         {[3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => (
@@ -637,7 +577,8 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
 const EXERCISE_TYPES = ['Yoga', 'Walk', 'Swim', 'Stretching', 'Pilates', 'Other']
 
 export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [exerciseType, setExerciseType] = useState<string | null>(null)
   const [minutes, setMinutes] = useState(30)
   const [saving, setSaving] = useState(false)
@@ -657,10 +598,11 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Emoji size={20}>🧘</Emoji>
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Exercise on {formatDate(date)}</Text>
-      </View>
+      <LogFormSticker
+        type="exercise"
+        label={`Movement on ${formatDate(date)}`}
+        tint={s.greenSoft}
+      />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Type</Text>
       <View style={styles.chipRow}>
         {EXERCISE_TYPES.map((t) => (
@@ -709,7 +651,8 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
 const NUTRITION_TAGS = ['Iron', 'Folic acid', 'Protein', 'Calcium', 'DHA', 'Vitamin D']
 
 export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [tags, setTags] = useState<string[]>([])
   const [nutritionNotes, setNutritionNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -733,10 +676,11 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Emoji size={20}>🥗</Emoji>
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Nutrition on {formatDate(date)}</Text>
-      </View>
+      <LogFormSticker
+        type="nutrition"
+        label={`Nourish on ${formatDate(date)}`}
+        tint={s.greenSoft}
+      />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Nutrients covered today</Text>
       <View style={styles.chipRow}>
         {NUTRITION_TAGS.map((tag) => {
@@ -774,7 +718,8 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
 // ─── Kegel Log Form ────────────────────────────────────────────────────────
 
 export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [sets, setSets] = useState(3)
   const [saving, setSaving] = useState(false)
 
@@ -792,10 +737,11 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Emoji size={20}>💪</Emoji>
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Kegel exercises</Text>
-      </View>
+      <LogFormSticker
+        type="kegel"
+        label="Pelvic floor practice"
+        tint={s.lilacSoft}
+      />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Sets completed</Text>
       <View style={styles.counterRow}>
         <Pressable onPress={() => setSets((s) => Math.max(1, s - 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
@@ -814,7 +760,8 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
 // ─── Water Log Form ────────────────────────────────────────────────────────
 
 export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [glasses, setGlasses] = useState(1)
   const [saving, setSaving] = useState(false)
 
@@ -832,10 +779,11 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Emoji size={20}>💧</Emoji>
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Water intake</Text>
-      </View>
+      <LogFormSticker
+        type="water"
+        label="Hydration check-in"
+        tint={s.blueSoft}
+      />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Glasses today</Text>
       <View style={styles.counterRow}>
         <Pressable onPress={() => setGlasses((g) => Math.max(1, g - 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
@@ -857,7 +805,8 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
 // ─── Vitamins Log Form ─────────────────────────────────────────────────────
 
 export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [saving, setSaving] = useState(false)
 
   async function save() {
@@ -874,10 +823,11 @@ export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () =
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Emoji size={20}>💊</Emoji>
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Prenatal vitamins</Text>
-      </View>
+      <LogFormSticker
+        type="vitamins"
+        label="Prenatal vitamins"
+        tint={s.greenSoft}
+      />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign: 'center' }]}>
         Did you take your prenatal vitamins today?
       </Text>
@@ -891,7 +841,8 @@ export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () =
 const NESTING_CATEGORIES = ['Nursery', 'Cleaning', 'Laundry', 'Shopping', 'Organizing', 'Other']
 
 export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [nestingTitle, setNestingTitle] = useState('')
   const [nestingCategory, setNestingCategory] = useState<string | null>(null)
   const [done, setDone] = useState(false)
@@ -912,10 +863,11 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Emoji size={20}>🪺</Emoji>
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Nesting task</Text>
-      </View>
+      <LogFormSticker
+        type="nesting"
+        label="Getting ready at home"
+        tint={s.peachSoft}
+      />
       <TextInput
         value={nestingTitle}
         onChangeText={setNestingTitle}
@@ -961,7 +913,8 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
 const BIRTH_PREP_CATEGORIES = ['Hospital bag', 'Birth plan', 'Classes', 'Postpartum', 'Baby gear', 'Admin', 'Other']
 
 export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [birthPrepTitle, setBirthPrepTitle] = useState('')
   const [birthPrepCategory, setBirthPrepCategory] = useState<string | null>(null)
   const [dueWeek, setDueWeek] = useState<number | null>(null)
@@ -983,10 +936,11 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Emoji size={20}>🏥</Emoji>
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Birth prep task</Text>
-      </View>
+      <LogFormSticker
+        type="birth_prep"
+        label="Preparing for baby"
+        tint={s.lilacSoft}
+      />
       <TextInput
         value={birthPrepTitle}
         onChangeText={setBirthPrepTitle}
@@ -1049,7 +1003,8 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
 // ─── Contraction Timer Log Form ─────────────────────────────────────────────
 
 export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [durationSec, setDurationSec] = useState(45)
   const [intervalMin, setIntervalMin] = useState(10)
   const [contractionNotes, setContractionNotes] = useState('')
@@ -1069,10 +1024,11 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Emoji size={20}>⏱️</Emoji>
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Contraction on {formatDate(date)}</Text>
-      </View>
+      <LogFormSticker
+        type="contraction"
+        label={`Contraction on ${formatDate(date)}`}
+        tint={s.pinkSoft}
+      />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Duration (seconds)</Text>
       <View style={styles.counterRow}>
         <Pressable onPress={() => setDurationSec((s) => Math.max(10, s - 5))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
@@ -1108,7 +1064,8 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
 // ─── Weight Log Form ──────────────────────────────────────────────────────
 
 export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const [weight, setWeight] = useState('70')
   const [saving, setSaving] = useState(false)
 
@@ -1131,10 +1088,11 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
 
   return (
     <View style={styles.form}>
-      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Emoji size={20}>⚖️</Emoji>
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Weight on {formatDate(date)}</Text>
-      </View>
+      <LogFormSticker
+        type="weight"
+        label={`Weight on ${formatDate(date)}`}
+        tint={s.peachSoft}
+      />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Weight (kg)</Text>
       <TextInput
         value={weight}
@@ -1155,17 +1113,6 @@ const styles = StyleSheet.create({
   form: {
     gap: 16,
     paddingBottom: 8,
-  },
-  iconBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 14,
-    borderRadius: 12,
-  },
-  bannerLabel: {
-    fontSize: 15,
-    fontWeight: '600',
   },
   input: {
     borderWidth: 1,
@@ -1198,11 +1145,12 @@ const styles = StyleSheet.create({
   moodBtn: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 14,
-    gap: 4,
+    paddingVertical: 18,
+    gap: 8,
+    borderWidth: 1,
   },
   moodLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
   kickCenter: {
@@ -1248,7 +1196,7 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
+    fontFamily: 'DMSans_500Medium',
     fontWeight: '600',
     marginBottom: 8,
     marginTop: 8,
@@ -1268,7 +1216,7 @@ const styles = StyleSheet.create({
   },
   numberBtnText: {
     fontSize: 14,
-    fontFamily: 'Satoshi-Variable',
+    fontFamily: 'DMSans_500Medium',
     fontWeight: '600',
   },
   counterRow: {
@@ -1286,12 +1234,12 @@ const styles = StyleSheet.create({
   },
   counterBtnText: {
     fontSize: 28,
-    fontFamily: 'CabinetGrotesk-Black',
+    fontFamily: 'Fraunces_800ExtraBold',
     lineHeight: 32,
   },
   counterValue: {
     fontSize: 48,
-    fontFamily: 'CabinetGrotesk-Black',
+    fontFamily: 'Fraunces_800ExtraBold',
     minWidth: 64,
     textAlign: 'center',
   },
@@ -1304,7 +1252,7 @@ const styles = StyleSheet.create({
   },
   toggleLabel: {
     fontSize: 15,
-    fontFamily: 'Satoshi-Variable',
+    fontFamily: 'DMSans_500Medium',
     fontWeight: '600',
   },
   togglePill: {

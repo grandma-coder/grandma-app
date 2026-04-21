@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   },
 
   cabinet56Cream: {
-    fontFamily: 'CabinetGrotesk-Black',
+    fontFamily: 'Fraunces_800ExtraBold',
     fontSize: 92,
     lineHeight: 96,
     color: '#FFFEF8',

@@ -316,7 +316,7 @@ function StepChildCount({
   total: number
   onContinue: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const count = useKidsOnboardingStore((s) => s.childCount)
   const setCount = useKidsOnboardingStore((s) => s.setChildCount)
 
@@ -383,7 +383,7 @@ function StepChildName({
   childCount: number
   onContinue: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
 
@@ -435,7 +435,7 @@ function StepChildDob({
   setShowPicker: (v: boolean) => void
   onContinue: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
   const childName = child?.name || `Child ${childIdx + 1}`
@@ -492,7 +492,7 @@ function StepChildDob({
                 updateChild(childIdx, { birthDate: selected.toISOString().split('T')[0] })
               }
             }}
-            themeVariant="light"
+            themeVariant={isDark ? 'dark' : 'light'}
           />
         )}
 
@@ -547,7 +547,7 @@ function StepChildCountry({
   childIdx: number
   onContinue: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
   const childName = child?.name || `Child ${childIdx + 1}`
@@ -650,7 +650,7 @@ function StepChildPhoto({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
   const childName = child?.name || `Child ${childIdx + 1}`
@@ -734,7 +734,7 @@ function StepChildAllergies({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const toggleAllergy = useKidsOnboardingStore((s) => s.toggleAllergy)
   const childName = child?.name || `Child ${childIdx + 1}`
@@ -795,7 +795,7 @@ function StepChildConditions({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
   const childName = child?.name || `Child ${childIdx + 1}`
@@ -841,7 +841,7 @@ function StepPartner({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const partner = useKidsOnboardingStore((s) => s.partnerName)
   const setPartner = useKidsOnboardingStore((s) => s.setPartnerName)
 
@@ -889,7 +889,7 @@ function StepCaregiver({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const role = useKidsOnboardingStore((s) => s.caregiverRole)
   const name = useKidsOnboardingStore((s) => s.caregiverName)
   const setRole = useKidsOnboardingStore((s) => s.setCaregiverRole)
@@ -967,7 +967,7 @@ function CompletionScreen({
   onFinish: () => void
 }) {
   const insets = useSafeAreaInsets()
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
 
   return (
     <View style={[completeStyles.root, { backgroundColor: colors.bg }]}>

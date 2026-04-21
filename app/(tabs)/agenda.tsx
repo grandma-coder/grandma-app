@@ -25,12 +25,19 @@ export default function AgendaScreen() {
   else if (mode === 'pregnancy') inner = <PregnancyCalendar />
   else inner = <KidsCalendar />
 
+  // Pre-pregnancy and pregnancy render the bell inside their AgendaHeader
+  // action cluster (next to the + button). Kids calendar uses its own layout,
+  // so we keep the floating bell there only.
+  const showFloatingBell = mode === 'kids'
+
   return (
     <View style={styles.root}>
       {inner}
-      <View style={[styles.bellWrap, { top: insets.top + 12 }]}>
-        <NotificationBell />
-      </View>
+      {showFloatingBell && (
+        <View style={[styles.bellWrap, { top: insets.top + 12 }]}>
+          <NotificationBell />
+        </View>
+      )}
     </View>
   )
 }

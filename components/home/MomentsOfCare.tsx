@@ -1,16 +1,19 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
+import type { ComponentType } from 'react'
 import { GlassCard } from '../ui/GlassCard'
-import { Emoji } from '../ui/Emoji'
+import { LogExercise, LogSleep } from '../stickers/RewardStickers'
 import { colors, borderRadius } from '../../constants/theme'
 
-const MOMENTS = [
+type StickerFn = ComponentType<{ size?: number; fill?: string; stroke?: string }>
+
+const MOMENTS: Array<{ Sticker: StickerFn; title: string; description: string }> = [
   {
-    icon: '🌟',
+    Sticker: LogExercise,
     title: 'Stardust Stretching',
     description: 'Gentle movements to ease lower back tension as your center of gravity shifts with the moon.',
   },
   {
-    icon: '🌙',
+    Sticker: LogSleep,
     title: 'Deep Sleep Ritual',
     description: 'Listen to the "Arctic Calm" soundscape to lower cortisol levels before your midnight rest.',
   },
@@ -27,7 +30,7 @@ export function MomentsOfCare() {
           <GlassCard style={styles.card}>
             <View style={styles.cardRow}>
               <View style={styles.iconCircle}>
-                <Emoji style={styles.icon}>{moment.icon}</Emoji>
+                <moment.Sticker size={28} />
               </View>
               <View style={styles.cardText}>
                 <Text style={styles.cardTitle}>{moment.title}</Text>

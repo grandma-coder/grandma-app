@@ -53,9 +53,9 @@ export default function Home() {
           <View style={styles.emptyWrap}>
             <GrandmaLogo
               size={96}
-              body={isDark ? stickers.yellow : '#F5D652'}
+              palette="sunny"
               outline={ink}
-              accent={stickers.coral}
+              motion="default"
             />
             <Display size={28} align="center" color={ink} style={{ marginTop: 18 }}>
               Your journey starts

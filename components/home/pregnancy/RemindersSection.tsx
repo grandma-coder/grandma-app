@@ -1,17 +1,24 @@
 import React from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
-import { router } from 'expo-router'
 import { useTheme } from '../../../constants/theme'
-import { Emoji } from '../../ui/Emoji'
 import { PaperCard } from '../../ui/PaperCard'
+import {
+  NotifyAppointmentDue, TipRead, LogKicks, LogWater, LogVitamins,
+} from '../../stickers/RewardStickers'
 import { getUpcomingAppointment } from '../../../lib/pregnancyAppointments'
+import type { StandardAppointment } from '../../../lib/pregnancyAppointments'
 import { getWeekData } from '../../../lib/pregnancyData'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
 
+export type ReminderLogType =
+  | 'water' | 'vitamins' | 'kick_count' | 'symptom' | 'mood' | 'weight' | 'sleep'
+
+type StickerFn = (props: { size?: number; fill?: string; stroke?: string }) => React.ReactElement
+
 interface ReminderItem {
   id: string
-  icon: string
+  Sticker: StickerFn
   title: string
   subtitle: string
   tint: string
@@ -23,9 +30,17 @@ interface Props {
   weekNumber: number
   todayLogs: Record<string, TodayLogEntry>
   onOpenWeekDetail: () => void
+  onLog: (type: ReminderLogType) => void
+  onOpenAppointment: (appt: StandardAppointment) => void
 }
 
-export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Props) {
+export function RemindersSection({
+  weekNumber,
+  todayLogs,
+  onOpenWeekDetail,
+  onLog,
+  onOpenAppointment,
+}: Props) {
   const { colors, stickers } = useTheme()
 
   const items: ReminderItem[] = []
@@ -35,12 +50,12 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
   if (appt) {
     items.push({
       id: 'appointment',
-      icon: '📅',
+      Sticker: NotifyAppointmentDue,
       title: appt.name,
       subtitle: `Week ${appt.week} · ${appt.prepNote}`,
       tint: stickers.yellowSoft,
       accent: stickers.yellow,
-      onPress: () => router.push('/(tabs)/agenda'),
+      onPress: () => onOpenAppointment(appt),
     })
   }
 
@@ -49,8 +64,8 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
   if (weekData?.momTip) {
     items.push({
       id: 'week_tip',
-      icon: '💡',
-      title: `Week ${weekNumber} Tip`,
+      Sticker: TipRead,
+      title: `Week ${weekNumber} tip`,
       subtitle: weekData.momTip,
       tint: stickers.lilacSoft,
       accent: stickers.lilac,
@@ -62,12 +77,12 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
   if (weekNumber >= 28 && !todayLogs['kick_count']) {
     items.push({
       id: 'kicks',
-      icon: '👶',
+      Sticker: LogKicks,
       title: 'Log your kick count',
       subtitle: 'Track 10 movements — aim to finish within 2 hours',
       tint: stickers.greenSoft,
       accent: stickers.green,
-      onPress: () => router.push('/(tabs)/agenda'),
+      onPress: () => onLog('kick_count'),
     })
   }
 
@@ -76,12 +91,12 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
   if (waterVal < 4) {
     items.push({
       id: 'water',
-      icon: '💧',
+      Sticker: LogWater,
       title: 'Stay hydrated',
       subtitle: `You've had ${waterVal}/8 glasses today — keep going`,
       tint: stickers.blueSoft,
       accent: stickers.blue,
-      onPress: () => {},
+      onPress: () => onLog('water'),
     })
   }
 
@@ -89,12 +104,12 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
   if (!todayLogs['vitamins']) {
     items.push({
       id: 'vitamins',
-      icon: '💊',
+      Sticker: LogVitamins,
       title: 'Take your prenatal vitamins',
       subtitle: 'Best taken with food to avoid nausea',
       tint: stickers.pinkSoft,
       accent: stickers.pink,
-      onPress: () => {},
+      onPress: () => onLog('vitamins' as ReminderLogType),
     })
   }
 
@@ -109,7 +124,9 @@ export function RemindersSection({ weekNumber, todayLogs, onOpenWeekDetail }: Pr
           style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
         >
           <PaperCard tint={item.tint} radius={20} padding={14} flat style={styles.item}>
-            <Emoji style={styles.itemIcon}>{item.icon}</Emoji>
+            <View style={styles.iconWrap}>
+              <item.Sticker size={32} />
+            </View>
             <View style={styles.itemBody}>
               <Text style={[styles.itemTitle, { color: colors.text }]} numberOfLines={1}>
                 {item.title}
@@ -133,7 +150,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  itemIcon: { fontSize: 22, flexShrink: 0 },
+  iconWrap: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   itemBody: { flex: 1 },
   itemTitle: {
     fontSize: 14,

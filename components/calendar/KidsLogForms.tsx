@@ -400,7 +400,7 @@ function DateChip({
   value: string
   onChange: (dateStr: string) => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const [showPicker, setShowPicker] = useState(false)
   const [tempDate, setTempDate] = useState(value)
 
@@ -432,7 +432,7 @@ function DateChip({
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             maximumDate={new Date()}
-            themeVariant="dark"
+            themeVariant={isDark ? 'dark' : 'light'}
             onChange={(e, d) => {
               if (Platform.OS === 'android') {
                 setShowPicker(false)
@@ -476,7 +476,7 @@ function TimeChip({
   onChange: (timeStr: string) => void
   label: string
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const [showPicker, setShowPicker] = useState(false)
   // Local temp value so iOS spinner doesn't fight with parent state
   const [tempTime, setTempTime] = useState(value)
@@ -514,7 +514,7 @@ function TimeChip({
             value={dateVal}
             mode="time"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            themeVariant="dark"
+            themeVariant={isDark ? 'dark' : 'light'}
             minuteInterval={5}
             onChange={(e, d) => {
               if (Platform.OS === 'android') {

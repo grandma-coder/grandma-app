@@ -23,7 +23,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTheme, brand, THEME_COLORS } from '../../constants/theme'
-import { Emoji } from '../ui/Emoji'
+import { stickerForEmoji } from '../../lib/emojiToSticker'
+import { NotifyHealthAlert, TalkMaster } from '../stickers/RewardStickers'
 import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -463,11 +464,12 @@ function CollapsibleCard({
 }: CollapsibleCardProps) {
   const { colors } = useTheme()
   const isOpen = expandedMap[id] ?? defaultOpen
+  const Sticker = stickerForEmoji(emoji)
 
   return (
     <View style={[ci.card, { backgroundColor: colors.surface, borderColor: color + '30' }]}>
       <Pressable onPress={() => onToggle(id)} style={ci.cardHeader}>
-        <Text style={ci.cardEmoji}>{emoji}</Text>
+        <Sticker size={28} />
         <Text style={[ci.cardTitle, { color: colors.text, flex: 1 }]}>{title}</Text>
         <Text style={[ci.cardChevron, { color: color }]}>{isOpen ? '▲' : '▼'}</Text>
       </Pressable>
@@ -476,10 +478,11 @@ function CollapsibleCard({
           {children}
           <Pressable
             onPress={() => router.push('/grandma-talk')}
-            style={[ci.askCta, { borderColor: color + '40' }]}
+            style={[ci.askCta, { borderColor: color + '40', flexDirection: 'row', justifyContent: 'center', gap: 6 }]}
           >
+            <TalkMaster size={16} />
             <Text style={[ci.askCtaText, { color: color }]}>
-              👵 Ask Grandma about {title.toLowerCase()}
+              Ask Grandma about {title.toLowerCase()}
             </Text>
           </Pressable>
         </View>
@@ -579,7 +582,6 @@ function PregnancyInsightsContent() {
         <Text style={[ci.greetingDate, { color: colors.textMuted }]}>{today}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={[ci.greetingName, { color: colors.text }]}>Good morning, {parentName}</Text>
-          <Emoji size={20}>💜</Emoji>
         </View>
         <Text style={[ci.greetingWeek, { color: brand.pregnancy }]}>Week {weekNumber} · {weekData.babySize}</Text>
       </View>
@@ -596,11 +598,15 @@ function PregnancyInsightsContent() {
         title={birthFocus.title} defaultOpen expandedMap={expandedCards} onToggle={toggleCard}
       >
         <Text style={[ci.bodyText, { color: colors.textSecondary }]}>{birthFocus.subtitle}</Text>
-        {birthFocus.bullets.map((b, i) => (
-          <Text key={i} style={[ci.bulletText, { color: colors.textSecondary }]}>
-            {b.icon} {b.text}
-          </Text>
-        ))}
+        {birthFocus.bullets.map((b, i) => {
+          const BulletSticker = stickerForEmoji(b.icon)
+          return (
+            <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingVertical: 2 }}>
+              <View style={{ marginTop: 2 }}><BulletSticker size={18} /></View>
+              <Text style={[ci.bulletText, { color: colors.textSecondary, flex: 1 }]}>{b.text}</Text>
+            </View>
+          )
+        })}
       </CollapsibleCard>
 
       <CollapsibleCard
@@ -627,7 +633,7 @@ function PregnancyInsightsContent() {
     <>
       <View style={[ci.warningCard, { borderColor: THEME_COLORS.orange + '40', backgroundColor: THEME_COLORS.orange + '14' }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Emoji size={16}>⚠️</Emoji>
+          <NotifyHealthAlert size={22} />
           <Text style={[ci.warningTitle, { color: THEME_COLORS.orange }]}>Call your provider or go to hospital if:</Text>
         </View>
         {WARNING_SIGNS.map((sign, i) => (
@@ -682,7 +688,12 @@ function PregnancyInsightsContent() {
 
   return (
     <View style={[ci.root, { backgroundColor: colors.bg }]}>
-      <View style={[ci.tabBar, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
+      <View style={[ci.topRow, { paddingTop: insets.top + 8 }]}>
+        <Pressable onPress={() => router.back()} style={ci.topBackBtn} hitSlop={12}>
+          <ArrowLeft size={22} color={colors.text} strokeWidth={2} />
+        </Pressable>
+      </View>
+      <View style={[ci.tabBar, { borderBottomColor: colors.border }]}>
         {(['today', 'birth_guide', 'reads'] as PregnancyTab[]).map((t) => {
           const label = t === 'today' ? 'Today' : t === 'birth_guide' ? 'Birth Guide' : 'Reads'
           return (
@@ -712,7 +723,7 @@ function PregnancyInsightsContent() {
         onPress={() => router.push('/grandma-talk')}
         style={[ci.askBar, { backgroundColor: brand.pregnancy, bottom: insets.bottom + 8 }]}
       >
-        <Emoji size={22}>👵</Emoji>
+        <TalkMaster size={28} />
         <Text style={[ci.askBarText, { color: '#FFFFFF' }]}>Ask Grandma anything</Text>
         <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
       </Pressable>
@@ -724,44 +735,46 @@ function PregnancyInsightsContent() {
 
 const ci = StyleSheet.create({
   root: { flex: 1 },
+  topRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 4 },
+  topBackBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   tabBar: { flexDirection: 'row', paddingHorizontal: 16, borderBottomWidth: 1 },
   tabBtn: { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  tabLabel: { fontSize: 12, fontFamily: 'Satoshi-Variable', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  tabLabel: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   scroll: { padding: 16, gap: 0 },
 
   greetingCard: { borderRadius: 20, padding: 20, marginBottom: 12, borderWidth: 1 },
-  greetingDate: { fontSize: 12, fontFamily: 'Satoshi-Variable', marginBottom: 4 },
-  greetingName: { fontSize: 20, fontFamily: 'CabinetGrotesk-Black', marginBottom: 4 },
-  greetingWeek: { fontSize: 14, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  greetingDate: { fontSize: 12, fontFamily: 'DMSans_500Medium', marginBottom: 4 },
+  greetingName: { fontSize: 20, fontFamily: 'Fraunces_800ExtraBold', marginBottom: 4 },
+  greetingWeek: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
 
   card: { borderRadius: 20, marginBottom: 12, borderWidth: 1, overflow: 'hidden' },
   cardHeader: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
   cardEmoji: { fontSize: 22 },
-  cardTitle: { fontSize: 15, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  cardTitle: { fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
   cardChevron: { fontSize: 12 },
   cardBody: { padding: 16, paddingTop: 12, borderTopWidth: 1, gap: 8 },
 
-  bodyText: { fontSize: 14, fontFamily: 'Satoshi-Variable', lineHeight: 20 },
-  bulletText: { fontSize: 13, fontFamily: 'Satoshi-Variable', lineHeight: 20, paddingLeft: 4 },
-  affirmationText: { fontSize: 16, fontFamily: 'Satoshi-Variable', fontStyle: 'italic', lineHeight: 24, fontWeight: '500' },
+  bodyText: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 20 },
+  bulletText: { fontSize: 13, fontFamily: 'DMSans_500Medium', lineHeight: 20, paddingLeft: 4 },
+  affirmationText: { fontSize: 16, fontFamily: 'DMSans_500Medium', fontStyle: 'italic', lineHeight: 24, fontWeight: '500' },
 
   askCta: { marginTop: 12, paddingVertical: 10, borderRadius: 999, borderWidth: 1, alignItems: 'center' },
-  askCtaText: { fontSize: 13, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  askCtaText: { fontSize: 13, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
 
   warningCard: { borderRadius: 20, padding: 16, marginBottom: 12, borderWidth: 1 },
-  warningTitle: { fontSize: 14, fontFamily: 'Satoshi-Variable', fontWeight: '700', marginBottom: 8 },
-  warningItem: { fontSize: 13, fontFamily: 'Satoshi-Variable', lineHeight: 20 },
+  warningTitle: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '700', marginBottom: 8 },
+  warningItem: { fontSize: 13, fontFamily: 'DMSans_500Medium', lineHeight: 20 },
 
   featuredCard: { borderRadius: 20, padding: 20, marginBottom: 12, borderWidth: 1 },
-  featuredBadge: { fontSize: 10, fontFamily: 'Satoshi-Variable', fontWeight: '700', letterSpacing: 1, marginBottom: 8 },
-  featuredTitle: { fontSize: 17, fontFamily: 'CabinetGrotesk-Black', marginBottom: 8 },
-  featuredSummary: { fontSize: 14, fontFamily: 'Satoshi-Variable', lineHeight: 20 },
-  featuredMins: { fontSize: 12, fontFamily: 'Satoshi-Variable', marginTop: 6 },
-  readMins: { fontSize: 11, fontFamily: 'Satoshi-Variable', marginTop: 6 },
+  featuredBadge: { fontSize: 10, fontFamily: 'DMSans_500Medium', fontWeight: '700', letterSpacing: 1, marginBottom: 8 },
+  featuredTitle: { fontSize: 17, fontFamily: 'Fraunces_800ExtraBold', marginBottom: 8 },
+  featuredSummary: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 20 },
+  featuredMins: { fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 6 },
+  readMins: { fontSize: 11, fontFamily: 'DMSans_500Medium', marginTop: 6 },
 
   askBar: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', alignItems: 'center', borderRadius: 999, paddingVertical: 14, paddingHorizontal: 20, gap: 10 },
   askBarEmoji: { fontSize: 20 },
-  askBarText: { flex: 1, fontSize: 15, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
+  askBarText: { flex: 1, fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
 })
 
 // ─── Main Screen ──────────────────────────────────────────────────────────

@@ -1,22 +1,9 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
 import { colors, THEME_COLORS, borderRadius, shadows } from '../../constants/theme'
 import { pillars } from '../../lib/pillars'
 import type { Pillar } from '../../types'
-
-// Icon mapping to match HTML mockup (Lucide-style via Ionicons)
-const PILLAR_ICONS: Record<string, string> = {
-  milk: 'happy-outline',       // baby
-  food: 'nutrition-outline',   // apple
-  nutrition: 'leaf-outline',   // leaf
-  vaccines: 'medkit-outline',  // syringe
-  clothes: 'shirt-outline',    // shirt
-  recipes: 'restaurant-outline', // utensils
-  habits: 'heart-outline',
-  milestones: 'star-outline',
-  medicine: 'medical-outline',
-}
+import { getPillarSticker } from '../../lib/pillarStickerMap'
 
 interface PillarGridProps {
   lastActivities?: Record<string, string>
@@ -33,7 +20,7 @@ export function PillarGrid({ lastActivities = {} }: PillarGridProps) {
         const bgColor = (colors.pillar as Record<string, string>)[pillar.id] ?? colors.surface
         const isDark = bgColor === '#241845' || bgColor === '#141414'
         const textColor = isDark ? '#FFFFFF' : '#000000'
-        const iconName = PILLAR_ICONS[pillar.id] ?? 'help-circle-outline'
+        const Sticker = getPillarSticker(pillar.id)
 
         return (
           <Pressable
@@ -48,9 +35,9 @@ export function PillarGrid({ lastActivities = {} }: PillarGridProps) {
             {/* Gradient overlay at bottom */}
             <View style={styles.cardGradient} />
 
-            {/* Icon */}
+            {/* Sticker */}
             <View style={[styles.iconBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
-              <Ionicons name={iconName as any} size={28} color={textColor} />
+              {Sticker ? <Sticker size={40} /> : null}
             </View>
 
             {/* Text at bottom */}

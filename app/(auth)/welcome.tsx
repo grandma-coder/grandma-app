@@ -111,9 +111,9 @@ export default function Welcome() {
         <View style={{ marginBottom: 18 }}>
           <GrandmaLogo
             size={104}
-            body={isDark ? stickers.yellow : '#F5D652'}
+            palette="sunny"
             outline={ink}
-            accent={stickers.coral}
+            motion="sparkle"
           />
         </View>
 

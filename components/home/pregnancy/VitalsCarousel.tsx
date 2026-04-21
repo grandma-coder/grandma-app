@@ -12,10 +12,11 @@ import {
 import { X, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTheme } from '../../../constants/theme'
-import { Emoji } from '../../ui/Emoji'
 import { PaperCard } from '../../ui/PaperCard'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
-import { MoodFace } from '../../stickers/RewardStickers'
+import {
+  MoodFace, LogWeight, LogWater, LogSleep, LogKicks, LogNutrition, LogExercise,
+} from '../../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill } from '../../../lib/moodFace'
 import { supabase } from '../../../lib/supabase'
 import { LineChart } from '../../charts/SvgCharts'
@@ -25,15 +26,18 @@ import {
   PregnancySymptomsForm,
   KickCountForm,
 } from '../../calendar/PregnancyLogForms'
+import { SimplePregnancyLogForm } from '../../calendar/SimplePregnancyLogForm'
 
 const SCREEN_W = Dimensions.get('window').width
 const CARD_W = 130
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type StickerFn = (props: { size?: number; fill?: string; stroke?: string }) => React.ReactElement
+
 interface VitalCard {
   id: string
-  icon: string
+  Sticker: StickerFn
   label: string
   value: string
   subLabel?: string
@@ -168,7 +172,7 @@ function VitalDetailModal({ card, userId, weekNumber, onClose, onLog }: DetailMo
         {card.id === 'mood' ? (
           <MoodFace size={44} variant={moodFaceVariant(latestMoodKey)} fill={moodFaceFill(latestMoodKey)} />
         ) : (
-          <Emoji size={40}>{card.icon}</Emoji>
+          <card.Sticker size={44} />
         )}
         <View>
           <MonoCaps size={10} color={colors.textMuted}>{card.label.toUpperCase()}</MonoCaps>
@@ -233,8 +237,8 @@ function VitalDetailModal({ card, userId, weekNumber, onClose, onLog }: DetailMo
         onPress={() => onLog(card.logType as LogFormType)}
         style={[styles.logBtn, { backgroundColor: card.color + '20', borderColor: card.color + '60' }]}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Emoji size={15}>{card.icon}</Emoji>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <card.Sticker size={18} />
           <Text style={[styles.logBtnText, { color: card.color }]}>{logLabel}</Text>
         </View>
       </Pressable>
@@ -272,7 +276,7 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
   const cards: VitalCard[] = [
     {
       id: 'weight',
-      icon: '⚖️',
+      Sticker: LogWeight,
       label: 'Weight',
       value: weightVal !== null ? `${weightVal.toFixed(1)} kg` : '—',
       color: stickers.lilac,
@@ -283,7 +287,7 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
     },
     {
       id: 'water',
-      icon: '💧',
+      Sticker: LogWater,
       label: 'Hydration',
       value: `${waterVal}/8`,
       subLabel: 'glasses today',
@@ -294,7 +298,7 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
     },
     {
       id: 'sleep',
-      icon: '😴',
+      Sticker: LogSleep,
       label: 'Sleep',
       value: sleepVal !== null ? `${sleepVal.toFixed(1)}h` : '—',
       progress: sleepVal !== null ? Math.min(1, sleepVal / 9) : 0,
@@ -305,7 +309,7 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
     ...(weekNumber >= 28
       ? [{
           id: 'kicks',
-          icon: '👶',
+          Sticker: LogKicks,
           label: 'Kicks',
           value: kicksVal !== null ? String(kicksVal) : '—',
           subLabel: 'Count today',
@@ -318,7 +322,7 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
       : []),
     {
       id: 'mood',
-      icon: '😊',
+      Sticker: LogExercise,  // mood card renders MoodFace — sticker only used for detail header fallback
       label: 'Mood',
       value: moodVal ? (moodLabels[moodVal] ?? moodVal) : '—',
       subLabel: moodVal ? 'Today' : 'Not logged',
@@ -329,7 +333,7 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
     },
     {
       id: 'nutrition',
-      icon: '🥗',
+      Sticker: LogNutrition,
       label: 'Meals',
       value: `${nutritionVal}/3`,
       progress: Math.min(1, nutritionVal / 3),
@@ -339,7 +343,7 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
     },
     {
       id: 'exercise',
-      icon: '🧘',
+      Sticker: LogExercise,
       label: 'Exercise',
       value: exerciseLogged ? '✓' : '—',
       subLabel: exerciseLogged ? 'Done today' : 'Not logged',
@@ -368,7 +372,7 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
     if (activeLog === 'kick_count') return <KickCountForm date={today} onSaved={handleLogClose} />
     if (activeLog === 'weight' || activeLog === 'water' || activeLog === 'sleep'
         || activeLog === 'exercise' || activeLog === 'nutrition') {
-      return <SimpleLogForm type={activeLog} userId={userId} onSaved={handleLogClose} />
+      return <SimplePregnancyLogForm type={activeLog} userId={userId} onSaved={handleLogClose} />
     }
     return null
   }
@@ -454,84 +458,6 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
   )
 }
 
-// ─── SimpleLogForm ────────────────────────────────────────────────────────────
-
-interface SimpleLogFormProps {
-  type: 'weight' | 'water' | 'sleep' | 'exercise' | 'nutrition'
-  userId: string | undefined
-  onSaved: () => void
-}
-
-function SimpleLogForm({ type, userId, onSaved }: SimpleLogFormProps) {
-  const { colors, stickers } = useTheme()
-  const [value, setValue] = React.useState('')
-  const [saving, setSaving] = React.useState(false)
-
-  const configs = {
-    weight: { label: '⚖️ Log Weight', placeholder: 'e.g. 68.5', unit: 'kg', keyboard: 'decimal-pad' as const },
-    water: { label: '💧 Log Water', placeholder: 'Glasses today (0–8)', unit: 'glasses', keyboard: 'number-pad' as const },
-    sleep: { label: '😴 Log Sleep', placeholder: 'Hours slept e.g. 7.5', unit: 'hours', keyboard: 'decimal-pad' as const },
-    exercise: { label: '🧘 Log Exercise', placeholder: 'Minutes e.g. 30', unit: 'min', keyboard: 'number-pad' as const },
-    nutrition: { label: '🥗 Log Meals', placeholder: 'Meals today (1–6)', unit: 'meals', keyboard: 'number-pad' as const },
-  }
-
-  const cfg = configs[type]
-
-  const handleSave = async () => {
-    if (!userId || !value.trim()) return
-    setSaving(true)
-    const today = new Date().toISOString().split('T')[0]
-    await supabase.from('pregnancy_logs').insert({
-      user_id: userId,
-      log_date: today,
-      log_type: type,
-      value: value.trim(),
-    })
-    setSaving(false)
-    onSaved()
-  }
-
-  return (
-    <View style={styles.simpleForm}>
-      <Text style={[styles.simpleFormTitle, { color: colors.text }]}>{cfg.label}</Text>
-      <View style={[styles.simpleInput, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
-        <Text
-          style={[styles.simpleInputText, { color: value ? colors.text : colors.textMuted }]}
-          onPress={() => {}}
-        >
-          {value || cfg.placeholder}
-        </Text>
-        <Text style={[styles.simpleUnit, { color: colors.textMuted }]}>{cfg.unit}</Text>
-      </View>
-      <View style={styles.simpleNumpad}>
-        {['1','2','3','4','5','6','7','8','9','.','0','⌫'].map((key) => (
-          <Pressable
-            key={key}
-            onPress={() => {
-              if (key === '⌫') setValue(v => v.slice(0, -1))
-              else if (key === '.' && value.includes('.')) return
-              else setValue(v => v + key)
-            }}
-            style={({ pressed }) => [styles.numpadKey, { backgroundColor: pressed ? colors.surface : colors.surfaceGlass }]}
-          >
-            <Text style={[styles.numpadKeyText, { color: colors.text }]}>{key}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <Pressable
-        onPress={handleSave}
-        style={[styles.saveBtn, { backgroundColor: colors.primary }]}
-        disabled={saving || !value.trim()}
-      >
-        {saving
-          ? <ActivityIndicator color={colors.textInverse} />
-          : <Text style={[styles.saveBtnText, { color: colors.textInverse }]}>Save</Text>
-        }
-      </Pressable>
-    </View>
-  )
-}
-
 const styles = StyleSheet.create({
   scrollContainer: { paddingHorizontal: 20, gap: 10, paddingBottom: 4 },
 
@@ -600,22 +526,4 @@ const styles = StyleSheet.create({
     paddingBottom: 40, maxHeight: '80%',
   },
 
-  simpleForm: { padding: 24, gap: 16 },
-  simpleFormTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', textAlign: 'center' },
-  simpleInput: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    borderRadius: 16, paddingHorizontal: 20, paddingVertical: 14, borderWidth: 1,
-  },
-  simpleInputText: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', flex: 1 },
-  simpleUnit: { fontSize: 13, fontFamily: 'DMSans_400Regular' },
-  simpleNumpad: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  numpadKey: {
-    width: (SCREEN_W - 48 - 16) / 3 - 6,
-    paddingVertical: 14, borderRadius: 12, alignItems: 'center',
-  },
-  numpadKeyText: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold' },
-  saveBtn: {
-    borderRadius: 999, paddingVertical: 16, alignItems: 'center',
-  },
-  saveBtnText: { fontSize: 16, fontFamily: 'DMSans_600SemiBold' },
 })

@@ -124,7 +124,9 @@
       "Bash(cp /var/folders/f9/fp0fmxys2290v_wzm9b_pgyr0000gn/T/tmp.oWWOUUjUng/grandma-app-design-system/project/preview/reward-stickers.html '/Users/igorcarvalhorodrigues/Projects/grandma-app/docs/Claude design studio, new design system log and screens/preview/reward-stickers.html')",
       "Bash(cp /var/folders/f9/fp0fmxys2290v_wzm9b_pgyr0000gn/T/tmp.oWWOUUjUng/grandma-app-design-system/project/grandma-print.html '/Users/igorcarvalhorodrigues/Projects/grandma-app/docs/Claude design studio, new design system log and screens/grandma-print.html')",
       "Bash(pkill -f \"expo start\")",
-      "Bash(git reset *)"
+      "Bash(git reset *)",
+      "Bash(xargs -I {} sh -c 'echo \"--- {} ---\"; grep -l -iE \"secret|api_key|password|token\" \"{}\" 2>/dev/null || true')",
+      "Bash(grep -iE \"\\(secret|api_key|password|token\\).*[=:].*['\\\\\"][a-zA-Z0-9]{20,}\")"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"

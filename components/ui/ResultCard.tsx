@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, ScrollView, Pressable } from 'react-native'
 import { colors, borderRadius } from '../../constants/theme'
-import { Emoji } from './Emoji'
+import { TalkMaster } from '../stickers/RewardStickers'
 
 interface ResultCardProps {
   result: string
@@ -26,7 +26,7 @@ export default function ResultCard({ result, scanType, onClose }: ResultCardProp
           </Pressable>
         </View>
         <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-          <Emoji size={36} style={styles.emoji}>👵</Emoji>
+          <View style={styles.emoji}><TalkMaster size={56} /></View>
           <Text style={styles.resultText}>{result}</Text>
         </ScrollView>
       </View>

@@ -14,15 +14,30 @@ import { useTheme, brand } from '../../constants/theme'
 
 // ─── Shared Helpers ───────────────────────────────────────────────────────────
 
-/** Compute nice Y-axis ticks (3-4 ticks) */
+/** Compute nice Y-axis ticks (3-4 ticks) spanning [min, max] without forcing 0 */
 function niceScale(min: number, max: number, ticks = 4): number[] {
-  if (max === min) return [min]
+  if (max === min) {
+    const pad = Math.max(1, Math.abs(max) * 0.1)
+    return [min - pad, min, min + pad]
+  }
   const range = max - min
-  const step = Math.ceil(range / ticks)
+  // Choose a "nice" step size (1, 2, 2.5, 5, 10, …)
+  const rawStep = range / ticks
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)))
+  const normalized = rawStep / magnitude
+  let niceStep: number
+  if (normalized < 1.5) niceStep = 1
+  else if (normalized < 3) niceStep = 2
+  else if (normalized < 7) niceStep = 5
+  else niceStep = 10
+  niceStep *= magnitude
+
+  const scaleMin = Math.floor(min / niceStep) * niceStep
+  const scaleMax = Math.ceil(max / niceStep) * niceStep
   const result: number[] = []
-  for (let v = 0; v <= max + step; v += step) {
-    result.push(v)
-    if (result.length >= ticks + 1) break
+  for (let v = scaleMin; v <= scaleMax + niceStep / 2; v += niceStep) {
+    result.push(Number(v.toFixed(6)))
+    if (result.length > ticks + 2) break
   }
   return result
 }

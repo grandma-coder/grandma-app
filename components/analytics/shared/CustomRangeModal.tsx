@@ -36,7 +36,7 @@ function formatPretty(d: Date): string {
 }
 
 export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onApply }: Props) {
-  const { colors, font } = useTheme()
+  const { colors, font, isDark } = useTheme()
 
   const defaultTo = new Date()
   const defaultFrom = new Date()
@@ -107,6 +107,7 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
                 mode="date"
                 display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 maximumDate={today}
+                themeVariant={isDark ? 'dark' : 'light'}
                 onChange={(_e, d) => handleChange('from', d)}
               />
             )}
@@ -123,6 +124,7 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
                 display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 minimumDate={from}
                 maximumDate={today}
+                themeVariant={isDark ? 'dark' : 'light'}
                 onChange={(_e, d) => handleChange('to', d)}
               />
             )}

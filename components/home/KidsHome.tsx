@@ -625,7 +625,7 @@ interface HealthHistoryData {
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export function KidsHome() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
@@ -1397,6 +1397,7 @@ export function KidsHome() {
               maximumDate={customPickerActive === 'start' ? customDraft.end : new Date()}
               minimumDate={customPickerActive === 'end' ? customDraft.start : undefined}
               textColor={colors.text}
+              themeVariant={isDark ? 'dark' : 'light'}
               style={{ width: '100%' }}
               onChange={(_: DateTimePickerEvent, selected?: Date) => {
                 if (!selected) return
@@ -1638,7 +1639,7 @@ export function KidsHome() {
               mode="date"
               display="spinner"
               minimumDate={new Date()}
-              themeVariant="dark"
+              themeVariant={isDark ? 'dark' : 'light'}
               textColor="#FFFFFF"
               style={{ height: 120, marginTop: -8 }}
               onChange={(e: DateTimePickerEvent, date?: Date) => {
@@ -3131,7 +3132,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
   onMarkVaccineGiven: (name: string, date: string, key: string) => Promise<void>
   activityCount: number; activityBreakdown: Record<string, number>; feedingCount: number; caloriesTotal: number; feedingMl: number; stage: FeedingStage
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const { weight, height } = parseGrowthValue(healthHistory.growth)
   const upcomingVaccines = getNextDueVaccines(child.birthDate ?? '', healthHistory.vaccines, child.countryCode ?? 'US')
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
@@ -3301,7 +3302,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                             mode="date"
                             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                             minimumDate={new Date()}
-                            themeVariant="dark"
+                            themeVariant={isDark ? 'dark' : 'light'}
                             onChange={(e: DateTimePickerEvent, d?: Date) => {
                               if (Platform.OS === 'android') setExpandedKey(null)
                               if (e.type === 'set' && d) {

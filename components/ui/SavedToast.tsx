@@ -146,10 +146,10 @@ function SavedToastOverlay({
             <View style={styles.logoWrap}>
               <GrandmaLogo
                 size={86}
-                body={stickers.yellow}
-                accent={opts.accent ?? stickers.coral}
+                mode="auto"
+                accent={opts.accent}
                 outline={ink}
-                motion="default"
+                motion="grow"
               />
             </View>
 

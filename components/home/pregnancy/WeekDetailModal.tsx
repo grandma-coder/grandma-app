@@ -1,3 +1,14 @@
+/**
+ * WeekDetailModal — pregnancy week detail sheet (v3, latest)
+ *
+ * Ported from pregnancy-weeks.html `.popup-*` styles:
+ *  - Peach/colored hero matching the card's palette
+ *  - Cream/paper body with 3 sections:
+ *      · BABY'S DEVELOPMENT (bullets with accent dots)
+ *      · COMMON SYMPTOMS (pills)
+ *      · WHAT TO PREPARE (action cards with colored icon squares)
+ */
+
 import React, { useState } from 'react'
 import {
   View,
@@ -8,14 +19,14 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
-import { X, ChevronRight, ArrowLeft } from 'lucide-react-native'
-import { useTheme, brand } from '../../../constants/theme'
-import { Emoji } from '../../ui/Emoji'
-import { getWeekDetail, PrepItem } from '../../../lib/weekDetailData'
+import { X, ArrowLeft, ChevronRight } from 'lucide-react-native'
+import { useTheme } from '../../../constants/theme'
 import { getWeekData } from '../../../lib/pregnancyData'
+import { getWeekStat, formatWeight } from '../../../lib/weekStats'
+import { getWeekContent, PrepItemDef } from '../../../lib/weekContent'
+import { StickerIcon } from './stickerIcons'
 
-const SCREEN_W = Dimensions.get('window').width
+const SCREEN_H = Dimensions.get('window').height
 
 interface Props {
   visible: boolean
@@ -23,48 +34,80 @@ interface Props {
   onClose: () => void
 }
 
-const WEEK_EMOJI: Record<number, string> = {
-  1: '🌱', 2: '🌱', 3: '🌱', 4: '🫘', 5: '🍎', 6: '🫛', 7: '🫐', 8: '🍇',
-  9: '🍒', 10: '🍓', 11: '🍋', 12: '🍑', 13: '🍑', 14: '🍋', 15: '🍏',
-  16: '🥑', 17: '🍐', 18: '🫑', 19: '🥭', 20: '🍌', 21: '🥕', 22: '🍈',
-  23: '🍊', 24: '🌽', 25: '🫚', 26: '🥬', 27: '🥦', 28: '🍆', 29: '🎃',
-  30: '🥬', 31: '🥥', 32: '🌰', 33: '🍍', 34: '🍈', 35: '🍈', 36: '🥬',
-  37: '🥬', 38: '🌿', 39: '🍉', 40: '🎃',
-}
-
 function getTrimester(week: number): 1 | 2 | 3 {
   if (week <= 13) return 1
   if (week <= 26) return 2
   return 3
 }
+const TRI_NAMES = ['First', 'Second', 'Third'] as const
+
+interface HeroPalette {
+  bg: string
+  fg: string
+  metaFg: string
+  accent: string    // dev dot + icon square bg
+  accentSoft: string
+}
+
+// Palettes from pregnancy-weeks.html — keyed to the card's cycling bg.
+// accent/accentSoft pairs mirror the popup's dev-dot and icon-square tints.
+const PALETTES: HeroPalette[] = [
+  { // 0 — deep purple
+    bg: '#2A1F4A', fg: '#FFFEF8', metaFg: '#E9DFFF',
+    accent: '#F5D652', accentSoft: '#FBEA9E',
+  },
+  { // 1 — cream
+    bg: '#FFFEF8', fg: '#141313', metaFg: '#6B5E56',
+    accent: '#EE7B6D', accentSoft: '#F9D6C0',
+  },
+  { // 2 — peach
+    bg: '#F5B896', fg: '#141313', metaFg: '#5A3A24',
+    accent: '#B983FF', accentSoft: '#E0D5F3',
+  },
+  { // 3 — coral
+    bg: '#EE7B6D', fg: '#FFFEF8', metaFg: '#FFE6E0',
+    accent: '#BDD48C', accentSoft: '#DDE7BB',
+  },
+  { // 4 — green
+    bg: '#BDD48C', fg: '#141313', metaFg: '#3E5A20',
+    accent: '#7048B8', accentSoft: '#E0D5F3',
+  },
+]
+function paletteForWeek(week: number): HeroPalette {
+  return PALETTES[(week - 1) % PALETTES.length]
+}
 
 // ─── Prep Detail sub-sheet ────────────────────────────────────────────────────
 
-interface PrepDetailProps {
-  item: PrepItem
-  onBack: () => void
-}
-
-function PrepDetailSheet({ item, onBack }: PrepDetailProps) {
+function PrepDetailSheet({
+  item,
+  onBack,
+  accent,
+  accentSoft,
+}: { item: PrepItemDef; onBack: () => void; accent: string; accentSoft: string }) {
   const { colors } = useTheme()
   return (
-    <View style={[styles.prepDetailRoot, { backgroundColor: colors.bgWarm }]}>
-      <Pressable onPress={onBack} style={styles.prepBackRow}>
-        <ArrowLeft size={18} color={brand.pregnancy} strokeWidth={2} />
-        <Text style={[styles.prepBackText, { color: brand.pregnancy }]}>Back</Text>
+    <View style={[styles.prepDetailRoot, { backgroundColor: colors.bg }]}>
+      <Pressable onPress={onBack} style={styles.prepBackRow} hitSlop={8}>
+        <ArrowLeft size={18} color={accent} strokeWidth={2} />
+        <Text style={[styles.prepBackText, { color: accent }]}>Back</Text>
       </Pressable>
 
       <View style={[styles.prepDetailHeader, { backgroundColor: colors.surface }]}>
-        <Text style={styles.prepDetailIcon}>{item.icon}</Text>
-        <View style={styles.prepDetailHeaderText}>
-          <Text style={[styles.prepDetailTitle, { color: colors.text }]}>{item.title}</Text>
-          <Text style={[styles.prepDetailSummary, { color: colors.textSecondary }]}>{item.summary}</Text>
+        <View style={[styles.prepIconBox, { backgroundColor: accentSoft }]}>
+          <StickerIcon name={item.i} size={36} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.prepDetailTitle, { color: colors.text }]}>{item.t}</Text>
+          <Text style={[styles.prepDetailSummary, { color: colors.textSecondary }]}>
+            {item.d}
+          </Text>
         </View>
       </View>
 
-      <ScrollView style={styles.prepDetailBody} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         <Text style={[styles.prepDetailContent, { color: colors.textSecondary }]}>
-          {item.detail}
+          {item.d}
         </Text>
       </ScrollView>
     </View>
@@ -74,18 +117,30 @@ function PrepDetailSheet({ item, onBack }: PrepDetailProps) {
 // ─── Main WeekDetailModal ─────────────────────────────────────────────────────
 
 export function WeekDetailModal({ visible, week, onClose }: Props) {
-  const { colors } = useTheme()
-  const [selectedPrep, setSelectedPrep] = useState<PrepItem | null>(null)
+  const { colors, isDark } = useTheme()
+  const [selectedPrep, setSelectedPrep] = useState<PrepItemDef | null>(null)
 
   const weekData = getWeekData(week)
-  const detail = getWeekDetail(week)
+  const content = getWeekContent(week)
+  const stat = getWeekStat(week)
+  const pal = paletteForWeek(week)
   const tri = getTrimester(week)
-  const emoji = WEEK_EMOJI[week] ?? '👶'
 
-  const gradientColors: [string, string] =
-    tri === 1 ? ['#1A2A4A', '#2D4A8A']
-    : tri === 2 ? ['#2A1050', '#5C2FA8']
-    : ['#2A0A3A', '#7B1FA2']
+  const weekStr = String(week).padStart(2, '0')
+  const lengthStr = `${stat.cm}cm`
+  const weightStr = formatWeight(stat.g)
+  const fruitName = weekData.babySize.toLowerCase()
+  const article = /^[aeiou]/i.test(fruitName) ? 'an' : 'a'
+
+  // Cream paper body background — adapts to dark mode
+  const paperBg = isDark ? colors.surface : '#FFFEF8'
+  const pillBg = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(20,19,19,0.05)'
+  const pillBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(20,19,19,0.14)'
+  const prepCardBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(20,19,19,0.035)'
+  const prepCardBorder = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(20,19,19,0.08)'
+  const bodyInk = isDark ? colors.text : '#141313'
+  const bodyInk2 = isDark ? colors.textSecondary : '#3A3533'
+  const bodyInk3 = isDark ? colors.textMuted : '#6E6763'
 
   return (
     <Modal
@@ -98,100 +153,109 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
       }}
     >
       <View style={styles.overlay}>
-        <Pressable style={styles.overlayBg} onPress={() => {
-          if (selectedPrep) setSelectedPrep(null)
-          else onClose()
-        }} />
+        <Pressable
+          style={styles.overlayBg}
+          onPress={() => (selectedPrep ? setSelectedPrep(null) : onClose())}
+        />
 
-        <View style={[styles.sheet, { backgroundColor: colors.bgWarm }]}>
-          <View style={styles.handle} />
-
-          {/* Prep detail sub-screen */}
+        <View style={[styles.sheet, { backgroundColor: paperBg }]}>
           {selectedPrep ? (
-            <PrepDetailSheet item={selectedPrep} onBack={() => setSelectedPrep(null)} />
+            <PrepDetailSheet
+              item={selectedPrep}
+              onBack={() => setSelectedPrep(null)}
+              accent={pal.accent}
+              accentSoft={pal.accentSoft}
+            />
           ) : (
-            <>
-              {/* Header close */}
-              <Pressable onPress={onClose} style={styles.closeBtn}>
-                <X size={18} color={colors.textMuted} strokeWidth={2} />
-              </Pressable>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 36 }}>
+              {/* Hero — inherits card's palette */}
+              <View style={[styles.hero, { backgroundColor: pal.bg }]}>
+                <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={10}>
+                  <X size={18} color="#141313" strokeWidth={2.5} />
+                </Pressable>
 
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                {/* Mini hero */}
-                <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.miniHero}>
-                  <Emoji style={styles.miniHeroEmoji}>{emoji}</Emoji>
-                  <View style={styles.miniHeroText}>
-                    <Text style={styles.miniHeroWeek}>Week {week}</Text>
-                    <Text style={styles.miniHeroSub}>
-                      {weekData.babySize} · {weekData.babyLength} · {weekData.babyWeight}
-                    </Text>
-                    <Text style={[styles.miniHeroTri, { color: brand.pregnancy }]}>
-                      <Emoji>{tri === 1 ? '🌱' : tri === 2 ? '🌙' : '⭐'}</Emoji>
-                      {tri === 1 ? ' First Trimester' : tri === 2 ? ' Second Trimester' : ' Third Trimester'}
-                    </Text>
+                <Text style={[styles.heroLabel, { color: pal.metaFg }]}>
+                  WEEK {week} · {TRI_NAMES[tri - 1].toUpperCase()} TRIMESTER
+                </Text>
+
+                <Text style={[styles.heroMega, { color: pal.fg }]}>{weekStr}</Text>
+
+                <View style={styles.heroSizeRow}>
+                  <Text style={[styles.heroSize, { color: pal.fg }]}>
+                    {article}{' '}
+                    <Text style={styles.heroSizeBold}>{fruitName}</Text>
+                  </Text>
+                  <Text style={[styles.heroSizeDot, { color: pal.fg }]}>·</Text>
+                  <View style={styles.heroStatBox}>
+                    <View style={[styles.heroStatTick, { backgroundColor: pal.fg }]} />
+                    <Text style={[styles.heroStat, { color: pal.fg }]}>{lengthStr}</Text>
                   </View>
-                </LinearGradient>
+                  <Text style={[styles.heroSizeDot, { color: pal.fg }]}>·</Text>
+                  <View style={styles.heroStatBox}>
+                    <View style={[styles.heroStatTick, { backgroundColor: pal.fg }]} />
+                    <Text style={[styles.heroStat, { color: pal.fg }]}>{weightStr}</Text>
+                  </View>
+                </View>
+              </View>
 
-                {/* Development */}
+              <View style={styles.body}>
+                {/* Baby's Development */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>BABY'S DEVELOPMENT</Text>
-                  {detail.developmentPoints.map((point, i) => (
+                  <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>BABY'S DEVELOPMENT</Text>
+                  {content.dev.map((point, i) => (
                     <View key={i} style={styles.devRow}>
-                      <View style={[styles.devDot, { backgroundColor: brand.pregnancy }]} />
-                      <Text style={[styles.devText, { color: colors.textSecondary }]}>{point}</Text>
+                      <View style={[styles.devDot, { backgroundColor: pal.accent }]} />
+                      <Text style={[styles.devText, { color: bodyInk2 }]}>{point}</Text>
                     </View>
                   ))}
                 </View>
 
-                {/* Common symptoms */}
+                {/* Common Symptoms */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>COMMON SYMPTOMS</Text>
-                  <View style={styles.chipsRow}>
-                    {detail.symptoms.map((sym) => (
-                      <View key={sym} style={[styles.symChip, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
-                        <Text style={[styles.symChipText, { color: colors.textSecondary }]}>{sym}</Text>
+                  <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>COMMON SYMPTOMS</Text>
+                  <View style={styles.pillsRow}>
+                    {content.sym.map((sym) => (
+                      <View
+                        key={sym}
+                        style={[styles.pill, { backgroundColor: pillBg, borderColor: pillBorder }]}
+                      >
+                        <Text style={[styles.pillText, { color: bodyInk2 }]}>{sym}</Text>
                       </View>
                     ))}
                   </View>
                 </View>
 
-                {/* What to prepare */}
-                {detail.prepItems.length > 0 && (
+                {/* What to Prepare */}
+                {content.prep.length > 0 && (
                   <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>WHAT TO PREPARE</Text>
-                    {detail.prepItems.map((item) => (
+                    <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>WHAT TO PREPARE</Text>
+                    {content.prep.map((item, i) => (
                       <Pressable
-                        key={item.id}
+                        key={`${item.i}-${i}`}
                         onPress={() => setSelectedPrep(item)}
                         style={({ pressed }) => [
-                          styles.prepRow,
-                          { backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 },
+                          styles.prepCard,
+                          {
+                            backgroundColor: prepCardBg,
+                            borderColor: prepCardBorder,
+                            opacity: pressed ? 0.7 : 1,
+                          },
                         ]}
                       >
-                        <Emoji style={styles.prepIcon}>{item.icon}</Emoji>
-                        <View style={styles.prepBody}>
-                          <Text style={[styles.prepTitle, { color: colors.text }]}>{item.title}</Text>
-                          <Text style={[styles.prepSummary, { color: colors.textMuted }]}>{item.summary}</Text>
+                        <View style={[styles.prepIconBox, { backgroundColor: pal.accentSoft }]}>
+                          <StickerIcon name={item.i} size={34} />
                         </View>
-                        <ChevronRight size={16} color={brand.pregnancy} strokeWidth={2} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.prepTitle, { color: bodyInk }]}>{item.t}</Text>
+                          <Text style={[styles.prepDesc, { color: bodyInk3 }]}>{item.d}</Text>
+                        </View>
+                        <ChevronRight size={18} color={bodyInk3} strokeWidth={2} />
                       </Pressable>
                     ))}
                   </View>
                 )}
-
-                {/* Grandma's tip */}
-                <View style={styles.section}>
-                  <View style={[styles.grandmaTip, { backgroundColor: colors.surfaceGlass, borderColor: 'rgba(185,131,255,0.2)' }]}>
-                    <Emoji style={styles.grandmaEmoji}>👵</Emoji>
-                    <Text style={[styles.grandmaTipText, { color: colors.textSecondary }]}>
-                      "{detail.grandmaTip}"
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={{ height: 20 }} />
-              </ScrollView>
-            </>
+              </View>
+            </ScrollView>
           )}
         </View>
       </View>
@@ -200,181 +264,205 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
+  overlay: { flex: 1, justifyContent: 'flex-end' },
   overlayBg: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(20,19,19,0.55)',
   },
   sheet: {
+    maxHeight: SCREEN_H * 0.92,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    maxHeight: '88%',
-    paddingTop: 12,
+    overflow: 'hidden',
   },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignSelf: 'center',
-    marginBottom: 8,
+
+  // Hero
+  hero: {
+    paddingTop: 30,
+    paddingBottom: 26,
+    paddingHorizontal: 28,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    position: 'relative',
   },
   closeBtn: {
     position: 'absolute',
-    top: 12,
-    right: 20,
-    padding: 8,
-    zIndex: 10,
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-
-  miniHero: {
-    flexDirection: 'row',
+    top: 14,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 999,
     alignItems: 'center',
-    gap: 14,
-    margin: 16,
-    borderRadius: 20,
-    padding: 16,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,254,248,0.85)',
+    zIndex: 2,
   },
-  miniHeroEmoji: { fontSize: 48, fontFamily: 'Fraunces_600SemiBold' },
-  miniHeroText: { flex: 1 },
-  miniHeroWeek: {
-    fontSize: 20,
-    fontFamily: 'CabinetGrotesk-Black',
-    color: '#FFFFFF',
-  },
-  miniHeroSub: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Variable',
-    color: 'rgba(255,255,255,0.6)',
-    marginTop: 2,
-  },
-  miniHeroTri: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '600',
-    marginTop: 4,
-  },
-
-  section: { paddingHorizontal: 20, marginTop: 20 },
-  sectionTitle: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
-    letterSpacing: 1,
+  heroLabel: {
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 10.5,
+    letterSpacing: 2.3,
     textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  heroMega: {
+    fontFamily: 'Fraunces_700Bold',
+    fontSize: 58,
+    fontWeight: '700',
+    letterSpacing: -2.6,
+    lineHeight: 58,
     marginBottom: 12,
   },
+  heroSizeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    gap: 10,
+  },
+  heroSize: {
+    fontFamily: 'Fraunces_500Medium',
+    fontSize: 22,
+    letterSpacing: -0.4,
+  },
+  heroSizeBold: {
+    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontStyle: 'italic',
+  },
+  heroSizeDot: { fontSize: 18, opacity: 0.5 },
+  heroStatBox: {
+    paddingTop: 8,
+    alignItems: 'flex-start',
+  },
+  heroStatTick: {
+    width: 36,
+    height: 1.5,
+    marginBottom: 8,
+    opacity: 0.85,
+  },
+  heroStat: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    opacity: 0.9,
+  },
 
+  // Body
+  body: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+  section: { marginBottom: 26 },
+  sectionTitle: {
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 10.5,
+    letterSpacing: 2.3,
+    textTransform: 'uppercase',
+    marginBottom: 14,
+  },
+
+  // Development
   devRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
-    marginBottom: 8,
+    marginBottom: 12,
+    paddingLeft: 2,
   },
   devDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 6,
-    flexShrink: 0,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 8,
+    marginRight: 14,
   },
   devText: {
     flex: 1,
-    fontSize: 14,
-    fontFamily: 'Satoshi-Variable',
-    lineHeight: 20,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    lineHeight: 22,
   },
 
-  chipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  symChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  // Symptom pills
+  pillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  pill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
   },
-  symChipText: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '600',
+  pillText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
   },
 
-  prepRow: {
+  // Prep cards
+  prepCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 8,
-    gap: 12,
+    gap: 14,
+    paddingVertical: 12,
+    paddingLeft: 12,
+    paddingRight: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  prepIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   prepIcon: { fontSize: 24 },
-  prepBody: { flex: 1 },
   prepTitle: {
-    fontSize: 14,
-    fontFamily: 'Satoshi-Variable',
-    fontWeight: '700',
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 15,
     marginBottom: 2,
+    lineHeight: 19,
   },
-  prepSummary: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Variable',
-    lineHeight: 16,
+  prepDesc: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    lineHeight: 18,
   },
 
-  grandmaTip: {
+  // Prep drill-down sub-sheet
+  prepDetailRoot: {
+    minHeight: SCREEN_H * 0.7,
+    padding: 24,
+  },
+  prepBackRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    alignSelf: 'flex-start',
   },
-  grandmaEmoji: { fontSize: 28, fontFamily: 'Fraunces_600SemiBold' },
-  grandmaTipText: {
-    flex: 1,
+  prepBackText: {
+    fontFamily: 'DMSans_600SemiBold',
     fontSize: 14,
-    fontFamily: 'Satoshi-Variable',
-    fontStyle: 'italic',
-    lineHeight: 20,
   },
-
-  // Prep detail sub-screen
-  prepDetailRoot: { flex: 1, padding: 20 },
-  prepBackRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 },
-  prepBackText: { fontSize: 14, fontFamily: 'Satoshi-Variable', fontWeight: '700' },
   prepDetailHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    borderRadius: 20,
     padding: 16,
-    marginBottom: 16,
+    borderRadius: 20,
+    marginTop: 10,
+    marginBottom: 18,
   },
-  prepDetailIcon: { fontSize: 36, fontFamily: 'Fraunces_600SemiBold' },
-  prepDetailHeaderText: { flex: 1 },
+  prepDetailIcon: { fontSize: 32 },
   prepDetailTitle: {
-    fontSize: 16,
-    fontFamily: 'CabinetGrotesk-Black',
-    marginBottom: 4,
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 20,
+    marginBottom: 2,
   },
   prepDetailSummary: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
-    fontFamily: 'Satoshi-Variable',
     lineHeight: 18,
   },
-  prepDetailBody: { flex: 1 },
   prepDetailContent: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
-    fontFamily: 'Satoshi-Variable',
     lineHeight: 24,
   },
 })

@@ -92,7 +92,12 @@ import { ChildPill, CHILD_COLORS, formatChildAge as sharedFormatChildAge } from 
 import { AnalyticsTitle } from './shared/AnalyticsTitle'
 import { MoodFace } from '../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
-import { Emoji } from '../ui/Emoji'
+import { stickerForEmoji } from '../../lib/emojiToSticker'
+
+function EmojiSticker({ size = 20, children, style }: { size?: number; children: string | undefined; style?: any }) {
+  const S = stickerForEmoji(children ?? '')
+  return <View style={style}><S size={size} /></View>
+}
 import { PeriodSelector, type Period } from './shared/PeriodSelector'
 import { BigChartCard } from './shared/BigChartCard'
 import { HealthScoreRing, type RingSegment } from './shared/HealthScoreRing'
@@ -108,6 +113,7 @@ import {
   Flower as StickerFlower,
 } from '../ui/Stickers'
 import { BrandedLoader } from '../ui/BrandedLoader'
+import { NotificationBell } from '../ui/NotificationBell'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -611,17 +617,20 @@ export function KidsAnalytics() {
               {getAgeLabel(ageMonths)}
             </Text>
           </View>
-          <Pressable
-            onPress={() => setShowScoreInfo(true)}
-            hitSlop={10}
-            style={({ pressed }) => [
-              styles.infoBtnNew,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-              pressed && { opacity: 0.7 },
-            ]}
-          >
-            <Info size={16} color={colors.text} strokeWidth={2} />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <NotificationBell />
+            <Pressable
+              onPress={() => setShowScoreInfo(true)}
+              hitSlop={10}
+              style={({ pressed }) => [
+                styles.infoBtnNew,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <Info size={16} color={colors.text} strokeWidth={2} />
+            </Pressable>
+          </View>
         </View>
 
         <PeriodSelector
@@ -2641,7 +2650,7 @@ function ActivityModal({
                 key={item.rank}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.surface, borderRadius: radius.xl, padding: 16, borderWidth: 1, borderColor: colors.border }}
               >
-                <Emoji size={26}>{item.emoji}</Emoji>
+                <EmojiSticker size={26}>{item.emoji}</EmojiSticker>
                 <View style={{ flex: 1, gap: 6 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }}>{item.label}</Text>
@@ -2656,7 +2665,7 @@ function ActivityModal({
             ))}
 
             <View style={{ backgroundColor: ACTIVITY_COLOR + '10', borderRadius: radius.xl, padding: 16, borderWidth: 1, borderColor: ACTIVITY_COLOR + '25', flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-              <Emoji size={18}>💡</Emoji>
+              <EmojiSticker size={18}>💡</EmojiSticker>
               <Text style={{ flex: 1, color: ACTIVITY_COLOR, fontSize: 13, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }}>
                 {ageMonths < 12
                   ? 'Aim for 20–30 min tummy time daily, spread across sessions.'
@@ -3262,7 +3271,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               {Object.entries(eventsByType).map(([type, events]) => (
                 <View key={type} style={{ marginBottom: 12 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                    <Emoji size={14}>{getHealthEventEmoji(type)}</Emoji>
+                    <EmojiSticker size={14}>{getHealthEventEmoji(type)}</EmojiSticker>
                     <Text style={{ color: getEventColor(type), fontSize: 12, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold', letterSpacing: 1 }}>
                       {getHealthEventLabel(type).toUpperCase()}
                     </Text>
@@ -3523,7 +3532,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             <View style={{ gap: 12, marginTop: 4 }}>
               {guideItems.map((item) => (
                 <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <Emoji size={22}>{item.emoji}</Emoji>
+                  <EmojiSticker size={22}>{item.emoji}</EmojiSticker>
                   <View style={{ flex: 1, gap: 4 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }}>{item.label}</Text>
@@ -4009,7 +4018,7 @@ function SleepQualityChart({ counts }: { counts: { great: number; good: number; 
         if (item.count === 0) return null
         return (
           <View key={i} style={styles.qualityRow}>
-            <Emoji size={22}>{item.emoji}</Emoji>
+            <EmojiSticker size={22}>{item.emoji}</EmojiSticker>
             <Text style={[styles.qualityLabel, { color: colors.textSecondary }]}>{item.label}</Text>
             <View style={[styles.qualityBarBg, { backgroundColor: colors.surfaceRaised, borderRadius: radius.full }]}>
               <View style={[styles.qualityBarFill, { width: `${pct}%`, backgroundColor: item.color, borderRadius: radius.full }]} />
@@ -4153,6 +4162,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginTop: 16,
     marginRight: 20,
   },

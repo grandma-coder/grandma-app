@@ -39,7 +39,7 @@ export function BrandedLoader({
   if (isCompact) {
     return (
       <View style={container}>
-        <GrandmaLogo size={logoSize} motion={motion} />
+        <GrandmaLogo size={logoSize} mode="auto" motion={motion} />
       </View>
     )
   }

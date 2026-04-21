@@ -33,6 +33,7 @@ import {
   Utensils,
   Moon,
   Heart,
+  FlaskConical,
   Smile,
   Camera,
   Calendar,
@@ -68,6 +69,7 @@ import { SegmentedTabs } from './SegmentedTabs'
 import { ActivityPillCard } from './ActivityPillCard'
 import { LogTile, LogTileGrid } from './LogTile'
 import { SectionHeader } from './SectionHeader'
+import { AgendaWeekStrip } from './AgendaWeekStrip'
 import { Display, Body } from '../ui/Typography'
 import { logSticker } from './logStickers'
 import {
@@ -82,6 +84,7 @@ import {
   type RoutinePrefill,
   type EditLog,
 } from './KidsLogForms'
+import { ExamForm } from '../exams/ExamForm'
 
 // Enable layout animations on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -102,7 +105,7 @@ interface ChildLog {
   logged_by: string | null
 }
 
-type LogType = 'feeding' | 'sleep' | 'wake_up' | 'health' | 'mood' | 'memory' | 'activity' | 'diaper'
+type LogType = 'feeding' | 'sleep' | 'wake_up' | 'health' | 'mood' | 'memory' | 'activity' | 'diaper' | 'exam'
 
 interface ChildRoutine {
   id: string
@@ -120,7 +123,12 @@ interface ChildRoutine {
 import { CHILD_COLORS, childColor } from '../ui/ChildPills'
 import { MoodFace } from '../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
-import { Emoji } from '../ui/Emoji'
+import { stickerForEmoji } from '../../lib/emojiToSticker'
+
+function EmojiSticker({ size = 20, children, style }: { size?: number; children: string | undefined; style?: any }) {
+  const S = stickerForEmoji(children ?? '')
+  return <View style={style}><S size={size} /></View>
+}
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -168,9 +176,24 @@ const QUICK_LOGS: { id: LogType; label: string; icon: typeof Utensils; color: st
   { id: 'activity', label: 'Activity', icon: Dumbbell, color: brand.phase.ovulation },
   { id: 'mood', label: 'Mood', icon: Smile, color: brand.accent },
   { id: 'memory', label: 'Memory', icon: Camera, color: brand.phase.ovulation },
+  { id: 'exam', label: 'Exam', icon: FlaskConical, color: brand.phase.ovulation },
 ]
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+// Growth leap schedule (weeks post-birth) — used for the Journey tab
+const KIDS_GROWTH_LEAPS: { week: number; name: string; desc: string; color: string }[] = [
+  { week: 5,   name: 'Changing Sensations', desc: 'Baby discovers a richer world of senses', color: '#B983FF' },
+  { week: 8,   name: 'Patterns',            desc: 'Recognizing simple repeating patterns',   color: '#4D96FF' },
+  { week: 12,  name: 'Smooth Transitions',  desc: 'Movements become more fluid',             color: '#A2FF86' },
+  { week: 19,  name: 'Events',              desc: 'Understanding action sequences',          color: '#FBBF24' },
+  { week: 26,  name: 'Relationships',       desc: 'How things and people relate',            color: '#FF8AD8' },
+  { week: 37,  name: 'Categories',          desc: 'Sorting the world into groups',           color: '#B983FF' },
+  { week: 46,  name: 'Sequences',           desc: 'Building things step by step',            color: '#4D96FF' },
+  { week: 55,  name: 'Programs',            desc: 'Flexible plans & independence',           color: '#A2FF86' },
+  { week: 64,  name: 'Principles',          desc: 'Testing rules & cause and effect',        color: '#FBBF24' },
+  { week: 75,  name: 'Systems',             desc: 'Modeling complex relationships',          color: '#FF8AD8' },
+]
 
 /** Map routine type → sheet LogType */
 const ROUTINE_SHEET_MAP: Record<string, string> = {
@@ -395,6 +418,7 @@ const KIDS_TINT_BY_TYPE: Record<LogType, string> = {
   sleep: 'sleep',
   wake_up: 'wake',
   health: 'health',
+  exam: 'exam',
   mood: 'mood',
   memory: 'memory',
   activity: 'activity',
@@ -494,7 +518,8 @@ export function KidsCalendar() {
   const setActiveChild = useChildStore((s) => s.setActiveChild)
 
   const [selectedChildId, setSelectedChildId] = useState<string | 'all'>('all')
-  const [view, setView] = useState<'month' | 'day' | 'list'>('month')
+  const [view, setView] = useState<'timeline' | 'journey' | 'visits'>('timeline')
+  const [timelineMode, setTimelineMode] = useState<'cards' | 'hours'>('cards')
   const [logSheetOpen, setLogSheetOpen] = useState(false)
   const [dayZoomH, setDayZoomH] = useState(DAY_VIEW_DEFAULT_HOUR_H)
   const [viewDate, setViewDate] = useState(() => new Date())
@@ -636,16 +661,16 @@ export function KidsCalendar() {
   // Reset UI collapse state when the selected date changes (NOT the done cache — that's date-keyed)
   useEffect(() => { setLoggedCollapsed(true); setLoggedCollapsedByChild({}); setExpandedLogCategories(new Set()); setPendingCollapsed(true); setPendingCollapsedByChild({}); setExpandedPendingCats(new Set()) }, [selectedDate])
 
-  // Auto-scroll day view to current time (or 8 AM) when opening it
+  // Auto-scroll hourly timeline to current time (or 8 AM) when opening it
   useEffect(() => {
-    if (view !== 'day') return
+    if (view !== 'timeline' || timelineMode !== 'hours') return
     const now = new Date()
     const targetHours = selectedDate === todayStr
       ? Math.max(DAY_VIEW_START, now.getHours() + now.getMinutes() / 60 - 2)
       : 8
     const scrollY = Math.max(0, (targetHours - DAY_VIEW_START) * dayZoomH)
     setTimeout(() => dayScrollRef.current?.scrollTo({ y: scrollY, animated: false }), 80)
-  }, [view, selectedDate, todayStr, dayZoomH])
+  }, [view, timelineMode, selectedDate, todayStr, dayZoomH])
 
   function handleSaved() {
     // Optimistically mark the routine as done so it disappears from pending immediately
@@ -1311,6 +1336,281 @@ export function KidsCalendar() {
       .sort((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at))
   }, [monthLogs, todayStr])
 
+  // Dots under each day in the week strip — one color per child who logged that day (max 3)
+  const dotsByDate = useMemo<Record<string, string[]>>(() => {
+    const out: Record<string, string[]> = {}
+    for (const [date, childIds] of childIdsByDate.entries()) {
+      out[date] = Array.from(childIds).slice(0, 3).map((cid) => childColor(childIndexMap.get(cid) ?? 0))
+    }
+    return out
+  }, [childIdsByDate, childIndexMap])
+
+  // ── Timeline rendering ────────────────────────────────────────────────────
+
+  function renderKidsModeToggle() {
+    return (
+      <View style={[styles.modeToggle, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
+        {(['cards', 'hours'] as const).map((m) => {
+          const active = timelineMode === m
+          return (
+            <Pressable
+              key={m}
+              onPress={() => setTimelineMode(m)}
+              style={[styles.modeToggleBtn, active && { backgroundColor: brand.kids }]}
+            >
+              <Text style={[styles.modeToggleLabel, { color: active ? '#fff' : colors.textSecondary }]}>
+                {m === 'cards' ? 'Cards' : 'Hours'}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
+    )
+  }
+
+  function renderTimelineCards() {
+    const selLogs = selectedDayLogs.filter((l) => l.type !== 'skipped')
+    const selPending = pendingRoutines
+    const dayLabel = formatDayLabel(selectedDate, todayStr)
+    const summary = [
+      selPending.length > 0 && `${selPending.length} pending`,
+      selLogs.length > 0 && `${selLogs.length} logged`,
+    ].filter(Boolean).join(' · ') || 'Nothing planned'
+
+    interface Row {
+      key: string
+      time: string
+      sortHours: number
+      title: string
+      subtitle?: string
+      tint: string
+      icon: React.ReactNode
+      chip?: { label: string; color: string }
+      onPress: () => void
+    }
+
+    const rows: Row[] = []
+
+    for (const r of selPending) {
+      const tintKey = (KIDS_TINT_BY_TYPE as Record<string, string>)[r.type] ?? 'activity'
+      const sortHours = r.time ? timeStrToHours(r.time) : 25
+      const ci = childIndexMap.get(r.child_id) ?? 0
+      const childName = children.find((c) => c.id === r.child_id)?.name
+      rows.push({
+        key: `r-${r.id}`,
+        time: r.time ? fmtTime(r.time) : '—',
+        sortHours,
+        title: r.name,
+        subtitle: 'Tap to log',
+        tint: tintKey,
+        icon: logSticker(r.type, 28, isDark),
+        chip: selectedChildId === 'all' && childName ? { label: childName, color: childColor(ci) } : undefined,
+        onPress: () => {
+          setRoutinePrefill({ routineId: r.id, childId: r.child_id, time: r.time ?? undefined, value: r.value ?? undefined, name: r.name })
+          setSheetType((ROUTINE_SHEET_MAP[r.type] ?? 'feeding') as LogType)
+        },
+      })
+    }
+
+    for (const log of selLogs) {
+      const tintKey = (KIDS_TINT_BY_TYPE as Record<string, string>)[log.type] ?? 'activity'
+      const sortHours = activityTimeHours(log)
+      const summaryStr = formatLogDisplay(log.type, log.value, log.notes)
+      const ci = childIndexMap.get(log.child_id) ?? 0
+      const childName = children.find((c) => c.id === log.child_id)?.name
+      rows.push({
+        key: `l-${log.id}`,
+        time: activityTimeDisplay(log),
+        sortHours,
+        title: logTitle(log),
+        subtitle: summaryStr || 'Logged',
+        tint: tintKey,
+        icon: logSticker(log.type, 28, isDark),
+        chip: selectedChildId === 'all' && childName ? { label: childName, color: childColor(ci) } : undefined,
+        onPress: () => { setSelectedLog(log); setEditing(false) },
+      })
+    }
+
+    rows.sort((a, b) => a.sortHours - b.sortHours)
+
+    return (
+      <>
+        <View style={styles.timelineHeader}>
+          <Display size={22} color={colors.text}>{dayLabel}</Display>
+          <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>{summary}</Body>
+        </View>
+
+        {rows.length === 0 ? (
+          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Body size={14} color={colors.textSecondary} align="center">
+              Nothing planned for this day.
+            </Body>
+            <Body size={12} color={colors.textMuted} align="center" style={{ marginTop: 4 }}>
+              Tap + above to log something.
+            </Body>
+          </View>
+        ) : (
+          <View style={{ gap: 10 }}>
+            {rows.map((r) => (
+              <View key={r.key} style={styles.timelineRow}>
+                <View style={styles.timelineGutter}>
+                  <Text style={[styles.timelineTime, { color: colors.textMuted }]}>{r.time}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <ActivityPillCard
+                    icon={r.icon}
+                    title={r.title}
+                    subtitle={r.subtitle}
+                    tint={r.tint}
+                    chip={r.chip}
+                    onPress={r.onPress}
+                  />
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+      </>
+    )
+  }
+
+  // ── Journey tab: growth leaps per active child ────────────────────────────
+
+  function renderJourney() {
+    const activeKid = selectedChildId !== 'all'
+      ? children.find((c) => c.id === selectedChildId)
+      : (activeChild ?? children[0])
+    if (!activeKid) {
+      return (
+        <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Body size={14} color={colors.textSecondary} align="center">Add a child to see their journey.</Body>
+        </View>
+      )
+    }
+    const birth = new Date(activeKid.birthDate + 'T00:00:00')
+    const now = new Date()
+    const weekAge = Math.max(0, Math.floor((now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24 * 7)))
+
+    return (
+      <View style={{ gap: 10 }}>
+        <View style={styles.timelineHeader}>
+          <Display size={22} color={colors.text}>{activeKid.name}'s Journey</Display>
+          <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>Week {weekAge} · Growth leaps</Body>
+        </View>
+        {KIDS_GROWTH_LEAPS.map((leap) => {
+          const isPast = weekAge > leap.week + 1
+          const isCurrent = weekAge >= leap.week - 2 && weekAge <= leap.week + 1
+          const circle = (
+            <View style={{
+              width: 40, height: 40, borderRadius: 20,
+              alignItems: 'center', justifyContent: 'center',
+              backgroundColor: isPast || isCurrent ? leap.color : leap.color + '25',
+            }}>
+              <Text style={{ fontFamily: 'Fraunces_800ExtraBold', fontSize: 15, color: isPast || isCurrent ? '#fff' : leap.color }}>
+                W{leap.week}
+              </Text>
+            </View>
+          )
+          return (
+            <View key={leap.week} style={{ opacity: isPast || isCurrent ? 1 : 0.6 }}>
+              <ActivityPillCard
+                icon={circle}
+                title={leap.name}
+                subtitle={leap.desc}
+                tint="mood"
+                chip={isCurrent ? { label: 'Now', color: brand.kids } : isPast ? { label: 'Done', color: brand.success } : undefined}
+                noChevron
+              />
+            </View>
+          )
+        })}
+      </View>
+    )
+  }
+
+  // ── Visits tab: vaccines / health / notes (future + past) ─────────────────
+
+  function renderVisits() {
+    const visitTypes = new Set(['vaccine', 'health', 'temperature', 'medicine', 'note', 'milestone'])
+    const visits = monthLogs
+      .filter((l) => visitTypes.has(l.type))
+      .sort((a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at))
+
+    const upcomingRoutines = routines.filter((r) => visitTypes.has(r.type))
+
+    if (visits.length === 0 && upcomingRoutines.length === 0) {
+      return (
+        <View style={{ gap: 10 }}>
+          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Body size={14} color={colors.textSecondary} align="center">No visits logged yet.</Body>
+            <Body size={12} color={colors.textMuted} align="center" style={{ marginTop: 4 }}>
+              Vaccines, medicines, and notes show up here.
+            </Body>
+          </View>
+          <Pressable
+            onPress={() => { setRoutinePrefill(null); setSheetType('health') }}
+            style={[styles.addVisitBtn, { backgroundColor: brand.kids }]}
+          >
+            <Plus size={18} color="#fff" strokeWidth={3} />
+            <Text style={styles.addVisitBtnText}>Add visit / medical note</Text>
+          </Pressable>
+        </View>
+      )
+    }
+
+    return (
+      <View style={{ gap: 10 }}>
+        <View style={styles.timelineHeader}>
+          <Display size={22} color={colors.text}>Visits</Display>
+          <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>{visits.length} logged · {upcomingRoutines.length} scheduled</Body>
+        </View>
+
+        {upcomingRoutines.map((r) => {
+          const ci = childIndexMap.get(r.child_id) ?? 0
+          const childName = children.find((c) => c.id === r.child_id)?.name ?? ''
+          return (
+            <ActivityPillCard
+              key={`r-${r.id}`}
+              icon={logSticker(r.type, 28, isDark)}
+              title={r.name}
+              subtitle={`${r.time ? fmtTime(r.time) + ' · ' : ''}Recurring`}
+              tint="health"
+              chip={childName ? { label: childName, color: childColor(ci) } : undefined}
+              onPress={() => {
+                setRoutinePrefill({ routineId: r.id, childId: r.child_id, time: r.time ?? undefined, value: r.value ?? undefined, name: r.name })
+                setSheetType((ROUTINE_SHEET_MAP[r.type] ?? 'health') as LogType)
+              }}
+            />
+          )
+        })}
+
+        {visits.map((log) => {
+          const ci = childIndexMap.get(log.child_id) ?? 0
+          const childName = children.find((c) => c.id === log.child_id)?.name ?? ''
+          return (
+            <ActivityPillCard
+              key={`l-${log.id}`}
+              icon={logSticker(log.type, 28, isDark)}
+              title={logTitle(log)}
+              subtitle={`${formatDayLabel(log.date, todayStr)} · ${formatLogDisplay(log.type, log.value, log.notes) || 'Logged'}`}
+              tint="health"
+              chip={childName ? { label: childName, color: childColor(ci) } : undefined}
+              onPress={() => { setSelectedLog(log); setEditing(false) }}
+            />
+          )
+        })}
+
+        <Pressable
+          onPress={() => { setRoutinePrefill(null); setSheetType('health') }}
+          style={[styles.addVisitBtn, { backgroundColor: brand.kids }]}
+        >
+          <Plus size={18} color="#fff" strokeWidth={3} />
+          <Text style={styles.addVisitBtnText}>Add visit / medical note</Text>
+        </Pressable>
+      </View>
+    )
+  }
+
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <ScrollView
@@ -1394,1182 +1694,269 @@ export function KidsCalendar() {
         <View style={styles.toggleWrap}>
           <SegmentedTabs
             options={[
-              { key: 'month', label: 'Month' },
-              { key: 'day', label: 'Day' },
-              { key: 'list', label: 'List' },
+              { key: 'timeline', label: 'Timeline' },
+              { key: 'journey', label: 'Journey' },
+              { key: 'visits', label: 'Visits' },
             ]}
             value={view}
-            onChange={(k) => setView(k as 'month' | 'day' | 'list')}
+            onChange={(k) => setView(k as 'timeline' | 'journey' | 'visits')}
             activeBg={isDark ? brand.kids + '40' : '#9EC5FF'}
             activeFg={isDark ? colors.text : '#141313'}
           />
         </View>
 
-        {view === 'month' ? (
+        {view === 'timeline' ? (
           <>
-            {/* 3. Month Header */}
-            <View style={styles.monthHeader}>
-              <Pressable onPress={prevMonth} style={styles.chevron}>
-                <ChevronLeft size={24} color={colors.text} />
-              </Pressable>
-              <Text style={[styles.monthLabel, { color: colors.text }]}>{monthLabel}</Text>
-              <Pressable onPress={nextMonth} style={styles.chevron}>
-                <ChevronRight size={24} color={colors.text} />
-              </Pressable>
-            </View>
+            <AgendaWeekStrip
+              selectedDate={selectedDate}
+              onSelectDate={handleDayPress}
+              dotsByDate={dotsByDate}
+              modeColor={brand.kids}
+            />
+            <View style={{ height: 12 }} />
+            {renderKidsModeToggle()}
+            <View style={{ height: 12 }} />
+            {timelineMode === 'cards' ? (
+              renderTimelineCards()
+            ) : (
+              <View style={[{ flex: 1, backgroundColor: colors.surface, borderRadius: radius.xl, overflow: 'hidden' }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                  <Pressable onPress={prevDay} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <ChevronLeft size={20} color={colors.text} />
+                  </Pressable>
+                  <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
+                    <Text style={[styles.dayDetailTitle, { color: colors.text }]}>
+                      {formatDayLabel(selectedDate, todayStr)}
+                    </Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 11 }}>
+                      {[
+                        pendingRoutines.length > 0 && `${pendingRoutines.length} pending`,
+                        selectedDayLogs.filter((l) => l.type !== 'skipped').length > 0 && `${selectedDayLogs.filter((l) => l.type !== 'skipped').length} logged`,
+                      ].filter(Boolean).join(' · ') || 'No activities'}
+                    </Text>
+                  </View>
+                  <Pressable onPress={nextDay} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <ChevronRight size={20} color={colors.text} />
+                  </Pressable>
+                </View>
 
-            {/* Calendar Grid */}
-            <View style={styles.calendarWrap}>
-              <View style={styles.weekRow}>
-                {WEEKDAYS.map((w) => (
-                  <Text key={w} style={[styles.weekday, { color: colors.textMuted }]}>{w}</Text>
-                ))}
-              </View>
-              <View style={styles.dayGrid}>
-                {calendarDays.map((d, idx) => {
-                  if (!d.inMonth) return <View key={`e-${idx}`} style={styles.dayCell} />
-                  const isSelected = d.date === selectedDate
-                  const dayChildIds = childIdsByDate.get(d.date)
-                  const hasLogs = !!dayChildIds && dayChildIds.size > 0
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 6, paddingHorizontal: 12, paddingBottom: 6 }}>
+                  <Pressable
+                    onPress={() => setDayZoomH((h) => Math.min(h + 16, DAY_VIEW_MAX_HOUR_H))}
+                    style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}
+                  >
+                    <Plus size={14} color={colors.textSecondary} strokeWidth={2.5} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setDayZoomH((h) => Math.max(h - 16, DAY_VIEW_MIN_HOUR_H))}
+                    style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}
+                  >
+                    <Minus size={14} color={colors.textSecondary} strokeWidth={2.5} />
+                  </Pressable>
+                </View>
+
+                {openSleepLogForBanner && selectedDate === toDateStr(new Date()) && (() => {
+                  let sp: Record<string, any> = {}
+                  try { sp = JSON.parse(openSleepLogForBanner.value ?? '{}') } catch {}
+                  const childName = children.find((c) => c.id === openSleepLogForBanner.child_id)?.name ?? ''
                   return (
                     <Pressable
-                      key={d.date}
-                      onPress={() => handleDayPress(d.date)}
-                      style={[
-                        styles.dayCell,
-                        {
-                          backgroundColor: isSelected
-                            ? colors.primary + '30'
-                            : d.isToday
-                              ? colors.primary + '20'
-                              : colors.primary + '14',
-                          borderRadius: radius.sm,
-                          opacity: d.isFuture ? 0.4 : 1,
-                        },
-                      ]}
+                      onPress={() => { setRoutinePrefill(null); setSheetType('wake_up') }}
+                      style={({ pressed }) => ({
+                        marginHorizontal: 12, marginBottom: 8,
+                        backgroundColor: brand.accent + '15',
+                        borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14,
+                        flexDirection: 'row', alignItems: 'center', gap: 10,
+                        borderWidth: 1, borderColor: brand.accent + '35',
+                        opacity: pressed ? 0.8 : 1,
+                      })}
                     >
-                      <View
-                        style={[
-                          styles.dayInner,
-                          isSelected && {
-                            borderWidth: 2,
-                            borderColor: colors.primary,
-                            borderRadius: radius.sm,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.dayNumber,
-                            { color: isSelected ? colors.primary : d.isToday ? brand.accent : colors.text },
-                            (isSelected || d.isToday) && { fontWeight: '800' },
-                          ]}
-                        >
-                          {d.day}
+                      <Moon size={16} color={brand.pregnancy} strokeWidth={2} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13 }}>
+                          {childName ? `${childName} is still sleeping` : 'Still sleeping'}
                         </Text>
-                        {/* Today indicator dot */}
-                        {d.isToday && !isSelected && (
-                          <View style={[styles.todayDot, { backgroundColor: brand.accent }]} />
-                        )}
-                        {hasLogs && (
-                          <View style={styles.dotRow}>
-                            {Array.from(dayChildIds).slice(0, 3).map((cid) => {
-                              const ci = childIndexMap.get(cid) ?? 0
-                              return (
-                                <View
-                                  key={cid}
-                                  style={[styles.logDot, { backgroundColor: childColor(ci) }]}
-                                />
-                              )
-                            })}
-                          </View>
-                        )}
+                        <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+                          Bedtime {sp.routineName ? `· ${sp.routineName}` : ''} at {fmtTime(sp.startTime)} · tap to log wake up
+                        </Text>
                       </View>
+                      <Sun size={16} color={brand.accent} strokeWidth={2} />
                     </Pressable>
                   )
-                })}
-              </View>
-            </View>
+                })()}
 
-            {loading && (
-              <ActivityIndicator size="small" color={colors.primary} style={{ marginBottom: 12 }} />
-            )}
-
-            {/* 4. Upcoming Highlights — pastel activity card */}
-            {upcomingHighlights.length > 0 && (() => {
-              const h = upcomingHighlights[highlightIndex % upcomingHighlights.length]
-              if (!h) return null
-              const meta = LOG_META[h.icon] ?? { icon: Calendar, color: brand.accent }
-              const HIcon = meta.icon
-              const tintKey = (KIDS_TINT_BY_TYPE as Record<string, string>)[h.icon] ?? 'activity'
-              return (
-                <View style={{ marginBottom: 14, gap: 8 }}>
-                  <ActivityPillCard
-                    icon={<HIcon size={18} color={h.color} strokeWidth={2} />}
-                    title={h.title}
-                    subtitle={h.detail}
-                    tint={tintKey}
-                    chip={{ label: h.childName, color: h.childColor }}
-                    noChevron
-                  />
-                  {upcomingHighlights.length > 1 && (
-                    <View style={styles.highlightDots}>
-                      {upcomingHighlights.map((_, i) => (
-                        <View key={i} style={[styles.highlightDot, { backgroundColor: i === (highlightIndex % upcomingHighlights.length) ? colors.primary : colors.border }]} />
+                <ScrollView ref={dayScrollRef} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                  <View style={{ flexDirection: 'row', height: (DAY_VIEW_END - DAY_VIEW_START) * dayZoomH + dayZoomH }}>
+                    <View style={{ width: 52 }}>
+                      {Array.from({ length: DAY_VIEW_END - DAY_VIEW_START + 1 }, (_, i) => (
+                        <View key={i} style={{ height: dayZoomH, paddingTop: 5, alignItems: 'flex-end', paddingRight: 8 }}>
+                          <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600' }}>
+                            {fmtHourLabel(DAY_VIEW_START + i)}
+                          </Text>
+                        </View>
                       ))}
                     </View>
-                  )}
-                </View>
-              )
-            })()}
 
-            {/* 5. Day Detail Panel — grouped per child */}
-            <View style={[styles.dayDetailPanel, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <View style={styles.dayDetailHeader}>
-                <View style={styles.dayDetailTitleRow}>
-                  <Calendar size={16} color={colors.primary} strokeWidth={2} />
-                  <Text style={[styles.dayDetailTitle, { color: colors.text }]}>
-                    {formatDayLabel(selectedDate, todayStr)}
-                  </Text>
-                </View>
-                <Text style={[styles.dayDetailCount, { color: colors.textMuted }]}>
-                  {selectedDayLogs.filter((l) => l.type !== 'skipped').length} {selectedDayLogs.filter((l) => l.type !== 'skipped').length === 1 ? 'activity' : 'activities'}
-                </Text>
-              </View>
+                    <View style={{ flex: 1, position: 'relative', height: (DAY_VIEW_END - DAY_VIEW_START) * dayZoomH }}>
+                      {Array.from({ length: DAY_VIEW_END - DAY_VIEW_START }, (_, i) => (
+                        <View key={`h-${i}`} style={{ position: 'absolute', top: i * dayZoomH, left: 0, right: 8, height: 1, backgroundColor: colors.border }} />
+                      ))}
+                      {Array.from({ length: DAY_VIEW_END - DAY_VIEW_START }, (_, i) => (
+                        <View key={`hh-${i}`} style={{ position: 'absolute', top: i * dayZoomH + dayZoomH / 2, left: 0, right: 8, height: 0.5, backgroundColor: colors.border + '50' }} />
+                      ))}
 
-              {selectedChildId === 'all' ? (
-                /* All Kids: grouped per child with individual expand/collapse + logged sub-section */
-                (() => {
-                  const dayGroups = children.map((child, ci) => {
-                    const color = childColor(ci)
-                    const childPending = pendingRoutines.filter((r) => r.child_id === child.id)
-                    const childSkipped = skippedDayRoutines.filter((r) => r.child_id === child.id)
-                    const childLogged = selectedDayLogs.filter((l) => l.child_id === child.id && l.type !== 'skipped')
-                    if (childPending.length === 0 && childSkipped.length === 0 && childLogged.length === 0) return null
-                    return { child, ci, color, childPending, childSkipped, childLogged }
-                  }).filter(Boolean) as { child: (typeof children)[0]; ci: number; color: string; childPending: ChildRoutine[]; childSkipped: ChildRoutine[]; childLogged: ChildLog[] }[]
-
-                  if (dayGroups.length === 0) {
-                    return (
-                      <View style={styles.emptyDay}>
-                        <Text style={[styles.emptyDayText, { color: colors.textMuted }]}>No activities logged</Text>
-                        <Text style={[styles.emptyDayHint, { color: colors.textMuted }]}>Tap + to add one</Text>
-                      </View>
-                    )
-                  }
-
-                  return dayGroups.map(({ child, ci, color, childPending, childSkipped, childLogged }) => {
-                    const isSectionCollapsed = collapsedDayChildren.has(child.id)
-                    const isLoggedCollapsed = loggedCollapsedByChild[child.id] ?? true
-
-                    return (
-                      <View key={child.id} style={{ marginBottom: 2 }}>
-                        {/* Child section header */}
-                        <Pressable
-                          onPress={() => setCollapsedDayChildren((prev) => {
-                            const next = new Set(prev)
-                            if (next.has(child.id)) next.delete(child.id); else next.add(child.id)
-                            return next
-                          })}
-                          style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 9, paddingHorizontal: 4, gap: 8 }}
-                        >
-                          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-                          <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700', flex: 1 }}>{child.name}</Text>
-                          <Text style={{ color: colors.textMuted, fontSize: 11 }}>
-                            {childPending.length > 0 ? `${childPending.length} pending` : ''}
-                            {childPending.length > 0 && childLogged.length > 0 ? ' · ' : ''}
-                            {childLogged.length > 0 ? `${childLogged.length} logged` : ''}
-                            {childPending.length === 0 && childLogged.length === 0 && childSkipped.length > 0 ? 'skipped' : ''}
-                          </Text>
-                          {isSectionCollapsed
-                            ? <ChevronDown size={14} color={colors.textMuted} />
-                            : <ChevronUp size={14} color={colors.textMuted} />}
-                        </Pressable>
-
-                        {!isSectionCollapsed && (
-                          <View style={{ paddingLeft: 18 }}>
-                            {/* Pending routines for this child — collapsible */}
-                            {(childPending.length > 0 || childSkipped.length > 0) && (
-                              <Pressable
-                                onPress={() => {
-                                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-                                  setPendingCollapsedByChild((prev) => ({ ...prev, [child.id]: !(prev[child.id] ?? true) }))
-                                }}
-                                style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 7, gap: 6 }}
-                              >
-                                <AlertCircle size={13} color={brand.accent} strokeWidth={2.5} />
-                                <Text style={{ color: brand.accent, fontSize: 12, fontWeight: '700', flex: 1 }}>
-                                  {childPending.length} pending{childSkipped.length > 0 ? ` · ${childSkipped.length} skipped` : ''}
-                                </Text>
-                                {(pendingCollapsedByChild[child.id] ?? true)
-                                  ? <ChevronDown size={14} color={brand.accent} />
-                                  : <ChevronUp size={14} color={brand.accent} />}
-                              </Pressable>
-                            )}
-                            {!(pendingCollapsedByChild[child.id] ?? true) && (childPending.length > 0 || childSkipped.length > 0) && (
-                              (() => {
-                                const catK = (type: string) => (type === 'food' ? 'feeding' : type)
-                                const seen = new Set<string>()
-                                const orderedCats: string[] = []
-                                for (const r of [...childPending, ...childSkipped]) {
-                                  const k = catK(r.type)
-                                  if (!seen.has(k)) { seen.add(k); orderedCats.push(k) }
-                                }
-                                return orderedCats.map((ck) => {
-                                  const catPending = childPending.filter((r) => catK(r.type) === ck)
-                                  const catSkipped = childSkipped.filter((r) => catK(r.type) === ck)
-                                  const catMeta = LOG_META[ck] ?? { label: ck, icon: Calendar, color: colors.textMuted }
-                                  const CatIcon = catMeta.icon
-                                  const catExpandKey = `${child.id}:${ck}`
-                                  const isCatExpanded = expandedPendingCats.has(catExpandKey)
-                                  return (
-                                    <View key={ck} style={{ marginBottom: 4 }}>
-                                      <Pressable
-                                        onPress={() => {
-                                          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-                                          setExpandedPendingCats((prev) => {
-                                            const next = new Set(prev)
-                                            if (next.has(catExpandKey)) next.delete(catExpandKey); else next.add(catExpandKey)
-                                            return next
-                                          })
-                                        }}
-                                        style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 10, backgroundColor: catMeta.color + '12', borderRadius: radius.md, gap: 8 }}
-                                      >
-                                        <CatIcon size={13} color={catMeta.color} strokeWidth={2.5} />
-                                        <Text style={{ color: catMeta.color, fontSize: 12, fontWeight: '700', flex: 1 }}>{catMeta.label}</Text>
-                                        <Text style={{ color: catMeta.color + 'AA', fontSize: 11, fontWeight: '600' }}>{catPending.length + catSkipped.length}</Text>
-                                        {isCatExpanded ? <ChevronUp size={12} color={catMeta.color} /> : <ChevronDown size={12} color={catMeta.color} />}
-                                      </Pressable>
-                                      {isCatExpanded && (
-                                        <View style={[styles.dayLogList, { marginTop: 4 }]}>
-                                          {catPending.map((routine) => {
-                                            const meta = LOG_META[routine.type] ?? { label: routine.type, icon: Calendar, color: colors.textMuted }
-                                            const Icon = meta.icon
-                                            return (
-                                              <Pressable
-                                                key={`pending-${routine.id}`}
-                                                onPress={() => {
-                                                  setRoutinePrefill({ routineId: routine.id, childId: routine.child_id, time: routine.time ?? undefined, value: routine.value ?? undefined, name: routine.name })
-                                                  setSheetType((ROUTINE_SHEET_MAP[routine.type] ?? 'feeding') as LogType)
-                                                }}
-                                                onLongPress={() => handleRoutineOptions(routine)}
-                                                delayLongPress={400}
-                                                style={({ pressed }) => [
-                                                  styles.dayLogItem, styles.pendingRoutineItem,
-                                                  { borderColor: meta.color + '60', backgroundColor: meta.color + '08', borderRadius: radius.lg },
-                                                  pressed && { opacity: 0.7 },
-                                                ]}
-                                              >
-                                                <View>
-                                                  <View style={[styles.dayLogIcon, { backgroundColor: meta.color + '15' }]}>
-                                                    <Icon size={16} color={meta.color} strokeWidth={2} />
-                                                  </View>
-                                                  <View style={[styles.loggedBadge, { backgroundColor: colors.bg, borderColor: brand.accent + '80' }]}>
-                                                    <AlertCircle size={12} color={brand.accent} strokeWidth={2.5} />
-                                                  </View>
-                                                </View>
-                                                <View style={styles.dayLogContent}>
-                                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                                                    <Text style={[styles.dayLogType, { color: colors.textSecondary }]}>{routine.name}</Text>
-                                                    <Repeat size={10} color={colors.textMuted} strokeWidth={2.5} />
-                                                  </View>
-                                                  <Text style={[styles.dayLogDetail, { color: colors.textMuted }]}>
-                                                    {routine.time ? `${fmtTime(routine.time)} · ` : ''}Tap to log
-                                                  </Text>
-                                                </View>
-                                                <View style={styles.dayLogMeta}>
-                                                  {routine.time && <Text style={[styles.dayLogTime, { color: colors.textMuted }]}>{fmtTime(routine.time)}</Text>}
-                                                </View>
-                                                <ChevronRightSmall size={14} color={colors.textMuted} style={{ marginLeft: 4 }} />
-                                              </Pressable>
-                                            )
-                                          })}
-                                          {catSkipped.map((routine) => {
-                                            const meta = LOG_META[routine.type] ?? { label: routine.type, icon: Calendar, color: colors.textMuted }
-                                            const Icon = meta.icon
-                                            return (
-                                              <Pressable
-                                                key={`skipped-${routine.id}`}
-                                                onPress={() =>
-                                                  Alert.alert(
-                                                    'Undo skip?',
-                                                    `Restore "${routine.name}" as pending for this day.`,
-                                                    [
-                                                      { text: 'Cancel', style: 'cancel' },
-                                                      { text: 'Undo skip', onPress: () => unskipRoutine(routine) },
-                                                    ]
-                                                  )
-                                                }
-                                                style={({ pressed }) => [styles.dayLogItem, styles.pendingRoutineItem, { borderColor: '#88888840', backgroundColor: '#88888808', borderRadius: radius.lg, opacity: pressed ? 0.5 : 0.75 }]}
-                                              >
-                                                <View>
-                                                  <View style={[styles.dayLogIcon, { backgroundColor: '#88888815' }]}>
-                                                    <Icon size={16} color="#888888" strokeWidth={2} />
-                                                  </View>
-                                                  <View style={[styles.loggedBadge, { backgroundColor: colors.bg, borderColor: '#88888880' }]}>
-                                                    <MinusCircle size={12} color="#888888" strokeWidth={2.5} />
-                                                  </View>
-                                                </View>
-                                                <View style={styles.dayLogContent}>
-                                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                                                    <Text style={[styles.dayLogType, { color: colors.textMuted, textDecorationLine: 'line-through' }]}>{routine.name}</Text>
-                                                    <Repeat size={10} color={colors.textMuted} strokeWidth={2.5} />
-                                                  </View>
-                                                  <Text style={[styles.dayLogDetail, { color: colors.textMuted }]}>
-                                                    {routine.time ? `${fmtTime(routine.time)} · ` : ''}Skipped · Tap to undo
-                                                  </Text>
-                                                </View>
-                                                {routine.time && <Text style={[styles.dayLogTime, { color: colors.textMuted }]}>{fmtTime(routine.time)}</Text>}
-                                              </Pressable>
-                                            )
-                                          })}
-                                        </View>
-                                      )}
-                                    </View>
-                                  )
-                                })
-                              })()
-                            )}
-
-                            {/* Logged activities for this child — collapsible */}
-                            {childLogged.length > 0 && (
-                              <>
-                                {!(pendingCollapsedByChild[child.id] ?? true) && (childPending.length > 0 || childSkipped.length > 0) && (
-                                  <View style={[styles.listDivider, { backgroundColor: colors.border }]} />
-                                )}
-                                <Pressable
-                                  onPress={() => setLoggedCollapsedByChild((prev) => ({ ...prev, [child.id]: !(prev[child.id] ?? true) }))}
-                                  style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 7, gap: 6 }}
-                                >
-                                  <CheckCircle2 size={13} color={brand.success} strokeWidth={2.5} />
-                                  <Text style={{ color: brand.success, fontSize: 12, fontWeight: '700', flex: 1 }}>
-                                    {childLogged.length} {childLogged.length === 1 ? 'activity' : 'activities'} logged
-                                  </Text>
-                                  {isLoggedCollapsed
-                                    ? <ChevronDown size={14} color={brand.success} />
-                                    : <ChevronUp size={14} color={brand.success} />}
-                                </Pressable>
-                                {!isLoggedCollapsed && (
-                                  <View style={styles.dayLogList}>
-                                    {childLogged.map((log) => {
-                                      const meta = LOG_META[log.type] ?? { label: log.type, icon: Calendar, color: colors.textMuted }
-                                      const Icon = meta.icon
-                                      const isFromRoutine = selectedDayRoutines.some((r) => isRoutineDone(r, [log]))
-                                      const loggerName = log.logged_by ? profileNames[log.logged_by] : undefined
-                                      return (
-                                        <Pressable
-                                          key={log.id}
-                                          onPress={() => { setSelectedLog(log); setEditing(false) }}
-                                          onLongPress={() => setUnlogTarget(log)}
-                                          delayLongPress={400}
-                                          style={({ pressed }) => [
-                                            styles.dayLogItem,
-                                            styles.loggedItem,
-                                            { borderColor: brand.success + '50', backgroundColor: brand.success + '08', borderRadius: radius.lg },
-                                            pressed && { opacity: 0.7 },
-                                          ]}
-                                        >
-                                          <View>
-                                            <View style={[styles.dayLogIcon, { backgroundColor: meta.color + '15' }]}>
-                                              <Icon size={16} color={meta.color} strokeWidth={2} />
-                                            </View>
-                                            <View style={[styles.loggedBadge, { backgroundColor: colors.bg, borderColor: brand.success + '80' }]}>
-                                              <CheckCircle2 size={12} color={brand.success} strokeWidth={2.5} />
-                                            </View>
-                                          </View>
-                                          <View style={styles.dayLogContent}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                                              <Text style={[styles.dayLogType, { color: colors.text }]}>{logTitle(log)}</Text>
-                                              {isFromRoutine && <Repeat size={10} color={colors.textMuted} strokeWidth={2.5} />}
-                                            </View>
-                                            {formatLogDisplay(log.type, log.value, log.notes) !== '' && (
-                                              <Text style={[styles.dayLogDetail, { color: colors.textSecondary }]} numberOfLines={2}>
-                                                {formatLogDisplay(log.type, log.value, log.notes)}
-                                              </Text>
-                                            )}
-                                          </View>
-                                          <View style={styles.dayLogMeta}>
-                                            <Text style={[styles.dayLogTime, { color: colors.textMuted }]}>{activityTimeDisplay(log)}</Text>
-                                            {loggerName && (
-                                              <Text style={{ fontSize: 9, color: colors.textMuted, fontWeight: '500' }}>by {loggerName}</Text>
-                                            )}
-                                          </View>
-                                          <ChevronRightSmall size={14} color={colors.textMuted} style={{ marginLeft: 4 }} />
-                                        </Pressable>
-                                      )
-                                    })}
-                                  </View>
-                                )}
-                              </>
-                            )}
-                          </View>
-                        )}
-                      </View>
-                    )
-                  })
-                })()
-              ) : (
-                /* Single child — pending routines + skipped + collapsible logged */
-                <>
-                  {/* Pending routines — collapsible */}
-                  {(pendingRoutines.length > 0 || skippedDayRoutines.length > 0) && (
-                    <>
-                      <Pressable
-                        onPress={() => {
-                          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-                          setPendingCollapsed((v) => !v)
-                        }}
-                        style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 6 }}
-                      >
-                        <AlertCircle size={13} color={brand.accent} strokeWidth={2.5} />
-                        <Text style={{ color: brand.accent, fontSize: 12, fontWeight: '700', flex: 1 }}>
-                          {pendingRoutines.length} pending{skippedDayRoutines.length > 0 ? ` · ${skippedDayRoutines.length} skipped` : ''}
-                        </Text>
-                        {pendingCollapsed
-                          ? <ChevronDown size={14} color={brand.accent} />
-                          : <ChevronUp size={14} color={brand.accent} />}
-                      </Pressable>
-                    </>
-                  )}
-                  {!pendingCollapsed && (pendingRoutines.length > 0 || skippedDayRoutines.length > 0) && (
-                    (() => {
-                      const catK = (type: string) => (type === 'food' ? 'feeding' : type)
-                      const seen = new Set<string>()
-                      const orderedCats: string[] = []
-                      for (const r of [...pendingRoutines, ...skippedDayRoutines]) {
-                        const k = catK(r.type)
-                        if (!seen.has(k)) { seen.add(k); orderedCats.push(k) }
-                      }
-                      return orderedCats.map((ck) => {
-                        const catPending = pendingRoutines.filter((r) => catK(r.type) === ck)
-                        const catSkipped = skippedDayRoutines.filter((r) => catK(r.type) === ck)
-                        const catMeta = LOG_META[ck] ?? { label: ck, icon: Calendar, color: colors.textMuted }
-                        const CatIcon = catMeta.icon
-                        const isCatExpanded = expandedPendingCats.has(ck)
+                      {selectedDate === todayStr && (() => {
+                        const now = new Date()
+                        const nowH = now.getHours() + now.getMinutes() / 60
+                        const y = (nowH - DAY_VIEW_START) * dayZoomH
                         return (
-                          <View key={ck} style={{ marginBottom: 4 }}>
-                            <Pressable
-                              onPress={() => {
-                                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-                                setExpandedPendingCats((prev) => {
-                                  const next = new Set(prev)
-                                  if (next.has(ck)) next.delete(ck); else next.add(ck)
-                                  return next
-                                })
-                              }}
-                              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 10, backgroundColor: catMeta.color + '12', borderRadius: radius.md, gap: 8 }}
-                            >
-                              <CatIcon size={13} color={catMeta.color} strokeWidth={2.5} />
-                              <Text style={{ color: catMeta.color, fontSize: 12, fontWeight: '700', flex: 1 }}>{catMeta.label}</Text>
-                              <Text style={{ color: catMeta.color + 'AA', fontSize: 11, fontWeight: '600' }}>{catPending.length + catSkipped.length}</Text>
-                              {isCatExpanded ? <ChevronUp size={12} color={catMeta.color} /> : <ChevronDown size={12} color={catMeta.color} />}
-                            </Pressable>
-                            {isCatExpanded && (
-                              <View style={[styles.dayLogList, { marginTop: 4 }]}>
-                                {catPending.map((routine) => {
-                                  const meta = LOG_META[routine.type] ?? { label: routine.type, icon: Calendar, color: colors.textMuted }
-                                  const Icon = meta.icon
-                                  return (
-                                    <Pressable
-                                      key={`pending-${routine.id}`}
-                                      onPress={() => {
-                                        setRoutinePrefill({ routineId: routine.id, childId: routine.child_id, time: routine.time ?? undefined, value: routine.value ?? undefined, name: routine.name })
-                                        setSheetType((ROUTINE_SHEET_MAP[routine.type] ?? 'feeding') as LogType)
-                                      }}
-                                      onLongPress={() => handleRoutineOptions(routine)}
-                                      delayLongPress={400}
-                                      style={({ pressed }) => [
-                                        styles.dayLogItem,
-                                        styles.pendingRoutineItem,
-                                        { borderColor: meta.color + '60', backgroundColor: meta.color + '08', borderRadius: radius.lg },
-                                        pressed && { opacity: 0.7 },
-                                      ]}
-                                    >
-                                      <View>
-                                        <View style={[styles.dayLogIcon, { backgroundColor: meta.color + '15' }]}>
-                                          <Icon size={16} color={meta.color} strokeWidth={2} />
-                                        </View>
-                                        <View style={[styles.loggedBadge, { backgroundColor: colors.bg, borderColor: brand.accent + '80' }]}>
-                                          <AlertCircle size={12} color={brand.accent} strokeWidth={2.5} />
-                                        </View>
-                                      </View>
-                                      <View style={styles.dayLogContent}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                                          <Text style={[styles.dayLogType, { color: colors.textSecondary }]}>{routine.name}</Text>
-                                          <Repeat size={10} color={colors.textMuted} strokeWidth={2.5} />
-                                        </View>
-                                        <Text style={[styles.dayLogDetail, { color: colors.textMuted }]}>
-                                          {routine.time ? `${fmtTime(routine.time)} · ` : ''}Tap to log
-                                        </Text>
-                                      </View>
-                                      <View style={styles.dayLogMeta}>
-                                        {routine.time && <Text style={[styles.dayLogTime, { color: colors.textMuted }]}>{fmtTime(routine.time)}</Text>}
-                                      </View>
-                                      <ChevronRightSmall size={14} color={colors.textMuted} style={{ marginLeft: 4 }} />
-                                    </Pressable>
-                                  )
-                                })}
-                                {catSkipped.map((routine) => {
-                                  const meta = LOG_META[routine.type] ?? { label: routine.type, icon: Calendar, color: colors.textMuted }
-                                  const Icon = meta.icon
-                                  return (
-                                    <Pressable
-                                      key={`skipped-${routine.id}`}
-                                      onPress={() =>
-                                        Alert.alert(
-                                          'Undo skip?',
-                                          `Restore "${routine.name}" as pending for this day.`,
-                                          [
-                                            { text: 'Cancel', style: 'cancel' },
-                                            { text: 'Undo skip', onPress: () => unskipRoutine(routine) },
-                                          ]
-                                        )
-                                      }
-                                      style={({ pressed }) => [styles.dayLogItem, styles.pendingRoutineItem, { borderColor: '#88888840', backgroundColor: '#88888808', borderRadius: radius.lg, opacity: pressed ? 0.5 : 0.75 }]}
-                                    >
-                                      <View>
-                                        <View style={[styles.dayLogIcon, { backgroundColor: '#88888815' }]}>
-                                          <Icon size={16} color="#888888" strokeWidth={2} />
-                                        </View>
-                                        <View style={[styles.loggedBadge, { backgroundColor: colors.bg, borderColor: '#88888880' }]}>
-                                          <MinusCircle size={12} color="#888888" strokeWidth={2.5} />
-                                        </View>
-                                      </View>
-                                      <View style={styles.dayLogContent}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                                          <Text style={[styles.dayLogType, { color: colors.textMuted, textDecorationLine: 'line-through' }]}>{routine.name}</Text>
-                                          <Repeat size={10} color={colors.textMuted} strokeWidth={2.5} />
-                                        </View>
-                                        <Text style={[styles.dayLogDetail, { color: colors.textMuted }]}>
-                                          {routine.time ? `${fmtTime(routine.time)} · ` : ''}Skipped · Tap to undo
-                                        </Text>
-                                      </View>
-                                      {routine.time && <Text style={[styles.dayLogTime, { color: colors.textMuted }]}>{fmtTime(routine.time)}</Text>}
-                                    </Pressable>
-                                  )
-                                })}
-                              </View>
-                            )}
+                          <View style={{ position: 'absolute', top: y, left: 0, right: 8, flexDirection: 'row', alignItems: 'center', zIndex: 20 }} pointerEvents="none">
+                            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#FF4444', marginLeft: -2 }} />
+                            <View style={{ flex: 1, height: 2, backgroundColor: '#FF4444' }} />
                           </View>
-                        )
-                      })
-                    })()
-                  )}
-
-                  {/* Divider — only when pending section is expanded */}
-                  {!pendingCollapsed && (pendingRoutines.length > 0 || skippedDayRoutines.length > 0) && selectedDayLogs.filter((l) => l.type !== 'skipped').length > 0 && (
-                    <View style={[styles.listDivider, { backgroundColor: colors.border }]} />
-                  )}
-
-                  {/* Logged activities — collapsible / empty state */}
-                  {selectedDayLogs.filter((l) => l.type !== 'skipped').length === 0 && pendingRoutines.length === 0 && skippedDayRoutines.length === 0 ? (
-                    <View style={styles.emptyDay}>
-                      <Text style={[styles.emptyDayText, { color: colors.textMuted }]}>No activities logged</Text>
-                      <Text style={[styles.emptyDayHint, { color: colors.textMuted }]}>Tap + to add one</Text>
-                    </View>
-                  ) : selectedDayLogs.filter((l) => l.type !== 'skipped').length > 0 ? (
-                    <>
-                      {/* Logged activities grouped by category */}
-                      {(() => {
-                        const logsToShow = selectedDayLogs.filter((l) => l.type !== 'skipped')
-                        // Canonical category key: food/feeding → 'feeding', rest by type
-                        const categoryKey = (type: string) => (type === 'food' ? 'feeding' : type)
-                        // Build ordered unique category list preserving first-seen order
-                        const seen = new Set<string>()
-                        const orderedCats: string[] = []
-                        for (const l of logsToShow) {
-                          const k = categoryKey(l.type)
-                          if (!seen.has(k)) { seen.add(k); orderedCats.push(k) }
-                        }
-                        const totalLogged = logsToShow.length
-                        return (
-                          <>
-                            {/* All-categories header */}
-                            <Pressable
-                              onPress={() => {
-                                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-                                setLoggedCollapsed((v) => !v)
-                              }}
-                              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 6 }}
-                            >
-                              <CheckCircle2 size={13} color={brand.success} strokeWidth={2.5} />
-                              <Text style={{ color: brand.success, fontSize: 12, fontWeight: '700', flex: 1 }}>
-                                {totalLogged} {totalLogged === 1 ? 'activity' : 'activities'} logged
-                              </Text>
-                              {loggedCollapsed
-                                ? <ChevronDown size={14} color={brand.success} />
-                                : <ChevronUp size={14} color={brand.success} />}
-                            </Pressable>
-
-                            {!loggedCollapsed && orderedCats.map((catKey) => {
-                              const catLogs = logsToShow.filter((l) => categoryKey(l.type) === catKey)
-                              const catMeta = LOG_META[catKey] ?? { label: catKey, icon: Calendar, color: colors.textMuted }
-                              const CatIcon = catMeta.icon
-                              const catCollapsed = !expandedLogCategories.has(catKey)
-                              return (
-                                <View key={catKey} style={{ marginBottom: 4 }}>
-                                  {/* Category header */}
-                                  <Pressable
-                                    onPress={() => {
-                                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-                                      setExpandedLogCategories((prev) => {
-                                        const next = new Set(prev)
-                                        if (next.has(catKey)) next.delete(catKey); else next.add(catKey)
-                                        return next
-                                      })
-                                    }}
-                                    style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 10, backgroundColor: catMeta.color + '12', borderRadius: radius.md, gap: 8 }}
-                                  >
-                                    <CatIcon size={13} color={catMeta.color} strokeWidth={2.5} />
-                                    <Text style={{ color: catMeta.color, fontSize: 12, fontWeight: '700', flex: 1 }}>{catMeta.label}</Text>
-                                    <Text style={{ color: catMeta.color + 'AA', fontSize: 11, fontWeight: '600' }}>{catLogs.length}</Text>
-                                    {catCollapsed
-                                      ? <ChevronDown size={12} color={catMeta.color} />
-                                      : <ChevronUp size={12} color={catMeta.color} />}
-                                  </Pressable>
-
-                                  {/* Category items */}
-                                  {!catCollapsed && (
-                                    <View style={[styles.dayLogList, { marginTop: 4 }]}>
-                                      {catLogs.map((log) => {
-                                        const meta = LOG_META[log.type] ?? { label: log.type, icon: Calendar, color: colors.textMuted }
-                                        const Icon = meta.icon
-                                        const isFromRoutine = selectedDayRoutines.some((r) => isRoutineDone(r, [log]))
-                                        const loggerName = log.logged_by ? profileNames[log.logged_by] : undefined
-                                        return (
-                                          <Pressable
-                                            key={log.id}
-                                            onPress={() => { setSelectedLog(log); setEditing(false) }}
-                                            onLongPress={() => setUnlogTarget(log)}
-                                            delayLongPress={400}
-                                            style={({ pressed }) => [
-                                              styles.dayLogItem,
-                                              styles.loggedItem,
-                                              { borderColor: brand.success + '50', backgroundColor: brand.success + '08', borderRadius: radius.lg },
-                                              pressed && { opacity: 0.7 },
-                                            ]}
-                                          >
-                                            <View>
-                                              <View style={[styles.dayLogIcon, { backgroundColor: meta.color + '15' }]}>
-                                                <Icon size={16} color={meta.color} strokeWidth={2} />
-                                              </View>
-                                              <View style={[styles.loggedBadge, { backgroundColor: colors.bg, borderColor: brand.success + '80' }]}>
-                                                <CheckCircle2 size={12} color={brand.success} strokeWidth={2.5} />
-                                              </View>
-                                            </View>
-                                            <View style={styles.dayLogContent}>
-                                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                                                <Text style={[styles.dayLogType, { color: colors.text }]}>{logTitle(log)}</Text>
-                                                {isFromRoutine && <Repeat size={10} color={colors.textMuted} strokeWidth={2.5} />}
-                                              </View>
-                                              {formatLogDisplay(log.type, log.value, log.notes) !== '' && (
-                                                <Text style={[styles.dayLogDetail, { color: colors.textSecondary }]} numberOfLines={2}>
-                                                  {formatLogDisplay(log.type, log.value, log.notes)}
-                                                </Text>
-                                              )}
-                                            </View>
-                                            <View style={styles.dayLogMeta}>
-                                              <Text style={[styles.dayLogTime, { color: colors.textMuted }]}>{activityTimeDisplay(log)}</Text>
-                                              {loggerName && (
-                                                <Text style={{ fontSize: 9, color: colors.textMuted, fontWeight: '500' }}>by {loggerName}</Text>
-                                              )}
-                                            </View>
-                                            <ChevronRightSmall size={14} color={colors.textMuted} style={{ marginLeft: 4 }} />
-                                          </Pressable>
-                                        )
-                                      })}
-                                    </View>
-                                  )}
-                                </View>
-                              )
-                            })}
-                          </>
                         )
                       })()}
-                    </>
-                  ) : null}
-                </>
-              )}
-            </View>
 
-            {/* Next Event Banner (fallback if no highlights) */}
-            {upcomingHighlights.length === 0 && nextEvent && (
-              <View style={[styles.banner, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-                <View style={styles.bannerHeader}>
-                  <Calendar size={18} color={colors.primary} strokeWidth={2} />
-                  <Text style={[styles.bannerTitle, { color: colors.text }]}>Upcoming</Text>
-                </View>
-                <Text style={[styles.bannerEvent, { color: colors.text }]}>
-                  {nextEvent.label}{nextEvent.detail ? ` — ${nextEvent.detail}` : ''}
-                </Text>
-                <Text style={[styles.bannerDate, { color: colors.textSecondary }]}>
-                  {formatDayLabel(nextEvent.date, todayStr)} — {nextEvent.childName}
-                </Text>
+                      {(() => {
+                        type DvEvent = {
+                          id: string; title: string; hours: number; durationHours: number
+                          color: string; childId: string; isPending: boolean; isSkipped: boolean; isLogged: boolean
+                          routine?: ChildRoutine; log?: ChildLog
+                        }
+                        const events: DvEvent[] = []
+
+                        const skippedSigsDv = new Set(
+                          skippedDayRoutines.map((r) => routineSig(r))
+                        )
+                        const seenPendingSigs = new Set<string>()
+                        for (const r of pendingRoutines) {
+                          if (!r.time) continue
+                          const sig = routineSig(r)
+                          if (skippedSigsDv.has(sig)) continue
+                          if (seenPendingSigs.has(sig)) continue
+                          seenPendingSigs.add(sig)
+                          const hours = timeStrToHours(r.time)
+                          if (hours < DAY_VIEW_START - 0.25 || hours > DAY_VIEW_END) continue
+                          const rMeta = LOG_META[r.type] ?? { color: colors.textMuted }
+                          events.push({ id: `p-${r.id}`, title: r.name, hours, durationHours: 0.75, color: rMeta.color, childId: r.child_id, isPending: true, isSkipped: false, isLogged: false, routine: r })
+                        }
+                        const seenSkipSigs = new Set<string>()
+                        for (const r of skippedDayRoutines) {
+                          if (!r.time) continue
+                          const sig = routineSig(r)
+                          if (seenSkipSigs.has(sig)) continue
+                          seenSkipSigs.add(sig)
+                          const hours = timeStrToHours(r.time)
+                          if (hours < DAY_VIEW_START - 0.25 || hours > DAY_VIEW_END) continue
+                          events.push({ id: `s-${r.id}`, title: r.name, hours, durationHours: 0.75, color: '#888888', childId: r.child_id, isPending: false, isSkipped: true, isLogged: false, routine: r })
+                        }
+                        for (const log of selectedDayLogs.filter((l) => l.type !== 'skipped')) {
+                          const hours = activityTimeHours(log)
+                          if (hours < DAY_VIEW_START - 0.25 || hours > DAY_VIEW_END) continue
+                          const meta = LOG_META[log.type] ?? { label: log.type, color: colors.textMuted }
+                          events.push({ id: `l-${log.id}`, title: logTitle(log), hours, durationHours: 0.75, color: meta.color, childId: log.child_id, isPending: false, isSkipped: false, isLogged: true, log })
+                        }
+
+                        if (events.length === 0) {
+                          return (
+                            <View style={{ position: 'absolute', top: (8 - DAY_VIEW_START) * dayZoomH, left: 0, right: 8, alignItems: 'center' }}>
+                              <Text style={{ color: colors.textMuted, fontSize: 12 }}>No activities — tap + to add</Text>
+                            </View>
+                          )
+                        }
+
+                        const sorted = [...events].sort((a, b) => a.hours - b.hours)
+                        const colEndTimes: number[] = []
+                        const withCol = sorted.map((ev) => {
+                          const evEnd = ev.hours + ev.durationHours
+                          let col = colEndTimes.findIndex((t) => t <= ev.hours + 0.05)
+                          if (col === -1) { col = colEndTimes.length; colEndTimes.push(evEnd) }
+                          else colEndTimes[col] = evEnd
+                          return { ...ev, col }
+                        })
+                        const withTotalCols = withCol.map((ev) => {
+                          const evEnd = ev.hours + ev.durationHours
+                          const concurrent = withCol.filter((other) => {
+                            const otherEnd = other.hours + other.durationHours
+                            return other.hours < evEnd - 0.05 && otherEnd > ev.hours + 0.05
+                          })
+                          return { ...ev, totalCols: concurrent.length > 0 ? Math.max(...concurrent.map((c) => c.col)) + 1 : 1 }
+                        })
+
+                        return withTotalCols.map((ev) => {
+                          const clampedH = Math.max(DAY_VIEW_START, ev.hours)
+                          const y = (clampedH - DAY_VIEW_START) * dayZoomH
+                          const blockH = Math.max(dayZoomH > 50 ? 44 : 28, ev.durationHours * dayZoomH - 4)
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          const leftPct = `${(ev.col / ev.totalCols) * 100}%` as any
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          const widthPct = `${(1 / ev.totalCols) * 100 - 1}%` as any
+                          const childName = children.find((c) => c.id === ev.childId)?.name
+
+                          return (
+                            <Pressable
+                              key={ev.id}
+                              onPress={() => {
+                                if (ev.isPending && ev.routine) {
+                                  setRoutinePrefill({ routineId: ev.routine.id, childId: ev.routine.child_id, time: ev.routine.time ?? undefined, value: ev.routine.value ?? undefined, name: ev.routine.name })
+                                  setSheetType((ROUTINE_SHEET_MAP[ev.routine.type] ?? 'feeding') as LogType)
+                                } else if (ev.isLogged && ev.log) {
+                                  setSelectedLog(ev.log); setEditing(false)
+                                }
+                              }}
+                              onLongPress={() => ev.routine && handleRoutineOptions(ev.routine)}
+                              delayLongPress={400}
+                              style={({ pressed }) => ({
+                                position: 'absolute' as const,
+                                top: y + 2,
+                                height: blockH,
+                                left: leftPct,
+                                width: widthPct,
+                                backgroundColor: ev.isSkipped ? '#88888812' : ev.color + (ev.isLogged ? '28' : '18'),
+                                borderLeftWidth: 3,
+                                borderLeftColor: ev.isSkipped ? '#888888' : ev.color,
+                                borderRadius: 6,
+                                paddingVertical: 5,
+                                paddingLeft: 7,
+                                paddingRight: 4,
+                                zIndex: 5,
+                                opacity: pressed ? 0.7 : (ev.isSkipped ? 0.55 : 1),
+                              })}
+                            >
+                              <Text style={{ color: ev.isSkipped ? '#888888' : ev.color, fontSize: dayZoomH < 50 ? 9 : 11, fontWeight: '700', lineHeight: dayZoomH < 50 ? 11 : 14 }} numberOfLines={1}>
+                                {ev.title}
+                              </Text>
+                              {dayZoomH >= 40 && (
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1, gap: 3 }}>
+                                  <Text style={{ color: colors.textMuted, fontSize: 9 }} numberOfLines={1}>
+                                    {fmtTime(hoursToHHMM(ev.hours))}
+                                  </Text>
+                                  {ev.isLogged
+                                    ? <CheckCircle2 size={9} color={brand.success} strokeWidth={2.5} />
+                                    : ev.isPending
+                                      ? <AlertCircle size={9} color={brand.accent} strokeWidth={2.5} />
+                                      : <MinusCircle size={9} color="#888888" strokeWidth={2.5} />}
+                                </View>
+                              )}
+                              {dayZoomH >= 56 && selectedChildId === 'all' && childName && ev.totalCols < 3 && (
+                                <View style={{ marginTop: 3, alignSelf: 'flex-start', backgroundColor: ev.color + '30', borderRadius: 3, paddingHorizontal: 4, paddingVertical: 1 }}>
+                                  <Text style={{ color: ev.color, fontSize: 8, fontWeight: '700' }} numberOfLines={1}>{childName}</Text>
+                                </View>
+                              )}
+                            </Pressable>
+                          )
+                        })
+                      })()}
+                    </View>
+                  </View>
+                </ScrollView>
               </View>
             )}
           </>
-        ) : view === 'day' ? (
-          /* Day Time View — Google Calendar-style vertical timeline */
-          <View style={[{ flex: 1, backgroundColor: colors.surface, borderRadius: radius.xl, overflow: 'hidden' }]}>
-            {/* Day nav header */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-              <Pressable onPress={prevDay} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <ChevronLeft size={20} color={colors.text} />
-              </Pressable>
-              <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-                <Text style={[styles.dayDetailTitle, { color: colors.text }]}>
-                  {formatDayLabel(selectedDate, todayStr)}
-                </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 11 }}>
-                  {[
-                    pendingRoutines.length > 0 && `${pendingRoutines.length} pending`,
-                    selectedDayLogs.filter((l) => l.type !== 'skipped').length > 0 && `${selectedDayLogs.filter((l) => l.type !== 'skipped').length} logged`,
-                  ].filter(Boolean).join(' · ') || 'No activities'}
-                </Text>
-              </View>
-              <Pressable onPress={nextDay} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <ChevronRight size={20} color={colors.text} />
-              </Pressable>
-            </View>
-
-            {/* Zoom controls */}
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 6, paddingHorizontal: 12, paddingBottom: 6 }}>
-              <Pressable
-                onPress={() => setDayZoomH((h) => Math.min(h + 16, DAY_VIEW_MAX_HOUR_H))}
-                style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}
-              >
-                <Plus size={14} color={colors.textSecondary} strokeWidth={2.5} />
-              </Pressable>
-              <Pressable
-                onPress={() => setDayZoomH((h) => Math.max(h - 16, DAY_VIEW_MIN_HOUR_H))}
-                style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}
-              >
-                <Minus size={14} color={colors.textSecondary} strokeWidth={2.5} />
-              </Pressable>
-            </View>
-
-            {/* ── Still sleeping banner ──────────────────────────────── */}
-            {openSleepLogForBanner && selectedDate === toDateStr(new Date()) && (() => {
-              let sp: Record<string, any> = {}
-              try { sp = JSON.parse(openSleepLogForBanner.value ?? '{}') } catch {}
-              const childName = children.find((c) => c.id === openSleepLogForBanner.child_id)?.name ?? ''
-              return (
-                <Pressable
-                  onPress={() => { setRoutinePrefill(null); setSheetType('wake_up') }}
-                  style={({ pressed }) => ({
-                    marginHorizontal: 12, marginBottom: 8,
-                    backgroundColor: brand.accent + '15',
-                    borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14,
-                    flexDirection: 'row', alignItems: 'center', gap: 10,
-                    borderWidth: 1, borderColor: brand.accent + '35',
-                    opacity: pressed ? 0.8 : 1,
-                  })}
-                >
-                  <Moon size={16} color={brand.pregnancy} strokeWidth={2} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13 }}>
-                      {childName ? `${childName} is still sleeping` : 'Still sleeping'}
-                    </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>
-                      Bedtime {sp.routineName ? `· ${sp.routineName}` : ''} at {fmtTime(sp.startTime)} · tap to log wake up
-                    </Text>
-                  </View>
-                  <Sun size={16} color={brand.accent} strokeWidth={2} />
-                </Pressable>
-              )
-            })()}
-
-            {/* Time grid — full 24h, flex height */}
-            <ScrollView ref={dayScrollRef} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-              <View style={{ flexDirection: 'row', height: (DAY_VIEW_END - DAY_VIEW_START) * dayZoomH + dayZoomH }}>
-                {/* Time labels column */}
-                <View style={{ width: 52 }}>
-                  {Array.from({ length: DAY_VIEW_END - DAY_VIEW_START + 1 }, (_, i) => (
-                    <View key={i} style={{ height: dayZoomH, paddingTop: 5, alignItems: 'flex-end', paddingRight: 8 }}>
-                      <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600' }}>
-                        {fmtHourLabel(DAY_VIEW_START + i)}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-
-                {/* Events canvas */}
-                <View style={{ flex: 1, position: 'relative', height: (DAY_VIEW_END - DAY_VIEW_START) * dayZoomH }}>
-                  {/* Hour grid lines */}
-                  {Array.from({ length: DAY_VIEW_END - DAY_VIEW_START }, (_, i) => (
-                    <View key={`h-${i}`} style={{ position: 'absolute', top: i * dayZoomH, left: 0, right: 8, height: 1, backgroundColor: colors.border }} />
-                  ))}
-                  {/* Half-hour lines */}
-                  {Array.from({ length: DAY_VIEW_END - DAY_VIEW_START }, (_, i) => (
-                    <View key={`hh-${i}`} style={{ position: 'absolute', top: i * dayZoomH + dayZoomH / 2, left: 0, right: 8, height: 0.5, backgroundColor: colors.border + '50' }} />
-                  ))}
-
-                  {/* Current time indicator */}
-                  {selectedDate === todayStr && (() => {
-                    const now = new Date()
-                    const nowH = now.getHours() + now.getMinutes() / 60
-                    const y = (nowH - DAY_VIEW_START) * dayZoomH
-                    return (
-                      <View style={{ position: 'absolute', top: y, left: 0, right: 8, flexDirection: 'row', alignItems: 'center', zIndex: 20 }} pointerEvents="none">
-                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#FF4444', marginLeft: -2 }} />
-                        <View style={{ flex: 1, height: 2, backgroundColor: '#FF4444' }} />
-                      </View>
-                    )
-                  })()}
-
-                  {/* Event blocks */}
-                  {(() => {
-                    type DvEvent = {
-                      id: string; title: string; hours: number; durationHours: number
-                      color: string; childId: string; isPending: boolean; isSkipped: boolean; isLogged: boolean
-                      routine?: ChildRoutine; log?: ChildLog
-                    }
-                    const events: DvEvent[] = []
-
-                    // Build a set of normalized skipped signatures so pending blocks for
-                    // duplicate routines never appear alongside their skipped counterpart.
-                    const skippedSigsDv = new Set(
-                      skippedDayRoutines.map((r) => routineSig(r))
-                    )
-                    // Track seen pending sigs to dedup duplicate pending routines on the timeline
-                    const seenPendingSigs = new Set<string>()
-                    for (const r of pendingRoutines) {
-                      if (!r.time) continue
-                      const sig = routineSig(r)
-                      if (skippedSigsDv.has(sig)) continue
-                      if (seenPendingSigs.has(sig)) continue
-                      seenPendingSigs.add(sig)
-                      const hours = timeStrToHours(r.time)
-                      if (hours < DAY_VIEW_START - 0.25 || hours > DAY_VIEW_END) continue
-                      const rMeta = LOG_META[r.type] ?? { color: colors.textMuted }
-                      events.push({ id: `p-${r.id}`, title: r.name, hours, durationHours: 0.75, color: rMeta.color, childId: r.child_id, isPending: true, isSkipped: false, isLogged: false, routine: r })
-                    }
-                    const seenSkipSigs = new Set<string>()
-                    for (const r of skippedDayRoutines) {
-                      if (!r.time) continue
-                      const sig = routineSig(r)
-                      if (seenSkipSigs.has(sig)) continue
-                      seenSkipSigs.add(sig)
-                      const hours = timeStrToHours(r.time)
-                      if (hours < DAY_VIEW_START - 0.25 || hours > DAY_VIEW_END) continue
-                      events.push({ id: `s-${r.id}`, title: r.name, hours, durationHours: 0.75, color: '#888888', childId: r.child_id, isPending: false, isSkipped: true, isLogged: false, routine: r })
-                    }
-                    for (const log of selectedDayLogs.filter((l) => l.type !== 'skipped')) {
-                      const hours = activityTimeHours(log)
-                      if (hours < DAY_VIEW_START - 0.25 || hours > DAY_VIEW_END) continue
-                      const meta = LOG_META[log.type] ?? { label: log.type, color: colors.textMuted }
-                      events.push({ id: `l-${log.id}`, title: logTitle(log), hours, durationHours: 0.75, color: meta.color, childId: log.child_id, isPending: false, isSkipped: false, isLogged: true, log })
-                    }
-
-                    if (events.length === 0) {
-                      return (
-                        <View style={{ position: 'absolute', top: (8 - DAY_VIEW_START) * dayZoomH, left: 0, right: 8, alignItems: 'center' }}>
-                          <Text style={{ color: colors.textMuted, fontSize: 12 }}>No activities — tap + to add</Text>
-                        </View>
-                      )
-                    }
-
-                    // Greedy column assignment
-                    const sorted = [...events].sort((a, b) => a.hours - b.hours)
-                    const colEndTimes: number[] = []
-                    const withCol = sorted.map((ev) => {
-                      const evEnd = ev.hours + ev.durationHours
-                      let col = colEndTimes.findIndex((t) => t <= ev.hours + 0.05)
-                      if (col === -1) { col = colEndTimes.length; colEndTimes.push(evEnd) }
-                      else colEndTimes[col] = evEnd
-                      return { ...ev, col }
-                    })
-                    // Determine max concurrent columns per event
-                    const withTotalCols = withCol.map((ev) => {
-                      const evEnd = ev.hours + ev.durationHours
-                      const concurrent = withCol.filter((other) => {
-                        const otherEnd = other.hours + other.durationHours
-                        return other.hours < evEnd - 0.05 && otherEnd > ev.hours + 0.05
-                      })
-                      return { ...ev, totalCols: concurrent.length > 0 ? Math.max(...concurrent.map((c) => c.col)) + 1 : 1 }
-                    })
-
-                    return withTotalCols.map((ev) => {
-                      const clampedH = Math.max(DAY_VIEW_START, ev.hours)
-                      const y = (clampedH - DAY_VIEW_START) * dayZoomH
-                      const blockH = Math.max(dayZoomH > 50 ? 44 : 28, ev.durationHours * dayZoomH - 4)
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      const leftPct = `${(ev.col / ev.totalCols) * 100}%` as any
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      const widthPct = `${(1 / ev.totalCols) * 100 - 1}%` as any
-                      const childName = children.find((c) => c.id === ev.childId)?.name
-
-                      return (
-                        <Pressable
-                          key={ev.id}
-                          onPress={() => {
-                            if (ev.isPending && ev.routine) {
-                              setRoutinePrefill({ routineId: ev.routine.id, childId: ev.routine.child_id, time: ev.routine.time ?? undefined, value: ev.routine.value ?? undefined, name: ev.routine.name })
-                              setSheetType((ROUTINE_SHEET_MAP[ev.routine.type] ?? 'feeding') as LogType)
-                            } else if (ev.isLogged && ev.log) {
-                              setSelectedLog(ev.log); setEditing(false)
-                            }
-                          }}
-                          onLongPress={() => ev.routine && handleRoutineOptions(ev.routine)}
-                          delayLongPress={400}
-                          style={({ pressed }) => ({
-                            position: 'absolute' as const,
-                            top: y + 2,
-                            height: blockH,
-                            left: leftPct,
-                            width: widthPct,
-                            backgroundColor: ev.isSkipped ? '#88888812' : ev.color + (ev.isLogged ? '28' : '18'),
-                            borderLeftWidth: 3,
-                            borderLeftColor: ev.isSkipped ? '#888888' : ev.color,
-                            borderRadius: 6,
-                            paddingVertical: 5,
-                            paddingLeft: 7,
-                            paddingRight: 4,
-                            zIndex: 5,
-                            opacity: pressed ? 0.7 : (ev.isSkipped ? 0.55 : 1),
-                          })}
-                        >
-                          <Text style={{ color: ev.isSkipped ? '#888888' : ev.color, fontSize: dayZoomH < 50 ? 9 : 11, fontWeight: '700', lineHeight: dayZoomH < 50 ? 11 : 14 }} numberOfLines={1}>
-                            {ev.title}
-                          </Text>
-                          {dayZoomH >= 40 && (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1, gap: 3 }}>
-                              <Text style={{ color: colors.textMuted, fontSize: 9 }} numberOfLines={1}>
-                                {fmtTime(hoursToHHMM(ev.hours))}
-                              </Text>
-                              {ev.isLogged
-                                ? <CheckCircle2 size={9} color={brand.success} strokeWidth={2.5} />
-                                : ev.isPending
-                                  ? <AlertCircle size={9} color={brand.accent} strokeWidth={2.5} />
-                                  : <MinusCircle size={9} color="#888888" strokeWidth={2.5} />}
-                            </View>
-                          )}
-                          {dayZoomH >= 56 && selectedChildId === 'all' && childName && ev.totalCols < 3 && (
-                            <View style={{ marginTop: 3, alignSelf: 'flex-start', backgroundColor: ev.color + '30', borderRadius: 3, paddingHorizontal: 4, paddingVertical: 1 }}>
-                              <Text style={{ color: ev.color, fontSize: 8, fontWeight: '700' }} numberOfLines={1}>{childName}</Text>
-                            </View>
-                          )}
-                        </Pressable>
-                      )
-                    })
-                  })()}
-                </View>
-              </View>
-            </ScrollView>
-          </View>
+        ) : view === 'journey' ? (
+          renderJourney()
         ) : (
-          /* 5. List View */
-          <View style={styles.listWrap}>
-            {allLogsForList.length === 0 && !loading ? (
-              <View style={[styles.emptyList, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-                <Text style={[styles.emptyDayText, { color: colors.textMuted }]}>No activities this month</Text>
-              </View>
-            ) : selectedChildId === 'all' ? (
-              /* All Kids: grouped by child, collapsible */
-              (() => {
-                const groups = children.map((child, ci) => {
-                  const childLogs = allLogsForList.filter((l) => l.child_id === child.id)
-                  return { child, ci, logs: childLogs }
-                }).filter((g) => g.logs.length > 0)
-                return groups.map(({ child, ci, logs }) => {
-                  const color = childColor(ci)
-                  const collapsed = !expandedChildren.has(child.id)
-                  return (
-                    <View key={child.id}>
-                      {/* Child section header */}
-                      <Pressable
-                        onPress={() => setExpandedChildren((prev) => {
-                          const next = new Set(prev)
-                          if (next.has(child.id)) next.delete(child.id); else next.add(child.id)
-                          return next
-                        })}
-                        style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 4, gap: 8 }}
-                      >
-                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', flex: 1 }}>{child.name}</Text>
-                        <Text style={{ color: colors.textMuted, fontSize: 12 }}>{logs.length}</Text>
-                        {collapsed
-                          ? <ChevronDown size={16} color={colors.textMuted} />
-                          : <ChevronUp size={16} color={colors.textMuted} />}
-                      </Pressable>
-                      {!collapsed && (() => {
-                        const ck = (type: string) => (type === 'food' ? 'feeding' : type)
-                        const dateGroups: Array<{ date: string; cats: Array<{ key: string; cLogs: ChildLog[] }> }> = []
-                        for (const log of logs) {
-                          let dg = dateGroups.find((d) => d.date === log.date)
-                          if (!dg) { dg = { date: log.date, cats: [] }; dateGroups.push(dg) }
-                          const k = ck(log.type)
-                          let cg = dg.cats.find((c) => c.key === k)
-                          if (!cg) { cg = { key: k, cLogs: [] }; dg.cats.push(cg) }
-                          cg.cLogs.push(log)
-                        }
-                        return dateGroups.map(({ date, cats }) => (
-                          <View key={date}>
-                            <Text style={[styles.listDateHeader, { color: colors.textSecondary }]}>
-                              {formatDayLabel(date, todayStr).toUpperCase()}
-                            </Text>
-                            {cats.map(({ key: catK, cLogs }) => {
-                              const catMeta = LOG_META[catK] ?? { label: catK, icon: Calendar, color: colors.textMuted }
-                              const CatIcon = catMeta.icon
-                              const collapseKey = `${child.id}:${date}:${catK}`
-                              const isCatCollapsed = !expandedListCats.has(collapseKey)
-                              return (
-                                <View key={catK} style={{ marginBottom: 6 }}>
-                                  <Pressable
-                                    onPress={() => {
-                                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-                                      setExpandedListCats((prev) => {
-                                        const next = new Set(prev)
-                                        if (next.has(collapseKey)) next.delete(collapseKey); else next.add(collapseKey)
-                                        return next
-                                      })
-                                    }}
-                                    style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, backgroundColor: catMeta.color + '12', borderRadius: radius.lg, gap: 8, marginBottom: isCatCollapsed ? 0 : 4 }}
-                                  >
-                                    <CatIcon size={14} color={catMeta.color} strokeWidth={2.5} />
-                                    <Text style={{ color: catMeta.color, fontSize: 13, fontWeight: '700', flex: 1 }}>{catMeta.label}</Text>
-                                    <Text style={{ color: catMeta.color + 'AA', fontSize: 11, fontWeight: '600' }}>{cLogs.length}</Text>
-                                    {isCatCollapsed ? <ChevronDown size={13} color={catMeta.color} /> : <ChevronUp size={13} color={catMeta.color} />}
-                                  </Pressable>
-                                  {!isCatCollapsed && cLogs.map((log) => {
-                                    const meta = LOG_META[log.type] ?? { label: log.type, icon: Calendar, color: colors.textMuted }
-                                    const Icon = meta.icon
-                                    const loggerName = log.logged_by ? profileNames[log.logged_by] : undefined
-                                    return (
-                                      <Pressable
-                                        key={log.id}
-                                        onPress={() => { setSelectedLog(log); setEditing(false) }}
-                                        onLongPress={() => setUnlogTarget(log)}
-                                        delayLongPress={400}
-                                        style={({ pressed }) => [
-                                          styles.listItem,
-                                          { backgroundColor: colors.surface, borderRadius: radius.xl },
-                                          pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
-                                        ]}
-                                      >
-                                        <View style={[styles.listIcon, { backgroundColor: meta.color + '15' }]}>
-                                          <Icon size={18} color={meta.color} strokeWidth={2} />
-                                        </View>
-                                        <View style={styles.listContent}>
-                                          <Text style={[styles.listType, { color: colors.text }]}>{logTitle(log)}</Text>
-                                          {formatLogDisplay(log.type, log.value, log.notes) !== '' && (
-                                            <Text style={[styles.listDetail, { color: colors.textSecondary }]} numberOfLines={1}>
-                                              {formatLogDisplay(log.type, log.value, log.notes)}
-                                            </Text>
-                                          )}
-                                        </View>
-                                        <View style={styles.listMeta}>
-                                          <Text style={[styles.listTime, { color: colors.textMuted }]}>{activityTimeDisplay(log)}</Text>
-                                          {loggerName && <Text style={[styles.listChild, { color: colors.textMuted }]}>by {loggerName}</Text>}
-                                        </View>
-                                        <ChevronRightSmall size={14} color={colors.textMuted} style={{ marginLeft: 2 }} />
-                                      </Pressable>
-                                    )
-                                  })}
-                                </View>
-                              )
-                            })}
-                          </View>
-                        ))
-                      })()}
-                    </View>
-                  )
-                })
-              })()
-            ) : (
-              /* Single child: grouped by type within each date section */
-              (() => {
-                // Build date → catKey → logs[]
-                const catKey = (type: string) => (type === 'food' ? 'feeding' : type)
-                const dateGroups: Array<{ date: string; cats: Array<{ key: string; logs: ChildLog[] }> }> = []
-                for (const log of allLogsForList) {
-                  let dg = dateGroups.find((d) => d.date === log.date)
-                  if (!dg) { dg = { date: log.date, cats: [] }; dateGroups.push(dg) }
-                  const ck = catKey(log.type)
-                  let cg = dg.cats.find((c) => c.key === ck)
-                  if (!cg) { cg = { key: ck, logs: [] }; dg.cats.push(cg) }
-                  cg.logs.push(log)
-                }
-                return dateGroups.map(({ date, cats }) => (
-                  <View key={date}>
-                    <Text style={[styles.listDateHeader, { color: colors.textSecondary }]}>
-                      {formatDayLabel(date, todayStr).toUpperCase()}
-                    </Text>
-                    {cats.map(({ key: ck, logs: catLogs }) => {
-                      const catMeta = LOG_META[ck] ?? { label: ck, icon: Calendar, color: colors.textMuted }
-                      const CatIcon = catMeta.icon
-                      const collapseKey = `${date}:${ck}`
-                      const isCatCollapsed = !expandedListCats.has(collapseKey)
-                      return (
-                        <View key={ck} style={{ marginBottom: 6 }}>
-                          {/* Category header row */}
-                          <Pressable
-                            onPress={() => {
-                              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-                              setExpandedListCats((prev) => {
-                                const next = new Set(prev)
-                                if (next.has(collapseKey)) next.delete(collapseKey); else next.add(collapseKey)
-                                return next
-                              })
-                            }}
-                            style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, backgroundColor: catMeta.color + '12', borderRadius: radius.lg, gap: 8, marginBottom: isCatCollapsed ? 0 : 4 }}
-                          >
-                            <CatIcon size={14} color={catMeta.color} strokeWidth={2.5} />
-                            <Text style={{ color: catMeta.color, fontSize: 13, fontWeight: '700', flex: 1 }}>{catMeta.label}</Text>
-                            <Text style={{ color: catMeta.color + 'AA', fontSize: 11, fontWeight: '600' }}>{catLogs.length}</Text>
-                            {isCatCollapsed
-                              ? <ChevronDown size={13} color={catMeta.color} />
-                              : <ChevronUp size={13} color={catMeta.color} />}
-                          </Pressable>
-
-                          {!isCatCollapsed && catLogs.map((log) => {
-                            const meta = LOG_META[log.type] ?? { label: log.type, icon: Calendar, color: colors.textMuted }
-                            const Icon = meta.icon
-                            const loggerName = log.logged_by ? profileNames[log.logged_by] : undefined
-                            return (
-                              <Pressable
-                                key={log.id}
-                                onPress={() => { setSelectedLog(log); setEditing(false) }}
-                                onLongPress={() => setUnlogTarget(log)}
-                                delayLongPress={400}
-                                style={({ pressed }) => [
-                                  styles.listItem,
-                                  { backgroundColor: colors.surface, borderRadius: radius.xl },
-                                  pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
-                                ]}
-                              >
-                                <View style={[styles.listIcon, { backgroundColor: meta.color + '15' }]}>
-                                  <Icon size={18} color={meta.color} strokeWidth={2} />
-                                </View>
-                                <View style={styles.listContent}>
-                                  <Text style={[styles.listType, { color: colors.text }]}>{logTitle(log)}</Text>
-                                  {formatLogDisplay(log.type, log.value, log.notes) !== '' && (
-                                    <Text style={[styles.listDetail, { color: colors.textSecondary }]} numberOfLines={1}>
-                                      {formatLogDisplay(log.type, log.value, log.notes)}
-                                    </Text>
-                                  )}
-                                </View>
-                                <View style={styles.listMeta}>
-                                  <Text style={[styles.listTime, { color: colors.textMuted }]}>{activityTimeDisplay(log)}</Text>
-                                  {loggerName && (
-                                    <Text style={[styles.listChild, { color: colors.textMuted }]}>by {loggerName}</Text>
-                                  )}
-                                </View>
-                                <ChevronRightSmall size={14} color={colors.textMuted} style={{ marginLeft: 2 }} />
-                              </Pressable>
-                            )
-                          })}
-                        </View>
-                      )
-                    })}
-                  </View>
-                ))
-              })()
-            )}
-            {loading && (
-              <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 16 }} />
-            )}
-          </View>
+          renderVisits()
         )}
       </ScrollView>
 
@@ -2613,6 +2000,15 @@ export function KidsCalendar() {
 
       <LogSheet visible={sheetType === 'diaper'} title={editingLog ? 'Edit Diaper Log' : 'Log Diaper'} onClose={closeSheet}>
         <DiaperForm onSaved={handleSaved} initialDate={selectedDate} editLog={editingLog ?? undefined} />
+      </LogSheet>
+
+      <LogSheet visible={sheetType === 'exam'} title="Log Exam Result" onClose={closeSheet}>
+        <ExamForm
+          behavior="kids"
+          childId={selectedChildId !== 'all' ? selectedChildId : (activeChild?.id ?? children[0]?.id ?? null)}
+          date={selectedDate}
+          onSaved={handleSaved}
+        />
       </LogSheet>
 
       {/* ─── Routine Manager ────────────────────────────────────────── */}
@@ -3088,7 +2484,7 @@ export function KidsCalendar() {
                       return (
                         <>
                           <View style={{ backgroundColor: sleepColor + '15', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: sleepColor + '30' }}>
-                            <Emoji size={52}>🌙</Emoji>
+                            <EmojiSticker size={52}>🌙</EmojiSticker>
                             {durStr ? (
                               <Text style={{ color: sleepColor, fontSize: 56, fontWeight: '800', lineHeight: 64, letterSpacing: -2, marginTop: 6, fontFamily: 'Fraunces_600SemiBold' }}>{durStr}</Text>
                             ) : (
@@ -3171,7 +2567,7 @@ export function KidsCalendar() {
                       return (
                         <>
                           <View style={{ backgroundColor: diaperColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: diaperColor + '30' }}>
-                            <Emoji size={64}>{dt?.emoji ?? '🍼'}</Emoji>
+                            <EmojiSticker size={64}>{dt?.emoji ?? '🍼'}</EmojiSticker>
                             <Text style={{ color: diaperColor, fontSize: 24, fontWeight: '800', marginTop: 8, fontFamily: 'Fraunces_600SemiBold' }}>{dt?.label ?? 'Diaper'}</Text>
                             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Diaper change</Text>
                           </View>
@@ -3386,7 +2782,7 @@ export function KidsCalendar() {
             <View style={{ backgroundColor: colors.surface, borderRadius: 32, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: brand.accent + '40' }}>
               {/* Star burst */}
               <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: brand.accent + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 2, borderColor: brand.accent + '50' }}>
-                <Emoji size={40}>🌟</Emoji>
+                <EmojiSticker size={40}>🌟</EmojiSticker>
               </View>
 
               <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8, textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' }}>
@@ -3440,7 +2836,7 @@ export function KidsCalendar() {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={{ color: '#1A1030', fontSize: 16, fontWeight: '800' }}>Awesome!</Text>
-                  <Emoji size={18}>🎉</Emoji>
+                  <EmojiSticker size={18}>🎉</EmojiSticker>
                 </View>
               </Pressable>
             </View>
@@ -3456,6 +2852,19 @@ export function KidsCalendar() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { paddingHorizontal: 16 },
+
+  // Timeline (matches pregnancy)
+  modeToggle: { flexDirection: 'row', padding: 4, borderRadius: 999, borderWidth: 1 },
+  modeToggleBtn: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 999 },
+  modeToggleLabel: { fontSize: 13, fontWeight: '700' },
+  timelineHeader: { marginBottom: 10, paddingHorizontal: 4 },
+  timelineRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  timelineGutter: { width: 52, alignItems: 'flex-end' },
+  timelineTime: { fontSize: 11, fontWeight: '600' },
+  emptyCard: { padding: 24, borderRadius: 20, borderWidth: 1, alignItems: 'center' },
+  addVisitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: 999, marginTop: 8 },
+  addVisitBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+
 
   // Child selector
   childSelectorRow: { gap: 8, marginBottom: 12, paddingVertical: 4 },
@@ -3557,6 +2966,9 @@ const styles = StyleSheet.create({
   routineSaveBtn: { alignItems: 'center', justifyContent: 'center', paddingVertical: 14 },
   routineSaveBtnText: { fontSize: 14, fontWeight: '700', color: '#FFF' },
   routineManagerItem: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, marginBottom: 8 },
+  routineIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  routineName: { fontSize: 14, fontWeight: '700' },
+  routineTime: { fontSize: 12, fontWeight: '500' },
 
   // FAB + Sheet
   fabBtn: { position: 'absolute', right: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 6, zIndex: 10 },

@@ -109,6 +109,33 @@ Rules:
 }`
   }
 
+  if (scanType === 'exam') {
+    return `You are a precise OCR assistant for grandma.app. Extract medical lab / exam / test result information from this image of a medical document.
+
+Rules:
+- Read every piece of text visible (headers, table rows, footers)
+- Return ONLY a valid JSON object — no markdown, no explanation, no backticks
+- Use null for any field you cannot find or read confidently
+- "title" should be the best human name for the exam (e.g. "Complete Blood Count", "Glucose Tolerance Test", "Thyroid Panel")
+- "result" should be a concise summary of key findings (e.g. "Normal", "120/80 mmHg", "HbA1c 5.4%")
+- "examDate" should be ISO format YYYY-MM-DD if visible; otherwise null
+- "provider" is the doctor, clinic, or lab that ordered/ran the test
+- "referenceRange" is the normal/healthy range if printed on the document
+- "flagged" is an array of abnormal or out-of-range findings (each a short phrase)
+- "notes" is a 1–2 sentence plain-language summary a parent can understand; explain what this exam measures without diagnosing
+- NEVER invent values. If unsure, use null.
+- The JSON schema MUST be exactly:
+{
+  "title": string | null,
+  "result": string | null,
+  "examDate": string | null,
+  "provider": string | null,
+  "referenceRange": string | null,
+  "flagged": string[],
+  "notes": string | null
+}`
+  }
+
   const childInfo = child
     ? `Child: ${child.name}, ${child.ageMonths} months old, ${child.weightKg}kg.`
       + (child.allergies?.length ? ` Allergies: ${child.allergies.join(', ')}.` : '')
@@ -136,6 +163,7 @@ function getScanQuestion(scanType: string): string {
     food: 'What food product is this? Are any ingredients unsafe or allergenic for my child?',
     nutrition: 'What are the nutritional facts? Is this appropriate for my child\'s age?',
     insurance_card: 'Extract all insurance information from this card. Return ONLY the JSON object, nothing else.',
+    exam: 'Extract the medical exam / lab result information from this document. Return ONLY the JSON object, nothing else.',
     general: 'What is this product? Tell me anything relevant for my child.',
   }
   return questions[scanType] ?? questions.general
