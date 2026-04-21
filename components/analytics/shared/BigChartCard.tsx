@@ -25,9 +25,11 @@ interface Props {
   labelAlign?: 'left' | 'center'
   /** Optional tap handler. When set, card becomes pressable. */
   onPress?: () => void
+  /** When true, skip rendering the value+unit row even if value is provided. */
+  hideValue?: boolean
 }
 
-export function BigChartCard({ label, value, unit, children, blobColor, labelAlign = 'left', onPress }: Props) {
+export function BigChartCard({ label, value, unit, children, blobColor, labelAlign = 'left', onPress, hideValue }: Props) {
   const { colors, font, stickers } = useTheme()
   const blobFill = blobColor ?? stickers.yellow
   const Container: any = onPress ? Pressable : View
@@ -59,7 +61,7 @@ export function BigChartCard({ label, value, unit, children, blobColor, labelAli
         {label}
       </Text>
 
-      {value !== undefined && (
+      {value !== undefined && !hideValue && (
         <View style={styles.valueRow}>
           <Text
             style={[

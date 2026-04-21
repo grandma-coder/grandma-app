@@ -73,10 +73,11 @@ export function CycleAnalytics() {
 
         <Pressable onPress={() => setDetailType('cycleLength')}>
           <BigChartCard
-            label={`CYCLE LENGTH (LAST ${cycleValues.length || 0})`}
+            label={cycleValues.length > 0 ? `CYCLE LENGTH (LAST ${cycleValues.length})` : 'CYCLE LENGTH'}
             value={String(avgLabel)}
             unit="days avg"
             blobColor={stickers.pinkSoft}
+            hideValue={cycleValues.length === 0}
           >
             <MiniBarChart
               data={cycleValues}
