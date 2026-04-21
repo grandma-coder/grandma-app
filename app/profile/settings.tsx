@@ -7,6 +7,8 @@ import { useState } from 'react'
 import {
   View, Text, Pressable, ScrollView, Switch, Alert, Modal, FlatList, StyleSheet,
 } from 'react-native'
+import { useQueryClient } from '@tanstack/react-query'
+import { seedCycleData } from '../../lib/devSeed'
 import { Ionicons } from '@expo/vector-icons'
 import { Moon, Sun, Thermometer, Scale, Trash2, Globe, Check, ChevronRight } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -24,6 +26,7 @@ export default function SettingsScreen() {
   const theme = useThemeStore((s) => s.theme)
   const { t, language } = useTranslation()
   const setLanguage = useLanguageStore((s) => s.setLanguage)
+  const queryClient = useQueryClient()
 
   const paper = isDark ? colors.surface : '#FFFEF8'
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
@@ -45,6 +48,29 @@ export default function SettingsScreen() {
   function handleSelectLanguage(lang: LanguageOption) {
     setLanguage(lang.code)
     setLangModalVisible(false)
+  }
+
+  async function handleSeed() {
+    Alert.alert(
+      'Seed cycle data?',
+      'This replaces your cycle history with 6 demo cycles.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Seed',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { inserted } = await seedCycleData()
+              await queryClient.invalidateQueries({ queryKey: ['cycleLogs'] })
+              Alert.alert('Done', `Inserted ${inserted} cycle logs.`)
+            } catch (e: unknown) {
+              Alert.alert('Error', e instanceof Error ? e.message : String(e))
+            }
+          },
+        },
+      ]
+    )
   }
 
   async function handleDeleteAccount() {
@@ -166,6 +192,25 @@ export default function SettingsScreen() {
           <Trash2 size={18} color={dangerText} strokeWidth={2} />
           <Text style={[styles.dangerText, { color: dangerText, fontFamily: font.bodySemiBold }]}>{t('settings_deleteAccount')}</Text>
         </Pressable>
+
+        {/* Developer (dev builds only) */}
+        {__DEV__ && (
+          <>
+            <View style={{ marginTop: 22 }}><MonoCaps color={colors.textMuted}>Developer</MonoCaps></View>
+            <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <Pressable
+                onPress={handleSeed}
+                style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
+              >
+                <View style={styles.rowLeft}>
+                  <Text style={{ fontSize: 16 }}>🌱</Text>
+                  <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodyMedium }]}>Seed cycle data</Text>
+                </View>
+                <ChevronRight size={16} color={colors.textMuted} />
+              </Pressable>
+            </View>
+          </>
+        )}
       </ScrollView>
 
       {/* Language Picker Modal */}
