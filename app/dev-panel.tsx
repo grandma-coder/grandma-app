@@ -16,6 +16,7 @@ import { supabase } from '../lib/supabase'
 import { seedCycleData, seedKidsData, seedPregnancyData, wipeAllDemoData } from '../lib/devSeed'
 import { useModeStore } from '../store/useModeStore'
 import { useJourneyStore } from '../store/useJourneyStore'
+import { useDevStore } from '../store/useDevStore'
 import { MonoCaps, Body } from '../components/ui/Typography'
 import type { JourneyMode } from '../types'
 
@@ -63,6 +64,7 @@ export default function DevPanel() {
   const mode = useModeStore((s) => s.mode)
   const setMode = useModeStore((s) => s.setMode)
   const clearJourney = useJourneyStore((s) => s.clearAll)
+  const enterDevMode = useDevStore((s) => s.enter)
 
   const [userInfo, setUserInfo] = useState<{ email: string; id: string } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -232,7 +234,7 @@ export default function DevPanel() {
             <ActionRow
               key={route}
               label={label}
-              onPress={() => router.push(route as any)}
+              onPress={() => { enterDevMode(); router.push(route as any) }}
               busy={busy}
             />
           ))}
@@ -249,7 +251,7 @@ export default function DevPanel() {
             <ActionRow
               key={route}
               label={label}
-              onPress={() => router.push(route as any)}
+              onPress={() => { enterDevMode(); router.push(route as any) }}
               busy={busy}
             />
           ))}
@@ -262,7 +264,7 @@ export default function DevPanel() {
             <ActionRow
               key={route}
               label={label}
-              onPress={() => router.push(route as any)}
+              onPress={() => { enterDevMode(); router.push(route as any) }}
               busy={busy}
             />
           ))}
