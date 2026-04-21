@@ -302,6 +302,92 @@ export async function seedPregnancyData(): Promise<{ inserted: number }> {
   return { inserted: rows.length }
 }
 
+// ─── Repair behaviors from data ───────────────────────────────────────────
+
+import { useBehaviorStore } from '../store/useBehaviorStore'
+
+/**
+ * Infers which behaviors the user should be enrolled in based on actual data:
+ *  - children exist → kids
+ *  - pregnancy_logs exist → pregnancy
+ *  - cycle_logs exist → pre-pregnancy
+ *
+ * Adds any missing enrollments (doesn't remove existing ones). Writes to both
+ * the behaviors table and the useBehaviorStore.
+ *
+ * Note: the behaviors table has no unique constraint on (user_id, type), so we
+ * check for an existing row before inserting to avoid duplicates.
+ */
+export async function repairBehaviorsFromData(): Promise<{ enrolled: string[] }> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError) throw new Error(`Session error: ${sessionError.message ?? sessionError}`)
+  const session = sessionData.session
+  if (!session) throw new Error('Not authenticated')
+  const userId = session.user.id
+
+  const inferred: Array<'pre-pregnancy' | 'pregnancy' | 'kids'> = []
+
+  // Kids — does the user own any children row?
+  const { count: kidsCount, error: kidsErr } = await supabase
+    .from('children')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+  if (kidsErr) throw new Error(`children query failed: ${kidsErr.message ?? kidsErr}`)
+  if ((kidsCount ?? 0) > 0) inferred.push('kids')
+
+  // Pregnancy
+  const { count: pregCount, error: pregErr } = await supabase
+    .from('pregnancy_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+  if (pregErr) throw new Error(`pregnancy_logs query failed: ${pregErr.message ?? pregErr}`)
+  if ((pregCount ?? 0) > 0) inferred.push('pregnancy')
+
+  // Pre-pregnancy
+  const { count: cycleCount, error: cycleErr } = await supabase
+    .from('cycle_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+  if (cycleErr) throw new Error(`cycle_logs query failed: ${cycleErr.message ?? cycleErr}`)
+  if ((cycleCount ?? 0) > 0) inferred.push('pre-pregnancy')
+
+  if (inferred.length === 0) return { enrolled: [] }
+
+  // Map store names → DB type values
+  const DB_MAP: Record<'pre-pregnancy' | 'pregnancy' | 'kids', string> = {
+    'pre-pregnancy': 'cycle',
+    'pregnancy': 'pregnancy',
+    'kids': 'kids',
+  }
+
+  // Fetch existing behavior rows to avoid duplicate inserts (no unique constraint on user_id,type)
+  const { data: existingRows } = await supabase
+    .from('behaviors')
+    .select('type')
+    .eq('user_id', userId)
+  const existingTypes = new Set((existingRows ?? []).map((r: { type: string }) => r.type))
+
+  for (const b of inferred) {
+    const dbType = DB_MAP[b]
+    if (existingTypes.has(dbType)) continue
+    const { error: insErr } = await supabase
+      .from('behaviors')
+      .insert({ user_id: userId, type: dbType, active: true })
+    // Don't fail the whole repair if one row fails.
+    if (insErr) console.warn('[repairBehaviors] insert failed', dbType, insErr)
+  }
+
+  // Update local store — enroll every inferred behavior that isn't already enrolled.
+  const store = useBehaviorStore.getState()
+  for (const b of inferred) {
+    if (!store.enrolledBehaviors.includes(b)) {
+      store.enroll(b)
+    }
+  }
+
+  return { enrolled: inferred }
+}
+
 // ─── Wipe all dev data ────────────────────────────────────────────────────
 
 export async function wipeAllDemoData(): Promise<void> {
