@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { router } from 'expo-router'
 import { useTheme } from '../../constants/theme'
 import { Heart as HeartSticker, Squishy, Star as StarSticker } from '../ui/Stickers'
 import { AvatarView } from '../ui/AvatarPicker'
@@ -42,6 +44,20 @@ export function ProfileHero({
 }: ProfileHeroProps) {
   const { colors, stickers, font } = useTheme()
 
+  const tapCount = useRef(0)
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleNameTap() {
+    tapCount.current += 1
+    if (tapTimer.current) clearTimeout(tapTimer.current)
+    tapTimer.current = setTimeout(() => { tapCount.current = 0 }, 2000)
+    if (tapCount.current >= 5) {
+      tapCount.current = 0
+      if (tapTimer.current) clearTimeout(tapTimer.current)
+      router.push('/dev-panel' as Parameters<typeof router.push>[0])
+    }
+  }
+
   const avatarNode = (
     <View style={{ position: 'relative' }}>
       <AvatarView
@@ -79,26 +95,28 @@ export function ProfileHero({
         avatarNode
       )}
 
-      <View style={styles.nameRow}>
-        <Text
-          style={[styles.firstName, { fontFamily: font.display, color: colors.text }]}
-          allowFontScaling={false}
-        >
-          {firstName}
-        </Text>
-        {lastName ? (
+      <Pressable onPress={handleNameTap} hitSlop={6}>
+        <View style={styles.nameRow}>
           <Text
-            style={[
-              styles.lastName,
-              { fontFamily: font.italic, color: colors.text },
-            ]}
+            style={[styles.firstName, { fontFamily: font.display, color: colors.text }]}
             allowFontScaling={false}
           >
-            {' '}
-            {lastName}
+            {firstName}
           </Text>
-        ) : null}
-      </View>
+          {lastName ? (
+            <Text
+              style={[
+                styles.lastName,
+                { fontFamily: font.italic, color: colors.text },
+              ]}
+              allowFontScaling={false}
+            >
+              {' '}
+              {lastName}
+            </Text>
+          ) : null}
+        </View>
+      </Pressable>
 
       {subtitle ? (
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
