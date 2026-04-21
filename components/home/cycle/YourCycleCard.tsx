@@ -39,7 +39,7 @@ export function YourCycleCard({
   const cardMuted = 'rgba(255, 254, 248, 0.65)'
 
   // Semicircle progress (bottom half of circle)
-  const progress = Math.min(1, Math.max(0, (cycleDay - 1) / Math.max(1, cycleLength)))
+  const progress = Math.min(1, Math.max(0, cycleDay / Math.max(1, cycleLength)))
   // Arc from 180° (left) through 0° (right) — bottom half
   // Use stroke-dasharray approach on a full circle, then rotate to expose bottom half
   const circumference = 2 * Math.PI * RING_RADIUS
