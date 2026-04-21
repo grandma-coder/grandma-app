@@ -19,6 +19,43 @@ import { useJourneyStore } from '../store/useJourneyStore'
 import { MonoCaps, Body } from '../components/ui/Typography'
 import type { JourneyMode } from '../types'
 
+// ─── Route lists ──────────────────────────────────────────────────────────
+
+const AUTH_FLOWS: Array<[string, string]> = [
+  ['Welcome', '/(auth)/welcome'],
+  ['Sign in', '/(auth)/sign-in'],
+  ['Sign up', '/(auth)/sign-up'],
+]
+
+const ONBOARDING_FLOWS: Array<[string, string]> = [
+  ['Journey picker', '/onboarding/journey'],
+  ['Pre-pregnancy onboarding', '/onboarding/cycle'],
+  ['Pregnancy onboarding', '/onboarding/pregnancy'],
+  ['Kids onboarding', '/onboarding/kids'],
+  ['Activities onboarding', '/onboarding/activities'],
+  ['Parent name', '/onboarding/parent-name'],
+  ['Due date', '/onboarding/due-date'],
+  ['Baby name', '/onboarding/baby-name'],
+  ['Child profile', '/onboarding/child-profile'],
+  ['Transition', '/onboarding/transition'],
+]
+
+const SCREENS: Array<[string, string]> = [
+  ['Paywall', '/paywall'],
+  ['Daily rewards', '/daily-rewards'],
+  ['Leaderboard', '/leaderboard'],
+  ['Notifications', '/notifications'],
+  ['Grandma talk', '/grandma-talk'],
+  ['Insights', '/insights'],
+  ['Scan', '/scan'],
+  ['Birth plan', '/birth-plan'],
+  ['Airtag setup', '/airtag-setup'],
+  ['Invite caregiver', '/invite-caregiver'],
+  ['Manage caregivers', '/manage-caregivers'],
+  ['Connections', '/connections'],
+  ['Child picker', '/child-picker'],
+]
+
 export default function DevPanel() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
@@ -189,14 +226,46 @@ export default function DevPanel() {
           <ActionRow label="Wipe all demo data"  sub="Destructive"               onPress={handleWipeAll}       busy={busy} destructive />
         </Section>
 
-        {/* Onboarding */}
-        <Section title="ONBOARDING">
+        {/* Auth flows */}
+        <Section title="AUTH FLOWS">
+          {AUTH_FLOWS.map(([label, route]) => (
+            <ActionRow
+              key={route}
+              label={label}
+              onPress={() => router.push(route as any)}
+              busy={busy}
+            />
+          ))}
+        </Section>
+
+        {/* Sign out */}
+        <Section title="SIGN OUT">
+          <ActionRow label="Sign out" sub="Clears session + cache" onPress={handleSignOut} busy={busy} destructive />
+        </Section>
+
+        {/* Onboarding flows */}
+        <Section title="ONBOARDING FLOWS">
+          {ONBOARDING_FLOWS.map(([label, route]) => (
+            <ActionRow
+              key={route}
+              label={label}
+              onPress={() => router.push(route as any)}
+              busy={busy}
+            />
+          ))}
           <ActionRow label="Reset onboarding state" sub="Clears Zustand + AsyncStorage" onPress={handleResetOnboarding} busy={busy} />
         </Section>
 
-        {/* Auth */}
-        <Section title="AUTH">
-          <ActionRow label="Sign out" sub="Clears session + cache" onPress={handleSignOut} busy={busy} destructive />
+        {/* Screens */}
+        <Section title="SCREENS">
+          {SCREENS.map(([label, route]) => (
+            <ActionRow
+              key={route}
+              label={label}
+              onPress={() => router.push(route as any)}
+              busy={busy}
+            />
+          ))}
         </Section>
 
         {/* Cache */}
