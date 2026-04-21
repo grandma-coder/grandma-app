@@ -8,11 +8,14 @@
  */
 
 import { useState, useMemo } from 'react'
-import { View, Text, Pressable, ScrollView, StyleSheet, Modal } from 'react-native'
+import { View, Text, Pressable, ScrollView, StyleSheet, Modal, Alert } from 'react-native'
+import { useQueryClient } from '@tanstack/react-query'
 import { X, Check, Circle as CircleIcon } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { getCycleInfo, toDateStr, type CyclePhase } from '../../lib/cycleLogic'
+import { useCycleHistory } from '../../lib/cycleAnalytics'
+import { seedCycleData } from '../../lib/devSeed'
 import { LogSheet } from './LogSheet'
 import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
@@ -119,6 +122,10 @@ export function CycleCalendar() {
   const [sheetType, setSheetType] = useState<LogType | null>(null)
   const [logSheetOpen, setLogSheetOpen] = useState(false)
 
+  const queryClient = useQueryClient()
+  const { data: history } = useCycleHistory()
+  const showSeedButton = __DEV__ && (history?.cycles.length ?? 0) === 0
+
   // Cycle config (mock — will come from Supabase)
   const cycleConfig = useMemo(() => {
     const d = new Date()
@@ -131,6 +138,25 @@ export function CycleCalendar() {
 
   function handleSaved() {
     setSheetType(null)
+  }
+
+  async function handleSeed() {
+    try {
+      const { inserted } = await seedCycleData()
+      await queryClient.invalidateQueries({ queryKey: ['cycleLogs'] })
+      Alert.alert('Done', `Inserted ${inserted} cycle logs.`)
+    } catch (e: unknown) {
+      console.error('[seedCycleData] failed', e)
+      const message =
+        e instanceof Error
+          ? e.message
+          : typeof e === 'object' && e !== null && 'message' in e
+          ? String((e as { message: unknown }).message)
+          : typeof e === 'string'
+          ? e
+          : JSON.stringify(e)
+      Alert.alert('Seed failed', message || 'Unknown error')
+    }
   }
 
   return (
@@ -190,6 +216,30 @@ export function CycleCalendar() {
                 {selectedInfo.phaseDescription}
               </Body>
             </PaperCard>
+
+            {showSeedButton && (
+              <PaperCard style={{ marginBottom: 14 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <Body size={13} color={isDark ? colors.text : '#141313'} style={{ flex: 1, fontWeight: '600' }}>
+                    No cycle history yet
+                  </Body>
+                  <Pressable
+                    onPress={handleSeed}
+                    style={({ pressed }) => [
+                      {
+                        backgroundColor: colors.primary,
+                        paddingHorizontal: 14,
+                        paddingVertical: 8,
+                        borderRadius: 999,
+                        opacity: pressed ? 0.85 : 1,
+                      },
+                    ]}
+                  >
+                    <Body size={12} color="#FFFFFF" style={{ fontWeight: '700' }}>Seed demo data</Body>
+                  </Pressable>
+                </View>
+              </PaperCard>
+            )}
 
             <SectionHeader
               title={`Today · ${formatDayShort(selectedDate)}`}
