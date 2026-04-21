@@ -10,7 +10,10 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.grandmacoder.grandmaapp",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSPhotoLibraryAddUsageDescription": "Save your daily affirmation as an image to share anywhere."
+      }
     },
     "android": {
       "adaptiveIcon": {

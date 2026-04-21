@@ -12,6 +12,7 @@ import { useTheme } from '../../../constants/theme'
 import { MonoCaps, Body } from '../../ui/Typography'
 import { Heart as HeartSticker } from '../../stickers/BrandStickers'
 import { supabase } from '../../../lib/supabase'
+import { AffirmationShareModal } from './AffirmationShareModal'
 
 // ─── Fetch daily affirmation from Supabase ────────────────────────────────────
 
@@ -133,6 +134,7 @@ export function AffirmationRevealCard() {
   const [revealed, setRevealed] = useState(false)
   const [showParticles, setShowParticles] = useState(false)
   const [particles, setParticles] = useState<{ id: number; color: string; x: number; y: number; delay: number }[]>([])
+  const [shareOpen, setShareOpen] = useState(false)
 
   const orbScale = useRef(new Animated.Value(1)).current
   const orbOpacity = useRef(new Animated.Value(1)).current
@@ -208,6 +210,7 @@ export function AffirmationRevealCard() {
   }
 
   return (
+    <>
     <View style={[styles.card, { backgroundColor: paperBg, borderColor: 'rgba(20,19,19,0.08)' }]}>
       {/* Floating heart sticker on the right */}
       <View style={styles.heartSticker} pointerEvents="none">
@@ -253,9 +256,26 @@ export function AffirmationRevealCard() {
           <Body size={11} color={inkMuted} style={{ marginTop: 10 }}>
             Come back tomorrow for a new affirmation
           </Body>
+          {text ? (
+            <Pressable
+              onPress={() => setShareOpen(true)}
+              style={({ pressed }) => [
+                styles.shareBtn,
+                { backgroundColor: lilacSoft, opacity: pressed ? 0.8 : 1 },
+              ]}
+            >
+              <Text style={[styles.shareBtnText, { color: inkText }]}>Share ↗</Text>
+            </Pressable>
+          ) : null}
         </Animated.View>
       )}
     </View>
+    <AffirmationShareModal
+      visible={shareOpen}
+      phrase={text ?? ''}
+      onClose={() => setShareOpen(false)}
+    />
+    </>
   )
 }
 
@@ -316,5 +336,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Fraunces_600SemiBold',
     lineHeight: 28,
     letterSpacing: -0.4,
+  },
+  shareBtn: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    marginTop: 14,
+  },
+  shareBtnText: {
+    fontSize: 13,
+    fontFamily: 'DMSans_600SemiBold',
   },
 })
