@@ -49,6 +49,7 @@ function EmojiSticker({ size = 20, children, style }: { size?: number; children:
 }
 import { MoodFace } from '../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
+import { BlockTower, type BlockTowerItem } from '../charts/GalleryCharts'
 import { useGoalsStore, getSuggestedGoals, getFeedingStage, getNutritionLabel, getAgeMonths, type MetricGoals, type FeedingStage } from '../../store/useGoalsStore'
 import { useBadgeStore } from '../../store/useBadgeStore'
 import { supabase } from '../../lib/supabase'
@@ -3232,6 +3233,19 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
 
             {/* Recent Vaccines */}
             <Text style={[s.modalSectionTitle, { color: colors.text }]}>Recent Vaccines</Text>
+            {/* Block tower visualization — gallery pattern 32 */}
+            {healthHistory.vaccines.length > 0 && (() => {
+              const towerColors = ['#F5B896', '#F5D652', '#F2B2C7', '#BDD48C', '#9DC3E8', '#C8B6E8']
+              const items: BlockTowerItem[] = healthHistory.vaccines.slice(0, 6).map((v, i) => ({
+                label: (v.value.split(/[,(]/)[0] || '').trim().slice(0, 10) || `#${i + 1}`,
+                color: towerColors[i % towerColors.length],
+              }))
+              return (
+                <View style={{ marginBottom: 10, marginTop: 2 }}>
+                  <BlockTower items={items} height={Math.max(80, items.length * 22 + 16)} />
+                </View>
+              )
+            })()}
             {healthHistory.vaccines.length > 0 ? healthHistory.vaccines.slice(0, 4).map((v, i) => (
               <View key={i} style={[s.modalTaskRow, { borderBottomColor: colors.border }]}>
                 <View style={[s.modalTaskCheck, { backgroundColor: brand.success, borderWidth: 0 }]}>

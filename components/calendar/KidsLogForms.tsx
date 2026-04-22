@@ -5,7 +5,7 @@
  * Persist to Supabase child_logs table.
  */
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, type ReactElement } from 'react'
 import {
   View,
   Text,
@@ -28,7 +28,6 @@ import * as ImageManipulator from 'expo-image-manipulator'
 import {
   Utensils,
   Moon,
-  Heart,
   Smile,
   Frown,
   Meh,
@@ -48,14 +47,72 @@ import {
   ScanLine,
   X,
 } from 'lucide-react-native'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, stickers as stickerPalette } from '../../constants/theme'
 import { MoodFace } from '../stickers/RewardStickers'
+import { Heart as HeartSticker, Moon as MoonSticker, Flower, Drop, Star } from '../stickers/BrandStickers'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodCalories'
 import type { CalorieMatch } from '../../lib/foodCalories'
 import { estimateFromText, estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
 import type { ChildWithRole } from '../../types'
+
+// ─── Kids-mode accent palette (cream-paper redesign) ─────────────────────
+// Log sheets are always "kids mode" — powder blue accent, ink text on cream.
+
+const ACCENT = brand.kids            // #8BB8E8 powder blue
+const ACCENT_SOFT = brand.kidsSoft   // #D4E3F3
+const INK = '#141313'
+
+// ─── FormHeaderSticker — decorative per-form accent shown under the title ─
+// Each log form gets its own hand-drawn sticker so the sheet reads as a
+// purpose-built page rather than a generic input.
+
+type FormKind = 'feeding' | 'sleep' | 'health' | 'mood' | 'memory' | 'activity' | 'diaper' | 'wakeup'
+
+function FormHeaderSticker({ kind }: { kind: FormKind }) {
+  // Sticker + pastel chip color per form
+  const map: Record<FormKind, { node: ReactElement; bg: string; label: string }> = {
+    feeding: { node: <Drop size={28} fill={stickerPalette.peach} />,  bg: stickerPalette.peachSoft, label: 'Feeding' },
+    sleep:   { node: <MoonSticker size={28} fill={stickerPalette.lilac} />,   bg: stickerPalette.blueSoft,  label: 'Sleep' },
+    health:  { node: <HeartSticker size={28} fill={stickerPalette.pink} />,   bg: stickerPalette.pinkSoft,  label: 'Health' },
+    mood:    { node: <Flower size={28} petal={stickerPalette.lilac} center={stickerPalette.yellow} />,  bg: stickerPalette.lilacSoft, label: 'Mood' },
+    memory:  { node: <HeartSticker size={28} fill={stickerPalette.coral} />,  bg: stickerPalette.peachSoft, label: 'Memory' },
+    activity:{ node: <Star size={28} fill={stickerPalette.yellow} />,   bg: stickerPalette.yellowSoft,label: 'Activity' },
+    diaper:  { node: <Drop size={28} fill={stickerPalette.blue} />,     bg: stickerPalette.blueSoft,  label: 'Diaper' },
+    wakeup:  { node: <Star size={28} fill={stickerPalette.yellow} />,   bg: stickerPalette.yellowSoft,label: 'Wake up' },
+  }
+  const m = map[kind]
+  return (
+    <View style={formHeaderStickerStyles.wrap}>
+      <View style={[formHeaderStickerStyles.chip, { backgroundColor: m.bg }]}>
+        {m.node}
+        <Text style={formHeaderStickerStyles.label}>{m.label}</Text>
+      </View>
+    </View>
+  )
+}
+
+const formHeaderStickerStyles = StyleSheet.create({
+  wrap: { flexDirection: 'row', alignItems: 'center', marginBottom: -4 },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(20,19,19,0.08)',
+  },
+  label: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: INK,
+  },
+})
 
 // ─── Routine Prefill type ─────────────────────────────────────────────────
 
@@ -241,13 +298,14 @@ function RoutineToggle({
   onDaysChange: (d: number[]) => void
   locked?: boolean
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const accentText = isDark ? colors.text : INK
   if (locked) {
     return (
-      <View style={[routineStyles.toggleRow, { backgroundColor: brand.success + '12', borderColor: brand.success + '40', borderRadius: radius.lg }]}>
-        <Repeat size={16} color={brand.success} strokeWidth={2} />
-        <Text style={[routineStyles.toggleText, { color: brand.success }]}>Already a routine</Text>
-        <Check size={16} color={brand.success} strokeWidth={2.5} />
+      <View style={[routineStyles.toggleRow, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '66', borderRadius: radius.lg }]}>
+        <Repeat size={16} color={ACCENT} strokeWidth={2} />
+        <Text style={[routineStyles.toggleText, { color: accentText }]}>Already a routine</Text>
+        <Check size={16} color={ACCENT} strokeWidth={2.5} />
       </View>
     )
   }
@@ -258,21 +316,21 @@ function RoutineToggle({
         style={[
           routineStyles.toggleRow,
           {
-            backgroundColor: enabled ? colors.primary + '12' : colors.surface,
-            borderColor: enabled ? colors.primary + '40' : colors.border,
+            backgroundColor: enabled ? ACCENT_SOFT : colors.surface,
+            borderColor: enabled ? ACCENT + '66' : colors.border,
             borderRadius: radius.lg,
           },
         ]}
       >
-        <Repeat size={16} color={enabled ? colors.primary : colors.textMuted} strokeWidth={2} />
-        <Text style={[routineStyles.toggleText, { color: enabled ? colors.primary : colors.textSecondary }]}>
+        <Repeat size={16} color={enabled ? ACCENT : colors.textMuted} strokeWidth={2} />
+        <Text style={[routineStyles.toggleText, { color: enabled ? accentText : colors.textSecondary }]}>
           Save as routine
         </Text>
         <View
           style={[
             routineStyles.toggleSwitch,
             {
-              backgroundColor: enabled ? colors.primary : colors.border,
+              backgroundColor: enabled ? ACCENT : colors.border,
               borderRadius: 10,
             },
           ]}
@@ -298,13 +356,13 @@ function RoutineToggle({
                 style={[
                   routineStyles.dayChip,
                   {
-                    backgroundColor: active ? colors.primary : 'transparent',
-                    borderColor: active ? colors.primary : colors.border,
+                    backgroundColor: active ? ACCENT : 'transparent',
+                    borderColor: active ? ACCENT : colors.border,
                     borderRadius: radius.full,
                   },
                 ]}
               >
-                <Text style={[routineStyles.dayText, { color: active ? '#FFF' : colors.textMuted }]}>
+                <Text style={[routineStyles.dayText, { color: active ? INK : colors.textMuted }]}>
                   {label}
                 </Text>
               </Pressable>
@@ -319,12 +377,12 @@ function RoutineToggle({
 const routineStyles = StyleSheet.create({
   wrap: { gap: 8 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1 },
-  toggleText: { flex: 1, fontSize: 14, fontWeight: '600' },
+  toggleText: { flex: 1, fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
   toggleSwitch: { width: 34, height: 20, padding: 3, justifyContent: 'center' },
   toggleKnob: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#FFF' },
   daysRow: { flexDirection: 'row', gap: 6, justifyContent: 'space-between', paddingHorizontal: 4 },
   dayChip: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  dayText: { fontSize: 12, fontWeight: '700' },
+  dayText: { fontSize: 12, fontFamily: 'DMSans_600SemiBold' },
 })
 
 // ─── Child Selector (shared) ───────────────────────────────────────────────
@@ -360,13 +418,13 @@ function ChildSelector({
               style={[
                 styles.childChip,
                 {
-                  backgroundColor: active ? colors.primaryTint : colors.surface,
-                  borderColor: active ? colors.primary : needsSelection ? brand.accent + '40' : colors.border,
+                  backgroundColor: active ? ACCENT_SOFT : colors.surface,
+                  borderColor: active ? ACCENT : needsSelection ? brand.accent + '40' : colors.border,
                   borderRadius: radius.full,
                 },
               ]}
             >
-              <Text style={[styles.childChipText, { color: active ? colors.primary : colors.text }]}>
+              <Text style={[styles.childChipText, { color: active ? INK : colors.text }]}>
                 {c.name}
               </Text>
             </Pressable>
@@ -961,8 +1019,10 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
           </View>
         </View>
 
+        <FormHeaderSticker kind="feeding" />
+
         {/* Feed type toggle */}
-        <View style={[styles.toggleRow, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
+        <View style={[styles.toggleRow, { backgroundColor: colors.surfaceRaised, borderRadius: 999 }]}>
           {(['breast', 'bottle', 'solids'] as FeedingType[]).map((t) => (
             <Pressable
               key={t}
@@ -970,13 +1030,13 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               style={[
                 styles.toggleBtn,
                 {
-                  backgroundColor: feedType === t ? colors.primary : 'transparent',
-                  borderRadius: radius.md,
+                  backgroundColor: feedType === t ? ACCENT : 'transparent',
+                  borderRadius: 999,
                 },
               ]}
             >
               <Text
-                style={[styles.toggleText, { color: feedType === t ? '#FFFFFF' : colors.textSecondary }]}
+                style={[styles.toggleText, { color: feedType === t ? INK : colors.textSecondary }]}
               >
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </Text>
@@ -997,13 +1057,13 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     style={[
                       styles.chip,
                       {
-                        backgroundColor: active ? colors.primaryTint : colors.surface,
-                        borderColor: active ? colors.primary : colors.border,
+                        backgroundColor: active ? ACCENT_SOFT : colors.surface,
+                        borderColor: active ? ACCENT : colors.border,
                         borderRadius: radius.full,
                       },
                     ]}
                   >
-                    <Text style={[styles.chipText, { color: active ? colors.primary : colors.text }]}>
+                    <Text style={[styles.chipText, { color: active ? INK : colors.text }]}>
                       {m.label}
                     </Text>
                   </Pressable>
@@ -1029,9 +1089,9 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 <View style={styles.photoButtons}>
                   <Pressable
                     onPress={takePhoto}
-                    style={[styles.cameraBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}
+                    style={[styles.cameraBtn, { backgroundColor: ACCENT, borderRadius: radius.lg }]}
                   >
-                    <Camera size={24} color="#FFFFFF" strokeWidth={2} />
+                    <Camera size={24} color={INK} strokeWidth={2} />
                   </Pressable>
                   <Pressable
                     onPress={pickPhoto}
@@ -1055,17 +1115,17 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               disabled={scanningPlate}
               style={({ pressed }) => [
                 styles.scanPlateBtn,
-                { backgroundColor: colors.primary + '14', borderColor: colors.primary + '40', borderRadius: radius.lg },
+                { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '66', borderRadius: 999 },
                 pressed && { opacity: 0.7 },
               ]}
             >
               {scanningPlate
-                ? <ActivityIndicator size="small" color={colors.primary} />
-                : <ScanLine size={18} color={colors.primary} strokeWidth={2.2} />}
-              <Text style={[styles.scanPlateText, { color: colors.primary }]}>
+                ? <ActivityIndicator size="small" color={ACCENT} />
+                : <ScanLine size={18} color={ACCENT} strokeWidth={2.2} />}
+              <Text style={[styles.scanPlateText, { color: INK }]}>
                 {scanningPlate ? 'Reading the plate…' : 'Scan plate — auto-detect foods & calories'}
               </Text>
-              <Sparkles size={14} color={colors.primary} strokeWidth={2} />
+              <Sparkles size={14} color={ACCENT} strokeWidth={2} />
             </Pressable>
 
             {/* Food tag input + live calorie estimate */}
@@ -1179,9 +1239,9 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                         setManualCalIdx(null)
                         setManualCalInput('')
                       }}
-                      style={[styles.manualCalBtn, { backgroundColor: colors.primary, borderColor: colors.primary, flex: 1 }]}
+                      style={[styles.manualCalBtn, { backgroundColor: ACCENT, borderColor: ACCENT, flex: 1 }]}
                     >
-                      <Text style={[styles.manualCalBtnText, { color: '#FFF' }]}>Confirm</Text>
+                      <Text style={[styles.manualCalBtnText, { color: INK }]}>Confirm</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -1478,13 +1538,13 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                         style={[
                           styles.sideChipSmall,
                           {
-                            backgroundColor: active ? colors.primaryTint : 'transparent',
-                            borderColor: active ? colors.primary : colors.border,
+                            backgroundColor: active ? ACCENT_SOFT : 'transparent',
+                            borderColor: active ? ACCENT : colors.border,
                             borderRadius: radius.full,
                           },
                         ]}
                       >
-                        <Text style={[styles.sideChipSmallText, { color: active ? colors.primary : colors.textMuted }]}>{s.label}</Text>
+                        <Text style={[styles.sideChipSmallText, { color: active ? INK : colors.textMuted }]}>{s.label}</Text>
                       </Pressable>
                     )
                   })}
@@ -1638,13 +1698,14 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
           )}
         </View>
       </View>
-      <View style={[styles.iconBanner, { backgroundColor: brand.pregnancy + '15' }]}>
-        <Moon size={20} color={brand.pregnancy} strokeWidth={2} />
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Sleep Log</Text>
-        {autoDuration !== '' && (
-          <Text style={[styles.autoDuration, { color: brand.pregnancy }]}>{autoDuration}</Text>
-        )}
-      </View>
+      <FormHeaderSticker kind="sleep" />
+      {autoDuration !== '' && (
+        <View style={[styles.iconBanner, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '40', borderWidth: 1 }]}>
+          <Moon size={20} color={ACCENT} strokeWidth={2} />
+          <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: 'DMSans_600SemiBold' }]}>Sleep session</Text>
+          <Text style={[styles.autoDuration, { color: INK, fontFamily: 'Fraunces_700Bold' }]}>{autoDuration}</Text>
+        </View>
+      )}
       <View style={styles.chipGrid}>
         {qualities.map((q) => {
           const active = quality === q
@@ -1653,12 +1714,12 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
               key={q}
               onPress={() => setQuality(q)}
               style={[styles.chip, {
-                backgroundColor: active ? colors.primaryTint : colors.surface,
-                borderColor: active ? colors.primary : colors.border,
+                backgroundColor: active ? ACCENT_SOFT : colors.surface,
+                borderColor: active ? ACCENT : colors.border,
                 borderRadius: radius.full,
               }]}
             >
-              <Text style={[styles.chipText, { color: active ? colors.primary : colors.text }]}>{q}</Text>
+              <Text style={[styles.chipText, { color: active ? INK : colors.text }]}>{q}</Text>
             </Pressable>
           )
         })}
@@ -1749,10 +1810,7 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
           <TimeChip value={startTime} onChange={setStartTime} label="Time" />
         </View>
       </View>
-      <View style={[styles.iconBanner, { backgroundColor: brand.error + '15' }]}>
-        <Heart size={20} color={brand.error} strokeWidth={2} />
-        <Text style={[styles.bannerLabel, { color: colors.text }]}>Health Event</Text>
-      </View>
+      <FormHeaderSticker kind="health" />
       <View style={styles.chipGrid}>
         {HEALTH_EVENTS.map((e) => {
           const active = eventType === e
@@ -1761,12 +1819,12 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
               key={e}
               onPress={() => setEventType(e)}
               style={[styles.chip, {
-                backgroundColor: active ? colors.primaryTint : colors.surface,
-                borderColor: active ? colors.primary : colors.border,
+                backgroundColor: active ? ACCENT_SOFT : colors.surface,
+                borderColor: active ? ACCENT : colors.border,
                 borderRadius: radius.full,
               }]}
             >
-              <Text style={[styles.chipText, { color: active ? colors.primary : colors.text }]}>{e}</Text>
+              <Text style={[styles.chipText, { color: active ? INK : colors.text }]}>{e}</Text>
             </Pressable>
           )
         })}
@@ -1873,6 +1931,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
           <TimeChip value={startTime} onChange={setStartTime} label="Time" />
         </View>
       </View>
+      <FormHeaderSticker kind="mood" />
       <View style={styles.moodRow}>
         {MOODS.map((m) => {
           const active = mood === m.id
@@ -1881,12 +1940,12 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
               key={m.id}
               onPress={() => setMood(m.id)}
               style={[styles.moodBtn, {
-                backgroundColor: active ? colors.primaryTint : colors.surface,
+                backgroundColor: active ? ACCENT_SOFT : colors.surface,
                 borderRadius: radius.lg,
               }]}
             >
               <MoodFace variant={m.id} fill={m.fill} size={44} />
-              <Text style={[styles.moodLabel, { color: active ? colors.primary : colors.textMuted }]}>{m.label}</Text>
+              <Text style={[styles.moodLabel, { color: active ? INK : colors.textMuted }]}>{m.label}</Text>
             </Pressable>
           )
         })}
@@ -1963,6 +2022,7 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
           <TimeChip value={startTime} onChange={setStartTime} label="Time" />
         </View>
       </View>
+      <FormHeaderSticker kind="memory" />
       <View style={styles.photoRow}>
         {photos.map((uri, i) => (
           <View key={i} style={{ position: 'relative' }}>
@@ -1978,8 +2038,8 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
         ))}
         {photos.length < 4 && (
           <View style={styles.photoButtons}>
-            <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}>
-              <Camera size={24} color="#FFFFFF" strokeWidth={2} />
+            <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: ACCENT, borderRadius: radius.lg }]}>
+              <Camera size={24} color={INK} strokeWidth={2} />
             </Pressable>
             <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderRadius: radius.lg }]}>
               <Plus size={20} color={colors.textMuted} strokeWidth={2} />
@@ -2128,13 +2188,14 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
             )}
           </View>
         </View>
-        <View style={[styles.iconBanner, { backgroundColor: brand.phase.ovulation + '15' }]}>
-          <Dumbbell size={20} color={brand.phase.ovulation} strokeWidth={2} />
-          <Text style={[styles.bannerLabel, { color: colors.text }]}>Log Activity</Text>
-          {autoDuration !== '' && (
-            <Text style={[styles.autoDuration, { color: brand.phase.ovulation }]}>{autoDuration}</Text>
-          )}
-        </View>
+        <FormHeaderSticker kind="activity" />
+        {autoDuration !== '' && (
+          <View style={[styles.iconBanner, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '40', borderWidth: 1 }]}>
+            <Dumbbell size={20} color={ACCENT} strokeWidth={2} />
+            <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: 'DMSans_600SemiBold' }]}>Duration</Text>
+            <Text style={[styles.autoDuration, { color: INK, fontFamily: 'Fraunces_700Bold' }]}>{autoDuration}</Text>
+          </View>
+        )}
 
         {/* Activity type chips */}
         <View style={styles.chipGrid}>
@@ -2145,12 +2206,12 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
                 key={a.id}
                 onPress={() => setActivityType(a.id)}
                 style={[styles.chip, {
-                  backgroundColor: active ? colors.primaryTint : colors.surface,
-                  borderColor: active ? colors.primary : colors.border,
+                  backgroundColor: active ? ACCENT_SOFT : colors.surface,
+                  borderColor: active ? ACCENT : colors.border,
                   borderRadius: radius.full,
                 }]}
               >
-                <Text style={[styles.chipText, { color: active ? colors.primary : colors.text }]}>{a.label}</Text>
+                <Text style={[styles.chipText, { color: active ? INK : colors.text }]}>{a.label}</Text>
               </Pressable>
             )
           })}
@@ -2289,10 +2350,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
           </View>
         </View>
 
-        <View style={[styles.iconBanner, { backgroundColor: brand.secondary + '15' }]}>
-          <Baby size={20} color={brand.secondary} strokeWidth={2} />
-          <Text style={[styles.bannerLabel, { color: colors.text }]}>Log Diaper</Text>
-        </View>
+        <FormHeaderSticker kind="diaper" />
 
         {/* Diaper type */}
         <View style={styles.chipGrid}>
@@ -2350,12 +2408,12 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
                     key={c.id}
                     onPress={() => setConsistency(c.id)}
                     style={[styles.chip, {
-                      backgroundColor: active ? colors.primaryTint : colors.surface,
-                      borderColor: active ? colors.primary : colors.border,
+                      backgroundColor: active ? ACCENT_SOFT : colors.surface,
+                      borderColor: active ? ACCENT : colors.border,
                       borderRadius: radius.full,
                     }]}
                   >
-                    <Text style={[styles.chipText, { color: active ? colors.primary : colors.text }]}>{c.label}</Text>
+                    <Text style={[styles.chipText, { color: active ? INK : colors.text }]}>{c.label}</Text>
                   </Pressable>
                 )
               })}
@@ -2379,8 +2437,8 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
           ))}
           {photos.length === 0 && (
             <View style={styles.photoButtons}>
-              <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}>
-                <Camera size={24} color="#FFFFFF" strokeWidth={2} />
+              <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: ACCENT, borderRadius: radius.lg }]}>
+                <Camera size={24} color={INK} strokeWidth={2} />
               </Pressable>
               <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderRadius: radius.lg }]}>
                 <Plus size={20} color={colors.textMuted} strokeWidth={2} />
@@ -2496,16 +2554,17 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
   return (
     <View style={styles.form}>
       <ChildSelector selected={childId} onSelect={setChildId} />
+      <FormHeaderSticker kind="wakeup" />
 
       {loading ? (
         <ActivityIndicator color={colors.primary} style={{ marginVertical: 24 }} />
       ) : openLog ? (
         <>
           {/* Bedtime summary card */}
-          <View style={{ backgroundColor: brand.pregnancy + '18', borderRadius: 16, padding: 16, gap: 6, borderWidth: 1, borderColor: brand.pregnancy + '30' }}>
+          <View style={{ backgroundColor: ACCENT + '18', borderRadius: 16, padding: 16, gap: 6, borderWidth: 1, borderColor: ACCENT + '30' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Moon size={15} color={brand.pregnancy} strokeWidth={2} />
-              <Text style={{ color: brand.pregnancy, fontWeight: '700', fontSize: 14 }}>
+              <Moon size={15} color={ACCENT} strokeWidth={2} />
+              <Text style={{ color: ACCENT, fontWeight: '700', fontSize: 14 }}>
                 {openLog.routineName ?? 'Bedtime'} · {formatTimeLabel(openLog.startTime)}
               </Text>
             </View>
@@ -2523,8 +2582,8 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
 
           {/* Duration preview */}
           {sleepDuration ? (
-            <View style={{ backgroundColor: brand.pregnancy + '12', borderRadius: 14, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: brand.pregnancy + '25' }}>
-              <Text style={{ color: brand.pregnancy, fontWeight: '800', fontSize: 36, letterSpacing: -1, lineHeight: 40, fontFamily: 'Fraunces_600SemiBold' }}>{sleepDuration}</Text>
+            <View style={{ backgroundColor: ACCENT + '12', borderRadius: 14, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: ACCENT + '25' }}>
+              <Text style={{ color: ACCENT, fontWeight: '800', fontSize: 36, letterSpacing: -1, lineHeight: 40, fontFamily: 'Fraunces_600SemiBold' }}>{sleepDuration}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>total sleep</Text>
             </View>
           ) : null}
@@ -2549,20 +2608,17 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
 // ─── Save Button ───────────────────────────────────────────────────────────
 
 function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void; saving: boolean; disabled?: boolean; onSkip?: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors } = useTheme()
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: 10, marginTop: 4 }}>
       {onSkip && (
         <Pressable
           onPress={onSkip}
           disabled={saving}
           style={({ pressed }) => [
-            styles.saveBtn,
+            styles.saveBtnGhost,
             {
-              backgroundColor: 'transparent',
-              borderRadius: radius.lg,
-              borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: colors.borderStrong,
               opacity: saving ? 0.4 : 1,
             },
             pressed && { opacity: 0.7 },
@@ -2570,7 +2626,7 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <MinusCircle size={16} color={colors.textMuted} strokeWidth={2} />
-            <Text style={[styles.saveBtnText, { color: colors.textMuted }]}>Skip this time</Text>
+            <Text style={[styles.saveBtnGhostText, { color: colors.textMuted }]}>Skip this time</Text>
           </View>
         </Pressable>
       )}
@@ -2578,12 +2634,12 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
         onPress={onPress}
         disabled={saving || disabled}
         style={({ pressed }) => [
-          styles.saveBtn,
-          { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: disabled ? 0.4 : 1 },
-          pressed && !disabled && { transform: [{ scale: 0.98 }], opacity: 0.9 },
+          styles.saveBtnPrimary,
+          { opacity: disabled ? 0.4 : 1 },
+          pressed && !disabled && { transform: [{ scale: 0.98 }], opacity: 0.92 },
         ]}
       >
-        {saving ? <ActivityIndicator color="#FFF" /> : <Text style={styles.saveBtnText}>Save</Text>}
+        {saving ? <ActivityIndicator color={INK} /> : <Text style={styles.saveBtnPrimaryText}>Save</Text>}
       </Pressable>
     </View>
   )
@@ -2596,28 +2652,28 @@ const styles = StyleSheet.create({
   topRow: { gap: 10 },
   dateTimeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   dateChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1 },
-  dateChipText: { fontSize: 13, fontWeight: '700' },
+  dateChipText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
   datePickerWrap: { marginTop: 4, borderWidth: 1, overflow: 'hidden' },
   datePickerDone: { alignItems: 'center', paddingVertical: 10, borderTopWidth: 1 },
   datePickerDoneText: { fontSize: 15, fontWeight: '700' },
   timeChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, paddingVertical: 6, paddingHorizontal: 10, borderWidth: 1 },
-  timeChipLabel: { fontSize: 10, fontWeight: '600' },
-  timeChipValue: { fontSize: 13, fontWeight: '700' },
+  timeChipLabel: { fontSize: 10, fontFamily: 'DMSans_500Medium', letterSpacing: 0.8, textTransform: 'uppercase' },
+  timeChipValue: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
   childSelectorWrap: { gap: 6 },
   childSelectorPrompt: { fontSize: 13, fontWeight: '700' },
   childRow: { gap: 8 },
   childChip: { paddingVertical: 8, paddingHorizontal: 16, borderWidth: 1 },
-  childChipText: { fontSize: 14, fontWeight: '600' },
+  childChipText: { fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
   iconBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 12 },
-  bannerLabel: { flex: 1, fontSize: 15, fontWeight: '600' },
-  autoDuration: { fontSize: 14, fontWeight: '800' },
-  input: { borderWidth: 1, paddingHorizontal: 16, height: 48, fontSize: 15, fontWeight: '500' },
+  bannerLabel: { flex: 1, fontSize: 15, fontFamily: 'DMSans_500Medium' },
+  autoDuration: { fontSize: 18, fontFamily: 'Fraunces_700Bold' },
+  input: { borderWidth: 1, paddingHorizontal: 20, minHeight: 52, fontSize: 15, fontFamily: 'DMSans_500Medium', borderRadius: 999 },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1 },
-  chipText: { fontSize: 13, fontWeight: '600' },
+  chipText: { fontSize: 13, fontFamily: 'DMSans_500Medium' },
   toggleRow: { flexDirection: 'row', padding: 4 },
   toggleBtn: { flex: 1, alignItems: 'center', paddingVertical: 10 },
-  toggleText: { fontSize: 14, fontWeight: '700' },
+  toggleText: { fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
   photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   photoThumb: { width: 72, height: 72 },
   photoDeleteBtn: { position: 'absolute', top: -6, right: -6, backgroundColor: 'rgba(0,0,0,0.75)', borderRadius: 999, width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
@@ -2626,19 +2682,44 @@ const styles = StyleSheet.create({
   galleryBtn: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderStyle: 'dashed' },
   qualityRow: { flexDirection: 'row', gap: 8 },
   qualityBtn: { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 6, borderWidth: 1 },
-  qualityLabel: { fontSize: 11, fontWeight: '600', textAlign: 'center' },
+  qualityLabel: { fontSize: 11, fontFamily: 'DMSans_500Medium', textAlign: 'center' },
   flagRow: { flexDirection: 'row', gap: 8 },
   flagChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1 },
-  flagText: { fontSize: 13, fontWeight: '600' },
+  flagText: { fontSize: 13, fontFamily: 'DMSans_500Medium' },
   moodRow: { flexDirection: 'row', gap: 8 },
   moodBtn: { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 4 },
-  moodLabel: { fontSize: 11, fontWeight: '600' },
-  saveBtn: { height: 48, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  saveBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+  moodLabel: { fontSize: 11, fontFamily: 'DMSans_500Medium' },
+  saveBtnPrimary: {
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+    backgroundColor: ACCENT,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  saveBtnPrimaryText: {
+    fontSize: 16,
+    fontFamily: 'DMSans_600SemiBold',
+    color: INK,
+    letterSpacing: 0.2,
+  },
+  saveBtnGhost: {
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+  },
+  saveBtnGhostText: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
 
   // Scan plate (AI vision)
   scanPlateBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, marginBottom: 12 },
-  scanPlateText: { flex: 1, fontSize: 14, fontWeight: '700' },
+  scanPlateText: { flex: 1, fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
 
   // Calorie banner
   foodTag: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5 },
@@ -2667,7 +2748,7 @@ const styles = StyleSheet.create({
   // Breast feeding
   lastSideBanner: { padding: 12, borderWidth: 1 },
   lastSideLabel: { fontSize: 13, fontWeight: '500', lineHeight: 20 },
-  sectionLabel: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  sectionLabel: { fontSize: 11, fontFamily: 'DMSans_500Medium', textTransform: 'uppercase', letterSpacing: 1.2 },
   sideRow: { flexDirection: 'row', gap: 8 },
   sideBtn: { flex: 1, alignItems: 'center', paddingVertical: 16, gap: 8, borderWidth: 1 },
   breastIcon: { flexDirection: 'row', gap: 2, alignItems: 'flex-end' },

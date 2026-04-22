@@ -10,6 +10,7 @@ import { useTheme, stickers, getModeColorSoft } from '../../constants/theme'
 import { getWeekData } from '../../lib/pregnancyData'
 import { Display, DisplayItalic, MonoCaps } from '../ui/Typography'
 import { Heart } from '../ui/Stickers'
+import { WeeksProgressBeads } from '../charts/GalleryCharts'
 
 interface PregnancyWeekDisplayProps {
   weekNumber: number
@@ -55,6 +56,11 @@ export function PregnancyWeekDisplay({ weekNumber }: PregnancyWeekDisplayProps) 
           a {data.babySize}
         </Text>
       </View>
+
+      {/* 40-week S-curve path with milestone beads — gallery pattern 38 */}
+      <View style={styles.beads}>
+        <WeeksProgressBeads week={weekNumber} color={ink} height={86} />
+      </View>
     </View>
   )
 }
@@ -96,5 +102,9 @@ const styles = StyleSheet.create({
   sizeValue: {
     fontSize: 14,
     letterSpacing: -0.2,
+  },
+  beads: {
+    marginTop: 18,
+    marginHorizontal: -4,
   },
 })

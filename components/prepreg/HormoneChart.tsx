@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native'
-import Svg, { Path, Defs, LinearGradient, Stop, Circle, Line } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
 import { THEME_COLORS } from '../../constants/theme'
+import { HormoneWave } from '../charts/GalleryCharts'
 import type { CycleInfo } from '../../lib/cycleLogic'
 
 interface HormoneChartProps {
@@ -10,8 +10,6 @@ interface HormoneChartProps {
 
 export function HormoneChart({ cycleInfo }: HormoneChartProps) {
   const progress = cycleInfo.cycleProgress
-  // Marker X position (0-400 in SVG coords)
-  const markerX = Math.min(380, Math.max(20, progress * 360 + 20))
 
   return (
     // matches HTML: .bg-white/5.rounded-[32px].p-6.border.border-white/10.relative.overflow-hidden
@@ -22,51 +20,14 @@ export function HormoneChart({ cycleInfo }: HormoneChartProps) {
         <Text style={styles.title}>Hormone Rhythm</Text>
       </View>
 
-      {/* SVG Chart — matches: .h-32.w-full.relative.mb-6 */}
+      {/* Living hormone wave — scrolling, gradient fill, today marker */}
       <View style={styles.chartWrap}>
-        <Svg width="100%" height={120} viewBox="0 0 400 120" preserveAspectRatio="none">
-          <Defs>
-            <LinearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <Stop offset="0%" stopColor="#FF8AD8" stopOpacity={1} />
-              <Stop offset="30%" stopColor="#F4FD50" stopOpacity={1} />
-              <Stop offset="60%" stopColor="#A2FF86" stopOpacity={1} />
-              <Stop offset="100%" stopColor="#B983FF" stopOpacity={1} />
-            </LinearGradient>
-          </Defs>
-
-          {/* Estrogen Wave — matches HTML path exactly */}
-          <Path
-            d="M0,100 C50,100 80,20 150,20 C220,20 250,80 300,80 C350,80 380,40 400,40"
-            fill="none"
-            stroke="url(#waveGrad)"
-            strokeWidth={4}
-            strokeLinecap="round"
-          />
-
-          {/* Progesterone Wave (subtle dashed) — matches HTML */}
-          <Path
-            d="M0,80 C80,80 120,90 200,90 C280,90 320,30 400,30"
-            fill="none"
-            stroke="white"
-            strokeOpacity={0.1}
-            strokeWidth={2}
-            strokeDasharray="4,4"
-          />
-
-          {/* Today marker — matches HTML: circle + dashed line */}
-          {cycleInfo.cycleDay > 0 && (
-            <>
-              <Line
-                x1={markerX} y1={20} x2={markerX} y2={120}
-                stroke="#A2FF86"
-                strokeWidth={1}
-                strokeDasharray="4,4"
-                opacity={0.5}
-              />
-              <Circle cx={markerX} cy={20} r={6} fill="#A2FF86" />
-            </>
-          )}
-        </Svg>
+        <HormoneWave
+          progress={progress}
+          color={THEME_COLORS.pink}
+          height={120}
+          label={cycleInfo.cycleDay > 0 ? `DAY ${cycleInfo.cycleDay}` : undefined}
+        />
       </View>
 
       {/* Phase pills — matches HTML: .flex.flex-wrap.gap-2 */}

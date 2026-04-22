@@ -46,6 +46,7 @@ import {
   KickCountForm,
 } from '../calendar/PregnancyLogForms'
 import { SimplePregnancyLogForm } from '../calendar/SimplePregnancyLogForm'
+import { PregnancyMealForm } from '../calendar/PregnancyMealForm'
 
 import { WeekCard } from './pregnancy/WeekCard'
 import {
@@ -321,17 +322,23 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
     if (activeLog === 'appointment') return <AppointmentForm date={today} onSaved={onClose} />
     if (activeLog === 'kick_count') return <KickCountForm date={today} onSaved={onClose} />
 
+    if (activeLog === 'nutrition') {
+      return <PregnancyMealForm userId={userId} onSaved={onClose} />
+    }
     if (activeLog === 'water' || activeLog === 'weight' || activeLog === 'sleep'
-        || activeLog === 'exercise' || activeLog === 'nutrition') {
+        || activeLog === 'exercise') {
       return <SimplePregnancyLogForm type={activeLog} userId={userId} onSaved={onClose} />
     }
 
     if (activeLog === 'vitamins' || activeLog === 'kegel') {
+      const Sticker = activeLog === 'vitamins' ? LogVitamins : LogKegel
+      const title = activeLog === 'vitamins' ? 'Mark vitamins taken' : 'Log Kegel sets'
       return (
         <View style={styles.simpleForm}>
-          <Text style={[styles.simpleFormTitle, { color: colors.text }]}>
-            {activeLog === 'vitamins' ? '💊 Mark vitamins taken' : '💪 Log Kegel sets'}
-          </Text>
+          <View style={styles.simpleFormHeader}>
+            <Sticker size={32} />
+            <Text style={[styles.simpleFormTitle, { color: colors.text }]}>{title}</Text>
+          </View>
           <Pressable
             onPress={async () => {
               if (!userId) return
@@ -500,6 +507,7 @@ const styles = StyleSheet.create({
   modalClose: { position: 'absolute', right: 20, top: 8, padding: 8 },
 
   simpleForm: { padding: 24, gap: 20, alignItems: 'center' },
+  simpleFormHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   simpleFormTitle: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', textAlign: 'center' },
   simpleFormBtn: { paddingHorizontal: 40, paddingVertical: 16, borderRadius: 999 },
   simpleFormBtnText: { fontSize: 16, fontFamily: 'DMSans_600SemiBold' },

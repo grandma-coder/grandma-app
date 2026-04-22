@@ -4,9 +4,17 @@
  * Layout: colored circle icon • title + optional subtitle • optional right chip • chevron
  */
 
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { View, Pressable, Text, StyleSheet } from 'react-native'
-import { ChevronRight } from 'lucide-react-native'
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated'
+import { ChevronRight, Check } from 'lucide-react-native'
 import { useTheme } from '../../constants/theme'
 import { Body } from '../ui/Typography'
 import { getTint, type TintKey } from './tints'
@@ -22,6 +30,10 @@ interface ActivityPillCardProps {
   onPress?: () => void
   /** Hide chevron */
   noChevron?: boolean
+  /** One-shot scale pulse on the icon — use to confirm a freshly-logged entry */
+  pulse?: boolean
+  /** Show a small green check next to the title to mark the entry as logged */
+  logged?: boolean
 }
 
 export function ActivityPillCard({
@@ -32,11 +44,25 @@ export function ActivityPillCard({
   chip,
   onPress,
   noChevron,
+  pulse,
+  logged,
 }: ActivityPillCardProps) {
   const { colors, isDark, font } = useTheme()
   const { fill, ink } = getTint(tint, isDark)
   const textInk = isDark ? colors.text : '#141313'
   const textMuted = isDark ? colors.textMuted : '#6E6763'
+
+  const scale = useSharedValue(1)
+  const iconAnimStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
+
+  useEffect(() => {
+    if (!pulse) return
+    scale.value = withSequence(
+      withTiming(1.22, { duration: 220, easing: Easing.out(Easing.quad) }),
+      withTiming(0.96, { duration: 140, easing: Easing.inOut(Easing.quad) }),
+      withDelay(40, withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) })),
+    )
+  }, [pulse, scale])
 
   return (
     <Pressable
@@ -47,14 +73,27 @@ export function ActivityPillCard({
         { backgroundColor: fill, opacity: pressed ? 0.88 : 1 },
       ]}
     >
-      <View style={[styles.iconWrap, { backgroundColor: isDark ? ink + '33' : '#FFFEF8' }]}>
+      <Animated.View
+        style={[
+          styles.iconWrap,
+          { backgroundColor: isDark ? ink + '33' : '#FFFEF8' },
+          iconAnimStyle,
+        ]}
+      >
         {icon}
-      </View>
+      </Animated.View>
 
       <View style={styles.textCol}>
-        <Body size={15} color={textInk} style={{ fontFamily: font.bodySemiBold }}>
-          {title}
-        </Body>
+        <View style={styles.titleRow}>
+          <Body size={15} color={textInk} style={{ fontFamily: font.bodySemiBold }}>
+            {title}
+          </Body>
+          {logged ? (
+            <View style={styles.checkBadge}>
+              <Check size={11} color="#FFFFFF" strokeWidth={3} />
+            </View>
+          ) : null}
+        </View>
         {subtitle ? (
           <Body size={12} color={textMuted} style={{ marginTop: 2 }}>
             {subtitle}
@@ -100,6 +139,19 @@ const styles = StyleSheet.create({
   textCol: {
     flex: 1,
     minWidth: 0,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  checkBadge: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#22C55E',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chip: {
     paddingVertical: 3,

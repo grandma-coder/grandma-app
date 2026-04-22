@@ -23,6 +23,24 @@ import { DMSans_400Regular } from '@expo-google-fonts/dm-sans/400Regular'
 import { DMSans_500Medium } from '@expo-google-fonts/dm-sans/500Medium'
 import { DMSans_600SemiBold } from '@expo-google-fonts/dm-sans/600SemiBold'
 import { DMSans_700Bold } from '@expo-google-fonts/dm-sans/700Bold'
+// ─── Affirmation share templates — extra display/handwriting/mono fonts ───
+import { AbrilFatface_400Regular } from '@expo-google-fonts/abril-fatface/400Regular'
+import { ArchivoBlack_400Regular } from '@expo-google-fonts/archivo-black/400Regular'
+import { BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue/400Regular'
+import { Caveat_500Medium } from '@expo-google-fonts/caveat/500Medium'
+import { Caveat_700Bold } from '@expo-google-fonts/caveat/700Bold'
+import { IBMPlexSerif_400Regular_Italic } from '@expo-google-fonts/ibm-plex-serif/400Regular_Italic'
+import { IBMPlexSerif_600SemiBold } from '@expo-google-fonts/ibm-plex-serif/600SemiBold'
+import { LibreCaslonText_400Regular_Italic } from '@expo-google-fonts/libre-caslon-text/400Regular_Italic'
+import { Monoton_400Regular } from '@expo-google-fonts/monoton/400Regular'
+import { PermanentMarker_400Regular } from '@expo-google-fonts/permanent-marker/400Regular'
+import { PlayfairDisplay_700Bold_Italic } from '@expo-google-fonts/playfair-display/700Bold_Italic'
+import { PlayfairDisplay_900Black_Italic } from '@expo-google-fonts/playfair-display/900Black_Italic'
+import { Shrikhand_400Regular } from '@expo-google-fonts/shrikhand/400Regular'
+import { SpaceMono_400Regular } from '@expo-google-fonts/space-mono/400Regular'
+import { SpaceMono_700Bold } from '@expo-google-fonts/space-mono/700Bold'
+import { UnicaOne_400Regular } from '@expo-google-fonts/unica-one/400Regular'
+import { YesevaOne_400Regular } from '@expo-google-fonts/yeseva-one/400Regular'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
@@ -76,6 +94,23 @@ export default function RootLayout() {
     DMSans_500Medium,
     DMSans_600SemiBold,
     DMSans_700Bold,
+    AbrilFatface_400Regular,
+    ArchivoBlack_400Regular,
+    BebasNeue_400Regular,
+    Caveat_500Medium,
+    Caveat_700Bold,
+    IBMPlexSerif_400Regular_Italic,
+    IBMPlexSerif_600SemiBold,
+    LibreCaslonText_400Regular_Italic,
+    Monoton_400Regular,
+    PermanentMarker_400Regular,
+    PlayfairDisplay_700Bold_Italic,
+    PlayfairDisplay_900Black_Italic,
+    Shrikhand_400Regular,
+    SpaceMono_400Regular,
+    SpaceMono_700Bold,
+    UnicaOne_400Regular,
+    YesevaOne_400Regular,
   })
 
   // Apply DM Sans as the default for every Text / TextInput once fonts load.

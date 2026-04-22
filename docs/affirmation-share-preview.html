@@ -1,0 +1,992 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>grandma.app — Affirmation share preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Archivo+Black&family=Bebas+Neue&family=Caveat:wght@500;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,600;1,9..144,900&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=Instrument+Serif:ital@0;1&family=Libre+Caslon+Text:ital,wght@0,400;1,400&family=Monoton&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Shrikhand&family=Space+Mono:wght@400;700&family=Unica+One&family=Yeseva+One&display=swap" rel="stylesheet">
+<style>
+  /* ───────────────────────── tokens ───────────────────────── */
+  :root {
+    --bg:            #0E0B1A;
+    --bgWarm:        #140F28;
+    --glass:         rgba(255,255,255,0.06);
+    --text:          #FFFFFF;
+    --textSecondary: rgba(255,255,255,0.65);
+    --textMuted:     rgba(255,255,255,0.35);
+    --border:        rgba(255,255,255,0.12);
+    --primary:       #A07FDC;
+
+    --prePreg:       #E58BB4;
+    --preg:          #B7A6E8;
+    --kids:          #8BB8E8;
+
+    --ink:           #141313;
+    --cream:         #FFFEF8;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+  /* ───────────────────────── docs header ───────────────────────── */
+  .docs-header {
+    max-width: 820px;
+    margin: 40px auto 0;
+    padding: 0 24px;
+    color: var(--textSecondary);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .docs-header h2 {
+    color: var(--text);
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 28px;
+    margin: 0 0 8px;
+    letter-spacing: -0.5px;
+  }
+  .docs-header p { margin: 0 0 8px; }
+
+  /* ───────────────────────── phone frame ───────────────────────── */
+  .phone {
+    max-width: 440px;
+    margin: 32px auto;
+    background: var(--bgWarm);
+    border-radius: 40px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 40px 120px rgba(0,0,0,0.6);
+    position: relative;
+  }
+
+  .status-bar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .header {
+    display: grid;
+    grid-template-columns: 44px 1fr 64px;
+    align-items: center;
+    padding: 12px 20px 6px;
+  }
+  .close-btn {
+    width: 32px; height: 32px; border-radius: 999px;
+    background: var(--glass); border: none; color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px;
+  }
+  .header h1 {
+    margin: 0; text-align: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.4px;
+  }
+  .share-link {
+    color: var(--primary);
+    font-size: 15px;
+    font-weight: 600;
+    text-align: right;
+    cursor: pointer;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--textSecondary);
+    font-size: 13px;
+    letter-spacing: 0.4px;
+    padding: 2px 20px 12px;
+  }
+
+  /* ───────────────────────── style toggle ───────────────────────── */
+  .style-toggle {
+    display: flex;
+    gap: 0;
+    margin: 0 20px 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px;
+  }
+  .style-toggle button {
+    flex: 1;
+    padding: 9px 10px;
+    background: transparent;
+    border: none;
+    color: var(--textSecondary);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .style-toggle button.active {
+    background: var(--primary);
+    color: #0E0B1A;
+  }
+
+  /* ───────────────────────── mode tabs ───────────────────────── */
+  .mode-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 0 20px 12px;
+  }
+  .mode-tab {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 999px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    color: var(--textSecondary);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-tab.active[data-mode="prePreg"]   { background: rgba(229,139,180,0.18); color: var(--prePreg); border-color: var(--prePreg); }
+  .mode-tab.active[data-mode="pregnancy"] { background: rgba(183,166,232,0.18); color: var(--preg);    border-color: var(--preg); }
+  .mode-tab.active[data-mode="kids"]      { background: rgba(139,184,232,0.18); color: var(--kids);    border-color: var(--kids); }
+
+  /* ───────────────────────── phrase input ───────────────────────── */
+  .phrase-input-wrap { padding: 2px 20px 14px; }
+  .phrase-input-label {
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    color: var(--textMuted);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .phrase-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    line-height: 1.35;
+    resize: none;
+    min-height: 64px;
+  }
+  .phrase-input:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  /* ───────────────────────── card grid ───────────────────────── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 0 20px 40px;
+  }
+  .grid.hidden { display: none; }
+
+  .card {
+    aspect-ratio: 4 / 5;
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    isolation: isolate;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+  }
+  .card:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 10px 30px rgba(0,0,0,0.55); }
+
+  .card .bg   { position: absolute; inset: 0; z-index: 0; }
+  .card .deco { position: absolute; z-index: 1; pointer-events: none; }
+  .card .fg   { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; padding: 18px; text-align: center; }
+  .card .fg.left   { justify-content: flex-start; text-align: left; padding: 22px; }
+  .card .fg.right  { justify-content: flex-end;   text-align: right; padding: 22px; }
+  .card .fg.top    { align-items: flex-start; }
+  .card .fg.bottom { align-items: flex-end; padding-bottom: 40px; }
+
+  .card .label {
+    position: absolute; z-index: 2;
+    left: 0; right: 0;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .card .signature {
+    position: absolute; z-index: 2;
+    bottom: 28px; left: 0; right: 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 9px;
+    text-align: center;
+    opacity: 0.7;
+  }
+  .card .watermark {
+    position: absolute; z-index: 3;
+    bottom: 8px; left: 0; right: 0;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 7px;
+    letter-spacing: 0.6px;
+    color: rgba(20,19,19,0.4);
+  }
+  .card .watermark.cream { color: rgba(255,254,248,0.5); }
+
+  /* ─── type scale helpers (thumb size) ─── */
+  .ff-fraunces    { font-family: 'Fraunces', serif; }
+  .ff-instrument  { font-family: 'Instrument Serif', serif; }
+  .ff-dmsans      { font-family: 'DM Sans', sans-serif; }
+  .ff-archivo     { font-family: 'Archivo Black', sans-serif; }
+  .ff-bebas       { font-family: 'Bebas Neue', sans-serif; }
+  .ff-caveat      { font-family: 'Caveat', cursive; }
+  .ff-mono        { font-family: 'Space Mono', monospace; }
+  .ff-yeseva      { font-family: 'Yeseva One', serif; }
+  .ff-abril       { font-family: 'Abril Fatface', serif; }
+  .ff-playfair    { font-family: 'Playfair Display', serif; }
+  .ff-shrikhand   { font-family: 'Shrikhand', cursive; }
+  .ff-monoton     { font-family: 'Monoton', cursive; }
+  .ff-unica       { font-family: 'Unica One', sans-serif; }
+  .ff-marker      { font-family: 'Permanent Marker', cursive; }
+  .ff-libre       { font-family: 'Libre Caslon Text', serif; }
+  .ff-plex        { font-family: 'IBM Plex Serif', serif; }
+
+  .phrase { margin: 0; padding: 0; }
+
+  /* backgrounds */
+  .bg-cream       { background: #FFFEF8; }
+  .bg-blush       { background: #F2B2C7; }
+  .bg-burgundy    { background: #3A0E20; }
+  .bg-rosegold    { background: linear-gradient(135deg, #F8E2DA 0%, #E8B8A8 45%, #C79886 100%); }
+  .bg-black       { background: #000000; }
+  .bg-ink         { background: #0E0B1A; }
+  .bg-neonpink    { background: #FF4D9D; }
+  .bg-stripes     {
+    background:
+      repeating-linear-gradient(45deg,
+        #FFFEF8 0, #FFFEF8 24px,
+        #F7CFDD 24px, #F7CFDD 48px);
+  }
+  .bg-sunset      { background: linear-gradient(180deg, #6B2FBF 0%, #E85D75 45%, #FFD166 100%); }
+  .bg-darknight   { background: #120820; }
+  .bg-lilac       { background: #E3D8F2; }
+  .bg-peach       { background: #F5B896; }
+  .bg-mustard     { background: #E5C46B; }
+  .bg-sage        { background: #A8B89D; }
+  .bg-lime        { background: #BDD48C; }
+  .bg-pregGrad    { background: linear-gradient(160deg, #6B4FB8 0%, #B7A6E8 100%); }
+  .bg-navy        { background: #0E1840; }
+  .bg-powder      { background: #D4E3F3; }
+  .bg-cloud       { background: linear-gradient(180deg, #FFFFFF 0%, #D4E3F3 100%); }
+  .bg-blue        { background: #4D96FF; }
+  .bg-sunny       { background: #FDD353; }
+  .bg-denim       {
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0)),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 2px, transparent 2px 4px),
+      #1E3A5F;
+  }
+  .bg-confetti    { background: #FAEADF; }
+  .bg-sunrise     { background: linear-gradient(180deg, #FDD9A6 0%, #F2B2C7 45%, #D4E3F3 100%); }
+  .bg-vinyl       { background: radial-gradient(circle at 50% 50%, #2A1F4A 0%, #0E0B1A 70%); }
+  .bg-magenta-mint { background: linear-gradient(135deg, #FF4D9D 0%, #4FE3C1 100%); }
+  .bg-half        {
+    background:
+      linear-gradient(to right, #FFFEF8 50%, #B7A6E8 50%);
+  }
+
+  /* ─── modal ─── */
+  .modal {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.82);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 50;
+    padding: 32px;
+  }
+  .modal.open { display: flex; }
+  .modal-card {
+    width: min(420px, 92vw);
+    aspect-ratio: 4/5;
+    border-radius: 28px;
+    overflow: hidden;
+    position: relative;
+    isolation: isolate;
+    box-shadow: 0 40px 120px rgba(0,0,0,0.8);
+  }
+  .modal-card .fg         { padding: 42px; }
+  .modal-card .fg.left    { padding: 52px; }
+  .modal-card .label      { font-size: 13px; letter-spacing: 2.2px; }
+  .modal-card .signature  { font-size: 16px; bottom: 58px; }
+  .modal-card .watermark  { font-size: 12px; bottom: 16px; letter-spacing: 1.2px; }
+
+  .modal-close {
+    position: absolute; top: 24px; right: 24px;
+    width: 44px; height: 44px; border-radius: 999px;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18);
+    color: #fff; font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .modal-name {
+    position: absolute; top: 36px; left: 50%; transform: translateX(-50%);
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 18px;
+    color: var(--textSecondary);
+  }
+  .toast {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(20,16,48,0.9);
+    backdrop-filter: blur(20px);
+    color: #fff; font-weight: 600; font-size: 16px;
+    padding: 14px 28px; border-radius: 999px;
+    border: 1px solid var(--border);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 60;
+  }
+  .toast.show { opacity: 1; }
+
+  .card-label {
+    position: absolute; bottom: 5px; left: 6px; right: 6px;
+    font-size: 8.5px; letter-spacing: 0.6px;
+    color: rgba(255,255,255,0.55);
+    text-align: center;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 4;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+  .card.show-name .fg { padding-bottom: 26px; }
+
+  /* ─── text-only mode ──────────────────────────────────────────
+     Hides backgrounds / decorations / watermarks — shows only typography
+     on a checkered transparent pattern so the user sees exactly what
+     would be exported as a transparent PNG. */
+  .grid.text-only .card,
+  .modal-card.text-only {
+    background-color: rgba(255,255,255,0.03);
+    background-image:
+      linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.05) 75%),
+      linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.05) 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+    border: 1px dashed rgba(255,255,255,0.12);
+  }
+  .grid.text-only .card .bg,
+  .grid.text-only .card .deco,
+  .grid.text-only .card .watermark,
+  .grid.text-only .card .label,
+  .grid.text-only .card .signature,
+  .grid.text-only .card .bg-layer,
+  .modal-card.text-only .bg,
+  .modal-card.text-only .deco,
+  .modal-card.text-only .watermark,
+  .modal-card.text-only .label,
+  .modal-card.text-only .signature,
+  .modal-card.text-only .bg-layer { display: none !important; }
+  /* force readable typography color */
+  .grid.text-only .card .phrase,
+  .modal-card.text-only .phrase {
+    color: #FFFFFF !important;
+    -webkit-text-stroke: 0 !important;
+    text-shadow: none !important;
+    background: none !important;
+    -webkit-background-clip: initial !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+  }
+</style>
+</head>
+<body>
+
+<div class="docs-header">
+  <h2>Affirmation share — design preview</h2>
+  <p>30 card designs across all three journeys. Each card has its own font, palette, and composition. Toggle "Text only" to copy just the typography (transparent background).</p>
+  <p style="color: var(--textMuted); font-size: 12px;">Click any card to preview full-size and copy the phrase to your clipboard.</p>
+</div>
+
+<div class="phone">
+  <div class="status-bar">
+    <span>11:39</span>
+    <span style="display:flex; gap:6px; align-items:center;"><span style="opacity:.6">●●●●</span><span>▲</span><span>▮▮</span></span>
+  </div>
+
+  <div class="header">
+    <button class="close-btn" aria-label="close">✕</button>
+    <h1>Share affirmation</h1>
+    <span class="share-link">Share…</span>
+  </div>
+  <div class="subtitle">Tap to copy · Hold to save</div>
+
+  <div class="style-toggle" id="styleToggle">
+    <button data-style="bg" class="active">With background</button>
+    <button data-style="text">Text only (transparent)</button>
+  </div>
+
+  <div class="mode-tabs" id="modeTabs">
+    <button class="mode-tab active" data-mode="prePreg">Pre-pregnancy</button>
+    <button class="mode-tab" data-mode="pregnancy">Pregnancy</button>
+    <button class="mode-tab" data-mode="kids">Kids</button>
+  </div>
+
+  <div class="phrase-input-wrap">
+    <div class="phrase-input-label">Daily affirmation</div>
+    <textarea class="phrase-input" id="phraseInput">What matters today: you showed up. That is everything.</textarea>
+  </div>
+
+  <div class="grid" id="grid-prePreg"></div>
+  <div class="grid hidden" id="grid-pregnancy"></div>
+  <div class="grid hidden" id="grid-kids"></div>
+</div>
+
+<div class="modal" id="modal">
+  <button class="modal-close" id="modalClose">✕</button>
+  <div class="modal-name" id="modalName"></div>
+  <div class="modal-card" id="modalCard"></div>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<script>
+/* ───────────────────────── helpers ───────────────────────── */
+const svg = (content, { w = '100%', h = '100%', style = '', vb = '0 0 100 100' } = {}) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" width="${w}" height="${h}" style="${style}" preserveAspectRatio="xMidYMid meet">${content}</svg>`;
+
+const stickers = {
+  heart:  (f) => `<path fill="${f}" d="M50 85 C20 60 10 40 25 25 C38 12 50 25 50 32 C50 25 62 12 75 25 C90 40 80 60 50 85 Z"/>`,
+  burst:  (f) => {
+    let pts = '';
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2;
+      const r = i % 2 === 0 ? 50 : 28;
+      pts += `${50 + Math.cos(a) * r},${50 + Math.sin(a) * r} `;
+    }
+    return `<polygon fill="${f}" points="${pts.trim()}"/>`;
+  },
+  moon:   (f) => `<path fill="${f}" d="M70 20 a40 40 0 1 0 10 60 a32 32 0 1 1 -10 -60 Z"/>`,
+  star:   (f) => `<polygon fill="${f}" points="50,8 60,40 92,42 66,60 76,92 50,72 24,92 34,60 8,42 40,40"/>`,
+  flower: (p, c) => `<g><circle cx="50" cy="20" r="14" fill="${p}"/><circle cx="50" cy="80" r="14" fill="${p}"/><circle cx="20" cy="50" r="14" fill="${p}"/><circle cx="80" cy="50" r="14" fill="${p}"/><circle cx="28" cy="28" r="12" fill="${p}"/><circle cx="72" cy="28" r="12" fill="${p}"/><circle cx="28" cy="72" r="12" fill="${p}"/><circle cx="72" cy="72" r="12" fill="${p}"/><circle cx="50" cy="50" r="14" fill="${c}"/></g>`,
+  cloud:  (f) => `<g fill="${f}"><ellipse cx="30" cy="60" rx="22" ry="18"/><ellipse cx="55" cy="50" rx="26" ry="22"/><ellipse cx="78" cy="62" rx="18" ry="16"/><rect x="20" y="58" width="70" height="16" rx="8"/></g>`,
+  rainbow:() => `<g fill="none" stroke-width="8"><path d="M10 90 A40 40 0 0 1 90 90" stroke="#F2B2C7"/><path d="M20 90 A30 30 0 0 1 80 90" stroke="#FBEA9E"/><path d="M30 90 A20 20 0 0 1 70 90" stroke="#BDD48C"/><path d="M40 90 A10 10 0 0 1 60 90" stroke="#9DC3E8"/></g>`,
+  leaf:   (f) => `<path fill="${f}" d="M50 92 C 20 70 20 30 50 8 C 80 30 80 70 50 92 Z M50 8 L50 92" stroke="${f}" stroke-width="2"/>`,
+  diamond:(f) => `<polygon fill="${f}" points="50,5 95,50 50,95 5,50"/>`,
+  teddy:  (f) => `<g fill="${f}"><circle cx="30" cy="28" r="14"/><circle cx="70" cy="28" r="14"/><circle cx="50" cy="52" r="32"/></g>`,
+  smiley: (bg, stroke) => `<g><circle cx="50" cy="50" r="42" fill="${bg}"/><circle cx="36" cy="42" r="4" fill="${stroke}"/><circle cx="64" cy="42" r="4" fill="${stroke}"/><path d="M32 58 Q50 76 68 58" fill="none" stroke="${stroke}" stroke-width="4" stroke-linecap="round"/></g>`,
+  sparkle:(f) => `<g fill="${f}"><path d="M50 20 L55 45 L80 50 L55 55 L50 80 L45 55 L20 50 L45 45 Z"/></g>`,
+  sprig:  (f) => `<g stroke="${f}" stroke-width="3" fill="none" stroke-linecap="round"><path d="M50 10 L50 90"/><path d="M50 30 Q38 34 34 42"/><path d="M50 45 Q62 49 66 57"/><path d="M50 60 Q38 64 34 72"/></g>`,
+};
+
+const hormoneWave = (stroke, mark='#F5D652') => `
+  <svg viewBox="0 0 200 80" preserveAspectRatio="none" style="width:100%; height:100%;">
+    <path d="M0 55 C 30 20, 50 65, 80 40 S 140 20, 170 55 S 200 45, 200 55" fill="none" stroke="${stroke}" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="100" cy="32" r="5" fill="${mark}"/>
+  </svg>`;
+
+const WM       = '<div class="watermark">grandma.app</div>';
+const WM_CREAM = '<div class="watermark cream">grandma.app</div>';
+
+const upper = (p) => p.toUpperCase();
+const lower = (p) => p.toLowerCase();
+function splitPoem(p) {
+  const L = p.toLowerCase();
+  for (const c of [' and ', ' but ']) {
+    const i = L.indexOf(c);
+    if (i > 0) return [p.slice(0, i).trim(), p.slice(i + 1).trim()];
+  }
+  const i = p.indexOf(',');
+  if (i > 0) return [p.slice(0, i).trim(), p.slice(i + 1).trim()];
+  const mid = Math.floor(p.length / 2);
+  let s = p.indexOf(' ', mid);
+  if (s < 0) s = p.lastIndexOf(' ', mid);
+  return s < 0 ? [p] : [p.slice(0, s).trim(), p.slice(s + 1).trim()];
+}
+
+/* ───────────────────────── 30 templates — each distinct ───────────────────────── */
+
+/* -------------- PRE-PREGNANCY (10) -------------- */
+const prePregTemplates = [
+  {
+    id: 'pp-01', name: '01 · Cream Heart',
+    /* Fraunces serif · cream bg · blush heart sticker */
+    render: (p) => `
+      <div class="bg bg-cream"></div>
+      <div style="position:absolute; right:-6%; bottom:-4%; width:52%; aspect-ratio:1;" class="deco">${svg(stickers.heart('#F9D8E2'))}</div>
+      <div class="label" style="color:#141313; top:18%;">DAILY AFFIRMATION</div>
+      <div class="fg">
+        <p class="phrase ff-fraunces" style="font-weight:700; font-size:17px; line-height:1.15; color:#141313; letter-spacing:-0.3px;">${p}</p>
+      </div>
+      ${WM}`
+  },
+  {
+    id: 'pp-02', name: '02 · Burgundy Lipstick',
+    /* Yeseva One serif italic · deep burgundy */
+    render: (p) => `
+      <div class="bg bg-burgundy"></div>
+      <div class="fg">
+        <p class="phrase ff-yeseva" style="font-style:italic; font-size:18px; line-height:1.2; color:#F2B2C7; letter-spacing:-0.5px;">${p}</p>
+      </div>
+      <div class="watermark" style="color:rgba(242,178,199,0.5);">grandma.app</div>`
+  },
+  {
+    id: 'pp-03', name: '03 · Rose Gold Foil',
+    /* Abril Fatface · metallic rose-gold gradient */
+    render: (p) => `
+      <div class="bg bg-rosegold"></div>
+      <div style="position:absolute; top:14%; left:50%; transform:translateX(-50%); width:14%;" class="deco">${svg(stickers.sparkle('#FFFEF8'))}</div>
+      <div class="fg">
+        <p class="phrase ff-abril" style="font-size:17px; line-height:1.15; color:#4A1D2B;">${p}</p>
+      </div>
+      <div class="watermark" style="color:rgba(74,29,43,0.5);">grandma.app</div>`
+  },
+  {
+    id: 'pp-04', name: '04 · Ticker Tape',
+    /* Space Mono · black with scrolling pink ticker */
+    render: (p) => `
+      <div class="bg bg-black"></div>
+      <div style="position:absolute; top:10%; left:0; right:0; overflow:hidden; white-space:nowrap; font-family:'Space Mono',monospace; font-size:8px; letter-spacing:1.4px; color:#FF4D9D; opacity:0.6;">${(upper(p) + ' · ').repeat(5)}</div>
+      <div style="position:absolute; bottom:10%; left:0; right:0; overflow:hidden; white-space:nowrap; font-family:'Space Mono',monospace; font-size:8px; letter-spacing:1.4px; color:#FF4D9D; opacity:0.6;">${(upper(p) + ' · ').repeat(5)}</div>
+      <div class="fg">
+        <p class="phrase ff-mono" style="font-weight:700; font-size:12px; line-height:1.25; color:#FFFFFF; letter-spacing:-0.2px;">${upper(p)}</p>
+      </div>
+      <div class="watermark" style="color:rgba(255,77,157,0.5);">grandma.app</div>`
+  },
+  {
+    id: 'pp-05', name: '05 · Neon Billboard',
+    /* Archivo Black · hot pink · white stars */
+    render: (p) => `
+      <div class="bg bg-neonpink"></div>
+      <div class="deco" style="position:absolute; top:10%; left:8%; width:12%;">${svg(stickers.star('#FFFEF8'))}</div>
+      <div class="deco" style="position:absolute; top:16%; right:12%; width:8%;">${svg(stickers.star('#FFFEF8'))}</div>
+      <div class="deco" style="position:absolute; bottom:16%; left:14%; width:7%;">${svg(stickers.star('#FFFEF8'))}</div>
+      <div class="deco" style="position:absolute; bottom:22%; right:10%; width:10%;">${svg(stickers.star('#FFFEF8'))}</div>
+      <div class="fg">
+        <p class="phrase ff-archivo" style="font-size:16px; line-height:1.05; color:#FFFEF8; letter-spacing:-0.4px;">${upper(p)}</p>
+      </div>
+      ${WM_CREAM}`
+  },
+  {
+    id: 'pp-06', name: '06 · Ransom Zine',
+    /* Permanent Marker + Caveat mix · cream with washi tape */
+    render: (p) => {
+      const words = p.split(' ');
+      const chunks = words.map((w, i) => {
+        const ff = i % 3 === 0 ? 'ff-marker' : i % 3 === 1 ? 'ff-caveat' : 'ff-mono';
+        const size = i % 3 === 0 ? 15 : i % 3 === 1 ? 18 : 11;
+        const rot = (i % 2 === 0 ? -2 : 3);
+        return `<span class="${ff}" style="display:inline-block; font-size:${size}px; line-height:1.1; margin:0 3px; transform:rotate(${rot}deg); color:#141313;">${w}</span>`;
+      }).join(' ');
+      return `
+        <div class="bg bg-cream"></div>
+        <div class="deco" style="position:absolute; top:12%; left:-6%; right:-6%; height:18px; background:#F5D652; transform:rotate(-3deg); opacity:0.85;"></div>
+        <div class="deco" style="position:absolute; bottom:20%; left:-6%; right:-6%; height:14px; background:#F2B2C7; transform:rotate(2deg); opacity:0.85;"></div>
+        <div class="fg">
+          <p class="phrase" style="font-size:inherit;">${chunks}</p>
+        </div>
+        ${WM}`;
+    }
+  },
+  {
+    id: 'pp-07', name: '07 · Candy Stripes',
+    /* Fraunces in white disc · diagonal stripes */
+    render: (p) => `
+      <div class="bg bg-stripes"></div>
+      <div class="fg">
+        <div style="width:82%; aspect-ratio:1; border-radius:50%; background:#FFFEF8; display:flex; align-items:center; justify-content:center; padding:18px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+          <p class="phrase ff-fraunces" style="font-weight:600; font-style:italic; font-size:14px; line-height:1.15; color:#E58BB4; letter-spacing:-0.3px;">${p}</p>
+        </div>
+      </div>
+      ${WM}`
+  },
+  {
+    id: 'pp-08', name: '08 · Sunset Photo',
+    /* Playfair Display · purple→coral→yellow gradient */
+    render: (p) => `
+      <div class="bg bg-sunset"></div>
+      <div class="fg bottom">
+        <p class="phrase ff-playfair" style="font-weight:900; font-style:italic; font-size:17px; line-height:1.1; color:#FFFEF8; letter-spacing:-0.3px; text-shadow:0 2px 12px rgba(0,0,0,0.3);">${p}</p>
+      </div>
+      ${WM_CREAM}`
+  },
+  {
+    id: 'pp-09', name: '09 · Hormone Chart',
+    /* IBM Plex Serif + Space Mono · dark data-viz */
+    render: (p) => `
+      <div class="bg bg-darknight"></div>
+      <div class="deco" style="position:absolute; top:26%; left:8%; right:8%; height:28%;">${hormoneWave('#E58BB4')}</div>
+      <div class="deco" style="position:absolute; top:26%; left:8%; right:8%; bottom:46%; border-top:1px dashed rgba(255,255,255,0.15); border-bottom:1px dashed rgba(255,255,255,0.15);"></div>
+      <div class="label ff-mono" style="color:#E58BB4; top:12%; text-align:center;">DAY 14 · OVULATION</div>
+      <div class="fg bottom">
+        <p class="phrase ff-plex" style="font-weight:400; font-style:italic; font-size:13px; line-height:1.3; color:#FFFEF8; padding: 0 4px;">${p}</p>
+      </div>
+      <div class="watermark" style="color:rgba(229,139,180,0.5);">grandma.app</div>`
+  },
+  {
+    id: 'pp-10', name: '10 · Polaroid Scrapbook',
+    /* Caveat handwriting · cream + tilted polaroid + washi */
+    render: (p) => `
+      <div class="bg bg-cream"></div>
+      <div class="deco" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-4deg); width:78%; aspect-ratio:4/5; background:#F7CFDD; border:4px solid #FFFEF8; box-shadow:6px 6px 0 rgba(20,19,19,0.12); display:flex; align-items:center; justify-content:center; padding:18px;">
+        <p class="phrase ff-caveat" style="font-weight:700; font-size:17px; line-height:1.25; color:#141313;">${p}</p>
+      </div>
+      <div class="deco" style="position:absolute; top:8%; left:16%; width:38%; height:16px; background:#F5D652; opacity:0.9; transform:rotate(-8deg);"></div>
+      ${WM}`
+  },
+];
+
+/* -------------- PREGNANCY (10) -------------- */
+const pregnancyTemplates = [
+  {
+    id: 'pg-01', name: '11 · Midnight Poem',
+    /* Instrument Serif italic · deep ink · star + moon */
+    render: (p) => {
+      const lines = splitPoem(p);
+      return `
+        <div class="bg bg-ink"></div>
+        <div class="deco" style="position:absolute; top:10%; left:14%; width:12%;">${svg(stickers.star('#F5D652'))}</div>
+        <div class="deco" style="position:absolute; bottom:10%; right:6%; width:26%;">${svg(stickers.moon('#C8B6E8'))}</div>
+        <div class="fg">
+          <div>${lines.map(l => `<p class="phrase ff-instrument" style="font-style:italic; font-size:16px; line-height:1.3; color:#FFFEF8;">${l}</p>`).join('')}</div>
+        </div>
+        ${WM_CREAM}`;
+    }
+  },
+  {
+    id: 'pg-02', name: '12 · Lilac Soft',
+    /* Instrument Serif italic lowercase · pastel lilac */
+    render: (p) => `
+      <div class="bg bg-lilac"></div>
+      <div class="deco" style="position:absolute; top:6%; left:6%; width:26%;">${svg(stickers.burst('#F5D652'))}</div>
+      <div class="deco" style="position:absolute; bottom:8%; right:6%; width:32%;">${svg(stickers.moon('#C8B6E8'))}</div>
+      <div class="fg">
+        <p class="phrase ff-instrument" style="font-style:italic; font-size:17px; line-height:1.2; color:#141313;">${lower(p)}</p>
+      </div>
+      ${WM}`
+  },
+  {
+    id: 'pg-03', name: '13 · Peach Poster',
+    /* Archivo Black · peach with sun burst */
+    render: (p) => `
+      <div class="bg bg-peach"></div>
+      <div class="deco" style="position:absolute; top:8%; left:6%; right:6%; bottom:22%; opacity:0.35;">${svg(stickers.burst('#F5D652'))}</div>
+      <div class="fg">
+        <p class="phrase ff-archivo" style="font-size:17px; line-height:1.02; color:#FFFEF8; letter-spacing:-0.6px;">${upper(p)}</p>
+      </div>
+      ${WM}`
+  },
+  {
+    id: 'pg-04', name: '14 · Retro Mustard',
+    /* Shrikhand 70s retro · mustard */
+    render: (p) => `
+      <div class="bg bg-mustard"></div>
+      <div class="deco" style="position:absolute; top:8%; left:10%; width:10%;">${svg(stickers.diamond('#2A1A3A'))}</div>
+      <div class="deco" style="position:absolute; bottom:14%; right:12%; width:10%;">${svg(stickers.diamond('#2A1A3A'))}</div>
+      <div class="fg">
+        <p class="phrase ff-shrikhand" style="font-size:16px; line-height:1.1; color:#2A1A3A;">${p}</p>
+      </div>
+      <div class="watermark" style="color:rgba(42,26,58,0.5);">grandma.app</div>`
+  },
+  {
+    id: 'pg-05', name: '15 · Sage Minimal',
+    /* Libre Caslon classic serif · sage green */
+    render: (p) => `
+      <div class="bg bg-sage"></div>
+      <div class="deco" style="position:absolute; top:54%; left:50%; transform:translateX(-50%); width:5%;">${svg(stickers.sprig('#2F3B27'))}</div>
+      <div class="fg top" style="padding-top:22%;">
+        <p class="phrase ff-libre" style="font-style:italic; font-size:14px; line-height:1.35; color:#1F2A18;">${lower(p)}</p>
+      </div>
+      <div class="watermark" style="color:rgba(31,42,24,0.5);">grandma.app</div>`
+  },
+  {
+    id: 'pg-06', name: '16 · Lime Punch',
+    /* DM Sans 800 left-aligned · lime green */
+    render: (p) => `
+      <div class="bg bg-lime"></div>
+      <div class="deco" style="position:absolute; top:6%; right:8%; width:26%;">${svg(stickers.flower('#F2B2C7','#F5D652'))}</div>
+      <div class="deco" style="position:absolute; top:40%; left:8%; width:12%;">${svg(stickers.star('#F5D652'))}</div>
+      <div class="deco" style="position:absolute; bottom:18%; right:12%; width:9%;">${svg(stickers.star('#F5D652'))}</div>
+      <div class="fg left">
+        <p class="phrase ff-dmsans" style="font-weight:800; font-size:15px; line-height:1.1; color:#141313; letter-spacing:-0.4px;">${p}</p>
+      </div>
+      ${WM}`
+  },
+  {
+    id: 'pg-07', name: '17 · Pink Blush',
+    /* Fraunces + signature · pink with tilted hearts */
+    render: (p) => `
+      <div class="bg bg-blush"></div>
+      <div class="deco" style="position:absolute; top:8%; left:6%; width:20%; transform:rotate(-14deg);">${svg(stickers.heart('#C8B6E8'))}</div>
+      <div class="deco" style="position:absolute; top:12%; right:10%; width:14%; transform:rotate(12deg);">${svg(stickers.heart('#FBEA9E'))}</div>
+      <div class="deco" style="position:absolute; bottom:-8%; left:32%; width:32%;">${svg(stickers.heart('#F9D8E2'))}</div>
+      <div class="fg">
+        <p class="phrase ff-fraunces" style="font-weight:600; font-size:16px; line-height:1.15; color:#141313; letter-spacing:-0.3px;">${p}</p>
+      </div>
+      <div class="signature ff-dmsans" style="color:#141313;">— xo, Grandma</div>
+      ${WM}`
+  },
+  {
+    id: 'pg-08', name: '18 · Week Numeral',
+    /* Fraunces Black giant "24" + Instrument italic caption */
+    render: (p) => `
+      <div class="bg bg-pregGrad"></div>
+      <div class="deco" style="position:absolute; top:2%; left:0; right:0; text-align:center; font-family:'Fraunces',serif; font-weight:900; font-size:118px; line-height:1; color:rgba(255,255,255,0.13); letter-spacing:-4px;">24</div>
+      <div class="label ff-mono" style="color:#FFFEF8; top:22%;">WEEK · TRIMESTER II</div>
+      <div class="fg" style="padding-top:40%;">
+        <p class="phrase ff-instrument" style="font-style:italic; font-size:15px; line-height:1.25; color:#FFFEF8;">${p}</p>
+      </div>
+      ${WM_CREAM}`
+  },
+  {
+    id: 'pg-09', name: '19 · Magazine Split',
+    /* Half cream half lavender · Fraunces editorial */
+    render: (p) => `
+      <div class="bg bg-half"></div>
+      <div class="label ff-mono" style="color:#141313; top:8%; left:8%; right:auto; text-align:left;">GRANDMA · VOL. 24</div>
+      <div class="fg left" style="padding: 20px;">
+        <p class="phrase ff-fraunces" style="font-weight:700; font-size:14px; line-height:1.15; color:#141313; letter-spacing:-0.3px; width:95%;">${p}</p>
+      </div>
+      <div class="deco" style="position:absolute; bottom:12%; right:10%; width:22%;">${svg(stickers.heart('#FFFEF8'))}</div>
+      ${WM}`
+  },
+  {
+    id: 'pg-10', name: '20 · Navy Bars',
+    /* Bebas Neue condensed · deep navy with yellow bars */
+    render: (p) => `
+      <div class="bg bg-navy"></div>
+      <div class="deco" style="position:absolute; top:16%; left:10%; width:30%; height:3px; background:#F5D652;"></div>
+      <div class="deco" style="position:absolute; bottom:16%; right:10%; width:30%; height:3px; background:#F5D652;"></div>
+      <div class="label ff-mono" style="color:#F5D652; top:22%; text-align:left; left:10%;">KEEP GOING</div>
+      <div class="fg left" style="padding: 40px 18px 18px;">
+        <p class="phrase ff-bebas" style="font-size:22px; line-height:1.02; color:#FFFEF8; letter-spacing:0.5px;">${upper(p)}</p>
+      </div>
+      <div class="watermark" style="color:rgba(245,214,82,0.6);">grandma.app</div>`
+  },
+];
+
+/* -------------- KIDS (10) -------------- */
+const kidsTemplates = [
+  {
+    id: 'k-01', name: '21 · Powder Star',
+    /* Fraunces · cream · blue star corner */
+    render: (p) => `
+      <div class="bg bg-cream"></div>
+      <div class="deco" style="position:absolute; right:-6%; bottom:-4%; width:48%;">${svg(stickers.star('#9DC3E8'))}</div>
+      <div class="label" style="color:#141313; top:18%;">DAILY AFFIRMATION</div>
+      <div class="fg">
+        <p class="phrase ff-fraunces" style="font-weight:700; font-size:17px; line-height:1.15; color:#141313; letter-spacing:-0.3px;">${p}</p>
+      </div>
+      ${WM}`
+  },
+  {
+    id: 'k-02', name: '22 · Sport Black/Gold',
+    /* Archivo Black · black with yellow accent bar */
+    render: (p) => `
+      <div class="bg bg-black"></div>
+      <div class="deco" style="position:absolute; top:20%; left:10%; width:30%; height:4px; background:#F5D652;"></div>
+      <div class="label ff-mono" style="color:#F5D652; top:26%; text-align:left; left:10%;">KIDS · AGE 3</div>
+      <div class="fg left" style="padding: 42px 18px 18px;">
+        <p class="phrase ff-archivo" style="font-size:15px; line-height:1.05; color:#FFFEF8; letter-spacing:-0.4px;">${upper(p)}</p>
+      </div>
+      <div class="watermark" style="color:rgba(245,214,82,0.6);">grandma.app</div>`
+  },
+  {
+    id: 'k-03', name: '23 · Cloud Gradient',
+    /* Instrument Serif italic lowercase · white→blue */
+    render: (p) => `
+      <div class="bg bg-cloud"></div>
+      <div class="deco" style="position:absolute; top:8%; left:4%; width:34%;">${svg(stickers.cloud('#FFFFFF'))}</div>
+      <div class="deco" style="position:absolute; top:28%; right:6%; width:26%;">${svg(stickers.cloud('#FFFFFF'))}</div>
+      <div class="deco" style="position:absolute; bottom:8%; left:16%; width:30%;">${svg(stickers.cloud('#FFFFFF'))}</div>
+      <div class="fg">
+        <p class="phrase ff-instrument" style="font-style:italic; font-size:17px; line-height:1.2; color:#0E1840;">${lower(p)}</p>
+      </div>
+      ${WM}`
+  },
+  {
+    id: 'k-04', name: '24 · Rainbow Corner',
+    /* Fraunces · cream · rainbow arc */
+    render: (p) => `
+      <div class="bg bg-cream"></div>
+      <div class="deco" style="position:absolute; top:-28%; right:-28%; width:78%; aspect-ratio:1;">${svg(stickers.rainbow())}</div>
+      <div class="label" style="color:#141313; top:22%;">DAILY AFFIRMATION</div>
+      <div class="fg">
+        <p class="phrase ff-fraunces" style="font-weight:700; font-size:16px; line-height:1.15; color:#141313; letter-spacing:-0.3px;">${p}</p>
+      </div>
+      ${WM}`
+  },
+  {
+    id: 'k-05', name: '25 · Sunny Smiley',
+    /* Shrikhand retro · bright yellow · smiley sun */
+    render: (p) => `
+      <div class="bg bg-sunny"></div>
+      <div class="deco" style="position:absolute; top:6%; right:6%; width:26%;">${svg(stickers.smiley('#FFFEF8','#0D6E6E'))}</div>
+      <div class="fg">
+        <p class="phrase ff-shrikhand" style="font-size:15px; line-height:1.15; color:#0D6E6E;">${p}</p>
+      </div>
+      <div class="watermark" style="color:rgba(13,110,110,0.6);">grandma.app</div>`
+  },
+  {
+    id: 'k-06', name: '26 · Denim Journal',
+    /* Caveat · denim texture · ruled white lines */
+    render: (p) => `
+      <div class="bg bg-denim"></div>
+      <div class="deco" style="position:absolute; top:28%; left:10%; right:10%; bottom:28%;
+           background-image: repeating-linear-gradient(to bottom, transparent 0 22px, rgba(255,255,255,0.18) 22px 23px);"></div>
+      <div class="label ff-mono" style="color:#F5D652; top:12%; left:10%; right:auto; text-align:left;">LUCAS · DAY 987</div>
+      <div class="fg">
+        <p class="phrase ff-caveat" style="font-weight:700; font-size:17px; line-height:1.25; color:#FFFEF8;">${p}</p>
+      </div>
+      <div class="deco" style="position:absolute; bottom:12%; right:12%; width:10%;">${svg(stickers.heart('#FF4D9D'))}</div>
+      <div class="watermark" style="color:rgba(255,254,248,0.5);">grandma.app</div>`
+  },
+  {
+    id: 'k-07', name: '27 · Confetti Party',
+    /* Fraunces bold · confetti dots */
+    render: (p) => {
+      const colors = ['#F2B2C7','#F5D652','#9DC3E8','#BDD48C','#E58BB4','#C8B6E8','#F5B896'];
+      const dots = Array.from({ length: 28 }, (_, i) => {
+        const top = Math.round((i * 37) % 90) + 2;
+        const left = Math.round((i * 71) % 92) + 2;
+        const color = colors[i % colors.length];
+        const size = (i % 3) + 4;
+        return `<span style="position:absolute; top:${top}%; left:${left}%; width:${size}px; height:${size}px; border-radius:50%; background:${color};"></span>`;
+      }).join('');
+      return `
+        <div class="bg bg-confetti"></div>
+        <div class="deco">${dots}</div>
+        <div class="fg">
+          <p class="phrase ff-fraunces" style="font-weight:900; font-style:italic; font-size:16px; line-height:1.15; color:#141313; letter-spacing:-0.4px;">${p}</p>
+        </div>
+        ${WM}`;
+    }
+  },
+  {
+    id: 'k-08', name: '28 · Stencil Milestone',
+    /* Unica One · vivid blue · giant stencil "18" */
+    render: (p) => `
+      <div class="bg bg-blue"></div>
+      <div class="deco" style="position:absolute; top:2%; left:0; right:0; text-align:center; font-family:'Unica One',sans-serif; font-size:140px; line-height:1; color:rgba(255,255,255,0.18); letter-spacing:-4px;">18</div>
+      <div class="label ff-mono" style="color:#FFFEF8; top:22%;">MONTHS</div>
+      <div class="fg" style="padding-top:42%;">
+        <p class="phrase ff-unica" style="font-size:15px; line-height:1.1; color:#FFFEF8; letter-spacing:0.5px;">${upper(p)}</p>
+      </div>
+      ${WM_CREAM}`
+  },
+  {
+    id: 'k-09', name: '29 · Sunrise Playfair',
+    /* Playfair Display · peach→pink→blue gradient · sun burst */
+    render: (p) => `
+      <div class="bg bg-sunrise"></div>
+      <div class="deco" style="position:absolute; top:6%; right:6%; width:28%;">${svg(stickers.burst('#F5D652'))}</div>
+      <div class="deco" style="position:absolute; bottom:8%; left:4%; width:36%;">${svg(stickers.cloud('#FFFFFF'))}</div>
+      <div class="fg">
+        <p class="phrase ff-playfair" style="font-weight:700; font-style:italic; font-size:17px; line-height:1.15; color:#141313; letter-spacing:-0.3px;">${p}</p>
+      </div>
+      ${WM}`
+  },
+  {
+    id: 'k-10', name: '30 · Vinyl Retro',
+    /* Monoton retro · dark purple radial · gold */
+    render: (p) => `
+      <div class="bg bg-vinyl"></div>
+      <div class="deco" style="position:absolute; inset:0; border-radius:50%; border:1px solid rgba(245,214,82,0.08); margin:6%;"></div>
+      <div class="deco" style="position:absolute; inset:0; border-radius:50%; border:1px solid rgba(245,214,82,0.06); margin:14%;"></div>
+      <div class="deco" style="position:absolute; inset:0; border-radius:50%; border:1px solid rgba(245,214,82,0.04); margin:22%;"></div>
+      <div class="fg">
+        <p class="phrase ff-monoton" style="font-size:15px; line-height:1.1; color:#F5D652; letter-spacing:1px;">${upper(p)}</p>
+      </div>
+      <div class="watermark" style="color:rgba(245,214,82,0.5);">grandma.app</div>`
+  },
+];
+
+const templateSets = { prePreg: prePregTemplates, pregnancy: pregnancyTemplates, kids: kidsTemplates };
+
+/* ───────────────────────── render logic ───────────────────────── */
+const phraseInput = document.getElementById('phraseInput');
+let currentStyle = 'bg'; // 'bg' | 'text'
+
+function renderGrid(mode) {
+  const grid = document.getElementById('grid-' + mode);
+  const phrase = phraseInput.value.trim() || 'What matters today: you showed up. That is everything.';
+  grid.innerHTML = templateSets[mode]
+    .map((t) => `
+      <div class="card show-name" data-mode="${mode}" data-id="${t.id}">
+        ${t.render(phrase)}
+        <div class="card-label">${t.name}</div>
+      </div>
+    `).join('');
+}
+
+function renderAll() { Object.keys(templateSets).forEach(renderGrid); }
+renderAll();
+
+/* ─── mode tabs ─── */
+document.getElementById('modeTabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('.mode-tab');
+  if (!btn) return;
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b === btn));
+  const mode = btn.dataset.mode;
+  ['prePreg','pregnancy','kids'].forEach(m => {
+    document.getElementById('grid-' + m).classList.toggle('hidden', m !== mode);
+  });
+});
+
+/* ─── style toggle (with bg / text only) ─── */
+document.getElementById('styleToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  currentStyle = btn.dataset.style;
+  document.querySelectorAll('#styleToggle button').forEach(b => b.classList.toggle('active', b === btn));
+  ['prePreg','pregnancy','kids'].forEach(m => {
+    document.getElementById('grid-' + m).classList.toggle('text-only', currentStyle === 'text');
+  });
+});
+
+/* ─── phrase live update ─── */
+let rt;
+phraseInput.addEventListener('input', () => { clearTimeout(rt); rt = setTimeout(renderAll, 120); });
+
+/* ─── modal + copy ─── */
+const modal = document.getElementById('modal');
+const modalCard = document.getElementById('modalCard');
+const modalName = document.getElementById('modalName');
+const toast = document.getElementById('toast');
+
+function showToast(msg = 'Copied to clipboard!') {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1400);
+}
+
+document.body.addEventListener('click', (e) => {
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const mode = card.dataset.mode;
+  const id = card.dataset.id;
+  const t = templateSets[mode].find(x => x.id === id);
+  if (!t) return;
+  const phrase = phraseInput.value.trim();
+  try { navigator.clipboard?.writeText(phrase); } catch {}
+  showToast();
+  modalName.textContent = t.name;
+  modalCard.innerHTML = t.render(phrase);
+  modalCard.classList.toggle('text-only', currentStyle === 'text');
+  modal.classList.add('open');
+});
+
+document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('open'));
+modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.classList.remove('open'); });
+</script>
+</body>
+</html>

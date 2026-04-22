@@ -5,13 +5,15 @@
  * Reuses the LogSheet shell for consistency with analytics detail sheets.
  */
 
-import { View, Text, StyleSheet, ScrollView } from 'react-native'
+import { useState } from 'react'
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native'
 import { useTheme } from '../../../constants/theme'
 import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
 import { Heart, Flower } from '../../ui/Stickers'
-import { getCycleInfo, type CycleConfig, type CyclePhase } from '../../../lib/cycleLogic'
-import { useFertileWindow } from '../../../lib/cycleAnalytics'
+import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../../lib/cycleLogic'
+import { useCycleHistory } from '../../../lib/cycleAnalytics'
+import { AffirmationShareModal } from '../pregnancy/AffirmationShareModal'
 
 export type CycleHomeDetailType = 'cycle' | 'hormones' | 'wisdom' | 'fertile'
 
@@ -42,7 +44,7 @@ export function CycleHomeDetailSheet({ type, onClose, cycleConfig }: Props) {
         {type === 'cycle' && <CycleDetail cycleConfig={cycleConfig} />}
         {type === 'hormones' && <HormonesDetail cycleConfig={cycleConfig} />}
         {type === 'wisdom' && <WisdomDetail cycleConfig={cycleConfig} />}
-        {type === 'fertile' && <FertileDetailBody />}
+        {type === 'fertile' && <FertileDetailBody cycleConfig={cycleConfig} />}
       </ScrollView>
     </LogSheet>
   )
@@ -161,18 +163,36 @@ function WisdomDetail({ cycleConfig }: { cycleConfig: CycleConfig }) {
   const { colors, stickers, isDark } = useTheme()
   const info = getCycleInfo(cycleConfig)
   const ink = isDark ? colors.text : '#141313'
+  const [shareOpen, setShareOpen] = useState(false)
+  const quote = PHASE_QUOTE[info.phase]
 
   return (
     <View style={{ gap: 18 }}>
       <View style={[detailStyles.quoteCard, { backgroundColor: stickers.yellow }]}>
         <Heart size={22} fill={stickers.pink} />
         <Body size={14} color="rgba(20,19,19,0.85)" style={{ marginTop: 10, fontStyle: 'italic' }}>
-          "{PHASE_QUOTE[info.phase]}"
+          "{quote}"
         </Body>
+        <Pressable
+          onPress={() => setShareOpen(true)}
+          style={({ pressed }) => [
+            detailStyles.shareBtn,
+            { backgroundColor: 'rgba(20,19,19,0.9)', opacity: pressed ? 0.85 : 1 },
+          ]}
+        >
+          <Text style={detailStyles.shareBtnText}>Share ↗</Text>
+        </Pressable>
       </View>
 
       <TipsSection title="ACTIVITIES FOR THIS PHASE" tips={info.activities} />
       <TipsSection title="DAILY TIPS" tips={info.dailyTips} />
+
+      <AffirmationShareModal
+        visible={shareOpen}
+        phrase={quote}
+        mode="prePreg"
+        onClose={() => setShareOpen(false)}
+      />
     </View>
   )
 }
@@ -184,21 +204,34 @@ const PHASE_QUOTE: Record<CyclePhase, string> = {
   luteal: 'Rest well tonight — tomorrow matters, dear.',
 }
 
-// ─── Fertile Detail Body (reuses useFertileWindow hook) ───────────────────
+// ─── Fertile Detail Body — synchronous render from cycleConfig ───────────
+//
+// Past-windows list is optional and populated from useCycleHistory when it
+// arrives. The current window is always computed synchronously from the
+// cycleConfig the parent already derived — no "Loading…" state.
 
-function FertileDetailBody() {
+function FertileDetailBody({ cycleConfig }: { cycleConfig: CycleConfig }) {
   const { colors, stickers, isDark } = useTheme()
-  const { data, isLoading } = useFertileWindow()
+  const { data: history } = useCycleHistory()
   const ink = isDark ? colors.text : '#141313'
 
-  if (isLoading) return <Body size={14} color={colors.textMuted} align="center">Loading…</Body>
-  if (!data || !data.current) {
-    return (
-      <Body size={14} color={colors.textMuted} align="center">
-        Log a period start to see your fertile window predictions.
-      </Body>
-    )
-  }
+  const info = getCycleInfo(cycleConfig, toDateStr(new Date()))
+  const startIso = formatFromCycleDay(cycleConfig.lastPeriodStart!, info.fertileStart - 1)
+  const endIso = formatFromCycleDay(cycleConfig.lastPeriodStart!, info.fertileEnd - 1)
+  const todayD = new Date(toDateStr(new Date()) + 'T00:00:00')
+  const endD = new Date(endIso + 'T00:00:00')
+  const daysLeft = Math.max(0, Math.round((endD.getTime() - todayD.getTime()) / 86400000))
+
+  const pastWindows = history
+    ? history.cycles
+        .slice(-4, -1)
+        .filter((c) => c.lengthDays !== null)
+        .map((c) => ({
+          start: formatFromCycleDay(c.startDate, (c.lengthDays as number) - 14 - 5 - 1),
+          end: formatFromCycleDay(c.startDate, (c.lengthDays as number) - 14 + 1 - 1),
+          cycleIdx: history.cycles.indexOf(c) + 1,
+        }))
+    : []
 
   return (
     <View style={{ gap: 18 }}>
@@ -209,11 +242,11 @@ function FertileDetailBody() {
         <View style={{ flex: 1, gap: 4 }}>
           <MonoCaps size={10} color={colors.textMuted}>THIS CYCLE</MonoCaps>
           <Display size={20} color={ink}>
-            {formatShort(data.current.start)} – {formatShort(data.current.end)}
+            {formatShort(startIso)} – {formatShort(endIso)}
           </Display>
           <Body size={13} color={colors.textSecondary}>
-            {data.current.daysLeft > 0
-              ? `${data.current.daysLeft} day${data.current.daysLeft === 1 ? '' : 's'} left`
+            {daysLeft > 0
+              ? `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`
               : 'Window closed'}
           </Body>
         </View>
@@ -226,10 +259,10 @@ function FertileDetailBody() {
         </Body>
       </View>
 
-      {data.history.length > 0 && (
+      {pastWindows.length > 0 && (
         <View style={{ gap: 6 }}>
           <MonoCaps size={10} color={colors.textMuted}>PAST WINDOWS</MonoCaps>
-          {data.history.map((w) => (
+          {pastWindows.map((w) => (
             <View key={w.cycleIdx} style={[detailStyles.historyRow, { borderColor: colors.borderLight }]}>
               <Body size={13} color={ink}>Cycle {w.cycleIdx}</Body>
               <Body size={13} color={colors.textSecondary}>
@@ -241,6 +274,12 @@ function FertileDetailBody() {
       )}
     </View>
   )
+}
+
+function formatFromCycleDay(cycleStart: string, dayOffset: number): string {
+  const d = new Date(cycleStart + 'T00:00:00')
+  d.setDate(d.getDate() + dayOffset)
+  return toDateStr(d)
 }
 
 function formatShort(iso: string): string {
@@ -337,6 +376,19 @@ const detailStyles = StyleSheet.create({
   quoteCard: {
     padding: 18,
     borderRadius: 22,
+  },
+  shareBtn: {
+    alignSelf: 'flex-start',
+    marginTop: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: 999,
+  },
+  shareBtnText: {
+    color: '#F5D652',
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 13,
+    letterSpacing: 0.3,
   },
   fertileCurrent: {
     flexDirection: 'row',

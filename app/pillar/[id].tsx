@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Pillar } from '../../types'
 import { pillars } from '../../lib/pillars'
+import { prePregPillars } from '../../lib/prePregPillars'
+import { pregnancyPillars } from '../../lib/pregnancyPillars'
 import TipCard from '../../components/pillar/TipCard'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { colors, typography, spacing, borderRadius } from '../../constants/theme'
@@ -11,7 +13,11 @@ import { colors, typography, spacing, borderRadius } from '../../constants/theme
 export default function PillarDetail() {
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
-  const pillar = pillars.find((p) => p.id === id) as Pillar | undefined
+  const pillar = (
+    pillars.find((p) => p.id === id)
+      ?? prePregPillars.find((p) => p.id === id)
+      ?? pregnancyPillars.find((p) => p.id === id)
+  ) as Pillar | undefined
 
   if (!pillar) {
     return (

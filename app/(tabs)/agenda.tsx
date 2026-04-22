@@ -9,44 +9,24 @@
  */
 
 import { View, StyleSheet } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useModeStore } from '../../store/useModeStore'
 import { CycleCalendar } from '../../components/calendar/CycleCalendar'
 import { PregnancyCalendar } from '../../components/calendar/PregnancyCalendar'
 import { KidsCalendar } from '../../components/calendar/KidsCalendar'
-import { NotificationBell } from '../../components/ui/NotificationBell'
 
 export default function AgendaScreen() {
   const mode = useModeStore((s) => s.mode)
-  const insets = useSafeAreaInsets()
 
   let inner
   if (mode === 'pre-pregnancy') inner = <CycleCalendar />
   else if (mode === 'pregnancy') inner = <PregnancyCalendar />
   else inner = <KidsCalendar />
 
-  // Pre-pregnancy and pregnancy render the bell inside their AgendaHeader
-  // action cluster (next to the + button). Kids calendar uses its own layout,
-  // so we keep the floating bell there only.
-  const showFloatingBell = mode === 'kids'
-
-  return (
-    <View style={styles.root}>
-      {inner}
-      {showFloatingBell && (
-        <View style={[styles.bellWrap, { top: insets.top + 12 }]}>
-          <NotificationBell />
-        </View>
-      )}
-    </View>
-  )
+  // All three calendars render the notification bell inline in their own
+  // header action cluster, so no floating bell is needed here.
+  return <View style={styles.root}>{inner}</View>
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  bellWrap: {
-    position: 'absolute',
-    right: 16,
-    zIndex: 10,
-  },
 })

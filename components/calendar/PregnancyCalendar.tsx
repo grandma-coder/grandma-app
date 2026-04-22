@@ -94,7 +94,6 @@ import {
   WeightLogForm,
   SleepLogForm,
   ExerciseLogForm,
-  NutritionLogForm,
   KegelLogForm,
   WaterLogForm,
   VitaminsLogForm,
@@ -102,6 +101,7 @@ import {
   BirthPrepTaskForm,
   ContractionTimerLogForm,
 } from './PregnancyLogForms'
+import { PregnancyMealForm } from './PregnancyMealForm'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -326,7 +326,7 @@ function LogFormRouter({
   if (type === 'kick_count')  return <KickCountForm date={date} onSaved={onSaved} />
   if (type === 'sleep')       return <SleepLogForm date={date} onSaved={onSaved} />
   if (type === 'exercise')    return <ExerciseLogForm date={date} onSaved={onSaved} />
-  if (type === 'nutrition')   return <NutritionLogForm date={date} onSaved={onSaved} />
+  if (type === 'nutrition')   return <PregnancyMealForm date={date} onSaved={onSaved} />
   if (type === 'kegel')       return <KegelLogForm date={date} onSaved={onSaved} />
   if (type === 'water')       return <WaterLogForm date={date} onSaved={onSaved} />
   if (type === 'vitamins')    return <VitaminsLogForm date={date} onSaved={onSaved} />
@@ -665,7 +665,7 @@ function LogDetailPopup({
       case 'kegel':       return { metric: rawValue, unit: 'sets', sublabel: 'KEGEL', isText: false }
       case 'symptom':     return { metric: rawValue, unit: '', sublabel: 'SYMPTOM', isText: true }
       case 'appointment': return { metric: rawValue, unit: '', sublabel: 'APPOINTMENT', isText: true }
-      case 'nutrition':   return { metric: rawValue, unit: '', sublabel: 'NUTRITION', isText: true }
+      case 'nutrition':   return { metric: rawValue, unit: 'kcal', sublabel: 'MEAL', isText: false }
       case 'nesting':     return { metric: rawValue, unit: '', sublabel: 'NESTING TASK', isText: true }
       case 'birth_prep':  return { metric: rawValue, unit: '', sublabel: 'BIRTH PREP', isText: true }
       case 'exam_result': return { metric: rawValue, unit: '', sublabel: 'EXAM RESULT', isText: true }
@@ -1074,6 +1074,39 @@ export function PregnancyCalendar() {
   const { data: calLogs = {}, refetch } = usePregnancyCalendarLogs(userId, year, month)
   const { data: todayLogs = {}, refetch: refetchToday } = usePregnancyTodayLogs(userId)
 
+  // Pulse newly-added log entries once to confirm the save.
+  const seenLogIdsRef = useRef<Set<string> | null>(null)
+  const [pulsingLogIds, setPulsingLogIds] = useState<Set<string>>(() => new Set())
+  useEffect(() => {
+    const currentIds = new Set<string>()
+    for (const dayLogs of Object.values(calLogs)) {
+      for (const l of dayLogs) currentIds.add(l.id)
+    }
+    if (seenLogIdsRef.current === null) {
+      seenLogIdsRef.current = currentIds
+      return
+    }
+    const newIds: string[] = []
+    for (const id of currentIds) {
+      if (!seenLogIdsRef.current.has(id)) newIds.push(id)
+    }
+    seenLogIdsRef.current = currentIds
+    if (newIds.length === 0) return
+    setPulsingLogIds((prev) => {
+      const next = new Set(prev)
+      for (const id of newIds) next.add(id)
+      return next
+    })
+    const t = setTimeout(() => {
+      setPulsingLogIds((prev) => {
+        const next = new Set(prev)
+        for (const id of newIds) next.delete(id)
+        return next
+      })
+    }, 1200)
+    return () => clearTimeout(t)
+  }, [calLogs])
+
   function handleSaved() {
     setLogForm(null)
     void refetch()
@@ -1285,6 +1318,8 @@ export function PregnancyCalendar() {
       tint: string
       icon: React.ReactNode
       onPress: () => void
+      pulse?: boolean
+      logged?: boolean
     }
 
     const rows: Row[] = []
@@ -1320,6 +1355,8 @@ export function PregnancyCalendar() {
         tint: tintKey,
         icon: logSticker(log.log_type, 28, isDark),
         onPress: () => setSelectedLog(log),
+        pulse: pulsingLogIds.has(log.id),
+        logged: true,
       })
     }
 
@@ -1373,6 +1410,8 @@ export function PregnancyCalendar() {
                     subtitle={r.subtitle}
                     tint={r.tint}
                     onPress={r.onPress}
+                    pulse={r.pulse}
+                    logged={r.logged}
                   />
                 </View>
               </View>

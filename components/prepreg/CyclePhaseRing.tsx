@@ -2,6 +2,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAppTheme } from '../ui/ThemeProvider'
 import { THEME_COLORS, borderRadius } from '../../constants/theme'
+import { CycleTodayPulse } from '../charts/GalleryCharts'
 import type { CycleInfo } from '../../lib/cycleLogic'
 
 interface CyclePhaseRingProps {
@@ -76,6 +77,20 @@ export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePh
             />
           )
         })}
+
+        {/* Animated ripple on today's dot (pattern 14 — pulse bubbles) */}
+        {(() => {
+          const today = dots.find((d) => d.isToday)
+          if (!today) return null
+          return (
+            <CycleTodayPulse
+              x={center + today.x}
+              y={center + today.y}
+              color={today.color}
+              r={6}
+            />
+          )
+        })()}
 
         {/* Center content */}
         <View style={styles.center}>

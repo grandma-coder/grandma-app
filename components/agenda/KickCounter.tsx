@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { GlassCard } from '../ui/GlassCard'
 import { colors, THEME_COLORS, borderRadius, shadows, typography } from '../../constants/theme'
+import { PulseBubblesLive } from '../charts/GalleryCharts'
 
 interface KickSession {
   id: string
@@ -80,6 +81,13 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
           </Pressable>
         ) : (
           <>
+            {/* Live pulse bubbles — gallery pattern 14 */}
+            <PulseBubblesLive
+              state="live"
+              color={THEME_COLORS.pink}
+              size={120}
+            />
+
             {/* Timer + count display */}
             <View style={styles.displayRow}>
               <View style={styles.displayBox}>

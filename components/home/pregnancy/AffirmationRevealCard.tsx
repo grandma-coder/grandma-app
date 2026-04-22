@@ -8,9 +8,10 @@ import {
   Easing,
 } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { LinearGradient } from 'expo-linear-gradient'
 import { useTheme } from '../../../constants/theme'
 import { MonoCaps, Body } from '../../ui/Typography'
-import { Heart as HeartSticker } from '../../stickers/BrandStickers'
+import { Heart as HeartSticker, Star as StarSticker } from '../../stickers/BrandStickers'
 import { supabase } from '../../../lib/supabase'
 import { AffirmationShareModal } from './AffirmationShareModal'
 
@@ -142,12 +143,36 @@ export function AffirmationRevealCard() {
   const textScale = useRef(new Animated.Value(0.85)).current
   const glowOpacity = useRef(new Animated.Value(0)).current
 
+  // Ambient VFX: pulsing halo + slowly rotating/floating stars
+  const haloPulse = useRef(new Animated.Value(0)).current
+  const starFloat = useRef(new Animated.Value(0)).current
+  const shimmer = useRef(new Animated.Value(0)).current
+
   // Card always renders as cream paper (even in dark mode) — the "paper pop" pattern.
   const paperBg = '#FFFEF8'
   const inkText = '#141313'
   const inkMuted = '#6E6763'
   const lilac = stickers.lilac
   const lilacSoft = stickers.lilacSoft
+
+  // Continuous ambient animations — halo pulse, star float, shimmer sweep
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(haloPulse, { toValue: 1, duration: 2200, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
+        Animated.timing(haloPulse, { toValue: 0, duration: 2200, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
+      ]),
+    ).start()
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(starFloat, { toValue: 1, duration: 3200, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
+        Animated.timing(starFloat, { toValue: 0, duration: 3200, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
+      ]),
+    ).start()
+    Animated.loop(
+      Animated.timing(shimmer, { toValue: 1, duration: 4000, useNativeDriver: true, easing: Easing.linear }),
+    ).start()
+  }, [])
 
   useEffect(() => {
     loadDailyAffirmation().then(setText)
@@ -211,11 +236,84 @@ export function AffirmationRevealCard() {
 
   return (
     <>
-    <View style={[styles.card, { backgroundColor: paperBg, borderColor: 'rgba(20,19,19,0.08)' }]}>
+    <View style={[styles.card, { backgroundColor: paperBg, borderColor: 'rgba(20,19,19,0.10)', shadowColor: lilac }]}>
+      {/* Top lilac gradient wash for depth */}
+      <LinearGradient
+        colors={[lilacSoft + 'CC', lilacSoft + '00']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.topWash}
+        pointerEvents="none"
+      />
+
+      {/* Diagonal shimmer sweep */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.shimmer,
+          {
+            transform: [
+              {
+                translateX: shimmer.interpolate({ inputRange: [0, 1], outputRange: [-260, 380] }),
+              },
+              { rotate: '18deg' },
+            ],
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
+
+      {/* Pulsing halo behind heart */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.heartHalo,
+          {
+            backgroundColor: lilac,
+            opacity: haloPulse.interpolate({ inputRange: [0, 1], outputRange: [0.18, 0.42] }),
+            transform: [{ scale: haloPulse.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1.15] }) }],
+          },
+        ]}
+      />
+
       {/* Floating heart sticker on the right */}
-      <View style={styles.heartSticker} pointerEvents="none">
-        <HeartSticker size={110} fill={stickers.pinkSoft} stroke="#141313" />
-      </View>
+      <Animated.View
+        style={[
+          styles.heartSticker,
+          {
+            transform: [
+              { translateY: starFloat.interpolate({ inputRange: [0, 1], outputRange: [0, -6] }) },
+              { rotate: starFloat.interpolate({ inputRange: [0, 1], outputRange: ['-4deg', '4deg'] }) },
+            ],
+          },
+        ]}
+        pointerEvents="none"
+      >
+        <HeartSticker size={110} fill={stickers.pink} stroke="#141313" />
+      </Animated.View>
+
+      {/* Decorative floating stars */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.starTopRight,
+          {
+            transform: [
+              { translateY: starFloat.interpolate({ inputRange: [0, 1], outputRange: [0, 4] }) },
+              { rotate: starFloat.interpolate({ inputRange: [0, 1], outputRange: ['-8deg', '12deg'] }) },
+            ],
+          },
+        ]}
+      >
+        <StarSticker size={22} fill={stickers.yellow} stroke="#141313" />
+      </Animated.View>
+
 
       <MonoCaps size={10} color={lilac} style={{ marginBottom: 12 }}>
         DAILY AFFIRMATION
@@ -242,10 +340,20 @@ export function AffirmationRevealCard() {
             onPress={handleReveal}
             style={({ pressed }) => [
               styles.revealBtn,
-              { backgroundColor: lilacSoft, opacity: pressed ? 0.8 : 1 },
+              {
+                shadowColor: lilac,
+                opacity: pressed ? 0.92 : 1,
+                transform: [{ scale: pressed ? 0.97 : 1 }],
+              },
             ]}
           >
-            <Text style={[styles.revealBtnText, { color: inkText }]}>Reveal today's →</Text>
+            <LinearGradient
+              colors={['#D9C9F5', '#A88EDB']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <Text style={[styles.revealBtnText, { color: '#1A1030' }]}>Reveal today's  →</Text>
           </Pressable>
         </View>
       ) : (
@@ -261,10 +369,20 @@ export function AffirmationRevealCard() {
               onPress={() => setShareOpen(true)}
               style={({ pressed }) => [
                 styles.shareBtn,
-                { backgroundColor: lilacSoft, opacity: pressed ? 0.8 : 1 },
+                {
+                  shadowColor: lilac,
+                  opacity: pressed ? 0.92 : 1,
+                  transform: [{ scale: pressed ? 0.97 : 1 }],
+                },
               ]}
             >
-              <Text style={[styles.shareBtnText, { color: inkText }]}>Share ↗</Text>
+              <LinearGradient
+                colors={['#D9C9F5', '#A88EDB']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <Text style={[styles.shareBtnText, { color: '#1A1030' }]}>Share ↗</Text>
             </Pressable>
           ) : null}
         </Animated.View>
@@ -273,6 +391,7 @@ export function AffirmationRevealCard() {
     <AffirmationShareModal
       visible={shareOpen}
       phrase={text ?? ''}
+      mode="pregnancy"
       onClose={() => setShareOpen(false)}
     />
     </>
@@ -287,13 +406,48 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     minHeight: 160,
     position: 'relative',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.22,
+    shadowRadius: 22,
+    elevation: 8,
+  },
+
+  topWash: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+  },
+
+  shimmer: {
+    position: 'absolute',
+    top: -40,
+    left: 0,
+    width: 110,
+    height: 260,
+  },
+
+  heartHalo: {
+    position: 'absolute',
+    right: -40,
+    bottom: -40,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+  },
+
+  starTopRight: {
+    position: 'absolute',
+    top: 14,
+    right: 20,
   },
 
   heartSticker: {
     position: 'absolute',
     right: -18,
     bottom: -18,
-    opacity: 0.9,
+    opacity: 0.95,
   },
 
   glowBurst: {
@@ -322,12 +476,18 @@ const styles = StyleSheet.create({
   revealBtn: {
     alignSelf: 'flex-start',
     borderRadius: 999,
-    paddingHorizontal: 18,
-    paddingVertical: 9,
+    paddingHorizontal: 20,
+    paddingVertical: 11,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
+    elevation: 6,
   },
   revealBtnText: {
     fontSize: 13,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
+    letterSpacing: 0.2,
   },
 
   revealedState: { gap: 6, paddingRight: 60 },
@@ -340,12 +500,18 @@ const styles = StyleSheet.create({
   shareBtn: {
     alignSelf: 'flex-start',
     borderRadius: 999,
-    paddingHorizontal: 18,
-    paddingVertical: 9,
+    paddingHorizontal: 20,
+    paddingVertical: 11,
     marginTop: 14,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
+    elevation: 6,
   },
   shareBtnText: {
     fontSize: 13,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
+    letterSpacing: 0.2,
   },
 })

@@ -1148,11 +1148,29 @@ export function usePregnancyTodayLogs(userId: string | undefined) {
         .order('created_at', { ascending: true })
       if (error) throw error
       const grouped: Record<string, TodayLogEntry> = {}
+      // For nutrition: aggregate all rows of the day → count = meals, sum of value = total kcal
+      let nutritionCount = 0
+      let nutritionTotalCals = 0
+      const nutritionEntries: Array<{ value: string | null; notes: string | null; created_at: string }> = []
       for (const row of data ?? []) {
+        if (row.log_type === 'nutrition') {
+          nutritionCount += 1
+          const kcal = row.value ? parseInt(row.value, 10) : 0
+          if (!isNaN(kcal)) nutritionTotalCals += kcal
+          nutritionEntries.push({ value: row.value, notes: row.notes, created_at: row.created_at })
+          continue
+        }
         grouped[row.log_type] = {
           value: row.value,
           notes: row.notes,
           created_at: row.created_at,
+        }
+      }
+      if (nutritionCount > 0) {
+        grouped['nutrition'] = {
+          value: String(nutritionCount),
+          notes: JSON.stringify({ totalCals: nutritionTotalCals, entries: nutritionEntries }),
+          created_at: nutritionEntries[nutritionEntries.length - 1].created_at,
         }
       }
       return grouped

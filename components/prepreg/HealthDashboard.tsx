@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { GlassCard } from '../ui/GlassCard'
 import { useAppTheme } from '../ui/ThemeProvider'
 import { colors, THEME_COLORS, borderRadius, shadows } from '../../constants/theme'
+import { LiquidFillBottle } from '../charts/GalleryCharts'
 import { DAILY_WATER_GOAL, getHydrationLevel } from '../../lib/cycleLogic'
 
 interface HealthDashboardProps {
@@ -31,31 +32,36 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
           </View>
         </View>
 
-        {/* Progress bar */}
-        <View style={[styles.progressBarBg, { backgroundColor: tc.border }]}>
-          <View style={[styles.progressBarFill, { width: `${hydration.percentage}%`, backgroundColor: hydration.color }]} />
-        </View>
-        <View style={styles.progressLabels}>
-          <Text style={[styles.progressPct, { color: hydration.color }]}>{hydration.percentage}%</Text>
-          <Text style={[styles.progressGoal, { color: tc.textTertiary }]}>{waterGlasses}/{DAILY_WATER_GOAL} glasses</Text>
-        </View>
-
-        {/* Water glasses visual */}
-        <View style={styles.glassesRow}>
-          {Array.from({ length: DAILY_WATER_GOAL }).map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.glass,
-                { borderColor: tc.border },
-                i < waterGlasses && { backgroundColor: '#4D96FF', borderColor: '#4D96FF' },
-              ]}
-            >
-              {i < waterGlasses && (
-                <Ionicons name="water" size={14} color="#FFF" />
-              )}
+        {/* Liquid-fill bottle — pattern 23 from the gallery */}
+        <View style={styles.bottleRow}>
+          <LiquidFillBottle
+            percent={hydration.percentage / 100}
+            size={120}
+            color={hydration.color}
+          />
+          <View style={styles.bottleSide}>
+            <Text style={[styles.progressPct, { color: hydration.color }]}>
+              {waterGlasses}
+              <Text style={[styles.progressGoal, { color: tc.textTertiary }]}>/{DAILY_WATER_GOAL}</Text>
+            </Text>
+            <Text style={[styles.progressGoal, { color: tc.textTertiary }]}>glasses today</Text>
+            <View style={styles.glassesRow}>
+              {Array.from({ length: DAILY_WATER_GOAL }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.glass,
+                    { borderColor: tc.border },
+                    i < waterGlasses && { backgroundColor: '#4D96FF', borderColor: '#4D96FF' },
+                  ]}
+                >
+                  {i < waterGlasses && (
+                    <Ionicons name="water" size={10} color="#FFF" />
+                  )}
+                </View>
+              ))}
             </View>
-          ))}
+          </View>
         </View>
 
         {/* Add water button */}
@@ -180,16 +186,27 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
 
+  bottleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 16,
+    marginTop: 4,
+  },
+  bottleSide: {
+    flex: 1,
+    gap: 4,
+  },
   glassesRow: {
     flexDirection: 'row',
-    gap: 6,
-    justifyContent: 'center',
-    marginBottom: 16,
+    gap: 4,
+    flexWrap: 'wrap',
+    marginTop: 6,
   },
   glass: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 20,
+    height: 20,
+    borderRadius: 6,
     borderWidth: 1.5,
     borderColor: colors.border,
     alignItems: 'center',

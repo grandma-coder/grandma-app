@@ -71,6 +71,7 @@ import { LogTile, LogTileGrid } from './LogTile'
 import { SectionHeader } from './SectionHeader'
 import { AgendaWeekStrip } from './AgendaWeekStrip'
 import { Display, Body } from '../ui/Typography'
+import { NotificationBell } from '../ui/NotificationBell'
 import { logSticker } from './logStickers'
 import {
   FeedingForm,
@@ -563,6 +564,8 @@ export function KidsCalendar() {
 
   // Real data from Supabase
   const [monthLogs, setMonthLogs] = useState<ChildLog[]>([])
+  const seenLogIdsRef = useRef<Set<string> | null>(null)
+  const [pulsingLogIds, setPulsingLogIds] = useState<Set<string>>(() => new Set())
   const [loading, setLoading] = useState(false)
   const [profileNames, setProfileNames] = useState<Record<string, string>>({}) // userId → display name
   const [selectedLog, setSelectedLog] = useState<ChildLog | null>(null)
@@ -638,6 +641,34 @@ export function KidsCalendar() {
   }, [year, month, selectedChildId, children])
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
+
+  useEffect(() => {
+    const currentIds = new Set<string>()
+    for (const l of monthLogs) currentIds.add(l.id)
+    if (seenLogIdsRef.current === null) {
+      seenLogIdsRef.current = currentIds
+      return
+    }
+    const newIds: string[] = []
+    for (const id of currentIds) {
+      if (!seenLogIdsRef.current.has(id)) newIds.push(id)
+    }
+    seenLogIdsRef.current = currentIds
+    if (newIds.length === 0) return
+    setPulsingLogIds((prev) => {
+      const next = new Set(prev)
+      for (const id of newIds) next.add(id)
+      return next
+    })
+    const t = setTimeout(() => {
+      setPulsingLogIds((prev) => {
+        const next = new Set(prev)
+        for (const id of newIds) next.delete(id)
+        return next
+      })
+    }, 1200)
+    return () => clearTimeout(t)
+  }, [monthLogs])
 
   // ── Fetch routines ──────────────────────────────────────────────────────
   const fetchRoutines = useCallback(async () => {
@@ -1387,6 +1418,8 @@ export function KidsCalendar() {
       icon: React.ReactNode
       chip?: { label: string; color: string }
       onPress: () => void
+      pulse?: boolean
+      logged?: boolean
     }
 
     const rows: Row[] = []
@@ -1428,6 +1461,8 @@ export function KidsCalendar() {
         icon: logSticker(log.type, 28, isDark),
         chip: selectedChildId === 'all' && childName ? { label: childName, color: childColor(ci) } : undefined,
         onPress: () => { setSelectedLog(log); setEditing(false) },
+        pulse: pulsingLogIds.has(log.id),
+        logged: true,
       })
     }
 
@@ -1464,6 +1499,8 @@ export function KidsCalendar() {
                     tint={r.tint}
                     chip={r.chip}
                     onPress={r.onPress}
+                    pulse={r.pulse}
+                    logged={r.logged}
                   />
                 </View>
               </View>
@@ -1673,6 +1710,8 @@ export function KidsCalendar() {
               )
             })}
           </ScrollView>
+
+          <NotificationBell />
 
           {/* Add-log "+" — inline with child pills per mock */}
           <Pressable

@@ -21,6 +21,8 @@ interface RequestBody {
   mediaType?: 'image/jpeg' | 'image/png' | 'image/webp'
   childAgeMonths?: number
   meal?: 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'night_snack'
+  /** Who is eating. Default 'child'. 'pregnant' uses adult portions + pregnancy-aware notes. */
+  audience?: 'child' | 'pregnant'
 }
 
 interface FoodItem {
@@ -37,7 +39,7 @@ interface AiResponse {
   notes?: string
 }
 
-const SYSTEM_PROMPT = `You are a pediatric nutrition helper inside the grandma.app parenting app.
+const SYSTEM_PROMPT_CHILD = `You are a pediatric nutrition helper inside the grandma.app parenting app.
 
 Your ONLY job is to identify foods and estimate calories for a young child's portion
 (default 1–5 years old; adjust portion size for the age when provided).
@@ -69,6 +71,36 @@ Rules:
   lower portionG to realistic values.
 - Calories are integers. Round to the nearest kcal.`
 
+const SYSTEM_PROMPT_PREGNANT = `You are a prenatal nutrition helper inside the grandma.app pregnancy companion.
+
+Your ONLY job is to identify foods on a pregnant person's plate and estimate calories
+for a normal adult portion (typical pregnancy meal).
+
+STRICT OUTPUT — JSON only, no prose, no markdown, matching this schema:
+{
+  "foods": [
+    {
+      "name": "lowercase canonical food name (e.g. 'grilled chicken', 'quinoa salad', 'greek yogurt')",
+      "cals": <integer kcal for the ADULT portion visible>,
+      "category": "fruit" | "vegetable" | "grain" | "protein" | "dairy" | "drink" | "snack" | "mixed",
+      "portionG": <integer grams, optional>,
+      "confidence": "high" | "medium" | "low"
+    }
+  ],
+  "totalCals": <sum of food.cals>,
+  "notes": "optional short warm note for the pregnant person — ONLY if something pregnancy-relevant applies (e.g. unpasteurized cheese risk, high-mercury fish, raw fish, deli meat caution, caffeine note, folate-rich praise, iron boost). Omit the note entirely when nothing stands out."
+}
+
+Rules:
+- ALWAYS return valid JSON. No commentary before or after.
+- Estimate ADULT portions — typical dinner plate serving. Do NOT shrink to child-sized portions.
+- If multiple items are on a plate, return each separately (don't merge).
+- If the input is ambiguous or not food at all, return { "foods": [], "totalCals": 0, "notes": "..." }.
+- Category "mixed" is for composite dishes (sandwiches, pizza, casseroles, stews).
+- Use English names. Map localized inputs (banana/banane/plátano) to English.
+- Notes must be warm, brief, and only when genuinely useful. Never mention "toddler" or "child portion".
+- Calories are integers. Round to the nearest kcal.`
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -78,15 +110,25 @@ serve(async (req) => {
     if (body.mode === 'text' && !body.text?.trim()) throw new Error('text required')
     if (body.mode === 'image' && !body.imageBase64) throw new Error('imageBase64 required')
 
-    const ageLine = body.childAgeMonths
-      ? `Child age: ${body.childAgeMonths} months.`
-      : 'Child age: toddler (assume 2 years old).'
+    const audience: 'child' | 'pregnant' = body.audience === 'pregnant' ? 'pregnant' : 'child'
+
+    const ageLine = audience === 'pregnant'
+      ? 'Eater: pregnant adult (normal adult portion).'
+      : (body.childAgeMonths
+        ? `Child age: ${body.childAgeMonths} months.`
+        : 'Child age: toddler (assume 2 years old).')
     const mealLine = body.meal ? `Meal context: ${body.meal}.` : ''
 
     const userText =
-      body.mode === 'text'
-        ? `${ageLine}\n${mealLine}\nCaregiver wrote: "${body.text}"\n\nIdentify each food they listed and estimate calories for the child's portion. Respond with JSON only.`
-        : `${ageLine}\n${mealLine}\nHere is a photo of what the child is eating. Identify each distinct food item visible on the plate/bowl/bottle/cup and estimate calories for what appears to be the child's portion. If the image is not food, return empty foods array. Respond with JSON only.`
+      audience === 'pregnant'
+        ? (body.mode === 'text'
+          ? `${ageLine}\n${mealLine}\nShe wrote: "${body.text}"\n\nIdentify each food she listed and estimate calories for her adult portion. Respond with JSON only.`
+          : `${ageLine}\n${mealLine}\nHere is a photo of what she is eating. Identify each distinct food item visible and estimate calories for the adult portion shown. If the image is not food, return empty foods array. Respond with JSON only.`)
+        : (body.mode === 'text'
+          ? `${ageLine}\n${mealLine}\nCaregiver wrote: "${body.text}"\n\nIdentify each food they listed and estimate calories for the child's portion. Respond with JSON only.`
+          : `${ageLine}\n${mealLine}\nHere is a photo of what the child is eating. Identify each distinct food item visible on the plate/bowl/bottle/cup and estimate calories for what appears to be the child's portion. If the image is not food, return empty foods array. Respond with JSON only.`)
+
+    const systemPrompt = audience === 'pregnant' ? SYSTEM_PROMPT_PREGNANT : SYSTEM_PROMPT_CHILD
 
     const content: unknown[] = []
     if (body.mode === 'image') {
@@ -107,7 +149,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: body.mode === 'image' ? VISION_MODEL : TEXT_MODEL,
         max_tokens: 800,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt,
         messages: [{ role: 'user', content }],
       }),
     })

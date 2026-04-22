@@ -28,10 +28,13 @@ export interface AiFoodResult {
 
 type Meal = 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'night_snack'
 
+type Audience = 'child' | 'pregnant'
+
 interface TextArgs {
   text: string
   childAgeMonths?: number
   meal?: Meal
+  audience?: Audience
 }
 
 interface ImageArgs {
@@ -39,6 +42,7 @@ interface ImageArgs {
   mediaType?: 'image/jpeg' | 'image/png' | 'image/webp'
   childAgeMonths?: number
   meal?: Meal
+  audience?: Audience
 }
 
 async function invoke(body: Record<string, unknown>): Promise<AiFoodResult> {

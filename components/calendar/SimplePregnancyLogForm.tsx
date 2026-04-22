@@ -14,10 +14,13 @@ import {
 } from 'react-native'
 import { useTheme } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
+import {
+  LogWeight, LogWater, LogSleep, LogExercise,
+} from '../stickers/RewardStickers'
 
 const SCREEN_W = Dimensions.get('window').width
 
-export type SimpleLogType = 'weight' | 'water' | 'sleep' | 'exercise' | 'nutrition'
+export type SimpleLogType = 'weight' | 'water' | 'sleep' | 'exercise'
 
 interface Props {
   type: SimpleLogType
@@ -25,17 +28,19 @@ interface Props {
   onSaved: () => void
 }
 
+type StickerFn = (props: { size?: number; fill?: string; stroke?: string }) => React.ReactElement
+
 const CONFIGS: Record<SimpleLogType, {
   label: string
   placeholder: string
   unit: string
   keyboard: 'decimal-pad' | 'number-pad'
+  Sticker: StickerFn
 }> = {
-  weight:    { label: '⚖️ Log Weight',   placeholder: 'e.g. 68.5',              unit: 'kg',      keyboard: 'decimal-pad' },
-  water:     { label: '💧 Log Water',    placeholder: 'Glasses today (0–8)',    unit: 'glasses', keyboard: 'number-pad' },
-  sleep:     { label: '😴 Log Sleep',    placeholder: 'Hours slept e.g. 7.5',   unit: 'hours',   keyboard: 'decimal-pad' },
-  exercise:  { label: '🧘 Log Exercise', placeholder: 'Minutes e.g. 30',        unit: 'min',     keyboard: 'number-pad' },
-  nutrition: { label: '🥗 Log Meals',    placeholder: 'Meals today (1–6)',      unit: 'meals',   keyboard: 'number-pad' },
+  weight:    { label: 'Log Weight',   placeholder: 'e.g. 68.5',              unit: 'kg',      keyboard: 'decimal-pad', Sticker: LogWeight },
+  water:     { label: 'Log Water',    placeholder: 'Glasses today (0–8)',    unit: 'glasses', keyboard: 'number-pad',  Sticker: LogWater },
+  sleep:     { label: 'Log Sleep',    placeholder: 'Hours slept e.g. 7.5',   unit: 'hours',   keyboard: 'decimal-pad', Sticker: LogSleep },
+  exercise:  { label: 'Log Exercise', placeholder: 'Minutes e.g. 30',        unit: 'min',     keyboard: 'number-pad',  Sticker: LogExercise },
 }
 
 export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
@@ -61,7 +66,10 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
 
   return (
     <View style={styles.form}>
-      <Text style={[styles.title, { color: colors.text }]}>{cfg.label}</Text>
+      <View style={styles.header}>
+        <cfg.Sticker size={32} />
+        <Text style={[styles.title, { color: colors.text }]}>{cfg.label}</Text>
+      </View>
 
       <View style={[styles.input, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
         <Text
@@ -111,6 +119,7 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
 
 const styles = StyleSheet.create({
   form: { padding: 24, gap: 16 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   title: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', textAlign: 'center' },
   input: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

@@ -27,6 +27,7 @@ import {
   KickCountForm,
 } from '../../calendar/PregnancyLogForms'
 import { SimplePregnancyLogForm } from '../../calendar/SimplePregnancyLogForm'
+import { PregnancyMealForm } from '../../calendar/PregnancyMealForm'
 
 const SCREEN_W = Dimensions.get('window').width
 const CARD_W = 130
@@ -267,6 +268,14 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
   const kicksVal = todayLogs['kick_count']?.value ? parseInt(todayLogs['kick_count'].value, 10) : null
   const moodVal = todayLogs['mood']?.notes ?? todayLogs['mood']?.value ?? null
   const nutritionVal = todayLogs['nutrition']?.value ? parseInt(todayLogs['nutrition'].value, 10) : 0
+  const nutritionTotalCals: number = (() => {
+    const raw = todayLogs['nutrition']?.notes
+    if (!raw) return 0
+    try {
+      const parsed = JSON.parse(raw) as { totalCals?: number }
+      return typeof parsed.totalCals === 'number' ? parsed.totalCals : 0
+    } catch { return 0 }
+  })()
   const exerciseLogged = !!todayLogs['exercise']
 
   const moodLabels: Record<string, string> = {
@@ -336,6 +345,7 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
       Sticker: LogNutrition,
       label: 'Meals',
       value: `${nutritionVal}/3`,
+      subLabel: nutritionTotalCals > 0 ? `~${nutritionTotalCals} kcal today` : undefined,
       progress: Math.min(1, nutritionVal / 3),
       color: stickers.peach,
       tint: stickers.peachSoft,
@@ -370,8 +380,11 @@ export function VitalsCarousel({ todayLogs, weekNumber, userId }: Props) {
     if (activeLog === 'mood') return <PregnancyMoodForm date={today} onSaved={handleLogClose} />
     if (activeLog === 'symptom') return <PregnancySymptomsForm date={today} onSaved={handleLogClose} />
     if (activeLog === 'kick_count') return <KickCountForm date={today} onSaved={handleLogClose} />
+    if (activeLog === 'nutrition') {
+      return <PregnancyMealForm userId={userId} onSaved={handleLogClose} />
+    }
     if (activeLog === 'weight' || activeLog === 'water' || activeLog === 'sleep'
-        || activeLog === 'exercise' || activeLog === 'nutrition') {
+        || activeLog === 'exercise') {
       return <SimplePregnancyLogForm type={activeLog} userId={userId} onSaved={handleLogClose} />
     }
     return null
