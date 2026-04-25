@@ -13,7 +13,7 @@ import {
 } from 'react-native'
 import { X, ChevronDown, ChevronUp } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme } from '../../constants/theme'
+import { useTheme, brand } from '../../constants/theme'
 import { Display, Body } from '../ui/Typography'
 import { getBirthTopic } from '../../lib/birthGuideData'
 import type { BirthTopicKey, BirthSection } from '../../lib/birthGuideData'
@@ -292,6 +292,6 @@ const styles = StyleSheet.create({
   ctaText: {
     fontSize: 14,
     fontFamily: 'DMSans_600SemiBold',
-    color: '#7048B8',
+    color: brand.primary,
   },
 })
