@@ -556,56 +556,42 @@ export function MoodStickerStrip({ days }: { days: MoodStripDay[] }) {
       <View style={{ flexDirection: 'row' }}>
         {days.map((day, i) => {
           const size = BASE + Math.round(day.intensityRatio * RANGE)
-          const fill = day.dominantMood ? moodFaceFill(day.dominantMood) : undefined
-          const variant = day.dominantMood ? moodFaceVariant(day.dominantMood) : undefined
-          const stroke = isDark ? (fill ?? colors.border) : '#141313'
 
           return (
             <View
               key={i}
               style={{ flex: 1, alignItems: 'center', gap: 6, paddingVertical: 10 }}
             >
-              {day.dominantMood ? (
-                // Soap bubble wrapper
-                <View
-                  style={{
-                    width: size,
-                    height: size,
-                    borderRadius: size / 2,
-                    backgroundColor: (fill ?? '#FBEA9E') + '40',
-                    borderWidth: 1.5,
-                    borderColor: (fill ?? '#FBEA9E') + '70',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'hidden',
-                    shadowColor: fill ?? '#FBEA9E',
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 8,
-                    elevation: 4,
-                  }}
-                >
-                  {/* Shine crescent */}
+              {day.dominantMood ? (() => {
+                const fill = moodFaceFill(day.dominantMood)
+                const variant = moodFaceVariant(day.dominantMood)
+                const stroke = isDark ? fill : '#141313'
+                return (
+                  // Soap bubble wrapper
                   <View
-                    style={{
-                      position: 'absolute',
-                      top: '14%',
-                      left: '18%',
-                      width: '30%',
-                      height: '20%',
-                      borderRadius: 999,
-                      backgroundColor: 'rgba(255,255,255,0.5)',
-                      transform: [{ rotate: '-22deg' }],
-                    }}
-                  />
-                  <MoodFace
-                    size={Math.round(size * 0.72)}
-                    variant={variant!}
-                    fill={fill!}
-                    stroke={stroke}
-                  />
-                </View>
-              ) : (
+                    style={[
+                      moodStyles.soapBubble,
+                      {
+                        width: size,
+                        height: size,
+                        borderRadius: size / 2,
+                        backgroundColor: fill + '40',
+                        borderColor: fill + '70',
+                        shadowColor: fill,
+                      },
+                    ]}
+                  >
+                    {/* Shine crescent */}
+                    <View style={moodStyles.shineCrescent} />
+                    <MoodFace
+                      size={Math.round(size * 0.72)}
+                      variant={variant}
+                      fill={fill}
+                      stroke={stroke}
+                    />
+                  </View>
+                )
+              })() : (
                 // Empty day — dashed circle
                 <View
                   style={{
@@ -652,4 +638,27 @@ const styles = StyleSheet.create({
   bubble: { alignItems: 'center', justifyContent: 'center', gap: 2 },
   bubbleCount: { fontWeight: '900' },
   bubbleLabel: { fontWeight: '600', textAlign: 'center' },
+})
+
+const moodStyles = StyleSheet.create({
+  soapBubble: {
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  shineCrescent: {
+    position: 'absolute',
+    top: '14%',
+    left: '18%',
+    width: '30%',
+    height: '20%',
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    transform: [{ rotate: '-22deg' }],
+  },
 })
