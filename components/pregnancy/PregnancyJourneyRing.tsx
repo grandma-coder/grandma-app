@@ -24,10 +24,10 @@ const AnimatedG = Animated.createAnimatedComponent(G)
 
 // ─── Layout constants ────────────────────────────────────────────────────────
 const SVG_SIZE = 320
-const CX = SVG_SIZE / 2        // 160
-const CY = SVG_SIZE / 2        // 160
+const CX = SVG_SIZE / 2
+const CY = SVG_SIZE / 2
 const RING_R = 128
-const ANCHOR_DEG = 90          // 6 o'clock = bottom
+const ANCHOR_DEG = 90
 
 // ─── Color helpers ───────────────────────────────────────────────────────────
 function triColor(w: number): string {
@@ -115,7 +115,7 @@ interface Props {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
-  const { font } = useTheme()
+  const { font, colors } = useTheme()
 
   const [userId, setUserId] = useState<string | undefined>()
   useEffect(() => {
@@ -126,7 +126,6 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
 
   const dots = useMemo(() => buildDotConfigs(weekNumber), [weekNumber])
 
-  // Initial rotation: place weekNumber at bottom anchor
   const initialRot = 180 - ((weekNumber - 1) / 40) * 360
   const rotationDeg = useSharedValue(initialRot)
 
@@ -181,9 +180,9 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
   })
 
   // ── Gesture tracking refs ──────────────────────────────────────────────────
-  const lastAngleRef   = useRef(0)
-  const velocityRef    = useRef(0)
-  const totalMoveRef   = useRef(0)
+  const lastAngleRef = useRef(0)
+  const velocityRef  = useRef(0)
+  const totalMoveRef = useRef(0)
 
   const getAngle = (e: GestureResponderEvent): number => {
     const { locationX, locationY } = e.nativeEvent
@@ -243,9 +242,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
               best = i
             }
           }
-          if (best !== null) {
-            snapToWeek(best + 1)
-          }
+          if (best !== null) snapToWeek(best + 1)
         } else {
           rotationDeg.value = withDecay({
             velocity: velocityRef.current * 12,
@@ -264,6 +261,11 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
   const statusLabel = isCurrWeek ? 'You are here' : isPastWeek ? 'Completed' : 'Upcoming'
   const dateLabel = dueDate ? formatDateRange(dueDate, selectedWeek) : '—'
 
+  // Theme-aware colors for SVG (must be strings for SVG props)
+  const orbitStroke = colors.border
+  const anchorRingStroke = colors.textSecondary
+  const futureDotBg = colors.border
+
   return (
     <View style={styles.container}>
       {/* ── Ring ── */}
@@ -274,7 +276,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
             <Circle
               cx={CX} cy={CY} r={RING_R}
               fill="none"
-              stroke="rgba(255,255,255,0.06)"
+              stroke={orbitStroke}
               strokeWidth={1.5}
             />
             {/* Rotating dot group */}
@@ -294,7 +296,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
             <Circle
               cx={CX} cy={CY + RING_R} r={14}
               fill="none"
-              stroke="rgba(255,255,255,0.65)"
+              stroke={anchorRingStroke}
               strokeWidth={2}
             />
             {/* Anchor dot indicator */}
@@ -304,19 +306,19 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
 
         {/* Center overlay */}
         <View style={styles.centerOverlay} pointerEvents="none">
-          <Text style={[styles.centerLabel, { color: 'rgba(255,255,255,0.35)', fontFamily: font.bodySemiBold }]}>
+          <Text style={[styles.centerLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
             WEEK
           </Text>
-          <Text style={[styles.centerNumber, { color: '#fff', fontFamily: font.display }]}>
+          <Text style={[styles.centerNumber, { color: colors.text, fontFamily: font.display }]}>
             {selectedWeek}
           </Text>
-          <Text style={[styles.centerStatus, { color: 'rgba(255,255,255,0.28)', fontFamily: font.bodyMedium }]}>
+          <Text style={[styles.centerStatus, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
             {isCurrWeek ? 'YOU ARE HERE' : isPastWeek ? 'COMPLETED' : 'UPCOMING'}
           </Text>
         </View>
       </View>
 
-      <Text style={[styles.hint, { color: 'rgba(255,255,255,0.18)', fontFamily: font.body }]}>
+      <Text style={[styles.hint, { color: colors.textFaint, fontFamily: font.body }]}>
         ↺ drag to spin · tap any week
       </Text>
 
@@ -340,20 +342,23 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
 
         {/* Logged this week */}
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: 'rgba(255,255,255,0.28)', fontFamily: font.bodySemiBold }]}>
+          <Text style={[styles.sectionLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
             LOGGED THIS WEEK
           </Text>
           {weekLogTypes.length > 0 ? (
             <View style={styles.chipsRow}>
               {weekLogTypes.map((type) => {
-                const display = LOG_DISPLAY[type] ?? { label: type, color: '#fff' }
+                const display = LOG_DISPLAY[type] ?? { label: type, color: colors.textSecondary }
                 return (
                   <View
                     key={type}
-                    style={[styles.chip, { borderColor: 'rgba(255,255,255,0.10)' }]}
+                    style={[styles.chip, {
+                      borderColor: colors.border,
+                      backgroundColor: colors.surfaceGlass,
+                    }]}
                   >
                     <View style={[styles.chipDot, { backgroundColor: display.color }]} />
-                    <Text style={[styles.chipText, { color: 'rgba(255,255,255,0.70)', fontFamily: font.bodySemiBold }]}>
+                    <Text style={[styles.chipText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>
                       {display.label}
                     </Text>
                   </View>
@@ -361,7 +366,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
               })}
             </View>
           ) : (
-            <Text style={[styles.emptyLogs, { color: 'rgba(255,255,255,0.22)', fontFamily: font.body }]}>
+            <Text style={[styles.emptyLogs, { color: colors.textFaint, fontFamily: font.body }]}>
               {isCurrWeek
                 ? 'Nothing logged yet this week.'
                 : isPastWeek
@@ -372,14 +377,14 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
         </View>
 
         {/* Divider */}
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
         {/* This week milestone note */}
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: 'rgba(255,255,255,0.28)', fontFamily: font.bodySemiBold }]}>
+          <Text style={[styles.sectionLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
             THIS WEEK
           </Text>
-          <Text style={[styles.noteText, { color: 'rgba(255,255,255,0.62)', fontFamily: font.body }]}>
+          <Text style={[styles.noteText, { color: colors.textSecondary, fontFamily: font.body }]}>
             {weekData.developmentFact}
           </Text>
         </View>
@@ -398,7 +403,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
                 style={[
                   styles.progressDot,
                   {
-                    backgroundColor: isPast || isCurr ? dotCol : 'rgba(255,255,255,0.10)',
+                    backgroundColor: isPast || isCurr ? dotCol : futureDotBg,
                     opacity: isPast ? 0.45 : 1,
                     width: isCurr ? 7 : isSelected ? 6 : 5,
                     height: isCurr ? 7 : isSelected ? 6 : 5,
@@ -435,29 +440,28 @@ const styles = StyleSheet.create({
   centerNumber: { fontSize: 58, lineHeight: 62 },
   centerStatus: { fontSize: 9, letterSpacing: 1.2, marginTop: 2 },
 
-  panel:         { flex: 1 },
-  panelContent:  { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 32, gap: 16 },
+  panel:        { flex: 1 },
+  panelContent: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 32, gap: 16 },
 
-  dateRow:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  dateText:      { fontSize: 13, fontWeight: '600' },
-  statusPill:    { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 99, borderWidth: 1 },
-  statusPillText:{ fontSize: 10, letterSpacing: 0.5 },
+  dateRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  dateText:       { fontSize: 13, fontWeight: '600' },
+  statusPill:     { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 99, borderWidth: 1 },
+  statusPillText: { fontSize: 10, letterSpacing: 0.5 },
 
-  section:       { gap: 8 },
-  sectionLabel:  { fontSize: 9, letterSpacing: 1.8 },
+  section:      { gap: 8 },
+  sectionLabel: { fontSize: 9, letterSpacing: 1.8 },
 
-  chipsRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.07)',
     borderWidth: 1, borderRadius: 99,
     paddingVertical: 6, paddingHorizontal: 13,
   },
-  chipDot:       { width: 6, height: 6, borderRadius: 3 },
-  chipText:      { fontSize: 12 },
-  emptyLogs:     { fontSize: 12, fontStyle: 'italic' },
+  chipDot:   { width: 6, height: 6, borderRadius: 3 },
+  chipText:  { fontSize: 12 },
+  emptyLogs: { fontSize: 12, fontStyle: 'italic' },
 
-  divider:       { height: 1, backgroundColor: 'rgba(255,255,255,0.08)' },
+  divider:       { height: 1 },
   noteText:      { fontSize: 14, lineHeight: 22 },
 
   progressStrip: { flexDirection: 'row', flexWrap: 'wrap', gap: 3 },
