@@ -296,7 +296,6 @@ export default function RootLayout() {
           <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
           <Stack.Screen name="connections" />
           <Stack.Screen name="garage" />
-          <Stack.Screen name="channel" />
         </Stack>
         <DevModeBanner />
         </SavedToastProvider>

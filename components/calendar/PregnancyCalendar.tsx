@@ -1724,28 +1724,31 @@ export function PregnancyCalendar() {
         />
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {view === 'timeline' && (
-          <>
-            <AgendaWeekStrip
-              selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
-              dotsByDate={dotsByDate}
-              weekLabel={`Week ${weekNumber}`}
-              modeColor={brand.pregnancy}
-            />
-            <View style={{ height: 12 }} />
-            {renderModeToggle()}
-            <View style={{ height: 12 }} />
-            {renderTimelineView()}
-          </>
-        )}
-        {view === 'journey' && renderJourneyView()}
-        {view === 'appointments' && renderAppointmentsView()}
-      </ScrollView>
+      {view === 'journey' ? (
+        renderJourneyView()
+      ) : (
+        <ScrollView
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {view === 'timeline' && (
+            <>
+              <AgendaWeekStrip
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+                dotsByDate={dotsByDate}
+                weekLabel={`Week ${weekNumber}`}
+                modeColor={brand.pregnancy}
+              />
+              <View style={{ height: 12 }} />
+              {renderModeToggle()}
+              <View style={{ height: 12 }} />
+              {renderTimelineView()}
+            </>
+          )}
+          {view === 'appointments' && renderAppointmentsView()}
+        </ScrollView>
+      )}
 
       {/* Quick Log Sheet */}
       <QuickLogSheet

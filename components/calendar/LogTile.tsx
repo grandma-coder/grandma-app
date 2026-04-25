@@ -23,6 +23,9 @@ export function LogTile({ icon, label, tint = 'activity', onPress }: LogTileProp
   const { fill, ink } = getTint(tint, isDark)
   const textInk = isDark ? colors.text : '#141313'
 
+  const tileBorder = isDark ? 'transparent' : '#141313'
+  const iconBorder = isDark ? 'transparent' : '#141313'
+
   return (
     <Pressable
       onPress={onPress}
@@ -30,15 +33,25 @@ export function LogTile({ icon, label, tint = 'activity', onPress }: LogTileProp
         styles.tile,
         {
           backgroundColor: fill,
-          opacity: pressed ? 0.85 : 1,
+          borderWidth: isDark ? 0 : 1.5,
+          borderColor: tileBorder,
+          opacity: pressed ? 0.9 : 1,
           transform: [{ scale: pressed ? 0.97 : 1 }],
+          shadowColor: '#141313',
+          shadowOpacity: isDark ? 0 : 0.06,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 2 },
         },
       ]}
     >
-      <View style={[styles.iconWrap, { backgroundColor: isDark ? ink + '33' : '#FFFEF8' }]}>
+      <View style={[styles.iconWrap, {
+        backgroundColor: isDark ? ink + '33' : '#FFFEF8',
+        borderWidth: isDark ? 0 : 1.5,
+        borderColor: iconBorder,
+      }]}>
         {icon}
       </View>
-      <Body size={13} color={textInk} style={{ fontFamily: font.bodySemiBold }} align="center">
+      <Body size={13} color={textInk} style={{ fontFamily: 'Fraunces_700Bold', letterSpacing: -0.2 }} align="center">
         {label}
       </Body>
     </Pressable>

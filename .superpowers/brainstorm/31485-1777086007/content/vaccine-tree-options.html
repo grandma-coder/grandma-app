@@ -1,0 +1,236 @@
+<style>
+  body { background: #F5F0E8; font-family: 'Georgia', serif; }
+  .page-title { font-size: 18px; font-weight: 700; color: #141313; margin-bottom: 4px; font-family: sans-serif; }
+  .page-sub { font-size: 13px; color: #6E6763; margin-bottom: 24px; font-family: sans-serif; }
+
+  .cards { display: flex; gap: 20px; flex-wrap: wrap; }
+  .card { flex: 1; min-width: 280px; background: #FFFEF8; border: 2px solid rgba(20,19,19,0.10); border-radius: 20px; overflow: hidden; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+  .card:hover { border-color: #B983FF; }
+  .card.selected { border-color: #B983FF; box-shadow: 0 0 0 3px rgba(185,131,255,0.25); }
+  .card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #6E6763; padding: 14px 16px 6px; font-family: sans-serif; }
+  .card-title { font-size: 17px; font-weight: 700; color: #141313; padding: 0 16px 4px; font-family: sans-serif; }
+  .card-desc { font-size: 12px; color: #6E6763; padding: 0 16px 14px; font-family: sans-serif; line-height: 1.5; }
+  .preview { padding: 0 16px 16px; }
+
+  /* === Shared token === */
+  :root {
+    --cream: #F5F0E8;
+    --paper: #FFFEF8;
+    --ink: #141313;
+    --ink3: #6E6763;
+    --border: rgba(20,19,19,0.10);
+    --green: #7EC86A;
+    --upcoming: #F5D652;
+    --kids: #4D96FF;
+  }
+
+  /* === Option A: Horizontal Age Timeline === */
+  .timeline-wrap { padding: 8px 0; overflow-x: auto; }
+  .timeline { display: flex; align-items: flex-start; gap: 0; position: relative; padding-bottom: 8px; }
+  .milestone { display: flex; flex-direction: column; align-items: center; min-width: 72px; }
+  .milestone-line { display: flex; align-items: center; width: 100%; }
+  .ml-dot { width: 14px; height: 14px; border-radius: 50%; background: #4D96FF; flex-shrink: 0; border: 2px solid #FFFEF8; box-shadow: 0 0 0 2px #4D96FF; z-index: 1; }
+  .ml-bar { flex: 1; height: 2px; background: rgba(20,19,19,0.12); }
+  .ml-bar.done { background: #7EC86A; }
+  .milestone-age { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #6E6763; margin-top: 6px; font-family: sans-serif; }
+  .vax-dots { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; align-items: center; }
+  .vax-dot { display: flex; align-items: center; gap: 4px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot.done { background: #7EC86A; }
+  .dot.upcoming { background: transparent; border: 1.5px solid #F5D652; }
+  .dot.overdue { background: #F5B896; border: 1.5px solid #E8856A; }
+  .vax-name { font-size: 9px; color: #6E6763; white-space: nowrap; font-family: sans-serif; }
+
+  /* === Option B: Vertical Branch Tree === */
+  .tree-wrap { padding: 8px 0 4px; }
+  .tree-node { display: flex; flex-direction: column; }
+  .tree-row { display: flex; align-items: flex-start; margin-bottom: 2px; }
+  .tree-age-node { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .age-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; font-family: sans-serif; flex-shrink: 0; }
+  .age-circle.done { background: #DFF5D6; border: 2px solid #7EC86A; color: #3A7A28; }
+  .age-circle.partial { background: #FEF9DC; border: 2px solid #F5D652; color: #7A6100; }
+  .age-circle.future { background: #F0EDE8; border: 2px solid rgba(20,19,19,0.15); color: #6E6763; }
+  .tree-branch { padding-left: 44px; border-left: 2px dashed rgba(20,19,19,0.12); margin-left: 17px; margin-bottom: 8px; padding-bottom: 2px; }
+  .tree-vax-row { display: flex; align-items: center; gap: 6px; padding: 3px 0 3px 8px; }
+  .tree-check { width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; flex-shrink: 0; }
+  .tree-check.done { background: #7EC86A; color: white; }
+  .tree-check.upcoming { background: transparent; border: 1.5px solid #F5D652; }
+  .tree-check.overdue { background: #F5B896; border: 1.5px solid #E8856A; }
+  .tree-vax-name { font-size: 11px; color: #141313; font-family: sans-serif; }
+  .tree-vax-sub { font-size: 10px; color: #6E6763; font-family: sans-serif; margin-left: auto; }
+
+  /* === Option C: Radial/Fan Arc === */
+  .arc-wrap { display: flex; align-items: center; justify-content: center; padding: 8px 0; }
+
+  /* badge */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; font-family: sans-serif; }
+  .badge-done { background: #DFF5D6; color: #3A7A28; }
+  .badge-upcoming { background: #FEF9DC; color: #7A6100; }
+</style>
+
+<div class="page-title">Vaccine Tree — Layout Options</div>
+<div class="page-sub">Choose the visualization style for tracking vaccines by age in the Health Overview modal.</div>
+
+<div class="cards">
+
+  <!-- Option A: Horizontal Timeline -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="card-label">Option A</div>
+    <div class="card-title">Horizontal Age Timeline</div>
+    <div class="card-desc">Milestones on a horizontal rail. Each age stop shows its vaccines as dots — filled green if done, yellow outline if upcoming. Compact and linear, scrolls right for later ages.</div>
+    <div class="preview">
+      <div class="timeline-wrap">
+        <div class="timeline">
+          <div class="milestone">
+            <div class="milestone-line"><div class="ml-dot" style="background:#7EC86A;box-shadow:0 0 0 2px #7EC86A"></div><div class="ml-bar done"></div></div>
+            <div class="milestone-age">Birth</div>
+            <div class="vax-dots">
+              <div class="vax-dot"><div class="dot done"></div><span class="vax-name">Hep B</span></div>
+            </div>
+          </div>
+          <div class="milestone">
+            <div class="milestone-line"><div class="ml-dot" style="background:#7EC86A;box-shadow:0 0 0 2px #7EC86A"></div><div class="ml-bar done"></div></div>
+            <div class="milestone-age">2 mo</div>
+            <div class="vax-dots">
+              <div class="vax-dot"><div class="dot done"></div><span class="vax-name">DTaP</span></div>
+              <div class="vax-dot"><div class="dot done"></div><span class="vax-name">IPV</span></div>
+              <div class="vax-dot"><div class="dot done"></div><span class="vax-name">Hib</span></div>
+              <div class="vax-dot"><div class="dot done"></div><span class="vax-name">RV</span></div>
+            </div>
+          </div>
+          <div class="milestone">
+            <div class="milestone-line"><div class="ml-dot" style="background:#F5D652;box-shadow:0 0 0 2px #F5D652"></div><div class="ml-bar"></div></div>
+            <div class="milestone-age">4 mo</div>
+            <div class="vax-dots">
+              <div class="vax-dot"><div class="dot upcoming"></div><span class="vax-name">DTaP</span></div>
+              <div class="vax-dot"><div class="dot upcoming"></div><span class="vax-name">IPV</span></div>
+              <div class="vax-dot"><div class="dot upcoming"></div><span class="vax-name">Hib</span></div>
+            </div>
+          </div>
+          <div class="milestone">
+            <div class="milestone-line"><div class="ml-dot" style="background:rgba(20,19,19,0.15);box-shadow:none; border:2px solid rgba(20,19,19,0.12)"></div><div class="ml-bar"></div></div>
+            <div class="milestone-age">6 mo</div>
+            <div class="vax-dots">
+              <div class="vax-dot"><div class="dot upcoming"></div><span class="vax-name">PCV</span></div>
+              <div class="vax-dot"><div class="dot upcoming"></div><span class="vax-name">Flu</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Vertical Branch Tree -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="card-label">Option B</div>
+    <div class="card-title">Vertical Branch Tree</div>
+    <div class="card-desc">Age milestones as parent nodes, vaccines branch off as children. Matches the "Branch tree" style in your screenshot. Each node shows done/upcoming state clearly. Scrolls vertically.</div>
+    <div class="preview">
+      <div class="tree-wrap">
+
+        <!-- Birth — all done -->
+        <div class="tree-age-node">
+          <div class="age-circle done">Birth</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#141313;font-family:sans-serif">Birth</div>
+            <div class="badge badge-done">All done ✓</div>
+          </div>
+        </div>
+        <div class="tree-branch">
+          <div class="tree-vax-row"><div class="tree-check done">✓</div><span class="tree-vax-name">Hepatitis B</span><span class="tree-vax-sub">Jan 15</span></div>
+        </div>
+
+        <!-- 2 months — all done -->
+        <div class="tree-age-node">
+          <div class="age-circle done">2 mo</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#141313;font-family:sans-serif">2 Months</div>
+            <div class="badge badge-done">All done ✓</div>
+          </div>
+        </div>
+        <div class="tree-branch">
+          <div class="tree-vax-row"><div class="tree-check done">✓</div><span class="tree-vax-name">DTaP · dose 1</span><span class="tree-vax-sub">Feb 20</span></div>
+          <div class="tree-vax-row"><div class="tree-check done">✓</div><span class="tree-vax-name">IPV · dose 1</span><span class="tree-vax-sub">Feb 20</span></div>
+          <div class="tree-vax-row"><div class="tree-check done">✓</div><span class="tree-vax-name">Hib · dose 1</span><span class="tree-vax-sub">Feb 20</span></div>
+          <div class="tree-vax-row"><div class="tree-check done">✓</div><span class="tree-vax-name">Rotavirus</span><span class="tree-vax-sub">Mar 15</span></div>
+        </div>
+
+        <!-- 4 months — upcoming -->
+        <div class="tree-age-node">
+          <div class="age-circle partial">4 mo</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#141313;font-family:sans-serif">4 Months</div>
+            <div class="badge badge-upcoming">Due soon</div>
+          </div>
+        </div>
+        <div class="tree-branch">
+          <div class="tree-vax-row"><div class="tree-check upcoming"></div><span class="tree-vax-name">IPV · dose 2</span><span class="tree-vax-sub" style="color:#F5A623">Due 4 mo</span></div>
+          <div class="tree-vax-row"><div class="tree-check upcoming"></div><span class="tree-vax-name">Hib · dose 2</span><span class="tree-vax-sub" style="color:#F5A623">Due 4 mo</span></div>
+          <div class="tree-vax-row"><div class="tree-check upcoming"></div><span class="tree-vax-name">PCV15 · dose 1</span><span class="tree-vax-sub" style="color:#F5A623">Due 3 mo</span></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C: SVG Branch Tree (visual nodes) -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="card-label">Option C</div>
+    <div class="card-title">Visual Node Graph (SVG)</div>
+    <div class="card-desc">Like the "Branch tree" in your inspiration screenshot — SVG circles and lines. Age groups as mid-tier nodes, individual vaccines as leaf circles. Color-coded: green=done, yellow=upcoming. Visually striking but less readable for many vaccines.</div>
+    <div class="preview arc-wrap">
+      <svg width="240" height="200" viewBox="0 0 240 200">
+        <!-- Root -->
+        <circle cx="120" cy="20" r="14" fill="#4D96FF" />
+        <text x="120" y="24" text-anchor="middle" font-size="8" fill="white" font-family="sans-serif" font-weight="700">ALL</text>
+
+        <!-- Lines to age groups -->
+        <line x1="120" y1="34" x2="50" y2="80" stroke="rgba(20,19,19,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <line x1="120" y1="34" x2="120" y2="80" stroke="rgba(20,19,19,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <line x1="120" y1="34" x2="190" y2="80" stroke="rgba(20,19,19,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+
+        <!-- Birth node -->
+        <circle cx="50" cy="90" r="18" fill="#DFF5D6" stroke="#7EC86A" stroke-width="2"/>
+        <text x="50" y="87" text-anchor="middle" font-size="8" fill="#3A7A28" font-family="sans-serif" font-weight="700">Birth</text>
+        <text x="50" y="97" text-anchor="middle" font-size="7" fill="#3A7A28" font-family="sans-serif">done</text>
+
+        <!-- 2mo node -->
+        <circle cx="120" cy="90" r="18" fill="#DFF5D6" stroke="#7EC86A" stroke-width="2"/>
+        <text x="120" y="87" text-anchor="middle" font-size="8" fill="#3A7A28" font-family="sans-serif" font-weight="700">2 mo</text>
+        <text x="120" y="97" text-anchor="middle" font-size="7" fill="#3A7A28" font-family="sans-serif">4/4 ✓</text>
+
+        <!-- 4mo node -->
+        <circle cx="190" cy="90" r="18" fill="#FEF9DC" stroke="#F5D652" stroke-width="2"/>
+        <text x="190" y="87" text-anchor="middle" font-size="8" fill="#7A6100" font-family="sans-serif" font-weight="700">4 mo</text>
+        <text x="190" y="97" text-anchor="middle" font-size="7" fill="#7A6100" font-family="sans-serif">0/3</text>
+
+        <!-- Birth leaves -->
+        <line x1="50" y1="108" x2="50" y2="148" stroke="rgba(20,19,19,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <circle cx="50" cy="158" r="10" fill="#7EC86A"/>
+        <text x="50" y="162" text-anchor="middle" font-size="7" fill="white" font-family="sans-serif">Hep B</text>
+
+        <!-- 2mo leaves -->
+        <line x1="100" y1="108" x2="86" y2="148" stroke="rgba(20,19,19,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <line x1="110" y1="108" x2="100" y2="148" stroke="rgba(20,19,19,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <line x1="120" y1="108" x2="114" y2="148" stroke="rgba(20,19,19,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <line x1="130" y1="108" x2="128" y2="148" stroke="rgba(20,19,19,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <circle cx="86" cy="158" r="8" fill="#7EC86A"/><text x="86" y="162" text-anchor="middle" font-size="6" fill="white" font-family="sans-serif">DTaP</text>
+        <circle cx="100" cy="158" r="8" fill="#7EC86A"/><text x="100" y="162" text-anchor="middle" font-size="6" fill="white" font-family="sans-serif">IPV</text>
+        <circle cx="114" cy="158" r="8" fill="#7EC86A"/><text x="114" y="162" text-anchor="middle" font-size="6" fill="white" font-family="sans-serif">Hib</text>
+        <circle cx="128" cy="158" r="8" fill="#7EC86A"/><text x="128" y="162" text-anchor="middle" font-size="6" fill="white" font-family="sans-serif">RV</text>
+
+        <!-- 4mo leaves -->
+        <line x1="180" y1="108" x2="168" y2="148" stroke="rgba(20,19,19,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <line x1="190" y1="108" x2="190" y2="148" stroke="rgba(20,19,19,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <line x1="200" y1="108" x2="212" y2="148" stroke="rgba(20,19,19,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <circle cx="168" cy="158" r="8" fill="none" stroke="#F5D652" stroke-width="2"/><text x="168" y="162" text-anchor="middle" font-size="6" fill="#7A6100" font-family="sans-serif">IPV</text>
+        <circle cx="190" cy="158" r="8" fill="none" stroke="#F5D652" stroke-width="2"/><text x="190" y="162" text-anchor="middle" font-size="6" fill="#7A6100" font-family="sans-serif">Hib</text>
+        <circle cx="212" cy="158" r="8" fill="none" stroke="#F5D652" stroke-width="2"/><text x="212" y="162" text-anchor="middle" font-size="6" fill="#7A6100" font-family="sans-serif">PCV</text>
+      </svg>
+    </div>
+  </div>
+
+</div>

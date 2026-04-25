@@ -21,6 +21,7 @@ import {
   Check,
   Hand,
 } from 'lucide-react-native'
+import Svg, { Path } from 'react-native-svg'
 import {
   useTheme,
   brand,
@@ -30,8 +31,10 @@ import {
 import { supabase } from '../../lib/supabase'
 import { LogFormSticker } from './LogFormSticker'
 import { MoodFace } from '../stickers/RewardStickers'
+import { Heart as HeartSticker, Burst as BurstSticker, Star as StarSticker } from '../stickers/BrandStickers'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 import { ExamForm } from '../exams/ExamForm'
+import { StepSlider } from '../ui/StepSlider'
 
 // ─── Shared save helper ────────────────────────────────────────────────────
 
@@ -109,8 +112,8 @@ export function PregnancyMoodForm({
               style={[
                 styles.moodBtn,
                 {
-                  backgroundColor: active ? colors.primaryTint : colors.surface,
-                  borderColor: active ? colors.primary : colors.border,
+                  backgroundColor: active ? brand.pregnancy + '24' : colors.surface,
+                  borderColor: active ? brand.pregnancy : colors.border,
                   borderRadius: radius.lg,
                 },
               ]}
@@ -123,7 +126,7 @@ export function PregnancyMoodForm({
               <Text
                 style={[
                   styles.moodLabel,
-                  { color: active ? colors.primary : colors.textSecondary },
+                  { color: active ? brand.pregnancy : colors.textSecondary },
                 ]}
               >
                 {m.label}
@@ -137,8 +140,9 @@ export function PregnancyMoodForm({
         onChangeText={setNotes}
         placeholder="How are you feeling?"
         placeholderTextColor={colors.textMuted}
+        multiline
         style={[
-          styles.input,
+          styles.inputMultiline,
           {
             color: colors.text,
             backgroundColor: colors.surface,
@@ -218,19 +222,19 @@ export function PregnancySymptomsForm({
               style={[
                 styles.chip,
                 {
-                  backgroundColor: active ? colors.primaryTint : colors.surface,
-                  borderColor: active ? colors.primary : colors.border,
+                  backgroundColor: active ? brand.pregnancy + '24' : colors.surface,
+                  borderColor: active ? brand.pregnancy : colors.border,
                   borderRadius: radius.full,
                 },
               ]}
             >
               {active && (
-                <Check size={12} color={colors.primary} strokeWidth={3} />
+                <Check size={12} color={brand.pregnancy} strokeWidth={3} />
               )}
               <Text
                 style={[
                   styles.chipText,
-                  { color: active ? colors.primary : colors.text },
+                  { color: active ? brand.pregnancy : colors.text },
                 ]}
               >
                 {sym}
@@ -244,8 +248,9 @@ export function PregnancySymptomsForm({
         onChangeText={setNotes}
         placeholder="Additional notes"
         placeholderTextColor={colors.textMuted}
+        multiline
         style={[
-          styles.input,
+          styles.inputMultiline,
           {
             color: colors.text,
             backgroundColor: colors.surface,
@@ -285,18 +290,23 @@ export function AppointmentForm({
   const { colors, radius, isDark } = useTheme()
   const s = isDark ? stickersDark : stickersLight
   const [type, setType] = useState<string | null>(null)
+  const [customType, setCustomType] = useState('')
   const [doctor, setDoctor] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
 
+  const isOther = type === 'Other'
+  const finalType = isOther ? customType.trim() : type
+  const canSave = !!finalType
+
   async function save() {
-    if (!type) return
+    if (!finalType) return
     setSaving(true)
     try {
       await savePregnancyLog(
         date,
         'appointment',
-        type,
+        finalType,
         JSON.stringify({ doctor: doctor || undefined, notes: notes || undefined })
       )
       onSaved()
@@ -324,8 +334,8 @@ export function AppointmentForm({
               style={[
                 styles.chip,
                 {
-                  backgroundColor: active ? colors.primaryTint : colors.surface,
-                  borderColor: active ? colors.primary : colors.border,
+                  backgroundColor: active ? brand.pregnancy + '24' : colors.surface,
+                  borderColor: active ? brand.pregnancy : colors.border,
                   borderRadius: radius.full,
                 },
               ]}
@@ -333,7 +343,7 @@ export function AppointmentForm({
               <Text
                 style={[
                   styles.chipText,
-                  { color: active ? colors.primary : colors.text },
+                  { color: active ? brand.pregnancy : colors.text },
                 ]}
               >
                 {t}
@@ -342,6 +352,24 @@ export function AppointmentForm({
           )
         })}
       </View>
+      {isOther && (
+        <TextInput
+          value={customType}
+          onChangeText={setCustomType}
+          placeholder="Describe the appointment"
+          placeholderTextColor={colors.textMuted}
+          autoFocus
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+              backgroundColor: colors.surface,
+              borderColor: brand.pregnancy,
+              borderRadius: radius.lg,
+            },
+          ]}
+        />
+      )}
       <TextInput
         value={doctor}
         onChangeText={setDoctor}
@@ -362,8 +390,9 @@ export function AppointmentForm({
         onChangeText={setNotes}
         placeholder="Notes (optional)"
         placeholderTextColor={colors.textMuted}
+        multiline
         style={[
-          styles.input,
+          styles.inputMultiline,
           {
             color: colors.text,
             backgroundColor: colors.surface,
@@ -372,7 +401,7 @@ export function AppointmentForm({
           },
         ]}
       />
-      <SaveButton onPress={save} saving={saving} disabled={!type} />
+      <SaveButton onPress={save} saving={saving} disabled={!canSave} />
     </View>
   )
 }
@@ -419,6 +448,13 @@ export function KickCountForm({
     }
   }
 
+  const goal = 10
+  const goalReached = count >= goal
+  const dots = Array.from({ length: goal }, (_, i) => i < count)
+  const ink = '#141313'
+  const cream = '#FFFEF8'
+  const pinkSticker = '#F2B2C7'
+
   return (
     <View style={styles.form}>
       <LogFormSticker
@@ -426,25 +462,105 @@ export function KickCountForm({
         label="Count baby's kicks"
         tint={s.pinkSoft}
       />
+
       <View style={styles.kickCenter}>
-        <Pressable
-          onPress={() => setCount((c) => c + 1)}
-          style={({ pressed }) => [
-            styles.kickTapBtn,
-            { backgroundColor: brand.pregnancy, borderRadius: radius.xl },
-            pressed && { transform: [{ scale: 0.95 }] },
-          ]}
-        >
-          <Hand size={36} color="#FFFFFF" strokeWidth={2} />
-          <Text style={styles.kickTapLabel}>TAP</Text>
-        </Pressable>
-        <Text style={[styles.kickCount, { color: colors.text }]}>{count} kicks</Text>
-        <Text style={[styles.kickGoal, { color: colors.textMuted }]}>
-          {count >= 10
+        {/* Big tap button — sticker style with ink border + corner stickers */}
+        <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center', paddingTop: 14, paddingBottom: 6 }}>
+          <View style={{ position: 'absolute', top: -2, left: 14, transform: [{ rotate: '-18deg' }], opacity: 0.85 }} pointerEvents="none">
+            <HeartSticker size={28} fill={pinkSticker} stroke={ink} />
+          </View>
+          <View style={{ position: 'absolute', top: 8, right: 14, transform: [{ rotate: '20deg' }], opacity: 0.85 }} pointerEvents="none">
+            <StarSticker size={26} fill="#F5D652" stroke={ink} />
+          </View>
+          <View style={{ position: 'absolute', bottom: 6, right: 36, transform: [{ rotate: '-12deg' }], opacity: 0.7 }} pointerEvents="none">
+            <BurstSticker size={22} fill="#9DC3E8" stroke={ink} />
+          </View>
+
+          <Pressable
+            onPress={() => setCount((c) => c + 1)}
+            style={({ pressed }) => [
+              {
+                width: 168,
+                height: 168,
+                borderRadius: 999,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: goalReached ? '#BDD48C' : pinkSticker,
+                borderWidth: 2.5,
+                borderColor: ink,
+                shadowColor: ink,
+                shadowOpacity: pressed ? 0.05 : 0.15,
+                shadowRadius: pressed ? 4 : 12,
+                shadowOffset: { width: 0, height: pressed ? 2 : 6 },
+                transform: [{ scale: pressed ? 0.96 : 1 }],
+              },
+            ]}
+          >
+            <View style={{
+              width: 140,
+              height: 140,
+              borderRadius: 999,
+              backgroundColor: cream,
+              borderWidth: 1.5,
+              borderColor: ink,
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
+            }}>
+              <Hand size={42} color={ink} strokeWidth={2} />
+              <Text style={{ fontSize: 12, fontFamily: 'DMSans_700Bold', color: ink, letterSpacing: 2 }}>TAP</Text>
+            </View>
+          </Pressable>
+        </View>
+
+        {/* Big count — Fraunces */}
+        <Text style={{
+          fontSize: 56,
+          fontFamily: 'Fraunces_600SemiBold',
+          color: isDark ? colors.text : ink,
+          letterSpacing: -1.5,
+          lineHeight: 60,
+          marginTop: 4,
+        }}>
+          {count}
+          <Text style={{
+            fontSize: 22,
+            fontFamily: 'Fraunces_600SemiBold',
+            color: isDark ? colors.textMuted : 'rgba(20,19,19,0.55)',
+            letterSpacing: -0.4,
+          }}>{count === 1 ? ' kick' : ' kicks'}</Text>
+        </Text>
+
+        {/* Goal dot ring */}
+        <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
+          {dots.map((filled, i) => (
+            <View
+              key={i}
+              style={{
+                width: 11,
+                height: 11,
+                borderRadius: 999,
+                backgroundColor: filled ? (goalReached ? '#BDD48C' : pinkSticker) : 'transparent',
+                borderWidth: 1.5,
+                borderColor: filled ? ink : (isDark ? colors.border : 'rgba(20,19,19,0.22)'),
+              }}
+            />
+          ))}
+        </View>
+
+        <Text style={{
+          fontSize: 13,
+          fontFamily: 'DMSans_500Medium',
+          color: isDark ? colors.textMuted : 'rgba(20,19,19,0.55)',
+          textAlign: 'center',
+          marginTop: 6,
+        }}>
+          {goalReached
             ? 'Goal reached! Great session.'
             : `Goal: 10 kicks in 2 hours`}
         </Text>
       </View>
+
       <SaveButton
         onPress={save}
         saving={saving}
@@ -476,17 +592,25 @@ function SaveButton({
       style={({ pressed }) => [
         styles.saveBtn,
         {
-          backgroundColor: colors.primary,
-          borderRadius: radius.lg,
-          opacity: disabled ? 0.4 : 1,
+          backgroundColor: disabled ? colors.surface : brand.pregnancy,
+          borderColor: disabled ? colors.border : brand.pregnancy,
+          borderWidth: 1.5,
+          borderRadius: radius.full,
         },
         pressed && !disabled && { transform: [{ scale: 0.98 }], opacity: 0.9 },
       ]}
     >
       {saving ? (
-        <ActivityIndicator color="#FFF" />
+        <ActivityIndicator color={disabled ? colors.textMuted : '#FFFEF8'} />
       ) : (
-        <Text style={styles.saveBtnText}>{label ?? 'Save'}</Text>
+        <Text
+          style={[
+            styles.saveBtnText,
+            { color: disabled ? colors.textMuted : '#FFFEF8' },
+          ]}
+        >
+          {label ?? 'Save'}
+        </Text>
       )}
     </Pressable>
   )
@@ -530,43 +654,22 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
         tint={s.lilacSoft}
       />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Hours slept</Text>
-      <View style={styles.numberRow}>
-        {[3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => (
-          <Pressable
-            key={h}
-            onPress={() => setHours(h)}
-            style={[
-              styles.numberBtn,
-              {
-                backgroundColor: hours === h ? brand.pregnancy : colors.surface,
-                borderRadius: radius.md,
-                borderColor: hours === h ? brand.pregnancy : colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.numberBtnText, { color: hours === h ? '#fff' : colors.text }]}>{h}</Text>
-          </Pressable>
-        ))}
-      </View>
+      <StepSlider
+        min={3}
+        max={12}
+        value={hours}
+        onChange={setHours}
+        color={brand.pregnancy}
+        unit={hours === 1 ? 'hour' : 'hours'}
+      />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Quality (1–10)</Text>
-      <View style={styles.numberRow}>
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((q) => (
-          <Pressable
-            key={q}
-            onPress={() => setQuality(q)}
-            style={[
-              styles.numberBtn,
-              {
-                backgroundColor: quality === q ? brand.pregnancy : colors.surface,
-                borderRadius: radius.md,
-                borderColor: quality === q ? brand.pregnancy : colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.numberBtnText, { color: quality === q ? '#fff' : colors.text }]}>{q}</Text>
-          </Pressable>
-        ))}
-      </View>
+      <StepSlider
+        min={1}
+        max={10}
+        value={quality}
+        onChange={setQuality}
+        color={brand.pregnancy}
+      />
       <SaveButton onPress={save} saving={saving} disabled={false} />
     </View>
   )
@@ -580,14 +683,19 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
   const { colors, radius, isDark } = useTheme()
   const s = isDark ? stickersDark : stickersLight
   const [exerciseType, setExerciseType] = useState<string | null>(null)
+  const [customType, setCustomType] = useState('')
   const [minutes, setMinutes] = useState(30)
   const [saving, setSaving] = useState(false)
 
+  const isOther = exerciseType === 'Other'
+  const finalType = isOther ? customType.trim() : exerciseType
+  const canSave = !!finalType
+
   async function save() {
-    if (!exerciseType) return
+    if (!finalType) return
     setSaving(true)
     try {
-      await savePregnancyLog(date, 'exercise', minutes.toString(), JSON.stringify({ type: exerciseType }))
+      await savePregnancyLog(date, 'exercise', minutes.toString(), JSON.stringify({ type: finalType }))
       onSaved()
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
@@ -612,7 +720,7 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
             style={[
               styles.chip,
               {
-                backgroundColor: exerciseType === t ? brand.pregnancy + '20' : colors.surface,
+                backgroundColor: exerciseType === t ? brand.pregnancy + '24' : colors.surface,
                 borderColor: exerciseType === t ? brand.pregnancy : colors.border,
                 borderRadius: radius.full,
               },
@@ -622,26 +730,34 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
           </Pressable>
         ))}
       </View>
+      {isOther && (
+        <TextInput
+          value={customType}
+          onChangeText={setCustomType}
+          placeholder="What kind of movement?"
+          placeholderTextColor={colors.textMuted}
+          autoFocus
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+              backgroundColor: colors.surface,
+              borderColor: brand.pregnancy,
+              borderRadius: radius.lg,
+            },
+          ]}
+        />
+      )}
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Minutes</Text>
-      <View style={styles.numberRow}>
-        {[15, 20, 30, 45, 60, 90].map((m) => (
-          <Pressable
-            key={m}
-            onPress={() => setMinutes(m)}
-            style={[
-              styles.numberBtn,
-              {
-                backgroundColor: minutes === m ? brand.pregnancy : colors.surface,
-                borderRadius: radius.md,
-                borderColor: minutes === m ? brand.pregnancy : colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.numberBtnText, { color: minutes === m ? '#fff' : colors.text }]}>{m}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <SaveButton onPress={save} saving={saving} disabled={!exerciseType} />
+      <StepSlider
+        min={5}
+        max={120}
+        value={minutes}
+        onChange={setMinutes}
+        color={brand.pregnancy}
+        unit="min"
+      />
+      <SaveButton onPress={save} saving={saving} disabled={!canSave} />
     </View>
   )
 }
@@ -692,7 +808,7 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
               style={[
                 styles.chip,
                 {
-                  backgroundColor: active ? brand.pregnancy + '20' : colors.surface,
+                  backgroundColor: active ? brand.pregnancy + '24' : colors.surface,
                   borderColor: active ? brand.pregnancy : colors.border,
                   borderRadius: radius.full,
                 },
@@ -708,7 +824,8 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
         onChangeText={setNutritionNotes}
         placeholder="Notes (optional)"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        multiline
+        style={[styles.inputMultiline, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
       <SaveButton onPress={save} saving={saving} disabled={tags.length === 0} />
     </View>
@@ -743,15 +860,14 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
         tint={s.lilacSoft}
       />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Sets completed</Text>
-      <View style={styles.counterRow}>
-        <Pressable onPress={() => setSets((s) => Math.max(1, s - 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
-          <Text style={[styles.counterBtnText, { color: colors.text }]}>−</Text>
-        </Pressable>
-        <Text style={[styles.counterValue, { color: colors.text }]}>{sets}</Text>
-        <Pressable onPress={() => setSets((s) => Math.min(20, s + 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
-          <Text style={[styles.counterBtnText, { color: colors.text }]}>+</Text>
-        </Pressable>
-      </View>
+      <StepSlider
+        min={1}
+        max={20}
+        value={sets}
+        onChange={setSets}
+        color={brand.pregnancy}
+        unit={sets === 1 ? 'set' : 'sets'}
+      />
       <SaveButton onPress={save} saving={saving} disabled={false} />
     </View>
   )
@@ -760,10 +876,18 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
 // ─── Water Log Form ────────────────────────────────────────────────────────
 
 export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, isDark, font } = useTheme()
   const s = isDark ? stickersDark : stickersLight
   const [glasses, setGlasses] = useState(1)
   const [saving, setSaving] = useState(false)
+
+  const GOAL = 8
+  const remaining = Math.max(0, GOAL - glasses)
+  const ink = isDark ? colors.text : '#141313'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.10)'
+  const dropFill = '#9DC3E8'                                  // sticker blue
+  const dropMuted = isDark ? colors.border : 'rgba(20,19,19,0.18)'
 
   async function save() {
     setSaving(true)
@@ -777,28 +901,82 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
     }
   }
 
+  const hint =
+    glasses >= GOAL ? 'Beautifully hydrated today.'
+    : glasses >= GOAL / 2 ? `Halfway there — ${remaining} more to go.`
+    : `${remaining} more to reach today's goal.`
+
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="water"
-        label="Hydration check-in"
-        tint={s.blueSoft}
-      />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Glasses today</Text>
-      <View style={styles.counterRow}>
-        <Pressable onPress={() => setGlasses((g) => Math.max(1, g - 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
-          <Text style={[styles.counterBtnText, { color: colors.text }]}>−</Text>
-        </Pressable>
-        <Text style={[styles.counterValue, { color: colors.text }]}>{glasses}</Text>
-        <Pressable onPress={() => setGlasses((g) => Math.min(20, g + 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
-          <Text style={[styles.counterBtnText, { color: colors.text }]}>+</Text>
-        </Pressable>
+      <LogFormSticker type="water" label="Hydration check-in" tint={s.blueSoft} />
+
+      {/* Counter card */}
+      <View style={[styles.waterCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+        <Text style={[styles.waterMetaLabel, { color: ink, fontFamily: font.bodySemiBold }]}>
+          GLASSES TODAY
+        </Text>
+
+        <View style={styles.waterCounterRow}>
+          <Pressable
+            onPress={() => setGlasses((g) => Math.max(0, g - 1))}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.waterStepBtn,
+              { backgroundColor: paper, borderColor: paperBorder },
+              pressed && { transform: [{ scale: 0.94 }], opacity: 0.85 },
+            ]}
+          >
+            <Text style={[styles.waterStepText, { color: ink, fontFamily: font.display }]}>−</Text>
+          </Pressable>
+
+          <Text style={[styles.waterValue, { color: ink, fontFamily: font.display }]}>
+            {glasses}
+            <Text style={[styles.waterValueUnit, { color: ink, fontFamily: font.italic }]}>
+              /{GOAL}
+            </Text>
+          </Text>
+
+          <Pressable
+            onPress={() => setGlasses((g) => Math.min(20, g + 1))}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.waterStepBtn,
+              { backgroundColor: paper, borderColor: paperBorder },
+              pressed && { transform: [{ scale: 0.94 }], opacity: 0.85 },
+            ]}
+          >
+            <Text style={[styles.waterStepText, { color: ink, fontFamily: font.display }]}>+</Text>
+          </Pressable>
+        </View>
+
+        {/* Droplet progress tally */}
+        <View style={styles.waterDropletRow}>
+          {Array.from({ length: GOAL }, (_, i) => (
+            <Droplet key={i} filled={i < glasses} fill={dropFill} stroke={ink} muted={dropMuted} />
+          ))}
+        </View>
+
+        <Text style={[styles.waterHint, { color: ink, fontFamily: font.italic }]}>
+          {hint}
+        </Text>
       </View>
-      <Text style={[styles.fieldLabel, { color: colors.textMuted, textAlign: 'center' }]}>
-        Goal: 8 glasses · {glasses >= 8 ? '🎉 Done!' : `${8 - glasses} more to go`}
-      </Text>
+
       <SaveButton onPress={save} saving={saving} disabled={false} />
     </View>
+  )
+}
+
+function Droplet({ filled, fill, stroke, muted }: { filled: boolean; fill: string; stroke: string; muted: string }) {
+  return (
+    <Svg width={18} height={24} viewBox="0 0 20 26">
+      <Path
+        d="M10 2 C5.5 9 2.5 14 2.5 18 C2.5 22.4 5.9 25.5 10 25.5 C14.1 25.5 17.5 22.4 17.5 18 C17.5 14 14.5 9 10 2 Z"
+        fill={filled ? fill : 'none'}
+        stroke={filled ? stroke : muted}
+        strokeWidth={1.4}
+        strokeLinejoin="round"
+      />
+    </Svg>
   )
 }
 
@@ -845,14 +1023,18 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
   const s = isDark ? stickersDark : stickersLight
   const [nestingTitle, setNestingTitle] = useState('')
   const [nestingCategory, setNestingCategory] = useState<string | null>(null)
+  const [customCategory, setCustomCategory] = useState('')
   const [done, setDone] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  const isOther = nestingCategory === 'Other'
+  const finalCategory = isOther ? (customCategory.trim() || 'Other') : (nestingCategory ?? 'Other')
 
   async function save() {
     if (!nestingTitle) return
     setSaving(true)
     try {
-      await savePregnancyLog(date, 'nesting', done ? '1' : '0', JSON.stringify({ title: nestingTitle, category: nestingCategory ?? 'Other' }))
+      await savePregnancyLog(date, 'nesting', done ? '1' : '0', JSON.stringify({ title: nestingTitle, category: finalCategory }))
       onSaved()
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
@@ -884,7 +1066,7 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
             style={[
               styles.chip,
               {
-                backgroundColor: nestingCategory === cat ? brand.pregnancy + '20' : colors.surface,
+                backgroundColor: nestingCategory === cat ? brand.pregnancy + '24' : colors.surface,
                 borderColor: nestingCategory === cat ? brand.pregnancy : colors.border,
                 borderRadius: radius.full,
               },
@@ -894,6 +1076,16 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
           </Pressable>
         ))}
       </View>
+      {isOther && (
+        <TextInput
+          value={customCategory}
+          onChangeText={setCustomCategory}
+          placeholder="Custom category"
+          placeholderTextColor={colors.textMuted}
+          autoFocus
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: brand.pregnancy, borderRadius: radius.lg }]}
+        />
+      )}
       <Pressable
         onPress={() => setDone((d) => !d)}
         style={[styles.toggleRow2, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
@@ -917,15 +1109,19 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
   const s = isDark ? stickersDark : stickersLight
   const [birthPrepTitle, setBirthPrepTitle] = useState('')
   const [birthPrepCategory, setBirthPrepCategory] = useState<string | null>(null)
-  const [dueWeek, setDueWeek] = useState<number | null>(null)
+  const [customCategory, setCustomCategory] = useState('')
+  const [dueWeek, setDueWeek] = useState<number>(36)
   const [done, setDone] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  const isOther = birthPrepCategory === 'Other'
+  const finalCategory = isOther ? (customCategory.trim() || 'Other') : (birthPrepCategory ?? 'Other')
 
   async function save() {
     if (!birthPrepTitle) return
     setSaving(true)
     try {
-      await savePregnancyLog(date, 'birth_prep', done ? '1' : '0', JSON.stringify({ title: birthPrepTitle, category: birthPrepCategory ?? 'Other', dueWeek }))
+      await savePregnancyLog(date, 'birth_prep', done ? '1' : '0', JSON.stringify({ title: birthPrepTitle, category: finalCategory, dueWeek }))
       onSaved()
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
@@ -957,7 +1153,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
             style={[
               styles.chip,
               {
-                backgroundColor: birthPrepCategory === cat ? brand.pregnancy + '20' : colors.surface,
+                backgroundColor: birthPrepCategory === cat ? brand.pregnancy + '24' : colors.surface,
                 borderColor: birthPrepCategory === cat ? brand.pregnancy : colors.border,
                 borderRadius: radius.full,
               },
@@ -967,25 +1163,25 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
           </Pressable>
         ))}
       </View>
+      {isOther && (
+        <TextInput
+          value={customCategory}
+          onChangeText={setCustomCategory}
+          placeholder="Custom category"
+          placeholderTextColor={colors.textMuted}
+          autoFocus
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: brand.pregnancy, borderRadius: radius.lg }]}
+        />
+      )}
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Due by week</Text>
-      <View style={styles.numberRow}>
-        {[28, 30, 32, 34, 36, 38, 40].map((w) => (
-          <Pressable
-            key={w}
-            onPress={() => setDueWeek(w)}
-            style={[
-              styles.numberBtn,
-              {
-                backgroundColor: dueWeek === w ? brand.pregnancy : colors.surface,
-                borderRadius: radius.md,
-                borderColor: dueWeek === w ? brand.pregnancy : colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.numberBtnText, { color: dueWeek === w ? '#fff' : colors.text }]}>W{w}</Text>
-          </Pressable>
-        ))}
-      </View>
+      <StepSlider
+        min={20}
+        max={42}
+        value={dueWeek}
+        onChange={setDueWeek}
+        color={brand.pregnancy}
+        unit={`week${dueWeek === 1 ? '' : 's'}`}
+      />
       <Pressable
         onPress={() => setDone((d) => !d)}
         style={[styles.toggleRow2, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
@@ -1030,31 +1226,30 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
         tint={s.pinkSoft}
       />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Duration (seconds)</Text>
-      <View style={styles.counterRow}>
-        <Pressable onPress={() => setDurationSec((s) => Math.max(10, s - 5))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
-          <Text style={[styles.counterBtnText, { color: colors.text }]}>−</Text>
-        </Pressable>
-        <Text style={[styles.counterValue, { color: colors.text }]}>{durationSec}s</Text>
-        <Pressable onPress={() => setDurationSec((s) => Math.min(300, s + 5))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
-          <Text style={[styles.counterBtnText, { color: colors.text }]}>+</Text>
-        </Pressable>
-      </View>
+      <StepSlider
+        min={10}
+        max={180}
+        value={durationSec}
+        onChange={setDurationSec}
+        color={brand.pregnancy}
+        unit="sec"
+      />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Interval (minutes apart)</Text>
-      <View style={styles.counterRow}>
-        <Pressable onPress={() => setIntervalMin((m) => Math.max(1, m - 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
-          <Text style={[styles.counterBtnText, { color: colors.text }]}>−</Text>
-        </Pressable>
-        <Text style={[styles.counterValue, { color: colors.text }]}>{intervalMin}m</Text>
-        <Pressable onPress={() => setIntervalMin((m) => Math.min(60, m + 1))} style={[styles.counterBtn, { backgroundColor: colors.surface, borderRadius: radius.full }]}>
-          <Text style={[styles.counterBtnText, { color: colors.text }]}>+</Text>
-        </Pressable>
-      </View>
+      <StepSlider
+        min={1}
+        max={30}
+        value={intervalMin}
+        onChange={setIntervalMin}
+        color={brand.pregnancy}
+        unit={intervalMin === 1 ? 'minute' : 'minutes'}
+      />
       <TextInput
         value={contractionNotes}
         onChangeText={setContractionNotes}
         placeholder="Notes (intensity, location)"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        multiline
+        style={[styles.inputMultiline, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
       <SaveButton onPress={save} saving={saving} disabled={false} />
     </View>
@@ -1093,15 +1288,18 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
         label={`Weight on ${formatDate(date)}`}
         tint={s.peachSoft}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Weight (kg)</Text>
-      <TextInput
-        value={weight}
-        onChangeText={setWeight}
-        keyboardType="decimal-pad"
-        placeholder="e.g. 68.5"
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
-      />
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Weight</Text>
+      <View style={[styles.weightCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+        <TextInput
+          value={weight}
+          onChangeText={setWeight}
+          keyboardType="decimal-pad"
+          placeholder="68.5"
+          placeholderTextColor={colors.textMuted}
+          style={[styles.weightInput, { color: colors.text, fontFamily: 'Fraunces_600SemiBold' }]}
+        />
+        <Text style={[styles.weightUnit, { color: colors.textMuted, fontFamily: 'DMSans_500Medium' }]}>kg</Text>
+      </View>
       <SaveButton onPress={save} saving={saving} disabled={weight.trim() === ''} />
     </View>
   )
@@ -1116,10 +1314,21 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    paddingHorizontal: 16,
-    height: 48,
+    paddingHorizontal: 18,
+    height: 56,
     fontSize: 15,
+    fontFamily: 'DMSans_500Medium',
     fontWeight: '500',
+  },
+  inputMultiline: {
+    borderWidth: 1,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 16,
+    minHeight: 80,
+    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    textAlignVertical: 'top',
   },
   chipGrid: {
     flexDirection: 'row',
@@ -1155,39 +1364,20 @@ const styles = StyleSheet.create({
   },
   kickCenter: {
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 8,
-  },
-  kickTapBtn: {
-    width: 100,
-    height: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: 4,
-  },
-  kickTapLabel: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 1,
-  },
-  kickCount: {
-    fontSize: 32,
-    fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' },
-  kickGoal: {
-    fontSize: 14,
-    fontWeight: '500',
+    paddingVertical: 12,
   },
   saveBtn: {
-    height: 48,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
   },
   saveBtnText: {
-    fontSize: 15,
+    fontSize: 16,
+    fontFamily: 'DMSans_600SemiBold',
     fontWeight: '700',
-    color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   chipRow: {
     flexDirection: 'row',
@@ -1242,6 +1432,89 @@ const styles = StyleSheet.create({
     fontFamily: 'Fraunces_800ExtraBold',
     minWidth: 64,
     textAlign: 'center',
+  },
+
+  weightCard: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    borderWidth: 1,
+    paddingVertical: 24,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  weightInput: {
+    fontSize: 48,
+    minWidth: 100,
+    textAlign: 'right',
+    padding: 0,
+  },
+  weightUnit: {
+    fontSize: 18,
+  },
+
+  // ── Water log card ───────────────────────────────────────────────────────
+  waterCard: {
+    borderWidth: 1,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 22,
+    gap: 14,
+  },
+  waterMetaLabel: {
+    fontSize: 11,
+    letterSpacing: 1.8,
+    textAlign: 'center',
+    opacity: 0.55,
+    textTransform: 'uppercase',
+  },
+  waterCounterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+  },
+  waterStepBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  waterStepText: {
+    fontSize: 28,
+    lineHeight: 30,
+  },
+  waterValue: {
+    fontSize: 72,
+    letterSpacing: -3,
+    lineHeight: 76,
+  },
+  waterValueUnit: {
+    fontSize: 28,
+    opacity: 0.45,
+    fontWeight: '400',
+    fontStyle: 'italic',
+  },
+  waterDropletRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    paddingTop: 4,
+  },
+  waterHint: {
+    fontSize: 14,
+    textAlign: 'center',
+    opacity: 0.7,
+    fontStyle: 'italic',
+    paddingTop: 4,
   },
   toggleRow2: {
     flexDirection: 'row',

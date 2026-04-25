@@ -1,0 +1,253 @@
+<style>
+  .phone {
+    width: 210px;
+    height: 400px;
+    background: #F3ECD9;
+    border-radius: 32px;
+    border: 2px solid #d4c8b0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    margin: 0 auto;
+  }
+  .sheet-handle {
+    width: 36px; height: 4px;
+    background: rgba(20,19,19,0.2);
+    border-radius: 2px;
+    margin: 10px auto 6px;
+    flex-shrink: 0;
+  }
+  .sheet-header {
+    padding: 0 14px 8px;
+    flex-shrink: 0;
+  }
+  .sheet-header h3 { font-size: 14px; font-weight: 700; color: #141313; margin: 0; font-family: Georgia, serif; }
+  .sheet-header p { font-size: 9px; color: #888; margin: 2px 0 0; }
+  .sheet-body { flex: 1; overflow: hidden; padding: 0 12px 12px; display: flex; flex-direction: column; gap: 6px; }
+
+  /* Option A: Tabs + content */
+  .tab-row {
+    display: flex; gap: 4px; flex-shrink: 0;
+    background: rgba(20,19,19,0.06);
+    border-radius: 10px;
+    padding: 3px;
+  }
+  .tab {
+    flex: 1; text-align: center;
+    font-size: 8px; font-weight: 600;
+    padding: 4px 2px;
+    border-radius: 8px;
+    color: #888;
+  }
+  .tab.active { background: white; color: #7048B8; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .content-block {
+    background: #FFFEF8;
+    border: 1px solid #e8e0cc;
+    border-radius: 12px;
+    padding: 8px 10px;
+  }
+  .content-block .cb-title { font-size: 10px; font-weight: 700; color: #141313; margin: 0 0 3px; }
+  .content-block .cb-body { font-size: 8px; color: #666; line-height: 1.5; }
+  .tag-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+  .tag { background: #f0ebff; color: #7048B8; font-size: 7px; font-weight: 600; border-radius: 6px; padding: 2px 5px; }
+
+  /* Option B: Scrollable sections */
+  .section-label {
+    font-size: 8px; font-weight: 700; color: #B7A6E8; letter-spacing: 0.8px;
+    text-transform: uppercase; flex-shrink: 0; margin-top: 4px;
+  }
+  .expand-row {
+    background: #FFFEF8;
+    border: 1px solid #e8e0cc;
+    border-radius: 10px;
+    padding: 7px 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .expand-emoji { font-size: 14px; flex-shrink: 0; }
+  .expand-text { flex: 1; }
+  .expand-text .et-title { font-size: 9px; font-weight: 700; color: #141313; }
+  .expand-text .et-sub { font-size: 8px; color: #888; }
+  .expand-chevron { font-size: 10px; color: #B7A6E8; }
+  .expand-row.open { background: #f4f0ff; border-color: #c4b5fd; }
+
+  /* Option C: Card grid landing */
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .grid-card {
+    border-radius: 12px;
+    padding: 9px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .grid-card .gc-icon { font-size: 16px; }
+  .grid-card .gc-title { font-size: 9px; font-weight: 700; color: #141313; }
+  .grid-card .gc-sub { font-size: 7px; color: #666; }
+  .gc-green { background: #e8f8e8; border: 1px solid #b7e5b7; }
+  .gc-purple { background: #f0ebff; border: 1px solid #c4b5fd; }
+  .gc-blue { background: #e8f0ff; border: 1px solid #b7c8f5; }
+  .gc-pink { background: #fff0f5; border: 1px solid #f5b7cc; }
+
+  .more-row {
+    background: #FFFEF8;
+    border: 1px solid #e8e0cc;
+    border-radius: 10px;
+    padding: 7px 10px;
+    font-size: 9px;
+    font-weight: 600;
+    color: #7048B8;
+    text-align: center;
+  }
+
+  .cards { gap: 24px; }
+</style>
+
+<h2>How is the Birth Guide screen organized?</h2>
+<p class="subtitle">When you tap the banner, a full sheet opens. Which structure works best for the comprehensive content (birth types, labor stages, hospital bag, warning signs, etc.)?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8f5ee;">
+      <div class="phone">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3>Birth Guide 🌿</h3>
+          <p>Choose a birth type to explore</p>
+        </div>
+        <div class="sheet-body">
+          <div class="tab-row">
+            <div class="tab active">🌿 Natural</div>
+            <div class="tab">🏥 C-Section</div>
+            <div class="tab">🏡 Home</div>
+            <div class="tab">🌊 Water</div>
+          </div>
+          <div class="content-block">
+            <div class="cb-title">What is natural birth?</div>
+            <div class="cb-body">Vaginal delivery without medical pain intervention. Focuses on breathing, movement & support.</div>
+            <div class="tag-row">
+              <span class="tag">Labor stages</span>
+              <span class="tag">Pain relief</span>
+              <span class="tag">Positions</span>
+            </div>
+          </div>
+          <div class="content-block">
+            <div class="cb-title">What to expect</div>
+            <div class="cb-body">Early labor (6–12h) → Active (3–8h) → Transition → Pushing → Golden hour</div>
+          </div>
+          <div class="content-block">
+            <div class="cb-title">Pros & considerations</div>
+            <div class="cb-body">Faster recovery, skin-to-skin immediately, no medication side effects.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Tabs per birth type</h3>
+      <p>Switch between Natural / C-Section / Home / Water. Each tab has its own deep content. Simple navigation, focused reading.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8f5ee;">
+      <div class="phone">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3>Birth Guide 🌿</h3>
+          <p>Tap any topic to expand</p>
+        </div>
+        <div class="sheet-body">
+          <div class="section-label">Birth Types</div>
+          <div class="expand-row open">
+            <div class="expand-emoji">🌿</div>
+            <div class="expand-text">
+              <div class="et-title">Natural Birth</div>
+              <div class="et-sub">Vaginal, no medication</div>
+            </div>
+            <div class="expand-chevron">∧</div>
+          </div>
+          <div class="expand-row">
+            <div class="expand-emoji">🏥</div>
+            <div class="expand-text">
+              <div class="et-title">C-Section</div>
+              <div class="et-sub">Surgical delivery</div>
+            </div>
+            <div class="expand-chevron">∨</div>
+          </div>
+          <div class="section-label">Labor</div>
+          <div class="expand-row">
+            <div class="expand-emoji">⏱️</div>
+            <div class="expand-text">
+              <div class="et-title">Labor Stages</div>
+              <div class="et-sub">Early → Active → Pushing</div>
+            </div>
+            <div class="expand-chevron">∨</div>
+          </div>
+          <div class="expand-row">
+            <div class="expand-emoji">🚨</div>
+            <div class="expand-text">
+              <div class="et-title">Warning Signs</div>
+              <div class="et-sub">When to call your provider</div>
+            </div>
+            <div class="expand-chevron">∨</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Accordion sections</h3>
+      <p>All topics visible as expandable rows, organized by category. Users scan everything at once and tap to open. Great for reference — feels like a handbook.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8f5ee;">
+      <div class="phone">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3>Birth Guide 🌿</h3>
+          <p>What do you want to explore?</p>
+        </div>
+        <div class="sheet-body">
+          <div class="card-grid">
+            <div class="grid-card gc-green">
+              <div class="gc-icon">🌿</div>
+              <div class="gc-title">Natural Birth</div>
+              <div class="gc-sub">Breathing, positions, stages</div>
+            </div>
+            <div class="grid-card gc-purple">
+              <div class="gc-icon">🏥</div>
+              <div class="gc-title">C-Section</div>
+              <div class="gc-sub">Surgery, recovery, VBAC</div>
+            </div>
+            <div class="grid-card gc-blue">
+              <div class="gc-icon">🏡</div>
+              <div class="gc-title">Home Birth</div>
+              <div class="gc-sub">Midwife, safety, planning</div>
+            </div>
+            <div class="grid-card gc-pink">
+              <div class="gc-icon">🌊</div>
+              <div class="gc-title">Water Birth</div>
+              <div class="gc-sub">Pool, pain relief, logistics</div>
+            </div>
+          </div>
+          <div class="section-label" style="margin-top:4px;">Also in this guide</div>
+          <div class="more-row">⏱️ Labor Stages</div>
+          <div class="more-row">🧳 Hospital Bag Checklist</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Topic card grid + extras</h3>
+      <p>2×2 color-coded cards for the 4 birth types, then list rows for Labor Stages, Hospital Bag, Warning Signs. Each card opens a dedicated detail screen.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Click your preferred layout, then reply in the terminal.</p>

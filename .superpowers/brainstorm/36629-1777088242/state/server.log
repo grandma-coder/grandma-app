@@ -1,0 +1,4 @@
+{"type":"server-started","port":63379,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:63379","screen_dir":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/36629-1777088242/content","state_dir":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/36629-1777088242/state"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/36629-1777088242/content/vaccine-tree-options.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/36629-1777088242/content/vaccine-tree-design.html"}
+{"type":"server-stopped","reason":"idle timeout"}

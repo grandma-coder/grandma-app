@@ -52,6 +52,7 @@ import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { LogSheet } from '../../components/calendar/LogSheet'
+import { isIconAvatar } from '../../components/ui/AvatarPicker'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
@@ -748,7 +749,7 @@ export default function CareCircleScreen() {
                       },
                     ]}
                   >
-                    {m.photoUrl ? (
+                    {m.photoUrl && !isIconAvatar(m.photoUrl) ? (
                       <Image source={{ uri: m.photoUrl }} style={styles.memberPhoto} />
                     ) : (
                       <FlowerSticker size={26} petal={roleColor} center={stickers.yellow} />

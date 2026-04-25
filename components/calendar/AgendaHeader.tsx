@@ -10,6 +10,9 @@ import { Ionicons } from '@expo/vector-icons'
 import { Display } from '../ui/Typography'
 import { useTheme } from '../../constants/theme'
 import { NotificationBell } from '../ui/NotificationBell'
+import { StickerPalette } from '../stickers/BrandStickers'
+
+const STICKER_INK = '#141313'
 
 interface AgendaHeaderProps {
   onFilter?: () => void
@@ -22,9 +25,7 @@ interface AgendaHeaderProps {
 export function AgendaHeader({ onFilter, onAdd, right, showBell = true }: AgendaHeaderProps) {
   const { colors, isDark } = useTheme()
   const ink = isDark ? colors.text : '#141313'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const accent = isDark ? colors.primary : '#B7A6E8'
+  const paper = isDark ? colors.surface : StickerPalette.paper
 
   return (
     <View style={styles.row}>
@@ -35,15 +36,15 @@ export function AgendaHeader({ onFilter, onAdd, right, showBell = true }: Agenda
         {showBell && <NotificationBell />}
         {onFilter && (
           <Pressable onPress={onFilter} hitSlop={8}>
-            <View style={[styles.circleBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
-              <Ionicons name="filter" size={16} color={ink} />
+            <View style={[styles.circleBtn, { backgroundColor: paper, borderColor: STICKER_INK }]}>
+              <Ionicons name="filter" size={16} color={STICKER_INK} />
             </View>
           </Pressable>
         )}
         {onAdd && (
           <Pressable onPress={onAdd} hitSlop={8}>
-            <View style={[styles.circleBtn, { backgroundColor: accent, borderColor: accent }]}>
-              <Ionicons name="add" size={18} color={isDark ? ink : '#141313'} />
+            <View style={[styles.circleBtn, { backgroundColor: StickerPalette.lilac, borderColor: STICKER_INK }]}>
+              <Ionicons name="add" size={18} color={STICKER_INK} />
             </View>
           </Pressable>
         )}
@@ -66,11 +67,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   circleBtn: {
-    width: 34,
-    height: 34,
+    width: 38,
+    height: 38,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: STICKER_INK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
   },
 })

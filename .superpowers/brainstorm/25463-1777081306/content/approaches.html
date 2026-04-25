@@ -1,0 +1,214 @@
+<h2>Pregnancy Week Wheel — 3 Approaches</h2>
+<p class="subtitle">Each dot = one week (40 total). Pick the interaction model that feels right.</p>
+
+<style>
+  .phone-grid { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin: 24px 0; }
+  .phone { width: 200px; background: #1A1430; border-radius: 32px; overflow: hidden; border: 2px solid rgba(255,255,255,0.12); box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  .phone-screen { padding: 20px 16px 16px; min-height: 340px; display: flex; flex-direction: column; align-items: center; }
+  .phone-label { font-size: 11px; text-align: center; padding: 8px 12px; background: rgba(255,255,255,0.05); color: #fff; font-weight: 600; letter-spacing: 0.5px; }
+
+  /* Option A – Rotatable Ring */
+  .ring-container { position: relative; width: 160px; height: 160px; margin: 8px auto; }
+  .ring-dot { position: absolute; width: 7px; height: 7px; border-radius: 50%; transform: translate(-50%, -50%); }
+  .week-info-a { text-align: center; margin-top: 10px; }
+  .week-info-a .week-num { font-size: 22px; font-weight: 800; color: #fff; }
+  .week-info-a .week-sub { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .week-info-a .week-size { font-size: 11px; color: #B983FF; margin-top: 4px; font-weight: 600; }
+  .rotate-hint { font-size: 9px; color: rgba(255,255,255,0.35); margin-top: 8px; text-align: center; }
+
+  /* Option B – Swipe Arc */
+  .arc-container { width: 180px; height: 100px; position: relative; overflow: hidden; margin: 4px 0; }
+  .arc-dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, -50%); }
+  .week-card-b { background: rgba(255,255,255,0.08); border-radius: 16px; padding: 12px 14px; width: 100%; margin-top: 10px; text-align: center; }
+  .week-card-b .wk { font-size: 12px; color: rgba(255,255,255,0.5); }
+  .week-card-b .title { font-size: 14px; font-weight: 700; color: #fff; margin: 3px 0; }
+  .week-card-b .fact { font-size: 10px; color: rgba(255,255,255,0.55); line-height: 1.4; }
+
+  /* Option C – Spin Wheel */
+  .wheel-container { width: 160px; height: 160px; position: relative; margin: 4px auto; }
+  .wheel-outer { width: 160px; height: 160px; border-radius: 50%; background: conic-gradient(
+    #A2FF86 0% 32.5%,
+    #B983FF 32.5% 65%,
+    #FF6B35 65% 100%
+  ); opacity: 0.25; position: absolute; }
+  .wheel-inner { width: 100px; height: 100px; background: #1A1430; border-radius: 50%; position: absolute; top: 30px; left: 30px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .wheel-inner .wn { font-size: 24px; font-weight: 800; color: #fff; }
+  .wheel-inner .ws { font-size: 9px; color: rgba(255,255,255,0.45); }
+  .wheel-dots-ring { position: absolute; top: 0; left: 0; width: 160px; height: 160px; }
+  .spin-hint { font-size: 9px; color: rgba(255,255,255,0.35); text-align: center; margin-top: 8px; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; margin-top: 6px; }
+  .badge-rec { background: #A2FF86; color: #1A1430; }
+  .badge-alt { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.6); }
+
+  .cards { gap: 16px !important; }
+  .card { background: #161028 !important; }
+  .card-body p { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.5; }
+</style>
+
+<script>
+function buildRingA(containerId, currentWeek) {
+  const el = document.getElementById(containerId);
+  const total = 40;
+  const cx = 80, cy = 80, r = 68;
+  for (let i = 1; i <= total; i++) {
+    const angle = ((i - 1) / total) * 2 * Math.PI - Math.PI / 2;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    const dot = document.createElement('div');
+    dot.className = 'ring-dot';
+    dot.style.left = x + 'px';
+    dot.style.top = y + 'px';
+    const tri = i <= 13 ? '#A2FF86' : i <= 26 ? '#B983FF' : '#FF6B35';
+    if (i < currentWeek) {
+      dot.style.background = tri;
+      dot.style.opacity = '0.7';
+      dot.style.width = dot.style.height = '6px';
+    } else if (i === currentWeek) {
+      dot.style.background = tri;
+      dot.style.width = dot.style.height = '11px';
+      dot.style.boxShadow = '0 0 8px 3px ' + tri + '88';
+      dot.style.zIndex = '2';
+    } else {
+      dot.style.background = 'rgba(255,255,255,0.15)';
+      dot.style.width = dot.style.height = '5px';
+    }
+    el.appendChild(dot);
+  }
+  // Center label
+  const center = document.createElement('div');
+  center.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;';
+  center.innerHTML = '<div style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:1px">WEEK</div><div style="font-size:26px;font-weight:800;color:#fff;line-height:1">' + currentWeek + '</div><div style="font-size:9px;color:#B983FF;margin-top:2px">Mango · 26cm</div>';
+  el.appendChild(center);
+}
+
+function buildArcB(containerId) {
+  const el = document.getElementById(containerId);
+  const total = 40;
+  const cx = 90, cy = 110, r = 90;
+  for (let i = 1; i <= total; i++) {
+    const frac = (i - 1) / (total - 1);
+    const angle = Math.PI + frac * Math.PI; // 180° → 360° (bottom arc)
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    const dot = document.createElement('div');
+    dot.className = 'arc-dot';
+    dot.style.left = x + 'px';
+    dot.style.top = y + 'px';
+    const tri = i <= 13 ? '#A2FF86' : i <= 26 ? '#B983FF' : '#FF6B35';
+    if (i < 20) {
+      dot.style.background = tri;
+      dot.style.opacity = i === 19 ? '1' : '0.5';
+      dot.style.width = dot.style.height = i === 19 ? '11px' : '5px';
+      if (i === 19) dot.style.boxShadow = '0 0 8px 3px ' + tri + '88';
+    } else {
+      dot.style.background = 'rgba(255,255,255,0.15)';
+      dot.style.width = dot.style.height = '5px';
+    }
+    el.appendChild(dot);
+  }
+}
+
+function buildWheelC(containerId, currentWeek) {
+  const el = document.getElementById(containerId);
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('width', '160');
+  svg.setAttribute('height', '160');
+  svg.style.position = 'absolute';
+  const total = 40;
+  const cx = 80, cy = 80, r = 72;
+  for (let i = 1; i <= total; i++) {
+    const angle = ((i - 1) / total) * 2 * Math.PI - Math.PI / 2;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    const c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', x);
+    c.setAttribute('cy', y);
+    const tri = i <= 13 ? '#A2FF86' : i <= 26 ? '#B983FF' : '#FF6B35';
+    if (i <= currentWeek) {
+      c.setAttribute('r', i === currentWeek ? '5' : '3.5');
+      c.setAttribute('fill', tri);
+      c.setAttribute('opacity', i === currentWeek ? '1' : '0.6');
+    } else {
+      c.setAttribute('r', '2.5');
+      c.setAttribute('fill', 'rgba(255,255,255,0.2)');
+    }
+    svg.appendChild(c);
+  }
+  el.appendChild(svg);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  buildRingA('ring-a', 22);
+  buildArcB('arc-b');
+  buildWheelC('wheel-c', 22);
+});
+</script>
+
+<div class="phone-grid">
+
+  <!-- Option A: Rotatable Ring -->
+  <div class="cards">
+    <div class="card" data-choice="a" onclick="toggleSelect(this)" style="max-width:220px">
+      <div style="padding:16px;display:flex;flex-direction:column;align-items:center">
+        <div style="background:#1A1430;border-radius:20px;padding:16px;width:100%;display:flex;flex-direction:column;align-items:center">
+          <div class="ring-container" id="ring-a"></div>
+          <div class="rotate-hint">↺ drag to spin · tap dot to jump</div>
+        </div>
+        <span class="badge badge-rec" style="margin-top:10px">⭐ RECOMMENDED</span>
+      </div>
+      <div class="card-body">
+        <h3>A · Rotatable Ring</h3>
+        <p>40 dots in a full circle, color-coded by trimester. Drag to spin — it rotates like a dial, snapping each week to the top. The current week pulses. Tapping any dot jumps to it. Feels playful and satisfying.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Swipe Arc -->
+  <div class="cards">
+    <div class="card" data-choice="b" onclick="toggleSelect(this)" style="max-width:220px">
+      <div style="padding:16px;display:flex;flex-direction:column;align-items:center">
+        <div style="background:#1A1430;border-radius:20px;padding:16px;width:100%;display:flex;flex-direction:column;align-items:center">
+          <div class="arc-container" id="arc-b"></div>
+          <div class="week-card-b">
+            <div class="wk">WEEK 19</div>
+            <div class="title">Mango · 26cm</div>
+            <div class="fact">Baby can hear sounds from outside the womb now.</div>
+          </div>
+        </div>
+        <span class="badge badge-alt" style="margin-top:10px">ALTERNATIVE</span>
+      </div>
+      <div class="card-body">
+        <h3>B · Swipe Arc</h3>
+        <p>A half-circle arc at the top, dots sweep left–right. Swipe along the arc to move between weeks. Week card snaps below. Easier one-handed use, more screen space for details.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C: Conic Wheel -->
+  <div class="cards">
+    <div class="card" data-choice="c" onclick="toggleSelect(this)" style="max-width:220px">
+      <div style="padding:16px;display:flex;flex-direction:column;align-items:center">
+        <div style="background:#1A1430;border-radius:20px;padding:16px;width:100%;display:flex;flex-direction:column;align-items:center">
+          <div class="wheel-container" id="wheel-c">
+            <div class="wheel-outer"></div>
+            <div class="wheel-inner">
+              <div class="wn">22</div>
+              <div class="ws">WEEK</div>
+            </div>
+          </div>
+          <div class="spin-hint">↺ spin the trimester wheel</div>
+        </div>
+        <span class="badge badge-alt" style="margin-top:10px">ALTERNATIVE</span>
+      </div>
+      <div class="card-body">
+        <h3>C · Trimester Wheel</h3>
+        <p>A conic-gradient ring shows trimesters as colored sectors. Dots on the rim. Spin gesture rotates the whole colored wheel. More abstract, higher visual impact, less granular control.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="text-align:center;margin-top:8px">Click to select · Let me know which direction feels right or if you want to mix elements from multiple options</p>

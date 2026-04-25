@@ -38,6 +38,7 @@ import {
 } from 'lucide-react-native'
 import { useTheme } from '../constants/theme'
 import { supabase } from '../lib/supabase'
+import { AvatarView, isIconAvatar } from '../components/ui/AvatarPicker'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { ScreenHeader } from '../components/ui/ScreenHeader'
 import { Display, MonoCaps, Body } from '../components/ui/Typography'
@@ -420,8 +421,12 @@ export default function LeaderboardScreen() {
         />
       </View>
 
-      {/* Tabs — paper pills */}
-      <View style={styles.tabsRow}>
+      {/* Tabs — paper pills (horizontal scroll so long labels don't clip) */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tabsRow}
+      >
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key
           const count = filterByTab(entries, tab.key).length
@@ -463,7 +468,7 @@ export default function LeaderboardScreen() {
             </Pressable>
           )
         })}
-      </View>
+      </ScrollView>
 
       <FlatList
         data={rest}
@@ -510,6 +515,13 @@ export default function LeaderboardScreen() {
         ListEmptyComponent={
           podium.length === 0 ? (
             <EmptyState />
+          ) : null
+        }
+        ListFooterComponent={
+          ranked.length === 1 && ranked[0].user_id === myUserId ? (
+            <View style={{ paddingTop: 14 }}>
+              <SoloCheer />
+            </View>
           ) : null
         }
       />
@@ -592,7 +604,7 @@ function Podium({
               {rankSticker(rank, isCenter ? 36 : 30, fill)}
             </View>
 
-            {entry.photo_url ? (
+            {entry.photo_url && !isIconAvatar(entry.photo_url) ? (
               <Image source={{ uri: entry.photo_url }} style={styles.podiumAvatar} />
             ) : (
               <View style={[styles.podiumAvatar, { backgroundColor: fill + (isDark ? '22' : '33'), alignItems: 'center', justifyContent: 'center' }]}>
@@ -658,20 +670,30 @@ function LeaderRow({
         </Text>
       </View>
 
-      {entry.photo_url ? (
+      {isIconAvatar(entry.photo_url) ? (
+        <AvatarView
+          value={entry.photo_url}
+          size={40}
+          accent={isMe ? stickers.pink : stickers.yellowSoft}
+          borderColor={isMe ? stickers.coral : 'rgba(20,19,19,0.12)'}
+          borderWidth={1.5}
+        />
+      ) : entry.photo_url ? (
         <Image source={{ uri: entry.photo_url }} style={styles.rowAvatar} />
       ) : (
         <View
           style={[
             styles.rowAvatar,
             {
-              backgroundColor: isMe ? stickers.coral + '33' : stickers.yellowSoft,
+              backgroundColor: isMe ? stickers.pink : stickers.yellowSoft,
+              borderWidth: 1.5,
+              borderColor: isMe ? stickers.coral : 'rgba(20,19,19,0.12)',
               alignItems: 'center',
               justifyContent: 'center',
             },
           ]}
         >
-          <User size={18} color={ink} strokeWidth={1.8} />
+          {rankSticker(entry.rank, 22, isMe ? stickers.coral : stickers.yellow)}
         </View>
       )}
 
@@ -717,6 +739,43 @@ function StatChip({ icon, value }: { icon: React.ReactNode; value: number }) {
       {icon}
       <Text style={[styles.statChipText, { color: colors.textMuted, fontFamily: font.body }]}>
         {value}
+      </Text>
+    </View>
+  )
+}
+
+// ─── Solo Cheer — shown when the user is the only one ranked ────────────────
+
+function SoloCheer() {
+  const { colors, stickers, font, radius, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+
+  return (
+    <View
+      style={[
+        styles.soloWrap,
+        { backgroundColor: paper, borderColor: paperBorder, borderRadius: radius.lg },
+      ]}
+    >
+      <View style={styles.soloStickerRow} pointerEvents="none">
+        <View style={{ transform: [{ rotate: '-12deg' }] }}>
+          <FlowerSticker size={42} petal={stickers.peach} />
+        </View>
+        <View style={{ transform: [{ rotate: '6deg' }], marginTop: -8 }}>
+          <StarSticker size={56} fill={stickers.yellow} />
+        </View>
+        <View style={{ transform: [{ rotate: '14deg' }] }}>
+          <HeartSticker size={40} fill={stickers.pink} />
+        </View>
+      </View>
+
+      <Display size={20} align="center" color={ink}>
+        Alone at the top
+      </Display>
+      <Text style={[styles.soloItalic, { color: colors.textSecondary, fontFamily: font.italic }]}>
+        Invite caregivers and post in channels — friendly competition makes the climb sweeter.
       </Text>
     </View>
   )
@@ -806,7 +865,7 @@ function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => v
       </View>
 
       <View style={styles.profileAvatarWrap}>
-        {entry.photo_url ? (
+        {entry.photo_url && !isIconAvatar(entry.photo_url) ? (
           <Image source={{ uri: entry.photo_url }} style={styles.profileAvatar} />
         ) : (
           <View
@@ -951,15 +1010,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
+    alignItems: 'center',
   },
   tabPill: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
+    gap: 6,
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     borderWidth: 1,
   },
   tabPillText: { fontSize: 13 },
@@ -1036,6 +1095,27 @@ const styles = StyleSheet.create({
   },
   youName: { fontSize: 22, lineHeight: 26 },
   youSub: { fontSize: 14, lineHeight: 20 },
+
+  soloWrap: {
+    marginTop: 4,
+    paddingVertical: 22,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    gap: 10,
+  },
+  soloStickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  soloItalic: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
 
   emptyWrap: {
     alignItems: 'center',

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mood Bubble Cluster — Design System</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F3ECD9; --paper: #FFFEF8; --paper-2: #F7F0DF;
+    --ink: #141313; --ink-2: #3A3533; --ink-3: #6E6763; --ink-4: #A69E93;
+    --line: rgba(20,19,19,0.08); --line-2: rgba(20,19,19,0.14);
+    --sh-card: 0 1px 0 rgba(20,19,19,.04), 0 8px 24px -12px rgba(20,19,19,.12);
+    --sh-pop: 0 2px 0 rgba(20,19,19,.08), 0 18px 36px -16px rgba(20,19,19,.22);
+    --font-display: 'Fraunces', serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: var(--font-body); color: var(--ink); padding: 32px 24px 60px; }
+
+  h1 { font-family: var(--font-display); font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .page-sub { font-size: 13px; color: var(--ink-3); margin-bottom: 36px; }
+  .section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-4); margin: 0 0 16px; }
+
+  .row { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 48px; }
+
+  /* Phone shell */
+  .phone {
+    width: 320px; flex-shrink: 0;
+    background: var(--bg);
+    border-radius: 44px;
+    border: 2px solid var(--line-2);
+    padding: 20px 16px;
+    box-shadow: var(--sh-pop);
+  }
+  .phone.dark {
+    --bg: #1A1713; --paper: #232019; --paper-2: #2C2820;
+    --ink: #F5EDDC; --ink-2: #D6CCB5; --ink-3: #9E9684; --ink-4: #6E6757;
+    --line: rgba(245,237,220,0.08); --line-2: rgba(245,237,220,0.14);
+    background: var(--bg); border-color: var(--line-2);
+  }
+  .phone-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-4); text-align: center; margin-bottom: 12px; }
+
+  /* Card */
+  .card {
+    background: var(--paper);
+    border-radius: 28px;
+    border: 1px solid var(--line);
+    padding: 18px 16px 16px;
+    box-shadow: var(--sh-card);
+  }
+  .card-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+  .card-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--ink); }
+  .card-tag { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-4); }
+
+  /* Bubble field */
+  .bubble-field { position: relative; height: 200px; }
+
+  /* Soap bubble wrapper */
+  .soap {
+    position: absolute;
+    border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px;
+    overflow: hidden;
+  }
+  /* Shine crescent */
+  .soap::after {
+    content: '';
+    position: absolute;
+    top: 13%; left: 17%;
+    width: 30%; height: 20%;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.55);
+    transform: rotate(-22deg);
+    pointer-events: none;
+  }
+
+  .soap-label { font-size: 9px; font-weight: 700; font-family: var(--font-body); position: relative; z-index: 1; }
+  .soap-count { font-family: var(--font-display); font-size: 12px; font-weight: 700; position: relative; z-index: 1; line-height: 1; }
+
+  /* Chips row */
+  .chips { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 12px; }
+  .chip {
+    display: flex; align-items: center; gap: 5px;
+    padding: 5px 12px 5px 8px;
+    border-radius: 999px; border: 1px solid;
+    font-size: 11px; font-weight: 700; font-family: var(--font-body);
+  }
+
+  /* Summary */
+  .summary {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 16px; border: 1px solid;
+    margin-top: 12px;
+    font-size: 13px; font-weight: 500; color: var(--ink-2);
+    font-family: var(--font-body);
+  }
+  .summary strong { font-weight: 800; }
+
+  /* Notes */
+  .note-box { background: var(--paper); border-radius: 24px; border: 1px solid var(--line); padding: 20px; width: 320px; box-shadow: var(--sh-card); flex-shrink: 0; }
+  .note-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+  .note-item { font-size: 12px; color: var(--ink-3); padding: 6px 0; border-bottom: 1px solid var(--line); display: flex; gap: 8px; line-height: 1.5; }
+  .note-item:last-child { border-bottom: none; }
+  .note-bullet { color: #EE7B6D; font-weight: 900; flex-shrink: 0; }
+  .note-item strong { color: var(--ink); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<h1>Mood Bubble Cluster</h1>
+<p class="page-sub">Mood counts as soap bubbles — the MoodFace sticker lives inside each one. Size = count.</p>
+
+<!--
+  MOOD_FACE_COLORS from lib/moodFace.ts:
+    happy    '#FBEA9E'  — soft yellow
+    calm     '#BFE0C0'  — soft green
+    energetic '#C5DBF3' — soft blue
+    fussy    '#FFD8B0'  — soft peach
+    cranky   '#F7B8B8'  — soft pink/red
+
+  Eyes + mouths from RewardStickers.tsx MoodFace (viewBox 0 0 100 100, circle r=42):
+    happy:    eyes = arc ∩∩   mouth = big smile curve up
+    calm:     eyes = dots ••  mouth = gentle curve
+    energetic: eyes = big dots + rays  mouth = filled shape
+    fussy:    eyes = dashes -- mouth = flat line
+    cranky:   eyes = slant / mouth = frown curve
+-->
+
+<p class="section-label">Light — Cream Paper</p>
+<div class="row">
+
+  <div class="phone">
+    <div class="phone-label">Kids Mode — Past 7 Days</div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Mood breakdown</span>
+        <span class="card-tag">5 moods logged</span>
+      </div>
+
+      <div class="bubble-field">
+
+        <!-- HAPPY: count=3 → biggest, ~104px -->
+        <div class="soap" style="
+          width:108px; height:108px;
+          left:50%; top:0; transform:translateX(-50%);
+          background: radial-gradient(circle at 38% 30%, #FBEA9E, rgba(251,234,158,0.35) 65%);
+          border: 1.5px solid rgba(251,234,158,0.7);
+          filter: drop-shadow(0 3px 10px rgba(245,214,82,0.25));
+        ">
+          <!-- MoodFace: happy — circle + arc eyes + big smile -->
+          <svg width="54" height="54" viewBox="0 0 100 100" style="position:relative;z-index:1;">
+            <circle cx="50" cy="50" r="42" fill="#FBEA9E" stroke="#141313" stroke-width="1.8"/>
+            <!-- eyes: arc shape ∩ -->
+            <path d="M34,42 Q38,36 42,42" fill="none" stroke="#141313" stroke-width="2" stroke-linecap="round"/>
+            <path d="M58,42 Q62,36 66,42" fill="none" stroke="#141313" stroke-width="2" stroke-linecap="round"/>
+            <!-- mouth: big smile -->
+            <path d="M36,62 Q50,74 64,62" fill="none" stroke="#141313" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="soap-label" style="color:#7A6010;">Happy</span>
+          <span class="soap-count" style="color:#7A6010;">3</span>
+        </div>
+
+        <!-- CALM: count=2 → medium-large, ~82px -->
+        <div class="soap" style="
+          width:84px; height:84px;
+          left:8px; top:70px;
+          background: radial-gradient(circle at 38% 30%, #BFE0C0, rgba(191,224,192,0.35) 65%);
+          border: 1.5px solid rgba(191,224,192,0.7);
+          filter: drop-shadow(0 3px 8px rgba(189,212,140,0.2));
+        ">
+          <!-- MoodFace: calm — dots + gentle smile -->
+          <svg width="40" height="40" viewBox="0 0 100 100" style="position:relative;z-index:1;">
+            <circle cx="50" cy="50" r="42" fill="#BFE0C0" stroke="#141313" stroke-width="1.8"/>
+            <circle cx="38" cy="42" r="2" fill="#141313"/>
+            <circle cx="62" cy="42" r="2" fill="#141313"/>
+            <path d="M40,64 Q50,68 60,64" fill="none" stroke="#141313" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="soap-label" style="color:#3A6A42;">Calm</span>
+          <span class="soap-count" style="color:#3A6A42;">2</span>
+        </div>
+
+        <!-- ENERGETIC: count=2 → medium, ~80px -->
+        <div class="soap" style="
+          width:82px; height:82px;
+          right:8px; top:66px;
+          background: radial-gradient(circle at 38% 30%, #C5DBF3, rgba(197,219,243,0.35) 65%);
+          border: 1.5px solid rgba(197,219,243,0.7);
+          filter: drop-shadow(0 3px 8px rgba(157,195,232,0.2));
+        ">
+          <!-- MoodFace: energetic — big dots + rays + filled mouth -->
+          <svg width="40" height="40" viewBox="0 0 100 100" style="position:relative;z-index:1;">
+            <circle cx="50" cy="50" r="42" fill="#C5DBF3" stroke="#141313" stroke-width="1.8"/>
+            <circle cx="38" cy="40" r="3" fill="#141313"/>
+            <circle cx="62" cy="40" r="3" fill="#141313"/>
+            <!-- rays -->
+            <path d="M20,22 L24,28 M80,22 L76,28 M16,34 L22,36 M84,34 L78,36" stroke="#141313" stroke-width="1.8" stroke-linecap="round"/>
+            <!-- filled mouth -->
+            <path d="M38,60 Q50,72 62,60 Q50,70 38,60 Z" fill="#141313"/>
+          </svg>
+          <span class="soap-label" style="color:#2A5080;">Energetic</span>
+          <span class="soap-count" style="color:#2A5080;">2</span>
+        </div>
+
+        <!-- FUSSY: count=1 → small, ~58px -->
+        <div class="soap" style="
+          width:60px; height:60px;
+          left:96px; bottom:10px;
+          background: radial-gradient(circle at 38% 30%, #FFD8B0, rgba(255,216,176,0.35) 65%);
+          border: 1.5px solid rgba(255,216,176,0.7);
+          filter: drop-shadow(0 2px 6px rgba(245,184,150,0.2));
+        ">
+          <!-- MoodFace: fussy — dash eyes + flat mouth -->
+          <svg width="28" height="28" viewBox="0 0 100 100" style="position:relative;z-index:1;">
+            <circle cx="50" cy="50" r="42" fill="#FFD8B0" stroke="#141313" stroke-width="1.8"/>
+            <path d="M34,42 L42,42" stroke="#141313" stroke-width="2" stroke-linecap="round"/>
+            <path d="M58,42 L66,42" stroke="#141313" stroke-width="2" stroke-linecap="round"/>
+            <path d="M40,66 L60,66" stroke="#141313" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="soap-label" style="color:#8A5010;font-size:8px;">Fussy</span>
+          <span class="soap-count" style="color:#8A5010;font-size:10px;">1</span>
+        </div>
+
+      </div>
+
+      <!-- Count chips -->
+      <div class="chips">
+        <div class="chip" style="background:rgba(251,234,158,0.2);border-color:rgba(245,214,82,0.5);color:#7A6010;">
+          <svg width="14" height="14" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#FBEA9E" stroke="#141313" stroke-width="2"/><path d="M34,42 Q38,36 42,42" fill="none" stroke="#141313" stroke-width="2.2" stroke-linecap="round"/><path d="M58,42 Q62,36 66,42" fill="none" stroke="#141313" stroke-width="2.2" stroke-linecap="round"/><path d="M36,62 Q50,74 64,62" fill="none" stroke="#141313" stroke-width="2.2" stroke-linecap="round"/></svg>
+          Happy <span style="font-weight:900;margin-left:2px;">3</span>
+        </div>
+        <div class="chip" style="background:rgba(191,224,192,0.2);border-color:rgba(189,212,140,0.5);color:#3A6A42;">
+          <svg width="14" height="14" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#BFE0C0" stroke="#141313" stroke-width="2"/><circle cx="38" cy="42" r="2.5" fill="#141313"/><circle cx="62" cy="42" r="2.5" fill="#141313"/><path d="M40,64 Q50,68 60,64" fill="none" stroke="#141313" stroke-width="2.2" stroke-linecap="round"/></svg>
+          Calm <span style="font-weight:900;margin-left:2px;">2</span>
+        </div>
+        <div class="chip" style="background:rgba(197,219,243,0.2);border-color:rgba(157,195,232,0.5);color:#2A5080;">
+          <svg width="14" height="14" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#C5DBF3" stroke="#141313" stroke-width="2"/><circle cx="38" cy="40" r="3.5" fill="#141313"/><circle cx="62" cy="40" r="3.5" fill="#141313"/></svg>
+          Energetic <span style="font-weight:900;margin-left:2px;">2</span>
+        </div>
+        <div class="chip" style="background:rgba(255,216,176,0.2);border-color:rgba(245,184,150,0.5);color:#8A5010;">
+          <svg width="14" height="14" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#FFD8B0" stroke="#141313" stroke-width="2"/><path d="M34,42 L42,42" stroke="#141313" stroke-width="2.2" stroke-linecap="round"/><path d="M58,42 L66,42" stroke="#141313" stroke-width="2.2" stroke-linecap="round"/></svg>
+          Fussy <span style="font-weight:900;margin-left:2px;">1</span>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="summary" style="background:rgba(251,234,158,0.14);border-color:rgba(245,214,82,0.35);">
+        <svg width="22" height="22" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#FBEA9E" stroke="#141313" stroke-width="2"/><path d="M34,42 Q38,36 42,42" fill="none" stroke="#141313" stroke-width="2" stroke-linecap="round"/><path d="M58,42 Q62,36 66,42" fill="none" stroke="#141313" stroke-width="2" stroke-linecap="round"/><path d="M36,62 Q50,74 64,62" fill="none" stroke="#141313" stroke-width="2" stroke-linecap="round"/></svg>
+        Mostly <strong style="color:#8A7010;margin:0 3px;">Happy</strong> this period
+      </div>
+    </div>
+  </div>
+
+  <!-- DARK -->
+  <div class="phone dark">
+    <div class="phone-label">Dark — Warm Charcoal</div>
+    <div class="card" style="background:var(--paper);border-color:var(--line);">
+      <div class="card-header">
+        <span class="card-title" style="color:var(--ink);">Mood breakdown</span>
+        <span class="card-tag" style="color:var(--ink-4);">5 moods logged</span>
+      </div>
+
+      <div class="bubble-field">
+
+        <!-- HAPPY big -->
+        <div class="soap" style="
+          width:108px; height:108px;
+          left:50%; top:0; transform:translateX(-50%);
+          background: radial-gradient(circle at 38% 30%, rgba(251,234,158,0.55), rgba(251,234,158,0.1) 65%);
+          border: 1.5px solid rgba(251,234,158,0.4);
+          filter: drop-shadow(0 3px 10px rgba(245,214,82,0.15));
+        ">
+          <svg width="54" height="54" viewBox="0 0 100 100" style="position:relative;z-index:1;">
+            <circle cx="50" cy="50" r="42" fill="rgba(251,234,158,0.18)" stroke="#FBEA9E" stroke-width="1.8"/>
+            <path d="M34,42 Q38,36 42,42" fill="none" stroke="#FBEA9E" stroke-width="2" stroke-linecap="round"/>
+            <path d="M58,42 Q62,36 66,42" fill="none" stroke="#FBEA9E" stroke-width="2" stroke-linecap="round"/>
+            <path d="M36,62 Q50,74 64,62" fill="none" stroke="#FBEA9E" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="soap-label" style="color:#FBEA9E;">Happy</span>
+          <span class="soap-count" style="color:#FBEA9E;">3</span>
+        </div>
+
+        <!-- CALM -->
+        <div class="soap" style="
+          width:84px; height:84px; left:8px; top:70px;
+          background: radial-gradient(circle at 38% 30%, rgba(191,224,192,0.5), rgba(191,224,192,0.08) 65%);
+          border: 1.5px solid rgba(191,224,192,0.35);
+          filter: drop-shadow(0 3px 8px rgba(189,212,140,0.12));
+        ">
+          <svg width="40" height="40" viewBox="0 0 100 100" style="position:relative;z-index:1;">
+            <circle cx="50" cy="50" r="42" fill="rgba(191,224,192,0.15)" stroke="#BFE0C0" stroke-width="1.8"/>
+            <circle cx="38" cy="42" r="2" fill="#BFE0C0"/>
+            <circle cx="62" cy="42" r="2" fill="#BFE0C0"/>
+            <path d="M40,64 Q50,68 60,64" fill="none" stroke="#BFE0C0" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="soap-label" style="color:#BFE0C0;">Calm</span>
+          <span class="soap-count" style="color:#BFE0C0;">2</span>
+        </div>
+
+        <!-- ENERGETIC -->
+        <div class="soap" style="
+          width:82px; height:82px; right:8px; top:66px;
+          background: radial-gradient(circle at 38% 30%, rgba(197,219,243,0.5), rgba(197,219,243,0.08) 65%);
+          border: 1.5px solid rgba(197,219,243,0.35);
+          filter: drop-shadow(0 3px 8px rgba(157,195,232,0.12));
+        ">
+          <svg width="40" height="40" viewBox="0 0 100 100" style="position:relative;z-index:1;">
+            <circle cx="50" cy="50" r="42" fill="rgba(197,219,243,0.15)" stroke="#C5DBF3" stroke-width="1.8"/>
+            <circle cx="38" cy="40" r="3" fill="#C5DBF3"/>
+            <circle cx="62" cy="40" r="3" fill="#C5DBF3"/>
+            <path d="M20,22 L24,28 M80,22 L76,28 M16,34 L22,36 M84,34 L78,36" stroke="#C5DBF3" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M38,60 Q50,72 62,60 Q50,70 38,60 Z" fill="#C5DBF3"/>
+          </svg>
+          <span class="soap-label" style="color:#C5DBF3;">Energetic</span>
+          <span class="soap-count" style="color:#C5DBF3;">2</span>
+        </div>
+
+        <!-- FUSSY small -->
+        <div class="soap" style="
+          width:60px; height:60px; left:96px; bottom:10px;
+          background: radial-gradient(circle at 38% 30%, rgba(255,216,176,0.5), rgba(255,216,176,0.08) 65%);
+          border: 1.5px solid rgba(255,216,176,0.35);
+          filter: drop-shadow(0 2px 6px rgba(245,184,150,0.12));
+        ">
+          <svg width="28" height="28" viewBox="0 0 100 100" style="position:relative;z-index:1;">
+            <circle cx="50" cy="50" r="42" fill="rgba(255,216,176,0.15)" stroke="#FFD8B0" stroke-width="1.8"/>
+            <path d="M34,42 L42,42" stroke="#FFD8B0" stroke-width="2" stroke-linecap="round"/>
+            <path d="M58,42 L66,42" stroke="#FFD8B0" stroke-width="2" stroke-linecap="round"/>
+            <path d="M40,66 L60,66" stroke="#FFD8B0" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="soap-label" style="color:#FFD8B0;font-size:8px;">Fussy</span>
+          <span class="soap-count" style="color:#FFD8B0;font-size:10px;">1</span>
+        </div>
+
+      </div>
+
+      <!-- Count chips dark -->
+      <div class="chips">
+        <div class="chip" style="background:rgba(251,234,158,0.1);border-color:rgba(251,234,158,0.35);color:#FBEA9E;">
+          <svg width="14" height="14" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="rgba(251,234,158,0.15)" stroke="#FBEA9E" stroke-width="2"/><path d="M34,42 Q38,36 42,42" fill="none" stroke="#FBEA9E" stroke-width="2.2" stroke-linecap="round"/><path d="M58,42 Q62,36 66,42" fill="none" stroke="#FBEA9E" stroke-width="2.2" stroke-linecap="round"/><path d="M36,62 Q50,74 64,62" fill="none" stroke="#FBEA9E" stroke-width="2.2" stroke-linecap="round"/></svg>
+          Happy <span style="font-weight:900;margin-left:2px;">3</span>
+        </div>
+        <div class="chip" style="background:rgba(191,224,192,0.1);border-color:rgba(191,224,192,0.35);color:#BFE0C0;">
+          <svg width="14" height="14" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="rgba(191,224,192,0.15)" stroke="#BFE0C0" stroke-width="2"/><circle cx="38" cy="42" r="2.5" fill="#BFE0C0"/><circle cx="62" cy="42" r="2.5" fill="#BFE0C0"/></svg>
+          Calm <span style="font-weight:900;margin-left:2px;">2</span>
+        </div>
+        <div class="chip" style="background:rgba(197,219,243,0.1);border-color:rgba(197,219,243,0.35);color:#C5DBF3;">
+          <svg width="14" height="14" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="rgba(197,219,243,0.15)" stroke="#C5DBF3" stroke-width="2"/><circle cx="38" cy="40" r="3.5" fill="#C5DBF3"/><circle cx="62" cy="40" r="3.5" fill="#C5DBF3"/></svg>
+          Energetic <span style="font-weight:900;margin-left:2px;">2</span>
+        </div>
+        <div class="chip" style="background:rgba(255,216,176,0.1);border-color:rgba(255,216,176,0.35);color:#FFD8B0;">
+          <svg width="14" height="14" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="rgba(255,216,176,0.15)" stroke="#FFD8B0" stroke-width="2"/><path d="M34,42 L42,42" stroke="#FFD8B0" stroke-width="2.2" stroke-linecap="round"/><path d="M58,42 L66,42" stroke="#FFD8B0" stroke-width="2.2" stroke-linecap="round"/></svg>
+          Fussy <span style="font-weight:900;margin-left:2px;">1</span>
+        </div>
+      </div>
+
+      <div class="summary" style="background:rgba(251,234,158,0.08);border-color:rgba(251,234,158,0.25);color:var(--ink-2);">
+        <svg width="22" height="22" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="rgba(251,234,158,0.15)" stroke="#FBEA9E" stroke-width="2"/><path d="M34,42 Q38,36 42,42" fill="none" stroke="#FBEA9E" stroke-width="2" stroke-linecap="round"/><path d="M58,42 Q62,36 66,42" fill="none" stroke="#FBEA9E" stroke-width="2" stroke-linecap="round"/><path d="M36,62 Q50,74 64,62" fill="none" stroke="#FBEA9E" stroke-width="2" stroke-linecap="round"/></svg>
+        Mostly <strong style="color:#FBEA9E;margin:0 3px;">Happy</strong> this period
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="note-box">
+    <div class="note-title" style="font-family:var(--font-display);">Design notes</div>
+    <div class="note-item"><span class="note-bullet">→</span><div>Each bubble wraps the <strong>MoodFace SVG sticker</strong> (same paths as RewardStickers.tsx)</div></div>
+    <div class="note-item"><span class="note-bullet">→</span><div><strong>Bubble size = mood count</strong>: 3 occurrences → 108px, 2 → 84px, 1 → 60px</div></div>
+    <div class="note-item"><span class="note-bullet">→</span><div>Fill colors from <strong>MOOD_FACE_COLORS</strong> in lib/moodFace.ts (happy=#FBEA9E, calm=#BFE0C0, etc.)</div></div>
+    <div class="note-item"><span class="note-bullet">→</span><div>Light: face uses ink <code>#141313</code> stroke on pastel fill. Dark: face stroke = fill color (no harsh ink on dark bg)</div></div>
+    <div class="note-item"><span class="note-bullet">→</span><div>Soap bubble effect: <strong>radial-gradient + ::after shine crescent</strong> at 38% 30%</div></div>
+    <div class="note-item"><span class="note-bullet">→</span><div>Chips: same MoodFace at 14px + mood label + count — uses <code>color-mix</code> tint pattern</div></div>
+    <div class="note-item"><span class="note-bullet">→</span><div>Summary bar reuses dominant mood face at 22px</div></div>
+  </div>
+</div>
+
+</body>
+</html>

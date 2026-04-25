@@ -317,7 +317,7 @@ function RoutineToggle({
           routineStyles.toggleRow,
           {
             backgroundColor: enabled ? ACCENT_SOFT : colors.surface,
-            borderColor: enabled ? ACCENT + '66' : colors.border,
+            borderColor: enabled ? ACCENT + '66' : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
             borderRadius: radius.lg,
           },
         ]}
@@ -330,7 +330,7 @@ function RoutineToggle({
           style={[
             routineStyles.toggleSwitch,
             {
-              backgroundColor: enabled ? ACCENT : colors.border,
+              backgroundColor: enabled ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
               borderRadius: 10,
             },
           ]}
@@ -357,7 +357,7 @@ function RoutineToggle({
                   routineStyles.dayChip,
                   {
                     backgroundColor: active ? ACCENT : 'transparent',
-                    borderColor: active ? ACCENT : colors.border,
+                    borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                     borderRadius: radius.full,
                   },
                 ]}
@@ -419,7 +419,7 @@ function ChildSelector({
                 styles.childChip,
                 {
                   backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                  borderColor: active ? ACCENT : needsSelection ? brand.accent + '40' : colors.border,
+                  borderColor: active ? ACCENT : needsSelection ? brand.accent + '40' : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                   borderRadius: radius.full,
                 },
               ]}
@@ -476,7 +476,7 @@ function DateChip({
     <View>
       <Pressable
         onPress={openPicker}
-        style={[styles.dateChip, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}
+        style={[styles.dateChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.full }]}
       >
         <CalendarDays size={14} color={colors.primary} strokeWidth={2} />
         <Text style={[styles.dateChipText, { color: colors.primary }]}>
@@ -484,7 +484,7 @@ function DateChip({
         </Text>
       </Pressable>
       {showPicker && (
-        <View style={[styles.datePickerWrap, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+        <View style={[styles.datePickerWrap, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}>
           <DateTimePicker
             value={new Date((showPicker ? tempDate : value) + 'T12:00:00')}
             mode="date"
@@ -502,7 +502,7 @@ function DateChip({
             }}
           />
           {Platform.OS === 'ios' && (
-            <Pressable onPress={confirmDate} style={[styles.datePickerDone, { borderColor: colors.border }]}>
+            <Pressable onPress={confirmDate} style={[styles.datePickerDone, { borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)') }]}>
               <Text style={[styles.datePickerDoneText, { color: colors.primary }]}>Done</Text>
             </Pressable>
           )}
@@ -560,14 +560,14 @@ function TimeChip({
     <View>
       <Pressable
         onPress={openPicker}
-        style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}
+        style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.full }]}
       >
         <Clock size={12} color={colors.textSecondary} strokeWidth={2} />
         <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>{label}</Text>
         <Text style={[styles.timeChipValue, { color: colors.text }]}>{formatTimeLabel(value)}</Text>
       </Pressable>
       {showPicker && (
-        <View style={[styles.datePickerWrap, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+        <View style={[styles.datePickerWrap, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}>
           <DateTimePicker
             value={dateVal}
             mode="time"
@@ -586,7 +586,7 @@ function TimeChip({
             }}
           />
           {Platform.OS === 'ios' && (
-            <Pressable onPress={confirmTime} style={[styles.datePickerDone, { borderColor: colors.border }]}>
+            <Pressable onPress={confirmTime} style={[styles.datePickerDone, { borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)') }]}>
               <Text style={[styles.datePickerDoneText, { color: colors.primary }]}>Done</Text>
             </Pressable>
           )}
@@ -1058,7 +1058,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                       styles.chip,
                       {
                         backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                        borderColor: active ? ACCENT : colors.border,
+                        borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                         borderRadius: radius.full,
                       },
                     ]}
@@ -1095,7 +1095,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   </Pressable>
                   <Pressable
                     onPress={pickPhoto}
-                    style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderRadius: radius.lg }]}
+                    style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
                   >
                     <Plus size={20} color={colors.textMuted} strokeWidth={2} />
                   </Pressable>
@@ -1178,7 +1178,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   })
                   setFoodInput('')
                 }}
-                style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg, minHeight: 48 }]}
+                style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg, minHeight: 48 }]}
               />
               {calorieMatches.length > 0 && (
                 <View style={[styles.calorieBanner, { backgroundColor: brand.success + '10', borderColor: brand.success + '30', borderRadius: radius.lg }]}>
@@ -1207,7 +1207,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               {/* Manual kcal popup for unrecognized foods */}
               <Modal visible={manualCalIdx !== null} transparent animationType="fade" onRequestClose={() => setManualCalIdx(null)}>
                 <Pressable style={styles.popupBackdrop} onPress={() => setManualCalIdx(null)} />
-                <View style={[styles.manualCalPopup, { backgroundColor: colors.surface, borderRadius: radius.xl, borderColor: colors.border }]}>
+                <View style={[styles.manualCalPopup, { backgroundColor: colors.surface, borderRadius: radius.xl, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)') }]}>
                   <Text style={[styles.manualCalTitle, { color: colors.text }]}>
                     Unknown food — add kcal manually
                   </Text>
@@ -1220,13 +1220,13 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     placeholder="e.g. 120"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="number-pad"
-                    style={[styles.input, { color: colors.text, backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderRadius: radius.lg, minHeight: 48, marginTop: 12 }]}
+                    style={[styles.input, { color: colors.text, backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg, minHeight: 48, marginTop: 12 }]}
                     autoFocus
                   />
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
                     <Pressable
                       onPress={() => setManualCalIdx(null)}
-                      style={[styles.manualCalBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, flex: 1 }]}
+                      style={[styles.manualCalBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), flex: 1 }]}
                     >
                       <Text style={[styles.manualCalBtnText, { color: colors.textSecondary }]}>Skip</Text>
                     </Pressable>
@@ -1261,7 +1261,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                       styles.qualityBtn,
                       {
                         backgroundColor: active ? q.color + '15' : colors.surface,
-                        borderColor: active ? q.color : colors.border,
+                        borderColor: active ? q.color : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                         borderRadius: radius.lg,
                       },
                     ]}
@@ -1281,7 +1281,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 onPress={() => setIsNewFood(!isNewFood)}
                 style={[styles.flagChip, {
                   backgroundColor: isNewFood ? brand.secondary + '15' : colors.surface,
-                  borderColor: isNewFood ? brand.secondary : colors.border,
+                  borderColor: isNewFood ? brand.secondary : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                   borderRadius: radius.full,
                 }]}
               >
@@ -1294,7 +1294,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 onPress={() => setHasReaction(!hasReaction)}
                 style={[styles.flagChip, {
                   backgroundColor: hasReaction ? brand.error + '15' : colors.surface,
-                  borderColor: hasReaction ? brand.error : colors.border,
+                  borderColor: hasReaction ? brand.error : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                   borderRadius: radius.full,
                 }]}
               >
@@ -1314,7 +1314,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   onChangeText={setNewFoodName}
                   placeholder="e.g. Kiwi, shrimp..."
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}
+                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.md }]}
                 />
               </View>
             )}
@@ -1328,7 +1328,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   onChangeText={setReactionFood}
                   placeholder="Which food caused it?"
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}
+                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.md }]}
                 />
                 <TextInput
                   value={reactionDesc}
@@ -1336,7 +1336,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   placeholder="Describe the reaction (rash, vomit, swelling...)"
                   placeholderTextColor={colors.textMuted}
                   multiline
-                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md, minHeight: 60 }]}
+                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.md, minHeight: 60 }]}
                 />
               </View>
             )}
@@ -1467,7 +1467,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                           styles.sideBtn,
                           {
                             backgroundColor: colors.surface,
-                            borderColor: isRecommended ? brand.accent + '50' : colors.border,
+                            borderColor: isRecommended ? brand.accent + '50' : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                             borderRadius: radius.lg,
                           },
                           pressed && { opacity: 0.7, transform: [{ scale: 0.97 }] },
@@ -1493,7 +1493,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 </View>
 
                 {/* Switch target setting */}
-                <View style={[styles.switchTargetRow, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+                <View style={[styles.switchTargetRow, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}>
                   <Clock size={14} color={colors.textMuted} strokeWidth={2} />
                   <Text style={[styles.switchTargetLabel, { color: colors.textSecondary }]}>Alert to switch at</Text>
                   {[10, 15, 20].map((min) => (
@@ -1504,7 +1504,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                         styles.switchTargetChip,
                         {
                           backgroundColor: switchTargetMin === min ? colors.primary : 'transparent',
-                          borderColor: switchTargetMin === min ? colors.primary : colors.border,
+                          borderColor: switchTargetMin === min ? colors.primary : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                           borderRadius: radius.full,
                         },
                       ]}
@@ -1539,7 +1539,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                           styles.sideChipSmall,
                           {
                             backgroundColor: active ? ACCENT_SOFT : 'transparent',
-                            borderColor: active ? ACCENT : colors.border,
+                            borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                             borderRadius: radius.full,
                           },
                         ]}
@@ -1556,7 +1556,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   placeholder="Duration (minutes)"
                   placeholderTextColor={colors.textMuted}
                   keyboardType="number-pad"
-                  style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+                  style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
                 />
               </>
             )}
@@ -1570,7 +1570,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               placeholder="Amount (ml)"
               placeholderTextColor={colors.textMuted}
               keyboardType="number-pad"
-              style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+              style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
             />
           </>
         )}
@@ -1690,7 +1690,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
           ) : (
             <Pressable
               onPress={() => setEndTime(toTimeStr(new Date()))}
-              style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 999 }]}
+              style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: 999 }]}
             >
               <Plus size={12} color={colors.textMuted} strokeWidth={2} />
               <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>End</Text>
@@ -1715,7 +1715,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
               onPress={() => setQuality(q)}
               style={[styles.chip, {
                 backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                borderColor: active ? ACCENT : colors.border,
+                borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                 borderRadius: radius.full,
               }]}
             >
@@ -1729,7 +1729,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
         onChangeText={setNotes}
         placeholder="Notes (optional)"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
       />
       <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
       <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={prefill?.routineId ? onSkip : undefined} />
@@ -1820,7 +1820,7 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
               onPress={() => setEventType(e)}
               style={[styles.chip, {
                 backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                borderColor: active ? ACCENT : colors.border,
+                borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                 borderRadius: radius.full,
               }]}
             >
@@ -1835,14 +1835,14 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
         placeholder={eventType === 'Temperature' ? 'Temperature (e.g. 37.5°C)' : 'Details'}
         placeholderTextColor={colors.textMuted}
         keyboardType={eventType === 'Temperature' ? 'decimal-pad' : 'default'}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
       />
       <TextInput
         value={notes}
         onChangeText={setNotes}
         placeholder="Notes (optional)"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
       />
       <SaveButton onPress={save} saving={saving} disabled={!childId || !eventType} onSkip={prefill?.routineId ? onSkip : undefined} />
     </View>
@@ -1955,7 +1955,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
         onChangeText={setNotes}
         placeholder="What happened?"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
       />
       <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
       <SaveButton onPress={save} saving={saving} disabled={!childId || !mood} onSkip={prefill?.routineId ? onSkip : undefined} />
@@ -2041,7 +2041,7 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
             <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: ACCENT, borderRadius: radius.lg }]}>
               <Camera size={24} color={INK} strokeWidth={2} />
             </Pressable>
-            <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderRadius: radius.lg }]}>
+            <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}>
               <Plus size={20} color={colors.textMuted} strokeWidth={2} />
             </Pressable>
           </View>
@@ -2052,7 +2052,7 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
         onChangeText={setCaption}
         placeholder="Caption this moment..."
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
       />
       <SaveButton onPress={save} saving={saving} disabled={!childId} />
     </View>
@@ -2180,7 +2180,7 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
             ) : (
               <Pressable
                 onPress={() => setEndTime(toTimeStr(new Date()))}
-                style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 999 }]}
+                style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: 999 }]}
               >
                 <Plus size={12} color={colors.textMuted} strokeWidth={2} />
                 <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>End</Text>
@@ -2207,7 +2207,7 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
                 onPress={() => setActivityType(a.id)}
                 style={[styles.chip, {
                   backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                  borderColor: active ? ACCENT : colors.border,
+                  borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                   borderRadius: radius.full,
                 }]}
               >
@@ -2222,14 +2222,14 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
           onChangeText={setName}
           placeholder="Activity name (e.g. Soccer practice)"
           placeholderTextColor={colors.textMuted}
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
         />
         <TextInput
           value={notes}
           onChangeText={setNotes}
           placeholder="Notes (optional)"
           placeholderTextColor={colors.textMuted}
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
         />
         <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
         <SaveButton onPress={save} saving={saving} disabled={!childId || !activityType} onSkip={prefill?.routineId ? onSkip : undefined} />
@@ -2362,7 +2362,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
                 onPress={() => setDiaperType(t.id)}
                 style={[styles.chip, {
                   backgroundColor: active ? brand.secondary + '25' : colors.surface,
-                  borderColor: active ? brand.secondary : colors.border,
+                  borderColor: active ? brand.secondary : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                   borderRadius: radius.full,
                   gap: 4,
                 }]}
@@ -2387,7 +2387,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
                     onPress={() => setColor(c.id)}
                     style={[styles.chip, {
                       backgroundColor: active ? c.hex + '25' : colors.surface,
-                      borderColor: active ? c.hex : colors.border,
+                      borderColor: active ? c.hex : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                       borderRadius: radius.full,
                       gap: 6,
                     }]}
@@ -2409,7 +2409,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
                     onPress={() => setConsistency(c.id)}
                     style={[styles.chip, {
                       backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                      borderColor: active ? ACCENT : colors.border,
+                      borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                       borderRadius: radius.full,
                     }]}
                   >
@@ -2440,7 +2440,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
               <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: ACCENT, borderRadius: radius.lg }]}>
                 <Camera size={24} color={INK} strokeWidth={2} />
               </Pressable>
-              <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderRadius: radius.lg }]}>
+              <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}>
                 <Plus size={20} color={colors.textMuted} strokeWidth={2} />
               </Pressable>
             </View>
@@ -2452,7 +2452,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
           onChangeText={setNotes}
           placeholder="Notes (optional)"
           placeholderTextColor={colors.textMuted}
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
         />
         <SaveButton onPress={save} saving={saving} disabled={!childId || !diaperType} />
       </View>
@@ -2608,7 +2608,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
 // ─── Save Button ───────────────────────────────────────────────────────────
 
 function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void; saving: boolean; disabled?: boolean; onSkip?: () => void }) {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   return (
     <View style={{ gap: 10, marginTop: 4 }}>
       {onSkip && (
@@ -2618,7 +2618,8 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
           style={({ pressed }) => [
             styles.saveBtnGhost,
             {
-              borderColor: colors.borderStrong,
+              borderColor: isDark ? colors.borderStrong : 'rgba(20,19,19,0.18)',
+              borderWidth: 1.5,
               opacity: saving ? 0.4 : 1,
             },
             pressed && { opacity: 0.7 },
@@ -2635,11 +2636,25 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
         disabled={saving || disabled}
         style={({ pressed }) => [
           styles.saveBtnPrimary,
-          { opacity: disabled ? 0.4 : 1 },
+          {
+            backgroundColor: disabled
+              ? (isDark ? colors.surface : '#FFFEF8')
+              : (isDark ? colors.text : INK),
+            borderColor: disabled
+              ? (isDark ? colors.border : 'rgba(20,19,19,0.18)')
+              : (isDark ? colors.text : INK),
+          },
           pressed && !disabled && { transform: [{ scale: 0.98 }], opacity: 0.92 },
         ]}
       >
-        {saving ? <ActivityIndicator color={INK} /> : <Text style={styles.saveBtnPrimaryText}>Save</Text>}
+        {saving ? (
+          <ActivityIndicator color={disabled ? INK : '#FFFEF8'} />
+        ) : (
+          <Text style={[
+            styles.saveBtnPrimaryText,
+            { color: disabled ? (isDark ? colors.textMuted : 'rgba(20,19,19,0.4)') : '#FFFEF8' },
+          ]}>Save</Text>
+        )}
       </Pressable>
     </View>
   )
@@ -2651,60 +2666,59 @@ const styles = StyleSheet.create({
   form: { gap: 16, paddingBottom: 8 },
   topRow: { gap: 10 },
   dateTimeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  dateChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1 },
-  dateChipText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
-  datePickerWrap: { marginTop: 4, borderWidth: 1, overflow: 'hidden' },
+  dateChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderWidth: 1.5 },
+  dateChipText: { fontSize: 13, fontFamily: 'DMSans_700Bold' },
+  datePickerWrap: { marginTop: 4, borderWidth: 1.5, overflow: 'hidden' },
   datePickerDone: { alignItems: 'center', paddingVertical: 10, borderTopWidth: 1 },
   datePickerDoneText: { fontSize: 15, fontWeight: '700' },
-  timeChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, paddingVertical: 6, paddingHorizontal: 10, borderWidth: 1 },
-  timeChipLabel: { fontSize: 10, fontFamily: 'DMSans_500Medium', letterSpacing: 0.8, textTransform: 'uppercase' },
-  timeChipValue: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  timeChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, paddingVertical: 7, paddingHorizontal: 10, borderWidth: 1.5 },
+  timeChipLabel: { fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 0.8, textTransform: 'uppercase' },
+  timeChipValue: { fontSize: 13, fontFamily: 'DMSans_700Bold' },
   childSelectorWrap: { gap: 6 },
-  childSelectorPrompt: { fontSize: 13, fontWeight: '700' },
+  childSelectorPrompt: { fontSize: 13, fontFamily: 'DMSans_700Bold' },
   childRow: { gap: 8 },
-  childChip: { paddingVertical: 8, paddingHorizontal: 16, borderWidth: 1 },
-  childChipText: { fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
+  childChip: { paddingVertical: 8, paddingHorizontal: 16, borderWidth: 1.5 },
+  childChipText: { fontSize: 14, fontFamily: 'DMSans_700Bold' },
   iconBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 12 },
   bannerLabel: { flex: 1, fontSize: 15, fontFamily: 'DMSans_500Medium' },
   autoDuration: { fontSize: 18, fontFamily: 'Fraunces_700Bold' },
-  input: { borderWidth: 1, paddingHorizontal: 20, minHeight: 52, fontSize: 15, fontFamily: 'DMSans_500Medium', borderRadius: 999 },
+  input: { borderWidth: 1.5, paddingHorizontal: 20, minHeight: 52, fontSize: 15, fontFamily: 'DMSans_500Medium', borderRadius: 999 },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1 },
-  chipText: { fontSize: 13, fontFamily: 'DMSans_500Medium' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1.5 },
+  chipText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
   toggleRow: { flexDirection: 'row', padding: 4 },
   toggleBtn: { flex: 1, alignItems: 'center', paddingVertical: 10 },
-  toggleText: { fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
+  toggleText: { fontSize: 14, fontFamily: 'DMSans_700Bold' },
   photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   photoThumb: { width: 72, height: 72 },
   photoDeleteBtn: { position: 'absolute', top: -6, right: -6, backgroundColor: 'rgba(0,0,0,0.75)', borderRadius: 999, width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
   photoButtons: { flexDirection: 'row', gap: 8 },
-  cameraBtn: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
-  galleryBtn: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderStyle: 'dashed' },
+  cameraBtn: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
+  galleryBtn: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderStyle: 'dashed' },
   qualityRow: { flexDirection: 'row', gap: 8 },
-  qualityBtn: { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 6, borderWidth: 1 },
-  qualityLabel: { fontSize: 11, fontFamily: 'DMSans_500Medium', textAlign: 'center' },
+  qualityBtn: { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 6, borderWidth: 1.5 },
+  qualityLabel: { fontSize: 11, fontFamily: 'DMSans_700Bold', textAlign: 'center' },
   flagRow: { flexDirection: 'row', gap: 8 },
-  flagChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1 },
-  flagText: { fontSize: 13, fontFamily: 'DMSans_500Medium' },
+  flagChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1.5 },
+  flagText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
   moodRow: { flexDirection: 'row', gap: 8 },
-  moodBtn: { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 4 },
-  moodLabel: { fontSize: 11, fontFamily: 'DMSans_500Medium' },
+  moodBtn: { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 4, borderWidth: 1.5 },
+  moodLabel: { fontSize: 11, fontFamily: 'DMSans_700Bold' },
   saveBtnPrimary: {
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 999,
-    backgroundColor: ACCENT,
+    borderWidth: 1.5,
     shadowColor: '#141313',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 2,
   },
   saveBtnPrimaryText: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
-    color: INK,
+    fontFamily: 'DMSans_700Bold',
     letterSpacing: 0.2,
   },
   saveBtnGhost: {

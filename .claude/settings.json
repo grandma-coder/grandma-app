@@ -126,7 +126,13 @@
       "Bash(pkill -f \"expo start\")",
       "Bash(git reset *)",
       "Bash(xargs -I {} sh -c 'echo \"--- {} ---\"; grep -l -iE \"secret|api_key|password|token\" \"{}\" 2>/dev/null || true')",
-      "Bash(grep -iE \"\\(secret|api_key|password|token\\).*[=:].*['\\\\\"][a-zA-Z0-9]{20,}\")"
+      "Bash(grep -iE \"\\(secret|api_key|password|token\\).*[=:].*['\\\\\"][a-zA-Z0-9]{20,}\")",
+      "Bash(node -e ' *)",
+      "Bash(git -C /Users/igorcarvalhorodrigues/Projects/grandma-app add components/pregnancy/BirthGuideModal.tsx)",
+      "Bash(git -C /Users/igorcarvalhorodrigues/Projects/grandma-app commit -m ' *)",
+      "Bash(grep -n \"brand\\\\|heroColor\\\\|heroBorder\\\\|#[A-Fa-f0-9]\\\\{3,6\\\\}\" /Users/igorcarvalhorodrigues/Projects/grandma-app/constants/theme.ts)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js\\)$\")",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"

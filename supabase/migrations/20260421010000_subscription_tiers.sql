@@ -14,7 +14,14 @@ update profiles
 set subscription_tier = 'premium_solo'
 where subscription_status = 'premium' and subscription_tier = 'free';
 
--- 2. Seat-limit helper (owner-side count of accepted caregivers they invited)
+-- 2. Add is_locked to child_caregivers BEFORE any functions reference it
+alter table child_caregivers
+  add column if not exists is_locked boolean not null default false;
+
+create index if not exists idx_child_caregivers_invited_by_active
+  on child_caregivers(invited_by, status) where is_locked = false;
+
+-- 3. Seat-limit helper (owner-side count of accepted caregivers they invited)
 create or replace function tier_seat_limit(tier subscription_tier)
 returns int
 language sql
@@ -40,13 +47,6 @@ as $$
     and coalesce(is_locked, false) = false
     and role <> 'parent';
 $$;
-
--- 3. Read-only lock flag (set when owner downgrades past their current seat count)
-alter table child_caregivers
-  add column if not exists is_locked boolean not null default false;
-
-create index if not exists idx_child_caregivers_invited_by_active
-  on child_caregivers(invited_by, status) where is_locked = false;
 
 -- 4. Replace INSERT policy on child_caregivers to enforce tier seat cap
 drop policy if exists "Parents can create invites for their children" on child_caregivers;

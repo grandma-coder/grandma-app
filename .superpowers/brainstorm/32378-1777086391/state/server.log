@@ -1,0 +1,5 @@
+{"type":"server-started","port":61988,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:61988","screen_dir":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/32378-1777086391/content","state_dir":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/32378-1777086391/state"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/32378-1777086391/content/mood-bubble-directions.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/32378-1777086391/content/ds-accurate-mockup.html"}
+{"type":"screen-added","file":"/Users/igorcarvalhorodrigues/Projects/grandma-app/.superpowers/brainstorm/32378-1777086391/content/mood-bubble-cluster.html"}
+{"type":"server-stopped","reason":"idle timeout"}

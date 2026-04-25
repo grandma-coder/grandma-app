@@ -1,0 +1,262 @@
+<style>
+  .phone {
+    width: 220px;
+    height: 420px;
+    background: #F3ECD9;
+    border-radius: 36px;
+    border: 2px solid #d4c8b0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    margin: 0 auto;
+  }
+  .phone-status {
+    height: 20px;
+    background: #F3ECD9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #888;
+  }
+  .phone-content {
+    flex: 1;
+    overflow: hidden;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .week-card {
+    background: #B7A6E8;
+    border-radius: 16px;
+    padding: 10px 12px;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .week-card .week-num { font-size: 18px; font-weight: 700; }
+  .week-card .subtitle { opacity: 0.8; font-size: 9px; }
+  .quick-strip {
+    display: flex;
+    gap: 6px;
+    overflow: hidden;
+  }
+  .chip {
+    background: #FFFEF8;
+    border: 1px solid #e0d8c8;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 9px;
+    color: #555;
+    white-space: nowrap;
+  }
+
+  /* Option A: Hero Banner Card */
+  .birth-banner {
+    background: linear-gradient(135deg, #B7A6E8, #9B7FD4);
+    border-radius: 16px;
+    padding: 12px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(183,166,232,0.4);
+  }
+  .birth-banner .icon-circle {
+    width: 36px;
+    height: 36px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .birth-banner .text h4 { font-size: 11px; font-weight: 700; margin: 0; }
+  .birth-banner .text p { font-size: 9px; opacity: 0.8; margin: 2px 0 0; }
+  .birth-banner .arrow { margin-left: auto; font-size: 14px; opacity: 0.8; }
+
+  /* Option B: Big Central Button */
+  .birth-big-btn {
+    background: linear-gradient(135deg, #B7A6E8, #7048B8);
+    border-radius: 20px;
+    padding: 14px;
+    color: white;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 6px 24px rgba(112,72,184,0.45);
+    position: relative;
+    overflow: hidden;
+  }
+  .birth-big-btn::before {
+    content: '';
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 70px; height: 70px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+  .birth-big-btn .big-icon { font-size: 24px; margin-bottom: 4px; }
+  .birth-big-btn h4 { font-size: 12px; font-weight: 700; margin: 0; }
+  .birth-big-btn p { font-size: 9px; opacity: 0.75; margin: 3px 0 0; }
+  .badge-row {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-top: 6px;
+  }
+  .badge {
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 8px;
+  }
+
+  /* Option C: Sticker-style floating tile */
+  .birth-sticker {
+    background: #FFFEF8;
+    border: 2px solid #B7A6E8;
+    border-radius: 20px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0px #B7A6E8;
+  }
+  .birth-sticker .sticker-emoji {
+    width: 40px; height: 40px;
+    background: #f0ebff;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .birth-sticker .text h4 { font-size: 11px; font-weight: 700; color: #141313; margin: 0; }
+  .birth-sticker .text p { font-size: 9px; color: #777; margin: 2px 0 0; }
+  .birth-sticker .dot-row {
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: flex-end;
+  }
+  .dot { width: 5px; height: 5px; background: #B7A6E8; border-radius: 50%; }
+
+  .cards { gap: 20px; }
+  .card-body p { font-size: 13px !important; }
+</style>
+
+<h2>How should the Birth Guide entry point look on the home screen?</h2>
+<p class="subtitle">These are three styles for the button/card that opens the full Birth Guide. All are placed in the pregnancy home feed, below the week card.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8f5ee;">
+      <div class="phone">
+        <div class="phone-status">9:11</div>
+        <div class="phone-content">
+          <div class="week-card">
+            <div class="week-num">Week 28</div>
+            <div class="subtitle">Your baby is the size of an eggplant 🍆</div>
+          </div>
+          <div class="quick-strip">
+            <div class="chip">💊 Vitamins</div>
+            <div class="chip">💧 Water</div>
+            <div class="chip">😴 Sleep</div>
+          </div>
+          <div class="birth-banner">
+            <div class="icon-circle">🤱</div>
+            <div class="text">
+              <h4>Birth Guide</h4>
+              <p>Natural · C-Section · Home · Water</p>
+            </div>
+            <div class="arrow">›</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Compact Banner</h3>
+      <p>A wide row card with icon, label, and subtitle. Fits naturally in the feed without dominating. Quick to scan and tap.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8f5ee;">
+      <div class="phone">
+        <div class="phone-status">9:11</div>
+        <div class="phone-content">
+          <div class="week-card">
+            <div class="week-num">Week 28</div>
+            <div class="subtitle">Your baby is the size of an eggplant 🍆</div>
+          </div>
+          <div class="quick-strip">
+            <div class="chip">💊 Vitamins</div>
+            <div class="chip">💧 Water</div>
+            <div class="chip">😴 Sleep</div>
+          </div>
+          <div class="birth-big-btn">
+            <div class="big-icon">🌿</div>
+            <h4>Birth Guide</h4>
+            <p>Everything you need to know about giving birth</p>
+            <div class="badge-row">
+              <span class="badge">Natural</span>
+              <span class="badge">C-Section</span>
+              <span class="badge">Home</span>
+              <span class="badge">Water</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Bold Hero Button</h3>
+      <p>A prominent full-width card with gradient background, centered icon, title, and topic badges. Unmissable — clearly signals this is important content.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8f5ee;">
+      <div class="phone">
+        <div class="phone-status">9:11</div>
+        <div class="phone-content">
+          <div class="week-card">
+            <div class="week-num">Week 28</div>
+            <div class="subtitle">Your baby is the size of an eggplant 🍆</div>
+          </div>
+          <div class="quick-strip">
+            <div class="chip">💊 Vitamins</div>
+            <div class="chip">💧 Water</div>
+            <div class="chip">😴 Sleep</div>
+          </div>
+          <div class="birth-sticker">
+            <div class="sticker-emoji">🌿</div>
+            <div class="text">
+              <h4>Birth Guide</h4>
+              <p>4 birth paths · labor stages · hospital bag</p>
+            </div>
+            <div class="dot-row">
+              <div class="dot"></div>
+              <div class="dot" style="opacity:0.5"></div>
+              <div class="dot" style="opacity:0.2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Sticker Card</h3>
+      <p>Paper-collage style with cream background, offset lavender shadow, and emoji tile. Matches the app's cream-paper design system most closely.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top: 16px;">Click to select, then let me know in the terminal.</p>

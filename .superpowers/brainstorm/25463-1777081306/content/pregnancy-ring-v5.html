@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pregnancy Week Ring v5</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0C0A1E; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    font-family: Georgia, serif; color: #fff; overflow-x: hidden;
+  }
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+
+  .phone-frame {
+    width: 390px; max-width: 100vw; min-height: 100vh;
+    background: #0E0B22; position: relative; z-index: 1;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  .header {
+    padding: 52px 24px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-title { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+  .header-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .tabs {
+    display: flex; margin: 0 20px 0;
+    background: rgba(255,255,255,0.06); border-radius: 99px; padding: 4px; gap: 2px;
+  }
+  .tab {
+    flex: 1; text-align: center; padding: 8px 4px; border-radius: 99px;
+    font-size: 13px; font-family: sans-serif; font-weight: 500;
+    color: rgba(255,255,255,0.45); cursor: pointer;
+  }
+  .tab.active { background: #fff; color: #0E0B22; font-weight: 700; }
+
+  .ring-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 10px 0 2px;
+  }
+  #ring-canvas { cursor: grab; touch-action: none; user-select: none; display: block; }
+  #ring-canvas:active { cursor: grabbing; }
+  .hint {
+    font-family: sans-serif; font-size: 10px;
+    color: rgba(255,255,255,0.18); text-align: center; padding: 2px 0 0;
+  }
+
+  /* ── Bottom content (scrollable) */
+  .bottom-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .bottom-content::-webkit-scrollbar { display: none; }
+
+  /* Date range row */
+  .date-row {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .date-range {
+    font-family: sans-serif; font-size: 13px; font-weight: 600;
+    transition: color 0.2s;
+  }
+  .status-pill {
+    font-family: sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 99px;
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.4);
+    transition: all 0.2s;
+  }
+
+  /* Logs section */
+  .section-label {
+    font-family: sans-serif; font-size: 9px; font-weight: 700;
+    letter-spacing: 1.8px; text-transform: uppercase;
+    color: rgba(255,255,255,0.28); margin-bottom: 8px;
+  }
+  .logs-row {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .log-chip {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 99px; padding: 6px 13px;
+    font-family: sans-serif; font-size: 12px; font-weight: 600;
+    color: rgba(255,255,255,0.7);
+  }
+  .log-chip .cdot { width: 6px; height: 6px; border-radius: 50%; }
+  .log-empty {
+    font-family: sans-serif; font-size: 12px;
+    color: rgba(255,255,255,0.22);
+    font-style: italic;
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px; background: rgba(255,255,255,0.08); margin: 0;
+  }
+
+  /* Week note */
+  .week-note {
+    font-family: sans-serif; font-size: 14px; line-height: 1.65;
+    color: rgba(255,255,255,0.60);
+    transition: opacity 0.2s;
+  }
+
+  /* Week dots progress */
+  .progress-row {
+    display: flex; gap: 3px; flex-wrap: wrap; padding-top: 4px;
+  }
+  .pdot { width: 5px; height: 5px; border-radius: 50%; transition: all 0.2s; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<canvas class="stars" id="stars"></canvas>
+
+<div class="phone-frame">
+  <div class="header">
+    <div class="header-title">Agenda.</div>
+    <div style="display:flex;gap:8px">
+      <div class="header-btn">🔔</div>
+      <div class="header-btn" style="background:#B983FF22;border-color:#B983FF44;color:#B983FF;font-size:20px">+</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab">Timeline</div>
+    <div class="tab active">Journey</div>
+    <div class="tab">Appts</div>
+  </div>
+
+  <div class="ring-wrap">
+    <canvas id="ring-canvas" width="360" height="310"></canvas>
+    <div class="hint">↺ drag to spin · tap any week</div>
+  </div>
+
+  <!-- Everything logged + info lives here -->
+  <div class="bottom-content">
+
+    <div class="date-row">
+      <div class="date-range" id="b-dates">Apr 14 – Apr 20, 2025</div>
+      <div class="status-pill" id="b-status">You are here</div>
+    </div>
+
+    <div>
+      <div class="section-label">LOGGED THIS WEEK</div>
+      <div class="logs-row" id="b-logs"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <div class="section-label">THIS WEEK</div>
+      <div class="week-note" id="b-note">Baby can now hear sounds from outside the womb. Their eyes are beginning to open for the very first time.</div>
+    </div>
+
+    <div class="progress-row" id="progress-row"></div>
+
+  </div>
+</div>
+
+<script>
+// Stars
+(function(){
+  const s=document.getElementById('stars'),c=s.getContext('2d');
+  s.width=window.innerWidth;s.height=window.innerHeight;
+  for(let i=0;i<130;i++){c.beginPath();c.arc(Math.random()*s.width,Math.random()*s.height,Math.random()*1.1,0,Math.PI*2);c.fillStyle=`rgba(255,255,255,${.1+Math.random()*.3})`;c.fill();}
+})();
+
+const DUE_DATE = new Date('2025-09-22');
+const CURRENT_WEEK = 22, TOTAL = 40;
+
+function weekDates(w){
+  const s=new Date(DUE_DATE); s.setDate(s.getDate()-(40-w)*7);
+  const e=new Date(s); e.setDate(e.getDate()+6);
+  const f=d=>d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return {label:`${f(s)} – ${f(e)}, ${e.getFullYear()}`};
+}
+
+function triColor(w){ return w<=13?'#A2FF86':w<=26?'#B983FF':'#FF6B35'; }
+
+const NOTES=[
+  'Fertilization occurs. A tiny cluster of cells begins its journey.',
+  'The fertilized egg implants into the uterine wall.',
+  'Cells are multiplying rapidly. The placenta begins to form.',
+  'The neural tube — foundation of brain and spine — is taking shape.',
+  "Baby's heart starts beating for the first time.",
+  'Tiny facial features emerge. Nostrils, eyes, and ear openings are forming.',
+  'Brain grows rapidly. Paddle-shaped hands and feet are visible.',
+  "Baby is moving — though you can't feel it yet. Fingers are visible.",
+  'Toes are now distinct. The embryo officially becomes a fetus.',
+  'Vital organs are fully formed and beginning to work together.',
+  'Baby can open and close their fists. Hair follicles are developing.',
+  'Reflexes are developing. Fingernails begin to grow.',
+  'Unique fingerprints are forming. Baby can suck their thumb!',
+  'Baby can make facial expressions. Kidneys are producing urine.',
+  'Bones are hardening. Baby can sense light through closed eyelids.',
+  'Baby practices breathing movements. First flutters may be felt soon.',
+  'Fat is forming under the skin. The umbilical cord grows thicker.',
+  'Baby can yawn and hiccup. Ears are now fully formed and functional.',
+  'Vernix caseosa coats the skin for protection inside the womb.',
+  "Halfway there! Baby's movements are growing stronger every day.",
+  'Baby is developing a regular sleep cycle. Eyebrows are now visible.',
+  'Baby can hear sounds from outside the womb. Eyes are beginning to open.',
+  'Skin is becoming less transparent as fat develops beneath it.',
+  'Lungs are developing rapidly. Baby has a chance if born now.',
+  'Baby responds to touch and sound. Hair now has color and pigment.',
+  'Eyes open fully for the first time. Baby may respond to belly light.',
+  'Brain tissue is developing rapidly. Baby can recognize your voice.',
+  'Third trimester begins! Baby can blink and now has eyelashes.',
+  'Muscles and lungs are maturing. Baby gains about 200g per week.',
+  'Red blood cells are forming in bone marrow. Baby is very active.',
+  'Baby can track light with their eyes. Rapid brain development continues.',
+  'Toenails, fingernails, and hair are all growing now.',
+  'Skull bones remain soft and flexible — designed for birth.',
+  'Central nervous system and lungs are nearly fully mature.',
+  'Baby is filling out and getting plumper. Kidneys are fully developed.',
+  "Baby drops into the pelvis — 'lightening'. Almost ready!",
+  'Early term. Baby is practicing breathing and sucking reflexes.',
+  'All organs are fully ready. Vernix is shedding into amniotic fluid.',
+  'Full-term. Baby could arrive any day. You are incredible.',
+  'Due date! Baby is ready to meet the world. You did it, Mama. ❤️',
+];
+
+const MOCK_LOGS={
+  5:['Weight'],6:['Weight','Mood'],7:['Weight'],
+  8:['Weight','Mood','Symptom'],9:['Weight','Symptom'],
+  10:['Weight','Mood','Kick'],11:['Weight','Symptom','Mood'],
+  12:['Weight','Kick','Mood'],13:['Weight','Mood'],
+  14:['Weight','Kick'],15:['Weight','Mood','Symptom','Kick'],
+  16:['Weight','Kick','Mood'],17:['Weight','Kick'],
+  18:['Weight','Mood','Kick'],19:['Weight','Kick','Mood','Symptom'],
+  20:['Weight','Kick','Mood'],21:['Weight','Kick','Mood','Appt'],
+  22:['Weight','Kick','Appt'],
+};
+const LOG_COLORS={Weight:'#A2FF86',Mood:'#B983FF',Kick:'#FF8AD8',Symptom:'#FF6B35',Appt:'#4D96FF'};
+
+// Progress dots
+const pr=document.getElementById('progress-row');
+for(let i=1;i<=40;i++){const d=document.createElement('div');d.className='pdot';d.id='pd'+i;pr.appendChild(d);}
+function updateDots(sel){
+  for(let i=1;i<=40;i++){
+    const d=document.getElementById('pd'+i),col=triColor(i);
+    if(i<CURRENT_WEEK){d.style.background=col+'55';d.style.width=d.style.height='5px';d.style.boxShadow='none';}
+    else if(i===CURRENT_WEEK){d.style.background=col;d.style.width=d.style.height='7px';d.style.boxShadow='0 0 5px '+col;}
+    else if(i===sel&&sel>CURRENT_WEEK){d.style.background=col+'66';d.style.width=d.style.height='6px';d.style.boxShadow='none';}
+    else{d.style.background='rgba(255,255,255,0.10)';d.style.width=d.style.height='5px';d.style.boxShadow='none';}
+  }
+}
+
+function updateBottom(w){
+  const col=triColor(w), isCurr=w===CURRENT_WEEK, isPast=w<CURRENT_WEEK;
+  document.getElementById('b-dates').textContent=weekDates(w).label;
+  document.getElementById('b-dates').style.color=col;
+  const sp=document.getElementById('b-status');
+  sp.textContent=isCurr?'You are here':(isPast?'Completed':'Upcoming');
+  sp.style.color=col+'cc'; sp.style.borderColor=col+'33';
+  sp.style.background=col+'12'; sp.style.border='1px solid '+col+'33';
+  // Logs
+  const logsEl=document.getElementById('b-logs'); logsEl.innerHTML='';
+  const logs=MOCK_LOGS[w]||[];
+  if(logs.length===0){
+    const e=document.createElement('div');e.className='log-empty';
+    e.textContent=isCurr?'Nothing logged yet this week.':(isPast?'No logs recorded for this week.':'Future week — nothing to log yet.');
+    logsEl.appendChild(e);
+  } else {
+    logs.forEach(type=>{
+      const chip=document.createElement('div');chip.className='log-chip';
+      chip.innerHTML=`<span class="cdot" style="background:${LOG_COLORS[type]||'#fff'}"></span>${type}`;
+      logsEl.appendChild(chip);
+    });
+  }
+  document.getElementById('b-note').textContent=NOTES[w-1];
+  updateDots(w);
+}
+
+// ── Canvas
+const canvas=document.getElementById('ring-canvas');
+const ctx=canvas.getContext('2d');
+const W=360,H=310,CX=180,CY=148,RING_R=128,ANCHOR=Math.PI/2;
+let rotation=0,selectedWeek=CURRENT_WEEK,pulseT=0;
+
+(function initRot(){
+  const base=((CURRENT_WEEK-1)/TOTAL)*2*Math.PI-Math.PI/2;
+  rotation=ANCHOR-base;
+})();
+
+function wAngle(i){return(i/TOTAL)*2*Math.PI-Math.PI/2+rotation;}
+function orbR(i){
+  const w=i+1,isSel=w===selectedWeek,isCurr=w===CURRENT_WEEK;
+  const base=w<=13?5:w<=26?6:7;
+  return isSel?base+5:(isCurr?base+3:base);
+}
+
+function drawCenter(w){
+  const col=triColor(w), isCurr=w===CURRENT_WEEK, isPast=w<CURRENT_WEEK;
+
+  // Soft radial glow
+  const grd=ctx.createRadialGradient(CX,CY,5,CX,CY,72);
+  grd.addColorStop(0,col+'14'); grd.addColorStop(1,'transparent');
+  ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(CX,CY,72,0,Math.PI*2); ctx.fill();
+
+  // Pulse for current
+  if(isCurr){
+    const p=0.45+0.55*Math.sin(pulseT);
+    ctx.beginPath(); ctx.arc(CX,CY,44+p*10,0,Math.PI*2);
+    ctx.strokeStyle=col+Math.floor(p*60).toString(16).padStart(2,'0');
+    ctx.lineWidth=1.2; ctx.stroke();
+  }
+
+  // Status micro-label
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  ctx.font='700 8px sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(isCurr?'YOU ARE HERE':(isPast?'COMPLETED':'UPCOMING'), CX, CY-38);
+
+  // "WEEK" label
+  ctx.fillStyle='rgba(255,255,255,0.35)';
+  ctx.font='700 11px sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('WEEK', CX, CY-16);
+
+  // Big number
+  ctx.shadowColor=col; ctx.shadowBlur=14;
+  ctx.fillStyle='#fff';
+  ctx.font='800 58px Georgia, serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(w, CX, CY+16);
+  ctx.shadowBlur=0;
+
+  ctx.textBaseline='alphabetic';
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.beginPath(); ctx.arc(CX,CY,RING_R,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1.5; ctx.stroke();
+
+  for(let i=0;i<TOTAL;i++){
+    const w=i+1, angle=wAngle(i);
+    const x=CX+RING_R*Math.cos(angle), y=CY+RING_R*Math.sin(angle);
+    const col=triColor(w), r=orbR(i);
+    const isFuture=w>CURRENT_WEEK, isSel=w===selectedWeek, isCurr=w===CURRENT_WEEK;
+
+    ctx.shadowBlur=0;
+
+    if(isSel&&isCurr){
+      const p=0.45+0.55*Math.sin(pulseT);
+      ctx.beginPath(); ctx.arc(x,y,r+5+p*5,0,Math.PI*2);
+      ctx.strokeStyle=col+Math.floor(p*65).toString(16).padStart(2,'0');
+      ctx.lineWidth=1.2; ctx.stroke();
+    }
+
+    if(isSel){ctx.shadowColor=col;ctx.shadowBlur=16;}
+    else if(isCurr){ctx.shadowColor=col;ctx.shadowBlur=8;}
+
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    if(isFuture&&!isSel){
+      ctx.strokeStyle='rgba(255,255,255,0.13)'; ctx.lineWidth=1; ctx.stroke();
+    } else {
+      const alpha=w<CURRENT_WEEK?0.35+(i/CURRENT_WEEK)*0.6:1;
+      ctx.globalAlpha=isSel?1:alpha; ctx.fillStyle=col; ctx.fill(); ctx.globalAlpha=1;
+      if(isSel){ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=2;ctx.stroke();}
+    }
+    ctx.shadowBlur=0;
+  }
+
+  // Anchor arrow
+  const sc=triColor(selectedWeek);
+  ctx.beginPath();
+  ctx.moveTo(CX-5,CY+RING_R+13); ctx.lineTo(CX+5,CY+RING_R+13); ctx.lineTo(CX,CY+RING_R+6);
+  ctx.closePath(); ctx.fillStyle=sc; ctx.fill();
+
+  drawCenter(selectedWeek);
+}
+
+// Drag
+let isDragging=false,lastAngle=0,velocity=0,lastTime=0;
+function pAngle(e){
+  const r=canvas.getBoundingClientRect();
+  return Math.atan2((e.touches?e.touches[0].clientY:e.clientY)-r.top-CY,
+    (e.touches?e.touches[0].clientX:e.clientX)-r.left-CX);
+}
+canvas.addEventListener('mousedown',e=>{isDragging=true;velocity=0;lastAngle=pAngle(e);lastTime=Date.now();});
+canvas.addEventListener('touchstart',e=>{e.preventDefault();isDragging=true;velocity=0;lastAngle=pAngle(e);lastTime=Date.now();},{passive:false});
+function onMove(e){
+  if(!isDragging)return;if(e.cancelable)e.preventDefault();
+  const a=pAngle(e);let d=a-lastAngle;
+  if(d>Math.PI)d-=2*Math.PI;if(d<-Math.PI)d+=2*Math.PI;
+  rotation+=d; const now=Date.now();velocity=d/Math.max(1,now-lastTime)*16;
+  lastTime=now;lastAngle=a;snapSel();draw();
+}
+canvas.addEventListener('mousemove',onMove);
+canvas.addEventListener('touchmove',onMove,{passive:false});
+canvas.addEventListener('mouseup',()=>{isDragging=false;});
+canvas.addEventListener('touchend',()=>{isDragging=false;});
+canvas.addEventListener('mouseleave',()=>{isDragging=false;});
+canvas.addEventListener('click',e=>{
+  if(Math.abs(velocity)>0.015)return;
+  const r=canvas.getBoundingClientRect();
+  const tx=e.clientX-r.left,ty=e.clientY-r.top;
+  let best=null,bestD=999;
+  for(let i=0;i<TOTAL;i++){
+    const a=wAngle(i),ox=CX+RING_R*Math.cos(a),oy=CY+RING_R*Math.sin(a);
+    const d=Math.hypot(tx-ox,ty-oy);
+    if(d<22&&d<bestD){bestD=d;best=i;}
+  }
+  if(best!==null)snapToWeek(best+1);
+});
+
+function snapSel(){
+  let best=0,bestD=999;
+  for(let i=0;i<TOTAL;i++){
+    const a=wAngle(i);let d=((a-ANCHOR+Math.PI)%(2*Math.PI))-Math.PI;
+    if(Math.abs(d)<bestD){bestD=Math.abs(d);best=i;}
+  }
+  if(selectedWeek!==best+1){selectedWeek=best+1;updateBottom(selectedWeek);}
+}
+
+function snapToWeek(w){
+  selectedWeek=w;
+  const base=((w-1)/TOTAL)*2*Math.PI-Math.PI/2;
+  let diff=(ANCHOR-base)-rotation;
+  while(diff>Math.PI)diff-=2*Math.PI;while(diff<-Math.PI)diff+=2*Math.PI;
+  const start=rotation,t0=performance.now();
+  function anim(t){
+    const p=Math.min(1,(t-t0)/380),ease=1-Math.pow(1-p,3);
+    rotation=start+diff*ease;draw();
+    if(p<1)requestAnimationFrame(anim);else{velocity=0;updateBottom(w);}
+  }
+  requestAnimationFrame(anim);
+}
+
+function loop(){
+  pulseT+=0.04;
+  if(!isDragging&&Math.abs(velocity)>0.0005){rotation+=velocity;velocity*=0.93;snapSel();}
+  draw();requestAnimationFrame(loop);
+}
+
+updateBottom(CURRENT_WEEK);
+loop();
+</script>
+</body>
+</html>

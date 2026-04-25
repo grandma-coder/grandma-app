@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   sheet: {
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    maxHeight: '92%',
+    height: '90%',
   },
   handleWrap: {
     alignItems: 'center',

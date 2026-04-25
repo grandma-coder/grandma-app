@@ -18,16 +18,18 @@ interface Props {
 }
 
 export function LogFormSticker({ type, label, tint }: Props) {
-  const { colors, isDark, font } = useTheme()
+  const { colors, isDark } = useTheme()
   const haloTint = tint ?? colors.surfaceRaised
+  const ink = isDark ? 'rgba(255,255,255,0.18)' : '#141313'
+  const border = isDark ? colors.border : ink
 
   return (
-    <View style={[styles.row, { backgroundColor: haloTint, borderColor: colors.border }]}>
-      <View style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View style={[styles.row, { backgroundColor: haloTint, borderColor: border }]}>
+      <View style={[styles.chip, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: border }]}>
         {logSticker(type, 32, isDark)}
       </View>
       <Text
-        style={[styles.label, { color: colors.text, fontFamily: font.bodySemiBold }]}
+        style={[styles.label, { color: isDark ? colors.text : '#141313', fontFamily: 'Fraunces_700Bold', letterSpacing: -0.2 }]}
         numberOfLines={2}
       >
         {label}
@@ -42,19 +44,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     padding: 14,
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 22,
+    borderWidth: 1.5,
   },
   chip: {
     width: 48,
     height: 48,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   label: {
-    fontSize: 14,
+    fontSize: 15,
     flex: 1,
   },
 })

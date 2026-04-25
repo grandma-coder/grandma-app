@@ -30,7 +30,7 @@ export function LogSheet({ visible, title, onClose, children, chip, chipColor, t
 
   const bg = isDark ? colors.bg : '#F3ECD9'
   const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.18)'
   const ink = isDark ? colors.text : '#141313'
 
   return (
@@ -115,20 +115,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chip: {
-    paddingVertical: 3,
+    paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   chipText: {
     fontSize: 11,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
   },
   closeBtn: {
     width: 34,
     height: 34,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,0 +1,296 @@
+<style>
+  .phone {
+    width: 210px;
+    height: 420px;
+    background: #F3ECD9;
+    border-radius: 32px;
+    border: 2px solid #d4c8b0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    margin: 0 auto;
+  }
+  .sheet-handle {
+    width: 36px; height: 4px;
+    background: rgba(20,19,19,0.2);
+    border-radius: 2px;
+    margin: 10px auto 0;
+    flex-shrink: 0;
+  }
+  .hero {
+    padding: 12px 14px 10px;
+    flex-shrink: 0;
+  }
+  .hero-inner {
+    border-radius: 16px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .hero-icon { font-size: 28px; }
+  .hero-text h3 { font-size: 14px; font-weight: 700; margin: 0; font-family: Georgia, serif; }
+  .hero-text p { font-size: 9px; margin: 2px 0 0; opacity: 0.75; }
+  .scroll-body {
+    flex: 1;
+    overflow: hidden;
+    padding: 0 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .section-label {
+    font-size: 7px; font-weight: 700; color: #B7A6E8;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .info-card {
+    background: #FFFEF8;
+    border: 1px solid #e8e0cc;
+    border-radius: 10px;
+    padding: 7px 10px;
+    flex-shrink: 0;
+  }
+  .info-card .ic-title { font-size: 9px; font-weight: 700; color: #141313; margin-bottom: 3px; }
+  .info-card .ic-body { font-size: 8px; color: #555; line-height: 1.5; }
+  .pill-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+  .pill { font-size: 7px; font-weight: 600; border-radius: 6px; padding: 2px 6px; }
+
+  /* Option A: flat scroll */
+  .pros-cons-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .pc-col { background: #FFFEF8; border: 1px solid #e8e0cc; border-radius: 10px; padding: 6px 8px; }
+  .pc-col .pc-head { font-size: 8px; font-weight: 700; margin-bottom: 3px; }
+  .pc-col .pc-item { font-size: 7px; color: #555; margin-bottom: 2px; }
+  .green-head { color: #3a8a3a; }
+  .red-head { color: #c04040; }
+
+  /* Option B: accordion within detail */
+  .acc-row {
+    background: #FFFEF8; border: 1px solid #e8e0cc;
+    border-radius: 10px; padding: 7px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .acc-row .ar-left { display: flex; align-items: center; gap: 6px; }
+  .acc-row .ar-num {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700; flex-shrink: 0;
+  }
+  .acc-row .ar-title { font-size: 9px; font-weight: 700; color: #141313; }
+  .acc-row .ar-sub { font-size: 7px; color: #888; }
+  .acc-row .chevron { font-size: 9px; color: #B7A6E8; }
+  .acc-row.open-row { background: #f4f0ff; border-color: #c4b5fd; }
+
+  /* Option C: visual timeline */
+  .timeline { display: flex; flex-direction: column; gap: 0; flex-shrink: 0; }
+  .tl-item { display: flex; gap: 8px; padding: 0 0 6px; }
+  .tl-left { display: flex; flex-direction: column; align-items: center; }
+  .tl-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; }
+  .tl-line { width: 2px; background: #e8e0cc; flex: 1; margin: 2px 0; }
+  .tl-content .tl-title { font-size: 9px; font-weight: 700; color: #141313; }
+  .tl-content .tl-body { font-size: 7px; color: #666; margin-top: 1px; }
+
+  .grandma-cta {
+    background: #f4f0ff; border: 1px solid #c4b5fd;
+    border-radius: 10px; padding: 7px 10px;
+    text-align: center; flex-shrink: 0;
+  }
+  .grandma-cta .gc-text { font-size: 8px; color: #7048B8; font-weight: 600; }
+
+  .cards { gap: 24px; }
+</style>
+
+<h2>What does tapping a birth type card open?</h2>
+<p class="subtitle">When the user taps "Natural Birth" (or any birth type), a detail view opens. These are three ways to structure all that rich content.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8f5ee;">
+      <div class="phone">
+        <div class="sheet-handle"></div>
+        <div class="hero">
+          <div class="hero-inner" style="background:#e8f8e8; border:1px solid #b7e5b7;">
+            <div class="hero-icon">🌿</div>
+            <div class="hero-text">
+              <h3 style="color:#141313;">Natural Birth</h3>
+              <p style="color:#3a8a3a;">Vaginal · No medication</p>
+            </div>
+          </div>
+        </div>
+        <div class="scroll-body">
+          <div class="section-label">Overview</div>
+          <div class="info-card">
+            <div class="ic-title">What it is</div>
+            <div class="ic-body">Vaginal delivery without epidural or pain meds. Uses breathing, movement & support.</div>
+          </div>
+          <div class="section-label">Pros & Considerations</div>
+          <div class="pros-cons-row">
+            <div class="pc-col">
+              <div class="pc-head green-head">Pros</div>
+              <div class="pc-item">• Faster recovery</div>
+              <div class="pc-item">• Immediate skin-to-skin</div>
+              <div class="pc-item">• No medication side effects</div>
+            </div>
+            <div class="pc-col">
+              <div class="pc-head red-head">Consider</div>
+              <div class="pc-item">• Intense pain</div>
+              <div class="pc-item">• May need emergency C-section</div>
+            </div>
+          </div>
+          <div class="grandma-cta">
+            <div class="gc-text">💬 Ask Grandma anything →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Flat scroll</h3>
+      <p>One long scrollable screen: overview, pros/cons, what to expect, pain relief options, positions, "Ask Grandma" CTA. Clean and simple, all info in one pass.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8f5ee;">
+      <div class="phone">
+        <div class="sheet-handle"></div>
+        <div class="hero">
+          <div class="hero-inner" style="background:#e8f8e8; border:1px solid #b7e5b7;">
+            <div class="hero-icon">🌿</div>
+            <div class="hero-text">
+              <h3 style="color:#141313;">Natural Birth</h3>
+              <p style="color:#3a8a3a;">6 topics to explore</p>
+            </div>
+          </div>
+        </div>
+        <div class="scroll-body">
+          <div class="acc-row open-row">
+            <div class="ar-left">
+              <div class="ar-num" style="background:#e8f8e8;color:#3a8a3a;">1</div>
+              <div>
+                <div class="ar-title">What is it?</div>
+                <div class="ar-sub">Overview & definition</div>
+              </div>
+            </div>
+            <div class="chevron">∧</div>
+          </div>
+          <div class="acc-row">
+            <div class="ar-left">
+              <div class="ar-num" style="background:#f0ebff;color:#7048B8;">2</div>
+              <div>
+                <div class="ar-title">Labor stages</div>
+                <div class="ar-sub">Early → Active → Pushing</div>
+              </div>
+            </div>
+            <div class="chevron">∨</div>
+          </div>
+          <div class="acc-row">
+            <div class="ar-left">
+              <div class="ar-num" style="background:#fff0e8;color:#c06030;">3</div>
+              <div>
+                <div class="ar-title">Pain relief options</div>
+                <div class="ar-sub">Breathing, water, TENS</div>
+              </div>
+            </div>
+            <div class="chevron">∨</div>
+          </div>
+          <div class="acc-row">
+            <div class="ar-left">
+              <div class="ar-num" style="background:#e8f0ff;color:#3060b8;">4</div>
+              <div>
+                <div class="ar-title">Birth positions</div>
+                <div class="ar-sub">Upright, squatting, side-lying</div>
+              </div>
+            </div>
+            <div class="chevron">∨</div>
+          </div>
+          <div class="grandma-cta">
+            <div class="gc-text">💬 Ask Grandma anything →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Sub-topic accordion</h3>
+      <p>Each birth type has 5-7 expandable sub-topics: Overview, Labor Stages, Pain Relief, Positions, What to Pack, Pros & Cons, Recovery. User drills into what interests them.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8f5ee;">
+      <div class="phone">
+        <div class="sheet-handle"></div>
+        <div class="hero">
+          <div class="hero-inner" style="background:#e8f8e8; border:1px solid #b7e5b7;">
+            <div class="hero-icon">🌿</div>
+            <div class="hero-text">
+              <h3 style="color:#141313;">Natural Birth</h3>
+              <p style="color:#3a8a3a;">From early labor to golden hour</p>
+            </div>
+          </div>
+        </div>
+        <div class="scroll-body">
+          <div class="section-label">Labor Journey</div>
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-left">
+                <div class="tl-dot" style="background:#b7e5b7;"></div>
+                <div class="tl-line"></div>
+              </div>
+              <div class="tl-content">
+                <div class="tl-title">Early labor (0-6cm)</div>
+                <div class="tl-body">Contractions every 5-20 min · Stay home · Rest</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-left">
+                <div class="tl-dot" style="background:#c4b5fd;"></div>
+                <div class="tl-line"></div>
+              </div>
+              <div class="tl-content">
+                <div class="tl-title">Active labor (6-10cm)</div>
+                <div class="tl-body">Go to hospital · Contractions 3-5 min</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-left">
+                <div class="tl-dot" style="background:#fde68a;"></div>
+                <div class="tl-line"></div>
+              </div>
+              <div class="tl-content">
+                <div class="tl-title">Transition & pushing</div>
+                <div class="tl-body">Most intense · 10-60 min pushing</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-left">
+                <div class="tl-dot" style="background:#fca5a5;"></div>
+              </div>
+              <div class="tl-content">
+                <div class="tl-title">Golden hour</div>
+                <div class="tl-body">Skin-to-skin · Delayed cord clamping</div>
+              </div>
+            </div>
+          </div>
+          <div class="grandma-cta">
+            <div class="gc-text">💬 Ask Grandma anything →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Visual timeline + sections</h3>
+      <p>Labor journey shown as a color-coded timeline at top, then flat sections below (pros/cons, pain relief, positions). Most visual and emotionally engaging.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Pick your preferred detail style, then reply in the terminal.</p>

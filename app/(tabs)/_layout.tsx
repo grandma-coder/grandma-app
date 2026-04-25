@@ -10,10 +10,12 @@ import { useState, useEffect, useRef, useCallback, ReactElement } from 'react'
 import { View, Text, Pressable, Modal, Animated, StyleSheet, Dimensions } from 'react-native'
 import { Tabs, router } from 'expo-router'
 import {
-  Home, Calendar, BarChart3, User, Sparkles,
+  Home, Calendar, BarChart3, User, Sparkles, Plus,
   MessageCircle, Lightbulb, ShoppingBag, Users, Gift,
   LucideIcon,
 } from 'lucide-react-native'
+import Svg, { Path } from 'react-native-svg'
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
@@ -21,6 +23,12 @@ import { getModeConfig } from '../../lib/modeConfig'
 import { useTheme, brand, getModeColor } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { Burst, Blob, Flower, Squishy, Heart, Star, Drop, StickerPalette } from '../../components/stickers/BrandStickers'
+
+// ─── Collage Strip constants ───────────────────────────────────────────────
+const STRIP_HEIGHT = 84
+const STICKER_TAB_SIZE = 46
+const CENTER_BURST_SIZE = 72
+const STICKER_INK = '#141313'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -156,16 +164,19 @@ function CenterTabButton() {
 
   return (
     <>
-      {/* Tab bar button — always visible, animates rotation */}
+      {/* Tab bar button — Burst sticker, raised above the strip */}
       <View style={styles.centerWrapper}>
-        <Pressable onPress={open ? animateClose : animateOpen}>
+        <Pressable onPress={open ? animateClose : animateOpen} hitSlop={12}>
           <Animated.View
             style={[
-              styles.centerButtonInner,
-              { backgroundColor: accentColor, shadowColor: accentColor, transform: [{ rotate: rotation }, { scale: pulse }] },
+              styles.centerBurstWrap,
+              { shadowColor: STICKER_INK, transform: [{ rotate: rotation }, { scale: pulse }] },
             ]}
           >
-            <Sparkles size={28} color="#FFFFFF" strokeWidth={2.5} />
+            <Burst size={CENTER_BURST_SIZE} fill={StickerPalette.coral} stroke={STICKER_INK} points={11} wobble={0.26} />
+            <View style={styles.centerSparkleAbs} pointerEvents="none">
+              <Plus size={26} color={STICKER_INK} strokeWidth={3} />
+            </View>
           </Animated.View>
         </Pressable>
       </View>
@@ -284,15 +295,146 @@ function CenterTabButton() {
   )
 }
 
+// ─── Collage Strip — torn-paper bottom bar with sticker tabs ──────────────
+
+interface TabStickerCfg {
+  icon: LucideIcon
+  label: string
+  color: string
+}
+
+function TornEdge({ width, color }: { width: number; color: string }) {
+  // Wavy/zig-zag torn paper top edge — deterministic but irregular.
+  const segs = 26
+  const segW = width / segs
+  const heights = [3, 7, 2, 5, 8, 4, 6, 3, 9, 5, 2, 6, 4, 8, 3, 5, 7, 2, 6, 4, 9, 3, 5, 8, 2, 6, 4]
+  let d = `M0,${STRIP_HEIGHT} L0,10 `
+  for (let i = 0; i <= segs; i++) {
+    const x = (i * segW).toFixed(1)
+    const y = heights[i % heights.length]
+    d += `L${x},${y} `
+  }
+  d += `L${width},${STRIP_HEIGHT} Z`
+  return (
+    <Svg
+      width={width}
+      height={STRIP_HEIGHT}
+      style={StyleSheet.absoluteFillObject}
+      pointerEvents="none"
+    >
+      <Path d={d} fill={color} />
+    </Svg>
+  )
+}
+
+function CollageStripTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets()
+  const { isDark } = useTheme()
+  const { t } = useTranslation()
+  const screenW = Dimensions.get('window').width
+
+  const TAB_CFG: Record<string, TabStickerCfg> = {
+    index:    { icon: Home,      label: t('tab_home'),      color: StickerPalette.yellow },
+    agenda:   { icon: Calendar,  label: t('tab_calendar'),  color: StickerPalette.blue },
+    vault:    { icon: BarChart3, label: t('tab_analytics'), color: StickerPalette.green },
+    settings: { icon: User,      label: t('tab_profile'),   color: StickerPalette.lilac },
+  }
+
+  // Filter to visible routes — expo-router converts href:null into
+  // tabBarItemStyle:{display:'none'} + tabBarButton:()=>null. Detect either.
+  const visible = state.routes.filter((r) => {
+    const opts = descriptors[r.key].options as any
+    if (opts.tabBarButton && opts.tabBarItemStyle?.display === 'none') return false
+    if (opts.href === null) return false
+    return true
+  })
+
+  // Paper color — cream in light mode, parchment in dark
+  const paperColor = isDark ? '#2C2820' : StickerPalette.cream
+  const inkColor = isDark ? StickerPalette.cream : STICKER_INK
+  const labelMutedColor = isDark ? 'rgba(245,237,220,0.6)' : '#6E6763'
+
+  return (
+    <View style={[stripStyles.wrap, { paddingBottom: insets.bottom, backgroundColor: paperColor }]}>
+      <TornEdge width={screenW} color={paperColor} />
+      <View style={[stripStyles.row, { backgroundColor: paperColor }]}>
+        {visible.map((route) => {
+          const isFocused = state.routes[state.index]?.key === route.key
+
+          if (route.name === 'library') {
+            return (
+              <View key={route.key} style={stripStyles.cell}>
+                <CenterTabButton />
+              </View>
+            )
+          }
+
+          const cfg = TAB_CFG[route.name]
+          if (!cfg) return null
+          const Icon = cfg.icon
+
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            })
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name as never)
+            }
+          }
+
+          return (
+            <Pressable
+              key={route.key}
+              onPress={onPress}
+              style={stripStyles.cell}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isFocused }}
+              accessibilityLabel={cfg.label}
+            >
+              <View
+                style={[
+                  stripStyles.tabSticker,
+                  {
+                    backgroundColor: cfg.color,
+                    borderColor: STICKER_INK,
+                    opacity: isFocused ? 1 : 0.92,
+                    shadowOpacity: isFocused ? 0.18 : 0,
+                  },
+                ]}
+              >
+                <Icon size={20} color={STICKER_INK} strokeWidth={2} />
+              </View>
+              <Text
+                style={[
+                  stripStyles.tabLabel,
+                  {
+                    color: isFocused ? inkColor : labelMutedColor,
+                    fontFamily: isFocused
+                      ? 'Fraunces_700Bold'
+                      : 'InstrumentSerif_400Regular_Italic',
+                    fontStyle: isFocused ? 'normal' : 'italic',
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {cfg.label}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
 // ─── Tab Layout ────────────────────────────────────────────────────────────
 
 export default function TabLayout() {
   const mode = useModeStore((s) => s.mode)
   const currentBehavior = useBehaviorStore((s) => s.currentBehavior)
   const config = getModeConfig(mode)
-  const { colors, isDark } = useTheme()
-  const { t } = useTranslation()
-  const activeTint = getModeColor(mode, isDark)
 
   // Fade transition on behavior switch
   const fadeAnim = useRef(new Animated.Value(1)).current
@@ -311,77 +453,18 @@ export default function TabLayout() {
   return (
     <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
       <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: {
-            backgroundColor: colors.tabBg,
-            borderTopColor: colors.tabBorder,
-            borderTopWidth: 1,
-            height: 88,
-            paddingBottom: 34,
-            paddingTop: 8,
-          },
-          tabBarActiveTintColor: activeTint,
-          tabBarInactiveTintColor: colors.tabInactive,
-          tabBarLabelStyle: {
-            fontSize: 9,
-            fontFamily: 'DMSans_600SemiBold',
-            letterSpacing: 0.8,
-            textTransform: 'uppercase',
-          },
-        }}
+        screenOptions={{ headerShown: false }}
+        tabBar={(props) => <CollageStripTabBar {...props} />}
       >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: t('tab_home'),
-            tabBarIcon: ({ color, size }) => (
-              <Home size={size} color={color} strokeWidth={2} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="agenda"
-          options={{
-            title: t('tab_calendar'),
-            tabBarIcon: ({ color, size }) => (
-              <Calendar size={size} color={color} strokeWidth={2} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="library"
-          options={{
-            title: '',
-            tabBarButton: () => <CenterTabButton />,
-          }}
-        />
+        <Tabs.Screen name="index" options={{ title: '' }} />
+        <Tabs.Screen name="agenda" options={{ title: '' }} />
+        <Tabs.Screen name="library" options={{ title: '' }} />
         <Tabs.Screen
           name="vault"
-          options={{
-            title: t('tab_analytics'),
-            href: config.tabs.vault.visible ? undefined : null,
-            tabBarIcon: ({ color, size }) => (
-              <BarChart3 size={size} color={color} strokeWidth={2} />
-            ),
-          }}
+          options={{ title: '', href: config.tabs.vault.visible ? undefined : null }}
         />
-        <Tabs.Screen
-          name="exchange"
-          options={{
-            title: config.tabs.exchange.label,
-            href: null,
-          }}
-        />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            title: t('tab_profile'),
-            tabBarIcon: ({ color, size }) => (
-              <User size={size} color={color} strokeWidth={2} />
-            ),
-          }}
-        />
+        <Tabs.Screen name="exchange" options={{ title: '', href: null }} />
+        <Tabs.Screen name="settings" options={{ title: '' }} />
       </Tabs>
     </Animated.View>
   )
@@ -390,20 +473,28 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   centerWrapper: {
     position: 'relative',
-    top: -16,
+    top: -22,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  centerButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  centerBurstWrap: {
+    width: CENTER_BURST_SIZE,
+    height: CENTER_BURST_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  centerSparkleAbs: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   confetti: {
     position: 'absolute',
@@ -463,5 +554,40 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     textAlign: 'center',
     maxWidth: 104,
+  },
+})
+
+const stripStyles = StyleSheet.create({
+  wrap: {
+    position: 'relative',
+  },
+  row: {
+    height: STRIP_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingTop: 6,
+  },
+  cell: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  tabSticker: {
+    width: STICKER_TAB_SIZE,
+    height: STICKER_TAB_SIZE,
+    borderRadius: STICKER_TAB_SIZE / 2,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: STICKER_INK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabLabel: {
+    marginTop: 4,
+    fontSize: 11,
+    letterSpacing: 0.1,
   },
 })

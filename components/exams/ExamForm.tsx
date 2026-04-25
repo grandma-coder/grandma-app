@@ -328,20 +328,26 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
       <Pressable
         onPress={handleSave}
         disabled={saving || !title.trim() || uploading || extracting}
-        style={({ pressed }) => [
-          styles.saveBtn,
-          {
-            backgroundColor: brand.primary,
-            borderRadius: radius.lg,
-            opacity: saving || !title.trim() || uploading || extracting ? 0.5 : 1,
-          },
-          pressed && { transform: [{ scale: 0.98 }] },
-        ]}
+        style={({ pressed }) => {
+          const isDisabled = saving || !title.trim() || uploading || extracting
+          return [
+            styles.saveBtn,
+            {
+              backgroundColor: isDisabled ? colors.surface : brand.pregnancy,
+              borderColor: isDisabled ? colors.border : brand.pregnancy,
+              borderWidth: 1.5,
+              borderRadius: radius.full,
+            },
+            pressed && !isDisabled && { transform: [{ scale: 0.98 }], opacity: 0.9 },
+          ]
+        }}
       >
         {saving ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={!title.trim() ? colors.textMuted : '#FFFEF8'} />
         ) : (
-          <Text style={styles.saveBtnText}>Save exam</Text>
+          <Text style={[styles.saveBtnText, { color: !title.trim() ? colors.textMuted : '#FFFEF8' }]}>
+            Save exam
+          </Text>
         )}
       </Pressable>
 
@@ -379,10 +385,10 @@ const styles = StyleSheet.create({
   },
   aiBadgeText: { fontSize: 12 },
   input: {
-    borderWidth: 1, paddingHorizontal: 16, height: 48,
-    fontSize: 15, fontWeight: '500',
+    borderWidth: 1, paddingHorizontal: 18, height: 56,
+    fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '500',
   },
-  inputMultiline: { height: 96, paddingVertical: 12, textAlignVertical: 'top' },
+  inputMultiline: { height: 96, paddingVertical: 14, textAlignVertical: 'top' },
   metaRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, borderWidth: 1,
@@ -393,7 +399,7 @@ const styles = StyleSheet.create({
   flaggedTitle: { fontSize: 13, marginBottom: 4 },
   flaggedItem: { fontSize: 13, lineHeight: 18 },
   flaggedNote: { fontSize: 11, marginTop: 6, fontStyle: 'italic' },
-  saveBtn: { height: 52, alignItems: 'center', justifyContent: 'center' },
-  saveBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  saveBtn: { height: 56, alignItems: 'center', justifyContent: 'center' },
+  saveBtnText: { fontSize: 16, fontFamily: 'DMSans_600SemiBold', fontWeight: '700', letterSpacing: 0.2 },
   cancelText: { fontSize: 13, textAlign: 'center', paddingVertical: 6 },
 })

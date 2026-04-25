@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pregnancy Week Ring — Interactive Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0C0A1E;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    font-family: 'Georgia', serif;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  }
+
+  .phone-frame {
+    width: 380px;
+    max-width: 100vw;
+    min-height: 100vh;
+    background: #0E0B22;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Header */
+  .header {
+    padding: 52px 24px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-title {
+    font-family: Georgia, serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .header-bell {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  /* Tab bar */
+  .tabs {
+    display: flex;
+    margin: 0 20px 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    padding: 4px;
+    gap: 2px;
+  }
+  .tab {
+    flex: 1; text-align: center;
+    padding: 8px 4px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-family: sans-serif;
+    font-weight: 500;
+    color: rgba(255,255,255,0.45);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: #fff;
+    color: #0E0B22;
+    font-weight: 700;
+  }
+
+  /* Ring area */
+  .ring-area {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0 0;
+    position: relative;
+  }
+
+  #ring-canvas {
+    cursor: grab;
+    display: block;
+    touch-action: none;
+    user-select: none;
+  }
+  #ring-canvas:active { cursor: grabbing; }
+
+  /* Info below ring */
+  .week-detail {
+    width: 340px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 24px;
+    padding: 20px 22px;
+    margin-top: 8px;
+  }
+  .week-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .week-label {
+    font-family: sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+  }
+  .trimester-badge {
+    font-family: sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    letter-spacing: 0.5px;
+  }
+  .week-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .week-size {
+    font-family: sans-serif;
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 10px;
+  }
+  .week-fact {
+    font-family: sans-serif;
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.55;
+  }
+  .week-progress {
+    margin-top: 14px;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .week-progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.3s ease;
+  }
+  .progress-label {
+    font-family: sans-serif;
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    margin-top: 6px;
+    text-align: right;
+  }
+
+  .hint {
+    font-family: sans-serif;
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    text-align: center;
+    padding: 10px 0 4px;
+    letter-spacing: 0.3px;
+  }
+
+  /* Note */
+  .design-note {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(185, 131, 255, 0.12);
+    border-top: 1px solid rgba(185,131,255,0.2);
+    padding: 10px 20px;
+    font-family: sans-serif;
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+    z-index: 100;
+  }
+  .design-note strong { color: #B983FF; }
+</style>
+</head>
+<body>
+
+<canvas class="stars" id="stars"></canvas>
+
+<div class="phone-frame">
+  <div class="header">
+    <div class="header-title">Agenda.</div>
+    <div style="display:flex;gap:8px">
+      <div class="header-bell">🔔</div>
+      <div class="header-bell" style="background:#B983FF22;border-color:#B983FF44;color:#B983FF">+</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab">Timeline</div>
+    <div class="tab active">Journey</div>
+    <div class="tab">Appts</div>
+  </div>
+
+  <div class="ring-area">
+    <canvas id="ring-canvas" width="340" height="340"></canvas>
+    <div class="hint">↺ drag to spin · tap any week</div>
+  </div>
+
+  <div class="week-detail" id="week-detail">
+    <div class="week-detail-header">
+      <span class="week-label">WEEK <span id="d-week">22</span> OF 40</span>
+      <span class="trimester-badge" id="d-tri">2nd Trimester</span>
+    </div>
+    <div class="week-title" id="d-title">Mango</div>
+    <div class="week-size" id="d-size">27cm · 430g</div>
+    <div class="week-fact" id="d-fact">Baby can now hear sounds from outside the womb. Their eyes are beginning to open for the first time.</div>
+    <div class="week-progress">
+      <div class="week-progress-fill" id="d-fill" style="width:55%"></div>
+    </div>
+    <div class="progress-label" id="d-pct">55% through pregnancy</div>
+  </div>
+</div>
+
+<div class="design-note">
+  <strong>Interactive demo</strong> — drag the ring to spin · colors shift by trimester · current week glows · final UI will match grandma.app cream-paper design system
+</div>
+
+<script>
+// ── Star background ──────────────────────────────────────────────────────────
+const starCanvas = document.getElementById('stars');
+const sc = starCanvas.getContext('2d');
+function resizeStars() {
+  starCanvas.width = window.innerWidth;
+  starCanvas.height = window.innerHeight;
+  sc.clearRect(0, 0, starCanvas.width, starCanvas.height);
+  for (let i = 0; i < 120; i++) {
+    const x = Math.random() * starCanvas.width;
+    const y = Math.random() * starCanvas.height;
+    const r = Math.random() * 1.2;
+    sc.beginPath();
+    sc.arc(x, y, r, 0, Math.PI * 2);
+    sc.fillStyle = `rgba(255,255,255,${0.15 + Math.random() * 0.4})`;
+    sc.fill();
+  }
+}
+resizeStars();
+
+// ── Week data ────────────────────────────────────────────────────────────────
+const WEEKS = [
+  { week:1,  size:'Poppy seed',    dim:'<1mm',       fact:'Fertilization occurs. The journey begins!' },
+  { week:2,  size:'Poppy seed',    dim:'<1mm',       fact:'The fertilized egg implants into the uterine wall.' },
+  { week:3,  size:'Pinhead',       dim:'1mm',        fact:'The blastocyst is forming. Cells are multiplying rapidly.' },
+  { week:4,  size:'Sesame seed',   dim:'2mm',        fact:'The neural tube is forming — the future brain and spinal cord.' },
+  { week:5,  size:'Apple seed',    dim:'3mm',        fact:"Baby's heart begins to beat! Tiny arm and leg buds are forming." },
+  { week:6,  size:'Sweet pea',     dim:'6mm',        fact:'Facial features start forming — tiny nostrils, eyes, ear openings.' },
+  { week:7,  size:'Blueberry',     dim:'1cm',        fact:'Brain is growing rapidly. Hands and feet look like tiny paddles.' },
+  { week:8,  size:'Raspberry',     dim:'1.6cm',      fact:'Baby is moving, though you cannot feel it yet. Fingers are forming.' },
+  { week:9,  size:'Cherry',        dim:'2.3cm',      fact:'Toes are now visible. The embryo officially becomes a fetus.' },
+  { week:10, size:'Strawberry',    dim:'3.1cm',      fact:'Vital organs are fully formed and beginning to function.' },
+  { week:11, size:'Fig',           dim:'4.1cm',      fact:'Baby can open and close their fists. Hair follicles are forming.' },
+  { week:12, size:'Lime',          dim:'5.4cm',      fact:'Reflexes are developing. Fingernails begin to grow.' },
+  { week:13, size:'Peach',         dim:'7.4cm',      fact:'Unique fingerprints are forming. Baby can suck their thumb!' },
+  { week:14, size:'Lemon',         dim:'8.7cm',      fact:'Baby can make facial expressions. Kidneys are producing urine.' },
+  { week:15, size:'Apple',         dim:'10.1cm',     fact:'Bones are hardening. Baby can sense light through closed eyelids.' },
+  { week:16, size:'Avocado',       dim:'11.6cm',     fact:'Baby practices breathing movements. You may feel first flutters!' },
+  { week:17, size:'Pear',          dim:'13cm',       fact:'Fat is starting to form under the skin for warmth and energy.' },
+  { week:18, size:'Bell pepper',   dim:'14.2cm',     fact:'Baby can yawn and hiccup. Ears are now fully formed.' },
+  { week:19, size:'Mango',         dim:'15.3cm',     fact:'Vernix caseosa coats the skin for protection in the womb.' },
+  { week:20, size:'Banana',        dim:'25.6cm',     fact:"Halfway there! Baby's movements are becoming stronger." },
+  { week:21, size:'Carrot',        dim:'26.7cm',     fact:'Baby is developing a sleep cycle. Eyebrows are now visible.' },
+  { week:22, size:'Papaya',        dim:'27.8cm',     fact:'Baby can hear sounds from outside the womb. Eyes are opening.' },
+  { week:23, size:'Grapefruit',    dim:'28.9cm',     fact:'Skin is becoming less transparent as fat develops beneath it.' },
+  { week:24, size:'Corn cob',      dim:'30cm',       fact:'Baby has a chance of survival if born now. Lungs are developing.' },
+  { week:25, size:'Cauliflower',   dim:'34.6cm',     fact:'Baby responds to touch and sound. Hair has color now.' },
+  { week:26, size:'Scallion bunch',dim:'35.6cm',     fact:'Eyes open fully. Baby may respond to light shining on the belly.' },
+  { week:27, size:'Cabbage',       dim:'36.6cm',     fact:'Brain tissue is developing rapidly. Baby can recognize voices.' },
+  { week:28, size:'Eggplant',      dim:'37.6cm',     fact:'Third trimester begins! Baby can blink and has eyelashes.' },
+  { week:29, size:'Butternut squash',dim:'38.6cm',   fact:'Muscles and lungs are maturing. Baby is gaining about 200g/week.' },
+  { week:30, size:'Cabbage',       dim:'39.9cm',     fact:'Red blood cells are forming in bone marrow. Baby is very active.' },
+  { week:31, size:'Coconut',       dim:'41.1cm',     fact:'Baby can track light with their eyes. Rapid brain development.' },
+  { week:32, size:'Squash',        dim:'42.4cm',     fact:'Toenails, fingernails, and hair are growing. Practice breathing continues.' },
+  { week:33, size:'Pineapple',     dim:'43.7cm',     fact:'Skull bones are still soft and flexible for birth. Baby is head-down.' },
+  { week:34, size:'Cantaloupe',    dim:'45cm',       fact:'Central nervous system and lungs are nearly mature.' },
+  { week:35, size:'Honeydew',      dim:'46.2cm',     fact:'Baby is filling out, getting plumper. Kidneys are fully developed.' },
+  { week:36, size:'Romaine lettuce',dim:'47.4cm',    fact:'Baby drops into the pelvis — "lightening." Almost ready!' },
+  { week:37, size:'Swiss chard',   dim:'48.6cm',     fact:'Baby is considered early term. Practicing breathing and sucking.' },
+  { week:38, size:'Leek',          dim:'49.8cm',     fact:'Organs are fully ready. Baby is shedding vernix into amniotic fluid.' },
+  { week:39, size:'Watermelon',    dim:'50.7cm',     fact:'Baby is full-term! Could arrive any day. Antibodies are transferring.' },
+  { week:40, size:'Small pumpkin', dim:'51cm',       fact:'Due date! Baby is ready to meet the world. You are amazing.' },
+];
+
+function getTriColor(w) {
+  if (w <= 13) return '#A2FF86';   // green  T1
+  if (w <= 26) return '#B983FF';   // purple T2
+  return '#FF6B35';                // orange T3
+}
+function getTriName(w) {
+  if (w <= 13) return '1st Trimester';
+  if (w <= 26) return '2nd Trimester';
+  return '3rd Trimester';
+}
+function getTriBg(w) {
+  if (w <= 13) return 'rgba(162,255,134,0.15)';
+  if (w <= 26) return 'rgba(185,131,255,0.15)';
+  return 'rgba(255,107,53,0.15)';
+}
+
+// ── Ring renderer ────────────────────────────────────────────────────────────
+const canvas = document.getElementById('ring-canvas');
+const ctx = canvas.getContext('2d');
+const W = 340, H = 340, CX = 170, CY = 170;
+const TOTAL = 40;
+const CURRENT_WEEK = 22; // simulated
+const RING_R = 130;
+const ANCHOR_ANGLE = Math.PI * 0.5; // 6 o'clock = bottom
+
+let rotation = 0; // extra rotation applied to ring
+
+// Snap selected week to bottom anchor
+// Week i is at angle: baseAngle(i) + rotation
+// base angle for week i (0-indexed): ((i / TOTAL) * 2π) - π/2 (start at top)
+// We want week (CURRENT_WEEK - 1) to land at ANCHOR_ANGLE
+// So: baseAngle(CURRENT_WEEK-1) + rotation = ANCHOR_ANGLE
+function initialRotation() {
+  const idx = CURRENT_WEEK - 1;
+  const base = (idx / TOTAL) * 2 * Math.PI - Math.PI / 2;
+  return ANCHOR_ANGLE - base;
+}
+rotation = initialRotation();
+
+let selectedWeek = CURRENT_WEEK;
+
+function getWeekAngle(idx) {
+  return (idx / TOTAL) * 2 * Math.PI - Math.PI / 2 + rotation;
+}
+
+function orbSize(idx) {
+  // Size grows slightly with week number (baby growing)
+  const w = idx + 1;
+  const base = w <= 13 ? 5 : w <= 26 ? 6.5 : 8;
+  const isSel = (w === selectedWeek);
+  const isCurr = (w === CURRENT_WEEK);
+  return isSel ? base + 5 : (isCurr ? base + 3 : base);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Faint orbit ring
+  ctx.beginPath();
+  ctx.arc(CX, CY, RING_R, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Draw weeks
+  for (let i = 0; i < TOTAL; i++) {
+    const w = i + 1;
+    const angle = getWeekAngle(i);
+    const x = CX + RING_R * Math.cos(angle);
+    const y = CY + RING_R * Math.sin(angle);
+    const col = getTriColor(w);
+    const r = orbSize(i);
+    const isPast = w < CURRENT_WEEK;
+    const isCurr = w === CURRENT_WEEK;
+    const isSel = w === selectedWeek;
+    const isFuture = w > CURRENT_WEEK;
+
+    // Glow for selected
+    if (isSel) {
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 18;
+    } else if (isCurr) {
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 10;
+    } else {
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+
+    if (isFuture && !isSel) {
+      // Future: faint outline only
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      continue;
+    }
+
+    // Past or current: filled
+    const alpha = isSel ? 1 : (isPast ? 0.65 + (i / TOTAL) * 0.3 : 1);
+    ctx.fillStyle = col + (isSel ? 'ff' : (isPast ? 'aa' : 'ff'));
+    ctx.fill();
+
+    // White ring for selected
+    if (isSel) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Week number on orb for selected / current
+    if (isSel || isCurr) {
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#0E0B22';
+      ctx.font = `bold ${Math.max(8, r * 0.75)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(w, x, y);
+    }
+
+    ctx.shadowBlur = 0;
+  }
+
+  // Center content
+  drawCenter();
+
+  // Anchor indicator (small triangle at bottom)
+  ctx.beginPath();
+  ctx.moveTo(CX - 5, CY + RING_R + 16);
+  ctx.lineTo(CX + 5, CY + RING_R + 16);
+  ctx.lineTo(CX, CY + RING_R + 8);
+  ctx.closePath();
+  const selCol = getTriColor(selectedWeek);
+  ctx.fillStyle = selCol;
+  ctx.fill();
+}
+
+let pulsePhase = 0;
+function drawCenter() {
+  const w = selectedWeek;
+  const col = getTriColor(w);
+  const data = WEEKS[w - 1];
+  const isCurr = w === CURRENT_WEEK;
+
+  // Soft glow behind center
+  const grd = ctx.createRadialGradient(CX, CY, 10, CX, CY, 80);
+  grd.addColorStop(0, col + '18');
+  grd.addColorStop(1, 'transparent');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  // Pulse ring for current week
+  if (isCurr) {
+    const pulse = 0.5 + 0.5 * Math.sin(pulsePhase);
+    ctx.beginPath();
+    ctx.arc(CX, CY, 40 + pulse * 12, 0, Math.PI * 2);
+    ctx.strokeStyle = col + Math.floor(pulse * 60).toString(16).padStart(2, '0');
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // "WEEK" label
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '700 10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.letterSpacing = '2px';
+  ctx.fillText('WEEK', CX, CY - 32);
+
+  // Week number
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 52px Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(w, CX, CY - 4);
+
+  // Baby size
+  ctx.fillStyle = col;
+  ctx.font = '600 12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(data.size, CX, CY + 28);
+
+  // Days to go (simulated)
+  const daysLeft = (40 - w) * 7;
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '500 10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(isCurr ? '← current week' : (w < CURRENT_WEEK ? 'past' : daysLeft + ' days to go'), CX, CY + 46);
+}
+
+function updateDetail(w) {
+  const data = WEEKS[w - 1];
+  document.getElementById('d-week').textContent = w;
+  document.getElementById('d-title').textContent = data.size;
+  document.getElementById('d-size').textContent = data.dim + (data.dim.includes('cm') ? '' : '');
+  document.getElementById('d-fact').textContent = data.fact;
+  document.getElementById('d-tri').textContent = getTriName(w);
+  document.getElementById('d-tri').style.background = getTriBg(w);
+  document.getElementById('d-tri').style.color = getTriColor(w);
+  const pct = Math.round((w / 40) * 100);
+  document.getElementById('d-fill').style.width = pct + '%';
+  document.getElementById('d-fill').style.background = getTriColor(w);
+  document.getElementById('d-pct').textContent = pct + '% through pregnancy';
+}
+
+// ── Drag / spin logic ────────────────────────────────────────────────────────
+let isDragging = false;
+let lastAngle = 0;
+let velocity = 0;
+let lastTime = 0;
+
+function getPointerAngle(e) {
+  const rect = canvas.getBoundingClientRect();
+  const px = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left - CX;
+  const py = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top - CY;
+  return Math.atan2(py, px);
+}
+
+function pointerDown(e) {
+  e.preventDefault();
+  isDragging = true;
+  velocity = 0;
+  lastAngle = getPointerAngle(e);
+  lastTime = Date.now();
+}
+
+function pointerMove(e) {
+  if (!isDragging) return;
+  e.preventDefault();
+  const angle = getPointerAngle(e);
+  let delta = angle - lastAngle;
+  // Wrap delta
+  if (delta > Math.PI) delta -= 2 * Math.PI;
+  if (delta < -Math.PI) delta += 2 * Math.PI;
+  rotation += delta;
+  const now = Date.now();
+  velocity = delta / Math.max(1, now - lastTime) * 16;
+  lastTime = now;
+  lastAngle = angle;
+  snapSelectedWeek();
+  draw();
+}
+
+function pointerUp(e) {
+  if (!isDragging) return;
+  isDragging = false;
+  // Check for tap (tiny movement)
+  const tapThreshold = 0.01;
+  if (Math.abs(velocity) < tapThreshold) {
+    handleTap(e);
+  }
+}
+
+function handleTap(e) {
+  const rect = canvas.getBoundingClientRect();
+  const tx = (e.changedTouches ? e.changedTouches[0].clientX : e.clientX) - rect.left;
+  const ty = (e.changedTouches ? e.changedTouches[0].clientY : e.clientY) - rect.top;
+  // Find nearest orb
+  let best = null, bestDist = 999;
+  for (let i = 0; i < TOTAL; i++) {
+    const angle = getWeekAngle(i);
+    const ox = CX + RING_R * Math.cos(angle);
+    const oy = CY + RING_R * Math.sin(angle);
+    const d = Math.hypot(tx - ox, ty - oy);
+    if (d < 20 && d < bestDist) { bestDist = d; best = i; }
+  }
+  if (best !== null) {
+    snapToWeek(best + 1);
+  }
+}
+
+function snapSelectedWeek() {
+  // Find which week is closest to anchor angle (bottom)
+  let best = 0, bestDiff = 999;
+  for (let i = 0; i < TOTAL; i++) {
+    const a = getWeekAngle(i);
+    // Normalize to -π..π relative to anchor
+    let diff = ((a - ANCHOR_ANGLE + Math.PI) % (2 * Math.PI)) - Math.PI;
+    if (Math.abs(diff) < bestDiff) { bestDiff = Math.abs(diff); best = i; }
+  }
+  if (selectedWeek !== best + 1) {
+    selectedWeek = best + 1;
+    updateDetail(selectedWeek);
+  }
+}
+
+function snapToWeek(w) {
+  selectedWeek = w;
+  const idx = w - 1;
+  const base = (idx / TOTAL) * 2 * Math.PI - Math.PI / 2;
+  const target = ANCHOR_ANGLE - base;
+  // Animate snap
+  const start = rotation;
+  let diff = target - start;
+  while (diff > Math.PI) diff -= 2 * Math.PI;
+  while (diff < -Math.PI) diff += 2 * Math.PI;
+  const end = start + diff;
+  const t0 = performance.now();
+  const dur = 400;
+  function animate(t) {
+    const p = Math.min(1, (t - t0) / dur);
+    const ease = 1 - Math.pow(1 - p, 3);
+    rotation = start + diff * ease;
+    draw();
+    if (p < 1) requestAnimationFrame(animate);
+    else { velocity = 0; updateDetail(w); }
+  }
+  requestAnimationFrame(animate);
+}
+
+canvas.addEventListener('mousedown', pointerDown);
+canvas.addEventListener('mousemove', pointerMove);
+canvas.addEventListener('mouseup', pointerUp);
+canvas.addEventListener('mouseleave', pointerUp);
+canvas.addEventListener('touchstart', pointerDown, { passive: false });
+canvas.addEventListener('touchmove', pointerMove, { passive: false });
+canvas.addEventListener('touchend', pointerUp);
+
+// ── Momentum & pulse animation loop ─────────────────────────────────────────
+function loop() {
+  if (!isDragging && Math.abs(velocity) > 0.0005) {
+    rotation += velocity;
+    velocity *= 0.94; // friction
+    snapSelectedWeek();
+    draw();
+  } else if (!isDragging) {
+    // Just redraw for pulse
+    pulsePhase += 0.04;
+    draw();
+  }
+  requestAnimationFrame(loop);
+}
+
+updateDetail(CURRENT_WEEK);
+draw();
+loop();
+</script>
+</body>
+</html>

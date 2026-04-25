@@ -86,6 +86,7 @@ import {
   type EditLog,
 } from './KidsLogForms'
 import { ExamForm } from '../exams/ExamForm'
+import { KidsJourneyRing } from '../kids/KidsJourneyRing'
 
 // Enable layout animations on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -1529,39 +1530,11 @@ export function KidsCalendar() {
     const weekAge = Math.max(0, Math.floor((now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24 * 7)))
 
     return (
-      <View style={{ gap: 10 }}>
-        <View style={styles.timelineHeader}>
-          <Display size={22} color={colors.text}>{activeKid.name}'s Journey</Display>
-          <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>Week {weekAge} · Growth leaps</Body>
-        </View>
-        {KIDS_GROWTH_LEAPS.map((leap) => {
-          const isPast = weekAge > leap.week + 1
-          const isCurrent = weekAge >= leap.week - 2 && weekAge <= leap.week + 1
-          const circle = (
-            <View style={{
-              width: 40, height: 40, borderRadius: 20,
-              alignItems: 'center', justifyContent: 'center',
-              backgroundColor: isPast || isCurrent ? leap.color : leap.color + '25',
-            }}>
-              <Text style={{ fontFamily: 'Fraunces_800ExtraBold', fontSize: 15, color: isPast || isCurrent ? '#fff' : leap.color }}>
-                W{leap.week}
-              </Text>
-            </View>
-          )
-          return (
-            <View key={leap.week} style={{ opacity: isPast || isCurrent ? 1 : 0.6 }}>
-              <ActivityPillCard
-                icon={circle}
-                title={leap.name}
-                subtitle={leap.desc}
-                tint="mood"
-                chip={isCurrent ? { label: 'Now', color: brand.kids } : isPast ? { label: 'Done', color: brand.success } : undefined}
-                noChevron
-              />
-            </View>
-          )
-        })}
-      </View>
+      <KidsJourneyRing
+        leaps={KIDS_GROWTH_LEAPS}
+        weekAge={weekAge}
+        childName={activeKid.name}
+      />
     )
   }
 
@@ -1650,13 +1623,8 @@ export function KidsCalendar() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.scroll,
-          { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
+      {/* Sticky top: child selector + segmented tabs (always visible across tabs) */}
+      <View style={{ paddingTop: insets.top + 12, paddingHorizontal: 16 }}>
         {/* 1. Child Selector Row — pills + inline "+" add-log button */}
         <View style={styles.childRowWrap}>
           <ScrollView
@@ -1762,7 +1730,20 @@ export function KidsCalendar() {
             activeFg={isDark ? colors.text : '#141313'}
           />
         </View>
+      </View>
 
+      {/* Tab content — Journey lives outside the ScrollView so its rotating ring
+          PanResponder doesn't fight a parent vertical-scroll gesture. */}
+      {view === 'journey' ? (
+        renderJourney()
+      ) : (
+        <ScrollView
+          contentContainerStyle={[
+            styles.scroll,
+            { paddingBottom: insets.bottom + 40 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
         {view === 'timeline' ? (
           <>
             <AgendaWeekStrip
@@ -2011,12 +1992,11 @@ export function KidsCalendar() {
               </View>
             )}
           </>
-        ) : view === 'journey' ? (
-          renderJourney()
         ) : (
           renderVisits()
         )}
-      </ScrollView>
+        </ScrollView>
+      )}
 
       {/* ─── Log Activity Sheet (opened by header "+") ──────────────────── */}
       <LogActivitySheet

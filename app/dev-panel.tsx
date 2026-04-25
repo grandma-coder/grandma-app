@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../constants/theme'
 import { supabase } from '../lib/supabase'
-import { seedCycleData, seedKidsData, seedPregnancyData, wipeAllDemoData, repairBehaviorsFromData } from '../lib/devSeed'
+import { seedCycleData, seedKidsData, seedPregnancyData, seedExamData, wipeAllDemoData, repairBehaviorsFromData } from '../lib/devSeed'
 import { useModeStore } from '../store/useModeStore'
 import { useJourneyStore } from '../store/useJourneyStore'
 import { useDevStore } from '../store/useDevStore'
@@ -120,6 +120,14 @@ export default function DevPanel() {
       const { inserted } = await seedPregnancyData()
       await queryClient.invalidateQueries({ queryKey: ['pregnancyLogs'] })
       return `Inserted ${inserted} pregnancy logs`
+    })
+  }
+
+  async function handleSeedExams() {
+    await run('Seed exam data', async () => {
+      const { inserted } = await seedExamData()
+      await queryClient.invalidateQueries({ queryKey: ['exams'] })
+      return `Inserted ${inserted} exams`
     })
   }
 
@@ -234,6 +242,7 @@ export default function DevPanel() {
           <ActionRow label="Seed cycle data"     sub="6 cycles, ~200 logs"       onPress={handleSeedCycle}     busy={busy} />
           <ActionRow label="Seed kids data"      sub="1 child, 30d logs"         onPress={handleSeedKids}      busy={busy} />
           <ActionRow label="Seed pregnancy data" sub="60d of logs"               onPress={handleSeedPregnancy} busy={busy} />
+          <ActionRow label="Seed exam data"      sub="14 exams across all behaviors" onPress={handleSeedExams}     busy={busy} />
           <ActionRow label="Repair behaviors from data" sub="Re-enroll based on children / logs" onPress={handleRepairBehaviors} busy={busy} />
           <ActionRow label="Wipe all demo data"  sub="Destructive"               onPress={handleWipeAll}       busy={busy} destructive />
         </Section>

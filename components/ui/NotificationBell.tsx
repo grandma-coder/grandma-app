@@ -110,12 +110,12 @@ export function NotificationBell() {
           styles.btn,
           {
             backgroundColor: colors.surface,
-            borderColor: colors.border,
+            borderColor: '#141313',
             transform: [{ rotate: rotateInterp }],
           },
         ]}
       >
-        <Bell size={18} color={colors.text} strokeWidth={2} />
+        <Bell size={18} color="#141313" strokeWidth={2} />
         {count > 0 && (
           <View style={[styles.badge, { backgroundColor: stickers.coral, borderColor: colors.surface }]}>
             <Text
@@ -138,9 +138,14 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
   },
   badge: {
     position: 'absolute',

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { isIconAvatar } from '../../components/ui/AvatarPicker'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { supabase } from '../../lib/supabase'
 import { deletePost, toggleSave, type GaragePost } from '../../lib/garagePosts'
@@ -151,7 +152,7 @@ export default function GarageProfileScreen() {
       {/* User profile section */}
       <View style={s.profileSection}>
         {/* Avatar */}
-        {userPhoto ? (
+        {userPhoto && !isIconAvatar(userPhoto) ? (
           <Image source={{ uri: userPhoto }} style={[s.profileAvatar, { borderColor: colors.primary }]} />
         ) : (
           <View style={[s.profileAvatarPlaceholder, { backgroundColor: colors.surfaceRaised, borderColor: colors.primary }]}>

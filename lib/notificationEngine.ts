@@ -12,6 +12,8 @@
  */
 
 import { supabase } from './supabase'
+import { getCycleInfo } from './cycleLogic'
+import { getWeekData } from './pregnancyData'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -749,6 +751,305 @@ export async function generateChannelActivityNotifications(
   return insertNotifications(notifications.slice(0, 3))
 }
 
+// ─── 12. PREGNANCY NOTIFICATIONS ────────────────────────────────────────────
+
+const WEEK_MILESTONES = new Set([4, 8, 12, 16, 20, 24, 28, 32, 36, 38, 40])
+
+export async function generatePregnancyNotifications(userId: string): Promise<number> {
+  // Only run if user has pregnancy data
+  const { count: pregCount } = await supabase
+    .from('pregnancy_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  if (!pregCount || pregCount === 0) return 0
+
+  const notifications: NotificationPayload[] = []
+  const todayDate = new Date().toISOString().split('T')[0]
+
+  // ── Try to read dueDate from onboarding note ──────────────────────────────
+  let dueDate: string | null = null
+  let weekNumber: number | null = null
+
+  const { data: noteRows } = await supabase
+    .from('pregnancy_logs')
+    .select('notes')
+    .eq('user_id', userId)
+    .eq('log_type', 'note')
+    .eq('value', 'onboarding')
+    .order('log_date', { ascending: false })
+    .limit(1)
+
+  if (noteRows && noteRows[0]?.notes) {
+    try {
+      const meta = JSON.parse(noteRows[0].notes)
+      if (meta.dueDate) {
+        dueDate = meta.dueDate
+        const due = new Date(meta.dueDate)
+        const daysToDue = Math.ceil((due.getTime() - Date.now()) / 86400000)
+        weekNumber = Math.max(1, Math.min(40, 40 - Math.floor(daysToDue / 7)))
+      }
+    } catch {}
+  }
+
+  // ── Week milestone notification ───────────────────────────────────────────
+  if (weekNumber && WEEK_MILESTONES.has(weekNumber)) {
+    const dedupeKey = `pregnancy_week_${weekNumber}`
+    const already = await alreadyNotifiedToday(userId, 'milestone', dedupeKey)
+    if (!already) {
+      const wk = getWeekData(weekNumber)
+      notifications.push({
+        user_id: userId,
+        type: 'milestone',
+        title: `Week ${weekNumber}: ${wk.babySize}`,
+        body: wk.developmentFact,
+        data: { behavior: 'pregnancy', week: weekNumber, dedupeKey },
+      })
+    }
+  }
+
+  // ── Due date approaching ──────────────────────────────────────────────────
+  if (dueDate) {
+    const daysToDue = Math.ceil((new Date(dueDate).getTime() - Date.now()) / 86400000)
+    if (daysToDue >= 0 && daysToDue <= 14) {
+      const dedupeKey = `pregnancy_due_${daysToDue}`
+      const already = await alreadyNotifiedToday(userId, 'reminder', dedupeKey)
+      if (!already) {
+        notifications.push({
+          user_id: userId,
+          type: 'reminder',
+          title: daysToDue === 0 ? 'Today is your due date!' : `${daysToDue} day${daysToDue === 1 ? '' : 's'} until due date`,
+          body: daysToDue <= 3
+            ? 'Hospital bag packed? Stay close to home and trust your body.'
+            : 'Final stretch — rest, hydrate, and prepare for baby.',
+          data: { behavior: 'pregnancy', daysToDue, dedupeKey },
+        })
+      }
+    }
+  }
+
+  // ── Missing data: no logs in 3+ days ──────────────────────────────────────
+  const { data: lastLog } = await supabase
+    .from('pregnancy_logs')
+    .select('log_date')
+    .eq('user_id', userId)
+    .order('log_date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (lastLog) {
+    const daysSince = Math.floor((Date.now() - new Date(lastLog.log_date).getTime()) / 86400000)
+    if (daysSince >= 3) {
+      const dedupeKey = `pregnancy_missing_${daysSince}`
+      const already = await alreadyNotifiedToday(userId, 'missing_data', dedupeKey)
+      if (!already) {
+        notifications.push({
+          user_id: userId,
+          type: 'missing_data',
+          title: `No pregnancy logs in ${daysSince} days`,
+          body: 'Log a symptom, mood, or weight to keep your week-by-week journey on track.',
+          data: { behavior: 'pregnancy', daysMissing: daysSince, dedupeKey },
+        })
+      }
+    }
+  }
+
+  // ── Strong/severe symptoms in last 24h ────────────────────────────────────
+  const oneDayAgo = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+  const { data: severeSymptoms } = await supabase
+    .from('pregnancy_logs')
+    .select('log_date, value, severity')
+    .eq('user_id', userId)
+    .eq('log_type', 'symptom')
+    .eq('severity', 'strong')
+    .gte('log_date', oneDayAgo)
+    .limit(5)
+
+  if (severeSymptoms && severeSymptoms.length > 0) {
+    const dedupeKey = `pregnancy_severe_${todayDate}`
+    const already = await alreadyNotifiedToday(userId, 'health_alert', dedupeKey)
+    if (!already) {
+      const list = severeSymptoms.map((s) => s.value).filter(Boolean).slice(0, 3).join(', ')
+      notifications.push({
+        user_id: userId,
+        type: 'health_alert',
+        title: 'Strong symptoms logged recently',
+        body: `${list || 'Severe symptoms'} — if it persists or worsens, contact your provider.`,
+        data: { behavior: 'pregnancy', count: severeSymptoms.length, dedupeKey },
+      })
+    }
+  }
+
+  // ── Low kick count (week 28+) ─────────────────────────────────────────────
+  if (weekNumber && weekNumber >= 28) {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]
+    const { data: kickLogs } = await supabase
+      .from('pregnancy_logs')
+      .select('log_date, value')
+      .eq('user_id', userId)
+      .eq('log_type', 'kick_count')
+      .gte('log_date', sevenDaysAgo)
+      .order('log_date', { ascending: false })
+
+    if (kickLogs && kickLogs.length >= 4) {
+      const todayKicks = kickLogs
+        .filter((k) => k.log_date === todayDate)
+        .reduce((sum, k) => sum + (parseInt(k.value || '0', 10) || 0), 0)
+      const olderKicks = kickLogs.filter((k) => k.log_date !== todayDate)
+      const avgOlder = olderKicks.length > 0
+        ? olderKicks.reduce((sum, k) => sum + (parseInt(k.value || '0', 10) || 0), 0) / olderKicks.length
+        : 0
+
+      if (todayKicks > 0 && avgOlder > 0 && todayKicks < avgOlder * 0.5) {
+        const dedupeKey = `pregnancy_low_kicks_${todayDate}`
+        const already = await alreadyNotifiedToday(userId, 'health_alert', dedupeKey)
+        if (!already) {
+          notifications.push({
+            user_id: userId,
+            type: 'health_alert',
+            title: 'Kick count is lower than usual',
+            body: `Today: ${todayKicks} kicks vs ${avgOlder.toFixed(0)} avg. Try lying on your left side and counting again. Call your provider if reduced movement persists.`,
+            data: { behavior: 'pregnancy', todayKicks, avgOlder, dedupeKey },
+          })
+        }
+      }
+    }
+  }
+
+  return insertNotifications(notifications)
+}
+
+// ─── 13. CYCLE / PRE-PREGNANCY NOTIFICATIONS ────────────────────────────────
+
+export async function generateCycleNotifications(userId: string): Promise<number> {
+  // Find latest period_start
+  const { data: periodRows } = await supabase
+    .from('cycle_logs')
+    .select('date, value, notes')
+    .eq('user_id', userId)
+    .eq('type', 'period_start')
+    .order('date', { ascending: false })
+    .limit(1)
+
+  if (!periodRows || periodRows.length === 0) return 0
+
+  const lastPeriodStart = periodRows[0].date
+  const periodDuration = parseInt(periodRows[0].value || '5', 10) || 5
+
+  // Parse cycle config from notes JSON (onboarding stored it on the period_start row)
+  let cycleLength = 28
+  let tryingToConceive = false
+  try {
+    if (periodRows[0].notes) {
+      const meta = JSON.parse(periodRows[0].notes)
+      if (typeof meta.cycleLength === 'number') cycleLength = meta.cycleLength
+      tryingToConceive = !!meta.tryingToConceive
+    }
+  } catch {}
+
+  const info = getCycleInfo({
+    lastPeriodStart,
+    cycleLength,
+    periodLength: periodDuration,
+  })
+
+  const notifications: NotificationPayload[] = []
+  const todayDate = new Date().toISOString().split('T')[0]
+
+  // ── Fertile window starting today ─────────────────────────────────────────
+  if (info.cycleDay === info.fertileStart && tryingToConceive) {
+    const dedupeKey = `cycle_fertile_${todayDate}`
+    const already = await alreadyNotifiedToday(userId, 'insight', dedupeKey)
+    if (!already) {
+      notifications.push({
+        user_id: userId,
+        type: 'insight',
+        title: 'Your fertile window is starting',
+        body: `Days ${info.fertileStart}–${info.fertileEnd}. Ovulation predicted around day ${info.ovulationDay}.`,
+        data: { behavior: 'pre-pregnancy', cycleDay: info.cycleDay, dedupeKey },
+      })
+    }
+  }
+
+  // ── Ovulation day ─────────────────────────────────────────────────────────
+  if (info.cycleDay === info.ovulationDay) {
+    const dedupeKey = `cycle_ovulation_${todayDate}`
+    const already = await alreadyNotifiedToday(userId, 'milestone', dedupeKey)
+    if (!already) {
+      notifications.push({
+        user_id: userId,
+        type: 'milestone',
+        title: tryingToConceive ? 'Ovulation today — peak fertility' : 'Ovulation day',
+        body: tryingToConceive
+          ? 'Your most fertile 24 hours. Conception probability is at its peak.'
+          : `You're on day ${info.cycleDay} of your cycle.`,
+        data: { behavior: 'pre-pregnancy', cycleDay: info.cycleDay, dedupeKey },
+      })
+    }
+  }
+
+  // ── Period in 1–2 days ────────────────────────────────────────────────────
+  if (info.daysUntilPeriod === 1 || info.daysUntilPeriod === 2) {
+    const dedupeKey = `cycle_period_soon_${info.daysUntilPeriod}_${todayDate}`
+    const already = await alreadyNotifiedToday(userId, 'reminder', dedupeKey)
+    if (!already) {
+      notifications.push({
+        user_id: userId,
+        type: 'reminder',
+        title: `Period expected in ${info.daysUntilPeriod} day${info.daysUntilPeriod === 1 ? '' : 's'}`,
+        body: 'PMS symptoms are common now. Stock up on what you need and rest if you can.',
+        data: { behavior: 'pre-pregnancy', daysUntilPeriod: info.daysUntilPeriod, dedupeKey },
+      })
+    }
+  }
+
+  // ── Late period (3+ days past expected) ───────────────────────────────────
+  if (info.daysUntilPeriod < -2 && info.daysUntilPeriod >= -10) {
+    const lateDays = Math.abs(info.daysUntilPeriod)
+    const dedupeKey = `cycle_late_${lateDays}`
+    const already = await alreadyNotifiedToday(userId, 'insight', dedupeKey)
+    if (!already) {
+      notifications.push({
+        user_id: userId,
+        type: 'insight',
+        title: `Period is ${lateDays} days late`,
+        body: tryingToConceive
+          ? 'A late period can be an early pregnancy sign. Consider taking a test.'
+          : 'Stress, sleep, and hormone shifts can delay your cycle. Keep tracking.',
+        data: { behavior: 'pre-pregnancy', lateDays, dedupeKey },
+      })
+    }
+  }
+
+  // ── Missing data: no cycle logs in 5+ days ────────────────────────────────
+  const { data: lastLog } = await supabase
+    .from('cycle_logs')
+    .select('date')
+    .eq('user_id', userId)
+    .order('date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (lastLog) {
+    const daysSince = Math.floor((Date.now() - new Date(lastLog.date).getTime()) / 86400000)
+    if (daysSince >= 5) {
+      const dedupeKey = `cycle_missing_${daysSince}`
+      const already = await alreadyNotifiedToday(userId, 'missing_data', dedupeKey)
+      if (!already) {
+        notifications.push({
+          user_id: userId,
+          type: 'missing_data',
+          title: `No cycle logs in ${daysSince} days`,
+          body: 'Log a symptom, BBT, or mood to keep your predictions accurate.',
+          data: { behavior: 'pre-pregnancy', daysMissing: daysSince, dedupeKey },
+        })
+      }
+    }
+  }
+
+  return insertNotifications(notifications)
+}
+
 // ─── MASTER: Run All Generators ──────────────────────────────────────────────
 
 export async function runNotificationEngine(): Promise<number> {
@@ -768,6 +1069,8 @@ export async function runNotificationEngine(): Promise<number> {
       generateInsightNotifications(userId),
       generateAppointmentReminders(userId),
       generateChannelActivityNotifications(userId),
+      generatePregnancyNotifications(userId),
+      generateCycleNotifications(userId),
     ])
 
     const total = results.reduce((sum, r) => sum + (r.status === 'fulfilled' ? r.value : 0), 0)
