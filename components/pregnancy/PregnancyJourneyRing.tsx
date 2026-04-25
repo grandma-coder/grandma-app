@@ -179,35 +179,23 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
     staleTime: 30_000,
   })
 
-  // ── View measurement for reliable page-relative coordinates ─────────────────
-  // locationX/locationY in PanResponder shift when the finger passes over SVG
-  // child elements. pageX/pageY (absolute) minus measured view origin is stable.
-  const ringViewRef   = useRef<View>(null)
-  const viewOriginRef = useRef({ x: 0, y: 0 })
+  // ── Gesture refs ──────────────────────────────────────────────────────────────
+  // Strategy: tangent-projection avoids all coordinate-system issues with SVG.
+  // locationX/locationY is only read ONCE at touch start (reliable — no child
+  // interference yet). All subsequent tracking uses gestureState.dx/dy
+  // (cumulative translation since start, never jumps).
+  const tangentRef   = useRef({ x: 0, y: 1 })  // unit tangent at touch start
+  const lastDxRef    = useRef(0)
+  const lastDyRef    = useRef(0)
+  const velocityRef  = useRef(0)                // deg/s
+  const totalMoveRef = useRef(0)                // accumulated |delta| deg
+  const initLocRef   = useRef({ x: 0, y: 0 })  // locationX/Y at grant
 
-  const remeasure = useCallback(() => {
-    ringViewRef.current?.measureInWindow((x, y) => {
-      viewOriginRef.current = { x, y }
-    })
-  }, [])
-
-  // ── Gesture tracking refs ──────────────────────────────────────────────────
-  const lastAngleRef = useRef(0)
-  const lastTimeRef  = useRef(0)
-  const velocityRef  = useRef(0)   // deg/s
-  const totalMoveRef = useRef(0)
-
-  const getAngle = useCallback((pageX: number, pageY: number): number => {
-    const relX = pageX - viewOriginRef.current.x - CX
-    const relY = pageY - viewOriginRef.current.y - CY
-    return Math.atan2(relY, relX) * (180 / Math.PI)
-  }, [])
-
-  // Snap to an exact week — short-arc, JS thread.
+  // Snap to week — short-arc, JS thread.
   const snapToWeek = useCallback(
     (w: number) => {
-      const targetRot = 180 - ((w - 1) / 40) * 360
-      let diff = ((targetRot - rotationDeg.value) % 360 + 360) % 360
+      const target = 180 - ((w - 1) / 40) * 360
+      let diff = ((target - rotationDeg.value) % 360 + 360) % 360
       if (diff > 180) diff -= 360
       cancelAnimation(rotationDeg)
       rotationDeg.value = withTiming(rotationDeg.value + diff, {
@@ -225,66 +213,67 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
 
       onPanResponderGrant: (e) => {
         cancelAnimation(rotationDeg)
-        const { pageX, pageY } = e.nativeEvent
-        lastAngleRef.current = getAngle(pageX, pageY)
-        lastTimeRef.current  = Date.now()
+        // locationX/Y at first touch is reliable — no SVG child interference yet
+        const lx = e.nativeEvent.locationX
+        const ly = e.nativeEvent.locationY
+        initLocRef.current = { x: lx, y: ly }
+        // Unit tangent at touch point: perpendicular to radius (clockwise)
+        const rx = lx - CX
+        const ry = ly - CY
+        const r  = Math.sqrt(rx * rx + ry * ry) || RING_R
+        tangentRef.current  = { x: -ry / r, y: rx / r }
+        lastDxRef.current   = 0
+        lastDyRef.current   = 0
+        velocityRef.current = 0
         totalMoveRef.current = 0
-        velocityRef.current  = 0
       },
 
-      onPanResponderMove: (e) => {
-        const { pageX, pageY } = e.nativeEvent
-        const now = Date.now()
-        const angle = getAngle(pageX, pageY)
-        let delta = angle - lastAngleRef.current
-        if (delta > 180)  delta -= 360
-        if (delta < -180) delta += 360
-        const dt = now - lastTimeRef.current
-        // Clamp to ±720 deg/s — prevents runaway spins from noisy events
-        if (dt > 0) {
-          const raw = (delta / dt) * 1000
-          velocityRef.current = Math.max(-720, Math.min(720, raw))
-        }
-        rotationDeg.value += delta
-        lastAngleRef.current = angle
-        lastTimeRef.current  = now
+      onPanResponderMove: (_e, gestureState) => {
+        // Delta from last event using gestureState (cumulative, never jumps)
+        const ddx = gestureState.dx - lastDxRef.current
+        const ddy = gestureState.dy - lastDyRef.current
+        // Project onto tangent → arc length → degrees
+        const arc   = ddx * tangentRef.current.x + ddy * tangentRef.current.y
+        const delta = (arc / RING_R) * (180 / Math.PI)
+        rotationDeg.value   += delta
+        lastDxRef.current    = gestureState.dx
+        lastDyRef.current    = gestureState.dy
         totalMoveRef.current += Math.abs(delta)
+        // Velocity: gestureState.vx/vy in px/ms → project → deg/s
+        const tangVel = gestureState.vx * tangentRef.current.x +
+                        gestureState.vy * tangentRef.current.y
+        velocityRef.current = Math.max(-600, Math.min(600,
+          (tangVel / RING_R) * (180 / Math.PI) * 1000,
+        ))
       },
 
-      onPanResponderRelease: (e) => {
+      onPanResponderRelease: () => {
         if (totalMoveRef.current < 5) {
-          // Tap: snap nearest dot to anchor
-          const { pageX, pageY } = e.nativeEvent
-          const relX = pageX - viewOriginRef.current.x
-          const relY = pageY - viewOriginRef.current.y
+          // Tap: find dot nearest to initial touch and snap it to anchor
+          const relX = initLocRef.current.x
+          const relY = initLocRef.current.y
           let best: number | null = null
           let bestDist = Infinity
           for (let i = 0; i < 40; i++) {
-            const baseAngleDeg = (i / 40) * 360 - 90
-            const rad = (baseAngleDeg + rotationDeg.value) * (Math.PI / 180)
+            const rad  = ((i / 40) * 360 - 90 + rotationDeg.value) * (Math.PI / 180)
             const dotX = CX + RING_R * Math.cos(rad)
             const dotY = CY + RING_R * Math.sin(rad)
             const dist = Math.hypot(relX - dotX, relY - dotY)
-            if (dist < 30 && dist < bestDist) {
-              bestDist = dist
-              best = i
-            }
+            if (dist < 32 && dist < bestDist) { bestDist = dist; best = i }
           }
           if (best !== null) snapToWeek(best + 1)
         } else {
-          // Drag: momentum, then snap nearest week when decay finishes
+          // Drag: momentum decay, then snap to nearest week
           rotationDeg.value = withDecay(
             { velocity: velocityRef.current, deceleration: 0.994 },
             (finished) => {
               'worklet'
               if (!finished) return
-              // Find nearest week to anchor and snap
-              let best = 0
-              let bestDiff = Infinity
+              let best = 0, bestDiff = Infinity
               for (let i = 0; i < 40; i++) {
-                const a = (i / 40) * 360 - 90 + rotationDeg.value
+                const a    = (i / 40) * 360 - 90 + rotationDeg.value
                 const norm = (((a - ANCHOR_DEG) % 360) + 360) % 360
-                const d = norm > 180 ? 360 - norm : norm
+                const d    = norm > 180 ? 360 - norm : norm
                 if (d < bestDiff) { bestDiff = d; best = i }
               }
               const target = 180 - (best / 40) * 360
@@ -317,7 +306,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
     <View style={styles.container}>
       {/* ── Ring ── */}
       <View style={styles.ringWrap}>
-        <View ref={ringViewRef} onLayout={remeasure} {...panResponder.panHandlers}>
+        <View {...panResponder.panHandlers}>
           <Svg width={SVG_SIZE} height={SVG_SIZE}>
             {/* Faint orbit track */}
             <Circle
