@@ -72,6 +72,7 @@ import {
 } from '../../lib/analyticsData'
 import type { PregnancyCalendarLog } from '../../lib/analyticsData'
 import { STANDARD_APPOINTMENTS } from '../../lib/pregnancyAppointments'
+import { PregnancyJourneyRing } from '../pregnancy/PregnancyJourneyRing'
 import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
 import { LogTile, LogTileGrid } from './LogTile'
@@ -1635,48 +1636,7 @@ export function PregnancyCalendar() {
 
   function renderJourneyView() {
     return (
-      <View style={{ gap: 10 }}>
-        {pregnancyWeeks.map((wkData) => {
-          const isCurrent = wkData.week === weekNumber
-          const isPast = wkData.week < weekNumber
-          const tri = getTrimester(wkData.week) as 1 | 2 | 3
-          const triColor = TRIMESTER_COLOR[tri]
-          const firstSentence = wkData.developmentFact.split('. ')[0] + (wkData.developmentFact.includes('. ') ? '.' : '')
-
-          const wrappedIcon = (
-            <View
-              style={{
-                width: 40, height: 40, borderRadius: 20,
-                alignItems: 'center', justifyContent: 'center',
-                backgroundColor: isPast || isCurrent ? triColor : triColor + '20',
-              }}
-            >
-              <Text style={{ fontFamily: 'Fraunces_800ExtraBold', fontSize: 16, color: isPast || isCurrent ? '#fff' : triColor }}>
-                {wkData.week}
-              </Text>
-            </View>
-          )
-
-          return (
-            <View key={wkData.week} style={{ opacity: isPast || isCurrent ? 1 : 0.55 }}>
-              <ActivityPillCard
-                icon={wrappedIcon}
-                title={`${wkData.babySize} · ${wkData.babyLength}`}
-                subtitle={firstSentence}
-                tint={tri === 1 ? 'memory' : tri === 2 ? 'sleep' : 'mood'}
-                chip={
-                  isCurrent
-                    ? { label: 'Now', color: brand.pregnancy }
-                    : isPast
-                    ? { label: 'Done', color: COLOR_GREEN }
-                    : undefined
-                }
-                onPress={() => setSelectedJourneyWeek(wkData.week)}
-              />
-            </View>
-          )
-        })}
-      </View>
+      <PregnancyJourneyRing weekNumber={weekNumber} dueDate={dueDate} />
     )
   }
 
