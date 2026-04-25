@@ -3591,6 +3591,14 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                         ) : vax.status === 'upcoming' || vax.status === 'overdue' ? (
                           apptDate ? (
                             <View style={{ gap: 4, alignItems: 'flex-end' }}>
+                              <Pressable onPress={() => {
+                                setExpandedKey(isPickerOpen ? null : vax.scheduleKey)
+                                setPickerDate(new Date(apptDate + 'T12:00:00'))
+                              }}>
+                                <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: ST_INK }}>
+                                  {formatHealthDate(apptDate)}
+                                </Text>
+                              </Pressable>
                               <Pressable
                                 onPress={() => onMarkVaccineGiven(
                                   vax.name + (vax.doseLabel ? ` - ${vax.doseLabel}` : ''),
@@ -3601,12 +3609,6 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                               >
                                 <Check size={10} color={brand.success} strokeWidth={3} />
                                 <Text style={[s.hdVaxBtnText, { color: brand.success }]}>Mark given</Text>
-                              </Pressable>
-                              <Pressable onPress={() => {
-                                setExpandedKey(isPickerOpen ? null : vax.scheduleKey)
-                                setPickerDate(new Date(apptDate + 'T12:00:00'))
-                              }}>
-                                <Text style={[s.hdChangeDateText, { color: ink3 }]}>Change date</Text>
                               </Pressable>
                             </View>
                           ) : (
