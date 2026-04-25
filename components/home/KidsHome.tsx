@@ -53,6 +53,7 @@ import { useGoalsStore, getSuggestedGoals, getFeedingStage, getNutritionLabel, g
 import { useBadgeStore } from '../../store/useBadgeStore'
 import { supabase } from '../../lib/supabase'
 import { estimateCalories } from '../../lib/foodCalories'
+import { getVaccineInfo, type VaccineInfo } from '../../lib/vaccineInfo'
 import type { ChildWithRole } from '../../types'
 import { MoodStickerStrip, MoodBubbleCluster } from '../charts/SvgCharts'
 import type { MoodStripDay, MoodBubbleItem } from '../charts/SvgCharts'
@@ -1196,7 +1197,7 @@ export function KidsHome() {
   if (!child) return null
 
   const growthLeap = getGrowthLeap(child.birthDate)
-  const firstName = parentName?.split(' ')[0] || profileName?.split(' ')[0] || 'Mom'
+  const firstName = (profileName || parentName)?.split(' ')[0] || ''
 
   // Ring progress values
   const sleepProgress = rangeData.sleepTarget > 0 ? Math.min(rangeData.sleepTotal / rangeData.sleepTarget, 1) : 0
@@ -3285,6 +3286,106 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
   )
 }
 
+function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, accent }: {
+  visible: boolean; onClose: () => void
+  vaccineName: string; doseLabel: string
+  info: VaccineInfo | null
+  accent: string
+}) {
+  const { colors, isDark } = useTheme()
+  const ink = colors.text
+  const ink3 = colors.textMuted
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = colors.border
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <Pressable style={s.modalOverlay} onPress={onClose}>
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          style={[s.modalContent, { backgroundColor: colors.bg, maxHeight: '70%' }]}
+        >
+          {/* Drag handle */}
+          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 6 }}>
+            <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: paperBorder }} />
+          </View>
+
+          {/* Header */}
+          <View style={[s.modalHeader, { gap: 10, alignItems: 'flex-start' }]}>
+            <View style={{
+              width: 56, height: 56, borderRadius: 18,
+              backgroundColor: accent, borderWidth: 2, borderColor: '#141313',
+              alignItems: 'center', justifyContent: 'center',
+              shadowColor: '#141313', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0,
+              elevation: 4,
+            }}>
+              <CrossSticker size={32} fill="#FFFEF8" stroke="#141313" />
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={{ color: ink, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>
+                {vaccineName}
+              </Text>
+              {!!doseLabel && (
+                <Text style={{ color: ink3, fontSize: 12, fontFamily: 'DMSans_500Medium', textTransform: 'uppercase', letterSpacing: 1.2 }}>
+                  {doseLabel}
+                </Text>
+              )}
+            </View>
+            <Pressable onPress={onClose} hitSlop={8}>
+              <View style={[s.modalClose, { backgroundColor: paper, borderWidth: 1, borderColor: paperBorder }]}>
+                <X size={16} color={ink} strokeWidth={2} />
+              </View>
+            </Pressable>
+          </View>
+
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 24, paddingTop: 8, gap: 16 }}
+            showsVerticalScrollIndicator={false}
+          >
+            {info ? (
+              <>
+                <View>
+                  <Text style={{ color: ink3, fontSize: 11, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 }}>
+                    What it protects against
+                  </Text>
+                  <Text style={{ color: ink, fontSize: 15, fontFamily: 'DMSans_500Medium', lineHeight: 22 }}>
+                    {info.protects}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={{ color: ink3, fontSize: 11, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 }}>
+                    Why it matters
+                  </Text>
+                  <Text style={{ color: ink, fontSize: 14, fontFamily: 'DMSans_400Regular', lineHeight: 22 }}>
+                    {info.why}
+                  </Text>
+                </View>
+                {info.sideEffects && (
+                  <View style={{ backgroundColor: paper, borderWidth: 1, borderColor: paperBorder, borderRadius: 18, padding: 14, gap: 4 }}>
+                    <Text style={{ color: ink3, fontSize: 11, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.4 }}>
+                      Common side effects
+                    </Text>
+                    <Text style={{ color: ink, fontSize: 13, fontFamily: 'DMSans_400Regular', lineHeight: 20 }}>
+                      {info.sideEffects}
+                    </Text>
+                  </View>
+                )}
+                <Text style={{ color: ink3, fontSize: 11, fontFamily: 'DMSans_400Regular', fontStyle: 'italic', textAlign: 'center', marginTop: 8 }}>
+                  Always check with your pediatrician for advice tailored to your child.
+                </Text>
+              </>
+            ) : (
+              <Text style={{ color: ink3, fontSize: 14, fontFamily: 'DMSans_400Regular', lineHeight: 22 }}>
+                We don't have detailed info for this vaccine yet. Please ask your pediatrician about its purpose and timing.
+              </Text>
+            )}
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  )
+}
+
 function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVaccineDate, onMarkVaccineGiven }: {
   child: ChildWithRole
   healthHistory: HealthHistoryData
@@ -3307,21 +3408,32 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
   })
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
   const [pickerDate, setPickerDate] = useState(new Date())
+  const [infoVaccine, setInfoVaccine] = useState<{ name: string; doseLabel: string; info: VaccineInfo | null; accent: string } | null>(null)
 
   const ink = colors.text
   const ink3 = colors.textMuted
 
-  // Status palette — cream-paper design system
-  const DONE_BG = isDark ? '#1A3020' : '#DFF5D6'
-  const DONE_BORDER = '#7EC86A'
-  const DONE_TEXT = isDark ? '#A0D890' : '#3A7A28'
-  const PARTIAL_BG = isDark ? '#2E2800' : '#FEF9DC'
-  const PARTIAL_BORDER = '#F5D652'
-  const PARTIAL_TEXT = isDark ? '#F5D652' : '#7A6100'
-  const OVERDUE_BG = isDark ? '#2E1000' : '#FEE8DC'
-  const OVERDUE_BORDER = '#F5B896'
-  const FUTURE_BG = isDark ? colors.surface : '#F0EDE8'
-  const FUTURE_BORDER = colors.border
+  // Sticker palette (cream-paper design system) — bright fills + ink borders for the sticker-on-paper feel
+  const ST_INK = '#141313'
+  const ST_GREEN = isDark ? '#C5DA98' : '#BDD48C'
+  const ST_GREEN_SOFT = isDark ? '#283016' : '#DDE7BB'
+  const ST_YELLOW = isDark ? '#F0CE4C' : '#F5D652'
+  const ST_YELLOW_SOFT = isDark ? '#3A3116' : '#FBEA9E'
+  const ST_PEACH = isDark ? '#F7C09D' : '#F5B896'
+  const ST_PEACH_SOFT = isDark ? '#3A2618' : '#F9D6C0'
+  const ST_CREAM = isDark ? colors.surface : '#F7F0DF'
+  const ST_LINE = isDark ? 'rgba(245,237,220,0.20)' : 'rgba(20,19,19,0.20)'
+
+  const DONE_BG = ST_GREEN
+  const DONE_BORDER = ST_INK
+  const DONE_INK = ST_INK
+  const PARTIAL_BG = ST_YELLOW
+  const PARTIAL_BORDER = ST_INK
+  const PARTIAL_INK = ST_INK
+  const OVERDUE_BG = ST_PEACH
+  const OVERDUE_BORDER = ST_INK
+  const FUTURE_BG = ST_CREAM
+  const FUTURE_BORDER = ST_LINE
 
   function toggleMilestone(key: string) {
     setExpandedMilestones((prev) => {
@@ -3351,43 +3463,65 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
 
         const nodeBg = isDoneMilestone ? DONE_BG : isPartialMilestone ? PARTIAL_BG : FUTURE_BG
         const nodeBorder = isDoneMilestone ? DONE_BORDER : isPartialMilestone ? PARTIAL_BORDER : FUTURE_BORDER
-        const nodeText = isDoneMilestone ? DONE_TEXT : isPartialMilestone ? PARTIAL_TEXT : ink3
+        const nodeAccent = isDoneMilestone ? ST_GREEN : isPartialMilestone ? ST_YELLOW : ST_PEACH
 
         const doneCount = milestone.vaccines.filter((v) => v.status === 'done').length
         const totalCount = milestone.vaccines.length
         const badgeText = isDoneMilestone
-          ? `✓ ${doneCount}/${totalCount} done`
+          ? `${doneCount}/${totalCount} done`
           : isPartialMilestone
           ? `${doneCount}/${totalCount} · due soon`
-          : `${totalCount} vaccine${totalCount !== 1 ? 's' : ''}`
+          : `${totalCount} ahead`
 
         return (
-          <View key={milestone.key}>
-            {/* Age milestone row */}
+          <View key={milestone.key} style={{ marginBottom: 4 }}>
+            {/* Age milestone row — sticker-on-paper */}
             <Pressable
               onPress={() => toggleMilestone(milestone.key)}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 }}
             >
+              {/* Squishy sticker age node */}
               <View style={{
-                width: 40, height: 40, borderRadius: 20,
-                backgroundColor: nodeBg, borderWidth: 2, borderColor: nodeBorder,
+                width: 52, height: 44, borderRadius: 14,
+                backgroundColor: nodeBg, borderWidth: 1.5, borderColor: nodeBorder,
                 alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                shadowColor: ST_INK, shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: isDoneMilestone || isPartialMilestone ? 1 : 0,
+                shadowRadius: 0, elevation: isDoneMilestone || isPartialMilestone ? 3 : 0,
               }}>
-                <Text style={{ fontSize: 9, fontFamily: 'DMSans_700Bold', color: nodeText, textAlign: 'center', lineHeight: 12 }}>
-                  {milestone.label}
+                <Text style={{
+                  fontSize: 11, fontFamily: 'Fraunces_600SemiBold',
+                  color: isDoneMilestone || isPartialMilestone ? ST_INK : ink3,
+                  textAlign: 'center', lineHeight: 13, letterSpacing: -0.2,
+                }}>
+                  {milestone.label.replace(/^Months$/i, 'mo').replace(/\bMonths\b/g, 'mo').replace(/\bYears\b/g, 'yr')}
                 </Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13, fontFamily: 'DMSans_600SemiBold', color: ink }}>
+                <Text style={{ fontSize: 16, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.3 }}>
                   {milestone.label}
                 </Text>
-                <View style={{ backgroundColor: nodeBg, borderRadius: 999, alignSelf: 'flex-start', paddingHorizontal: 7, paddingVertical: 2, marginTop: 2 }}>
-                  <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: nodeText }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                  {isDoneMilestone && <Check size={10} color={ST_INK} strokeWidth={3} />}
+                  <Text style={{
+                    fontSize: 11, fontFamily: 'DMSans_600SemiBold',
+                    color: isDoneMilestone || isPartialMilestone ? ST_INK : ink3,
+                    textTransform: 'uppercase', letterSpacing: 0.8,
+                  }}>
                     {badgeText}
                   </Text>
                 </View>
               </View>
-              <Text style={{ fontSize: 11, color: ink3 }}>{isExpanded ? '▾' : '▸'}</Text>
+              <View style={{
+                width: 24, height: 24, borderRadius: 12,
+                backgroundColor: isExpanded ? nodeAccent : 'transparent',
+                borderWidth: 1.5, borderColor: isExpanded ? ST_INK : ST_LINE,
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Text style={{ fontSize: 10, color: isExpanded ? ST_INK : ink3, fontFamily: 'DMSans_700Bold' }}>
+                  {isExpanded ? '−' : '+'}
+                </Text>
+              </View>
             </Pressable>
 
             {/* Branch content */}
@@ -3395,44 +3529,63 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
               <View style={{
                 borderLeftWidth: 2, borderLeftColor: nodeBorder,
                 borderStyle: 'dashed',
-                marginLeft: 19, marginBottom: isLast ? 0 : 4, paddingBottom: 4,
+                marginLeft: 25, marginBottom: isLast ? 0 : 4, paddingBottom: 4, paddingTop: 2,
               }}>
                 {milestone.vaccines.map((vax) => {
                   const apptDate = scheduledVaccines[vax.scheduleKey] ?? null
                   const isPickerOpen = expandedKey === vax.scheduleKey
                   const fullName = vax.name + (vax.doseLabel ? ` · ${vax.doseLabel}` : '')
 
-                  const checkBg = vax.status === 'done' ? DONE_BG
-                    : vax.status === 'overdue' ? OVERDUE_BG
-                    : vax.status === 'upcoming' ? PARTIAL_BG
-                    : 'transparent'
-                  const checkBorder = vax.status === 'done' ? DONE_BORDER
-                    : vax.status === 'overdue' ? OVERDUE_BORDER
-                    : vax.status === 'upcoming' ? PARTIAL_BORDER
-                    : FUTURE_BORDER
-                  const metaColor = vax.status === 'done' ? DONE_TEXT
-                    : vax.status === 'overdue' ? (isDark ? OVERDUE_BORDER : '#8A3A00')
-                    : vax.status === 'upcoming' ? PARTIAL_TEXT
+                  const stickerFill = vax.status === 'done' ? ST_GREEN
+                    : vax.status === 'overdue' ? ST_PEACH
+                    : vax.status === 'upcoming' ? ST_YELLOW
+                    : ST_CREAM
+                  const stickerStroke = vax.status === 'future' ? ST_LINE : ST_INK
+                  const metaColor = vax.status === 'done' ? (isDark ? ST_GREEN : '#3A7A28')
+                    : vax.status === 'overdue' ? (isDark ? ST_PEACH : '#8A3A00')
+                    : vax.status === 'upcoming' ? (isDark ? ST_YELLOW : '#7A6100')
                     : ink3
 
                   return (
                     <View key={vax.scheduleKey}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 5, paddingLeft: 10 }}>
-                        {/* Status circle */}
-                        <View style={{
-                          width: 16, height: 16, borderRadius: 8,
-                          backgroundColor: checkBg, borderWidth: 2, borderColor: checkBorder,
-                          alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                        }}>
-                          {vax.status === 'done' && <Check size={8} color={DONE_TEXT} strokeWidth={3} />}
-                        </View>
-                        {/* Name */}
-                        <Text style={{ flex: 1, fontSize: 12, fontFamily: 'DMSans_500Medium', color: ink }}>
-                          {fullName}
-                        </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7, paddingLeft: 12, paddingRight: 4 }}>
+                        {/* Cross sticker + name — tap to open info */}
+                        <Pressable
+                          onPress={() => setInfoVaccine({
+                            name: vax.name,
+                            doseLabel: vax.doseLabel,
+                            info: getVaccineInfo(vax.name),
+                            accent: stickerFill,
+                          })}
+                          style={({ pressed }) => ({
+                            flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10,
+                            opacity: pressed ? 0.65 : 1,
+                          })}
+                        >
+                          {/* Cross sticker bullet */}
+                          <View style={{
+                            width: 22, height: 22, alignItems: 'center', justifyContent: 'center',
+                            flexShrink: 0,
+                            shadowColor: ST_INK,
+                            shadowOffset: { width: 0, height: 1.5 },
+                            shadowOpacity: vax.status === 'future' ? 0 : 0.5,
+                            shadowRadius: 0, elevation: vax.status === 'future' ? 0 : 2,
+                          }}>
+                            <CrossSticker size={22} fill={stickerFill} stroke={stickerStroke} />
+                            {vax.status === 'done' && (
+                              <View style={{ position: 'absolute' }}>
+                                <Check size={10} color={ST_INK} strokeWidth={3.5} />
+                              </View>
+                            )}
+                          </View>
+                          {/* Name */}
+                          <Text style={{ flex: 1, fontSize: 13, fontFamily: 'DMSans_500Medium', color: ink }}>
+                            {fullName}
+                          </Text>
+                        </Pressable>
                         {/* Meta / actions */}
                         {vax.status === 'done' ? (
-                          <Text style={{ fontSize: 10, fontFamily: 'DMSans_400Regular', color: metaColor }}>
+                          <Text style={{ fontSize: 11, fontFamily: 'DMSans_500Medium', color: metaColor }}>
                             {vax.givenDate ? formatHealthDate(vax.givenDate) : ''}
                           </Text>
                         ) : vax.status === 'upcoming' || vax.status === 'overdue' ? (
@@ -3514,15 +3667,15 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
               /* Collapsed: dashed stub + one-line summary for done milestones */
               <View style={{
                 borderLeftWidth: 2,
-                borderLeftColor: isDoneMilestone ? DONE_BORDER + '60' : FUTURE_BORDER,
+                borderLeftColor: isDoneMilestone ? ST_GREEN : ST_LINE,
                 borderStyle: 'dashed',
-                marginLeft: 19,
+                marginLeft: 25,
                 marginBottom: isLast ? 0 : 4,
-                paddingBottom: 4,
-                minHeight: 12,
+                paddingBottom: 6,
+                minHeight: 14,
               }}>
                 {isDoneMilestone && (
-                  <Text style={{ fontSize: 10, fontFamily: 'DMSans_400Regular', color: ink3, paddingLeft: 10, paddingTop: 2 }} numberOfLines={1}>
+                  <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, paddingLeft: 12, paddingTop: 4 }} numberOfLines={1}>
                     {milestone.vaccines.map((v) => v.name.split(' ')[0]).join(' · ')}
                     {milestone.vaccines[0]?.givenDate ? ` · ${formatHealthDate(milestone.vaccines[0].givenDate)}` : ''}
                   </Text>
@@ -3532,6 +3685,14 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
           </View>
         )
       })}
+      <VaccineInfoModal
+        visible={infoVaccine !== null}
+        onClose={() => setInfoVaccine(null)}
+        vaccineName={infoVaccine?.name ?? ''}
+        doseLabel={infoVaccine?.doseLabel ?? ''}
+        info={infoVaccine?.info ?? null}
+        accent={infoVaccine?.accent ?? ST_YELLOW}
+      />
     </View>
   )
 }
@@ -3606,45 +3767,6 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
               </View>
             </View>
 
-            {/* Allergies */}
-            {child.allergies.length > 0 && (
-              <>
-                <Text style={[s.modalSectionTitle, { color: colors.text }]}>Allergies</Text>
-                <View style={s.healthTagsRow}>
-                  {child.allergies.map((a, i) => (
-                    <View key={i} style={[s.hdAllergyTag, { backgroundColor: isDark ? '#36222A' : '#FDEEF2', borderColor: isDark ? '#F5BBCF40' : '#F2B2C730' }]}>
-                      <AlertCircle size={11} color={isDark ? '#F5BBCF' : '#C0436A'} strokeWidth={2} />
-                      <Text style={[s.hdAllergyText, { color: isDark ? '#F5BBCF' : '#C0436A' }]}>{a}</Text>
-                    </View>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {/* Medications from child profile */}
-            {child.medications.length > 0 && (
-              <>
-                <Text style={[s.modalSectionTitle, { color: colors.text }]}>Medications</Text>
-                {child.medications.map((m, i) => (
-                  <View key={i} style={[s.modalTaskRow, { borderBottomColor: colors.border }]}>
-                    <Pill size={14} color={brand.secondary} strokeWidth={2} />
-                    <Text style={[s.modalTaskLabel, { color: colors.text }]}>{m}</Text>
-                    <Text style={[s.modalTaskStatus, { color: brand.secondary }]}>Active</Text>
-                  </View>
-                ))}
-              </>
-            )}
-
-            {/* Vaccine Schedule */}
-            <Text style={[s.modalSectionTitle, { color: colors.text }]}>Vaccine Schedule</Text>
-            <VaccineScheduleTree
-              child={child}
-              healthHistory={healthHistory}
-              scheduledVaccines={scheduledVaccines}
-              onSetVaccineDate={onSetVaccineDate}
-              onMarkVaccineGiven={onMarkVaccineGiven}
-            />
-
             {/* Latest Growth */}
             {(weight || height) && (
               <>
@@ -3709,6 +3831,45 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                 <Text style={[s.modalStatExtra, { color: PILLAR_COLORS.nutrition }]}>{feedingMl.toLocaleString()}ml</Text>
               </View>
             )}
+
+            {/* Allergies */}
+            {child.allergies.length > 0 && (
+              <>
+                <Text style={[s.modalSectionTitle, { color: colors.text }]}>Allergies</Text>
+                <View style={s.healthTagsRow}>
+                  {child.allergies.map((a, i) => (
+                    <View key={i} style={[s.hdAllergyTag, { backgroundColor: isDark ? '#36222A' : '#FDEEF2', borderColor: isDark ? '#F5BBCF40' : '#F2B2C730' }]}>
+                      <AlertCircle size={11} color={isDark ? '#F5BBCF' : '#C0436A'} strokeWidth={2} />
+                      <Text style={[s.hdAllergyText, { color: isDark ? '#F5BBCF' : '#C0436A' }]}>{a}</Text>
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+
+            {/* Medications from child profile */}
+            {child.medications.length > 0 && (
+              <>
+                <Text style={[s.modalSectionTitle, { color: colors.text }]}>Medications</Text>
+                {child.medications.map((m, i) => (
+                  <View key={i} style={[s.modalTaskRow, { borderBottomColor: colors.border }]}>
+                    <Pill size={14} color={brand.secondary} strokeWidth={2} />
+                    <Text style={[s.modalTaskLabel, { color: colors.text }]}>{m}</Text>
+                    <Text style={[s.modalTaskStatus, { color: brand.secondary }]}>Active</Text>
+                  </View>
+                ))}
+              </>
+            )}
+
+            {/* Vaccine Schedule */}
+            <Text style={[s.modalSectionTitle, { color: colors.text }]}>Vaccine Schedule</Text>
+            <VaccineScheduleTree
+              child={child}
+              healthHistory={healthHistory}
+              scheduledVaccines={scheduledVaccines}
+              onSetVaccineDate={onSetVaccineDate}
+              onMarkVaccineGiven={onMarkVaccineGiven}
+            />
 
             {/* View Full History */}
             <Pressable
@@ -4640,7 +4801,7 @@ function RemindersModal({
             horizontal
             showsHorizontalScrollIndicator={false}
             style={{ flexGrow: 0 }}
-            contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10 }}
+            contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 6 }}
           >
             {/* All pill */}
             {(() => {
@@ -4650,16 +4811,15 @@ function RemindersModal({
                   key="all"
                   onPress={() => setSelectedChildId(null)}
                   style={{
-                    alignSelf: 'flex-start',
-                    paddingVertical: 7,
-                    paddingHorizontal: 16,
-                    borderRadius: radius.full,
+                    paddingVertical: 8,
+                    paddingHorizontal: 18,
+                    borderRadius: 999,
                     borderWidth: 1.5,
-                    backgroundColor: isAll ? brand.kids : brand.kids + '20',
-                    borderColor: isAll ? brand.kids : brand.kids + '60',
+                    backgroundColor: isAll ? '#141313' : (isDark ? colors.surface : '#FFFEF8'),
+                    borderColor: isAll ? '#141313' : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
                   }}
                 >
-                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_600SemiBold', color: isAll ? '#FFFFFF' : brand.kids }}>All</Text>
+                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', letterSpacing: 0.2, color: isAll ? '#FFFEF8' : (isDark ? colors.text : '#141313') }}>All</Text>
                 </Pressable>
               )
             })()}
@@ -4673,35 +4833,63 @@ function RemindersModal({
                   key={c.id}
                   onPress={() => setSelectedChildId(c.id)}
                   style={{
-                    alignSelf: 'flex-start',
-                    paddingVertical: 7,
-                    paddingHorizontal: 16,
-                    borderRadius: radius.full,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    paddingVertical: 8,
+                    paddingHorizontal: 14,
+                    borderRadius: 999,
                     borderWidth: 1.5,
-                    backgroundColor: isActive ? kidColor : kidColor + '20',
-                    borderColor: isActive ? kidColor : kidColor + '50',
+                    backgroundColor: isActive ? kidColor : kidColor + '22',
+                    borderColor: isActive ? '#141313' : kidColor + '70',
                   }}
                 >
-                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_600SemiBold', color: isActive ? '#141313' : kidColor }}>{c.name}</Text>
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: isActive ? '#141313' : kidColor }} />
+                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', letterSpacing: 0.2, color: isActive ? '#141313' : (isDark ? colors.text : '#141313') }}>{c.name}</Text>
                 </Pressable>
               )
             })}
           </ScrollView>
         )}
 
-        {/* Tabs */}
-        <View style={[s.reminderTabs, { borderBottomColor: colors.border }]}>
-          {(['active', 'archived'] as const).map(t => (
-            <Pressable key={t} onPress={() => setTab(t)} style={s.reminderTab}>
-              <Text style={[s.reminderTabText, {
-                color: tab === t ? brand.kids : colors.textMuted,
-                fontWeight: tab === t ? '700' : '500',
-              }]}>
-                {t === 'active' ? `Active (${active.length})` : `Archived (${archived.length})`}
-              </Text>
-              {tab === t && <View style={[s.reminderTabLine, { backgroundColor: brand.kids }]} />}
-            </Pressable>
-          ))}
+        {/* Tabs — segmented pill */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4 }}>
+          <View style={{
+            flexDirection: 'row',
+            backgroundColor: isDark ? colors.surface : '#FFFEF8',
+            borderRadius: 999,
+            borderWidth: 1.5,
+            borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
+            padding: 4,
+            gap: 4,
+          }}>
+            {(['active', 'archived'] as const).map(t => {
+              const isOn = tab === t
+              return (
+                <Pressable
+                  key={t}
+                  onPress={() => setTab(t)}
+                  style={{
+                    flex: 1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingVertical: 10,
+                    borderRadius: 999,
+                    backgroundColor: isOn ? '#141313' : 'transparent',
+                  }}
+                >
+                  <Text style={{
+                    fontSize: 14,
+                    fontFamily: isOn ? 'Fraunces_600SemiBold' : 'DMSans_600SemiBold',
+                    color: isOn ? '#FFFEF8' : (isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'),
+                    letterSpacing: -0.1,
+                  }}>
+                    {t === 'active' ? `Active · ${active.length}` : `Archived · ${archived.length}`}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
         </View>
 
         {/* List */}
