@@ -36,6 +36,7 @@ import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
 import { Heart as HeartSticker, Flower as FlowerSticker, Burst as BurstSticker, Star as StarSticker, Cross as CrossSticker, Moon as MoonSticker, Sparkle as SparkleSticker, Leaf as LeafSticker, Pill as PillSticker } from '../ui/Stickers'
 import { StickerPalette } from '../stickers/BrandStickers'
+import { Flame as FlameSticker } from '../stickers/RewardStickers'
 import { stickerForEmoji } from '../../lib/emojiToSticker'
 
 const DIAPER_STICKER_INK = '#141313'
@@ -1357,12 +1358,14 @@ export function KidsHome() {
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={{
-              backgroundColor: colors.surface,
-              borderTopLeftRadius: radius.xl,
-              borderTopRightRadius: radius.xl,
-              borderTopWidth: 1,
-              borderColor: colors.border,
-              paddingTop: 12,
+              backgroundColor: isDark ? colors.surface : '#FFFEF8',
+              borderTopLeftRadius: 32,
+              borderTopRightRadius: 32,
+              borderTopWidth: 1.5,
+              borderLeftWidth: 1.5,
+              borderRightWidth: 1.5,
+              borderColor: '#141313',
+              paddingTop: 14,
               paddingHorizontal: 20,
               paddingBottom: 48,
               gap: 16,
@@ -1370,70 +1373,96 @@ export function KidsHome() {
             }}
           >
             {/* Sticker accent — top-right corner */}
-            <View style={{ position: 'absolute', top: -10, right: 12, opacity: 0.55 }} pointerEvents="none">
+            <View style={{ position: 'absolute', top: -8, right: 12, opacity: 0.6 }} pointerEvents="none">
               <StarSticker size={64} fill="#9DC3E8" stroke="#141313" />
             </View>
 
             {/* Drag handle */}
-            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 4 }} />
+            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#14131340', alignSelf: 'center', marginBottom: 4 }} />
 
             {/* Header */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ color: colors.text, fontSize: 22, fontWeight: '900', letterSpacing: -0.5, fontFamily: font.display }}>Custom Range</Text>
+              <Text style={{ color: isDark ? colors.text : '#141313', fontSize: 24, letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' }}>Custom Range</Text>
               <Pressable
                 onPress={() => setCustomPickerVisible(false)}
-                style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
+                style={({ pressed }) => ({
+                  width: 36, height: 36, borderRadius: 18,
+                  backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
+                  borderWidth: 1.5, borderColor: '#141313',
+                  alignItems: 'center', justifyContent: 'center',
+                  shadowColor: '#141313',
+                  shadowOffset: { width: 0, height: pressed ? 1 : 2 },
+                  shadowOpacity: 1, shadowRadius: 0, elevation: 3,
+                  transform: [{ translateY: pressed ? 1 : 0 }],
+                })}
               >
-                <X size={15} color={colors.textMuted} strokeWidth={2.5} />
+                <X size={15} color="#141313" strokeWidth={2.5} />
               </Pressable>
             </View>
 
             {/* START / END chips */}
-            <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-              <Pressable
-                onPress={() => setCustomPickerActive('start')}
-                style={{
-                  flex: 1,
-                  borderRadius: radius.md,
-                  borderWidth: 1.5,
-                  borderColor: customPickerActive === 'start' ? brand.kids : colors.border,
-                  backgroundColor: customPickerActive === 'start' ? brand.kids + '18' : colors.surfaceRaised,
-                  paddingVertical: 12,
-                  paddingHorizontal: 14,
-                  gap: 3,
-                }}
-              >
-                <Text style={{ fontSize: 10, fontWeight: '800', letterSpacing: 1.5, color: customPickerActive === 'start' ? brand.kids : colors.textMuted, fontFamily: font.bodySemiBold }}>
-                  START
-                </Text>
-                <Text style={{ fontSize: 17, fontWeight: '700', color: customPickerActive === 'start' ? colors.text : colors.textSecondary, fontFamily: font.display }}>
-                  {fmtShortDate(customDraft.start)}
-                </Text>
-              </Pressable>
+            {(() => {
+              const ST_INK = '#141313'
+              const ST_YELLOW = isDark ? '#F0CE4C' : '#F5D652'
+              const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+              return (
+                <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                  <Pressable
+                    onPress={() => setCustomPickerActive('start')}
+                    style={({ pressed }) => ({
+                      flex: 1,
+                      borderRadius: 18,
+                      borderWidth: 1.5,
+                      borderColor: ST_INK,
+                      backgroundColor: customPickerActive === 'start' ? ST_YELLOW : ST_CREAM,
+                      paddingVertical: 12,
+                      paddingHorizontal: 14,
+                      gap: 3,
+                      shadowColor: ST_INK,
+                      shadowOffset: { width: 0, height: customPickerActive === 'start' ? (pressed ? 1 : 3) : 0 },
+                      shadowOpacity: customPickerActive === 'start' ? 1 : 0,
+                      shadowRadius: 0, elevation: customPickerActive === 'start' ? 4 : 0,
+                      transform: [{ translateY: customPickerActive === 'start' && pressed ? 2 : 0 }],
+                    })}
+                  >
+                    <Text style={{ fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1.5, color: ST_INK, textTransform: 'uppercase' }}>
+                      Start
+                    </Text>
+                    <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ST_INK, letterSpacing: -0.3 }}>
+                      {fmtShortDate(customDraft.start)}
+                    </Text>
+                  </Pressable>
 
-              <View style={{ width: 16, height: 1.5, backgroundColor: colors.border, borderRadius: 1 }} />
+                  <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ST_INK }}>—</Text>
 
-              <Pressable
-                onPress={() => setCustomPickerActive('end')}
-                style={{
-                  flex: 1,
-                  borderRadius: radius.md,
-                  borderWidth: 1.5,
-                  borderColor: customPickerActive === 'end' ? brand.kids : colors.border,
-                  backgroundColor: customPickerActive === 'end' ? brand.kids + '18' : colors.surfaceRaised,
-                  paddingVertical: 12,
-                  paddingHorizontal: 14,
-                  gap: 3,
-                }}
-              >
-                <Text style={{ fontSize: 10, fontWeight: '800', letterSpacing: 1.5, color: customPickerActive === 'end' ? brand.kids : colors.textMuted, fontFamily: font.bodySemiBold }}>
-                  END
-                </Text>
-                <Text style={{ fontSize: 17, fontWeight: '700', color: customPickerActive === 'end' ? colors.text : colors.textSecondary, fontFamily: font.display }}>
-                  {fmtShortDate(customDraft.end)}
-                </Text>
-              </Pressable>
-            </View>
+                  <Pressable
+                    onPress={() => setCustomPickerActive('end')}
+                    style={({ pressed }) => ({
+                      flex: 1,
+                      borderRadius: 18,
+                      borderWidth: 1.5,
+                      borderColor: ST_INK,
+                      backgroundColor: customPickerActive === 'end' ? ST_YELLOW : ST_CREAM,
+                      paddingVertical: 12,
+                      paddingHorizontal: 14,
+                      gap: 3,
+                      shadowColor: ST_INK,
+                      shadowOffset: { width: 0, height: customPickerActive === 'end' ? (pressed ? 1 : 3) : 0 },
+                      shadowOpacity: customPickerActive === 'end' ? 1 : 0,
+                      shadowRadius: 0, elevation: customPickerActive === 'end' ? 4 : 0,
+                      transform: [{ translateY: customPickerActive === 'end' && pressed ? 2 : 0 }],
+                    })}
+                  >
+                    <Text style={{ fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1.5, color: ST_INK, textTransform: 'uppercase' }}>
+                      End
+                    </Text>
+                    <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ST_INK, letterSpacing: -0.3 }}>
+                      {fmtShortDate(customDraft.end)}
+                    </Text>
+                  </Pressable>
+                </View>
+              )
+            })()}
 
             {/* Date spinner */}
             <DateTimePicker
@@ -1443,7 +1472,8 @@ export function KidsHome() {
               display="spinner"
               maximumDate={customPickerActive === 'start' ? customDraft.end : new Date()}
               minimumDate={customPickerActive === 'end' ? customDraft.start : undefined}
-              textColor={colors.text}
+              textColor={isDark ? colors.text : '#141313'}
+              accentColor="#141313"
               themeVariant={isDark ? 'dark' : 'light'}
               style={{ width: '100%' }}
               onChange={(_: DateTimePickerEvent, selected?: Date) => {
@@ -1456,49 +1486,69 @@ export function KidsHome() {
               }}
             />
 
-            {/* Apply button */}
+            {/* Apply button — sticker style */}
             <Pressable
               onPress={() => {
                 setCustomRange({ start: customDraft.start, end: customDraft.end })
                 setDateRange('custom')
                 setCustomPickerVisible(false)
               }}
-              style={{
+              style={({ pressed }) => ({
                 height: 60,
-                borderRadius: radius.full,
-                backgroundColor: brand.kids,
-                alignItems: 'center',
-                justifyContent: 'center',
-                shadowColor: brand.kids,
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.35,
-                shadowRadius: 16,
-              }}
+                borderRadius: 999,
+                backgroundColor: isDark ? '#F0CE4C' : '#F5D652',
+                borderWidth: 2, borderColor: '#141313',
+                alignItems: 'center', justifyContent: 'center',
+                shadowColor: '#141313',
+                shadowOffset: { width: 0, height: pressed ? 2 : 5 },
+                shadowOpacity: 1, shadowRadius: 0, elevation: 6,
+                transform: [{ translateY: pressed ? 3 : 0 }],
+              })}
             >
-              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16, letterSpacing: 1, textTransform: 'uppercase', fontFamily: font.bodySemiBold }}>Apply Range</Text>
+              <Text style={{ color: '#141313', fontFamily: 'DMSans_700Bold', fontSize: 16, letterSpacing: 1, textTransform: 'uppercase' }}>Apply Range</Text>
             </Pressable>
           </Pressable>
         </Pressable>
       </Modal>
 
-      {/* ─── Past 7 Days Mini Rings ──────────────────────────── */}
-      <View style={[s.miniRingsCard, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.borderLight }]}>
+      {/* ─── Past 7 Days Mini Rings — sticker card ─────────────── */}
+      <View
+        style={[
+          s.miniRingsCard,
+          {
+            backgroundColor: isDark ? colors.surface : '#FFFEF8',
+            borderRadius: 22,
+            borderColor: '#141313',
+            borderWidth: 1.5,
+            shadowColor: '#141313',
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: isDark ? 0 : 0.08,
+            shadowRadius: 6,
+            elevation: 2,
+          },
+        ]}
+      >
         <View style={s.miniRingsHeader}>
-          <Text style={[s.miniRingsTitle, { color: colors.textSecondary }]}>Past 7 Days</Text>
+          <Text style={[s.miniRingsTitle, { color: isDark ? colors.text : '#141313', fontFamily: 'Fraunces_700Bold' }]}>Past 7 Days</Text>
           <View style={s.miniMetricPicker}>
             {(['sleep', 'nutrition', 'activity'] as MiniRingMetric[]).map((m) => {
               const on = miniRingMetric === m
+              const fillSoft =
+                m === 'sleep' ? '#CFE0F0' :
+                m === 'nutrition' ? '#F9D8E2' :
+                '#DDE7BB'
               return (
                 <Pressable
                   key={m}
                   onPress={() => setMiniRingMetric(m)}
                   style={[s.miniMetricBtn, {
-                    backgroundColor: on ? PILLAR_COLORS[m] + '22' : 'transparent',
-                    borderColor: on ? 'transparent' : colors.border,
+                    backgroundColor: on ? fillSoft : (isDark ? colors.surfaceRaised : '#FFFEF8'),
+                    borderColor: '#141313',
+                    borderWidth: 1.5,
                   }]}
                 >
-                  <View style={[s.miniMetricDot, { backgroundColor: PILLAR_COLORS[m] }]} />
-                  <Text style={[s.miniMetricLabel, { color: on ? colors.text : colors.textMuted }]}>
+                  <View style={[s.miniMetricDot, { backgroundColor: PILLAR_COLORS[m], borderWidth: 1, borderColor: '#141313' }]} />
+                  <Text style={[s.miniMetricLabel, { color: '#141313', fontFamily: on ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }]}>
                     {m === 'sleep' ? 'Sleep' : m === 'nutrition' ? nutritionLabel : 'Activity'}
                   </Text>
                 </Pressable>
@@ -1924,19 +1974,21 @@ export function KidsHome() {
         onPress={() => router.push('/grandma-talk' as any)}
         style={({ pressed }) => [s.grandmaCard, { opacity: pressed ? 0.92 : 1 }]}
       >
-        {/* Blue burst sticker in corner */}
+        {/* Blue burst sticker — pokes out of the card top-right */}
         <View style={s.grandmaBurst}>
-          <BurstSticker size={86} fill="#9DC3E8" stroke="#141313" />
+          <BurstSticker size={92} fill="#9DC3E8" stroke="#141313" />
         </View>
         <View style={s.grandmaIconWrap}>
-          <Sparkles size={20} color="#7048B8" strokeWidth={2.2} />
+          <SparkleSticker size={26} fill="#F5D652" stroke="#141313" />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={s.grandmaTitle}>Grandma knows best</Text>
-          <Text style={s.grandmaDesc}>Sleep, feeding, milestones & more</Text>
+          <Text style={s.grandmaDesc}>
+            Sleep, feeding, milestones <Text style={s.grandmaDescItalic}>& more</Text>
+          </Text>
         </View>
         <View style={s.grandmaArrow}>
-          <ChevronRight size={15} color="#141313" strokeWidth={2.5} />
+          <ChevronRight size={16} color="#141313" strokeWidth={2.5} />
         </View>
       </Pressable>
 
@@ -1946,24 +1998,26 @@ export function KidsHome() {
         style={({ pressed }) => [s.rewardsCard, { opacity: pressed ? 0.92 : 1 }]}
       >
         <View style={s.rewardsIconWrap}>
-          <Trophy size={18} color="#F5D652" strokeWidth={2} />
+          <StarSticker size={26} fill="#F5D652" stroke="#141313" />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={s.rewardsTitle}>Your Rewards</Text>
-          <Text style={s.rewardsDesc}>Points, streaks & badges</Text>
+          <Text style={s.rewardsDesc}>
+            Points, streaks <Text style={s.rewardsDescItalic}>& badges</Text>
+          </Text>
         </View>
         <View style={s.rewardsStats}>
           <View style={s.rewardsStat}>
-            <Flame size={12} color="#EE7B6D" strokeWidth={2} />
-            <Text style={[s.rewardsStatNum, { color: '#EE7B6D' }]}>{currentStreak}</Text>
+            <FlameSticker size={16} fill="#EE7B6D" stroke="#141313" />
+            <Text style={[s.rewardsStatNum, { color: '#141313' }]}>{currentStreak}</Text>
           </View>
           <View style={s.rewardsStat}>
-            <Star size={12} color="#F5D652" strokeWidth={2} />
-            <Text style={[s.rewardsStatNum, { color: '#F5D652' }]}>{totalPoints}</Text>
+            <StarSticker size={16} fill="#F5D652" stroke="#141313" />
+            <Text style={[s.rewardsStatNum, { color: '#141313' }]}>{totalPoints}</Text>
           </View>
           <View style={s.rewardsStat}>
-            <Trophy size={12} color="#BDD48C" strokeWidth={2} />
-            <Text style={[s.rewardsStatNum, { color: '#BDD48C' }]}>{earnedBadges.length}</Text>
+            <Trophy size={14} color="#BDD48C" fill="#BDD48C" strokeWidth={2} />
+            <Text style={[s.rewardsStatNum, { color: '#141313' }]}>{earnedBadges.length}</Text>
           </View>
         </View>
         <ChevronRight size={14} color={colors.textMuted} strokeWidth={2.5} />
@@ -2152,53 +2206,68 @@ function HeroTiles({
   const calPct = calTarget > 0 ? Math.min((isLiquid ? feedingCount : caloriesTotal) / calTarget, 1) : 0
   const calSub = calTarget > 0 ? `of ${calTarget.toLocaleString()} target` : (isLiquid ? 'Tap for details' : 'Set a target')
 
+  // Empty/data flags so we render inviting copy instead of bare "—"
+  const hasSleep = sleepTotal > 0
+  const hasFeed = isLiquid ? feedingCount > 0 : caloriesTotal > 0
+  const hasActivity = activityCount > 0
+  const sleepNum = hasSleep ? `${sleepHours}` : ''
+  const sleepMinStr = hasSleep && sleepMins > 0 ? ` ${String(sleepMins).padStart(2, '0')}` : ''
+
   return (
     <View style={{ gap: 10 }}>
       {/* Row 1: LAST SLEEP (1.3fr) + MOOD (1fr) */}
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Pressable
           onPress={onPressSleep}
-          style={{
-            flex: 1.3, padding: 16, borderRadius: 28, borderWidth: 1,
-            backgroundColor: blueSoft, borderColor: lineColor, overflow: 'hidden',
-          }}
+          style={({ pressed }) => [
+            tileStyles.card,
+            { backgroundColor: blueSoft, borderColor: lineColor, flex: 1.3, opacity: pressed ? 0.92 : 1 },
+          ]}
         >
-          <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-            LAST SLEEP
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginTop: 6 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: paper, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: lineColor }}>
-              <Moon size={22} color="#9DC3E8" strokeWidth={2} />
+          <Text style={[tileStyles.metaLabel, { color: ink3 }]}>LAST SLEEP</Text>
+          <View style={tileStyles.bodyRow}>
+            <View style={[tileStyles.iconCircle, { backgroundColor: paper, borderColor: lineColor }]}>
+              <MoonSticker size={32} fill="#9DC3E8" stroke={ink} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 28, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.6, lineHeight: 30 }}>
-                {sleepLabel}
-              </Text>
-              <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, marginTop: 2 }}>
-                {sleepSub}
-              </Text>
+              {hasSleep ? (
+                <Text style={[tileStyles.heroNumber, { color: ink }]}>
+                  {sleepNum}
+                  <Text style={[tileStyles.heroUnit, { color: ink }]}>h</Text>
+                  {sleepMinStr ? (
+                    <Text style={[tileStyles.heroSecondary, { color: ink }]}>{sleepMinStr}</Text>
+                  ) : null}
+                </Text>
+              ) : (
+                <Text style={[tileStyles.emptyHero, { color: ink }]}>Tap to log</Text>
+              )}
+              <Text style={[tileStyles.subText, { color: ink3 }]}>{sleepSub}</Text>
             </View>
           </View>
         </Pressable>
 
         <Pressable
           onPress={onPressMood}
-          style={{
-            flex: 1, padding: 14, borderRadius: 28, borderWidth: 1,
-            backgroundColor: yellowSoft, borderColor: lineColor, overflow: 'hidden',
-          }}
+          style={({ pressed }) => [
+            tileStyles.card,
+            { backgroundColor: yellowSoft, borderColor: lineColor, flex: 1, padding: 14, opacity: pressed ? 0.92 : 1 },
+          ]}
         >
-          <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: '#3A3533', letterSpacing: 1.2, textTransform: 'uppercase' }}>
-            MOOD
-          </Text>
+          <Text style={[tileStyles.metaLabel, { color: '#3A3533' }]}>MOOD</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
             {hasMoods && dominantMood ? (
-              <MoodFace size={26} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} />
+              <MoodFace size={28} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} />
             ) : (
-              <Text style={{ fontSize: 22, color: ink3 }}>—</Text>
+              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: paper, borderWidth: 1, borderColor: lineColor }} />
             )}
-            <Text style={{ fontSize: 22, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.4, flex: 1 }} numberOfLines={1}>
-              {moodDisplay}
+            <Text
+              style={[
+                hasMoods ? tileStyles.moodLabelOn : tileStyles.moodLabelOff,
+                { color: ink, flex: 1 },
+              ]}
+              numberOfLines={1}
+            >
+              {hasMoods ? moodDisplay : 'How are they?'}
             </Text>
           </View>
           {/* Mood bars — colored by each mood; dominant is full opacity */}
@@ -2222,30 +2291,40 @@ function HeroTiles({
               )
             })}
           </View>
-          <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: ink3, marginTop: 6, letterSpacing: 0.3 }}>
-            {hasMoods ? `${totalMoodLogs} log${totalMoodLogs !== 1 ? 's' : ''}` : 'Log a mood'}
+          <Text style={[tileStyles.metaSub, { color: ink3 }]}>
+            {hasMoods ? `${totalMoodLogs} log${totalMoodLogs !== 1 ? 's' : ''}` : 'Tap to log'}
           </Text>
         </Pressable>
       </View>
 
-      {/* Row 2: CALORIES (1fr) + LEAP (1.2fr) */}
+      {/* Row 2: FEEDINGS / CALORIES (1fr) + ACTIVITIES (1.2fr) */}
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Pressable
           onPress={onPressCalories}
-          style={{
-            flex: 1, padding: 16, borderRadius: 28, borderWidth: 1,
-            backgroundColor: pinkSoft, borderColor: lineColor,
-          }}
+          style={({ pressed }) => [
+            tileStyles.card,
+            { backgroundColor: pinkSoft, borderColor: lineColor, flex: 1, opacity: pressed ? 0.92 : 1 },
+          ]}
         >
-          <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-            {isLiquid ? 'FEEDINGS' : 'CALORIES'}
-          </Text>
-          <Text style={{ fontSize: 30, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 6, letterSpacing: -0.8, lineHeight: 32 }}>
-            {calValue}
-          </Text>
-          <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, marginTop: 2 }}>
-            {calSub}
-          </Text>
+          <View style={tileStyles.headerRow}>
+            <Text style={[tileStyles.metaLabel, { color: ink3 }]}>
+              {isLiquid ? 'FEEDINGS' : 'CALORIES'}
+            </Text>
+            <View style={[tileStyles.miniSticker, { backgroundColor: paper, borderColor: lineColor }]}>
+              <HeartSticker size={18} fill="#EE7B6D" stroke={ink} />
+            </View>
+          </View>
+          {hasFeed ? (
+            <Text style={[tileStyles.heroNumber, { color: ink, marginTop: 8 }]}>
+              {calValue}
+              {!isLiquid && (
+                <Text style={[tileStyles.heroUnit, { color: ink }]}>kcal</Text>
+              )}
+            </Text>
+          ) : (
+            <Text style={[tileStyles.emptyHero, { color: ink, marginTop: 8 }]}>Tap to log</Text>
+          )}
+          <Text style={[tileStyles.subText, { color: ink3 }]}>{calSub}</Text>
           {/* Progress bar */}
           <View style={{ height: 6, borderRadius: 999, backgroundColor: 'rgba(238,123,109,0.18)', marginTop: 10, overflow: 'hidden' }}>
             <View style={{ width: `${Math.min(calPct, 1) * 100}%`, height: 6, borderRadius: 999, backgroundColor: '#EE7B6D' }} />
@@ -2254,21 +2333,24 @@ function HeroTiles({
 
         <Pressable
           onPress={onPressActivity}
-          style={{
-            flex: 1.2, padding: 16, borderRadius: 28, borderWidth: 1,
-            backgroundColor: greenSoft, borderColor: lineColor, overflow: 'hidden',
-          }}
+          style={({ pressed }) => [
+            tileStyles.card,
+            { backgroundColor: greenSoft, borderColor: lineColor, flex: 1.2, opacity: pressed ? 0.92 : 1 },
+          ]}
         >
-          <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-            ACTIVITIES
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 6 }}>
-            <ActivityPctRing pct={activityEngagement} size={52} color="#8BB356" trackColor="rgba(139,179,86,0.20)" />
+          <Text style={[tileStyles.metaLabel, { color: ink3 }]}>ACTIVITIES</Text>
+          <View style={tileStyles.bodyRow}>
+            <ActivityPctRing pct={activityEngagement} size={56} color="#8BB356" trackColor="rgba(139,179,86,0.20)" />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 28, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.6, lineHeight: 30 }}>
-                {activityValueLabel}
-              </Text>
-              <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, marginTop: 2 }} numberOfLines={1}>
+              {hasActivity ? (
+                <Text style={[tileStyles.heroNumber, { color: ink }]}>
+                  {activityValueLabel}
+                  <Text style={[tileStyles.heroUnit, { color: ink }]}>logs</Text>
+                </Text>
+              ) : (
+                <Text style={[tileStyles.emptyHero, { color: ink }]}>Tap to log</Text>
+              )}
+              <Text style={[tileStyles.subText, { color: ink3 }]} numberOfLines={1}>
                 {activitySub}
               </Text>
             </View>
@@ -2298,6 +2380,107 @@ function SvgStar() {
     </Svg>
   )
 }
+
+// ─── Hero tile shared styles (sticker-card aesthetic) ─────────────────────────
+const tileStyles = StyleSheet.create({
+  card: {
+    padding: 16,
+    borderRadius: 28,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  metaLabel: {
+    fontSize: 10,
+    fontFamily: 'DMSans_600SemiBold',
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+  },
+  metaSub: {
+    fontSize: 10.5,
+    fontFamily: 'DMSans_500Medium',
+    marginTop: 6,
+    letterSpacing: 0.3,
+  },
+  bodyRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+    marginTop: 8,
+  },
+  iconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  miniSticker: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  heroNumber: {
+    fontFamily: 'Fraunces_800ExtraBold',
+    fontSize: 36,
+    lineHeight: 38,
+    letterSpacing: -1.4,
+    fontWeight: '800',
+  },
+  heroUnit: {
+    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontStyle: 'italic',
+    fontSize: 18,
+    fontWeight: '400',
+    opacity: 0.55,
+    letterSpacing: 0,
+  },
+  heroSecondary: {
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 22,
+    fontWeight: '600',
+    letterSpacing: -0.6,
+  },
+  emptyHero: {
+    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontStyle: 'italic',
+    fontSize: 22,
+    opacity: 0.55,
+    letterSpacing: -0.2,
+    lineHeight: 28,
+  },
+  moodLabelOn: {
+    fontFamily: 'Fraunces_700Bold',
+    fontSize: 22,
+    letterSpacing: -0.5,
+    fontWeight: '700',
+  },
+  moodLabelOff: {
+    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontStyle: 'italic',
+    fontSize: 18,
+    opacity: 0.6,
+    letterSpacing: -0.2,
+  },
+  subText: {
+    fontSize: 11.5,
+    fontFamily: 'DMSans_400Regular',
+    marginTop: 3,
+  },
+})
 
 // Small circular progress ring used inside the Activity hero tile
 function ActivityPctRing({ pct, size, color, trackColor }: { pct: number; size: number; color: string; trackColor: string }) {
@@ -2714,7 +2897,7 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
   diaperByDay: Record<string, { pee: number; poop: number; mixed: number }>
   startDate: string; endDate: string
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const total = pee + poop + mixed
   const peeW  = total > 0 ? (pee  / total) * 100 : 0
   const poopW = total > 0 ? (poop / total) * 100 : 0
@@ -2734,22 +2917,39 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
     return b ? b.pee + b.poop + b.mixed : 0
   }), 1)
 
+  const stickerInk = isDark ? 'rgba(255,255,255,0.18)' : '#141313'
+  const ink = isDark ? colors.text : '#141313'
+  const ink3 = isDark ? colors.textMuted : 'rgba(20,19,19,0.5)'
+
   return (
-    <View style={[s.diaperFullCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View style={[s.diaperFullCard, {
+      backgroundColor: isDark ? colors.surface : '#FFFEF8',
+      borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
+      borderWidth: 1.5,
+      shadowColor: '#141313',
+      shadowOpacity: isDark ? 0 : 0.05,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 3 },
+    }]}>
       {/* Header */}
       <View style={s.diaperCardHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: DIAPER_COLORS.pee + '22', alignItems: 'center', justifyContent: 'center' }}>
-            <Baby size={12} color={DIAPER_COLORS.pee} strokeWidth={2} />
+          <View style={{
+            width: 22, height: 22, borderRadius: 11,
+            backgroundColor: DIAPER_COLORS.pee,
+            borderWidth: 1, borderColor: stickerInk,
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Baby size={11} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={2.5} />
           </View>
-          <Text style={[s.diaperCardTitle, { color: colors.textMuted }]}>DIAPERS</Text>
+          <Text style={[s.diaperCardTitle, { color: ink3 }]}>DIAPERS</Text>
         </View>
-        <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
+        <ChevronRight size={14} color={ink3} strokeWidth={2} />
       </View>
 
       {/* Main row: big number + type chips */}
       <View style={s.diaperMainRow}>
-        <Text style={[s.diaperBigCount, { color: colors.text }]}>{count}</Text>
+        <Text style={[s.diaperBigCount, { color: ink }]}>{count}</Text>
         <View style={s.diaperChips}>
           {[
             { label: 'Pee', count: pee, color: DIAPER_COLORS.pee, emoji: '💧' },
@@ -2758,10 +2958,21 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
           ].map(({ label, count: c, color, emoji }) => {
             const ChipSticker = stickerForEmoji(emoji)
             return (
-              <View key={label} style={[s.diaperChip, { backgroundColor: color + '18', borderColor: color + '50' }]}>
-                <ChipSticker size={14} />
-                <Text style={[s.diaperChipLabel, { color }]}>{label}</Text>
-                <Text style={[s.diaperChipCount, { color }]}>{c}</Text>
+              <View key={label} style={[s.diaperChip, {
+                backgroundColor: isDark ? color + '14' : color + '26',
+                borderColor: isDark ? color + '50' : stickerInk,
+                borderWidth: 1.5,
+              }]}>
+                <View style={{
+                  width: 22, height: 22, borderRadius: 11,
+                  backgroundColor: isDark ? 'transparent' : '#FFFEF8',
+                  borderWidth: isDark ? 0 : 1, borderColor: stickerInk,
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <ChipSticker size={14} />
+                </View>
+                <Text style={[s.diaperChipLabel, { color: isDark ? color : '#141313' }]}>{label}</Text>
+                <Text style={[s.diaperChipCount, { color: isDark ? color : '#141313' }]}>{c}</Text>
               </View>
             )
           })}
@@ -2769,10 +2980,15 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
       </View>
 
       {/* Proportion bar */}
-      <View style={[s.diaperBar, { borderRadius: 4, marginTop: 10 }]}>
-        {peeW  > 0 && <View style={{ width: `${peeW}%`  as any, height: 8, backgroundColor: DIAPER_COLORS.pee,   borderTopLeftRadius: 4, borderBottomLeftRadius: 4 }} />}
-        {poopW > 0 && <View style={{ width: `${poopW}%` as any, height: 8, backgroundColor: DIAPER_COLORS.poop }} />}
-        {mixedW > 0 && <View style={{ width: `${mixedW}%` as any, height: 8, backgroundColor: DIAPER_COLORS.mixed, borderTopRightRadius: 4, borderBottomRightRadius: 4 }} />}
+      <View style={[s.diaperBar, {
+        borderRadius: 999, marginTop: 12, height: 10,
+        borderWidth: 1.5, borderColor: stickerInk,
+        backgroundColor: isDark ? colors.surfaceGlass : 'rgba(20,19,19,0.04)',
+        overflow: 'hidden',
+      }]}>
+        {peeW  > 0 && <View style={{ width: `${peeW}%`  as any, height: '100%', backgroundColor: DIAPER_COLORS.pee }} />}
+        {poopW > 0 && <View style={{ width: `${poopW}%` as any, height: '100%', backgroundColor: DIAPER_COLORS.poop }} />}
+        {mixedW > 0 && <View style={{ width: `${mixedW}%` as any, height: '100%', backgroundColor: DIAPER_COLORS.mixed }} />}
       </View>
 
       {/* Daily sparkline */}
@@ -2786,13 +3002,15 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
             <View key={d} style={s.diaperSparkCol}>
               <View style={{ height: 32, justifyContent: 'flex-end' }}>
                 <View style={{
-                  width: 6, height: barH, borderRadius: 3,
+                  width: 8, height: barH, borderRadius: 4,
                   backgroundColor: dayTotal > 0
-                    ? (isToday ? DIAPER_COLORS.pee : DIAPER_COLORS.pee + 'AA')
-                    : 'rgba(255,255,255,0.08)',
+                    ? (isToday ? DIAPER_COLORS.pee : DIAPER_COLORS.pee + 'CC')
+                    : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(20,19,19,0.08)'),
+                  borderWidth: dayTotal > 0 && !isDark ? 1 : 0,
+                  borderColor: stickerInk,
                 }} />
               </View>
-              <Text style={[s.diaperSparkLabel, { color: isToday ? colors.text : colors.textMuted }]}>
+              <Text style={[s.diaperSparkLabel, { color: isToday ? ink : ink3 }]}>
                 {new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'narrow' })}
               </Text>
             </View>
@@ -4289,47 +4507,80 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
                 </View>
               )}
             </View>
-            <Pressable onPress={onClose} style={[s.modalClose, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
-              <X size={18} color={colors.textMuted} strokeWidth={2} />
+            <Pressable onPress={onClose} style={[s.modalClose, { backgroundColor: StickerPalette.paper, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK }]}>
+              <X size={18} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
             </Pressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-            {/* Top stat card — activities + context */}
-            <View style={[s.modalStatCard, { backgroundColor: PILLAR_COLORS.activity + '10', borderRadius: radius.md }]}>
-              <Zap size={18} color={PILLAR_COLORS.activity} strokeWidth={2} />
+            {/* Top stat card — sticker */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                padding: 16,
+                borderRadius: 22,
+                borderWidth: 1.5,
+                borderColor: DIAPER_STICKER_INK,
+                backgroundColor: StickerPalette.greenSoft,
+                shadowColor: DIAPER_STICKER_INK,
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.1,
+                shadowRadius: 6,
+                elevation: 2,
+                marginBottom: 14,
+              }}
+            >
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: StickerPalette.green, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center' }}>
+                <Zap size={18} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
+              </View>
               <View style={{ flex: 1 }}>
-                <Text style={[s.modalStatLabel, { color: colors.textMuted }]}>Activities</Text>
-                <Text style={[s.modalStatValue, { color: colors.text }]}>{activityCount > 0 ? activityCount.toLocaleString() : '—'} total</Text>
+                <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase' }}>Activities</Text>
+                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, marginTop: 2 }}>
+                  {activityCount > 0 ? activityCount.toLocaleString() : '—'} total
+                </Text>
               </View>
               {activeDays > 0 && rangeDays > 0 && (
-                <Text style={[s.modalStatExtra, { color: PILLAR_COLORS.activity }]}>
+                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic' }}>
                   {activeDays}/{rangeDays} days
                 </Text>
               )}
             </View>
 
-            {/* 3-tile analytics row */}
-            <View style={s.feedingBreakdownRow}>
-              <View style={[s.feedingBreakdownCard, { backgroundColor: PILLAR_COLORS.activity + '10', borderRadius: radius.md }]}>
-                <Clock size={20} color={PILLAR_COLORS.activity} strokeWidth={1.8} />
-                <Text style={[s.feedingBreakdownValue, { color: colors.text }]}>
-                  {activeDays}{rangeDays > 0 ? `/${rangeDays}` : ''}
-                </Text>
-                <Text style={[s.feedingBreakdownLabel, { color: colors.textMuted }]}>Active Days</Text>
-              </View>
-              <View style={[s.feedingBreakdownCard, { backgroundColor: (topMeta?.color ?? PILLAR_COLORS.activity) + '14', borderRadius: radius.md }]}>
-                <TrendingUp size={20} color={topMeta?.color ?? PILLAR_COLORS.activity} strokeWidth={1.8} />
-                <Text style={[s.feedingBreakdownValue, { color: colors.text }]} numberOfLines={1}>
-                  {topMeta ? topMeta.label.split(' ')[0] : '—'}
-                </Text>
-                <Text style={[s.feedingBreakdownLabel, { color: colors.textMuted }]}>Top</Text>
-              </View>
-              <View style={[s.feedingBreakdownCard, { backgroundColor: PILLAR_COLORS.activity + '08', borderRadius: radius.md }]}>
-                <Sparkles size={20} color={PILLAR_COLORS.activity} strokeWidth={1.8} />
-                <Text style={[s.feedingBreakdownValue, { color: colors.text }]}>{distinctTypes}</Text>
-                <Text style={[s.feedingBreakdownLabel, { color: colors.textMuted }]}>Types</Text>
-              </View>
+            {/* 3-tile analytics — sticker cards */}
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 8 }}>
+              {[
+                { Icon: Clock, value: `${activeDays}${rangeDays > 0 ? `/${rangeDays}` : ''}`, label: 'Active Days', fill: StickerPalette.greenSoft, accent: StickerPalette.green, tilt: -2 },
+                { Icon: TrendingUp, value: topMeta ? topMeta.label.split(' ')[0] : '—', label: 'Top', fill: StickerPalette.yellowSoft, accent: StickerPalette.yellow, tilt: 2 },
+                { Icon: Sparkles, value: String(distinctTypes), label: 'Types', fill: StickerPalette.lilacSoft, accent: StickerPalette.lilac, tilt: -1.5 },
+              ].map((card, i) => (
+                <View
+                  key={i}
+                  style={{
+                    flex: 1,
+                    backgroundColor: card.fill,
+                    borderRadius: 22,
+                    borderWidth: 1.5,
+                    borderColor: DIAPER_STICKER_INK,
+                    paddingVertical: 14,
+                    paddingHorizontal: 8,
+                    alignItems: 'center',
+                    shadowColor: DIAPER_STICKER_INK,
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: 0.12,
+                    shadowRadius: 6,
+                    elevation: 2,
+                    transform: [{ rotate: `${card.tilt}deg` }],
+                  }}
+                >
+                  <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: card.accent, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+                    <card.Icon size={16} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
+                  </View>
+                  <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }} numberOfLines={1}>{card.value}</Text>
+                  <Text style={{ color: DIAPER_STICKER_INK, fontSize: 9.5, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{card.label}</Text>
+                </View>
+              ))}
             </View>
             {activityCount > 0 && (
               <Text style={[s.feedingAvgText, { color: colors.textMuted }]}>
@@ -4565,56 +4816,83 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
                 Daily targets for {childName} ({ageLabel}) · scale with your date range
               </Text>
             </View>
-            <Pressable onPress={onClose} style={[s.gsCloseBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
-              <X size={16} color={colors.textMuted} strokeWidth={2} />
+            <Pressable onPress={onClose} style={[s.gsCloseBtn, { backgroundColor: StickerPalette.paper, borderColor: DIAPER_STICKER_INK, borderWidth: 1.5 }]}>
+              <X size={16} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
             </Pressable>
           </View>
 
-          {/* Age suggestion banner */}
-          <View style={[s.gsAgeBanner, { backgroundColor: isDark ? '#1F2A3A' : brand.kidsSoft }]}>
-            <Sparkles size={12} color={brand.kids} strokeWidth={2} />
-            <Text style={[s.gsAgeBannerText, { color: isDark ? '#A5C9F0' : '#3A6A9E' }]}>
+          {/* Age suggestion banner — sticker pill */}
+          <View style={[s.gsAgeBanner, { backgroundColor: StickerPalette.blueSoft, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK }]}>
+            <Sparkles size={12} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
+            <Text style={[s.gsAgeBannerText, { color: DIAPER_STICKER_INK }]}>
               Suggested for age {ageLabel} · CDC / WHO guidelines
             </Text>
           </View>
 
-          {/* Goal cards */}
+          {/* Goal cards — sticker rows */}
           <ScrollView
             style={{ maxHeight: 360 }}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={s.gsCardList}
           >
-            {metrics.map((m) => {
+            {metrics.map((m, idx) => {
               const Icon = m.icon
+              const stickerFill =
+                m.key === 'sleep' ? StickerPalette.blueSoft :
+                m.key === 'feedings' || m.key === 'feedingMl' ? StickerPalette.pinkSoft :
+                m.key === 'calories' ? StickerPalette.peachSoft :
+                StickerPalette.greenSoft
+              const tilt = (idx % 2 === 0 ? -0.6 : 0.6)
               return (
-                <View key={m.key} style={[s.gsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                  <View style={[s.gsCardIcon, { backgroundColor: m.color + '1A' }]}>
-                    <Icon size={20} color={m.color} strokeWidth={1.8} />
+                <View
+                  key={m.key}
+                  style={[
+                    s.gsCard,
+                    {
+                      backgroundColor: StickerPalette.paper,
+                      borderColor: DIAPER_STICKER_INK,
+                      borderWidth: 1.5,
+                      shadowColor: DIAPER_STICKER_INK,
+                      shadowOffset: { width: 0, height: 3 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 6,
+                      elevation: 2,
+                      transform: [{ rotate: `${tilt}deg` }],
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      s.gsCardIcon,
+                      { backgroundColor: stickerFill, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK },
+                    ]}
+                  >
+                    <Icon size={20} color={DIAPER_STICKER_INK} strokeWidth={2} />
                   </View>
                   <View style={s.gsCardInfo}>
-                    <Text style={[s.gsCardLabel, { color: colors.text }]}>{m.label}</Text>
-                    <Text style={[s.gsCardDesc, { color: colors.textMuted }]}>{m.desc}</Text>
+                    <Text style={[s.gsCardLabel, { color: DIAPER_STICKER_INK }]}>{m.label}</Text>
+                    <Text style={[s.gsCardDesc, { color: '#6E6763' }]}>{m.desc}</Text>
                   </View>
                   <View style={s.gsStepper}>
                     <Pressable
                       onPress={() => m.setValue(String(Math.max(0, (Number(m.value) || 0) - m.step)))}
-                      style={[s.gsStepBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
+                      style={[s.gsStepBtn, { backgroundColor: StickerPalette.cream, borderColor: DIAPER_STICKER_INK, borderWidth: 1.5 }]}
                       hitSlop={6}
                     >
-                      <Minus size={13} color={colors.textMuted} strokeWidth={2.2} />
+                      <Minus size={13} color={DIAPER_STICKER_INK} strokeWidth={2.4} />
                     </Pressable>
                     <View style={s.gsStepValue}>
-                      <Text style={[s.gsStepNum, { color: m.color }]}>{m.value || '0'}</Text>
-                      <Text style={[s.gsStepUnit, { color: colors.textMuted }]}>
+                      <Text style={[s.gsStepNum, { color: DIAPER_STICKER_INK, fontFamily: 'Fraunces_700Bold' }]}>{m.value || '0'}</Text>
+                      <Text style={[s.gsStepUnit, { color: '#6E6763' }]}>
                         {m.unit.split('/')[0]}
                       </Text>
                     </View>
                     <Pressable
                       onPress={() => m.setValue(String((Number(m.value) || 0) + m.step))}
-                      style={[s.gsStepBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
+                      style={[s.gsStepBtn, { backgroundColor: StickerPalette.cream, borderColor: DIAPER_STICKER_INK, borderWidth: 1.5 }]}
                       hitSlop={6}
                     >
-                      <Plus size={13} color={colors.textMuted} strokeWidth={2.2} />
+                      <Plus size={13} color={DIAPER_STICKER_INK} strokeWidth={2.4} />
                     </Pressable>
                   </View>
                 </View>
@@ -4622,14 +4900,35 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
             })}
           </ScrollView>
 
-          {/* Footer */}
+          {/* Footer — sticker buttons */}
           <View style={s.gsFooter}>
-            <Pressable onPress={handleReset} style={[s.gsUseSuggestedBtn, { borderColor: colors.borderStrong }]}>
-              <Sparkles size={13} color={brand.kids} strokeWidth={2} />
-              <Text style={[s.gsUseSuggestedText, { color: brand.kids }]}>Use Suggested</Text>
+            <Pressable
+              onPress={handleReset}
+              style={[
+                s.gsUseSuggestedBtn,
+                { borderColor: DIAPER_STICKER_INK, borderWidth: 1.5, backgroundColor: StickerPalette.paper },
+              ]}
+            >
+              <Sparkles size={13} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
+              <Text style={[s.gsUseSuggestedText, { color: DIAPER_STICKER_INK }]}>Use Suggested</Text>
             </Pressable>
-            <Pressable onPress={handleSave} style={[s.gsSaveBtn, { backgroundColor: brand.kids }]}>
-              <Text style={s.gsSaveBtnText}>Save Goals</Text>
+            <Pressable
+              onPress={handleSave}
+              style={[
+                s.gsSaveBtn,
+                {
+                  backgroundColor: StickerPalette.coral,
+                  borderWidth: 1.5,
+                  borderColor: DIAPER_STICKER_INK,
+                  shadowColor: DIAPER_STICKER_INK,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 8,
+                  elevation: 4,
+                },
+              ]}
+            >
+              <Text style={[s.gsSaveBtnText, { color: DIAPER_STICKER_INK }]}>Save Goals</Text>
             </Pressable>
           </View>
         </View>
@@ -5209,45 +5508,78 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
   const phaseIndex = isActive ? (leap.phaseIndex ?? 0) : -1
   const currentPhaseName = phaseIndex >= 0 ? (leap.phases[phaseIndex]?.label ?? '') : ''
 
+  const stickerInk = isDark ? 'rgba(255,255,255,0.18)' : '#141313'
+  const ink = isDark ? colors.text : '#141313'
+  const ink3 = isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'
+
   // Sticker-green soft for "done", mode-color soft for active, paper otherwise
   const bg = isDone
-    ? (isDark ? 'rgba(189,212,140,0.16)' : '#DDE7BB')
+    ? (isDark ? 'rgba(189,212,140,0.16)' : '#EDF5E2')
     : isActive
-      ? leapColor + '18'
+      ? (isDark ? leapColor + '18' : leapColor + '20')
       : (isDark ? colors.surface : '#FFFEF8')
   const border = isDone
-    ? (isDark ? 'rgba(189,212,140,0.35)' : 'rgba(189,212,140,0.6)')
+    ? (isDark ? 'rgba(189,212,140,0.35)' : 'rgba(20,19,19,0.12)')
     : isActive
-      ? leapColor + '40'
-      : (isDark ? colors.border : 'rgba(20,19,19,0.08)')
+      ? (isDark ? leapColor + '40' : 'rgba(20,19,19,0.12)')
+      : (isDark ? colors.border : 'rgba(20,19,19,0.12)')
+
+  // Number badge (sticker style — full sticker color + ink border + white inner)
+  const badgeFill = isDone ? '#BDD48C' : isActive ? leapColor : '#F5D652'
 
   return (
     <View>
       {/* ── Compact card ── */}
       <Pressable
         onPress={() => setShowDetail(true)}
-        style={[s.leapCard, { backgroundColor: bg, borderColor: border }]}
+        style={[s.leapCard, {
+          backgroundColor: bg, borderColor: border, borderWidth: 1.5,
+          shadowColor: '#141313',
+          shadowOpacity: isDark ? 0 : 0.05,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 3 },
+        }]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={[s.leapNumCircle, { backgroundColor: isDone ? brand.success + '20' : leapColor + '20', borderColor: isDone ? brand.success + '50' : leapColor + '50' }]}>
+          {/* Sticker number badge */}
+          <View style={{
+            width: 44, height: 44, borderRadius: 22,
+            backgroundColor: badgeFill,
+            borderWidth: 1.5, borderColor: stickerInk,
+            alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
             {isDone
-              ? <Check size={14} color={brand.success} strokeWidth={3} />
-              : <Text style={[s.leapNumText, { color: leapColor }]}>{leap.index + 1}</Text>
+              ? <Check size={18} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={3} />
+              : <Text style={{ fontSize: 18, fontFamily: 'Fraunces_700Bold', color: isDark ? '#FFFFFF' : '#141313', letterSpacing: -0.4 }}>{leap.index + 1}</Text>
             }
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[s.leapTitle, { color: colors.text }]}>{isDone ? 'All Leaps Complete' : leap.name}</Text>
-            <Text style={[s.leapDesc, { color: colors.textMuted }]}>
+            <Text style={[s.leapTitle, { color: ink }]}>{isDone ? 'All Leaps Complete' : leap.name}</Text>
+            <Text style={[s.leapDesc, { color: ink3 }]}>
               {isDone ? 'Your child has completed all 10 Wonder Weeks' : isActive && currentPhaseName ? `Phase: ${currentPhaseName}` : leap.desc}
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end', gap: 6 }}>
-            <View style={[s.leapBadge, { backgroundColor: isActive ? leapColor + '22' : isDone ? brand.success + '22' : colors.surfaceGlass, borderColor: isActive ? leapColor + '60' : isDone ? brand.success + '60' : colors.border }]}>
-              <Text style={[s.leapBadgeText, { color: isActive ? leapColor : isDone ? brand.success : colors.textMuted }]}>
+            <View style={{
+              paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999,
+              borderWidth: 1.5,
+              backgroundColor: isActive
+                ? (isDark ? leapColor + '22' : '#FFFEF8')
+                : isDone
+                  ? (isDark ? brand.success + '22' : '#FFFEF8')
+                  : (isDark ? colors.surfaceGlass : '#FFFEF8'),
+              borderColor: stickerInk,
+            }}>
+              <Text style={{
+                fontSize: 10, fontFamily: 'DMSans_700Bold',
+                textTransform: 'uppercase', letterSpacing: 0.8,
+                color: isActive ? (isDark ? leapColor : '#141313') : isDone ? (isDark ? brand.success : '#141313') : (isDark ? colors.textMuted : '#141313'),
+              }}>
                 {isActive ? 'NOW' : isDone ? 'ALL DONE' : `In ${(leap as any).weeksUntil ?? '?'}w`}
               </Text>
             </View>
-            <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
+            <ChevronRight size={14} color={ink3} strokeWidth={2} />
           </View>
         </View>
 
@@ -5257,21 +5589,28 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
             const done = i < leap.completedCount
             const active = i === leap.index && isActive
             const upcoming = i === leap.index && !isActive && !isDone
-            const dotBg = done ? brand.success : active ? leapColor : upcoming ? 'transparent' : colors.border
+            const dotBg = done ? '#BDD48C' : active ? leapColor : upcoming ? 'transparent' : (isDark ? colors.border : 'rgba(20,19,19,0.06)')
             return (
               <View
                 key={i}
-                style={[s.leapAllDot, { backgroundColor: dotBg },
-                  active && { transform: [{ scale: 1.3 }] },
-                  upcoming && { borderWidth: 1.5, borderColor: leapColor },
+                style={[s.leapAllDot, {
+                  backgroundColor: dotBg,
+                  borderWidth: 1.5,
+                  borderColor: done || active || upcoming ? stickerInk : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                  width: 16, height: 16, borderRadius: 999,
+                },
+                  active && { transform: [{ scale: 1.25 }] },
                 ]}
               >
-                {done && <Check size={7} color="#000" strokeWidth={3} />}
+                {done && <Check size={9} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={3} />}
               </View>
             )
           })}
         </View>
-        <Text style={[s.leapAllDotsLabel, { color: colors.textMuted }]}>
+        <Text style={{
+          fontSize: 11, fontFamily: 'DMSans_600SemiBold', textAlign: 'center',
+          color: ink3, marginTop: 4,
+        }}>
           {isDone ? `All ${GROWTH_LEAPS.length} leaps completed · Wk ${leap.weekAge}` : `${leap.completedCount}/${GROWTH_LEAPS.length} leaps completed · Wk ${leap.week}`}
         </Text>
       </Pressable>
@@ -6046,8 +6385,8 @@ const s = StyleSheet.create({
   miniRingsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   miniRingsTitle: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.2 },
   miniMetricPicker: { flexDirection: 'row', gap: 6 },
-  miniMetricBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 3, paddingHorizontal: 8, borderRadius: 999, borderWidth: 1 },
-  miniMetricDot: { width: 6, height: 6, borderRadius: 3 },
+  miniMetricBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, paddingHorizontal: 9, borderRadius: 999, borderWidth: 1 },
+  miniMetricDot: { width: 8, height: 8, borderRadius: 4 },
   miniMetricLabel: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
   miniRingsRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 },
   miniRingCol: { alignItems: 'center', gap: 6 },
@@ -6216,57 +6555,75 @@ const s = StyleSheet.create({
 
   // Grandma CTA — lavender soft bg with blue burst sticker + ink text
   grandmaCard: {
-    flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12,
+    flexDirection: 'row', alignItems: 'center', padding: 18, gap: 14,
     overflow: 'hidden',
     backgroundColor: '#E0D5F3',
-    borderRadius: 24,
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(183,166,232,0.5)',
+    borderColor: 'rgba(20,19,19,0.10)',
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   grandmaBurst: {
     position: 'absolute',
-    right: -18,
-    top: -18,
+    right: -22,
+    top: -22,
     transform: [{ rotate: '14deg' }],
-    opacity: 0.95,
   },
   grandmaIconWrap: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 48, height: 48, borderRadius: 24,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: '#FFFEF8',
     borderWidth: 1,
-    borderColor: 'rgba(20,19,19,0.08)',
+    borderColor: 'rgba(20,19,19,0.10)',
   },
   grandmaArrow: {
-    width: 30, height: 30, borderRadius: 999,
+    width: 32, height: 32, borderRadius: 999,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: '#FFFEF8',
     borderWidth: 1,
-    borderColor: 'rgba(20,19,19,0.08)',
+    borderColor: 'rgba(20,19,19,0.10)',
   },
-  grandmaTitle: { fontSize: 17, fontFamily: 'Fraunces_600SemiBold', color: '#141313', letterSpacing: -0.3 },
-  grandmaDesc: { fontSize: 12, fontFamily: 'DMSans_400Regular', color: '#3A3533', marginTop: 2 },
+  grandmaTitle: { fontSize: 18, fontFamily: 'Fraunces_700Bold', fontWeight: '700', color: '#141313', letterSpacing: -0.4, lineHeight: 22 },
+  grandmaDesc: { fontSize: 12.5, fontFamily: 'DMSans_400Regular', color: '#3A3533', marginTop: 3, lineHeight: 16 },
+  grandmaDescItalic: { fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic', fontSize: 13.5, color: '#3A3533' },
 
   // Rewards — paper cream card with ink text and sticker-color stats
   rewardsCard: {
-    flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12,
+    flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14,
     overflow: 'hidden',
     backgroundColor: '#FFFEF8',
-    borderRadius: 24,
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(20,19,19,0.08)',
+    borderColor: 'rgba(20,19,19,0.10)',
     marginTop: 10,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   rewardsIconWrap: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 48, height: 48, borderRadius: 24,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: '#FBEA9E',
+    borderWidth: 1,
+    borderColor: 'rgba(20,19,19,0.10)',
   },
-  rewardsTitle: { fontSize: 16, fontFamily: 'Fraunces_600SemiBold', color: '#141313', letterSpacing: -0.3 },
-  rewardsDesc: { fontSize: 11, fontFamily: 'DMSans_400Regular', color: '#6E6763', marginTop: 1 },
-  rewardsStats: { flexDirection: 'row', gap: 8, alignItems: 'center', marginRight: 4 },
-  rewardsStat: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  rewardsStatNum: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  rewardsTitle: { fontSize: 17, fontFamily: 'Fraunces_700Bold', fontWeight: '700', color: '#141313', letterSpacing: -0.4, lineHeight: 21 },
+  rewardsDesc: { fontSize: 12, fontFamily: 'DMSans_400Regular', color: '#6E6763', marginTop: 2, lineHeight: 15 },
+  rewardsDescItalic: { fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic', fontSize: 13, color: '#6E6763' },
+  rewardsStats: { flexDirection: 'row', gap: 10, alignItems: 'center', marginRight: 4 },
+  rewardsStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  rewardsStatNum: {
+    fontSize: 15,
+    fontFamily: 'Fraunces_700Bold',
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
 
   // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(10,8,6,0.55)', justifyContent: 'flex-end' },
