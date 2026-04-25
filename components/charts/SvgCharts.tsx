@@ -5,7 +5,7 @@
  * Features: smooth curves, Y-axis labels, grid lines, value labels, gradient fills, rounded bars.
  */
 
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet, ViewStyle } from 'react-native'
 import Svg, {
   Circle, Rect, Line, Path,
   Text as SvgText, Defs, LinearGradient, Stop,
@@ -622,7 +622,7 @@ interface MoodBubbleClusterProps {
 }
 
 // Five fixed scatter positions (largest bubble gets index 0).
-const BUBBLE_POSITIONS: Array<Record<string, unknown>> = [
+const BUBBLE_POSITIONS: ViewStyle[] = [
   { alignSelf: 'center', top: 0 },
   { left: 8, top: '40%' },
   { right: 8, top: '35%' },
@@ -634,7 +634,7 @@ const BUBBLE_MIN_SIZE = 56
 const BUBBLE_MAX_SIZE = 112
 
 export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
-  const { colors, isDark } = useTheme()
+  const { isDark } = useTheme()
 
   const sorted = [...items]
     .filter((item) => item.count > 0)
@@ -649,7 +649,7 @@ export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
         const size = Math.round(BUBBLE_MIN_SIZE + (item.count / maxCount) * (BUBBLE_MAX_SIZE - BUBBLE_MIN_SIZE))
         const fill = moodFaceFill(item.mood)
         const variant = moodFaceVariant(item.mood)
-        const stroke = isDark ? fill : STICKER_INK
+        const stroke = isDark ? (fill || STICKER_INK) : STICKER_INK
         const label = item.mood.charAt(0).toUpperCase() + item.mood.slice(1)
         const pos = BUBBLE_POSITIONS[idx] ?? BUBBLE_POSITIONS[4]
 
@@ -666,7 +666,7 @@ export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
                 borderColor: fill + '70',
                 shadowColor: fill,
               },
-              pos as any,
+              pos,
             ]}
           >
             <View style={bubbleClusterStyles.shine} />
