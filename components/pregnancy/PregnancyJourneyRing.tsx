@@ -239,10 +239,10 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
         lastDxRef.current    = gestureState.dx
         lastDyRef.current    = gestureState.dy
         totalMoveRef.current += Math.abs(delta)
-        // Velocity: gestureState.vx/vy in px/ms → project → deg/s
+        // Velocity: gestureState.vx/vy in px/ms → project → deg/s, cap ±300
         const tangVel = gestureState.vx * tangentRef.current.x +
                         gestureState.vy * tangentRef.current.y
-        velocityRef.current = Math.max(-600, Math.min(600,
+        velocityRef.current = Math.max(-300, Math.min(300,
           (tangVel / RING_R) * (180 / Math.PI) * 1000,
         ))
       },
@@ -259,13 +259,13 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
             const dotX = CX + RING_R * Math.cos(rad)
             const dotY = CY + RING_R * Math.sin(rad)
             const dist = Math.hypot(relX - dotX, relY - dotY)
-            if (dist < 32 && dist < bestDist) { bestDist = dist; best = i }
+            if (dist < 18 && dist < bestDist) { bestDist = dist; best = i }
           }
           if (best !== null) snapToWeek(best + 1)
         } else {
           // Drag: momentum decay, then snap to nearest week
           rotationDeg.value = withDecay(
-            { velocity: velocityRef.current, deceleration: 0.994 },
+            { velocity: velocityRef.current, deceleration: 0.94 },
             (finished) => {
               'worklet'
               if (!finished) return
