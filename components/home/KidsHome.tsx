@@ -34,8 +34,11 @@ import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
-import { Heart as HeartSticker, Flower as FlowerSticker, Burst as BurstSticker, Star as StarSticker, Cross as CrossSticker } from '../ui/Stickers'
+import { Heart as HeartSticker, Flower as FlowerSticker, Burst as BurstSticker, Star as StarSticker, Cross as CrossSticker, Moon as MoonSticker, Sparkle as SparkleSticker, Leaf as LeafSticker, Pill as PillSticker } from '../ui/Stickers'
+import { StickerPalette } from '../stickers/BrandStickers'
 import { stickerForEmoji } from '../../lib/emojiToSticker'
+
+const DIAPER_STICKER_INK = '#141313'
 import {
   NotifyAppointmentDue, NotifyRoutine, NotifyInsight, NotifyGoalAchieved,
   TipRead, LogWater, LogUltrasound,
@@ -1236,16 +1239,23 @@ export function KidsHome() {
           {children.slice(0, 3).map((c, idx) => {
             const active = c.id === child.id
             const kidColor = CHILD_COLORS[idx % CHILD_COLORS.length]
+            const ST_INK = '#141313'
             return (
               <Pressable key={c.id} onPress={() => setActiveChild(c)}
-                style={[s.childPill, {
-                  backgroundColor: kidColor + (active ? 'FF' : '2E'),
+                style={({ pressed }) => [s.childPill, {
+                  backgroundColor: active ? kidColor : kidColor + '2E',
                   borderRadius: radius.full,
-                  borderWidth: 1,
-                  borderColor: active ? kidColor : kidColor + '40',
+                  borderWidth: active ? 1.5 : 1,
+                  borderColor: active ? ST_INK : kidColor + '40',
+                  shadowColor: ST_INK,
+                  shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
+                  shadowOpacity: active ? 1 : 0,
+                  shadowRadius: 0,
+                  elevation: active ? 4 : 0,
+                  transform: [{ translateY: active && pressed ? 2 : 0 }],
                 }]}
               >
-                <Text style={[s.pillName, { color: active ? '#141313' : kidColor }]}>{c.name}</Text>
+                <Text style={[s.pillName, { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : kidColor }]}>{c.name}</Text>
                 <Text style={[s.pillAge, { color: active ? 'rgba(20,19,19,0.7)' : kidColor + 'AA' }]}>{formatAge(c.birthDate)}</Text>
               </Pressable>
             )
@@ -1301,6 +1311,8 @@ export function KidsHome() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.dateRangeRow}>
         {DATE_RANGE_OPTIONS.map((opt) => {
           const active = dateRange === opt.key
+          const ST_INK = '#141313'
+          const ST_YELLOW = '#F5D652'
           return (
             <Pressable
               key={opt.key}
@@ -1313,13 +1325,20 @@ export function KidsHome() {
                   setDateRange(opt.key)
                 }
               }}
-              style={[s.dateRangePill, {
-                backgroundColor: active ? colors.primaryTint : 'transparent',
-                borderColor: active ? colors.primary : colors.border,
+              style={({ pressed }) => [s.dateRangePill, {
+                backgroundColor: active ? ST_YELLOW : 'transparent',
+                borderColor: active ? ST_INK : colors.border,
+                borderWidth: active ? 1.5 : 1,
                 borderRadius: radius.full,
+                shadowColor: ST_INK,
+                shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
+                shadowOpacity: active ? 1 : 0,
+                shadowRadius: 0,
+                elevation: active ? 4 : 0,
+                transform: [{ translateY: active && pressed ? 2 : 0 }],
               }]}
             >
-              <Text style={[s.dateRangeText, { color: active ? colors.primary : colors.textMuted }]}>
+              <Text style={[s.dateRangeText, { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : colors.textMuted }]}>
                 {opt.key === 'custom' && customRange
                   ? `${fmtShortDate(customRange.start)}–${fmtShortDate(customRange.end)}`
                   : opt.label}
@@ -2883,78 +2902,156 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
             {rangeLabel} — {count} diaper{count !== 1 ? 's' : ''} · avg {avgPerDay}/day
           </Text>
 
-          {/* Type chips */}
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+          {/* Type sticker cards — pastel fill, ink border, icon-in-circle on top */}
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
             {[
-              { label: 'Pee', count: pee, color: DIAPER_COLORS.pee, emoji: '💧' },
-              { label: 'Poop', count: poop, color: DIAPER_COLORS.poop, emoji: '💩' },
-              { label: 'Mixed', count: mixed, color: DIAPER_COLORS.mixed, emoji: '🔄' },
-            ].map(({ label, count: c, color, emoji }) => {
-              const CellSticker = stickerForEmoji(emoji)
-              return (
-              <View key={label} style={{ flex: 1, backgroundColor: color + '15', borderRadius: radius.md, borderWidth: 1, borderColor: color + '40', padding: 10, alignItems: 'center', gap: 2 }}>
-                <CellSticker size={24} />
-                <Text style={{ color, fontSize: 18, fontWeight: '800' }}>{c}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 10 }}>{total > 0 ? Math.round((c / total) * 100) : 0}%</Text>
+              { label: 'Pee', count: pee, fill: StickerPalette.blueSoft, accent: StickerPalette.blue, Icon: Droplets, rotation: -3 },
+              { label: 'Poop', count: poop, fill: StickerPalette.peachSoft, accent: StickerPalette.peach, Icon: BurstSticker as any, rotation: 2, isSticker: true, stickerFill: StickerPalette.peach },
+              { label: 'Mixed', count: mixed, fill: StickerPalette.yellowSoft, accent: StickerPalette.yellow, Icon: Sparkles, rotation: -2 },
+            ].map(({ label, count: c, fill, accent, Icon, rotation, isSticker, stickerFill }) => (
+              <View
+                key={label}
+                style={{
+                  flex: 1,
+                  backgroundColor: fill,
+                  borderRadius: 22,
+                  borderWidth: 1.5,
+                  borderColor: DIAPER_STICKER_INK,
+                  paddingVertical: 14,
+                  paddingHorizontal: 8,
+                  alignItems: 'center',
+                  shadowColor: DIAPER_STICKER_INK,
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: 0.12,
+                  shadowRadius: 6,
+                  elevation: 3,
+                  transform: [{ rotate: `${rotation}deg` }],
+                }}
+              >
+                {/* Icon sticker disc */}
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: accent,
+                    borderWidth: 1.5,
+                    borderColor: DIAPER_STICKER_INK,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  {isSticker
+                    ? <BurstSticker size={22} fill={stickerFill ?? accent} />
+                    : <Icon size={18} color={DIAPER_STICKER_INK} strokeWidth={2.2} />}
+                </View>
+                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.4 }}>{c}</Text>
+                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{label}</Text>
+                <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic', marginTop: 2 }}>
+                  {total > 0 ? Math.round((c / total) * 100) : 0}%
+                </Text>
               </View>
-              )
-            })}
+            ))}
           </View>
 
-          {/* Proportion bar */}
-          <View style={[s.diaperBar, { height: 10, borderRadius: 5, marginTop: 14 }]}>
-            {pee > 0  && <View style={{ width: `${(pee  / total) * 100}%` as any, height: 10, backgroundColor: DIAPER_COLORS.pee,   borderTopLeftRadius: 5, borderBottomLeftRadius: 5 }} />}
-            {poop > 0 && <View style={{ width: `${(poop / total) * 100}%` as any, height: 10, backgroundColor: DIAPER_COLORS.poop }} />}
-            {mixed > 0 && <View style={{ width: `${(mixed / total) * 100}%` as any, height: 10, backgroundColor: DIAPER_COLORS.mixed, borderTopRightRadius: 5, borderBottomRightRadius: 5 }} />}
-          </View>
+          {/* Proportion bar — ink-bordered sticker */}
+          {total > 0 && (
+            <View
+              style={{
+                height: 14,
+                marginTop: 16,
+                borderRadius: 7,
+                borderWidth: 1.5,
+                borderColor: DIAPER_STICKER_INK,
+                overflow: 'hidden',
+                flexDirection: 'row',
+                backgroundColor: StickerPalette.cream,
+              }}
+            >
+              {pee > 0   && <View style={{ width: `${(pee   / total) * 100}%` as any, backgroundColor: DIAPER_COLORS.pee }} />}
+              {poop > 0  && <View style={{ width: `${(poop  / total) * 100}%` as any, backgroundColor: DIAPER_COLORS.poop }} />}
+              {mixed > 0 && <View style={{ width: `${(mixed / total) * 100}%` as any, backgroundColor: DIAPER_COLORS.mixed }} />}
+            </View>
+          )}
 
-          {/* Daily / weekly bar chart */}
-          <View style={{ marginTop: 20 }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Trend</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 3 }}>
+          {/* Daily / weekly stacked bar chart — sticker bars */}
+          <View style={{ marginTop: 22 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: 'DMSans_700Bold', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>Trend</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 4 }}>
               {buckets.map((b, i) => {
-                const h = b.total > 0 ? Math.max((b.total / bucketMax) * BAR_H, 6) : 3
+                const h = b.total > 0 ? Math.max((b.total / bucketMax) * BAR_H, 8) : 6
                 const peeH   = b.total > 0 ? Math.round((b.pee   / b.total) * h) : 0
                 const poopH  = b.total > 0 ? Math.round((b.poop  / b.total) * h) : 0
                 const mixedH = Math.max(h - peeH - poopH, 0)
+                const tilt = (i % 2 === 0 ? -1 : 1) * 1.5
                 return (
                   <View key={i} style={{ flex: 1 }}>
-                    {/* Stacked bar — grows upward via column-reverse */}
                     <View style={{ height: BAR_H, flexDirection: 'column', justifyContent: 'flex-end' }}>
-                      <View style={{ height: h, borderRadius: 4, overflow: 'hidden', marginHorizontal: 2 }}>
-                        {b.total > 0 ? (
+                      <View
+                        style={{
+                          height: h,
+                          borderRadius: 8,
+                          overflow: 'hidden',
+                          borderWidth: b.total > 0 ? 1.5 : 1,
+                          borderColor: b.total > 0 ? DIAPER_STICKER_INK : 'rgba(20,19,19,0.18)',
+                          backgroundColor: b.total > 0 ? 'transparent' : StickerPalette.cream,
+                          shadowColor: DIAPER_STICKER_INK,
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: b.total > 0 ? 0.14 : 0,
+                          shadowRadius: 4,
+                          elevation: b.total > 0 ? 2 : 0,
+                          transform: [{ rotate: `${tilt}deg` }],
+                        }}
+                      >
+                        {b.total > 0 && (
                           <>
                             {mixedH > 0 && <View style={{ height: mixedH, backgroundColor: DIAPER_COLORS.mixed }} />}
                             {poopH  > 0 && <View style={{ height: poopH,  backgroundColor: DIAPER_COLORS.poop }} />}
                             {peeH   > 0 && <View style={{ height: peeH,   backgroundColor: DIAPER_COLORS.pee }} />}
                           </>
-                        ) : (
-                          <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.07)' }} />
                         )}
                       </View>
                     </View>
-                    <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '700', textAlign: 'center', marginTop: 4 }}>{b.label}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic', textAlign: 'center', marginTop: 6 }}>{b.label}</Text>
                   </View>
                 )
               })}
             </View>
           </View>
 
-          {/* Color distribution (poop/mixed only) */}
+          {/* Stool color — sticker-style swatch chips */}
           {colorEntries.length > 0 && (
-            <View style={{ marginTop: 16 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            <View style={{ marginTop: 22 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: 'DMSans_700Bold', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>
                 Stool Color {poopTotal > 0 ? `· ${poopTotal} logged` : ''}
               </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {colorEntries.map(([color, cnt]) => {
                   const meta = DIAPER_COLOR_META[color] ?? { label: color.charAt(0).toUpperCase() + color.slice(1), swatch: '#888' }
                   return (
-                    <View key={color} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 5 }}>
-                      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: meta.swatch }} />
-                      <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600' }}>{meta.label}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 11 }}>{cnt}</Text>
+                    <View
+                      key={color}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                        backgroundColor: StickerPalette.paper,
+                        borderRadius: 999,
+                        borderWidth: 1.5,
+                        borderColor: DIAPER_STICKER_INK,
+                        paddingHorizontal: 12,
+                        paddingVertical: 5,
+                        shadowColor: DIAPER_STICKER_INK,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 3,
+                        elevation: 1,
+                      }}
+                    >
+                      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: meta.swatch, borderWidth: 1, borderColor: DIAPER_STICKER_INK }} />
+                      <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: 'DMSans_600SemiBold' }}>{meta.label}</Text>
+                      <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: 'Fraunces_700Bold' }}>{cnt}</Text>
                     </View>
                   )
                 })}
@@ -3753,10 +3850,11 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
   const { weight, height } = parseGrowthValue(healthHistory.growth)
   const [activityBreakdownVisible, setActivityBreakdownVisible] = useState(false)
 
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const ink = colors.text
-  const ink3 = colors.textMuted
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.12)'
+  const ink = isDark ? colors.text : '#141313'
+  const ink3 = isDark ? colors.textMuted : 'rgba(20,19,19,0.5)'
+  const stickerInk = isDark ? 'rgba(255,255,255,0.18)' : '#141313'
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -3795,17 +3893,35 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
             nestedScrollEnabled
           >
-            {/* Sleep summary banner */}
-            <View style={[s.hdSleepBanner, { backgroundColor: paper, borderColor: paperBorder }]}>
-              <View style={[s.hdSleepIcon, { backgroundColor: isDark ? '#1C2A3A' : '#CFE0F0' }]}>
-                <Moon size={18} color="#9DC3E8" strokeWidth={1.8} />
+            {/* Sleep summary banner — sticker style */}
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', gap: 14,
+              backgroundColor: paper, borderColor: paperBorder, borderWidth: 1.5,
+              borderRadius: 22, padding: 14, marginBottom: 16,
+              shadowColor: '#141313', shadowOpacity: isDark ? 0 : 0.05,
+              shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+              position: 'relative', overflow: 'hidden',
+            }}>
+              {/* Decorative star sticker top-right */}
+              <View style={{ position: 'absolute', top: -6, right: -2, transform: [{ rotate: '18deg' }], opacity: 0.6 }} pointerEvents="none">
+                <StarSticker size={36} fill="#F5D652" stroke={stickerInk} />
+              </View>
+
+              {/* Moon sticker badge */}
+              <View style={{
+                width: 52, height: 52, borderRadius: 26,
+                backgroundColor: '#E8DFF7',
+                borderWidth: 1.5, borderColor: stickerInk,
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <MoonSticker size={32} fill="#C8B6E8" stroke={stickerInk} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[s.hdBannerLabel, { color: ink3 }]}>SLEEP QUALITY</Text>
                 <Text style={[s.hdBannerValue, { color: ink }]}>{sleepQuality}</Text>
               </View>
-              <View style={{ alignItems: 'flex-end', gap: 2 }}>
-                <Text style={[s.hdBannerStat, { color: '#9DC3E8' }]}>{sleepTotal.toFixed(1)}h</Text>
+              <View style={{ alignItems: 'flex-end', gap: 0 }}>
+                <Text style={{ fontSize: 22, fontFamily: 'Fraunces_700Bold', color: ink, letterSpacing: -0.4 }}>{sleepTotal.toFixed(1)}h</Text>
                 <Text style={[s.hdBannerStatSub, { color: ink3 }]}>of {sleepTarget.toFixed(0)}h</Text>
               </View>
             </View>
@@ -3813,26 +3929,42 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             {/* Latest Growth */}
             {(weight || height) && (
               <>
-                <Text style={[s.modalSectionTitle, { color: colors.text }]}>Latest Growth</Text>
-                <View style={[s.hdGrowthCard, { backgroundColor: isDark ? '#1F2A3A' : brand.kidsSoft, borderColor: isDark ? colors.border : brand.kids + '30' }]}>
-                  <View style={[s.hdGrowthIconWrap, { backgroundColor: isDark ? colors.surfaceRaised : '#FFFFFF80' }]}>
-                    <TrendingUp size={16} color={brand.kids} strokeWidth={2} />
+                <View style={s.modalSectionRow}>
+                  <View style={{ transform: [{ rotate: '-8deg' }] }}>
+                    <LeafSticker size={22} fill="#BDD48C" stroke={stickerInk} />
+                  </View>
+                  <Text style={[s.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>Latest Growth</Text>
+                </View>
+                <View style={{
+                  flexDirection: 'row', alignItems: 'center', gap: 14,
+                  backgroundColor: isDark ? '#1F2A3A' : '#EBF3FC',
+                  borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
+                  borderWidth: 1.5, borderRadius: 22, padding: 14, marginTop: 4,
+                  shadowColor: '#141313', shadowOpacity: isDark ? 0 : 0.05,
+                  shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+                }}>
+                  <View style={{
+                    width: 44, height: 44, borderRadius: 22,
+                    backgroundColor: '#9DC3E8', borderWidth: 1.5, borderColor: stickerInk,
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <TrendingUp size={18} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={2.2} />
                   </View>
                   <View style={{ flex: 1, flexDirection: 'row', gap: 16 }}>
                     {weight && (
                       <View>
-                        <Text style={[s.hdGrowthLabel, { color: isDark ? '#A5C9F0' : '#3A6A9E' }]}>WEIGHT</Text>
-                        <Text style={[s.hdGrowthValue, { color: colors.text }]}>{weight}</Text>
+                        <Text style={[s.hdGrowthLabel, { color: ink3 }]}>WEIGHT</Text>
+                        <Text style={[s.hdGrowthValue, { color: ink }]}>{weight}</Text>
                       </View>
                     )}
                     {height && (
                       <View>
-                        <Text style={[s.hdGrowthLabel, { color: isDark ? '#A5C9F0' : '#3A6A9E' }]}>HEIGHT</Text>
-                        <Text style={[s.hdGrowthValue, { color: colors.text }]}>{height}</Text>
+                        <Text style={[s.hdGrowthLabel, { color: ink3 }]}>HEIGHT</Text>
+                        <Text style={[s.hdGrowthValue, { color: ink }]}>{height}</Text>
                       </View>
                     )}
                   </View>
-                  <Text style={[s.hdGrowthDate, { color: isDark ? '#A5C9F0' : '#3A6A9E' }]}>
+                  <Text style={[s.hdGrowthDate, { color: ink3 }]}>
                     {healthHistory.growth[0]?.date ? formatHealthDate(healthHistory.growth[0].date) : ''}
                   </Text>
                 </View>
@@ -3840,50 +3972,102 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             )}
 
             {/* Activity Overview */}
-            <Text style={[s.modalSectionTitle, { color: colors.text }]}>Activity Overview</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
+            <View style={s.modalSectionRow}>
+              <View style={{ transform: [{ rotate: '12deg' }] }}>
+                <StarSticker size={22} fill="#F5D652" stroke={stickerInk} />
+              </View>
+              <Text style={[s.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>Activity Overview</Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4, marginBottom: 4 }}>
               <Pressable
                 onPress={() => setActivityBreakdownVisible(true)}
-                style={[s.modalStatCard, { flex: 1, backgroundColor: PILLAR_COLORS.activity + '10', borderRadius: radius.md }]}
+                style={{
+                  flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
+                  backgroundColor: isDark ? PILLAR_COLORS.activity + '14' : '#EDF5E2',
+                  borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
+                  borderWidth: 1.5, borderRadius: 22,
+                  shadowColor: '#141313', shadowOpacity: isDark ? 0 : 0.05,
+                  shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+                }}
               >
-                <Zap size={16} color={PILLAR_COLORS.activity} strokeWidth={2} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[s.modalStatLabel, { color: colors.textMuted }]}>Activities</Text>
-                  <Text style={[s.modalStatValue, { color: colors.text }]}>{activityCount.toLocaleString()}</Text>
+                <View style={{
+                  width: 36, height: 36, borderRadius: 18,
+                  backgroundColor: '#BDD48C', borderWidth: 1.5, borderColor: stickerInk,
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Zap size={16} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={2.2} />
                 </View>
-                <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
-              </Pressable>
-              <View style={[s.modalStatCard, { flex: 1, backgroundColor: PILLAR_COLORS.nutrition + '10', borderRadius: radius.md }]}>
-                {stage === 'liquid' || stage === 'mixed'
-                  ? <Droplets size={16} color={PILLAR_COLORS.nutrition} strokeWidth={2} />
-                  : <Utensils size={16} color={PILLAR_COLORS.nutrition} strokeWidth={2} />}
                 <View style={{ flex: 1 }}>
-                  <Text style={[s.modalStatLabel, { color: colors.textMuted }]}>
+                  <Text style={[s.modalStatLabel, { color: ink3 }]}>Activities</Text>
+                  <Text style={[s.modalStatValue, { color: ink }]}>{activityCount.toLocaleString()}</Text>
+                </View>
+                <ChevronRight size={14} color={ink3} strokeWidth={2} />
+              </Pressable>
+              <View style={{
+                flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
+                backgroundColor: isDark ? PILLAR_COLORS.nutrition + '14' : '#FFEDE6',
+                borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
+                borderWidth: 1.5, borderRadius: 22,
+                shadowColor: '#141313', shadowOpacity: isDark ? 0 : 0.05,
+                shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+              }}>
+                <View style={{
+                  width: 36, height: 36, borderRadius: 18,
+                  backgroundColor: '#F5B896', borderWidth: 1.5, borderColor: stickerInk,
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {stage === 'liquid' || stage === 'mixed'
+                    ? <Droplets size={16} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={2.2} />
+                    : <Utensils size={16} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={2.2} />}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.modalStatLabel, { color: ink3 }]}>
                     {stage === 'liquid' ? 'Feedings' : stage === 'mixed' ? 'Feeds' : 'Calories'}
                   </Text>
-                  <Text style={[s.modalStatValue, { color: colors.text }]}>
+                  <Text style={[s.modalStatValue, { color: ink }]}>
                     {stage === 'liquid' ? feedingCount.toLocaleString() : stage === 'mixed' ? feedingCount.toLocaleString() : (caloriesTotal > 0 ? caloriesTotal.toLocaleString() : '—')}
                   </Text>
                 </View>
               </View>
             </View>
             {(stage === 'liquid' || stage === 'mixed') && feedingMl > 0 && (
-              <View style={[s.modalStatCard, { backgroundColor: PILLAR_COLORS.nutrition + '08', borderRadius: radius.md }]}>
-                <Droplets size={14} color={PILLAR_COLORS.nutrition} strokeWidth={2} />
-                <Text style={[s.modalStatLabel, { color: colors.textMuted }]}>Total volume</Text>
-                <Text style={[s.modalStatExtra, { color: PILLAR_COLORS.nutrition }]}>{feedingMl.toLocaleString()}ml</Text>
+              <View style={{
+                flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, marginTop: 8,
+                backgroundColor: isDark ? PILLAR_COLORS.nutrition + '0C' : '#FFF6F0',
+                borderColor: isDark ? colors.border : 'rgba(20,19,19,0.1)',
+                borderWidth: 1, borderRadius: 16,
+              }}>
+                <Droplets size={14} color={PILLAR_COLORS.nutrition} strokeWidth={2.2} />
+                <Text style={[s.modalStatLabel, { color: ink3, flex: 1 }]}>Total volume</Text>
+                <Text style={{ fontSize: 14, fontFamily: 'Fraunces_600SemiBold', color: ink }}>{feedingMl.toLocaleString()}ml</Text>
               </View>
             )}
 
             {/* Allergies */}
             {child.allergies.length > 0 && (
               <>
-                <Text style={[s.modalSectionTitle, { color: colors.text }]}>Allergies</Text>
-                <View style={s.healthTagsRow}>
+                <View style={s.modalSectionRow}>
+                  <View style={{ transform: [{ rotate: '-10deg' }] }}>
+                    <HeartSticker size={22} fill="#F2B2C7" stroke={stickerInk} />
+                  </View>
+                  <Text style={[s.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>Allergies</Text>
+                </View>
+                <View style={[s.healthTagsRow, { marginTop: 4 }]}>
                   {child.allergies.map((a, i) => (
-                    <View key={i} style={[s.hdAllergyTag, { backgroundColor: isDark ? '#36222A' : '#FDEEF2', borderColor: isDark ? '#F5BBCF40' : '#F2B2C730' }]}>
-                      <AlertCircle size={11} color={isDark ? '#F5BBCF' : '#C0436A'} strokeWidth={2} />
-                      <Text style={[s.hdAllergyText, { color: isDark ? '#F5BBCF' : '#C0436A' }]}>{a}</Text>
+                    <View key={i} style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 6,
+                      paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1.5,
+                      backgroundColor: isDark ? '#36222A' : '#FDEEF2',
+                      borderColor: isDark ? '#F5BBCF40' : 'rgba(20,19,19,0.18)',
+                    }}>
+                      <View style={{
+                        width: 16, height: 16, borderRadius: 8,
+                        backgroundColor: '#F2B2C7', borderWidth: 1, borderColor: stickerInk,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <AlertCircle size={9} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={2.5} />
+                      </View>
+                      <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', color: isDark ? '#F5BBCF' : '#141313' }}>{a}</Text>
                     </View>
                   ))}
                 </View>
@@ -3893,11 +4077,16 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             {/* Medications from child profile */}
             {child.medications.length > 0 && (
               <>
-                <Text style={[s.modalSectionTitle, { color: colors.text }]}>Medications</Text>
+                <View style={s.modalSectionRow}>
+                  <View style={{ transform: [{ rotate: '10deg' }] }}>
+                    <PillSticker size={22} fill="#F5D652" stroke={stickerInk} />
+                  </View>
+                  <Text style={[s.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>Medications</Text>
+                </View>
                 {child.medications.map((m, i) => (
-                  <View key={i} style={[s.modalTaskRow, { borderBottomColor: colors.border }]}>
+                  <View key={i} style={[s.modalTaskRow, { borderBottomColor: paperBorder }]}>
                     <Pill size={14} color={brand.secondary} strokeWidth={2} />
-                    <Text style={[s.modalTaskLabel, { color: colors.text }]}>{m}</Text>
+                    <Text style={[s.modalTaskLabel, { color: ink }]}>{m}</Text>
                     <Text style={[s.modalTaskStatus, { color: brand.secondary }]}>Active</Text>
                   </View>
                 ))}
@@ -3905,7 +4094,12 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             )}
 
             {/* Vaccine Schedule */}
-            <Text style={[s.modalSectionTitle, { color: colors.text }]}>Vaccine Schedule</Text>
+            <View style={s.modalSectionRow}>
+              <View style={{ transform: [{ rotate: '-6deg' }] }}>
+                <CrossSticker size={22} fill="#F5D652" stroke={stickerInk} />
+              </View>
+              <Text style={[s.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>Vaccine Schedule</Text>
+            </View>
             <VaccineScheduleTree
               child={child}
               healthHistory={healthHistory}
@@ -3914,13 +4108,17 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
               onMarkVaccineGiven={onMarkVaccineGiven}
             />
 
-            {/* View Full History */}
+            {/* View Full History — ink-on-cream pill */}
             <Pressable
               onPress={() => { onClose(); router.push('/profile/health-history' as any) }}
-              style={[s.hdHistoryBtn, { backgroundColor: brand.kids }]}
+              style={[s.hdHistoryBtn, {
+                backgroundColor: isDark ? colors.surface : '#141313',
+                borderWidth: 1.5,
+                borderColor: isDark ? colors.border : '#141313',
+              }]}
             >
-              <CrossSticker size={14} fill="#FFFFFF99" stroke="#FFFFFF" />
-              <Text style={s.hdHistoryBtnText}>View Full Health History</Text>
+              <SparkleSticker size={16} fill="#F5D652" stroke={isDark ? colors.border : '#FFFEF8'} />
+              <Text style={[s.hdHistoryBtnText, { color: '#FFFEF8' }]}>View Full Health History</Text>
             </Pressable>
           </ScrollView>
         </Pressable>
@@ -6098,7 +6296,8 @@ const s = StyleSheet.create({
   modalStatLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
   modalStatValue: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', marginTop: 2, letterSpacing: -0.2 },
   modalStatExtra: { fontSize: 12, fontFamily: 'DMSans_600SemiBold' },
-  modalSectionTitle: { fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginTop: 20, marginBottom: 10, letterSpacing: -0.2 },
+  modalSectionTitle: { fontSize: 17, fontFamily: 'Fraunces_700Bold', marginTop: 20, marginBottom: 10, letterSpacing: -0.3 },
+  modalSectionRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 22, marginBottom: 8 },
 
   modalTaskRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderBottomWidth: 1 },
   modalTaskCheck: { width: 20, height: 20, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },

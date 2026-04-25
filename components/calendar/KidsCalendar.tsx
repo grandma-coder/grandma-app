@@ -1665,27 +1665,39 @@ export function KidsCalendar() {
             contentContainerStyle={styles.childSelectorRow}
             style={{ flex: 1 }}
           >
-            <Pressable
-              onPress={() => setSelectedChildId('all')}
-              style={[
-                styles.childSelectorChip,
-                {
-                  backgroundColor: selectedChildId === 'all'
-                    ? (isDark ? colors.primary + '25' : '#EFE6FF')
-                    : (isDark ? colors.surface : '#FFFEF8'),
-                  borderColor: selectedChildId === 'all'
-                    ? (isDark ? colors.primary : '#B7A6E8')
-                    : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
-                  borderRadius: radius.full,
-                },
-              ]}
-            >
-              <Text style={[styles.childSelectorText, { color: selectedChildId === 'all' ? (isDark ? colors.primary : '#7048B8') : (isDark ? colors.text : '#141313') }]}>
-                All Kids
-              </Text>
-            </Pressable>
+            {(() => {
+              const ST_INK = '#141313'
+              const ST_LILAC = '#C8B6E8'
+              const allActive = selectedChildId === 'all'
+              return (
+                <Pressable
+                  onPress={() => setSelectedChildId('all')}
+                  style={({ pressed }) => [
+                    styles.childSelectorChip,
+                    {
+                      backgroundColor: allActive ? ST_LILAC : (isDark ? colors.surface : '#FFFEF8'),
+                      borderColor: allActive ? ST_INK : (isDark ? colors.border : 'rgba(20,19,19,0.10)'),
+                      borderWidth: allActive ? 1.5 : 1,
+                      borderRadius: radius.full,
+                      shadowColor: ST_INK,
+                      shadowOffset: { width: 0, height: allActive ? (pressed ? 1 : 3) : 0 },
+                      shadowOpacity: allActive ? 1 : 0,
+                      shadowRadius: 0,
+                      elevation: allActive ? 4 : 0,
+                      transform: [{ translateY: allActive && pressed ? 2 : 0 }],
+                    },
+                  ]}
+                >
+                  <Text style={[styles.childSelectorText, { fontFamily: allActive ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: allActive ? ST_INK : (isDark ? colors.text : '#141313') }]}>
+                    All Kids
+                  </Text>
+                </Pressable>
+              )
+            })()}
             {children.map((c, i) => {
+              const ST_INK = '#141313'
               const active = selectedChildId === c.id
+              const kidColor = childColor(i)
               return (
                 <Pressable
                   key={c.id}
@@ -1693,17 +1705,24 @@ export function KidsCalendar() {
                     setSelectedChildId(c.id)
                     setActiveChild(c)
                   }}
-                  style={[
+                  style={({ pressed }) => [
                     styles.childSelectorChip,
                     {
-                      backgroundColor: active ? childColor(i) + '15' : (isDark ? colors.surface : '#FFFEF8'),
-                      borderColor: active ? childColor(i) : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                      backgroundColor: active ? kidColor : (isDark ? colors.surface : '#FFFEF8'),
+                      borderColor: active ? ST_INK : (isDark ? colors.border : 'rgba(20,19,19,0.10)'),
+                      borderWidth: active ? 1.5 : 1,
                       borderRadius: radius.full,
+                      shadowColor: ST_INK,
+                      shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
+                      shadowOpacity: active ? 1 : 0,
+                      shadowRadius: 0,
+                      elevation: active ? 4 : 0,
+                      transform: [{ translateY: active && pressed ? 2 : 0 }],
                     },
                   ]}
                 >
-                  <View style={[styles.childDot, { backgroundColor: childColor(i) }]} />
-                  <Text style={[styles.childSelectorText, { color: active ? childColor(i) : (isDark ? colors.text : '#141313') }]}>
+                  <View style={[styles.childDot, { backgroundColor: active ? ST_INK : kidColor }]} />
+                  <Text style={[styles.childSelectorText, { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : (isDark ? colors.text : '#141313') }]}>
                     {c.name}
                   </Text>
                 </Pressable>
