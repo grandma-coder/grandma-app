@@ -76,7 +76,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
-import { LineChart, BarChart, BubbleGrid, smoothPath } from '../charts/SvgCharts'
+import { LineChart, BarChart, BubbleGrid, smoothPath, MoodBubbleCluster } from '../charts/SvgCharts'
 import { FullScreenChart } from '../charts/FullScreenChart'
 import {
   useKidsAnalytics,
@@ -4032,23 +4032,7 @@ function SleepQualityChart({ counts }: { counts: { great: number; good: number; 
 }
 
 function MoodDistribution({ moods }: { moods: { mood: string; count: number }[] }) {
-  const { colors, radius } = useTheme()
-  const total = moods.reduce((a, m) => a + m.count, 0)
-  return (
-    <View style={styles.moodDistWrap}>
-      {moods.map((m, i) => {
-        const pct = Math.round((m.count / total) * 100)
-        const color = MOOD_COLORS[m.mood] || colors.primary
-        return (
-          <View key={i} style={[styles.moodChip, { backgroundColor: color + '15', borderColor: color + '30', borderRadius: radius.xl }]}>
-            <MoodFace size={18} variant={moodFaceVariant(m.mood)} fill={moodFaceFill(m.mood)} />
-            <Text style={[styles.moodLabel, { color }]}>{m.mood}</Text>
-            <Text style={[styles.moodPct, { color: colors.textSecondary }]}>{pct}%</Text>
-          </View>
-        )
-      })}
-    </View>
-  )
+  return <MoodBubbleCluster items={moods} />
 }
 
 function MoodDailyChart({ dailyCounts, labels, width }: { dailyCounts: Record<string, number[]>; labels: string[]; width: number }) {
@@ -4447,13 +4431,6 @@ const styles = StyleSheet.create({
   qualityBarBg: { flex: 1, height: 16, overflow: 'hidden' },
   qualityBarFill: { height: '100%' },
   qualityPct: { fontSize: 14, fontFamily: 'Fraunces_600SemiBold', width: 44, textAlign: 'right' },
-
-  // Mood
-  moodDistWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
-  moodChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1 },
-  moodEmoji: { fontSize: 18 },
-  moodLabel: { fontSize: 14, fontFamily: 'DMSans_600SemiBold', textTransform: 'capitalize' },
-  moodPct: { fontSize: 13, fontFamily: 'DMSans_500Medium' },
 
   // Stat row
   statRow: { flexDirection: 'row', gap: 12, padding: 8 },
