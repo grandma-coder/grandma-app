@@ -142,9 +142,10 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
     let best = 0
     let bestDiff = Infinity
     for (let i = 0; i < 40; i++) {
-      const angle = (i / 40) * 360 - 90 + rotationDeg.value
-      const diff = ((angle - ANCHOR_DEG + 180) % 360) - 180
-      const absDiff = diff < 0 ? -diff : diff
+      const a = (i / 40) * 360 - 90 + rotationDeg.value
+      // Proper positive modulo — JS % is negative for negative inputs
+      const normalized = ((( a - ANCHOR_DEG) % 360) + 360) % 360
+      const absDiff = normalized > 180 ? 360 - normalized : normalized
       if (absDiff < bestDiff) {
         bestDiff = absDiff
         best = i
@@ -181,7 +182,8 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
 
   // ── Gesture tracking refs ──────────────────────────────────────────────────
   const lastAngleRef = useRef(0)
-  const velocityRef  = useRef(0)
+  const lastTimeRef  = useRef(0)
+  const velocityRef  = useRef(0)   // deg/s
   const totalMoveRef = useRef(0)
 
   const getAngle = (e: GestureResponderEvent): number => {
@@ -189,11 +191,12 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
     return Math.atan2(locationY - CY, locationX - CX) * (180 / Math.PI)
   }
 
+  // Snap to an exact week (short-arc travel). Runs on JS thread.
   const snapToWeek = useCallback(
     (w: number) => {
       const targetRot = 180 - ((w - 1) / 40) * 360
-      let diff = targetRot - rotationDeg.value
-      diff = ((diff + 180) % 360) - 180
+      let diff = ((targetRot - rotationDeg.value) % 360 + 360) % 360
+      if (diff > 180) diff -= 360
       cancelAnimation(rotationDeg)
       rotationDeg.value = withTiming(rotationDeg.value + diff, {
         duration: 380,
@@ -203,6 +206,29 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
     [rotationDeg],
   )
 
+  // Worklet-safe snap used in the withDecay callback (UI thread).
+  const snapAfterDecay = useCallback(() => {
+    'worklet'
+    let best = 0
+    let bestDiff = Infinity
+    for (let i = 0; i < 40; i++) {
+      const a = (i / 40) * 360 - 90 + rotationDeg.value
+      const normalized = (((a - ANCHOR_DEG) % 360) + 360) % 360
+      const absDiff = normalized > 180 ? 360 - normalized : normalized
+      if (absDiff < bestDiff) {
+        bestDiff = absDiff
+        best = i
+      }
+    }
+    const targetRot = 180 - (best / 40) * 360
+    let diff = ((targetRot - rotationDeg.value) % 360 + 360) % 360
+    if (diff > 180) diff -= 360
+    rotationDeg.value = withTiming(rotationDeg.value + diff, {
+      duration: 380,
+      easing: Easing.out(Easing.cubic),
+    })
+  }, [rotationDeg])
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -211,23 +237,29 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
       onPanResponderGrant: (e) => {
         cancelAnimation(rotationDeg)
         lastAngleRef.current = getAngle(e)
+        lastTimeRef.current  = Date.now()
         totalMoveRef.current = 0
-        velocityRef.current = 0
+        velocityRef.current  = 0
       },
 
       onPanResponderMove: (e) => {
         const angle = getAngle(e)
+        const now   = Date.now()
         let delta = angle - lastAngleRef.current
         if (delta > 180) delta -= 360
         if (delta < -180) delta += 360
+        const dt = now - lastTimeRef.current
+        // degrees / ms → degrees / s
+        if (dt > 0) velocityRef.current = (delta / dt) * 1000
         rotationDeg.value += delta
-        velocityRef.current = delta
         lastAngleRef.current = angle
+        lastTimeRef.current  = now
         totalMoveRef.current += Math.abs(delta)
       },
 
       onPanResponderRelease: (e) => {
-        if (totalMoveRef.current < 3) {
+        if (totalMoveRef.current < 4) {
+          // Tap: snap nearest dot to anchor
           const { locationX, locationY } = e.nativeEvent
           let best: number | null = null
           let bestDist = Infinity
@@ -237,17 +269,21 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
             const dotX = CX + RING_R * Math.cos(currentAngleRad)
             const dotY = CY + RING_R * Math.sin(currentAngleRad)
             const dist = Math.hypot(locationX - dotX, locationY - dotY)
-            if (dist < 24 && dist < bestDist) {
+            if (dist < 28 && dist < bestDist) {
               bestDist = dist
               best = i
             }
           }
           if (best !== null) snapToWeek(best + 1)
         } else {
-          rotationDeg.value = withDecay({
-            velocity: velocityRef.current * 12,
-            deceleration: 0.997,
-          })
+          // Drag release: momentum then auto-snap when it settles
+          rotationDeg.value = withDecay(
+            { velocity: velocityRef.current, deceleration: 0.994 },
+            (finished) => {
+              'worklet'
+              if (finished) snapAfterDecay()
+            },
+          )
         }
       },
     })
@@ -263,7 +299,6 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
 
   // Theme-aware colors for SVG (must be strings for SVG props)
   const orbitStroke = colors.border
-  const anchorRingStroke = colors.textSecondary
   const futureDotBg = colors.border
 
   return (
@@ -292,11 +327,11 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
                 />
               ))}
             </AnimatedG>
-            {/* Fixed selection ring at anchor (6 o'clock) */}
+            {/* Fixed selection ring at anchor (6 o'clock) — trimester color */}
             <Circle
               cx={CX} cy={CY + RING_R} r={14}
-              fill="none"
-              stroke={anchorRingStroke}
+              fill={col + '22'}
+              stroke={col}
               strokeWidth={2}
             />
             {/* Anchor dot indicator */}
@@ -306,10 +341,10 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
 
         {/* Center overlay */}
         <View style={styles.centerOverlay} pointerEvents="none">
-          <Text style={[styles.centerLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          <Text style={[styles.centerLabel, { color: col, fontFamily: font.bodySemiBold }]}>
             WEEK
           </Text>
-          <Text style={[styles.centerNumber, { color: colors.text, fontFamily: font.display }]}>
+          <Text style={[styles.centerNumber, { color: col, fontFamily: font.display }]}>
             {selectedWeek}
           </Text>
           <Text style={[styles.centerStatus, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
