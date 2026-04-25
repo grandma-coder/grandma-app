@@ -49,7 +49,6 @@ function EmojiSticker({ size = 20, children, style }: { size?: number; children:
 }
 import { MoodFace } from '../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
-import { BlockTower, type BlockTowerItem } from '../charts/GalleryCharts'
 import { useGoalsStore, getSuggestedGoals, getFeedingStage, getNutritionLabel, getAgeMonths, type MetricGoals, type FeedingStage } from '../../store/useGoalsStore'
 import { useBadgeStore } from '../../store/useBadgeStore'
 import { supabase } from '../../lib/supabase'
@@ -3606,9 +3605,6 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
 }) {
   const { colors, radius, isDark } = useTheme()
   const { weight, height } = parseGrowthValue(healthHistory.growth)
-  const upcomingVaccines = getNextDueVaccines(child.birthDate ?? '', healthHistory.vaccines, child.countryCode ?? 'US')
-  const [expandedKey, setExpandedKey] = useState<string | null>(null)
-  const [pickerDate, setPickerDate] = useState(new Date())
   const [activityBreakdownVisible, setActivityBreakdownVisible] = useState(false)
 
   const paper = colors.surface
@@ -3697,128 +3693,15 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
               </>
             )}
 
-            {/* Recent Vaccines */}
-            <Text style={[s.modalSectionTitle, { color: colors.text }]}>Recent Vaccines</Text>
-            {/* Block tower visualization — gallery pattern 32 */}
-            {healthHistory.vaccines.length > 0 && (() => {
-              const towerColors = ['#F5B896', '#F5D652', '#F2B2C7', '#BDD48C', '#9DC3E8', '#C8B6E8']
-              const items: BlockTowerItem[] = healthHistory.vaccines.slice(0, 6).map((v, i) => ({
-                label: (v.value.split(/[,(]/)[0] || '').trim().slice(0, 10) || `#${i + 1}`,
-                color: towerColors[i % towerColors.length],
-              }))
-              return (
-                <View style={{ marginBottom: 10, marginTop: 2 }}>
-                  <BlockTower items={items} height={Math.max(80, items.length * 22 + 16)} />
-                </View>
-              )
-            })()}
-            {healthHistory.vaccines.length > 0 ? healthHistory.vaccines.slice(0, 4).map((v, i) => (
-              <View key={i} style={[s.modalTaskRow, { borderBottomColor: colors.border }]}>
-                <View style={[s.modalTaskCheck, { backgroundColor: brand.success, borderWidth: 0 }]}>
-                  <Check size={10} color="#FFF" strokeWidth={3} />
-                </View>
-                <Text style={[s.modalTaskLabel, { color: colors.text }]}>{v.value.split(/[,(]/)[0].trim()}</Text>
-                <Text style={[s.modalTaskStatus, { color: colors.textMuted }]}>{formatHealthDate(v.date)}</Text>
-              </View>
-            )) : (
-              <Text style={[s.modalTaskStatus, { color: colors.textMuted, marginBottom: 8 }]}>No vaccines logged yet</Text>
-            )}
-
-            {/* Upcoming Vaccines */}
-            {upcomingVaccines.length > 0 && (
-              <>
-                <Text style={[s.modalSectionTitle, { color: colors.text }]}>Upcoming Vaccines</Text>
-                {upcomingVaccines.map((uv) => {
-                  const apptDate = scheduledVaccines[uv.key] ?? null
-                  const isExpanded = expandedKey === uv.key
-                  const fullName = uv.name + (uv.doseLabel ? ` · ${uv.doseLabel}` : '')
-                  return (
-                    <View key={uv.key} style={[{ borderBottomWidth: 1, borderBottomColor: colors.border }]}>
-                      {/* Main row */}
-                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 12, gap: 10 }}>
-                        <View style={[s.hdVaxIcon, { backgroundColor: uv.overdue ? brand.error + '18' : isDark ? '#3A2E00' : '#FFFAE0' }]}>
-                          <Syringe size={12} color={uv.overdue ? brand.error : '#8A7400'} strokeWidth={2} />
-                        </View>
-                        <View style={{ flex: 1, gap: 3 }}>
-                          <Text style={[s.modalTaskLabel, { color: colors.text }]}>{fullName}</Text>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <View style={[s.hdUrgencyBadge, {
-                              backgroundColor: uv.overdue ? brand.error + '18' : isDark ? '#3A2E00' : '#FFFAE0',
-                            }]}>
-                              <Text style={[s.hdUrgencyText, { color: uv.overdue ? brand.error : (isDark ? '#F5D652' : '#6B5800') }]}>
-                                {uv.overdue ? 'Overdue' : 'Due'} · {uv.dueAge}
-                              </Text>
-                            </View>
-                          </View>
-                          {apptDate && (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 }}>
-                              <NotifyAppointmentDue size={12} />
-                              <Text style={[s.hdApptText, { color: brand.success }]}>
-                                Appt {formatHealthDate(apptDate)}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                        {apptDate ? (
-                          <View style={{ gap: 6, alignItems: 'flex-end' }}>
-                            <Pressable
-                              onPress={() => onMarkVaccineGiven(uv.name + (uv.doseLabel ? ` - ${uv.doseLabel}` : ''), apptDate, uv.key)}
-                              style={[s.hdVaxBtn, { backgroundColor: brand.success + '18', borderColor: brand.success + '50' }]}
-                            >
-                              <Check size={10} color={brand.success} strokeWidth={3} />
-                              <Text style={[s.hdVaxBtnText, { color: brand.success }]}>Mark given</Text>
-                            </Pressable>
-                            <Pressable onPress={() => { setExpandedKey(isExpanded ? null : uv.key); setPickerDate(new Date(apptDate + 'T12:00:00')) }}>
-                              <Text style={[s.hdChangeDateText, { color: colors.textMuted }]}>Change date</Text>
-                            </Pressable>
-                          </View>
-                        ) : (
-                          <Pressable
-                            onPress={() => { setExpandedKey(isExpanded ? null : uv.key); setPickerDate(new Date()) }}
-                            style={[s.hdVaxBtn, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}
-                          >
-                            <Text style={[s.hdVaxBtnText, { color: colors.textSecondary }]}>Set date</Text>
-                          </Pressable>
-                        )}
-                      </View>
-
-                      {/* Inline date picker */}
-                      {isExpanded && (
-                        <View style={{ paddingBottom: 12 }}>
-                          <DateTimePicker
-                            value={pickerDate}
-                            mode="date"
-                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                            minimumDate={new Date()}
-                            themeVariant={isDark ? 'dark' : 'light'}
-                            onChange={(e: DateTimePickerEvent, d?: Date) => {
-                              if (Platform.OS === 'android') setExpandedKey(null)
-                              if (e.type === 'set' && d) {
-                                setPickerDate(d)
-                                const y = d.getFullYear()
-                                const m = String(d.getMonth() + 1).padStart(2, '0')
-                                const day = String(d.getDate()).padStart(2, '0')
-                                onSetVaccineDate(uv.key, `${y}-${m}-${day}`)
-                                if (Platform.OS === 'android') setExpandedKey(null)
-                              }
-                              if (e.type === 'dismissed') setExpandedKey(null)
-                            }}
-                          />
-                          {Platform.OS === 'ios' && (
-                            <Pressable
-                              onPress={() => setExpandedKey(null)}
-                              style={[s.vaccineScheduleBtn, { alignSelf: 'center', marginTop: 4, backgroundColor: brand.primary + '20', borderColor: brand.primary }]}
-                            >
-                              <Text style={[s.vaccineScheduleBtnText, { color: brand.primary }]}>Done</Text>
-                            </Pressable>
-                          )}
-                        </View>
-                      )}
-                    </View>
-                  )
-                })}
-              </>
-            )}
+            {/* Vaccine Schedule */}
+            <Text style={[s.modalSectionTitle, { color: colors.text }]}>Vaccine Schedule</Text>
+            <VaccineScheduleTree
+              child={child}
+              healthHistory={healthHistory}
+              scheduledVaccines={scheduledVaccines}
+              onSetVaccineDate={onSetVaccineDate}
+              onMarkVaccineGiven={onMarkVaccineGiven}
+            />
 
             {/* Latest Growth */}
             {(weight || height) && (
