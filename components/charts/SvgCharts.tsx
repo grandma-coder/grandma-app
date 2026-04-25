@@ -530,7 +530,7 @@ export function MoodStickerStrip({ days }: { days: MoodStripDay[] }) {
     : null
 
   return (
-    <View style={{ position: 'relative' }}>
+    <View style={moodStyles.stripContainer}>
       {/* Dashed connecting line behind bubbles */}
       {linePath && (
         <Svg
@@ -553,14 +553,14 @@ export function MoodStickerStrip({ days }: { days: MoodStripDay[] }) {
       )}
 
       {/* Day columns */}
-      <View style={{ flexDirection: 'row' }}>
+      <View style={moodStyles.stripRow}>
         {days.map((day, i) => {
           const size = BASE + Math.round(day.intensityRatio * RANGE)
 
           return (
             <View
               key={i}
-              style={{ flex: 1, alignItems: 'center', gap: 6, paddingVertical: 10 }}
+              style={moodStyles.dayColumn}
             >
               {day.dominantMood ? (() => {
                 const fill = moodFaceFill(day.dominantMood)
@@ -641,6 +641,18 @@ const styles = StyleSheet.create({
 })
 
 const moodStyles = StyleSheet.create({
+  stripContainer: {
+    position: 'relative',
+  },
+  stripRow: {
+    flexDirection: 'row',
+  },
+  dayColumn: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+  },
   soapBubble: {
     borderWidth: 1.5,
     alignItems: 'center',
