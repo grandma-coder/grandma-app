@@ -2925,7 +2925,7 @@ const styles = StyleSheet.create({
 
 
   // Child selector
-  childSelectorRow: { gap: 8, marginBottom: 12, paddingVertical: 4 },
+  childSelectorRow: { gap: 8, marginBottom: 12, paddingVertical: 4, paddingRight: 6 },
   childSelectorChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1 },
   childSelectorText: { fontSize: 14, fontWeight: '600' },
   childDot: { width: 8, height: 8, borderRadius: 4 },
@@ -3030,7 +3030,7 @@ const styles = StyleSheet.create({
 
   // FAB + Sheet
   fabBtn: { position: 'absolute', right: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 6, zIndex: 10 },
-  childRowWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  childRowWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
   addLogBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 3 },
   toggleWrap: { marginBottom: 14 },
   fabSheetTitleWrap: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 },
