@@ -1,12 +1,15 @@
 /**
- * SegmentedTabs — pill segmented control for agenda tab switching.
+ * SegmentedTabs — sticker-style segmented control for agenda tab switching.
  *
- * Supports 3–4 options (pregnancy uses 4). Inactive = text on paper,
- * active = filled pill with mode-appropriate bg.
+ * Active = sticker pill (yellow fill, ink border, hard offset shadow, press translates down).
+ * Inactive = ink text on cream paper. Supports 2–4 options.
  */
 
 import { View, Pressable, Text, StyleSheet } from 'react-native'
 import { useTheme } from '../../constants/theme'
+
+const ST_INK = '#141313'
+const ST_YELLOW = '#F5D652'
 
 export interface SegmentedOption {
   key: string
@@ -17,9 +20,9 @@ interface SegmentedTabsProps {
   options: SegmentedOption[]
   value: string
   onChange: (key: string) => void
-  /** Fill color of the active pill. Defaults to ink. */
+  /** Fill color of the active pill. Defaults to sticker yellow. */
   activeBg?: string
-  /** Text color inside the active pill. Auto-derived if omitted. */
+  /** Text color inside the active pill. Defaults to ink. */
   activeFg?: string
 }
 
@@ -27,11 +30,10 @@ export function SegmentedTabs({ options, value, onChange, activeBg, activeFg }: 
   const { colors, font, isDark } = useTheme()
 
   const trackBg = isDark ? colors.surface : '#FFFEF8'
-  const trackBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const trackBorder = isDark ? colors.border : 'rgba(20,19,19,0.10)'
   const inactiveFg = isDark ? colors.textSecondary : '#3A3533'
-  const defaultActiveBg = isDark ? colors.text : '#141313'
-  const resolvedActiveBg = activeBg ?? defaultActiveBg
-  const resolvedActiveFg = activeFg ?? (isDark ? colors.bg : '#FFFEF8')
+  const resolvedActiveBg = activeBg ?? ST_YELLOW
+  const resolvedActiveFg = activeFg ?? ST_INK
 
   return (
     <View
@@ -50,10 +52,18 @@ export function SegmentedTabs({ options, value, onChange, activeBg, activeFg }: 
           <Pressable
             key={opt.key}
             onPress={() => onChange(opt.key)}
-            style={[
+            style={({ pressed }) => [
               styles.segment,
               isActive && {
                 backgroundColor: resolvedActiveBg,
+                borderWidth: 1.5,
+                borderColor: ST_INK,
+                shadowColor: ST_INK,
+                shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+                elevation: 4,
+                transform: [{ translateY: pressed ? 2 : 0 }],
               },
             ]}
           >
@@ -82,7 +92,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 4,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 1.5,
     alignItems: 'center',
   },
   segment: {
@@ -90,6 +100,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 6,
     borderRadius: 999,
+    borderWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },

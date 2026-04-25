@@ -26,6 +26,8 @@ interface AgendaWeekStripProps {
 
 const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const TODAY_AMBER = '#F9D77E'
+const ST_INK = '#141313'
+const ST_YELLOW = '#F5D652'
 
 function getWeekDates(centerDate: string): { date: Date; dateStr: string }[] {
   const center = new Date(centerDate + 'T00:00:00')
@@ -97,8 +99,9 @@ export function AgendaWeekStrip({
           const isSelected = dateStr === selectedDate
           const isToday = dateStr === todayStr && !isSelected
           const dots = dotsByDate?.[dateStr] ?? []
-          const labelColor = textMuted
-          const numColor = isSelected ? '#FFFEF8' : ink
+          const labelColor = isSelected ? ST_INK : textMuted
+          const numColor = isSelected ? ST_INK : ink
+          const selectedFill = modeColor || ST_YELLOW
 
           return (
             <Pressable
@@ -106,14 +109,23 @@ export function AgendaWeekStrip({
               onPress={() => onSelectDate(dateStr)}
               style={styles.cell}
             >
-              <Text style={[styles.weekday, { color: labelColor }]}>
+              <Text style={[styles.weekday, { color: labelColor, fontFamily: isSelected ? 'DMSans_700Bold' : 'DMSans_500Medium' }]}>
                 {DAY_INITIALS[date.getDay()]}
               </Text>
               <View
                 style={[
                   styles.bubble,
-                  isSelected && { backgroundColor: modeColor },
-                  isToday && { backgroundColor: TODAY_AMBER },
+                  isSelected && {
+                    backgroundColor: selectedFill,
+                    borderWidth: 1.5,
+                    borderColor: ST_INK,
+                    shadowColor: ST_INK,
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: 1,
+                    shadowRadius: 0,
+                    elevation: 4,
+                  },
+                  isToday && { backgroundColor: TODAY_AMBER, borderWidth: 1.5, borderColor: ST_INK },
                 ]}
               >
                 <Text style={[styles.num, { color: numColor }]}>
