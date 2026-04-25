@@ -25,7 +25,7 @@ import {
   Moon, Smile, Utensils, Heart, Camera, ChevronRight, ChevronDown,
   Thermometer, MessageCircle, Plus, AlertCircle, Baby,
   Brain, Rocket, Check, Sparkles, Activity, X, TrendingUp,
-  Zap, Droplets, Clock, Settings, Target, Minus, Milk, Hand, Info,
+  Zap, Droplets, Clock, Settings, Minus, Milk, Hand,
   Bell, Trash2, Syringe, Pill, Pencil, GripVertical, Flag, Trophy, Flame, Star,
 } from 'lucide-react-native'
 import * as Haptics from 'expo-haptics'
@@ -34,7 +34,7 @@ import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
-import { Heart as HeartSticker, Flower as FlowerSticker, Burst as BurstSticker } from '../ui/Stickers'
+import { Heart as HeartSticker, Flower as FlowerSticker, Burst as BurstSticker, Star as StarSticker, Cross as CrossSticker } from '../ui/Stickers'
 import { stickerForEmoji } from '../../lib/emojiToSticker'
 import {
   NotifyAppointmentDue, NotifyRoutine, NotifyInsight, NotifyGoalAchieved,
@@ -453,6 +453,15 @@ function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+function formatTime12h(hhmm: string): string {
+  const [hStr, mStr] = hhmm.split(':')
+  const h = parseInt(hStr, 10)
+  const m = mStr ?? '00'
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12 = h % 12 === 0 ? 12 : h % 12
+  return `${h12}:${m} ${ampm}`
+}
+
 function toDateStr(d: any): string {
   if (!d) return ''
   if (typeof d === 'string') {
@@ -601,6 +610,7 @@ interface Reminder {
   text: string
   done: boolean
   dueDate?: string | null     // ISO date string YYYY-MM-DD
+  dueTime?: string | null     // HH:MM (24h) — optional time component
   notifId?: string | null     // Supabase notification row id
   archivedAt?: string | null  // ISO timestamp when marked done
   childId?: string | null     // null = all kids
@@ -626,7 +636,7 @@ interface HealthHistoryData {
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export function KidsHome() {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, isDark, font, stickers } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
@@ -660,7 +670,9 @@ export function KidsHome() {
   const [showReminderInput, setShowReminderInput] = useState(false)
   const [newReminderText, setNewReminderText] = useState('')
   const [newReminderDate, setNewReminderDate] = useState<Date | null>(null)
+  const [newReminderTime, setNewReminderTime] = useState<Date | null>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showTimePicker, setShowTimePicker] = useState(false)
   const [newReminderChildId, setNewReminderChildId] = useState<string | null>(null)
   const [remindersModalVisible, setRemindersModalVisible] = useState(false)
 
@@ -806,30 +818,38 @@ export function KidsHome() {
   async function addReminder() {
     if (!newReminderText.trim()) return
     const dueDate = newReminderDate ? localDateStr(newReminderDate) : null
+    const dueTime = newReminderTime
+      ? `${String(newReminderTime.getHours()).padStart(2, '0')}:${String(newReminderTime.getMinutes()).padStart(2, '0')}`
+      : null
     let notifId: string | null = null
 
     // Insert a Supabase notification so it shows in the notifications feed
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
+        const bodyParts: string[] = []
+        if (dueDate) bodyParts.push(`Due ${dueDate}`)
+        if (dueTime) bodyParts.push(`at ${formatTime12h(dueTime)}`)
         const { data } = await supabase.from('notifications').insert({
           user_id: session.user.id,
           type: 'reminder',
           title: newReminderText.trim(),
-          body: dueDate ? `Due ${dueDate}` : 'No due date',
-          data: { childId: child?.id, dueDate },
+          body: bodyParts.length ? bodyParts.join(' ') : 'No due date',
+          data: { childId: child?.id, dueDate, dueTime },
           is_read: false,
         }).select('id').single()
         notifId = data?.id ?? null
       }
     } catch {}
 
-    const r: Reminder = { id: Date.now().toString(), text: newReminderText.trim(), done: false, dueDate, notifId, childId: newReminderChildId }
+    const r: Reminder = { id: Date.now().toString(), text: newReminderText.trim(), done: false, dueDate, dueTime, notifId, childId: newReminderChildId }
     persistReminders([...reminders, r])
     setNewReminderText('')
     setNewReminderDate(null)
+    setNewReminderTime(null)
     setNewReminderChildId(null)
     setShowDatePicker(false)
+    setShowTimePicker(false)
     setShowReminderInput(false)
   }
 
@@ -1313,32 +1333,40 @@ export function KidsHome() {
       {/* ─── Custom Range Picker Modal ────────────────────────── */}
       <Modal visible={customPickerVisible} transparent animationType="slide">
         <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
           onPress={() => setCustomPickerVisible(false)}
         >
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={{
               backgroundColor: colors.surface,
-              borderTopLeftRadius: radius.lg,
-              borderTopRightRadius: radius.lg,
-              paddingTop: 20,
+              borderTopLeftRadius: radius.xl,
+              borderTopRightRadius: radius.xl,
+              borderTopWidth: 1,
+              borderColor: colors.border,
+              paddingTop: 12,
               paddingHorizontal: 20,
               paddingBottom: 48,
               gap: 16,
+              overflow: 'hidden',
             }}
           >
+            {/* Sticker accent — top-right corner */}
+            <View style={{ position: 'absolute', top: -10, right: 12, opacity: 0.55 }} pointerEvents="none">
+              <StarSticker size={64} fill="#9DC3E8" stroke="#141313" />
+            </View>
+
             {/* Drag handle */}
-            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 4 }} />
+            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 4 }} />
 
             {/* Header */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 }}>Custom Range</Text>
+              <Text style={{ color: colors.text, fontSize: 22, fontWeight: '900', letterSpacing: -0.5, fontFamily: font.display }}>Custom Range</Text>
               <Pressable
                 onPress={() => setCustomPickerVisible(false)}
-                style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' }}
+                style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
               >
-                <X size={16} color={colors.textMuted} strokeWidth={2.5} />
+                <X size={15} color={colors.textMuted} strokeWidth={2.5} />
               </Pressable>
             </View>
 
@@ -1350,22 +1378,22 @@ export function KidsHome() {
                   flex: 1,
                   borderRadius: radius.md,
                   borderWidth: 1.5,
-                  borderColor: customPickerActive === 'start' ? colors.primary : colors.border,
-                  backgroundColor: customPickerActive === 'start' ? colors.primaryTint : colors.surfaceGlass,
+                  borderColor: customPickerActive === 'start' ? brand.kids : colors.border,
+                  backgroundColor: customPickerActive === 'start' ? brand.kids + '18' : colors.surfaceRaised,
                   paddingVertical: 12,
                   paddingHorizontal: 14,
                   gap: 3,
                 }}
               >
-                <Text style={{ fontSize: 10, fontWeight: '800', letterSpacing: 1.5, color: customPickerActive === 'start' ? colors.primary : colors.textMuted }}>
+                <Text style={{ fontSize: 10, fontWeight: '800', letterSpacing: 1.5, color: customPickerActive === 'start' ? brand.kids : colors.textMuted, fontFamily: font.bodySemiBold }}>
                   START
                 </Text>
-                <Text style={{ fontSize: 17, fontWeight: '700', color: customPickerActive === 'start' ? colors.text : colors.textSecondary }}>
+                <Text style={{ fontSize: 17, fontWeight: '700', color: customPickerActive === 'start' ? colors.text : colors.textSecondary, fontFamily: font.display }}>
                   {fmtShortDate(customDraft.start)}
                 </Text>
               </Pressable>
 
-              <View style={{ width: 20, height: 1, backgroundColor: colors.border }} />
+              <View style={{ width: 16, height: 1.5, backgroundColor: colors.border, borderRadius: 1 }} />
 
               <Pressable
                 onPress={() => setCustomPickerActive('end')}
@@ -1373,23 +1401,23 @@ export function KidsHome() {
                   flex: 1,
                   borderRadius: radius.md,
                   borderWidth: 1.5,
-                  borderColor: customPickerActive === 'end' ? colors.primary : colors.border,
-                  backgroundColor: customPickerActive === 'end' ? colors.primaryTint : colors.surfaceGlass,
+                  borderColor: customPickerActive === 'end' ? brand.kids : colors.border,
+                  backgroundColor: customPickerActive === 'end' ? brand.kids + '18' : colors.surfaceRaised,
                   paddingVertical: 12,
                   paddingHorizontal: 14,
                   gap: 3,
                 }}
               >
-                <Text style={{ fontSize: 10, fontWeight: '800', letterSpacing: 1.5, color: customPickerActive === 'end' ? colors.primary : colors.textMuted }}>
+                <Text style={{ fontSize: 10, fontWeight: '800', letterSpacing: 1.5, color: customPickerActive === 'end' ? brand.kids : colors.textMuted, fontFamily: font.bodySemiBold }}>
                   END
                 </Text>
-                <Text style={{ fontSize: 17, fontWeight: '700', color: customPickerActive === 'end' ? colors.text : colors.textSecondary }}>
+                <Text style={{ fontSize: 17, fontWeight: '700', color: customPickerActive === 'end' ? colors.text : colors.textSecondary, fontFamily: font.display }}>
                   {fmtShortDate(customDraft.end)}
                 </Text>
               </Pressable>
             </View>
 
-            {/* Spinner */}
+            {/* Date spinner */}
             <DateTimePicker
               key={customPickerActive}
               value={customPickerActive === 'start' ? customDraft.start : customDraft.end}
@@ -1420,16 +1448,16 @@ export function KidsHome() {
               style={{
                 height: 60,
                 borderRadius: radius.full,
-                backgroundColor: colors.primary,
+                backgroundColor: brand.kids,
                 alignItems: 'center',
                 justifyContent: 'center',
-                shadowColor: colors.primary,
+                shadowColor: brand.kids,
                 shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.4,
+                shadowOpacity: 0.35,
                 shadowRadius: 16,
               }}
             >
-              <Text style={{ color: colors.textInverse, fontWeight: '800', fontSize: 16, letterSpacing: 0.2 }}>Apply Range</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16, letterSpacing: 1, textTransform: 'uppercase', fontFamily: font.bodySemiBold }}>Apply Range</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -1522,14 +1550,14 @@ export function KidsHome() {
       {/* ─── Set Goals Button ─────────────────────────────────── */}
       <Pressable
         onPress={() => setGoalsModalVisible(true)}
-        style={[s.setGoalsBtn, { backgroundColor: colors.primaryTint, borderColor: colors.primary + '40' }]}
+        style={[s.setGoalsBtn, { backgroundColor: isDark ? '#1F2A3A' : brand.kidsSoft, borderColor: isDark ? colors.border : brand.kids + '40' }]}
       >
-        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: colors.primary + '22', alignItems: 'center', justifyContent: 'center' }}>
-          <Target size={14} color={colors.primary} strokeWidth={2} />
+        <View style={[s.setGoalsBtnIcon, { backgroundColor: brand.kids + '28' }]}>
+          <StarSticker size={18} fill={brand.kids} stroke={isDark ? '#A5C9F0' : '#3A6A9E'} />
         </View>
-        <Text style={[s.setGoalsBtnText, { color: colors.primary }]}>Set Goals</Text>
+        <Text style={[s.setGoalsBtnText, { color: brand.kids }]}>Set Goals</Text>
         <Text style={[s.setGoalsBtnHint, { color: colors.textMuted }]}>Customize daily targets</Text>
-        <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
+        <ChevronRight size={14} color={brand.kids} strokeWidth={2} />
       </Pressable>
 
       {/* ─── Health + Diaper (Mood + Calories live in hero tiles now) ─── */}
@@ -1567,17 +1595,48 @@ export function KidsHome() {
         </View>
         <Pressable
           onPress={() => { setShowReminderInput(!showReminderInput); setNewReminderText('') }}
-          style={[s.addReminderBtn, { backgroundColor: colors.primary + '15', borderRadius: radius.full }]}
+          style={[s.addReminderBtn, { backgroundColor: brand.kids + '15', borderRadius: radius.full }]}
         >
-          <Plus size={13} color={colors.primary} strokeWidth={2.5} />
-          <Text style={[s.addReminderBtnText, { color: colors.primary }]}>Add</Text>
+          <Plus size={13} color={brand.kids} strokeWidth={2.5} />
+          <Text style={[s.addReminderBtnText, { color: brand.kids }]}>Add</Text>
         </Pressable>
       </View>
 
       {showReminderInput && (
-        <View style={[s.reminderInputCard, { backgroundColor: colors.surface, borderRadius: radius.md, borderColor: colors.borderLight }]}>
+        <View style={[s.reminderInputCard, {
+          backgroundColor: isDark ? colors.surface : '#FFFEF8',
+          borderRadius: 28,
+          borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
+          shadowColor: '#141313',
+          shadowOpacity: isDark ? 0 : 0.07,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 4 },
+        }]}>
+          {/* Sticker decoration — top-right corner */}
+          <View style={{ position: 'absolute', top: -10, right: 14, transform: [{ rotate: '15deg' }] }} pointerEvents="none">
+            <StarSticker size={36} fill={stickers.yellow} stroke="#141313" />
+          </View>
+
+          {/* Header row */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            {/* Yellow bell sticker badge */}
+            <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: stickers.yellow, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
+              <Bell size={13} color="#141313" strokeWidth={2.5} />
+            </View>
+            <Text style={{ fontSize: 16, fontFamily: 'Fraunces_600SemiBold', color: colors.text, letterSpacing: -0.3 }}>Add reminder</Text>
+          </View>
+
+          {/* Text input */}
           <TextInput
-            style={[s.reminderInput, { color: colors.text }]}
+            style={[s.reminderInput, {
+              color: colors.text,
+              backgroundColor: isDark ? colors.surfaceRaised : 'rgba(20,19,19,0.04)',
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+              paddingHorizontal: 14,
+              paddingVertical: 11,
+            }]}
             placeholder="e.g. Give vitamin D drops, call pediatrician..."
             placeholderTextColor={colors.textMuted}
             value={newReminderText}
@@ -1585,69 +1644,203 @@ export function KidsHome() {
             onSubmitEditing={addReminder}
             autoFocus
             returnKeyType="done"
+            multiline={false}
           />
-          <View style={s.reminderInputActions}>
+
+          {/* Actions row — Date + (optional Time) + Save */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {/* Date pill */}
             <Pressable
-              onPress={() => setShowDatePicker(!showDatePicker)}
-              style={[s.reminderDateBtn, { borderColor: newReminderDate ? colors.primary : colors.border, backgroundColor: newReminderDate ? colors.primary + '15' : 'transparent', borderRadius: radius.sm }]}
+              onPress={() => { setShowDatePicker(!showDatePicker); setShowTimePicker(false) }}
+              style={[s.reminderDateBtn, {
+                borderColor: newReminderDate ? brand.kids : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
+                backgroundColor: newReminderDate
+                  ? brand.kids + '18'
+                  : (isDark ? colors.surfaceRaised : stickers.blue + '22'),
+                borderRadius: radius.full,
+                flex: 0,
+              }]}
             >
-              <Clock size={12} color={newReminderDate ? colors.primary : colors.textMuted} strokeWidth={2} />
-              <Text style={[s.reminderDateBtnText, { color: newReminderDate ? colors.primary : colors.textMuted }]}>
-                {newReminderDate ? newReminderDate.toLocaleDateString('en', { month: 'short', day: 'numeric' }) : 'Set date'}
+              <Clock size={12} color={newReminderDate ? brand.kids : colors.textSecondary} strokeWidth={2} />
+              <Text style={[s.reminderDateBtnText, {
+                color: newReminderDate ? brand.kids : colors.textSecondary,
+                fontFamily: 'DMSans_600SemiBold',
+                flex: 0,
+              }]}>
+                {newReminderDate
+                  ? newReminderDate.toLocaleDateString('en', { month: 'short', day: 'numeric' })
+                  : 'Set date'}
               </Text>
               {newReminderDate && (
-                <Pressable onPress={() => { setNewReminderDate(null); setShowDatePicker(false) }} hitSlop={8}>
-                  <X size={10} color={colors.primary} strokeWidth={2.5} />
+                <Pressable onPress={() => { setNewReminderDate(null); setNewReminderTime(null); setShowDatePicker(false); setShowTimePicker(false) }} hitSlop={8}>
+                  <X size={10} color={brand.kids} strokeWidth={2.5} />
                 </Pressable>
               )}
             </Pressable>
-            <Pressable onPress={addReminder} style={[s.reminderSaveBtn, { backgroundColor: colors.primary, borderRadius: radius.sm }]}>
-              <Text style={s.reminderSaveBtnText}>Save</Text>
+
+            {/* Time pill — only visible after date is chosen */}
+            {newReminderDate && (
+              <Pressable
+                onPress={() => { setShowTimePicker(!showTimePicker); setShowDatePicker(false) }}
+                style={{
+                  flexDirection: 'row', alignItems: 'center', gap: 5,
+                  paddingHorizontal: 12, paddingVertical: 7,
+                  borderRadius: radius.full, borderWidth: 1,
+                  borderColor: newReminderTime ? stickers.peach + 'CC' : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
+                  backgroundColor: newReminderTime
+                    ? stickers.peach + '30'
+                    : (isDark ? colors.surfaceRaised : stickers.peach + '22'),
+                }}
+              >
+                <Bell size={11} color={newReminderTime ? '#C06030' : colors.textSecondary} strokeWidth={2} />
+                <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: newReminderTime ? '#C06030' : colors.textSecondary }}>
+                  {newReminderTime
+                    ? formatTime12h(`${String(newReminderTime.getHours()).padStart(2, '0')}:${String(newReminderTime.getMinutes()).padStart(2, '0')}`)
+                    : 'Set time'}
+                </Text>
+                {newReminderTime && (
+                  <Pressable onPress={() => { setNewReminderTime(null); setShowTimePicker(false) }} hitSlop={8}>
+                    <X size={9} color="#C06030" strokeWidth={2.5} />
+                  </Pressable>
+                )}
+              </Pressable>
+            )}
+
+            {/* Spacer so Save stays at end */}
+            <View style={{ flex: 1 }} />
+
+            {/* Save button */}
+            <Pressable onPress={addReminder} style={[s.reminderSaveBtn, { backgroundColor: brand.kids, borderRadius: radius.full, borderWidth: 1.5, borderColor: isDark ? brand.kids : '#141313' }]}>
+              <Text style={[s.reminderSaveBtnText, { fontFamily: 'DMSans_700Bold' }]}>Save</Text>
             </Pressable>
           </View>
+
           {/* Child tag picker */}
           {children.length > 1 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
               <Pressable
                 onPress={() => setNewReminderChildId(null)}
                 style={[s.childTagChip, {
-                  backgroundColor: newReminderChildId === null ? colors.primary + '25' : 'transparent',
-                  borderColor: newReminderChildId === null ? colors.primary : colors.border,
+                  backgroundColor: newReminderChildId === null ? brand.kids + '22' : (isDark ? 'transparent' : 'rgba(20,19,19,0.04)'),
+                  borderColor: newReminderChildId === null ? brand.kids : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
                   borderRadius: radius.full,
                 }]}
               >
-                <Text style={[s.childTagChipText, { color: newReminderChildId === null ? colors.primary : colors.textMuted }]}>All kids</Text>
+                <Text style={[s.childTagChipText, { color: newReminderChildId === null ? brand.kids : colors.textSecondary, fontFamily: 'DMSans_600SemiBold' }]}>All kids</Text>
               </Pressable>
               {children.map((c) => (
                 <Pressable
                   key={c.id}
                   onPress={() => setNewReminderChildId(c.id === newReminderChildId ? null : c.id)}
                   style={[s.childTagChip, {
-                    backgroundColor: newReminderChildId === c.id ? brand.kids + '25' : 'transparent',
-                    borderColor: newReminderChildId === c.id ? brand.kids : colors.border,
+                    backgroundColor: newReminderChildId === c.id ? brand.kids + '25' : (isDark ? 'transparent' : 'rgba(20,19,19,0.04)'),
+                    borderColor: newReminderChildId === c.id ? brand.kids : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
                     borderRadius: radius.full,
                   }]}
                 >
-                  <Text style={[s.childTagChipText, { color: newReminderChildId === c.id ? brand.kids : colors.textMuted }]}>{c.name}</Text>
+                  <Text style={[s.childTagChipText, { color: newReminderChildId === c.id ? brand.kids : colors.textSecondary, fontFamily: 'DMSans_600SemiBold' }]}>{c.name}</Text>
                 </Pressable>
               ))}
             </ScrollView>
           )}
 
+          {/* Inline calendar picker */}
           {showDatePicker && (
-            <DateTimePicker
-              value={newReminderDate ?? new Date()}
-              mode="date"
-              display="spinner"
-              minimumDate={new Date()}
-              themeVariant={isDark ? 'dark' : 'light'}
-              textColor="#FFFFFF"
-              style={{ height: 120, marginTop: -8 }}
-              onChange={(e: DateTimePickerEvent, date?: Date) => {
-                if (Platform.OS !== 'ios') setShowDatePicker(false)
-                if (date) setNewReminderDate(date)
-              }}
-            />
+            <View style={{
+              borderRadius: 20,
+              overflow: 'hidden',
+              marginTop: 6,
+              borderWidth: 1.5,
+              borderColor: isDark ? colors.border : 'rgba(20,19,19,0.1)',
+              backgroundColor: isDark ? colors.surfaceRaised : '#FFFFFF',
+            }}>
+              {/* Calendar header label */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 }}>
+                <View style={{ transform: [{ rotate: '-10deg' }] }}>
+                  <StarSticker size={18} fill={stickers.blue} stroke="#141313" />
+                </View>
+                <Text style={{ fontFamily: 'Fraunces_600SemiBold', fontSize: 14, color: colors.text, letterSpacing: -0.2 }}>Pick a date</Text>
+              </View>
+              <DateTimePicker
+                value={newReminderDate ?? new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                minimumDate={new Date()}
+                themeVariant={isDark ? 'dark' : 'light'}
+                accentColor={brand.kids}
+                onChange={(e: DateTimePickerEvent, date?: Date) => {
+                  if (Platform.OS !== 'ios') setShowDatePicker(false)
+                  if (date) setNewReminderDate(date)
+                }}
+              />
+              {Platform.OS === 'ios' && (
+                <Pressable
+                  onPress={() => setShowDatePicker(false)}
+                  style={{
+                    alignItems: 'center',
+                    paddingVertical: 12,
+                    backgroundColor: isDark ? colors.surface : stickers.blue + '18',
+                    borderTopWidth: 1,
+                    borderTopColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                  }}
+                >
+                  <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: brand.kids }}>Done — confirm date</Text>
+                </Pressable>
+              )}
+            </View>
+          )}
+
+          {/* Time picker panel */}
+          {showTimePicker && newReminderDate && (
+            <View style={{
+              borderRadius: 20,
+              overflow: 'hidden',
+              marginTop: 6,
+              borderWidth: 1.5,
+              borderColor: isDark ? colors.border : 'rgba(20,19,19,0.1)',
+              backgroundColor: isDark ? colors.surfaceRaised : '#FFFFFF',
+            }}>
+              {/* Header */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: stickers.peach, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
+                    <Bell size={10} color="#141313" strokeWidth={2.5} />
+                  </View>
+                  <Text style={{ fontFamily: 'Fraunces_600SemiBold', fontSize: 14, color: colors.text, letterSpacing: -0.2 }}>Set a time</Text>
+                </View>
+                {newReminderTime && (
+                  <Pressable onPress={() => { setNewReminderTime(null) }} hitSlop={8}>
+                    <Text style={{ fontFamily: 'DMSans_600SemiBold', fontSize: 11, color: colors.textMuted }}>Clear</Text>
+                  </Pressable>
+                )}
+              </View>
+              <DateTimePicker
+                value={newReminderTime ?? (() => { const d = new Date(); d.setHours(9, 0, 0, 0); return d })()}
+                mode="time"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                themeVariant={isDark ? 'dark' : 'light'}
+                accentColor={brand.kids}
+                style={{ height: 140 }}
+                onChange={(e: DateTimePickerEvent, date?: Date) => {
+                  if (Platform.OS !== 'ios') setShowTimePicker(false)
+                  if (date) setNewReminderTime(date)
+                }}
+              />
+              {Platform.OS === 'ios' && (
+                <Pressable
+                  onPress={() => setShowTimePicker(false)}
+                  style={{
+                    alignItems: 'center',
+                    paddingVertical: 12,
+                    backgroundColor: isDark ? colors.surface : stickers.peach + '18',
+                    borderTopWidth: 1,
+                    borderTopColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                  }}
+                >
+                  <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: '#C06030' }}>Done — confirm time</Text>
+                </Pressable>
+              )}
+            </View>
           )}
         </View>
       )}
@@ -1667,7 +1860,7 @@ export function KidsHome() {
           </View>
         )
         return (
-          <View style={[s.remindersCard, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.borderLight }]}>
+          <View style={{ gap: 8 }}>
             {preview.map((r, i) => (
               <ReminderRow
                 key={r.id}
@@ -1683,12 +1876,12 @@ export function KidsHome() {
             {hasMore && (
               <Pressable
                 onPress={() => setRemindersModalVisible(true)}
-                style={[s.reminderSeeAll, { borderTopWidth: preview.length > 0 ? 1 : 0, borderTopColor: colors.border }]}
+                style={[s.reminderSeeAll]}
               >
-                <Text style={[s.reminderSeeAllText, { color: colors.primary }]}>
+                <Text style={[s.reminderSeeAllText, { color: brand.kids }]}>
                   +{active.length - 4} more
                 </Text>
-                <ChevronRight size={13} color={colors.primary} strokeWidth={2} />
+                <ChevronRight size={13} color={brand.kids} strokeWidth={2} />
               </Pressable>
             )}
           </View>
@@ -2422,47 +2615,74 @@ function HealthCard({ reminders, healthHistory, child }: {
   const ink = isDark ? colors.text : '#141313'
   const ink3 = isDark ? colors.textMuted : '#6E6763'
 
+  const nextVaccines = getNextDueVaccines(child.birthDate ?? '', healthHistory.vaccines, child.countryCode ?? 'US')
+  const nextVaccine = nextVaccines[0]
+
+  const statusBg = overdueCount > 0
+    ? (isDark ? brand.error + '22' : brand.error + '15')
+    : upcomingCount > 0
+      ? (isDark ? '#3A2E00' : '#FFFAE0')
+      : (isDark ? '#1A2810' : '#EEF7E4')
+  const statusColor = overdueCount > 0 ? brand.error : upcomingCount > 0 ? (isDark ? '#F5D652' : '#6B5800') : (isDark ? '#BDD48C' : '#3A6020')
+  const statusLabel = overdueCount > 0 ? `${overdueCount} overdue` : upcomingCount > 0 ? `${upcomingCount} due soon` : 'Up to date'
+
   return (
-    <View style={[s.metricCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
-      <View style={s.metricHeader}>
-        <Heart size={14} color={green} strokeWidth={2} />
-        <Text style={[s.metricLabel, { color: ink3 }]}>HEALTH</Text>
-        <ChevronRight size={12} color={ink3} strokeWidth={2} style={{ marginLeft: 'auto' }} />
+    <View style={[s.hcCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
+      {/* Icon */}
+      <View style={[s.hcIconWrap, { backgroundColor: isDark ? '#1A2810' : '#EEF7E4' }]}>
+        <CrossSticker size={30} fill={green + 'BB'} stroke={green} />
       </View>
-      <View style={s.healthList}>
-        {lastVaccine ? (
-          <View style={s.healthRow}>
-            <Syringe size={9} color={green} strokeWidth={2} />
-            <Text style={[s.healthLabel, { color: ink3 }]} numberOfLines={1}>
+
+      {/* Content */}
+      <View style={{ flex: 1, gap: 4 }}>
+        {nextVaccine ? (
+          <>
+            <Text style={[s.hcEyebrow, { color: ink3 }]}>
+              {overdueCount > 0 ? 'Overdue vaccine' : 'Next vaccine'}
+            </Text>
+            <Text style={[s.hcPrimary, { color: ink }]} numberOfLines={1}>
+              {nextVaccine.name}{nextVaccine.doseLabel ? ` · ${nextVaccine.doseLabel}` : ''}
+            </Text>
+            <Text style={[s.hcSecondary, { color: overdueCount > 0 ? brand.error : ink3 }]}>
+              {overdueCount > 0 ? 'Overdue · ' : 'Due: '}{nextVaccine.dueAge}
+            </Text>
+          </>
+        ) : lastVaccine ? (
+          <>
+            <Text style={[s.hcEyebrow, { color: ink3 }]}>Last vaccine</Text>
+            <Text style={[s.hcPrimary, { color: ink }]} numberOfLines={1}>
               {lastVaccine.value.split(/[,(]/)[0].trim()}
             </Text>
-          </View>
+          </>
         ) : (
-          <View style={s.healthRow}>
-            <Syringe size={9} color={ink3} strokeWidth={2} />
-            <Text style={[s.healthLabel, { color: ink3 }]} numberOfLines={1}>No vaccines</Text>
-          </View>
+          <Text style={[s.hcPrimary, { color: ink3 }]}>No vaccines logged yet</Text>
         )}
-        {growthSummary ? (
-          <View style={s.healthRow}>
-            <TrendingUp size={9} color="#9DC3E8" strokeWidth={2} />
-            <Text style={[s.healthLabel, { color: ink3 }]} numberOfLines={1}>{growthSummary}</Text>
-          </View>
-        ) : null}
-        {activeReminders > 0 && (
-          <View style={s.healthRow}>
-            <Bell size={10} color="#F5D652" strokeWidth={2} />
-            <Text style={[s.healthLabel, { color: ink }]} numberOfLines={1}>{activeReminders} reminder{activeReminders !== 1 ? 's' : ''}</Text>
-          </View>
-        )}
+
+        <View style={s.hcDetailRow}>
+          {growthSummary && (
+            <View style={s.hcDetailItem}>
+              <TrendingUp size={12} color="#9DC3E8" strokeWidth={2} />
+              <Text style={[s.hcDetail, { color: ink3 }]}>{growthSummary}</Text>
+            </View>
+          )}
+          {activeReminders > 0 && (
+            <View style={s.hcDetailItem}>
+              <Bell size={12} color="#F5D652" strokeWidth={2} />
+              <Text style={[s.hcDetail, { color: ink3 }]}>
+                {activeReminders} reminder{activeReminders !== 1 ? 's' : ''}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
-      {overdueCount > 0 ? (
-        <Text style={[s.metricValue, { color: brand.error }]}>{overdueCount} overdue</Text>
-      ) : upcomingCount > 0 ? (
-        <Text style={[s.metricValue, { color: '#F5D652' }]}>{upcomingCount} due soon</Text>
-      ) : (
-        <Text style={[s.metricValue, { color: green }]}>Up to date</Text>
-      )}
+
+      {/* Status + chevron */}
+      <View style={{ alignItems: 'flex-end', gap: 8 }}>
+        <View style={[s.healthStatusPill, { backgroundColor: statusBg }]}>
+          <Text style={[s.healthStatusText, { color: statusColor }]}>{statusLabel}</Text>
+        </View>
+        <ChevronRight size={14} color={ink3} strokeWidth={2} />
+      </View>
     </View>
   )
 }
@@ -2757,7 +2977,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
   startDate: string; endDate: string
   childName?: string; childColor?: string
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const moods = ['happy', 'calm', 'energetic', 'fussy', 'cranky']
   const totalMoods = Object.values(moodCounts).reduce((a, b) => a + b, 0)
 
@@ -2853,7 +3073,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
                 </View>
               )}
             </View>
-            <Pressable onPress={onClose} style={[s.modalClose, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
+            <Pressable onPress={onClose} style={[s.modalClose, { backgroundColor: colors.surfaceGlass }]}>
               <X size={18} color={colors.textMuted} strokeWidth={2} />
             </Pressable>
           </View>
@@ -2864,7 +3084,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
           {totalMoods > 0 ? (
             <>
               {/* Mood-face chart */}
-              <View style={[s.moodChartWrap, { backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: radius.md }]}>
+              <View style={[s.moodChartWrap, { backgroundColor: colors.surfaceRaised, borderRadius: radius.md }]}>
                 <Svg width={chartW} height={chartH}>
                   {/* 5-level grid lines */}
                   {[1, 2, 3, 4, 5].map((level) => {
@@ -2873,7 +3093,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
                       <SvgLine
                         key={level}
                         x1={padL} y1={y} x2={padL + innerW} y2={y}
-                        stroke="rgba(255,255,255,0.06)" strokeWidth={1}
+                        stroke={colors.border} strokeWidth={1}
                       />
                     )
                   })}
@@ -2882,7 +3102,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
                   {activePts.length >= 2 && (
                     <Path
                       d={smoothPath(activePts)}
-                      stroke="rgba(255,255,255,0.20)"
+                      stroke={colors.textFaint}
                       strokeWidth={2}
                       fill="none"
                       strokeLinecap="round"
@@ -2898,7 +3118,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
                       y={chartH - 8}
                       textAnchor="middle"
                       fontSize={8} fontWeight="700"
-                      fill="rgba(255,255,255,0.30)"
+                      fill={colors.textMuted}
                     >
                       {day.label}
                     </SvgText>
@@ -3182,24 +3402,19 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
             nestedScrollEnabled
           >
-            {/* Sleep summary banner — sticker-blue soft */}
-            <View style={{
-              flexDirection: 'row', alignItems: 'center', gap: 12,
-              backgroundColor: 'rgba(157,195,232,0.18)', borderColor: 'rgba(157,195,232,0.35)',
-              borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 14,
-            }}>
-              <Moon size={20} color="#9DC3E8" strokeWidth={2} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-                  Sleep Quality
-                </Text>
-                <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 2 }}>
-                  {sleepQuality}
-                </Text>
+            {/* Sleep summary banner */}
+            <View style={[s.hdSleepBanner, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <View style={[s.hdSleepIcon, { backgroundColor: isDark ? '#1C2A3A' : '#CFE0F0' }]}>
+                <Moon size={18} color="#9DC3E8" strokeWidth={1.8} />
               </View>
-              <Text style={{ fontSize: 12, fontFamily: 'DMSans_600SemiBold', color: '#9DC3E8' }}>
-                {sleepTotal.toFixed(1)}h / {sleepTarget.toFixed(0)}h
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.hdBannerLabel, { color: ink3 }]}>SLEEP QUALITY</Text>
+                <Text style={[s.hdBannerValue, { color: ink }]}>{sleepQuality}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                <Text style={[s.hdBannerStat, { color: '#9DC3E8' }]}>{sleepTotal.toFixed(1)}h</Text>
+                <Text style={[s.hdBannerStatSub, { color: ink3 }]}>of {sleepTarget.toFixed(0)}h</Text>
+              </View>
             </View>
 
             {/* Allergies */}
@@ -3208,9 +3423,9 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                 <Text style={[s.modalSectionTitle, { color: colors.text }]}>Allergies</Text>
                 <View style={s.healthTagsRow}>
                   {child.allergies.map((a, i) => (
-                    <View key={i} style={[s.healthTag, { backgroundColor: brand.error + '15', borderRadius: radius.sm }]}>
-                      <AlertCircle size={10} color={brand.error} strokeWidth={2} />
-                      <Text style={[s.healthTagText, { color: brand.error }]}>{a}</Text>
+                    <View key={i} style={[s.hdAllergyTag, { backgroundColor: isDark ? '#36222A' : '#FDEEF2', borderColor: isDark ? '#F5BBCF40' : '#F2B2C730' }]}>
+                      <AlertCircle size={11} color={isDark ? '#F5BBCF' : '#C0436A'} strokeWidth={2} />
+                      <Text style={[s.hdAllergyText, { color: isDark ? '#F5BBCF' : '#C0436A' }]}>{a}</Text>
                     </View>
                   ))}
                 </View>
@@ -3269,18 +3484,26 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                   return (
                     <View key={uv.key} style={[{ borderBottomWidth: 1, borderBottomColor: colors.border }]}>
                       {/* Main row */}
-                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 10, gap: 10 }}>
-                        <Syringe size={14} color={uv.overdue ? brand.error : brand.accent} strokeWidth={2} style={{ marginTop: 2 }} />
-                        <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 12, gap: 10 }}>
+                        <View style={[s.hdVaxIcon, { backgroundColor: uv.overdue ? brand.error + '18' : isDark ? '#3A2E00' : '#FFFAE0' }]}>
+                          <Syringe size={12} color={uv.overdue ? brand.error : '#8A7400'} strokeWidth={2} />
+                        </View>
+                        <View style={{ flex: 1, gap: 3 }}>
                           <Text style={[s.modalTaskLabel, { color: colors.text }]}>{fullName}</Text>
-                          <Text style={[s.modalTaskStatus, { color: uv.overdue ? brand.error : colors.textMuted, marginTop: 2 }]}>
-                            {uv.overdue ? 'Overdue · ' : 'Due: '}{uv.dueAge}
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <View style={[s.hdUrgencyBadge, {
+                              backgroundColor: uv.overdue ? brand.error + '18' : isDark ? '#3A2E00' : '#FFFAE0',
+                            }]}>
+                              <Text style={[s.hdUrgencyText, { color: uv.overdue ? brand.error : (isDark ? '#F5D652' : '#6B5800') }]}>
+                                {uv.overdue ? 'Overdue' : 'Due'} · {uv.dueAge}
+                              </Text>
+                            </View>
+                          </View>
                           {apptDate && (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                              <NotifyAppointmentDue size={14} />
-                              <Text style={[s.modalTaskStatus, { color: brand.success }]}>
-                                Appt: {formatHealthDate(apptDate)}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 }}>
+                              <NotifyAppointmentDue size={12} />
+                              <Text style={[s.hdApptText, { color: brand.success }]}>
+                                Appt {formatHealthDate(apptDate)}
                               </Text>
                             </View>
                           )}
@@ -3289,21 +3512,21 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                           <View style={{ gap: 6, alignItems: 'flex-end' }}>
                             <Pressable
                               onPress={() => onMarkVaccineGiven(uv.name + (uv.doseLabel ? ` - ${uv.doseLabel}` : ''), apptDate, uv.key)}
-                              style={[s.vaccineScheduleBtn, { backgroundColor: brand.success + '20', borderColor: brand.success }]}
+                              style={[s.hdVaxBtn, { backgroundColor: brand.success + '18', borderColor: brand.success + '50' }]}
                             >
                               <Check size={10} color={brand.success} strokeWidth={3} />
-                              <Text style={[s.vaccineScheduleBtnText, { color: brand.success }]}>Mark given</Text>
+                              <Text style={[s.hdVaxBtnText, { color: brand.success }]}>Mark given</Text>
                             </Pressable>
                             <Pressable onPress={() => { setExpandedKey(isExpanded ? null : uv.key); setPickerDate(new Date(apptDate + 'T12:00:00')) }}>
-                              <Text style={[s.vaccineScheduleBtnText, { color: colors.textMuted }]}>Change date</Text>
+                              <Text style={[s.hdChangeDateText, { color: colors.textMuted }]}>Change date</Text>
                             </Pressable>
                           </View>
                         ) : (
                           <Pressable
                             onPress={() => { setExpandedKey(isExpanded ? null : uv.key); setPickerDate(new Date()) }}
-                            style={[s.vaccineScheduleBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                            style={[s.hdVaxBtn, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}
                           >
-                            <Text style={[s.vaccineScheduleBtnText, { color: colors.textMuted }]}>Set date</Text>
+                            <Text style={[s.hdVaxBtnText, { color: colors.textSecondary }]}>Set date</Text>
                           </Pressable>
                         )}
                       </View>
@@ -3350,13 +3573,25 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             {(weight || height) && (
               <>
                 <Text style={[s.modalSectionTitle, { color: colors.text }]}>Latest Growth</Text>
-                <View style={[s.modalStatCard, { backgroundColor: brand.kids + '10', borderRadius: radius.md }]}>
-                  <TrendingUp size={18} color={brand.kids} strokeWidth={2} />
-                  <View style={{ flex: 1 }}>
-                    {weight && <Text style={[s.modalStatValue, { color: colors.text }]}>{weight}</Text>}
-                    {height && <Text style={[s.modalStatLabel, { color: colors.textMuted, marginTop: weight ? 2 : 0 }]}>{height}</Text>}
+                <View style={[s.hdGrowthCard, { backgroundColor: isDark ? '#1F2A3A' : brand.kidsSoft, borderColor: isDark ? colors.border : brand.kids + '30' }]}>
+                  <View style={[s.hdGrowthIconWrap, { backgroundColor: isDark ? colors.surfaceRaised : '#FFFFFF80' }]}>
+                    <TrendingUp size={16} color={brand.kids} strokeWidth={2} />
                   </View>
-                  <Text style={[s.modalStatExtra, { color: colors.textMuted }]}>
+                  <View style={{ flex: 1, flexDirection: 'row', gap: 16 }}>
+                    {weight && (
+                      <View>
+                        <Text style={[s.hdGrowthLabel, { color: isDark ? '#A5C9F0' : '#3A6A9E' }]}>WEIGHT</Text>
+                        <Text style={[s.hdGrowthValue, { color: colors.text }]}>{weight}</Text>
+                      </View>
+                    )}
+                    {height && (
+                      <View>
+                        <Text style={[s.hdGrowthLabel, { color: isDark ? '#A5C9F0' : '#3A6A9E' }]}>HEIGHT</Text>
+                        <Text style={[s.hdGrowthValue, { color: colors.text }]}>{height}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={[s.hdGrowthDate, { color: isDark ? '#A5C9F0' : '#3A6A9E' }]}>
                     {healthHistory.growth[0]?.date ? formatHealthDate(healthHistory.growth[0].date) : ''}
                   </Text>
                 </View>
@@ -3402,11 +3637,10 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             {/* View Full History */}
             <Pressable
               onPress={() => { onClose(); router.push('/profile/health-history' as any) }}
-              style={[s.healthHistoryBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}
+              style={[s.hdHistoryBtn, { backgroundColor: brand.kids }]}
             >
-              <Heart size={14} color={colors.primary} strokeWidth={2} />
-              <Text style={[s.healthHistoryBtnText, { color: colors.primary }]}>View Full Health History</Text>
-              <ChevronRight size={14} color={colors.primary} strokeWidth={2} />
+              <CrossSticker size={14} fill="#FFFFFF99" stroke="#FFFFFF" />
+              <Text style={s.hdHistoryBtnText}>View Full Health History</Text>
             </Pressable>
           </ScrollView>
         </Pressable>
@@ -3711,7 +3945,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
   childId: string; childName: string; birthDate: string
   onSaved: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const store = useGoalsStore()
   const current = store.getGoals(childId, birthDate)
   const suggested = getSuggestedGoals(birthDate)
@@ -3725,8 +3959,6 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
   const [feedings, setFeedings] = useState(String(current.feedings))
   const [feedingMl, setFeedingMl] = useState(String(current.feedingMl))
   const [activity, setActivity] = useState(String(current.activity))
-  const [expandedInfo, setExpandedInfo] = useState<string | null>(null)
-
   // Reset inputs when modal opens
   useEffect(() => {
     if (visible) {
@@ -3842,100 +4074,86 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={s.modalOverlay}>
-        <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
-          <View style={s.modalHeader}>
-            <Text style={[s.modalTitle, { color: colors.text }]}>Set Goals</Text>
-            <Pressable onPress={onClose} style={[s.modalClose, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
-              <X size={18} color={colors.textMuted} strokeWidth={2} />
+        <View style={[s.gsSheet, { backgroundColor: colors.bg }]}>
+
+          {/* Drag handle */}
+          <View style={[s.gsDragHandle, { backgroundColor: colors.borderStrong }]} />
+
+          {/* Header */}
+          <View style={s.gsHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.gsTitle, { color: colors.text }]}>Set Goals</Text>
+              <Text style={[s.gsSubtitle, { color: colors.textMuted }]}>
+                Daily targets for {childName} ({ageLabel}) · scale with your date range
+              </Text>
+            </View>
+            <Pressable onPress={onClose} style={[s.gsCloseBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+              <X size={16} color={colors.textMuted} strokeWidth={2} />
             </Pressable>
           </View>
-          <Text style={[s.modalSubtitle, { color: colors.textMuted }]}>
-            Daily targets for {childName} ({ageLabel}). Goals are per day — they scale automatically with your selected date range.
-          </Text>
 
           {/* Age suggestion banner */}
-          <View style={[s.goalSuggestBanner, { backgroundColor: brand.kids + '10', borderRadius: radius.md }]}>
-            <Sparkles size={14} color={brand.kids} strokeWidth={2} />
-            <Text style={[s.goalSuggestText, { color: colors.textSecondary }]}>
-              Suggested goals are based on {childName}'s age ({ageLabel}) using CDC/WHO guidelines
+          <View style={[s.gsAgeBanner, { backgroundColor: isDark ? '#1F2A3A' : brand.kidsSoft }]}>
+            <Sparkles size={12} color={brand.kids} strokeWidth={2} />
+            <Text style={[s.gsAgeBannerText, { color: isDark ? '#A5C9F0' : '#3A6A9E' }]}>
+              Suggested for age {ageLabel} · CDC / WHO guidelines
             </Text>
           </View>
 
-          {/* Goal inputs */}
-          <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
-          {metrics.map((m) => {
-            const Icon = m.icon
-            const isExpanded = expandedInfo === m.key
-            return (
-              <View key={m.key}>
-                <View style={[s.goalRow, { borderBottomColor: isExpanded ? 'transparent' : colors.border }]}>
-                  <View style={[s.goalIconWrap, { backgroundColor: m.color + '15' }]}>
-                    <Icon size={16} color={m.color} strokeWidth={2} />
+          {/* Goal cards */}
+          <ScrollView
+            style={{ maxHeight: 360 }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={s.gsCardList}
+          >
+            {metrics.map((m) => {
+              const Icon = m.icon
+              return (
+                <View key={m.key} style={[s.gsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <View style={[s.gsCardIcon, { backgroundColor: m.color + '1A' }]}>
+                    <Icon size={20} color={m.color} strokeWidth={1.8} />
                   </View>
-                  <View style={s.goalInfo}>
-                    <View style={s.goalLabelRow}>
-                      <Text style={[s.goalLabel, { color: colors.text }]}>{m.label}</Text>
-                      <Pressable
-                        onPress={() => setExpandedInfo(isExpanded ? null : m.key)}
-                        hitSlop={8}
-                      >
-                        <Info size={13} color={isExpanded ? brand.kids : colors.textMuted} strokeWidth={2} />
-                      </Pressable>
-                    </View>
-                    <Text style={[s.goalDesc, { color: colors.textMuted }]}>{m.desc}</Text>
+                  <View style={s.gsCardInfo}>
+                    <Text style={[s.gsCardLabel, { color: colors.text }]}>{m.label}</Text>
+                    <Text style={[s.gsCardDesc, { color: colors.textMuted }]}>{m.desc}</Text>
                   </View>
-                  <View style={s.goalInputWrap}>
-                    <Pressable onPress={() => {
-                      const n = Math.max(0, (Number(m.value) || 0) - m.step)
-                      m.setValue(String(n))
-                    }} style={[s.goalStepBtn, { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
-                      <Minus size={12} color={colors.textMuted} strokeWidth={2} />
+                  <View style={s.gsStepper}>
+                    <Pressable
+                      onPress={() => m.setValue(String(Math.max(0, (Number(m.value) || 0) - m.step)))}
+                      style={[s.gsStepBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
+                      hitSlop={6}
+                    >
+                      <Minus size={13} color={colors.textMuted} strokeWidth={2.2} />
                     </Pressable>
-                    <TextInput
-                      style={[s.goalInput, { color: m.color, borderColor: colors.border }]}
-                      value={m.value}
-                      onChangeText={m.setValue}
-                      keyboardType="numeric"
-                      selectTextOnFocus
-                    />
-                    <Pressable onPress={() => {
-                      const n = (Number(m.value) || 0) + m.step
-                      m.setValue(String(n))
-                    }} style={[s.goalStepBtn, { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
-                      <Plus size={12} color={colors.textMuted} strokeWidth={2} />
-                    </Pressable>
-                  </View>
-                  <Text style={[s.goalUnit, { color: colors.textMuted }]}>{m.unit}</Text>
-                </View>
-                {isExpanded && (
-                  <View style={[s.goalReasonCard, { backgroundColor: brand.kids + '08', borderColor: brand.kids + '20', borderBottomColor: colors.border }]}>
-                    <View style={s.goalReasonHeader}>
-                      <Sparkles size={12} color={brand.kids} strokeWidth={2} />
-                      <Text style={[s.goalReasonTitle, { color: brand.kids }]}>
-                        Why {m.suggested} {m.unit.split('/')[0]}?
+                    <View style={s.gsStepValue}>
+                      <Text style={[s.gsStepNum, { color: m.color }]}>{m.value || '0'}</Text>
+                      <Text style={[s.gsStepUnit, { color: colors.textMuted }]}>
+                        {m.unit.split('/')[0]}
                       </Text>
                     </View>
-                    <Text style={[s.goalReasonText, { color: colors.textSecondary }]}>{m.reason}</Text>
-                    <Text style={[s.goalReasonSource, { color: colors.textMuted }]}>Source: CDC, WHO, AAP guidelines</Text>
+                    <Pressable
+                      onPress={() => m.setValue(String((Number(m.value) || 0) + m.step))}
+                      style={[s.gsStepBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
+                      hitSlop={6}
+                    >
+                      <Plus size={13} color={colors.textMuted} strokeWidth={2.2} />
+                    </Pressable>
                   </View>
-                )}
-              </View>
-            )
-          })}
+                </View>
+              )
+            })}
           </ScrollView>
 
-          {/* Suggested vs current comparison */}
-          <View style={s.goalCompareRow}>
-            <Pressable onPress={handleReset} style={[s.goalResetBtn, { borderColor: colors.border }]}>
-              <Sparkles size={12} color={brand.kids} strokeWidth={2} />
-              <Text style={[s.goalResetText, { color: brand.kids }]}>Use Suggested</Text>
+          {/* Footer */}
+          <View style={s.gsFooter}>
+            <Pressable onPress={handleReset} style={[s.gsUseSuggestedBtn, { borderColor: colors.borderStrong }]}>
+              <Sparkles size={13} color={brand.kids} strokeWidth={2} />
+              <Text style={[s.gsUseSuggestedText, { color: brand.kids }]}>Use Suggested</Text>
+            </Pressable>
+            <Pressable onPress={handleSave} style={[s.gsSaveBtn, { backgroundColor: brand.kids }]}>
+              <Text style={s.gsSaveBtnText}>Save Goals</Text>
             </Pressable>
           </View>
-
-          {/* Save button */}
-          <Pressable onPress={handleSave} style={[s.goalSaveBtn, { backgroundColor: colors.primary, borderRadius: radius.md }]}>
-            <Text style={s.goalSaveText}>Save Goals</Text>
-          </Pressable>
         </View>
       </View>
     </Modal>
@@ -3950,17 +4168,19 @@ function ReminderRow({
   r: Reminder; isLast: boolean; onToggle: () => void; onDelete: () => void; onEdit: (id: string, newText: string) => void; colors: any
   onFlag?: () => void; allChildren?: ChildWithRole[]; isDragging?: boolean; dragHandleProps?: object
 }) {
+  const { isDark, stickers } = useTheme()
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const due = r.dueDate ? new Date(r.dueDate + 'T00:00:00') : null
   const diffDays = due ? Math.round((due.getTime() - today.getTime()) / 86400000) : null
   const isOverdue = !r.done && diffDays !== null && diffDays < 0
   const isDueToday = !r.done && diffDays === 0
   const isDueSoon = !r.done && diffDays !== null && diffDays > 0 && diffDays <= 3
-  const dueDateColor = isOverdue ? brand.error : isDueToday ? brand.accent : isDueSoon ? brand.warning : colors.textMuted
+  const dueDateColor = isOverdue ? brand.error : isDueToday ? '#C08000' : isDueSoon ? brand.warning : colors.textMuted
+  const timeSuffix = r.dueTime ? ` · ${formatTime12h(r.dueTime)}` : ''
   const dueDateLabel = due
-    ? isOverdue ? `${Math.abs(diffDays!)}d overdue`
-    : isDueToday ? 'Due today'
-    : `Due ${due.toLocaleDateString('en', { month: 'short', day: 'numeric' })}`
+    ? isOverdue ? `${Math.abs(diffDays!)}d overdue${timeSuffix}`
+    : isDueToday ? `Due today${timeSuffix}`
+    : `Due ${due.toLocaleDateString('en', { month: 'short', day: 'numeric' })}${timeSuffix}`
     : null
 
   const taggedChild = allChildren && r.childId ? allChildren.find(c => c.id === r.childId) : null
@@ -3976,32 +4196,90 @@ function ReminderRow({
     setEditing(false)
   }
 
+  // Card tint by status
+  const cardBg = r.done
+    ? (isDark ? 'rgba(189,212,140,0.12)' : '#EDF5E2')
+    : isOverdue
+    ? (isDark ? 'rgba(238,123,109,0.10)' : '#FFF0ED')
+    : r.flagged
+    ? (isDark ? 'rgba(245,214,82,0.10)' : '#FFFBE6')
+    : isDueToday
+    ? (isDark ? 'rgba(245,214,82,0.08)' : '#FFFDE8')
+    : isDragging
+    ? (isDark ? brand.kids + '18' : brand.kidsSoft)
+    : (isDark ? colors.surface : '#FFFEF8')
+
+  const cardBorder = r.done
+    ? (isDark ? 'rgba(189,212,140,0.28)' : 'rgba(189,212,140,0.65)')
+    : isOverdue
+    ? (isDark ? 'rgba(238,123,109,0.28)' : 'rgba(238,123,109,0.38)')
+    : r.flagged || isDueToday
+    ? (isDark ? 'rgba(245,214,82,0.28)' : 'rgba(245,214,82,0.65)')
+    : isDragging
+    ? (isDark ? brand.kids + '50' : brand.kids + '80')
+    : (isDark ? colors.border : 'rgba(20,19,19,0.1)')
+
+  // Icon badge color
+  const badgeBg = r.done
+    ? stickers.green
+    : isOverdue
+    ? '#EE7B6D'
+    : r.flagged || isDueToday
+    ? stickers.yellow
+    : stickers.blue
+
+  const badgeIconColor = (r.done || r.flagged || isDueToday) ? '#141313' : isOverdue ? '#FFFFFF' : '#141313'
+
   return (
-    <View style={[
-      s.reminderRow,
-      !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border },
-      r.flagged && { borderLeftWidth: 3, borderLeftColor: brand.accent },
-      isDragging && { backgroundColor: 'rgba(112,72,184,0.12)', elevation: 8, shadowColor: '#7048B8', shadowOpacity: 0.3, shadowRadius: 8 },
-    ]}>
+    <View style={{
+      backgroundColor: cardBg,
+      borderRadius: 20,
+      borderWidth: 1.5,
+      borderColor: cardBorder,
+      padding: 14,
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 10,
+      shadowColor: '#141313',
+      shadowOpacity: isDark ? 0 : 0.05,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+    }}>
       {/* Drag handle */}
-      <View style={{ paddingRight: 4, justifyContent: 'center', opacity: 0.4 }} {...(dragHandleProps ?? {})}>
-        <GripVertical size={15} color={colors.textMuted} strokeWidth={2} />
+      <View style={{ paddingTop: 10, opacity: 0.22 }} {...(dragHandleProps ?? {})}>
+        <GripVertical size={13} color={colors.textMuted} strokeWidth={2} />
       </View>
+
+      {/* Sticker badge — tappable checkbox */}
       <Pressable
         onPress={onToggle}
-        style={[s.reminderCheck, {
-          backgroundColor: r.done ? brand.success : 'transparent',
-          borderWidth: r.done ? 0 : 1.5,
-          borderColor: isOverdue ? brand.error : colors.border,
-        }]}
+        style={{
+          width: 36, height: 36, borderRadius: 18,
+          backgroundColor: badgeBg,
+          borderWidth: 1.5,
+          borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#141313',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          marginTop: 1,
+        }}
       >
-        {r.done && <Check size={9} color="#FFF" strokeWidth={3} />}
+        {r.done
+          ? <Check size={14} color={badgeIconColor} strokeWidth={3} />
+          : isOverdue
+          ? <Bell size={13} color={badgeIconColor} strokeWidth={2.5} />
+          : (isDueToday || r.flagged)
+          ? <Clock size={13} color={badgeIconColor} strokeWidth={2.5} />
+          : <View style={{ width: 11, height: 11, borderRadius: 6, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(20,19,19,0.35)' }} />
+        }
       </Pressable>
-      <View style={{ flex: 1, gap: 3 }}>
+
+      {/* Text + tags */}
+      <View style={{ flex: 1, gap: 6, paddingTop: 2 }}>
         {editing ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <TextInput
-              style={[s.reminderText, { color: colors.text, flex: 1, borderBottomWidth: 1, borderBottomColor: colors.primary, paddingVertical: 2 }]}
+              style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: colors.text, flex: 1, borderBottomWidth: 1, borderBottomColor: brand.kids, paddingVertical: 2 }}
               value={editText}
               onChangeText={setEditText}
               onSubmitEditing={commitEdit}
@@ -4010,7 +4288,7 @@ function ReminderRow({
               returnKeyType="done"
             />
             <Pressable onPress={commitEdit} hitSlop={8}>
-              <Check size={14} color={brand.success} strokeWidth={2.5} />
+              <Check size={14} color="#BDD48C" strokeWidth={2.5} />
             </Pressable>
             <Pressable onPress={() => { setEditText(r.text); setEditing(false) }} hitSlop={8}>
               <X size={14} color={colors.textMuted} strokeWidth={2} />
@@ -4018,46 +4296,63 @@ function ReminderRow({
           </View>
         ) : (
           <Text
-            style={[s.reminderText, { color: r.done ? colors.textMuted : colors.text, textDecorationLine: r.done ? 'line-through' : 'none' }]}
+            style={{
+              fontSize: 15,
+              fontFamily: r.done ? 'DMSans_400Regular' : 'Fraunces_600SemiBold',
+              color: r.done ? colors.textMuted : (isDark ? colors.text : '#141313'),
+              textDecorationLine: r.done ? 'line-through' : 'none',
+              lineHeight: 21,
+            }}
             numberOfLines={2}
           >{r.text}</Text>
         )}
-        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+
+        {/* Tags row */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 5 }}>
           {taggedChild && (
-            <View style={[s.reminderChildTag, { backgroundColor: tagColor + '20', borderColor: tagColor + '50' }]}>
+            <View style={[s.reminderChildTag, { backgroundColor: tagColor + '18', borderColor: tagColor + '60' }]}>
               <Baby size={9} color={tagColor} strokeWidth={2} />
               <Text style={[s.reminderChildTagText, { color: tagColor }]}>{taggedChild.name}</Text>
             </View>
           )}
           {dueDateLabel && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-              <Clock size={10} color={dueDateColor} strokeWidth={2} />
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', gap: 3,
+              backgroundColor: isOverdue ? brand.error + '14' : isDueToday ? '#F5D65220' : (isDark ? colors.surfaceRaised : 'rgba(20,19,19,0.06)'),
+              borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3,
+              borderWidth: 1, borderColor: isOverdue ? brand.error + '40' : isDueToday ? '#F5D65270' : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
+            }}>
+              <Clock size={9} color={dueDateColor} strokeWidth={2.5} />
               <Text style={[s.reminderDueText, { color: dueDateColor }]}>{dueDateLabel}</Text>
             </View>
           )}
           {r.done && r.archivedAt && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-              <Check size={10} color={brand.success} strokeWidth={2.5} />
-              <Text style={[s.reminderDueText, { color: brand.success }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#BDD48C30', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, borderWidth: 1, borderColor: '#BDD48C60' }}>
+              <Check size={9} color="#5A8A3A" strokeWidth={2.5} />
+              <Text style={[s.reminderDueText, { color: '#5A8A3A' }]}>
                 Done {new Date(r.archivedAt).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
               </Text>
             </View>
           )}
         </View>
       </View>
-      {!editing && !r.done && (
-        <Pressable onPress={() => { setEditText(r.text); setEditing(true) }} hitSlop={12} style={{ marginRight: 8 }}>
-          <Pencil size={12} color={colors.textMuted} strokeWidth={2} />
+
+      {/* Actions column */}
+      <View style={{ alignItems: 'center', gap: 10, paddingTop: 4 }}>
+        {!editing && !r.done && (
+          <Pressable onPress={() => { setEditText(r.text); setEditing(true) }} hitSlop={12}>
+            <Pencil size={13} color={colors.textFaint} strokeWidth={2} />
+          </Pressable>
+        )}
+        {onFlag && (
+          <Pressable onPress={onFlag} hitSlop={12}>
+            <Flag size={13} color={r.flagged ? '#F5D652' : colors.textFaint} fill={r.flagged ? '#F5D652' : 'transparent'} strokeWidth={2} />
+          </Pressable>
+        )}
+        <Pressable onPress={onDelete} hitSlop={12}>
+          <Trash2 size={13} color={colors.textFaint} strokeWidth={2} />
         </Pressable>
-      )}
-      {onFlag && (
-        <Pressable onPress={onFlag} hitSlop={12} style={{ marginRight: 8 }}>
-          <Flag size={13} color={r.flagged ? brand.accent : colors.textMuted} fill={r.flagged ? brand.accent : 'transparent'} strokeWidth={2} />
-        </Pressable>
-      )}
-      <Pressable onPress={onDelete} hitSlop={12}>
-        <Trash2 size={13} color={colors.textMuted} strokeWidth={2} />
-      </Pressable>
+      </View>
     </View>
   )
 }
@@ -4135,7 +4430,7 @@ function DraggableReminderList({
   }
 
   return (
-    <View style={[s.remindersCard, { backgroundColor: colors.surface, borderColor: colors.borderLight, borderRadius: radius.lg }]}>
+    <View style={{ gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
       {localItems.map((r, i) => {
         const isDragging = draggingId === r.id
         const pr = getOrCreatePanResponder(r.id)
@@ -4173,7 +4468,7 @@ function RemindersModal({
   onFlag: (id: string) => void; onReorder: (items: Reminder[]) => void
   allChildren?: ChildWithRole[]
 }) {
-  const { radius } = useTheme()
+  const { radius, isDark } = useTheme()
   const [tab, setTab] = useState<'active' | 'archived'>('active')
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null)
   const [isDraggingReminder, setIsDraggingReminder] = useState(false)
@@ -4222,36 +4517,44 @@ function RemindersModal({
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={[s.reminderModalOverlay]}>
-      <View style={[s.reminderModal, { backgroundColor: colors.bg }]}>
+      <View style={[s.reminderModal, { backgroundColor: isDark ? colors.bg : '#FFFEF8' }]}>
         {/* Drag handle */}
         <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 4 }}>
           <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
         </View>
+
         {/* Header */}
-        <View style={[s.reminderModalHeader, { borderBottomColor: colors.border }]}>
-          <Text style={[s.reminderModalTitle, { color: colors.text }]}>Reminders</Text>
+        <View style={[s.reminderModalHeader, { borderBottomColor: 'transparent' }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            {/* Bell sticker accent */}
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#F5D652', borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
+              <Bell size={16} color="#141313" strokeWidth={2} />
+            </View>
+            <Text style={[s.reminderModalTitle, { color: colors.text }]}>Reminders</Text>
+          </View>
           <Pressable onPress={onClose} hitSlop={12}>
-            <View style={{ width: 34, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
-              <X size={16} color={colors.text} strokeWidth={2} />
+            <View style={{ width: 34, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border }}>
+              <X size={15} color={colors.textMuted} strokeWidth={2.5} />
             </View>
           </Pressable>
         </View>
 
-        {/* Completion metric strip */}
-        <View style={[s.reminderMetricStrip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <View style={s.reminderMetricItem}>
-            <Text style={[s.reminderMetricVal, { color: colors.text }]}>{active.length}</Text>
-            <Text style={[s.reminderMetricLabel, { color: colors.textMuted }]}>Active</Text>
+        {/* Metric tiles — three sticker-colored cards */}
+        <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 4, marginBottom: 4 }}>
+          {/* Active */}
+          <View style={{ flex: 1, backgroundColor: '#F5B896', borderRadius: 16, borderWidth: 1.5, borderColor: '#141313', paddingVertical: 12, alignItems: 'center', gap: 2 }}>
+            <Text style={{ fontSize: 26, fontFamily: 'Fraunces_600SemiBold', color: '#141313', letterSpacing: -0.5 }}>{active.length}</Text>
+            <Text style={{ fontSize: 9, fontFamily: 'DMSans_600SemiBold', color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>Active</Text>
           </View>
-          <View style={[s.reminderMetricDivider, { backgroundColor: colors.border }]} />
-          <View style={s.reminderMetricItem}>
-            <Text style={[s.reminderMetricVal, { color: '#BDD48C' }]}>{thisWeek}</Text>
-            <Text style={[s.reminderMetricLabel, { color: colors.textMuted }]}>Done this week</Text>
+          {/* Done this week */}
+          <View style={{ flex: 1, backgroundColor: '#BDD48C', borderRadius: 16, borderWidth: 1.5, borderColor: '#141313', paddingVertical: 12, alignItems: 'center', gap: 2 }}>
+            <Text style={{ fontSize: 26, fontFamily: 'Fraunces_600SemiBold', color: '#141313', letterSpacing: -0.5 }}>{thisWeek}</Text>
+            <Text style={{ fontSize: 9, fontFamily: 'DMSans_600SemiBold', color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>Done this week</Text>
           </View>
-          <View style={[s.reminderMetricDivider, { backgroundColor: colors.border }]} />
-          <View style={s.reminderMetricItem}>
-            <Text style={[s.reminderMetricVal, { color: '#9DC3E8' }]}>{completionRate}%</Text>
-            <Text style={[s.reminderMetricLabel, { color: colors.textMuted }]}>Completion</Text>
+          {/* Completion */}
+          <View style={{ flex: 1, backgroundColor: '#9DC3E8', borderRadius: 16, borderWidth: 1.5, borderColor: '#141313', paddingVertical: 12, alignItems: 'center', gap: 2 }}>
+            <Text style={{ fontSize: 26, fontFamily: 'Fraunces_600SemiBold', color: '#141313', letterSpacing: -0.5 }}>{completionRate}%</Text>
+            <Text style={{ fontSize: 9, fontFamily: 'DMSans_600SemiBold', color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>Completion</Text>
           </View>
         </View>
 
@@ -4265,7 +4568,7 @@ function RemindersModal({
           >
             {/* All pill */}
             {(() => {
-              const isActive = selectedChildId === null
+              const isAll = selectedChildId === null
               return (
                 <Pressable
                   key="all"
@@ -4275,12 +4578,12 @@ function RemindersModal({
                     paddingVertical: 7,
                     paddingHorizontal: 16,
                     borderRadius: radius.full,
-                    borderWidth: 1,
-                    backgroundColor: isActive ? colors.primary : colors.primaryTint,
-                    borderColor: colors.primary + '50',
+                    borderWidth: 1.5,
+                    backgroundColor: isAll ? brand.kids : brand.kids + '20',
+                    borderColor: isAll ? brand.kids : brand.kids + '60',
                   }}
                 >
-                  <Text style={{ fontSize: 14, fontFamily: 'DMSans_600SemiBold', color: isActive ? '#FFF' : colors.primary }}>All</Text>
+                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_600SemiBold', color: isAll ? '#FFFFFF' : brand.kids }}>All</Text>
                 </Pressable>
               )
             })()}
@@ -4298,12 +4601,12 @@ function RemindersModal({
                     paddingVertical: 7,
                     paddingHorizontal: 16,
                     borderRadius: radius.full,
-                    borderWidth: 1,
-                    backgroundColor: isActive ? kidColor : kidColor + '2E',
+                    borderWidth: 1.5,
+                    backgroundColor: isActive ? kidColor : kidColor + '20',
                     borderColor: isActive ? kidColor : kidColor + '50',
                   }}
                 >
-                  <Text style={{ fontSize: 14, fontFamily: 'DMSans_600SemiBold', color: isActive ? '#141313' : kidColor }}>{c.name}</Text>
+                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_600SemiBold', color: isActive ? '#141313' : kidColor }}>{c.name}</Text>
                 </Pressable>
               )
             })}
@@ -4315,12 +4618,12 @@ function RemindersModal({
           {(['active', 'archived'] as const).map(t => (
             <Pressable key={t} onPress={() => setTab(t)} style={s.reminderTab}>
               <Text style={[s.reminderTabText, {
-                color: tab === t ? colors.primary : colors.textMuted,
+                color: tab === t ? brand.kids : colors.textMuted,
                 fontWeight: tab === t ? '700' : '500',
               }]}>
                 {t === 'active' ? `Active (${active.length})` : `Archived (${archived.length})`}
               </Text>
-              {tab === t && <View style={[s.reminderTabLine, { backgroundColor: colors.primary }]} />}
+              {tab === t && <View style={[s.reminderTabLine, { backgroundColor: brand.kids }]} />}
             </Pressable>
           ))}
         </View>
@@ -4330,7 +4633,7 @@ function RemindersModal({
           {tab === 'active' ? (
             active.length === 0 ? (
               <View style={s.reminderModalEmpty}>
-                <Bell size={28} color={colors.textMuted} strokeWidth={1.5} />
+                <FlowerSticker size={48} petal="#BDD48C" center="#F5D652" stroke="#141313" />
                 <Text style={[s.remindersEmptyText, { color: colors.textSecondary }]}>No active reminders</Text>
               </View>
             ) : (
@@ -4359,14 +4662,14 @@ function RemindersModal({
             )
           ) : archivedByDate.length === 0 ? (
             <View style={s.reminderModalEmpty}>
-              <Check size={28} color={colors.textMuted} strokeWidth={1.5} />
+              <StarSticker size={48} fill="#F5D652" stroke="#141313" />
               <Text style={[s.remindersEmptyText, { color: colors.textSecondary }]}>Nothing archived yet</Text>
             </View>
           ) : (
             archivedByDate.map(({ label, items }) => (
               <View key={label} style={{ marginHorizontal: 16, marginTop: 16 }}>
                 <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8 }}>{label}</Text>
-                <View style={[s.remindersCard, { backgroundColor: colors.surface, borderColor: colors.borderLight, borderRadius: radius.lg }]}>
+                <View style={{ gap: 8 }}>
                   {items.map((r, i) => (
                     <ReminderRow
                       key={r.id}
@@ -5058,6 +5361,103 @@ function parseGrowthValue(entries: HealthRecord[]): { weight: string | null; hei
   return { weight, height }
 }
 
+// ─── Vaccine Schedule Tree ────────────────────────────────────────────────────
+
+interface MilestoneVaccineItem {
+  name: string
+  doseLabel: string   // "dose 2" or ""
+  dueAge: string      // human label from schedule e.g. "4 months"
+  status: 'done' | 'upcoming' | 'overdue' | 'future'
+  givenDate?: string  // ISO date if done
+  scheduleKey: string // unique key: "<name>-<doseIndex>"
+}
+
+interface AgeMilestone {
+  key: string                 // stringified monthMin e.g. "0", "2", "4"
+  label: string               // display label e.g. "Birth", "2 Months"
+  monthMin: number
+  vaccines: MilestoneVaccineItem[]
+  milestoneStatus: 'done' | 'partial' | 'future'
+}
+
+function formatMilestoneLabel(monthMin: number, ageLabel: string): string {
+  if (monthMin === 0) return 'Birth'
+  return ageLabel.charAt(0).toUpperCase() + ageLabel.slice(1)
+}
+
+function buildVaccineScheduleTree(
+  birthDate: string,
+  givenVaccines: HealthRecord[],
+  countryCode: string = 'US',
+): AgeMilestone[] {
+  if (!birthDate) return []
+  const ageMonths = getAgeMonths(birthDate)
+  const schedule = getScheduleForCountry(countryCode)
+  const milestoneMap = new Map<number, AgeMilestone>()
+
+  for (const v of schedule) {
+    const firstWord = v.name.toLowerCase().split(' ')[0]
+    const doseCount = givenVaccines.filter((g) =>
+      g.value.toLowerCase().includes(firstWord)
+    ).length
+
+    for (let i = 0; i < v.monthRanges.length; i++) {
+      const [monthMin, monthMax] = v.monthRanges[i]
+      const ageLabel = v.ages[i]
+
+      let status: MilestoneVaccineItem['status']
+      if (i < doseCount) {
+        status = 'done'
+      } else if (ageMonths > monthMax + 1) {
+        status = 'overdue'
+      } else if (ageMonths >= monthMin - 2) {
+        status = 'upcoming'
+      } else {
+        status = 'future'
+      }
+
+      let givenDate: string | undefined
+      if (status === 'done') {
+        const match = givenVaccines.filter((g) =>
+          g.value.toLowerCase().includes(firstWord)
+        )[i]
+        givenDate = match?.date
+      }
+
+      if (!milestoneMap.has(monthMin)) {
+        milestoneMap.set(monthMin, {
+          key: String(monthMin),
+          label: formatMilestoneLabel(monthMin, ageLabel),
+          monthMin,
+          vaccines: [],
+          milestoneStatus: 'done',
+        })
+      }
+
+      milestoneMap.get(monthMin)!.vaccines.push({
+        name: v.name,
+        doseLabel: v.monthRanges.length > 1 ? `dose ${i + 1}` : '',
+        dueAge: ageLabel,
+        status,
+        givenDate,
+        scheduleKey: `${v.name}-${i}`,
+      })
+    }
+  }
+
+  for (const milestone of milestoneMap.values()) {
+    const hasOverdueOrUpcoming = milestone.vaccines.some(
+      (v) => v.status === 'overdue' || v.status === 'upcoming',
+    )
+    const allDone = milestone.vaccines.every((v) => v.status === 'done')
+    if (allDone) milestone.milestoneStatus = 'done'
+    else if (hasOverdueOrUpcoming) milestone.milestoneStatus = 'partial'
+    else milestone.milestoneStatus = 'future'
+  }
+
+  return Array.from(milestoneMap.values()).sort((a, b) => a.monthMin - b.monthMin)
+}
+
 function formatHealthDate(dateStr: string): string {
   if (!dateStr) return ''
   try {
@@ -5210,11 +5610,22 @@ const s = StyleSheet.create({
   calorieRingWrap: { alignItems: 'center', justifyContent: 'center', height: 60, marginBottom: 2 },
   calorieNumber: { position: 'absolute', fontSize: 11, fontWeight: '800' },
 
-  // Health
+  // Health card (hc)
+  hcCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderWidth: 1, borderRadius: 20 },
+  hcIconWrap: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  hcEyebrow: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
+  hcPrimary: { fontSize: 15, fontFamily: 'DMSans_600SemiBold', lineHeight: 20 },
+  hcSecondary: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
+  hcDetailRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginTop: 2 },
+  hcDetailItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  hcDetail: { fontSize: 12, fontFamily: 'DMSans_400Regular' },
+  healthStatusPill: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999 },
+  healthStatusText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  // legacy health row (used by other parts)
   healthList: { gap: 6, marginBottom: 2 },
   healthRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   healthCheck: { width: 14, height: 14, borderRadius: 3, alignItems: 'center', justifyContent: 'center' },
-  healthLabel: { fontSize: 10, fontWeight: '500', flex: 1 },
+  healthLabel: { fontSize: 11, fontFamily: 'DMSans_500Medium', flex: 1 },
 
   // Quick actions
   quickRow: { flexDirection: 'row', justifyContent: 'space-between' },
@@ -5265,17 +5676,13 @@ const s = StyleSheet.create({
   // Reminders
   addReminderBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 12 },
   addReminderBtnText: { fontSize: 12, fontWeight: '700' },
-  reminderInputCard: { padding: 12, borderWidth: 1, gap: 8 },
-  reminderInput: { fontSize: 14, fontWeight: '500' },
+  reminderInputCard: { padding: 16, borderWidth: 1, gap: 10 },
+  reminderInput: { fontSize: 14, fontFamily: 'DMSans_400Regular' },
   reminderInputActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   reminderDateBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, flex: 1 },
   reminderDateBtnText: { fontSize: 11, fontWeight: '600', flex: 1 },
   reminderSaveBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
   reminderSaveBtnText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold', color: '#FFF' },
-  remindersCard: { borderWidth: 1, overflow: 'hidden' },
-  reminderRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
-  reminderCheck: { width: 22, height: 22, borderRadius: 6, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  reminderText: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 20 },
   reminderDueText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
   reminderChildTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1 },
   reminderChildTagText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
@@ -5289,17 +5696,17 @@ const s = StyleSheet.create({
   // Reminders modal — cream bottom sheet
   reminderModalOverlay: { flex: 1, backgroundColor: 'rgba(10,8,6,0.55)', justifyContent: 'flex-end' },
   reminderModal: { height: '90%', borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden' },
-  reminderModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 10, paddingBottom: 14, borderBottomWidth: 1 },
+  reminderModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 14 },
   reminderModalTitle: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
   reminderMetricStrip: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 24, marginTop: 16, borderRadius: 20, borderWidth: 1, overflow: 'hidden' },
   reminderMetricItem: { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 2 },
   reminderMetricVal: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
   reminderMetricLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
   reminderMetricDivider: { width: 1, height: 40 },
-  reminderTabs: { flexDirection: 'row', borderBottomWidth: 1, marginTop: 16 },
-  reminderTab: { flex: 1, alignItems: 'center', paddingBottom: 12, paddingTop: 4 },
-  reminderTabText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
-  reminderTabLine: { height: 2, width: '60%', borderRadius: 2, marginTop: 8 },
+  reminderTabs: { flexDirection: 'row', borderBottomWidth: 1, marginTop: 12 },
+  reminderTab: { flex: 1, alignItems: 'center', paddingBottom: 10, paddingTop: 6 },
+  reminderTabText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold', letterSpacing: 0.1 },
+  reminderTabLine: { height: 2.5, width: '50%', borderRadius: 2, marginTop: 8 },
   reminderModalEmpty: { alignItems: 'center', paddingVertical: 48, gap: 8 },
 
   // Grandma CTA — lavender soft bg with blue burst sticker + ink text
@@ -5405,43 +5812,66 @@ const s = StyleSheet.create({
 
   // Set Goals button
   setGoalsBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 18, borderWidth: 1, borderRadius: 999 },
-  setGoalsBtnText: { fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
+  setGoalsBtnIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  setGoalsBtnText: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.2 },
   setGoalsBtnHint: { flex: 1, fontSize: 12, fontFamily: 'DMSans_400Regular', textAlign: 'right' },
 
-  // Goal Setting Modal
-  goalSuggestBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, marginBottom: 16 },
-  goalSuggestText: { flex: 1, fontSize: 11, fontWeight: '500', lineHeight: 16 },
-  goalRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 16, borderBottomWidth: 1 },
-  goalIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  goalInfo: { flex: 1 },
-  goalLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  goalLabel: { fontSize: 14, fontWeight: '700' },
-  goalDesc: { fontSize: 10, fontWeight: '500', marginTop: 2 },
-  goalInputWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  goalStepBtn: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  goalInput: { width: 56, height: 36, borderWidth: 1, borderRadius: 8, textAlign: 'center', fontSize: 16, fontWeight: '800' },
-  goalUnit: { fontSize: 9, fontWeight: '600', width: 48 },
-  goalReasonCard: { marginHorizontal: 4, marginBottom: 4, padding: 12, borderRadius: 12, borderWidth: 1, borderBottomWidth: 1, gap: 6 },
-  goalReasonHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  goalReasonTitle: { fontSize: 12, fontWeight: '800' },
-  goalReasonText: { fontSize: 12, fontWeight: '500', lineHeight: 18 },
-  goalReasonSource: { fontSize: 9, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },
-  goalCompareRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 16 },
-  goalResetBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 16, borderWidth: 1, borderRadius: 999 },
-  goalResetText: { fontSize: 12, fontWeight: '700' },
-  goalSaveBtn: { alignItems: 'center', paddingVertical: 14, marginTop: 16 },
-  goalSaveText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
+  // Goal Setting Modal (gs = goal sheet)
+  gsSheet: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 36, borderTopLeftRadius: 36, borderTopRightRadius: 36 },
+  gsDragHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
+  gsHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 16 },
+  gsTitle: { fontSize: 28, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.6, lineHeight: 32 },
+  gsSubtitle: { fontSize: 12, fontFamily: 'DMSans_400Regular', marginTop: 4, lineHeight: 17 },
+  gsCloseBtn: { width: 34, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center', borderWidth: 1, marginTop: 2 },
+  gsAgeBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, alignSelf: 'flex-start', marginBottom: 18 },
+  gsAgeBannerText: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
+  gsCardList: { gap: 10, paddingBottom: 4 },
+  gsCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: 20, borderWidth: 1 },
+  gsCardIcon: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  gsCardInfo: { flex: 1 },
+  gsCardLabel: { fontSize: 15, fontFamily: 'DMSans_600SemiBold' },
+  gsCardDesc: { fontSize: 11, fontFamily: 'DMSans_400Regular', marginTop: 2 },
+  gsStepper: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  gsStepBtn: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  gsStepValue: { alignItems: 'center', minWidth: 52 },
+  gsStepNum: { fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, lineHeight: 26 },
+  gsStepUnit: { fontSize: 9, fontFamily: 'DMSans_500Medium', textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 1 },
+  gsFooter: { marginTop: 20, gap: 10 },
+  gsUseSuggestedBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 13, borderRadius: 999, borderWidth: 1 },
+  gsUseSuggestedText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  gsSaveBtn: { alignItems: 'center', paddingVertical: 17, borderRadius: 999 },
+  gsSaveBtnText: { fontSize: 16, fontFamily: 'DMSans_700Bold', color: '#FFFFFF' },
 
   // Health tags (allergies)
-  healthTagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 4 },
+  healthTagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
   healthTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999 },
   healthTagText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
 
-  // View Full History button
-  healthHistoryBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 14, borderWidth: 1, marginTop: 20, marginBottom: 8 },
-  healthHistoryBtnText: { flex: 1, fontSize: 13, fontWeight: '700' },
+  // Health Detail Modal (hd = health detail)
+  hdSleepBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 16 },
+  hdSleepIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  hdBannerLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', letterSpacing: 1.2, textTransform: 'uppercase' },
+  hdBannerValue: { fontSize: 20, fontFamily: 'Fraunces_700Bold', marginTop: 2, letterSpacing: -0.3 },
+  hdBannerStat: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 },
+  hdBannerStatSub: { fontSize: 11, fontFamily: 'DMSans_400Regular' },
+  hdAllergyTag: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 },
+  hdAllergyText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  hdVaxIcon: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  hdUrgencyBadge: { paddingVertical: 2, paddingHorizontal: 8, borderRadius: 999 },
+  hdUrgencyText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  hdApptText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  hdVaxBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 },
+  hdVaxBtnText: { fontSize: 12, fontFamily: 'DMSans_600SemiBold' },
+  hdChangeDateText: { fontSize: 11, fontFamily: 'DMSans_500Medium', textAlign: 'right' },
+  hdGrowthCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, borderWidth: 1, marginTop: 4 },
+  hdGrowthIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  hdGrowthLabel: { fontSize: 9, fontFamily: 'DMSans_600SemiBold', letterSpacing: 1.2, textTransform: 'uppercase' },
+  hdGrowthValue: { fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, marginTop: 2 },
+  hdGrowthDate: { fontSize: 11, fontFamily: 'DMSans_500Medium' },
+  hdHistoryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 999, marginTop: 20, marginBottom: 8 },
+  hdHistoryBtnText: { fontSize: 15, fontFamily: 'DMSans_700Bold', color: '#FFFFFF' },
 
-  // Vaccine schedule button
+  // Vaccine schedule button (legacy — kept for date picker done button)
   vaccineScheduleBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 20, borderWidth: 1 },
-  vaccineScheduleBtnText: { fontSize: 11, fontWeight: '700' },
+  vaccineScheduleBtnText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
 })
