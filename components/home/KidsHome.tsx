@@ -54,6 +54,8 @@ import { useBadgeStore } from '../../store/useBadgeStore'
 import { supabase } from '../../lib/supabase'
 import { estimateCalories } from '../../lib/foodCalories'
 import type { ChildWithRole } from '../../types'
+import { MoodStickerStrip, MoodBubbleCluster } from '../charts/SvgCharts'
+import type { MoodStripDay, MoodBubbleItem } from '../charts/SvgCharts'
 
 const SW = Dimensions.get('window').width
 const AnimatedSvgCircle = Reanimated.createAnimatedComponent(SvgCircle)
@@ -438,9 +440,6 @@ const MOOD_COLORS: Record<string, string> = {
 }
 const MOOD_LABELS: Record<string, string> = {
   happy: 'Happy', calm: 'Calm', energetic: 'Active', fussy: 'Fussy', cranky: 'Cranky',
-}
-const MOOD_SCORE: Record<string, number> = {
-  cranky: 1, fussy: 2, energetic: 3, calm: 4, happy: 5,
 }
 const MOOD_EMOJI: Record<string, string> = {
   cranky: '😠', fussy: '😟', energetic: '😐', calm: '🙂', happy: '😊',
@@ -3017,13 +3016,6 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
     return { chartDays: weeks }
   }, [startDate, endDate])
 
-  // Chart dimensions
-  const chartW = SW - 96
-  const chartH = 180
-  const padL = 16, padR = 16, padT = 28, padB = 28
-  const innerW = chartW - padL - padR
-  const innerH = chartH - padT - padB
-
   // Dominant mood per bucket (highest count across all dates in the bucket wins)
   const dominantPerDay = chartDays.map((day, i) => {
     const dayData: Record<string, number> = {}
@@ -3039,25 +3031,27 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
       if (count > maxCount) { maxCount = count; dominant = mood }
     }
     if (!dominant) return null
-    const score = MOOD_SCORE[dominant] || 3
-    const x = chartDays.length > 1 ? padL + (i / (chartDays.length - 1)) * innerW : padL + innerW / 2
-    const y = padT + innerH - ((score - 1) / 4) * innerH
-    return { x, y, score, mood: dominant, emoji: MOOD_EMOJI[dominant] || '😐', color: MOOD_COLORS[dominant] || '#888' }
+    return { mood: dominant }
   })
 
-  const activePts = dominantPerDay.filter(Boolean) as NonNullable<typeof dominantPerDay[0]>[]
-
-  function smoothPath(pts: { x: number; y: number }[]): string {
-    if (pts.length < 2) return ''
-    let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`
-    for (let i = 1; i < pts.length; i++) {
-      const prev = pts[i - 1], curr = pts[i]
-      const cp1x = (prev.x + (curr.x - prev.x) * 0.4).toFixed(1)
-      const cp2x = (curr.x - (curr.x - prev.x) * 0.4).toFixed(1)
-      d += ` C ${cp1x} ${prev.y.toFixed(1)}, ${cp2x} ${curr.y.toFixed(1)}, ${curr.x.toFixed(1)} ${curr.y.toFixed(1)}`
+  const stripDays: MoodStripDay[] = chartDays.map((day, i) => {
+    const pt = dominantPerDay[i]
+    if (!pt) return { label: day.label, dominantMood: null, intensityRatio: 0 }
+    const dayData: Record<string, number> = {}
+    for (const d of day.dates) {
+      const dayMoods = moodByDay[d] || {}
+      for (const [mood, count] of Object.entries(dayMoods)) {
+        dayData[mood] = (dayData[mood] || 0) + count
+      }
     }
-    return d
-  }
+    const bucketTotal = Object.values(dayData).reduce((a, b) => a + b, 0)
+    const dominantCount = dayData[pt.mood] ?? 1
+    return {
+      label: day.label,
+      dominantMood: pt.mood,
+      intensityRatio: bucketTotal > 0 ? dominantCount / bucketTotal : 1,
+    }
+  })
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -3082,68 +3076,9 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
 
           {totalMoods > 0 ? (
             <>
-              {/* Mood-face chart */}
-              <View style={[s.moodChartWrap, { backgroundColor: colors.surfaceRaised, borderRadius: radius.md }]}>
-                <Svg width={chartW} height={chartH}>
-                  {/* 5-level grid lines */}
-                  {[1, 2, 3, 4, 5].map((level) => {
-                    const y = padT + innerH - ((level - 1) / 4) * innerH
-                    return (
-                      <SvgLine
-                        key={level}
-                        x1={padL} y1={y} x2={padL + innerW} y2={y}
-                        stroke={colors.border} strokeWidth={1}
-                      />
-                    )
-                  })}
-
-                  {/* Smooth line connecting active days */}
-                  {activePts.length >= 2 && (
-                    <Path
-                      d={smoothPath(activePts)}
-                      stroke={colors.textFaint}
-                      strokeWidth={2}
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  )}
-
-                  {/* Day/week labels */}
-                  {chartDays.map((day, i) => (
-                    <SvgText
-                      key={day.date}
-                      x={chartDays.length > 1 ? padL + (i / (chartDays.length - 1)) * innerW : padL + innerW / 2}
-                      y={chartH - 8}
-                      textAnchor="middle"
-                      fontSize={8} fontWeight="700"
-                      fill={colors.textMuted}
-                    >
-                      {day.label}
-                    </SvgText>
-                  ))}
-                </Svg>
-
-                {/* MoodFace stickers overlaid on chart positions */}
-                {dominantPerDay.map((pt, i) => {
-                  if (!pt) return null
-                  const faceSize = 30
-                  return (
-                    <View
-                      key={`face-${i}`}
-                      pointerEvents="none"
-                      style={{
-                        position: 'absolute',
-                        left: pt.x - faceSize / 2,
-                        top: pt.y - faceSize / 2,
-                        width: faceSize,
-                        height: faceSize,
-                      }}
-                    >
-                      <MoodFace size={faceSize} variant={moodFaceVariant(pt.mood)} fill={moodFaceFill(pt.mood)} />
-                    </View>
-                  )
-                })}
+              {/* Mood sticker strip */}
+              <View style={[s.moodChartWrap, { backgroundColor: colors.surfaceRaised, borderRadius: radius.md, paddingHorizontal: 4, paddingVertical: 10 }]}>
+                <MoodStickerStrip days={stripDays} />
               </View>
 
               {/* Mood count chips */}
@@ -3167,6 +3102,13 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, moodByDay
                   )
                 })}
               </View>
+
+              {/* Mood bubble cluster */}
+              <MoodBubbleCluster
+                items={(Object.entries(moodCounts) as [string, number][])
+                  .filter(([, c]) => c > 0)
+                  .map(([mood, count]): MoodBubbleItem => ({ mood, count }))}
+              />
 
               {/* Summary */}
               <View style={[s.modalSummary, {
