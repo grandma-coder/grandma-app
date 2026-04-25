@@ -26,7 +26,7 @@ interface BirthDetailModalProps {
   visible: boolean
   onClose: () => void
   topicKey: BirthTopicKey | null
-  onAskGrandma: (topicTitle: string) => void
+  onAskGrandma: () => void
 }
 
 export function BirthDetailModal({
@@ -54,7 +54,7 @@ export function BirthDetailModal({
 
   const handleAskGrandma = () => {
     handleClose()
-    onAskGrandma(topic.title)
+    onAskGrandma()
   }
 
   return (
@@ -69,7 +69,7 @@ export function BirthDetailModal({
         <View
           style={[
             styles.sheet,
-            { backgroundColor: isDark ? colors.surface : '#FFFEF8', paddingBottom: insets.bottom + 16 },
+            { backgroundColor: colors.surface, paddingBottom: insets.bottom + 16 },
           ]}
         >
           {/* Handle */}
@@ -93,7 +93,7 @@ export function BirthDetailModal({
                 <Display size={20} color={isDark ? colors.text : '#141313'}>
                   {topic.title}
                 </Display>
-                <Body size={12} color={isDark ? colors.textSecondary : '#777'} style={{ marginTop: 2 }}>
+                <Body size={12} color={colors.textSecondary} style={{ marginTop: 2 }}>
                   {topic.subtitle}
                 </Body>
               </View>
@@ -158,23 +158,23 @@ function AccordionItem({ section, index, isOpen, onToggle, accentColor, isDark, 
           {
             backgroundColor: isOpen
               ? (isDark ? 'rgba(196,181,253,0.12)' : '#F4F0FF')
-              : (isDark ? colors.surface : '#FFFEF8'),
+              : colors.surface,
             borderColor: isOpen ? '#C4B5FD' : (isDark ? colors.border : '#E8E0CC'),
             opacity: pressed ? 0.8 : 1,
           },
         ]}
       >
         <View style={[styles.numCircle, { backgroundColor: accentColor + '40', borderColor: accentColor }]}>
-          <Text style={[styles.numText, { color: isDark ? colors.text : '#141313' }]}>{index + 1}</Text>
+          <Text style={[styles.numText, { color: colors.text }]}>{index + 1}</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Body size={14} color={isDark ? colors.text : '#141313'} style={{ fontFamily: 'DMSans_600SemiBold' }}>
+          <Body size={14} color={colors.text} style={{ fontFamily: 'DMSans_600SemiBold' }}>
             {section.title}
           </Body>
         </View>
         {isOpen
           ? <ChevronUp size={16} color={accentColor} strokeWidth={2.5} />
-          : <ChevronDown size={16} color={isDark ? colors.textMuted : '#AAAAAA'} strokeWidth={2.5} />}
+          : <ChevronDown size={16} color={colors.textMuted} strokeWidth={2.5} />}
       </Pressable>
 
       {isOpen && (
@@ -182,12 +182,12 @@ function AccordionItem({ section, index, isOpen, onToggle, accentColor, isDark, 
           style={[
             styles.accordionBody,
             {
-              backgroundColor: isDark ? 'rgba(196,181,253,0.06)' : '#FDFBFF',
+              backgroundColor: isDark ? 'rgba(196,181,253,0.06)' : colors.surface,
               borderColor: isDark ? colors.border : '#E8E0CC',
             },
           ]}
         >
-          <Body size={13} color={isDark ? colors.textSecondary : '#555'} style={{ lineHeight: 20 }}>
+          <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
             {section.content}
           </Body>
           {section.bullets && section.bullets.length > 0 && (
@@ -195,7 +195,7 @@ function AccordionItem({ section, index, isOpen, onToggle, accentColor, isDark, 
               {section.bullets.map((bullet, i) => (
                 <View key={i} style={styles.bulletRow}>
                   <View style={[styles.bulletDot, { backgroundColor: accentColor }]} />
-                  <Body size={12} color={isDark ? colors.textSecondary : '#555'} style={{ flex: 1, lineHeight: 18 }}>
+                  <Body size={12} color={colors.textSecondary} style={{ flex: 1, lineHeight: 18 }}>
                     {bullet}
                   </Body>
                 </View>

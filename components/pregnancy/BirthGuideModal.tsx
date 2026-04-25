@@ -61,7 +61,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
     onClose()
   }
 
-  const handleAskGrandma = (topicTitle: string) => {
+  const handleAskGrandma = () => {
     handleClose()
     router.push('/grandma-talk')
   }
@@ -112,7 +112,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                     style={({ pressed }) => [
                       styles.typeCard,
                       {
-                        backgroundColor: isDark ? colors.surfaceRaised ?? colors.surface : item.bg,
+                        backgroundColor: isDark ? colors.surfaceRaised : item.bg,
                         borderColor: item.border,
                         opacity: pressed ? 0.8 : 1,
                       },
