@@ -610,6 +610,85 @@ export function MoodStickerStrip({ days }: MoodStickerStripProps) {
   )
 }
 
+// ─── Mood Bubble Cluster ───────────────────────────────────────────────────
+
+export interface MoodBubbleItem {
+  mood: string
+  count: number
+}
+
+interface MoodBubbleClusterProps {
+  items: MoodBubbleItem[]
+}
+
+// Five fixed scatter positions (largest bubble gets index 0).
+const BUBBLE_POSITIONS: Array<Record<string, unknown>> = [
+  { alignSelf: 'center', top: 0 },
+  { left: 8, top: '40%' },
+  { right: 8, top: '35%' },
+  { left: '38%', bottom: 8 },
+  { left: 4, bottom: 4 },
+]
+
+const BUBBLE_MIN_SIZE = 56
+const BUBBLE_MAX_SIZE = 112
+
+export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
+  const { colors, isDark } = useTheme()
+
+  const sorted = [...items]
+    .filter((item) => item.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+
+  const maxCount = sorted[0]?.count ?? 1
+
+  return (
+    <View style={bubbleClusterStyles.container}>
+      {sorted.map((item, idx) => {
+        const size = Math.round(BUBBLE_MIN_SIZE + (item.count / maxCount) * (BUBBLE_MAX_SIZE - BUBBLE_MIN_SIZE))
+        const fill = moodFaceFill(item.mood)
+        const variant = moodFaceVariant(item.mood)
+        const stroke = isDark ? fill : STICKER_INK
+        const label = item.mood.charAt(0).toUpperCase() + item.mood.slice(1)
+        const pos = BUBBLE_POSITIONS[idx] ?? BUBBLE_POSITIONS[4]
+
+        return (
+          <View
+            key={item.mood}
+            style={[
+              bubbleClusterStyles.bubble,
+              {
+                width: size,
+                height: size,
+                borderRadius: size / 2,
+                backgroundColor: fill + '40',
+                borderColor: fill + '70',
+                shadowColor: fill,
+              },
+              pos as any,
+            ]}
+          >
+            <View style={bubbleClusterStyles.shine} />
+            <MoodFace
+              size={Math.round(size * 0.5)}
+              variant={variant}
+              fill={fill}
+              stroke={stroke}
+            />
+            <Text style={[bubbleClusterStyles.bubbleLabel, { color: fill }]} numberOfLines={1}>
+              {label}
+            </Text>
+            <Text style={[bubbleClusterStyles.bubbleCount, { color: fill }]}>
+              {item.count}
+            </Text>
+          </View>
+        )
+      })}
+    </View>
+  )
+}
+
 // ─── Styles ────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
@@ -678,5 +757,47 @@ const moodStyles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+})
+
+const bubbleClusterStyles = StyleSheet.create({
+  container: {
+    height: 200,
+    position: 'relative',
+  },
+  bubble: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  shine: {
+    position: 'absolute',
+    top: '14%',
+    left: '18%',
+    width: '30%',
+    height: '20%',
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    transform: [{ rotate: '-22deg' }],
+  },
+  bubbleLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    position: 'relative',
+    zIndex: 1,
+    marginTop: 2,
+  },
+  bubbleCount: {
+    fontSize: 12,
+    fontWeight: '700',
+    position: 'relative',
+    zIndex: 1,
+    lineHeight: 14,
   },
 })
