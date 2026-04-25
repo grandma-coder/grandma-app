@@ -3627,15 +3627,34 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                         )}
                       </View>
 
-                      {/* Inline date picker */}
+                      {/* Inline date picker — sticker-paper card */}
                       {isPickerOpen && (
-                        <View style={{ paddingBottom: 12, paddingLeft: 10 }}>
+                        <View style={{
+                          marginTop: 6, marginBottom: 12, marginLeft: 10, marginRight: 4,
+                          backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                          borderWidth: 1.5, borderColor: ST_INK,
+                          borderRadius: 22, padding: 12,
+                          shadowColor: ST_INK,
+                          shadowOffset: { width: 0, height: 3 },
+                          shadowOpacity: 1,
+                          shadowRadius: 0,
+                          elevation: 3,
+                        }}>
+                          <Text style={{
+                            fontSize: 11, fontFamily: 'DMSans_600SemiBold',
+                            color: ink3, textTransform: 'uppercase', letterSpacing: 1.4,
+                            paddingHorizontal: 4, paddingBottom: 4,
+                          }}>
+                            Pick a date
+                          </Text>
                           <DateTimePicker
                             value={pickerDate}
                             mode="date"
                             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                             minimumDate={new Date()}
                             themeVariant={isDark ? 'dark' : 'light'}
+                            accentColor={ST_INK}
+                            textColor={ST_INK}
                             onChange={(e: DateTimePickerEvent, d?: Date) => {
                               if (Platform.OS === 'android') setExpandedKey(null)
                               if (e.type === 'set' && d) {
@@ -3652,9 +3671,31 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                           {Platform.OS === 'ios' && (
                             <Pressable
                               onPress={() => setExpandedKey(null)}
-                              style={[s.vaccineScheduleBtn, { alignSelf: 'center', marginTop: 4, backgroundColor: brand.primary + '20', borderColor: brand.primary }]}
+                              style={({ pressed }) => ({
+                                alignSelf: 'center',
+                                marginTop: 6,
+                                paddingHorizontal: 28,
+                                height: 44,
+                                borderRadius: 999,
+                                borderWidth: 2,
+                                borderColor: ST_INK,
+                                backgroundColor: ST_YELLOW,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                shadowColor: ST_INK,
+                                shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                                shadowOpacity: 1,
+                                shadowRadius: 0,
+                                elevation: 4,
+                                transform: [{ translateY: pressed ? 2 : 0 }],
+                              })}
                             >
-                              <Text style={[s.vaccineScheduleBtnText, { color: brand.primary }]}>Done</Text>
+                              <Text style={{
+                                fontSize: 14, fontFamily: 'DMSans_700Bold',
+                                color: ST_INK, letterSpacing: -0.2,
+                              }}>
+                                Done
+                              </Text>
                             </Pressable>
                           )}
                         </View>
