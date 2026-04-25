@@ -59,7 +59,7 @@ import { RemindersSection } from './pregnancy/RemindersSection'
 import type { ReminderLogType } from './pregnancy/RemindersSection'
 import { WeekDetailModal } from './pregnancy/WeekDetailModal'
 import { WeightTrendCard } from './pregnancy/WeightTrendCard'
-import { BirthGuidePreview } from './pregnancy/BirthGuidePreview'
+import { BirthGuideModal } from '../pregnancy/BirthGuideModal'
 import { AppointmentDetailModal } from './pregnancy/AppointmentDetailModal'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 
@@ -292,6 +292,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
   const [weekDetailVisible, setWeekDetailVisible] = useState(false)
   const [detailWeek, setDetailWeek] = useState(weekNumber)
   const [apptDetail, setApptDetail] = useState<StandardAppointment | null>(null)
+  const [birthGuideVisible, setBirthGuideVisible] = useState(false)
 
   const [userId, setUserId] = useState<string | undefined>(undefined)
   useEffect(() => {
@@ -430,10 +431,32 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
         <WeightTrendCard userId={userId} weekNumber={weekNumber} />
       </View>
 
-      {/* 7. Birth guide — collapsible cards inline */}
+      {/* 7. Birth guide — compact banner */}
       <View style={styles.section}>
-        <MonoCaps style={{ marginBottom: 12 }}>BIRTH GUIDE</MonoCaps>
-        <BirthGuidePreview />
+        <Pressable
+          onPress={() => setBirthGuideVisible(true)}
+          style={({ pressed }) => [
+            styles.birthBanner,
+            {
+              backgroundColor: colors.surface,
+              borderColor: '#C4B5FD',
+              opacity: pressed ? 0.8 : 1,
+            },
+          ]}
+        >
+          <View style={styles.birthBannerTile}>
+            <Text style={styles.birthBannerEmoji}>🌿</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.birthBannerTitle, { color: colors.text }]}>
+              Birth Guide
+            </Text>
+            <Text style={[styles.birthBannerSub, { color: colors.textSecondary }]}>
+              Natural · C-Section · Home · Water
+            </Text>
+          </View>
+          <Text style={styles.birthBannerChevron}>›</Text>
+        </Pressable>
       </View>
 
       {/* 8. Grandma CTA */}
@@ -452,6 +475,12 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
         appointment={apptDetail}
         currentWeek={weekNumber}
         onClose={() => setApptDetail(null)}
+      />
+
+      {/* Birth guide modal */}
+      <BirthGuideModal
+        visible={birthGuideVisible}
+        onClose={() => setBirthGuideVisible(false)}
       />
 
       {/* Inline log forms modal */}
@@ -505,6 +534,43 @@ const styles = StyleSheet.create({
   modalHeader: { alignItems: 'center', paddingTop: 12, paddingHorizontal: 20, paddingBottom: 8, flexDirection: 'row', justifyContent: 'center' },
   modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', position: 'absolute', top: 12 },
   modalClose: { position: 'absolute', right: 20, top: 8, padding: 8 },
+
+  birthBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    shadowColor: '#C4B5FD',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  birthBannerTile: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#F0EBFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  birthBannerEmoji: { fontSize: 20 },
+  birthBannerTitle: {
+    fontSize: 15,
+    fontFamily: 'DMSans_600SemiBold',
+  },
+  birthBannerSub: {
+    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    marginTop: 2,
+  },
+  birthBannerChevron: {
+    fontSize: 20,
+    color: '#C4B5FD',
+  },
 
   simpleForm: { padding: 24, gap: 20, alignItems: 'center' },
   simpleFormHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
