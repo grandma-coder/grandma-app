@@ -596,10 +596,18 @@ interface HistoryPanelProps {
 }
 
 function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const sessions = useGrandmaHistoryStore((s) => s.sessions)
   const deleteSession = useGrandmaHistoryStore((s) => s.deleteSession)
+
+  // Sticker palette
+  const ST_INK = '#141313'
+  const ST_YELLOW = isDark ? '#F0CE4C' : '#F5D652'
+  const ST_LILAC = isDark ? '#D0BFEC' : '#C8B6E8'
+  const PAPER = isDark ? colors.surface : '#FFFEF8'
+  const ink = isDark ? colors.text : ST_INK
+  const ink3 = colors.textMuted
 
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, zIndex: 10 }]}>
@@ -609,77 +617,138 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
         { paddingTop: insets.top + 10, borderBottomColor: colors.border, backgroundColor: colors.bg }
       ]}>
         <Pressable onPress={onClose} style={histStyles.headerBtn} hitSlop={8}>
-          <ArrowLeft size={22} color={colors.textSecondary} />
+          <ArrowLeft size={22} color={ink} strokeWidth={2} />
         </Pressable>
-        <Text style={[histStyles.headerTitle, { color: colors.text }]}>Past conversations</Text>
-        <Pressable onPress={onNewChat} style={histStyles.headerBtn} hitSlop={8}>
-          <Plus size={22} color={colors.primary} />
+        <Text style={{ fontSize: 22, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.4 }}>
+          Past conversations
+        </Text>
+        <Pressable
+          onPress={onNewChat}
+          hitSlop={8}
+          style={({ pressed }) => ({
+            width: 38, height: 38, borderRadius: 19,
+            backgroundColor: ST_YELLOW,
+            borderWidth: 1.5, borderColor: ST_INK,
+            alignItems: 'center', justifyContent: 'center',
+            shadowColor: ST_INK,
+            shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+            shadowOpacity: 1, shadowRadius: 0, elevation: 4,
+            transform: [{ translateY: pressed ? 2 : 0 }],
+          })}
+        >
+          <Plus size={18} color={ST_INK} strokeWidth={2.5} />
         </Pressable>
       </View>
 
       {sessions.length === 0 ? (
         <View style={histStyles.empty}>
-          <MessageCircle size={48} color={colors.textMuted} strokeWidth={1.5} />
-          <Text style={[histStyles.emptyTitle, { color: colors.text }]}>No past chats yet</Text>
-          <Text style={[histStyles.emptySubtitle, { color: colors.textMuted }]}>
+          <MessageCircle size={48} color={ink3} strokeWidth={1.5} />
+          <Text style={{ fontSize: 22, fontFamily: 'Fraunces_600SemiBold', color: ink, textAlign: 'center', letterSpacing: -0.4 }}>
+            No past chats yet
+          </Text>
+          <Text style={{ fontSize: 14, fontFamily: 'DMSans_400Regular', color: ink3, textAlign: 'center', lineHeight: 20 }}>
             Your conversations with Grandma will appear here
           </Text>
           <Pressable
             onPress={onNewChat}
-            style={[histStyles.newChatBtn, { backgroundColor: colors.primary }]}
+            style={({ pressed }) => ({
+              flexDirection: 'row', alignItems: 'center', gap: 8,
+              paddingHorizontal: 24, paddingVertical: 12,
+              borderRadius: 999,
+              backgroundColor: ST_YELLOW,
+              borderWidth: 1.5, borderColor: ST_INK,
+              marginTop: 12,
+              shadowColor: ST_INK,
+              shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+              shadowOpacity: 1, shadowRadius: 0, elevation: 4,
+              transform: [{ translateY: pressed ? 2 : 0 }],
+            })}
           >
-            <Plus size={16} color="#FFF" strokeWidth={2.5} />
-            <Text style={histStyles.newChatBtnLabel}>Start a conversation</Text>
+            <Plus size={16} color={ST_INK} strokeWidth={2.5} />
+            <Text style={{ color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 15, letterSpacing: -0.2 }}>
+              Start a conversation
+            </Text>
           </Pressable>
         </View>
       ) : (
         <FlatList
           data={sessions}
           keyExtractor={(s) => s.id}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 16, gap: 10 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 16, gap: 12 }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <Pressable
               onPress={onNewChat}
-              style={[histStyles.newSessionRow, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={({ pressed }) => ({
+                flexDirection: 'row', alignItems: 'center', gap: 12,
+                borderRadius: 18,
+                borderWidth: 1.5, borderColor: ST_INK,
+                padding: 14, marginBottom: 4,
+                backgroundColor: ST_YELLOW,
+                shadowColor: ST_INK,
+                shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                shadowOpacity: 1, shadowRadius: 0, elevation: 4,
+                transform: [{ translateY: pressed ? 2 : 0 }],
+              })}
             >
-              <View style={[histStyles.newSessionIcon, { backgroundColor: colors.primaryTint }]}>
-                <Plus size={18} color={colors.primary} strokeWidth={2.5} />
+              <View style={{
+                width: 36, height: 36, borderRadius: 18,
+                backgroundColor: PAPER, borderWidth: 1.5, borderColor: ST_INK,
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Plus size={18} color={ST_INK} strokeWidth={2.5} />
               </View>
-              <Text style={[histStyles.newSessionLabel, { color: colors.primary }]}>New conversation</Text>
+              <Text style={{ fontSize: 15, fontFamily: 'DMSans_700Bold', color: ST_INK, letterSpacing: -0.2 }}>
+                New conversation
+              </Text>
             </Pressable>
           }
           renderItem={({ item }) => (
             <Pressable
               onPress={() => onSelect(item)}
-              style={({ pressed }) => [
-                histStyles.sessionCard,
-                {
-                  backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}
+              style={({ pressed }) => ({
+                flexDirection: 'row', alignItems: 'center', gap: 12,
+                borderRadius: 18, padding: 14,
+                backgroundColor: PAPER,
+                borderWidth: 1.5, borderColor: ST_INK,
+                shadowColor: ST_INK,
+                shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                shadowOpacity: 1, shadowRadius: 0, elevation: 3,
+                transform: [{ translateY: pressed ? 2 : 0 }],
+              })}
             >
               <View style={histStyles.sessionCardLeft}>
-                <View style={[histStyles.sessionAvatar, { backgroundColor: colors.primaryTint }]}>
-                  <Sparkles size={14} color={colors.primary} strokeWidth={2.5} />
+                <View style={{
+                  width: 36, height: 36, borderRadius: 18,
+                  backgroundColor: ST_LILAC, borderWidth: 1.5, borderColor: ST_INK,
+                  alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2,
+                }}>
+                  <Sparkles size={14} color={ST_INK} strokeWidth={2.5} />
                 </View>
                 <View style={histStyles.sessionMeta}>
-                  <Text style={[histStyles.sessionTitle, { color: colors.text }]} numberOfLines={2}>
+                  <Text style={{ fontSize: 14, fontFamily: 'DMSans_600SemiBold', color: ink, lineHeight: 20 }} numberOfLines={2}>
                     {item.title}
                   </Text>
                   <View style={histStyles.sessionTags}>
-                    <Text style={[histStyles.sessionDate, { color: colors.textMuted }]}>
+                    <Text style={{ fontSize: 11, fontFamily: 'DMSans_500Medium', color: ink3 }}>
                       {formatDate(item.createdAt)}
                     </Text>
-                    <View style={[histStyles.sessionBadge, { backgroundColor: getBehaviorColor(item.behavior) + '22' }]}>
-                      <Text style={[histStyles.sessionBadgeText, { color: getBehaviorColor(item.behavior) }]}>
+                    <View style={{
+                      paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
+                      backgroundColor: getBehaviorColor(item.behavior) + (isDark ? '30' : 'AA'),
+                      borderWidth: 1, borderColor: ST_INK + '30',
+                    }}>
+                      <Text style={{ fontSize: 10, fontFamily: 'DMSans_700Bold', color: ST_INK, textTransform: 'uppercase', letterSpacing: 0.6 }}>
                         {getBehaviorLabel(item.behavior)}
                       </Text>
                     </View>
                     {item.childName && (
-                      <View style={[histStyles.sessionBadge, { backgroundColor: colors.surfaceRaised }]}>
-                        <Text style={[histStyles.sessionBadgeText, { color: colors.textSecondary }]}>
+                      <View style={{
+                        paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
+                        backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
+                        borderWidth: 1, borderColor: ST_INK + '30',
+                      }}>
+                        <Text style={{ fontSize: 10, fontFamily: 'DMSans_700Bold', color: ink, textTransform: 'uppercase', letterSpacing: 0.6 }}>
                           {item.childName}
                         </Text>
                       </View>
@@ -692,7 +761,7 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
                 hitSlop={8}
                 style={histStyles.deleteBtn}
               >
-                <Trash2 size={16} color={colors.textMuted} strokeWidth={1.5} />
+                <Trash2 size={16} color={ink3} strokeWidth={1.8} />
               </Pressable>
             </Pressable>
           )}
