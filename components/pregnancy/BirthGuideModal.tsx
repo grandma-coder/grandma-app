@@ -79,7 +79,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
           <View
             style={[
               styles.sheet,
-              { backgroundColor: isDark ? colors.surface : '#FFFEF8', paddingBottom: insets.bottom + 16 },
+              { backgroundColor: colors.surface, paddingBottom: insets.bottom + 16 },
             ]}
           >
             {/* Handle */}
@@ -92,7 +92,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
 
             {/* Header */}
             <View style={styles.headerPad}>
-              <Display size={22} color={isDark ? colors.text : '#141313'}>Birth Guide 🌿</Display>
+              <Display size={22}>Birth Guide 🌿</Display>
               <Body size={13} color={isDark ? colors.textSecondary : '#888'} style={{ marginTop: 4 }}>
                 What do you want to explore?
               </Body>
@@ -111,11 +111,15 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                     onPress={() => setDetailTopic(item.key)}
                     style={({ pressed }) => [
                       styles.typeCard,
-                      { backgroundColor: item.bg, borderColor: item.border, opacity: pressed ? 0.8 : 1 },
+                      {
+                        backgroundColor: isDark ? colors.surfaceRaised ?? colors.surface : item.bg,
+                        borderColor: item.border,
+                        opacity: pressed ? 0.8 : 1,
+                      },
                     ]}
                   >
                     <Text style={styles.typeEmoji}>{item.emoji}</Text>
-                    <Body size={13} color={isDark ? colors.text : '#141313'} style={{ fontFamily: 'DMSans_600SemiBold', marginTop: 4 }}>
+                    <Body size={13} color={colors.text} style={{ fontFamily: 'DMSans_600SemiBold', marginTop: 4 }}>
                       {item.title}
                     </Body>
                     <Body size={11} color={isDark ? colors.textSecondary : '#777'} style={{ marginTop: 2 }}>
@@ -148,7 +152,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                       <Text style={styles.extraEmoji}>{item.emoji}</Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Body size={14} color={isDark ? colors.text : '#141313'} style={{ fontFamily: 'DMSans_600SemiBold' }}>
+                      <Body size={14} color={colors.text} style={{ fontFamily: 'DMSans_600SemiBold' }}>
                         {item.title}
                       </Body>
                       <Body size={12} color={isDark ? colors.textSecondary : '#888'} style={{ marginTop: 2 }}>
