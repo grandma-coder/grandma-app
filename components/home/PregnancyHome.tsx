@@ -64,6 +64,7 @@ import { AppointmentDetailModal } from './pregnancy/AppointmentDetailModal'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 
 const SCREEN_W = Dimensions.get('window').width
+const BIRTH_ACCENT = '#C4B5FD'
 
 function getTrimester(week: number): 1 | 2 | 3 {
   if (week <= 13) return 1
@@ -278,7 +279,7 @@ type InlineLogType =
 interface PregnancyHomeProps { topInset?: number }
 
 export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const queryClient = useQueryClient()
 
@@ -439,12 +440,12 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
             styles.birthBanner,
             {
               backgroundColor: colors.surface,
-              borderColor: '#C4B5FD',
+              borderColor: BIRTH_ACCENT,
               opacity: pressed ? 0.8 : 1,
             },
           ]}
         >
-          <View style={styles.birthBannerTile}>
+          <View style={[styles.birthBannerTile, { backgroundColor: isDark ? colors.surfaceRaised ?? colors.surface : '#F0EBFF' }]}>
             <Text style={styles.birthBannerEmoji}>🌿</Text>
           </View>
           <View style={{ flex: 1 }}>
@@ -542,7 +543,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     padding: 14,
-    shadowColor: '#C4B5FD',
+    shadowColor: BIRTH_ACCENT,
     shadowOffset: { width: 3, height: 3 },
     shadowOpacity: 1,
     shadowRadius: 0,
@@ -552,7 +553,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#F0EBFF',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   },
   birthBannerChevron: {
     fontSize: 20,
-    color: '#C4B5FD',
+    color: BIRTH_ACCENT,
   },
 
   simpleForm: { padding: 24, gap: 20, alignItems: 'center' },
