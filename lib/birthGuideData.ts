@@ -30,6 +30,12 @@ export interface BirthTopic {
   sections: BirthSection[]
 }
 
+function bagItems(category: string): string[] {
+  const found = hospitalBagChecklist.find((c) => c.category === category)
+  if (!found) throw new Error(`hospitalBagChecklist missing category "${category}"`)
+  return found.items
+}
+
 export const BIRTH_TOPICS: BirthTopic[] = [
   {
     key: 'natural',
@@ -444,17 +450,17 @@ export const BIRTH_TOPICS: BirthTopic[] = [
       {
         title: 'For Mom',
         content: 'Pack these in the main compartment you\'ll access first.',
-        bullets: hospitalBagChecklist.find((c) => c.category === 'For Mom')?.items ?? [],
+        bullets: bagItems('For Mom'),
       },
       {
         title: 'For Baby',
         content: 'Everything your newborn needs for the first day and the journey home.',
-        bullets: hospitalBagChecklist.find((c) => c.category === 'For Baby')?.items ?? [],
+        bullets: bagItems('For Baby'),
       },
       {
         title: 'For Partner',
         content: 'Labor can be long. Your support person needs to be prepared.',
-        bullets: hospitalBagChecklist.find((c) => c.category === 'For Partner')?.items ?? [],
+        bullets: bagItems('For Partner'),
       },
       {
         title: 'Documents to bring',
