@@ -11,6 +11,8 @@ import Svg, {
   Text as SvgText, Defs, LinearGradient, Stop,
 } from 'react-native-svg'
 import { useTheme, brand } from '../../constants/theme'
+import { MoodFace } from '../stickers/RewardStickers'
+import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 
 // ─── Shared Helpers ───────────────────────────────────────────────────────────
 
@@ -499,6 +501,139 @@ export function DotTimeline({ dots, cycleLength = 28, color, width = 300, onPres
         </Svg>
       </View>
     </Pressable>
+  )
+}
+
+// ─── Mood Sticker Strip ────────────────────────────────────────────────────
+
+export interface MoodStripDay {
+  label: string       // e.g. 'Mon', 'W1'
+  dominantMood: string | null
+  intensityRatio: number  // 0–1: dominant count / total that day
+}
+
+export function MoodStickerStrip({ days }: { days: MoodStripDay[] }) {
+  const { colors, isDark } = useTheme()
+  const BASE = 32
+  const RANGE = 10
+  const ST_GREEN = isDark ? '#C5DA98' : '#BDD48C'
+
+  // Collect x-centre positions of logged days for the connecting line
+  const loggedIndices = days.map((d, i) => d.dominantMood ? i : null).filter((i) => i !== null) as number[]
+
+  // Build SVG dashed-line path between logged columns
+  // We use a fixed viewBox of (days.length * 40) x 60; each column centre = i*40+20
+  const vbW = days.length * 40
+  const lineY = 22  // vertical centre of bubbles in the 60-unit viewBox
+  const linePath = loggedIndices.length >= 2
+    ? 'M ' + loggedIndices.map((i) => `${i * 40 + 20} ${lineY}`).join(' L ')
+    : null
+
+  return (
+    <View style={{ position: 'relative' }}>
+      {/* Dashed connecting line behind bubbles */}
+      {linePath && (
+        <Svg
+          width="100%"
+          height={60}
+          viewBox={`0 0 ${vbW} 60`}
+          preserveAspectRatio="none"
+          style={{ position: 'absolute', top: 0, left: 0, right: 0 }}
+          pointerEvents="none"
+        >
+          <Path
+            d={linePath}
+            stroke={ST_GREEN}
+            strokeWidth={1.5}
+            strokeDasharray="4 3"
+            fill="none"
+            strokeLinecap="round"
+          />
+        </Svg>
+      )}
+
+      {/* Day columns */}
+      <View style={{ flexDirection: 'row' }}>
+        {days.map((day, i) => {
+          const size = BASE + Math.round(day.intensityRatio * RANGE)
+          const fill = day.dominantMood ? moodFaceFill(day.dominantMood) : undefined
+          const variant = day.dominantMood ? moodFaceVariant(day.dominantMood) : undefined
+          const stroke = isDark ? (fill ?? colors.border) : '#141313'
+
+          return (
+            <View
+              key={i}
+              style={{ flex: 1, alignItems: 'center', gap: 6, paddingVertical: 10 }}
+            >
+              {day.dominantMood ? (
+                // Soap bubble wrapper
+                <View
+                  style={{
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                    backgroundColor: (fill ?? '#FBEA9E') + '40',
+                    borderWidth: 1.5,
+                    borderColor: (fill ?? '#FBEA9E') + '70',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    shadowColor: fill ?? '#FBEA9E',
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 8,
+                    elevation: 4,
+                  }}
+                >
+                  {/* Shine crescent */}
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: '14%',
+                      left: '18%',
+                      width: '30%',
+                      height: '20%',
+                      borderRadius: 999,
+                      backgroundColor: 'rgba(255,255,255,0.5)',
+                      transform: [{ rotate: '-22deg' }],
+                    }}
+                  />
+                  <MoodFace
+                    size={Math.round(size * 0.72)}
+                    variant={variant!}
+                    fill={fill!}
+                    stroke={stroke}
+                  />
+                </View>
+              ) : (
+                // Empty day — dashed circle
+                <View
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 13,
+                    borderWidth: 1.5,
+                    borderStyle: 'dashed',
+                    borderColor: colors.border,
+                  }}
+                />
+              )}
+              <Text
+                style={{
+                  fontSize: 8,
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  color: day.dominantMood ? colors.textMuted : colors.textMuted + '66',
+                  letterSpacing: 0.5,
+                }}
+              >
+                {day.label}
+              </Text>
+            </View>
+          )
+        })}
+      </View>
+    </View>
   )
 }
 
