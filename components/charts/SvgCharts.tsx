@@ -14,6 +14,10 @@ import { useTheme, brand } from '../../constants/theme'
 import { MoodFace } from '../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 
+const STICKER_INK = '#141313'
+const MOOD_STRIP_BASE_SIZE = 32
+const MOOD_STRIP_SIZE_RANGE = 10
+
 // ─── Shared Helpers ───────────────────────────────────────────────────────────
 
 /** Compute nice Y-axis ticks (3-4 ticks) spanning [min, max] without forcing 0 */
@@ -512,11 +516,13 @@ export interface MoodStripDay {
   intensityRatio: number  // 0–1: dominant count / total that day
 }
 
-export function MoodStickerStrip({ days }: { days: MoodStripDay[] }) {
+interface MoodStickerStripProps {
+  days: MoodStripDay[]
+}
+
+export function MoodStickerStrip({ days }: MoodStickerStripProps) {
   const { colors, isDark } = useTheme()
-  const BASE = 32
-  const RANGE = 10
-  const ST_GREEN = isDark ? '#C5DA98' : '#BDD48C'
+  const connectLineColor = isDark ? '#C5DA98' : '#BDD48C'
 
   // Collect x-centre positions of logged days for the connecting line
   const loggedIndices = days.map((d, i) => d.dominantMood ? i : null).filter((i) => i !== null) as number[]
@@ -538,12 +544,12 @@ export function MoodStickerStrip({ days }: { days: MoodStripDay[] }) {
           height={60}
           viewBox={`0 0 ${vbW} 60`}
           preserveAspectRatio="none"
-          style={{ position: 'absolute', top: 0, left: 0, right: 0 }}
+          style={moodStyles.svgOverlay}
           pointerEvents="none"
         >
           <Path
             d={linePath}
-            stroke={ST_GREEN}
+            stroke={connectLineColor}
             strokeWidth={1.5}
             strokeDasharray="4 3"
             fill="none"
@@ -554,65 +560,46 @@ export function MoodStickerStrip({ days }: { days: MoodStripDay[] }) {
 
       {/* Day columns */}
       <View style={moodStyles.stripRow}>
-        {days.map((day, i) => {
-          const size = BASE + Math.round(day.intensityRatio * RANGE)
+        {days.map((day) => {
+          const size = MOOD_STRIP_BASE_SIZE + Math.round(day.intensityRatio * MOOD_STRIP_SIZE_RANGE)
+          const fill = day.dominantMood ? moodFaceFill(day.dominantMood) : null
+          const variant = day.dominantMood ? moodFaceVariant(day.dominantMood) : null
+          const stroke = isDark ? (fill ?? colors.border) : STICKER_INK
 
           return (
             <View
-              key={i}
+              key={day.label}
               style={moodStyles.dayColumn}
             >
-              {day.dominantMood ? (() => {
-                const fill = moodFaceFill(day.dominantMood)
-                const variant = moodFaceVariant(day.dominantMood)
-                const stroke = isDark ? fill : '#141313'
-                return (
-                  // Soap bubble wrapper
-                  <View
-                    style={[
-                      moodStyles.soapBubble,
-                      {
-                        width: size,
-                        height: size,
-                        borderRadius: size / 2,
-                        backgroundColor: fill + '40',
-                        borderColor: fill + '70',
-                        shadowColor: fill,
-                      },
-                    ]}
-                  >
-                    {/* Shine crescent */}
-                    <View style={moodStyles.shineCrescent} />
-                    <MoodFace
-                      size={Math.round(size * 0.72)}
-                      variant={variant}
-                      fill={fill}
-                      stroke={stroke}
-                    />
-                  </View>
-                )
-              })() : (
-                // Empty day — dashed circle
+              {fill && variant ? (
+                // Soap bubble wrapper
                 <View
-                  style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: 13,
-                    borderWidth: 1.5,
-                    borderStyle: 'dashed',
-                    borderColor: colors.border,
-                  }}
-                />
+                  style={[
+                    moodStyles.soapBubble,
+                    {
+                      width: size,
+                      height: size,
+                      borderRadius: size / 2,
+                      backgroundColor: fill + '40',
+                      borderColor: fill + '70',
+                      shadowColor: fill,
+                    },
+                  ]}
+                >
+                  {/* Shine crescent */}
+                  <View style={moodStyles.shineCrescent} />
+                  <MoodFace
+                    size={Math.round(size * 0.72)}
+                    variant={variant}
+                    fill={fill}
+                    stroke={stroke}
+                  />
+                </View>
+              ) : (
+                // Empty day — dashed circle
+                <View style={[moodStyles.emptyCircle, { borderColor: colors.border }]} />
               )}
-              <Text
-                style={{
-                  fontSize: 8,
-                  fontWeight: '700',
-                  textTransform: 'uppercase',
-                  color: day.dominantMood ? colors.textMuted : colors.textMuted + '66',
-                  letterSpacing: 0.5,
-                }}
-              >
+              <Text style={[moodStyles.dayLabel, { color: day.dominantMood ? colors.textMuted : colors.textMuted + '66' }]}>
                 {day.label}
               </Text>
             </View>
@@ -672,5 +659,24 @@ const moodStyles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.5)',
     transform: [{ rotate: '-22deg' }],
+  },
+  svgOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  emptyCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+  },
+  dayLabel: {
+    fontSize: 8,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 })
