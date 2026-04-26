@@ -50,6 +50,7 @@ import {
 import { useTheme, brand, stickers as stickerPalette } from '../../constants/theme'
 import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Moon as MoonSticker, Flower, Drop, Star } from '../stickers/BrandStickers'
+import { ChildPill, childColor } from '../ui/ChildPills'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodCalories'
@@ -99,11 +100,16 @@ const formHeaderStickerStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 7,
+    paddingHorizontal: 13,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(20,19,19,0.08)',
+    borderWidth: 1.5,
+    borderColor: INK,
+    shadowColor: INK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 1,
   },
   label: {
     fontFamily: 'DMSans_600SemiBold',
@@ -317,7 +323,7 @@ function RoutineToggle({
           routineStyles.toggleRow,
           {
             backgroundColor: enabled ? ACCENT_SOFT : colors.surface,
-            borderColor: enabled ? ACCENT + '66' : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+            borderColor: enabled ? ACCENT + '66' : (isDark ? colors.border : INK),
             borderRadius: radius.lg,
           },
         ]}
@@ -330,7 +336,7 @@ function RoutineToggle({
           style={[
             routineStyles.toggleSwitch,
             {
-              backgroundColor: enabled ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+              backgroundColor: enabled ? ACCENT : (isDark ? colors.border : INK),
               borderRadius: 10,
             },
           ]}
@@ -357,7 +363,7 @@ function RoutineToggle({
                   routineStyles.dayChip,
                   {
                     backgroundColor: active ? ACCENT : 'transparent',
-                    borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                    borderColor: active ? ACCENT : (isDark ? colors.border : INK),
                     borderRadius: radius.full,
                   },
                 ]}
@@ -376,12 +382,18 @@ function RoutineToggle({
 
 const routineStyles = StyleSheet.create({
   wrap: { gap: 8 },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1 },
+  toggleRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1.5,
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 1,
+  },
   toggleText: { flex: 1, fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
   toggleSwitch: { width: 34, height: 20, padding: 3, justifyContent: 'center' },
   toggleKnob: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#FFF' },
   daysRow: { flexDirection: 'row', gap: 6, justifyContent: 'space-between', paddingHorizontal: 4 },
-  dayChip: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  dayChip: {
+    width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5,
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
+  },
   dayText: { fontSize: 12, fontFamily: 'DMSans_600SemiBold' },
 })
 
@@ -394,7 +406,6 @@ function ChildSelector({
   selected: string | null
   onSelect: (id: string) => void
 }) {
-  const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
 
   if (children.length <= 1) return null
@@ -409,27 +420,15 @@ function ChildSelector({
         </Text>
       )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childRow}>
-        {children.map((c) => {
-          const active = selected === c.id
-          return (
-            <Pressable
-              key={c.id}
-              onPress={() => onSelect(c.id)}
-              style={[
-                styles.childChip,
-                {
-                  backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                  borderColor: active ? ACCENT : needsSelection ? brand.accent + '40' : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
-                  borderRadius: radius.full,
-                },
-              ]}
-            >
-              <Text style={[styles.childChipText, { color: active ? INK : colors.text }]}>
-                {c.name}
-              </Text>
-            </Pressable>
-          )
-        })}
+        {children.map((c, idx) => (
+          <ChildPill
+            key={c.id}
+            label={c.name}
+            active={selected === c.id}
+            color={childColor(idx)}
+            onPress={() => onSelect(c.id)}
+          />
+        ))}
       </ScrollView>
     </View>
   )
@@ -472,19 +471,20 @@ function DateChip({
     setShowPicker(false)
   }
 
+  const inkText = isDark ? colors.text : INK
   return (
     <View>
       <Pressable
         onPress={openPicker}
-        style={[styles.dateChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.full }]}
+        style={[styles.dateChip, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: (isDark ? colors.border : INK), borderRadius: radius.full }]}
       >
-        <CalendarDays size={14} color={colors.primary} strokeWidth={2} />
-        <Text style={[styles.dateChipText, { color: colors.primary }]}>
+        <CalendarDays size={14} color={inkText} strokeWidth={2} />
+        <Text style={[styles.dateChipText, { color: inkText }]}>
           {formatDateLabel(value)}
         </Text>
       </Pressable>
       {showPicker && (
-        <View style={[styles.datePickerWrap, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}>
+        <View style={[styles.datePickerWrap, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
           <DateTimePicker
             value={new Date((showPicker ? tempDate : value) + 'T12:00:00')}
             mode="date"
@@ -502,7 +502,7 @@ function DateChip({
             }}
           />
           {Platform.OS === 'ios' && (
-            <Pressable onPress={confirmDate} style={[styles.datePickerDone, { borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)') }]}>
+            <Pressable onPress={confirmDate} style={[styles.datePickerDone, { borderColor: (isDark ? colors.border : INK) }]}>
               <Text style={[styles.datePickerDoneText, { color: colors.primary }]}>Done</Text>
             </Pressable>
           )}
@@ -556,18 +556,19 @@ function TimeChip({
     return d
   }, [showPicker ? tempTime : value])
 
+  const inkText = isDark ? colors.text : INK
   return (
     <View>
       <Pressable
         onPress={openPicker}
-        style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.full }]}
+        style={[styles.timeChip, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: (isDark ? colors.border : INK), borderRadius: radius.full }]}
       >
-        <Clock size={12} color={colors.textSecondary} strokeWidth={2} />
-        <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>{label}</Text>
-        <Text style={[styles.timeChipValue, { color: colors.text }]}>{formatTimeLabel(value)}</Text>
+        <Clock size={12} color={inkText} strokeWidth={2} />
+        <Text style={[styles.timeChipLabel, { color: isDark ? colors.textMuted : '#6E6763' }]}>{label}</Text>
+        <Text style={[styles.timeChipValue, { color: inkText }]}>{formatTimeLabel(value)}</Text>
       </Pressable>
       {showPicker && (
-        <View style={[styles.datePickerWrap, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}>
+        <View style={[styles.datePickerWrap, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
           <DateTimePicker
             value={dateVal}
             mode="time"
@@ -586,7 +587,7 @@ function TimeChip({
             }}
           />
           {Platform.OS === 'ios' && (
-            <Pressable onPress={confirmTime} style={[styles.datePickerDone, { borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)') }]}>
+            <Pressable onPress={confirmTime} style={[styles.datePickerDone, { borderColor: (isDark ? colors.border : INK) }]}>
               <Text style={[styles.datePickerDoneText, { color: colors.primary }]}>Done</Text>
             </Pressable>
           )}
@@ -634,7 +635,7 @@ const EAT_QUALITIES: { id: EatQuality; label: string; icon: typeof Smile; color:
 ]
 
 export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
@@ -1058,7 +1059,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                       styles.chip,
                       {
                         backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                        borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                        borderColor: active ? ACCENT : (isDark ? colors.border : INK),
                         borderRadius: radius.full,
                       },
                     ]}
@@ -1089,13 +1090,13 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 <View style={styles.photoButtons}>
                   <Pressable
                     onPress={takePhoto}
-                    style={[styles.cameraBtn, { backgroundColor: ACCENT, borderRadius: radius.lg }]}
+                    style={[styles.cameraBtn, { backgroundColor: ACCENT, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
                   >
                     <Camera size={24} color={INK} strokeWidth={2} />
                   </Pressable>
                   <Pressable
                     onPress={pickPhoto}
-                    style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
+                    style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
                   >
                     <Plus size={20} color={colors.textMuted} strokeWidth={2} />
                   </Pressable>
@@ -1178,7 +1179,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   })
                   setFoodInput('')
                 }}
-                style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg, minHeight: 48 }]}
+                style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg, minHeight: 48 }]}
               />
               {calorieMatches.length > 0 && (
                 <View style={[styles.calorieBanner, { backgroundColor: brand.success + '10', borderColor: brand.success + '30', borderRadius: radius.lg }]}>
@@ -1207,7 +1208,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               {/* Manual kcal popup for unrecognized foods */}
               <Modal visible={manualCalIdx !== null} transparent animationType="fade" onRequestClose={() => setManualCalIdx(null)}>
                 <Pressable style={styles.popupBackdrop} onPress={() => setManualCalIdx(null)} />
-                <View style={[styles.manualCalPopup, { backgroundColor: colors.surface, borderRadius: radius.xl, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)') }]}>
+                <View style={[styles.manualCalPopup, { backgroundColor: colors.surface, borderRadius: radius.xl, borderColor: (isDark ? colors.border : INK) }]}>
                   <Text style={[styles.manualCalTitle, { color: colors.text }]}>
                     Unknown food — add kcal manually
                   </Text>
@@ -1220,13 +1221,13 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     placeholder="e.g. 120"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="number-pad"
-                    style={[styles.input, { color: colors.text, backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg, minHeight: 48, marginTop: 12 }]}
+                    style={[styles.input, { color: colors.text, backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg, minHeight: 48, marginTop: 12 }]}
                     autoFocus
                   />
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
                     <Pressable
                       onPress={() => setManualCalIdx(null)}
-                      style={[styles.manualCalBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), flex: 1 }]}
+                      style={[styles.manualCalBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), flex: 1 }]}
                     >
                       <Text style={[styles.manualCalBtnText, { color: colors.textSecondary }]}>Skip</Text>
                     </Pressable>
@@ -1261,7 +1262,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                       styles.qualityBtn,
                       {
                         backgroundColor: active ? q.color + '15' : colors.surface,
-                        borderColor: active ? q.color : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                        borderColor: active ? q.color : (isDark ? colors.border : INK),
                         borderRadius: radius.lg,
                       },
                     ]}
@@ -1281,7 +1282,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 onPress={() => setIsNewFood(!isNewFood)}
                 style={[styles.flagChip, {
                   backgroundColor: isNewFood ? brand.secondary + '15' : colors.surface,
-                  borderColor: isNewFood ? brand.secondary : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                  borderColor: isNewFood ? brand.secondary : (isDark ? colors.border : INK),
                   borderRadius: radius.full,
                 }]}
               >
@@ -1294,7 +1295,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 onPress={() => setHasReaction(!hasReaction)}
                 style={[styles.flagChip, {
                   backgroundColor: hasReaction ? brand.error + '15' : colors.surface,
-                  borderColor: hasReaction ? brand.error : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                  borderColor: hasReaction ? brand.error : (isDark ? colors.border : INK),
                   borderRadius: radius.full,
                 }]}
               >
@@ -1314,7 +1315,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   onChangeText={setNewFoodName}
                   placeholder="e.g. Kiwi, shrimp..."
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.md }]}
+                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.md }]}
                 />
               </View>
             )}
@@ -1328,7 +1329,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   onChangeText={setReactionFood}
                   placeholder="Which food caused it?"
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.md }]}
+                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.md }]}
                 />
                 <TextInput
                   value={reactionDesc}
@@ -1336,7 +1337,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   placeholder="Describe the reaction (rash, vomit, swelling...)"
                   placeholderTextColor={colors.textMuted}
                   multiline
-                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.md, minHeight: 60 }]}
+                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.md, minHeight: 60 }]}
                 />
               </View>
             )}
@@ -1467,7 +1468,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                           styles.sideBtn,
                           {
                             backgroundColor: colors.surface,
-                            borderColor: isRecommended ? brand.accent + '50' : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                            borderColor: isRecommended ? brand.accent + '50' : (isDark ? colors.border : INK),
                             borderRadius: radius.lg,
                           },
                           pressed && { opacity: 0.7, transform: [{ scale: 0.97 }] },
@@ -1493,7 +1494,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 </View>
 
                 {/* Switch target setting */}
-                <View style={[styles.switchTargetRow, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}>
+                <View style={[styles.switchTargetRow, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
                   <Clock size={14} color={colors.textMuted} strokeWidth={2} />
                   <Text style={[styles.switchTargetLabel, { color: colors.textSecondary }]}>Alert to switch at</Text>
                   {[10, 15, 20].map((min) => (
@@ -1504,7 +1505,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                         styles.switchTargetChip,
                         {
                           backgroundColor: switchTargetMin === min ? colors.primary : 'transparent',
-                          borderColor: switchTargetMin === min ? colors.primary : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                          borderColor: switchTargetMin === min ? colors.primary : (isDark ? colors.border : INK),
                           borderRadius: radius.full,
                         },
                       ]}
@@ -1539,7 +1540,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                           styles.sideChipSmall,
                           {
                             backgroundColor: active ? ACCENT_SOFT : 'transparent',
-                            borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                            borderColor: active ? ACCENT : (isDark ? colors.border : INK),
                             borderRadius: radius.full,
                           },
                         ]}
@@ -1556,7 +1557,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   placeholder="Duration (minutes)"
                   placeholderTextColor={colors.textMuted}
                   keyboardType="number-pad"
-                  style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
+                  style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
                 />
               </>
             )}
@@ -1570,7 +1571,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               placeholder="Amount (ml)"
               placeholderTextColor={colors.textMuted}
               keyboardType="number-pad"
-              style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
+              style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
             />
           </>
         )}
@@ -1585,7 +1586,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 // ─── 2. SLEEP FORM ─────────────────────────────────────────────────────────
 
 export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
@@ -1690,7 +1691,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
           ) : (
             <Pressable
               onPress={() => setEndTime(toTimeStr(new Date()))}
-              style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: 999 }]}
+              style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: 999 }]}
             >
               <Plus size={12} color={colors.textMuted} strokeWidth={2} />
               <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>End</Text>
@@ -1715,7 +1716,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
               onPress={() => setQuality(q)}
               style={[styles.chip, {
                 backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                borderColor: active ? ACCENT : (isDark ? colors.border : INK),
                 borderRadius: radius.full,
               }]}
             >
@@ -1729,7 +1730,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
         onChangeText={setNotes}
         placeholder="Notes (optional)"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
       />
       <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
       <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={prefill?.routineId ? onSkip : undefined} />
@@ -1742,7 +1743,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
 const HEALTH_EVENTS = ['Temperature', 'Vaccine', 'Medicine', 'Doctor visit', 'Injury', 'Other']
 
 export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
@@ -1820,7 +1821,7 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
               onPress={() => setEventType(e)}
               style={[styles.chip, {
                 backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                borderColor: active ? ACCENT : (isDark ? colors.border : INK),
                 borderRadius: radius.full,
               }]}
             >
@@ -1835,14 +1836,14 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
         placeholder={eventType === 'Temperature' ? 'Temperature (e.g. 37.5°C)' : 'Details'}
         placeholderTextColor={colors.textMuted}
         keyboardType={eventType === 'Temperature' ? 'decimal-pad' : 'default'}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
       />
       <TextInput
         value={notes}
         onChangeText={setNotes}
         placeholder="Notes (optional)"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
       />
       <SaveButton onPress={save} saving={saving} disabled={!childId || !eventType} onSkip={prefill?.routineId ? onSkip : undefined} />
     </View>
@@ -1862,7 +1863,7 @@ const MOODS: { id: 'happy' | 'calm' | 'fussy' | 'cranky' | 'energetic'; label: s
 ]
 
 export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
@@ -1955,7 +1956,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
         onChangeText={setNotes}
         placeholder="What happened?"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
       />
       <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
       <SaveButton onPress={save} saving={saving} disabled={!childId || !mood} onSkip={prefill?.routineId ? onSkip : undefined} />
@@ -1966,7 +1967,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
 // ─── 5. MEMORY FORM ────────────────────────────────────────────────────────
 
 export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; initialDate?: string }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
@@ -2038,10 +2039,10 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
         ))}
         {photos.length < 4 && (
           <View style={styles.photoButtons}>
-            <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: ACCENT, borderRadius: radius.lg }]}>
+            <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: ACCENT, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
               <Camera size={24} color={INK} strokeWidth={2} />
             </Pressable>
-            <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}>
+            <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
               <Plus size={20} color={colors.textMuted} strokeWidth={2} />
             </Pressable>
           </View>
@@ -2052,7 +2053,7 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
         onChangeText={setCaption}
         placeholder="Caption this moment..."
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
       />
       <SaveButton onPress={save} saving={saving} disabled={!childId} />
     </View>
@@ -2078,7 +2079,7 @@ const ACTIVITY_TYPES = [
 ]
 
 export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
 
   const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
@@ -2180,7 +2181,7 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
             ) : (
               <Pressable
                 onPress={() => setEndTime(toTimeStr(new Date()))}
-                style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: 999 }]}
+                style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: 999 }]}
               >
                 <Plus size={12} color={colors.textMuted} strokeWidth={2} />
                 <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>End</Text>
@@ -2207,7 +2208,7 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
                 onPress={() => setActivityType(a.id)}
                 style={[styles.chip, {
                   backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                  borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                  borderColor: active ? ACCENT : (isDark ? colors.border : INK),
                   borderRadius: radius.full,
                 }]}
               >
@@ -2222,14 +2223,14 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
           onChangeText={setName}
           placeholder="Activity name (e.g. Soccer practice)"
           placeholderTextColor={colors.textMuted}
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
         />
         <TextInput
           value={notes}
           onChangeText={setNotes}
           placeholder="Notes (optional)"
           placeholderTextColor={colors.textMuted}
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
         />
         <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
         <SaveButton onPress={save} saving={saving} disabled={!childId || !activityType} onSkip={prefill?.routineId ? onSkip : undefined} />
@@ -2267,7 +2268,7 @@ const DIAPER_CONSISTENCIES: { id: DiaperConsistency; label: string }[] = [
 ]
 
 export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => void; initialDate?: string; editLog?: EditLog }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
 
   const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
@@ -2362,7 +2363,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
                 onPress={() => setDiaperType(t.id)}
                 style={[styles.chip, {
                   backgroundColor: active ? brand.secondary + '25' : colors.surface,
-                  borderColor: active ? brand.secondary : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                  borderColor: active ? brand.secondary : (isDark ? colors.border : INK),
                   borderRadius: radius.full,
                   gap: 4,
                 }]}
@@ -2387,7 +2388,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
                     onPress={() => setColor(c.id)}
                     style={[styles.chip, {
                       backgroundColor: active ? c.hex + '25' : colors.surface,
-                      borderColor: active ? c.hex : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                      borderColor: active ? c.hex : (isDark ? colors.border : INK),
                       borderRadius: radius.full,
                       gap: 6,
                     }]}
@@ -2409,7 +2410,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
                     onPress={() => setConsistency(c.id)}
                     style={[styles.chip, {
                       backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                      borderColor: active ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
+                      borderColor: active ? ACCENT : (isDark ? colors.border : INK),
                       borderRadius: radius.full,
                     }]}
                   >
@@ -2437,10 +2438,10 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
           ))}
           {photos.length === 0 && (
             <View style={styles.photoButtons}>
-              <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: ACCENT, borderRadius: radius.lg }]}>
+              <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: ACCENT, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
                 <Camera size={24} color={INK} strokeWidth={2} />
               </Pressable>
-              <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}>
+              <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
                 <Plus size={20} color={colors.textMuted} strokeWidth={2} />
               </Pressable>
             </View>
@@ -2452,7 +2453,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
           onChangeText={setNotes}
           placeholder="Notes (optional)"
           placeholderTextColor={colors.textMuted}
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : 'rgba(20,19,19,0.18)'), borderRadius: radius.lg }]}
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
         />
         <SaveButton onPress={save} saving={saving} disabled={!childId || !diaperType} />
       </View>
@@ -2472,9 +2473,12 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
 }) {
   const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
+  const activeChild = useChildStore((s) => s.activeChild)
 
   const [childId, setChildId] = useState(() =>
-    prefill?.childId ?? (children.length === 1 ? (children[0]?.id ?? '') : '')
+    prefill?.childId
+      ?? activeChild?.id
+      ?? (children.length === 1 ? (children[0]?.id ?? '') : '')
   )
   const [wakeTime, setWakeTime] = useState(() => toTimeStr(new Date()))
   const [openLog, setOpenLog] = useState<{
@@ -2483,33 +2487,52 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  // Fetch open-ended sleep log whenever child changes
+  // Fetch the most recent open-ended sleep log within the last ~26h.
+  //
+  // We can't query JSON content server-side, so pull the last few days of
+  // sleep logs and filter client-side. Looking back 3 days (rather than just
+  // today/yesterday) avoids timezone-edge misses — a bedtime saved with
+  // `date = Friday` may legitimately need to be matched on Sunday morning if
+  // it's still inside the 24h window.
   useEffect(() => {
     if (!childId) return
     setLoading(true)
     setOpenLog(null)
-    const today = toDateStr(new Date())
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    const yesterdayStr = toDateStr(yesterday)
+    const lookback = new Date()
+    lookback.setDate(lookback.getDate() - 3)
+    const lookbackStr = toDateStr(lookback)
     supabase
       .from('child_logs')
       .select('id, value, date')
       .eq('child_id', childId)
       .eq('type', 'sleep')
-      .in('date', [today, yesterdayStr])
+      .gte('date', lookbackStr)
+      .order('date', { ascending: false })
       .order('created_at', { ascending: false })
+      .limit(20)
       .then(({ data }) => {
+        const now = Date.now()
+        const MAX_AGE_MS = 26 * 60 * 60 * 1000 // 24h + 2h buffer
+        // Find the most recent open log whose bedtime is within the window.
         const found = (data ?? []).find((log) => {
           try {
             const p = JSON.parse(log.value ?? '{}')
-            return !!p.startTime && !p.endTime
+            if (!p.startTime || p.endTime) return false
+            const bedDate = new Date(`${log.date}T${p.startTime}:00`)
+            const age = now - bedDate.getTime()
+            // Allow a small future skew (2 min) for clock drift, then cap at 26h
+            return age >= -120_000 && age <= MAX_AGE_MS
           } catch { return false }
         })
         if (found) {
           try {
             const p = JSON.parse(found.value ?? '{}')
-            setOpenLog({ id: found.id, startTime: p.startTime, date: found.date, routineName: p.routineName })
+            setOpenLog({
+              id: found.id,
+              startTime: p.startTime,
+              date: found.date,
+              routineName: p.routineName,
+            })
           } catch {}
         }
         setLoading(false)
@@ -2618,7 +2641,7 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
           style={({ pressed }) => [
             styles.saveBtnGhost,
             {
-              borderColor: isDark ? colors.borderStrong : 'rgba(20,19,19,0.18)',
+              borderColor: isDark ? colors.borderStrong : INK,
               borderWidth: 1.5,
               opacity: saving ? 0.4 : 1,
             },
@@ -2641,7 +2664,7 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
               ? (isDark ? colors.surface : '#FFFEF8')
               : (isDark ? colors.text : INK),
             borderColor: disabled
-              ? (isDark ? colors.border : 'rgba(20,19,19,0.18)')
+              ? (isDark ? colors.border : INK)
               : (isDark ? colors.text : INK),
           },
           pressed && !disabled && { transform: [{ scale: 0.98 }], opacity: 0.92 },
@@ -2666,25 +2689,43 @@ const styles = StyleSheet.create({
   form: { gap: 16, paddingBottom: 8 },
   topRow: { gap: 10 },
   dateTimeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  dateChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderWidth: 1.5 },
+  dateChip: {
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6,
+    paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1.5,
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
+  },
   dateChipText: { fontSize: 13, fontFamily: 'DMSans_700Bold' },
   datePickerWrap: { marginTop: 4, borderWidth: 1.5, overflow: 'hidden' },
   datePickerDone: { alignItems: 'center', paddingVertical: 10, borderTopWidth: 1 },
   datePickerDoneText: { fontSize: 15, fontWeight: '700' },
-  timeChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, paddingVertical: 7, paddingHorizontal: 10, borderWidth: 1.5 },
+  timeChip: {
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 5,
+    paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1.5,
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
+  },
   timeChipLabel: { fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 0.8, textTransform: 'uppercase' },
   timeChipValue: { fontSize: 13, fontFamily: 'DMSans_700Bold' },
   childSelectorWrap: { gap: 6 },
   childSelectorPrompt: { fontSize: 13, fontFamily: 'DMSans_700Bold' },
   childRow: { gap: 8 },
-  childChip: { paddingVertical: 8, paddingHorizontal: 16, borderWidth: 1.5 },
+  childChip: {
+    paddingVertical: 8, paddingHorizontal: 16, borderWidth: 1.5,
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
+  },
   childChipText: { fontSize: 14, fontFamily: 'DMSans_700Bold' },
   iconBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 12 },
   bannerLabel: { flex: 1, fontSize: 15, fontFamily: 'DMSans_500Medium' },
   autoDuration: { fontSize: 18, fontFamily: 'Fraunces_700Bold' },
-  input: { borderWidth: 1.5, paddingHorizontal: 20, minHeight: 52, fontSize: 15, fontFamily: 'DMSans_500Medium', borderRadius: 999 },
+  input: {
+    borderWidth: 1.5, paddingHorizontal: 20, minHeight: 52, fontSize: 15,
+    fontFamily: 'DMSans_500Medium', borderRadius: 999,
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 1,
+  },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1.5 },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 9, paddingHorizontal: 14, borderWidth: 1.5,
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
+  },
   chipText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
   toggleRow: { flexDirection: 'row', padding: 4 },
   toggleBtn: { flex: 1, alignItems: 'center', paddingVertical: 10 },
@@ -2693,16 +2734,28 @@ const styles = StyleSheet.create({
   photoThumb: { width: 72, height: 72 },
   photoDeleteBtn: { position: 'absolute', top: -6, right: -6, backgroundColor: 'rgba(0,0,0,0.75)', borderRadius: 999, width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
   photoButtons: { flexDirection: 'row', gap: 8 },
-  cameraBtn: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
+  cameraBtn: {
+    width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5,
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
+  },
   galleryBtn: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderStyle: 'dashed' },
   qualityRow: { flexDirection: 'row', gap: 8 },
-  qualityBtn: { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 6, borderWidth: 1.5 },
+  qualityBtn: {
+    flex: 1, alignItems: 'center', paddingVertical: 14, gap: 6, borderWidth: 1.5,
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
+  },
   qualityLabel: { fontSize: 11, fontFamily: 'DMSans_700Bold', textAlign: 'center' },
   flagRow: { flexDirection: 'row', gap: 8 },
-  flagChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1.5 },
+  flagChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 9, paddingHorizontal: 14, borderWidth: 1.5,
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
+  },
   flagText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
   moodRow: { flexDirection: 'row', gap: 8 },
-  moodBtn: { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 4, borderWidth: 1.5 },
+  moodBtn: {
+    flex: 1, alignItems: 'center', paddingVertical: 14, gap: 4, borderWidth: 1.5,
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
+  },
   moodLabel: { fontSize: 11, fontFamily: 'DMSans_700Bold' },
   saveBtnPrimary: {
     height: 56,
@@ -2772,7 +2825,10 @@ const styles = StyleSheet.create({
   breastNipple: { width: 5, height: 5, borderRadius: 3 },
   sideBtnText: { fontSize: 13, fontWeight: '700' },
   recommendedTag: { position: 'absolute', top: 4, right: 4, paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4 },
-  sideChipSmall: { flex: 1, alignItems: 'center', paddingVertical: 8, borderWidth: 1 },
+  sideChipSmall: {
+    flex: 1, alignItems: 'center', paddingVertical: 9, borderWidth: 1.5,
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
+  },
   sideChipSmallText: { fontSize: 13, fontWeight: '600' },
 
   // Live timer

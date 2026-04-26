@@ -9,18 +9,18 @@ import { useState, useEffect } from 'react'
 import {
   View, Text, Pressable, ScrollView, Switch, Alert, StyleSheet, ActivityIndicator,
 } from 'react-native'
-import { router } from 'expo-router'
-import {
-  Download, Shield, Eye, Users, MessageSquare,
-  Database, FileText, ChevronRight, Lock, Trash2,
-} from 'lucide-react-native'
+import { ChevronRight } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 import { useChildStore } from '../../store/useChildStore'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
-import { MonoCaps, Body } from '../../components/ui/Typography'
+import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
 import { useSavedToast } from '../../components/ui/SavedToast'
+import { Heart, Cross, Sparkle, Star, Leaf, GrandmaEye } from '../../components/ui/Stickers'
+
+type StickerKind =
+  | 'heart' | 'crossPink' | 'crossCoral' | 'sparkle' | 'star' | 'leaf' | 'eye'
 
 interface PrivacySettings {
   share_with_caregivers: boolean
@@ -39,12 +39,10 @@ const DEFAULT_SETTINGS: PrivacySettings = {
 }
 
 export default function PrivacyScreen() {
-  const { colors, font, stickers, isDark } = useTheme()
+  const { colors, font, stickers, radius, spacing, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
   const toast = useSavedToast()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
 
   const [settings, setSettings] = useState<PrivacySettings>(DEFAULT_SETTINGS)
   const [loadingSettings, setLoadingSettings] = useState(true)
@@ -264,53 +262,69 @@ export default function PrivacyScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="Data & Privacy" />
+        <ScreenHeader title="" />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Big Fraunces title */}
+        <View style={styles.titleBlock}>
+          <Display size={34} color={colors.text}>Data & Privacy</Display>
+          <DisplayItalic size={18} color={stickers.coral} style={{ marginTop: 6 }}>
+            only what you choose to share
+          </DisplayItalic>
+        </View>
+
         {/* Data Sharing */}
-        <View style={{ marginTop: 8 }}><MonoCaps color={colors.textMuted}>Data Sharing</MonoCaps></View>
-        <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <ToggleRow icon={Users} iconColor={isDark ? stickers.blue : '#1F4A7A'} label="Share with Care Circle" desc="Allow caregivers to see activity logs"
+        <View style={{ marginTop: 8 }}>
+          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>Data Sharing</MonoCaps>
+        </View>
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+          <ToggleRow stickerKind="heart" label="Share with Care Circle" desc="Allow caregivers to see activity logs"
             value={settings.share_with_caregivers} onToggle={(v) => updateSetting('share_with_caregivers', v)} />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ToggleRow icon={Shield} iconColor={isDark ? stickers.green : '#3F5919'} label="Share Health Data" desc="Allow caregivers to see health records"
+          <ToggleRow stickerKind="crossPink" label="Share Health Data" desc="Allow caregivers to see health records"
             value={settings.share_health_data} onToggle={(v) => updateSetting('share_health_data', v)} />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ToggleRow icon={Eye} iconColor={isDark ? '#F0CE4C' : '#7C5E0F'} label="Share Photos" desc="Allow caregivers to see memories"
+          <ToggleRow stickerKind="sparkle" label="Share Photos" desc="Allow caregivers to see memories"
             value={settings.share_photos} onToggle={(v) => updateSetting('share_photos', v)} />
         </View>
 
         {/* AI & Analytics */}
-        <View style={{ marginTop: 18 }}><MonoCaps color={colors.textMuted}>AI & Analytics</MonoCaps></View>
-        <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <ToggleRow icon={MessageSquare} iconColor={isDark ? stickers.lilac : '#3A2A6E'} label="AI Data Usage" desc="Allow Grandma AI to use your data for personalized advice"
+        <View style={{ marginTop: 18 }}>
+          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>AI & Analytics</MonoCaps>
+        </View>
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+          <ToggleRow stickerKind="eye" label="AI Data Usage" desc="Allow Grandma AI to use your data for personalized advice"
             value={settings.ai_data_usage} onToggle={(v) => updateSetting('ai_data_usage', v)} />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ToggleRow icon={Database} iconColor={colors.textSecondary} label="Analytics" desc="Help improve the app with anonymous usage data"
+          <ToggleRow stickerKind="star" label="Analytics" desc="Help improve the app with anonymous usage data"
             value={settings.analytics} onToggle={(v) => updateSetting('analytics', v)} />
         </View>
 
         {/* Your Data */}
-        <View style={{ marginTop: 18 }}><MonoCaps color={colors.textMuted}>Your Data</MonoCaps></View>
-        <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <ActionRow icon={Download} iconColor={isDark ? stickers.green : '#3F5919'} label="Export All Data" desc="Download a summary of everything" onPress={handleExportData} />
+        <View style={{ marginTop: 18 }}>
+          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>Your Data</MonoCaps>
+        </View>
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+          <ActionRow stickerKind="leaf" label="Export All Data" desc="Download a summary of everything" onPress={handleExportData} />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ActionRow icon={Trash2} iconColor={isDark ? '#F0CE4C' : '#7C5E0F'} label="Clear Activity Logs" desc="Delete feeding, sleep, mood logs" onPress={handleClearLogs} loading={clearingLogs} />
+          <ActionRow stickerKind="crossCoral" label="Clear Activity Logs" desc="Delete feeding, sleep, mood logs" onPress={handleClearLogs} loading={clearingLogs} danger />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ActionRow icon={MessageSquare} iconColor={isDark ? stickers.coral : '#B43E2E'} label="Clear Chat History" desc="Delete all Grandma AI conversations" onPress={handleClearChat} loading={clearingChat} />
+          <ActionRow stickerKind="crossCoral" label="Clear Chat History" desc="Delete all Grandma AI conversations" onPress={handleClearChat} loading={clearingChat} danger />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ActionRow icon={Eye} iconColor={isDark ? stickers.coral : '#B43E2E'} label="Clear All Memories" desc="Delete all photos and memories" onPress={handleClearMemories} loading={clearingMemories} />
+          <ActionRow stickerKind="crossCoral" label="Clear All Memories" desc="Delete all photos and memories" onPress={handleClearMemories} loading={clearingMemories} danger />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ActionRow icon={Shield} iconColor={isDark ? stickers.coral : '#B43E2E'} label="Clear Health Records" desc="Delete vaccines, meds, growth, milestones" onPress={handleClearHealthRecords} />
+          <ActionRow stickerKind="crossCoral" label="Clear Health Records" desc="Delete vaccines, meds, growth, milestones" onPress={handleClearHealthRecords} danger />
         </View>
 
         {/* Legal */}
-        <View style={{ marginTop: 18 }}><MonoCaps color={colors.textMuted}>Legal</MonoCaps></View>
-        <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <ActionRow icon={FileText} iconColor={colors.textSecondary} label="Privacy Policy" desc="How we handle your data" onPress={() => Alert.alert('Privacy Policy', 'Available at grandma.app/privacy')} />
+        <View style={{ marginTop: 18 }}>
+          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>Legal</MonoCaps>
+        </View>
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+          <ActionRow stickerKind="star" label="Privacy Policy" desc="How we handle your data" onPress={() => Alert.alert('Privacy Policy', 'Available at grandma.app/privacy')} />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ActionRow icon={Lock} iconColor={colors.textSecondary} label="Terms of Service" desc="Usage terms and conditions" onPress={() => Alert.alert('Terms of Service', 'Available at grandma.app/terms')} />
+          <ActionRow stickerKind="sparkle" label="Terms of Service" desc="Usage terms and conditions" onPress={() => Alert.alert('Terms of Service', 'Available at grandma.app/terms')} />
         </View>
 
         <Text style={[styles.footer, { color: colors.textMuted, fontFamily: font.body }]}>
@@ -321,15 +335,26 @@ export default function PrivacyScreen() {
   )
 }
 
-function ToggleRow({ icon: Icon, iconColor, label, desc, value, onToggle }: {
-  icon: typeof Shield; iconColor: string; label: string; desc: string; value: boolean; onToggle: (v: boolean) => void
+function StickerGlyph({ kind, size = 34 }: { kind: StickerKind; size?: number }) {
+  const { stickers } = useTheme()
+  switch (kind) {
+    case 'heart': return <Heart size={size} fill={stickers.pink} />
+    case 'crossPink': return <Cross size={size} fill={stickers.pink} />
+    case 'crossCoral': return <Cross size={size} fill={stickers.coral} />
+    case 'sparkle': return <Sparkle size={size} fill={stickers.yellow} />
+    case 'star': return <Star size={size} fill={stickers.yellow} />
+    case 'leaf': return <Leaf size={size} fill={stickers.green} />
+    case 'eye': return <GrandmaEye size={size} body={stickers.lilac} accent={stickers.coral} />
+  }
+}
+
+function ToggleRow({ stickerKind, label, desc, value, onToggle }: {
+  stickerKind: StickerKind; label: string; desc: string; value: boolean; onToggle: (v: boolean) => void
 }) {
-  const { colors, font, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
-  const off = isDark ? colors.borderLight : 'rgba(20,19,19,0.14)'
+  const { colors, font, brand } = useTheme()
   return (
     <View style={styles.toggleRow}>
-      <Icon size={18} color={iconColor} strokeWidth={2} />
+      <View style={styles.stickerWrap}><StickerGlyph kind={stickerKind} /></View>
       <View style={{ flex: 1 }}>
         <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{label}</Text>
         <Text style={[styles.rowDesc, { color: colors.textMuted, fontFamily: font.body }]}>{desc}</Text>
@@ -337,28 +362,28 @@ function ToggleRow({ icon: Icon, iconColor, label, desc, value, onToggle }: {
       <Switch
         value={value}
         onValueChange={onToggle}
-        trackColor={{ false: off, true: ink }}
-        thumbColor={'#FFFEF8'}
-        ios_backgroundColor={off}
+        trackColor={{ false: colors.borderStrong, true: brand.pregnancy }}
+        thumbColor="#FFFFFF"
+        ios_backgroundColor={colors.borderStrong}
       />
     </View>
   )
 }
 
-function ActionRow({ icon: Icon, iconColor, label, desc, onPress, loading }: {
-  icon: typeof Shield; iconColor: string; label: string; desc: string; onPress: () => void; loading?: boolean
+function ActionRow({ stickerKind, label, desc, onPress, loading, danger }: {
+  stickerKind: StickerKind; label: string; desc: string; onPress: () => void; loading?: boolean; danger?: boolean
 }) {
-  const { colors, font } = useTheme()
+  const { colors, font, stickers } = useTheme()
   return (
     <Pressable onPress={loading ? undefined : onPress} style={[styles.row, loading && { opacity: 0.5 }]}>
       <View style={styles.rowLeft}>
-        <Icon size={18} color={iconColor} strokeWidth={2} />
+        <View style={styles.stickerWrap}><StickerGlyph kind={stickerKind} /></View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{label}</Text>
           <Text style={[styles.rowDesc, { color: colors.textMuted, fontFamily: font.body }]}>{desc}</Text>
         </View>
       </View>
-      {loading ? <ActivityIndicator size="small" color={colors.text} /> : <ChevronRight size={16} color={colors.textMuted} />}
+      {loading ? <ActivityIndicator size="small" color={colors.text} /> : <ChevronRight size={16} color={danger ? stickers.coral : colors.textMuted} />}
     </Pressable>
   )
 }
@@ -370,7 +395,6 @@ const styles = StyleSheet.create({
   card: {
     padding: 4,
     marginTop: 8,
-    borderRadius: 28,
     borderWidth: 1,
     shadowColor: '#141313',
     shadowOffset: { width: 0, height: 6 },
@@ -378,11 +402,13 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 2,
   },
-  divider: { height: 1, marginHorizontal: 16 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16, paddingHorizontal: 16, gap: 12 },
+  divider: { height: 1, marginHorizontal: 20 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16, paddingHorizontal: 20, gap: 12 },
   rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   rowLabel: { fontSize: 15 },
   rowDesc: { fontSize: 12, marginTop: 2, lineHeight: 16 },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 16, gap: 12 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 18, gap: 12 },
+  stickerWrap: { width: 38, alignItems: 'center', justifyContent: 'center' },
   footer: { fontSize: 12, textAlign: 'center', marginTop: 22, lineHeight: 18, paddingHorizontal: 20 },
+  titleBlock: { marginTop: 4, marginBottom: 18, paddingHorizontal: 4 },
 })

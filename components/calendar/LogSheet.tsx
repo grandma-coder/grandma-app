@@ -6,7 +6,7 @@
  */
 
 import { ReactNode } from 'react'
-import { View, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform, Text } from 'react-native'
+import { View, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform, Text, ScrollView } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
@@ -70,7 +70,14 @@ export function LogSheet({ visible, title, onClose, children, chip, chipColor, t
             </Pressable>
           </View>
 
-          <View style={styles.content}>{children}</View>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -132,7 +139,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  scroll: {
+    maxHeight: '100%',
+  },
   content: {
     paddingHorizontal: 24,
+    paddingBottom: 16,
   },
 })

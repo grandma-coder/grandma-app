@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import {
   View, Text, ScrollView, PanResponder, StyleSheet,
 } from 'react-native'
-import Svg, { Circle, Polygon } from 'react-native-svg'
+import Svg, { Circle } from 'react-native-svg'
 import { BabyIllustration } from '../home/pregnancy/babyIllustrations'
 import Animated, {
   useSharedValue,
@@ -16,6 +16,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { useQuery } from '@tanstack/react-query'
+import { useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { getWeekData } from '../../lib/pregnancyData'
@@ -189,7 +190,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
   )
 
   // ── Logged activity types for selected week ────────────────────────────────
-  const { data: weekLogTypes = [] } = useQuery({
+  const { data: weekLogTypes = [], refetch: refetchWeekLogs } = useQuery({
     queryKey: ['pregnancy-week-logs', userId, selectedWeek, dueDate],
     queryFn: async (): Promise<string[]> => {
       if (!userId || !dueDate) return []
@@ -204,8 +205,16 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
       return [...new Set((data ?? []).map((r: { log_type: string }) => r.log_type))]
     },
     enabled: !!userId && !!dueDate,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   })
+
+  // Refetch logs whenever this screen regains focus (so newly-saved logs show up)
+  useFocusEffect(
+    useCallback(() => {
+      void refetchWeekLogs()
+    }, [refetchWeekLogs]),
+  )
 
   // ── Gesture refs ──────────────────────────────────────────────────────────────
   // Strategy: tangent-projection avoids all coordinate-system issues with SVG.
@@ -373,7 +382,8 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
               </View>
             ))}
           </Animated.View>
-          {/* Static layer: orbit track + fixed anchor chevron at 6 o'clock */}
+          {/* Static layer: orbit track + fixed anchor circle at 6 o'clock that
+              frames the currently-selected week's fruit illustration. */}
           <Svg width={SVG_SIZE} height={SVG_SIZE} style={StyleSheet.absoluteFill}>
             <Circle
               cx={CX} cy={CY} r={RING_R}
@@ -381,10 +391,18 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
               stroke={orbitStroke}
               strokeWidth={1.5}
             />
-            {/* Triangle chevron pointing up at 6 o'clock — trimester color */}
-            <Polygon
-              points={`${CX},${CY + RING_R - 6} ${CX - 9},${CY + RING_R + 9} ${CX + 9},${CY + RING_R + 9}`}
-              fill={col}
+            {/* Soft inner halo so the framed illustration pops on dark surfaces */}
+            <Circle
+              cx={CX} cy={CY + RING_R} r={14}
+              fill={col + '22'}
+              stroke="none"
+            />
+            {/* Outer ring — trimester color */}
+            <Circle
+              cx={CX} cy={CY + RING_R} r={16}
+              fill="none"
+              stroke={col}
+              strokeWidth={2}
             />
           </Svg>
 

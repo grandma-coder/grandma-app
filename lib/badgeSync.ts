@@ -116,19 +116,41 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
       .eq('owner_id', userId),
   ])
 
-  // Calculate streak
+  // Calculate streak — count back from today; also include today if logged
   const logDates = new Set(
     (logsResult.data ?? []).map((l: any) => l.date),
   )
+  const today = localDateStr(new Date())
   let streak = 0
   const checkDate = new Date()
-  checkDate.setDate(checkDate.getDate() - 1)
-  for (let i = 0; i < 120; i++) {
+  // If today has a log, count it; otherwise start from yesterday
+  if (!logDates.has(today)) checkDate.setDate(checkDate.getDate() - 1)
+  for (let i = 0; i < 365; i++) {
     if (logDates.has(localDateStr(checkDate))) {
       streak++
       checkDate.setDate(checkDate.getDate() - 1)
     } else break
   }
+
+  // Longest streak — scan all logged dates for the longest consecutive run
+  let longestStreak = 0
+  if (logDates.size > 0) {
+    const sortedDates = [...logDates].sort()
+    let runStart = new Date(sortedDates[0] + 'T12:00:00')
+    let prev = new Date(sortedDates[0] + 'T12:00:00')
+    let run = 1
+    longestStreak = 1
+    for (let i = 1; i < sortedDates.length; i++) {
+      const cur = new Date(sortedDates[i] + 'T12:00:00')
+      const diffDays = Math.round((cur.getTime() - prev.getTime()) / 86400000)
+      if (diffDays === 1) run++
+      else { run = 1; runStart = cur }
+      if (run > longestStreak) longestStreak = run
+      prev = cur
+    }
+  }
+  longestStreak = Math.max(longestStreak, streak)
+  const totalLogDays = logDates.size
 
   // Count unique foods
   const foodNames = new Set<string>()
@@ -180,13 +202,29 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
     sleepScore7Day: 0,
   })
 
-  // Update streak in badge store
-  if (streak > 0) {
-    const store = useBadgeStore.getState()
-    if (streak > store.longestStreak) {
-      // Can't call set directly, but syncFromData handles streak badges
-    }
+  // ── Fetch user's points from the same source as the leaderboard ─────────
+  const { data: lbRow } = await supabase
+    .from('leaderboard_scores')
+    .select('total_points')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  let totalPoints = lbRow?.total_points ?? 0
+  if (!lbRow) {
+    // Fallback formula matches lib/leaderboard.ts fetchLeaderboardFallback
+    const gp = (garageResult.count ?? 0)
+    const cp = (channelResult.count ?? 0)
+    const cl = logsResult.count ?? 0
+    totalPoints = gp * 5 + garageLikes + cp * 3 + totalReactions + cl
   }
+
+  // Sync streak + leaderboard points back to store (single source of truth)
+  useBadgeStore.getState().setSyncedStats({
+    currentStreak: streak,
+    longestStreak,
+    totalPoints,
+    totalCheckIns: totalLogDays,
+  })
 
   return newBadges
 }

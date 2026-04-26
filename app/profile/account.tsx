@@ -7,17 +7,16 @@ import {
   View, TextInput, Pressable, ScrollView, Alert, StyleSheet, Text,
 } from 'react-native'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
 import {
-  Mail, Lock, Smartphone, Trash2, Eye, EyeOff, ChevronRight,
+  Mail, Lock, Eye, EyeOff, ChevronRight,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
-import { PillButton } from '../../components/ui/PillButton'
-import { MonoCaps, Body } from '../../components/ui/Typography'
+import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
 import { useSavedToast } from '../../components/ui/SavedToast'
+import { Heart, Star, Moon, Cross, Sparkle } from '../../components/ui/Stickers'
 
 export default function AccountScreen() {
   const { colors, font, stickers, isDark } = useTheme()
@@ -26,8 +25,6 @@ export default function AccountScreen() {
 
   const paper = isDark ? colors.surface : '#FFFEF8'
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const danger = stickers.coral
-  const dangerText = isDark ? stickers.coral : '#B43E2E'
   const dangerLabel = isDark ? '#F29082' : '#B43E2E'
 
   const [email, setEmail] = useState('')
@@ -95,15 +92,32 @@ export default function AccountScreen() {
     )
   }
 
+  function SectionLabel({ children, sticker, color }: { children: React.ReactNode; sticker: React.ReactNode; color?: string }) {
+    return (
+      <View style={styles.sectionLabel}>
+        <View style={styles.sectionSticker}>{sticker}</View>
+        <MonoCaps color={color ?? colors.textMuted} style={{ letterSpacing: 1.5 }}>{children}</MonoCaps>
+      </View>
+    )
+  }
+
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="Account & Security" />
+        <ScreenHeader title="" />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Big Fraunces title */}
+        <View style={styles.titleBlock}>
+          <Display size={32} color={colors.text}>Account & Security</Display>
+          <DisplayItalic size={18} color={stickers.coral} style={{ marginTop: 6 }}>
+            your sign-in, your call
+          </DisplayItalic>
+        </View>
+
         {/* Email */}
-        <View style={{ marginTop: 8 }}><MonoCaps color={colors.textMuted}>Email</MonoCaps></View>
+        <SectionLabel sticker={<Heart size={20} fill={stickers.pink} />}>Email</SectionLabel>
         <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
           <View style={[styles.inputRow, { borderBottomColor: paperBorder }]}>
             <Mail size={18} color={colors.textMuted} strokeWidth={2} />
@@ -117,18 +131,28 @@ export default function AccountScreen() {
               style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
             />
           </View>
-          <PillButton
-            label={saving ? 'Saving…' : 'Update Email'}
-            variant="accent"
-            accentColor={stickers.lilac}
+          <Pressable
             onPress={handleChangeEmail}
             disabled={saving}
-            height={48}
-          />
+            style={({ pressed }) => [
+              styles.actionPill,
+              {
+                backgroundColor: stickers.lilacSoft,
+                borderColor: paperBorder,
+                opacity: saving ? 0.6 : 1,
+                transform: [{ translateY: pressed ? 1 : 0 }],
+              },
+            ]}
+          >
+            <Sparkle size={20} fill={stickers.yellow} />
+            <Text style={[styles.actionPillText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+              {saving ? 'Saving…' : 'Update Email'}
+            </Text>
+          </Pressable>
         </View>
 
         {/* Password */}
-        <View style={{ marginTop: 18 }}><MonoCaps color={colors.textMuted}>Password</MonoCaps></View>
+        <SectionLabel sticker={<Star size={20} fill={stickers.yellow} />}>Password</SectionLabel>
         <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
           <View style={[styles.inputRow, { borderBottomColor: paperBorder }]}>
             <Lock size={18} color={colors.textMuted} strokeWidth={2} />
@@ -145,36 +169,55 @@ export default function AccountScreen() {
             </Pressable>
           </View>
           <Body size={12} color={colors.textMuted}>Minimum 6 characters</Body>
-          <PillButton
-            label={saving ? 'Saving…' : 'Change Password'}
-            variant="accent"
-            accentColor={stickers.lilac}
+          <Pressable
             onPress={handleChangePassword}
             disabled={saving || newPassword.length < 6}
-            height={48}
-          />
+            style={({ pressed }) => [
+              styles.actionPill,
+              {
+                backgroundColor: stickers.lilacSoft,
+                borderColor: paperBorder,
+                opacity: (saving || newPassword.length < 6) ? 0.5 : 1,
+                transform: [{ translateY: pressed ? 1 : 0 }],
+              },
+            ]}
+          >
+            <Sparkle size={20} fill={stickers.yellow} />
+            <Text style={[styles.actionPillText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+              {saving ? 'Saving…' : 'Change Password'}
+            </Text>
+          </Pressable>
         </View>
 
         {/* Sessions */}
-        <View style={{ marginTop: 18 }}><MonoCaps color={colors.textMuted}>Sessions</MonoCaps></View>
+        <SectionLabel sticker={<Moon size={20} fill={stickers.lilac} />}>Sessions</SectionLabel>
         <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
           <Pressable onPress={handleSignOutAll} style={styles.row}>
             <View style={styles.rowLeft}>
-              <Smartphone size={18} color={isDark ? stickers.peach : '#A6532A'} strokeWidth={2} />
-              <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodyMedium }]}>Sign Out All Devices</Text>
+              <Moon size={32} fill={stickers.lilac} />
+              <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>Sign Out All Devices</Text>
             </View>
-            <ChevronRight size={16} color={colors.textMuted} />
+            <ChevronRight size={18} color={colors.textMuted} />
           </Pressable>
         </View>
 
         {/* Danger zone */}
-        <View style={{ marginTop: 22 }}><MonoCaps color={dangerLabel}>Danger Zone</MonoCaps></View>
+        <SectionLabel sticker={<Cross size={20} fill={stickers.coral} />} color={dangerLabel}>
+          Danger Zone
+        </SectionLabel>
         <Pressable
           onPress={handleDeleteAccount}
-          style={[styles.dangerBtn, { backgroundColor: danger + (isDark ? '18' : '14'), borderColor: danger + '50' }]}
+          style={({ pressed }) => [
+            styles.dangerBtn,
+            {
+              backgroundColor: stickers.peachSoft,
+              borderColor: stickers.coral,
+              transform: [{ translateY: pressed ? 1 : 0 }],
+            },
+          ]}
         >
-          <Trash2 size={18} color={dangerText} strokeWidth={2} />
-          <Text style={[styles.dangerTextBtn, { color: dangerText, fontFamily: font.bodySemiBold }]}>Delete Account</Text>
+          <Cross size={28} fill={stickers.coral} />
+          <Text style={[styles.dangerTextBtn, { color: colors.text, fontFamily: font.bodySemiBold }]}>Delete Account</Text>
         </Pressable>
         <Text style={[styles.dangerHint, { color: colors.textMuted, fontFamily: font.body }]}>
           This permanently deletes your account, all children profiles, care circle members, memories, and health records.
@@ -209,16 +252,35 @@ const styles = StyleSheet.create({
   },
   inputText: { flex: 1, fontSize: 15 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4, paddingHorizontal: 0 },
-  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   rowLabel: { fontSize: 15 },
+  titleBlock: { marginTop: 4, marginBottom: 18, paddingHorizontal: 4 },
+  sectionLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 18,
+    marginBottom: 4,
+  },
+  sectionSticker: { width: 22, alignItems: 'center', justifyContent: 'center' },
+  actionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    height: 56,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  actionPillText: { fontSize: 15, letterSpacing: 0.1 },
   dangerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 12,
     paddingVertical: 16,
-    borderWidth: 1,
-    borderRadius: 22,
+    borderWidth: 1.5,
+    borderRadius: 999,
     marginTop: 8,
   },
   dangerTextBtn: { fontSize: 15 },

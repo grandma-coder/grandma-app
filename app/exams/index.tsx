@@ -1,9 +1,11 @@
 /**
- * Exams list — unified view across all three behaviors.
+ * Exams list — per-behavior view (Pre-pregnancy / Pregnancy / Kids).
  *
- * Cream-paper sticker aesthetic. Surfaces total / flagged / this-year counts,
- * month-grouped paper cards, and an inviting empty state with a CTA back to
- * the calendar (where new exams are actually created).
+ * Cream-paper sticker aesthetic. Defaults the behavior tab to the user's
+ * active journey mode so each behavior gets its own focused exam history,
+ * not a mashed-together list. Surfaces total / flagged / this-year counts,
+ * month-grouped paper cards, and an inviting empty state with a CTA back
+ * to the calendar (where new exams are actually created).
  */
 
 import { useMemo, useState } from 'react'
@@ -21,6 +23,7 @@ import { ChevronLeft } from 'lucide-react-native'
 
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
+import { useModeStore } from '../../store/useModeStore'
 import {
   type Exam,
   type ExamBehavior,
@@ -34,24 +37,34 @@ import { logSticker } from '../../components/calendar/logStickers'
 import { childColor } from '../../components/ui/ChildPills'
 import { SegmentedTabs } from '../../components/calendar/SegmentedTabs'
 
-type BehaviorFilter = 'all' | ExamBehavior
-
 const BEHAVIOR_COLORS: Record<ExamBehavior, string> = {
   'pre-pregnancy': brand.prePregnancy,
   pregnancy: brand.pregnancy,
   kids: brand.kids,
 }
 
+/** Map the global journey mode → exam behavior key (they share the same tokens). */
+function modeToBehavior(mode: string): ExamBehavior {
+  if (mode === 'pre-pregnancy') return 'pre-pregnancy'
+  if (mode === 'pregnancy') return 'pregnancy'
+  return 'kids'
+}
+
 export default function ExamsListScreen() {
   const { colors, isDark, font } = useTheme()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
+  const activeMode = useModeStore((s) => s.mode)
 
-  const [behaviorFilter, setBehaviorFilter] = useState<BehaviorFilter>('all')
+  // Default to the user's active journey so the screen opens already filtered
+  // to the behavior they care about right now (no "All" mixing).
+  const [behaviorFilter, setBehaviorFilter] = useState<ExamBehavior>(() =>
+    modeToBehavior(activeMode),
+  )
   const [childFilter, setChildFilter] = useState<string | 'all'>('all')
 
   const { data: exams = [], isLoading } = useExams({
-    behavior: behaviorFilter === 'all' ? undefined : behaviorFilter,
+    behavior: behaviorFilter,
     childId: childFilter === 'all' ? undefined : childFilter,
   })
 
@@ -83,31 +96,48 @@ export default function ExamsListScreen() {
   const inkMuted = isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'
   const inkFaint = isDark ? colors.textFaint : 'rgba(20,19,19,0.35)'
 
-  const showChildRow =
-    children.length > 1 && (behaviorFilter === 'all' || behaviorFilter === 'kids')
+  const showChildRow = children.length > 1 && behaviorFilter === 'kids'
+  const behaviorAccent = BEHAVIOR_COLORS[behaviorFilter]
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      {/* Header */}
+      {/* Header — sticker-style back chip */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 12 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backBtn}>
-          <ChevronLeft size={24} color={ink} strokeWidth={2} />
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={10}
+          style={({ pressed }) => [
+            styles.backChip,
+            {
+              backgroundColor: paper,
+              borderColor: isDark ? colors.border : '#141313',
+              shadowColor: '#141313',
+              shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+              shadowOpacity: 1,
+              shadowRadius: 0,
+              elevation: 4,
+              transform: [{ translateY: pressed ? 2 : 0 }],
+            },
+          ]}
+        >
+          <ChevronLeft size={20} color={ink} strokeWidth={2.2} />
         </Pressable>
         <Display size={28} color={ink}>Exams</Display>
-        <View style={{ width: 32 }} />
+        <View style={{ width: 36 }} />
       </View>
 
-      {/* Behavior segmented tabs */}
+      {/* Behavior segmented tabs — active pill picks up the behavior color */}
       <View style={styles.segWrap}>
         <SegmentedTabs
           options={[
-            { key: 'all', label: 'All' },
             { key: 'pre-pregnancy', label: 'Pre-preg' },
             { key: 'pregnancy', label: 'Pregnancy' },
             { key: 'kids', label: 'Kids' },
           ]}
           value={behaviorFilter}
-          onChange={(k) => setBehaviorFilter(k as BehaviorFilter)}
+          onChange={(k) => setBehaviorFilter(k as ExamBehavior)}
+          activeBg={behaviorAccent}
+          activeFg="#141313"
         />
       </View>
 
@@ -196,10 +226,19 @@ export default function ExamsListScreen() {
               onPress={() => router.push('/(tabs)/agenda')}
               style={({ pressed }) => [
                 styles.emptyCta,
-                { backgroundColor: ink, opacity: pressed ? 0.85 : 1 },
+                {
+                  backgroundColor: behaviorAccent,
+                  borderColor: isDark ? colors.border : '#141313',
+                  shadowColor: '#141313',
+                  shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                  shadowOpacity: 1,
+                  shadowRadius: 0,
+                  elevation: 4,
+                  transform: [{ translateY: pressed ? 2 : 0 }],
+                },
               ]}
             >
-              <Text style={[styles.emptyCtaText, { color: paper, fontFamily: font.bodySemiBold }]}>
+              <Text style={[styles.emptyCtaText, { color: '#141313', fontFamily: font.bodySemiBold }]}>
                 Open calendar
               </Text>
             </Pressable>
@@ -478,6 +517,14 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
   },
   backBtn: { padding: 4 },
+  backChip: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   segWrap: { paddingHorizontal: 16, marginBottom: 12 },
 
@@ -549,6 +596,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingVertical: 12,
     borderRadius: 999,
+    borderWidth: 1.5,
   },
   emptyCtaText: {
     fontSize: 14,

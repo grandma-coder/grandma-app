@@ -44,9 +44,6 @@ import Svg, {
   Circle,
   Rect,
   Line,
-  Defs,
-  LinearGradient,
-  Stop,
   G,
   Text as SvgText,
 } from 'react-native-svg'
@@ -76,7 +73,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
-import { LineChart, BarChart, BubbleGrid, smoothPath, MoodBubbleCluster } from '../charts/SvgCharts'
+import { LineChart, BarChart, BubbleGrid, MoodBubbleCluster } from '../charts/SvgCharts'
 import { FullScreenChart } from '../charts/FullScreenChart'
 import {
   useKidsAnalytics,
@@ -147,13 +144,15 @@ function radarWobble(i: number, phase: number): number {
 
 // ─── Pillar Config ─────────────────────────────────────────────────────────
 
+// Pillar colors map to the cream-paper sticker palette (not the legacy neon).
+// These are the vivid sticker chip tones; soft tints come from `pillarPalette()`.
 const PILLAR_CONFIG = {
-  nutrition: { label: 'Nutrition', color: '#A2FF86', icon: Utensils },
-  sleep:     { label: 'Sleep',     color: '#B983FF', icon: Moon },
-  mood:      { label: 'Mood',      color: '#FF8AD8', icon: Smile },
-  health:    { label: 'Health',    color: '#4D96FF', icon: Heart },
-  growth:    { label: 'Growth',    color: '#F59E0B', icon: TrendingUp },
-  activity:  { label: 'Activity',  color: '#FF6B35', icon: Zap },
+  nutrition: { label: 'Nutrition', color: '#7A9D4A', icon: Utensils },  // sticker green (deepened)
+  sleep:     { label: 'Sleep',     color: '#8E72C9', icon: Moon },      // sticker lilac (deepened)
+  mood:      { label: 'Mood',      color: '#D87CA0', icon: Smile },     // sticker pink (deepened)
+  health:    { label: 'Health',    color: '#5F8FC1', icon: Heart },     // sticker blue (deepened)
+  growth:    { label: 'Growth',    color: '#C9A02C', icon: TrendingUp }, // sticker yellow (deepened)
+  activity:  { label: 'Activity',  color: '#D86A4F', icon: Zap },        // sticker coral (deepened)
 } as const
 
 type PillarKey = keyof typeof PILLAR_CONFIG
@@ -249,6 +248,24 @@ function rankColor(i: number): string {
   if (i === 1) return '#6AABF7' // silver-blue
   if (i === 2) return '#A2FF86' // green
   return '#FFFFFF66'            // muted white
+}
+
+// Downsample a daily series to ≤ maxBuckets by summing each bucket and
+// taking the first label of the bucket (or first+last for wide spans).
+// Keeps short series untouched so weekly views stay per-day.
+function binSeries(data: number[], labels: string[], maxBuckets = 14): { data: number[]; labels: string[] } {
+  const n = data.length
+  if (n <= maxBuckets) return { data, labels }
+  const stride = Math.ceil(n / maxBuckets)
+  const buckets: number[] = []
+  const bucketLabels: string[] = []
+  for (let i = 0; i < n; i += stride) {
+    let sum = 0
+    for (let j = i; j < Math.min(i + stride, n); j++) sum += data[j]
+    buckets.push(sum)
+    bucketLabels.push(labels[i] ?? '')
+  }
+  return { data: buckets, labels: bucketLabels }
 }
 
 // ─── Tip Data Interface ────────────────────────────────────────────────────
@@ -390,7 +407,7 @@ function getHealthTips(
     detail: ageMonths < 12
       ? 'Tummy time builds neck, shoulder, and core strength essential for rolling, sitting, and crawling. Start with 2–3 min sessions and work up to 20–30 min spread across the day. Get on the floor with your baby to make it fun.'
       : 'Physical activity supports gross motor skills, better sleep, healthy weight, and improved mood. Outdoor play adds vitamin D, fresh air, and sensory stimulation. Even 3 × 20-minute sessions count toward the daily target.',
-    color: '#FF6B35',
+    color: PILLAR_CONFIG.activity.color,
     icon: TrendingUp,
   })
 
@@ -733,7 +750,7 @@ export function KidsAnalytics() {
           <FullScreenChart visible={fullScreen === 'top_foods'} title="Most Logged Foods" onClose={() => setFullScreen(null)}>
             <BubbleGrid items={analytics.nutrition.topFoods.map((f, i) => ({
               label: f.label, value: f.count,
-              color: [PILLAR_CONFIG.nutrition.color, PILLAR_CONFIG.health.color, PILLAR_CONFIG.mood.color, PILLAR_CONFIG.sleep.color, PILLAR_CONFIG.growth.color, '#FF6B35'][i % 6],
+              color: [PILLAR_CONFIG.nutrition.color, PILLAR_CONFIG.health.color, PILLAR_CONFIG.mood.color, PILLAR_CONFIG.sleep.color, PILLAR_CONFIG.growth.color, PILLAR_CONFIG.activity.color][i % 6],
             }))} />
           </FullScreenChart>
           <FullScreenChart visible={fullScreen === 'sleep_weekly'} title="Daily Sleep Hours" onClose={() => setFullScreen(null)}>
@@ -2130,12 +2147,10 @@ function RoutineComplianceModal({
               gap: 16,
             }}
           >
-            <View
-              style={[
-                styles.routineExpand,
-                { backgroundColor: colors.surface, borderColor: colors.border, marginTop: 0 },
-              ]}
-            >
+            <Animated.View entering={FadeInDown.duration(280).springify().damping(18)} style={[
+              styles.routineExpand,
+              { backgroundColor: colors.surface, borderColor: colors.border, marginTop: 0 },
+            ]}>
               <View style={styles.routineStatRow}>
             <View style={styles.routineStatCell}>
               <Text
@@ -2269,7 +2284,7 @@ function RoutineComplianceModal({
               No skipped routines this week
             </Text>
           )}
-            </View>
+            </Animated.View>
           </ScrollView>
         </View>
       </View>
@@ -2459,38 +2474,40 @@ function PillarDetailModal({
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
           </View>
 
-          {/* Header — paper-sticker redesign */}
-          <View style={[styles.modalHeader, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, paddingBottom: 16 }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          {/* Header — matches kids-analytics-screen.jsx mockup */}
+          <View style={[styles.modalHeader, { paddingBottom: 14 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
               <View
                 style={{
-                  width: 46,
-                  height: 46,
+                  width: 44,
+                  height: 44,
                   borderRadius: 999,
                   backgroundColor: palette.tint,
-                  borderWidth: 1,
-                  borderColor: colors.border,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                {renderPillarSticker(stickerForPillar(pillarKey), palette.chip, 26)}
+                {renderPillarSticker(stickerForPillar(pillarKey), palette.chip, 22)}
               </View>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text
-                  style={[
-                    styles.modalTitle,
-                    { color: colors.text, fontFamily: font.display },
-                  ]}
+                  style={{
+                    color: colors.text,
+                    fontFamily: font.display,
+                    fontSize: 26,
+                    letterSpacing: -0.5,
+                    lineHeight: 30,
+                  }}
                 >
                   {config.label}
                 </Text>
                 {score.hasData && (
                   <Text
                     style={{
-                      color: colors.textSecondary,
+                      color: PILLAR_CONFIG[pillarKey].color,
                       fontSize: 13,
-                      fontFamily: font.body,
+                      fontFamily: font.bodyMedium,
+                      marginTop: 2,
                     }}
                   >
                     {score.value.toFixed(1)}/10 — {score.label}
@@ -2498,8 +2515,8 @@ function PillarDetailModal({
                 )}
               </View>
             </View>
-            <Pressable onPress={onClose} hitSlop={10} style={[styles.modalClose, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }]}>
-              <X size={16} color={colors.text} strokeWidth={2} />
+            <Pressable onPress={onClose} hitSlop={10} style={[styles.modalClose, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, width: 32, height: 32, borderRadius: 16 }]}>
+              <X size={14} color={colors.text} strokeWidth={2} />
             </Pressable>
           </View>
 
@@ -2509,14 +2526,16 @@ function PillarDetailModal({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 24, gap: 16 }}
           >
-            <PillarDetail
-              pillarKey={pillarKey}
-              analytics={analytics}
-              chartW={chartW}
-              onFullScreen={onFullScreen}
-              childName={childName}
-              ageMonths={ageMonths}
-            />
+            <Animated.View entering={FadeInDown.duration(280).springify().damping(18)}>
+              <PillarDetail
+                pillarKey={pillarKey}
+                analytics={analytics}
+                chartW={chartW}
+                onFullScreen={onFullScreen}
+                childName={childName}
+                ageMonths={ageMonths}
+              />
+            </Animated.View>
           </ScrollView>
         </View>
       </View>
@@ -2531,7 +2550,7 @@ function PillarDetailModal({
 function ActivitySection({ ageMonths, childName }: { ageMonths: number; childName: string }) {
   const { colors, radius } = useTheme()
   const [showModal, setShowModal] = useState(false)
-  const ACTIVITY_COLOR = '#FF6B35'
+  const ACTIVITY_COLOR = PILLAR_CONFIG.activity.color
 
   const target = ageMonths < 12
     ? '20–30 min tummy time & floor play daily'
@@ -2586,7 +2605,7 @@ function ActivityModal({
 }) {
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
-  const ACTIVITY_COLOR = '#FF6B35'
+  const ACTIVITY_COLOR = PILLAR_CONFIG.activity.color
 
   interface ActivityItem { rank: number; label: string; pct: number; emoji: string; tip: string }
 
@@ -2691,82 +2710,17 @@ interface MathStep {
   value: string      // "7.5"
 }
 
-function ScoreMathCard({ title, steps, final, color }: {
+// The kids-analytics-screen.jsx mockup deliberately omits a step-by-step
+// score-math card — the modal flow is header → tiles → "How this score works"
+// → body charts. We render nothing here so the data hooks/conditionals upstream
+// stay valid without surfacing a calculation table that's not in the design.
+function ScoreMathCard(_props: {
   title: string
   steps: MathStep[]
   final: { label: string; value: string }
   color: string
 }) {
-  const { colors, font } = useTheme()
-  return (
-    <View
-      style={{
-        backgroundColor: colors.surface,
-        borderRadius: 26,
-        padding: 16,
-        gap: 12,
-        borderWidth: 1,
-        borderColor: colors.border,
-      }}
-    >
-      <Text
-        style={{
-          color: colors.textMuted,
-          fontFamily: font.bodySemiBold,
-          fontSize: 10,
-          letterSpacing: 2,
-          textTransform: 'uppercase',
-        }}
-      >
-        Score math
-      </Text>
-      <Text
-        style={{
-          color: colors.text,
-          fontFamily: font.display,
-          fontSize: 20,
-          lineHeight: 24,
-        }}
-      >
-        {title}
-      </Text>
-      <View style={{ gap: 10, marginTop: 4 }}>
-        {steps.map((s, i) => (
-          <View key={i} style={{ gap: 3 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <Text style={{ color: colors.textSecondary, fontFamily: font.bodySemiBold, fontSize: 13 }}>
-                {s.label}
-              </Text>
-              <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 16 }}>
-                {s.value}
-              </Text>
-            </View>
-            <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 12, lineHeight: 16 }}>
-              {s.formula}
-            </Text>
-          </View>
-        ))}
-      </View>
-      <View
-        style={{
-          marginTop: 6,
-          paddingTop: 12,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-        }}
-      >
-        <Text style={{ color: colors.text, fontFamily: font.bodySemiBold, fontSize: 14 }}>
-          {final.label}
-        </Text>
-        <Text style={{ color, fontFamily: font.display, fontSize: 26 }}>
-          {final.value}
-        </Text>
-      </View>
-    </View>
-  )
+  return null
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2813,7 +2767,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       return nutr.hasData ? (
         <View style={styles.detailBody}>
           {/* Summary stats — differ by age mode */}
-          <View style={[styles.statRow, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+          <View style={[styles.statRow]}>
             {isMilkPhase ? (
               <>
                 <StatPill label="Avg feeds/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
@@ -2840,10 +2794,8 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           </View>
 
           {/* Explanation — different copy per mode */}
-          <View style={[{ backgroundColor: colors.surfaceRaised, borderRadius: radius.xl, padding: 16, gap: 8 }]}>
-            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }]}>
-              How this score works
-            </Text>
+          <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
+            <Text style={[styles.helpCardCaps, { color: colors.text }]}>How this score works</Text>
             {isMilkPhase ? (
               <>
                 <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
@@ -3075,17 +3027,15 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       return analytics.sleep.hasData ? (
         <View style={styles.detailBody}>
           {/* Stats at top */}
-          <View style={[styles.statRow, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+          <View style={[styles.statRow]}>
             <StatPill label="Avg/night" value={`${avg.toFixed(1)}h`} color={PILLAR_CONFIG.sleep.color} />
             <StatPill label="Quality" value={getBestQuality(analytics.sleep.qualityCounts)} color={brand.success} />
             <StatPill label="Target" value={`${target}h`} color={colors.textMuted} />
           </View>
 
           {/* Explanation */}
-          <View style={[{ backgroundColor: colors.surfaceRaised, borderRadius: radius.xl, padding: 16, gap: 8 }]}>
-            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }]}>
-              How this score works
-            </Text>
+          <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
+            <Text style={[styles.helpCardCaps, { color: colors.text }]}>How this score works</Text>
             <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
               {`${childName} averaged ${avg.toFixed(1)}h/night across ${daysLogged} logged days. The target for ${getAgeLabel(ageMonths)} is ${target}h including naps. `}
               {deficit > 0.5
@@ -3154,6 +3104,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               labels={analytics.sleep.weekLabels}
               color={PILLAR_CONFIG.sleep.color}
               width={chartW}
+              unit="h"
             />
           </ChartCard>
 
@@ -3171,9 +3122,12 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       const moodScore = analytics.scores.mood
       return analytics.mood.hasData ? (
         <View style={styles.detailBody}>
-          <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
-            Mood score weights: happy/calm = positive, energetic = neutral-positive, fussy/cranky = negative. More consistent logging improves accuracy.
-          </Text>
+          <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
+            <Text style={[styles.helpCardCaps, { color: colors.text }]}>How this score works</Text>
+            <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+              Mood score weights: happy/calm = positive, energetic = neutral-positive, fussy/cranky = negative. More consistent logging improves accuracy.
+            </Text>
+          </View>
 
           <ScoreMathCard
             title={`Mood · ${Number.isFinite(moodScore.value) ? moodScore.value.toFixed(1) : '—'}/10`}
@@ -3219,21 +3173,21 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       return (
         <View style={styles.detailBody}>
           {/* Summary card */}
-          <View style={[styles.statRow, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+          <View style={[styles.statRow]}>
             <StatPill label="Vaccines done" value={`${doneVaccines}/${totalVaccines}`} color={brand.success} />
             <StatPill label="Events this week" value={`${totalEvents}`} color={totalEvents === 0 ? brand.success : brand.accent} />
             <StatPill label="Completion" value={`${vaccinePct}%`} color={PILLAR_CONFIG.health.color} />
           </View>
 
           {/* Health score explanation */}
-          <View style={[{ backgroundColor: colors.surfaceRaised, borderRadius: radius.xl, padding: 16, gap: 8 }]}>
-            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }]}>How this score works</Text>
+          <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
+            <Text style={[styles.helpCardCaps, { color: colors.text }]}>How this score works</Text>
             <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
               {`Health score = vaccine completion (60%) + low health incidents (40%). ${doneVaccines}/${totalVaccines} vaccines logged. ${totalEvents === 0 ? 'No health events this week — great!' : `${totalEvents} health event${totalEvents !== 1 ? 's' : ''} logged this week.`}`}
             </Text>
           </View>
 
-          {(() => {
+          {analytics.scores.health.hasData && (() => {
             const healthScore = analytics.scores.health
             const vaccineScore = totalVaccines > 0 ? (doneVaccines / totalVaccines) * 10 : 5
             const eventPenalty = Math.min(totalEvents * 0.8, 5)
@@ -3266,13 +3220,13 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Recent events by type */}
           {analytics.health.hasData && analytics.health.recentEvents.length > 0 && (
-            <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <Text style={[styles.chartTitle, { color: colors.text }]}>Recent Events</Text>
+            <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
+              <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 14 }]}>Recent Events</Text>
               {Object.entries(eventsByType).map(([type, events]) => (
-                <View key={type} style={{ marginBottom: 12 }}>
+                <View key={type} style={{ marginBottom: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                     <EmojiSticker size={14}>{getHealthEventEmoji(type)}</EmojiSticker>
-                    <Text style={{ color: getEventColor(type), fontSize: 12, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold', letterSpacing: 1 }}>
+                    <Text style={{ color: getEventColor(type), fontSize: 11, fontWeight: '600', fontFamily: 'DMSans_600SemiBold', letterSpacing: 1.4 }}>
                       {getHealthEventLabel(type).toUpperCase()}
                     </Text>
                   </View>
@@ -3301,16 +3255,16 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
 
           {/* Vaccine tracker */}
-          <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-            <View style={styles.row}>
-              <Syringe size={20} color={PILLAR_CONFIG.health.color} strokeWidth={2} />
+          <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
+            <View style={[styles.row, { marginBottom: 4 }]}>
+              <Syringe size={18} color={PILLAR_CONFIG.health.color} strokeWidth={2} />
               <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 0 }]}>Vaccine Tracker</Text>
             </View>
             {/* Progress bar */}
-            <View style={{ height: 6, borderRadius: 3, marginTop: 10, marginBottom: 14, overflow: 'hidden', backgroundColor: brand.success + '20' }}>
-              <View style={{ width: `${vaccinePct}%`, height: '100%', backgroundColor: brand.success, borderRadius: 3 }} />
+            <View style={{ height: 8, borderRadius: 999, marginTop: 12, marginBottom: 12, overflow: 'hidden', backgroundColor: brand.success + '22' }}>
+              <View style={{ width: `${vaccinePct}%`, height: '100%', backgroundColor: brand.success, borderRadius: 999 }} />
             </View>
-            <Text style={[styles.detailExplain, { color: colors.textSecondary, marginBottom: 12 }]}>
+            <Text style={[styles.detailExplain, { color: colors.textSecondary, marginBottom: 14 }]}>
               {`${doneVaccines}/${totalVaccines} logged as completed`}
             </Text>
             <View style={styles.vaccineGrid}>
@@ -3318,13 +3272,13 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                 <View
                   key={i}
                   style={[styles.vaccineChip, {
-                    backgroundColor: v.done ? brand.success + '15' : colors.surfaceRaised,
-                    borderColor: v.done ? brand.success + '40' : colors.border,
+                    backgroundColor: v.done ? brand.success + '1A' : colors.surfaceRaised,
+                    borderColor: v.done ? brand.success + '55' : colors.borderStrong,
                     borderRadius: radius.full,
                   }]}
                 >
                   {v.done && <Shield size={14} color={brand.success} strokeWidth={2.5} />}
-                  <Text style={[styles.vaccineText, { color: v.done ? brand.success : colors.textMuted }]}>{v.name}</Text>
+                  <Text style={[styles.vaccineText, { color: v.done ? brand.success : colors.textSecondary }]}>{v.name}</Text>
                 </View>
               ))}
             </View>
@@ -3377,7 +3331,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Latest measurements — always shown */}
           {(analytics.growth.weights.length >= 1 || analytics.growth.heights.length >= 1) && (
-            <View style={[styles.statRow, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+            <View style={[styles.statRow]}>
               {analytics.growth.weights.length >= 1 && (
                 <StatPill
                   label={`Weight (${new Date(analytics.growth.weights.at(-1)!.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}
@@ -3466,15 +3420,15 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       return (
         <View style={styles.detailBody}>
           {/* Stats */}
-          <View style={[styles.statRow, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+          <View style={[styles.statRow]}>
             <StatPill label="Active days" value={act.hasData ? `${act.activeDays}/7` : '—'} color={COLOR} />
             <StatPill label="Sessions" value={act.hasData ? `${act.totalSessions}` : '—'} color={brand.secondary} />
             <StatPill label="Types" value={act.hasData ? `${act.uniqueTypes.length}` : '—'} color={brand.accent} />
           </View>
 
           {/* Explanation */}
-          <View style={[{ backgroundColor: colors.surfaceRaised, borderRadius: radius.xl, padding: 16, gap: 8 }]}>
-            <Text style={[styles.detailExplain, { color: colors.text, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }]}>How this score works</Text>
+          <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
+            <Text style={[styles.helpCardCaps, { color: colors.text }]}>How this score works</Text>
             <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
               {act.hasData
                 ? `${childName} was active on ${act.activeDays} of ${act.dailySessions.length} days (${act.totalSessions} session${act.totalSessions !== 1 ? 's' : ''}, ${act.uniqueTypes.length} unique type${act.uniqueTypes.length !== 1 ? 's' : ''}).`
@@ -3526,33 +3480,38 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             </ChartCard>
           )}
 
-          {/* Age-appropriate guide */}
-          <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-            <Text style={[styles.chartTitle, { color: colors.text }]}>Recommended Activity Split</Text>
-            <View style={{ gap: 12, marginTop: 4 }}>
-              {guideItems.map((item) => (
-                <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <EmojiSticker size={22}>{item.emoji}</EmojiSticker>
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }}>{item.label}</Text>
-                      <Text style={{ color: COLOR, fontSize: 15, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' }}>{item.pct}%</Text>
-                    </View>
-                    <View style={{ height: 5, borderRadius: 3, backgroundColor: COLOR + '18', overflow: 'hidden' }}>
-                      <View style={{ width: `${item.pct}%`, height: '100%', backgroundColor: COLOR + 'CC', borderRadius: 3 }} />
-                    </View>
-                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '500', fontFamily: 'DMSans_500Medium' }}>{item.tip}</Text>
+          {/* Age-appropriate guide — RecSplit pattern from the mockup */}
+          <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }]}>
+            <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 6 }]}>Recommended Activity Split</Text>
+            {guideItems.map((item) => (
+              <View key={item.label} style={{ paddingVertical: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 12 }}>{item.emoji}</Text>
                   </View>
+                  <Text style={{ flex: 1, color: colors.text, fontSize: 14, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.1 }}>
+                    {item.label}
+                  </Text>
+                  <Text style={{ color: COLOR, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 }}>
+                    {item.pct}%
+                  </Text>
                 </View>
-              ))}
-            </View>
-            <View style={{ backgroundColor: COLOR + '10', borderRadius: 12, padding: 12, marginTop: 12, borderWidth: 1, borderColor: COLOR + '25' }}>
-              <Text style={{ color: COLOR, fontSize: 12, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }}>
+                <View style={{ height: 6, borderRadius: 999, backgroundColor: colors.surfaceRaised, marginTop: 6, overflow: 'hidden' }}>
+                  <View style={{ width: `${item.pct}%`, height: '100%', backgroundColor: COLOR }} />
+                </View>
+                <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'DMSans_400Regular', lineHeight: 14, marginTop: 4 }}>
+                  {item.tip}
+                </Text>
+              </View>
+            ))}
+            <View style={{ backgroundColor: COLOR + '15', borderRadius: radius.md, padding: 12, marginTop: 8, borderWidth: 1, borderColor: COLOR + '30', flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+              <Text style={{ fontSize: 14, lineHeight: 16 }}>📋</Text>
+              <Text style={{ color: COLOR, fontSize: 12, fontFamily: 'DMSans_500Medium', flex: 1, lineHeight: 16 }}>
                 {ageMonths < 12
-                  ? '📋 Aim for 20–30 min tummy time daily, spread across sessions.'
+                  ? 'Aim for 20–30 min tummy time daily, spread across sessions.'
                   : ageMonths < 36
-                  ? '📋 WHO recommends 180 min of activity/day for toddlers, spread throughout.'
-                  : '📋 WHO recommends 60 min of moderate-to-vigorous activity daily for children 3+.'}
+                  ? 'WHO recommends 180 min of activity/day for toddlers, spread throughout.'
+                  : 'WHO recommends 60 min of moderate-to-vigorous activity daily for children 3+.'}
               </Text>
             </View>
           </View>
@@ -3577,10 +3536,10 @@ function ChildChip({ label, age, active, color, onPress }: { label: string; age:
 function ChartCard({ title, children, onExpand }: { title: string; children: React.ReactNode; onExpand: () => void }) {
   const { colors, radius } = useTheme()
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }]}>
       <Pressable onPress={onExpand} style={styles.chartHeader}>
         <Text style={[styles.chartTitle, { color: colors.text }]}>{title}</Text>
-        <ChevronRight size={16} color={colors.textMuted} />
+        <ChevronRight size={18} color={colors.textMuted} strokeWidth={1.75} />
       </Pressable>
       <View style={styles.chartBody}>{children}</View>
     </View>
@@ -3590,9 +3549,14 @@ function ChartCard({ title, children, onExpand }: { title: string; children: Rea
 function StatPill({ label, value, color }: { label: string; value: string; color: string }) {
   const { colors, radius } = useTheme()
   return (
-    <View style={[styles.statPill, { backgroundColor: color + '12', borderRadius: radius.xl }]}>
+    <View style={[styles.statPill, {
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    }]}>
       <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
     </View>
   )
 }
@@ -3610,8 +3574,8 @@ function EmptyDetail({ pillar }: { pillar: PillarKey }) {
     activity: 'No activities logged yet this week. Log sessions from the calendar to track movement.',
   }
   return (
-    <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-      <Icon size={20} color={colors.textMuted} />
+    <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
+      <Icon size={22} color={colors.textMuted} strokeWidth={1.75} />
       <Text style={[styles.emptyText, { color: colors.textMuted }]}>{messages[pillar]}</Text>
     </View>
   )
@@ -3622,36 +3586,36 @@ function EmptyDetail({ pillar }: { pillar: PillarKey }) {
 function StackedBarChart({ good, little, none, labels, width = 300, height = 200 }: {
   good: number[]; little: number[]; none: number[]; labels: string[]; width?: number; height?: number
 }) {
-  const { colors } = useTheme()
+  const { colors, stickers: st } = useTheme()
   const leftPad = 40, rightPad = 16, topPad = 28, bottomPad = 8
   const chartW = width - leftPad - rightPad
   const chartH = height - topPad - bottomPad
   const count = good.length
   const maxVal = Math.max(...good.map((g, i) => g + little[i] + none[i]), 1)
-  const barW = Math.min(36, chartW / count - 10)
-  const barR = Math.min(8, barW / 3)
 
-  // Y-axis ticks
+  // Empty state
+  if (maxVal === 0 || count === 0) {
+    return (
+      <View style={{ height, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center' }]}>
+          Log meals to see eat-quality patterns.
+        </Text>
+      </View>
+    )
+  }
+
+  const barW = Math.min(36, chartW / count - 10)
+  const barR = Math.min(10, barW / 2.5)
   const ticks = [0, Math.round(maxVal / 2), maxVal]
+
+  // Sticker palette: green=ate well, peach=a little, coral=didn't eat
+  const colGood = st.green
+  const colLittle = st.peach
+  const colNone = st.coral
 
   return (
     <View style={{ alignItems: 'center' }}>
       <Svg width={width} height={height}>
-        <Defs>
-          <LinearGradient id="stackGood" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={brand.success} stopOpacity="1" />
-            <Stop offset="1" stopColor={brand.success} stopOpacity="0.55" />
-          </LinearGradient>
-          <LinearGradient id="stackLittle" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={brand.accent} stopOpacity="1" />
-            <Stop offset="1" stopColor={brand.accent} stopOpacity="0.6" />
-          </LinearGradient>
-          <LinearGradient id="stackNone" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={brand.error} stopOpacity="0.85" />
-            <Stop offset="1" stopColor={brand.error} stopOpacity="0.45" />
-          </LinearGradient>
-        </Defs>
-
         {/* Grid lines + Y labels */}
         {ticks.map((tick, i) => {
           const y = topPad + chartH - (tick / maxVal) * chartH
@@ -3659,17 +3623,18 @@ function StackedBarChart({ good, little, none, labels, width = 300, height = 200
             <G key={`grid-${i}`}>
               <Line
                 x1={leftPad} y1={y} x2={width - rightPad} y2={y}
-                stroke={colors.border} strokeWidth={0.5} opacity={0.3}
-                strokeDasharray={i === 0 ? undefined : '4,4'}
+                stroke={colors.border} strokeWidth={1} opacity={0.45}
+                strokeDasharray={i === 0 ? undefined : '3,5'}
+                strokeLinecap="round"
               />
-              <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end">
+              <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end" fontFamily="DMSans_500Medium">
                 {tick}
               </SvgText>
             </G>
           )
         })}
 
-        {/* Stacked bars */}
+        {/* Stacked sticker bars */}
         {good.map((g, i) => {
           const x = leftPad + (i + 0.5) * (chartW / count) - barW / 2
           const baseY = topPad + chartH
@@ -3677,39 +3642,24 @@ function StackedBarChart({ good, little, none, labels, width = 300, height = 200
           const lH = (little[i] / maxVal) * chartH
           const nH = (none[i] / maxVal) * chartH
           const totalH = gH + lH + nH
-
-          // Build stacked segments with rounded top on topmost segment
           const topR = totalH > barR * 2 ? barR : Math.min(totalH / 2, barR)
-          const topY = baseY - totalH
 
           return (
             <G key={i}>
-              {/* Determine which is the topmost segment for rounded corners */}
               {(() => {
                 const hasN = nH > 0, hasL = lH > 0, hasG = gH > 0
                 const topSeg = hasN ? 'none' : hasL ? 'little' : 'good'
-                const segments: { fill: string; y0: number; h: number }[] = []
-                if (hasG) segments.push({ fill: 'url(#stackGood)', y0: baseY - gH, h: gH })
-                if (hasL) segments.push({ fill: 'url(#stackLittle)', y0: baseY - gH - lH, h: lH })
-                if (hasN) segments.push({ fill: 'url(#stackNone)', y0: topY, h: nH })
+                const segments: { fill: string; key: string; y0: number; h: number }[] = []
+                if (hasG) segments.push({ fill: colGood, key: 'good', y0: baseY - gH, h: gH })
+                if (hasL) segments.push({ fill: colLittle, key: 'little', y0: baseY - gH - lH, h: lH })
+                if (hasN) segments.push({ fill: colNone, key: 'none', y0: baseY - totalH, h: nH })
 
                 return segments.map((seg, si) => {
-                  const isTop = (seg.fill.includes('Good') && topSeg === 'good')
-                    || (seg.fill.includes('Little') && topSeg === 'little')
-                    || (seg.fill.includes('None') && topSeg === 'none')
-
+                  const isTop = seg.key === topSeg
                   if (isTop && seg.h > 2) {
                     const r = Math.min(topR, seg.h / 2)
                     return (
-                      <Path key={si} d={`
-                        M ${x} ${seg.y0 + seg.h}
-                        L ${x} ${seg.y0 + r}
-                        Q ${x} ${seg.y0}, ${x + r} ${seg.y0}
-                        L ${x + barW - r} ${seg.y0}
-                        Q ${x + barW} ${seg.y0}, ${x + barW} ${seg.y0 + r}
-                        L ${x + barW} ${seg.y0 + seg.h}
-                        Z
-                      `} fill={seg.fill} />
+                      <Path key={si} d={`M ${x} ${seg.y0 + seg.h} L ${x} ${seg.y0 + r} Q ${x} ${seg.y0}, ${x + r} ${seg.y0} L ${x + barW - r} ${seg.y0} Q ${x + barW} ${seg.y0}, ${x + barW} ${seg.y0 + r} L ${x + barW} ${seg.y0 + seg.h} Z`} fill={seg.fill} />
                     )
                   }
                   return <Rect key={si} x={x} y={seg.y0} width={barW} height={Math.max(seg.h, 1)} fill={seg.fill} />
@@ -3723,14 +3673,51 @@ function StackedBarChart({ good, little, none, labels, width = 300, height = 200
         {labels.map((l, i) => <Text key={i} style={[styles.label, { color: colors.textMuted }]}>{l}</Text>)}
       </View>
       <View style={styles.legendRow}>
-        <LegendDot color={brand.success} label="Ate well" />
-        <LegendDot color={brand.accent} label="A little" />
-        <LegendDot color={brand.error} label="Didn't eat" />
+        <LegendDot color={colGood} label="Ate well" />
+        <LegendDot color={colLittle} label="A little" />
+        <LegendDot color={colNone} label="Didn't eat" />
       </View>
     </View>
   )
 }
 
+// Mockup-faithful donut: stroked ring + percentage in center.
+function Donut({ size = 100, pct, color, label, bgRing }: {
+  size?: number
+  pct: number
+  color: string
+  label: string
+  bgRing: string
+}) {
+  const stroke = 10
+  const r = size / 2 - stroke / 2 - 1
+  const cf = 2 * Math.PI * r
+  const offset = cf - (cf * pct) / 100
+  return (
+    <View style={{ alignItems: 'center', gap: 8 }}>
+      <View style={{ width: size, height: size }}>
+        <Svg width={size} height={size}>
+          <Circle cx={size / 2} cy={size / 2} r={r} stroke={bgRing} strokeWidth={stroke} fill="none" />
+          <Circle
+            cx={size / 2} cy={size / 2} r={r}
+            stroke={color} strokeWidth={stroke} fill="none"
+            strokeDasharray={cf} strokeDashoffset={offset}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          />
+        </Svg>
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color, letterSpacing: -0.5 }}>
+            {pct}%
+          </Text>
+        </View>
+      </View>
+      <Text style={{ fontSize: 12, color: '#6E6763', fontFamily: 'DMSans_500Medium' }}>{label}</Text>
+    </View>
+  )
+}
+
+// EatQualityBubbles → donut pair, matches the kids-analytics-screen.jsx mockup.
 function EatQualityBubbles({
   good, little, none,
 }: {
@@ -3738,261 +3725,190 @@ function EatQualityBubbles({
   little: number[]
   none: number[]
 }) {
-  const { colors } = useTheme()
+  const { colors, stickers: st } = useTheme()
   const totalGood = good.reduce((a, b) => a + b, 0)
   const totalLittle = little.reduce((a, b) => a + b, 0)
   const totalNone = none.reduce((a, b) => a + b, 0)
   const total = totalGood + totalLittle + totalNone
-  if (total === 0) return null
+  if (total === 0) {
+    return (
+      <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center', paddingVertical: 20 }]}>
+        Log meals to see eat-quality patterns.
+      </Text>
+    )
+  }
 
   const pctGood = Math.round((totalGood / total) * 100)
   const pctLittle = Math.round((totalLittle / total) * 100)
   const pctNone = 100 - pctGood - pctLittle
 
   const items = [
-    { label: 'Ate well', pct: pctGood, color: brand.success },
-    { label: 'A little', pct: pctLittle, color: brand.accent },
-    { label: "Didn't eat", pct: pctNone, color: brand.error },
+    { label: 'Ate well', pct: pctGood, color: st.green },
+    { label: 'A little', pct: pctLittle, color: st.peach },
+    { label: "Didn't eat", pct: pctNone, color: st.coral },
   ].filter((i) => i.pct > 0)
 
-  const maxPct = Math.max(...items.map((i) => i.pct), 1)
-
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 20, paddingVertical: 16 }}>
-      {items.map((item) => {
-        const size = 56 + (item.pct / maxPct) * 52 // 56–108px
-        return (
-          <View key={item.label} style={{ alignItems: 'center', gap: 10 }}>
-            <View
-              style={{
-                width: size, height: size, borderRadius: size / 2,
-                backgroundColor: item.color + '20',
-                borderWidth: 2, borderColor: item.color + '50',
-                alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              <Text style={{ color: item.color, fontSize: size > 80 ? 20 : 16, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' }}>
-                {item.pct}%
-              </Text>
-            </View>
-            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', fontFamily: 'DMSans_600SemiBold', textAlign: 'center', maxWidth: size + 8 }}>
-              {item.label}
-            </Text>
-          </View>
-        )
-      })}
+    <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: 24, paddingVertical: 12 }}>
+      {items.map((item) => (
+        <Donut key={item.label} size={100} pct={item.pct} color={item.color} label={item.label} bgRing={colors.surfaceRaised} />
+      ))}
     </View>
   )
 }
 
+// Mockup-faithful LineChart from kids-analytics-screen.jsx (line 402–419):
+// simple polyline + 10px circles with paper-deep fill + line-stroke, value
+// shown inside each circle, day label below. No area fill, no smooth curve.
 function MealsLineChart({
-  data, labels, width,
+  data: rawData, labels: rawLabels, width,
 }: {
   data: number[]
   labels: string[]
   width: number
 }) {
   const { colors } = useTheme()
-  const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const color = PILLAR_CONFIG.nutrition.color
 
-  const leftPad = 32
-  const rightPad = 16
-  const topPad = 32
-  const bottomPad = 8
-  const svgH = 160
-  const innerW = width - leftPad - rightPad
-  const innerH = svgH - topPad - bottomPad
+  // Bin to ≤ 14 points to keep wide windows legible
+  const { data, labels } = binSeries(rawData, rawLabels, 14)
+  if (data.length < 2) return null
+
+  const pad = 16
+  const svgH = 90
+  const labelH = 18
+  const totalH = svgH + labelH
+  const innerW = width - pad * 2
+  const step = innerW / (data.length - 1)
 
   const maxV = Math.max(...data, 1)
-  const nonZeroData = data.some((v) => v > 0)
-
   const pts = data.map((v, i) => ({
-    x: leftPad + (i / Math.max(data.length - 1, 1)) * innerW,
-    y: topPad + innerH - (v / maxV) * innerH,
+    x: pad + i * step,
+    y: pad + (svgH - pad * 2) - (v / maxV) * (svgH - pad * 2),
     v,
   }))
-
-  const curvePath = nonZeroData ? smoothPath(pts) : ''
-  const areaPath = nonZeroData
-    ? curvePath + ` L ${pts[pts.length - 1].x} ${topPad + innerH} L ${pts[0].x} ${topPad + innerH} Z`
-    : ''
+  const polyline = pts.map((p) => `${p.x},${p.y}`).join(' ')
+  const nonZeroData = data.some((v) => v > 0)
 
   return (
-    <View>
-      <View>
-        <Svg width={width} height={svgH}>
-          <Defs>
-            <LinearGradient id="mealsAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={color} stopOpacity="0.18" />
-              <Stop offset="1" stopColor={color} stopOpacity="0" />
-            </LinearGradient>
-          </Defs>
+    <View style={{ width: '100%', paddingVertical: 4 }}>
+      <Svg width={width} height={totalH}>
+        {/* Connecting polyline — straight lines, 2px stroke, no fill */}
+        {nonZeroData && (
+          <Path
+            d={'M ' + pts.map((p) => `${p.x} ${p.y}`).join(' L ')}
+            fill="none" stroke={color} strokeWidth={2}
+            strokeLinejoin="round" strokeLinecap="round"
+          />
+        )}
 
-          {/* Area fill */}
-          {nonZeroData && <Path d={areaPath} fill="url(#mealsAreaGrad)" />}
-
-          {/* Smooth line */}
-          {nonZeroData && (
-            <Path d={curvePath} fill="none" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-          )}
-
-          {/* Y-axis max label */}
-          <SvgText x={leftPad - 6} y={topPad + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end">
-            {maxV}
-          </SvgText>
-          <SvgText x={leftPad - 6} y={topPad + innerH + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end">
-            0
-          </SvgText>
-
-          {/* Point circles — outer ring + filled inner dot (no SVG emoji, not reliable) */}
-          {pts.map((p, i) => (
-            <G key={i}>
-              <Circle
-                cx={p.x} cy={p.y} r={selectedDay === i ? 20 : 15}
-                fill={selectedDay === i ? color + '30' : color + '15'}
-                stroke={selectedDay === i ? color : color + '60'}
-                strokeWidth={1.5}
-              />
-              <Circle
-                cx={p.x} cy={p.y} r={selectedDay === i ? 6 : 4.5}
-                fill={color}
-              />
-            </G>
-          ))}
-        </Svg>
-
-        {/* Pressable overlay for each point */}
-        <View style={[StyleSheet.absoluteFill, { flexDirection: 'row' }]}>
-          {pts.map((p, i) => (
-            <Pressable
-              key={i}
-              onPress={() => setSelectedDay(selectedDay === i ? null : i)}
-              style={{ position: 'absolute', left: p.x - 20, top: p.y - 20, width: 40, height: 40 }}
-            />
-          ))}
-        </View>
-      </View>
-
-      {/* X-axis labels */}
-      <View style={{ flexDirection: 'row', paddingLeft: leftPad, paddingRight: rightPad, marginTop: 4 }}>
-        {labels.map((label, i) => (
-          <Text
-            key={i}
-            style={{
-              flex: 1, textAlign: 'center', fontSize: 12, fontWeight: selectedDay === i ? '800' : '600',
-              color: selectedDay === i ? color : colors.textMuted,
-            }}
-          >
-            {label}
-          </Text>
+        {/* Each point: bg-deep circle with line stroke + value text inside */}
+        {pts.map((p, i) => (
+          <G key={i}>
+            <Circle cx={p.x} cy={p.y} r={11} fill={colors.surfaceRaised} stroke={colors.borderStrong} strokeWidth={1} />
+            <SvgText
+              x={p.x} y={p.y + 3}
+              textAnchor="middle"
+              fontSize={10}
+              fontFamily="Fraunces_600SemiBold"
+              fill={p.v > 0 ? color : colors.textMuted}
+            >
+              {p.v}
+            </SvgText>
+            {/* Day label below */}
+            <SvgText
+              x={p.x} y={svgH + 14}
+              textAnchor="middle"
+              fontSize={10}
+              fontFamily="DMSans_400Regular"
+              fill={colors.textMuted}
+            >
+              {labels[i]}
+            </SvgText>
+          </G>
         ))}
-      </View>
-
-      {/* Tap tooltip */}
-      {selectedDay !== null && (
-        <View style={{ backgroundColor: color + '15', borderRadius: 12, padding: 12, marginTop: 10, borderWidth: 1, borderColor: color + '30' }}>
-          <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', fontFamily: 'DMSans_600SemiBold' }}>
-            <Text style={{ color, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' }}>{labels[selectedDay]}: </Text>
-            {data[selectedDay] === 0
-              ? 'No meals logged'
-              : `${data[selectedDay]} meal${data[selectedDay] !== 1 ? 's' : ''} logged`}
-          </Text>
-        </View>
-      )}
+      </Svg>
     </View>
   )
 }
 
+// Mockup-faithful bar chart: flex bars, no grid, color-mix for non-highlighted,
+// tiny "1h" label on the highlighted (max) bar. Matches kids-analytics-screen.jsx.
 function HighlightBarChart({
-  data, labels, color, width = 300, height = 180,
+  data: rawData, labels: rawLabels, color, width: _width, height = 140, unit = '',
 }: {
   data: number[]
   labels: string[]
   color: string
   width?: number
   height?: number
+  unit?: string
 }) {
   const { colors } = useTheme()
-  if (data.length === 0) return null
+  if (rawData.length === 0) return null
 
-  const leftPad = 40
-  const rightPad = 16
-  const topPad = 28
-  const bottomPad = 8
-  const chartW = width - leftPad - rightPad
-  const chartH = height - topPad - bottomPad
+  const realMax = Math.max(...rawData, 0)
+  if (realMax === 0) {
+    return (
+      <View style={{ height, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
+        <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center' }]}>
+          No entries logged in this window yet.
+        </Text>
+      </View>
+    )
+  }
 
+  const { data, labels } = binSeries(rawData, rawLabels, 14)
   const maxV = Math.max(...data, 0.1)
   const maxIdx = data.indexOf(maxV)
-  const ticks = [0, Math.round(maxV / 2), Math.round(maxV)]
-  const barW = Math.min(36, chartW / data.length - 10)
-  const barR = Math.min(8, barW / 3)
+  const yTop = realMax % 1 === 0 ? Math.ceil(maxV) : Number(maxV.toFixed(1))
+  const yMid = Math.round(maxV / 2)
+
+  const fmt = (v: number) => (v % 1 === 0 ? `${v}` : v.toFixed(1))
+  const dimmed = `${color}66` // 40% over paper, mockup-equivalent of color-mix
 
   return (
-    <View style={{ alignItems: 'center' }}>
-      <Svg width={width} height={height}>
-        <Defs>
-          <LinearGradient id="hlBarHigh" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={color} stopOpacity="1" />
-            <Stop offset="1" stopColor={color} stopOpacity="0.55" />
-          </LinearGradient>
-          <LinearGradient id="hlBarLow" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={color} stopOpacity="0.45" />
-            <Stop offset="1" stopColor={color} stopOpacity="0.2" />
-          </LinearGradient>
-        </Defs>
-
-        {/* Grid lines */}
-        {ticks.map((tick, i) => {
-          const y = topPad + chartH - (tick / maxV) * chartH
-          return (
-            <G key={i}>
-              <Line x1={leftPad} y1={y} x2={width - rightPad} y2={y} stroke={colors.border} strokeWidth={0.5} opacity={0.3} strokeDasharray={i === 0 ? undefined : '4,4'} />
-              <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end">
-                {tick}
-              </SvgText>
-            </G>
-          )
-        })}
-
-        {/* Bars */}
+    <View style={{ width: '100%', paddingVertical: 4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', height, paddingLeft: 22, gap: 4, position: 'relative' }}>
+        {/* Y axis labels — left edge, 3 only, no grid lines */}
+        <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, justifyContent: 'space-between', paddingVertical: 2 }}>
+          <Text style={{ fontSize: 10, color: colors.textMuted, fontFamily: 'DMSans_400Regular' }}>{fmt(yTop)}</Text>
+          <Text style={{ fontSize: 10, color: colors.textMuted, fontFamily: 'DMSans_400Regular' }}>{fmt(yMid)}</Text>
+          <Text style={{ fontSize: 10, color: colors.textMuted, fontFamily: 'DMSans_400Regular' }}>0</Text>
+        </View>
         {data.map((v, i) => {
-          const rawH = v > 0 ? Math.max((v / maxV) * chartH, 4) : 4
-          const x = leftPad + (i + 0.5) * (chartW / data.length) - barW / 2
-          const y = topPad + chartH - rawH
+          const pct = Math.max((v / maxV) * 100, v > 0 ? 2 : 0)
           const isMax = i === maxIdx && v > 0
-          const rTop = rawH > barR * 2 ? barR : Math.min(rawH / 2, barR)
-          const barPath = `M ${x} ${y + rawH} L ${x} ${y + rTop} Q ${x} ${y}, ${x + rTop} ${y} L ${x + barW - rTop} ${y} Q ${x + barW} ${y}, ${x + barW} ${y + rTop} L ${x + barW} ${y + rawH} Z`
-
           return (
-            <G key={i}>
+            <View key={i} style={{ flex: 1, alignItems: 'stretch', position: 'relative', height: '100%', justifyContent: 'flex-end' }}>
+              {/* Highlighted label tooltip */}
               {isMax && (
-                <Path d={barPath} fill={color} opacity={0.12} transform={`translate(0, 2) scale(1.05, 1)`} />
+                <View style={{ position: 'absolute', top: -2, left: 0, right: 0, alignItems: 'center' }}>
+                  <View style={{ backgroundColor: color + '22', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 }}>
+                    <Text style={{ fontSize: 10, fontFamily: 'Fraunces_600SemiBold', color }}>
+                      {fmt(v)}{unit}
+                    </Text>
+                  </View>
+                </View>
               )}
-              <Path d={barPath} fill={isMax ? 'url(#hlBarHigh)' : 'url(#hlBarLow)'} />
-              {isMax && v > 0 && (
-                <>
-                  <Rect x={x - 4} y={y - 22} width={barW + 8} height={18} rx={4} fill={color} opacity={0.15} />
-                  <SvgText x={x + barW / 2} y={y - 9} fill={color} fontSize={12} fontWeight="900" textAnchor="middle">
-                    {v % 1 === 0 ? v : v.toFixed(1)}h
-                  </SvgText>
-                </>
-              )}
-              {!isMax && v > 0 && (
-                <SvgText x={x + barW / 2} y={y - 6} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="middle">
-                  {v % 1 === 0 ? v : v.toFixed(1)}
-                </SvgText>
-              )}
-            </G>
+              <View style={{
+                height: `${pct}%`,
+                marginHorizontal: 2,
+                borderRadius: 6,
+                backgroundColor: v === 0 ? colors.surfaceRaised : (isMax ? color : dimmed),
+              }} />
+            </View>
           )
         })}
-      </Svg>
-
+      </View>
       {/* X labels */}
-      <View style={[styles.labelRow, { width, paddingLeft: leftPad, paddingRight: rightPad }]}>
+      <View style={{ flexDirection: 'row', paddingLeft: 22, gap: 4, marginTop: 8 }}>
         {labels.map((l, i) => (
-          <Text key={i} style={[styles.label, { color: i === maxIdx && data[i] > 0 ? color : colors.textMuted, fontWeight: i === maxIdx && data[i] > 0 ? '800' : '600' }]}>
+          <Text key={i} style={{
+            flex: 1, textAlign: 'center', fontSize: 10,
+            color: i === maxIdx && data[i] > 0 ? color : colors.textMuted,
+            fontFamily: i === maxIdx && data[i] > 0 ? 'DMSans_600SemiBold' : 'DMSans_400Regular',
+          }}>
             {l}
           </Text>
         ))}
@@ -4004,7 +3920,13 @@ function HighlightBarChart({
 function SleepQualityChart({ counts }: { counts: { great: number; good: number; restless: number; poor: number } }) {
   const { colors, radius } = useTheme()
   const total = counts.great + counts.good + counts.restless + counts.poor
-  if (total === 0) return null
+  if (total === 0) {
+    return (
+      <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center', paddingVertical: 18 }]}>
+        Log a few sleep sessions to see the quality breakdown.
+      </Text>
+    )
+  }
   const items = [
     { label: 'Great', count: counts.great, color: brand.success, emoji: '😴' },
     { label: 'Good', count: counts.good, color: PILLAR_CONFIG.health.color, emoji: '🙂' },
@@ -4018,9 +3940,9 @@ function SleepQualityChart({ counts }: { counts: { great: number; good: number; 
         if (item.count === 0) return null
         return (
           <View key={i} style={styles.qualityRow}>
-            <EmojiSticker size={22}>{item.emoji}</EmojiSticker>
-            <Text style={[styles.qualityLabel, { color: colors.textSecondary }]}>{item.label}</Text>
-            <View style={[styles.qualityBarBg, { backgroundColor: colors.surfaceRaised, borderRadius: radius.full }]}>
+            <EmojiSticker size={24}>{item.emoji}</EmojiSticker>
+            <Text style={[styles.qualityLabel, { color: colors.text }]}>{item.label}</Text>
+            <View style={[styles.qualityBarBg, { backgroundColor: item.color + '1A', borderRadius: radius.full, height: 12 }]}>
               <View style={[styles.qualityBarFill, { width: `${pct}%`, backgroundColor: item.color, borderRadius: radius.full }]} />
             </View>
             <Text style={[styles.qualityPct, { color: item.color }]}>{pct}%</Text>
@@ -4036,29 +3958,42 @@ function MoodDistribution({ moods }: { moods: { mood: string; count: number }[] 
 }
 
 function MoodDailyChart({ dailyCounts, labels, width }: { dailyCounts: Record<string, number[]>; labels: string[]; width: number }) {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   const days = labels.length
   const moods = Object.keys(dailyCounts)
-  const colW = width / days
+  const totalAcrossWindow = moods.reduce((sum, m) => sum + dailyCounts[m].reduce((a, b) => a + b, 0), 0)
+  if (totalAcrossWindow === 0) {
+    return (
+      <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center', paddingVertical: 24 }]}>
+        No moods logged in this window yet.
+      </Text>
+    )
+  }
+  // Cap to ≤14 columns on long windows so dots don't overlap
+  const stride = Math.max(1, Math.ceil(days / 14))
+  const ink = isDark ? colors.text : '#141313'
+  const colW = width / Math.ceil(days / stride)
   return (
     <View style={{ alignItems: 'center' }}>
-      <View style={{ flexDirection: 'row', width }}>
-        {labels.map((label, dayIdx) => {
-          const dayMoods = moods.filter((m) => dailyCounts[m][dayIdx] > 0)
+      <View style={{ flexDirection: 'row', width, flexWrap: 'nowrap' }}>
+        {labels.filter((_, i) => i % stride === 0).map((label, colIdx) => {
+          const dayIdx = colIdx * stride
+          const dayMoods = moods.filter((m) => (dailyCounts[m]?.[dayIdx] ?? 0) > 0)
           return (
-            <View key={dayIdx} style={{ width: colW, alignItems: 'center', gap: 6, paddingVertical: 10 }}>
-              {dayMoods.length > 0 ? dayMoods.map((mood) => {
-                const count = dailyCounts[mood][dayIdx]
-                const color = MOOD_COLORS[mood] || colors.primary
-                return Array.from({ length: Math.min(count, 3) }).map((_, dotIdx) => (
-                  <View key={`${mood}-${dotIdx}`} style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color + '30', borderWidth: 1.5, borderColor: color + '50', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                    <MoodFace size={20} variant={moodFaceVariant(mood)} fill={moodFaceFill(mood)} />
+            <View key={dayIdx} style={{ width: colW, alignItems: 'center', gap: 4, paddingVertical: 10 }}>
+              {dayMoods.length > 0 ? dayMoods.slice(0, 3).map((mood) => {
+                const fill = moodFaceFill(mood)
+                return (
+                  <View key={mood} style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: fill + '55', borderWidth: 1.5, borderColor: ink, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <MoodFace size={20} variant={moodFaceVariant(mood)} fill={fill} stroke={ink} />
                   </View>
-                ))
+                )
               }) : (
-                <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border }} />
+                <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderStrong }} />
               )}
-              <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
+              <Text style={[styles.label, { color: dayMoods.length > 0 ? colors.textSecondary : colors.textMuted }]} numberOfLines={1}>
+                {label}
+              </Text>
             </View>
           )
         })}
@@ -4150,7 +4085,7 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 20,
     marginTop: 16,
     marginRight: 20,
   },
@@ -4394,12 +4329,20 @@ const styles = StyleSheet.create({
 
   // Detail body
   detailBody: { gap: 16, paddingTop: 8 },
-  detailExplain: { fontSize: 13, fontFamily: 'DMSans_400Regular', lineHeight: 19, paddingHorizontal: 4 },
+  detailExplain: { fontSize: 14, fontFamily: 'DMSans_400Regular', lineHeight: 20, paddingHorizontal: 4 },
+  helpCardCaps: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.2, marginBottom: 4 },
 
-  // Chart card
-  card: { padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 3 },
-  chartHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-  chartTitle: { fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginBottom: 8 },
+  // Chart card — paper-cutout sticker style (no harsh black shadow)
+  card: {
+    padding: 20,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    elevation: 2,
+  },
+  chartHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  chartTitle: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.1 },
   chartBody: { alignItems: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 
@@ -4432,11 +4375,11 @@ const styles = StyleSheet.create({
   qualityBarFill: { height: '100%' },
   qualityPct: { fontSize: 14, fontFamily: 'Fraunces_600SemiBold', width: 44, textAlign: 'right' },
 
-  // Stat row
-  statRow: { flexDirection: 'row', gap: 12, padding: 8 },
-  statPill: { flex: 1, alignItems: 'center', padding: 16, gap: 6 },
-  statValue: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold' },
-  statLabel: { fontSize: 12, fontFamily: 'DMSans_500Medium', textAlign: 'center' },
+  // Stat row — paper tiles like the design-system mockup
+  statRow: { flexDirection: 'row', gap: 8, padding: 0, backgroundColor: 'transparent' as any },
+  statPill: { flex: 1, alignItems: 'center', paddingVertical: 16, paddingHorizontal: 10, gap: 2 },
+  statValue: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, lineHeight: 28 },
+  statLabel: { fontSize: 11, fontFamily: 'DMSans_400Regular', textAlign: 'center', lineHeight: 14, marginTop: 2 },
 
   // Loading / Error / Empty
   loadingWrap: { alignItems: 'center', gap: 10, paddingVertical: 32 },

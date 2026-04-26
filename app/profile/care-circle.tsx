@@ -56,6 +56,7 @@ import { isIconAvatar } from '../../components/ui/AvatarPicker'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
+import { childColor } from '../../components/ui/ChildPills'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import {
   Heart as HeartSticker,
@@ -64,6 +65,11 @@ import {
   Burst as BurstSticker,
   Cross as CrossSticker,
   Drop as DropSticker,
+  Moon as MoonSticker,
+  Bottle as BottleSticker,
+  Sparkle as SparkleSticker,
+  Smiley as SmileySticker,
+  Bear as BearSticker,
 } from '../../components/ui/Stickers'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -149,22 +155,39 @@ const PERMISSION_LEVELS = [
   { id: 'full', label: 'Full Contributor', perms: ['view', 'log_activity', 'chat', 'edit_child', 'emergency'], desc: 'Full access including emergency' },
 ]
 
-const EVENT_ICONS: Record<string, typeof Utensils> = {
-  feeding: Utensils,
-  food: Utensils,
-  sleep: MoonIcon,
-  mood: Smile,
-  diaper: Baby,
-  health: Heart,
-  temperature: Thermometer,
-  vaccine: Shield,
-  medicine: Heart,
-  activity: Dumbbell,
-  memory: Camera,
-  photo: Camera,
-  growth: Heart,
-  milestone: Heart,
-  note: MessageSquare,
+/**
+ * Each kind maps to a sticker renderer. Returns a JSX element so we can pass
+ * sticker-specific props (fill colors) without piping through generic Icon API.
+ */
+function renderActivitySticker(kind: string, size: number, stickerColors: { coral: string; blue: string; lilac: string; pink: string; yellow: string; green: string }) {
+  switch (kind) {
+    case 'vaccine':
+    case 'medicine':
+    case 'health':
+    case 'temperature':
+      return <CrossSticker size={size} fill={stickerColors.coral} />
+    case 'diaper':
+      return <DropSticker size={size} fill={stickerColors.blue} />
+    case 'feeding':
+    case 'food':
+      return <BottleSticker size={size} fill={stickerColors.blue} />
+    case 'sleep':
+      return <MoonSticker size={size} fill={stickerColors.lilac} />
+    case 'mood':
+      return <SmileySticker size={size} fill={stickerColors.yellow} />
+    case 'activity':
+      return <StarSticker size={size} fill={stickerColors.yellow} />
+    case 'memory':
+    case 'photo':
+      return <SparkleSticker size={size} fill={stickerColors.pink} />
+    case 'growth':
+    case 'milestone':
+      return <FlowerSticker size={size} petal={stickerColors.green} center={stickerColors.yellow} />
+    case 'note':
+      return <HeartSticker size={size} fill={stickerColors.pink} />
+    default:
+      return <HeartSticker size={size} fill={stickerColors.pink} />
+  }
 }
 
 const EVENT_COLORS: Record<string, string> = {
@@ -633,9 +656,17 @@ export default function CareCircleScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      {/* Header */}
+      {/* Header — paper-circle back + large editorial title */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="Care Circle" />
+        <ScreenHeader />
+        <View style={styles.titleBlock}>
+          <Text style={[styles.pageTitle, { color: colors.text, fontFamily: font.display }]}>
+            Care Circle
+          </Text>
+          <Text style={[styles.pageItalic, { color: stickers.coral, fontFamily: font.italic }]}>
+            the people who love them with you
+          </Text>
+        </View>
       </View>
 
       {/* Tab Toggle */}
@@ -643,8 +674,8 @@ export default function CareCircleScreen() {
         style={[
           styles.toggleRow,
           {
-            backgroundColor: isDark ? colors.surface : '#F7F0DF',
-            borderColor: isDark ? colors.border : 'rgba(20,19,19,0.06)',
+            backgroundColor: colors.surfaceRaised,
+            borderColor: colors.borderLight,
             marginHorizontal: 20,
           },
         ]}
@@ -697,15 +728,18 @@ export default function CareCircleScreen() {
               style={[
                 styles.emptyCard,
                 {
-                  backgroundColor: isDark ? colors.surface : '#FFFEF8',
-                  borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
                 },
               ]}
             >
-              <FlowerSticker size={64} petal={stickers.pink} center={stickers.yellow} />
-              <Display size={20} align="center" color={colors.text}>
+              <FlowerSticker size={120} petal={stickers.pink} center={stickers.yellow} />
+              <Display size={24} align="center" color={colors.text}>
                 No caregivers yet
               </Display>
+              <Text style={{ fontFamily: font.italic, fontSize: 18, color: stickers.coral, textAlign: 'center', marginTop: -6 }}>
+                invite the village
+              </Text>
               <Body size={14} align="center" color={colors.textSecondary}>
                 Invite a partner, nanny, or family member to share access.
               </Body>
@@ -729,8 +763,8 @@ export default function CareCircleScreen() {
                 style={[
                   styles.memberCard,
                   {
-                    backgroundColor: isDark ? colors.surface : '#FFFEF8',
-                    borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
                     opacity: isPaused ? 0.7 : 1,
                   },
                 ]}
@@ -797,24 +831,68 @@ export default function CareCircleScreen() {
                   </View>
                 </View>
 
-                {/* Children access */}
-                {childNames.length > 0 && (
+                {/* Children access — per-child colored sticker tag */}
+                {m.childIds.length > 0 && (
                   <View style={styles.childChipRow}>
-                    {childNames.map((name, i) => (
-                      <View key={i} style={[styles.childChip, { backgroundColor: stickers.blue + (isDark ? '28' : '40') }]}>
-                        <FlowerSticker size={12} petal={stickers.blue} center={stickers.yellow} />
-                        <Text style={[styles.childChipText, { color: isDark ? stickers.blue : '#1F4A7A', fontFamily: font.bodySemiBold }]}>{name}</Text>
-                      </View>
-                    ))}
+                    {m.childIds.map((cid) => {
+                      const idx = children.findIndex((c) => c.id === cid)
+                      const name = idx >= 0 ? children[idx].name : 'Child'
+                      const dotColor = idx >= 0 ? childColor(idx) : stickers.blue
+                      return (
+                        <View
+                          key={cid}
+                          style={[
+                            styles.childChip,
+                            {
+                              backgroundColor: dotColor + (isDark ? '28' : '24'),
+                              borderColor: colors.borderStrong,
+                              borderWidth: 1,
+                            },
+                          ]}
+                        >
+                          <View
+                            style={{
+                              width: 7,
+                              height: 7,
+                              borderRadius: 4,
+                              backgroundColor: dotColor,
+                              borderWidth: 1,
+                              borderColor: colors.borderStrong,
+                            }}
+                          />
+                          <Text
+                            style={[
+                              styles.childChipText,
+                              {
+                                color: isDark ? colors.text : '#141313',
+                                fontFamily: font.bodySemiBold,
+                              },
+                            ]}
+                          >
+                            {name}
+                          </Text>
+                        </View>
+                      )
+                    })}
                   </View>
                 )}
 
                 {/* Permissions */}
                 <View style={styles.permRow}>
                   {permKeys.map((p) => (
-                    <View key={p} style={[styles.permChip, { backgroundColor: colors.surfaceRaised }]}>
-                      <Shield size={10} color={colors.textMuted} />
-                      <Text style={[styles.permText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{p.replace('_', ' ')}</Text>
+                    <View
+                      key={p}
+                      style={[
+                        styles.permChip,
+                        {
+                          backgroundColor: colors.surface,
+                          borderWidth: 1,
+                          borderColor: colors.borderStrong,
+                        },
+                      ]}
+                    >
+                      <SparkleSticker size={12} fill={stickers.yellow} />
+                      <Text style={[styles.permText, { color: colors.text, fontFamily: font.bodyMedium }]}>{p.replace('_', ' ')}</Text>
                     </View>
                   ))}
                 </View>
@@ -833,14 +911,14 @@ export default function CareCircleScreen() {
                 {/* Actions row 2 */}
                 <View style={styles.actionRow}>
                   <Pressable
-                    style={[styles.actionBtn, { borderColor: isDark ? colors.border : 'rgba(20,19,19,0.14)' }]}
+                    style={[styles.actionBtn, { borderColor: colors.borderStrong }]}
                     onPress={() => setEditingMember(m)}
                   >
                     <Pencil size={14} color={colors.text} />
                     <Text style={[styles.actionText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Edit</Text>
                   </Pressable>
                   <Pressable
-                    style={[styles.actionBtn, { borderColor: isDark ? colors.border : 'rgba(20,19,19,0.14)' }]}
+                    style={[styles.actionBtn, { borderColor: colors.borderStrong }]}
                     onPress={() => pauseMember(m)}
                   >
                     {isPaused ? <Check size={14} color={isDark ? stickers.green : '#3F5919'} /> : <Pause size={14} color={isDark ? '#F0CE4C' : '#7C5E0F'} />}
@@ -858,13 +936,14 @@ export default function CareCircleScreen() {
             )
           })}
 
-          {/* Add button */}
+          {/* Add button — editorial ink CTA with sparkle */}
           <PillButton
             label="Add to Care Circle"
             variant="ink"
+            height={64}
             onPress={() => setShowAddSheet(true)}
-            leading={<Ionicons name="person-add" size={18} color={colors.bg} />}
-            style={{ marginTop: 6 }}
+            leading={<SparkleSticker size={20} fill={stickers.yellow} />}
+            style={{ marginTop: 10 }}
           />
         </ScrollView>
       ) : (
@@ -881,10 +960,10 @@ export default function CareCircleScreen() {
           {/* Filter: By caregiver */}
           {members.length > 0 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterBar}>
-              <FilterChip label="All People" active={!filterMember} onPress={() => setFilterMember(null)} />
-              <FilterChip label="You" active={filterMember === 'self'} onPress={() => setFilterMember(filterMember === 'self' ? null : 'self')} />
+              <FilterChip kind="person" label="All People" active={!filterMember} onPress={() => setFilterMember(null)} />
+              <FilterChip kind="person" label="You" active={filterMember === 'self'} onPress={() => setFilterMember(filterMember === 'self' ? null : 'self')} />
               {members.map((m) => (
-                <FilterChip key={m.rowIds[0]} label={m.displayName || m.role} active={filterMember === m.rowIds[0]} onPress={() => setFilterMember(filterMember === m.rowIds[0] ? null : m.rowIds[0])} />
+                <FilterChip kind="person" key={m.rowIds[0]} label={m.displayName || m.role} active={filterMember === m.rowIds[0]} onPress={() => setFilterMember(filterMember === m.rowIds[0] ? null : m.rowIds[0])} />
               ))}
             </ScrollView>
           )}
@@ -915,15 +994,18 @@ export default function CareCircleScreen() {
                   style={[
                     styles.emptyCard,
                     {
-                      backgroundColor: isDark ? colors.surface : '#FFFEF8',
-                      borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
                     },
                   ]}
                 >
-                  <DropSticker size={56} fill={stickers.blue} />
-                  <Display size={20} align="center" color={colors.text}>
+                  <FlowerSticker size={120} petal={stickers.lilac} center={stickers.yellow} />
+                  <Display size={24} align="center" color={colors.text}>
                     No activity yet
                   </Display>
+                  <Text style={{ fontFamily: font.italic, fontSize: 18, color: stickers.coral, textAlign: 'center', marginTop: -6 }}>
+                    a quiet day, dear
+                  </Text>
                   <Body size={14} align="center" color={colors.textSecondary}>
                     Activities logged by caregivers will appear here.
                   </Body>
@@ -944,8 +1026,6 @@ export default function CareCircleScreen() {
               <View key={dateLabel}>
                 <Text style={[styles.dateHeader, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{dateLabel}</Text>
                 {items.map((a) => {
-                  const Icon = EVENT_ICONS[a.type] ?? HeartSticker
-                  const color = EVENT_COLORS[a.type] ?? colors.textMuted
                   const summary = formatActivitySummary(a.type, a.value, a.notes)
                   const typeLabel = friendlyTypeLabel(a.type, a.value)
                   return (
@@ -954,13 +1034,13 @@ export default function CareCircleScreen() {
                       style={[
                         styles.activityItem,
                         {
-                          backgroundColor: isDark ? colors.surface : '#FFFEF8',
-                          borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                          backgroundColor: colors.surface,
+                          borderColor: colors.border,
                         },
                       ]}
                     >
-                      <View style={[styles.activityIcon, { backgroundColor: color + (isDark ? '24' : '32') }]}>
-                        <Icon size={18} color={color} strokeWidth={2} />
+                      <View style={styles.activityStickerSlot}>
+                        {renderActivitySticker(a.type, 38, stickers)}
                       </View>
                       <View style={{ flex: 1 }}>
                         <View style={styles.activityTopRow}>
@@ -1022,17 +1102,26 @@ export default function CareCircleScreen() {
 
 // ─── Filter Chip ───────────────────────────────────────────────────────────
 
-function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function FilterChip({ label, active, onPress, kind = 'kid' }: { label: string; active: boolean; onPress: () => void; kind?: 'kid' | 'person' }) {
   const { colors, font, isDark, stickers } = useTheme()
   return (
     <Pressable
       onPress={onPress}
       style={[styles.filterChip, {
-        backgroundColor: active ? stickers.lilac + (isDark ? '28' : '40') : (isDark ? colors.surface : '#FFFEF8'),
-        borderColor: active ? (isDark ? stickers.lilac : '#3A2A6E') : (isDark ? colors.border : 'rgba(20,19,19,0.14)'),
+        backgroundColor: active ? stickers.lilacSoft : colors.surface,
+        borderColor: active ? stickers.lilac : colors.borderStrong,
+        borderWidth: active ? 2 : 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
       }]}
     >
-      <Text style={[styles.filterChipText, { color: active ? (isDark ? stickers.lilac : '#3A2A6E') : colors.text, fontFamily: font.bodySemiBold }]}>{label}</Text>
+      {kind === 'kid' ? (
+        <FlowerSticker size={14} petal={stickers.pink} center={stickers.yellow} />
+      ) : (
+        <HeartSticker size={14} fill={stickers.coral} />
+      )}
+      <Text style={[styles.filterChipText, { color: active ? (isDark ? stickers.lilac : '#3A2A6E') : colors.textMuted, fontFamily: font.bodySemiBold }]}>{label}</Text>
     </Pressable>
   )
 }
@@ -1043,8 +1132,8 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
   const { colors, font, stickers, isDark, radius } = useTheme()
   const allChildren = useChildStore((s) => s.children)
   const toast = useSavedToast()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const paperBorder = colors.border
   const inkActiveBg = stickers.lilac + (isDark ? '32' : '40')
   const inkActiveText = isDark ? stickers.lilac : '#3A2A6E'
 
@@ -1192,6 +1281,14 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {/* Step 1: Photo + Name + Role */}
           {step === 1 && (
             <>
+              <View style={{ alignItems: 'center', marginBottom: 8 }}>
+                <Text style={{ fontFamily: font.display, fontSize: 28, color: colors.text, letterSpacing: -0.5 }}>
+                  Who
+                </Text>
+                <Text style={{ fontFamily: font.italic, fontSize: 18, color: stickers.coral, marginTop: 2 }}>
+                  add a caregiver, dear
+                </Text>
+              </View>
               <PhotoPickerAvatar uri={photoUri} onPick={setPhotoUri} />
               <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Name</MonoCaps></View>
               <TextInput
@@ -1438,8 +1535,8 @@ function EditMemberSheet({ member, onClose, onSaved }: {
   onSaved: (updates: { displayName?: string; photoUrl?: string; role?: string; permLevel?: string }) => void
 }) {
   const { colors, font, stickers, isDark } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const paperBorder = colors.border
   const inkActiveBg = stickers.lilac + (isDark ? '32' : '40')
   const inkActiveText = isDark ? stickers.lilac : '#3A2A6E'
 
@@ -1526,7 +1623,10 @@ function EditMemberSheet({ member, onClose, onSaved }: {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  headerWrap: { paddingHorizontal: 16, paddingBottom: 6 },
+  headerWrap: { paddingHorizontal: 16, paddingBottom: 12 },
+  titleBlock: { paddingHorizontal: 8, paddingTop: 14, paddingBottom: 10 },
+  pageTitle: { fontSize: 38, letterSpacing: -1, lineHeight: 42 },
+  pageItalic: { fontSize: 19, marginTop: 4, letterSpacing: 0.1 },
   toggleRow: {
     flexDirection: 'row',
     padding: 4,
@@ -1576,7 +1676,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   memberPhoto: { width: 48, height: 48, borderRadius: 999 },
-  memberName: { fontSize: 18, letterSpacing: -0.2 },
+  memberName: { fontSize: 24, letterSpacing: -0.4, lineHeight: 28 },
   memberEmail: { fontSize: 13, marginTop: 2 },
   memberBadges: { flexDirection: 'row', gap: 6, marginTop: 6 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999 },
@@ -1627,7 +1727,7 @@ const styles = StyleSheet.create({
 
   dateHeader: {
     fontSize: 11,
-    letterSpacing: 1.2,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginTop: 8,
     marginBottom: 6,
@@ -1642,6 +1742,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   activityIcon: { width: 40, height: 40, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+  activityStickerSlot: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   activityTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   activityType: { fontSize: 15, letterSpacing: -0.1 },
   loggerBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },

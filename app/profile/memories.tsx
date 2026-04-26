@@ -48,6 +48,7 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
 import { Heart as HeartSticker, Flower as FlowerSticker, Star as StarSticker } from '../../components/ui/Stickers'
+import { ChildPill, childColor } from '../../components/ui/ChildPills'
 
 const SCREEN_W = Dimensions.get('window').width
 const GRID_GAP = 3
@@ -586,22 +587,15 @@ export default function MemoriesScreen() {
 
             <MonoCaps color={colors.textMuted}>Which child?</MonoCaps>
             <View style={styles.childChips}>
-              {children.map((c) => {
-                const active = selectedChild === c.id
-                return (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => setSelectedChild(c.id)}
-                    style={[styles.childChip, {
-                      backgroundColor: active ? stickers.blue + (isDark ? '32' : '40') : paper,
-                      borderColor: active ? (isDark ? stickers.blue : '#1F4A7A') : paperBorder,
-                    }]}
-                  >
-                    {active && <Check size={14} color={isDark ? stickers.blue : '#1F4A7A'} strokeWidth={3} />}
-                    <Text style={[styles.childChipText, { color: active ? (isDark ? stickers.blue : '#1F4A7A') : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
-                  </Pressable>
-                )
-              })}
+              {children.map((c, idx) => (
+                <ChildPill
+                  key={c.id}
+                  label={c.name}
+                  active={selectedChild === c.id}
+                  color={childColor(idx)}
+                  onPress={() => setSelectedChild(c.id)}
+                />
+              ))}
             </View>
 
             <PillButton

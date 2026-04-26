@@ -26,6 +26,7 @@ const TYPE_LABEL: Record<StandardAppointment['type'], { label: string; Sticker: 
   blood_test: { label: 'Blood test',  Sticker: LogExamResult },
   checkup:    { label: 'Checkup',     Sticker: HealthCheckup },
   test:       { label: 'Test',        Sticker: LogAppointment },
+  vaccine:    { label: 'Vaccine',     Sticker: HealthCheckup },
 }
 
 interface Props {

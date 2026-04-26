@@ -1,22 +1,24 @@
 /**
  * ChildPills — shared child selector pills used across the app.
  *
- * Consistent styling: each child gets a unique color from CHILD_COLORS.
- * Active = solid color bg + white text. Inactive = light tint bg + colored text.
+ * Sticker-paper design language (Apr 2026):
+ *   active   — solid child color bg, ink text, hard ink stroke, ink offset shadow
+ *   inactive — child-color tinted bg, ink text at full opacity, hairline ink border
+ *   pressed  — pill drops 2px (shadow swallows) for tactile feedback
  *
- * Usage:
- *   <ChildPills
- *     children={children}
- *     activeChildId={activeChild?.id}
- *     onSelect={(child) => setActiveChild(child)}
- *   />
+ * Always use this component (or `ChildPill`) for any per-child selector. Don't
+ * roll your own — keeps the language consistent across calendar, analytics,
+ * home, exams, profile, leaderboard.
  */
 
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
 import { stickers } from '../../constants/theme'
 import { useTheme } from '../../constants/theme'
 
-// ─── Shared child color palette (redesign sticker palette) ────────────────
+const ST_INK = '#141313'
+const PAPER_BORDER = 'rgba(20,19,19,0.18)'
+
+// ─── Shared child color palette (sticker palette) ─────────────────────────
 
 export const CHILD_COLORS = [
   stickers.blue,
@@ -63,6 +65,8 @@ interface ChildPillsProps {
   maxVisible?: number
   /** Render as a wrapping row instead of horizontal scroll. Default: false */
   wrap?: boolean
+  /** Hide the small age caption (only show the name). Default: false */
+  hideAge?: boolean
 }
 
 // ─── Component ────────────────────────────────────────────────────────────
@@ -73,46 +77,28 @@ export function ChildPills({
   onSelect,
   maxVisible,
   wrap = false,
+  hideAge = false,
 }: ChildPillsProps) {
-  const { radius } = useTheme()
   const visible = maxVisible ? childrenList.slice(0, maxVisible) : childrenList
 
   const renderPill = (child: ChildItem, idx: number) => {
     const isActive = child.id === activeChildId
     const color = childColor(idx)
-    const age = child.birthDate ? formatChildAge(child.birthDate) : ''
-
+    const age = !hideAge && child.birthDate ? formatChildAge(child.birthDate) : ''
     return (
-      <Pressable
+      <ChildPill
         key={child.id}
+        label={child.name}
+        age={age}
+        active={isActive}
+        color={color}
         onPress={() => onSelect(child)}
-        style={[
-          styles.pill,
-          {
-            backgroundColor: isActive ? color : color + '18',
-            borderColor: isActive ? color : color + '50',
-            borderRadius: radius.full,
-          },
-        ]}
-      >
-        <Text style={[styles.pillName, { color: isActive ? '#FFF' : color }]}>
-          {child.name}
-        </Text>
-        {age ? (
-          <Text style={[styles.pillAge, { color: isActive ? 'rgba(255,255,255,0.7)' : color + 'AA' }]}>
-            {age}
-          </Text>
-        ) : null}
-      </Pressable>
+      />
     )
   }
 
   if (wrap) {
-    return (
-      <View style={styles.wrapRow}>
-        {visible.map(renderPill)}
-      </View>
-    )
+    return <View style={styles.wrapRow}>{visible.map(renderPill)}</View>
   }
 
   return (
@@ -126,33 +112,70 @@ export function ChildPills({
   )
 }
 
-// ─── Single Pill (for external use e.g. in analytics) ─────────────────────
+// ─── Single Pill (sticker style) ──────────────────────────────────────────
 
 interface ChildPillProps {
   label: string
   age?: string
   active: boolean
+  /** Child's accent color (e.g. childColor(idx)) */
   color: string
   onPress: () => void
+  /** Render the colored leading dot. Defaults true. */
+  showDot?: boolean
 }
 
-export function ChildPill({ label, age, active, color, onPress }: ChildPillProps) {
-  const { radius } = useTheme()
+export function ChildPill({ label, age, active, color, onPress, showDot = true }: ChildPillProps) {
+  const { isDark, colors, radius } = useTheme()
+  const ink = isDark ? colors.text : ST_INK
+  const inkBorder = isDark ? colors.border : PAPER_BORDER
+  const tintBg = isDark ? color + '28' : color + '24' // ~14% in light, ~16% in dark
+
   return (
     <Pressable
       onPress={onPress}
-      style={[
+      style={({ pressed }) => [
         styles.pill,
         {
-          backgroundColor: active ? color : color + '18',
-          borderColor: active ? color : color + '50',
+          backgroundColor: active ? color : tintBg,
+          borderColor: active ? ST_INK : inkBorder,
+          borderWidth: active ? 1.5 : 1,
           borderRadius: radius.full,
+          // Sticker-pop ink shadow on active state only
+          shadowColor: ST_INK,
+          shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
+          shadowOpacity: active ? 1 : 0,
+          shadowRadius: 0,
+          elevation: active ? 4 : 0,
+          transform: [{ translateY: active && pressed ? 2 : 0 }],
         },
       ]}
     >
-      <Text style={[styles.pillName, { color: active ? '#FFF' : color }]}>{label}</Text>
+      {showDot && (
+        <View
+          style={[
+            styles.pillDot,
+            { backgroundColor: active ? ST_INK : color, borderColor: active ? 'transparent' : 'rgba(20,19,19,0.18)' },
+          ]}
+        />
+      )}
+      <Text
+        style={[
+          styles.pillName,
+          { color: ink, fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold' },
+        ]}
+      >
+        {label}
+      </Text>
       {age ? (
-        <Text style={[styles.pillAge, { color: active ? 'rgba(255,255,255,0.7)' : color + 'AA' }]}>{age}</Text>
+        <Text
+          style={[
+            styles.pillAge,
+            { color: active ? ink : ink, opacity: active ? 0.7 : 0.55 },
+          ]}
+        >
+          {age}
+        </Text>
       ) : null}
     </Pressable>
   )
@@ -164,26 +187,33 @@ const styles = StyleSheet.create({
   scrollRow: {
     paddingHorizontal: 16,
     gap: 8,
+    alignItems: 'center',
   },
   wrapRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    alignItems: 'center',
   },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 7,
     paddingHorizontal: 14,
     paddingVertical: 8,
+  },
+  pillDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     borderWidth: 1,
   },
   pillName: {
     fontSize: 14,
-    fontWeight: '700',
+    letterSpacing: -0.1,
   },
   pillAge: {
     fontSize: 11,
-    fontWeight: '500',
+    fontFamily: 'DMSans_500Medium',
   },
 })

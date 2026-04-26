@@ -14,6 +14,7 @@ import {
 } from 'react-native'
 import { useTheme } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
+import { queryClient } from '../../lib/queryClient'
 import {
   LogWeight, LogWater, LogSleep, LogExercise,
 } from '../stickers/RewardStickers'
@@ -60,6 +61,7 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
       log_type: type,
       value: value.trim(),
     })
+    await queryClient.invalidateQueries({ queryKey: ['pregnancy-week-logs'] })
     setSaving(false)
     onSaved()
   }

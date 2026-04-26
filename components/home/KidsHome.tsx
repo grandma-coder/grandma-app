@@ -596,6 +596,13 @@ interface RangeData {
   activityEntries: ActivityEntry[]
   activityActiveDays: number
   activityRangeDays: number
+  // Breastfeeding detail
+  feedingLeft: number
+  feedingRight: number
+  feedingBoth: number
+  feedingTimes: number[]      // hour-of-day for each breast feed
+  feedingDurations: number[]  // minutes per breast feed
+  feedingDays: number         // distinct dates with at least one breast feed
 }
 
 interface ActivityEntry {
@@ -923,6 +930,12 @@ export function KidsHome() {
     activityEntries: [],
     activityActiveDays: 0,
     activityRangeDays: 0,
+    feedingLeft: 0,
+    feedingRight: 0,
+    feedingBoth: 0,
+    feedingTimes: [],
+    feedingDurations: [],
+    feedingDays: 0,
   })
 
   useEffect(() => {
@@ -1011,6 +1024,10 @@ export function KidsHome() {
     const catMap: Record<string, { cals: number; color: string }> = {}
     let totalCalories = 0
     let feedingCount = 0, feedingBreast = 0, feedingBottle = 0, feedingMlTotal = 0
+    let feedingLeft = 0, feedingRight = 0, feedingBoth = 0
+    const feedingTimes: number[] = [] // hour-of-day for each breast feed
+    const feedingDurations: number[] = [] // minutes per breast feed
+    const feedingDayMap: Record<string, number> = {} // date → breast feeds count
     for (const log of foodLogs) {
       let parsed: any = null
       try { parsed = typeof log.value === 'string' ? JSON.parse(log.value) : log.value } catch {}
@@ -1019,7 +1036,23 @@ export function KidsHome() {
       if (log.type === 'feeding' && parsed && typeof parsed === 'object') {
         feedingCount++
         const ft = (parsed.feedType || '').toLowerCase()
-        if (ft === 'breast') feedingBreast++
+        if (ft === 'breast') {
+          feedingBreast++
+          // Side tracking
+          const side = (parsed.side || '').toLowerCase()
+          if (side === 'left') feedingLeft++
+          else if (side === 'right') feedingRight++
+          else if (side === 'both') feedingBoth++
+          // Time-of-day
+          const t = String(parsed.time || '')
+          const h = Number(t.split(':')[0])
+          if (!isNaN(h)) feedingTimes.push(h)
+          // Duration (minutes)
+          const dur = Number(parsed.duration)
+          if (!isNaN(dur) && dur > 0) feedingDurations.push(dur)
+          // Per-day count
+          feedingDayMap[log.date] = (feedingDayMap[log.date] || 0) + 1
+        }
         else feedingBottle++
         feedingMlTotal += Number(parsed.amount) || 0
       }
@@ -1196,6 +1229,9 @@ export function KidsHome() {
       calorieCategories,
       feedingBreast, feedingBottle, avgFeedingMl, activityBreakdown, activityEntries,
       activityActiveDays, activityRangeDays,
+      feedingLeft, feedingRight, feedingBoth,
+      feedingTimes, feedingDurations,
+      feedingDays: Object.keys(feedingDayMap).length,
     })
   }
 
@@ -1287,20 +1323,27 @@ export function KidsHome() {
               {children.map((c, idx) => {
                 const active = c.id === child.id
                 const kidColor = CHILD_COLORS[idx % CHILD_COLORS.length]
+                const ST_INK = '#141313'
                 return (
                   <Pressable
                     key={c.id}
                     onPress={() => { setActiveChild(c); setOverflowKidsVisible(false) }}
-                    style={[s.childPill, {
-                      backgroundColor: active ? kidColor : kidColor + '18',
+                    style={({ pressed }) => [s.childPill, {
+                      backgroundColor: active ? kidColor : kidColor + '24',
                       borderRadius: radius.full,
-                      borderWidth: 1,
-                      borderColor: active ? kidColor : kidColor + '50',
+                      borderWidth: active ? 1.5 : 1,
+                      borderColor: active ? ST_INK : 'rgba(20,19,19,0.18)',
+                      shadowColor: ST_INK,
+                      shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
+                      shadowOpacity: active ? 1 : 0,
+                      shadowRadius: 0,
+                      elevation: active ? 4 : 0,
+                      transform: [{ translateY: active && pressed ? 2 : 0 }],
                       alignSelf: 'flex-start',
                     }]}
                   >
-                    <Text style={[s.pillName, { color: active ? '#FFF' : kidColor }]}>{c.name}</Text>
-                    <Text style={[s.pillAge, { color: active ? 'rgba(255,255,255,0.7)' : kidColor + 'AA' }]}>{formatAge(c.birthDate)}</Text>
+                    <Text style={[s.pillName, { color: ST_INK, fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }]}>{c.name}</Text>
+                    <Text style={[s.pillAge, { color: ST_INK, opacity: active ? 0.7 : 0.55 }]}>{formatAge(c.birthDate)}</Text>
                   </Pressable>
                 )
               })}
@@ -1512,81 +1555,11 @@ export function KidsHome() {
         </Pressable>
       </Modal>
 
-      {/* ─── Past 7 Days Mini Rings — sticker card ─────────────── */}
-      <View
-        style={[
-          s.miniRingsCard,
-          {
-            backgroundColor: isDark ? colors.surface : '#FFFEF8',
-            borderRadius: 22,
-            borderColor: '#141313',
-            borderWidth: 1.5,
-            shadowColor: '#141313',
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: isDark ? 0 : 0.08,
-            shadowRadius: 6,
-            elevation: 2,
-          },
-        ]}
-      >
-        <View style={s.miniRingsHeader}>
-          <Text style={[s.miniRingsTitle, { color: isDark ? colors.text : '#141313', fontFamily: 'Fraunces_700Bold' }]}>Past 7 Days</Text>
-          <View style={s.miniMetricPicker}>
-            {(['sleep', 'nutrition', 'activity'] as MiniRingMetric[]).map((m) => {
-              const on = miniRingMetric === m
-              const fillSoft =
-                m === 'sleep' ? '#CFE0F0' :
-                m === 'nutrition' ? '#F9D8E2' :
-                '#DDE7BB'
-              return (
-                <Pressable
-                  key={m}
-                  onPress={() => setMiniRingMetric(m)}
-                  style={[s.miniMetricBtn, {
-                    backgroundColor: on ? fillSoft : (isDark ? colors.surfaceRaised : '#FFFEF8'),
-                    borderColor: '#141313',
-                    borderWidth: 1.5,
-                  }]}
-                >
-                  <View style={[s.miniMetricDot, { backgroundColor: PILLAR_COLORS[m], borderWidth: 1, borderColor: '#141313' }]} />
-                  <Text style={[s.miniMetricLabel, { color: '#141313', fontFamily: on ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }]}>
-                    {m === 'sleep' ? 'Sleep' : m === 'nutrition' ? nutritionLabel : 'Activity'}
-                  </Text>
-                </Pressable>
-              )
-            })}
-          </View>
-        </View>
-        <View style={s.miniRingsRow}>
-          {rangeData.dayLabels.map((label, i) => {
-            const dailyData = miniRingMetric === 'sleep' ? rangeData.dailySleep : miniRingMetric === 'nutrition' ? rangeData.dailyNutrition : rangeData.dailyActivity
-            const target = miniRingMetric === 'sleep' ? rangeData.dailySleepTarget : miniRingMetric === 'nutrition' ? rangeData.dailyNutritionTarget : rangeData.dailyActivityTarget
-            const progress = target > 0 ? Math.min(dailyData[i] / target, 1) : 0
-            const isToday = i === rangeData.dayLabels.length - 1
-            const color = PILLAR_COLORS[miniRingMetric]
-            return (
-              <MiniRing
-                key={i}
-                label={label}
-                progress={progress}
-                color={color}
-                isToday={isToday}
-                hasData={dailyData[i] > 0}
-              />
-            )
-          })}
-        </View>
-      </View>
-
-      {/* ─── Multi-Ring Wheel Hero (big concentric arcs) ─────── */}
-      <MultiRingHero
-        sleepProgress={sleepProgress}
-        nutritionProgress={nutritionProgress}
-        activityProgress={activityProgress}
-        focused={focusedRing}
-        onTapRing={setFocusedRing}
-        centerData={focused}
-      />
+      {/* Past 7 Days mini-rings + the big concentric Multi-Ring hero were
+          removed — the data they showed is already covered by the Hero tiles
+          (Last Sleep / Mood / Calories / Activities) below, so they were
+          repetitive and the seven empty rings looked broken when there was no
+          recent data. */}
 
       {/* ─── Hero tiles: LAST SLEEP / MOOD / CALORIES / ACTIVITIES ─── */}
       <HeroTiles
@@ -1616,17 +1589,49 @@ export function KidsHome() {
 
       {/* (Ring legend / stats strip removed — hero tiles + detail modals cover this) */}
 
-      {/* ─── Set Goals Button ─────────────────────────────────── */}
+      {/* ─── Set Goals Button — sticker-on-paper ─────────────────── */}
       <Pressable
         onPress={() => setGoalsModalVisible(true)}
-        style={[s.setGoalsBtn, { backgroundColor: isDark ? '#1F2A3A' : brand.kidsSoft, borderColor: isDark ? colors.border : brand.kids + '40' }]}
+        style={({ pressed }) => [
+          s.setGoalsBtn,
+          {
+            backgroundColor: isDark ? colors.surface : '#FFFEF8',
+            borderColor: isDark ? colors.border : '#141313',
+            shadowColor: '#141313',
+            shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+            shadowOpacity: 1,
+            shadowRadius: 0,
+            elevation: 4,
+            transform: [{ translateY: pressed ? 2 : 0 }],
+          },
+        ]}
       >
-        <View style={[s.setGoalsBtnIcon, { backgroundColor: brand.kids + '28' }]}>
-          <StarSticker size={18} fill={brand.kids} stroke={isDark ? '#A5C9F0' : '#3A6A9E'} />
+        <View
+          style={[
+            s.setGoalsBtnIcon,
+            {
+              backgroundColor: '#F5D652',
+              borderWidth: 1.2,
+              borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#141313',
+            },
+          ]}
+        >
+          <StarSticker size={20} fill="#F5D652" stroke="#141313" />
         </View>
-        <Text style={[s.setGoalsBtnText, { color: brand.kids }]}>Set Goals</Text>
-        <Text style={[s.setGoalsBtnHint, { color: colors.textMuted }]}>Customize daily targets</Text>
-        <ChevronRight size={14} color={brand.kids} strokeWidth={2} />
+        <Text style={[s.setGoalsBtnText, { color: isDark ? colors.text : '#141313', fontFamily: 'Fraunces_700Bold' }]}>Set Goals</Text>
+        <Text style={[s.setGoalsBtnHint, { color: isDark ? colors.textMuted : 'rgba(20,19,19,0.55)', fontFamily: 'DMSans_500Medium' }]}>
+          Customize daily targets
+        </Text>
+        <View
+          style={{
+            width: 26, height: 26, borderRadius: 13,
+            backgroundColor: isDark ? colors.surfaceRaised : '#FFFEF8',
+            borderWidth: 1.2, borderColor: isDark ? colors.border : '#141313',
+            alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <ChevronRight size={13} color={isDark ? colors.text : '#141313'} strokeWidth={2.4} />
+        </View>
       </Pressable>
 
       {/* ─── Health + Diaper (Mood + Calories live in hero tiles now) ─── */}
@@ -2101,6 +2106,12 @@ export function KidsHome() {
         feedingBottle={rangeData.feedingBottle}
         feedingMl={rangeData.feedingMl}
         avgMl={rangeData.avgFeedingMl}
+        feedingLeft={rangeData.feedingLeft}
+        feedingRight={rangeData.feedingRight}
+        feedingBoth={rangeData.feedingBoth}
+        feedingTimes={rangeData.feedingTimes}
+        feedingDurations={rangeData.feedingDurations}
+        feedingDays={rangeData.feedingDays}
         childName={child?.name}
         childColor={CHILD_COLORS[children.findIndex(c => c.id === child?.id) % CHILD_COLORS.length]}
       />
@@ -2174,15 +2185,16 @@ function HeroTiles({
 }) {
   const { colors, isDark } = useTheme()
   const ink = isDark ? colors.text : '#141313'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
-  const lineColor = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink3 = isDark ? colors.textSecondary : '#6E6763'
+  const lineColor = isDark ? colors.borderStrong : 'rgba(20,19,19,0.08)'
   const paper = isDark ? colors.surface : '#FFFEF8'
 
-  // Sticker-palette soft bgs
-  const blueSoft = isDark ? 'rgba(157,195,232,0.18)' : '#CFE0F0'
-  const yellowSoft = isDark ? 'rgba(245,214,82,0.24)' : '#F5D652'
-  const pinkSoft = isDark ? 'rgba(242,178,199,0.18)' : '#F9D8E2'
-  const greenSoft = isDark ? 'rgba(189,212,140,0.18)' : '#DDE7BB'
+  // Sticker-palette soft bgs — bumped contrast in dark mode so cards read as
+  // tinted paper rather than near-black olive.
+  const blueSoft = isDark ? 'rgba(157,195,232,0.32)' : '#CFE0F0'
+  const yellowSoft = isDark ? 'rgba(245,214,82,0.36)' : '#F5D652'
+  const pinkSoft = isDark ? 'rgba(242,178,199,0.32)' : '#F9D8E2'
+  const greenSoft = isDark ? 'rgba(189,212,140,0.32)' : '#DDE7BB'
 
   // Activity — engagement ratio (active days over range) is the meaningful metric
   const activityEngagement = activityRangeDays > 0 ? Math.min(activityActiveDays / activityRangeDays, 1) : 0
@@ -2265,7 +2277,7 @@ function HeroTiles({
             { backgroundColor: yellowSoft, borderColor: lineColor, flex: 1, padding: 14, opacity: pressed ? 0.92 : 1 },
           ]}
         >
-          <Text style={[tileStyles.metaLabel, { color: '#3A3533' }]}>MOOD</Text>
+          <Text style={[tileStyles.metaLabel, { color: isDark ? colors.text : '#3A3533' }]}>MOOD</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
             {hasMoods && dominantMood ? (
               <MoodFace size={28} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} />
@@ -4388,13 +4400,427 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
   )
 }
 
+// ─── Category Rank Card (animated) ──────────────────────────────────────────
+
+function categoryNote(rank: number, pctOfTotal: number): string {
+  if (rank === 0) return 'Leading the menu, dear.'
+  if (pctOfTotal >= 25) return 'A heavy hitter on the plate.'
+  if (pctOfTotal >= 15) return 'Pulling its weight nicely.'
+  if (pctOfTotal >= 8) return 'Holding steady in the mix.'
+  if (pctOfTotal >= 3) return 'A small but welcome touch.'
+  return 'Just a sprinkle, love.'
+}
+
+function CategoryRankCard({ cat, rank, pctOfTotal, barWidth, visible }: {
+  cat: { label: string; cals: number; color: string }
+  rank: number
+  pctOfTotal: number
+  barWidth: number
+  visible: boolean
+}) {
+  const fill = useSharedValue(0)
+
+  useEffect(() => {
+    if (visible) {
+      fill.value = 0
+      fill.value = withDelay(120 + rank * 90, withTiming(barWidth, { duration: 750, easing: Easing.out(Easing.cubic) }))
+    } else {
+      fill.value = 0
+    }
+  }, [visible, barWidth, rank])
+
+  const animatedBarStyle = useAnimatedStyle(() => ({
+    width: `${Math.max(fill.value, 0)}%` as any,
+  }))
+
+  const tilt = rank % 2 === 0 ? -0.6 : 0.6
+  const note = categoryNote(rank, pctOfTotal)
+
+  return (
+    <View
+      style={{
+        backgroundColor: StickerPalette.paper,
+        borderRadius: 18,
+        borderWidth: 1.5,
+        borderColor: DIAPER_STICKER_INK,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        shadowColor: DIAPER_STICKER_INK,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 1,
+        transform: [{ rotate: `${tilt}deg` }],
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+        {/* Rank badge */}
+        <View style={{
+          width: 24,
+          height: 24,
+          borderRadius: 12,
+          backgroundColor: StickerPalette.cream,
+          borderWidth: 1.5,
+          borderColor: DIAPER_STICKER_INK,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: 'Fraunces_700Bold' }}>{rank + 1}</Text>
+        </View>
+        {/* Color dot */}
+        <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: cat.color, borderWidth: 1, borderColor: DIAPER_STICKER_INK }} />
+        {/* Label */}
+        <Text style={{ color: DIAPER_STICKER_INK, fontSize: 14, fontFamily: 'DMSans_600SemiBold', flex: 1 }} numberOfLines={1}>{cat.label}</Text>
+        {/* Calories */}
+        <Text style={{ color: DIAPER_STICKER_INK, fontSize: 14, fontFamily: 'Fraunces_700Bold' }}>{cat.cals.toLocaleString()} cal</Text>
+      </View>
+      {/* Proportion bar + bold % pill */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{
+          flex: 1,
+          height: 10,
+          borderRadius: 5,
+          borderWidth: 1.2,
+          borderColor: DIAPER_STICKER_INK,
+          backgroundColor: StickerPalette.cream,
+          overflow: 'hidden',
+        }}>
+          <Reanimated.View style={[{ height: '100%', backgroundColor: cat.color }, animatedBarStyle]} />
+        </View>
+        <View style={{
+          paddingHorizontal: 9,
+          paddingVertical: 3,
+          borderRadius: 999,
+          borderWidth: 1.5,
+          borderColor: DIAPER_STICKER_INK,
+          backgroundColor: cat.color,
+          minWidth: 46,
+          alignItems: 'center',
+        }}>
+          <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.2 }}>
+            {pctOfTotal}%
+          </Text>
+        </View>
+      </View>
+      {/* Grandma's note about this category */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+        <Sparkles size={11} color="#6E6763" strokeWidth={2.2} />
+        <Text style={{ color: '#6E6763', fontSize: 12, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic', flex: 1 }}>
+          {note}
+        </Text>
+      </View>
+    </View>
+  )
+}
+
+// ─── Breastfeeding Insights ─────────────────────────────────────────────────
+
+const TIME_BUCKETS: { key: string; label: string; range: string; from: number; to: number }[] = [
+  { key: 'dawn',      label: 'Dawn',      range: '5–9 AM',   from: 5,  to: 9  },
+  { key: 'morning',   label: 'Morning',   range: '9 AM–12 PM', from: 9,  to: 12 },
+  { key: 'afternoon', label: 'Afternoon', range: '12–5 PM',  from: 12, to: 17 },
+  { key: 'evening',   label: 'Evening',   range: '5–10 PM',  from: 17, to: 22 },
+  { key: 'night',     label: 'Night',     range: '10 PM–5 AM', from: 22, to: 5  }, // wraps midnight
+]
+
+function bucketForHour(h: number): string {
+  for (const b of TIME_BUCKETS) {
+    if (b.from < b.to ? h >= b.from && h < b.to : h >= b.from || h < b.to) return b.key
+  }
+  return 'morning'
+}
+
+function BreastfeedingInsights({
+  visible, feedingBreast, feedingLeft, feedingRight, feedingBoth, feedingTimes, feedingDurations, feedingDays,
+}: {
+  visible: boolean
+  feedingBreast: number; feedingLeft: number; feedingRight: number; feedingBoth: number
+  feedingTimes: number[]; feedingDurations: number[]; feedingDays: number
+}) {
+  // Side balance — fold "both" half-and-half into each side for the % bar
+  const sideKnown = feedingLeft + feedingRight + feedingBoth
+  const leftEffective = feedingLeft + feedingBoth * 0.5
+  const rightEffective = feedingRight + feedingBoth * 0.5
+  const leftPct = sideKnown > 0 ? Math.round((leftEffective / sideKnown) * 100) : 50
+  const rightPct = sideKnown > 0 ? 100 - leftPct : 50
+
+  // Time-of-day buckets
+  const bucketCounts: Record<string, number> = { dawn: 0, morning: 0, afternoon: 0, evening: 0, night: 0 }
+  for (const h of feedingTimes) bucketCounts[bucketForHour(h)]++
+  const peakBucket = TIME_BUCKETS.reduce((best, b) => bucketCounts[b.key] > bucketCounts[best.key] ? b : best, TIME_BUCKETS[0])
+  const peakCount = bucketCounts[peakBucket.key]
+  const maxBucket = Math.max(1, ...Object.values(bucketCounts))
+
+  // Session stats
+  const totalMin = feedingDurations.reduce((s, d) => s + d, 0)
+  const avgMin = feedingDurations.length > 0 ? Math.round(totalMin / feedingDurations.length) : 0
+  const perDay = feedingDays > 0 ? Math.round((feedingBreast / feedingDays) * 10) / 10 : feedingBreast
+  const minPerDay = feedingDays > 0 ? Math.round(totalMin / feedingDays) : totalMin
+
+  // Smart notes
+  const notes: string[] = []
+  if (sideKnown > 0) {
+    const diff = Math.abs(leftPct - rightPct)
+    if (diff >= 20) {
+      const lead = leftPct > rightPct ? 'left' : 'right'
+      const start = lead === 'left' ? 'right' : 'left'
+      notes.push(`Your ${lead} side is taking the lead — try starting on the ${start} next time to keep things balanced.`)
+    } else if (diff <= 8) {
+      notes.push('Beautifully balanced between both sides — well done.')
+    }
+  }
+  if (avgMin > 0) {
+    if (avgMin < 8) notes.push('Sessions are on the shorter side — baby may want to keep going if still hungry.')
+    else if (avgMin > 25) notes.push('Long, deep feeds — baby is drinking their fill.')
+  }
+  if (feedingDays > 0) {
+    if (perDay < 6) notes.push('A lighter day for feeds — keep an eye on cues.')
+    else if (perDay >= 10) notes.push('Frequent feeds — sounds like a growth spurt, dear.')
+  }
+  if (peakCount >= Math.ceil(feedingBreast * 0.35)) {
+    notes.push(`Most feeds land in the ${peakBucket.label.toLowerCase()} — ${peakBucket.range}.`)
+  }
+
+  return (
+    <View style={{ marginTop: 18, gap: 12 }}>
+      <Text style={{ color: '#6E6763', fontSize: 12, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+        Breastfeeding Insights
+      </Text>
+
+      {/* ── Side balance card ── */}
+      {sideKnown > 0 && (
+        <View style={{
+          backgroundColor: StickerPalette.paper,
+          borderRadius: 22,
+          borderWidth: 1.5,
+          borderColor: DIAPER_STICKER_INK,
+          padding: 14,
+          shadowColor: DIAPER_STICKER_INK,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 1,
+          transform: [{ rotate: '-0.6deg' }],
+        }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+            <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+              Side Balance
+            </Text>
+            <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic' }}>
+              {feedingLeft} L · {feedingRight} R{feedingBoth > 0 ? ` · ${feedingBoth} both` : ''}
+            </Text>
+          </View>
+          {/* Split bar */}
+          <View style={{
+            flexDirection: 'row',
+            height: 16,
+            borderRadius: 8,
+            borderWidth: 1.5,
+            borderColor: DIAPER_STICKER_INK,
+            overflow: 'hidden',
+            backgroundColor: StickerPalette.cream,
+          }}>
+            {leftPct > 0 && <View style={{ width: `${leftPct}%` as any, backgroundColor: StickerPalette.pink }} />}
+            {rightPct > 0 && <View style={{ width: `${rightPct}%` as any, backgroundColor: StickerPalette.blue }} />}
+          </View>
+          {/* Pills under the bar — bigger, bolder */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}>
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', gap: 8,
+              paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999,
+              borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, backgroundColor: StickerPalette.pink,
+            }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: DIAPER_STICKER_INK }} />
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }}>{leftPct}%</Text>
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: 'DMSans_700Bold', letterSpacing: 0.6, textTransform: 'uppercase' }}>Left</Text>
+            </View>
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', gap: 8,
+              paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999,
+              borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, backgroundColor: StickerPalette.blue,
+            }}>
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: 'DMSans_700Bold', letterSpacing: 0.6, textTransform: 'uppercase' }}>Right</Text>
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }}>{rightPct}%</Text>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: DIAPER_STICKER_INK }} />
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* ── Time of day card ── */}
+      {feedingTimes.length > 0 && (
+        <View style={{
+          backgroundColor: StickerPalette.paper,
+          borderRadius: 22,
+          borderWidth: 1.5,
+          borderColor: DIAPER_STICKER_INK,
+          padding: 14,
+          shadowColor: DIAPER_STICKER_INK,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 1,
+          transform: [{ rotate: '0.6deg' }],
+        }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+            <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+              Time of Day
+            </Text>
+            <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic' }}>
+              peak {peakBucket.range.toLowerCase()}
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-end' }}>
+            {TIME_BUCKETS.map((b, i) => {
+              const count = bucketCounts[b.key]
+              const isPeak = b.key === peakBucket.key && count > 0
+              const heightPct = (count / maxBucket) * 100
+              const pctOfTotal = feedingTimes.length > 0 ? Math.round((count / feedingTimes.length) * 100) : 0
+              return (
+                <View key={b.key} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
+                  {/* Big count number on top */}
+                  <Text style={{
+                    color: DIAPER_STICKER_INK,
+                    fontSize: 22,
+                    fontFamily: 'Fraunces_700Bold',
+                    letterSpacing: -0.5,
+                  }}>
+                    {count}
+                  </Text>
+                  {/* Bar */}
+                  <View style={{
+                    width: '100%',
+                    height: 60,
+                    justifyContent: 'flex-end',
+                  }}>
+                    <BucketBar
+                      pct={heightPct}
+                      color={isPeak ? StickerPalette.peach : StickerPalette.cream}
+                      visible={visible}
+                      delay={120 + i * 80}
+                    />
+                  </View>
+                  {/* Label */}
+                  <Text style={{
+                    color: isPeak ? DIAPER_STICKER_INK : '#6E6763',
+                    fontSize: 11,
+                    fontFamily: isPeak ? 'DMSans_700Bold' : 'DMSans_600SemiBold',
+                    letterSpacing: 0.3,
+                  }}>
+                    {b.label}
+                  </Text>
+                  {/* % pill */}
+                  <View style={{
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                    borderRadius: 999,
+                    borderWidth: 1.2,
+                    borderColor: DIAPER_STICKER_INK,
+                    backgroundColor: isPeak ? StickerPalette.peach : StickerPalette.cream,
+                  }}>
+                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: 'Fraunces_700Bold' }}>
+                      {pctOfTotal}%
+                    </Text>
+                  </View>
+                </View>
+              )
+            })}
+          </View>
+        </View>
+      )}
+
+      {/* ── Session stats — 3 mini stickers ── */}
+      {(avgMin > 0 || perDay > 0) && (
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {[
+            { label: 'Avg Session', value: avgMin > 0 ? `${avgMin} min` : '—', accent: StickerPalette.pink, fill: StickerPalette.pinkSoft, tilt: -1 },
+            { label: 'Feeds / Day', value: perDay > 0 ? perDay.toString() : '—', accent: StickerPalette.peach, fill: StickerPalette.peachSoft, tilt: 1 },
+            { label: 'Min / Day', value: minPerDay > 0 ? `${minPerDay} min` : '—', accent: StickerPalette.blue, fill: StickerPalette.blueSoft, tilt: -0.5 },
+          ].map((card, i) => (
+            <View key={i} style={{
+              flex: 1,
+              backgroundColor: card.fill,
+              borderRadius: 20,
+              borderWidth: 1.5,
+              borderColor: DIAPER_STICKER_INK,
+              paddingVertical: 16,
+              paddingHorizontal: 8,
+              alignItems: 'center',
+              shadowColor: DIAPER_STICKER_INK,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 1,
+              transform: [{ rotate: `${card.tilt}deg` }],
+            }}>
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 26, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.5 }} numberOfLines={1} adjustsFontSizeToFit>
+                {card.value}
+              </Text>
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 10.5, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase', marginTop: 4 }}>
+                {card.label}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* ── Smart notes ── */}
+      {notes.length > 0 && (
+        <View style={{ gap: 6 }}>
+          {notes.map((n, i) => (
+            <View key={i} style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: 8,
+              paddingVertical: 9,
+              paddingHorizontal: 12,
+              borderRadius: 14,
+              borderWidth: 1.5,
+              borderColor: DIAPER_STICKER_INK,
+              backgroundColor: StickerPalette.yellowSoft,
+            }}>
+              <Sparkles size={12} color={DIAPER_STICKER_INK} strokeWidth={2.2} style={{ marginTop: 2 }} />
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12.5, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic', flex: 1, lineHeight: 17 }}>
+                {n}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  )
+}
+
+function BucketBar({ pct, color, visible, delay }: { pct: number; color: string; visible: boolean; delay: number }) {
+  const fill = useSharedValue(0)
+  useEffect(() => {
+    if (visible) {
+      fill.value = 0
+      fill.value = withDelay(delay, withTiming(pct, { duration: 700, easing: Easing.out(Easing.cubic) }))
+    } else { fill.value = 0 }
+  }, [visible, pct, delay])
+  const animStyle = useAnimatedStyle(() => ({ height: `${Math.max(fill.value, 4)}%` as any }))
+  return (
+    <Reanimated.View style={[{
+      width: '100%',
+      backgroundColor: color,
+      borderRadius: 6,
+      borderWidth: 1.2,
+      borderColor: DIAPER_STICKER_INK,
+      minHeight: 6,
+    }, animStyle]} />
+  )
+}
+
 // ─── Activity Detail Modal ──────────────────────────────────────────────────
 
-function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, categories, stage, feedingCount, feedingBreast, feedingBottle, feedingMl, avgMl, childName, childColor }: {
+function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, categories, stage, feedingCount, feedingBreast, feedingBottle, feedingMl, avgMl, feedingLeft, feedingRight, feedingBoth, feedingTimes, feedingDurations, feedingDays, childName, childColor }: {
   visible: boolean; onClose: () => void
   caloriesTotal: number; caloriesTarget: number
   categories: { label: string; cals: number; color: string }[]
   stage: FeedingStage; feedingCount: number; feedingBreast: number; feedingBottle: number; feedingMl: number; avgMl: number
+  feedingLeft: number; feedingRight: number; feedingBoth: number
+  feedingTimes: number[]; feedingDurations: number[]; feedingDays: number
   childName?: string; childColor?: string
 }) {
   const { colors, radius } = useTheme()
@@ -4555,6 +4981,20 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                   </View>
                 ) : null
               })()}
+
+              {/* ── Breastfeeding insights (only when there are breast feeds) ── */}
+              {feedingBreast > 0 && (
+                <BreastfeedingInsights
+                  visible={visible}
+                  feedingBreast={feedingBreast}
+                  feedingLeft={feedingLeft}
+                  feedingRight={feedingRight}
+                  feedingBoth={feedingBoth}
+                  feedingTimes={feedingTimes}
+                  feedingDurations={feedingDurations}
+                  feedingDays={feedingDays}
+                />
+              )}
             </>
           )}
 
@@ -4595,39 +5035,38 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
             </View>
           )}
 
-          {/* Category breakdown — sticker chips */}
-          {categories.length > 0 && (
-            <View style={{ marginTop: 18 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: 'DMSans_700Bold', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>Breakdown by Category</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {categories.map((cat, i) => (
-                  <View
-                    key={i}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                      backgroundColor: StickerPalette.paper,
-                      borderRadius: 999,
-                      borderWidth: 1.5,
-                      borderColor: DIAPER_STICKER_INK,
-                      paddingHorizontal: 12,
-                      paddingVertical: 5,
-                      shadowColor: DIAPER_STICKER_INK,
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 3,
-                      elevation: 1,
-                    }}
-                  >
-                    <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: cat.color, borderWidth: 1, borderColor: DIAPER_STICKER_INK }} />
-                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: 'DMSans_600SemiBold' }}>{cat.label}</Text>
-                    <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: 'Fraunces_700Bold' }}>{cat.cals.toLocaleString()} cal</Text>
-                  </View>
-                ))}
+          {/* Category breakdown — ranked sticker cards */}
+          {categories.length > 0 && (() => {
+            const ranked = [...categories].sort((a, b) => b.cals - a.cals)
+            const totalCals = ranked.reduce((sum, c) => sum + c.cals, 0)
+            const topCals = ranked[0]?.cals || 1
+            return (
+              <View style={{ marginTop: 18 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 0.8 }}>Breakdown by Category</Text>
+                  <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic' }}>
+                    {ranked.length} {ranked.length === 1 ? 'category' : 'categories'}
+                  </Text>
+                </View>
+                <View style={{ gap: 10 }}>
+                  {ranked.map((cat, i) => {
+                    const pctOfTotal = totalCals > 0 ? Math.round((cat.cals / totalCals) * 100) : 0
+                    const barWidth = topCals > 0 ? Math.max((cat.cals / topCals) * 100, 2) : 0
+                    return (
+                      <CategoryRankCard
+                        key={i}
+                        cat={cat}
+                        rank={i}
+                        pctOfTotal={pctOfTotal}
+                        barWidth={barWidth}
+                        visible={visible}
+                      />
+                    )
+                  })}
+                </View>
               </View>
-            </View>
-          )}
+            )
+          })()}
 
         </View>
       </View>
@@ -6908,7 +7347,7 @@ const s = StyleSheet.create({
   feedingAvgText: { fontSize: 11, fontWeight: '600', textAlign: 'center', marginTop: 8 },
 
   // Set Goals button
-  setGoalsBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 18, borderWidth: 1, borderRadius: 999 },
+  setGoalsBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1.5, borderRadius: 999 },
   setGoalsBtnIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   setGoalsBtnText: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.2 },
   setGoalsBtnHint: { flex: 1, fontSize: 12, fontFamily: 'DMSans_400Regular', textAlign: 'right' },

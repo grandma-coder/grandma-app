@@ -3,58 +3,70 @@ import React, { useState } from 'react'
 import {
   Modal,
   View,
-  Text,
   Pressable,
   ScrollView,
   StyleSheet,
 } from 'react-native'
-import { X } from 'lucide-react-native'
+import { X, ChevronRight } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { Display, MonoCaps, Body } from '../ui/Typography'
 import { BirthDetailModal } from './BirthDetailModal'
+import {
+  Leaf, Cross, Cloud, Drop, ClockFace, Bolt, Key, Pill, Lungs, Heart, Moon,
+} from '../ui/Stickers'
 import type { BirthTopicKey } from '../../lib/birthGuideData'
+
+const INK = '#141313'
 
 interface BirthGuideModalProps {
   visible: boolean
   onClose: () => void
 }
 
-const BIRTH_TYPES: {
+interface BirthTypeTile {
   key: BirthTopicKey
-  emoji: string
   title: string
   subtitle: string
   bg: string
-  border: string
-}[] = [
-  { key: 'natural', emoji: '🌿', title: 'Natural Birth', subtitle: 'Breathing, positions, stages', bg: '#E8F8E8', border: '#B7E5B7' },
-  { key: 'csection', emoji: '🏥', title: 'C-Section', subtitle: 'Surgery, recovery, VBAC', bg: '#F0EBFF', border: '#C4B5FD' },
-  { key: 'home', emoji: '🏡', title: 'Home Birth', subtitle: 'Midwife, safety, planning', bg: '#E8F0FF', border: '#B7C8F5' },
-  { key: 'water', emoji: '🌊', title: 'Water Birth', subtitle: 'Pool, pain relief, logistics', bg: '#FFF0F5', border: '#F5B7CC' },
-]
+  sticker: (size: number) => React.ReactNode
+}
 
-const EXTRA_TOPICS: {
+interface ExtraTopicTile {
   key: BirthTopicKey
-  emoji: string
   title: string
   subtitle: string
   tileBg: string
-}[] = [
-  { key: 'labor-stages', emoji: '⏱️', title: 'Labor Stages', subtitle: 'Early → Active → Transition → Pushing', tileBg: '#FEF9E8' },
-  { key: 'warning-signs', emoji: '🚨', title: 'Warning Signs', subtitle: 'When to call your provider', tileBg: '#FFF0F0' },
-  { key: 'hospital-bag', emoji: '🧳', title: 'Hospital Bag Checklist', subtitle: 'For mom, baby & partner', tileBg: '#E8F8F8' },
-  { key: 'pain-relief', emoji: '💊', title: 'Pain Relief Options', subtitle: 'Epidural, TENS, breathing & more', tileBg: '#F0F8FF' },
-  { key: 'positions', emoji: '🤸', title: 'Birth Positions', subtitle: 'Upright, squatting, hands & knees', tileBg: '#F5F0FF' },
-  { key: 'partner-guide', emoji: '👐', title: 'Birth Partner Guide', subtitle: 'What your support person needs to know', tileBg: '#FFF5E8' },
-  { key: 'recovery', emoji: '🌙', title: 'Recovery & Postpartum', subtitle: 'First 24h, healing, emotional changes', tileBg: '#F0F0FF' },
+  sticker: (size: number) => React.ReactNode
+}
+
+const BIRTH_TYPES: BirthTypeTile[] = [
+  { key: 'natural',  title: 'Natural Birth', subtitle: 'Breathing, positions, stages', bg: '#DDE7BB', sticker: (s) => <Leaf size={s} fill="#BDD48C" /> },
+  { key: 'csection', title: 'C-Section',     subtitle: 'Surgery, recovery, VBAC',      bg: '#E0D5F0', sticker: (s) => <Cross size={s} fill="#C8B6E8" /> },
+  { key: 'home',     title: 'Home Birth',    subtitle: 'Midwife, safety, planning',    bg: '#CFE0F0', sticker: (s) => <Cloud size={s} fill="#9DC3E8" /> },
+  { key: 'water',    title: 'Water Birth',   subtitle: 'Pool, pain relief, logistics', bg: '#F9D8E2', sticker: (s) => <Drop size={s} fill="#9DC3E8" /> },
+]
+
+const EXTRA_TOPICS: ExtraTopicTile[] = [
+  { key: 'labor-stages',   title: 'Labor Stages',          subtitle: 'Early → Active → Transition → Pushing', tileBg: '#FAEFB5', sticker: (s) => <ClockFace size={s} fill="#F5D652" /> },
+  { key: 'warning-signs',  title: 'Warning Signs',         subtitle: 'When to call your provider',            tileBg: '#F9D8E2', sticker: (s) => <Bolt size={s} fill="#EE7B6D" /> },
+  { key: 'hospital-bag',   title: 'Hospital Bag Checklist',subtitle: 'For mom, baby & partner',               tileBg: '#CFE0F0', sticker: (s) => <Key size={s} fill="#F5D652" /> },
+  { key: 'pain-relief',    title: 'Pain Relief Options',   subtitle: 'Epidural, TENS, breathing & more',      tileBg: '#E0D5F0', sticker: (s) => <Pill size={s} fill="#F5D652" /> },
+  { key: 'positions',      title: 'Birth Positions',       subtitle: 'Upright, squatting, hands & knees',     tileBg: '#DDE7BB', sticker: (s) => <Lungs size={s} fill="#F2B2C7" /> },
+  { key: 'partner-guide',  title: 'Birth Partner Guide',   subtitle: 'What your support person needs to know', tileBg: '#F2B2C7', sticker: (s) => <Heart size={s} fill="#EE7B6D" /> },
+  { key: 'recovery',       title: 'Recovery & Postpartum', subtitle: 'First 24h, healing, emotional changes', tileBg: '#E0D5F0', sticker: (s) => <Moon size={s} fill="#C8B6E8" /> },
 ]
 
 export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
   const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const [detailTopic, setDetailTopic] = useState<BirthTopicKey | null>(null)
+
+  const ink = isDark ? colors.text : INK
+  const inkMuted = isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : INK
 
   const handleClose = () => {
     setDetailTopic(null)
@@ -79,23 +91,45 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
           <View
             style={[
               styles.sheet,
-              { backgroundColor: colors.surface, paddingBottom: insets.bottom + 16 },
+              {
+                backgroundColor: isDark ? colors.bg : '#FFFEF8',
+                borderColor: paperBorder,
+                paddingBottom: insets.bottom + 16,
+              },
             ]}
           >
             {/* Handle */}
             <View style={styles.handleWrap}>
-              <View style={[styles.handle, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(20,19,19,0.15)' }]} />
-              <Pressable onPress={handleClose} style={styles.closeBtn} hitSlop={8}>
-                <X size={20} color={colors.textMuted} strokeWidth={2} />
-              </Pressable>
+              <View style={[styles.handle, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(20,19,19,0.18)' }]} />
             </View>
 
-            {/* Header */}
-            <View style={styles.headerPad}>
-              <Display size={22}>Birth Guide 🌿</Display>
-              <Body size={13} color={isDark ? colors.textSecondary : '#888'} style={{ marginTop: 4 }}>
-                What do you want to explore?
-              </Body>
+            {/* Header — Display title + sticker close */}
+            <View style={styles.headerRow}>
+              <View style={{ flex: 1, paddingRight: 12 }}>
+                <Display size={26} color={ink}>Birth Guide</Display>
+                <Body size={13} color={inkMuted} style={{ marginTop: 4 }}>
+                  What do you want to explore?
+                </Body>
+              </View>
+              <Pressable
+                onPress={handleClose}
+                hitSlop={10}
+                style={({ pressed }) => [
+                  styles.closeChip,
+                  {
+                    backgroundColor: paper,
+                    borderColor: paperBorder,
+                    shadowColor: INK,
+                    shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                    shadowOpacity: 1,
+                    shadowRadius: 0,
+                    elevation: 4,
+                    transform: [{ translateY: pressed ? 2 : 0 }],
+                  },
+                ]}
+              >
+                <X size={16} color={ink} strokeWidth={2.4} />
+              </Pressable>
             </View>
 
             <ScrollView
@@ -103,7 +137,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}
             >
-              {/* Birth type grid */}
+              {/* Birth type grid — sticker hero per card */}
               <View style={styles.grid}>
                 {BIRTH_TYPES.map((item) => (
                   <Pressable
@@ -113,16 +147,23 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                       styles.typeCard,
                       {
                         backgroundColor: isDark ? colors.surfaceRaised : item.bg,
-                        borderColor: item.border,
-                        opacity: pressed ? 0.8 : 1,
+                        borderColor: paperBorder,
+                        shadowColor: INK,
+                        shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                        shadowOpacity: 1,
+                        shadowRadius: 0,
+                        elevation: 4,
+                        transform: [{ translateY: pressed ? 2 : 0 }],
                       },
                     ]}
                   >
-                    <Text style={styles.typeEmoji}>{item.emoji}</Text>
-                    <Body size={13} color={colors.text} style={{ fontFamily: 'DMSans_600SemiBold', marginTop: 4 }}>
+                    <View style={styles.typeStickerRow}>
+                      {item.sticker(38)}
+                    </View>
+                    <Body size={14} color={ink} style={{ fontFamily: 'Fraunces_700Bold', marginTop: 6 }}>
                       {item.title}
                     </Body>
-                    <Body size={11} color={isDark ? colors.textSecondary : '#777'} style={{ marginTop: 2 }}>
+                    <Body size={11} color={inkMuted} style={{ marginTop: 2, lineHeight: 15 }}>
                       {item.subtitle}
                     </Body>
                   </Pressable>
@@ -130,7 +171,11 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
               </View>
 
               {/* Also in this guide */}
-              <MonoCaps size={10} color={brand.pregnancy} style={{ marginTop: 20, marginBottom: 10, letterSpacing: 0.8 }}>
+              <MonoCaps
+                size={11}
+                color={isDark ? colors.textMuted : INK}
+                style={{ marginTop: 22, marginBottom: 10, letterSpacing: 1.6 }}
+              >
                 ALSO IN THIS GUIDE
               </MonoCaps>
 
@@ -142,24 +187,39 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                     style={({ pressed }) => [
                       styles.extraRow,
                       {
-                        backgroundColor: isDark ? colors.surface : '#FFFEF8',
-                        borderColor: isDark ? colors.border : '#E8E0CC',
-                        opacity: pressed ? 0.8 : 1,
+                        backgroundColor: paper,
+                        borderColor: paperBorder,
+                        shadowColor: INK,
+                        shadowOffset: { width: 0, height: pressed ? 1 : 2 },
+                        shadowOpacity: 1,
+                        shadowRadius: 0,
+                        elevation: 3,
+                        transform: [{ translateY: pressed ? 1 : 0 }],
                       },
                     ]}
                   >
-                    <View style={[styles.extraTile, { backgroundColor: isDark ? colors.surface : item.tileBg }]}>
-                      <Text style={styles.extraEmoji}>{item.emoji}</Text>
+                    <View
+                      style={[
+                        styles.extraTile,
+                        {
+                          backgroundColor: isDark ? colors.surfaceRaised : item.tileBg,
+                          borderColor: paperBorder,
+                        },
+                      ]}
+                    >
+                      {item.sticker(28)}
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Body size={14} color={colors.text} style={{ fontFamily: 'DMSans_600SemiBold' }}>
+                      <Body size={14} color={ink} style={{ fontFamily: 'Fraunces_700Bold' }}>
                         {item.title}
                       </Body>
-                      <Body size={12} color={isDark ? colors.textSecondary : '#888'} style={{ marginTop: 2 }}>
+                      <Body size={12} color={inkMuted} style={{ marginTop: 2, lineHeight: 16 }}>
                         {item.subtitle}
                       </Body>
                     </View>
-                    <Text style={[styles.extraChevron, { color: brand.pregnancy }]}>›</Text>
+                    <View style={[styles.extraChevron, { backgroundColor: paper, borderColor: paperBorder }]}>
+                      <ChevronRight size={14} color={ink} strokeWidth={2.2} />
+                    </View>
                   </Pressable>
                 ))}
               </View>
@@ -185,33 +245,40 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(20,19,19,0.55)',
   },
   sheet: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderRightWidth: 1.5,
     height: '90%',
   },
   handleWrap: {
     alignItems: 'center',
     paddingTop: 12,
-    paddingHorizontal: 20,
-    paddingBottom: 4,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    paddingBottom: 6,
   },
   handle: {
-    width: 40,
+    width: 42,
     height: 4,
     borderRadius: 2,
-    position: 'absolute',
-    top: 12,
   },
-  closeBtn: {
-    position: 'absolute',
-    right: 20,
-    top: 8,
-    padding: 8,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 14,
   },
-  headerPad: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
-  scrollContent: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 16 },
+  closeChip: {
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -219,28 +286,42 @@ const styles = StyleSheet.create({
   },
   typeCard: {
     width: '47.5%',
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 22,
+    borderWidth: 1.5,
     padding: 14,
+    paddingTop: 12,
   },
-  typeEmoji: { fontSize: 24 },
-  extraList: { gap: 8 },
+  typeStickerRow: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  extraList: { gap: 10 },
   extraRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 14,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    padding: 12,
   },
   extraTile: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    borderWidth: 1.2,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  extraEmoji: { fontSize: 18 },
-  extraChevron: { fontSize: 20 },
+  extraChevron: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1.2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
 })

@@ -179,10 +179,13 @@ export function CycleCalendar() {
                   <View
                     style={[
                       styles.fertilityTag,
-                      { backgroundColor: phaseColor(selectedInfo.phase) + '22', borderColor: phaseColor(selectedInfo.phase) + '40' },
+                      {
+                        backgroundColor: isDark ? phaseColor(selectedInfo.phase) + '55' : phaseColor(selectedInfo.phase),
+                        borderColor: isDark ? colors.text : '#141313',
+                      },
                     ]}
                   >
-                    <Text style={[styles.fertilityTagText, { color: phaseColor(selectedInfo.phase) }]}>
+                    <Text style={[styles.fertilityTagText, { color: isDark ? colors.text : '#141313' }]}>
                       {selectedInfo.conceptionProbability.toUpperCase()} CHANCE
                     </Text>
                   </View>
@@ -311,15 +314,21 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   fertilityTag: {
-    paddingVertical: 2,
-    paddingHorizontal: 9,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   fertilityTagText: {
     fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    fontFamily: 'DMSans_700Bold',
   },
 
   tabEmpty: {

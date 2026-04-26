@@ -53,6 +53,9 @@ import {
   Heart as HeartSticker,
   Squishy,
   Star as StarSticker,
+  Sparkle as SparkleSticker,
+  Drop as DropSticker,
+  Burst as BurstSticker,
 } from '../../components/ui/Stickers'
 
 /** Neon orange — insurance accent per design system */
@@ -105,8 +108,10 @@ export default function EmergencyInsuranceScreen() {
   const { colors, font, stickers, isDark, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const coralInk = isDark ? stickers.coral : '#B43E2E'
+  const peachInk = isDark ? stickers.peach : '#A6532A'
 
   const store = useEmergencyInsuranceStore()
   const [loading, setLoading] = useState(true)
@@ -214,7 +219,15 @@ export default function EmergencyInsuranceScreen() {
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       {/* Header */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="Emergency & Insurance" />
+        <ScreenHeader />
+        <View style={styles.titleBlock}>
+          <Text style={[styles.bigTitle, { color: colors.text, fontFamily: font.display }]}>
+            Emergency & Insurance
+          </Text>
+          <Text style={[styles.bigSubtitle, { color: coralInk, fontFamily: font.italic }]}>
+            keep them close, dear
+          </Text>
+        </View>
       </View>
 
       {loading ? (
@@ -228,11 +241,15 @@ export default function EmergencyInsuranceScreen() {
         >
           {/* ── Emergency Contacts Section ───────────────────────────── */}
           <View style={styles.sectionHeader}>
-            <MonoCaps color={colors.textMuted}>Emergency Contacts</MonoCaps>
+            <View style={styles.sectionLabelRow}>
+              <HeartSticker size={16} fill={stickers.coral} />
+              <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>EMERGENCY CONTACTS</Text>
+            </View>
             <Pressable onPress={openAddContact} hitSlop={8}>
-              <View style={[styles.addPill, { backgroundColor: stickers.coral + (isDark ? '32' : '32') }]}>
-                <Plus size={14} color={isDark ? stickers.coral : '#B43E2E'} strokeWidth={3} />
-                <Text style={[styles.addPillText, { color: isDark ? stickers.coral : '#B43E2E', fontFamily: font.bodySemiBold }]}>Add</Text>
+              <View style={[styles.addPill, { backgroundColor: stickers.peachSoft }]}>
+                <SparkleSticker size={14} fill={coralInk} stroke={coralInk} />
+                <Plus size={14} color={coralInk} strokeWidth={3} />
+                <Text style={[styles.addPillText, { color: coralInk, fontFamily: font.bodySemiBold }]}>Add</Text>
               </View>
             </Pressable>
           </View>
@@ -242,10 +259,12 @@ export default function EmergencyInsuranceScreen() {
               onPress={openAddContact}
               style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder }]}
             >
-              <CrossSticker size={56} fill={stickers.coral} />
-              <Display size={20} align="center" color={colors.text}>
+              <View style={styles.emptyIllustration}>
+                <CrossSticker size={140} fill={stickers.coral} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display }]}>
                 No emergency contacts yet
-              </Display>
+              </Text>
               <Body size={14} align="center" color={colors.textMuted}>
                 Add people to call in case of an emergency. Grandma wants you safe.
               </Body>
@@ -296,11 +315,15 @@ export default function EmergencyInsuranceScreen() {
 
           {/* ── Insurance Plans Section ──────────────────────────────── */}
           <View style={[styles.sectionHeader, { marginTop: 28 }]}>
-            <MonoCaps color={colors.textMuted}>Insurance Plans</MonoCaps>
+            <View style={styles.sectionLabelRow}>
+              <StarSticker size={16} fill={stickers.peach} />
+              <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>INSURANCE PLANS</Text>
+            </View>
             <Pressable onPress={openAddPlan} hitSlop={8}>
-              <View style={[styles.addPill, { backgroundColor: stickers.peach + (isDark ? '32' : '40') }]}>
-                <Plus size={14} color={isDark ? stickers.peach : '#A6532A'} strokeWidth={3} />
-                <Text style={[styles.addPillText, { color: isDark ? stickers.peach : '#A6532A', fontFamily: font.bodySemiBold }]}>Add</Text>
+              <View style={[styles.addPill, { backgroundColor: stickers.peachSoft }]}>
+                <SparkleSticker size={14} fill={peachInk} stroke={peachInk} />
+                <Plus size={14} color={peachInk} strokeWidth={3} />
+                <Text style={[styles.addPillText, { color: peachInk, fontFamily: font.bodySemiBold }]}>Add</Text>
               </View>
             </Pressable>
           </View>
@@ -310,10 +333,12 @@ export default function EmergencyInsuranceScreen() {
               onPress={openAddPlan}
               style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder }]}
             >
-              <Squishy w={64} h={42} fill={stickers.peach} />
-              <Display size={20} align="center" color={colors.text}>
+              <View style={[styles.emptyIllustration, { transform: [{ rotate: '-6deg' }] }]}>
+                <Squishy w={140} h={94} fill={stickers.peach} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display }]}>
                 No insurance plans yet
-              </Display>
+              </Text>
               <Body size={14} align="center" color={colors.textMuted}>
                 Keep your health, dental, and vision plans handy in one place.
               </Body>
@@ -447,8 +472,8 @@ function ContactFormModal({
 }) {
   const { colors, font, stickers, isDark } = useTheme()
   const insets = useSafeAreaInsets()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const paperBorder = colors.border
   const isEdit = !!contact
 
   const [name, setName] = useState('')
@@ -523,9 +548,14 @@ function ContactFormModal({
               <Ionicons name="close" size={20} color={colors.text} />
             </View>
           </Pressable>
-          <Display size={20} color={colors.text}>
-            {isEdit ? 'Edit Contact' : 'Add Contact'}
-          </Display>
+          <View style={styles.modalTitleCenter}>
+            <Text style={[styles.modalBigTitle, { color: colors.text, fontFamily: font.display }]}>
+              {isEdit ? 'Edit Contact' : 'Add Contact'}
+            </Text>
+            <Text style={[styles.modalItalic, { color: isDark ? stickers.coral : '#B43E2E', fontFamily: font.italic }]}>
+              someone to call
+            </Text>
+          </View>
           <View style={styles.modalHeaderBtn} />
         </View>
 
@@ -628,7 +658,7 @@ function ContactFormModal({
           </Pressable>
 
           <MonoCaps color={colors.textMuted}>Notes (optional)</MonoCaps>
-          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder, minHeight: 96, alignItems: 'flex-start', paddingTop: 16 }]}>
+          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder, height: undefined, minHeight: 96, alignItems: 'flex-start', paddingTop: 16, paddingBottom: 16, borderRadius: 28 }]}>
             <TextInput
               value={notes}
               onChangeText={setNotes}
@@ -680,10 +710,11 @@ function PlanFormModal({
   const { colors, font, stickers, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const paperBorder = colors.border
   const accent = isDark ? stickers.peach : '#A6532A'
-  const accentBg = stickers.peach + (isDark ? '32' : '40')
+  const accentBg = stickers.peachSoft
+  const coral = stickers.coral
   const isEdit = !!plan
 
   const [planType, setPlanType] = useState<InsurancePlanType>('health')
@@ -774,9 +805,14 @@ function PlanFormModal({
               <Ionicons name="close" size={20} color={colors.text} />
             </View>
           </Pressable>
-          <Display size={20} color={colors.text}>
-            {isEdit ? 'Edit Plan' : 'Add Insurance Plan'}
-          </Display>
+          <View style={styles.modalTitleCenter}>
+            <Text style={[styles.modalBigTitle, { color: colors.text, fontFamily: font.display }]}>
+              {isEdit ? 'Edit Plan' : 'Add Insurance Plan'}
+            </Text>
+            <Text style={[styles.modalItalic, { color: isDark ? stickers.coral : '#B43E2E', fontFamily: font.italic }]}>
+              keep your card on hand
+            </Text>
+          </View>
           <View style={styles.modalHeaderBtn} />
         </View>
 
@@ -786,9 +822,12 @@ function PlanFormModal({
           keyboardShouldPersistTaps="handled"
         >
           {/* Scan card banner */}
-          <View style={[styles.scanBanner, { backgroundColor: accentBg, borderColor: accent + '50' }]}>
+          <View style={[styles.scanBanner, { backgroundColor: accentBg, borderColor: paperBorder, transform: [{ rotate: '-1deg' }] }]}>
+            <View style={styles.scanBurstDecor} pointerEvents="none">
+              <BurstSticker size={120} fill={stickers.peach} stroke={stickers.peach} />
+            </View>
             <View style={styles.scanBannerContent}>
-              <CreditCard size={20} color={accent} strokeWidth={2} />
+              <CreditCard size={20} color={coral} strokeWidth={2} />
               <View style={styles.scanBannerText}>
                 <Text style={[styles.scanBannerTitle, { color: colors.text, fontFamily: font.display }]}>
                   Scan your card
@@ -804,26 +843,26 @@ function PlanFormModal({
                 disabled={scanning}
                 style={({ pressed }) => [
                   styles.scanBtn,
-                  { backgroundColor: accent },
+                  { backgroundColor: coral },
                   pressed && { opacity: 0.85 },
                   scanning && { opacity: 0.5 },
                 ]}
               >
-                <Camera size={16} color={isDark ? '#1A1713' : '#FFFEF8'} strokeWidth={2.5} />
-                <Text style={[styles.scanBtnText, { color: isDark ? '#1A1713' : '#FFFEF8', fontFamily: font.bodySemiBold }]}>Camera</Text>
+                <Camera size={16} color="#FFFEF8" strokeWidth={2.5} />
+                <Text style={[styles.scanBtnText, { color: '#FFFEF8', fontFamily: font.bodySemiBold }]}>Camera</Text>
               </Pressable>
               <Pressable
                 onPress={() => handleScanCard(false)}
                 disabled={scanning}
                 style={({ pressed }) => [
                   styles.scanBtn,
-                  { backgroundColor: paper, borderWidth: 1, borderColor: accent + '50' },
+                  { backgroundColor: paper, borderWidth: 1, borderColor: paperBorder },
                   pressed && { opacity: 0.85 },
                   scanning && { opacity: 0.5 },
                 ]}
               >
-                <ImageIcon size={16} color={accent} strokeWidth={2.5} />
-                <Text style={[styles.scanBtnText, { color: accent, fontFamily: font.bodySemiBold }]}>Gallery</Text>
+                <ImageIcon size={16} color={colors.text} strokeWidth={2.5} />
+                <Text style={[styles.scanBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Gallery</Text>
               </Pressable>
             </View>
             {scanning && (
@@ -840,6 +879,12 @@ function PlanFormModal({
           <View style={styles.chipRow}>
             {PLAN_TYPES.map((t) => {
               const active = planType === t.id
+              const chipColor = active ? coral : colors.textMuted
+              const chipFill = active ? coral : stickers.peach
+              let icon = null
+              if (t.id === 'health') icon = <CrossSticker size={18} fill={chipFill} stroke={chipColor} />
+              else if (t.id === 'dental') icon = <SparkleSticker size={18} fill={chipFill} stroke={chipColor} />
+              else if (t.id === 'vision') icon = <DropSticker size={18} fill={chipFill} stroke={chipColor} />
               return (
                 <Pressable
                   key={t.id}
@@ -847,12 +892,14 @@ function PlanFormModal({
                   style={[
                     styles.typeChip,
                     {
-                      backgroundColor: active ? accentBg : paper,
-                      borderColor: active ? accent : paperBorder,
+                      backgroundColor: active ? stickers.peachSoft : paper,
+                      borderColor: active ? coral : paperBorder,
+                      borderWidth: active ? 2 : 1,
                     },
                   ]}
                 >
-                  <Text style={[styles.typeChipText, { color: active ? accent : colors.text, fontFamily: active ? font.bodySemiBold : font.bodyMedium }]}>
+                  {icon}
+                  <Text style={[styles.typeChipText, { color: active ? coral : colors.text, fontFamily: active ? font.display : font.bodyMedium, fontSize: active ? 16 : 14 }]}>
                     {t.label}
                   </Text>
                 </Pressable>
@@ -938,7 +985,7 @@ function PlanFormModal({
           </View>
 
           <MonoCaps color={colors.textMuted}>Notes (optional)</MonoCaps>
-          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder, minHeight: 96, alignItems: 'flex-start', paddingTop: 16 }]}>
+          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder, height: undefined, minHeight: 96, alignItems: 'flex-start', paddingTop: 16, paddingBottom: 16, borderRadius: 28 }]}>
             <TextInput
               value={notes}
               onChangeText={setNotes}
@@ -970,6 +1017,56 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
 
   headerWrap: { paddingHorizontal: 16, paddingBottom: 6 },
+  titleBlock: {
+    paddingHorizontal: 4,
+    paddingTop: 14,
+    paddingBottom: 6,
+    alignItems: 'flex-start',
+  },
+  bigTitle: {
+    fontSize: 34,
+    lineHeight: 38,
+    letterSpacing: -0.6,
+    textAlign: 'left',
+  },
+  bigSubtitle: {
+    fontSize: 18,
+    marginTop: 4,
+    textAlign: 'left',
+  },
+  sectionLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyIllustration: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  modalTitleCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  modalBigTitle: {
+    fontSize: 26,
+    letterSpacing: -0.3,
+  },
+  modalItalic: {
+    fontSize: 14,
+    marginTop: 2,
+  },
+  scanBurstDecor: {
+    position: 'absolute',
+    top: -22,
+    right: -14,
+    opacity: 0.35,
+  },
 
   // Legacy header (unused — kept harmless)
   header: {
@@ -1002,6 +1099,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 12,
     paddingLeft: 4,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   addPill: {
     flexDirection: 'row',
@@ -1112,15 +1214,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 22,
+    height: 64,
     borderWidth: 1,
-    borderRadius: 22,
+    borderRadius: 999,
     marginBottom: 4,
+    marginTop: 6,
   },
   inputText: { flex: 1, fontSize: 15 },
 
-  pickerList: { marginTop: 4, overflow: 'hidden', borderWidth: 1, borderRadius: 22 },
+  pickerList: { marginTop: 4, overflow: 'hidden', borderWidth: 1, borderRadius: 28 },
   pickerItem: { paddingVertical: 12, paddingHorizontal: 16 },
   pickerItemText: { fontSize: 15 },
 
@@ -1128,10 +1231,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 22,
+    height: 64,
     borderWidth: 1,
-    borderRadius: 22,
+    borderRadius: 999,
     marginTop: 16,
   },
   toggleLabel: { flex: 1, fontSize: 15 },
@@ -1147,8 +1250,11 @@ const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', gap: 10, marginBottom: 8 },
   typeChip: {
     flex: 1,
+    flexDirection: 'row',
     paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
     borderWidth: 1,
     borderRadius: 999,
   },
@@ -1160,6 +1266,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     gap: 14,
     borderRadius: 22,
+    overflow: 'hidden',
   },
   scanBannerContent: {
     flexDirection: 'row',

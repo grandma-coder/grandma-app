@@ -397,7 +397,7 @@ export default function LeaderboardScreen() {
       <SceneStickers />
 
       {/* Header */}
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.headerWrap, { paddingTop: insets.top }]}>
         <ScreenHeader
           title="Leaderboard"
           right={
@@ -604,13 +604,15 @@ function Podium({
               {rankSticker(rank, isCenter ? 36 : 30, fill)}
             </View>
 
-            {entry.photo_url && !isIconAvatar(entry.photo_url) ? (
-              <Image source={{ uri: entry.photo_url }} style={styles.podiumAvatar} />
-            ) : (
-              <View style={[styles.podiumAvatar, { backgroundColor: fill + (isDark ? '22' : '33'), alignItems: 'center', justifyContent: 'center' }]}>
-                <User size={isCenter ? 20 : 16} color={ink} strokeWidth={1.8} />
-              </View>
-            )}
+            <AvatarView
+              value={entry.photo_url}
+              size={isCenter ? 56 : 48}
+              accent={fill + (isDark ? '22' : '33')}
+              initial={(entry.name || '?').trim().charAt(0).toUpperCase()}
+              textColor={ink}
+              borderColor="rgba(20,19,19,0.12)"
+              borderWidth={1.5}
+            />
 
             <Text
               style={[styles.podiumName, { color: ink, fontFamily: font.bodySemiBold }]}
@@ -670,32 +672,15 @@ function LeaderRow({
         </Text>
       </View>
 
-      {isIconAvatar(entry.photo_url) ? (
-        <AvatarView
-          value={entry.photo_url}
-          size={40}
-          accent={isMe ? stickers.pink : stickers.yellowSoft}
-          borderColor={isMe ? stickers.coral : 'rgba(20,19,19,0.12)'}
-          borderWidth={1.5}
-        />
-      ) : entry.photo_url ? (
-        <Image source={{ uri: entry.photo_url }} style={styles.rowAvatar} />
-      ) : (
-        <View
-          style={[
-            styles.rowAvatar,
-            {
-              backgroundColor: isMe ? stickers.pink : stickers.yellowSoft,
-              borderWidth: 1.5,
-              borderColor: isMe ? stickers.coral : 'rgba(20,19,19,0.12)',
-              alignItems: 'center',
-              justifyContent: 'center',
-            },
-          ]}
-        >
-          {rankSticker(entry.rank, 22, isMe ? stickers.coral : stickers.yellow)}
-        </View>
-      )}
+      <AvatarView
+        value={entry.photo_url}
+        size={40}
+        accent={isMe ? stickers.pink : stickers.yellowSoft}
+        initial={(entry.name || '?').trim().charAt(0).toUpperCase()}
+        textColor={ink}
+        borderColor={isMe ? stickers.coral : 'rgba(20,19,19,0.12)'}
+        borderWidth={1.5}
+      />
 
       <View style={styles.rowInfo}>
         <Text
@@ -865,22 +850,15 @@ function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => v
       </View>
 
       <View style={styles.profileAvatarWrap}>
-        {entry.photo_url && !isIconAvatar(entry.photo_url) ? (
-          <Image source={{ uri: entry.photo_url }} style={styles.profileAvatar} />
-        ) : (
-          <View
-            style={[
-              styles.profileAvatar,
-              {
-                backgroundColor: rankFill + (isDark ? '33' : '44'),
-                alignItems: 'center',
-                justifyContent: 'center',
-              },
-            ]}
-          >
-            <User size={36} color={ink} strokeWidth={1.5} />
-          </View>
-        )}
+        <AvatarView
+          value={entry.photo_url}
+          size={84}
+          accent={rankFill + (isDark ? '33' : '44')}
+          initial={(entry.name || '?').trim().charAt(0).toUpperCase()}
+          textColor={ink}
+          borderColor={paperBorder}
+          borderWidth={2}
+        />
         <View
           style={[
             styles.profileRankBadge,

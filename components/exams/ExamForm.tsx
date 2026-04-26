@@ -47,9 +47,14 @@ interface Props {
   onSaved: () => void
 }
 
+const INK = '#141313'
+
 export function ExamForm({ behavior, childId, date, onSaved }: Props) {
   const { colors, radius, isDark, font } = useTheme()
   const s = isDark ? stickersDark : stickersLight
+  const inkBorder = isDark ? colors.border : INK
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const inkText = isDark ? colors.text : INK
   const invalidate = useInvalidateExams()
 
   const [title, setTitle] = useState('')
@@ -213,14 +218,14 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
             style={[
               styles.photoAddBtn,
               {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
+                backgroundColor: paper,
+                borderColor: inkBorder,
                 opacity: uploading ? 0.5 : 1,
               },
             ]}
           >
-            <Camera size={18} color={colors.text} strokeWidth={2} />
-            <Text style={[styles.photoAddLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+            <Camera size={18} color={inkText} strokeWidth={2} />
+            <Text style={[styles.photoAddLabel, { color: inkText, fontFamily: font.bodySemiBold }]}>
               Scan
             </Text>
           </Pressable>
@@ -231,14 +236,14 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
             style={[
               styles.photoAddBtn,
               {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
+                backgroundColor: paper,
+                borderColor: inkBorder,
                 opacity: uploading ? 0.5 : 1,
               },
             ]}
           >
-            <ImagePlus size={18} color={colors.text} strokeWidth={2} />
-            <Text style={[styles.photoAddLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+            <ImagePlus size={18} color={inkText} strokeWidth={2} />
+            <Text style={[styles.photoAddLabel, { color: inkText, fontFamily: font.bodySemiBold }]}>
               Upload
             </Text>
           </Pressable>
@@ -268,28 +273,28 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
         onChangeText={setTitle}
         placeholder="Test name (e.g. Blood work, Glucose)"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        style={[styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
       />
       <TextInput
         value={result}
         onChangeText={setResult}
         placeholder="Result (e.g. Normal, 120/80)"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        style={[styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
       />
       <TextInput
         value={provider}
         onChangeText={setProvider}
         placeholder="Doctor / clinic (optional)"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        style={[styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
       />
       <TextInput
         value={examDate}
         onChangeText={setExamDate}
         placeholder="YYYY-MM-DD"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        style={[styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
       />
       <TextInput
         value={notes}
@@ -300,7 +305,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
         style={[
           styles.input,
           styles.inputMultiline,
-          { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg },
+          { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: 22 },
         ]}
       />
 
@@ -333,8 +338,8 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
           return [
             styles.saveBtn,
             {
-              backgroundColor: isDisabled ? colors.surface : brand.pregnancy,
-              borderColor: isDisabled ? colors.border : brand.pregnancy,
+              backgroundColor: isDisabled ? paper : (isDark ? colors.text : INK),
+              borderColor: isDisabled ? inkBorder : (isDark ? colors.text : INK),
               borderWidth: 1.5,
               borderRadius: radius.full,
             },
@@ -343,9 +348,9 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
         }}
       >
         {saving ? (
-          <ActivityIndicator color={!title.trim() ? colors.textMuted : '#FFFEF8'} />
+          <ActivityIndicator color={!title.trim() ? inkText : '#FFFEF8'} />
         ) : (
-          <Text style={[styles.saveBtnText, { color: !title.trim() ? colors.textMuted : '#FFFEF8' }]}>
+          <Text style={[styles.saveBtnText, { color: !title.trim() ? (isDark ? colors.textMuted : 'rgba(20,19,19,0.4)') : '#FFFEF8' }]}>
             Save exam
           </Text>
         )}
@@ -373,7 +378,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   photoAddBtn: {
-    width: 96, height: 96, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed',
+    width: 96, height: 96, borderRadius: 18, borderWidth: 1.5, borderStyle: 'dashed',
     alignItems: 'center', justifyContent: 'center', gap: 6,
   },
   photoAddLabel: { fontSize: 12 },
@@ -385,8 +390,9 @@ const styles = StyleSheet.create({
   },
   aiBadgeText: { fontSize: 12 },
   input: {
-    borderWidth: 1, paddingHorizontal: 18, height: 56,
+    borderWidth: 1.5, paddingHorizontal: 20, height: 56,
     fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '500',
+    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 1,
   },
   inputMultiline: { height: 96, paddingVertical: 14, textAlignVertical: 'top' },
   metaRow: {
@@ -399,7 +405,10 @@ const styles = StyleSheet.create({
   flaggedTitle: { fontSize: 13, marginBottom: 4 },
   flaggedItem: { fontSize: 13, lineHeight: 18 },
   flaggedNote: { fontSize: 11, marginTop: 6, fontStyle: 'italic' },
-  saveBtn: { height: 56, alignItems: 'center', justifyContent: 'center' },
+  saveBtn: {
+    height: 56, alignItems: 'center', justifyContent: 'center',
+    shadowColor: INK, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 2,
+  },
   saveBtnText: { fontSize: 16, fontFamily: 'DMSans_600SemiBold', fontWeight: '700', letterSpacing: 0.2 },
   cancelText: { fontSize: 13, textAlign: 'center', paddingVertical: 6 },
 })

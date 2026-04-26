@@ -1,7 +1,10 @@
+export type BirthStickerKind = 'leaf' | 'cross' | 'heart' | 'drop'
+
 export interface BirthType {
   id: string
   title: string
   icon: string
+  sticker: BirthStickerKind
   description: string
   pros: string[]
   cons: string[]
@@ -13,6 +16,7 @@ export const birthTypes: BirthType[] = [
     id: 'natural',
     title: 'Natural Birth',
     icon: '🌿',
+    sticker: 'leaf',
     description: 'Vaginal delivery without medical interventions like epidurals or induction.',
     pros: [
       'Faster recovery time',
@@ -31,6 +35,7 @@ export const birthTypes: BirthType[] = [
     id: 'c-section',
     title: 'C-Section',
     icon: '🏥',
+    sticker: 'cross',
     description: 'Surgical delivery through an incision in the abdomen and uterus.',
     pros: [
       'Planned scheduling reduces uncertainty',
@@ -49,6 +54,7 @@ export const birthTypes: BirthType[] = [
     id: 'home-birth',
     title: 'Home Birth',
     icon: '🏡',
+    sticker: 'heart',
     description: 'Giving birth at home with a certified midwife, in a familiar environment.',
     pros: [
       'Comfortable, familiar environment',
@@ -67,6 +73,7 @@ export const birthTypes: BirthType[] = [
     id: 'water-birth',
     title: 'Water Birth',
     icon: '🌊',
+    sticker: 'drop',
     description: 'Laboring and/or delivering in a warm water pool for natural pain relief.',
     pros: [
       'Warm water provides natural pain relief',

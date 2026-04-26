@@ -22,7 +22,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTheme, brand, THEME_COLORS } from '../../constants/theme'
+import { useTheme, brand, THEME_COLORS, stickers as stickerPalette } from '../../constants/theme'
 import { stickerForEmoji } from '../../lib/emojiToSticker'
 import { NotifyHealthAlert, TalkMaster } from '../stickers/RewardStickers'
 import { useModeStore } from '../../store/useModeStore'
@@ -54,26 +54,26 @@ const TYPE_CONFIG: Record<InsightType, {
   tip: string
 }> = {
   pattern: {
-    icon: Lightbulb, color: '#FBBF24',
-    gradient: ['rgba(251,191,36,0.18)', 'rgba(245,158,11,0.04)'],
+    icon: Lightbulb, color: '#C9A300', // ink-readable yellow
+    gradient: [stickerPalette.yellowSoft, stickerPalette.yellowSoft + '00'],
     label: 'Pattern', detailIcon: Brain,
     tip: 'Patterns become clearer with consistent logging over time.',
   },
   trend: {
-    icon: TrendingUp, color: '#3DAA6E',
-    gradient: ['rgba(61,170,110,0.18)', 'rgba(45,139,87,0.04)'],
+    icon: TrendingUp, color: '#5C8C3A', // ink-readable green
+    gradient: [stickerPalette.greenSoft, stickerPalette.greenSoft + '00'],
     label: 'Trend', detailIcon: Zap,
     tip: 'Trends are calculated from your recent 30-day activity window.',
   },
   upcoming: {
-    icon: CalendarClock, color: '#6AABF7',
-    gradient: ['rgba(106,171,247,0.18)', 'rgba(59,125,216,0.04)'],
+    icon: CalendarClock, color: '#3F6FA8', // ink-readable blue
+    gradient: [stickerPalette.blueSoft, stickerPalette.blueSoft + '00'],
     label: 'Upcoming', detailIcon: CalendarClock,
     tip: 'Predictions improve as we learn more about your unique rhythms.',
   },
   nudge: {
-    icon: Sparkles, color: '#FF8AD8',
-    gradient: ['rgba(255,138,216,0.18)', 'rgba(214,95,182,0.04)'],
+    icon: Sparkles, color: '#B85174', // ink-readable pink
+    gradient: [stickerPalette.pinkSoft, stickerPalette.pinkSoft + '00'],
     label: 'Nudge', detailIcon: Heart,
     tip: 'Small daily habits make the biggest difference over time.',
   },
@@ -95,12 +95,12 @@ interface Article {
 }
 
 const CATEGORY_META: Record<ArticleCategory, { label: string; icon: typeof Moon; color: string }> = {
-  sleep:       { label: 'Sleep',       icon: Moon,    color: '#B983FF' },
-  feeding:     { label: 'Feeding',     icon: Apple,   color: '#A2FF86' },
-  development: { label: 'Development', icon: Brain,   color: '#6AABF7' },
-  behavior:    { label: 'Behavior',    icon: Heart,   color: '#FF8AD8' },
-  health:      { label: 'Health',      icon: Shield,  color: '#FBBF24' },
-  you:         { label: 'For You',     icon: Coffee,  color: '#FB923C' },
+  sleep:       { label: 'Sleep',       icon: Moon,    color: '#7A5BB8' }, // ink-readable lilac
+  feeding:     { label: 'Feeding',     icon: Apple,   color: '#5C8C3A' }, // green
+  development: { label: 'Development', icon: Brain,   color: '#3F6FA8' }, // blue
+  behavior:    { label: 'Behavior',    icon: Heart,   color: '#B85174' }, // pink
+  health:      { label: 'Health',      icon: Shield,  color: '#C9A300' }, // yellow
+  you:         { label: 'For You',     icon: Coffee,  color: stickerPalette.coral },
 }
 
 const ARTICLES: Article[] = [
@@ -721,11 +721,11 @@ function PregnancyInsightsContent() {
 
       <Pressable
         onPress={() => router.push('/grandma-talk')}
-        style={[ci.askBar, { backgroundColor: brand.pregnancy, bottom: insets.bottom + 8 }]}
+        style={[ci.askBar, { backgroundColor: colors.accent, bottom: insets.bottom + 8 }]}
       >
         <TalkMaster size={28} />
-        <Text style={[ci.askBarText, { color: '#FFFFFF' }]}>Ask Grandma anything</Text>
-        <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
+        <Text style={[ci.askBarText, { color: colors.text }]}>Ask Grandma anything</Text>
+        <ChevronRight size={18} color={colors.text} strokeWidth={2.5} />
       </Pressable>
     </View>
   )
@@ -938,7 +938,7 @@ export function InsightsScreen() {
         contentContainerStyle={[s.scroll, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
       >
         {/* Header */}
         <View style={s.headerRow}>
@@ -961,15 +961,15 @@ export function InsightsScreen() {
               <Pressable
                 key={t}
                 onPress={() => setTab(t)}
-                style={[s.tabBtn, { borderRadius: radius.sm - 2 }, active && { backgroundColor: colors.primary + '20' }]}
+                style={[s.tabBtn, { borderRadius: radius.sm - 2 }, active && { backgroundColor: colors.accentSoft }]}
               >
-                <Icon size={13} color={active ? colors.primary : colors.textMuted} strokeWidth={2} />
-                <Text style={[s.tabText, { color: active ? colors.primary : colors.textMuted }, active && s.tabTextActive]}>
+                <Icon size={13} color={active ? colors.accent : colors.textMuted} strokeWidth={2} />
+                <Text style={[s.tabText, { color: active ? colors.accent : colors.textMuted }, active && s.tabTextActive]}>
                   {label}
                 </Text>
                 {t === 'today' && insights.length > 0 && (
-                  <View style={[s.tabBadge, { backgroundColor: active ? colors.primary + '30' : colors.surfaceRaised }]}>
-                    <Text style={[s.tabBadgeText, { color: active ? colors.primary : colors.textMuted }]}>
+                  <View style={[s.tabBadge, { backgroundColor: active ? colors.accent + '30' : colors.surfaceRaised }]}>
+                    <Text style={[s.tabBadgeText, { color: active ? colors.accent : colors.textMuted }]}>
                       {insights.length}
                     </Text>
                   </View>
@@ -983,27 +983,25 @@ export function InsightsScreen() {
         {tab === 'today' && (
           <>
             {/* Daily Brief */}
-            <LinearGradient
-              colors={['rgba(112,72,184,0.22)', 'rgba(59,125,216,0.10)', 'rgba(14,11,26,0.0)']}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={[s.dailyCard, { borderRadius: radius.lg, borderColor: colors.border }]}
+            <View
+              style={[s.dailyCard, { borderRadius: radius.lg, borderColor: colors.border, backgroundColor: colors.accentSoft }]}
             >
               <View style={s.dailyTop}>
                 <View>
                   <Text style={[s.dailyGreeting, { color: colors.textSecondary }]}>{today}</Text>
                   <Text style={[s.dailyName, { color: colors.text }]}>{greeting}</Text>
                 </View>
-                <View style={[s.sunIcon, { backgroundColor: '#FBBF2415' }]}>
-                  <Sun size={20} color="#FBBF24" strokeWidth={2} />
+                <View style={[s.sunIcon, { backgroundColor: stickerPalette.yellowSoft }]}>
+                  <Sun size={20} color="#C9A300" strokeWidth={2} />
                 </View>
               </View>
-              <View style={[s.tipBox, { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.10)' }]}>
+              <View style={[s.tipBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <View style={s.tipBoxHeader}>
-                  <Sparkles size={12} color={colors.primary} strokeWidth={2} />
-                  <Text style={[s.tipBoxLabel, { color: colors.primary }]}>Today's tip</Text>
+                  <Sparkles size={12} color={colors.accent} strokeWidth={2} />
+                  <Text style={[s.tipBoxLabel, { color: colors.accent }]}>Today's tip</Text>
                   {child?.birthDate && (
-                    <View style={[s.agePill, { backgroundColor: colors.primary + '20' }]}>
-                      <Text style={[s.agePillText, { color: colors.primary }]}>
+                    <View style={[s.agePill, { backgroundColor: colors.accent + '20' }]}>
+                      <Text style={[s.agePillText, { color: colors.accent }]}>
                         {ageMonths < 12 ? `${ageMonths}mo` : `${Math.floor(ageMonths / 12)}y`}
                       </Text>
                     </View>
@@ -1011,7 +1009,7 @@ export function InsightsScreen() {
                 </View>
                 <Text style={[s.tipBoxText, { color: colors.text }]}>{dailyTip}</Text>
               </View>
-            </LinearGradient>
+            </View>
 
             {/* Week at a Glance */}
             {metrics && metrics.totalLogs > 0 && (
@@ -1060,19 +1058,17 @@ export function InsightsScreen() {
 
             {/* Generating banner */}
             {generating && (
-              <LinearGradient
-                colors={['rgba(160,127,220,0.15)', 'rgba(106,171,247,0.08)']}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={[s.generatingBanner, { borderRadius: radius.md }]}
+              <View
+                style={[s.generatingBanner, { borderRadius: radius.md, backgroundColor: colors.accentSoft, borderColor: colors.border }]}
               >
-                <View style={s.generatingDot}>
-                  <ActivityIndicator size="small" color={colors.primary} />
+                <View style={[s.generatingDot, { backgroundColor: colors.surface }]}>
+                  <ActivityIndicator size="small" color={colors.accent} />
                 </View>
                 <View>
                   <Text style={[s.generatingTitle, { color: colors.text }]}>Grandma is thinking...</Text>
                   <Text style={[s.generatingSubtext, { color: colors.textSecondary }]}>Analyzing your recent data</Text>
                 </View>
-              </LinearGradient>
+              </View>
             )}
 
             {/* Error */}
@@ -1089,7 +1085,7 @@ export function InsightsScreen() {
             {/* AI Insights section */}
             {isLoading && !generating && (
               <View style={s.loadingWrap}>
-                <ActivityIndicator color={colors.primary} />
+                <ActivityIndicator color={colors.accent} />
               </View>
             )}
 
@@ -1101,14 +1097,10 @@ export function InsightsScreen() {
                   Log a few days of data and generate your first personalized insights.
                 </Text>
                 <Pressable onPress={handleGenerate}>
-                  <LinearGradient
-                    colors={[brand.primary, brand.primaryDark]}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                    style={[s.generateBtn, { borderRadius: radius.md }]}
-                  >
-                    <Sparkles size={15} color="#FFFFFF" strokeWidth={2} />
-                    <Text style={s.generateBtnText}>Generate Insights</Text>
-                  </LinearGradient>
+                  <View style={[s.generateBtn, { borderRadius: radius.full, backgroundColor: colors.accent }]}>
+                    <Sparkles size={15} color={colors.text} strokeWidth={2} />
+                    <Text style={[s.generateBtnText, { color: colors.text }]}>Generate Insights</Text>
+                  </View>
                 </Pressable>
               </View>
             )}
@@ -1116,13 +1108,13 @@ export function InsightsScreen() {
             {insights.length > 0 && (
               <View style={s.insightSection}>
                 <View style={s.sectionHeader}>
-                  <View style={[s.sectionIconWrap, { backgroundColor: colors.primary + '20' }]}>
-                    <Sparkles size={13} color={colors.primary} strokeWidth={2.5} />
+                  <View style={[s.sectionIconWrap, { backgroundColor: colors.accentSoft }]}>
+                    <Sparkles size={13} color={colors.accent} strokeWidth={2.5} />
                   </View>
-                  <Text style={[s.sectionLabel, { color: colors.primary }]}>Grandma's Insights</Text>
+                  <Text style={[s.sectionLabel, { color: colors.accent }]}>Grandma's Insights</Text>
                   <View style={[s.sectionLine, { backgroundColor: colors.border }]} />
-                  <Pressable onPress={handleGenerate} hitSlop={8} style={[s.regenBtn, { backgroundColor: colors.primary + '15' }]}>
-                    <RefreshCw size={13} color={colors.primary} strokeWidth={2} />
+                  <Pressable onPress={handleGenerate} hitSlop={8} style={[s.regenBtn, { backgroundColor: colors.accentSoft }]}>
+                    <RefreshCw size={13} color={colors.accent} strokeWidth={2} />
                   </Pressable>
                 </View>
                 {typeOrder.map((type) => {
@@ -1143,32 +1135,26 @@ export function InsightsScreen() {
             )}
 
             {/* Motivation */}
-            <LinearGradient
-              colors={['rgba(251,191,36,0.10)', 'rgba(251,146,60,0.06)', 'rgba(14,11,26,0.0)']}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={[s.quoteCard, { borderRadius: radius.lg, borderColor: 'rgba(251,191,36,0.15)' }]}
+            <View
+              style={[s.quoteCard, { borderRadius: radius.lg, borderColor: colors.border, backgroundColor: stickerPalette.yellowSoft }]}
             >
-              <View style={[s.quoteIconWrap, { backgroundColor: 'rgba(251,191,36,0.15)' }]}>
-                <MessageSquare size={16} color="#FBBF24" strokeWidth={2} />
+              <View style={[s.quoteIconWrap, { backgroundColor: colors.surface }]}>
+                <MessageSquare size={16} color="#C9A300" strokeWidth={2} />
               </View>
               <Text style={[s.quoteText, { color: colors.text }]}>"{quote.text}"</Text>
               <Text style={[s.quoteAuthor, { color: colors.textMuted }]}>— {quote.author}</Text>
-            </LinearGradient>
+            </View>
 
             {/* Ask Grandma CTA */}
             <Pressable
               onPress={() => router.push('/grandma-talk' as any)}
               style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1 }]}
             >
-              <LinearGradient
-                colors={[brand.primary, brand.primaryDark]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={[s.grandmaCta, { borderRadius: radius.lg }]}
-              >
-                <MessageCircle size={18} color="#FFF" strokeWidth={2} />
-                <Text style={s.grandmaCtaText}>Ask Grandma anything</Text>
-                <ChevronRight size={16} color="rgba(255,255,255,0.7)" strokeWidth={2.5} />
-              </LinearGradient>
+              <View style={[s.grandmaCta, { borderRadius: radius.full, backgroundColor: colors.accent }]}>
+                <MessageCircle size={18} color={colors.text} strokeWidth={2} />
+                <Text style={[s.grandmaCtaText, { color: colors.text }]}>Ask Grandma anything</Text>
+                <ChevronRight size={16} color={colors.text} strokeWidth={2.5} />
+              </View>
             </Pressable>
           </>
         )}
@@ -1184,9 +1170,9 @@ export function InsightsScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.categoryScroll} contentContainerStyle={s.categoryContent}>
               <Pressable
                 onPress={() => setArticleCategory('all')}
-                style={[s.categoryPill, { backgroundColor: articleCategory === 'all' ? colors.primary : colors.surface, borderColor: articleCategory === 'all' ? colors.primary : colors.border }]}
+                style={[s.categoryPill, { backgroundColor: articleCategory === 'all' ? colors.accent : colors.surface, borderColor: articleCategory === 'all' ? colors.accent : colors.border }]}
               >
-                <Text style={[s.categoryPillText, { color: articleCategory === 'all' ? '#FFF' : colors.textSecondary }]}>All</Text>
+                <Text style={[s.categoryPillText, { color: articleCategory === 'all' ? colors.text : colors.textSecondary }]}>All</Text>
               </Pressable>
               {(Object.keys(CATEGORY_META) as ArticleCategory[]).map((cat) => {
                 const meta = CATEGORY_META[cat]
@@ -1227,7 +1213,7 @@ export function InsightsScreen() {
           <>
             {isLoadingHistory && (
               <View style={s.loadingWrap}>
-                <ActivityIndicator color={colors.primary} />
+                <ActivityIndicator color={colors.accent} />
               </View>
             )}
             {!isLoadingHistory && archivedInsights.length === 0 && (
@@ -1333,10 +1319,8 @@ function ArticleDetailModal({
       <View style={s.modalOverlay}>
         <Pressable style={s.modalBackdrop} onPress={onClose} />
         <View style={[s.modalSheet, { paddingBottom: insets.bottom + 20 }]}>
-          <LinearGradient
-            colors={[meta.color + '12', colors.bg + 'F8', colors.bg]}
-            start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.4 }}
-            style={[s.modalContent, { borderTopLeftRadius: 24, borderTopRightRadius: 24 }]}
+          <View
+            style={[s.modalContent, { borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.surface }]}
           >
             <View style={s.modalHandle}>
               <View style={[s.handleBar, { backgroundColor: colors.textMuted + '40' }]} />
@@ -1361,16 +1345,12 @@ function ArticleDetailModal({
             </ScrollView>
             <View style={[s.modalDivider, { backgroundColor: colors.border, marginVertical: 20 }]} />
             <Pressable onPress={onAskGrandma}>
-              <LinearGradient
-                colors={[brand.primary, brand.primaryDark]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={[s.askBtn, { borderRadius: radius.lg }]}
-              >
-                <MessageCircle size={18} color="#FFF" strokeWidth={2} />
-                <Text style={s.askBtnText}>Ask Grandma about this</Text>
-              </LinearGradient>
+              <View style={[s.askBtn, { borderRadius: radius.full, backgroundColor: colors.accent }]}>
+                <MessageCircle size={18} color={colors.text} strokeWidth={2} />
+                <Text style={[s.askBtnText, { color: colors.text }]}>Ask Grandma about this</Text>
+              </View>
             </Pressable>
-          </LinearGradient>
+          </View>
         </View>
       </View>
     </Modal>
@@ -1449,8 +1429,8 @@ function HistoryCard({
           <Text style={[s.historyBody, { color: colors.textMuted }]} numberOfLines={1}>{insight.body}</Text>
         </View>
         <Pressable onPress={(e) => { e.stopPropagation?.(); onRestore() }} hitSlop={10}
-          style={[s.restoreBtn, { backgroundColor: colors.primary + '12' }]}>
-          <RotateCcw size={14} color={colors.primary} strokeWidth={2} />
+          style={[s.restoreBtn, { backgroundColor: colors.accentSoft }]}>
+          <RotateCcw size={14} color={colors.accent} strokeWidth={2} />
         </Pressable>
       </View>
     </Pressable>
@@ -1480,10 +1460,8 @@ function InsightDetailModal({
       <View style={s.modalOverlay}>
         <Pressable style={s.modalBackdrop} onPress={onClose} />
         <View style={[s.modalSheet, { paddingBottom: insets.bottom + 20 }]}>
-          <LinearGradient
-            colors={[config.color + '12', colors.bg + 'F8', colors.bg]}
-            start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.4 }}
-            style={[s.modalContent, { borderTopLeftRadius: 24, borderTopRightRadius: 24 }]}
+          <View
+            style={[s.modalContent, { borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.surface }]}
           >
             <View style={s.modalHandle}>
               <View style={[s.handleBar, { backgroundColor: colors.textMuted + '40' }]} />
@@ -1492,13 +1470,11 @@ function InsightDetailModal({
               <X size={20} color={colors.textMuted} />
             </Pressable>
             <View style={s.modalHeader}>
-              <LinearGradient
-                colors={[config.color + '30', config.color + '08']}
-                style={[s.modalIconWrap, { borderRadius: radius.md }]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              <View
+                style={[s.modalIconWrap, { borderRadius: radius.md, backgroundColor: config.color + '22' }]}
               >
                 <Icon size={24} color={config.color} strokeWidth={2} />
-              </LinearGradient>
+              </View>
               <View style={[s.modalTypeBadge, { backgroundColor: config.color + '18' }]}>
                 <Text style={[s.modalTypeText, { color: config.color }]}>{config.label}</Text>
               </View>
@@ -1528,28 +1504,24 @@ function InsightDetailModal({
             </View>
             <View style={s.modalActions}>
               <Pressable onPress={onAskGrandma} style={{ flex: 1 }}>
-                <LinearGradient
-                  colors={[brand.primary, brand.primaryDark]}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                  style={[s.askBtn, { borderRadius: radius.lg }]}
-                >
-                  <MessageCircle size={18} color="#FFF" strokeWidth={2} />
-                  <Text style={s.askBtnText}>Ask Grandma</Text>
-                </LinearGradient>
+                <View style={[s.askBtn, { borderRadius: radius.full, backgroundColor: colors.accent }]}>
+                  <MessageCircle size={18} color={colors.text} strokeWidth={2} />
+                  <Text style={[s.askBtnText, { color: colors.text }]}>Ask Grandma</Text>
+                </View>
               </Pressable>
               {isArchived ? (
                 <Pressable onPress={onRestore}
-                  style={[s.secondaryBtn, { borderRadius: radius.lg, borderColor: colors.primary + '40' }]}>
-                  <RotateCcw size={18} color={colors.primary} strokeWidth={2} />
+                  style={[s.secondaryBtn, { borderRadius: radius.full, borderColor: colors.accent + '60' }]}>
+                  <RotateCcw size={18} color={colors.accent} strokeWidth={2} />
                 </Pressable>
               ) : (
                 <Pressable onPress={onArchive}
-                  style={[s.secondaryBtn, { borderRadius: radius.lg, borderColor: colors.border }]}>
+                  style={[s.secondaryBtn, { borderRadius: radius.full, borderColor: colors.border }]}>
                   <X size={18} color={colors.textMuted} strokeWidth={2} />
                 </Pressable>
               )}
             </View>
-          </LinearGradient>
+          </View>
         </View>
       </View>
     </Modal>

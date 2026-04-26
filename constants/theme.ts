@@ -155,10 +155,12 @@ export const darkTokens = {
   surfaceRaised: '#2C2820',  // elevated cards
   surfaceGlass: 'rgba(245,237,220,0.06)',
 
-  // Borders
-  border: 'rgba(245,237,220,0.08)',
-  borderLight: 'rgba(245,237,220,0.05)',
-  borderStrong: 'rgba(245,237,220,0.14)',
+  // Borders — bumped for dark-mode sticker-on-paper definition.
+  // The light theme draws hard ink borders; in dark we use a brighter cream
+  // hairline so cards/pills/chips read as paper rather than fading out.
+  border: 'rgba(245,237,220,0.18)',
+  borderLight: 'rgba(245,237,220,0.10)',
+  borderStrong: 'rgba(245,237,220,0.30)',
 
   // Text — cream on dark
   text: '#F5EDDC',

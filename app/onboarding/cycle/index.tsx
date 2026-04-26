@@ -17,7 +17,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
 } from 'react-native'
-import DateTimePicker from '@react-native-community/datetimepicker'
+import DatePickerField from '../../../components/ui/DatePickerField'
 import { router } from 'expo-router'
 import { Sparkles } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -68,7 +68,6 @@ export default function CycleOnboarding() {
   const { handleComplete: onboardingComplete } = useOnboardingComplete()
 
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [showDatePicker, setShowDatePicker] = useState(Platform.OS === 'ios')
 
   const steps = getSteps(store.tryingToConceive)
   const currentStep = steps[currentIndex]
@@ -161,8 +160,6 @@ export default function CycleOnboarding() {
         <StepLastPeriod
           step={currentIndex + 1}
           total={totalSteps}
-          showPicker={showDatePicker}
-          setShowPicker={setShowDatePicker}
           onContinue={goNext}
           onSkip={goSkip}
         />
@@ -229,23 +226,16 @@ export default function CycleOnboarding() {
 function StepLastPeriod({
   step,
   total,
-  showPicker,
-  setShowPicker,
   onContinue,
   onSkip,
 }: {
   step: number
   total: number
-  showPicker: boolean
-  setShowPicker: (v: boolean) => void
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
   const date = useCycleOnboardingStore((s) => s.lastPeriodDate)
   const setDate = useCycleOnboardingStore((s) => s.setLastPeriodDate)
-
-  const dateValue = date ? new Date(date) : new Date()
 
   return (
     <OnboardingStep
@@ -257,30 +247,15 @@ function StepLastPeriod({
       continueDisabled={!date}
     >
       <View style={stepStyles.centered}>
-        {Platform.OS === 'android' && !showPicker && (
-          <Pressable
-            onPress={() => setShowPicker(true)}
-            style={[stepStyles.dateButton, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
-          >
-            <Text style={[stepStyles.dateButtonText, { color: date ? colors.text : colors.textMuted }]}>
-              {date ? new Date(date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Tap to select a date'}
-            </Text>
-          </Pressable>
-        )}
-        {showPicker && (
-          <DateTimePicker
-            value={dateValue}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            maximumDate={new Date()}
-            minimumDate={new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)}
-            onChange={(_, selected) => {
-              if (Platform.OS === 'android') setShowPicker(false)
-              if (selected) setDate(selected.toISOString().split('T')[0])
-            }}
-            themeVariant={isDark ? 'dark' : 'light'}
-          />
-        )}
+        <DatePickerField
+          label=""
+          value={date || ''}
+          onChange={setDate}
+          placeholder="Tap to select a date"
+          modalTitle="Last period start"
+          maximumDate={new Date()}
+          minimumDate={new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)}
+        />
       </View>
     </OnboardingStep>
   )

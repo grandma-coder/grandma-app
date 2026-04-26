@@ -57,8 +57,13 @@ import {
   Minus,
   Baby,
   Sun,
+  Syringe,
+  Pill,
+  Thermometer,
+  FileText,
 } from 'lucide-react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
@@ -183,19 +188,8 @@ const QUICK_LOGS: { id: LogType; label: string; icon: typeof Utensils; color: st
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-// Growth leap schedule (weeks post-birth) — used for the Journey tab
-const KIDS_GROWTH_LEAPS: { week: number; name: string; desc: string; color: string }[] = [
-  { week: 5,   name: 'Changing Sensations', desc: 'Baby discovers a richer world of senses', color: '#B983FF' },
-  { week: 8,   name: 'Patterns',            desc: 'Recognizing simple repeating patterns',   color: '#4D96FF' },
-  { week: 12,  name: 'Smooth Transitions',  desc: 'Movements become more fluid',             color: '#A2FF86' },
-  { week: 19,  name: 'Events',              desc: 'Understanding action sequences',          color: '#FBBF24' },
-  { week: 26,  name: 'Relationships',       desc: 'How things and people relate',            color: '#FF8AD8' },
-  { week: 37,  name: 'Categories',          desc: 'Sorting the world into groups',           color: '#B983FF' },
-  { week: 46,  name: 'Sequences',           desc: 'Building things step by step',            color: '#4D96FF' },
-  { week: 55,  name: 'Programs',            desc: 'Flexible plans & independence',           color: '#A2FF86' },
-  { week: 64,  name: 'Principles',          desc: 'Testing rules & cause and effect',        color: '#FBBF24' },
-  { week: 75,  name: 'Systems',             desc: 'Modeling complex relationships',          color: '#FF8AD8' },
-]
+// Growth leap schedule lives in lib/growthLeaps.ts and is consumed by
+// KidsJourneyRing directly — no per-screen duplication needed.
 
 /** Map routine type → sheet LogType */
 const ROUTINE_SHEET_MAP: Record<string, string> = {
@@ -491,14 +485,27 @@ function LogActivitySheet({
             style={({ pressed }) => [
               styles.manageRoutinesBtn,
               {
-                backgroundColor: paper,
-                borderColor: paperBorder,
-                opacity: pressed ? 0.85 : 1,
+                backgroundColor: isDark ? colors.surfaceRaised : '#E9DFFB',
+                borderColor: ink,
+                borderWidth: 1.5,
+                shadowColor: ink,
+                shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+                elevation: 4,
+                transform: [{ translateY: pressed ? 2 : 0 }],
               },
             ]}
           >
-            <Repeat size={18} color={accent} strokeWidth={2} />
-            <Body size={14} color={accent} style={{ fontFamily: font.bodySemiBold, flex: 1 }}>
+            <View style={{
+              width: 30, height: 30, borderRadius: 15,
+              backgroundColor: isDark ? colors.surface : '#FFFEF8',
+              borderWidth: 1.5, borderColor: ink,
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Repeat size={15} color={ink} strokeWidth={2.4} />
+            </View>
+            <Body size={14} color={ink} style={{ fontFamily: 'DMSans_700Bold', flex: 1, letterSpacing: 0.2 }}>
               Manage Routines
             </Body>
             <ChevronRightSmall size={16} color={ink} />
@@ -523,6 +530,7 @@ export function KidsCalendar() {
   const [view, setView] = useState<'timeline' | 'journey' | 'visits'>('timeline')
   const [timelineMode, setTimelineMode] = useState<'cards' | 'hours'>('cards')
   const [logSheetOpen, setLogSheetOpen] = useState(false)
+  const [kidPickerOpen, setKidPickerOpen] = useState(false)
   const [dayZoomH, setDayZoomH] = useState(DAY_VIEW_DEFAULT_HOUR_H)
   const [viewDate, setViewDate] = useState(() => new Date())
   const [expandedChildren, setExpandedChildren] = useState<Set<string>>(new Set())
@@ -580,6 +588,8 @@ export function KidsCalendar() {
   const [routineForm, setRoutineForm] = useState({ name: '', type: 'activity' as string, time: '09:00', days: [0,1,2,3,4,5,6] as number[] })
   const [routineSaving, setRoutineSaving] = useState(false)
   const [routineFilterKid, setRoutineFilterKid] = useState<string | null>(null)
+  const [confirmDeleteRoutineId, setConfirmDeleteRoutineId] = useState<string | null>(null)
+  const [routineDeleting, setRoutineDeleting] = useState(false)
   const [highlightIndex, setHighlightIndex] = useState(0)
 
   // Edit state
@@ -1121,14 +1131,26 @@ export function KidsCalendar() {
     }
   }
 
-  async function deleteRoutine(id: string) {
-    Alert.alert('Delete Routine', 'Remove this routine?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
-        await supabase.from('child_routines').delete().eq('id', id)
-        fetchRoutines()
-      }},
-    ])
+  function deleteRoutine(id: string) {
+    setConfirmDeleteRoutineId(id)
+  }
+
+  async function performRoutineDelete() {
+    const id = confirmDeleteRoutineId
+    if (!id) return
+    setRoutineDeleting(true)
+    try {
+      await supabase.from('child_routines').delete().eq('id', id)
+      await fetchRoutines()
+    } finally {
+      setRoutineDeleting(false)
+      setConfirmDeleteRoutineId(null)
+    }
+  }
+
+  function cancelRoutineEdit() {
+    setRoutineEditing(null)
+    setRoutineForm({ name: '', type: 'activity', time: '09:00', days: [0,1,2,3,4,5,6] })
   }
 
   async function skipRoutine(routine: ChildRoutine) {
@@ -1531,7 +1553,6 @@ export function KidsCalendar() {
 
     return (
       <KidsJourneyRing
-        leaps={KIDS_GROWTH_LEAPS}
         weekAge={weekAge}
         childName={activeKid.name}
       />
@@ -1621,82 +1642,127 @@ export function KidsCalendar() {
     )
   }
 
+  // ── Kid selector layout strategy ──────────────────────────────────────────
+  // ≤ 4 kids: show every kid inline (no overflow needed).
+  // ≥ 5 kids: show "All Kids" + the active kid + a "+N more" pill that opens
+  // an overflow sheet with the full list. Horizontal scroll is still possible
+  // for power users, but the visible row stays compact and never collides
+  // with the bell.
+  const KID_PILL_LIMIT = 4
+  const tooManyKids = children.length > KID_PILL_LIMIT
+  const visibleKids = !tooManyKids
+    ? children
+    : children.filter((c) => c.id === selectedChildId)
+  const hiddenKidsCount = children.length - visibleKids.length
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.10)'
+  const fadeBg = isDark ? colors.bg : '#F0E5D2'
+  const fadeTransparent = (isDark ? colors.bg : '#F0E5D2') + '00'
+
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       {/* Sticky top: child selector + segmented tabs (always visible across tabs) */}
-      <View style={{ paddingTop: insets.top + 12, paddingHorizontal: 16 }}>
+      <View style={{ paddingTop: insets.top + 12, paddingLeft: 16, paddingRight: 20 }}>
         {/* 1. Child Selector Row — pills + inline "+" add-log button */}
         <View style={styles.childRowWrap}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.childSelectorRow}
-            style={{ flex: 1 }}
-          >
-            {(() => {
-              const ST_INK = '#141313'
-              const ST_LILAC = '#C8B6E8'
-              const allActive = selectedChildId === 'all'
-              return (
+          <View style={styles.childScrollClip}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.childSelectorRow}
+            >
+              {(() => {
+                const ST_INK = '#141313'
+                const ST_LILAC = '#C8B6E8'
+                const allActive = selectedChildId === 'all'
+                return (
+                  <Pressable
+                    onPress={() => setSelectedChildId('all')}
+                    style={({ pressed }) => [
+                      styles.childSelectorChip,
+                      {
+                        backgroundColor: allActive ? ST_LILAC : (isDark ? colors.surface : '#FFFEF8'),
+                        borderColor: allActive ? ST_INK : paperBorder,
+                        borderWidth: allActive ? 1.5 : 1,
+                        borderRadius: radius.full,
+                        shadowColor: ST_INK,
+                        shadowOffset: { width: 0, height: allActive ? (pressed ? 1 : 3) : 0 },
+                        shadowOpacity: allActive ? 1 : 0,
+                        shadowRadius: 0,
+                        elevation: allActive ? 4 : 0,
+                        transform: [{ translateY: allActive && pressed ? 2 : 0 }],
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.childSelectorText, { fontFamily: allActive ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: allActive ? ST_INK : (isDark ? colors.text : '#141313') }]}>
+                      All Kids
+                    </Text>
+                  </Pressable>
+                )
+              })()}
+              {visibleKids.map((c) => {
+                const ST_INK = '#141313'
+                const i = children.findIndex((ch) => ch.id === c.id)
+                const active = selectedChildId === c.id
+                const kidColor = childColor(i)
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => {
+                      setSelectedChildId(c.id)
+                      setActiveChild(c)
+                    }}
+                    style={({ pressed }) => [
+                      styles.childSelectorChip,
+                      {
+                        backgroundColor: active ? kidColor : (isDark ? colors.surface : '#FFFEF8'),
+                        borderColor: active ? ST_INK : paperBorder,
+                        borderWidth: active ? 1.5 : 1,
+                        borderRadius: radius.full,
+                        shadowColor: ST_INK,
+                        shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
+                        shadowOpacity: active ? 1 : 0,
+                        shadowRadius: 0,
+                        elevation: active ? 4 : 0,
+                        transform: [{ translateY: active && pressed ? 2 : 0 }],
+                      },
+                    ]}
+                  >
+                    <View style={[styles.childDot, { backgroundColor: active ? ST_INK : kidColor }]} />
+                    <Text style={[styles.childSelectorText, { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : (isDark ? colors.text : '#141313') }]}>
+                      {c.name}
+                    </Text>
+                  </Pressable>
+                )
+              })}
+              {hiddenKidsCount > 0 && (
                 <Pressable
-                  onPress={() => setSelectedChildId('all')}
-                  style={({ pressed }) => [
+                  onPress={() => setKidPickerOpen(true)}
+                  style={[
                     styles.childSelectorChip,
                     {
-                      backgroundColor: allActive ? ST_LILAC : (isDark ? colors.surface : '#FFFEF8'),
-                      borderColor: allActive ? ST_INK : (isDark ? colors.border : 'rgba(20,19,19,0.10)'),
-                      borderWidth: allActive ? 1.5 : 1,
+                      backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                      borderColor: paperBorder,
+                      borderWidth: 1,
                       borderRadius: radius.full,
-                      shadowColor: ST_INK,
-                      shadowOffset: { width: 0, height: allActive ? (pressed ? 1 : 3) : 0 },
-                      shadowOpacity: allActive ? 1 : 0,
-                      shadowRadius: 0,
-                      elevation: allActive ? 4 : 0,
-                      transform: [{ translateY: allActive && pressed ? 2 : 0 }],
                     },
                   ]}
                 >
-                  <Text style={[styles.childSelectorText, { fontFamily: allActive ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: allActive ? ST_INK : (isDark ? colors.text : '#141313') }]}>
-                    All Kids
+                  <Text style={[styles.childSelectorText, { fontFamily: 'DMSans_700Bold', color: isDark ? colors.text : '#141313' }]}>
+                    +{hiddenKidsCount} more
                   </Text>
                 </Pressable>
-              )
-            })()}
-            {children.map((c, i) => {
-              const ST_INK = '#141313'
-              const active = selectedChildId === c.id
-              const kidColor = childColor(i)
-              return (
-                <Pressable
-                  key={c.id}
-                  onPress={() => {
-                    setSelectedChildId(c.id)
-                    setActiveChild(c)
-                  }}
-                  style={({ pressed }) => [
-                    styles.childSelectorChip,
-                    {
-                      backgroundColor: active ? kidColor : (isDark ? colors.surface : '#FFFEF8'),
-                      borderColor: active ? ST_INK : (isDark ? colors.border : 'rgba(20,19,19,0.10)'),
-                      borderWidth: active ? 1.5 : 1,
-                      borderRadius: radius.full,
-                      shadowColor: ST_INK,
-                      shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
-                      shadowOpacity: active ? 1 : 0,
-                      shadowRadius: 0,
-                      elevation: active ? 4 : 0,
-                      transform: [{ translateY: active && pressed ? 2 : 0 }],
-                    },
-                  ]}
-                >
-                  <View style={[styles.childDot, { backgroundColor: active ? ST_INK : kidColor }]} />
-                  <Text style={[styles.childSelectorText, { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : (isDark ? colors.text : '#141313') }]}>
-                    {c.name}
-                  </Text>
-                </Pressable>
-              )
-            })}
-          </ScrollView>
+              )}
+            </ScrollView>
+
+            {/* Right-edge fade so pills don't visually collide with the bell */}
+            <LinearGradient
+              colors={[fadeTransparent, fadeBg]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              pointerEvents="none"
+              style={styles.childScrollFade}
+            />
+          </View>
 
           <NotificationBell />
 
@@ -2006,6 +2072,119 @@ export function KidsCalendar() {
         onManageRoutines={() => setShowRoutineManager(true)}
       />
 
+      {/* ─── Kid Picker Sheet (opened by "+N more" pill) ────────────────── */}
+      <Modal visible={kidPickerOpen} transparent animationType="slide" onRequestClose={() => setKidPickerOpen(false)}>
+        <Pressable style={styles.kidPickerOverlay} onPress={() => setKidPickerOpen(false)}>
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={[
+              styles.kidPickerSheet,
+              {
+                backgroundColor: isDark ? colors.bg : '#FFFEF8',
+                borderColor: isDark ? colors.border : '#141313',
+                paddingBottom: insets.bottom + 20,
+              },
+            ]}
+          >
+            <View style={{ alignItems: 'center', paddingTop: 10 }}>
+              <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
+            </View>
+            <View style={styles.kidPickerHeader}>
+              <Text style={[styles.kidPickerTitle, { color: isDark ? colors.text : '#141313', fontFamily: 'Fraunces_700Bold' }]}>
+                Pick a kid
+              </Text>
+              <Pressable
+                onPress={() => setKidPickerOpen(false)}
+                hitSlop={12}
+                style={{
+                  width: 32, height: 32, borderRadius: 999,
+                  backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                  borderWidth: 1.2, borderColor: isDark ? colors.border : '#141313',
+                  alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <X size={14} color={isDark ? colors.text : '#141313'} strokeWidth={2.4} />
+              </Pressable>
+            </View>
+
+            <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8, gap: 8 }}>
+              {/* All Kids row */}
+              <Pressable
+                onPress={() => { setSelectedChildId('all'); setKidPickerOpen(false) }}
+                style={[
+                  styles.kidPickerRow,
+                  {
+                    backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                    borderColor: selectedChildId === 'all' ? '#141313' : (isDark ? colors.border : 'rgba(20,19,19,0.10)'),
+                    borderWidth: selectedChildId === 'all' ? 1.5 : 1,
+                  },
+                ]}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {children.slice(0, 4).map((c, i) => (
+                    <View
+                      key={c.id}
+                      style={{
+                        width: 18, height: 18, borderRadius: 9,
+                        backgroundColor: childColor(i),
+                        borderWidth: 1.2, borderColor: '#141313',
+                        marginLeft: i === 0 ? 0 : -6,
+                      }}
+                    />
+                  ))}
+                </View>
+                <Text style={[styles.kidPickerName, { color: isDark ? colors.text : '#141313', fontFamily: 'DMSans_700Bold' }]}>
+                  All Kids
+                </Text>
+                <Text style={[styles.kidPickerMeta, { color: colors.textMuted, fontFamily: 'DMSans_500Medium' }]}>
+                  {children.length} kids
+                </Text>
+              </Pressable>
+
+              {children.map((c, i) => {
+                const active = selectedChildId === c.id
+                const kc = childColor(i)
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => { setSelectedChildId(c.id); setActiveChild(c); setKidPickerOpen(false) }}
+                    style={[
+                      styles.kidPickerRow,
+                      {
+                        backgroundColor: active ? kc + '22' : (isDark ? colors.surface : '#FFFEF8'),
+                        borderColor: active ? '#141313' : (isDark ? colors.border : 'rgba(20,19,19,0.10)'),
+                        borderWidth: active ? 1.5 : 1,
+                      },
+                    ]}
+                  >
+                    <View style={{
+                      width: 32, height: 32, borderRadius: 16,
+                      backgroundColor: kc, borderWidth: 1.2, borderColor: '#141313',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 13, color: '#141313' }}>
+                        {c.name.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <Text style={[styles.kidPickerName, { color: isDark ? colors.text : '#141313', fontFamily: 'DMSans_700Bold' }]}>
+                      {c.name}
+                    </Text>
+                    {active && (
+                      <View style={{
+                        paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
+                        backgroundColor: kc, borderWidth: 1, borderColor: '#141313',
+                      }}>
+                        <Text style={{ fontSize: 10, fontFamily: 'DMSans_700Bold', color: '#141313' }}>SELECTED</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                )
+              })}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       {/* ─── Bottom Sheets ────────────────────────────────────────────── */}
 
       <LogSheet visible={sheetType === 'feeding'} title={editingLog ? 'Edit Entry' : (routinePrefill?.name ?? 'Log Feeding')} onClose={closeSheet}>
@@ -2049,220 +2228,756 @@ export function KidsCalendar() {
         />
       </LogSheet>
 
-      {/* ─── Routine Manager ────────────────────────────────────────── */}
+      {/* ─── Routine Manager (sticker-on-paper) ─────────────────────── */}
       <Modal
         visible={showRoutineManager}
         animationType="slide"
         transparent
         onRequestClose={() => { setShowRoutineManager(false); setRoutineEditing(null); setRoutineFilterKid(null) }}
       >
-        <Pressable style={styles.popupBackdrop} onPress={() => { setShowRoutineManager(false); setRoutineEditing(null); setRoutineFilterKid(null) }} />
-        <View style={[styles.popupSheet, { backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingBottom: insets.bottom + 20 }]}>
-          <View style={styles.popupHandleWrap}>
-            <View style={[styles.popupHandle, { backgroundColor: colors.border }]} />
-          </View>
-          <View style={[styles.popupHeader, { paddingBottom: 12 }]}>
-            <View style={[styles.popupIconLarge, { backgroundColor: colors.primary + '15' }]}>
-              <Repeat size={24} color={colors.primary} strokeWidth={2} />
-            </View>
-            <View style={styles.popupHeaderText}>
-              <Text style={[styles.popupTitle, { color: colors.text }]}>Routines</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500' }}>
-                Recurring activities for your kids
-              </Text>
-            </View>
-            <Pressable onPress={() => { setShowRoutineManager(false); setRoutineEditing(null); setRoutineFilterKid(null) }} style={styles.popupClose}>
-              <X size={20} color={colors.textMuted} />
-            </Pressable>
-          </View>
-
-          <ScrollView style={styles.popupBody} showsVerticalScrollIndicator={false}>
-            {/* Add / Edit Form */}
-            <View style={[styles.routineFormWrap, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <Text style={[styles.routineFormTitle, { color: colors.text }]}>
-                {routineEditing ? 'Edit Routine' : 'New Routine'}
-              </Text>
-
-              {/* Name */}
-              <TextInput
-                value={routineForm.name}
-                onChangeText={(t) => setRoutineForm((f) => ({ ...f, name: t }))}
-                placeholder="Routine name (e.g. Morning bottle)"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.routineInput, { color: colors.text, borderColor: colors.border, borderRadius: radius.md }]}
-              />
-
-              {/* Type */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.routineTypeRow}>
-                {['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health'].map((t) => {
-                  const meta = LOG_META[t]
-                  const active = routineForm.type === t
-                  return (
-                    <Pressable
-                      key={t}
-                      onPress={() => setRoutineForm((f) => ({ ...f, type: t }))}
-                      style={[
-                        styles.routineTypeChip,
-                        { backgroundColor: active ? meta.color + '20' : colors.surfaceRaised, borderColor: active ? meta.color : colors.border, borderRadius: radius.full },
-                      ]}
-                    >
-                      <Text style={[styles.routineTypeText, { color: active ? meta.color : colors.textSecondary }]}>
-                        {meta.label}
-                      </Text>
-                    </Pressable>
-                  )
-                })}
-              </ScrollView>
-
-              {/* Time */}
-              <View style={styles.routineTimeRow}>
-                <Clock size={16} color={colors.textMuted} />
-                <TextInput
-                  value={routineForm.time}
-                  onChangeText={(t) => setRoutineForm((f) => ({ ...f, time: t }))}
-                  placeholder="HH:MM"
-                  placeholderTextColor={colors.textMuted}
-                  style={[styles.routineTimeInput, { color: colors.text, borderColor: colors.border, borderRadius: radius.md }]}
-                  keyboardType="numbers-and-punctuation"
-                />
-              </View>
-
-              {/* Days */}
-              <View style={styles.routineDaysRow}>
-                {DAY_NAMES.map((name, i) => {
-                  const active = routineForm.days.includes(i)
-                  return (
-                    <Pressable
-                      key={i}
-                      onPress={() => setRoutineForm((f) => ({
-                        ...f,
-                        days: active ? f.days.filter((d) => d !== i) : [...f.days, i].sort(),
-                      }))}
-                      style={[
-                        styles.routineDayChip,
-                        {
-                          backgroundColor: active ? colors.primary : colors.surfaceRaised,
-                          borderColor: active ? colors.primary : colors.border,
-                          borderRadius: radius.full,
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.routineDayText, { color: active ? '#FFF' : colors.textSecondary }]}>
-                        {name.charAt(0)}
-                      </Text>
-                    </Pressable>
-                  )
-                })}
-              </View>
-
-              {/* Save */}
-              <Pressable
-                onPress={saveRoutine}
-                disabled={!routineForm.name.trim() || routineSaving}
-                style={({ pressed }) => [
-                  styles.routineSaveBtn,
-                  { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: (!routineForm.name.trim() || routineSaving) ? 0.4 : 1 },
-                  pressed && { opacity: 0.9 },
+        {(() => {
+          const ST_INK = '#141313'
+          const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
+          const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+          const ST_SHEET = isDark ? colors.bg : '#FAF6E8'
+          const ST_PURPLE = isDark ? '#A07FDC' : '#7048B8'
+          const closeManager = () => { setShowRoutineManager(false); setRoutineEditing(null); setRoutineFilterKid(null) }
+          return (
+            <>
+              <Pressable style={styles.popupBackdrop} onPress={closeManager} />
+              <View
+                style={[
+                  styles.popupSheet,
+                  {
+                    backgroundColor: ST_SHEET,
+                    borderTopLeftRadius: 32,
+                    borderTopRightRadius: 32,
+                    borderTopWidth: 1.5,
+                    borderLeftWidth: 1.5,
+                    borderRightWidth: 1.5,
+                    borderColor: isDark ? colors.border : ST_INK,
+                    paddingBottom: insets.bottom + 20,
+                  },
                 ]}
               >
-                {routineSaving
-                  ? <ActivityIndicator color="#FFF" size="small" />
-                  : <Text style={styles.routineSaveBtnText}>{routineEditing ? 'Update' : 'Add Routine'}</Text>
-                }
-              </Pressable>
-            </View>
+                {/* Drag handle */}
+                <View style={styles.popupHandleWrap}>
+                  <View style={[styles.popupHandle, { backgroundColor: isDark ? colors.border : '#14131340' }]} />
+                </View>
 
-            {/* Existing Routines List */}
-            {routines.length > 0 && (
-              <View style={{ marginTop: 16 }}>
-                <Text style={[styles.routineFormTitle, { color: colors.text, marginBottom: 10, paddingHorizontal: 4 }]}>
-                  Active Routines ({routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid).length : routines.length})
-                </Text>
+                {/* Header */}
+                <View style={[styles.popupHeader, { paddingBottom: 12 }]}>
+                  <View
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      backgroundColor: isDark ? colors.surfaceRaised : '#E9DFFB',
+                      borderWidth: 1.5,
+                      borderColor: ST_INK,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Repeat size={22} color={ST_PURPLE} strokeWidth={2.2} />
+                  </View>
+                  <View style={styles.popupHeaderText}>
+                    <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 24, letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' }}>
+                      Routines
+                    </Text>
+                    <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 13, fontFamily: 'DMSans_500Medium' }}>
+                      Recurring activities for your kids
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={closeManager}
+                    style={({ pressed }) => ({
+                      width: 36, height: 36, borderRadius: 18,
+                      backgroundColor: ST_CREAM,
+                      borderWidth: 1.5, borderColor: ST_INK,
+                      alignItems: 'center', justifyContent: 'center',
+                      shadowColor: ST_INK,
+                      shadowOffset: { width: 0, height: pressed ? 1 : 2 },
+                      shadowOpacity: 1, shadowRadius: 0, elevation: 3,
+                      transform: [{ translateY: pressed ? 1 : 0 }],
+                    })}
+                  >
+                    <X size={15} color={ST_INK} strokeWidth={2.5} />
+                  </Pressable>
+                </View>
 
-                {/* Kid filter pills */}
-                {children.length > 1 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 4, paddingBottom: 12 }}>
+                <ScrollView style={styles.popupBody} showsVerticalScrollIndicator={false}>
+                  {/* ─── New Routine Form (paper card) — hidden while editing ── */}
+                  {!routineEditing && (
+                  <View
+                    style={{
+                      backgroundColor: ST_PAPER,
+                      borderRadius: 22,
+                      borderWidth: 1.5,
+                      borderColor: isDark ? colors.border : ST_INK,
+                      padding: 16,
+                      gap: 12,
+                      shadowColor: ST_INK,
+                      shadowOffset: { width: 0, height: 3 },
+                      shadowOpacity: isDark ? 0 : 0.12,
+                      shadowRadius: 0,
+                      elevation: 2,
+                    }}
+                  >
+                    <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }}>
+                      New Routine
+                    </Text>
+                    {/* (form fields below — duplicated in Edit Modal) */}
+
+                    {/* Name */}
+                    <View style={{
+                      backgroundColor: ST_CREAM,
+                      borderColor: isDark ? colors.border : ST_INK,
+                      borderWidth: 1.5,
+                      borderRadius: 999,
+                      height: 56,
+                      justifyContent: 'center',
+                    }}>
+                      <TextInput
+                        value={routineForm.name}
+                        onChangeText={(t) => setRoutineForm((f) => ({ ...f, name: t }))}
+                        placeholder="Routine name (e.g. Morning bottle)"
+                        placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+                        underlineColorAndroid="transparent"
+                        style={{
+                          color: isDark ? colors.text : ST_INK,
+                          paddingHorizontal: 22,
+                          paddingVertical: 0,
+                          fontSize: 15,
+                          fontFamily: 'DMSans_600SemiBold',
+                        }}
+                      />
+                    </View>
+
+                    {/* Type chips */}
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4, paddingHorizontal: 2 }}>
+                      {['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health'].map((t) => {
+                        const meta = LOG_META[t]
+                        const active = routineForm.type === t
+                        // Solid pastel fills (avoid alpha — hard shadow bleeds through translucent bgs on iOS)
+                        const activeBgLight = ({
+                          feeding: '#CFE0F0',
+                          food: '#CFE0F0',
+                          sleep: '#DCD2F2',
+                          diaper: '#CFE0F0',
+                          activity: '#D7E9C2',
+                          mood: '#FBE3C2',
+                          health: '#F9D8E2',
+                        } as Record<string, string>)[t] || '#E9DFFB'
+                        const activeBg = isDark ? meta.color : activeBgLight
+                        const labelColor = active ? (isDark ? '#FFF' : ST_INK) : (isDark ? colors.text : ST_INK)
+                        return (
+                          <Pressable
+                            key={t}
+                            onPress={() => setRoutineForm((f) => ({ ...f, type: t }))}
+                            style={({ pressed }) => ({
+                              paddingHorizontal: 14,
+                              paddingVertical: 8,
+                              borderRadius: 999,
+                              borderWidth: 1.5,
+                              borderColor: isDark && !active ? colors.border : ST_INK,
+                              backgroundColor: active ? activeBg : ST_CREAM,
+                              shadowColor: ST_INK,
+                              shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
+                              shadowOpacity: active ? (1) : 0,
+                              shadowRadius: 0, elevation: active ? 3 : 0,
+                              transform: [{ translateY: active && pressed ? 1 : 0 }],
+                            })}
+                          >
+                            <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }}>
+                              {meta.label}
+                            </Text>
+                          </Pressable>
+                        )
+                      })}
+                    </ScrollView>
+
+                    {/* Time */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <View style={{
+                        width: 32, height: 32, borderRadius: 16,
+                        backgroundColor: ST_CREAM, borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Clock size={14} color={isDark ? colors.text : ST_INK} strokeWidth={2.2} />
+                      </View>
+                      <TextInput
+                        value={routineForm.time}
+                        onChangeText={(t) => setRoutineForm((f) => ({ ...f, time: t }))}
+                        placeholder="HH:MM"
+                        placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+                        style={{
+                          flex: 1,
+                          color: isDark ? colors.text : ST_INK,
+                          backgroundColor: ST_CREAM,
+                          borderColor: isDark ? colors.border : ST_INK,
+                          borderWidth: 1.5,
+                          borderRadius: 999,
+                          paddingHorizontal: 16,
+                          paddingVertical: 10,
+                          fontSize: 15,
+                          fontFamily: 'DMSans_600SemiBold',
+                        }}
+                        keyboardType="numbers-and-punctuation"
+                      />
+                    </View>
+
+                    {/* Days */}
+                    <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'space-between' }}>
+                      {DAY_NAMES.map((name, i) => {
+                        const active = routineForm.days.includes(i)
+                        return (
+                          <Pressable
+                            key={i}
+                            onPress={() => setRoutineForm((f) => ({
+                              ...f,
+                              days: active ? f.days.filter((d) => d !== i) : [...f.days, i].sort(),
+                            }))}
+                            style={({ pressed }) => ({
+                              width: 36, height: 36, borderRadius: 18,
+                              alignItems: 'center', justifyContent: 'center',
+                              borderWidth: 1.5, borderColor: isDark && !active ? colors.border : ST_INK,
+                              backgroundColor: active ? ST_PURPLE : ST_CREAM,
+                              shadowColor: ST_INK,
+                              shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
+                              shadowOpacity: active ? (1) : 0,
+                              shadowRadius: 0, elevation: active ? 3 : 0,
+                              transform: [{ translateY: active && pressed ? 1 : 0 }],
+                            })}
+                          >
+                            <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', color: active ? '#FFF' : (isDark ? colors.text : ST_INK) }}>
+                              {name.charAt(0)}
+                            </Text>
+                          </Pressable>
+                        )
+                      })}
+                    </View>
+
+                    {/* Save sticker button */}
                     <Pressable
-                      onPress={() => setRoutineFilterKid(null)}
-                      style={[
-                        styles.routineTypeChip,
-                        {
-                          backgroundColor: routineFilterKid === null ? colors.primary + '20' : colors.surfaceRaised,
-                          borderColor: routineFilterKid === null ? colors.primary : colors.border,
-                          borderRadius: radius.full,
-                        },
-                      ]}
+                      onPress={saveRoutine}
+                      disabled={!routineForm.name.trim() || routineSaving}
+                      style={({ pressed }) => ({
+                        height: 56,
+                        borderRadius: 999,
+                        backgroundColor: ST_PURPLE,
+                        borderWidth: 2, borderColor: ST_INK,
+                        alignItems: 'center', justifyContent: 'center',
+                        shadowColor: ST_INK,
+                        shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+                        shadowOpacity: 1, shadowRadius: 0, elevation: 5,
+                        transform: [{ translateY: pressed ? 2 : 0 }],
+                        opacity: (!routineForm.name.trim() || routineSaving) ? 0.4 : 1,
+                        marginTop: 4,
+                      })}
                     >
-                      <Text style={[styles.routineTypeText, { color: routineFilterKid === null ? colors.primary : colors.textSecondary }]}>All Kids</Text>
+                      {routineSaving
+                        ? <ActivityIndicator color="#FFF" size="small" />
+                        : <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 15, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                            Add Routine
+                          </Text>
+                      }
                     </Pressable>
-                    {children.map((child, i) => {
-                      const cc = childColor(i)
-                      const active = routineFilterKid === child.id
-                      return (
-                        <Pressable
-                          key={child.id}
-                          onPress={() => setRoutineFilterKid(active ? null : child.id)}
-                          style={[
-                            styles.routineTypeChip,
-                            {
-                              backgroundColor: active ? cc + '20' : colors.surfaceRaised,
-                              borderColor: active ? cc : colors.border,
-                              borderRadius: radius.full,
+                  </View>
+                  )}
+
+                  {/* ─── Existing Routines ─────────────────────────── */}
+                  {routines.length > 0 && (
+                    <View style={{ marginTop: 20 }}>
+                      <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, marginBottom: 12, paddingHorizontal: 4 }}>
+                        Active Routines ({routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid).length : routines.length})
+                      </Text>
+
+                      {/* Kid filter pills */}
+                      {children.length > 1 && (
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 4, paddingBottom: 12 }}>
+                          {(() => {
+                            const allActive = routineFilterKid === null
+                            return (
+                              <Pressable
+                                onPress={() => setRoutineFilterKid(null)}
+                                style={({ pressed }) => ({
+                                  paddingHorizontal: 14,
+                                  paddingVertical: 8,
+                                  borderRadius: 999,
+                                  borderWidth: 1.5, borderColor: ST_INK,
+                                  backgroundColor: allActive ? '#C8B6E8' : ST_CREAM,
+                                  shadowColor: ST_INK,
+                                  shadowOffset: { width: 0, height: allActive ? (pressed ? 1 : 2) : 0 },
+                                  shadowOpacity: allActive ? 1 : 0,
+                                  shadowRadius: 0, elevation: allActive ? 3 : 0,
+                                  transform: [{ translateY: allActive && pressed ? 1 : 0 }],
+                                })}
+                              >
+                                <Text style={{ color: ST_INK, fontSize: 13, fontFamily: allActive ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }}>
+                                  All Kids
+                                </Text>
+                              </Pressable>
+                            )
+                          })()}
+                          {children.map((child, i) => {
+                            const cc = childColor(i)
+                            const active = routineFilterKid === child.id
+                            return (
+                              <Pressable
+                                key={child.id}
+                                onPress={() => setRoutineFilterKid(active ? null : child.id)}
+                                style={({ pressed }) => ({
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  paddingHorizontal: 14,
+                                  paddingVertical: 8,
+                                  borderRadius: 999,
+                                  borderWidth: 1.5, borderColor: ST_INK,
+                                  backgroundColor: active ? cc : ST_CREAM,
+                                  shadowColor: ST_INK,
+                                  shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
+                                  shadowOpacity: active ? 1 : 0,
+                                  shadowRadius: 0, elevation: active ? 3 : 0,
+                                  transform: [{ translateY: active && pressed ? 1 : 0 }],
+                                })}
+                              >
+                                <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: active ? ST_INK : cc, borderWidth: 1, borderColor: ST_INK }} />
+                                <Text style={{ color: ST_INK, fontSize: 13, fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }}>
+                                  {child.name}
+                                </Text>
+                              </Pressable>
+                            )
+                          })}
+                        </ScrollView>
+                      )}
+
+                      {(routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid) : routines).map((r) => {
+                        const meta = LOG_META[r.type] ?? { label: r.type, icon: Calendar, color: colors.textMuted }
+                        const Icon = meta.icon
+                        const childName = children.find((c) => c.id === r.child_id)?.name
+                        return (
+                          <View
+                            key={r.id}
+                            style={{
                               flexDirection: 'row',
                               alignItems: 'center',
-                              gap: 5,
-                            },
-                          ]}
+                              gap: 10,
+                              padding: 12,
+                              marginBottom: 10,
+                              backgroundColor: ST_PAPER,
+                              borderRadius: 18,
+                              borderWidth: 1.5,
+                              borderColor: isDark ? colors.border : ST_INK,
+                              shadowColor: ST_INK,
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: isDark ? 0 : 0.08,
+                              shadowRadius: 0,
+                              elevation: 2,
+                            }}
+                          >
+                            <View style={{
+                              width: 32, height: 32, borderRadius: 16,
+                              backgroundColor: isDark ? meta.color : (meta.color + '40'),
+                              borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                              alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              <Icon size={14} color={isDark ? '#FFF' : ST_INK} strokeWidth={2.2} />
+                            </View>
+                            <View style={{ flex: 1, gap: 2 }}>
+                              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 14, fontFamily: 'Fraunces_700Bold' }}>
+                                {r.name}
+                              </Text>
+                              <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 12, fontFamily: 'DMSans_500Medium' }}>
+                                {r.time ? fmtTime(r.time) : 'Anytime'}
+                                {' · '}
+                                {r.days_of_week.length === 7 ? 'Daily' : r.days_of_week.map((d) => DAY_NAMES[d].charAt(0)).join(' ')}
+                                {childName ? ` · ${childName}` : ''}
+                              </Text>
+                            </View>
+                            <Pressable
+                              onPress={() => {
+                                setRoutineEditing(r)
+                                setRoutineForm({ name: r.name, type: r.type, time: r.time ?? '09:00', days: r.days_of_week })
+                              }}
+                              style={({ pressed }) => ({
+                                width: 32, height: 32, borderRadius: 16,
+                                backgroundColor: ST_CREAM,
+                                borderWidth: 1.5, borderColor: ST_INK,
+                                alignItems: 'center', justifyContent: 'center',
+                                shadowColor: ST_INK,
+                                shadowOffset: { width: 0, height: pressed ? 0 : 2 },
+                                shadowOpacity: 1, shadowRadius: 0, elevation: 2,
+                                transform: [{ translateY: pressed ? 1 : 0 }],
+                              })}
+                            >
+                              <Pencil size={13} color={ST_INK} strokeWidth={2.2} />
+                            </Pressable>
+                            <Pressable
+                              onPress={() => deleteRoutine(r.id)}
+                              style={({ pressed }) => ({
+                                width: 32, height: 32, borderRadius: 16,
+                                backgroundColor: isDark ? '#3A1E1E' : '#FBE0DC',
+                                borderWidth: 1.5, borderColor: ST_INK,
+                                alignItems: 'center', justifyContent: 'center',
+                                shadowColor: ST_INK,
+                                shadowOffset: { width: 0, height: pressed ? 0 : 2 },
+                                shadowOpacity: 1, shadowRadius: 0, elevation: 2,
+                                transform: [{ translateY: pressed ? 1 : 0 }],
+                              })}
+                            >
+                              <Trash2 size={13} color={brand.error} strokeWidth={2.2} />
+                            </Pressable>
+                          </View>
+                        )
+                      })}
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
+            </>
+          )
+        })()}
+      </Modal>
+
+      {/* ─── Edit Routine Modal (sticker popup) ─────────────────────── */}
+      <Modal
+        visible={!!routineEditing}
+        animationType="fade"
+        transparent
+        onRequestClose={cancelRoutineEdit}
+      >
+        {(() => {
+          const ST_INK = '#141313'
+          const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
+          const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+          const ST_PURPLE = isDark ? '#A07FDC' : '#7048B8'
+          return (
+            <Pressable
+              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', paddingHorizontal: 20 }}
+              onPress={cancelRoutineEdit}
+            >
+              <Pressable onPress={(e) => e.stopPropagation()}>
+                <View
+                  style={{
+                    backgroundColor: ST_PAPER,
+                    borderRadius: 24,
+                    borderWidth: 1.5,
+                    borderColor: isDark ? colors.border : ST_INK,
+                    padding: 18,
+                    gap: 12,
+                    shadowColor: ST_INK,
+                    shadowOffset: { width: 0, height: 5 },
+                    shadowOpacity: 1,
+                    shadowRadius: 0,
+                    elevation: 8,
+                  }}
+                >
+                  {/* Header row with title + close */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <View style={{
+                        width: 36, height: 36, borderRadius: 18,
+                        backgroundColor: '#E9DFFB',
+                        borderWidth: 1.5, borderColor: ST_INK,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Pencil size={16} color={ST_PURPLE} strokeWidth={2.4} />
+                      </View>
+                      <Text style={{ color: ST_INK, fontSize: 20, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }}>
+                        Edit Routine
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={cancelRoutineEdit}
+                      style={({ pressed }) => ({
+                        width: 32, height: 32, borderRadius: 16,
+                        backgroundColor: ST_CREAM,
+                        borderWidth: 1.5, borderColor: ST_INK,
+                        alignItems: 'center', justifyContent: 'center',
+                        shadowColor: ST_INK,
+                        shadowOffset: { width: 0, height: pressed ? 0 : 2 },
+                        shadowOpacity: 1, shadowRadius: 0, elevation: 2,
+                        transform: [{ translateY: pressed ? 1 : 0 }],
+                      })}
+                    >
+                      <X size={14} color={ST_INK} strokeWidth={2.5} />
+                    </Pressable>
+                  </View>
+
+                  {/* Name */}
+                  <View style={{
+                    backgroundColor: ST_CREAM,
+                    borderColor: isDark ? colors.border : ST_INK,
+                    borderWidth: 1.5,
+                    borderRadius: 999,
+                    height: 56,
+                    justifyContent: 'center',
+                  }}>
+                    <TextInput
+                      value={routineForm.name}
+                      onChangeText={(t) => setRoutineForm((f) => ({ ...f, name: t }))}
+                      placeholder="Routine name"
+                      placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+                      underlineColorAndroid="transparent"
+                      style={{
+                        color: isDark ? colors.text : ST_INK,
+                        paddingHorizontal: 22,
+                        paddingVertical: 0,
+                        fontSize: 15,
+                        fontFamily: 'DMSans_600SemiBold',
+                      }}
+                    />
+                  </View>
+
+                  {/* Type chips */}
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4, paddingHorizontal: 2 }}>
+                    {['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health'].map((t) => {
+                      const meta = LOG_META[t]
+                      const active = routineForm.type === t
+                      const activeBgLight = ({
+                        feeding: '#CFE0F0', food: '#CFE0F0', sleep: '#DCD2F2',
+                        diaper: '#CFE0F0', activity: '#D7E9C2', mood: '#FBE3C2', health: '#F9D8E2',
+                      } as Record<string, string>)[t] || '#E9DFFB'
+                      const activeBg = isDark ? meta.color : activeBgLight
+                      const labelColor = active ? (isDark ? '#FFF' : ST_INK) : (isDark ? colors.text : ST_INK)
+                      return (
+                        <Pressable
+                          key={t}
+                          onPress={() => setRoutineForm((f) => ({ ...f, type: t }))}
+                          style={({ pressed }) => ({
+                            paddingHorizontal: 14, paddingVertical: 8,
+                            borderRadius: 999, borderWidth: 1.5,
+                            borderColor: isDark && !active ? colors.border : ST_INK,
+                            backgroundColor: active ? activeBg : ST_CREAM,
+                            shadowColor: ST_INK,
+                            shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
+                            shadowOpacity: active ? (1) : 0,
+                            shadowRadius: 0, elevation: active ? 3 : 0,
+                            transform: [{ translateY: active && pressed ? 1 : 0 }],
+                          })}
                         >
-                          <View style={[styles.childDot, { backgroundColor: cc, width: 7, height: 7 }]} />
-                          <Text style={[styles.routineTypeText, { color: active ? cc : colors.textSecondary }]}>{child.name}</Text>
+                          <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }}>
+                            {meta.label}
+                          </Text>
                         </Pressable>
                       )
                     })}
                   </ScrollView>
-                )}
 
-                {(routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid) : routines).map((r) => {
-                  const meta = LOG_META[r.type] ?? { label: r.type, icon: Calendar, color: colors.textMuted }
-                  const Icon = meta.icon
-                  const childName = children.find((c) => c.id === r.child_id)?.name
-                  const ci = childIndexMap.get(r.child_id) ?? 0
-                  return (
-                    <View
-                      key={r.id}
-                      style={[styles.routineManagerItem, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
-                    >
-                      <View style={[styles.routineIcon, { backgroundColor: meta.color + '12' }]}>
-                        <Icon size={14} color={meta.color} strokeWidth={2} />
-                      </View>
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={[styles.routineName, { color: colors.text }]}>{r.name}</Text>
-                        <Text style={[styles.routineTime, { color: colors.textMuted }]}>
-                          {r.time ? fmtTime(r.time) : 'Anytime'}
-                          {' · '}
-                          {r.days_of_week.length === 7 ? 'Daily' : r.days_of_week.map((d) => DAY_NAMES[d].charAt(0)).join(' ')}
-                          {childName ? ` · ${childName}` : ''}
-                        </Text>
-                      </View>
-                      <Pressable
-                        onPress={() => {
-                          setRoutineEditing(r)
-                          setRoutineForm({ name: r.name, type: r.type, time: r.time ?? '09:00', days: r.days_of_week })
-                        }}
-                        style={{ padding: 6 }}
-                      >
-                        <Pencil size={14} color={colors.textMuted} />
-                      </Pressable>
-                      <Pressable onPress={() => deleteRoutine(r.id)} style={{ padding: 6 }}>
-                        <Trash2 size={14} color={brand.error} />
-                      </Pressable>
+                  {/* Time */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{
+                      width: 32, height: 32, borderRadius: 16,
+                      backgroundColor: ST_CREAM, borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Clock size={14} color={isDark ? colors.text : ST_INK} strokeWidth={2.2} />
                     </View>
-                  )
-                })}
-              </View>
-            )}
-          </ScrollView>
-        </View>
+                    <TextInput
+                      value={routineForm.time}
+                      onChangeText={(t) => setRoutineForm((f) => ({ ...f, time: t }))}
+                      placeholder="HH:MM"
+                      placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+                      style={{
+                        flex: 1,
+                        color: isDark ? colors.text : ST_INK,
+                        backgroundColor: ST_CREAM,
+                        borderColor: isDark ? colors.border : ST_INK,
+                        borderWidth: 1.5, borderRadius: 999,
+                        paddingHorizontal: 16, paddingVertical: 10,
+                        fontSize: 15, fontFamily: 'DMSans_600SemiBold',
+                      }}
+                      keyboardType="numbers-and-punctuation"
+                    />
+                  </View>
+
+                  {/* Days */}
+                  <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'space-between' }}>
+                    {DAY_NAMES.map((name, i) => {
+                      const active = routineForm.days.includes(i)
+                      return (
+                        <Pressable
+                          key={i}
+                          onPress={() => setRoutineForm((f) => ({
+                            ...f,
+                            days: active ? f.days.filter((d) => d !== i) : [...f.days, i].sort(),
+                          }))}
+                          style={({ pressed }) => ({
+                            width: 36, height: 36, borderRadius: 18,
+                            alignItems: 'center', justifyContent: 'center',
+                            borderWidth: 1.5, borderColor: isDark && !active ? colors.border : ST_INK,
+                            backgroundColor: active ? ST_PURPLE : ST_CREAM,
+                            shadowColor: ST_INK,
+                            shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
+                            shadowOpacity: active ? (1) : 0,
+                            shadowRadius: 0, elevation: active ? 3 : 0,
+                            transform: [{ translateY: active && pressed ? 1 : 0 }],
+                          })}
+                        >
+                          <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', color: active ? '#FFF' : (isDark ? colors.text : ST_INK) }}>
+                            {name.charAt(0)}
+                          </Text>
+                        </Pressable>
+                      )
+                    })}
+                  </View>
+
+                  {/* Action row: Cancel + Update */}
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
+                    <Pressable
+                      onPress={cancelRoutineEdit}
+                      style={({ pressed }) => ({
+                        flex: 1, height: 52,
+                        borderRadius: 999,
+                        backgroundColor: ST_CREAM,
+                        borderWidth: 1.5, borderColor: ST_INK,
+                        alignItems: 'center', justifyContent: 'center',
+                        shadowColor: ST_INK,
+                        shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                        shadowOpacity: 1, shadowRadius: 0, elevation: 4,
+                        transform: [{ translateY: pressed ? 2 : 0 }],
+                      })}
+                    >
+                      <Text style={{ color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                        Cancel
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={saveRoutine}
+                      disabled={!routineForm.name.trim() || routineSaving}
+                      style={({ pressed }) => ({
+                        flex: 1.4, height: 52,
+                        borderRadius: 999,
+                        backgroundColor: ST_PURPLE,
+                        borderWidth: 2, borderColor: ST_INK,
+                        alignItems: 'center', justifyContent: 'center',
+                        shadowColor: ST_INK,
+                        shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+                        shadowOpacity: 1, shadowRadius: 0, elevation: 5,
+                        transform: [{ translateY: pressed ? 2 : 0 }],
+                        opacity: (!routineForm.name.trim() || routineSaving) ? 0.4 : 1,
+                      })}
+                    >
+                      {routineSaving
+                        ? <ActivityIndicator color="#FFF" size="small" />
+                        : <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                            Update
+                          </Text>
+                      }
+                    </Pressable>
+                  </View>
+                </View>
+              </Pressable>
+            </Pressable>
+          )
+        })()}
+      </Modal>
+
+      {/* ─── Delete Routine Confirm (sticker popup) ─────────────────── */}
+      <Modal
+        visible={!!confirmDeleteRoutineId}
+        animationType="fade"
+        transparent
+        onRequestClose={() => !routineDeleting && setConfirmDeleteRoutineId(null)}
+      >
+        {(() => {
+          const ST_INK = '#141313'
+          const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
+          const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+          const ST_RED = isDark ? '#E66B6B' : brand.error
+          return (
+            <Pressable
+              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', paddingHorizontal: 32 }}
+              onPress={() => !routineDeleting && setConfirmDeleteRoutineId(null)}
+            >
+              <Pressable onPress={(e) => e.stopPropagation()}>
+                <View
+                  style={{
+                    backgroundColor: ST_PAPER,
+                    borderRadius: 26,
+                    borderWidth: 1.5,
+                    borderColor: isDark ? colors.border : ST_INK,
+                    padding: 22,
+                    gap: 14,
+                    alignItems: 'center',
+                    shadowColor: ST_INK,
+                    shadowOffset: { width: 0, height: 5 },
+                    shadowOpacity: 1, shadowRadius: 0, elevation: 8,
+                  }}
+                >
+                  {/* Sticker trash icon */}
+                  <View style={{
+                    width: 60, height: 60, borderRadius: 30,
+                    backgroundColor: isDark ? '#3A1E1E' : '#FBE0DC',
+                    borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                    alignItems: 'center', justifyContent: 'center',
+                    shadowColor: ST_INK,
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: 1, shadowRadius: 0, elevation: 4,
+                  }}>
+                    <Trash2 size={26} color={ST_RED} strokeWidth={2.2} />
+                  </View>
+
+                  <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, textAlign: 'center' }}>
+                    Delete Routine?
+                  </Text>
+                  <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 14, fontFamily: 'DMSans_500Medium', textAlign: 'center', lineHeight: 20 }}>
+                    This routine will be removed and won't show up anymore. You can always add it back later.
+                  </Text>
+
+                  {/* Action row */}
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 6, alignSelf: 'stretch' }}>
+                    <Pressable
+                      onPress={() => setConfirmDeleteRoutineId(null)}
+                      disabled={routineDeleting}
+                      style={({ pressed }) => ({
+                        flex: 1, height: 52,
+                        borderRadius: 999,
+                        backgroundColor: ST_CREAM,
+                        borderWidth: 1.5, borderColor: ST_INK,
+                        alignItems: 'center', justifyContent: 'center',
+                        shadowColor: ST_INK,
+                        shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                        shadowOpacity: 1, shadowRadius: 0, elevation: 4,
+                        transform: [{ translateY: pressed ? 2 : 0 }],
+                        opacity: routineDeleting ? 0.5 : 1,
+                      })}
+                    >
+                      <Text style={{ color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                        Cancel
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={performRoutineDelete}
+                      disabled={routineDeleting}
+                      style={({ pressed }) => ({
+                        flex: 1, height: 52,
+                        borderRadius: 999,
+                        backgroundColor: ST_RED,
+                        borderWidth: 2, borderColor: ST_INK,
+                        alignItems: 'center', justifyContent: 'center',
+                        shadowColor: ST_INK,
+                        shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+                        shadowOpacity: 1, shadowRadius: 0, elevation: 5,
+                        transform: [{ translateY: pressed ? 2 : 0 }],
+                        opacity: routineDeleting ? 0.6 : 1,
+                      })}
+                    >
+                      {routineDeleting
+                        ? <ActivityIndicator color="#FFF" size="small" />
+                        : <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                            Delete
+                          </Text>
+                      }
+                    </Pressable>
+                  </View>
+                </View>
+              </Pressable>
+            </Pressable>
+          )
+        })()}
       </Modal>
 
       {/* ─── Log Detail Popup with Edit ───────────────────────────────── */}
@@ -2650,10 +3365,15 @@ export function KidsCalendar() {
                     {/* ── Health / Temperature / Vaccine / Medicine ── */}
                     {['health', 'temperature', 'vaccine', 'medicine', 'note'].includes(selectedLog.type) && (() => {
                       const healthColor = brand.error
-                      const typeEmojiMap: Record<string, string> = {
-                        temperature: '🌡️', vaccine: '💉', medicine: '💊', health: '❤️', note: '📝',
+                      const ST_INK = '#141313'
+                      const typeIconMap: Record<string, typeof Heart> = {
+                        temperature: Thermometer,
+                        vaccine: Syringe,
+                        medicine: Pill,
+                        health: Heart,
+                        note: FileText,
                       }
-                      const emoji = typeEmojiMap[selectedLog.type] ?? '❤️'
+                      const IconCmp = typeIconMap[selectedLog.type] ?? Heart
                       const rawVal = selectedLog.value ?? ''
                       let displayVal = rawVal
                       try {
@@ -2662,10 +3382,42 @@ export function KidsCalendar() {
                       } catch {}
                       return (
                         <>
-                          <View style={{ backgroundColor: healthColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: healthColor + '30' }}>
-                            <Text style={{ fontSize: 52, lineHeight: 56 }}>{emoji}</Text>
+                          <View style={{
+                            backgroundColor: healthColor + '12',
+                            borderRadius: 24,
+                            paddingVertical: 24,
+                            paddingHorizontal: 20,
+                            marginBottom: 12,
+                            alignItems: 'center',
+                            borderWidth: 1.5,
+                            borderColor: isDark ? colors.border : ST_INK,
+                            shadowColor: ST_INK,
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.08,
+                            shadowRadius: 4,
+                            elevation: 1,
+                          }}>
+                            {/* Sticker icon — circle with ink stroke, hand-drawn feel */}
+                            <View style={{
+                              width: 72,
+                              height: 72,
+                              borderRadius: 36,
+                              backgroundColor: '#FFFEF8',
+                              borderWidth: 2,
+                              borderColor: isDark ? colors.border : ST_INK,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              shadowColor: ST_INK,
+                              shadowOffset: { width: 0, height: 3 },
+                              shadowOpacity: 0.12,
+                              shadowRadius: 0,
+                              elevation: 2,
+                              transform: [{ rotate: '-3deg' }],
+                            }}>
+                              <IconCmp size={36} color={healthColor} strokeWidth={2.2} />
+                            </View>
                             {displayVal && displayVal !== selectedLog.type ? (
-                              <Text style={{ color: healthColor, fontSize: 32, fontWeight: '800', marginTop: 10, textAlign: 'center', letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' }}>{displayVal}</Text>
+                              <Text style={{ color: healthColor, fontSize: 28, fontWeight: '800', marginTop: 14, textAlign: 'center', letterSpacing: -0.8, fontFamily: 'Fraunces_600SemiBold' }}>{displayVal}</Text>
                             ) : null}
                             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 1, textTransform: 'uppercase' }}>
                               {selectedLog.type.charAt(0).toUpperCase() + selectedLog.type.slice(1)}
@@ -2722,18 +3474,27 @@ export function KidsCalendar() {
                         onPress={() => openEdit(selectedLog)}
                         style={({ pressed }) => [
                           styles.popupEditBtn,
-                          { backgroundColor: colors.primary, borderRadius: radius.lg },
-                          pressed && { opacity: 0.9 },
+                          {
+                            backgroundColor: isDark ? colors.text : '#141313',
+                            borderColor: isDark ? colors.text : '#141313',
+                            borderWidth: 1.5,
+                            borderRadius: 999,
+                          },
+                          pressed && { transform: [{ scale: 0.98 }], opacity: 0.92 },
                         ]}
                       >
-                        <Pencil size={16} color="#FFF" strokeWidth={2} />
-                        <Text style={styles.popupEditText}>Edit</Text>
+                        <Pencil size={16} color="#FFFEF8" strokeWidth={2} />
+                        <Text style={[styles.popupEditText, { color: '#FFFEF8' }]}>Edit</Text>
                       </Pressable>
                       <Pressable
                         onPress={() => handleDeleteLog(selectedLog.id)}
                         style={({ pressed }) => [
                           styles.popupDeleteBtn,
-                          { borderColor: colors.border, borderRadius: radius.lg },
+                          {
+                            backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                            borderColor: isDark ? colors.border : '#141313',
+                            borderRadius: 999,
+                          },
                           pressed && { opacity: 0.7 },
                         ]}
                       >
@@ -2905,8 +3666,17 @@ const styles = StyleSheet.create({
 
 
   // Child selector
-  childSelectorRow: { gap: 8, marginBottom: 12, paddingVertical: 4, paddingRight: 6 },
+  childSelectorRow: { gap: 8, paddingVertical: 4, paddingLeft: 0, paddingRight: 28 },
   childSelectorChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1 },
+  childScrollClip: { flex: 1, position: 'relative', overflow: 'hidden', marginBottom: 12 },
+  childScrollFade: { position: 'absolute', top: 0, bottom: 0, right: 0, width: 28 },
+  kidPickerOverlay: { flex: 1, backgroundColor: 'rgba(20,19,19,0.5)', justifyContent: 'flex-end' },
+  kidPickerSheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1.5, borderLeftWidth: 1.5, borderRightWidth: 1.5, maxHeight: '78%' },
+  kidPickerHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 14 },
+  kidPickerTitle: { fontSize: 22, letterSpacing: -0.4 },
+  kidPickerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18 },
+  kidPickerName: { flex: 1, fontSize: 15, letterSpacing: -0.1 },
+  kidPickerMeta: { fontSize: 12 },
   childSelectorText: { fontSize: 14, fontWeight: '600' },
   childDot: { width: 8, height: 8, borderRadius: 4 },
 
@@ -3010,7 +3780,7 @@ const styles = StyleSheet.create({
 
   // FAB + Sheet
   fabBtn: { position: 'absolute', right: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 6, zIndex: 10 },
-  childRowWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  childRowWrap: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   addLogBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 3 },
   toggleWrap: { marginBottom: 14 },
   fabSheetTitleWrap: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 },
@@ -3052,9 +3822,15 @@ const styles = StyleSheet.create({
 
   // View mode actions
   popupActions: { flexDirection: 'row', gap: 10, marginTop: 6, marginBottom: 20 },
-  popupEditBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14 },
-  popupEditText: { fontSize: 14, fontWeight: '700', color: '#FFF' },
-  popupDeleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14, borderWidth: 1, paddingHorizontal: 20 },
+  popupEditBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14,
+    shadowColor: '#141313', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 2,
+  },
+  popupEditText: { fontSize: 14, fontWeight: '700' },
+  popupDeleteBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14, borderWidth: 1.5, paddingHorizontal: 20,
+    shadowColor: '#141313', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 1,
+  },
   popupDeleteText: { fontSize: 14, fontWeight: '700' },
 
   // Edit mode

@@ -30,6 +30,8 @@ import {
   Platform,
   UIManager,
   LayoutAnimation,
+  ActivityIndicator,
+  Dimensions,
 } from 'react-native'
 import {
   ChevronLeft,
@@ -58,9 +60,11 @@ import {
   Edit3,
   CheckCircle2,
   Minus,
+  Pencil,
+  Clock,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, stickers as stickersLight, stickersDark } from '../../constants/theme'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getTrimester, weekForDate } from '../../lib/pregnancyWeeks'
 import { pregnancyWeeks } from '../../lib/pregnancyData'
@@ -72,6 +76,7 @@ import {
 } from '../../lib/analyticsData'
 import type { PregnancyCalendarLog } from '../../lib/analyticsData'
 import { STANDARD_APPOINTMENTS } from '../../lib/pregnancyAppointments'
+import Svg, { Path as SvgPath, Circle as SvgCircle, G as SvgG, Line as SvgLine } from 'react-native-svg'
 import { PregnancyJourneyRing } from '../pregnancy/PregnancyJourneyRing'
 import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
@@ -80,6 +85,7 @@ import { ActivityPillCard } from './ActivityPillCard'
 import { AgendaWeekStrip } from './AgendaWeekStrip'
 import { AppointmentDetailModal } from './AppointmentDetailModal'
 import { LogSheet } from './LogSheet'
+import { LogFormSticker } from './LogFormSticker'
 import { Display, Body, MonoCaps } from '../ui/Typography'
 import { logSticker } from './logStickers'
 import { MoodFace } from '../stickers/RewardStickers'
@@ -193,6 +199,19 @@ const MOOD_EMOJI: Record<string, string> = {
 
 const MOOD_LABEL: Record<string, string> = {
   excited: 'Excited', happy: 'Happy', okay: 'Okay', anxious: 'Anxious', energetic: 'Energetic', sad: 'Sad',
+}
+
+/** Maps a saturated meta color to a fixed pastel hex usable as a sticker fill. */
+function softTintFor(c: string): string {
+  switch (c) {
+    case COLOR_GREEN:  return '#D7E9C2'
+    case COLOR_BLUE:   return '#CFE0F0'
+    case COLOR_AMBER:  return '#FBE3C2'
+    case COLOR_ORANGE: return '#FBE0DC'
+    case brand.error:  return '#FBE0DC'
+    case brand.pregnancy: return '#DCD2F2'
+    default:           return '#E0D6F4'
+  }
 }
 
 const ALL_LOG_TYPES: LogFormType[] = [
@@ -393,15 +412,31 @@ function QuickLogSheet({
             onPress={() => { onClose(); onManageRoutines() }}
             style={({ pressed }) => [
               styles.manageRoutinesBtn,
-              { backgroundColor: paper, borderColor: paperBorder },
-              pressed && { opacity: 0.85 },
+              {
+                backgroundColor: isDark ? colors.surfaceRaised : '#E0D6F4',
+                borderColor: ink,
+                borderWidth: 1.5,
+                shadowColor: ink,
+                shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+                elevation: 4,
+                transform: [{ translateY: pressed ? 2 : 0 }],
+              },
             ]}
           >
-            <Calendar size={18} color={accent} strokeWidth={2} />
-            <Body size={14} color={accent} style={{ fontFamily: font.bodySemiBold, flex: 1 }}>
+            <View style={{
+              width: 30, height: 30, borderRadius: 15,
+              backgroundColor: paper,
+              borderWidth: 1.5, borderColor: ink,
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Calendar size={15} color={ink} strokeWidth={2.4} />
+            </View>
+            <Body size={14} color={ink} style={{ fontFamily: 'DMSans_700Bold', flex: 1, letterSpacing: 0.2 }}>
               Manage Routines
             </Body>
-            <ChevronRight size={16} color={ink} strokeWidth={2} />
+            <ChevronRight size={16} color={ink} strokeWidth={2.4} />
           </Pressable>
         </ScrollView>
       </View>
@@ -424,16 +459,25 @@ function RoutineManager({
   onSaved: () => void
   onDeleted: () => void
 }) {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
 
-  const [form, setForm] = useState({
-    name: '',
-    type: 'vitamins' as string,
-    time: '08:00',
-    days: [0, 1, 2, 3, 4, 5, 6] as number[],
-  })
+  // Sticker palette (pregnancy = lavender accent)
+  const ST_INK = '#141313'
+  const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
+  const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+  const ST_SHEET = isDark ? colors.bg : '#FAF6E8'
+  const ST_LAVENDER = isDark ? '#C4B5EF' : brand.pregnancy
+  const ST_LAVENDER_SOFT = '#E0D6F4'
+  const ST_RED = isDark ? '#E66B6B' : brand.error
+
+  const DEFAULT_FORM = { name: '', type: 'vitamins' as string, time: '08:00', days: [0,1,2,3,4,5,6] as number[] }
+
+  const [form, setForm] = useState(DEFAULT_FORM)
   const [saving, setSaving] = useState(false)
+  const [editingRoutine, setEditingRoutine] = useState<PregnancyRoutine | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
@@ -446,16 +490,27 @@ function RoutineManager({
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Not authenticated')
-      const { error } = await supabase.from('pregnancy_routines').insert({
-        user_id: session.user.id,
-        type: form.type,
-        name: form.name.trim(),
-        days_of_week: form.days,
-        time: form.time || null,
-        active: true,
-      })
-      if (error) throw error
-      setForm({ name: '', type: 'vitamins', time: '08:00', days: [0,1,2,3,4,5,6] })
+      if (editingRoutine) {
+        const { error } = await supabase.from('pregnancy_routines').update({
+          type: form.type,
+          name: form.name.trim(),
+          days_of_week: form.days,
+          time: form.time || null,
+        }).eq('id', editingRoutine.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase.from('pregnancy_routines').insert({
+          user_id: session.user.id,
+          type: form.type,
+          name: form.name.trim(),
+          days_of_week: form.days,
+          time: form.time || null,
+          active: true,
+        })
+        if (error) throw error
+      }
+      setForm(DEFAULT_FORM)
+      setEditingRoutine(null)
       onSaved()
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'Failed to save')
@@ -464,16 +519,27 @@ function RoutineManager({
     }
   }
 
-  async function handleDelete(id: string) {
-    Alert.alert('Delete Routine', 'Remove this routine?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete', style: 'destructive', onPress: async () => {
-          await supabase.from('pregnancy_routines').delete().eq('id', id)
-          onDeleted()
-        },
-      },
-    ])
+  function openEdit(r: PregnancyRoutine) {
+    setEditingRoutine(r)
+    setForm({ name: r.name, type: r.type, time: r.time ?? '08:00', days: r.days_of_week })
+  }
+
+  function cancelEdit() {
+    setEditingRoutine(null)
+    setForm(DEFAULT_FORM)
+  }
+
+  async function performDelete() {
+    const id = confirmDeleteId
+    if (!id) return
+    setDeleting(true)
+    try {
+      await supabase.from('pregnancy_routines').delete().eq('id', id)
+      onDeleted()
+    } finally {
+      setDeleting(false)
+      setConfirmDeleteId(null)
+    }
   }
 
   function toggleDay(d: number) {
@@ -485,158 +551,553 @@ function RoutineManager({
     })
   }
 
-  return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={[styles.modalOverlay]}>
-        <View style={[styles.routineManagerSheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 16 }]}>
-          <View style={styles.modalHandle} />
-          <View style={styles.routineManagerHeader}>
-            <Text style={[styles.routineManagerTitle, { color: colors.text }]}>Manage Routines</Text>
-            <Pressable onPress={onClose} style={styles.modalClose}>
-              <X size={20} color={colors.textMuted} strokeWidth={2} />
+  // ─── Reusable form fields (used inline AND inside the edit modal) ──────────
+  const formFields = (
+    <>
+      {/* Name */}
+      <View style={{
+        backgroundColor: ST_CREAM,
+        borderColor: ST_INK,
+        borderWidth: 1.5,
+        borderRadius: 999,
+        height: 56,
+        justifyContent: 'center',
+      }}>
+        <TextInput
+          value={form.name}
+          onChangeText={(t) => setForm((p) => ({ ...p, name: t }))}
+          placeholder="Routine name"
+          placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+          underlineColorAndroid="transparent"
+          style={{
+            color: isDark ? colors.text : ST_INK,
+            paddingHorizontal: 22,
+            paddingVertical: 0,
+            fontSize: 15,
+            fontFamily: 'DMSans_600SemiBold',
+          }}
+        />
+      </View>
+
+      {/* Type chips */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4, paddingHorizontal: 2 }}>
+        {ALL_LOG_TYPES.map((t) => {
+          const meta = LOG_META[t]
+          const active = form.type === t
+          // Solid (no alpha) bg per mode — alpha bleeds the hard ink shadow.
+          // Light: meta.color over cream gives a pastel; we use a fixed soft mix.
+          // Dark: full saturation so it pops against the dark surface.
+          const activeBg = isDark ? (meta.color || ST_LAVENDER) : softTintFor(meta.color || ST_LAVENDER)
+          // Inactive bg in dark mode is the dark surface; ink text is invisible there.
+          const labelColor = active
+            ? (isDark ? '#FFF' : ST_INK)
+            : (isDark ? colors.text : ST_INK)
+          return (
+            <Pressable
+              key={t}
+              onPress={() => setForm((p) => ({ ...p, type: t }))}
+              style={({ pressed }) => ({
+                paddingHorizontal: 14, paddingVertical: 8,
+                borderRadius: 999,
+                borderWidth: 1.5,
+                borderColor: isDark && !active ? colors.border : ST_INK,
+                backgroundColor: active ? activeBg : ST_CREAM,
+                shadowColor: ST_INK,
+                shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
+                shadowOpacity: active ? (1) : 0,
+                shadowRadius: 0, elevation: active ? 3 : 0,
+                transform: [{ translateY: active && pressed ? 1 : 0 }],
+              })}
+            >
+              <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }}>
+                {meta.label}
+              </Text>
             </Pressable>
-          </View>
+          )
+        })}
+      </ScrollView>
 
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.routineManagerScroll}>
-            {/* Existing routines */}
-            {routines.length === 0 ? (
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No routines yet</Text>
-            ) : (
-              routines.map((r) => {
-                const meta = LOG_META[r.type] ?? { label: r.type, icon: Calendar, color: colors.textMuted }
-                const Icon = meta.icon
-                const daysLabel = r.days_of_week.length === 7
-                  ? 'Every day'
-                  : r.days_of_week.map((d) => WEEKDAYS[d]).join(', ')
-                return (
-                  <View key={r.id} style={[styles.routineRow, { backgroundColor: colors.surfaceRaised ?? colors.surface, borderColor: colors.border }]}>
-                    <View style={[styles.routineIconWrap, { backgroundColor: meta.color + '18' }]}>
-                      <Icon size={18} color={meta.color} strokeWidth={2} />
-                    </View>
-                    <View style={styles.routineInfo}>
-                      <Text style={[styles.routineName, { color: colors.text }]}>{r.name}</Text>
-                      <Text style={[styles.routineDetail, { color: colors.textMuted }]}>
-                        {r.time ? `${fmtTime(r.time)} · ` : ''}{daysLabel}
-                      </Text>
-                    </View>
-                    <Pressable
-                      onPress={() => handleDelete(r.id)}
-                      style={[styles.routineDeleteBtn, { backgroundColor: brand.error + '15' }]}
-                    >
-                      <Trash2 size={14} color={brand.error} strokeWidth={2} />
-                    </Pressable>
-                  </View>
-                )
-              })
-            )}
+      {/* Time */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{
+          width: 32, height: 32, borderRadius: 16,
+          backgroundColor: ST_CREAM, borderWidth: 1.5, borderColor: ST_INK,
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Clock size={14} color={ST_INK} strokeWidth={2.2} />
+        </View>
+        <TextInput
+          value={form.time}
+          onChangeText={(t) => setForm((p) => ({ ...p, time: t }))}
+          placeholder="08:00"
+          placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+          keyboardType="numbers-and-punctuation"
+          style={{
+            flex: 1,
+            color: isDark ? colors.text : ST_INK,
+            backgroundColor: ST_CREAM,
+            borderColor: ST_INK,
+            borderWidth: 1.5, borderRadius: 999,
+            paddingHorizontal: 16, paddingVertical: 10,
+            fontSize: 15, fontFamily: 'DMSans_600SemiBold',
+          }}
+        />
+      </View>
 
-            {/* Add routine form */}
-            <View style={[styles.addRoutineForm, { backgroundColor: colors.surfaceRaised ?? colors.surface, borderColor: brand.pregnancy + '30' }]}>
-              <Text style={[styles.addRoutineTitle, { color: brand.pregnancy }]}>Add Routine</Text>
+      {/* Days */}
+      <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'space-between' }}>
+        {DAY_LABELS.map((label, idx) => {
+          const active = form.days.includes(idx)
+          return (
+            <Pressable
+              key={idx}
+              onPress={() => toggleDay(idx)}
+              style={({ pressed }) => ({
+                width: 36, height: 36, borderRadius: 18,
+                alignItems: 'center', justifyContent: 'center',
+                borderWidth: 1.5,
+                borderColor: isDark && !active ? colors.border : ST_INK,
+                backgroundColor: active ? ST_LAVENDER : ST_CREAM,
+                shadowColor: ST_INK,
+                shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
+                shadowOpacity: active ? (1) : 0,
+                shadowRadius: 0, elevation: active ? 3 : 0,
+                transform: [{ translateY: active && pressed ? 1 : 0 }],
+              })}
+            >
+              <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', color: active ? '#FFF' : (isDark ? colors.text : ST_INK) }}>
+                {label}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
+    </>
+  )
 
-              {/* Name */}
-              <TextInput
-                value={form.name}
-                onChangeText={(t) => setForm((p) => ({ ...p, name: t }))}
-                placeholder="Routine name"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.routineInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-              />
+  return (
+    <>
+      {/* ─── Manager sheet (sticker-on-paper) ─────────────────────── */}
+      <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+        <View style={styles.modalOverlay}>
+          <View
+            style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0,
+              maxHeight: '90%',
+              backgroundColor: ST_SHEET,
+              borderTopLeftRadius: 32,
+              borderTopRightRadius: 32,
+              borderTopWidth: 1.5,
+              borderLeftWidth: 1.5,
+              borderRightWidth: 1.5,
+              borderColor: isDark ? colors.border : ST_INK,
+              paddingBottom: insets.bottom + 20,
+            }}
+          >
+            {/* Drag handle */}
+            <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
+              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: isDark ? colors.border : '#14131340' }} />
+            </View>
 
-              {/* Type selector */}
-              <Text style={[styles.addRoutineLabel, { color: colors.textSecondary }]}>Type</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
-                {ALL_LOG_TYPES.map((t) => {
-                  const meta = LOG_META[t]
-                  const active = form.type === t
-                  return (
-                    <Pressable
-                      key={t}
-                      onPress={() => setForm((p) => ({ ...p, type: t }))}
-                      style={[
-                        styles.typePill,
-                        {
-                          backgroundColor: active ? meta.color + '25' : colors.surface,
-                          borderColor: active ? meta.color : colors.border,
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.typePillText, { color: active ? meta.color : colors.textMuted }]}>
-                        {meta.label}
-                      </Text>
-                    </Pressable>
-                  )
-                })}
-              </ScrollView>
-
-              {/* Time */}
-              <Text style={[styles.addRoutineLabel, { color: colors.textSecondary }]}>Time (HH:MM)</Text>
-              <TextInput
-                value={form.time}
-                onChangeText={(t) => setForm((p) => ({ ...p, time: t }))}
-                placeholder="08:00"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="numbers-and-punctuation"
-                style={[styles.routineInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-              />
-
-              {/* Days of week */}
-              <Text style={[styles.addRoutineLabel, { color: colors.textSecondary }]}>Days</Text>
-              <View style={styles.daysRow}>
-                {DAY_LABELS.map((label, idx) => {
-                  const active = form.days.includes(idx)
-                  return (
-                    <Pressable
-                      key={idx}
-                      onPress={() => toggleDay(idx)}
-                      style={[
-                        styles.dayPill,
-                        {
-                          backgroundColor: active ? brand.pregnancy : colors.surface,
-                          borderColor: active ? brand.pregnancy : colors.border,
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.dayPillText, { color: active ? '#fff' : colors.textMuted }]}>
-                        {label}
-                      </Text>
-                    </Pressable>
-                  )
-                })}
+            {/* Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 6, paddingBottom: 14, gap: 12 }}>
+              <View style={{
+                width: 48, height: 48, borderRadius: 24,
+                backgroundColor: isDark ? colors.surfaceRaised : ST_LAVENDER_SOFT,
+                borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Calendar size={22} color={ST_LAVENDER} strokeWidth={2.2} />
               </View>
-
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 24, letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' }}>
+                  Manage Routines
+                </Text>
+                <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 13, fontFamily: 'DMSans_500Medium' }}>
+                  Recurring activities for your pregnancy
+                </Text>
+              </View>
               <Pressable
-                onPress={handleSave}
-                disabled={saving}
-                style={[styles.saveRoutineBtn, { backgroundColor: brand.pregnancy, opacity: saving ? 0.6 : 1 }]}
+                onPress={onClose}
+                style={({ pressed }) => ({
+                  width: 36, height: 36, borderRadius: 18,
+                  backgroundColor: ST_CREAM,
+                  borderWidth: 1.5, borderColor: ST_INK,
+                  alignItems: 'center', justifyContent: 'center',
+                  shadowColor: ST_INK,
+                  shadowOffset: { width: 0, height: pressed ? 1 : 2 },
+                  shadowOpacity: 1, shadowRadius: 0, elevation: 3,
+                  transform: [{ translateY: pressed ? 1 : 0 }],
+                })}
               >
-                <Text style={styles.saveRoutineBtnText}>{saving ? 'Saving…' : 'Save Routine'}</Text>
+                <X size={15} color={ST_INK} strokeWidth={2.5} />
               </Pressable>
             </View>
-          </ScrollView>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8 }}>
+              {/* New routine form (paper card) — hidden while editing */}
+              {!editingRoutine && (
+                <View
+                  style={{
+                    backgroundColor: ST_PAPER,
+                    borderRadius: 22,
+                    borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                    padding: 16, gap: 12,
+                    shadowColor: ST_INK,
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: isDark ? 0 : 0.12,
+                    shadowRadius: 0, elevation: 2,
+                  }}
+                >
+                  <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }}>
+                    New Routine
+                  </Text>
+                  {formFields}
+                  {/* Save sticker button */}
+                  <Pressable
+                    onPress={handleSave}
+                    disabled={!form.name.trim() || saving}
+                    style={({ pressed }) => ({
+                      height: 56,
+                      borderRadius: 999,
+                      backgroundColor: ST_LAVENDER,
+                      borderWidth: 2, borderColor: ST_INK,
+                      alignItems: 'center', justifyContent: 'center',
+                      shadowColor: ST_INK,
+                      shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+                      shadowOpacity: 1, shadowRadius: 0, elevation: 5,
+                      transform: [{ translateY: pressed ? 2 : 0 }],
+                      opacity: (!form.name.trim() || saving) ? 0.4 : 1,
+                      marginTop: 4,
+                    })}
+                  >
+                    {saving
+                      ? <ActivityIndicator color="#FFF" size="small" />
+                      : <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 15, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                          Add Routine
+                        </Text>
+                    }
+                  </Pressable>
+                </View>
+              )}
+
+              {/* Active routines list */}
+              {routines.length > 0 && (
+                <View style={{ marginTop: 20 }}>
+                  <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, marginBottom: 12, paddingHorizontal: 4 }}>
+                    Active Routines ({routines.length})
+                  </Text>
+                  {routines.map((r) => {
+                    const meta = LOG_META[r.type] ?? { label: r.type, icon: Calendar, color: colors.textMuted }
+                    const Icon = meta.icon
+                    const daysLabel = r.days_of_week.length === 7
+                      ? 'Every day'
+                      : r.days_of_week.map((d) => WEEKDAYS[d]).join(', ')
+                    return (
+                      <View
+                        key={r.id}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: 12,
+                          marginBottom: 10,
+                          backgroundColor: ST_PAPER,
+                          borderRadius: 18,
+                          borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                          shadowColor: ST_INK,
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: isDark ? 0 : 0.08,
+                          shadowRadius: 0, elevation: 2,
+                        }}
+                      >
+                        <View style={{
+                          width: 32, height: 32, borderRadius: 16,
+                          backgroundColor: isDark ? meta.color : softTintFor(meta.color || ST_LAVENDER),
+                          borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                          alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <Icon size={14} color={isDark ? '#FFF' : ST_INK} strokeWidth={2.2} />
+                        </View>
+                        <View style={{ flex: 1, gap: 2 }}>
+                          <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 14, fontFamily: 'Fraunces_700Bold' }}>
+                            {r.name}
+                          </Text>
+                          <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 12, fontFamily: 'DMSans_500Medium' }}>
+                            {r.time ? `${fmtTime(r.time)} · ` : ''}{daysLabel}
+                          </Text>
+                        </View>
+                        <Pressable
+                          onPress={() => openEdit(r)}
+                          style={({ pressed }) => ({
+                            width: 32, height: 32, borderRadius: 16,
+                            backgroundColor: ST_CREAM,
+                            borderWidth: 1.5, borderColor: ST_INK,
+                            alignItems: 'center', justifyContent: 'center',
+                            shadowColor: ST_INK,
+                            shadowOffset: { width: 0, height: pressed ? 0 : 2 },
+                            shadowOpacity: 1, shadowRadius: 0, elevation: 2,
+                            transform: [{ translateY: pressed ? 1 : 0 }],
+                          })}
+                        >
+                          <Pencil size={13} color={ST_INK} strokeWidth={2.2} />
+                        </Pressable>
+                        <Pressable
+                          onPress={() => setConfirmDeleteId(r.id)}
+                          style={({ pressed }) => ({
+                            width: 32, height: 32, borderRadius: 16,
+                            backgroundColor: isDark ? '#3A1E1E' : '#FBE0DC',
+                            borderWidth: 1.5, borderColor: ST_INK,
+                            alignItems: 'center', justifyContent: 'center',
+                            shadowColor: ST_INK,
+                            shadowOffset: { width: 0, height: pressed ? 0 : 2 },
+                            shadowOpacity: 1, shadowRadius: 0, elevation: 2,
+                            transform: [{ translateY: pressed ? 1 : 0 }],
+                          })}
+                        >
+                          <Trash2 size={13} color={ST_RED} strokeWidth={2.2} />
+                        </Pressable>
+                      </View>
+                    )
+                  })}
+                </View>
+              )}
+            </ScrollView>
+          </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      {/* ─── Edit Routine popup ─────────────────────────────────── */}
+      <Modal visible={!!editingRoutine} animationType="fade" transparent onRequestClose={cancelEdit}>
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', paddingHorizontal: 20 }}
+          onPress={cancelEdit}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View
+              style={{
+                backgroundColor: ST_PAPER,
+                borderRadius: 24,
+                borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                padding: 18, gap: 12,
+                shadowColor: ST_INK,
+                shadowOffset: { width: 0, height: 5 },
+                shadowOpacity: 1, shadowRadius: 0, elevation: 8,
+              }}
+            >
+              {/* Header */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View style={{
+                    width: 36, height: 36, borderRadius: 18,
+                    backgroundColor: ST_LAVENDER_SOFT,
+                    borderWidth: 1.5, borderColor: ST_INK,
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Pencil size={16} color={ST_LAVENDER} strokeWidth={2.4} />
+                  </View>
+                  <Text style={{ color: ST_INK, fontSize: 20, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }}>
+                    Edit Routine
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={cancelEdit}
+                  style={({ pressed }) => ({
+                    width: 32, height: 32, borderRadius: 16,
+                    backgroundColor: ST_CREAM,
+                    borderWidth: 1.5, borderColor: ST_INK,
+                    alignItems: 'center', justifyContent: 'center',
+                    shadowColor: ST_INK,
+                    shadowOffset: { width: 0, height: pressed ? 0 : 2 },
+                    shadowOpacity: 1, shadowRadius: 0, elevation: 2,
+                    transform: [{ translateY: pressed ? 1 : 0 }],
+                  })}
+                >
+                  <X size={14} color={ST_INK} strokeWidth={2.5} />
+                </Pressable>
+              </View>
+
+              {formFields}
+
+              {/* Action row: Cancel + Update */}
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
+                <Pressable
+                  onPress={cancelEdit}
+                  style={({ pressed }) => ({
+                    flex: 1, height: 52,
+                    borderRadius: 999,
+                    backgroundColor: ST_CREAM,
+                    borderWidth: 1.5, borderColor: ST_INK,
+                    alignItems: 'center', justifyContent: 'center',
+                    shadowColor: ST_INK,
+                    shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                    shadowOpacity: 1, shadowRadius: 0, elevation: 4,
+                    transform: [{ translateY: pressed ? 2 : 0 }],
+                  })}
+                >
+                  <Text style={{ color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                    Cancel
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleSave}
+                  disabled={!form.name.trim() || saving}
+                  style={({ pressed }) => ({
+                    flex: 1.4, height: 52,
+                    borderRadius: 999,
+                    backgroundColor: ST_LAVENDER,
+                    borderWidth: 2, borderColor: ST_INK,
+                    alignItems: 'center', justifyContent: 'center',
+                    shadowColor: ST_INK,
+                    shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+                    shadowOpacity: 1, shadowRadius: 0, elevation: 5,
+                    transform: [{ translateY: pressed ? 2 : 0 }],
+                    opacity: (!form.name.trim() || saving) ? 0.4 : 1,
+                  })}
+                >
+                  {saving
+                    ? <ActivityIndicator color="#FFF" size="small" />
+                    : <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                        Update
+                      </Text>
+                  }
+                </Pressable>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ─── Delete confirm popup ───────────────────────────────── */}
+      <Modal visible={!!confirmDeleteId} animationType="fade" transparent onRequestClose={() => !deleting && setConfirmDeleteId(null)}>
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', paddingHorizontal: 32 }}
+          onPress={() => !deleting && setConfirmDeleteId(null)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View
+              style={{
+                backgroundColor: ST_PAPER,
+                borderRadius: 26,
+                borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                padding: 22, gap: 14,
+                alignItems: 'center',
+                shadowColor: ST_INK,
+                shadowOffset: { width: 0, height: 5 },
+                shadowOpacity: 1, shadowRadius: 0, elevation: 8,
+              }}
+            >
+              <View style={{
+                width: 60, height: 60, borderRadius: 30,
+                backgroundColor: isDark ? '#3A1E1E' : '#FBE0DC',
+                borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                alignItems: 'center', justifyContent: 'center',
+                shadowColor: ST_INK,
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 1, shadowRadius: 0, elevation: 4,
+              }}>
+                <Trash2 size={26} color={ST_RED} strokeWidth={2.2} />
+              </View>
+              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, textAlign: 'center' }}>
+                Delete Routine?
+              </Text>
+              <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 14, fontFamily: 'DMSans_500Medium', textAlign: 'center', lineHeight: 20 }}>
+                This routine will be removed and won't show up anymore. You can always add it back later.
+              </Text>
+
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 6, alignSelf: 'stretch' }}>
+                <Pressable
+                  onPress={() => setConfirmDeleteId(null)}
+                  disabled={deleting}
+                  style={({ pressed }) => ({
+                    flex: 1, height: 52,
+                    borderRadius: 999,
+                    backgroundColor: ST_CREAM,
+                    borderWidth: 1.5, borderColor: ST_INK,
+                    alignItems: 'center', justifyContent: 'center',
+                    shadowColor: ST_INK,
+                    shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                    shadowOpacity: 1, shadowRadius: 0, elevation: 4,
+                    transform: [{ translateY: pressed ? 2 : 0 }],
+                    opacity: deleting ? 0.5 : 1,
+                  })}
+                >
+                  <Text style={{ color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                    Cancel
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={performDelete}
+                  disabled={deleting}
+                  style={({ pressed }) => ({
+                    flex: 1, height: 52,
+                    borderRadius: 999,
+                    backgroundColor: ST_RED,
+                    borderWidth: 2, borderColor: ST_INK,
+                    alignItems: 'center', justifyContent: 'center',
+                    shadowColor: ST_INK,
+                    shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+                    shadowOpacity: 1, shadowRadius: 0, elevation: 5,
+                    transform: [{ translateY: pressed ? 2 : 0 }],
+                    opacity: deleting ? 0.6 : 1,
+                  })}
+                >
+                  {deleting
+                    ? <ActivityIndicator color="#FFF" size="small" />
+                    : <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                        Delete
+                      </Text>
+                  }
+                </Pressable>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   )
 }
 
 // ─── Log Detail Popup ─────────────────────────────────────────────────────────
 
+/** Map pregnancy log types → sticker tint key + header label (matches add-log forms) */
+const DETAIL_STICKER: Record<string, { tintKey: keyof typeof stickersLight; label: string }> = {
+  mood:        { tintKey: 'yellowSoft', label: 'Mood check-in' },
+  symptom:     { tintKey: 'peachSoft',  label: 'Symptom logged' },
+  appointment: { tintKey: 'yellowSoft', label: 'Appointment' },
+  exam_result: { tintKey: 'yellowSoft', label: 'Exam result' },
+  kick_count:  { tintKey: 'pinkSoft',   label: "Baby's kicks" },
+  sleep:       { tintKey: 'lilacSoft',  label: 'Sleep session' },
+  exercise:    { tintKey: 'greenSoft',  label: 'Movement' },
+  nutrition:   { tintKey: 'greenSoft',  label: 'Meal logged' },
+  kegel:       { tintKey: 'lilacSoft',  label: 'Pelvic floor practice' },
+  water:       { tintKey: 'blueSoft',   label: 'Hydration check-in' },
+  vitamins:    { tintKey: 'greenSoft',  label: 'Prenatal vitamins' },
+  nesting:     { tintKey: 'peachSoft',  label: 'Nesting task' },
+  birth_prep:  { tintKey: 'lilacSoft',  label: 'Birth prep' },
+  contraction: { tintKey: 'pinkSoft',   label: 'Contraction' },
+  weight:      { tintKey: 'peachSoft',  label: 'Weight check' },
+}
+
 function LogDetailPopup({
   log,
-  onClose,
   onEdit,
   onDeleted,
 }: {
   log: PregnancyCalendarLog
-  onClose: () => void
   onEdit: () => void
   onDeleted: () => void
 }) {
-  const { colors } = useTheme()
-  const insets = useSafeAreaInsets()
+  const { colors, isDark } = useTheme()
+  const s = isDark ? stickersDark : stickersLight
   const meta = LOG_META[log.log_type] ?? { label: log.log_type, icon: Calendar, color: brand.pregnancy }
   const Icon = meta.icon
+  const stickerCfg = DETAIL_STICKER[log.log_type] ?? { tintKey: 'yellowSoft' as const, label: meta.label }
+  const stickerTint = s[stickerCfg.tintKey]
+  const ink = isDark ? colors.text : '#141313'
+  const inkMuted = isDark ? colors.textSecondary : 'rgba(20,19,19,0.55)'
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.18)'
 
   // Parse value + notes
   const rawValue = log.value ?? ''
@@ -704,66 +1165,67 @@ function LogDetailPopup({
   }
 
   return (
-    <View style={[styles.detailSheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 16 }]}>
-      <View style={styles.detailHandle} />
+    <View style={styles.detailBody}>
+      {/* Sticker header — matches add-log forms */}
+      <LogFormSticker type={log.log_type} label={stickerCfg.label} tint={stickerTint} />
 
-      {/* Header */}
-      <View style={styles.detailHeader}>
-        <Text style={[styles.detailTitle, { color: colors.text }]}>{meta.label}</Text>
-        <Pressable onPress={onClose} style={styles.detailClose}>
-          <X size={20} color={colors.textMuted} strokeWidth={2} />
-        </Pressable>
-      </View>
-
-      {/* Date row */}
-      <View style={[styles.detailInfoRow, { backgroundColor: colors.surfaceRaised ?? colors.surface }]}>
-        <Timer size={14} color={colors.textMuted} strokeWidth={2} />
-        <Text style={[styles.detailInfoText, { color: colors.textSecondary }]}>
-          {dateLabel} at {formatTime(log.created_at)}
-        </Text>
-      </View>
-
-      {/* Big metric card */}
-      <View style={[styles.detailMetricCard, { backgroundColor: meta.color + '10', borderColor: meta.color + '20' }]}>
+      {/* Big metric card on paper */}
+      <View style={[styles.detailMetricCard, { backgroundColor: paper, borderColor: paperBorder }]}>
         {log.log_type === 'mood' ? (
           <MoodFace size={64} variant={moodFaceVariant(rawValue.toLowerCase())} fill={moodFaceFill(rawValue.toLowerCase())} />
         ) : (
-          <Icon size={28} color={meta.color + '70'} strokeWidth={2} />
+          <Icon size={26} color={meta.color} strokeWidth={2} />
         )}
         {isText ? (
-          <Text style={[styles.detailMetricText, { color: meta.color }]}>{metric}</Text>
+          <Text style={[styles.detailMetricText, { color: ink }]}>{metric}</Text>
         ) : (
           <Text style={[styles.detailMetricBig, { color: meta.color }]}>
             {metric}
-            {unit ? <Text style={styles.detailMetricUnit}>{` ${unit}`}</Text> : null}
+            {unit ? <Text style={[styles.detailMetricUnit, { color: meta.color }]}>{` ${unit}`}</Text> : null}
           </Text>
         )}
-        <Text style={[styles.detailMetricLabel, { color: colors.textMuted }]}>{sublabel}</Text>
+        <Text style={[styles.detailMetricLabel, { color: inkMuted }]}>{sublabel}</Text>
       </View>
 
-      {/* Pills */}
-      <View style={styles.detailPillsRow}>
-        {pills.map((p, i) => (
-          <View key={i} style={[styles.detailPill, { backgroundColor: p.color + '18', borderColor: p.color + '35' }]}>
-            <Text style={[styles.detailPillText, { color: p.color }]}>{p.label}</Text>
-          </View>
-        ))}
+      {/* Date pill row — paper chip with timer */}
+      <View style={[styles.detailDateRow, { backgroundColor: stickerTint, borderColor: paperBorder }]}>
+        <Timer size={13} color={ink} strokeWidth={2} />
+        <Text style={[styles.detailDateText, { color: ink }]}>{dateLabel} at {formatTime(log.created_at)}</Text>
       </View>
+
+      {/* Meta pills */}
+      {pills.length > 1 && (
+        <View style={styles.detailPillsRow}>
+          {pills.slice(1).map((p, i) => (
+            <View key={i} style={[styles.detailPill, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <Text style={[styles.detailPillText, { color: ink }]}>{p.label}</Text>
+            </View>
+          ))}
+        </View>
+      )}
 
       {/* Plain notes */}
       {plainNotes && (
-        <View style={[styles.detailNotesBox, { backgroundColor: colors.surfaceRaised ?? colors.surface }]}>
-          <Text style={[styles.detailNotesText, { color: colors.textSecondary }]}>{plainNotes}</Text>
+        <View style={[styles.detailNotesBox, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <Text style={[styles.detailNotesText, { color: ink }]}>{plainNotes}</Text>
         </View>
       )}
 
       {/* Actions */}
       <View style={styles.detailActions}>
-        <Pressable onPress={onEdit} style={[styles.detailEditBtn, { backgroundColor: brand.pregnancy }]}>
+        <Pressable onPress={onEdit} style={({ pressed }) => [
+          styles.detailEditBtn,
+          { backgroundColor: brand.pregnancy, borderColor: paperBorder },
+          pressed && { opacity: 0.85 },
+        ]}>
           <Edit3 size={16} color="#fff" strokeWidth={2} />
           <Text style={styles.detailActionText}>Edit</Text>
         </Pressable>
-        <Pressable onPress={handleDelete} style={[styles.detailDeleteBtn, { backgroundColor: brand.error + '18', borderColor: brand.error + '40' }]}>
+        <Pressable onPress={handleDelete} style={({ pressed }) => [
+          styles.detailDeleteBtn,
+          { backgroundColor: isDark ? brand.error + '22' : '#FCE3DD', borderColor: paperBorder },
+          pressed && { opacity: 0.85 },
+        ]}>
           <Trash2 size={16} color={brand.error} strokeWidth={2} />
           <Text style={[styles.detailActionText, { color: brand.error }]}>Delete</Text>
         </Pressable>
@@ -1044,11 +1506,29 @@ export function PregnancyCalendar() {
 
   const [dayZoomH, setDayZoomH] = useState(DAY_VIEW_DEFAULT_HOUR_H)
   const dayScrollRef = useRef<ScrollView>(null)
+  const apptCurveScrollRef = useRef<ScrollView>(null)
 
   const [userId, setUserId] = useState<string | undefined>(undefined)
   useEffect(() => {
     void supabase.auth.getSession().then(({ data: { session } }) => setUserId(session?.user.id))
   }, [])
+
+  // Auto-center the appointment S-curve on the next-up milestone whenever
+  // the user opens the Appts tab.
+  useEffect(() => {
+    if (view !== 'appointments') return
+    const BEAD_GAP = 90
+    const SIDE_PAD = 32
+    const nextIdx = STANDARD_APPOINTMENTS.findIndex((a) => weekNumber <= a.week)
+    const idx = nextIdx === -1 ? STANDARD_APPOINTMENTS.length - 1 : Math.max(0, nextIdx)
+    const targetX = SIDE_PAD + idx * BEAD_GAP
+    const winW = Dimensions.get('window').width
+    const x = Math.max(0, targetX - winW / 2 + 16)
+    const t = setTimeout(() => {
+      apptCurveScrollRef.current?.scrollTo({ x, animated: true })
+    }, 220)
+    return () => clearTimeout(t)
+  }, [view, weekNumber])
 
   // Routines state
   const [pregnancyRoutines, setPregnancyRoutines] = useState<PregnancyRoutine[]>([])
@@ -1640,33 +2120,224 @@ export function PregnancyCalendar() {
     )
   }
 
-  // ── Render: Appointments View (cards) ───────────────────────────────────
+  // ── Render: Appointments View (sticker S-curve + cards) ────────────────
 
   function renderAppointmentsView() {
+    const ST_INK = '#141313'
+    const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
+    const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+    const ST_LAVENDER = isDark ? '#C4B5EF' : brand.pregnancy
+    const ST_GREEN = isDark ? '#9DD68A' : '#86C46F'
+    const ST_CORAL = isDark ? '#F2A088' : '#E58968'
+
+    // ─── S-curve appointment path ────────────────────────────────────────
+    // Wide canvas so each milestone gets breathing room; the parent
+    // ScrollView lets the user pan left/right.
+    const BEAD_GAP = 90
+    const SIDE_PAD = 32
+    const VB_H = 130
+    const minWeek = STANDARD_APPOINTMENTS[0]?.week ?? 12
+    const maxWeek = STANDARD_APPOINTMENTS[STANDARD_APPOINTMENTS.length - 1]?.week ?? 40
+    const VB_W = SIDE_PAD * 2 + Math.max(1, STANDARD_APPOINTMENTS.length - 1) * BEAD_GAP
+    const curveBeads = STANDARD_APPOINTMENTS.map((appt, i) => {
+      const t = STANDARD_APPOINTMENTS.length > 1
+        ? (appt.week - minWeek) / (maxWeek - minWeek)
+        : 0.5
+      const x = SIDE_PAD + i * BEAD_GAP
+      // Sinusoidal Y centered around 65, amplitude 28, ~2.5 cycles across the curve
+      const y = 65 + Math.sin(t * Math.PI * 2.4) * -28
+      const isDone = weekNumber > appt.week
+      const isNext = !isDone && weekNumber >= appt.week - 2
+      const status: 'done' | 'next' | 'future' = isDone ? 'done' : isNext ? 'next' : 'future'
+      return { appt, x, y, status, idx: i }
+    })
+
+    // Smooth S-curve path through all beads (Catmull–Rom-ish via cubic Beziers).
+    const buildPath = (pts: { x: number; y: number }[]): string => {
+      if (pts.length < 2) return ''
+      let d = `M${pts[0].x},${pts[0].y}`
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[i - 1] ?? pts[i]
+        const p1 = pts[i]
+        const p2 = pts[i + 1]
+        const p3 = pts[i + 2] ?? p2
+        const cp1x = p1.x + (p2.x - p0.x) / 6
+        const cp1y = p1.y + (p2.y - p0.y) / 6
+        const cp2x = p2.x - (p3.x - p1.x) / 6
+        const cp2y = p2.y - (p3.y - p1.y) / 6
+        d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`
+      }
+      return d
+    }
+    const fullPath = buildPath(curveBeads)
+    // Done segment: subset path through done beads + the next bead so it visually trails into the active one.
+    const doneIdxMax = curveBeads.findIndex((b) => b.status !== 'done')
+    const doneSlice = doneIdxMax === -1 ? curveBeads : curveBeads.slice(0, doneIdxMax + 1)
+    const donePath = buildPath(doneSlice)
+
+    const trimester = weekNumber <= 13 ? 1 : weekNumber <= 27 ? 2 : 3
+
     return (
-      <View style={{ gap: 10 }}>
+      <View style={{ gap: 14 }}>
+        {/* ─── S-curve sticker card ────────────────────────────────────── */}
+        <View
+          style={{
+            backgroundColor: ST_PAPER,
+            borderRadius: 24,
+            borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+            padding: 18,
+            shadowColor: ST_INK,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isDark ? 0 : 0.10,
+            shadowRadius: 0, elevation: 3,
+          }}
+        >
+          {/* Header */}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.4 }}>
+                Pregnancy path
+              </Text>
+              <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 11, fontFamily: 'DMSans_700Bold', letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4 }}>
+                {STANDARD_APPOINTMENTS.length} milestones · 40 weeks
+              </Text>
+            </View>
+            <View style={{
+              backgroundColor: ST_CREAM,
+              borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+              borderRadius: 999,
+              paddingHorizontal: 10, paddingVertical: 5,
+            }}>
+              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase' }}>
+                Trimester {trimester}
+              </Text>
+            </View>
+          </View>
+
+          {/* SVG curve — horizontally scrollable */}
+          <ScrollView
+            ref={apptCurveScrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: 6, marginBottom: 4, marginHorizontal: -18 }}
+            contentContainerStyle={{ paddingHorizontal: 18 }}
+            decelerationRate="fast"
+          >
+            <View>
+              <Svg width={VB_W} height={VB_H} viewBox={`0 0 ${VB_W} ${VB_H}`}>
+                {/* Faint full path */}
+                <SvgPath
+                  d={fullPath}
+                  fill="none"
+                  stroke={isDark ? colors.border : '#D9CFB6'}
+                  strokeWidth={3}
+                  strokeLinecap="round"
+                />
+                {/* Done path overlay */}
+                {doneSlice.length > 1 && (
+                  <SvgPath
+                    d={donePath}
+                    fill="none"
+                    stroke={ST_CORAL}
+                    strokeWidth={3.5}
+                    strokeLinecap="round"
+                  />
+                )}
+                {/* Beads */}
+                {curveBeads.map((b) => {
+                  const fill = b.status === 'done' ? ST_GREEN : b.status === 'next' ? ST_CORAL : (isDark ? colors.surface : '#FFFEF8')
+                  const r = b.status === 'next' ? 9 : 7
+                  return (
+                    <SvgG key={b.appt.id}>
+                      {/* Glow halo on the active/next bead */}
+                      {b.status === 'next' && (
+                        <SvgCircle cx={b.x} cy={b.y} r={16} fill={ST_CORAL} opacity={0.18} />
+                      )}
+                      <SvgCircle
+                        cx={b.x} cy={b.y} r={r}
+                        fill={fill}
+                        stroke={isDark ? colors.text : ST_INK}
+                        strokeWidth={1.8}
+                      />
+                    </SvgG>
+                  )
+                })}
+              </Svg>
+
+              {/* Week labels strip — aligned to bead x positions, tappable */}
+              <View style={{ width: VB_W, height: 24, marginTop: 4 }}>
+                {curveBeads.map((b) => {
+                  const labelColor =
+                    b.status === 'done' ? ST_GREEN
+                    : b.status === 'next' ? ST_CORAL
+                    : (isDark ? colors.textMuted : '#8A8480')
+                  return (
+                    <Pressable
+                      key={b.appt.id}
+                      onPress={() => setSelectedAppt(b.appt)}
+                      hitSlop={10}
+                      style={{
+                        position: 'absolute',
+                        left: b.x - 22,
+                        width: 44,
+                        alignItems: 'center',
+                        paddingVertical: 2,
+                      }}
+                    >
+                      <Text style={{
+                        color: labelColor,
+                        fontSize: 11,
+                        fontFamily: b.status === 'next' ? 'DMSans_700Bold' : 'DMSans_600SemiBold',
+                        letterSpacing: 0.4,
+                      }}>
+                        W{b.appt.week}
+                      </Text>
+                    </Pressable>
+                  )
+                })}
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* Legend */}
+          <View style={{ flexDirection: 'row', gap: 14, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: isDark ? colors.border : '#E8DEC6' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ST_GREEN, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
+              <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 11, fontFamily: 'DMSans_600SemiBold' }}>Done</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ST_CORAL, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
+              <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 11, fontFamily: 'DMSans_600SemiBold' }}>Soon</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: isDark ? colors.surface : '#FFFEF8', borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
+              <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 11, fontFamily: 'DMSans_600SemiBold' }}>Upcoming</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ─── Appointment cards (tap to open detail) ─────────────────── */}
         {STANDARD_APPOINTMENTS.map((appt) => {
           const isDone = weekNumber > appt.week
           const isNext = !isDone && weekNumber >= appt.week - 2
           const status: 'done' | 'next' | 'future' = isDone ? 'done' : isNext ? 'next' : 'future'
 
-          const ringColor = isDone ? COLOR_GREEN : isNext ? COLOR_AMBER : colors.textMuted
-          const ringBg = isDone ? COLOR_GREEN : isNext ? COLOR_AMBER : 'transparent'
+          const beadColor = isDone ? ST_GREEN : isNext ? ST_CORAL : (isDark ? colors.surface : '#FFFEF8')
 
           const wrappedIcon = (
             <View
               style={{
                 width: 40, height: 40, borderRadius: 20,
                 alignItems: 'center', justifyContent: 'center',
-                backgroundColor: ringBg,
-                borderWidth: isDone || isNext ? 0 : 2,
-                borderColor: ringColor,
+                backgroundColor: beadColor,
+                borderWidth: 1.5,
+                borderColor: isDark ? colors.text : ST_INK,
               }}
             >
               {isDone ? (
-                <Check size={18} color="#fff" strokeWidth={3} />
+                <Check size={16} color={isDark ? colors.text : ST_INK} strokeWidth={3} />
               ) : (
-                <Text style={{ fontFamily: 'Fraunces_800ExtraBold', fontSize: 12, color: isNext ? '#fff' : ringColor }}>
+                <Text style={{ fontFamily: 'Fraunces_800ExtraBold', fontSize: 11, color: isDark ? colors.text : ST_INK }}>
                   W{appt.week}
                 </Text>
               )}
@@ -1679,24 +2350,41 @@ export function PregnancyCalendar() {
               : `Week ${appt.week} · ${appt.prepNote.length > 60 ? appt.prepNote.slice(0, 57) + '…' : appt.prepNote}`
 
           return (
-            <View key={appt.id} style={{ opacity: status === 'future' ? 0.7 : 1 }}>
+            <View key={appt.id} style={{ opacity: status === 'future' ? 0.75 : 1 }}>
               <ActivityPillCard
                 icon={wrappedIcon}
                 title={appt.name}
                 subtitle={subtitle}
                 tint={isNext ? 'appointment' : 'activity'}
-                chip={isNext ? { label: 'Soon', color: COLOR_AMBER } : undefined}
+                chip={isNext ? { label: 'Soon', color: ST_CORAL } : undefined}
                 onPress={() => setSelectedAppt(appt)}
               />
             </View>
           )
         })}
+
+        {/* Add appointment sticker button */}
         <Pressable
           onPress={() => setLogForm({ type: 'appointment', date: todayStr })}
-          style={[styles.addApptBtn, { backgroundColor: brand.pregnancy }]}
+          style={({ pressed }) => ({
+            height: 56,
+            borderRadius: 999,
+            backgroundColor: ST_LAVENDER,
+            borderWidth: 2, borderColor: isDark ? colors.border : ST_INK,
+            alignItems: 'center', justifyContent: 'center',
+            flexDirection: 'row',
+            gap: 10,
+            shadowColor: ST_INK,
+            shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+            shadowOpacity: 1, shadowRadius: 0, elevation: 5,
+            transform: [{ translateY: pressed ? 2 : 0 }],
+            marginTop: 4,
+          })}
         >
-          <Plus size={18} color="#fff" strokeWidth={3} />
-          <Text style={styles.addApptBtnText}>Add appointment / exam</Text>
+          <Plus size={18} color="#FFF" strokeWidth={3} />
+          <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+            Add appointment / exam
+          </Text>
         </Pressable>
       </View>
     )
@@ -1785,33 +2473,27 @@ export function PregnancyCalendar() {
       </LogSheet>
 
       {/* Log Detail Popup */}
-      <Modal
+      <LogSheet
         visible={selectedLog !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setSelectedLog(null)}
+        title={selectedLog ? (LOG_META[selectedLog.log_type]?.label ?? selectedLog.log_type) : ''}
+        onClose={() => setSelectedLog(null)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setSelectedLog(null)}>
-          <Pressable onPress={(e) => e.stopPropagation()}>
-            {selectedLog !== null && (
-              <LogDetailPopup
-                log={selectedLog}
-                onClose={() => setSelectedLog(null)}
-                onEdit={() => {
-                  const logToEdit = selectedLog
-                  setSelectedLog(null)
-                  setLogForm({ type: logToEdit.log_type as LogFormType, date: logToEdit.log_date })
-                }}
-                onDeleted={() => {
-                  setSelectedLog(null)
-                  void refetch()
-                  void refetchToday()
-                }}
-              />
-            )}
-          </Pressable>
-        </Pressable>
-      </Modal>
+        {selectedLog !== null && (
+          <LogDetailPopup
+            log={selectedLog}
+            onEdit={() => {
+              const logToEdit = selectedLog
+              setSelectedLog(null)
+              setLogForm({ type: logToEdit.log_type as LogFormType, date: logToEdit.log_date })
+            }}
+            onDeleted={() => {
+              setSelectedLog(null)
+              void refetch()
+              void refetchToday()
+            }}
+          />
+        )}
+      </LogSheet>
 
       {/* Journey Week Detail Modal */}
       <WeekDetailModal
@@ -2124,60 +2806,46 @@ const styles = StyleSheet.create({
   saveRoutineBtn: { paddingVertical: 14, borderRadius: 999, alignItems: 'center', marginTop: 4 },
   saveRoutineBtnText: { fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '700', color: '#fff' },
 
-  // Log Detail Bottom Sheet (Kids style)
-  detailSheet: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingTop: 8,
-    paddingHorizontal: 20,
-  },
-  detailHandle: {
-    width: 40, height: 4, borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignSelf: 'center', marginBottom: 20,
-  },
-  detailHeader: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 14,
-  },
-  detailTitle: { fontSize: 22, fontFamily: 'Fraunces_800ExtraBold' },
-  detailClose: { padding: 8 },
-  detailInfoRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderRadius: 14, padding: 12, marginBottom: 10,
-  },
-  detailInfoText: { fontSize: 13, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
+  // Log Detail (paper aesthetic — matches add-log forms)
+  detailBody: { paddingTop: 4, paddingBottom: 16 },
   detailMetricCard: {
-    borderRadius: 24, borderWidth: 1, padding: 24,
-    alignItems: 'center', gap: 6, marginBottom: 14,
+    borderRadius: 24, borderWidth: 1.5, padding: 24,
+    alignItems: 'center', gap: 6, marginTop: 16, marginBottom: 12,
   },
-  detailMetricBig: { fontSize: 52, fontFamily: 'Fraunces_800ExtraBold', letterSpacing: -2 },
+  detailMetricBig: { fontSize: 56, fontFamily: 'Fraunces_800ExtraBold', letterSpacing: -2 },
   detailMetricText: { fontSize: 22, fontFamily: 'Fraunces_800ExtraBold', textAlign: 'center' },
   detailMetricUnit: { fontSize: 20, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
   detailMetricLabel: {
-    fontSize: 11, fontFamily: 'DMSans_500Medium', fontWeight: '700',
-    letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 2,
+    fontSize: 11, fontFamily: 'DMSans_700Bold', fontWeight: '700',
+    letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 4,
   },
+  detailDateRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    borderRadius: 999, borderWidth: 1.5,
+    paddingHorizontal: 14, paddingVertical: 9,
+    alignSelf: 'flex-start', marginBottom: 14,
+  },
+  detailDateText: { fontSize: 13, fontFamily: 'DMSans_700Bold' },
   detailPillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   detailPill: {
     paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 999, borderWidth: 1,
+    borderRadius: 999, borderWidth: 1.5,
   },
-  detailPillText: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
-  detailNotesBox: { borderRadius: 14, padding: 14, marginBottom: 14 },
-  detailNotesText: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
-  detailActions: { flexDirection: 'row', gap: 12, marginTop: 4 },
+  detailPillText: { fontSize: 12, fontFamily: 'DMSans_700Bold' },
+  detailNotesBox: { borderRadius: 18, borderWidth: 1.5, padding: 14, marginBottom: 14 },
+  detailNotesText: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 20 },
+  detailActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
   detailEditBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 8,
-    paddingVertical: 16, borderRadius: 999,
+    paddingVertical: 16, borderRadius: 999, borderWidth: 1.5,
   },
   detailDeleteBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 8,
-    paddingVertical: 16, borderRadius: 999, borderWidth: 1,
+    paddingVertical: 16, borderRadius: 999, borderWidth: 1.5,
   },
-  detailActionText: { fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '700', color: '#fff' },
+  detailActionText: { fontSize: 15, fontFamily: 'DMSans_700Bold', fontWeight: '700', color: '#fff' },
 
   // Timeline (Cards mode)
   modeToggle: {

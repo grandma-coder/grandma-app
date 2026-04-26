@@ -13,7 +13,7 @@
 import { useEffect, useState } from 'react'
 import { Text as RNText, TextInput as RNTextInput } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import * as Font from 'expo-font'
 import { Fraunces_600SemiBold } from '@expo-google-fonts/fraunces/600SemiBold'
 import { Fraunces_700Bold } from '@expo-google-fonts/fraunces/700Bold'
@@ -56,7 +56,7 @@ import { DevModeBanner } from '../components/ui/DevModeBanner'
 import type { Session } from '@supabase/supabase-js'
 import type { ChildWithRole, CaregiverPermissions } from '../types'
 
-const queryClient = new QueryClient()
+import { queryClient } from '../lib/queryClient'
 
 /**
  * Set the default font family on every <Text> and <TextInput> once

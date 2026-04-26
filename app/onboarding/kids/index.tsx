@@ -18,7 +18,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
 } from 'react-native'
-import DateTimePicker from '@react-native-community/datetimepicker'
+import DatePickerField from '../../../components/ui/DatePickerField'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 import { Star, Camera, User, Plus, Minus, Check } from 'lucide-react-native'
@@ -87,7 +87,6 @@ export default function KidsOnboarding() {
   const { handleComplete: onboardingComplete } = useOnboardingComplete()
 
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [showDatePicker, setShowDatePicker] = useState(Platform.OS === 'ios')
 
   const steps = buildSteps(store.childCount)
   const currentStep = steps[currentIndex]
@@ -99,8 +98,6 @@ export default function KidsOnboarding() {
   const goNext = useCallback(() => {
     if (currentIndex < steps.length - 1) {
       setCurrentIndex((i) => i + 1)
-      // Reset date picker for Android on child switch
-      if (Platform.OS === 'android') setShowDatePicker(false)
     }
   }, [currentIndex, steps.length])
 
@@ -109,7 +106,6 @@ export default function KidsOnboarding() {
   const goBack = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex((i) => i - 1)
-      if (Platform.OS === 'android') setShowDatePicker(false)
     }
   }, [currentIndex])
 
@@ -254,8 +250,6 @@ export default function KidsOnboarding() {
           step={stepNum}
           total={totalSteps}
           childIdx={childIdx}
-          showPicker={showDatePicker}
-          setShowPicker={setShowDatePicker}
           onContinue={goNext}
         />
       )}
@@ -424,23 +418,17 @@ function StepChildDob({
   step,
   total,
   childIdx,
-  showPicker,
-  setShowPicker,
   onContinue,
 }: {
   step: number
   total: number
   childIdx: number
-  showPicker: boolean
-  setShowPicker: (v: boolean) => void
   onContinue: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius } = useTheme()
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
   const childName = child?.name || `Child ${childIdx + 1}`
-
-  const dateValue = child?.birthDate ? new Date(child.birthDate) : new Date()
 
   return (
     <OnboardingStep
@@ -451,50 +439,15 @@ function StepChildDob({
       continueDisabled={!child?.birthDate}
     >
       <View style={stepStyles.centered}>
-        {Platform.OS === 'android' && !showPicker && (
-          <Pressable
-            onPress={() => setShowPicker(true)}
-            style={[
-              stepStyles.dateButton,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                borderRadius: radius.lg,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                stepStyles.dateButtonText,
-                { color: child?.birthDate ? colors.text : colors.textMuted },
-              ]}
-            >
-              {child?.birthDate
-                ? new Date(child.birthDate).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })
-                : 'Tap to select a date'}
-            </Text>
-          </Pressable>
-        )}
-        {showPicker && (
-          <DateTimePicker
-            value={dateValue}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            maximumDate={new Date()}
-            minimumDate={new Date(2005, 0, 1)}
-            onChange={(_, selected) => {
-              if (Platform.OS === 'android') setShowPicker(false)
-              if (selected) {
-                updateChild(childIdx, { birthDate: selected.toISOString().split('T')[0] })
-              }
-            }}
-            themeVariant={isDark ? 'dark' : 'light'}
-          />
-        )}
+        <DatePickerField
+          label=""
+          value={child?.birthDate || ''}
+          onChange={(iso) => updateChild(childIdx, { birthDate: iso })}
+          placeholder="Tap to select a date"
+          modalTitle={`${childName}'s birth date`}
+          maximumDate={new Date()}
+          minimumDate={new Date(2005, 0, 1)}
+        />
 
         {child?.birthDate && (
           <View style={[stepStyles.ageBadge, { backgroundColor: colors.primaryTint, borderRadius: radius.lg }]}>

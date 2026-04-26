@@ -132,6 +132,8 @@ interface BadgeState {
   hasBadge: (badgeId: string) => boolean
   checkIn: () => { points: number; newBadges: string[]; streak: number }
   addPoints: (amount: number) => void
+  /** Overwrites streak + totalPoints from Supabase-derived values (single source of truth). */
+  setSyncedStats: (s: { currentStreak: number; longestStreak: number; totalPoints: number; totalCheckIns: number }) => void
   getBadgesByCategory: (category: BadgeCategory) => EarnedBadge[]
   syncFromData: (data: {
     totalLogs: number
@@ -259,6 +261,15 @@ export const useBadgeStore = create<BadgeState>()(
 
       addPoints: (amount) => {
         set((s) => ({ totalPoints: s.totalPoints + amount }))
+      },
+
+      setSyncedStats: ({ currentStreak, longestStreak, totalPoints, totalCheckIns }) => {
+        set((s) => ({
+          currentStreak,
+          longestStreak: Math.max(s.longestStreak, longestStreak),
+          totalPoints,
+          totalCheckIns: Math.max(s.totalCheckIns, totalCheckIns),
+        }))
       },
 
       getBadgesByCategory: (category) => {

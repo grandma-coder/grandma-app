@@ -618,23 +618,36 @@ export default function DailyRewardsScreen() {
                 <X size={16} color={ink} />
               </Pressable>
             </View>
-            <View style={{ gap: 8, marginTop: 8 }}>
-              {POINTS_ROWS.map((item) => (
-                <View
-                  key={item.label}
-                  style={[styles.modalRow, { backgroundColor: paperRaised, borderColor: line }]}
-                >
-                  <View style={[styles.modalDot, { backgroundColor: stickers[item.color] }]} />
-                  <Text style={[styles.modalLabel, { color: ink, fontFamily: font.body }]}>
-                    {item.label}
-                  </Text>
-                  <Text
-                    style={[styles.modalPts, { color: stickers[item.color], fontFamily: font.bodySemiBold }]}
+            <Text style={[styles.modalSubtitle, { color: ink, fontFamily: font.italic }]}>
+              Earn points across the app — they roll up into your leaderboard rank.
+            </Text>
+            <View style={{ gap: 8, marginTop: 12 }}>
+              {POINTS_ROWS.map((item) => {
+                const dotColor = stickers[item.color]
+                return (
+                  <View
+                    key={item.label}
+                    style={[styles.modalRow, { backgroundColor: paperRaised, borderColor: line }]}
                   >
-                    {item.pts}
-                  </Text>
-                </View>
-              ))}
+                    <View
+                      style={[
+                        styles.modalDot,
+                        {
+                          backgroundColor: dotColor,
+                          borderWidth: 1.2,
+                          borderColor: 'rgba(20,19,19,0.35)',
+                        },
+                      ]}
+                    />
+                    <Text style={[styles.modalLabel, { color: ink, fontFamily: font.bodySemiBold }]}>
+                      {item.label}
+                    </Text>
+                    <Text style={[styles.modalPts, { color: ink, fontFamily: font.display }]}>
+                      {item.pts}
+                    </Text>
+                  </View>
+                )
+              })}
             </View>
           </Pressable>
         </Pressable>
@@ -1065,18 +1078,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
   },
+  modalSubtitle: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    marginTop: 4,
+    opacity: 0.7,
+    lineHeight: 19,
+  },
   modalRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 14,
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 16,
     borderWidth: 1,
   },
-  modalDot: { width: 10, height: 10, borderRadius: 5 },
-  modalLabel: { fontSize: 14, flex: 1 },
-  modalPts: { fontSize: 14 },
+  modalDot: { width: 12, height: 12, borderRadius: 6 },
+  modalLabel: { fontSize: 14.5, flex: 1, letterSpacing: -0.2 },
+  modalPts: { fontSize: 17, letterSpacing: -0.4, fontWeight: '700' },
 
   // Category modal
   catModalHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },

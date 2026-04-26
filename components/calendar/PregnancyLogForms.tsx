@@ -29,6 +29,7 @@ import {
   stickersDark,
 } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
+import { queryClient } from '../../lib/queryClient'
 import { LogFormSticker } from './LogFormSticker'
 import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Burst as BurstSticker, Star as StarSticker } from '../stickers/BrandStickers'
@@ -57,6 +58,7 @@ async function savePregnancyLog(
     notes: notes ?? null,
   })
   if (error) throw error
+  await queryClient.invalidateQueries({ queryKey: ['pregnancy-week-logs'] })
 }
 
 // ─── Mood Form ─────────────────────────────────────────────────────────────
@@ -317,6 +319,15 @@ export function AppointmentForm({
     }
   }
 
+  // Sticker-on-paper palette (mode = pregnancy → lavender accent)
+  const ST_INK = '#141313'
+  const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
+  const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+  const ST_LAVENDER = isDark ? '#C4B5EF' : brand.pregnancy
+  const ST_LAVENDER_SOFT = '#E0D6F4'
+  const inkBorder = isDark ? colors.border : ST_INK
+  const inkText = isDark ? colors.text : ST_INK
+
   return (
     <View style={styles.form}>
       <LogFormSticker
@@ -324,6 +335,8 @@ export function AppointmentForm({
         label={`Visit on ${formatDate(date)}`}
         tint={s.yellowSoft}
       />
+
+      {/* Type chips — sticker pills */}
       <View style={styles.chipGrid}>
         {APPOINTMENT_TYPES.map((t) => {
           const active = type === t
@@ -331,19 +344,29 @@ export function AppointmentForm({
             <Pressable
               key={t}
               onPress={() => setType(t)}
-              style={[
+              style={({ pressed }) => [
                 styles.chip,
                 {
-                  backgroundColor: active ? brand.pregnancy + '24' : colors.surface,
-                  borderColor: active ? brand.pregnancy : colors.border,
-                  borderRadius: radius.full,
+                  backgroundColor: active ? ST_LAVENDER_SOFT : ST_CREAM,
+                  borderColor: isDark && !active ? colors.border : ST_INK,
+                  borderWidth: 1.5,
+                  borderRadius: 999,
+                  shadowColor: ST_INK,
+                  shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
+                  shadowOpacity: active ? (1) : 0,
+                  shadowRadius: 0,
+                  elevation: active ? 3 : 0,
+                  transform: [{ translateY: active && pressed ? 1 : 0 }],
                 },
               ]}
             >
               <Text
                 style={[
                   styles.chipText,
-                  { color: active ? brand.pregnancy : colors.text },
+                  {
+                    color: inkText,
+                    fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold',
+                  },
                 ]}
               >
                 {t}
@@ -352,55 +375,66 @@ export function AppointmentForm({
           )
         })}
       </View>
+
       {isOther && (
         <TextInput
           value={customType}
           onChangeText={setCustomType}
           placeholder="Describe the appointment"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
           autoFocus
           style={[
             styles.input,
             {
-              color: colors.text,
-              backgroundColor: colors.surface,
-              borderColor: brand.pregnancy,
-              borderRadius: radius.lg,
+              color: inkText,
+              backgroundColor: ST_CREAM,
+              borderColor: inkBorder,
+              borderWidth: 1.5,
+              borderRadius: 999,
+              height: 52,
             },
           ]}
         />
       )}
+
       <TextInput
         value={doctor}
         onChangeText={setDoctor}
         placeholder="Doctor name (optional)"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
         style={[
           styles.input,
           {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
+            color: inkText,
+            backgroundColor: ST_CREAM,
+            borderColor: inkBorder,
+            borderWidth: 1.5,
+            borderRadius: 999,
+            height: 56,
+            paddingVertical: 0,
+            textAlignVertical: 'center',
           },
         ]}
       />
+
       <TextInput
         value={notes}
         onChangeText={setNotes}
         placeholder="Notes (optional)"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
         multiline
         style={[
           styles.inputMultiline,
           {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
+            color: inkText,
+            backgroundColor: ST_CREAM,
+            borderColor: inkBorder,
+            borderWidth: 1.5,
+            borderRadius: 22,
           },
         ]}
       />
+
       <SaveButton onPress={save} saving={saving} disabled={!canSave} />
     </View>
   )
@@ -584,29 +618,39 @@ function SaveButton({
   disabled?: boolean
   label?: string
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
+  const ST_INK = '#141313'
+  const ST_LAVENDER = isDark ? '#C4B5EF' : brand.pregnancy
+  const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+  const isDisabled = !!disabled
   return (
     <Pressable
       onPress={onPress}
-      disabled={saving || disabled}
+      disabled={saving || isDisabled}
       style={({ pressed }) => [
         styles.saveBtn,
         {
-          backgroundColor: disabled ? colors.surface : brand.pregnancy,
-          borderColor: disabled ? colors.border : brand.pregnancy,
-          borderWidth: 1.5,
-          borderRadius: radius.full,
+          backgroundColor: isDisabled ? ST_CREAM : ST_LAVENDER,
+          borderColor: isDark && isDisabled ? colors.border : ST_INK,
+          borderWidth: 2,
+          borderRadius: 999,
+          shadowColor: ST_INK,
+          shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+          shadowOpacity: 1,
+          shadowRadius: 0,
+          elevation: 5,
+          transform: [{ translateY: pressed && !isDisabled ? 2 : 0 }],
+          opacity: isDisabled ? 0.55 : 1,
         },
-        pressed && !disabled && { transform: [{ scale: 0.98 }], opacity: 0.9 },
       ]}
     >
       {saving ? (
-        <ActivityIndicator color={disabled ? colors.textMuted : '#FFFEF8'} />
+        <ActivityIndicator color={isDisabled ? colors.textMuted : '#FFFEF8'} />
       ) : (
         <Text
           style={[
             styles.saveBtnText,
-            { color: disabled ? colors.textMuted : '#FFFEF8' },
+            { color: isDisabled ? (isDark ? colors.textMuted : '#6E6763') : '#FFFEF8' },
           ]}
         >
           {label ?? 'Save'}
@@ -1374,10 +1418,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   saveBtnText: {
-    fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
-    fontWeight: '700',
-    letterSpacing: 0.2,
+    fontSize: 15,
+    fontFamily: 'DMSans_700Bold',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   chipRow: {
     flexDirection: 'row',

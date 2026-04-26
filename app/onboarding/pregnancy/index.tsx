@@ -16,7 +16,7 @@ import {
   Platform,
   KeyboardAvoidingView,
 } from 'react-native'
-import DateTimePicker from '@react-native-community/datetimepicker'
+import DatePickerField from '../../../components/ui/DatePickerField'
 import { router } from 'expo-router'
 import { Heart } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -98,7 +98,6 @@ export default function PregnancyOnboarding() {
   const { handleComplete: onboardingComplete } = useOnboardingComplete()
 
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [showDatePicker, setShowDatePicker] = useState(Platform.OS === 'ios')
 
   const currentStep = STEPS[currentIndex]
 
@@ -215,8 +214,6 @@ export default function PregnancyOnboarding() {
       {currentStep === 'due_date' && (
         <StepDueDate
           step={1}
-          showPicker={showDatePicker}
-          setShowPicker={setShowDatePicker}
           onContinue={goNext}
         />
       )}
@@ -247,23 +244,20 @@ export default function PregnancyOnboarding() {
 
 function StepDueDate({
   step,
-  showPicker,
-  setShowPicker,
   onContinue,
 }: {
   step: number
-  showPicker: boolean
-  setShowPicker: (v: boolean) => void
   onContinue: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius } = useTheme()
   const dueDate = usePregnancyOnboardingStore((s) => s.dueDate)
   const setDueDate = usePregnancyOnboardingStore((s) => s.setDueDate)
 
-  // Default to ~6 months from now for picker initial value
-  const defaultDate = new Date()
-  defaultDate.setMonth(defaultDate.getMonth() + 6)
-  const dateValue = dueDate ? new Date(dueDate) : defaultDate
+  const maxDue = (() => {
+    const d = new Date()
+    d.setMonth(d.getMonth() + 10)
+    return d
+  })()
 
   return (
     <OnboardingStep
@@ -274,52 +268,15 @@ function StepDueDate({
       continueDisabled={!dueDate}
     >
       <View style={stepStyles.centered}>
-        {Platform.OS === 'android' && !showPicker && (
-          <Pressable
-            onPress={() => setShowPicker(true)}
-            style={[
-              stepStyles.dateButton,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                borderRadius: radius.lg,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                stepStyles.dateButtonText,
-                { color: dueDate ? colors.text : colors.textMuted },
-              ]}
-            >
-              {dueDate
-                ? new Date(dueDate).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })
-                : 'Tap to select your due date'}
-            </Text>
-          </Pressable>
-        )}
-        {showPicker && (
-          <DateTimePicker
-            value={dateValue}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            minimumDate={new Date()}
-            maximumDate={(() => {
-              const d = new Date()
-              d.setMonth(d.getMonth() + 10)
-              return d
-            })()}
-            onChange={(_, selected) => {
-              if (Platform.OS === 'android') setShowPicker(false)
-              if (selected) setDueDate(selected.toISOString().split('T')[0])
-            }}
-            themeVariant={isDark ? 'dark' : 'light'}
-          />
-        )}
+        <DatePickerField
+          label=""
+          value={dueDate || ''}
+          onChange={setDueDate}
+          placeholder="Tap to select your due date"
+          modalTitle="Due date"
+          minimumDate={new Date()}
+          maximumDate={maxDue}
+        />
 
         {/* Week indicator */}
         {dueDate && (

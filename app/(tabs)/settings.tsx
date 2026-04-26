@@ -26,6 +26,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
 import { useChildStore } from '../../store/useChildStore'
 import { useBadgeStore, BADGE_DEFS } from '../../store/useBadgeStore'
+import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { supabase } from '../../lib/supabase'
 import { useTranslation } from '../../lib/i18n'
 import { useDevPanel } from '../../context/DevPanelContext'
@@ -47,6 +48,8 @@ export default function ProfileScreen() {
   const children = useChildStore((s) => s.children)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
   const earnedBadges = useBadgeStore((s) => s.earnedBadges)
+  const pregnancyWeek = usePregnancyStore((s) => s.weekNumber)
+  const pregnancyDueDate = usePregnancyStore((s) => s.dueDate)
 
   const [userName, setUserName] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
@@ -143,11 +146,34 @@ export default function ProfileScreen() {
   const hasChildren = children.length > 0
   const hasEmergency = false // Wave 2 wires real emergency status
 
-  const kidPills: KidPill[] = children.map((c, i) => ({
-    id: c.id,
-    name: c.name,
-    color: childColor(i),
-  }))
+  // Behavior-aware gating — each journey only sees the menu items relevant
+  // to it (e.g. a pregnant user shouldn't see Kids Profile or per-child
+  // health history; a trying user shouldn't see kids-anything either).
+  const isKidsBehavior = currentBehavior === 'kids'
+  const isPregnancyBehavior = currentBehavior === 'pregnancy'
+  const isPrePregBehavior = currentBehavior === 'pre-pregnancy'
+  const showKidsItems = isKidsBehavior && hasChildren
+
+  // Hide the per-child sticker pills in the hero unless the user is
+  // actually in the kids journey — a pregnant user seeing kid pills
+  // when they're tracking their pregnancy is just noise.
+  const kidPills: KidPill[] = isKidsBehavior
+    ? children.map((c, i) => ({
+        id: c.id,
+        name: c.name,
+        color: childColor(i),
+      }))
+    : []
+
+  // Pregnancy summary value (e.g. "Week 24" or "Due Aug 12")
+  const pregnancySummary = (() => {
+    if (pregnancyWeek != null) return `Week ${pregnancyWeek}`
+    if (pregnancyDueDate) {
+      const d = new Date(pregnancyDueDate + 'T12:00:00')
+      return `Due ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+    }
+    return 'Set up'
+  })()
 
   function handleKidPillPress(id: string) {
     const child = children.find((c) => c.id === id)
@@ -219,7 +245,29 @@ export default function ProfileScreen() {
             value={careCircleCount === 1 ? '1 person' : `${careCircleCount} people`}
             onPress={() => router.push('/profile/care-circle')}
           />
-          {hasChildren && (
+
+          {/* Pregnancy-only row — surfaces current week / due date */}
+          {isPregnancyBehavior && (
+            <StatRow
+              icon={<AnimatedSticker type="Heart" size={18} fill="#C8B6E8" />}
+              label="Pregnancy"
+              value={pregnancySummary}
+              onPress={() => router.push('/birth-plan')}
+            />
+          )}
+
+          {/* Pre-pregnancy-only row — cycle tracking entry point */}
+          {isPrePregBehavior && (
+            <StatRow
+              icon={<AnimatedSticker type="Moon" size={18} fill="#F2B2C7" />}
+              label="Cycle"
+              value="Tracking"
+              onPress={() => router.push('/(tabs)')}
+            />
+          )}
+
+          {/* Kids-only rows — hidden in pregnancy / pre-pregnancy modes */}
+          {showKidsItems && (
             <StatRow
               icon={<AnimatedSticker type="Flower" size={18} petal="#9DC3E8" center="#F5D652" />}
               label="Kids Profile"
@@ -227,7 +275,7 @@ export default function ProfileScreen() {
               onPress={() => router.push('/profile/kids')}
             />
           )}
-          {hasChildren && (
+          {showKidsItems && (
             <StatRow
               icon={<AnimatedSticker type="Star" size={18} fill="#F5D652" />}
               label={t('profile_memories')}
@@ -235,7 +283,7 @@ export default function ProfileScreen() {
               onPress={() => router.push('/profile/memories')}
             />
           )}
-          {hasChildren && (
+          {showKidsItems && (
             <StatRow
               icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
               label={t('profile_healthHistory')}

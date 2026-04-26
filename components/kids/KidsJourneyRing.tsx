@@ -4,10 +4,14 @@
  * Mirrors PregnancyJourneyRing's rotation/snap/tap mechanics but adapted for
  * kids: each dot represents one growth leap (week 5 → week 75), labeled W{n}
  * inside, colored per leap, anchored at 6 o'clock when selected.
+ *
+ * Tapping the centre / "Growth Leap" card opens a detail modal with the
+ * brain-development context, three phases, observable signs, emerging
+ * skills, parent-led activities and a tip.
  */
 
 import React, { useRef, useState, useMemo, useCallback } from 'react'
-import { View, Text, ScrollView, PanResponder, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, PanResponder, StyleSheet, Pressable, Modal } from 'react-native'
 import Svg, { Circle, Polygon } from 'react-native-svg'
 import Animated, {
   useSharedValue,
@@ -21,7 +25,9 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { X, ChevronRight, Brain, Sparkles, Flame } from 'lucide-react-native'
 import { useTheme } from '../../constants/theme'
+import { GROWTH_LEAPS, leapStatusForWeek, type GrowthLeap } from '../../lib/growthLeaps'
 
 // ─── Layout constants ────────────────────────────────────────────────────────
 const SVG_SIZE = 320
@@ -29,14 +35,7 @@ const CX = SVG_SIZE / 2
 const CY = SVG_SIZE / 2
 const RING_R = 128
 const ANCHOR_DEG = 90
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-export interface Leap {
-  week: number
-  name: string
-  desc: string
-  color: string
-}
+const INK = '#141313'
 
 interface DotConfig {
   index: number
@@ -48,47 +47,40 @@ interface DotConfig {
 }
 
 interface Props {
-  leaps: Leap[]
   /** Child's current age in weeks (post-birth) — drives current/past/future */
   weekAge: number
   childName: string
+  /** Optional override; defaults to the shared GROWTH_LEAPS dataset */
+  leaps?: GrowthLeap[]
 }
 
-function leapState(weekAge: number, leapWeek: number): 'past' | 'current' | 'future' {
-  if (weekAge >= leapWeek - 2 && weekAge <= leapWeek + 1) return 'current'
-  if (weekAge > leapWeek + 1) return 'past'
-  return 'future'
-}
-
-function buildDotConfigs(leaps: Leap[], weekAge: number): DotConfig[] {
+function buildDotConfigs(leaps: GrowthLeap[], weekAge: number): DotConfig[] {
   return leaps.map((l, i) => {
     const angleDeg = (i / leaps.length) * 360 - 90
     const angleRad = angleDeg * (Math.PI / 180)
     const bx = CX + RING_R * Math.cos(angleRad)
     const by = CY + RING_R * Math.sin(angleRad)
-    const state = leapState(weekAge, l.week)
+    const state = leapStatusForWeek(weekAge, l.week)
     const size = state === 'current' ? 56 : state === 'past' ? 44 : 38
     return { index: i, bx, by, size, color: l.color, state }
   })
 }
 
-export function KidsJourneyRing({ leaps, weekAge, childName }: Props) {
-  const { font, colors } = useTheme()
+export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Props) {
+  const { font, colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
 
   const dots = useMemo(() => buildDotConfigs(leaps, weekAge), [leaps, weekAge])
   const N = leaps.length
 
-  // Default: snap the closest "current" leap to the anchor; otherwise snap the
-  // closest leap by week age (whichever leap the child is nearest to).
+  // Default selection: the leap currently active, OR the next upcoming leap if
+  // none active, OR the final leap if the child has aged past everything.
   const initialIndex = useMemo(() => {
-    let best = 0
-    let bestDiff = Infinity
-    leaps.forEach((l, i) => {
-      const d = Math.abs(weekAge - l.week)
-      if (d < bestDiff) { bestDiff = d; best = i }
-    })
-    return best
+    const activeIdx = leaps.findIndex((l) => leapStatusForWeek(weekAge, l.week) === 'current')
+    if (activeIdx >= 0) return activeIdx
+    const upcoming = leaps.findIndex((l) => weekAge < l.week - 2)
+    if (upcoming >= 0) return upcoming
+    return leaps.length - 1
   }, [leaps, weekAge])
 
   const initialRot = 180 - (initialIndex / N) * 360
@@ -98,8 +90,15 @@ export function KidsJourneyRing({ leaps, weekAge, childName }: Props) {
     transform: [{ rotate: `${rotationDeg.value}deg` }],
   }))
 
+  // Counter-rotation for the dot label so it always reads upright while the
+  // ring layer rotates beneath the gesture.
+  const counterRotateStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${-rotationDeg.value}deg` }],
+  }))
+
   // ── Selected leap state ───────────────────────────────────────────────────
   const [selectedIndex, setSelectedIndex] = useState(initialIndex)
+  const [detailOpen, setDetailOpen] = useState(false)
 
   const selectedDerived = useDerivedValue(() => {
     let best = 0
@@ -235,19 +234,24 @@ export function KidsJourneyRing({ leaps, weekAge, childName }: Props) {
 
   // ── Derived display values ────────────────────────────────────────────────
   const selectedLeap = leaps[selectedIndex] ?? leaps[0]
-  const selectedState = leapState(weekAge, selectedLeap.week)
+  const selectedState = leapStatusForWeek(weekAge, selectedLeap.week)
   const col = selectedLeap.color
-  const ink = colors.text
+  const ink = isDark ? colors.text : INK
   const inkMuted = colors.textMuted
   const inkFaint = colors.textFaint
   const orbitStroke = colors.border
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : INK
 
   const statusLabel =
     selectedState === 'current' ? 'Now' : selectedState === 'past' ? 'Done' : 'Upcoming'
   const statusColor =
     selectedState === 'current' ? '#EE7B6D' : selectedState === 'past' ? '#8BB356' : col
+  const statusFill =
+    selectedState === 'current' ? '#F5B896'
+    : selectedState === 'past' ? '#BDD48C'
+    : col + '33'
 
-  // Approximate calendar window for this leap (±1 week)
   const weekRangeLabel = `Week ${Math.max(1, selectedLeap.week - 1)}–${selectedLeap.week + 1}`
 
   return (
@@ -282,29 +286,32 @@ export function KidsJourneyRing({ leaps, weekAge, childName }: Props) {
                     width: d.size,
                     height: d.size,
                     borderRadius: d.size / 2,
-                    backgroundColor: isFuture ? d.color + '22' : d.color,
+                    backgroundColor: isFuture ? d.color + '33' : d.color,
                     borderWidth: 1.5,
-                    borderColor: '#141313',
+                    borderColor: isDark ? 'rgba(255,255,255,0.18)' : INK,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    shadowColor: '#141313',
+                    shadowColor: INK,
                     shadowOffset: { width: 0, height: isCurrent ? 2 : 1 },
-                    shadowOpacity: isCurrent ? 0.18 : 0.08,
+                    shadowOpacity: isDark ? 0 : isCurrent ? 0.18 : 0.08,
                     shadowRadius: isCurrent ? 6 : 3,
                     elevation: isCurrent ? 4 : 1,
-                    opacity: isFuture ? 0.85 : 1,
+                    opacity: isFuture ? 0.92 : 1,
                   }}
                 >
-                  <Text
-                    style={{
-                      fontFamily: 'Fraunces_800ExtraBold',
-                      fontSize,
-                      color: isFuture ? d.color : isPast ? '#FFFEF8' : '#FFFEF8',
-                      letterSpacing: -0.3,
-                    }}
-                  >
-                    W{leap.week}
-                  </Text>
+                  {/* Counter-rotate so the W## label always reads upright */}
+                  <Animated.View style={counterRotateStyle}>
+                    <Text
+                      style={{
+                        fontFamily: 'Fraunces_800ExtraBold',
+                        fontSize,
+                        color: isFuture ? (isDark ? '#FFFEF8' : INK) : isPast ? '#FFFEF8' : '#FFFEF8',
+                        letterSpacing: -0.3,
+                      }}
+                    >
+                      W{leap.week}
+                    </Text>
+                  </Animated.View>
                 </View>
               )
             })}
@@ -320,10 +327,11 @@ export function KidsJourneyRing({ leaps, weekAge, childName }: Props) {
               stroke={orbitStroke}
               strokeWidth={1.5}
             />
-            {/* Triangle chevron pointing up at 6 o'clock — leap color */}
             <Polygon
               points={`${CX},${CY + RING_R - 6} ${CX - 9},${CY + RING_R + 9} ${CX + 9},${CY + RING_R + 9}`}
               fill={col}
+              stroke={isDark ? 'rgba(255,255,255,0.18)' : INK}
+              strokeWidth={1.5}
             />
           </Svg>
 
@@ -371,13 +379,13 @@ export function KidsJourneyRing({ leaps, weekAge, childName }: Props) {
           <View
             style={[
               styles.statusPill,
-              { borderColor: statusColor + '55', backgroundColor: statusColor + '1A' },
+              { borderColor: isDark ? statusColor + '70' : INK, backgroundColor: isDark ? statusColor + '22' : statusFill },
             ]}
           >
             <Text
               style={[
                 styles.statusPillText,
-                { color: statusColor, fontFamily: font.bodySemiBold },
+                { color: isDark ? statusColor : INK, fontFamily: font.bodySemiBold },
               ]}
             >
               {statusLabel}
@@ -385,17 +393,34 @@ export function KidsJourneyRing({ leaps, weekAge, childName }: Props) {
           </View>
         </View>
 
-        {/* Description card */}
-        <View
-          style={[
+        {/* Tappable description card → opens detail modal */}
+        <Pressable
+          onPress={() => setDetailOpen(true)}
+          style={({ pressed }) => [
             styles.descCard,
-            { backgroundColor: col + '14', borderColor: col + '38' },
+            {
+              backgroundColor: isDark ? col + '14' : col + '22',
+              borderColor: isDark ? col + '38' : INK,
+              opacity: pressed ? 0.92 : 1,
+            },
           ]}
         >
-          <Text style={[styles.descText, { color: ink, fontFamily: font.body }]}>
-            {selectedLeap.desc}
-          </Text>
-        </View>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={[styles.descText, { color: ink, fontFamily: font.body }]} numberOfLines={2}>
+              {selectedLeap.desc}
+            </Text>
+            <Text style={[styles.descCta, { color: ink, fontFamily: font.bodySemiBold }]}>
+              Tap for full leap guide
+            </Text>
+          </View>
+          <View style={{
+            width: 28, height: 28, borderRadius: 14,
+            backgroundColor: paper, borderWidth: 1.2, borderColor: paperBorder,
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            <ChevronRight size={14} color={ink} strokeWidth={2.2} />
+          </View>
+        </Pressable>
 
         {/* Mini progress strip — 10 leap dots */}
         <View style={styles.section}>
@@ -406,23 +431,25 @@ export function KidsJourneyRing({ leaps, weekAge, childName }: Props) {
           </Text>
           <View style={styles.stripRow}>
             {leaps.map((l, i) => {
-              const state = leapState(weekAge, l.week)
+              const state = leapStatusForWeek(weekAge, l.week)
               const isSel = i === selectedIndex
               const isPast = state === 'past'
               const isCurr = state === 'current'
               return (
-                <View
+                <Pressable
                   key={l.week}
+                  onPress={() => snapToIndex(i)}
+                  hitSlop={8}
                   style={[
                     styles.stripDot,
                     {
-                      backgroundColor: isPast || isCurr ? l.color : l.color + '22',
-                      borderColor: isSel ? '#141313' : l.color,
+                      backgroundColor: isPast || isCurr ? l.color : l.color + '33',
+                      borderColor: isSel ? (isDark ? '#FFFEF8' : INK) : (isDark ? 'rgba(255,255,255,0.25)' : INK),
                       borderWidth: isSel ? 2 : 1,
                       width: isSel ? 16 : isCurr ? 14 : 11,
                       height: isSel ? 16 : isCurr ? 14 : 11,
                       borderRadius: 8,
-                      opacity: isPast ? 0.55 : 1,
+                      opacity: isPast ? 0.6 : 1,
                     },
                   ]}
                 />
@@ -431,7 +458,288 @@ export function KidsJourneyRing({ leaps, weekAge, childName }: Props) {
           </View>
         </View>
       </ScrollView>
+
+      {/* ── Detail modal ── */}
+      <LeapDetailModal
+        visible={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        leap={selectedLeap}
+        leapNumber={selectedIndex + 1}
+        totalLeaps={N}
+        statusLabel={statusLabel}
+        statusFill={statusFill}
+        statusColor={statusColor}
+      />
     </View>
+  )
+}
+
+// ─── Detail Modal ────────────────────────────────────────────────────────────
+
+function LeapDetailModal({
+  visible, onClose, leap, leapNumber, totalLeaps, statusLabel, statusFill, statusColor,
+}: {
+  visible: boolean
+  onClose: () => void
+  leap: GrowthLeap
+  leapNumber: number
+  totalLeaps: number
+  statusLabel: string
+  statusFill: string
+  statusColor: string
+}) {
+  const { colors, font, isDark } = useTheme()
+  const insets = useSafeAreaInsets()
+  const ink = isDark ? colors.text : INK
+  const inkMuted = colors.textMuted
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : INK
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={modalStyles.overlay}>
+        <View style={[
+          modalStyles.sheet,
+          {
+            backgroundColor: isDark ? colors.bg : '#FFFEF8',
+            borderColor: paperBorder,
+            paddingBottom: insets.bottom + 24,
+          },
+        ]}>
+          {/* Drag handle */}
+          <View style={{ alignItems: 'center', paddingTop: 10 }}>
+            <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
+          </View>
+
+          {/* Header */}
+          <View style={modalStyles.header}>
+            <View style={{ flex: 1, paddingRight: 12 }}>
+              <Text style={[modalStyles.eyebrow, { color: leap.color, fontFamily: font.bodySemiBold }]}>
+                LEAP {leapNumber} OF {totalLeaps} · {leap.ageRange}
+              </Text>
+              <Text style={[modalStyles.title, { color: ink, fontFamily: font.display }]} numberOfLines={2}>
+                {leap.name}
+              </Text>
+            </View>
+            <Pressable
+              onPress={onClose}
+              hitSlop={12}
+              style={{
+                width: 34, height: 34, borderRadius: 999,
+                backgroundColor: paper, borderWidth: 1.2, borderColor: paperBorder,
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <X size={15} color={ink} strokeWidth={2.4} />
+            </Pressable>
+          </View>
+
+          <ScrollView
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, gap: 14 }}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Status + duration chips */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              <Chip label={statusLabel} fill={isDark ? statusColor + '22' : statusFill} ink={isDark ? statusColor : INK} isDark={isDark} />
+              <Chip label={`Lasts ${leap.duration}`} fill={isDark ? colors.surfaceRaised : '#FFFEF8'} ink={ink} isDark={isDark} />
+              <Chip label={`Peak: week ${leap.week}`} fill={isDark ? leap.color + '22' : leap.color + '33'} ink={isDark ? leap.color : INK} isDark={isDark} />
+            </View>
+
+            {/* Brain note */}
+            <SectionCard
+              icon={<Brain size={14} color={ink} strokeWidth={2} />}
+              title="What's happening"
+              isDark={isDark}
+              accent={leap.color}
+            >
+              <Text style={[modalStyles.body, { color: ink, fontFamily: font.body }]}>
+                {leap.brainNote}
+              </Text>
+            </SectionCard>
+
+            {/* Phases */}
+            <SectionCard
+              icon={<Flame size={14} color={ink} strokeWidth={2} />}
+              title="Three phases"
+              isDark={isDark}
+              accent={leap.color}
+            >
+              <View style={{ gap: 10 }}>
+                {leap.phases.map((p, i) => {
+                  const phaseColors = ['#EE7B6D', '#F5D652', '#BDD48C']
+                  const fill = phaseColors[i] ?? leap.color
+                  return (
+                    <View
+                      key={p.label}
+                      style={{
+                        flexDirection: 'row',
+                        gap: 10,
+                        padding: 10,
+                        borderRadius: 14,
+                        backgroundColor: isDark ? colors.surfaceRaised : '#FFFEF8',
+                        borderWidth: 1, borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
+                      }}
+                    >
+                      <View style={{
+                        width: 28, height: 28, borderRadius: 14,
+                        backgroundColor: fill,
+                        borderWidth: 1.2, borderColor: isDark ? 'rgba(255,255,255,0.2)' : INK,
+                        alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                      }}>
+                        <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 13, color: isDark ? '#FFFEF8' : INK }}>{i + 1}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[modalStyles.phaseLabel, { color: ink, fontFamily: font.bodySemiBold }]}>
+                          {p.label}
+                        </Text>
+                        <Text style={[modalStyles.body, { color: inkMuted, fontFamily: font.body, marginTop: 2 }]}>
+                          {p.desc}
+                        </Text>
+                      </View>
+                    </View>
+                  )
+                })}
+              </View>
+            </SectionCard>
+
+            {/* Signs */}
+            <BulletSection
+              title="Signs you may notice"
+              items={leap.signs}
+              dot="#EE7B6D"
+              isDark={isDark}
+              accent={leap.color}
+            />
+
+            {/* Skills */}
+            <BulletSection
+              title="New skills emerging"
+              items={leap.skills}
+              dot="#BDD48C"
+              isDark={isDark}
+              accent={leap.color}
+            />
+
+            {/* Activities */}
+            <BulletSection
+              title="Try these activities"
+              items={leap.activities}
+              dot={leap.color}
+              isDark={isDark}
+              accent={leap.color}
+            />
+
+            {/* Tip */}
+            <View style={[
+              modalStyles.tip,
+              {
+                backgroundColor: isDark ? '#F5D65218' : '#F5D652',
+                borderColor: isDark ? '#F5D65240' : INK,
+              },
+            ]}>
+              <Sparkles size={14} color={isDark ? '#F5D652' : INK} strokeWidth={2} />
+              <Text style={[modalStyles.tipText, { color: isDark ? colors.text : INK, fontFamily: font.body }]}>
+                {leap.tip}
+              </Text>
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
+function Chip({ label, fill, ink, isDark }: { label: string; fill: string; ink: string; isDark: boolean }) {
+  return (
+    <View style={{
+      paddingHorizontal: 11,
+      paddingVertical: 4,
+      borderRadius: 999,
+      backgroundColor: fill,
+      borderWidth: 1.2,
+      borderColor: isDark ? 'rgba(255,255,255,0.18)' : INK,
+    }}>
+      <Text style={{ fontSize: 11, fontFamily: 'DMSans_700Bold', color: ink, letterSpacing: 0.2 }}>
+        {label}
+      </Text>
+    </View>
+  )
+}
+
+function SectionCard({
+  icon, title, children, isDark, accent,
+}: {
+  icon: React.ReactNode
+  title: string
+  children: React.ReactNode
+  isDark: boolean
+  accent: string
+}) {
+  const { colors } = useTheme()
+  const ink = isDark ? colors.text : INK
+  return (
+    <View style={{
+      borderRadius: 18,
+      borderWidth: 1.2,
+      borderColor: isDark ? colors.border : INK,
+      backgroundColor: isDark ? colors.surface : '#FFFEF8',
+      padding: 14,
+      gap: 10,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{
+          width: 26, height: 26, borderRadius: 13,
+          backgroundColor: isDark ? accent + '22' : accent + '33',
+          borderWidth: 1.2, borderColor: isDark ? 'rgba(255,255,255,0.18)' : INK,
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          {icon}
+        </View>
+        <Text style={{
+          fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase',
+          fontFamily: 'DMSans_700Bold', color: ink,
+        }}>
+          {title}
+        </Text>
+      </View>
+      {children}
+    </View>
+  )
+}
+
+function BulletSection({
+  title, items, dot, isDark, accent,
+}: {
+  title: string
+  items: string[]
+  dot: string
+  isDark: boolean
+  accent: string
+}) {
+  const { colors, font } = useTheme()
+  const ink = isDark ? colors.text : INK
+  return (
+    <SectionCard
+      icon={<View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: dot, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.3)' : INK }} />}
+      title={title}
+      isDark={isDark}
+      accent={accent}
+    >
+      <View style={{ gap: 6 }}>
+        {items.map((item, i) => (
+          <View key={i} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+            <View style={{
+              width: 6, height: 6, borderRadius: 3,
+              backgroundColor: dot, marginTop: 7,
+              borderWidth: 0.8, borderColor: isDark ? 'rgba(255,255,255,0.3)' : INK,
+            }} />
+            <Text style={[modalStyles.body, { color: ink, fontFamily: font.body, flex: 1 }]}>
+              {item}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </SectionCard>
   )
 }
 
@@ -475,16 +783,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     paddingVertical: 4,
     borderRadius: 99,
-    borderWidth: 1,
+    borderWidth: 1.2,
   },
   statusPillText: { fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase' },
 
   descCard: {
-    padding: 16,
-    borderRadius: 22,
-    borderWidth: 1,
+    padding: 14,
+    paddingRight: 12,
+    borderRadius: 18,
+    borderWidth: 1.2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   descText: { fontSize: 15, lineHeight: 22 },
+  descCta: { fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', opacity: 0.7 },
 
   section: { gap: 10 },
   sectionLabel: { fontSize: 9.5, letterSpacing: 1.8, textTransform: 'uppercase' },
@@ -497,4 +810,45 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   stripDot: { borderRadius: 8 },
+})
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(20,19,19,0.5)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderRightWidth: 1.5,
+    maxHeight: '90%',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 14,
+  },
+  eyebrow: {
+    fontSize: 10.5,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  title: { fontSize: 26, letterSpacing: -0.5, lineHeight: 30 },
+  body: { fontSize: 14, lineHeight: 21 },
+  phaseLabel: { fontSize: 14, letterSpacing: -0.2 },
+  tip: {
+    flexDirection: 'row',
+    gap: 10,
+    padding: 14,
+    borderRadius: 18,
+    borderWidth: 1.2,
+    alignItems: 'flex-start',
+  },
+  tipText: { fontSize: 14, lineHeight: 21, flex: 1 },
 })

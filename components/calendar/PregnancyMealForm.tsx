@@ -18,6 +18,7 @@ import * as ImageManipulator from 'expo-image-manipulator'
 import { Camera, ImagePlus, ScanLine, X } from 'lucide-react-native'
 import { useTheme } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
+import { queryClient } from '../../lib/queryClient'
 import { estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
 import { LogNutrition } from '../stickers/RewardStickers'
 import { useSavedToast } from '../ui/SavedToast'
@@ -147,6 +148,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
         value: String(totalCals),
         notes: JSON.stringify(payload),
       })
+      await queryClient.invalidateQueries({ queryKey: ['pregnancy-week-logs'] })
       onSaved()
     } catch (e: any) {
       toast.show({ title: 'Could not save', message: e?.message ?? 'Please try again in a moment.', autoDismiss: 0, accent: '#EE7B6D' })

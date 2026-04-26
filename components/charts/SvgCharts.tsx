@@ -7,8 +7,8 @@
 
 import { View, Text, Pressable, StyleSheet, ViewStyle } from 'react-native'
 import Svg, {
-  Circle, Rect, Line, Path,
-  Text as SvgText, Defs, LinearGradient, Stop,
+  Circle, Rect, Line, Path, G,
+  Text as SvgText,
 } from 'react-native-svg'
 import { useTheme, brand } from '../../constants/theme'
 import { MoodFace } from '../stickers/RewardStickers'
@@ -53,6 +53,22 @@ function formatNum(v: number): string {
   return v.toFixed(1)
 }
 
+/** Downsample a daily series to ≤ maxBuckets by summing each bucket. */
+function binSeries(data: number[], labels: string[] | undefined, maxBuckets = 14): { data: number[]; labels: string[] | undefined } {
+  const n = data.length
+  if (n <= maxBuckets) return { data, labels }
+  const stride = Math.ceil(n / maxBuckets)
+  const out: number[] = []
+  const outLabels: string[] = []
+  for (let i = 0; i < n; i += stride) {
+    let sum = 0
+    for (let j = i; j < Math.min(i + stride, n); j++) sum += data[j]
+    out.push(sum)
+    if (labels) outLabels.push(labels[i] ?? '')
+  }
+  return { data: out, labels: labels ? outLabels : undefined }
+}
+
 /** Build a smooth cubic bezier SVG path through points */
 export function smoothPath(pts: { x: number; y: number }[]): string {
   if (pts.length < 2) return ''
@@ -88,8 +104,8 @@ interface LineChartProps {
 }
 
 export function LineChart({
-  data,
-  labels,
+  data: rawData,
+  labels: rawLabels,
   color,
   width = 300,
   height = 200,
@@ -100,7 +116,28 @@ export function LineChart({
   const { colors } = useTheme()
   const lineColor = color ?? colors.primary
 
-  if (data.length < 2) return null
+  if (rawData.length < 2) return null
+
+  // Bin wide windows so lines aren't unreadably dense.
+  // For LineChart, take avg per bucket so the curve reflects values not totals.
+  const data = rawData.length <= 14 ? rawData : (() => {
+    const stride = Math.ceil(rawData.length / 14)
+    const out: number[] = []
+    for (let i = 0; i < rawData.length; i += stride) {
+      let sum = 0; let n = 0
+      for (let j = i; j < Math.min(i + stride, rawData.length); j++) { sum += rawData[j]; n++ }
+      out.push(n > 0 ? sum / n : 0)
+    }
+    return out
+  })()
+  const labels = rawLabels && rawLabels.length === rawData.length && rawData.length > 14
+    ? (() => {
+        const stride = Math.ceil(rawLabels.length / 14)
+        const out: string[] = []
+        for (let i = 0; i < rawLabels.length; i += stride) out.push(rawLabels[i])
+        return out
+      })()
+    : rawLabels
 
   const leftPad = 40
   const rightPad = 16
@@ -135,53 +172,48 @@ export function LineChart({
     <Pressable onPress={onPress} disabled={!onPress}>
       <View style={styles.chartWrap}>
         <Svg width={width} height={height}>
-          <Defs>
-            <LinearGradient id={`lineGrad_${lineColor.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={lineColor} stopOpacity="0.25" />
-              <Stop offset="0.7" stopColor={lineColor} stopOpacity="0.06" />
-              <Stop offset="1" stopColor={lineColor} stopOpacity="0" />
-            </LinearGradient>
-          </Defs>
 
           {/* Grid lines + Y labels */}
           {ticks.map((tick, i) => {
             const y = topPad + chartH - ((tick - scaleMin) / range) * chartH
             return (
-              <View key={i}>
+              <G key={i}>
                 <Line
                   x1={leftPad} y1={y} x2={width - rightPad} y2={y}
-                  stroke={colors.border} strokeWidth={0.5} opacity={0.35}
-                  strokeDasharray={i === 0 ? undefined : '4,4'}
+                  stroke={colors.border} strokeWidth={1} opacity={0.5}
+                  strokeDasharray={i === 0 ? undefined : '3,5'}
+                  strokeLinecap="round"
                 />
-                <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end">
+                <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end" fontFamily="DMSans_500Medium">
                   {formatNum(tick)}
                 </SvgText>
-              </View>
+              </G>
             )
           })}
 
-          {/* Area fill */}
-          <Path d={areaPath} fill={`url(#lineGrad_${lineColor.replace('#', '')})`} />
+          {/* Area fill — solid sticker tint */}
+          <Path d={areaPath} fill={lineColor} opacity={0.14} />
 
           {/* Average line */}
           {showAverage && (
-            <>
+            <G>
               <Line
                 x1={leftPad} y1={avgY} x2={width - rightPad} y2={avgY}
-                stroke={lineColor} strokeWidth={1} strokeDasharray="6,4" opacity={0.4}
+                stroke={lineColor} strokeWidth={1.25} strokeDasharray="5,5" opacity={0.5}
+                strokeLinecap="round"
               />
-              <SvgText x={width - rightPad + 4} y={avgY + 3} fill={lineColor} fontSize={10} fontWeight="600" opacity={0.6}>
+              <SvgText x={width - rightPad + 4} y={avgY + 3} fill={lineColor} fontSize={10} fontWeight="600" opacity={0.7} fontFamily="DMSans_500Medium">
                 avg
               </SvgText>
-            </>
+            </G>
           )}
 
-          {/* Smooth curve line */}
+          {/* Smooth curve line — hand-drawn ink feel */}
           <Path
             d={curvePath}
             fill="none"
             stroke={lineColor}
-            strokeWidth={3}
+            strokeWidth={2.75}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -194,24 +226,28 @@ export function LineChart({
             const isMin = p.v === minV && data.length > 3
             const showLabel = isFirst || isLast || isMax || isMin
             return (
-              <View key={i}>
+              <G key={i}>
+                {/* Soft sticker halo */}
+                <Circle cx={p.x} cy={p.y} r={9} fill={lineColor} opacity={0.15} />
                 <Circle cx={p.x} cy={p.y} r={5} fill={lineColor} stroke={colors.surface} strokeWidth={2.5} />
                 {showLabel && (
-                  <View>
+                  <G>
                     <Rect
-                      x={p.x - 18} y={p.y - 24} width={36} height={17}
-                      rx={4} fill={colors.surface} opacity={0.9}
+                      x={p.x - 19} y={p.y - 26} width={38} height={18}
+                      rx={9} fill={colors.surface}
+                      stroke={lineColor} strokeWidth={1} opacity={0.95}
                     />
                     <SvgText
-                      x={p.x} y={p.y - 12}
+                      x={p.x} y={p.y - 13}
                       fill={isMax ? lineColor : colors.text}
-                      fontSize={11} fontWeight="800" textAnchor="middle"
+                      fontSize={11} fontWeight="700" textAnchor="middle"
+                      fontFamily="Fraunces_600SemiBold"
                     >
                       {formatNum(p.v)}{unit}
                     </SvgText>
-                  </View>
+                  </G>
                 )}
-              </View>
+              </G>
             )
           })}
         </Svg>
@@ -242,8 +278,8 @@ interface BarChartProps {
 }
 
 export function BarChart({
-  data,
-  labels,
+  data: rawData,
+  labels: rawLabels,
   color,
   width = 300,
   height = 200,
@@ -253,7 +289,12 @@ export function BarChart({
   const { colors } = useTheme()
   const barColor = color ?? colors.primary
 
-  if (data.length === 0) return null
+  if (rawData.length === 0) return null
+
+  // Bin wide windows to ≤14 buckets so bars stay readable
+  const binned = binSeries(rawData, rawLabels, 14)
+  const data = binned.data
+  const labels = binned.labels
 
   const leftPad = 40
   const rightPad = 16
@@ -272,38 +313,32 @@ export function BarChart({
     <Pressable onPress={onPress} disabled={!onPress}>
       <View style={styles.chartWrap}>
         <Svg width={width} height={height}>
-          <Defs>
-            <LinearGradient id={`barGrad_${barColor.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={barColor} stopOpacity="1" />
-              <Stop offset="1" stopColor={barColor} stopOpacity="0.5" />
-            </LinearGradient>
-          </Defs>
-
           {/* Grid lines + Y labels */}
           {ticks.map((tick, i) => {
             const y = topPad + chartH - (tick / scaleMax) * chartH
             return (
-              <View key={i}>
+              <G key={i}>
                 <Line
                   x1={leftPad} y1={y} x2={width - rightPad} y2={y}
-                  stroke={colors.border} strokeWidth={0.5} opacity={0.3}
-                  strokeDasharray={i === 0 ? undefined : '4,4'}
+                  stroke={colors.border} strokeWidth={1} opacity={0.45}
+                  strokeDasharray={i === 0 ? undefined : '3,5'}
+                  strokeLinecap="round"
                 />
-                <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end">
+                <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end" fontFamily="DMSans_500Medium">
                   {formatNum(tick)}
                 </SvgText>
-              </View>
+              </G>
             )
           })}
 
-          {/* Bars with rounded top corners */}
+          {/* Bars with rounded top corners — sticker chip style */}
           {data.map((v, i) => {
             const rawH = (v / scaleMax) * chartH
             const barH = Math.max(rawH, 3)
             const x = leftPad + (i + 0.5) * (chartW / data.length) - barW / 2
             const y = topPad + chartH - barH
 
-            // Rounded top rect via path for better control
+            // Rounded top rect via path
             const rTop = rawH > barR * 2 ? barR : Math.min(rawH / 2, barR)
             const barPath = `
               M ${x} ${y + barH}
@@ -316,27 +351,24 @@ export function BarChart({
             `
 
             return (
-              <View key={i}>
-                <Path
-                  d={barPath}
-                  fill={`url(#barGrad_${barColor.replace('#', '')})`}
-                />
-                {/* Subtle glow behind bar */}
-                <Path
-                  d={barPath}
-                  fill={barColor}
-                  opacity={0.08}
-                />
+              <G key={i}>
+                {/* Soft tint base behind bar */}
+                {v > 0 && (
+                  <Path d={barPath} fill={barColor} opacity={0.18} transform="translate(0 1)" />
+                )}
+                {/* Solid sticker bar */}
+                <Path d={barPath} fill={barColor} />
                 {/* Value on top */}
                 {showValues && v > 0 && (
                   <SvgText
                     x={x + barW / 2} y={y - 8}
-                    fill={colors.text} fontSize={12} fontWeight="800" textAnchor="middle"
+                    fill={colors.text} fontSize={12} fontWeight="700" textAnchor="middle"
+                    fontFamily="Fraunces_600SemiBold"
                   >
                     {formatNum(v)}
                   </SvgText>
                 )}
-              </View>
+              </G>
             )
           })}
         </Svg>
@@ -422,14 +454,15 @@ interface BubbleGridProps {
 }
 
 export function BubbleGrid({ items, onPress }: BubbleGridProps) {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   const maxVal = Math.max(...items.map((i) => i.value), 1)
+  const ink = isDark ? colors.text : STICKER_INK
 
   return (
     <Pressable onPress={onPress} disabled={!onPress}>
       <View style={styles.bubbleWrap}>
         {items.map((item, i) => {
-          const size = 48 + (item.value / maxVal) * 40
+          const size = 56 + (item.value / maxVal) * 44
           const bg = item.color ?? colors.primary
           return (
             <View
@@ -438,15 +471,15 @@ export function BubbleGrid({ items, onPress }: BubbleGridProps) {
                 width: size,
                 height: size,
                 borderRadius: size / 2,
-                backgroundColor: bg + '18',
+                backgroundColor: bg + '40',
                 borderWidth: 1.5,
-                borderColor: bg + '35',
+                borderColor: ink,
               }]}
             >
-              <Text style={[styles.bubbleCount, { color: bg, fontSize: Math.max(14, size / 4) }]}>
+              <Text style={[styles.bubbleCount, { color: ink, fontSize: Math.max(16, size / 4), fontFamily: 'Fraunces_600SemiBold' }]}>
                 {item.value}
               </Text>
-              <Text style={[styles.bubbleLabel, { color: bg, fontSize: Math.max(9, size / 7) }]} numberOfLines={1}>
+              <Text style={[styles.bubbleLabel, { color: ink, fontSize: Math.max(10, size / 7), fontFamily: 'DMSans_500Medium' }]} numberOfLines={1}>
                 {item.label}
               </Text>
             </View>
@@ -621,20 +654,13 @@ interface MoodBubbleClusterProps {
   items: MoodBubbleItem[]
 }
 
-// Five fixed scatter positions (largest bubble gets index 0).
-const BUBBLE_POSITIONS: ViewStyle[] = [
-  { alignSelf: 'center', top: 0 },
-  { left: 8, top: '40%' },
-  { right: 8, top: '35%' },
-  { left: '38%', bottom: 8 },
-  { left: 4, bottom: 4 },
-]
-
-const BUBBLE_MIN_SIZE = 56
-const BUBBLE_MAX_SIZE = 112
+const BUBBLE_MIN_SIZE = 80
+const BUBBLE_MAX_SIZE = 140
 
 export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
-  const { isDark } = useTheme()
+  const { isDark, colors } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
+  const inkMuted = isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'
 
   const sorted = [...items]
     .filter((item) => item.count > 0)
@@ -642,45 +668,51 @@ export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
     .slice(0, 5)
 
   const maxCount = sorted[0]?.count ?? 1
+  const totalCount = sorted.reduce((sum, item) => sum + item.count, 0)
 
   return (
     <View style={bubbleClusterStyles.container}>
-      {sorted.map((item, idx) => {
-        const size = Math.round(BUBBLE_MIN_SIZE + (item.count / maxCount) * (BUBBLE_MAX_SIZE - BUBBLE_MIN_SIZE))
+      {sorted.map((item) => {
+        const size = Math.round(
+          BUBBLE_MIN_SIZE + (item.count / maxCount) * (BUBBLE_MAX_SIZE - BUBBLE_MIN_SIZE),
+        )
         const fill = moodFaceFill(item.mood)
         const variant = moodFaceVariant(item.mood)
         const stroke = isDark ? (fill || STICKER_INK) : STICKER_INK
         const label = item.mood.charAt(0).toUpperCase() + item.mood.slice(1)
-        const pos = BUBBLE_POSITIONS[idx] ?? BUBBLE_POSITIONS[4]
+        const pct = totalCount > 0 ? Math.round((item.count / totalCount) * 100) : 0
 
         return (
-          <View
-            key={item.mood}
-            style={[
-              bubbleClusterStyles.bubble,
-              {
-                width: size,
-                height: size,
-                borderRadius: size / 2,
-                backgroundColor: fill + '40',
-                borderColor: fill + '70',
-                shadowColor: fill,
-              },
-              pos,
-            ]}
-          >
-            <View style={bubbleClusterStyles.shine} />
-            <MoodFace
-              size={Math.round(size * 0.5)}
-              variant={variant}
-              fill={fill}
-              stroke={stroke}
-            />
-            <Text style={[bubbleClusterStyles.bubbleLabel, { color: fill }]} numberOfLines={1}>
+          <View key={item.mood} style={bubbleClusterStyles.cell}>
+            <View
+              style={[
+                bubbleClusterStyles.bubble,
+                {
+                  width: size,
+                  height: size,
+                  borderRadius: size / 2,
+                  backgroundColor: fill + '55',
+                  borderColor: STICKER_INK,
+                  shadowColor: STICKER_INK,
+                },
+              ]}
+            >
+              <View style={bubbleClusterStyles.shine} />
+              <MoodFace
+                size={Math.round(size * 0.55)}
+                variant={variant}
+                fill={fill}
+                stroke={stroke}
+              />
+            </View>
+            <Text style={[bubbleClusterStyles.bubbleCount, { color: ink }]}>
+              {item.count}
+            </Text>
+            <Text style={[bubbleClusterStyles.bubbleLabel, { color: ink }]} numberOfLines={1}>
               {label}
             </Text>
-            <Text style={[bubbleClusterStyles.bubbleCount, { color: fill }]}>
-              {item.count}
+            <Text style={[bubbleClusterStyles.bubblePct, { color: inkMuted }]}>
+              {pct}%
             </Text>
           </View>
         )
@@ -762,42 +794,56 @@ const moodStyles = StyleSheet.create({
 
 const bubbleClusterStyles = StyleSheet.create({
   container: {
-    height: 200,
-    position: 'relative',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    gap: 18,
+    paddingVertical: 16,
+  },
+  cell: {
+    alignItems: 'center',
+    gap: 4,
+    minWidth: 96,
   },
   bubble: {
-    position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     borderWidth: 1.5,
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.18,
     shadowRadius: 8,
     elevation: 4,
   },
   shine: {
     position: 'absolute',
-    top: '14%',
-    left: '18%',
-    width: '30%',
-    height: '20%',
+    top: '12%',
+    left: '16%',
+    width: '32%',
+    height: '22%',
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: 'rgba(255,255,255,0.55)',
     transform: [{ rotate: '-22deg' }],
   },
-  bubbleLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    position: 'relative',
-    zIndex: 1,
-    marginTop: 2,
-  },
   bubbleCount: {
+    fontFamily: 'Fraunces_800ExtraBold',
+    fontSize: 28,
+    letterSpacing: -1,
+    lineHeight: 32,
+    marginTop: 8,
+    fontWeight: '800',
+  },
+  bubbleLabel: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
+    letterSpacing: 0.2,
+    fontWeight: '600',
+  },
+  bubblePct: {
+    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontStyle: 'italic',
     fontSize: 12,
-    fontWeight: '700',
-    position: 'relative',
-    zIndex: 1,
-    lineHeight: 14,
+    opacity: 0.75,
   },
 })

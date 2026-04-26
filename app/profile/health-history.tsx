@@ -33,6 +33,7 @@ import { LogSheet } from '../../components/calendar/LogSheet'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
+import { ChildPill, childColor } from '../../components/ui/ChildPills'
 import {
   Cross as CrossSticker,
   Heart as HeartSticker,
@@ -147,26 +148,21 @@ export default function HealthHistoryScreen() {
       {children.length > 1 && (
         <View style={styles.filterRow}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
-            <Pressable
+            <ChildPill
+              label="All Kids"
+              active={!filterChild}
+              color={stickers.lilac}
+              showDot={false}
               onPress={() => setFilterChild(null)}
-              style={[styles.chip, {
-                backgroundColor: !filterChild ? stickers.lilac + (isDark ? '32' : '40') : paper,
-                borderColor: !filterChild ? (isDark ? stickers.lilac : '#3A2A6E') : paperBorder,
-              }]}
-            >
-              <Text style={[styles.chipText, { color: !filterChild ? (isDark ? stickers.lilac : '#3A2A6E') : colors.text, fontFamily: font.bodySemiBold }]}>All Kids</Text>
-            </Pressable>
-            {children.map((c) => (
-              <Pressable
+            />
+            {children.map((c, idx) => (
+              <ChildPill
                 key={c.id}
+                label={c.name}
+                active={filterChild === c.id}
+                color={childColor(idx)}
                 onPress={() => setFilterChild(filterChild === c.id ? null : c.id)}
-                style={[styles.chip, {
-                  backgroundColor: filterChild === c.id ? stickers.blue + (isDark ? '32' : '40') : paper,
-                  borderColor: filterChild === c.id ? (isDark ? stickers.blue : '#1F4A7A') : paperBorder,
-                }]}
-              >
-                <Text style={[styles.chipText, { color: filterChild === c.id ? (isDark ? stickers.blue : '#1F4A7A') : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
-              </Pressable>
+              />
             ))}
           </ScrollView>
         </View>
@@ -183,11 +179,7 @@ export default function HealthHistoryScreen() {
 
         {/* ─── Vaccine Tracker ──────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('vaccine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <View style={styles.sectionHeader}>
-            <Syringe size={18} color={brand.success} strokeWidth={2} />
-            <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>Vaccines</Text>
-            <ChevronRight size={16} color={colors.textMuted} />
-          </View>
+          <SectionHeader icon={Syringe} color={isDark ? stickers.green : '#3F5919'} title="Vaccines" />
           {vaccines.length > 0 ? (
             <View style={styles.vaccineList}>
               {vaccines.slice(0, 3).map((v) => (
@@ -197,10 +189,17 @@ export default function HealthHistoryScreen() {
                   <Text style={[styles.vaccineDate, { color: colors.textMuted, fontFamily: font.body }]}>{new Date(v.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</Text>
                 </View>
               ))}
-              {vaccines.length > 3 && <Text style={[styles.moreText, { color: colors.text, fontFamily: font.bodySemiBold }]}>+{vaccines.length - 3} more</Text>}
+              {vaccines.length > 3 && (
+                <View style={[styles.moreChip, { backgroundColor: stickers.green + (isDark ? '24' : '32'), borderColor: stickers.green + (isDark ? '40' : '60') }]}>
+                  <Text style={[styles.moreChipText, { color: isDark ? stickers.green : '#3F5919', fontFamily: font.bodySemiBold }]}>+{vaccines.length - 3} more</Text>
+                </View>
+              )}
             </View>
           ) : (
-            <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No vaccines logged yet. Tap + to add.</Text>
+            <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <CrossSticker size={28} />
+              <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No vaccines logged yet. Tap + to add.</Text>
+            </View>
           )}
           {/* Next recommended */}
           <View style={[styles.nextVaccine, { backgroundColor: stickers.green + (isDark ? '20' : '30') }]}>
@@ -213,15 +212,11 @@ export default function HealthHistoryScreen() {
 
         {/* ─── Medications ──────────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('medicine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <View style={styles.sectionHeader}>
-            <Pill size={18} color={brand.secondary} strokeWidth={2} />
-            <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>Medications</Text>
-            <ChevronRight size={16} color={colors.textMuted} />
-          </View>
+          <SectionHeader icon={Pill} color={isDark ? stickers.blue : '#1F4A7A'} title="Medications" />
           {medications.length > 0 ? (
             medications.slice(0, 3).map((m) => (
               <View key={m.id} style={styles.medItem}>
-                <View style={[styles.medDot, { backgroundColor: stickers.blue }]} />
+                <View style={[styles.medDot, { backgroundColor: stickers.blue, borderColor: isDark ? colors.border : 'rgba(20,19,19,0.18)' }]} />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.medName, { color: colors.text, fontFamily: font.bodyMedium }]}>{m.value}</Text>
                   {m.notes ? <Text style={[styles.medNotes, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>{m.notes}</Text> : null}
@@ -230,7 +225,10 @@ export default function HealthHistoryScreen() {
               </View>
             ))
           ) : (
-            <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No medications logged.</Text>
+            <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <DropSticker size={28} />
+              <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No medications logged.</Text>
+            </View>
           )}
           {/* Active meds from child profiles */}
           {children.some((c) => c.medications.length > 0) && (
@@ -245,11 +243,7 @@ export default function HealthHistoryScreen() {
 
         {/* ─── Growth ───────────────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('growth')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <View style={styles.sectionHeader}>
-            <TrendingUp size={18} color={brand.kids} strokeWidth={2} />
-            <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>Growth</Text>
-            <ChevronRight size={16} color={colors.textMuted} />
-          </View>
+          <SectionHeader icon={TrendingUp} color={isDark ? stickers.blue : '#1F4A7A'} title="Growth" />
           {growthEntries.length > 0 ? (
             <>
               {/* Separate weight + height lines */}
@@ -273,8 +267,8 @@ export default function HealthHistoryScreen() {
                             const h = Math.min(50, Math.max(10, (num / 20) * 50))
                             return (
                               <View key={g.id} style={styles.barCol}>
-                                <Text style={[styles.barValue, { color: wColor, fontFamily: font.bodySemiBold }]}>{num}</Text>
-                                <View style={[styles.bar, { height: h, backgroundColor: stickers.blue + (isDark ? '40' : '60'), borderRadius: 4 }]} />
+                                <Text style={[styles.barValue, { color: wColor, fontFamily: font.display }]}>{num}</Text>
+                                <View style={[styles.bar, { height: h, backgroundColor: stickers.blue + (isDark ? '40' : '60'), borderColor: stickers.blue + (isDark ? '60' : '70'), borderTopLeftRadius: 8, borderTopRightRadius: 8 }]} />
                                 <Text style={[styles.barLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
                               </View>
                             )
@@ -292,8 +286,8 @@ export default function HealthHistoryScreen() {
                             const h = Math.min(50, Math.max(10, (num / 120) * 50))
                             return (
                               <View key={g.id} style={styles.barCol}>
-                                <Text style={[styles.barValue, { color: hColor, fontFamily: font.bodySemiBold }]}>{num}</Text>
-                                <View style={[styles.bar, { height: h, backgroundColor: stickers.peach + (isDark ? '40' : '60'), borderRadius: 4 }]} />
+                                <Text style={[styles.barValue, { color: hColor, fontFamily: font.display }]}>{num}</Text>
+                                <View style={[styles.bar, { height: h, backgroundColor: stickers.peach + (isDark ? '40' : '60'), borderColor: stickers.peach + (isDark ? '60' : '70'), borderTopLeftRadius: 8, borderTopRightRadius: 8 }]} />
                                 <Text style={[styles.barLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
                               </View>
                             )
@@ -311,22 +305,21 @@ export default function HealthHistoryScreen() {
               })()}
             </>
           ) : (
-            <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No growth entries. Log weight and height to track progress.</Text>
+            <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <FlowerSticker size={28} />
+              <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No growth entries. Log weight and height to track progress.</Text>
+            </View>
           )}
         </Pressable>
 
         {/* ─── Milestones ───────────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('milestone')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <View style={styles.sectionHeader}>
-            <Star size={18} color={brand.accent} strokeWidth={2} />
-            <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>Milestones</Text>
-            <ChevronRight size={16} color={colors.textMuted} />
-          </View>
+          <SectionHeader icon={Star} color={isDark ? '#F0CE4C' : '#7C5E0F'} title="Milestones" />
           {milestones.length > 0 ? (
             <View style={styles.milestoneList}>
               {milestones.slice(0, 4).map((m) => (
                 <View key={m.id} style={styles.milestoneItem}>
-                  <View style={[styles.milestoneDot, { backgroundColor: stickers.yellow }]} />
+                  <View style={[styles.milestoneDot, { backgroundColor: stickers.yellow, borderColor: isDark ? colors.border : 'rgba(20,19,19,0.18)' }]} />
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.milestoneText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{m.value}</Text>
                     <Text style={[styles.milestoneDate, { color: colors.textMuted, fontFamily: font.body }]}>
@@ -337,7 +330,10 @@ export default function HealthHistoryScreen() {
               ))}
             </View>
           ) : (
-            <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No milestones yet. Celebrate every first!</Text>
+            <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <StarSticker size={28} />
+              <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No milestones yet. Celebrate every first!</Text>
+            </View>
           )}
         </Pressable>
 
@@ -353,10 +349,7 @@ export default function HealthHistoryScreen() {
           if (alertKids.length === 0) return null
           return (
           <View style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <View style={styles.sectionHeader}>
-              <AlertTriangle size={18} color={stickers.coral} strokeWidth={2} />
-              <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>Allergies & Alerts</Text>
-            </View>
+            <SectionHeader icon={AlertTriangle} color={isDark ? stickers.coral : '#B43E2E'} title="Allergies & Alerts" showChevron={false} />
             {alertKids.map((c) => (
               <View key={c.id} style={styles.refChild}>
                 <Text style={[styles.refChildName, { color: colors.text, fontFamily: font.display }]}>{c.name}</Text>
@@ -405,24 +398,46 @@ export default function HealthHistoryScreen() {
   )
 }
 
+// ─── Section Header ───────────────────────────────────────────────────────
+
+function SectionHeader({ icon: Icon, color, title, showChevron = true }: { icon: any; color: string; title: string; showChevron?: boolean }) {
+  const { colors, font, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.18)'
+  return (
+    <View style={styles.sectionHeader}>
+      <View style={[styles.sectionIconBadge, { backgroundColor: paper, borderColor: paperBorder }]}>
+        <Icon size={16} color={color} strokeWidth={2} />
+      </View>
+      <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>{title}</Text>
+      {showChevron ? <ChevronRight size={16} color={colors.textMuted} /> : null}
+    </View>
+  )
+}
+
 // ─── Stat Card ────────────────────────────────────────────────────────────
 
 function StatCard({ icon: Icon, color, bg, num, label, onPress }: any) {
   const { colors, font, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.18)'
   return (
     <Pressable
       onPress={onPress}
-      style={[
+      style={({ pressed }) => [
         styles.statCard,
         {
           backgroundColor: bg + (isDark ? '24' : '32'),
-          borderColor: bg + (isDark ? '28' : '50'),
+          borderColor: bg + (isDark ? '40' : '60'),
+          opacity: pressed ? 0.9 : 1,
         },
       ]}
     >
-      <Icon size={18} color={color} strokeWidth={2} />
+      <View style={[styles.statIconBadge, { backgroundColor: paper, borderColor: paperBorder }]}>
+        <Icon size={16} color={color} strokeWidth={2} />
+      </View>
       <Text style={[styles.statNum, { color, fontFamily: font.display }]}>{num}</Text>
-      <Text style={[styles.statLabel, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>{label}</Text>
+      <Text style={[styles.statLabel, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{label}</Text>
     </Pressable>
   )
 }
@@ -609,22 +624,15 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
             <>
               <MonoCaps color={colors.textMuted}>Child</MonoCaps>
               <View style={formStyles.childRow}>
-                {children.map((c) => {
-                  const active = selectedChild === c.id
-                  return (
-                    <Pressable
-                      key={c.id}
-                      onPress={() => setSelectedChild(c.id)}
-                      style={[formStyles.childChip, {
-                        backgroundColor: active ? stickers.blue + (isDark ? '32' : '40') : paper,
-                        borderColor: active ? (isDark ? stickers.blue : '#1F4A7A') : paperBorder,
-                      }]}
-                    >
-                      {active && <Check size={12} color={isDark ? stickers.blue : '#1F4A7A'} strokeWidth={3} />}
-                      <Text style={[formStyles.childText, { color: active ? (isDark ? stickers.blue : '#1F4A7A') : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
-                    </Pressable>
-                  )
-                })}
+                {children.map((c, idx) => (
+                  <ChildPill
+                    key={c.id}
+                    label={c.name}
+                    active={selectedChild === c.id}
+                    color={childColor(idx)}
+                    onPress={() => setSelectedChild(c.id)}
+                  />
+                ))}
               </View>
             </>
           )}
@@ -733,12 +741,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingVertical: 14,
-    gap: 4,
+    paddingHorizontal: 6,
+    gap: 6,
     borderRadius: 22,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
-  statNum: { fontSize: 24, letterSpacing: -0.5 },
-  statLabel: { fontSize: 10 },
+  statIconBadge: {
+    width: 30, height: 30, borderRadius: 999,
+    borderWidth: 1.5,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  statNum: { fontSize: 28, letterSpacing: -0.5, lineHeight: 30 },
+  statLabel: { fontSize: 11 },
 
   sectionCard: {
     padding: 18,
@@ -751,9 +765,23 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 2,
   },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sectionTitle: { fontSize: 18, flex: 1, letterSpacing: -0.2 },
-  emptyText: { fontSize: 13, lineHeight: 18 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sectionIconBadge: {
+    width: 32, height: 32, borderRadius: 999,
+    borderWidth: 1.5,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  sectionTitle: { fontSize: 20, flex: 1, letterSpacing: -0.3 },
+  emptyText: { fontSize: 13, lineHeight: 18, flex: 1 },
+  emptyState: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+  },
 
   vaccineList: { gap: 8 },
   vaccineItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -762,10 +790,16 @@ const styles = StyleSheet.create({
   nextVaccine: { padding: 12, marginTop: 4, borderRadius: 18 },
   nextLabel: { fontSize: 12, marginBottom: 4 },
   nextText: { fontSize: 13, lineHeight: 18 },
-  moreText: { fontSize: 13, marginTop: 4 },
+  moreChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12, paddingVertical: 5,
+    borderRadius: 999, borderWidth: 1.5,
+    marginTop: 4,
+  },
+  moreChipText: { fontSize: 12, letterSpacing: 0.2 },
 
   medItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
-  medDot: { width: 8, height: 8, borderRadius: 4 },
+  medDot: { width: 10, height: 10, borderRadius: 999, borderWidth: 1.5 },
   medName: { fontSize: 14 },
   medNotes: { fontSize: 12 },
   medDate: { fontSize: 11 },
@@ -781,7 +815,7 @@ const styles = StyleSheet.create({
 
   milestoneList: { gap: 10 },
   milestoneItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  milestoneDot: { width: 10, height: 10, borderRadius: 5, marginTop: 5 },
+  milestoneDot: { width: 12, height: 12, borderRadius: 999, borderWidth: 1.5, marginTop: 4 },
   milestoneText: { fontSize: 14 },
   milestoneDate: { fontSize: 11 },
 
@@ -869,13 +903,13 @@ const formStyles = StyleSheet.create({
   dateBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    height: 52,
+    gap: 12,
+    paddingHorizontal: 24,
+    height: 64,
     borderWidth: 1,
-    borderRadius: 18,
+    borderRadius: 999,
   },
   dateBtnText: { fontSize: 15 },
-  input: { borderWidth: 1, paddingHorizontal: 16, height: 52, fontSize: 15, borderRadius: 18 },
-  inputMulti: { borderWidth: 1, paddingHorizontal: 16, paddingVertical: 14, minHeight: 80, fontSize: 15, textAlignVertical: 'top', borderRadius: 18 },
+  input: { borderWidth: 1, paddingHorizontal: 24, height: 64, fontSize: 15, borderRadius: 999 },
+  inputMulti: { borderWidth: 1, paddingHorizontal: 20, paddingVertical: 16, minHeight: 96, fontSize: 15, textAlignVertical: 'top', borderRadius: 28 },
 })
