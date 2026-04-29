@@ -43,8 +43,8 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   line: {
-    fontSize: 34,
-    lineHeight: 38,
+    fontSize: 30,
+    lineHeight: 34,
   },
   italic: {
     fontStyle: 'italic',

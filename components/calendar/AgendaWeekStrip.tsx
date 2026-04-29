@@ -6,8 +6,10 @@
  * Selected day = filled circle in mode color. Today (if not selected) = amber.
  */
 
-import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { ArrowRight } from 'lucide-react-native'
+import { useRef } from 'react'
+import { View, Text, Pressable, StyleSheet, PanResponder } from 'react-native'
+import Animated, { SlideInRight, SlideInLeft } from 'react-native-reanimated'
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { useTheme } from '../../constants/theme'
 import { MonoCaps, Body } from '../ui/Typography'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -59,6 +61,33 @@ export function AgendaWeekStrip({
 
   const todayStr = toDateStr(new Date())
   const days = getWeekDates(selectedDate)
+  const weekKey = days[0].dateStr
+  const prevWeekKeyRef = useRef(weekKey)
+  const direction = weekKey > prevWeekKeyRef.current ? 1 : weekKey < prevWeekKeyRef.current ? -1 : 0
+  prevWeekKeyRef.current = weekKey
+
+  const latest = useRef({ selectedDate, onSelectDate })
+  latest.current = { selectedDate, onSelectDate }
+
+  const stepWeek = (delta: number) => {
+    const next = new Date(selectedDate + 'T00:00:00')
+    next.setDate(next.getDate() + delta)
+    onSelectDate(toDateStr(next))
+  }
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+      onPanResponderRelease: (_, g) => {
+        const delta = g.dx <= -40 ? 7 : g.dx >= 40 ? -7 : 0
+        if (!delta) return
+        const next = new Date(latest.current.selectedDate + 'T00:00:00')
+        next.setDate(next.getDate() + delta)
+        latest.current.onSelectDate(toDateStr(next))
+      },
+    })
+  ).current
 
   // Month label = month of the first day in strip
   const monthLabel = days[0].date
@@ -67,6 +96,7 @@ export function AgendaWeekStrip({
 
   return (
     <View
+      {...panResponder.panHandlers}
       style={[
         styles.container,
         {
@@ -76,9 +106,27 @@ export function AgendaWeekStrip({
       ]}
     >
       <View style={styles.captionRow}>
-        <MonoCaps size={11} color={textMuted}>
-          {monthLabel}
-        </MonoCaps>
+        <View style={styles.captionLeft}>
+          <MonoCaps size={11} color={textMuted}>
+            {monthLabel}
+          </MonoCaps>
+          <Pressable
+            onPress={() => stepWeek(-7)}
+            hitSlop={10}
+            style={[styles.arrowBtn, { borderColor: paperBorder }]}
+            accessibilityLabel="Previous week"
+          >
+            <ChevronLeft size={14} color={ink} strokeWidth={2.2} />
+          </Pressable>
+          <Pressable
+            onPress={() => stepWeek(7)}
+            hitSlop={10}
+            style={[styles.arrowBtn, { borderColor: paperBorder }]}
+            accessibilityLabel="Next week"
+          >
+            <ChevronRight size={14} color={ink} strokeWidth={2.2} />
+          </Pressable>
+        </View>
         {weekLabel ? (
           <Pressable
             onPress={onWeekTap}
@@ -94,7 +142,11 @@ export function AgendaWeekStrip({
         ) : null}
       </View>
 
-      <View style={styles.grid}>
+      <Animated.View
+        key={weekKey}
+        entering={direction >= 0 ? SlideInRight.duration(220) : SlideInLeft.duration(220)}
+        style={styles.grid}
+      >
         {days.map(({ date, dateStr }) => {
           const isSelected = dateStr === selectedDate
           const isToday = dateStr === todayStr && !isSelected
@@ -140,7 +192,7 @@ export function AgendaWeekStrip({
             </Pressable>
           )
         })}
-      </View>
+      </Animated.View>
     </View>
   )
 }
@@ -159,6 +211,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
     paddingHorizontal: 4,
+  },
+  captionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  arrowBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   weekChip: {
     flexDirection: 'row',

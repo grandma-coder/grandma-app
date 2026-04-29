@@ -20,7 +20,7 @@ interface Props {
 export function LogFormSticker({ type, label, tint }: Props) {
   const { colors, isDark } = useTheme()
   const haloTint = tint ?? colors.surfaceRaised
-  const ink = isDark ? 'rgba(255,255,255,0.18)' : '#141313'
+  const ink = colors.text
   const border = isDark ? colors.border : ink
 
   return (
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     padding: 14,
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1.5,
   },
   chip: {

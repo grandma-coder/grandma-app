@@ -2147,7 +2147,7 @@ function RoutineComplianceModal({
               gap: 16,
             }}
           >
-            <Animated.View entering={FadeInDown.duration(280).springify().damping(18)} style={[
+            <Animated.View entering={FadeInDown.duration(220)} style={[
               styles.routineExpand,
               { backgroundColor: colors.surface, borderColor: colors.border, marginTop: 0 },
             ]}>
@@ -2526,7 +2526,7 @@ function PillarDetailModal({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 24, gap: 16 }}
           >
-            <Animated.View entering={FadeInDown.duration(280).springify().damping(18)}>
+            <Animated.View entering={FadeInDown.duration(220)}>
               <PillarDetail
                 pillarKey={pillarKey}
                 analytics={analytics}

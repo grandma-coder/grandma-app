@@ -8,6 +8,7 @@
 import { getCycleInfo, toDateStr } from './cycleLogic'
 import { useChildStore } from '../store/useChildStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
+import { getCurrentWeekFromDueDate } from './pregnancyData'
 import type { Behavior } from '../store/useBehaviorStore'
 
 function formatAge(birthDate: string | undefined | null): string {
@@ -37,9 +38,10 @@ export function getCycleSubtitle(): string {
 }
 
 export function getPregnancySubtitle(): string {
-  const week = usePregnancyStore.getState().weekNumber ?? 24
   const dueDate = usePregnancyStore.getState().dueDate
-  if (!dueDate) return `Week ${week}`
+  const storedWeek = usePregnancyStore.getState().weekNumber
+  if (!dueDate) return `Week ${storedWeek ?? 1}`
+  const week = getCurrentWeekFromDueDate(dueDate)
   const due = new Date(dueDate + 'T00:00:00')
   const dueFmt = due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   return `Week ${week} · due ${dueFmt}`

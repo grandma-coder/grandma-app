@@ -16,7 +16,7 @@ import {
   Zap,
   Check,
 } from 'lucide-react-native'
-import { useTheme, stickers as stickersLight, stickersDark } from '../../constants/theme'
+import { useTheme, stickers as stickersLight, stickersDark, brand, getModeColor } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 import { LogFormSticker } from './LogFormSticker'
 
@@ -167,14 +167,14 @@ export function SymptomsForm({ date, onSaved }: { date: string; onSaved: () => v
               style={[
                 styles.chip,
                 {
-                  backgroundColor: active ? colors.primaryTint : colors.surface,
-                  borderColor: active ? colors.primary : colors.border,
+                  backgroundColor: active ? brand.prePregnancySoft : colors.surface,
+                  borderColor: active ? brand.prePregnancy : colors.border,
                   borderRadius: radius.full,
                 },
               ]}
             >
-              {active && <Check size={12} color={colors.primary} strokeWidth={3} />}
-              <Text style={[styles.chipText, { color: active ? colors.primary : colors.text }]}>{sym}</Text>
+              {active && <Check size={12} color={brand.prePregnancy} strokeWidth={3} />}
+              <Text style={[styles.chipText, { color: active ? brand.prePregnancy : colors.text }]}>{sym}</Text>
             </Pressable>
           )
         })}
@@ -241,13 +241,13 @@ export function MoodForm({ date, onSaved }: { date: string; onSaved: () => void 
               style={[
                 styles.moodBtn,
                 {
-                  backgroundColor: active ? colors.primaryTint : colors.surface,
+                  backgroundColor: active ? brand.prePregnancySoft : colors.surface,
                   borderRadius: radius.lg,
                 },
               ]}
             >
-              <Icon size={24} color={active ? colors.primary : colors.textMuted} strokeWidth={2} />
-              <Text style={[styles.moodLabel, { color: active ? colors.primary : colors.textMuted }]}>{m.label}</Text>
+              <Icon size={24} color={active ? brand.prePregnancy : colors.textMuted} strokeWidth={2} />
+              <Text style={[styles.moodLabel, { color: active ? brand.prePregnancy : colors.textMuted }]}>{m.label}</Text>
             </Pressable>
           )
         })}
@@ -362,19 +362,19 @@ export function IntimacyForm({ date, onSaved }: { date: string; onSaved: () => v
 // ─── Shared Save Button ────────────────────────────────────────────────────
 
 function SaveButton({ onPress, saving, disabled }: { onPress: () => void; saving: boolean; disabled?: boolean }) {
-  const { colors, radius } = useTheme()
+  const { radius, isDark } = useTheme()
   return (
     <Pressable
       onPress={onPress}
       disabled={saving || disabled}
       style={({ pressed }) => [
         styles.saveBtn,
-        { backgroundColor: colors.primary, borderRadius: radius.lg, opacity: disabled ? 0.4 : 1 },
+        { backgroundColor: getModeColor('pre', isDark), borderRadius: radius.lg, opacity: disabled ? 0.4 : 1 },
         pressed && !disabled && { transform: [{ scale: 0.98 }], opacity: 0.9 },
       ]}
     >
       {saving ? (
-        <ActivityIndicator color="#FFF" />
+        <ActivityIndicator color="#FFFEF8" />
       ) : (
         <Text style={styles.saveBtnText}>Save</Text>
       )}
@@ -401,6 +401,7 @@ const styles = StyleSheet.create({
     height: 48,
     fontSize: 15,
     fontWeight: '500',
+    fontFamily: 'DMSans_500Medium',
   },
   chipGrid: {
     flexDirection: 'row',
@@ -443,7 +444,6 @@ const styles = StyleSheet.create({
   tempInput: {
     flex: 1,
     fontSize: 24,
-    fontWeight: '800',
     fontFamily: 'Fraunces_600SemiBold',
   },
   tempUnit: {
@@ -459,6 +459,6 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#FFFEF8',
   },
 })

@@ -16,7 +16,7 @@ import {
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { Camera, ImagePlus, ScanLine, X } from 'lucide-react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, brand, stickers as stickerPalette } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
@@ -173,11 +173,11 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
               style={styles.photoClear}
               hitSlop={6}
             >
-              <X size={14} color="#FFFFFF" strokeWidth={3} />
+              <X size={14} color="#FFFEF8" strokeWidth={3} />
             </Pressable>
             {scanning && (
               <View style={styles.scanningOverlay}>
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color="#FFFEF8" />
                 <Text style={styles.scanningText}>Reading the plate…</Text>
               </View>
             )}
@@ -186,7 +186,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
           <View style={styles.pickRow}>
             <Pressable
               onPress={() => pick('camera')}
-              style={[styles.pickBtn, { backgroundColor: colors.primary }]}
+              style={[styles.pickBtn, { backgroundColor: brand.pregnancy }]}
             >
               <Camera size={18} color={colors.textInverse} strokeWidth={2} />
               <Text style={[styles.pickBtnText, { color: colors.textInverse }]}>Take photo</Text>
@@ -204,8 +204,8 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
         {foods.length > 0 && (
           <View style={[styles.summaryBox, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
             <View style={styles.summaryHeader}>
-              <ScanLine size={14} color={colors.primary} strokeWidth={2} />
-              <Text style={[styles.summaryTotal, { color: colors.primary }]}>
+              <ScanLine size={14} color={stickerPalette.green} strokeWidth={2} />
+              <Text style={[styles.summaryTotal, { color: stickerPalette.green }]}>
                 ~{totalCals} kcal
               </Text>
             </View>
@@ -259,13 +259,13 @@ const styles = StyleSheet.create({
   photo: { width: '100%', height: 200, resizeMode: 'cover' },
   photoClear: {
     position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 13,
-    backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(20,19,19,0.55)', alignItems: 'center', justifyContent: 'center',
   },
   scanningOverlay: {
-    position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)',
+    position: 'absolute', inset: 0, backgroundColor: 'rgba(20,19,19,0.45)',
     alignItems: 'center', justifyContent: 'center', gap: 8,
   },
-  scanningText: { color: '#FFFFFF', fontSize: 13, fontFamily: 'DMSans_500Medium' },
+  scanningText: { color: '#FFFEF8', fontSize: 13, fontFamily: 'DMSans_500Medium' },
   summaryBox: { borderRadius: 16, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 12, gap: 4 },
   summaryHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
   summaryTotal: { fontSize: 16, fontFamily: 'Fraunces_600SemiBold' },

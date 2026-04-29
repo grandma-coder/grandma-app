@@ -120,14 +120,6 @@ serve(async (req) => {
     if (!logSummary) {
       const starterInsights = getStarterInsights(behavior)
 
-      // Archive old insights for this user + behavior
-      await supabase
-        .from('insights')
-        .update({ archived: true, archived_at: new Date().toISOString() })
-        .eq('user_id', user_id)
-        .eq('behavior', behavior)
-        .eq('archived', false)
-
       const rows = starterInsights.map((ins: any) => ({
         user_id,
         type: ins.type,
@@ -137,7 +129,26 @@ serve(async (req) => {
         child_id: null,
       }))
 
-      await supabase.from('insights').insert(rows)
+      const { data: inserted, error: insertErr } = await supabase
+        .from('insights')
+        .insert(rows)
+        .select('id')
+
+      if (insertErr) {
+        console.error('Failed to insert starter insights:', insertErr.message)
+        throw new Error(`Insert failed: ${insertErr.message}`)
+      }
+
+      // Archive all OTHER active insights for this user+behavior (keep just-inserted ones)
+      const newIds = (inserted ?? []).map((r: any) => r.id)
+      const archiveQuery = supabase
+        .from('insights')
+        .update({ archived: true, archived_at: new Date().toISOString() })
+        .eq('user_id', user_id)
+        .eq('behavior', behavior)
+        .eq('archived', false)
+      if (newIds.length > 0) archiveQuery.not('id', 'in', `(${newIds.join(',')})`)
+      await archiveQuery
 
       return new Response(
         JSON.stringify({ insights: starterInsights, count: starterInsights.length }),
@@ -187,36 +198,47 @@ serve(async (req) => {
     }
 
     // ─── Save insights to database ───────────────────────────────────────
-    // Always archive old insights, even if new generation produced 0
-    await supabase
+    // Build rows to insert. If AI returned nothing useful, insert a fallback
+    // so the user is never left empty.
+    const rows = insights.length > 0
+      ? insights.map((ins: any) => ({
+          user_id,
+          type: ins.type ?? 'nudge',
+          title: ins.title ?? 'Insight',
+          body: ins.body ?? '',
+          behavior,
+          child_id: ins.child_id ?? null,
+        }))
+      : [{
+          user_id,
+          type: 'nudge',
+          title: 'Grandma is still learning',
+          body: "Keep logging and I'll have personalized insights for you soon!",
+          behavior,
+          child_id: null,
+        }]
+
+    const { data: inserted, error: insertErr } = await supabase
+      .from('insights')
+      .insert(rows)
+      .select('id')
+
+    if (insertErr) {
+      // Don't archive anything — keep the user's existing insights visible.
+      console.error('Failed to insert generated insights:', insertErr.message)
+      throw new Error(`Insert failed: ${insertErr.message}`)
+    }
+
+    // Archive previous active insights only AFTER new ones successfully inserted
+    const newIds = (inserted ?? []).map((r: any) => r.id)
+    const archiveQuery = supabase
       .from('insights')
       .update({ archived: true, archived_at: new Date().toISOString() })
       .eq('user_id', user_id)
       .eq('behavior', behavior)
       .eq('archived', false)
-
-    if (insights.length > 0) {
-      const rows = insights.map((ins: any) => ({
-        user_id,
-        type: ins.type ?? 'nudge',
-        title: ins.title ?? 'Insight',
-        body: ins.body ?? '',
-        behavior,
-        child_id: ins.child_id ?? null,
-      }))
-
-      await supabase.from('insights').insert(rows)
-    } else {
-      // AI returned nothing useful — insert a single fallback so the user isn't left empty
-      await supabase.from('insights').insert([{
-        user_id,
-        type: 'nudge',
-        title: 'Grandma is still learning',
-        body: 'Keep logging and I\'ll have personalized insights for you soon!',
-        behavior,
-        child_id: null,
-      }])
-    }
+    if (newIds.length > 0) archiveQuery.not('id', 'in', `(${newIds.join(',')})`)
+    await archiveQuery
 
     return new Response(
       JSON.stringify({ insights, count: insights.length }),

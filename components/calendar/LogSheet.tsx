@@ -7,7 +7,7 @@
 
 import { ReactNode } from 'react'
 import { View, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform, Text, ScrollView } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
+import { X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
 import { Display } from '../ui/Typography'
@@ -28,10 +28,10 @@ export function LogSheet({ visible, title, onClose, children, chip, chipColor, t
   const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
 
-  const bg = isDark ? colors.bg : '#F3ECD9'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.18)'
-  const ink = isDark ? colors.text : '#141313'
+  const bg = colors.bg
+  const paper = colors.surface
+  const paperBorder = colors.borderStrong
+  const ink = colors.text
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -65,7 +65,7 @@ export function LogSheet({ visible, title, onClose, children, chip, chipColor, t
             </View>
             <Pressable onPress={onClose} hitSlop={8}>
               <View style={[styles.closeBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
-                <Ionicons name="close" size={18} color={ink} />
+                <X size={18} color={ink} />
               </View>
             </Pressable>
           </View>
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(10,8,6,0.55)',
+    backgroundColor: 'rgba(20,19,19,0.55)',
   },
   backdrop: { ...StyleSheet.absoluteFillObject },
   sheet: {

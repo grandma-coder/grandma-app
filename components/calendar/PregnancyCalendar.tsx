@@ -67,7 +67,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers as stickersLight, stickersDark } from '../../constants/theme'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getTrimester, weekForDate } from '../../lib/pregnancyWeeks'
-import { pregnancyWeeks } from '../../lib/pregnancyData'
+import { pregnancyWeeks, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
 import {
@@ -138,7 +138,6 @@ const TRIMESTER_COLOR: Record<1 | 2 | 3, string> = {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ViewTab = 'timeline' | 'journey' | 'appointments'
-type TimelineMode = 'cards' | 'hours'
 type LogFormType =
   | 'mood' | 'weight' | 'symptom' | 'appointment' | 'exam_result' | 'kick_count'
   | 'sleep' | 'exercise' | 'nutrition' | 'kegel' | 'water' | 'vitamins'
@@ -1490,11 +1489,11 @@ export function PregnancyCalendar() {
   const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
 
-  const weekNumber = usePregnancyStore((s) => s.weekNumber) ?? 24
+  const storedWeek = usePregnancyStore((s) => s.weekNumber)
   const dueDate = usePregnancyStore((s) => s.dueDate) ?? ''
+  const weekNumber = dueDate ? getCurrentWeekFromDueDate(dueDate) : (storedWeek ?? 1)
 
   const [view, setView] = useState<ViewTab>('timeline')
-  const [timelineMode, setTimelineMode] = useState<TimelineMode>('cards')
   const [viewDate, setViewDate] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
   const [logForm, setLogForm] = useState<{ type: LogFormType; date: string } | null>(null)
@@ -1612,17 +1611,6 @@ export function PregnancyCalendar() {
     setSelectedDate(toDateStr(d))
   }
 
-  // Auto-scroll day timeline to current time / morning (Hours mode only)
-  useEffect(() => {
-    if (view !== 'timeline' || timelineMode !== 'hours') return
-    const now = new Date()
-    const targetHours = selectedDate === todayStr
-      ? Math.max(DAY_VIEW_START, now.getHours() + now.getMinutes() / 60 - 2)
-      : 6
-    const scrollY = Math.max(0, (targetHours - DAY_VIEW_START) * dayZoomH)
-    setTimeout(() => dayScrollRef.current?.scrollTo({ y: scrollY, animated: false }), 80)
-  }, [view, timelineMode, selectedDate, todayStr, dayZoomH])
-
   // ── Pending routines for selected date ────────────────────────────────────
 
   const pendingRoutinesForDate = useCallback((dateStr: string): PregnancyRoutine[] => {
@@ -1733,40 +1721,7 @@ export function PregnancyCalendar() {
     })
   }, [calLogs, todayStr])
 
-  // ── Render: Timeline View (Cards or Hours) ───────────────────────────────
-
-  function renderTimelineView() {
-    return timelineMode === 'cards' ? renderTimelineCards() : renderTimelineHours()
-  }
-
-  function renderModeToggle() {
-    return (
-      <View style={[styles.modeToggle, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
-        {(['cards', 'hours'] as TimelineMode[]).map((m) => {
-          const active = timelineMode === m
-          return (
-            <Pressable
-              key={m}
-              onPress={() => setTimelineMode(m)}
-              style={[
-                styles.modeToggleBtn,
-                active && { backgroundColor: brand.pregnancy },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.modeToggleLabel,
-                  { color: active ? '#fff' : colors.textSecondary },
-                ]}
-              >
-                {m === 'cards' ? 'Cards' : 'Hours'}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
-    )
-  }
+  // ── Render: Timeline View ────────────────────────────────────────────────
 
   // Build dotsByDate for the week strip — one color per unique log type per day
   const dotsByDate = useMemo<Record<string, string[]>>(() => {
@@ -1906,211 +1861,6 @@ export function PregnancyCalendar() {
 
   // ── Render: Timeline Hours mode (day grid) ──────────────────────────────
 
-  function renderTimelineHours() {
-    const selLogs = calLogs[selectedDate] ?? []
-    const selPending = pendingRoutinesForDate(selectedDate)
-    const loggedLogs = selLogs.filter((l) => l.log_type !== 'skipped')
-
-    return (
-      <>
-        {/* Day Timeline Card */}
-        <View style={[styles.dayTimelineCard, { backgroundColor: colors.surface }]}>
-          {/* Day nav header */}
-          <View style={[styles.dayTimelineHeader, { borderBottomColor: colors.border }]}>
-            <Pressable onPress={prevDay} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <ChevronLeft size={20} color={colors.text} strokeWidth={2} />
-            </Pressable>
-            <View style={styles.dayTimelineHeaderCenter}>
-              <Text style={[styles.dayPanelDate, { color: colors.text }]}>
-                {formatDayLabel(selectedDate, todayStr)}
-              </Text>
-              <Text style={[styles.dayTimelineSub, { color: colors.textMuted }]}>
-                {[
-                  selPending.length > 0 && `${selPending.length} pending`,
-                  loggedLogs.length > 0 && `${loggedLogs.length} logged`,
-                ].filter(Boolean).join(' · ') || 'No activities'}
-              </Text>
-            </View>
-            <Pressable onPress={nextDay} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <ChevronRight size={20} color={colors.text} strokeWidth={2} />
-            </Pressable>
-          </View>
-
-          {/* Zoom controls */}
-          <View style={styles.dayZoomRow}>
-            <Pressable
-              onPress={() => setDayZoomH((h) => Math.min(h + 16, DAY_VIEW_MAX_HOUR_H))}
-              style={[styles.dayZoomBtn, { backgroundColor: colors.surfaceRaised ?? colors.surface, borderColor: colors.border }]}
-            >
-              <Plus size={14} color={colors.textSecondary} strokeWidth={2.5} />
-            </Pressable>
-            <Pressable
-              onPress={() => setDayZoomH((h) => Math.max(h - 16, DAY_VIEW_MIN_HOUR_H))}
-              style={[styles.dayZoomBtn, { backgroundColor: colors.surfaceRaised ?? colors.surface, borderColor: colors.border }]}
-            >
-              <Minus size={14} color={colors.textSecondary} strokeWidth={2.5} />
-            </Pressable>
-          </View>
-
-          {/* Time grid */}
-          <ScrollView
-            ref={dayScrollRef}
-            style={styles.dayTimelineScroll}
-            showsVerticalScrollIndicator={false}
-            nestedScrollEnabled
-          >
-            <View style={{ flexDirection: 'row', height: (DAY_VIEW_END - DAY_VIEW_START) * dayZoomH + dayZoomH }}>
-              {/* Hour labels */}
-              <View style={{ width: 52 }}>
-                {Array.from({ length: DAY_VIEW_END - DAY_VIEW_START + 1 }, (_, i) => (
-                  <View key={i} style={{ height: dayZoomH, paddingTop: 5, alignItems: 'flex-end', paddingRight: 8 }}>
-                    <Text style={[styles.dayHourLabel, { color: colors.textMuted }]}>
-                      {fmtHourLabel(DAY_VIEW_START + i)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-
-              {/* Events canvas */}
-              <View style={{ flex: 1, position: 'relative', height: (DAY_VIEW_END - DAY_VIEW_START) * dayZoomH }}>
-                {/* Hour grid lines */}
-                {Array.from({ length: DAY_VIEW_END - DAY_VIEW_START }, (_, i) => (
-                  <View key={`h-${i}`} style={{ position: 'absolute', top: i * dayZoomH, left: 0, right: 8, height: 1, backgroundColor: colors.border }} />
-                ))}
-                {/* Half-hour lines */}
-                {Array.from({ length: DAY_VIEW_END - DAY_VIEW_START }, (_, i) => (
-                  <View key={`hh-${i}`} style={{ position: 'absolute', top: i * dayZoomH + dayZoomH / 2, left: 0, right: 8, height: 0.5, backgroundColor: colors.border + '50' }} />
-                ))}
-
-                {/* Current time indicator */}
-                {selectedDate === todayStr && (() => {
-                  const now = new Date()
-                  const nowH = now.getHours() + now.getMinutes() / 60
-                  const y = (nowH - DAY_VIEW_START) * dayZoomH
-                  return (
-                    <View style={{ position: 'absolute', top: y, left: 0, right: 8, flexDirection: 'row', alignItems: 'center', zIndex: 20 }} pointerEvents="none">
-                      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#FF4444', marginLeft: -2 }} />
-                      <View style={{ flex: 1, height: 2, backgroundColor: '#FF4444' }} />
-                    </View>
-                  )
-                })()}
-
-                {/* Event blocks */}
-                {(() => {
-                  interface DvEvent {
-                    id: string; title: string; hours: number; durationHours: number
-                    color: string; isPending: boolean; isLogged: boolean
-                    routine?: PregnancyRoutine; log?: PregnancyCalendarLog
-                  }
-                  const events: DvEvent[] = []
-
-                  // Pending routines
-                  for (const r of selPending) {
-                    if (!r.time) continue
-                    const hours = timeStrToHours(r.time)
-                    if (hours < DAY_VIEW_START - 0.25 || hours > DAY_VIEW_END) continue
-                    const rMeta = LOG_META[r.type] ?? { color: brand.pregnancy }
-                    events.push({ id: `p-${r.id}`, title: r.name, hours, durationHours: 0.75, color: rMeta.color, isPending: true, isLogged: false, routine: r })
-                  }
-
-                  // Logged entries
-                  for (const log of loggedLogs) {
-                    const hours = activityTimeHoursPreg(log)
-                    if (hours < DAY_VIEW_START - 0.25 || hours > DAY_VIEW_END) continue
-                    const meta = LOG_META[log.log_type] ?? { label: log.log_type, color: brand.pregnancy }
-                    events.push({ id: `l-${log.id}`, title: meta.label, hours, durationHours: 0.75, color: meta.color, isPending: false, isLogged: true, log })
-                  }
-
-                  if (events.length === 0) {
-                    return (
-                      <View style={{ position: 'absolute', top: (8 - DAY_VIEW_START) * dayZoomH, left: 0, right: 8, alignItems: 'center' }}>
-                        <Text style={{ color: colors.textMuted, fontSize: 12 }}>No activities — tap + to add</Text>
-                      </View>
-                    )
-                  }
-
-                  // Greedy column assignment for overlap
-                  const sorted = [...events].sort((a, b) => a.hours - b.hours)
-                  const colEndTimes: number[] = []
-                  const withCol = sorted.map((ev) => {
-                    const evEnd = ev.hours + ev.durationHours
-                    let col = colEndTimes.findIndex((t) => t <= ev.hours + 0.05)
-                    if (col === -1) { col = colEndTimes.length; colEndTimes.push(evEnd) }
-                    else colEndTimes[col] = evEnd
-                    return { ...ev, col }
-                  })
-                  const withTotalCols = withCol.map((ev) => {
-                    const evEnd = ev.hours + ev.durationHours
-                    const concurrent = withCol.filter((other) => {
-                      const otherEnd = other.hours + other.durationHours
-                      return other.hours < evEnd - 0.05 && otherEnd > ev.hours + 0.05
-                    })
-                    return { ...ev, totalCols: concurrent.length > 0 ? Math.max(...concurrent.map((c) => c.col)) + 1 : 1 }
-                  })
-
-                  return withTotalCols.map((ev) => {
-                    const clampedH = Math.max(DAY_VIEW_START, ev.hours)
-                    const y = (clampedH - DAY_VIEW_START) * dayZoomH
-                    const blockH = Math.max(dayZoomH > 50 ? 44 : 28, ev.durationHours * dayZoomH - 4)
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const leftPct = `${(ev.col / ev.totalCols) * 100}%` as any
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const widthPct = `${(1 / ev.totalCols) * 100 - 1}%` as any
-
-                    return (
-                      <Pressable
-                        key={ev.id}
-                        onPress={() => {
-                          if (ev.isPending && ev.routine) {
-                            setLogForm({ type: ev.routine.type as LogFormType, date: selectedDate })
-                          } else if (ev.isLogged && ev.log) {
-                            setSelectedLog(ev.log)
-                          }
-                        }}
-                        style={({ pressed }) => ({
-                          position: 'absolute' as const,
-                          top: y + 2,
-                          height: blockH,
-                          left: leftPct,
-                          width: widthPct,
-                          backgroundColor: ev.color + (ev.isLogged ? '28' : '18'),
-                          borderLeftWidth: 3,
-                          borderLeftColor: ev.color,
-                          borderRadius: 6,
-                          paddingVertical: 5,
-                          paddingLeft: 7,
-                          paddingRight: 4,
-                          zIndex: 5,
-                          opacity: pressed ? 0.7 : 1,
-                        })}
-                      >
-                        <Text
-                          style={{ color: ev.color, fontSize: dayZoomH < 50 ? 9 : 11, fontWeight: '700', lineHeight: dayZoomH < 50 ? 11 : 14 }}
-                          numberOfLines={1}
-                        >
-                          {ev.title}
-                        </Text>
-                        {dayZoomH >= 40 && (
-                          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1, gap: 3 }}>
-                            <Text style={{ color: colors.textMuted, fontSize: 9 }} numberOfLines={1}>
-                              {fmtTime(hoursToHHMM(ev.hours))}
-                            </Text>
-                            {ev.isLogged
-                              ? <CheckCircle2 size={9} color={COLOR_GREEN} strokeWidth={2.5} />
-                              : <AlertCircle size={9} color={COLOR_AMBER} strokeWidth={2.5} />}
-                          </View>
-                        )}
-                      </Pressable>
-                    )
-                  })
-                })()}
-              </View>
-            </View>
-          </ScrollView>
-        </View>
-      </>
-    )
-  }
 
   // ── Render: Journey View (cards) ─────────────────────────────────────────
 
@@ -2429,9 +2179,7 @@ export function PregnancyCalendar() {
                 modeColor={brand.pregnancy}
               />
               <View style={{ height: 12 }} />
-              {renderModeToggle()}
-              <View style={{ height: 12 }} />
-              {renderTimelineView()}
+              {renderTimelineCards()}
             </>
           )}
           {view === 'appointments' && renderAppointmentsView()}

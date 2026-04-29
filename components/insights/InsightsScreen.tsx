@@ -22,8 +22,9 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTheme, brand, THEME_COLORS, stickers as stickerPalette } from '../../constants/theme'
+import { useTheme, brand, THEME_COLORS, stickers as stickerPalette, getModeColor, getModeColorSoft } from '../../constants/theme'
 import { stickerForEmoji } from '../../lib/emojiToSticker'
+import { GrandmaLogo } from '../ui/GrandmaLogo'
 import { NotifyHealthAlert, TalkMaster } from '../stickers/RewardStickers'
 import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
@@ -35,7 +36,7 @@ import {
   type Insight, type InsightType, type BehaviorMetrics,
 } from '../../lib/insights'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
-import { getWeekData } from '../../lib/pregnancyData'
+import { getWeekData, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { getDailyAffirmation } from '../../lib/pregnancyAffirmations'
 import { getBirthFocusForWeek } from '../../lib/pregnancyInsights'
 import type { BirthFocusCard } from '../../lib/pregnancyInsights'
@@ -443,6 +444,34 @@ function buildWeekNarrative(metrics: BehaviorMetrics, childName: string): string
 
 type Tab = 'today' | 'reads' | 'history'
 
+// ─── Sticker-on-paper helpers ─────────────────────────────────────────────
+
+const STICKER_INK = '#141313'
+
+const stickerShadow = {
+  shadowColor: STICKER_INK,
+  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 1,
+  shadowRadius: 0,
+  elevation: 4,
+} as const
+
+const stickerShadowSm = {
+  shadowColor: STICKER_INK,
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 1,
+  shadowRadius: 0,
+  elevation: 3,
+} as const
+
+const stickerShadowLg = {
+  shadowColor: STICKER_INK,
+  shadowOffset: { width: 0, height: 5 },
+  shadowOpacity: 1,
+  shadowRadius: 0,
+  elevation: 6,
+} as const
+
 // ─── Pregnancy Insights Content ────────────────────────────────────────────
 
 type PregnancyTab = 'today' | 'birth_guide' | 'reads'
@@ -462,26 +491,37 @@ function CollapsibleCard({
   id, title, emoji, color, defaultOpen = false,
   children, expandedMap, onToggle,
 }: CollapsibleCardProps) {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   const isOpen = expandedMap[id] ?? defaultOpen
   const Sticker = stickerForEmoji(emoji)
 
   return (
-    <View style={[ci.card, { backgroundColor: colors.surface, borderColor: color + '30' }]}>
+    <View style={[ci.card, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
       <Pressable onPress={() => onToggle(id)} style={ci.cardHeader}>
-        <Sticker size={28} />
+        <View style={[ci.cardStickerWrap, { backgroundColor: color + '28' }]}>
+          <Sticker size={26} />
+        </View>
         <Text style={[ci.cardTitle, { color: colors.text, flex: 1 }]}>{title}</Text>
-        <Text style={[ci.cardChevron, { color: color }]}>{isOpen ? '▲' : '▼'}</Text>
+        <View style={[ci.cardChevronPill, { backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF' }]}>
+          <Text style={[ci.cardChevron, { color: STICKER_INK + 'A0' }]}>{isOpen ? '▲' : '▼'}</Text>
+        </View>
       </Pressable>
       {isOpen && (
-        <View style={[ci.cardBody, { borderTopColor: color + '20' }]}>
+        <View style={[ci.cardBody, { borderTopColor: STICKER_INK + '12' }]}>
           {children}
           <Pressable
             onPress={() => router.push('/grandma-talk')}
-            style={[ci.askCta, { borderColor: color + '40', flexDirection: 'row', justifyContent: 'center', gap: 6 }]}
+            style={({ pressed }) => [
+              ci.askCta,
+              {
+                borderColor: STICKER_INK,
+                backgroundColor: color + '22',
+                transform: [{ translateY: pressed ? 1 : 0 }],
+              },
+            ]}
           >
             <TalkMaster size={16} />
-            <Text style={[ci.askCtaText, { color: color }]}>
+            <Text style={[ci.askCtaText, { color: STICKER_INK }]}>
               Ask Grandma about {title.toLowerCase()}
             </Text>
           </Pressable>
@@ -549,9 +589,11 @@ const WARNING_SIGNS = [
 ]
 
 function PregnancyInsightsContent() {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
-  const weekNumber = usePregnancyStore((s) => s.weekNumber) ?? 24
+  const storedWeek = usePregnancyStore((s) => s.weekNumber)
+  const dueDate = usePregnancyStore((s) => s.dueDate)
+  const weekNumber = dueDate ? getCurrentWeekFromDueDate(dueDate) : (storedWeek ?? 1)
   const parentName = useJourneyStore((s) => s.parentName) ?? 'Mama'
 
   const [pTab, setPTab] = useState<PregnancyTab>('today')
@@ -578,12 +620,12 @@ function PregnancyInsightsContent() {
 
   const renderToday = () => (
     <>
-      <View style={[ci.greetingCard, { backgroundColor: brand.pregnancy + '12', borderColor: brand.pregnancy + '20' }]}>
+      <View style={[ci.greetingCard, { backgroundColor: colors.accentSoft }]}>
         <Text style={[ci.greetingDate, { color: colors.textMuted }]}>{today}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={[ci.greetingName, { color: colors.text }]}>Good morning, {parentName}</Text>
+          <Text style={[ci.greetingName, { color: STICKER_INK }]}>Good morning, {parentName}</Text>
         </View>
-        <Text style={[ci.greetingWeek, { color: brand.pregnancy }]}>Week {weekNumber} · {weekData.babySize}</Text>
+        <Text style={[ci.greetingWeek, { color: colors.accent }]}>Week {weekNumber} · {weekData.babySize}</Text>
       </View>
 
       <CollapsibleCard
@@ -631,13 +673,13 @@ function PregnancyInsightsContent() {
 
   const renderBirthGuide = () => (
     <>
-      <View style={[ci.warningCard, { borderColor: THEME_COLORS.orange + '40', backgroundColor: THEME_COLORS.orange + '14' }]}>
+      <View style={[ci.warningCard, { backgroundColor: stickerPalette.peachSoft }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <NotifyHealthAlert size={22} />
-          <Text style={[ci.warningTitle, { color: THEME_COLORS.orange }]}>Call your provider or go to hospital if:</Text>
+          <Text style={[ci.warningTitle, { color: STICKER_INK }]}>Call your provider or go to hospital if:</Text>
         </View>
         {WARNING_SIGNS.map((sign, i) => (
-          <Text key={i} style={[ci.warningItem, { color: THEME_COLORS.orange }]}>• {sign}</Text>
+          <Text key={i} style={[ci.warningItem, { color: STICKER_INK + 'C8' }]}>• {sign}</Text>
         ))}
       </View>
 
@@ -662,11 +704,11 @@ function PregnancyInsightsContent() {
   const renderReads = () => (
     <>
       {featuredRead && (
-        <View style={[ci.featuredCard, { backgroundColor: brand.pregnancy + '15', borderColor: brand.pregnancy + '30' }]}>
-          <Text style={[ci.featuredBadge, { color: brand.pregnancy }]}>FEATURED THIS WEEK</Text>
-          <Text style={[ci.featuredTitle, { color: colors.text }]}>{featuredRead.title}</Text>
-          <Text style={[ci.featuredSummary, { color: colors.textSecondary }]}>{featuredRead.teaser}</Text>
-          <Text style={[ci.featuredMins, { color: colors.textMuted }]}>{featuredRead.readMinutes} min read</Text>
+        <View style={[ci.featuredCard, { backgroundColor: stickerPalette.yellowSoft }]}>
+          <Text style={[ci.featuredBadge, { color: STICKER_INK }]}>FEATURED THIS WEEK</Text>
+          <Text style={[ci.featuredTitle, { color: STICKER_INK }]}>{featuredRead.title}</Text>
+          <Text style={[ci.featuredSummary, { color: STICKER_INK + 'C8' }]}>{featuredRead.teaser}</Text>
+          <Text style={[ci.featuredMins, { color: STICKER_INK + 'A0' }]}>{featuredRead.readMinutes} min read</Text>
         </View>
       )}
       {allReads.map((read) => (
@@ -689,20 +731,41 @@ function PregnancyInsightsContent() {
   return (
     <View style={[ci.root, { backgroundColor: colors.bg }]}>
       <View style={[ci.topRow, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} style={ci.topBackBtn} hitSlop={12}>
-          <ArrowLeft size={22} color={colors.text} strokeWidth={2} />
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={12}
+          style={({ pressed }) => [
+            ci.topBackBtn,
+            {
+              backgroundColor: isDark ? colors.surface : '#FFFEF8',
+              borderColor: STICKER_INK,
+              transform: [{ translateY: pressed ? 1 : 0 }],
+              ...stickerShadowSm,
+            },
+          ]}
+        >
+          <ArrowLeft size={20} color={colors.text} strokeWidth={2.5} />
         </Pressable>
       </View>
-      <View style={[ci.tabBar, { borderBottomColor: colors.border }]}>
+      <View style={ci.tabBar}>
         {(['today', 'birth_guide', 'reads'] as PregnancyTab[]).map((t) => {
+          const active = pTab === t
           const label = t === 'today' ? 'Today' : t === 'birth_guide' ? 'Birth Guide' : 'Reads'
           return (
             <Pressable
               key={t}
               onPress={() => setPTab(t)}
-              style={[ci.tabBtn, pTab === t && { borderBottomWidth: 2, borderBottomColor: brand.pregnancy }]}
+              style={({ pressed }) => [
+                ci.tabPill,
+                {
+                  backgroundColor: active ? colors.accentSoft : (isDark ? colors.surface : '#FFFEF8'),
+                  borderColor: active ? STICKER_INK : colors.borderStrong,
+                  transform: [{ translateY: active && pressed ? 2 : 0 }],
+                  ...(active ? stickerShadowSm : { shadowOpacity: 0, elevation: 0 }),
+                },
+              ]}
             >
-              <Text style={[ci.tabLabel, { color: pTab === t ? brand.pregnancy : colors.textMuted }]}>
+              <Text style={[ci.tabLabel, { color: active ? STICKER_INK : colors.textMuted }]}>
                 {label}
               </Text>
             </Pressable>
@@ -721,11 +784,14 @@ function PregnancyInsightsContent() {
 
       <Pressable
         onPress={() => router.push('/grandma-talk')}
-        style={[ci.askBar, { backgroundColor: colors.accent, bottom: insets.bottom + 8 }]}
+        style={({ pressed }) => [
+          ci.askBar,
+          { backgroundColor: colors.accent, bottom: insets.bottom + 8, transform: [{ translateY: pressed ? 2 : 0 }] },
+        ]}
       >
         <TalkMaster size={28} />
-        <Text style={[ci.askBarText, { color: colors.text }]}>Ask Grandma anything</Text>
-        <ChevronRight size={18} color={colors.text} strokeWidth={2.5} />
+        <Text style={[ci.askBarText, { color: STICKER_INK }]}>Ask Grandma anything</Text>
+        <ChevronRight size={18} color={STICKER_INK} strokeWidth={2.5} />
       </Pressable>
     </View>
   )
@@ -735,52 +801,52 @@ function PregnancyInsightsContent() {
 
 const ci = StyleSheet.create({
   root: { flex: 1 },
-  topRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 4 },
-  topBackBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  tabBar: { flexDirection: 'row', paddingHorizontal: 16, borderBottomWidth: 1 },
-  tabBtn: { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  tabLabel: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  topRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 8 },
+  topBackBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
+  tabBar: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 8 },
+  tabPill: { flex: 1, paddingVertical: 11, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 999, borderWidth: 1.5 },
+  tabLabel: { fontSize: 12, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 0.6 },
   scroll: { padding: 16, gap: 0 },
 
-  greetingCard: { borderRadius: 20, padding: 20, marginBottom: 12, borderWidth: 1 },
-  greetingDate: { fontSize: 12, fontFamily: 'DMSans_500Medium', marginBottom: 4 },
-  greetingName: { fontSize: 20, fontFamily: 'Fraunces_800ExtraBold', marginBottom: 4 },
-  greetingWeek: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
+  greetingCard: { borderRadius: 26, padding: 22, marginBottom: 14, borderWidth: 1.5, borderColor: STICKER_INK + '18', ...stickerShadow },
+  greetingDate: { fontSize: 11, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 },
+  greetingName: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold', marginBottom: 6, letterSpacing: -0.5, lineHeight: 28 },
+  greetingWeek: { fontSize: 14, fontFamily: 'DMSans_700Bold' },
 
-  card: { borderRadius: 20, marginBottom: 12, borderWidth: 1, overflow: 'hidden' },
+  card: { borderRadius: 22, marginBottom: 12, borderWidth: 1.5, borderColor: STICKER_INK + '18', overflow: 'hidden', ...stickerShadowSm },
   cardHeader: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
-  cardEmoji: { fontSize: 22 },
-  cardTitle: { fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
-  cardChevron: { fontSize: 12 },
-  cardBody: { padding: 16, paddingTop: 12, borderTopWidth: 1, gap: 8 },
+  cardStickerWrap: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: STICKER_INK + '22' },
+  cardTitle: { fontSize: 16, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.2 },
+  cardChevronPill: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  cardChevron: { fontSize: 11, fontFamily: 'DMSans_700Bold' },
+  cardBody: { padding: 16, paddingTop: 14, borderTopWidth: 1, gap: 10 },
 
-  bodyText: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 20 },
+  bodyText: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 21 },
   bulletText: { fontSize: 13, fontFamily: 'DMSans_500Medium', lineHeight: 20, paddingLeft: 4 },
-  affirmationText: { fontSize: 16, fontFamily: 'DMSans_500Medium', fontStyle: 'italic', lineHeight: 24, fontWeight: '500' },
+  affirmationText: { fontSize: 17, fontFamily: 'InstrumentSerif_400Regular_Italic', lineHeight: 24 },
 
-  askCta: { marginTop: 12, paddingVertical: 10, borderRadius: 999, borderWidth: 1, alignItems: 'center' },
-  askCtaText: { fontSize: 13, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
+  askCta: { marginTop: 8, paddingVertical: 11, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1.5, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, ...stickerShadowSm },
+  askCtaText: { fontSize: 13, fontFamily: 'DMSans_700Bold' },
 
-  warningCard: { borderRadius: 20, padding: 16, marginBottom: 12, borderWidth: 1 },
-  warningTitle: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '700', marginBottom: 8 },
+  warningCard: { borderRadius: 22, padding: 18, marginBottom: 14, borderWidth: 1.5, borderColor: STICKER_INK + '22', ...stickerShadowSm },
+  warningTitle: { fontSize: 14, fontFamily: 'DMSans_700Bold', marginBottom: 10 },
   warningItem: { fontSize: 13, fontFamily: 'DMSans_500Medium', lineHeight: 20 },
 
-  featuredCard: { borderRadius: 20, padding: 20, marginBottom: 12, borderWidth: 1 },
-  featuredBadge: { fontSize: 10, fontFamily: 'DMSans_500Medium', fontWeight: '700', letterSpacing: 1, marginBottom: 8 },
-  featuredTitle: { fontSize: 17, fontFamily: 'Fraunces_800ExtraBold', marginBottom: 8 },
-  featuredSummary: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 20 },
-  featuredMins: { fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 6 },
-  readMins: { fontSize: 11, fontFamily: 'DMSans_500Medium', marginTop: 6 },
+  featuredCard: { borderRadius: 26, padding: 22, marginBottom: 14, borderWidth: 1.5, borderColor: STICKER_INK + '22', ...stickerShadow },
+  featuredBadge: { fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1.6, marginBottom: 10, textTransform: 'uppercase' },
+  featuredTitle: { fontSize: 19, fontFamily: 'Fraunces_600SemiBold', marginBottom: 8, letterSpacing: -0.4, lineHeight: 24 },
+  featuredSummary: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 21 },
+  featuredMins: { fontSize: 12, fontFamily: 'DMSans_600SemiBold', marginTop: 8 },
+  readMins: { fontSize: 11, fontFamily: 'DMSans_600SemiBold', marginTop: 6 },
 
-  askBar: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', alignItems: 'center', borderRadius: 999, paddingVertical: 14, paddingHorizontal: 20, gap: 10 },
-  askBarEmoji: { fontSize: 20 },
-  askBarText: { flex: 1, fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
+  askBar: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', alignItems: 'center', borderRadius: 999, paddingVertical: 16, paddingHorizontal: 22, gap: 12, borderWidth: 1.5, borderColor: STICKER_INK, ...stickerShadow },
+  askBarText: { flex: 1, fontSize: 16, fontFamily: 'DMSans_700Bold' },
 })
 
 // ─── Main Screen ──────────────────────────────────────────────────────────
 
 export function InsightsScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
   const queryClient = useQueryClient()
@@ -843,7 +909,11 @@ export function InsightsScreen() {
       await generateInsights(mode)
       await queryClient.refetchQueries({ queryKey: ['insights', mode] })
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Something went wrong')
+      const msg = e instanceof Error ? e.message : 'Something went wrong'
+      setError(msg)
+      console.warn('[insights] generate failed:', msg)
+      // Allow retry on next mount/effect cycle
+      didAutoGenerate.current = false
     } finally {
       setGenerating(false)
     }
@@ -942,8 +1012,20 @@ export function InsightsScreen() {
       >
         {/* Header */}
         <View style={s.headerRow}>
-          <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={12}>
-            <ArrowLeft size={22} color={colors.text} />
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={12}
+            style={({ pressed }) => [
+              s.backBtn,
+              {
+                backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                borderColor: STICKER_INK,
+                transform: [{ translateY: pressed ? 1 : 0 }],
+                ...stickerShadowSm,
+              },
+            ]}
+          >
+            <ArrowLeft size={20} color={colors.text} strokeWidth={2.5} />
           </Pressable>
         </View>
         <Text style={[s.heading, { color: colors.text }]}>Insights</Text>
@@ -951,25 +1033,36 @@ export function InsightsScreen() {
           Your daily companion for {childName}'s journey
         </Text>
 
-        {/* Tab Row */}
-        <View style={[s.tabRow, { backgroundColor: colors.surface, borderRadius: radius.sm }]}>
+        {/* Tab Row — sticker pills */}
+        <View style={s.tabRow}>
           {(['today', 'reads', 'history'] as Tab[]).map((t) => {
             const active = tab === t
             const label = t === 'today' ? 'Today' : t === 'reads' ? 'Reads' : 'History'
             const Icon = t === 'today' ? Sun : t === 'reads' ? BookOpen : Clock
+            const modeKey = mode === 'pre-pregnancy' ? 'pre' : 'kids'
+            const modeAccent = getModeColor(modeKey, isDark)
+            const modeAccentSoft = getModeColorSoft(modeKey, isDark)
             return (
               <Pressable
                 key={t}
                 onPress={() => setTab(t)}
-                style={[s.tabBtn, { borderRadius: radius.sm - 2 }, active && { backgroundColor: colors.accentSoft }]}
+                style={({ pressed }) => [
+                  s.tabPill,
+                  {
+                    backgroundColor: active ? modeAccentSoft : (isDark ? colors.surface : '#FFFEF8'),
+                    borderColor: active ? STICKER_INK : colors.borderStrong,
+                    transform: [{ translateY: active && pressed ? 2 : 0 }],
+                    ...(active ? stickerShadowSm : { shadowOpacity: 0, elevation: 0 }),
+                  },
+                ]}
               >
-                <Icon size={13} color={active ? colors.accent : colors.textMuted} strokeWidth={2} />
-                <Text style={[s.tabText, { color: active ? colors.accent : colors.textMuted }, active && s.tabTextActive]}>
+                <Icon size={13} color={active ? modeAccent : colors.textMuted} strokeWidth={2.5} />
+                <Text style={[s.tabText, { color: active ? STICKER_INK : colors.textMuted }]}>
                   {label}
                 </Text>
                 {t === 'today' && insights.length > 0 && (
-                  <View style={[s.tabBadge, { backgroundColor: active ? colors.accent + '30' : colors.surfaceRaised }]}>
-                    <Text style={[s.tabBadgeText, { color: active ? colors.accent : colors.textMuted }]}>
+                  <View style={[s.tabBadge, { backgroundColor: active ? modeAccent : colors.surfaceRaised, borderColor: active ? STICKER_INK : colors.border }]}>
+                    <Text style={[s.tabBadgeText, { color: active ? STICKER_INK : colors.textMuted }]}>
                       {insights.length}
                     </Text>
                   </View>
@@ -984,24 +1077,24 @@ export function InsightsScreen() {
           <>
             {/* Daily Brief */}
             <View
-              style={[s.dailyCard, { borderRadius: radius.lg, borderColor: colors.border, backgroundColor: colors.accentSoft }]}
+              style={[s.dailyCard, { backgroundColor: colors.accentSoft }]}
             >
               <View style={s.dailyTop}>
-                <View>
-                  <Text style={[s.dailyGreeting, { color: colors.textSecondary }]}>{today}</Text>
-                  <Text style={[s.dailyName, { color: colors.text }]}>{greeting}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.dailyGreeting, { color: colors.textMuted }]}>{today}</Text>
+                  <Text style={[s.dailyName, { color: STICKER_INK }]}>{greeting}</Text>
                 </View>
-                <View style={[s.sunIcon, { backgroundColor: stickerPalette.yellowSoft }]}>
-                  <Sun size={20} color="#C9A300" strokeWidth={2} />
+                <View style={[s.sunIcon, { backgroundColor: stickerPalette.yellow }]}>
+                  <Sun size={22} color={STICKER_INK} strokeWidth={2.5} />
                 </View>
               </View>
-              <View style={[s.tipBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View style={[s.tipBox, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: STICKER_INK + '18' }]}>
                 <View style={s.tipBoxHeader}>
-                  <Sparkles size={12} color={colors.accent} strokeWidth={2} />
+                  <Sparkles size={12} color={colors.accent} strokeWidth={2.5} />
                   <Text style={[s.tipBoxLabel, { color: colors.accent }]}>Today's tip</Text>
                   {child?.birthDate && (
-                    <View style={[s.agePill, { backgroundColor: colors.accent + '20' }]}>
-                      <Text style={[s.agePillText, { color: colors.accent }]}>
+                    <View style={[s.agePill, { backgroundColor: stickerPalette.yellowSoft }]}>
+                      <Text style={[s.agePillText, { color: STICKER_INK }]}>
                         {ageMonths < 12 ? `${ageMonths}mo` : `${Math.floor(ageMonths / 12)}y`}
                       </Text>
                     </View>
@@ -1013,31 +1106,32 @@ export function InsightsScreen() {
 
             {/* Week at a Glance */}
             {metrics && metrics.totalLogs > 0 && (
-              <View style={[s.weekCard, { backgroundColor: colors.surface, borderRadius: radius.md, borderColor: colors.border }]}>
+              <View style={[s.weekCard, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
                 <View style={s.weekHeader}>
-                  <View style={[s.weekIconWrap, { backgroundColor: '#6AABF715' }]}>
-                    <BarChart3 size={14} color="#6AABF7" strokeWidth={2.5} />
+                  <View style={[s.weekIconWrap, { backgroundColor: stickerPalette.blueSoft }]}>
+                    <BarChart3 size={15} color={STICKER_INK} strokeWidth={2.5} />
                   </View>
                   <Text style={[s.weekTitle, { color: colors.text }]}>This Week</Text>
                   {metrics.logStreak > 0 && (
-                    <View style={s.streakBadge}>
-                      <Flame size={11} color="#FB923C" strokeWidth={2} />
-                      <Text style={[s.streakText, { color: '#FB923C' }]}>{metrics.logStreak}d streak</Text>
+                    <View style={[s.streakBadge, { backgroundColor: '#FFE7CE' }]}>
+                      <Flame size={11} color="#C2410C" strokeWidth={2.5} />
+                      <Text style={[s.streakText, { color: '#C2410C' }]}>{metrics.logStreak}d</Text>
                     </View>
                   )}
                 </View>
                 <Text style={[s.weekNarrative, { color: colors.textSecondary }]}>
                   {buildWeekNarrative(metrics, childName)}
                 </Text>
-                {/* Mini bars */}
+                {/* Mini bars — sticker blocks */}
                 <View style={s.miniBars}>
                   {metrics.recentActivity.map((day, i) => {
                     const maxAct = Math.max(...metrics.recentActivity.map(d => d.count), 1)
-                    const h = day.count > 0 ? Math.max((day.count / maxAct) * 24, 3) : 2
+                    const h = day.count > 0 ? Math.max((day.count / maxAct) * 36, 8) : 4
                     const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+                    const barColor = day.count > 0 ? stickerPalette.lilac : (isDark ? colors.surfaceRaised : '#EDE3CC')
                     return (
                       <View key={day.date} style={s.miniBarCol}>
-                        <View style={[s.miniBar, { height: h, backgroundColor: day.count > 0 ? colors.primary : colors.surfaceRaised, borderRadius: 2 }]} />
+                        <View style={[s.miniBar, { height: h, backgroundColor: barColor, borderRadius: 6, borderColor: day.count > 0 ? STICKER_INK + '40' : 'transparent' }]} />
                         <Text style={[s.miniBarLabel, { color: colors.textMuted }]}>{labels[i % 7]}</Text>
                       </View>
                     )
@@ -1045,12 +1139,15 @@ export function InsightsScreen() {
                 </View>
                 {metrics.topTypes.length > 0 && (
                   <View style={s.topTypesRow}>
-                    {metrics.topTypes.slice(0, 4).map(t => (
-                      <View key={t.type} style={[s.topTypeChip, { backgroundColor: colors.surfaceRaised }]}>
-                        <Text style={[s.topTypeText, { color: colors.textSecondary }]}>{formatLogType(t.type)}</Text>
-                        <Text style={[s.topTypeCount, { color: colors.primary }]}>{t.count}</Text>
-                      </View>
-                    ))}
+                    {metrics.topTypes.slice(0, 4).map(t => {
+                      const palette = [stickerPalette.yellowSoft, stickerPalette.greenSoft, stickerPalette.pinkSoft, stickerPalette.peachSoft]
+                      return (
+                        <View key={t.type} style={[s.topTypeChip, { backgroundColor: palette[metrics.topTypes.indexOf(t) % palette.length] }]}>
+                          <Text style={[s.topTypeText, { color: STICKER_INK }]}>{formatLogType(t.type)}</Text>
+                          <Text style={[s.topTypeCount, { color: STICKER_INK }]}>{t.count}</Text>
+                        </View>
+                      )
+                    })}
                   </View>
                 )}
               </View>
@@ -1059,25 +1156,26 @@ export function InsightsScreen() {
             {/* Generating banner */}
             {generating && (
               <View
-                style={[s.generatingBanner, { borderRadius: radius.md, backgroundColor: colors.accentSoft, borderColor: colors.border }]}
+                style={[s.generatingBanner, { backgroundColor: colors.accentSoft }]}
               >
-                <View style={[s.generatingDot, { backgroundColor: colors.surface }]}>
-                  <ActivityIndicator size="small" color={colors.accent} />
+                <View style={[s.generatingDot, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+                  <GrandmaLogo size={42} mode="auto" motion="sparkle" animate />
                 </View>
-                <View>
-                  <Text style={[s.generatingTitle, { color: colors.text }]}>Grandma is thinking...</Text>
-                  <Text style={[s.generatingSubtext, { color: colors.textSecondary }]}>Analyzing your recent data</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.generatingTitle, { color: STICKER_INK }]}>Grandma is thinking…</Text>
+                  <Text style={[s.generatingSubtext, { color: colors.textMuted }]}>Analyzing your recent data</Text>
                 </View>
               </View>
             )}
 
             {/* Error */}
             {error && !generating && (
-              <View style={[s.errorBanner, { borderRadius: radius.md }]}>
-                <AlertTriangle size={16} color="#FF6B6B" strokeWidth={2} />
-                <Text style={[s.errorText, { color: '#FF6B6B' }]}>{error}</Text>
-                <Pressable onPress={onRefresh} hitSlop={8}>
-                  <RefreshCw size={14} color={colors.primary} strokeWidth={2} />
+              <View style={s.errorBanner}>
+                <AlertTriangle size={16} color="#C62828" strokeWidth={2.5} />
+                <Text style={[s.errorText, { color: '#C62828' }]}>{error}</Text>
+                <Pressable onPress={handleGenerate} hitSlop={8} style={s.errorRetryBtn}>
+                  <RefreshCw size={13} color="#C62828" strokeWidth={2.5} />
+                  <Text style={s.errorRetryText}>Retry</Text>
                 </Pressable>
               </View>
             )}
@@ -1090,16 +1188,16 @@ export function InsightsScreen() {
             )}
 
             {!isLoading && !generating && insights.length === 0 && (
-              <View style={[s.noInsightsCard, { backgroundColor: colors.surface, borderRadius: radius.md, borderColor: colors.border }]}>
-                <Sparkles size={22} color={colors.textMuted} strokeWidth={1.5} />
+              <View style={[s.noInsightsCard, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+                <Sparkles size={26} color={colors.textMuted} strokeWidth={1.5} />
                 <Text style={[s.noInsightsTitle, { color: colors.text }]}>No AI insights yet</Text>
-                <Text style={[s.noInsightsBody, { color: colors.textSecondary }]}>
+                <Text style={[s.noInsightsBody, { color: colors.textMuted }]}>
                   Log a few days of data and generate your first personalized insights.
                 </Text>
-                <Pressable onPress={handleGenerate}>
-                  <View style={[s.generateBtn, { borderRadius: radius.full, backgroundColor: colors.accent }]}>
-                    <Sparkles size={15} color={colors.text} strokeWidth={2} />
-                    <Text style={[s.generateBtnText, { color: colors.text }]}>Generate Insights</Text>
+                <Pressable onPress={handleGenerate} style={({ pressed }) => [{ transform: [{ translateY: pressed ? 2 : 0 }] }]}>
+                  <View style={[s.generateBtn, { backgroundColor: stickerPalette.yellow }]}>
+                    <Sparkles size={15} color={STICKER_INK} strokeWidth={2.5} />
+                    <Text style={s.generateBtnText}>Generate insights</Text>
                   </View>
                 </Pressable>
               </View>
@@ -1108,52 +1206,59 @@ export function InsightsScreen() {
             {insights.length > 0 && (
               <View style={s.insightSection}>
                 <View style={s.sectionHeader}>
-                  <View style={[s.sectionIconWrap, { backgroundColor: colors.accentSoft }]}>
-                    <Sparkles size={13} color={colors.accent} strokeWidth={2.5} />
+                  <View style={[s.sectionLabelPill, { backgroundColor: colors.accentSoft }]}>
+                    <Sparkles size={12} color={colors.accent} strokeWidth={2.5} />
+                    <Text style={[s.sectionLabel, { color: colors.accent }]}>Grandma's Insights</Text>
                   </View>
-                  <Text style={[s.sectionLabel, { color: colors.accent }]}>Grandma's Insights</Text>
-                  <View style={[s.sectionLine, { backgroundColor: colors.border }]} />
-                  <Pressable onPress={handleGenerate} hitSlop={8} style={[s.regenBtn, { backgroundColor: colors.accentSoft }]}>
-                    <RefreshCw size={13} color={colors.accent} strokeWidth={2} />
+                  <View style={[s.sectionLine, { backgroundColor: STICKER_INK + '15' }]} />
+                  <Pressable onPress={handleGenerate} hitSlop={8} style={[s.regenBtn, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+                    <RefreshCw size={13} color={colors.accent} strokeWidth={2.5} />
                   </Pressable>
                 </View>
-                {typeOrder.map((type) => {
-                  const items = grouped[type]
-                  if (!items || items.length === 0) return null
-                  const config = TYPE_CONFIG[type]
-                  return items.map((ins) => (
-                    <InsightCard
-                      key={ins.id}
-                      insight={ins}
-                      config={config}
-                      onTap={() => setSelectedInsight(ins)}
-                      onArchive={() => handleArchive(ins.id)}
-                    />
-                  ))
-                })}
+                {(() => {
+                  let cardIndex = 0
+                  return typeOrder.map((type) => {
+                    const items = grouped[type]
+                    if (!items || items.length === 0) return null
+                    const config = TYPE_CONFIG[type]
+                    return items.map((ins) => {
+                      const idx = cardIndex++
+                      return (
+                        <InsightCard
+                          key={ins.id}
+                          insight={ins}
+                          config={config}
+                          index={idx}
+                          onTap={() => setSelectedInsight(ins)}
+                          onArchive={() => handleArchive(ins.id)}
+                        />
+                      )
+                    })
+                  })
+                })()}
               </View>
             )}
 
             {/* Motivation */}
             <View
-              style={[s.quoteCard, { borderRadius: radius.lg, borderColor: colors.border, backgroundColor: stickerPalette.yellowSoft }]}
+              style={[s.quoteCard, { backgroundColor: stickerPalette.yellowSoft }]}
             >
-              <View style={[s.quoteIconWrap, { backgroundColor: colors.surface }]}>
-                <MessageSquare size={16} color="#C9A300" strokeWidth={2} />
+              <View style={[s.quoteIconWrap, { backgroundColor: stickerPalette.yellow }]}>
+                <MessageSquare size={18} color={STICKER_INK} strokeWidth={2.5} />
               </View>
-              <Text style={[s.quoteText, { color: colors.text }]}>"{quote.text}"</Text>
+              <Text style={[s.quoteText, { color: STICKER_INK }]}>"{quote.text}"</Text>
               <Text style={[s.quoteAuthor, { color: colors.textMuted }]}>— {quote.author}</Text>
             </View>
 
-            {/* Ask Grandma CTA */}
+            {/* Ask Grandma CTA — sticker hero button */}
             <Pressable
               onPress={() => router.push('/grandma-talk' as any)}
-              style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1 }]}
+              style={({ pressed }) => [{ transform: [{ translateY: pressed ? 2 : 0 }] }]}
             >
-              <View style={[s.grandmaCta, { borderRadius: radius.full, backgroundColor: colors.accent }]}>
-                <MessageCircle size={18} color={colors.text} strokeWidth={2} />
-                <Text style={[s.grandmaCtaText, { color: colors.text }]}>Ask Grandma anything</Text>
-                <ChevronRight size={16} color={colors.text} strokeWidth={2.5} />
+              <View style={[s.grandmaCta, { backgroundColor: colors.accent }]}>
+                <MessageCircle size={18} color={STICKER_INK} strokeWidth={2.5} />
+                <Text style={s.grandmaCtaText}>Ask Grandma anything</Text>
+                <ChevronRight size={18} color={STICKER_INK} strokeWidth={2.5} />
               </View>
             </Pressable>
           </>
@@ -1166,13 +1271,21 @@ export function InsightsScreen() {
               Curated articles for parents{child?.birthDate ? `, filtered for ${ageMonths < 12 ? `${ageMonths}-month-old` : `${Math.floor(ageMonths / 12)}-year-old`} ${childName}` : ''}.
             </Text>
 
-            {/* Category filter */}
+            {/* Category filter — sticker pills */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.categoryScroll} contentContainerStyle={s.categoryContent}>
               <Pressable
                 onPress={() => setArticleCategory('all')}
-                style={[s.categoryPill, { backgroundColor: articleCategory === 'all' ? colors.accent : colors.surface, borderColor: articleCategory === 'all' ? colors.accent : colors.border }]}
+                style={({ pressed }) => [
+                  s.categoryPill,
+                  {
+                    backgroundColor: articleCategory === 'all' ? colors.accent : (isDark ? colors.surface : '#FFFEF8'),
+                    borderColor: articleCategory === 'all' ? STICKER_INK : colors.borderStrong,
+                    transform: [{ translateY: articleCategory === 'all' && pressed ? 2 : 0 }],
+                    ...(articleCategory === 'all' ? stickerShadowSm : { shadowOpacity: 0, elevation: 0 }),
+                  },
+                ]}
               >
-                <Text style={[s.categoryPillText, { color: articleCategory === 'all' ? colors.text : colors.textSecondary }]}>All</Text>
+                <Text style={[s.categoryPillText, { color: articleCategory === 'all' ? STICKER_INK : colors.textSecondary }]}>All</Text>
               </Pressable>
               {(Object.keys(CATEGORY_META) as ArticleCategory[]).map((cat) => {
                 const meta = CATEGORY_META[cat]
@@ -1181,18 +1294,26 @@ export function InsightsScreen() {
                   <Pressable
                     key={cat}
                     onPress={() => setArticleCategory(cat)}
-                    style={[s.categoryPill, { backgroundColor: active ? meta.color + '25' : colors.surface, borderColor: active ? meta.color : colors.border }]}
+                    style={({ pressed }) => [
+                      s.categoryPill,
+                      {
+                        backgroundColor: active ? meta.color + '35' : (isDark ? colors.surface : '#FFFEF8'),
+                        borderColor: active ? STICKER_INK : colors.borderStrong,
+                        transform: [{ translateY: active && pressed ? 2 : 0 }],
+                        ...(active ? stickerShadowSm : { shadowOpacity: 0, elevation: 0 }),
+                      },
+                    ]}
                   >
-                    <Text style={[s.categoryPillText, { color: active ? meta.color : colors.textSecondary }]}>{meta.label}</Text>
+                    <Text style={[s.categoryPillText, { color: active ? STICKER_INK : colors.textSecondary }]}>{meta.label}</Text>
                   </Pressable>
                 )
               })}
             </ScrollView>
 
             {filteredArticles.length === 0 && (
-              <View style={[s.noArticlesWrap, { backgroundColor: colors.surface, borderRadius: radius.md }]}>
+              <View style={[s.noArticlesWrap, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
                 <BookOpen size={24} color={colors.textMuted} strokeWidth={1.5} />
-                <Text style={[s.noArticlesText, { color: colors.textSecondary }]}>
+                <Text style={[s.noArticlesText, { color: colors.textMuted }]}>
                   No articles match this filter for {childName}'s age. Try "All".
                 </Text>
               </View>
@@ -1217,10 +1338,10 @@ export function InsightsScreen() {
               </View>
             )}
             {!isLoadingHistory && archivedInsights.length === 0 && (
-              <View style={[s.historyEmpty, { backgroundColor: colors.surface, borderRadius: radius.md }]}>
-                <Clock size={24} color={colors.textMuted} strokeWidth={1.5} />
+              <View style={[s.historyEmpty, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+                <Clock size={26} color={colors.textMuted} strokeWidth={1.5} />
                 <Text style={[s.historyEmptyTitle, { color: colors.text }]}>No past insights</Text>
-                <Text style={[s.historyEmptyBody, { color: colors.textSecondary }]}>
+                <Text style={[s.historyEmptyBody, { color: colors.textMuted }]}>
                   Dismissed and expired insights will appear here.
                 </Text>
               </View>
@@ -1274,19 +1395,24 @@ export function InsightsScreen() {
 // ─── Article Card ─────────────────────────────────────────────────────────
 
 function ArticleCard({ article, onTap }: { article: Article; onTap: () => void }) {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const meta = CATEGORY_META[article.category]
   const Icon = meta.icon
 
   return (
-    <Pressable onPress={onTap} style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1, marginBottom: 12 }]}>
-      <View style={[s.articleCard, { backgroundColor: colors.surface, borderRadius: radius.md, borderColor: colors.border }]}>
+    <Pressable
+      onPress={onTap}
+      style={({ pressed }) => [
+        { marginBottom: 14, transform: [{ translateY: pressed ? 2 : 0 }] },
+      ]}
+    >
+      <View style={[s.articleCard, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
         <View style={[s.articleColorBar, { backgroundColor: meta.color }]} />
         <View style={s.articleContent}>
           <View style={s.articleMeta}>
-            <View style={[s.articleCatBadge, { backgroundColor: meta.color + '18' }]}>
-              <Icon size={10} color={meta.color} strokeWidth={2.5} />
-              <Text style={[s.articleCatText, { color: meta.color }]}>{meta.label}</Text>
+            <View style={[s.articleCatBadge, { backgroundColor: meta.color + '28' }]}>
+              <Icon size={10} color={STICKER_INK} strokeWidth={2.5} />
+              <Text style={[s.articleCatText, { color: STICKER_INK }]}>{meta.label}</Text>
             </View>
             <Text style={[s.articleReadTime, { color: colors.textMuted }]}>{article.readMinutes} min read</Text>
           </View>
@@ -1309,7 +1435,7 @@ function ArticleDetailModal({
   onClose: () => void
   onAskGrandma: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const meta = CATEGORY_META[article.category]
   const Icon = meta.icon
@@ -1318,22 +1444,34 @@ function ArticleDetailModal({
     <Modal visible transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={s.modalOverlay}>
         <Pressable style={s.modalBackdrop} onPress={onClose} />
-        <View style={[s.modalSheet, { paddingBottom: insets.bottom + 20 }]}>
+        <View style={s.modalSheet}>
           <View
-            style={[s.modalContent, { borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.surface }]}
+            style={[s.modalContent, { backgroundColor: isDark ? colors.surface : '#FFFEF8', paddingBottom: insets.bottom + 24 }]}
           >
             <View style={s.modalHandle}>
-              <View style={[s.handleBar, { backgroundColor: colors.textMuted + '40' }]} />
+              <View style={[s.handleBar, { backgroundColor: STICKER_INK + '40' }]} />
             </View>
-            <Pressable onPress={onClose} style={s.modalClose} hitSlop={12}>
-              <X size={20} color={colors.textMuted} />
+            <Pressable
+              onPress={onClose}
+              hitSlop={12}
+              style={({ pressed }) => [
+                s.modalClose,
+                {
+                  backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
+                  borderColor: STICKER_INK + '24',
+                  transform: [{ translateY: pressed ? 1 : 0 }],
+                  ...stickerShadowSm,
+                },
+              ]}
+            >
+              <X size={16} color={colors.textMuted} strokeWidth={2.5} />
             </Pressable>
             <View style={s.modalHeader}>
-              <View style={[s.modalIconWrap, { backgroundColor: meta.color + '20', borderRadius: radius.md }]}>
-                <Icon size={22} color={meta.color} strokeWidth={2} />
+              <View style={[s.modalIconWrap, { backgroundColor: meta.color + '30', borderColor: STICKER_INK }]}>
+                <Icon size={22} color={STICKER_INK} strokeWidth={2.5} />
               </View>
-              <View style={[s.articleCatBadge, { backgroundColor: meta.color + '18' }]}>
-                <Text style={[s.articleCatText, { color: meta.color }]}>{meta.label}</Text>
+              <View style={[s.articleCatBadge, { backgroundColor: meta.color + '28' }]}>
+                <Text style={[s.articleCatText, { color: STICKER_INK }]}>{meta.label}</Text>
               </View>
               <Text style={[s.articleReadTime, { color: colors.textMuted }]}>{article.readMinutes} min read</Text>
             </View>
@@ -1343,11 +1481,11 @@ function ArticleDetailModal({
                 <Text key={i} style={[s.articleParagraph, { color: colors.textSecondary }]}>{para}</Text>
               ))}
             </ScrollView>
-            <View style={[s.modalDivider, { backgroundColor: colors.border, marginVertical: 20 }]} />
-            <Pressable onPress={onAskGrandma}>
-              <View style={[s.askBtn, { borderRadius: radius.full, backgroundColor: colors.accent }]}>
-                <MessageCircle size={18} color={colors.text} strokeWidth={2} />
-                <Text style={[s.askBtnText, { color: colors.text }]}>Ask Grandma about this</Text>
+            <View style={[s.modalDivider, { backgroundColor: STICKER_INK + '15', marginVertical: 20 }]} />
+            <Pressable onPress={onAskGrandma} style={({ pressed }) => [{ transform: [{ translateY: pressed ? 2 : 0 }] }]}>
+              <View style={[s.askBtn, { backgroundColor: colors.accent }]}>
+                <MessageCircle size={18} color={STICKER_INK} strokeWidth={2.5} />
+                <Text style={s.askBtnText}>Ask Grandma about this</Text>
               </View>
             </Pressable>
           </View>
@@ -1360,47 +1498,63 @@ function ArticleDetailModal({
 // ─── Insight Card ─────────────────────────────────────────────────────────
 
 function InsightCard({
-  insight, config, onTap, onArchive,
+  insight, config, index = 0, onTap, onArchive,
 }: {
   insight: Insight
   config: (typeof TYPE_CONFIG)[InsightType]
+  index?: number
   onTap: () => void
   onArchive: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const Icon = config.icon
+  const tilt = index % 2 === 0 ? '-0.6deg' : '0.6deg'
+  const paper = isDark ? colors.surface : '#FFFEF8'
 
   return (
-    <Pressable onPress={onTap} style={({ pressed }) => [{ marginBottom: 10 }, pressed && { transform: [{ scale: 0.97 }] }]}>
-      <LinearGradient
-        colors={config.gradient as unknown as [string, string]}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={[s.card, { borderRadius: radius.md, borderWidth: 1, borderColor: config.color + '20' }]}
-      >
-        <View style={[s.cardGlowLine, { backgroundColor: config.color }]} />
+    <Pressable
+      onPress={onTap}
+      style={({ pressed }) => [
+        { marginBottom: 14, transform: [{ rotate: tilt }, { translateY: pressed ? 2 : 0 }] },
+      ]}
+    >
+      <View style={[s.card, { backgroundColor: config.gradient[0], borderColor: STICKER_INK, ...stickerShadow }]}>
+        <View style={[s.cardRail, { backgroundColor: config.color, borderRightColor: STICKER_INK }]} />
         <View style={s.cardInner}>
           <View style={s.cardTop}>
-            <View style={[s.typeBadge, { backgroundColor: config.color + '20' }]}>
-              <Icon size={11} color={config.color} strokeWidth={2.5} />
-              <Text style={[s.typeBadgeText, { color: config.color }]}>{config.label}</Text>
+            <View style={[s.typeBadge, { backgroundColor: paper, borderColor: STICKER_INK }]}>
+              <Icon size={12} color={config.color} strokeWidth={2.75} />
+              <Text style={[s.typeBadgeText, { color: STICKER_INK }]}>{config.label}</Text>
             </View>
-            <Pressable onPress={(e) => { e.stopPropagation?.(); onArchive() }} hitSlop={12}>
-              <X size={14} color={colors.textMuted} />
+            <Pressable
+              onPress={(e) => { e.stopPropagation?.(); onArchive() }}
+              hitSlop={12}
+              style={({ pressed }) => [
+                s.cardCloseBtn,
+                {
+                  backgroundColor: paper,
+                  borderColor: STICKER_INK,
+                  transform: [{ translateY: pressed ? 1 : 0 }],
+                  ...stickerShadowSm,
+                },
+              ]}
+            >
+              <X size={14} color={STICKER_INK} strokeWidth={2.75} />
             </Pressable>
           </View>
-          <Text style={[s.cardTitle, { color: colors.text }]} numberOfLines={2}>{insight.title}</Text>
-          <Text style={[s.cardBody, { color: colors.textSecondary }]} numberOfLines={3}>{insight.body}</Text>
-          <View style={s.cardFooter}>
-            <View style={[s.modeBadge, { backgroundColor: config.color + '10' }]}>
-              <Text style={[s.modeText, { color: config.color + 'AA' }]}>{insight.behavior}</Text>
+          <Text style={[s.cardTitle, { color: STICKER_INK }]} numberOfLines={2}>{insight.title}</Text>
+          <Text style={[s.cardBody, { color: STICKER_INK + 'CC' }]} numberOfLines={3}>{insight.body}</Text>
+          <View style={[s.cardFooter, { borderTopColor: STICKER_INK + '14' }]}>
+            <View style={[s.modeBadge, { backgroundColor: paper, borderColor: STICKER_INK + '30' }]}>
+              <Text style={[s.modeText, { color: STICKER_INK }]}>{insight.behavior}</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Text style={[s.tapHintText, { color: colors.textMuted }]}>Tap for details</Text>
-              <ChevronRight size={12} color={colors.textMuted} strokeWidth={2} />
+            <View style={[s.tapHint, { backgroundColor: paper, borderColor: STICKER_INK + '24' }]}>
+              <Text style={[s.tapHintText, { color: STICKER_INK }]}>Tap for details</Text>
+              <ChevronRight size={12} color={STICKER_INK} strokeWidth={2.75} />
             </View>
           </View>
         </View>
-      </LinearGradient>
+      </View>
     </Pressable>
   )
 }
@@ -1415,22 +1569,27 @@ function HistoryCard({
   onTap: () => void
   onRestore: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const Icon = config.icon
 
   return (
-    <Pressable onPress={onTap} style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1, marginBottom: 8 }]}>
-      <View style={[s.historyCard, { backgroundColor: colors.surface, borderRadius: radius.md, borderColor: colors.border }]}>
-        <View style={[s.historyIconWrap, { backgroundColor: config.color + '12' }]}>
-          <Icon size={16} color={config.color + '80'} strokeWidth={2} />
+    <Pressable
+      onPress={onTap}
+      style={({ pressed }) => [
+        { marginBottom: 10, transform: [{ translateY: pressed ? 2 : 0 }] },
+      ]}
+    >
+      <View style={[s.historyCard, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+        <View style={[s.historyIconWrap, { backgroundColor: config.gradient[0] }]}>
+          <Icon size={16} color={STICKER_INK} strokeWidth={2.5} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={[s.historyTitle, { color: colors.textSecondary }]} numberOfLines={1}>{insight.title}</Text>
+          <Text style={[s.historyTitle, { color: colors.text }]} numberOfLines={1}>{insight.title}</Text>
           <Text style={[s.historyBody, { color: colors.textMuted }]} numberOfLines={1}>{insight.body}</Text>
         </View>
         <Pressable onPress={(e) => { e.stopPropagation?.(); onRestore() }} hitSlop={10}
           style={[s.restoreBtn, { backgroundColor: colors.accentSoft }]}>
-          <RotateCcw size={14} color={colors.accent} strokeWidth={2} />
+          <RotateCcw size={14} color={colors.accent} strokeWidth={2.5} />
         </Pressable>
       </View>
     </Pressable>
@@ -1449,7 +1608,7 @@ function InsightDetailModal({
   onArchive: () => void
   onRestore: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const config = TYPE_CONFIG[insight.type as InsightType] ?? TYPE_CONFIG.nudge
   const Icon = config.icon
@@ -1459,65 +1618,87 @@ function InsightDetailModal({
     <Modal visible transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={s.modalOverlay}>
         <Pressable style={s.modalBackdrop} onPress={onClose} />
-        <View style={[s.modalSheet, { paddingBottom: insets.bottom + 20 }]}>
+        <View style={s.modalSheet}>
           <View
-            style={[s.modalContent, { borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.surface }]}
+            style={[s.modalContent, { backgroundColor: isDark ? colors.surface : '#FFFEF8', paddingBottom: insets.bottom + 24 }]}
           >
             <View style={s.modalHandle}>
-              <View style={[s.handleBar, { backgroundColor: colors.textMuted + '40' }]} />
+              <View style={[s.handleBar, { backgroundColor: STICKER_INK + '40' }]} />
             </View>
-            <Pressable onPress={onClose} style={s.modalClose} hitSlop={12}>
-              <X size={20} color={colors.textMuted} />
+            <Pressable
+              onPress={onClose}
+              hitSlop={12}
+              style={({ pressed }) => [
+                s.modalClose,
+                {
+                  backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
+                  borderColor: STICKER_INK + '24',
+                  transform: [{ translateY: pressed ? 1 : 0 }],
+                  ...stickerShadowSm,
+                },
+              ]}
+            >
+              <X size={16} color={colors.textMuted} strokeWidth={2.5} />
             </Pressable>
             <View style={s.modalHeader}>
               <View
-                style={[s.modalIconWrap, { borderRadius: radius.md, backgroundColor: config.color + '22' }]}
+                style={[s.modalIconWrap, { backgroundColor: config.gradient[0], borderColor: STICKER_INK }]}
               >
-                <Icon size={24} color={config.color} strokeWidth={2} />
+                <Icon size={22} color={STICKER_INK} strokeWidth={2.75} />
               </View>
-              <View style={[s.modalTypeBadge, { backgroundColor: config.color + '18' }]}>
-                <Text style={[s.modalTypeText, { color: config.color }]}>{config.label}</Text>
+              <View style={[s.modalTypeBadge, { backgroundColor: config.gradient[0], borderColor: STICKER_INK }]}>
+                <Text style={[s.modalTypeText, { color: STICKER_INK }]}>{config.label}</Text>
               </View>
               {isArchived && (
-                <View style={[{ backgroundColor: colors.surfaceRaised, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 12 }]}>
-                  <Text style={[{ fontSize: 11, fontWeight: '600', color: colors.textMuted }]}>Archived</Text>
+                <View style={s.modalMetaPill}>
+                  <Text style={[s.modalMetaPillText, { color: colors.textMuted }]}>Archived</Text>
                 </View>
               )}
             </View>
             <Text style={[s.modalTitle, { color: colors.text }]}>{insight.title}</Text>
             <Text style={[s.modalBody, { color: colors.textSecondary }]}>{insight.body}</Text>
-            <View style={[s.modalDivider, { backgroundColor: colors.border }]} />
-            <View style={[s.tipCard, { backgroundColor: config.color + '0A', borderColor: config.color + '15' }]}>
-              <View style={s.tipHeader}>
-                <DetailIcon size={16} color={config.color} strokeWidth={2} />
-                <Text style={[s.tipLabel, { color: config.color }]}>Grandma's Tip</Text>
+            <View style={[s.modalDivider, { backgroundColor: STICKER_INK + '15' }]} />
+            <View style={[s.tipCard, { backgroundColor: config.gradient[0], borderColor: STICKER_INK }]}>
+              <View style={[s.tipIconDisc, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: STICKER_INK }]}>
+                <DetailIcon size={16} color={config.color} strokeWidth={2.75} />
               </View>
-              <Text style={[s.tipText, { color: colors.textSecondary }]}>{config.tip}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.tipLabel, { color: STICKER_INK }]}>Grandma's Tip</Text>
+                <Text style={[s.tipText, { color: STICKER_INK + 'CC' }]}>{config.tip}</Text>
+              </View>
             </View>
             <View style={s.modalMeta}>
-              <View style={[{ backgroundColor: colors.surfaceRaised, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 12 }]}>
-                <Text style={[{ fontSize: 11, fontWeight: '600', color: colors.textMuted }]}>Mode: {insight.behavior}</Text>
+              <View style={[s.modalMetaPill, { borderColor: STICKER_INK + '24' }]}>
+                <Text style={[s.modalMetaPillText, { color: STICKER_INK }]}>Mode: {insight.behavior}</Text>
               </View>
-              <Text style={[{ fontSize: 12, fontWeight: '500', color: colors.textMuted }]}>
+              <Text style={s.modalDateText}>
                 {new Date(insight.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </Text>
             </View>
             <View style={s.modalActions}>
-              <Pressable onPress={onAskGrandma} style={{ flex: 1 }}>
-                <View style={[s.askBtn, { borderRadius: radius.full, backgroundColor: colors.accent }]}>
-                  <MessageCircle size={18} color={colors.text} strokeWidth={2} />
-                  <Text style={[s.askBtnText, { color: colors.text }]}>Ask Grandma</Text>
+              <Pressable onPress={onAskGrandma} style={({ pressed }) => [{ flex: 1, transform: [{ translateY: pressed ? 2 : 0 }] }]}>
+                <View style={[s.askBtn, { backgroundColor: colors.accent }]}>
+                  <MessageCircle size={18} color={STICKER_INK} strokeWidth={2.5} />
+                  <Text style={s.askBtnText}>Ask Grandma</Text>
                 </View>
               </Pressable>
               {isArchived ? (
                 <Pressable onPress={onRestore}
-                  style={[s.secondaryBtn, { borderRadius: radius.full, borderColor: colors.accent + '60' }]}>
-                  <RotateCcw size={18} color={colors.accent} strokeWidth={2} />
+                  style={({ pressed }) => [
+                    s.secondaryBtn,
+                    { backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF', transform: [{ translateY: pressed ? 1 : 0 }] },
+                  ]}
+                >
+                  <RotateCcw size={18} color={colors.accent} strokeWidth={2.5} />
                 </Pressable>
               ) : (
                 <Pressable onPress={onArchive}
-                  style={[s.secondaryBtn, { borderRadius: radius.full, borderColor: colors.border }]}>
-                  <X size={18} color={colors.textMuted} strokeWidth={2} />
+                  style={({ pressed }) => [
+                    s.secondaryBtn,
+                    { backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF', transform: [{ translateY: pressed ? 1 : 0 }] },
+                  ]}
+                >
+                  <X size={18} color={colors.textMuted} strokeWidth={2.5} />
                 </Pressable>
               )}
             </View>
@@ -1556,152 +1737,159 @@ export function InsightCardCompact({ insight }: { insight: Insight }) {
 const s = StyleSheet.create({
   root: { flex: 1 },
   scroll: { paddingHorizontal: 20 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-  backBtn: { padding: 4 },
-  heading: { fontSize: 32, fontWeight: '900', letterSpacing: -0.8, marginBottom: 4, fontFamily: 'Fraunces_600SemiBold' },
-  subtitle: { fontSize: 14, fontWeight: '500', lineHeight: 20, marginBottom: 20 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  backBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: STICKER_INK + '20' },
+  heading: { fontSize: 38, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1.2, marginBottom: 6, lineHeight: 42 },
+  subtitle: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 20, marginBottom: 22 },
 
-  // Tabs
-  tabRow: { flexDirection: 'row', padding: 3, marginBottom: 20, gap: 2 },
-  tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 10 },
-  tabText: { fontSize: 13, fontWeight: '600' },
-  tabTextActive: { fontWeight: '700' },
-  tabBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 10 },
-  tabBadgeText: { fontSize: 10, fontWeight: '800' },
+  // Tabs — sticker pills (no outer container)
+  tabRow: { flexDirection: 'row', gap: 8, marginBottom: 22 },
+  tabPill: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 11, paddingHorizontal: 8, borderRadius: 999, borderWidth: 1.5 },
+  tabText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold', letterSpacing: 0.1 },
+  tabBadge: { minWidth: 20, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  tabBadgeText: { fontSize: 10, fontFamily: 'DMSans_700Bold' },
 
-  // Daily Brief
-  dailyCard: { padding: 20, marginBottom: 16, borderWidth: 1 },
-  dailyTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 },
-  dailyGreeting: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
-  dailyName: { fontSize: 22, fontWeight: '900', letterSpacing: -0.4 },
-  sunIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  tipBox: { borderRadius: 16, borderWidth: 1, padding: 14 },
-  tipBoxHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  tipBoxLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, flex: 1 },
-  agePill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
-  agePillText: { fontSize: 10, fontWeight: '700' },
-  tipBoxText: { fontSize: 14, fontWeight: '500', lineHeight: 21 },
+  // Daily Brief — sticker paper (mode-tinted)
+  dailyCard: { padding: 22, marginBottom: 14, borderWidth: 1.5, borderColor: STICKER_INK + '18', borderRadius: 26, ...stickerShadow },
+  dailyTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 },
+  dailyGreeting: { fontSize: 11, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 4 },
+  dailyName: { fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.6, lineHeight: 30 },
+  sunIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: STICKER_INK, transform: [{ rotate: '-8deg' }], ...stickerShadowSm },
+  tipBox: { borderRadius: 18, borderWidth: 1, padding: 16 },
+  tipBoxHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
+  tipBoxLabel: { fontSize: 10, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.4, flex: 1 },
+  agePill: { paddingHorizontal: 9, paddingVertical: 2, borderRadius: 999, borderWidth: 1, borderColor: STICKER_INK + '30' },
+  agePillText: { fontSize: 10, fontFamily: 'DMSans_700Bold' },
+  tipBoxText: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 22 },
 
-  // Week Card
-  weekCard: { padding: 16, marginBottom: 16, borderWidth: 1 },
-  weekHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  weekIconWrap: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  weekTitle: { fontSize: 15, fontWeight: '800', flex: 1 },
-  streakBadge: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  streakText: { fontSize: 12, fontWeight: '700' },
-  weekNarrative: { fontSize: 13, fontWeight: '400', lineHeight: 20, marginBottom: 14 },
-  miniBars: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 4, marginBottom: 12 },
-  miniBarCol: { flex: 1, alignItems: 'center', gap: 3 },
-  miniBar: { width: '100%' },
-  miniBarLabel: { fontSize: 10, fontWeight: '600' },
-  topTypesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  topTypeChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 3, paddingHorizontal: 9, borderRadius: 12 },
-  topTypeText: { fontSize: 11, fontWeight: '600' },
-  topTypeCount: { fontSize: 11, fontWeight: '800' },
+  // Week Card — sticker paper
+  weekCard: { padding: 18, marginBottom: 16, borderWidth: 1.5, borderColor: STICKER_INK + '18', borderRadius: 24, ...stickerShadow },
+  weekHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  weekIconWrap: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: STICKER_INK + '20' },
+  weekTitle: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', flex: 1, letterSpacing: -0.3 },
+  streakBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1, borderColor: '#FB923C40' },
+  streakText: { fontSize: 11, fontFamily: 'DMSans_700Bold' },
+  weekNarrative: { fontSize: 13, fontFamily: 'DMSans_500Medium', lineHeight: 20, marginBottom: 16 },
+  miniBars: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 4, marginBottom: 14, paddingHorizontal: 4 },
+  miniBarCol: { flex: 1, alignItems: 'center', gap: 5 },
+  miniBar: { width: '100%', borderWidth: 1, borderColor: STICKER_INK + '30' },
+  miniBarLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', letterSpacing: 0.4 },
+  topTypesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  topTypeChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: STICKER_INK + '20' },
+  topTypeText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  topTypeCount: { fontSize: 11, fontFamily: 'DMSans_700Bold' },
 
-  // Generating / error
-  generatingBanner: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(160,127,220,0.15)' },
-  generatingDot: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(160,127,220,0.15)', alignItems: 'center', justifyContent: 'center' },
-  generatingTitle: { fontSize: 14, fontWeight: '700' },
-  generatingSubtext: { fontSize: 12, fontWeight: '500', marginTop: 1 },
-  errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, marginBottom: 16, backgroundColor: 'rgba(255,77,79,0.08)', borderWidth: 1, borderColor: 'rgba(255,77,79,0.15)' },
-  errorText: { fontSize: 13, fontWeight: '500', flex: 1 },
+  // Generating / error — sticker banners
+  generatingBanner: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, marginBottom: 16, borderWidth: 1.5, borderColor: STICKER_INK + '18', borderRadius: 22, ...stickerShadowSm },
+  generatingDot: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: STICKER_INK + '24', overflow: 'hidden' },
+  generatingTitle: { fontSize: 14, fontFamily: 'DMSans_700Bold' },
+  generatingSubtext: { fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 1 },
+  errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, marginBottom: 16, backgroundColor: '#FFE3E3', borderWidth: 1.5, borderColor: '#C62828', borderRadius: 18, ...stickerShadowSm },
+  errorText: { fontSize: 13, fontFamily: 'DMSans_500Medium', flex: 1 },
+  errorRetryBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: '#C62828', backgroundColor: '#FFFEF8' },
+  errorRetryText: { fontSize: 11, fontFamily: 'DMSans_700Bold', color: '#C62828' },
   loadingWrap: { paddingVertical: 40, alignItems: 'center' },
 
   // AI Insights section
-  insightSection: { marginBottom: 20 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  sectionIconWrap: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  sectionLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
+  insightSection: { marginBottom: 22 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
+  sectionLabelPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderColor: STICKER_INK + '20' },
+  sectionIconWrap: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  sectionLabel: { fontSize: 11, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.4 },
   sectionLine: { flex: 1, height: 1 },
-  regenBtn: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  noInsightsCard: { alignItems: 'center', padding: 28, gap: 10, borderWidth: 1, marginBottom: 16 },
-  noInsightsTitle: { fontSize: 17, fontWeight: '800' },
-  noInsightsBody: { fontSize: 13, fontWeight: '400', textAlign: 'center', lineHeight: 20 },
-  generateBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 24, marginTop: 4 },
-  generateBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  regenBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: STICKER_INK + '20' },
+  noInsightsCard: { alignItems: 'center', padding: 30, gap: 12, borderWidth: 1.5, borderColor: STICKER_INK + '18', marginBottom: 16, borderRadius: 24, ...stickerShadowSm },
+  noInsightsTitle: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 },
+  noInsightsBody: { fontSize: 13, fontFamily: 'DMSans_500Medium', textAlign: 'center', lineHeight: 20 },
+  generateBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 13, paddingHorizontal: 24, marginTop: 6, borderWidth: 1.5, borderColor: STICKER_INK, borderRadius: 999, ...stickerShadowSm },
+  generateBtnText: { fontSize: 14, fontFamily: 'DMSans_700Bold', color: STICKER_INK },
 
-  // Insight card
-  card: { overflow: 'hidden' },
-  cardGlowLine: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, borderTopLeftRadius: 16, borderBottomLeftRadius: 16 },
-  cardInner: { padding: 16, paddingLeft: 18 },
-  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
-  typeBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 20 },
-  typeBadgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
-  cardTitle: { fontSize: 16, fontWeight: '800', marginBottom: 4, letterSpacing: -0.2 },
-  cardBody: { fontSize: 13, fontWeight: '400', lineHeight: 20, marginBottom: 12 },
-  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  modeBadge: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: 12 },
-  modeText: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  tapHintText: { fontSize: 11, fontWeight: '500' },
+  // Insight card — sticker paper with accent rail
+  card: { overflow: 'hidden', borderRadius: 24, borderWidth: 2 },
+  cardRail: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 10, borderRightWidth: 2 },
+  cardInner: { padding: 18, paddingLeft: 24 },
+  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  typeBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1.5 },
+  typeBadgeText: { fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1.2, textTransform: 'uppercase' },
+  cardCloseBtn: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
+  cardTitle: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', marginBottom: 8, letterSpacing: -0.4, lineHeight: 24 },
+  cardBody: { fontSize: 13, fontFamily: 'DMSans_500Medium', lineHeight: 20, marginBottom: 14 },
+  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, borderTopWidth: 1 },
+  modeBadge: { paddingVertical: 4, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1 },
+  modeText: { fontSize: 10, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.2 },
+  tapHint: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1 },
+  tapHintText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
 
-  // Quote
-  quoteCard: { padding: 20, marginBottom: 16, borderWidth: 1, alignItems: 'flex-start', gap: 12 },
-  quoteIconWrap: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  quoteText: { fontSize: 15, fontWeight: '500', lineHeight: 23, fontStyle: 'italic' },
-  quoteAuthor: { fontSize: 12, fontWeight: '600' },
+  // Quote — yellow sticker paper
+  quoteCard: { padding: 22, marginBottom: 16, borderWidth: 1.5, borderColor: STICKER_INK + '18', alignItems: 'flex-start', gap: 12, borderRadius: 26, ...stickerShadow },
+  quoteIconWrap: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: STICKER_INK, transform: [{ rotate: '-6deg' }] },
+  quoteText: { fontSize: 16, fontFamily: 'InstrumentSerif_400Regular_Italic', lineHeight: 24 },
+  quoteAuthor: { fontSize: 12, fontFamily: 'DMSans_600SemiBold' },
 
-  // Grandma CTA
-  grandmaCta: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 16, paddingHorizontal: 20, marginBottom: 8 },
-  grandmaCtaText: { flex: 1, fontSize: 16, fontWeight: '700', color: '#FFF' },
+  // Grandma CTA — hero sticker button
+  grandmaCta: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 18, paddingHorizontal: 22, marginBottom: 8, borderWidth: 1.5, borderColor: STICKER_INK, borderRadius: 999, ...stickerShadow },
+  grandmaCtaText: { flex: 1, fontSize: 16, fontFamily: 'DMSans_700Bold', color: STICKER_INK },
 
   // Reads tab
-  readsIntro: { fontSize: 13, fontWeight: '500', lineHeight: 19, marginBottom: 14 },
-  categoryScroll: { marginBottom: 16 },
+  readsIntro: { fontSize: 13, fontFamily: 'DMSans_500Medium', lineHeight: 19, marginBottom: 14 },
+  categoryScroll: { marginBottom: 18 },
   categoryContent: { gap: 8, paddingVertical: 2 },
-  categoryPill: { paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1 },
-  categoryPillText: { fontSize: 13, fontWeight: '600' },
-  noArticlesWrap: { alignItems: 'center', padding: 32, gap: 10 },
-  noArticlesText: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
+  categoryPill: { paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1.5 },
+  categoryPillText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  noArticlesWrap: { alignItems: 'center', padding: 32, gap: 10, borderWidth: 1.5, borderColor: STICKER_INK + '18', borderRadius: 22, ...stickerShadowSm },
+  noArticlesText: { fontSize: 13, fontFamily: 'DMSans_500Medium', textAlign: 'center', lineHeight: 20 },
 
-  // Article card
-  articleCard: { flexDirection: 'row', overflow: 'hidden', borderWidth: 1 },
-  articleColorBar: { width: 4 },
-  articleContent: { flex: 1, padding: 14, gap: 6 },
+  // Article card — sticker paper
+  articleCard: { flexDirection: 'row', overflow: 'hidden', borderWidth: 1.5, borderColor: STICKER_INK + '18', borderRadius: 22, ...stickerShadow },
+  articleColorBar: { width: 6 },
+  articleContent: { flex: 1, padding: 16, gap: 6 },
   articleMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  articleCatBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 3, paddingHorizontal: 8, borderRadius: 10 },
-  articleCatText: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
-  articleReadTime: { fontSize: 11, fontWeight: '500' },
-  articleTitle: { fontSize: 15, fontWeight: '800', letterSpacing: -0.2, lineHeight: 20 },
-  articleSummary: { fontSize: 12, fontWeight: '400', lineHeight: 18 },
-  articleParagraph: { fontSize: 14, lineHeight: 22, marginBottom: 14 },
+  articleCatBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 9, borderRadius: 999, borderWidth: 1, borderColor: STICKER_INK + '24' },
+  articleCatText: { fontSize: 10, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 1 },
+  articleReadTime: { fontSize: 11, fontFamily: 'DMSans_500Medium' },
+  articleTitle: { fontSize: 17, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3, lineHeight: 22 },
+  articleSummary: { fontSize: 13, fontFamily: 'DMSans_500Medium', lineHeight: 19 },
+  articleParagraph: { fontSize: 14, fontFamily: 'DMSans_400Regular', lineHeight: 22, marginBottom: 14 },
 
   // History
-  historyEmpty: { alignItems: 'center', padding: 32, gap: 10 },
-  historyEmptyTitle: { fontSize: 17, fontWeight: '700' },
-  historyEmptyBody: { fontSize: 13, fontWeight: '500', textAlign: 'center' },
-  historyGroup: { marginBottom: 20 },
-  historyDateLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
-  historyCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderWidth: 1 },
-  historyIconWrap: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  historyTitle: { fontSize: 14, fontWeight: '600' },
-  historyBody: { fontSize: 12, fontWeight: '400' },
-  restoreBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  historyEmpty: { alignItems: 'center', padding: 32, gap: 10, borderWidth: 1.5, borderColor: STICKER_INK + '18', borderRadius: 22, ...stickerShadowSm },
+  historyEmptyTitle: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 },
+  historyEmptyBody: { fontSize: 13, fontFamily: 'DMSans_500Medium', textAlign: 'center' },
+  historyGroup: { marginBottom: 22 },
+  historyDateLabel: { fontSize: 11, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.6, marginBottom: 12, marginLeft: 4 },
+  historyCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderWidth: 1.5, borderColor: STICKER_INK + '18', borderRadius: 20, ...stickerShadowSm },
+  historyIconWrap: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: STICKER_INK + '20' },
+  historyTitle: { fontSize: 14, fontFamily: 'DMSans_700Bold' },
+  historyBody: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
+  restoreBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: STICKER_INK + '20' },
 
-  // Modal (shared)
+  // Modal (shared) — sticker paper sheet
   modalOverlay: { flex: 1, justifyContent: 'flex-end' },
-  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
+  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)' },
   modalSheet: { maxHeight: '88%' },
-  modalContent: { padding: 24, paddingTop: 12 },
+  modalContent: { padding: 24, paddingTop: 12, borderTopLeftRadius: 32, borderTopRightRadius: 32 },
   modalHandle: { alignItems: 'center', paddingVertical: 8 },
-  handleBar: { width: 40, height: 4, borderRadius: 2 },
-  modalClose: { position: 'absolute', top: 16, right: 20, zIndex: 10, padding: 4 },
-  modalHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8, marginBottom: 20 },
-  modalIconWrap: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-  modalTypeBadge: { paddingVertical: 5, paddingHorizontal: 12, borderRadius: 20 },
-  modalTypeText: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  modalTitle: { fontSize: 21, fontWeight: '900', letterSpacing: -0.3, marginBottom: 8 },
-  modalBody: { fontSize: 15, fontWeight: '400', lineHeight: 23, marginBottom: 20 },
-  modalDivider: { height: 1, marginBottom: 20 },
-  tipCard: { padding: 16, borderRadius: 16, borderWidth: 1, marginBottom: 20 },
-  tipHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  tipLabel: { fontSize: 13, fontWeight: '700' },
-  tipText: { fontSize: 14, fontWeight: '400', lineHeight: 21 },
+  handleBar: { width: 44, height: 4, borderRadius: 2 },
+  modalClose: { position: 'absolute', top: 16, right: 20, zIndex: 10, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8, marginBottom: 22 },
+  modalIconWrap: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 2, transform: [{ rotate: '-4deg' }], ...stickerShadowSm },
+  modalTypeBadge: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1.5 },
+  modalTypeText: { fontSize: 11, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 1.4 },
+  modalMetaPill: { paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, backgroundColor: 'rgba(20,19,19,0.04)' },
+  modalMetaPillText: { fontSize: 11, fontFamily: 'DMSans_700Bold' },
+  modalDateText: { fontSize: 16, fontFamily: 'InstrumentSerif_400Regular_Italic', color: STICKER_INK + 'A0' },
+  modalTitle: { fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.7, marginBottom: 12, lineHeight: 30 },
+  modalBody: { fontSize: 15, fontFamily: 'DMSans_500Medium', lineHeight: 24, marginBottom: 22 },
+  modalDivider: { height: 1, marginBottom: 22 },
+  tipCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 16, paddingRight: 18, borderRadius: 22, borderWidth: 2, marginBottom: 22, ...stickerShadowSm },
+  tipIconDisc: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, transform: [{ rotate: '6deg' }] },
+  tipLabel: { fontSize: 13, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+  tipText: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 21 },
   modalMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 },
   modalActions: { flexDirection: 'row', gap: 12 },
-  askBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16 },
-  askBtnText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
-  secondaryBtn: { width: 54, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  askBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderRadius: 999, borderWidth: 1.5, borderColor: STICKER_INK, ...stickerShadow },
+  askBtnText: { fontSize: 16, fontFamily: 'DMSans_700Bold', color: STICKER_INK },
+  secondaryBtn: { width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: STICKER_INK + '24', ...stickerShadowSm },
 
   // Compact
   compactCard: { flex: 1, padding: 14, gap: 6 },

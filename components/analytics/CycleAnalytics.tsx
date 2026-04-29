@@ -83,6 +83,7 @@ export function CycleAnalytics() {
               data={cycleValues}
               labels={cycleLabels}
               color={stickers.pink}
+              height={100}
             />
           </BigChartCard>
         </Pressable>
@@ -149,12 +150,12 @@ const styles = StyleSheet.create({
   scroll: { paddingTop: 0 },
   grid: {
     paddingHorizontal: 20,
-    marginTop: 10,
-    gap: 10,
+    marginTop: 14,
+    gap: 12,
   },
   row: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
   pressable: {
     flex: 1,

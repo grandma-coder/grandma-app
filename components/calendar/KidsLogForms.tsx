@@ -50,6 +50,7 @@ import {
 import { useTheme, brand, stickers as stickerPalette } from '../../constants/theme'
 import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Moon as MoonSticker, Flower, Drop, Star } from '../stickers/BrandStickers'
+import { Smiley, Sleepy, Sad } from '../ui/Stickers'
 import { ChildPill, childColor } from '../ui/ChildPills'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
@@ -407,6 +408,7 @@ function ChildSelector({
   onSelect: (id: string) => void
 }) {
   const children = useChildStore((s) => s.children)
+  const { colors } = useTheme()
 
   if (children.length <= 1) return null
 
@@ -415,7 +417,7 @@ function ChildSelector({
   return (
     <View style={styles.childSelectorWrap}>
       {needsSelection && (
-        <Text style={[styles.childSelectorPrompt, { color: brand.accent }]}>
+        <Text style={[styles.childSelectorPrompt, { color: colors.warning }]}>
           Select a child to continue
         </Text>
       )}
@@ -628,10 +630,10 @@ const MEAL_MOMENTS: { id: MealMoment; label: string }[] = [
   { id: 'night_snack', label: 'Night' },
 ]
 
-const EAT_QUALITIES: { id: EatQuality; label: string; icon: typeof Smile; color: string }[] = [
-  { id: 'ate_well', label: 'Ate well', icon: Laugh, color: brand.success },
-  { id: 'ate_little', label: 'Ate a little', icon: Meh, color: brand.accent },
-  { id: 'did_not_eat', label: 'Did not eat', icon: Frown, color: brand.error },
+const EAT_QUALITIES: { id: EatQuality; label: string; sticker: 'smiley' | 'sleepy' | 'sad' }[] = [
+  { id: 'ate_well', label: 'Ate well', sticker: 'smiley' },
+  { id: 'ate_little', label: 'Ate a little', sticker: 'sleepy' },
+  { id: 'did_not_eat', label: 'Did not eat', sticker: 'sad' },
 ]
 
 export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
@@ -1182,10 +1184,10 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg, minHeight: 48 }]}
               />
               {calorieMatches.length > 0 && (
-                <View style={[styles.calorieBanner, { backgroundColor: brand.success + '10', borderColor: brand.success + '30', borderRadius: radius.lg }]}>
+                <View style={[styles.calorieBanner, { backgroundColor: stickerPalette.greenSoft, borderColor: stickerPalette.green, borderRadius: radius.lg }]}>
                   <View style={styles.calorieHeader}>
-                    <Utensils size={14} color={brand.success} strokeWidth={2} />
-                    <Text style={[styles.calorieTotalText, { color: brand.success }]}>
+                    <Utensils size={14} color={stickerPalette.green} strokeWidth={2} />
+                    <Text style={[styles.calorieTotalText, { color: stickerPalette.green }]}>
                       ~{totalEstimatedCals} kcal estimated
                     </Text>
                   </View>
@@ -1252,8 +1254,11 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             {/* Eat quality */}
             <View style={styles.qualityRow}>
               {EAT_QUALITIES.map((q) => {
-                const Icon = q.icon
                 const active = quality === q.id
+                const StickerNode =
+                  q.sticker === 'smiley' ? <Smiley size={32} /> :
+                  q.sticker === 'sleepy' ? <Sleepy size={32} /> :
+                  <Sad size={32} />
                 return (
                   <Pressable
                     key={q.id}
@@ -1261,14 +1266,14 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     style={[
                       styles.qualityBtn,
                       {
-                        backgroundColor: active ? q.color + '15' : colors.surface,
-                        borderColor: active ? q.color : (isDark ? colors.border : INK),
+                        backgroundColor: active ? ACCENT_SOFT : colors.surface,
+                        borderColor: active ? ACCENT : (isDark ? colors.border : INK),
                         borderRadius: radius.lg,
                       },
                     ]}
                   >
-                    <Icon size={22} color={active ? q.color : colors.textMuted} strokeWidth={2} />
-                    <Text style={[styles.qualityLabel, { color: active ? q.color : colors.textMuted }]}>
+                    {StickerNode}
+                    <Text style={[styles.qualityLabel, { color: active ? colors.text : colors.textMuted }]}>
                       {q.label}
                     </Text>
                   </Pressable>
@@ -1281,26 +1286,26 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               <Pressable
                 onPress={() => setIsNewFood(!isNewFood)}
                 style={[styles.flagChip, {
-                  backgroundColor: isNewFood ? brand.secondary + '15' : colors.surface,
-                  borderColor: isNewFood ? brand.secondary : (isDark ? colors.border : INK),
+                  backgroundColor: isNewFood ? stickerPalette.blue + '15' : colors.surface,
+                  borderColor: isNewFood ? stickerPalette.blue : (isDark ? colors.border : INK),
                   borderRadius: radius.full,
                 }]}
               >
-                <Baby size={14} color={isNewFood ? brand.secondary : colors.textMuted} strokeWidth={2} />
-                <Text style={[styles.flagText, { color: isNewFood ? brand.secondary : colors.textMuted }]}>
+                <Baby size={14} color={isNewFood ? stickerPalette.blue : colors.textMuted} strokeWidth={2} />
+                <Text style={[styles.flagText, { color: isNewFood ? stickerPalette.blue : colors.textMuted }]}>
                   New food
                 </Text>
               </Pressable>
               <Pressable
                 onPress={() => setHasReaction(!hasReaction)}
                 style={[styles.flagChip, {
-                  backgroundColor: hasReaction ? brand.error + '15' : colors.surface,
-                  borderColor: hasReaction ? brand.error : (isDark ? colors.border : INK),
+                  backgroundColor: hasReaction ? colors.error + '15' : colors.surface,
+                  borderColor: hasReaction ? colors.error : (isDark ? colors.border : INK),
                   borderRadius: radius.full,
                 }]}
               >
-                <AlertTriangle size={14} color={hasReaction ? brand.error : colors.textMuted} strokeWidth={2} />
-                <Text style={[styles.flagText, { color: hasReaction ? brand.error : colors.textMuted }]}>
+                <AlertTriangle size={14} color={hasReaction ? colors.error : colors.textMuted} strokeWidth={2} />
+                <Text style={[styles.flagText, { color: hasReaction ? colors.error : colors.textMuted }]}>
                   Reaction
                 </Text>
               </Pressable>
@@ -1350,9 +1355,9 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             {!timerActive && (lastSideLoading ? (
               <ActivityIndicator size="small" color={colors.primary} style={{ alignSelf: 'flex-start' }} />
             ) : lastSide ? (
-              <View style={[styles.lastSideBanner, { backgroundColor: brand.accent + '12', borderColor: brand.accent + '25', borderRadius: radius.lg }]}>
-                <Text style={[styles.lastSideLabel, { color: colors.textSecondary }]}>
-                  Last session was <Text style={{ fontWeight: '800', color: brand.accent }}>
+              <View style={[styles.lastSideBanner, { backgroundColor: stickerPalette.yellowSoft, borderColor: stickerPalette.yellow, borderRadius: radius.lg }]}>
+                <Text style={[styles.lastSideLabel, { color: colors.text }]}>
+                  Last session was <Text style={{ fontWeight: '800', color: colors.text }}>
                     {lastSide === 'left' ? 'Left' : lastSide === 'right' ? 'Right' : 'Both'}
                   </Text> — try <Text style={{ fontWeight: '800', color: colors.text }}>
                     {lastSide === 'left' ? 'Right' : lastSide === 'right' ? 'Left' : 'alternating'}
@@ -1368,19 +1373,19 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 <View style={styles.timerSideIndicator}>
                   <View style={styles.breastIcon}>
                     <View style={[styles.breastShape, styles.breastShapeL, {
-                      backgroundColor: (timerSide === 'left' ? colors.primary : colors.textMuted + '20') + '20',
-                      borderColor: timerSide === 'left' ? colors.primary : colors.textMuted + '30',
+                      backgroundColor: (timerSide === 'left' ? ACCENT : colors.textMuted + '20') + '20',
+                      borderColor: timerSide === 'left' ? ACCENT : colors.textMuted + '30',
                     }]}>
-                      {timerSide === 'left' && <View style={[styles.breastNipple, { backgroundColor: colors.primary }]} />}
+                      {timerSide === 'left' && <View style={[styles.breastNipple, { backgroundColor: ACCENT }]} />}
                     </View>
                     <View style={[styles.breastShape, styles.breastShapeR, {
-                      backgroundColor: (timerSide === 'right' ? colors.primary : colors.textMuted + '20') + '20',
-                      borderColor: timerSide === 'right' ? colors.primary : colors.textMuted + '30',
+                      backgroundColor: (timerSide === 'right' ? ACCENT : colors.textMuted + '20') + '20',
+                      borderColor: timerSide === 'right' ? ACCENT : colors.textMuted + '30',
                     }]}>
-                      {timerSide === 'right' && <View style={[styles.breastNipple, { backgroundColor: colors.primary }]} />}
+                      {timerSide === 'right' && <View style={[styles.breastNipple, { backgroundColor: ACCENT }]} />}
                     </View>
                   </View>
-                  <Text style={[styles.timerSideLabel, { color: colors.primary }]}>
+                  <Text style={[styles.timerSideLabel, { color: ACCENT }]}>
                     {timerSide === 'left' ? 'Left side' : 'Right side'}
                   </Text>
                 </View>
@@ -1392,17 +1397,17 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 
                 {/* Per-side breakdown */}
                 <View style={styles.timerBreakdown}>
-                  <View style={[styles.timerBreakdownItem, { backgroundColor: timerSide === 'left' ? colors.primary + '15' : 'transparent', borderRadius: radius.md }]}>
-                    <View style={[styles.timerBreakdownDot, { backgroundColor: timerSide === 'left' ? colors.primary : colors.textMuted }]} />
+                  <View style={[styles.timerBreakdownItem, { backgroundColor: timerSide === 'left' ? ACCENT + '15' : 'transparent', borderRadius: radius.md }]}>
+                    <View style={[styles.timerBreakdownDot, { backgroundColor: timerSide === 'left' ? ACCENT : colors.textMuted }]} />
                     <Text style={[styles.timerBreakdownLabel, { color: timerSide === 'left' ? colors.text : colors.textMuted }]}>L</Text>
-                    <Text style={[styles.timerBreakdownTime, { color: timerSide === 'left' ? colors.primary : colors.textMuted }]}>
+                    <Text style={[styles.timerBreakdownTime, { color: timerSide === 'left' ? ACCENT : colors.textMuted }]}>
                       {formatTimer(leftSeconds)}
                     </Text>
                   </View>
-                  <View style={[styles.timerBreakdownItem, { backgroundColor: timerSide === 'right' ? colors.primary + '15' : 'transparent', borderRadius: radius.md }]}>
-                    <View style={[styles.timerBreakdownDot, { backgroundColor: timerSide === 'right' ? colors.primary : colors.textMuted }]} />
+                  <View style={[styles.timerBreakdownItem, { backgroundColor: timerSide === 'right' ? ACCENT + '15' : 'transparent', borderRadius: radius.md }]}>
+                    <View style={[styles.timerBreakdownDot, { backgroundColor: timerSide === 'right' ? ACCENT : colors.textMuted }]} />
                     <Text style={[styles.timerBreakdownLabel, { color: timerSide === 'right' ? colors.text : colors.textMuted }]}>R</Text>
-                    <Text style={[styles.timerBreakdownTime, { color: timerSide === 'right' ? colors.primary : colors.textMuted }]}>
+                    <Text style={[styles.timerBreakdownTime, { color: timerSide === 'right' ? ACCENT : colors.textMuted }]}>
                       {formatTimer(rightSeconds)}
                     </Text>
                   </View>
@@ -1410,8 +1415,8 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 
                 {/* Switch alert banner */}
                 {switchAlertShown && (
-                  <View style={[styles.switchAlert, { backgroundColor: brand.accent + '15', borderColor: brand.accent + '30', borderRadius: radius.lg }]}>
-                    <Text style={[styles.switchAlertText, { color: brand.accent }]}>
+                  <View style={[styles.switchAlert, { backgroundColor: stickerPalette.yellowSoft, borderColor: stickerPalette.yellow, borderRadius: radius.lg }]}>
+                    <Text style={[styles.switchAlertText, { color: colors.text }]}>
                       {switchTargetMin} min reached — time to switch sides!
                     </Text>
                   </View>
@@ -1423,23 +1428,23 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     onPress={switchSide}
                     style={({ pressed }) => [
                       styles.timerSwitchBtn,
-                      { backgroundColor: brand.accent + '15', borderColor: brand.accent + '40', borderRadius: radius.lg },
+                      { backgroundColor: ACCENT_SOFT, borderColor: ACCENT, borderRadius: radius.lg },
                       pressed && { opacity: 0.8 },
                     ]}
                   >
-                    <Repeat size={18} color={brand.accent} strokeWidth={2} />
-                    <Text style={[styles.timerSwitchText, { color: brand.accent }]}>Switch side</Text>
+                    <Repeat size={18} color={ACCENT} strokeWidth={2} />
+                    <Text style={[styles.timerSwitchText, { color: ACCENT }]}>Switch side</Text>
                   </Pressable>
                   <Pressable
                     onPress={stopTimer}
                     style={({ pressed }) => [
                       styles.timerStopBtn,
-                      { backgroundColor: colors.primary, borderRadius: radius.lg },
+                      { backgroundColor: '#141313', borderRadius: radius.lg },
                       pressed && { opacity: 0.8 },
                     ]}
                   >
-                    <Check size={18} color="#FFF" strokeWidth={2.5} />
-                    <Text style={styles.timerStopText}>Done</Text>
+                    <Check size={18} color="#FFFEF8" strokeWidth={2.5} />
+                    <Text style={[styles.timerStopText, { color: '#FFFEF8' }]}>Done</Text>
                   </Pressable>
                 </View>
               </View>
@@ -1456,7 +1461,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                       (lastSide === 'left' && s.id === 'right') ||
                       (lastSide === 'right' && s.id === 'left')
                     )
-                    const accentC = colors.primary
+                    const accentC = ACCENT
                     const dimC = colors.textMuted + '30'
                     const lFill = s.id === 'left' ? accentC : dimC
                     const rFill = s.id === 'right' ? accentC : dimC
@@ -1468,7 +1473,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                           styles.sideBtn,
                           {
                             backgroundColor: colors.surface,
-                            borderColor: isRecommended ? brand.accent + '50' : (isDark ? colors.border : INK),
+                            borderColor: isRecommended ? stickerPalette.yellow : (isDark ? colors.border : INK),
                             borderRadius: radius.lg,
                           },
                           pressed && { opacity: 0.7, transform: [{ scale: 0.97 }] },
@@ -1484,8 +1489,8 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                         </View>
                         <Text style={[styles.sideBtnText, { color: colors.text }]}>{s.label}</Text>
                         {isRecommended && (
-                          <View style={[styles.recommendedTag, { backgroundColor: brand.accent + '20' }]}>
-                            <Text style={{ fontSize: 9, fontWeight: '700', color: brand.accent }}>NEXT</Text>
+                          <View style={[styles.recommendedTag, { backgroundColor: stickerPalette.yellowSoft, borderColor: stickerPalette.yellow, borderWidth: 1 }]}>
+                            <Text style={{ fontSize: 9, fontWeight: '700', color: INK }}>NEXT</Text>
                           </View>
                         )}
                       </Pressable>
@@ -1497,24 +1502,27 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 <View style={[styles.switchTargetRow, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
                   <Clock size={14} color={colors.textMuted} strokeWidth={2} />
                   <Text style={[styles.switchTargetLabel, { color: colors.textSecondary }]}>Alert to switch at</Text>
-                  {[10, 15, 20].map((min) => (
-                    <Pressable
-                      key={min}
-                      onPress={() => setSwitchTargetMin(min)}
-                      style={[
-                        styles.switchTargetChip,
-                        {
-                          backgroundColor: switchTargetMin === min ? colors.primary : 'transparent',
-                          borderColor: switchTargetMin === min ? colors.primary : (isDark ? colors.border : INK),
-                          borderRadius: radius.full,
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.switchTargetChipText, { color: switchTargetMin === min ? '#FFF' : colors.textMuted }]}>
-                        {min}m
-                      </Text>
-                    </Pressable>
-                  ))}
+                  {[10, 15, 20].map((min) => {
+                    const active = switchTargetMin === min
+                    return (
+                      <Pressable
+                        key={min}
+                        onPress={() => setSwitchTargetMin(min)}
+                        style={[
+                          styles.switchTargetChip,
+                          {
+                            backgroundColor: active ? INK : 'transparent',
+                            borderColor: active ? INK : (isDark ? colors.border : INK),
+                            borderRadius: radius.full,
+                          },
+                        ]}
+                      >
+                        <Text style={[styles.switchTargetChipText, { color: active ? '#FFFEF8' : colors.textMuted }]}>
+                          {min}m
+                        </Text>
+                      </Pressable>
+                    )
+                  })}
                 </View>
 
                 {/* Or log manually */}
@@ -2033,7 +2041,7 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
               style={styles.photoDeleteBtn}
               hitSlop={4}
             >
-              <X size={14} color="#FFFFFF" strokeWidth={3} />
+              <X size={14} color="#FFFEF8" strokeWidth={3} />
             </Pressable>
           </View>
         ))}
@@ -2584,7 +2592,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
       ) : openLog ? (
         <>
           {/* Bedtime summary card */}
-          <View style={{ backgroundColor: ACCENT + '18', borderRadius: 16, padding: 16, gap: 6, borderWidth: 1, borderColor: ACCENT + '30' }}>
+          <View style={{ backgroundColor: ACCENT_SOFT, borderRadius: 16, padding: 16, gap: 6, borderWidth: 1, borderColor: ACCENT }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Moon size={15} color={ACCENT} strokeWidth={2} />
               <Text style={{ color: ACCENT, fontWeight: '700', fontSize: 14 }}>
@@ -2606,7 +2614,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
           {/* Duration preview */}
           {sleepDuration ? (
             <View style={{ backgroundColor: ACCENT + '12', borderRadius: 14, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: ACCENT + '25' }}>
-              <Text style={{ color: ACCENT, fontWeight: '800', fontSize: 36, letterSpacing: -1, lineHeight: 40, fontFamily: 'Fraunces_600SemiBold' }}>{sleepDuration}</Text>
+              <Text style={{ color: ACCENT, fontSize: 36, letterSpacing: -1, lineHeight: 40, fontFamily: 'Fraunces_600SemiBold' }}>{sleepDuration}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>total sleep</Text>
             </View>
           ) : null}
@@ -2732,7 +2740,7 @@ const styles = StyleSheet.create({
   toggleText: { fontSize: 14, fontFamily: 'DMSans_700Bold' },
   photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   photoThumb: { width: 72, height: 72 },
-  photoDeleteBtn: { position: 'absolute', top: -6, right: -6, backgroundColor: 'rgba(0,0,0,0.75)', borderRadius: 999, width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
+  photoDeleteBtn: { position: 'absolute', top: -6, right: -6, backgroundColor: 'rgba(20,19,19,0.75)', borderRadius: 999, width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
   photoButtons: { flexDirection: 'row', gap: 8 },
   cameraBtn: {
     width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5,
@@ -2792,7 +2800,7 @@ const styles = StyleSheet.create({
   foodTag: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5 },
   foodTagText: { fontSize: 13, fontWeight: '600' },
   foodTagRemove: { fontSize: 18, lineHeight: 20, fontWeight: '400' },
-  popupBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
+  popupBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,19,19,0.6)' },
   manualCalPopup: { position: 'absolute', left: 24, right: 24, top: '35%', padding: 20, borderWidth: 1 },
   manualCalTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
   manualCalSubtitle: { fontSize: 13, fontWeight: '500', lineHeight: 18 },

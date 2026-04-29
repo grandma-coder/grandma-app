@@ -32,10 +32,11 @@ import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
 import { PaperCard } from '../ui/PaperCard'
+import { Leaf } from '../ui/Stickers'
 import { Display, MonoCaps, Body } from '../ui/Typography'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
 import { supabase } from '../../lib/supabase'
-import { pregnancyWeeks, getDaysToGo } from '../../lib/pregnancyData'
+import { pregnancyWeeks, getDaysToGo, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import type { PregnancyWeekData } from '../../lib/pregnancyData'
 import { usePregnancyTodayLogs } from '../../lib/analyticsData'
 import type { TodayLogEntry } from '../../lib/analyticsData'
@@ -64,7 +65,6 @@ import { AppointmentDetailModal } from './pregnancy/AppointmentDetailModal'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 
 const SCREEN_W = Dimensions.get('window').width
-const BIRTH_ACCENT = '#C4B5FD'
 
 function getTrimester(week: number): 1 | 2 | 3 {
   if (week <= 13) return 1
@@ -279,12 +279,15 @@ type InlineLogType =
 interface PregnancyHomeProps { topInset?: number }
 
 export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, stickers } = useTheme()
   const insets = useSafeAreaInsets()
   const queryClient = useQueryClient()
 
-  const weekNumber = usePregnancyStore((s) => s.weekNumber) ?? 24
+  const storedWeek = usePregnancyStore((s) => s.weekNumber)
   const dueDate = usePregnancyStore((s) => s.dueDate) ?? ''
+  // Always derive from due date so the week advances with time;
+  // fall back to the stored snapshot only when no due date is set.
+  const weekNumber = dueDate ? getCurrentWeekFromDueDate(dueDate) : (storedWeek ?? 1)
   const parentName = useJourneyStore((s) => s.parentName)
   const { data: profile } = useProfile()
   const displayName = profile?.name ?? parentName
@@ -432,31 +435,26 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
         <WeightTrendCard userId={userId} weekNumber={weekNumber} />
       </View>
 
-      {/* 7. Birth guide — compact banner */}
+      {/* 7. Birth guide — sticker-on-paper card */}
       <View style={styles.section}>
         <Pressable
           onPress={() => setBirthGuideVisible(true)}
-          style={({ pressed }) => [
-            styles.birthBanner,
-            {
-              backgroundColor: colors.surface,
-              borderColor: BIRTH_ACCENT,
-              opacity: pressed ? 0.8 : 1,
-            },
-          ]}
+          style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
         >
-          <View style={[styles.birthBannerTile, { backgroundColor: isDark ? colors.surfaceRaised ?? colors.surface : '#F0EBFF' }]}>
-            <Text style={styles.birthBannerEmoji}>🌿</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.birthBannerTitle, { color: colors.text }]}>
-              Birth Guide
-            </Text>
-            <Text style={[styles.birthBannerSub, { color: colors.textSecondary }]}>
-              Natural · C-Section · Home · Water
-            </Text>
-          </View>
-          <Text style={styles.birthBannerChevron}>›</Text>
+          <PaperCard tint={stickers.greenSoft} radius={20} padding={14} flat style={styles.birthGuideCard}>
+            <View style={styles.birthGuideIcon}>
+              <Leaf size={36} fill={stickers.green} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.birthGuideTitle, { color: colors.text }]} numberOfLines={1}>
+                Birth Guide
+              </Text>
+              <Text style={[styles.birthGuideSub, { color: colors.textMuted }]} numberOfLines={2}>
+                Natural · C-Section · Home · Water
+              </Text>
+            </View>
+            <ChevronRight size={14} color={stickers.green} strokeWidth={2} />
+          </PaperCard>
         </Pressable>
       </View>
 
@@ -536,40 +534,26 @@ const styles = StyleSheet.create({
   modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', position: 'absolute', top: 12 },
   modalClose: { position: 'absolute', right: 20, top: 8, padding: 8 },
 
-  birthBanner: {
+  birthGuideCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
-    shadowColor: BIRTH_ACCENT,
-    shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
   },
-  birthBannerTile: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  birthGuideIcon: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  birthBannerEmoji: { fontSize: 20 },
-  birthBannerTitle: {
-    fontSize: 15,
+  birthGuideTitle: {
+    fontSize: 14,
     fontFamily: 'DMSans_600SemiBold',
+    marginBottom: 2,
   },
-  birthBannerSub: {
+  birthGuideSub: {
     fontSize: 12,
     fontFamily: 'DMSans_400Regular',
-    marginTop: 2,
-  },
-  birthBannerChevron: {
-    fontSize: 20,
-    color: BIRTH_ACCENT,
   },
 
   simpleForm: { padding: 24, gap: 20, alignItems: 'center' },

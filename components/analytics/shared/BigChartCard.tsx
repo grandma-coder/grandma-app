@@ -41,14 +41,14 @@ export function BigChartCard({ label, value, unit, children, blobColor, labelAli
         styles.card,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.border,
+          borderColor: 'rgba(20,19,19,0.14)',
         },
         pressed && { opacity: 0.92 },
       ]}
     >
       {/* Offset blob sticker — top-right corner */}
       <View style={styles.blob} pointerEvents="none">
-        <Blob size={100} fill={blobFill} variant={0} stroke={colors.text} />
+        <Blob size={72} fill={blobFill} variant={0} stroke={colors.text} />
       </View>
 
       <Text
@@ -92,17 +92,23 @@ export function BigChartCard({ label, value, unit, children, blobColor, labelAli
 const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
-    marginTop: 6,
+    marginTop: 8,
     borderRadius: 28,
-    padding: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
     borderWidth: 1,
     overflow: 'hidden',
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 3,
   },
   blob: {
     position: 'absolute',
-    top: -20,
-    right: -20,
+    top: -10,
+    right: -10,
     opacity: 0.7,
   },
   label: {

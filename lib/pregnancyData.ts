@@ -62,3 +62,16 @@ export function getDaysToGo(dueDate: string): number {
   const diff = due.getTime() - now.getTime()
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 }
+
+/**
+ * Current pregnancy week derived from due date.
+ * EDD is reached at week 40, so weeks-to-go subtracts from 40.
+ * Clamped to [1, 42] so the UI stays valid for early/late inputs.
+ */
+export function getCurrentWeekFromDueDate(dueDate: string): number {
+  const due = new Date(dueDate)
+  const now = new Date()
+  const daysLeft = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  const week = 40 - Math.floor(daysLeft / 7)
+  return Math.max(1, Math.min(42, week))
+}

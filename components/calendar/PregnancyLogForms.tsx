@@ -27,6 +27,8 @@ import {
   brand,
   stickers as stickersLight,
   stickersDark,
+  getModeColor,
+  getModeColorSoft,
 } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
@@ -114,7 +116,7 @@ export function PregnancyMoodForm({
               style={[
                 styles.moodBtn,
                 {
-                  backgroundColor: active ? brand.pregnancy + '24' : colors.surface,
+                  backgroundColor: active ? getModeColorSoft('preg', isDark) : colors.surface,
                   borderColor: active ? brand.pregnancy : colors.border,
                   borderRadius: radius.lg,
                 },
@@ -224,7 +226,7 @@ export function PregnancySymptomsForm({
               style={[
                 styles.chip,
                 {
-                  backgroundColor: active ? brand.pregnancy + '24' : colors.surface,
+                  backgroundColor: active ? getModeColorSoft('preg', isDark) : colors.surface,
                   borderColor: active ? brand.pregnancy : colors.border,
                   borderRadius: radius.full,
                 },
@@ -324,7 +326,7 @@ export function AppointmentForm({
   const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
   const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
   const ST_LAVENDER = isDark ? '#C4B5EF' : brand.pregnancy
-  const ST_LAVENDER_SOFT = '#E0D6F4'
+  const ST_LAVENDER_SOFT = brand.pregnancySoft
   const inkBorder = isDark ? colors.border : ST_INK
   const inkText = isDark ? colors.text : ST_INK
 
@@ -391,7 +393,7 @@ export function AppointmentForm({
               borderColor: inkBorder,
               borderWidth: 1.5,
               borderRadius: 999,
-              height: 52,
+              height: 56,
             },
           ]}
         />
@@ -620,7 +622,7 @@ function SaveButton({
 }) {
   const { colors, isDark } = useTheme()
   const ST_INK = '#141313'
-  const ST_LAVENDER = isDark ? '#C4B5EF' : brand.pregnancy
+  const ST_LAVENDER = isDark ? colors.primary : brand.pregnancy
   const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
   const isDisabled = !!disabled
   return (
@@ -703,7 +705,7 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
         max={12}
         value={hours}
         onChange={setHours}
-        color={brand.pregnancy}
+        color={getModeColor('preg', isDark)}
         unit={hours === 1 ? 'hour' : 'hours'}
       />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Quality (1–10)</Text>
@@ -712,7 +714,7 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
         max={10}
         value={quality}
         onChange={setQuality}
-        color={brand.pregnancy}
+        color={getModeColor('preg', isDark)}
       />
       <SaveButton onPress={save} saving={saving} disabled={false} />
     </View>
@@ -1127,7 +1129,7 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
           placeholder="Custom category"
           placeholderTextColor={colors.textMuted}
           autoFocus
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: brand.pregnancy, borderRadius: radius.lg }]}
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: isDark ? colors.border : '#141313', borderRadius: radius.lg }]}
         />
       )}
       <Pressable

@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, Pressable, useWindowDimensions } from 'react-native'
 import { useTheme } from '../../../constants/theme'
 import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
@@ -14,6 +14,7 @@ import { Heart, Flower } from '../../ui/Stickers'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../../lib/cycleLogic'
 import { useCycleHistory } from '../../../lib/cycleAnalytics'
 import { AffirmationShareModal } from '../pregnancy/AffirmationShareModal'
+import { HormonesInteractiveChart } from './HormonesCard'
 
 export type CycleHomeDetailType = 'cycle' | 'hormones' | 'wisdom' | 'fertile'
 
@@ -94,6 +95,11 @@ function HormonesDetail({ cycleConfig }: { cycleConfig: CycleConfig }) {
   const { colors, stickers, isDark } = useTheme()
   const info = getCycleInfo(cycleConfig)
   const ink = isDark ? colors.text : '#141313'
+  const { width: screenW } = useWindowDimensions()
+  // Sheet padding (24) × 2 outside, chart card padding (16) × 2 inside.
+  const chartW = Math.max(240, screenW - 24 * 2 - 16 * 2)
+  const chartH = 200
+  const chartBg = isDark ? colors.surfaceRaised : colors.bg
 
   const blurbs = [
     {
@@ -118,6 +124,27 @@ function HormonesDetail({ cycleConfig }: { cycleConfig: CycleConfig }) {
 
   return (
     <View style={{ gap: 18 }}>
+      <View
+        style={[
+          detailStyles.chartCard,
+          { backgroundColor: chartBg, borderColor: colors.border },
+        ]}
+      >
+        <HormonesInteractiveChart
+          cycleDay={info.cycleDay}
+          cycleLength={info.cycleLength}
+          periodLength={cycleConfig.periodLength ?? 5}
+          lutealPhase={cycleConfig.lutealPhase ?? 14}
+          width={chartW}
+          height={chartH}
+        />
+        <View style={detailStyles.chartLegend}>
+          <ChartLegend color={stickers.coral} label="LH" />
+          <ChartLegend color={stickers.lilac} label="Estrogen" />
+          <ChartLegend color={stickers.green} label="Progesterone" />
+        </View>
+      </View>
+
       <View style={{ gap: 4 }}>
         <MonoCaps size={10} color={colors.textMuted}>TODAY'S CONTEXT</MonoCaps>
         <Display size={22} color={ink}>
@@ -144,6 +171,16 @@ function HormonesDetail({ cycleConfig }: { cycleConfig: CycleConfig }) {
           </View>
         ))}
       </View>
+    </View>
+  )
+}
+
+function ChartLegend({ color, label }: { color: string; label: string }) {
+  const { colors } = useTheme()
+  return (
+    <View style={detailStyles.legendItem}>
+      <View style={[detailStyles.legendDot, { backgroundColor: color }]} />
+      <Body size={12} color={colors.textSecondary}>{label}</Body>
     </View>
   )
 }
@@ -366,6 +403,33 @@ const detailStyles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     alignItems: 'flex-start',
+  },
+  chartCard: {
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 16,
+    gap: 12,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  chartLegend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 14,
+    justifyContent: 'center',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   colorChip: {
     width: 18,

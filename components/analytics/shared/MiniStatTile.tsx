@@ -30,7 +30,7 @@ export function MiniStatTile({ label, value, sticker, tint, onPress }: Props) {
         styles.tile,
         {
           backgroundColor: tint,
-          borderColor: colors.border,
+          borderColor: 'rgba(20,19,19,0.12)',
         },
         pressed && { opacity: 0.85 },
       ]}
@@ -80,6 +80,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     minHeight: 72,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   chip: {
     width: 42,

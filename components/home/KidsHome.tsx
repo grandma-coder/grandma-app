@@ -70,7 +70,7 @@ const AnimatedSvgCircle = Reanimated.createAnimatedComponent(SvgCircle)
 const GROWTH_LEAPS = [
   {
     week: 5, name: 'Changing Sensations', desc: 'Baby discovers a richer world of senses',
-    ageRange: '4–5 weeks', duration: '1–2 weeks',
+    ageRange: '4–5 weeks', duration: '1–2 weeks', difficulty: 2,
     brainNote: 'The nervous system undergoes a first major reorganization. Your baby\'s brain is suddenly receiving far more detailed signals from the senses — sharper sights, richer sounds, new body feelings. It\'s overwhelming and wonderful at the same time.',
     color: '#B983FF',
     phases: [
@@ -85,7 +85,7 @@ const GROWTH_LEAPS = [
   },
   {
     week: 8, name: 'Patterns', desc: 'Recognizing simple repeating patterns in the world',
-    ageRange: '7–8 weeks', duration: '1–2 weeks',
+    ageRange: '7–8 weeks', duration: '1–2 weeks', difficulty: 2,
     brainNote: 'Your baby\'s brain starts detecting repeating patterns in sound, movement, and visual input. This is the foundation for all future learning — understanding that the world is predictable and has structure.',
     color: '#4D96FF',
     phases: [
@@ -100,7 +100,7 @@ const GROWTH_LEAPS = [
   },
   {
     week: 12, name: 'Smooth Transitions', desc: 'Movements and muscle control become more fluid',
-    ageRange: '11–12 weeks', duration: '1–2 weeks',
+    ageRange: '11–12 weeks', duration: '1–2 weeks', difficulty: 2,
     brainNote: 'Motor neurons are rapidly myelinating, enabling smoother, more coordinated movements. Your baby transitions from jerky reflexes to intentional, fluid motion — a massive upgrade in physical self-awareness.',
     color: '#A2FF86',
     phases: [
@@ -115,7 +115,7 @@ const GROWTH_LEAPS = [
   },
   {
     week: 19, name: 'Events', desc: 'Understanding that actions happen in sequences',
-    ageRange: '14–19 weeks', duration: '3–6 weeks',
+    ageRange: '14–19 weeks', duration: '3–6 weeks', difficulty: 4,
     brainNote: 'Baby\'s brain starts to perceive the world as a series of events rather than a static blur. Actions have beginnings, middles, and ends. This is the birth of cause-and-effect thinking — and why everything suddenly seems so fascinating.',
     color: '#FBBF24',
     phases: [
@@ -130,7 +130,7 @@ const GROWTH_LEAPS = [
   },
   {
     week: 26, name: 'Relationships', desc: 'Grasping how things and people relate to each other',
-    ageRange: '22–26 weeks', duration: '4–5 weeks',
+    ageRange: '22–26 weeks', duration: '4–5 weeks', difficulty: 5,
     brainNote: 'Baby\'s brain builds its first relational maps — understanding that objects and people exist in relation to one another. Distance, closeness, inside/outside, near/far all become meaningful. This triggers object permanence and separation anxiety simultaneously.',
     color: '#FF8AD8',
     phases: [
@@ -145,7 +145,7 @@ const GROWTH_LEAPS = [
   },
   {
     week: 37, name: 'Categories', desc: 'Grouping the world into mental categories',
-    ageRange: '33–37 weeks', duration: '4–5 weeks',
+    ageRange: '33–37 weeks', duration: '4–5 weeks', difficulty: 3,
     brainNote: 'The brain begins organizing the world into abstract groups — animals, foods, people, colors. This mental filing system is the foundation for language and logic. First words often appear during or just after this leap.',
     color: '#FF6B35',
     phases: [
@@ -160,7 +160,7 @@ const GROWTH_LEAPS = [
   },
   {
     week: 46, name: 'Sequences', desc: 'Following multi-step actions toward a goal',
-    ageRange: '41–46 weeks', duration: '4–6 weeks',
+    ageRange: '41–46 weeks', duration: '4–6 weeks', difficulty: 4,
     brainNote: 'Baby\'s brain learns to chain actions together into purposeful sequences — a monumental shift. Planning, goal-directed behavior, and early problem-solving emerge. This is why everything suddenly needs to be done in order.',
     color: '#67E8F9',
     phases: [
@@ -175,7 +175,7 @@ const GROWTH_LEAPS = [
   },
   {
     week: 55, name: 'Programs', desc: 'Understanding flexible programs — different ways to reach a goal',
-    ageRange: '49–55 weeks', duration: '4–6 weeks',
+    ageRange: '49–55 weeks', duration: '4–6 weeks', difficulty: 5,
     brainNote: 'Baby discovers that goals can be achieved in multiple ways — there isn\'t just one path. This "flexible programming" unlocks creative problem-solving and imagination. It also triggers strong opinions, because baby now knows what they want and can envision alternatives.',
     color: '#A2FF86',
     phases: [
@@ -190,7 +190,7 @@ const GROWTH_LEAPS = [
   },
   {
     week: 64, name: 'Principles', desc: 'Grasping invisible rules that govern the world',
-    ageRange: '59–64 weeks', duration: '5–6 weeks',
+    ageRange: '59–64 weeks', duration: '5–6 weeks', difficulty: 5,
     brainNote: 'Toddler\'s brain starts internalizing abstract principles — rules that can\'t be seen but govern behavior. Fairness, sharing, and cause-and-consequence become real. This is why "no" becomes a favorite word — toddler is actively testing which principles apply.',
     color: '#FBBF24',
     phases: [
@@ -205,7 +205,7 @@ const GROWTH_LEAPS = [
   },
   {
     week: 75, name: 'Systems', desc: 'Understanding complex systems with interacting parts',
-    ageRange: '70–75 weeks', duration: '4–6 weeks',
+    ageRange: '70–75 weeks', duration: '4–6 weeks', difficulty: 4,
     brainNote: 'The final Wonder Week leap — toddler\'s brain now models complex systems: family dynamics, nature, society, cause-and-effect chains with many links. This is the foundation of adult thinking. The questions become deep, the roleplay becomes rich, and independence flourishes.',
     color: '#4D96FF',
     phases: [
@@ -439,6 +439,8 @@ function getRecommendedCalories(bd: string): number {
 
 // CHILD_COLORS imported from shared component
 import { CHILD_COLORS } from '../ui/ChildPills'
+import { LogSheet } from '../calendar/LogSheet'
+import { SleepForm, KidsMoodForm, FeedingForm, ActivityForm } from '../calendar/KidsLogForms'
 
 const MOOD_COLORS: Record<string, string> = {
   happy: '#FBBF24', calm: '#6EC96E', energetic: '#4D96FF', fussy: '#FF9800', cranky: '#FF7070',
@@ -675,6 +677,7 @@ export function KidsHome() {
   const [activitiesDetailVisible, setActivitiesDetailVisible] = useState(false)
   const [diaperModalVisible, setDiaperModalVisible] = useState(false)
   const [goalsModalVisible, setGoalsModalVisible] = useState(false)
+  const [logSheetType, setLogSheetType] = useState<'sleep' | 'mood' | 'feeding' | 'activity' | null>(null)
 
   // Reminders
   const [reminders, setReminders] = useState<Reminder[]>([])
@@ -1585,6 +1588,10 @@ export function KidsHome() {
         onPressMood={() => setMoodModalVisible(true)}
         onPressCalories={() => setActivityModalVisible(true)}
         onPressActivity={() => setActivitiesDetailVisible(true)}
+        onLogSleep={() => setLogSheetType('sleep')}
+        onLogMood={() => setLogSheetType('mood')}
+        onLogFeeding={() => setLogSheetType('feeding')}
+        onLogActivity={() => setLogSheetType('activity')}
       />
 
       {/* (Ring legend / stats strip removed — hero tiles + detail modals cover this) */}
@@ -1642,9 +1649,6 @@ export function KidsHome() {
           </View>
           <Text style={[s.sectionTitle, { color: colors.text }]}>Health & Care</Text>
         </View>
-        <Pressable onPress={() => router.push('/profile/health-history' as any)}>
-          <Text style={[s.sectionLink, { color: colors.primary }]}>Insights</Text>
-        </Pressable>
       </View>
 
       <Pressable onPress={() => setHealthModalVisible(true)}>
@@ -2136,6 +2140,20 @@ export function KidsHome() {
           onSaved={() => loadRangeData(child, dateRange)}
         />
       )}
+
+      {/* ─── Log Sheets (open from empty hero tiles) ─────────────────── */}
+      <LogSheet visible={logSheetType === 'sleep'} title="Log Sleep" onClose={() => setLogSheetType(null)}>
+        <SleepForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
+      </LogSheet>
+      <LogSheet visible={logSheetType === 'mood'} title="Log Mood" onClose={() => setLogSheetType(null)}>
+        <KidsMoodForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
+      </LogSheet>
+      <LogSheet visible={logSheetType === 'feeding'} title="Log Feeding" onClose={() => setLogSheetType(null)}>
+        <FeedingForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
+      </LogSheet>
+      <LogSheet visible={logSheetType === 'activity'} title="Log Activity" onClose={() => setLogSheetType(null)}>
+        <ActivityForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
+      </LogSheet>
     </View>
   )
 }
@@ -2163,6 +2181,10 @@ function HeroTiles({
   onPressMood,
   onPressCalories,
   onPressActivity,
+  onLogSleep,
+  onLogMood,
+  onLogFeeding,
+  onLogActivity,
 }: {
   sleepTotal: number
   sleepTarget: number
@@ -2182,6 +2204,10 @@ function HeroTiles({
   onPressMood?: () => void
   onPressCalories?: () => void
   onPressActivity?: () => void
+  onLogSleep?: () => void
+  onLogMood?: () => void
+  onLogFeeding?: () => void
+  onLogActivity?: () => void
 }) {
   const { colors, isDark } = useTheme()
   const ink = isDark ? colors.text : '#141313'
@@ -2242,7 +2268,7 @@ function HeroTiles({
       {/* Row 1: LAST SLEEP (1.3fr) + MOOD (1fr) */}
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Pressable
-          onPress={onPressSleep}
+          onPress={!hasSleep && onLogSleep ? onLogSleep : onPressSleep}
           style={({ pressed }) => [
             tileStyles.card,
             { backgroundColor: blueSoft, borderColor: lineColor, flex: 1.3, opacity: pressed ? 0.92 : 1 },
@@ -2271,7 +2297,7 @@ function HeroTiles({
         </Pressable>
 
         <Pressable
-          onPress={onPressMood}
+          onPress={!hasMoods && onLogMood ? onLogMood : onPressMood}
           style={({ pressed }) => [
             tileStyles.card,
             { backgroundColor: yellowSoft, borderColor: lineColor, flex: 1, padding: 14, opacity: pressed ? 0.92 : 1 },
@@ -2324,7 +2350,7 @@ function HeroTiles({
       {/* Row 2: FEEDINGS / CALORIES (1fr) + ACTIVITIES (1.2fr) */}
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Pressable
-          onPress={onPressCalories}
+          onPress={!hasFeed && onLogFeeding ? onLogFeeding : onPressCalories}
           style={({ pressed }) => [
             tileStyles.card,
             { backgroundColor: pinkSoft, borderColor: lineColor, flex: 1, opacity: pressed ? 0.92 : 1 },
@@ -2356,7 +2382,7 @@ function HeroTiles({
         </Pressable>
 
         <Pressable
-          onPress={onPressActivity}
+          onPress={!hasActivity && onLogActivity ? onLogActivity : onPressActivity}
           style={({ pressed }) => [
             tileStyles.card,
             { backgroundColor: greenSoft, borderColor: lineColor, flex: 1.2, opacity: pressed ? 0.92 : 1 },
@@ -6359,21 +6385,19 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 56 }}>
-          {/* Hero card — paper with sticker emoji corner */}
-          <View style={{ margin: 16, gap: 14 }}>
+          {/* Compact hero — current status only */}
+          <View style={{ margin: 16 }}>
             <View style={{
-              backgroundColor: isDone ? greenSoft : lilacSoft,
+              backgroundColor: isDone ? greenSoft : isActive ? yellowSoft : lilacSoft,
               borderRadius: 24, borderWidth: 1, borderColor: line,
-              padding: 18, gap: 12, position: 'relative', overflow: 'hidden',
+              padding: 18, gap: 6, position: 'relative', overflow: 'hidden',
             }}>
-              {/* sticker emoji */}
               <View style={{ position: 'absolute', right: -6, top: -8, transform: [{ rotate: '12deg' }] }}>
-                <EmojiSticker size={72} style={{ opacity: 0.85 }}>{heroEmoji}</EmojiSticker>
+                <EmojiSticker size={64} style={{ opacity: 0.85 }}>{heroEmoji}</EmojiSticker>
               </View>
-
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.5 }}>
-                  Leap #{leap.index + 1}
+                  {isDone ? 'All complete' : `Leap #${leap.index + 1}`}
                 </Text>
                 <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: heroBadgeBg, borderWidth: 1, borderColor: line }}>
                   <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: heroBadgeInk, letterSpacing: 0.8 }}>
@@ -6381,228 +6405,43 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
                   </Text>
                 </View>
               </View>
-
-              <Text style={{ fontSize: 28, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.6, lineHeight: 32, maxWidth: '78%' }}>
-                {isDone ? 'All Leaps Complete' : gl.name}
+              <Text style={{ fontSize: 24, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.5, lineHeight: 28, maxWidth: '78%' }}>
+                {isDone ? `Way to go, ${childName}!` : gl.name}
               </Text>
-              <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, lineHeight: 19, maxWidth: '85%' }}>
-                {isDone ? `${childName} has completed all 10 Wonder Weeks` : gl.desc}
+              <Text style={{ fontSize: 12, fontFamily: 'DMSans_400Regular', color: ink2, lineHeight: 17, maxWidth: '85%' }}>
+                {isDone
+                  ? `${childName} has completed all ${GROWTH_LEAPS.length} Wonder Weeks.`
+                  : `${leap.completedCount} of ${GROWTH_LEAPS.length} leaps done · Tap any node to learn more.`}
               </Text>
             </View>
-
-            {/* Age & Duration pastel tile row */}
-            {!isDone && (
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={{ flex: 1, backgroundColor: pinkSoft, borderRadius: 20, borderWidth: 1, borderColor: line, padding: 14 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <EmojiSticker size={14}>📅</EmojiSticker>
-                    <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Typical Age</Text>
-                  </View>
-                  <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 4, letterSpacing: -0.3 }}>{gl.ageRange}</Text>
-                </View>
-                <View style={{ flex: 1, backgroundColor: blueSoft, borderRadius: 20, borderWidth: 1, borderColor: line, padding: 14 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <EmojiSticker size={14}>⏱️</EmojiSticker>
-                    <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Duration</Text>
-                  </View>
-                  <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 4, letterSpacing: -0.3 }}>{gl.duration}</Text>
-                </View>
-              </View>
-            )}
-
-            {/* Brain note — paper card with 🧠 sticker header */}
-            {!isDone && (
-              <View style={{ backgroundColor: paper, borderRadius: 22, borderWidth: 1, borderColor: line, padding: 16, gap: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <View style={{ transform: [{ rotate: '-6deg' }] }}>
-                    <EmojiSticker size={22}>🧠</EmojiSticker>
-                  </View>
-                  <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
-                    What's happening in the brain
-                  </Text>
-                </View>
-                <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, lineHeight: 20 }}>
-                  {gl.brainNote}
-                </Text>
-              </View>
-            )}
-
-            {/* Phase checklist — sticker-emoji card row */}
-            {!isDone && (
-              <View style={{ gap: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <EmojiSticker size={20}>🌊</EmojiSticker>
-                  <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>The 3 Phases</Text>
-                </View>
-                {gl.phases.map((phase, pi) => {
-                  const done = phaseDone[pi]
-                  const current = phaseCurrent[pi] && isActive
-                  const phaseBg = current ? yellowSoft : done ? greenSoft : paper
-                  return (
-                    <View key={pi} style={{
-                      backgroundColor: phaseBg,
-                      borderRadius: 18, borderWidth: 1, borderColor: line,
-                      padding: 14, flexDirection: 'row', gap: 12, alignItems: 'center',
-                    }}>
-                      <EmojiSticker size={28}>{done ? '✅' : PHASE_EMOJI[pi]}</EmojiSticker>
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={{ fontSize: 14, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
-                          {phase.label}{current ? '  · now' : ''}
-                        </Text>
-                        <Text style={{ fontSize: 12, fontFamily: 'DMSans_400Regular', color: ink3, lineHeight: 17 }}>
-                          {phase.desc}
-                        </Text>
-                      </View>
-                    </View>
-                  )
-                })}
-              </View>
-            )}
-
-            {/* Signs — coral sticker chips */}
-            {!isDone && (
-              <View style={{ gap: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <EmojiSticker size={20}>👀</EmojiSticker>
-                  <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
-                    {isActive ? `Signs ${childName} may show` : 'Signs to expect'}
-                  </Text>
-                </View>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                  {gl.signs.map((sign, i) => (
-                    <View key={i} style={{
-                      paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
-                      backgroundColor: pinkSoft, borderWidth: 1, borderColor: line,
-                    }}>
-                      <Text style={{ fontSize: 12, fontFamily: 'DMSans_500Medium', color: ink2 }}>
-                        {sign}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* Skills — paper bullet card */}
-            {!isDone && (
-              <View style={{ gap: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <EmojiSticker size={20}>💪</EmojiSticker>
-                  <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
-                    {isActive ? 'Skills emerging now' : 'Skills that will emerge'}
-                  </Text>
-                </View>
-                <View style={{ backgroundColor: paper, borderRadius: 22, borderWidth: 1, borderColor: line, padding: 16, gap: 10 }}>
-                  {gl.skills.map((skill, i) => (
-                    <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-                      <EmojiSticker size={14} style={{ marginTop: 1 }}>✨</EmojiSticker>
-                      <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, flex: 1, lineHeight: 19 }}>
-                        {skill}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* Activities — numbered pastel cards */}
-            {!isDone && (
-              <View style={{ gap: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <EmojiSticker size={20}>🎯</EmojiSticker>
-                  <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
-                    Activities to support this leap
-                  </Text>
-                </View>
-                <View style={{ gap: 8 }}>
-                  {gl.activities.map((act, i) => (
-                    <View key={i} style={{
-                      backgroundColor: paper, borderRadius: 20, borderWidth: 1, borderColor: line,
-                      padding: 14, flexDirection: 'row', gap: 12, alignItems: 'flex-start',
-                    }}>
-                      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: greenSoft, borderWidth: 1, borderColor: line, alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ fontSize: 12, fontFamily: 'Fraunces_600SemiBold', color: ink }}>{i + 1}</Text>
-                      </View>
-                      <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, flex: 1, lineHeight: 19 }}>{act}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* Tip — yellow sticker card */}
-            {!isDone && (
-              <View style={{
-                backgroundColor: yellowSoft, borderRadius: 22, borderWidth: 1, borderColor: line,
-                padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center',
-              }}>
-                <EmojiSticker size={30}>💡</EmojiSticker>
-                <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: ink, flex: 1, lineHeight: 19 }}>{gl.tip}</Text>
-              </View>
-            )}
-
-            {/* Done celebration */}
-            {isDone && (
-              <View style={{
-                backgroundColor: greenSoft, borderRadius: 22, borderWidth: 1, borderColor: line,
-                padding: 18, flexDirection: 'row', gap: 12, alignItems: 'center',
-              }}>
-                <EmojiSticker size={34}>🎉</EmojiSticker>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
-                    Way to go, {childName}!
-                  </Text>
-                  <Text style={{ fontSize: 12, fontFamily: 'DMSans_400Regular', color: ink3, marginTop: 2 }}>
-                    All 10 Wonder Weeks leaps complete.
-                  </Text>
-                </View>
-              </View>
-            )}
           </View>
 
-          {/* All leaps list — paper rows with emoji stickers */}
-          <View style={{ marginHorizontal: 16, marginTop: 12, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <EmojiSticker size={20}>📖</EmojiSticker>
-            <Text style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>All 10 Leaps</Text>
+          {/* Vertical leap path */}
+          <View style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <EmojiSticker size={18}>🛤️</EmojiSticker>
+            <Text style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>The 10-Leap Path</Text>
+            <View style={{ flex: 1 }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={{ fontSize: 9, fontFamily: 'DMSans_600SemiBold', color: ink3, letterSpacing: 0.6, textTransform: 'uppercase', marginRight: 2 }}>Intensity</Text>
+              <View style={{ flexDirection: 'row', gap: 2 }}>
+                {[1,2,3,4,5].map((n) => (
+                  <View key={n} style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#EE7B6D' }} />
+                ))}
+              </View>
+            </View>
           </View>
-          <View style={{ marginHorizontal: 16, gap: 6 }}>
-            {GROWTH_LEAPS.map((g, i) => {
-              const done = i < leap.completedCount
-              const active = i === leap.index && isActive
-              const allDone = isDone
-              const rowEmoji = LEAP_EMOJI[i] ?? '✨'
-              const badge = (done || allDone) ? 'DONE' : active ? 'NOW' : `WK ${g.week}`
-              const badgeBg = (done || allDone) ? greenSoft : active ? yellowSoft : blueSoft
-              const badgeInk = (done || allDone) ? '#4A6F1D' : active ? '#6B5500' : '#1F4C7A'
-              return (
-                <Pressable
-                  key={i}
-                  onPress={() => setSelectedLeapIdx(i)}
-                  style={{
-                    backgroundColor: active ? yellowSoft : paper,
-                    borderRadius: 18, borderWidth: 1, borderColor: line,
-                    padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10,
-                    opacity: !done && !active && !allDone ? 0.78 : 1,
-                  }}
-                >
-                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? colors.surface : '#FFFEF8', borderWidth: 1, borderColor: line, alignItems: 'center', justifyContent: 'center' }}>
-                    <EmojiSticker size={18}>{done || allDone ? '✅' : rowEmoji}</EmojiSticker>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>{g.name}</Text>
-                    <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, marginTop: 1 }} numberOfLines={1}>{g.desc}</Text>
-                  </View>
-                  <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: badgeBg, borderWidth: 1, borderColor: line }}>
-                    <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: badgeInk, letterSpacing: 0.8 }}>{badge}</Text>
-                  </View>
-                </Pressable>
-              )
-            })}
-          </View>
+          <LeapTimelinePath
+            leaps={GROWTH_LEAPS}
+            completedCount={leap.completedCount}
+            activeIndex={isActive ? leap.index : -1}
+            isAllDone={isDone}
+            onSelect={(i) => setSelectedLeapIdx(i)}
+            tokens={{ paper, ink, ink2, ink3, line, yellowSoft, pinkSoft, blueSoft, greenSoft, lilacSoft, isDark, surface: isDark ? colors.surface : '#FFFEF8' }}
+          />
         </ScrollView>
       </View>
 
-      {/* Leap focus sheet — opens when a row is tapped */}
+      {/* Leap focus sheet — opens when a node is tapped */}
       {selectedLeapIdx !== null && (
         <LeapFocusSheet
           leapIdx={selectedLeapIdx}
@@ -6614,6 +6453,182 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
         />
       )}
     </Modal>
+  )
+}
+
+// ─── Leap Timeline Path (vertical S-curve with bead nodes) ───────────────────
+
+function DifficultyDots({ difficulty, muted }: { difficulty: number; muted: string }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 2, alignItems: 'center' }}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <View
+          key={n}
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: 2.5,
+            backgroundColor: n <= difficulty ? '#EE7B6D' : 'transparent',
+            borderWidth: 1,
+            borderColor: n <= difficulty ? '#EE7B6D' : muted,
+          }}
+        />
+      ))}
+    </View>
+  )
+}
+
+function LeapTimelinePath({
+  leaps,
+  completedCount,
+  activeIndex,
+  isAllDone,
+  onSelect,
+  tokens,
+}: {
+  leaps: typeof GROWTH_LEAPS
+  completedCount: number
+  activeIndex: number
+  isAllDone: boolean
+  onSelect: (i: number) => void
+  tokens: {
+    paper: string
+    ink: string
+    ink2: string
+    ink3: string
+    line: string
+    yellowSoft: string
+    pinkSoft: string
+    blueSoft: string
+    greenSoft: string
+    lilacSoft: string
+    isDark: boolean
+    surface: string
+  }
+}) {
+  const { paper, ink, ink3, line, yellowSoft, blueSoft, greenSoft, isDark, surface } = tokens
+
+  const NODE_GAP = 108
+  const PATH_W = 64
+  const TOP_PAD = 18
+  const BOT_PAD = 18
+  const VB_H = TOP_PAD + leaps.length * NODE_GAP + BOT_PAD
+
+  const ST_GREEN = '#BDD48C'
+  const ST_CORAL = '#EE7B6D'
+
+  const nodes = leaps.map((g, i) => {
+    const y = TOP_PAD + i * NODE_GAP + NODE_GAP / 2
+    const x = PATH_W / 2 + Math.sin(i * 0.7) * 16
+    const done = isAllDone || i < completedCount
+    const active = i === activeIndex
+    return { i, g, y, x, done, active }
+  })
+
+  const buildPath = (pts: { x: number; y: number }[]): string => {
+    if (pts.length < 2) return ''
+    let d = `M${pts[0].x},${pts[0].y}`
+    for (let k = 0; k < pts.length - 1; k++) {
+      const p0 = pts[k - 1] ?? pts[k]
+      const p1 = pts[k]
+      const p2 = pts[k + 1]
+      const p3 = pts[k + 2] ?? p2
+      const cp1x = p1.x + (p2.x - p0.x) / 6
+      const cp1y = p1.y + (p2.y - p0.y) / 6
+      const cp2x = p2.x - (p3.x - p1.x) / 6
+      const cp2y = p2.y - (p3.y - p1.y) / 6
+      d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`
+    }
+    return d
+  }
+
+  const fullPath = buildPath(nodes)
+  const lastDoneIdx = isAllDone
+    ? nodes.length - 1
+    : activeIndex >= 0
+    ? activeIndex
+    : completedCount - 1
+  const doneSlice = lastDoneIdx >= 0 ? nodes.slice(0, lastDoneIdx + 1) : []
+  const donePath = buildPath(doneSlice)
+
+  return (
+    <View style={{ marginHorizontal: 16, position: 'relative', height: VB_H }}>
+      <Svg width={PATH_W} height={VB_H} style={{ position: 'absolute', left: 0, top: 0 }}>
+        <Path d={fullPath} fill="none" stroke={isDark ? '#3A332A' : '#D9CFB6'} strokeWidth={3} strokeLinecap="round" />
+        {doneSlice.length > 1 && (
+          <Path d={donePath} fill="none" stroke={ST_GREEN} strokeWidth={3.5} strokeLinecap="round" />
+        )}
+        {nodes.filter((n) => n.active).map((n) => (
+          <SvgCircle key={`halo-${n.i}`} cx={n.x} cy={n.y} r={18} fill={ST_CORAL} opacity={0.18} />
+        ))}
+        {nodes.map((n) => {
+          const fill = n.done ? ST_GREEN : n.active ? ST_CORAL : surface
+          const r = n.active ? 11 : 9
+          return (
+            <SvgCircle
+              key={n.i}
+              cx={n.x}
+              cy={n.y}
+              r={r}
+              fill={fill}
+              stroke={ink}
+              strokeWidth={1.8}
+            />
+          )
+        })}
+      </Svg>
+
+      {nodes.map((n) => {
+        const cardBg = n.active ? yellowSoft : n.done ? greenSoft : paper
+        const statusBadge = n.done ? 'DONE' : n.active ? 'NOW' : `WK ${n.g.week}`
+        const statusBadgeBg = n.done ? greenSoft : n.active ? yellowSoft : blueSoft
+        const statusBadgeInk = n.done ? '#4A6F1D' : n.active ? '#6B5500' : '#1F4C7A'
+        const cardOpacity = !n.done && !n.active ? 0.88 : 1
+        return (
+          <Pressable
+            key={n.i}
+            onPress={() => onSelect(n.i)}
+            style={{
+              position: 'absolute',
+              left: PATH_W + 6,
+              right: 0,
+              top: n.y - 44,
+              opacity: cardOpacity,
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: cardBg,
+                borderRadius: 18,
+                borderWidth: 1,
+                borderColor: line,
+                padding: 12,
+                gap: 4,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Leap #{n.i + 1}
+                </Text>
+                <DifficultyDots difficulty={n.g.difficulty} muted={ink3} />
+                <View style={{ flex: 1 }} />
+                <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: statusBadgeBg, borderWidth: 1, borderColor: line }}>
+                  <Text style={{ fontSize: 9, fontFamily: 'DMSans_600SemiBold', color: statusBadgeInk, letterSpacing: 0.6 }}>
+                    {statusBadge}
+                  </Text>
+                </View>
+              </View>
+              <Text style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+                {n.g.name}
+              </Text>
+              <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, lineHeight: 15 }} numberOfLines={2}>
+                {n.g.desc}
+              </Text>
+            </View>
+          </Pressable>
+        )
+      })}
+    </View>
   )
 }
 

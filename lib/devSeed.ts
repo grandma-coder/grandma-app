@@ -44,6 +44,10 @@ function randFrom<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
+function isPastOrToday(d: Date, today: Date): boolean {
+  return dateStr(d) <= dateStr(today)
+}
+
 function bbtFor(cycleDay: number, cycleLength: number): string {
   const ovulation = cycleLength - 14
   const base = 36.4
@@ -82,57 +86,65 @@ export async function seedCycleData(): Promise<{ inserted: number }> {
   cycleStarts.reverse()
   const orderedLengths = [...cycleLengths].reverse()
 
+  const pushIfPast = (row: { user_id: string; date: string; type: string; value: string | null; notes: string | null }, d: Date) => {
+    if (isPastOrToday(d, today)) rows.push(row)
+  }
+
   for (let c = 0; c < cycleStarts.length; c++) {
     const start = cycleStarts[c]
     const length = orderedLengths[c]
     const isLast = c === cycleStarts.length - 1
 
     // period_start
-    rows.push({ user_id: userId, date: dateStr(start), type: 'period_start', value: null, notes: null })
+    pushIfPast({ user_id: userId, date: dateStr(start), type: 'period_start', value: null, notes: null }, start)
 
     // period_end (5 days later) — skip for the last cycle (treat as open)
     if (!isLast) {
-      rows.push({ user_id: userId, date: dateStr(addDays(start, 4)), type: 'period_end', value: null, notes: null })
+      const endDate = addDays(start, 4)
+      pushIfPast({ user_id: userId, date: dateStr(endDate), type: 'period_end', value: null, notes: null }, endDate)
     }
 
     // BBT entries — 1 every ~2 days across the cycle
     for (let day = 1; day <= length; day += 2) {
-      rows.push({
+      const d = addDays(start, day - 1)
+      pushIfPast({
         user_id: userId,
-        date: dateStr(addDays(start, day - 1)),
+        date: dateStr(d),
         type: 'basal_temp',
         value: bbtFor(day, length),
         notes: null,
-      })
+      }, d)
     }
 
     // Symptoms — 3-4 entries in the last 7 days of cycle (luteal/PMS)
     const pmsDays = 3 + Math.floor(Math.random() * 2)
     for (let i = 0; i < pmsDays; i++) {
       const offset = length - 6 + i
+      const d = addDays(start, offset)
       const count = 1 + Math.floor(Math.random() * 2)
       const picked: string[] = []
       for (let k = 0; k < count; k++) picked.push(randFrom(SYMPTOMS))
-      rows.push({
+      pushIfPast({
         user_id: userId,
-        date: dateStr(addDays(start, offset)),
+        date: dateStr(d),
         type: 'symptom',
         value: [...new Set(picked)].join(', '),
         notes: null,
-      })
+      }, d)
     }
 
     // Mood — ~5 per cycle spread out
     for (let i = 0; i < 5; i++) {
       const offset = Math.floor((length / 5) * i + Math.random() * 2)
       if (offset >= length) continue
-      rows.push({
+      const d = addDays(start, offset)
+      pushIfPast({
         user_id: userId,
-        date: dateStr(addDays(start, offset)),
+        date: dateStr(d),
         type: 'mood',
         value: randFrom(MOODS),
         notes: null,
-      })
+      }, d)
     }
 
     // Intercourse — 1-2 entries in the fertile window
@@ -140,15 +152,24 @@ export async function seedCycleData(): Promise<{ inserted: number }> {
     const fertileOffsets = [ovDay - 3, ovDay - 1, ovDay]
     const picks = 1 + Math.floor(Math.random() * 2)
     for (let i = 0; i < picks; i++) {
-      rows.push({
+      const d = addDays(start, fertileOffsets[i] - 1)
+      pushIfPast({
         user_id: userId,
-        date: dateStr(addDays(start, fertileOffsets[i] - 1)),
+        date: dateStr(d),
         type: 'intercourse',
         value: 'yes',
         notes: null,
-      })
+      }, d)
     }
   }
+
+  // Guarantee fresh entries dated today so the UI always reflects "current" data
+  const todayStr = dateStr(today)
+  const lastCycleLen = orderedLengths[orderedLengths.length - 1]
+  const lastStart = cycleStarts[cycleStarts.length - 1]
+  const dayInCycle = Math.max(1, Math.min(lastCycleLen, Math.round((today.getTime() - lastStart.getTime()) / 86400000) + 1))
+  rows.push({ user_id: userId, date: todayStr, type: 'basal_temp', value: bbtFor(dayInCycle, lastCycleLen), notes: null })
+  rows.push({ user_id: userId, date: todayStr, type: 'mood', value: randFrom(MOODS), notes: null })
 
   // Insert in batches of 100
   console.log('[seedCycleData] inserting', rows.length, 'rows for user', userId)
@@ -207,12 +228,12 @@ export async function seedKidsData(): Promise<{ childId: string; inserted: numbe
   const { error: delError } = await supabase.from('child_logs').delete().eq('child_id', childId)
   if (delError) throw new Error(`Delete failed: ${formatSupabaseError(delError)}`)
 
-  // Insert 30 days of activity
+  // Insert 90 days of activity (most recent day = today)
   const rows: Array<{
     user_id: string; child_id: string; date: string; type: string; value: string | null; notes: string | null
   }> = []
   const today = new Date()
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 90; i++) {
     const date = dateStr(addDays(today, -i))
     // Feeding — 4 per day
     for (let f = 0; f < 4; f++) {
@@ -266,8 +287,8 @@ export async function seedPregnancyData(): Promise<{ inserted: number }> {
   const today = new Date()
   const startWeight = 62
 
-  // 60 days of logs: weight weekly, symptoms daily-ish, kicks near term, mood sporadic
-  for (let i = 0; i < 60; i++) {
+  // 90 days of logs: weight weekly, symptoms daily-ish, kicks near term, mood sporadic
+  for (let i = 0; i < 90; i++) {
     const d = addDays(today, -i)
     const log_date = dateStr(d)
 
@@ -308,6 +329,13 @@ export async function seedPregnancyData(): Promise<{ inserted: number }> {
       })
     }
   }
+
+  // Guarantee fresh entries dated today across all log types
+  const todayStr = dateStr(today)
+  rows.push({ user_id: userId, log_date: todayStr, log_type: 'weight', value: (startWeight + 0.2).toFixed(1), notes: null })
+  rows.push({ user_id: userId, log_date: todayStr, log_type: 'symptom', value: randFrom(['Nausea', 'Fatigue', 'Back pain', 'Heartburn', 'Swelling']), notes: null })
+  rows.push({ user_id: userId, log_date: todayStr, log_type: 'mood', value: randFrom(['great', 'good', 'okay', 'low']), notes: null })
+  rows.push({ user_id: userId, log_date: todayStr, log_type: 'kick_count', value: String(10 + Math.floor(Math.random() * 5)), notes: null })
 
   const BATCH = 100
   for (let i = 0; i < rows.length; i += BATCH) {

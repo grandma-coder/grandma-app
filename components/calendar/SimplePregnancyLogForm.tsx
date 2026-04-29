@@ -12,7 +12,7 @@ import React, { useState } from 'react'
 import {
   View, Text, Pressable, StyleSheet, Dimensions, ActivityIndicator,
 } from 'react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, brand } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import {
@@ -94,7 +94,7 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
             }}
             style={({ pressed }) => [
               styles.key,
-              { backgroundColor: pressed ? colors.surface : colors.surfaceGlass },
+              { backgroundColor: pressed ? colors.surfaceRaised : colors.surfaceGlass },
             ]}
           >
             <Text style={[styles.keyText, { color: colors.text }]}>{key}</Text>
@@ -105,7 +105,7 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
       <Pressable
         onPress={handleSave}
         style={[styles.saveBtn, {
-          backgroundColor: colors.primary,
+          backgroundColor: brand.pregnancy,
           opacity: !value.trim() || saving ? 0.6 : 1,
         }]}
         disabled={saving || !value.trim()}

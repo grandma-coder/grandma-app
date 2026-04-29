@@ -1227,3 +1227,205 @@ export function usePregnancyCalendarLogs(
     staleTime: 60_000,
   })
 }
+
+// ─── Pregnancy — extra hooks for richer analytics ─────────────────────────────
+
+export interface PregnancyExerciseEntry {
+  date: string
+  minutes: number
+  notes: string | null
+}
+
+export function usePregnancyExerciseHistory(userId: string, days = 14) {
+  return useQuery({
+    queryKey: ['pregnancy_exercise', userId, days],
+    queryFn: async (): Promise<PregnancyExerciseEntry[]> => {
+      const since = new Date()
+      since.setDate(since.getDate() - days)
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('log_date, value, notes')
+        .eq('user_id', userId)
+        .eq('log_type', 'exercise')
+        .gte('log_date', since.toISOString().split('T')[0])
+        .order('log_date', { ascending: true })
+      if (error) throw error
+      return (data ?? []).map((r) => ({
+        date: r.log_date,
+        minutes: parseInt(r.value ?? '0', 10) || 0,
+        notes: r.notes,
+      }))
+    },
+    enabled: !!userId,
+  })
+}
+
+export interface PregnancyContractionSession {
+  date: string
+  count: number
+  avgIntervalMin: number | null
+}
+
+export function usePregnancyContractions(userId: string, days = 14) {
+  return useQuery({
+    queryKey: ['pregnancy_contractions', userId, days],
+    queryFn: async (): Promise<PregnancyContractionSession[]> => {
+      const since = new Date()
+      since.setDate(since.getDate() - days)
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('log_date, value, notes, created_at')
+        .eq('user_id', userId)
+        .eq('log_type', 'contraction')
+        .gte('log_date', since.toISOString().split('T')[0])
+        .order('log_date', { ascending: true })
+      if (error) throw error
+      const byDate: Record<string, { count: number; intervals: number[] }> = {}
+      for (const r of data ?? []) {
+        const d = r.log_date
+        if (!byDate[d]) byDate[d] = { count: 0, intervals: [] }
+        byDate[d].count += 1
+        const interval = parseInt(r.value ?? '', 10)
+        if (!isNaN(interval) && interval > 0) byDate[d].intervals.push(interval)
+      }
+      return Object.entries(byDate).map(([date, b]) => ({
+        date,
+        count: b.count,
+        avgIntervalMin: b.intervals.length
+          ? b.intervals.reduce((a, x) => a + x, 0) / b.intervals.length
+          : null,
+      }))
+    },
+    enabled: !!userId,
+  })
+}
+
+export interface KickHourBucket {
+  hour: number // 0–23
+  count: number
+}
+
+export function usePregnancyKickTimeOfDay(userId: string, days = 30) {
+  return useQuery({
+    queryKey: ['pregnancy_kick_hours', userId, days],
+    queryFn: async (): Promise<KickHourBucket[]> => {
+      const since = new Date()
+      since.setDate(since.getDate() - days)
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('created_at')
+        .eq('user_id', userId)
+        .eq('log_type', 'kick_count')
+        .gte('log_date', since.toISOString().split('T')[0])
+      if (error) throw error
+      const buckets = new Array(24).fill(0)
+      for (const r of data ?? []) {
+        if (!r.created_at) continue
+        const h = new Date(r.created_at).getHours()
+        if (h >= 0 && h < 24) buckets[h] += 1
+      }
+      return buckets.map((count, hour) => ({ hour, count }))
+    },
+    enabled: !!userId,
+  })
+}
+
+export interface BirthReadiness {
+  birthPlanCount: number    // birth_prep logs
+  nestingCount: number      // nesting logs
+  hospitalDocs: number      // vault docs in 'hospital' category
+  insuranceDocs: number     // vault docs in 'insurance' category
+  examDocs: number          // vault docs in 'exams' category
+  emergencyCardComplete: boolean
+  pct: number               // 0–100
+}
+
+export function usePregnancyBirthReadiness(userId: string) {
+  return useQuery({
+    queryKey: ['pregnancy_birth_readiness', userId],
+    queryFn: async (): Promise<BirthReadiness> => {
+      const [logsRes, docsRes, emergencyRes] = await Promise.all([
+        supabase
+          .from('pregnancy_logs')
+          .select('log_type')
+          .eq('user_id', userId)
+          .in('log_type', ['birth_prep', 'nesting']),
+        supabase
+          .from('vault_documents')
+          .select('category')
+          .eq('user_id', userId),
+        supabase
+          .from('emergency_cards')
+          .select('blood_type, allergies, primary_contact_name, primary_contact_phone')
+          .eq('user_id', userId)
+          .limit(1)
+          .maybeSingle(),
+      ])
+      const logs = logsRes.data ?? []
+      const docs = docsRes.data ?? []
+      const birthPlanCount = logs.filter((l) => l.log_type === 'birth_prep').length
+      const nestingCount = logs.filter((l) => l.log_type === 'nesting').length
+      const hospitalDocs = docs.filter((d) => d.category === 'hospital').length
+      const insuranceDocs = docs.filter((d) => d.category === 'insurance').length
+      const examDocs = docs.filter((d) => d.category === 'exams').length
+      const ec = emergencyRes.data
+      const emergencyCardComplete = !!(
+        ec && ec.blood_type && ec.primary_contact_name && ec.primary_contact_phone
+      )
+      // Score: 5 buckets, each up to 20%
+      const buckets = [
+        Math.min(birthPlanCount, 5) / 5,                  // birth plan items
+        Math.min(nestingCount + hospitalDocs, 8) / 8,     // hospital bag prep
+        Math.min(insuranceDocs, 2) / 2,                   // insurance ready
+        Math.min(examDocs, 4) / 4,                        // exam records
+        emergencyCardComplete ? 1 : 0,                    // emergency card
+      ]
+      const pct = Math.round((buckets.reduce((a, b) => a + b, 0) / 5) * 100)
+      return {
+        birthPlanCount,
+        nestingCount,
+        hospitalDocs,
+        insuranceDocs,
+        examDocs,
+        emergencyCardComplete,
+        pct,
+      }
+    },
+    enabled: !!userId,
+  })
+}
+
+export interface PregnancyWeightByWeek {
+  week: number
+  weight: number
+}
+
+/** Maps weight log dates → pregnancy week (computed from due date). */
+export function usePregnancyWeightByWeek(userId: string, dueDate: string | null) {
+  return useQuery({
+    queryKey: ['pregnancy_weight_by_week', userId, dueDate],
+    queryFn: async (): Promise<PregnancyWeightByWeek[]> => {
+      if (!dueDate) return []
+      const { data, error } = await supabase
+        .from('pregnancy_logs')
+        .select('log_date, value')
+        .eq('user_id', userId)
+        .eq('log_type', 'weight')
+        .order('log_date', { ascending: true })
+      if (error) throw error
+      const conception = new Date(dueDate)
+      conception.setDate(conception.getDate() - 280)
+      const out: PregnancyWeightByWeek[] = []
+      for (const r of data ?? []) {
+        const w = parseFloat(r.value ?? '0')
+        if (!w || isNaN(w)) continue
+        const logged = new Date(r.log_date + 'T00:00:00')
+        const days = Math.floor((logged.getTime() - conception.getTime()) / 86_400_000)
+        const week = Math.max(0, Math.min(42, Math.floor(days / 7)))
+        out.push({ week, weight: w })
+      }
+      return out
+    },
+    enabled: !!userId,
+  })
+}

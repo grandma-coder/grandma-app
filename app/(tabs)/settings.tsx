@@ -27,6 +27,7 @@ import { useBehaviorStore } from '../../store/useBehaviorStore'
 import { useChildStore } from '../../store/useChildStore'
 import { useBadgeStore, BADGE_DEFS } from '../../store/useBadgeStore'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
+import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { supabase } from '../../lib/supabase'
 import { useTranslation } from '../../lib/i18n'
 import { useDevPanel } from '../../context/DevPanelContext'
@@ -48,8 +49,11 @@ export default function ProfileScreen() {
   const children = useChildStore((s) => s.children)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
   const earnedBadges = useBadgeStore((s) => s.earnedBadges)
-  const pregnancyWeek = usePregnancyStore((s) => s.weekNumber)
+  const storedPregnancyWeek = usePregnancyStore((s) => s.weekNumber)
   const pregnancyDueDate = usePregnancyStore((s) => s.dueDate)
+  const pregnancyWeek = pregnancyDueDate
+    ? getCurrentWeekFromDueDate(pregnancyDueDate)
+    : storedPregnancyWeek
 
   const [userName, setUserName] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
@@ -252,7 +256,7 @@ export default function ProfileScreen() {
               icon={<AnimatedSticker type="Heart" size={18} fill="#C8B6E8" />}
               label="Pregnancy"
               value={pregnancySummary}
-              onPress={() => router.push('/birth-plan')}
+              onPress={() => router.push('/profile/pregnancy')}
             />
           )}
 
