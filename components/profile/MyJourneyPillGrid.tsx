@@ -4,11 +4,18 @@ import { router } from 'expo-router'
 import { useTheme, brand, getModeColor } from '../../constants/theme'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
+import { ModeTrying, ModePregnant, ModeParent } from '../stickers/RewardStickers'
+
+const ICON_BY_BEHAVIOR = {
+  'pre-pregnancy': ModeTrying,
+  pregnancy: ModePregnant,
+  kids: ModeParent,
+} as const
 
 const PILL_ORDER: Array<{ behavior: Behavior; label: string }> = [
-  { behavior: 'pre-pregnancy', label: 'Trying' },
-  { behavior: 'pregnancy', label: 'Pregnant' },
-  { behavior: 'kids', label: 'Parent' },
+  { behavior: 'pre-pregnancy', label: 'Cycle' },
+  { behavior: 'pregnancy', label: 'Expecting' },
+  { behavior: 'kids', label: 'Raising' },
 ]
 
 /**
@@ -23,6 +30,13 @@ export function MyJourneyPillGrid() {
   const enrolled = useBehaviorStore((s) => s.enrolledBehaviors)
   const switchTo = useBehaviorStore((s) => s.switchTo)
   const setMode = useModeStore((s) => s.setMode)
+  const cycleIntent = useModeStore((s) => s.cycleIntent)
+
+  const pills = PILL_ORDER.map((p) =>
+    p.behavior === 'pre-pregnancy'
+      ? { ...p, label: cycleIntent === 'ttc' ? 'Dreaming' : 'Cycle' }
+      : p
+  )
 
   const [overlayActive, setOverlayActive] = useState(false)
   const [overlayColor, setOverlayColor] = useState<string>(brand.primary)
@@ -69,10 +83,11 @@ export function MyJourneyPillGrid() {
       >
         <Text style={[styles.header, { color: colors.textMuted }]}>MY JOURNEY</Text>
         <View style={styles.grid}>
-          {PILL_ORDER.map(({ behavior, label }) => {
+          {pills.map(({ behavior, label }) => {
             const isActive = behavior === currentBehavior
             const isEnrolled = enrolled.includes(behavior)
             const accent = getModeColor(behavior, isDark)
+            const Icon = ICON_BY_BEHAVIOR[behavior]
             return (
               <Pressable
                 key={behavior}
@@ -87,6 +102,7 @@ export function MyJourneyPillGrid() {
                   pressed && { opacity: (isActive ? 1 : 0.6) * 0.8 },
                 ]}
               >
+                <Icon size={36} />
                 <Text
                   style={[
                     styles.pillLabel,
@@ -138,11 +154,12 @@ const styles = StyleSheet.create({
   pill: {
     flex: 1,
     borderRadius: 18,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+    gap: 6,
   },
   pillLabel: { fontSize: 14, fontWeight: '600' },
   activeHint: { fontSize: 10, fontWeight: '500', marginTop: 2 },

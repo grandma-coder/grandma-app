@@ -81,7 +81,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
   return (
     <>
       <Modal
-        visible={visible}
+        visible={visible && detailTopic === null}
         transparent
         animationType="slide"
         onRequestClose={handleClose}

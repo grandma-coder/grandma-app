@@ -3,14 +3,14 @@ import { colors, borderRadius } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import type { JourneyMode } from '../../types'
 
-const MODES: { id: JourneyMode; label: string }[] = [
-  { id: 'pre-pregnancy', label: 'Pre-Preg' },
-  { id: 'pregnancy', label: 'Pregnancy' },
-  { id: 'kids', label: 'Kids' },
-]
-
 export function ModeSwitcher() {
-  const { mode, setMode } = useModeStore()
+  const { mode, cycleIntent, setMode } = useModeStore()
+
+  const MODES: { id: JourneyMode; label: string }[] = [
+    { id: 'pre-pregnancy', label: cycleIntent === 'ttc' ? 'Dreaming' : 'Cycle' },
+    { id: 'pregnancy', label: 'Expecting' },
+    { id: 'kids', label: 'Raising' },
+  ]
 
   return (
     <View style={styles.container}>

@@ -9,9 +9,10 @@
 import React from 'react'
 import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { X, ChevronRight } from 'lucide-react-native'
+import { X } from 'lucide-react-native'
 import { useTheme } from '../../../constants/theme'
 import { PaperCard } from '../../ui/PaperCard'
+import { StickerButton } from '../../ui/StickerButton'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
 import {
   LogUltrasound, LogExamResult, LogAppointment, HealthCheckup,
@@ -114,24 +115,19 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
 
             {/* CTAs */}
             <View style={styles.ctaRow}>
-              <Pressable
+              <StickerButton
+                label="Schedule in agenda"
+                color={stickers.lilac}
+                colorSoft={stickers.lilacSoft}
                 onPress={() => { onClose(); router.push('/(tabs)/agenda') }}
-                style={[styles.ctaPrimary, { backgroundColor: colors.primary }]}
-              >
-                <Text style={[styles.ctaPrimaryText, { color: colors.textInverse }]}>
-                  Schedule in agenda
-                </Text>
-                <ChevronRight size={14} color={colors.textInverse} strokeWidth={2.5} />
-              </Pressable>
-
-              <Pressable
+              />
+              <StickerButton
+                label="Ask Grandma"
+                color={stickers.yellow}
+                colorSoft={stickers.yellowSoft}
+                active={false}
                 onPress={() => { onClose(); router.push('/grandma-talk') }}
-                style={[styles.ctaSecondary, { borderColor: colors.border }]}
-              >
-                <Text style={[styles.ctaSecondaryText, { color: colors.textSecondary }]}>
-                  Ask Grandma
-                </Text>
-              </Pressable>
+              />
             </View>
           </ScrollView>
         </View>
@@ -168,15 +164,5 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
 
-  ctaRow: { paddingHorizontal: 20, marginTop: 8, gap: 8 },
-  ctaPrimary: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, paddingVertical: 14, borderRadius: 999,
-  },
-  ctaPrimaryText: { fontSize: 15, fontFamily: 'DMSans_600SemiBold' },
-  ctaSecondary: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, paddingVertical: 12, borderRadius: 999, borderWidth: 1,
-  },
-  ctaSecondaryText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  ctaRow: { paddingHorizontal: 20, marginTop: 8, gap: 10 },
 })

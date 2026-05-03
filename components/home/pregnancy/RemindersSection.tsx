@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react-native'
 import { useTheme } from '../../../constants/theme'
 import { PaperCard } from '../../ui/PaperCard'
 import {
-  NotifyAppointmentDue, TipRead, LogKicks, LogWater, LogVitamins,
+  NotifyAppointmentDue, TipRead, LogKicks, LogVitamins,
 } from '../../stickers/RewardStickers'
 import { getUpcomingAppointment } from '../../../lib/pregnancyAppointments'
 import type { StandardAppointment } from '../../../lib/pregnancyAppointments'
@@ -83,20 +83,6 @@ export function RemindersSection({
       tint: stickers.greenSoft,
       accent: stickers.green,
       onPress: () => onLog('kick_count'),
-    })
-  }
-
-  // Water reminder (less than 4 glasses)
-  const waterVal = todayLogs['water']?.value ? parseInt(todayLogs['water'].value, 10) : 0
-  if (waterVal < 4) {
-    items.push({
-      id: 'water',
-      Sticker: LogWater,
-      title: 'Stay hydrated',
-      subtitle: `You've had ${waterVal}/8 glasses today — keep going`,
-      tint: stickers.blueSoft,
-      accent: stickers.blue,
-      onPress: () => onLog('water'),
     })
   }
 

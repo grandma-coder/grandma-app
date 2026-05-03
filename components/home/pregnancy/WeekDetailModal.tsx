@@ -24,7 +24,9 @@ import { useTheme } from '../../../constants/theme'
 import { getWeekData } from '../../../lib/pregnancyData'
 import { getWeekStat, formatWeight } from '../../../lib/weekStats'
 import { getWeekContent, PrepItemDef } from '../../../lib/weekContent'
+import { getPrepGuide } from '../../../lib/prepGuide'
 import { StickerIcon } from './stickerIcons'
+import { AnimatedFruit } from './AnimatedFruit'
 
 const SCREEN_H = Dimensions.get('window').height
 
@@ -81,34 +83,58 @@ function paletteForWeek(week: number): HeroPalette {
 
 function PrepDetailSheet({
   item,
+  week,
   onBack,
   accent,
   accentSoft,
-}: { item: PrepItemDef; onBack: () => void; accent: string; accentSoft: string }) {
-  const { colors } = useTheme()
+}: { item: PrepItemDef; week: number; onBack: () => void; accent: string; accentSoft: string }) {
+  const { colors, isDark } = useTheme()
+  const guide = getPrepGuide(item, week)
+  const ink = isDark ? colors.text : '#141313'
+  const ink2 = isDark ? colors.textSecondary : '#3A3533'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+
   return (
-    <View style={[styles.prepDetailRoot, { backgroundColor: colors.bg }]}>
+    <View style={[styles.prepDetailRoot, { backgroundColor: isDark ? colors.bg : '#FFFEF8' }]}>
       <Pressable onPress={onBack} style={styles.prepBackRow} hitSlop={8}>
         <ArrowLeft size={18} color={accent} strokeWidth={2} />
         <Text style={[styles.prepBackText, { color: accent }]}>Back</Text>
       </Pressable>
 
-      <View style={[styles.prepDetailHeader, { backgroundColor: colors.surface }]}>
+      <View style={[styles.prepDetailHeader, { backgroundColor: isDark ? colors.surface : 'rgba(20,19,19,0.04)' }]}>
         <View style={[styles.prepIconBox, { backgroundColor: accentSoft }]}>
           <StickerIcon name={item.i} size={36} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.prepDetailTitle, { color: colors.text }]}>{item.t}</Text>
-          <Text style={[styles.prepDetailSummary, { color: colors.textSecondary }]}>
+          <Text style={[styles.prepDetailTitle, { color: ink }]}>{item.t}</Text>
+          <Text style={[styles.prepDetailSummary, { color: ink3 }]}>
             {item.d}
           </Text>
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.prepDetailContent, { color: colors.textSecondary }]}>
-          {item.d}
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+        <Text style={[styles.prepSectionTitle, { color: ink3 }]}>WHY NOW</Text>
+        <Text style={[styles.prepDetailContent, { color: ink2 }]}>
+          {guide.why}
         </Text>
+
+        <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }]}>HOW TO DO IT</Text>
+        {guide.how.map((step, i) => (
+          <View key={i} style={styles.prepStepRow}>
+            <View style={[styles.prepStepDot, { backgroundColor: accent }]} />
+            <Text style={[styles.prepStepText, { color: ink2 }]}>{step}</Text>
+          </View>
+        ))}
+
+        {guide.watch ? (
+          <>
+            <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }]}>WATCH FOR</Text>
+            <View style={[styles.prepWatchBox, { backgroundColor: accentSoft, borderColor: accent + '40' }]}>
+              <Text style={[styles.prepDetailContent, { color: ink2 }]}>{guide.watch}</Text>
+            </View>
+          </>
+        ) : null}
       </ScrollView>
     </View>
   )
@@ -131,6 +157,16 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
   const weightStr = formatWeight(stat.g)
   const fruitName = weekData.babySize.toLowerCase()
   const article = /^[aeiou]/i.test(fruitName) ? 'an' : 'a'
+
+  // Same proportional scaling as WeekCard.illustrationSize, capped at 130 for the smaller hero.
+  const cm = stat.cm > 0 ? stat.cm : 0
+  const fruitSize = (() => {
+    const min = 22
+    const max = 130
+    if (cm <= 0) return min
+    const t = Math.min(1, Math.sqrt(cm / 51))
+    return min + (max - min) * t
+  })()
 
   // Cream paper body background — adapts to dark mode
   const paperBg = isDark ? colors.surface : '#FFFEF8'
@@ -162,6 +198,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
           {selectedPrep ? (
             <PrepDetailSheet
               item={selectedPrep}
+              week={week}
               onBack={() => setSelectedPrep(null)}
               accent={pal.accent}
               accentSoft={pal.accentSoft}
@@ -173,6 +210,11 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                 <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={10}>
                   <X size={18} color="#141313" strokeWidth={2.5} />
                 </Pressable>
+
+                {/* Animated baby-size illustration — proportional to actual size, like the WeekCard */}
+                <View style={styles.heroFruit} pointerEvents="none">
+                  <AnimatedFruit week={week} size={fruitSize} />
+                </View>
 
                 <Text style={[styles.heroLabel, { color: pal.metaFg }]}>
                   WEEK {week} · {TRI_NAMES[tri - 1].toUpperCase()} TRIMESTER
@@ -296,6 +338,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,254,248,0.85)',
     zIndex: 2,
+  },
+  heroFruit: {
+    position: 'absolute',
+    top: 56,
+    right: 24,
+    width: 140,
+    height: 140,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
   },
   heroLabel: {
     fontFamily: 'DMSans_700Bold',
@@ -464,5 +516,35 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     lineHeight: 24,
+  },
+  prepSectionTitle: {
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 10.5,
+    letterSpacing: 2.3,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  prepStepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  prepStepDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    marginTop: 9,
+    marginRight: 12,
+  },
+  prepStepText: {
+    flex: 1,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  prepWatchBox: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
   },
 })

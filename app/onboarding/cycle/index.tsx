@@ -31,6 +31,7 @@ import {
 } from '../../../store/useCycleOnboardingStore'
 import { supabase } from '../../../lib/supabase'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
+import { useModeStore } from '../../../store/useModeStore'
 
 // ─── Step IDs ──────────────────────────────────────────────────────────────
 
@@ -135,6 +136,9 @@ export default function CycleOnboarding() {
       // Non-blocking — user can still proceed
       console.warn('Failed to save cycle onboarding:', e)
     }
+
+    useModeStore.getState().setCycleIntent(store.tryingToConceive ? 'ttc' : 'tracking')
+    useModeStore.getState().setMode('pre-pregnancy')
 
     store.clearAll()
     onboardingComplete()

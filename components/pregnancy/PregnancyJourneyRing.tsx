@@ -101,6 +101,34 @@ const LOG_DISPLAY: Record<string, { label: string; color: string }> = {
   contraction: { label: 'Contractions', color: '#D94A3E' }, // terracotta
 }
 
+function formatLogDay(dateISO: string): string {
+  const d = new Date(dateISO + 'T12:00:00')
+  return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
+}
+
+function formatLogDetail(log: {
+  log_type: string
+  value: string | null
+  notes: string | null
+  severity: string | null
+  duration_seconds: number | null
+}): string {
+  const parts: string[] = []
+  if (log.value) {
+    if (log.log_type === 'weight') parts.push(`${log.value} kg`)
+    else if (log.log_type === 'kick_count') parts.push(`${log.value} kicks`)
+    else parts.push(log.value)
+  }
+  if (log.severity) parts.push(log.severity)
+  if (log.duration_seconds) {
+    const m = Math.floor(log.duration_seconds / 60)
+    const s = log.duration_seconds % 60
+    parts.push(m > 0 ? `${m}m ${s}s` : `${s}s`)
+  }
+  if (log.notes) parts.push(log.notes)
+  return parts.join(' · ') || '—'
+}
+
 // ─── Pre-calculated dot geometry ────────────────────────────────────────────
 type DotState = 'past' | 'current' | 'future'
 
@@ -189,20 +217,32 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
     },
   )
 
-  // ── Logged activity types for selected week ────────────────────────────────
-  const { data: weekLogTypes = [], refetch: refetchWeekLogs } = useQuery({
+  // ── Logged entries for selected week ───────────────────────────────────────
+  interface WeekLog {
+    id: string
+    log_type: string
+    log_date: string
+    value: string | null
+    notes: string | null
+    severity: string | null
+    duration_seconds: number | null
+  }
+
+  const { data: weekLogs = [], refetch: refetchWeekLogs } = useQuery({
     queryKey: ['pregnancy-week-logs', userId, selectedWeek, dueDate],
-    queryFn: async (): Promise<string[]> => {
+    queryFn: async (): Promise<WeekLog[]> => {
       if (!userId || !dueDate) return []
       const { start, end } = getWeekDateRange(dueDate, selectedWeek)
       const { data, error } = await supabase
         .from('pregnancy_logs')
-        .select('log_type')
+        .select('id, log_type, log_date, value, notes, severity, duration_seconds')
         .eq('user_id', userId)
         .gte('log_date', start)
         .lte('log_date', end)
+        .order('log_date', { ascending: true })
+        .order('created_at', { ascending: true })
       if (error) throw error
-      return [...new Set((data ?? []).map((r: { log_type: string }) => r.log_type))]
+      return (data ?? []) as WeekLog[]
     },
     enabled: !!userId && !!dueDate,
     staleTime: 0,
@@ -499,22 +539,29 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
           <Text style={[styles.sectionLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
             LOGGED THIS WEEK
           </Text>
-          {weekLogTypes.length > 0 ? (
-            <View style={styles.chipsRow}>
-              {weekLogTypes.map((type) => {
-                const display = LOG_DISPLAY[type] ?? { label: type, color: colors.textSecondary }
+          {weekLogs.length > 0 ? (
+            <View style={styles.logList}>
+              {weekLogs.map((log) => {
+                const display = LOG_DISPLAY[log.log_type] ?? { label: log.log_type, color: colors.textSecondary }
                 return (
-                  <View
-                    key={type}
-                    style={[styles.chip, {
-                      borderColor: colors.border,
-                      backgroundColor: colors.surfaceGlass,
-                    }]}
-                  >
-                    <View style={[styles.chipDot, { backgroundColor: display.color }]} />
-                    <Text style={[styles.chipText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>
-                      {display.label}
-                    </Text>
+                  <View key={log.id} style={styles.logRow}>
+                    <View style={[styles.logDot, { backgroundColor: display.color }]} />
+                    <View style={styles.logBody}>
+                      <View style={styles.logHeader}>
+                        <Text style={[styles.logLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+                          {display.label}
+                        </Text>
+                        <Text style={[styles.logDay, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
+                          {formatLogDay(log.log_date)}
+                        </Text>
+                      </View>
+                      <Text
+                        style={[styles.logDetail, { color: colors.textSecondary, fontFamily: font.body }]}
+                        numberOfLines={2}
+                      >
+                        {formatLogDetail(log)}
+                      </Text>
+                    </View>
                   </View>
                 )
               })}
@@ -577,14 +624,14 @@ const styles = StyleSheet.create({
   sectionLabel: { fontSize: 9.5, letterSpacing: 1.8, textTransform: 'uppercase' },
   noteText:     { fontSize: 14, lineHeight: 22 },
 
-  // Log chips
-  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  chip: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    borderWidth: 1, borderRadius: 99,
-    paddingVertical: 6, paddingHorizontal: 13,
-  },
-  chipDot:   { width: 6, height: 6, borderRadius: 3 },
-  chipText:  { fontSize: 12 },
+  // Log entries
+  logList:   { gap: 12, marginTop: 2 },
+  logRow:    { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  logDot:    { width: 8, height: 8, borderRadius: 4, marginTop: 7 },
+  logBody:   { flex: 1, gap: 2 },
+  logHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
+  logLabel:  { fontSize: 13, letterSpacing: 0.2 },
+  logDay:    { fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
+  logDetail: { fontSize: 13, lineHeight: 19 },
   emptyLogs: { fontSize: 12, fontStyle: 'italic' },
 })

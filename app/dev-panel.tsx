@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../constants/theme'
 import { supabase } from '../lib/supabase'
-import { seedCycleData, seedKidsData, seedPregnancyData, seedExamData, wipeAllDemoData, repairBehaviorsFromData } from '../lib/devSeed'
+import { seedCycleData, seedKidsData, seedPregnancyData, seedExamData, seedAllData, wipeAllDemoData, repairBehaviorsFromData } from '../lib/devSeed'
 import { useModeStore } from '../store/useModeStore'
 import { useJourneyStore } from '../store/useJourneyStore'
 import { useDevStore } from '../store/useDevStore'
@@ -131,6 +131,14 @@ export default function DevPanel() {
     })
   }
 
+  async function handleSeedAll() {
+    await run('Seed everything', async () => {
+      const r = await seedAllData()
+      await queryClient.invalidateQueries()
+      return `cycle ${r.cycle} · preg ${r.pregnancy} · kids ${r.kids} (${r.kidsCount} child${r.kidsCount === 1 ? '' : 'ren'}) · exams ${r.exams}`
+    })
+  }
+
   async function handleRepairBehaviors() {
     await run('Repair behaviors', async () => {
       const { enrolled } = await repairBehaviorsFromData()
@@ -239,8 +247,9 @@ export default function DevPanel() {
 
         {/* Seeds */}
         <Section title="SEED DATA">
+          <ActionRow label="Seed everything"     sub="All behaviors + every child, through today" onPress={handleSeedAll}      busy={busy} />
           <ActionRow label="Seed cycle data"     sub="6 cycles up to today, ~200 logs"  onPress={handleSeedCycle}     busy={busy} />
-          <ActionRow label="Seed kids data"      sub="1 child, 90d logs through today"  onPress={handleSeedKids}      busy={busy} />
+          <ActionRow label="Seed kids data"      sub="90d logs through today, all children"  onPress={handleSeedKids}      busy={busy} />
           <ActionRow label="Seed pregnancy data" sub="90d of logs through today"        onPress={handleSeedPregnancy} busy={busy} />
           <ActionRow label="Seed exam data"      sub="14 exams across all behaviors" onPress={handleSeedExams}     busy={busy} />
           <ActionRow label="Repair behaviors from data" sub="Re-enroll based on children / logs" onPress={handleRepairBehaviors} busy={busy} />

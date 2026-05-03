@@ -20,7 +20,7 @@ import { useTheme, brand, stickers as stickerPalette } from '../../constants/the
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
-import { LogNutrition } from '../stickers/RewardStickers'
+import { LogFormSticker } from './LogFormSticker'
 import { useSavedToast } from '../ui/SavedToast'
 
 interface Props {
@@ -47,7 +47,7 @@ async function uploadPlatePhoto(uri: string, userId: string): Promise<string | n
 }
 
 export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   const toast = useSavedToast()
   const [photoUri, setPhotoUri] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
@@ -160,10 +160,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
   return (
     <ScrollView style={{ maxHeight: 560 }} showsVerticalScrollIndicator={false}>
       <View style={styles.form}>
-        <View style={styles.header}>
-          <LogNutrition size={32} />
-          <Text style={[styles.title, { color: colors.text }]}>Log Meal</Text>
-        </View>
+        <LogFormSticker type="nutrition" label="Log Meal" tint={stickerPalette.greenSoft} />
 
         {photoUri ? (
           <View style={styles.photoBox}>
@@ -202,16 +199,19 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
         )}
 
         {foods.length > 0 && (
-          <View style={[styles.summaryBox, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
+          <View style={[styles.summaryBox, {
+            backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
+            borderColor: colors.border,
+          }]}>
             <View style={styles.summaryHeader}>
-              <ScanLine size={14} color={stickerPalette.green} strokeWidth={2} />
-              <Text style={[styles.summaryTotal, { color: stickerPalette.green }]}>
-                ~{totalCals} kcal
-              </Text>
+              <View style={[styles.totalChip, { backgroundColor: stickerPalette.yellowSoft }]}>
+                <ScanLine size={12} color="#141313" strokeWidth={2.4} />
+                <Text style={styles.totalChipText}>~{totalCals} kcal</Text>
+              </View>
             </View>
             {foods.map((f, i) => (
               <View key={`${f.name}-${i}`} style={[styles.foodRow, { borderBottomColor: colors.borderLight }]}>
-                <Text style={[styles.foodName, { color: colors.text }]} numberOfLines={1}>
+                <Text style={[styles.foodName, { color: colors.textSecondary }]} numberOfLines={1}>
                   {f.name.charAt(0).toUpperCase() + f.name.slice(1)}
                 </Text>
                 <Text style={[styles.foodCals, { color: colors.textMuted }]}>{f.cals} kcal</Text>
@@ -230,21 +230,63 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
           </Pressable>
         )}
 
-        <Pressable
+        <SaveMealButton
           onPress={save}
-          disabled={saving || foods.length === 0}
-          style={[styles.saveBtn, {
-            backgroundColor: colors.primary,
-            opacity: foods.length === 0 || saving ? 0.6 : 1,
-          }]}
-        >
-          {saving
-            ? <ActivityIndicator color={colors.textInverse} />
-            : <Text style={[styles.saveText, { color: colors.textInverse }]}>Save meal</Text>
-          }
-        </Pressable>
+          saving={saving}
+          disabled={foods.length === 0}
+          isDark={isDark}
+          colors={colors}
+        />
       </View>
     </ScrollView>
+  )
+}
+
+function SaveMealButton({
+  onPress, saving, disabled, isDark, colors,
+}: {
+  onPress: () => void
+  saving: boolean
+  disabled: boolean
+  isDark: boolean
+  colors: ReturnType<typeof useTheme>['colors']
+}) {
+  const ST_INK = '#141313'
+  const ST_LAVENDER = isDark ? colors.primary : brand.pregnancy
+  const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={saving || disabled}
+      style={({ pressed }) => [
+        styles.saveBtn,
+        {
+          backgroundColor: disabled ? ST_CREAM : ST_LAVENDER,
+          borderColor: isDark && disabled ? colors.border : ST_INK,
+          borderWidth: 2,
+          shadowColor: ST_INK,
+          shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+          shadowOpacity: 1,
+          shadowRadius: 0,
+          elevation: 5,
+          transform: [{ translateY: pressed && !disabled ? 2 : 0 }],
+          opacity: disabled ? 0.55 : 1,
+        },
+      ]}
+    >
+      {saving ? (
+        <ActivityIndicator color={disabled ? colors.textMuted : '#FFFEF8'} />
+      ) : (
+        <Text
+          style={[
+            styles.saveText,
+            { color: disabled ? (isDark ? colors.textMuted : '#6E6763') : '#FFFEF8' },
+          ]}
+        >
+          SAVE MEAL
+        </Text>
+      )}
+    </Pressable>
   )
 }
 
@@ -266,14 +308,38 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', gap: 8,
   },
   scanningText: { color: '#FFFEF8', fontSize: 13, fontFamily: 'DMSans_500Medium' },
-  summaryBox: { borderRadius: 16, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 12, gap: 4 },
-  summaryHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  summaryTotal: { fontSize: 16, fontFamily: 'Fraunces_600SemiBold' },
-  foodRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth },
+  summaryBox: {
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 4,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 1,
+  },
+  summaryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  totalChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  totalChipText: {
+    fontSize: 14,
+    fontFamily: 'Fraunces_600SemiBold',
+    color: '#141313',
+    letterSpacing: -0.2,
+  },
+  foodRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth },
   foodName: { fontSize: 14, fontFamily: 'DMSans_500Medium', flex: 1 },
-  foodCals: { fontSize: 12, fontFamily: 'DMSans_400Regular' },
+  foodCals: { fontSize: 13, fontFamily: 'DMSans_500Medium', fontVariant: ['tabular-nums'] },
   scanAgainBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 12, borderWidth: 1 },
   scanAgainText: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
-  saveBtn: { borderRadius: 999, paddingVertical: 16, alignItems: 'center' },
-  saveText: { fontSize: 16, fontFamily: 'DMSans_600SemiBold' },
+  saveBtn: { height: 56, borderRadius: 999, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  saveText: { fontSize: 15, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase' },
 })

@@ -7,15 +7,17 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { View, Text, Pressable, StyleSheet, Dimensions, Modal, ScrollView } from 'react-native'
+import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native'
 import { router } from 'expo-router'
-import { ChevronRight, TrendingUp, TrendingDown, Minus, X } from 'lucide-react-native'
+import { ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react-native'
 import Svg, {
   Circle, Line, Path, Rect, Text as SvgText, Defs, LinearGradient, Stop,
 } from 'react-native-svg'
 import { useTheme } from '../../../constants/theme'
 import { PaperCard } from '../../ui/PaperCard'
+import { StickerButton } from '../../ui/StickerButton'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
+import { LogSheet } from '../../calendar/LogSheet'
 import { smoothPath } from '../../charts/SvgCharts'
 import { supabase } from '../../../lib/supabase'
 
@@ -284,119 +286,154 @@ interface DetailProps {
   statusText: string
   entries: WeightEntry[]
   weekNumber: number
+  bandLow: number
+  bandHigh: number
+  chartWidth: number
 }
 
 function WeightDetailModal(props: DetailProps) {
   const {
     visible, onClose, current, start, gained, pace,
     band, expectedLow, expectedHigh, statusText, statusColor,
-    entries, weekNumber,
+    entries, weekNumber, bandLow, bandHigh, chartWidth,
   } = props
-  const { colors, stickers } = useTheme()
+  const { colors, font, stickers, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
+  const paperBorderStrong = isDark ? colors.border : 'rgba(20,19,19,0.18)'
 
   const recent = [...entries].reverse().slice(0, 8)
+  const chartPoints = entries.slice(-12).map((e, i) => ({ x: i, y: e.weight, date: e.date }))
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <Pressable style={styles.overlayBg} onPress={onClose} />
-        <View style={[styles.detailSheet, { backgroundColor: colors.bgWarm }]}>
-          <View style={styles.detailHandle} />
-          <Pressable onPress={onClose} style={styles.detailClose}>
-            <X size={18} color={colors.textMuted} strokeWidth={2} />
-          </Pressable>
-
-          <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
-            <View style={styles.detailHeader}>
-              <MonoCaps size={10} color={colors.textMuted}>WEIGHT TREND · WEEK {weekNumber}</MonoCaps>
-              <Display size={40} color={colors.text} style={{ marginTop: 4 }}>
-                {current !== null ? `${current.toFixed(1)} kg` : '—'}
-              </Display>
-              <Body size={13} color={statusColor} style={{ marginTop: 2, fontFamily: 'DMSans_600SemiBold' }}>
-                {statusText}
-              </Body>
-            </View>
-
-            {/* Stat grid */}
-            <View style={styles.statGrid}>
-              <PaperCard tint={stickers.lilacSoft} radius={16} padding={12} style={styles.statCell}>
-                <MonoCaps size={9} color={colors.textMuted}>STARTING</MonoCaps>
-                <Display size={20} color={colors.text} style={{ marginTop: 2 }}>
-                  {start !== null ? `${start.toFixed(1)}` : '—'}
-                </Display>
-                <Body size={10} color={colors.textMuted}>kg pre-preg</Body>
-              </PaperCard>
-
-              <PaperCard tint={stickers.greenSoft} radius={16} padding={12} style={styles.statCell}>
-                <MonoCaps size={9} color={colors.textMuted}>GAINED</MonoCaps>
-                <Display size={20} color={colors.text} style={{ marginTop: 2 }}>
-                  {gained !== null ? `${gained >= 0 ? '+' : ''}${gained.toFixed(1)}` : '—'}
-                </Display>
-                <Body size={10} color={colors.textMuted}>kg total</Body>
-              </PaperCard>
-
-              <PaperCard tint={stickers.yellowSoft} radius={16} padding={12} style={styles.statCell}>
-                <MonoCaps size={9} color={colors.textMuted}>PACE</MonoCaps>
-                <Display size={20} color={colors.text} style={{ marginTop: 2 }}>
-                  {pace !== null ? `${pace >= 0 ? '+' : ''}${pace.toFixed(1)}` : '—'}
-                </Display>
-                <Body size={10} color={colors.textMuted}>kg/wk recent</Body>
-              </PaperCard>
-            </View>
-
-            {/* Target band */}
-            <PaperCard radius={16} padding={16} style={{ marginHorizontal: 20, marginBottom: 16 }}>
-              <MonoCaps size={10} color={colors.textMuted}>IOM TARGET · {band.label}</MonoCaps>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
-                <Display size={22} color={colors.text}>{band.low}–{band.high}</Display>
-                <Body size={12} color={colors.textMuted}>kg total gain</Body>
-              </View>
-              {expectedLow !== null && expectedHigh !== null && (
-                <Body size={12} color={colors.textMuted} style={{ marginTop: 8, lineHeight: 16 }}>
-                  By week {weekNumber}, you're expected to gain <Text style={{ color: colors.text, fontFamily: 'DMSans_600SemiBold' }}>{expectedLow.toFixed(1)}–{expectedHigh.toFixed(1)} kg</Text>. Hit a range, not a number — everybody's trajectory differs.
-                </Body>
-              )}
-            </PaperCard>
-
-            {/* Recent entries */}
-            {recent.length > 0 && (
-              <PaperCard radius={16} padding={16} style={{ marginHorizontal: 20, marginBottom: 16 }}>
-                <MonoCaps size={10} color={colors.textMuted} style={{ marginBottom: 10 }}>RECENT ENTRIES</MonoCaps>
-                {recent.map((e, i) => {
-                  const prev = i < recent.length - 1 ? recent[i + 1] : null
-                  const delta = prev ? e.weight - prev.weight : 0
-                  return (
-                    <View key={i} style={[styles.recentRow, { borderBottomColor: colors.borderLight }]}>
-                      <Body size={13} color={colors.textMuted}>
-                        {new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </Body>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <Body size={13} color={colors.text} style={{ fontFamily: 'DMSans_600SemiBold' }}>
-                          {e.weight.toFixed(1)} kg
-                        </Body>
-                        {prev && (
-                          <Body size={11} color={delta > 0 ? stickers.green : delta < 0 ? stickers.coral : colors.textMuted}>
-                            {delta > 0 ? '+' : ''}{delta.toFixed(1)}
-                          </Body>
-                        )}
-                      </View>
-                    </View>
-                  )
-                })}
-              </PaperCard>
-            )}
-
-            {/* CTA */}
-            <Pressable
-              onPress={() => { onClose(); router.push('/insights') }}
-              style={[styles.detailCta, { backgroundColor: statusColor + '22', borderColor: statusColor + '55' }]}
-            >
-              <Text style={[styles.detailCtaText, { color: statusColor }]}>Open full insights →</Text>
-            </Pressable>
-          </ScrollView>
+    <LogSheet
+      visible={visible}
+      title="Weight trend"
+      onClose={onClose}
+      chip={`Week ${weekNumber}`}
+      chipColor={stickers.lilac}
+    >
+      <View style={{ gap: 14 }}>
+        {/* Hero */}
+        <View>
+          <Display size={44} color={ink}>
+            {current !== null ? `${current.toFixed(1)} kg` : '—'}
+          </Display>
+          <Body size={13} color={statusColor} style={{ marginTop: 2, fontFamily: font.bodySemiBold }}>
+            {statusText}
+          </Body>
         </View>
+
+        {/* Stat grid — sticker-tinted tiles with ink border */}
+        <View style={styles.statGrid}>
+          <View style={[styles.statTile, { backgroundColor: stickers.lilacSoft, borderColor: ink }]}>
+            <MonoCaps size={9} color={colors.textMuted}>STARTING</MonoCaps>
+            <Display size={22} color={ink} style={{ marginTop: 4 }}>
+              {start !== null ? `${start.toFixed(1)}` : '—'}
+            </Display>
+            <Body size={11} color={colors.textMuted} style={{ fontFamily: font.italic }}>kg pre-preg</Body>
+          </View>
+
+          <View style={[styles.statTile, { backgroundColor: stickers.greenSoft, borderColor: ink }]}>
+            <MonoCaps size={9} color={colors.textMuted}>GAINED</MonoCaps>
+            <Display size={22} color={ink} style={{ marginTop: 4 }}>
+              {gained !== null ? `${gained >= 0 ? '+' : ''}${gained.toFixed(1)}` : '—'}
+            </Display>
+            <Body size={11} color={colors.textMuted} style={{ fontFamily: font.italic }}>kg total</Body>
+          </View>
+
+          <View style={[styles.statTile, { backgroundColor: stickers.yellowSoft, borderColor: ink }]}>
+            <MonoCaps size={9} color={colors.textMuted}>PACE</MonoCaps>
+            <Display size={22} color={ink} style={{ marginTop: 4 }}>
+              {pace !== null ? `${pace >= 0 ? '+' : ''}${pace.toFixed(1)}` : '—'}
+            </Display>
+            <Body size={11} color={colors.textMuted} style={{ fontFamily: font.italic }}>kg/wk</Body>
+          </View>
+        </View>
+
+        {/* Trend chart with target band */}
+        <View style={[styles.chartCard, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: paperBorderStrong }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <MonoCaps size={10} color={colors.textMuted}>TREND · LAST {chartPoints.length} ENTRIES</MonoCaps>
+            <View style={[styles.legendDot, { backgroundColor: stickers.lilac, borderColor: ink }]} />
+          </View>
+          {chartPoints.length >= 2 ? (
+            <View style={{ marginTop: 12, alignItems: 'center' }}>
+              <WeightChart
+                points={chartPoints}
+                lowBand={bandLow}
+                highBand={bandHigh}
+                color={stickers.lilac}
+                mutedColor={colors.textMuted}
+                width={chartWidth}
+                height={180}
+              />
+            </View>
+          ) : (
+            <Body size={12} color={colors.textMuted} style={{ marginTop: 12, fontFamily: font.italic }}>
+              Log weight on at least 2 days to see your trend and IOM target band overlay.
+            </Body>
+          )}
+        </View>
+
+        {/* IOM target band */}
+        <View style={[styles.stickerBlock, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: paperBorderStrong }]}>
+          <MonoCaps size={10} color={colors.textMuted}>IOM TARGET · {band.label.toUpperCase()}</MonoCaps>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+            <Display size={26} color={ink}>{band.low}–{band.high}</Display>
+            <Body size={12} color={colors.textMuted} style={{ fontFamily: font.italic }}>kg total gain</Body>
+          </View>
+          {expectedLow !== null && expectedHigh !== null && (
+            <Body size={13} color={colors.textSecondary} style={{ marginTop: 10, lineHeight: 18 }}>
+              By week {weekNumber}, you're expected to gain{' '}
+              <Text style={{ color: ink, fontFamily: font.bodySemiBold }}>
+                {expectedLow.toFixed(1)}–{expectedHigh.toFixed(1)} kg
+              </Text>
+              . Hit a range, not a number — everybody's trajectory differs.
+            </Body>
+          )}
+        </View>
+
+        {/* Recent entries */}
+        {recent.length > 0 && (
+          <View style={[styles.stickerBlock, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: paperBorderStrong }]}>
+            <MonoCaps size={10} color={colors.textMuted} style={{ marginBottom: 6 }}>RECENT ENTRIES</MonoCaps>
+            {recent.map((e, i) => {
+              const prev = i < recent.length - 1 ? recent[i + 1] : null
+              const delta = prev ? e.weight - prev.weight : 0
+              return (
+                <View key={i} style={[styles.recentRow, { borderBottomColor: colors.borderLight }]}>
+                  <Body size={13} color={colors.textMuted}>
+                    {new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </Body>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Body size={13} color={ink} style={{ fontFamily: font.bodySemiBold }}>
+                      {e.weight.toFixed(1)} kg
+                    </Body>
+                    {prev && (
+                      <Body size={11} color={delta > 0 ? stickers.green : delta < 0 ? stickers.coral : colors.textMuted}>
+                        {delta > 0 ? '+' : ''}{delta.toFixed(1)}
+                      </Body>
+                    )}
+                  </View>
+                </View>
+              )
+            })}
+          </View>
+        )}
+
+        {/* CTA — sticker button with ink shadow so it 'sits' on the cream paper */}
+        <StickerButton
+          label="Open full insights"
+          color={stickers.lilac}
+          colorSoft={stickers.lilacSoft}
+          colorDark={ink}
+          onPress={() => { onClose(); router.push('/insights') }}
+          height={56}
+          fontSize={16}
+          style={{ marginTop: 6 }}
+        />
       </View>
-    </Modal>
+    </LogSheet>
   )
 }
 
@@ -579,6 +616,9 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
         statusText={statusText}
         entries={entries}
         weekNumber={weekNumber}
+        bandLow={bandLow}
+        bandHigh={bandHigh}
+        chartWidth={SCREEN_W - 88}
       />
     </>
   )
@@ -629,21 +669,45 @@ const styles = StyleSheet.create({
   detailsLink: { flexDirection: 'row', alignItems: 'center', gap: 2 },
 
   // Detail sheet
-  overlay: { flex: 1, justifyContent: 'flex-end' },
-  overlayBg: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,19,19,0.55)' },
-  detailSheet: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingTop: 12,
-    maxHeight: '85%',
-  },
-  detailHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(245,237,220,0.2)', alignSelf: 'center', marginBottom: 16 },
-  detailClose: { position: 'absolute', top: 12, right: 20, padding: 8, zIndex: 10 },
-  detailHeader: { paddingHorizontal: 24, marginBottom: 20 },
-
-  statGrid: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, marginBottom: 16 },
+  statGrid: { flexDirection: 'row', gap: 10 },
   statCell: { flex: 1 },
-
+  statTile: {
+    flex: 1,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    padding: 14,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  chartCard: {
+    borderRadius: 22,
+    borderWidth: 1.5,
+    padding: 18,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  stickerBlock: {
+    borderRadius: 22,
+    borderWidth: 1.5,
+    padding: 18,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  legendDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1.5,
+  },
   recentRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -651,13 +715,4 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
   },
-
-  detailCta: {
-    marginHorizontal: 20,
-    borderRadius: 999,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  detailCtaText: { fontSize: 15, fontFamily: 'DMSans_600SemiBold' },
 })

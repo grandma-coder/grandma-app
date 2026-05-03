@@ -615,9 +615,13 @@ export function KidsCalendar() {
 
     setLoading(true)
     try {
-      const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`
+      // Fetch prev + current + next month so week strips that span month boundaries
+      // (e.g. Apr 27–May 3) render with their full data.
+      const startYear = month - 1 < 0 ? year - 1 : year
+      const startMonth = month - 1 < 0 ? 12 : month
       const endYear = month + 2 > 12 ? year + 1 : year
       const endMonth = month + 2 > 12 ? 1 : month + 2
+      const startDate = `${startYear}-${String(startMonth).padStart(2, '0')}-01`
 
       const { data, error } = await supabase
         .from('child_logs')

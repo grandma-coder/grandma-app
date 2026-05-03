@@ -10,15 +10,16 @@ import {
   Platform,
   UIManager,
 } from 'react-native'
-import { X, ChevronDown, ChevronUp, MessageCircle } from 'lucide-react-native'
+import { X, ChevronDown, ChevronUp, MessageCircle, ExternalLink, Info, TriangleAlert, Lightbulb, Stethoscope } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Linking } from 'react-native'
 import { useTheme } from '../../constants/theme'
 import { Display, Body } from '../ui/Typography'
 import {
   Leaf, Cross, Cloud, Drop, ClockFace, Bolt, Key, Pill, Lungs, Heart, Moon,
 } from '../ui/Stickers'
 import { getBirthTopic } from '../../lib/birthGuideData'
-import type { BirthTopicKey, BirthSection } from '../../lib/birthGuideData'
+import type { BirthTopicKey, BirthSection, BirthCallout, BirthSource } from '../../lib/birthGuideData'
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -157,6 +158,23 @@ export function BirthDetailModal({
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
+            {topic.disclaimer && (
+              <View
+                style={[
+                  styles.disclaimer,
+                  {
+                    backgroundColor: isDark ? colors.surfaceRaised : '#FFF7E0',
+                    borderColor: paperBorder,
+                  },
+                ]}
+              >
+                <Info size={14} color={ink} strokeWidth={2.2} style={{ marginTop: 2 }} />
+                <Body size={12} color={inkMuted} style={{ flex: 1, lineHeight: 17 }}>
+                  {topic.disclaimer}
+                </Body>
+              </View>
+            )}
+
             {topic.sections.map((section, index) => (
               <AccordionItem
                 key={index}
@@ -171,6 +189,16 @@ export function BirthDetailModal({
                 isDark={isDark}
               />
             ))}
+
+            {topic.sources && topic.sources.length > 0 && (
+              <SourcesBlock
+                sources={topic.sources}
+                ink={ink}
+                inkMuted={inkMuted}
+                paper={paper}
+                paperBorder={paperBorder}
+              />
+            )}
           </ScrollView>
 
           {/* Ask Grandma CTA — sticker pill */}
@@ -293,8 +321,124 @@ function AccordionItem({
               ))}
             </View>
           )}
+
+          {section.subsections && section.subsections.length > 0 && (
+            <View style={styles.subList}>
+              {section.subsections.map((sub, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.subCard,
+                    { borderColor: paperBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#FBF6E8' },
+                  ]}
+                >
+                  <Body size={13} color={ink} style={{ fontFamily: 'DMSans_700Bold', marginBottom: 6 }}>
+                    {sub.title}
+                  </Body>
+                  <Body size={13} color={inkMuted} style={{ lineHeight: 20 }}>
+                    {sub.content}
+                  </Body>
+                  {sub.bullets && sub.bullets.length > 0 && (
+                    <View style={[styles.bulletList, { marginTop: 8 }]}>
+                      {sub.bullets.map((bullet, j) => (
+                        <View key={j} style={styles.bulletRow}>
+                          <View style={[styles.bulletDot, { backgroundColor: numFill, borderColor: isDark ? 'rgba(255,255,255,0.3)' : INK }]} />
+                          <Body size={12} color={ink} style={{ flex: 1, lineHeight: 18 }}>
+                            {bullet}
+                          </Body>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {section.callout && (
+            <CalloutBlock callout={section.callout} ink={ink} inkMuted={inkMuted} paperBorder={paperBorder} isDark={isDark} />
+          )}
         </View>
       )}
+    </View>
+  )
+}
+
+interface CalloutBlockProps {
+  callout: BirthCallout
+  ink: string
+  inkMuted: string
+  paperBorder: string
+  isDark: boolean
+}
+
+function CalloutBlock({ callout, ink, inkMuted, paperBorder, isDark }: CalloutBlockProps) {
+  const palette = {
+    provider: { bg: isDark ? 'rgba(157,195,232,0.12)' : '#E0EEF8', accent: '#9DC3E8', Icon: Stethoscope },
+    urgent:   { bg: isDark ? 'rgba(238,123,109,0.14)' : '#FCE3DE', accent: '#EE7B6D', Icon: TriangleAlert },
+    tip:      { bg: isDark ? 'rgba(245,214,82,0.14)' : '#FBF1C8', accent: '#F5D652', Icon: Lightbulb },
+  }[callout.variant]
+
+  const IconCmp = palette.Icon
+
+  return (
+    <View
+      style={[
+        styles.callout,
+        {
+          backgroundColor: palette.bg,
+          borderColor: paperBorder,
+        },
+      ]}
+    >
+      <View style={[styles.calloutIcon, { backgroundColor: palette.accent, borderColor: paperBorder }]}>
+        <IconCmp size={14} color={INK} strokeWidth={2.2} />
+      </View>
+      <View style={{ flex: 1 }}>
+        {callout.title && (
+          <Body size={13} color={ink} style={{ fontFamily: 'DMSans_700Bold', marginBottom: 3 }}>
+            {callout.title}
+          </Body>
+        )}
+        <Body size={12} color={inkMuted} style={{ lineHeight: 18 }}>
+          {callout.text}
+        </Body>
+      </View>
+    </View>
+  )
+}
+
+interface SourcesBlockProps {
+  sources: BirthSource[]
+  ink: string
+  inkMuted: string
+  paper: string
+  paperBorder: string
+}
+
+function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder }: SourcesBlockProps) {
+  return (
+    <View style={[styles.sourcesCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+      <Body size={12} color={inkMuted} style={{ fontFamily: 'DMSans_700Bold', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 10 }}>
+        Sources
+      </Body>
+      {sources.map((s, i) => (
+        <Pressable
+          key={i}
+          onPress={() => Linking.openURL(s.url).catch(() => {})}
+          style={({ pressed }) => [styles.sourceRow, { opacity: pressed ? 0.6 : 1 }]}
+        >
+          <View style={{ flex: 1 }}>
+            <Body size={12} color={ink} style={{ fontFamily: 'DMSans_700Bold', lineHeight: 17 }}>
+              {s.label}
+            </Body>
+            <Body size={11} color={inkMuted} style={{ lineHeight: 15, marginTop: 2 }}>
+              {s.org}
+            </Body>
+          </View>
+          <ExternalLink size={13} color={inkMuted} strokeWidth={2.2} />
+        </Pressable>
+      ))}
     </View>
   )
 }
@@ -392,6 +536,51 @@ const styles = StyleSheet.create({
   bulletList: { gap: 8, marginTop: 6 },
   bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   bulletDot: { width: 7, height: 7, borderRadius: 4, marginTop: 7, flexShrink: 0, borderWidth: 0.8 },
+  subList: { gap: 10, marginTop: 12 },
+  subCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+  },
+  callout: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    borderWidth: 1.2,
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 12,
+  },
+  calloutIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  disclaimer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    borderWidth: 1.2,
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 4,
+  },
+  sourcesCard: {
+    borderWidth: 1.5,
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 8,
+  },
+  sourceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+  },
   ctaPad: { paddingHorizontal: 16, paddingTop: 8 },
   cta: {
     flexDirection: 'row',

@@ -189,24 +189,23 @@ export async function seedCycleData(): Promise<{ inserted: number }> {
 
 // ─── Kids seed ────────────────────────────────────────────────────────────
 
-export async function seedKidsData(): Promise<{ childId: string; inserted: number }> {
+export async function seedKidsData(): Promise<{ childIds: string[]; inserted: number }> {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
   if (sessionError) throw new Error(`Session error: ${formatSupabaseError(sessionError)}`)
   const session = sessionData.session
   if (!session) throw new Error('Not authenticated')
   const userId = session.user.id
 
-  // Ensure a demo child exists — if any child belongs to this user, reuse the first one.
+  // Fetch ALL children for this user; if none, create one demo kid.
   const { data: existingChildren, error: childQueryError } = await supabase
     .from('children')
     .select('id')
     .eq('parent_id', userId)
-    .limit(1)
   if (childQueryError) throw new Error(`Child query failed: ${formatSupabaseError(childQueryError)}`)
 
-  let childId: string
+  let childIds: string[]
   if (existingChildren && existingChildren.length > 0) {
-    childId = existingChildren[0].id
+    childIds = existingChildren.map((c: { id: string }) => c.id)
   } else {
     const twoYearsAgo = new Date()
     twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
@@ -221,43 +220,46 @@ export async function seedKidsData(): Promise<{ childId: string; inserted: numbe
       .select('id')
       .single()
     if (childInsertError) throw new Error(`Child insert failed: ${formatSupabaseError(childInsertError)}`)
-    childId = newChild.id
+    childIds = [newChild.id]
   }
 
-  // Wipe existing logs for this child
-  const { error: delError } = await supabase.from('child_logs').delete().eq('child_id', childId)
+  // Wipe existing logs for all of these children
+  const { error: delError } = await supabase.from('child_logs').delete().in('child_id', childIds)
   if (delError) throw new Error(`Delete failed: ${formatSupabaseError(delError)}`)
 
-  // Insert 90 days of activity (most recent day = today)
+  // Insert 90 days of activity for EACH child (most recent day = today)
   const rows: Array<{
     user_id: string; child_id: string; date: string; type: string; value: string | null; notes: string | null
   }> = []
   const today = new Date()
-  for (let i = 0; i < 90; i++) {
-    const date = dateStr(addDays(today, -i))
-    // Feeding — 4 per day
-    for (let f = 0; f < 4; f++) {
-      rows.push({
-        user_id: userId, child_id: childId, date, type: 'feeding',
-        value: JSON.stringify({ amount: 120 + Math.floor(Math.random() * 60), kind: 'bottle' }),
-        notes: null,
-      })
-    }
-    // Sleep — 2 per day
-    rows.push({ user_id: userId, child_id: childId, date, type: 'sleep', value: JSON.stringify({ hours: 10 + Math.random() * 2 }), notes: null })
-    // Diaper — 5 per day
-    for (let d = 0; d < 5; d++) {
-      rows.push({
-        user_id: userId, child_id: childId, date, type: 'diaper',
-        value: randFrom(['pee', 'poop', 'mixed']), notes: null,
-      })
-    }
-    // Mood — every other day
-    if (i % 2 === 0) {
-      rows.push({
-        user_id: userId, child_id: childId, date, type: 'mood',
-        value: randFrom(['happy', 'calm', 'fussy']), notes: null,
-      })
+
+  for (const childId of childIds) {
+    for (let i = 0; i < 90; i++) {
+      const date = dateStr(addDays(today, -i))
+      // Feeding — 4 per day
+      for (let f = 0; f < 4; f++) {
+        rows.push({
+          user_id: userId, child_id: childId, date, type: 'feeding',
+          value: JSON.stringify({ amount: 120 + Math.floor(Math.random() * 60), kind: 'bottle' }),
+          notes: null,
+        })
+      }
+      // Sleep — 2 per day
+      rows.push({ user_id: userId, child_id: childId, date, type: 'sleep', value: JSON.stringify({ hours: 10 + Math.random() * 2 }), notes: null })
+      // Diaper — 5 per day
+      for (let d = 0; d < 5; d++) {
+        rows.push({
+          user_id: userId, child_id: childId, date, type: 'diaper',
+          value: randFrom(['pee', 'poop', 'mixed']), notes: null,
+        })
+      }
+      // Mood — every other day
+      if (i % 2 === 0) {
+        rows.push({
+          user_id: userId, child_id: childId, date, type: 'mood',
+          value: randFrom(['happy', 'calm', 'fussy']), notes: null,
+        })
+      }
     }
   }
 
@@ -267,7 +269,33 @@ export async function seedKidsData(): Promise<{ childId: string; inserted: numbe
     if (insError) throw new Error(`Insert failed: ${formatSupabaseError(insError)}`)
   }
 
-  return { childId, inserted: rows.length }
+  return { childIds, inserted: rows.length }
+}
+
+// ─── Seed everything ──────────────────────────────────────────────────────
+
+/**
+ * Runs every seed function in sequence so all behaviors are populated through
+ * today in one tap. Kids seed covers all of the user's children.
+ */
+export async function seedAllData(): Promise<{
+  cycle: number
+  pregnancy: number
+  kids: number
+  kidsCount: number
+  exams: number
+}> {
+  const cycle = await seedCycleData()
+  const pregnancy = await seedPregnancyData()
+  const kids = await seedKidsData()
+  const exams = await seedExamData()
+  return {
+    cycle: cycle.inserted,
+    pregnancy: pregnancy.inserted,
+    kids: kids.inserted,
+    kidsCount: kids.childIds.length,
+    exams: exams.inserted,
+  }
 }
 
 // ─── Pregnancy seed ───────────────────────────────────────────────────────

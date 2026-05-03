@@ -46,6 +46,7 @@ import { Display, MonoCaps, Body } from '../../components/ui/Typography'
 import { Heart as HeartSticker, Squishy, Star as StarSticker, Flower as FlowerSticker, Sparkle, Squiggle, CircleDashed } from '../../components/ui/Stickers'
 import { PaperCard } from '../../components/ui/PaperCard'
 import { PillButton } from '../../components/ui/PillButton'
+import { PaperAlert } from '../../components/ui/PaperAlert'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -208,6 +209,255 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
   )
 }
 
+// ─── Option / Wheel constants ─────────────────────────────────────────────────
+
+const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown']
+const RH_FACTORS = ['Positive', 'Negative', 'Unknown']
+const CONCEPTION_TYPES = ['Spontaneous', 'IVF', 'IUI', 'Other']
+
+function range(start: number, end: number, step = 1): number[] {
+  const out: number[] = []
+  for (let v = start; v <= end + 1e-6; v += step) out.push(Math.round(v * 10) / 10)
+  return out
+}
+
+const HEIGHT_OPTIONS = range(130, 210, 1).map((n) => String(n))
+const WEIGHT_OPTIONS = range(35, 200, 0.5).map((n) => n.toFixed(1))
+
+const SEX_OPTIONS = ['Boy', 'Girl', 'Not revealed', 'Other']
+const POSITION_OPTIONS = ['cephalic', 'breech', 'transverse', 'unknown']
+const SCAN_WEEK_OPTIONS = range(1, 40, 1).map((n) => String(n))
+
+const BIRTH_LOCATIONS = ['Hospital', 'Birth center', 'Home', 'Undecided', 'Other']
+const PAIN_MGMT_OPTIONS = ['Epidural', 'Natural / unmedicated', 'Nitrous oxide', 'IV medication', 'Undecided', 'Other']
+const ATMOSPHERE_OPTIONS = ['Calm & quiet', 'Music & playlist', 'Dim lights', 'Family present', 'Photographer', 'Undecided', 'Other']
+const CORD_CUTTING_OPTIONS = ['Immediate', 'Delayed', 'Partner cuts', 'Cord blood banking', 'Lotus birth', 'Undecided', 'Other']
+const FEEDING_PLAN_OPTIONS = ['Breastfeed', 'Formula', 'Mixed', 'Pumping', 'Undecided', 'Other']
+const DURATION_GOAL_OPTIONS = ['Less than 3 months', '3 months', '6 months', '9 months', '12 months', '18 months', '24 months', 'Undecided', 'Other']
+
+// ─── Options sheet (radio list) ───────────────────────────────────────────────
+
+interface OptionsSheetProps {
+  visible: boolean
+  label: string
+  value: string
+  options: string[]
+  onSave: (v: string) => void
+  onClose: () => void
+}
+
+function OptionsSheet({ visible, label, value, options, onSave, onClose }: OptionsSheetProps) {
+  const { colors, font, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+  const inkText = isDark ? colors.bg : '#F3ECD9'
+
+  // If the current saved value isn't one of the canonical options, treat it as "Other"
+  const isInList = (v: string) => options.includes(v)
+  const initialSelected = !value ? '' : isInList(value) ? value : 'Other'
+  const initialOtherText = !value || isInList(value) ? '' : value
+
+  const [selected, setSelected] = useState(initialSelected)
+  const [otherText, setOtherText] = useState(initialOtherText)
+
+  useEffect(() => {
+    if (!visible) return
+    setSelected(initialSelected)
+    setOtherText(initialOtherText)
+  }, [value, visible]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const showOtherInput = selected === 'Other'
+
+  function handleSave() {
+    if (showOtherInput) {
+      const trimmed = otherText.trim()
+      if (!trimmed) return
+      onSave(trimmed)
+    } else {
+      onSave(selected)
+    }
+    onClose()
+  }
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.editOverlay}>
+        <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }]}>
+          <Display size={18} color={colors.text}>{label}</Display>
+          <ScrollView style={{ maxHeight: 320, marginTop: 12 }} showsVerticalScrollIndicator={false}>
+            {options.map((opt) => {
+              const active = opt === selected
+              return (
+                <Pressable
+                  key={opt}
+                  onPress={() => setSelected(opt)}
+                  style={[
+                    styles.optionRow,
+                    {
+                      borderColor: active ? ink : paperBorder,
+                      backgroundColor: active ? (isDark ? colors.surfaceRaised : '#FBF3E4') : 'transparent',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.optionText, { color: colors.text, fontFamily: active ? font.bodySemiBold : font.body }]}>
+                    {opt}
+                  </Text>
+                  {active && <Check size={16} color={ink} strokeWidth={2.5} />}
+                </Pressable>
+              )
+            })}
+          </ScrollView>
+
+          {showOtherInput && (
+            <TextInput
+              value={otherText}
+              onChangeText={setOtherText}
+              placeholder="Type your answer"
+              placeholderTextColor={colors.textMuted}
+              autoFocus
+              style={[
+                styles.editInput,
+                {
+                  color: colors.text,
+                  backgroundColor: colors.surfaceRaised,
+                  borderColor: paperBorder,
+                  height: 56,
+                  fontFamily: font.body,
+                  marginTop: 8,
+                },
+              ]}
+            />
+          )}
+
+          <View style={styles.editButtons}>
+            <Pressable onPress={onClose} style={[styles.editBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: paperBorder }]}>
+              <Text style={[styles.editBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleSave}
+              disabled={showOtherInput && !otherText.trim()}
+              style={[
+                styles.editBtn,
+                {
+                  backgroundColor: ink,
+                  opacity: showOtherInput && !otherText.trim() ? 0.4 : 1,
+                },
+              ]}
+            >
+              <Text style={[styles.editBtnText, { color: inkText, fontFamily: font.bodySemiBold }]}>Save</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
+// ─── Wheel sheet (iOS-style spinning picker) ──────────────────────────────────
+
+interface WheelSheetProps {
+  visible: boolean
+  label: string
+  value: string
+  options: string[]
+  unit?: string
+  onSave: (v: string) => void
+  onClose: () => void
+}
+
+const WHEEL_ITEM_HEIGHT = 44
+const WHEEL_VISIBLE = 5
+const WHEEL_PAD = ((WHEEL_VISIBLE - 1) / 2) * WHEEL_ITEM_HEIGHT
+
+function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: WheelSheetProps) {
+  const { colors, font, isDark } = useTheme()
+  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
+  const inkText = isDark ? colors.bg : '#F3ECD9'
+  const initialIndex = Math.max(0, options.indexOf(value))
+  const [selected, setSelected] = useState(initialIndex >= 0 ? initialIndex : 0)
+  const scrollRef = useRef<ScrollView>(null)
+
+  useEffect(() => {
+    if (!visible) return
+    const idx = Math.max(0, options.indexOf(value))
+    setSelected(idx >= 0 ? idx : 0)
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y: (idx >= 0 ? idx : 0) * WHEEL_ITEM_HEIGHT, animated: false })
+    })
+  }, [visible, value, options])
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.editOverlay}>
+        <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }]}>
+          <Display size={18} color={colors.text}>{label}</Display>
+          <View style={{ height: WHEEL_VISIBLE * WHEEL_ITEM_HEIGHT, marginTop: 12 }}>
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                top: WHEEL_PAD,
+                left: 0,
+                right: 0,
+                height: WHEEL_ITEM_HEIGHT,
+                borderTopWidth: 1,
+                borderBottomWidth: 1,
+                borderColor: paperBorder,
+              }}
+            />
+            <ScrollView
+              ref={scrollRef}
+              showsVerticalScrollIndicator={false}
+              snapToInterval={WHEEL_ITEM_HEIGHT}
+              decelerationRate="fast"
+              contentContainerStyle={{ paddingVertical: WHEEL_PAD }}
+              onMomentumScrollEnd={(e) => {
+                const i = Math.round(e.nativeEvent.contentOffset.y / WHEEL_ITEM_HEIGHT)
+                setSelected(Math.max(0, Math.min(options.length - 1, i)))
+              }}
+            >
+              {options.map((opt, i) => {
+                const active = i === selected
+                return (
+                  <View
+                    key={opt}
+                    style={{ height: WHEEL_ITEM_HEIGHT, justifyContent: 'center', alignItems: 'center' }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: active ? 22 : 16,
+                        opacity: active ? 1 : 0.35,
+                        color: colors.text,
+                        fontFamily: active ? font.bodySemiBold : font.body,
+                      }}
+                    >
+                      {opt}{unit ? ` ${unit}` : ''}
+                    </Text>
+                  </View>
+                )
+              })}
+            </ScrollView>
+          </View>
+          <View style={styles.editButtons}>
+            <Pressable onPress={onClose} style={[styles.editBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: paperBorder }]}>
+              <Text style={[styles.editBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => { onSave(options[selected]); onClose() }}
+              style={[styles.editBtn, { backgroundColor: ink }]}
+            >
+              <Text style={[styles.editBtnText, { color: inkText, fontFamily: font.bodySemiBold }]}>Save</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
 // ─── Section card ─────────────────────────────────────────────────────────────
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -287,6 +537,7 @@ export default function PregnancyProfileScreen() {
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [savedAlertVisible, setSavedAlertVisible] = useState(false)
 
   const [profile, setProfile] = useState<ProfileData>({
     name: parentName,
@@ -316,13 +567,72 @@ export default function PregnancyProfileScreen() {
   const [draftDueDate, setDraftDueDate] = useState<Date>(() =>
     dueDate ? new Date(dueDate + 'T00:00:00') : new Date(),
   )
+  const [lmpPickerOpen, setLmpPickerOpen] = useState(false)
+  const [draftLmpDate, setDraftLmpDate] = useState<Date>(new Date())
+  const [optionsSheet, setOptionsSheet] = useState<{
+    label: string
+    value: string
+    options: string[]
+    onSave: (v: string) => void
+  } | null>(null)
+  const [wheelSheet, setWheelSheet] = useState<{
+    label: string
+    value: string
+    options: string[]
+    unit?: string
+    onSave: (v: string) => void
+  } | null>(null)
 
   function openDueDatePicker() {
     setDraftDueDate(dueDate ? new Date(dueDate + 'T00:00:00') : new Date())
     setDueDatePickerOpen(true)
   }
 
-  function applyDueDate(d: Date) {
+  async function persistDueDateToDb(iso: string) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const userId = session.user.id
+
+    const { data: existing } = await supabase
+      .from('pregnancy_logs')
+      .select('id, notes')
+      .eq('user_id', userId)
+      .eq('log_type', 'note')
+      .eq('value', 'onboarding')
+      .order('log_date', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    let meta: Record<string, unknown> = {}
+    if (existing?.notes) {
+      try { meta = JSON.parse(existing.notes as string) ?? {} } catch { meta = {} }
+    }
+    meta.dueDate = iso
+    meta.weekNumber = getCurrentWeekFromDueDate(iso)
+
+    if (existing?.id) {
+      const { error } = await supabase
+        .from('pregnancy_logs')
+        .update({ notes: JSON.stringify(meta) })
+        .eq('id', existing.id)
+      if (error) throw error
+    } else {
+      const today = new Date()
+      const log_date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      const { error } = await supabase
+        .from('pregnancy_logs')
+        .insert({
+          user_id: userId,
+          log_date,
+          log_type: 'note',
+          value: 'onboarding',
+          notes: JSON.stringify(meta),
+        })
+      if (error) throw error
+    }
+  }
+
+  async function applyDueDate(d: Date) {
     const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     const week = getCurrentWeekFromDueDate(iso)
     setStoreDueDate(iso)
@@ -330,6 +640,14 @@ export default function PregnancyProfileScreen() {
     setJourneyDueDate(iso)
     setJourneyWeekNumber(week)
     setDueDatePickerOpen(false)
+    setSaving(true)
+    try {
+      await persistDueDateToDb(iso)
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const trimester = weekNumber <= 13 ? 1 : weekNumber <= 26 ? 2 : 3
@@ -355,6 +673,27 @@ export default function PregnancyProfileScreen() {
             healthNotes: (profileRow.health_notes as string | null) ?? '',
             birthPreferences: bp,
           })
+        }
+
+        // Hydrate due date from the onboarding note (the canonical source)
+        const { data: noteRows } = await supabase
+          .from('pregnancy_logs')
+          .select('id, notes')
+          .eq('user_id', session.user.id)
+          .eq('log_type', 'note')
+          .eq('value', 'onboarding')
+          .order('log_date', { ascending: false })
+          .limit(1)
+        if (noteRows && noteRows[0]?.notes) {
+          try {
+            const meta = JSON.parse(noteRows[0].notes as string)
+            if (meta.dueDate && typeof meta.dueDate === 'string') {
+              setStoreDueDate(meta.dueDate)
+              setStoreWeekNumber(getCurrentWeekFromDueDate(meta.dueDate))
+              setJourneyDueDate(meta.dueDate)
+              setJourneyWeekNumber(getCurrentWeekFromDueDate(meta.dueDate))
+            }
+          } catch { /* ignore */ }
         }
 
         const { data: childRow } = await supabase
@@ -441,6 +780,11 @@ export default function PregnancyProfileScreen() {
       setStoreWeekNumber(week)
       setJourneyDueDate(newDue)
       setJourneyWeekNumber(week)
+      try {
+        await persistDueDateToDb(newDue)
+      } catch (e: unknown) {
+        Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      }
     }
   }
 
@@ -602,17 +946,19 @@ export default function PregnancyProfileScreen() {
             dotColor={ROW_DOTS[4]}
             label="LMP date"
             value={bp.lmpDate ? new Date(bp.lmpDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
-            onEdit={() => setEditField({
-              label: 'LMP date (YYYY-MM-DD)', value: bp.lmpDate ?? '',
-              onSave: (v) => void saveLmpDate(v),
-            })}
+            onEdit={() => {
+              setDraftLmpDate(bp.lmpDate ? new Date(bp.lmpDate + 'T00:00:00') : new Date())
+              setLmpPickerOpen(true)
+            }}
           />
           <InfoRow
             dotColor={ROW_DOTS[5]}
             label="Conception type"
             value={bp.conceptionType ?? ''}
-            onEdit={() => setEditField({
-              label: 'Conception type (Spontaneous / IVF / IUI / Other)', value: bp.conceptionType ?? '',
+            onEdit={() => setOptionsSheet({
+              label: 'Conception type',
+              value: bp.conceptionType ?? '',
+              options: CONCEPTION_TYPES,
               onSave: (v) => void saveBirthPreferences({ conceptionType: v }),
             })}
           />
@@ -620,8 +966,10 @@ export default function PregnancyProfileScreen() {
             dotColor={ROW_DOTS[0]}
             label="Blood type"
             value={profile.bloodType}
-            onEdit={() => setEditField({
-              label: 'Blood type', value: profile.bloodType,
+            onEdit={() => setOptionsSheet({
+              label: 'Blood type',
+              value: profile.bloodType,
+              options: BLOOD_TYPES,
               onSave: (v) => {
                 setProfile((p) => ({ ...p, bloodType: v }))
                 void saveProfileField('blood_type', v)
@@ -632,8 +980,10 @@ export default function PregnancyProfileScreen() {
             dotColor={ROW_DOTS[1]}
             label="Rh factor"
             value={bp.rhFactor ?? ''}
-            onEdit={() => setEditField({
-              label: 'Rh factor (Positive / Negative / Unknown)', value: bp.rhFactor ?? '',
+            onEdit={() => setOptionsSheet({
+              label: 'Rh factor',
+              value: bp.rhFactor ?? '',
+              options: RH_FACTORS,
               onSave: (v) => void saveBirthPreferences({ rhFactor: v }),
             })}
           />
@@ -641,8 +991,11 @@ export default function PregnancyProfileScreen() {
             dotColor={ROW_DOTS[2]}
             label="Height"
             value={bp.height ? `${bp.height} cm` : ''}
-            onEdit={() => setEditField({
-              label: 'Height (cm)', value: bp.height ?? '',
+            onEdit={() => setWheelSheet({
+              label: 'Height',
+              value: bp.height ?? '170',
+              options: HEIGHT_OPTIONS,
+              unit: 'cm',
               onSave: (v) => void saveBirthPreferences({ height: v }),
             })}
           />
@@ -650,8 +1003,11 @@ export default function PregnancyProfileScreen() {
             dotColor={ROW_DOTS[3]}
             label="Pre-pregnancy weight"
             value={bp.prePregnancyWeight ? `${bp.prePregnancyWeight} kg` : ''}
-            onEdit={() => setEditField({
-              label: 'Pre-pregnancy weight (kg)', value: bp.prePregnancyWeight ?? '',
+            onEdit={() => setWheelSheet({
+              label: 'Pre-pregnancy weight',
+              value: bp.prePregnancyWeight ?? '60.0',
+              options: WEIGHT_OPTIONS,
+              unit: 'kg',
               onSave: (v) => void saveBirthPreferences({ prePregnancyWeight: v }),
             })}
           />
@@ -659,8 +1015,11 @@ export default function PregnancyProfileScreen() {
             dotColor={ROW_DOTS[4]}
             label="Current weight"
             value={currentWeight ? `${currentWeight} kg` : ''}
-            onEdit={() => setEditField({
-              label: 'Current weight (kg)', value: currentWeight,
+            onEdit={() => setWheelSheet({
+              label: 'Current weight',
+              value: currentWeight || '62.0',
+              options: WEIGHT_OPTIONS,
+              unit: 'kg',
               onSave: (v) => void saveCurrentWeight(v),
             })}
           />
@@ -697,40 +1056,50 @@ export default function PregnancyProfileScreen() {
           <InfoRow
             label="Birth location"
             value={bp.birthLocation ?? ''}
-            onEdit={() => setEditField({
-              label: 'Birth location', value: bp.birthLocation ?? '',
+            onEdit={() => setOptionsSheet({
+              label: 'Birth location',
+              value: bp.birthLocation ?? '',
+              options: BIRTH_LOCATIONS,
               onSave: (v) => void saveBirthPreferences({ birthLocation: v }),
             })}
           />
           <InfoRow
             label="Pain management"
             value={bp.painManagement ?? ''}
-            onEdit={() => setEditField({
-              label: 'Pain management preference', value: bp.painManagement ?? '',
+            onEdit={() => setOptionsSheet({
+              label: 'Pain management',
+              value: bp.painManagement ?? '',
+              options: PAIN_MGMT_OPTIONS,
               onSave: (v) => void saveBirthPreferences({ painManagement: v }),
             })}
           />
           <InfoRow
             label="Atmosphere"
             value={bp.atmosphere ?? ''}
-            onEdit={() => setEditField({
-              label: 'Atmosphere preference', value: bp.atmosphere ?? '',
+            onEdit={() => setOptionsSheet({
+              label: 'Atmosphere',
+              value: bp.atmosphere ?? '',
+              options: ATMOSPHERE_OPTIONS,
               onSave: (v) => void saveBirthPreferences({ atmosphere: v }),
             })}
           />
           <InfoRow
             label="Cord cutting"
             value={bp.cordCutting ?? ''}
-            onEdit={() => setEditField({
-              label: 'Cord cutting preference', value: bp.cordCutting ?? '',
+            onEdit={() => setOptionsSheet({
+              label: 'Cord cutting',
+              value: bp.cordCutting ?? '',
+              options: CORD_CUTTING_OPTIONS,
               onSave: (v) => void saveBirthPreferences({ cordCutting: v }),
             })}
           />
           <InfoRow
             label="Feeding plan"
             value={bp.feedingPlan ?? ''}
-            onEdit={() => setEditField({
-              label: 'Feeding plan', value: bp.feedingPlan ?? '',
+            onEdit={() => setOptionsSheet({
+              label: 'Feeding plan',
+              value: bp.feedingPlan ?? '',
+              options: FEEDING_PLAN_OPTIONS,
               onSave: (v) => void saveBirthPreferences({ feedingPlan: v }),
             })}
           />
@@ -782,19 +1151,23 @@ export default function PregnancyProfileScreen() {
           <InfoRow
             label="Sex"
             value={baby.sex}
-            onEdit={() => setEditField({
-              label: 'Baby sex (or "Not revealed")', value: baby.sex,
+            onEdit={() => setOptionsSheet({
+              label: 'Baby sex',
+              value: baby.sex,
+              options: SEX_OPTIONS,
               onSave: (v) => setBaby((b) => ({ ...b, sex: v })),
             })}
           />
           <InfoRow
             label="Position"
             value={baby.position}
-            onEdit={() => setEditField({
-              label: 'Baby position (cephalic/breech/transverse/unknown)', value: baby.position,
+            onEdit={() => setOptionsSheet({
+              label: 'Baby position',
+              value: baby.position,
+              options: POSITION_OPTIONS,
               onSave: (v) => {
-                const pos = (['cephalic', 'breech', 'transverse', 'unknown'] as const).includes(v as BabyData['position'])
-                  ? v as BabyData['position']
+                const pos = (POSITION_OPTIONS as readonly string[]).includes(v)
+                  ? (v as BabyData['position'])
                   : 'unknown'
                 setBaby((b) => ({ ...b, position: pos }))
                 void saveBabyField('baby_position', pos)
@@ -804,8 +1177,11 @@ export default function PregnancyProfileScreen() {
           <InfoRow
             label="Last scan week"
             value={baby.lastScanWeek ? `Week ${baby.lastScanWeek}` : ''}
-            onEdit={() => setEditField({
-              label: 'Last scan week number', value: baby.lastScanWeek,
+            onEdit={() => setWheelSheet({
+              label: 'Last scan week',
+              value: baby.lastScanWeek || '20',
+              options: SCAN_WEEK_OPTIONS,
+              unit: '',
               onSave: (v) => setBaby((b) => ({ ...b, lastScanWeek: v })),
             })}
           />
@@ -864,16 +1240,20 @@ export default function PregnancyProfileScreen() {
           <InfoRow
             label="Feeding intention"
             value={bp.breastfeedingGoal ?? ''}
-            onEdit={() => setEditField({
-              label: 'Feeding intention', value: bp.breastfeedingGoal ?? '',
+            onEdit={() => setOptionsSheet({
+              label: 'Feeding intention',
+              value: bp.breastfeedingGoal ?? '',
+              options: FEEDING_PLAN_OPTIONS,
               onSave: (v) => void saveBirthPreferences({ breastfeedingGoal: v }),
             })}
           />
           <InfoRow
             label="Duration goal"
             value={bp.durationGoal ?? ''}
-            onEdit={() => setEditField({
-              label: 'Duration goal (e.g. 6 months)', value: bp.durationGoal ?? '',
+            onEdit={() => setOptionsSheet({
+              label: 'Duration goal',
+              value: bp.durationGoal ?? '',
+              options: DURATION_GOAL_OPTIONS,
               onSave: (v) => void saveBirthPreferences({ durationGoal: v }),
             })}
           />
@@ -926,7 +1306,7 @@ export default function PregnancyProfileScreen() {
         <PillButton
           label={saving ? 'Saving…' : 'Save Changes'}
           variant="ink"
-          onPress={() => router.back()}
+          onPress={() => setSavedAlertVisible(true)}
           disabled={saving}
           leading={
             <Ionicons
@@ -949,6 +1329,82 @@ export default function PregnancyProfileScreen() {
           multiline={editField.multiline}
         />
       )}
+
+      {optionsSheet && (
+        <OptionsSheet
+          visible
+          label={optionsSheet.label}
+          value={optionsSheet.value}
+          options={optionsSheet.options}
+          onSave={optionsSheet.onSave}
+          onClose={() => setOptionsSheet(null)}
+        />
+      )}
+
+      {wheelSheet && (
+        <WheelSheet
+          visible
+          label={wheelSheet.label}
+          value={wheelSheet.value}
+          options={wheelSheet.options}
+          unit={wheelSheet.unit}
+          onSave={wheelSheet.onSave}
+          onClose={() => setWheelSheet(null)}
+        />
+      )}
+
+      <Modal
+        visible={lmpPickerOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setLmpPickerOpen(false)}
+      >
+        <Pressable
+          style={styles.dateModalBackdrop}
+          onPress={() => setLmpPickerOpen(false)}
+        >
+          <Pressable
+            style={[styles.dateModalSheet, { backgroundColor: colors.bg }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.dateModalHeader}>
+              <Pressable onPress={() => setLmpPickerOpen(false)}>
+                <Text style={[styles.dateModalCancel, { color: colors.textMuted, fontFamily: font.body }]}>Cancel</Text>
+              </Pressable>
+              <Text style={[styles.dateModalTitle, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+                LMP date
+              </Text>
+              <Pressable onPress={() => {
+                const d = draftLmpDate
+                const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                setLmpPickerOpen(false)
+                void saveLmpDate(iso)
+              }}>
+                <Text style={[styles.dateModalSave, { color: colors.primary, fontFamily: font.bodySemiBold }]}>Save</Text>
+              </Pressable>
+            </View>
+            <DateTimePicker
+              value={draftLmpDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              themeVariant={isDark ? 'dark' : 'light'}
+              minimumDate={new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 * 50)}
+              maximumDate={new Date()}
+              onChange={(_, d) => {
+                if (Platform.OS === 'android') {
+                  setLmpPickerOpen(false)
+                  if (d) {
+                    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                    void saveLmpDate(iso)
+                  }
+                  return
+                }
+                if (d) setDraftLmpDate(d)
+              }}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <Modal
         visible={dueDatePickerOpen}
@@ -994,6 +1450,21 @@ export default function PregnancyProfileScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      <PaperAlert
+        visible={savedAlertVisible}
+        title="Saved"
+        italic="all set"
+        message="Your pregnancy profile has been saved."
+        buttons={[
+          {
+            label: 'OK',
+            variant: 'primary',
+            onPress: () => router.back(),
+          },
+        ]}
+        onRequestClose={() => setSavedAlertVisible(false)}
+      />
     </View>
   )
 }
@@ -1064,6 +1535,17 @@ const styles = StyleSheet.create({
   editButtons: { flexDirection: 'row', gap: 12, marginTop: 16 },
   editBtn: { flex: 1, paddingVertical: 14, borderRadius: 999, alignItems: 'center' },
   editBtnText: { fontSize: 15 },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  optionText: { fontSize: 15 },
 
   dateModalBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(20,19,19,0.6)' },
   dateModalSheet: { borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingBottom: 24 },

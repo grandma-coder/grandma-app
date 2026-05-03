@@ -5,7 +5,7 @@
  * 1. BabyHeroCarousel   — swipeable FlatList, full-width, tappable → WeekDetailModal
  * 2. AffirmationRevealCard — glow-burst VFX reveal, Supabase-backed
  * 3. QuickLogStrip      — today's routine chips with checkmark state
- * 4. VitalsCarousel     — horizontal scroll of metric cards, each → detail modal
+ * 4. TodaySummaryCard   — single "today at a glance" card → opens daily dashboard modal
  * 5. RemindersSection   — upcoming appts + week tips + habit nudges
  * 6. WeightMiniChart    — 6-entry sparkline
  * 7. GrandmaCTA         — deep-link to grandma-talk
@@ -45,9 +45,15 @@ import {
   PregnancySymptomsForm,
   AppointmentForm,
   KickCountForm,
+  SleepLogForm,
+  WeightLogForm,
+  WaterLogForm,
+  ExerciseLogForm,
+  VitaminsLogForm,
+  KegelLogForm,
 } from '../calendar/PregnancyLogForms'
-import { SimplePregnancyLogForm } from '../calendar/SimplePregnancyLogForm'
 import { PregnancyMealForm } from '../calendar/PregnancyMealForm'
+import { LogSheet } from '../calendar/LogSheet'
 
 import { WeekCard } from './pregnancy/WeekCard'
 import {
@@ -55,7 +61,7 @@ import {
   LogExercise, LogKicks, LogNutrition, LogKegel,
 } from '../stickers/RewardStickers'
 import { AffirmationRevealCard } from './pregnancy/AffirmationRevealCard'
-import { VitalsCarousel } from './pregnancy/VitalsCarousel'
+import { TodaySummaryCard } from './pregnancy/TodaySummaryCard'
 import { RemindersSection } from './pregnancy/RemindersSection'
 import type { ReminderLogType } from './pregnancy/RemindersSection'
 import { WeekDetailModal } from './pregnancy/WeekDetailModal'
@@ -276,6 +282,20 @@ type InlineLogType =
   | 'vitamins' | 'water' | 'weight' | 'sleep' | 'exercise' | 'kegel' | 'nutrition'
   | null
 
+const INLINE_LOG_TITLE: Record<Exclude<InlineLogType, null>, string> = {
+  mood: 'Log mood',
+  symptom: 'Log symptom',
+  appointment: 'New appointment',
+  kick_count: 'Kick counter',
+  vitamins: 'Log vitamins',
+  water: 'Hydration',
+  weight: 'Log weight',
+  sleep: 'Log sleep',
+  exercise: 'Log movement',
+  kegel: 'Log kegels',
+  nutrition: 'Log meal',
+}
+
 interface PregnancyHomeProps { topInset?: number }
 
 export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
@@ -330,39 +350,12 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
     if (activeLog === 'nutrition') {
       return <PregnancyMealForm userId={userId} onSaved={onClose} />
     }
-    if (activeLog === 'water' || activeLog === 'weight' || activeLog === 'sleep'
-        || activeLog === 'exercise') {
-      return <SimplePregnancyLogForm type={activeLog} userId={userId} onSaved={onClose} />
-    }
-
-    if (activeLog === 'vitamins' || activeLog === 'kegel') {
-      const Sticker = activeLog === 'vitamins' ? LogVitamins : LogKegel
-      const title = activeLog === 'vitamins' ? 'Mark vitamins taken' : 'Log Kegel sets'
-      return (
-        <View style={styles.simpleForm}>
-          <View style={styles.simpleFormHeader}>
-            <Sticker size={32} />
-            <Text style={[styles.simpleFormTitle, { color: colors.text }]}>{title}</Text>
-          </View>
-          <Pressable
-            onPress={async () => {
-              if (!userId) return
-              await supabase.from('pregnancy_logs').insert({
-                user_id: userId,
-                log_date: today,
-                log_type: activeLog,
-                value: '1',
-                notes: null,
-              })
-              onClose()
-            }}
-            style={[styles.simpleFormBtn, { backgroundColor: colors.primary }]}
-          >
-            <Text style={[styles.simpleFormBtnText, { color: colors.textInverse }]}>Mark done</Text>
-          </Pressable>
-        </View>
-      )
-    }
+    if (activeLog === 'sleep') return <SleepLogForm date={today} onSaved={onClose} />
+    if (activeLog === 'weight') return <WeightLogForm date={today} onSaved={onClose} />
+    if (activeLog === 'water') return <WaterLogForm date={today} onSaved={onClose} />
+    if (activeLog === 'exercise') return <ExerciseLogForm date={today} onSaved={onClose} />
+    if (activeLog === 'vitamins') return <VitaminsLogForm date={today} onSaved={onClose} />
+    if (activeLog === 'kegel') return <KegelLogForm date={today} onSaved={onClose} />
     return null
   }
 
@@ -403,12 +396,9 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
         onPressRoutine={(type) => setActiveLog(type as InlineLogType)}
       />
 
-      {/* 4. Vitals carousel */}
+      {/* 4. Today summary card — opens full daily dashboard */}
       <View style={[styles.section, { paddingHorizontal: 0 }]}>
-        <View style={{ paddingHorizontal: 20, marginBottom: 12 }}>
-          <MonoCaps>TODAY'S VITALS</MonoCaps>
-        </View>
-        <VitalsCarousel
+        <TodaySummaryCard
           todayLogs={todayLogs}
           weekNumber={weekNumber}
           userId={userId}
@@ -482,25 +472,14 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
         onClose={() => setBirthGuideVisible(false)}
       />
 
-      {/* Inline log forms modal */}
-      <Modal
+      {/* Inline log forms — same shell as the calendar */}
+      <LogSheet
         visible={activeLog !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setActiveLog(null)}
+        title={activeLog ? INLINE_LOG_TITLE[activeLog] : ''}
+        onClose={() => setActiveLog(null)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalHandle} />
-              <Pressable onPress={() => setActiveLog(null)} style={styles.modalClose}>
-                <X size={20} color={colors.textMuted} strokeWidth={2} />
-              </Pressable>
-            </View>
-            {renderInlineForm()}
-          </View>
-        </View>
-      </Modal>
+        {renderInlineForm()}
+      </LogSheet>
     </ScrollView>
   )
 }
