@@ -64,6 +64,7 @@ import { AffirmationRevealCard } from './pregnancy/AffirmationRevealCard'
 import { TodaySummaryCard } from './pregnancy/TodaySummaryCard'
 import { RemindersSection } from './pregnancy/RemindersSection'
 import type { ReminderLogType } from './pregnancy/RemindersSection'
+import { PregnancyUserReminders } from './pregnancy/PregnancyUserReminders'
 import { WeekDetailModal } from './pregnancy/WeekDetailModal'
 import { WeightTrendCard } from './pregnancy/WeightTrendCard'
 import { BirthGuideModal } from '../pregnancy/BirthGuideModal'
@@ -418,6 +419,8 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
           onLog={(type: ReminderLogType) => setActiveLog(type as InlineLogType)}
           onOpenAppointment={(appt) => setApptDetail(appt)}
         />
+        <View style={{ height: 12 }} />
+        <PregnancyUserReminders userId={userId ?? null} />
       </View>
 
       {/* 6. Weight trend — rich card with IOM target band */}

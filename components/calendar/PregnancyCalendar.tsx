@@ -1547,6 +1547,20 @@ export function PregnancyCalendar() {
 
   useEffect(() => { void fetchRoutines() }, [fetchRoutines])
 
+  // Keep viewDate's month in sync with selectedDate so the calendar query
+  // refetches when the user navigates into a previous (or future) month
+  // via the week strip. Without this, logs saved to a date outside the
+  // current viewDate's month never appear because they aren't fetched.
+  useEffect(() => {
+    const sel = new Date(selectedDate + 'T12:00:00')
+    if (
+      sel.getFullYear() !== viewDate.getFullYear() ||
+      sel.getMonth() !== viewDate.getMonth()
+    ) {
+      setViewDate(sel)
+    }
+  }, [selectedDate, viewDate])
+
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
   const todayStr = toDateStr(new Date())

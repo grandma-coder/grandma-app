@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react-native'
 import { useTheme } from '../../../constants/theme'
 import { PaperCard } from '../../ui/PaperCard'
 import {
-  NotifyAppointmentDue, TipRead, LogKicks, LogVitamins,
+  NotifyAppointmentDue, TipRead, LogKicks,
 } from '../../stickers/RewardStickers'
 import { getUpcomingAppointment } from '../../../lib/pregnancyAppointments'
 import type { StandardAppointment } from '../../../lib/pregnancyAppointments'
@@ -83,19 +83,6 @@ export function RemindersSection({
       tint: stickers.greenSoft,
       accent: stickers.green,
       onPress: () => onLog('kick_count'),
-    })
-  }
-
-  // Vitamins not taken
-  if (!todayLogs['vitamins']) {
-    items.push({
-      id: 'vitamins',
-      Sticker: LogVitamins,
-      title: 'Take your prenatal vitamins',
-      subtitle: 'Best taken with food to avoid nausea',
-      tint: stickers.pinkSoft,
-      accent: stickers.pink,
-      onPress: () => onLog('vitamins' as ReminderLogType),
     })
   }
 

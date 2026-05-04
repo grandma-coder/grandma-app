@@ -9,6 +9,9 @@
 import { useState, useEffect, useRef, useCallback, ReactElement } from 'react'
 import { View, Text, Pressable, Modal, Animated, StyleSheet, Dimensions } from 'react-native'
 import { Tabs, router } from 'expo-router'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { getUnreadCount } from '../../lib/notifications'
+import { supabase } from '../../lib/supabase'
 import {
   Home, Calendar, BarChart3, User, Sparkles, Plus,
   MessageCircle, Lightbulb, ShoppingBag, Users, Gift,
@@ -327,11 +330,41 @@ function TornEdge({ width, color }: { width: number; color: string }) {
   )
 }
 
+function useUnreadNotificationCount() {
+  const queryClient = useQueryClient()
+
+  const { data: count = 0 } = useQuery({
+    queryKey: ['notification-count'],
+    queryFn: getUnreadCount,
+    staleTime: 30 * 1000,
+    refetchInterval: 30 * 1000,
+  })
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('notification-count-tabbar')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['notification-count'] })
+        },
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [queryClient])
+
+  return count
+}
+
 function CollageStripTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets()
   const { isDark } = useTheme()
   const { t } = useTranslation()
   const screenW = Dimensions.get('window').width
+  const unreadNotifications = useUnreadNotificationCount()
 
   const TAB_CFG: Record<string, TabStickerCfg> = {
     index:    { icon: Home,      label: t('tab_home'),      color: StickerPalette.yellow },
@@ -405,6 +438,14 @@ function CollageStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
                 ]}
               >
                 <Icon size={20} color={STICKER_INK} strokeWidth={2} />
+                {route.name === 'settings' && unreadNotifications > 0 && (
+                  <View
+                    style={[
+                      stripStyles.unreadDot,
+                      { backgroundColor: StickerPalette.coral, borderColor: STICKER_INK },
+                    ]}
+                  />
+                )}
               </View>
               <Text
                 style={[
@@ -589,5 +630,14 @@ const stripStyles = StyleSheet.create({
     marginTop: 4,
     fontSize: 11,
     letterSpacing: 0.1,
+  },
+  unreadDot: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 1.5,
   },
 })

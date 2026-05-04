@@ -1,5 +1,5 @@
 // components/pregnancy/BirthDetailModal.tsx
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Modal,
   View,
@@ -56,7 +56,11 @@ export function BirthDetailModal({
 }: BirthDetailModalProps) {
   const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
-  const [openIndex, setOpenIndex] = useState<number | null>(0)
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    setOpenIndex(null)
+  }, [topicKey, visible])
 
   if (!topicKey) return null
   const topic = getBirthTopic(topicKey)
@@ -73,7 +77,7 @@ export function BirthDetailModal({
   }
 
   const handleClose = () => {
-    setOpenIndex(0)
+    setOpenIndex(null)
     onClose()
   }
 

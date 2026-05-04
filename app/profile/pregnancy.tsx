@@ -31,7 +31,7 @@ import {
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { router } from 'expo-router'
-import { Edit2, Check, ChevronRight } from 'lucide-react-native'
+import { Edit2, Check, ChevronRight, X } from 'lucide-react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
@@ -42,8 +42,12 @@ import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { supabase } from '../../lib/supabase'
 import { getDaysToGo } from '../../lib/pregnancyData'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
-import { Display, MonoCaps, Body } from '../../components/ui/Typography'
-import { Heart as HeartSticker, Squishy, Star as StarSticker, Flower as FlowerSticker, Sparkle, Squiggle, CircleDashed } from '../../components/ui/Stickers'
+import { Display } from '../../components/ui/Typography'
+import {
+  Heart as HeartSticker, Squishy, Star as StarSticker, Flower as FlowerSticker,
+  Sparkle, Squiggle, CircleDashed, ClockFace, Drop, Cross, Moon, Pill, Bear,
+  Foot, Lungs, Key, Leaf,
+} from '../../components/ui/Stickers'
 import { PaperCard } from '../../components/ui/PaperCard'
 import { PillButton } from '../../components/ui/PillButton'
 import { PaperAlert } from '../../components/ui/PaperAlert'
@@ -162,11 +166,9 @@ interface EditFieldModalProps {
 }
 
 function EditFieldModal({ visible, label, value, onSave, onClose, multiline = false }: EditFieldModalProps) {
-  const { colors, font, isDark } = useTheme()
+  const { colors, font, isDark, stickers: st } = useTheme()
   const paper = isDark ? colors.surface : '#FFFEF8'
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
-  const inkText = isDark ? colors.bg : '#F3ECD9'
   const [text, setText] = useState(value)
   useEffect(() => { setText(value) }, [value])
 
@@ -174,7 +176,7 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.editOverlay}>
         <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }]}>
-          <Display size={18} color={colors.text}>{label}</Display>
+          <ModalHeader label={label} onClose={onClose} stickers={st} />
           <TextInput
             value={text}
             onChangeText={setText}
@@ -193,15 +195,15 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
             placeholderTextColor={colors.textMuted}
           />
           <View style={styles.editButtons}>
-            <Pressable onPress={onClose} style={[styles.editBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: paperBorder }]}>
-              <Text style={[styles.editBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Cancel</Text>
-            </Pressable>
-            <Pressable
+            <PillButton label="Cancel" variant="paper" onPress={onClose} height={52} style={{ flex: 1 }} />
+            <PillButton
+              label="Save"
+              variant="accent"
+              accentColor={st.lilac}
               onPress={() => { onSave(text); onClose() }}
-              style={[styles.editBtn, { backgroundColor: ink }]}
-            >
-              <Text style={[styles.editBtnText, { color: inkText, fontFamily: font.bodySemiBold }]}>Save</Text>
-            </Pressable>
+              height={52}
+              style={{ flex: 1 }}
+            />
           </View>
         </View>
       </View>
@@ -246,14 +248,61 @@ interface OptionsSheetProps {
   onClose: () => void
 }
 
-function OptionsSheet({ visible, label, value, options, onSave, onClose }: OptionsSheetProps) {
+// Map a label → sticker + tint pair so each modal feels like its own object.
+function modalAccent(label: string, stickers: ReturnType<typeof useTheme>['stickers']):
+  { node: React.ReactNode; tint: string } {
+  const k = label.toLowerCase()
+  if (k.includes('blood')) return { node: <Drop size={22} fill={stickers.pink} />, tint: stickers.pinkSoft }
+  if (k.includes('rh')) return { node: <Drop size={22} fill={stickers.lilac} />, tint: stickers.lilacSoft }
+  if (k.includes('conception')) return { node: <Sparkle size={20} fill={stickers.yellow} />, tint: stickers.yellowSoft }
+  if (k.includes('location')) return { node: <FlowerSticker size={22} petal={stickers.green} center={stickers.yellow} />, tint: stickers.greenSoft }
+  if (k.includes('pain')) return { node: <Lungs size={22} fill={stickers.peach} />, tint: stickers.peachSoft }
+  if (k.includes('atmos')) return { node: <Moon size={22} fill={stickers.lilac} />, tint: stickers.lilacSoft }
+  if (k.includes('cord')) return { node: <Squiggle w={22} h={14} stroke={stickers.coral} />, tint: stickers.peachSoft }
+  if (k.includes('feed') || k.includes('breast')) return { node: <Drop size={22} fill={stickers.pink} />, tint: stickers.pinkSoft }
+  if (k.includes('duration')) return { node: <ClockFace size={22} fill={stickers.blue} />, tint: stickers.blueSoft }
+  if (k.includes('height')) return { node: <StarSticker size={22} fill={stickers.yellow} />, tint: stickers.yellowSoft }
+  if (k.includes('weight')) return { node: <Pill size={22} fill={stickers.green} />, tint: stickers.greenSoft }
+  if (k.includes('scan') || k.includes('week')) return { node: <ClockFace size={22} fill={stickers.lilac} />, tint: stickers.lilacSoft }
+  if (k.includes('sex')) return { node: <HeartSticker size={22} fill={stickers.pink} />, tint: stickers.pinkSoft }
+  if (k.includes('position')) return { node: <Foot size={22} fill={stickers.peach} />, tint: stickers.peachSoft }
+  if (k.includes('baby')) return { node: <Bear size={24} fill={stickers.yellow} />, tint: stickers.yellowSoft }
+  if (k.includes('health')) return { node: <Cross size={22} fill={stickers.peach} />, tint: stickers.peachSoft }
+  return { node: <Sparkle size={20} fill={stickers.lilac} />, tint: stickers.lilacSoft }
+}
+
+function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose: () => void; stickers: ReturnType<typeof useTheme>['stickers'] }) {
   const { colors, font, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
+  const accent = modalAccent(label, st)
+  return (
+    <View style={styles.modalHeader}>
+      <View style={[styles.modalHeaderBadge, { backgroundColor: accent.tint, borderColor: ink }]}>
+        {accent.node}
+      </View>
+      <View style={{ flex: 1 }}>
+        <Display size={22} color={colors.text}>{label}</Display>
+        <Text style={[styles.modalHeaderSub, { color: colors.textMuted, fontFamily: font.italic }]}>
+          pick the one that fits
+        </Text>
+      </View>
+      <Pressable
+        onPress={onClose}
+        style={({ pressed }) => [styles.modalCloseX, { borderColor: ink, opacity: pressed ? 0.6 : 1 }]}
+        hitSlop={8}
+      >
+        <X size={16} color={ink} strokeWidth={2.2} />
+      </Pressable>
+    </View>
+  )
+}
+
+function OptionsSheet({ visible, label, value, options, onSave, onClose }: OptionsSheetProps) {
+  const { colors, font, isDark, stickers: st } = useTheme()
   const paper = isDark ? colors.surface : '#FFFEF8'
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
   const ink = isDark ? colors.text : '#141313'
-  const inkText = isDark ? colors.bg : '#F3ECD9'
 
-  // If the current saved value isn't one of the canonical options, treat it as "Other"
   const isInList = (v: string) => options.includes(v)
   const initialSelected = !value ? '' : isInList(value) ? value : 'Other'
   const initialOtherText = !value || isInList(value) ? '' : value
@@ -284,8 +333,8 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.editOverlay}>
         <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }]}>
-          <Display size={18} color={colors.text}>{label}</Display>
-          <ScrollView style={{ maxHeight: 320, marginTop: 12 }} showsVerticalScrollIndicator={false}>
+          <ModalHeader label={label} onClose={onClose} stickers={st} />
+          <ScrollView style={{ maxHeight: 380, marginTop: 4 }} showsVerticalScrollIndicator={false}>
             {options.map((opt) => {
               const active = opt === selected
               return (
@@ -293,10 +342,11 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
                   key={opt}
                   onPress={() => setSelected(opt)}
                   style={[
-                    styles.optionRow,
+                    styles.optionPill,
                     {
-                      borderColor: active ? ink : paperBorder,
-                      backgroundColor: active ? (isDark ? colors.surfaceRaised : '#FBF3E4') : 'transparent',
+                      borderColor: ink,
+                      borderWidth: active ? 1.5 : 1,
+                      backgroundColor: active ? st.lilacSoft : 'transparent',
                     },
                   ]}
                 >
@@ -331,22 +381,22 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
           )}
 
           <View style={styles.editButtons}>
-            <Pressable onPress={onClose} style={[styles.editBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: paperBorder }]}>
-              <Text style={[styles.editBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Cancel</Text>
-            </Pressable>
-            <Pressable
+            <PillButton
+              label="Cancel"
+              variant="paper"
+              onPress={onClose}
+              height={52}
+              style={{ flex: 1 }}
+            />
+            <PillButton
+              label="Save"
+              variant="accent"
+              accentColor={st.lilac}
               onPress={handleSave}
               disabled={showOtherInput && !otherText.trim()}
-              style={[
-                styles.editBtn,
-                {
-                  backgroundColor: ink,
-                  opacity: showOtherInput && !otherText.trim() ? 0.4 : 1,
-                },
-              ]}
-            >
-              <Text style={[styles.editBtnText, { color: inkText, fontFamily: font.bodySemiBold }]}>Save</Text>
-            </Pressable>
+              height={52}
+              style={{ flex: 1 }}
+            />
           </View>
         </View>
       </View>
@@ -371,11 +421,9 @@ const WHEEL_VISIBLE = 5
 const WHEEL_PAD = ((WHEEL_VISIBLE - 1) / 2) * WHEEL_ITEM_HEIGHT
 
 function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: WheelSheetProps) {
-  const { colors, font, isDark } = useTheme()
+  const { colors, font, isDark, stickers: st } = useTheme()
   const paper = isDark ? colors.surface : '#FFFEF8'
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
-  const inkText = isDark ? colors.bg : '#F3ECD9'
   const initialIndex = Math.max(0, options.indexOf(value))
   const [selected, setSelected] = useState(initialIndex >= 0 ? initialIndex : 0)
   const scrollRef = useRef<ScrollView>(null)
@@ -393,8 +441,8 @@ function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: W
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.editOverlay}>
         <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }]}>
-          <Display size={18} color={colors.text}>{label}</Display>
-          <View style={{ height: WHEEL_VISIBLE * WHEEL_ITEM_HEIGHT, marginTop: 12 }}>
+          <ModalHeader label={label} onClose={onClose} stickers={st} />
+          <View style={{ height: WHEEL_VISIBLE * WHEEL_ITEM_HEIGHT, marginTop: 4 }}>
             <View
               pointerEvents="none"
               style={{
@@ -442,15 +490,15 @@ function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: W
             </ScrollView>
           </View>
           <View style={styles.editButtons}>
-            <Pressable onPress={onClose} style={[styles.editBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: paperBorder }]}>
-              <Text style={[styles.editBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Cancel</Text>
-            </Pressable>
-            <Pressable
+            <PillButton label="Cancel" variant="paper" onPress={onClose} height={52} style={{ flex: 1 }} />
+            <PillButton
+              label="Save"
+              variant="accent"
+              accentColor={st.lilac}
               onPress={() => { onSave(options[selected]); onClose() }}
-              style={[styles.editBtn, { backgroundColor: ink }]}
-            >
-              <Text style={[styles.editBtnText, { color: inkText, fontFamily: font.bodySemiBold }]}>Save</Text>
-            </Pressable>
+              height={52}
+              style={{ flex: 1 }}
+            />
           </View>
         </View>
       </View>
@@ -460,14 +508,33 @@ function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: W
 
 // ─── Section card ─────────────────────────────────────────────────────────────
 
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
-  const { colors, isDark } = useTheme()
+interface SectionCardProps {
+  title: string
+  subtitle?: string
+  badge: React.ReactNode
+  badgeTint: string
+  children: React.ReactNode
+}
+
+function SectionCard({ title, subtitle, badge, badgeTint, children }: SectionCardProps) {
+  const { colors, font, isDark } = useTheme()
   const paper = isDark ? colors.surface : '#FFFEF8'
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = isDark ? colors.text : '#141313'
   return (
     <View style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-      <View style={{ marginBottom: 8 }}>
-        <MonoCaps color={colors.textMuted}>{title}</MonoCaps>
+      <View style={styles.sectionHeader}>
+        <View style={[styles.sectionBadge, { backgroundColor: badgeTint, borderColor: ink }]}>
+          {badge}
+        </View>
+        <View style={{ flex: 1 }}>
+          <Display size={20} color={colors.text}>{title}</Display>
+          {subtitle ? (
+            <Text style={[styles.sectionSubtitle, { color: colors.textMuted, fontFamily: font.italic }]}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
       </View>
       {children}
     </View>
@@ -932,7 +999,12 @@ export default function PregnancyProfileScreen() {
         </PaperCard>
 
         {/* 2. Pregnancy Info */}
-        <SectionCard title="Pregnancy Info">
+        <SectionCard
+          title="Pregnancy Info"
+          subtitle="your pregnancy at a glance"
+          badge={<ClockFace size={26} fill={stickers.lilac} />}
+          badgeTint={stickers.lilacSoft}
+        >
           <InfoRow
             dotColor={ROW_DOTS[0]}
             label="Due date"
@@ -1038,7 +1110,12 @@ export default function PregnancyProfileScreen() {
         </SectionCard>
 
         {/* Birth Planning — link to the full birth-plan screen */}
-        <SectionCard title="Birth Planning">
+        <SectionCard
+          title="Birth Planning"
+          subtitle="plan how you want to welcome baby"
+          badge={<Leaf size={26} fill={stickers.green} />}
+          badgeTint={stickers.greenSoft}
+        >
           <Pressable
             onPress={() => router.push('/birth-plan')}
             style={[styles.linkRow, { borderBottomColor: colors.borderLight }]}
@@ -1052,7 +1129,12 @@ export default function PregnancyProfileScreen() {
         </SectionCard>
 
         {/* 3. Birth Preferences */}
-        <SectionCard title="Birth Preferences">
+        <SectionCard
+          title="Birth Preferences"
+          subtitle="the way you'd love it to feel"
+          badge={<HeartSticker size={26} fill={stickers.pink} />}
+          badgeTint={stickers.pinkSoft}
+        >
           <InfoRow
             label="Birth location"
             value={bp.birthLocation ?? ''}
@@ -1106,7 +1188,12 @@ export default function PregnancyProfileScreen() {
         </SectionCard>
 
         {/* 4. Birth Team */}
-        <SectionCard title="Birth Team">
+        <SectionCard
+          title="Birth Team"
+          subtitle="people in your corner"
+          badge={<StarSticker size={26} fill={stickers.blue} />}
+          badgeTint={stickers.blueSoft}
+        >
           <Pressable
             onPress={() => router.push('/profile/care-circle')}
             style={[styles.linkRow, { borderBottomColor: colors.borderLight }]}
@@ -1120,7 +1207,12 @@ export default function PregnancyProfileScreen() {
         </SectionCard>
 
         {/* 5. Health Flags */}
-        <SectionCard title="Health Flags">
+        <SectionCard
+          title="Health Flags"
+          subtitle="anything your team should know"
+          badge={<Cross size={26} fill={stickers.peach} />}
+          badgeTint={stickers.peachSoft}
+        >
           <InfoRow
             label="Conditions / notes"
             value={profile.healthNotes}
@@ -1136,7 +1228,12 @@ export default function PregnancyProfileScreen() {
         </SectionCard>
 
         {/* 6. Baby Info */}
-        <SectionCard title="Baby Info">
+        <SectionCard
+          title="Baby Info"
+          subtitle="the little one we're waiting for"
+          badge={<Bear size={28} fill={stickers.yellow} />}
+          badgeTint={stickers.yellowSoft}
+        >
           <InfoRow
             label="Baby name"
             value={baby.name}
@@ -1188,7 +1285,12 @@ export default function PregnancyProfileScreen() {
         </SectionCard>
 
         {/* 7. Emergency Contacts */}
-        <SectionCard title="Emergency Contacts">
+        <SectionCard
+          title="Emergency Contacts"
+          subtitle="who to reach if it's urgent"
+          badge={<Key size={26} fill={stickers.coral} />}
+          badgeTint={stickers.peachSoft}
+        >
           <Pressable
             onPress={() => router.push('/profile/emergency-insurance')}
             style={styles.linkRow}
@@ -1202,7 +1304,12 @@ export default function PregnancyProfileScreen() {
         </SectionCard>
 
         {/* 8. Postpartum Prep */}
-        <SectionCard title="Postpartum Prep">
+        <SectionCard
+          title="Postpartum Prep"
+          subtitle="things future-you will thank you for"
+          badge={<Sparkle size={24} fill={stickers.lilac} />}
+          badgeTint={stickers.lilacSoft}
+        >
           {POSTPARTUM_ITEMS.map((item) => (
             <Pressable
               key={item}
@@ -1213,8 +1320,8 @@ export default function PregnancyProfileScreen() {
                 style={[
                   styles.checkbox,
                   {
-                    backgroundColor: postpartumDone[item] ? '#A2FF86' : 'transparent',
-                    borderColor: postpartumDone[item] ? '#A2FF86' : colors.border,
+                    backgroundColor: postpartumDone[item] ? stickers.green : 'transparent',
+                    borderColor: postpartumDone[item] ? stickers.green : colors.border,
                   },
                 ]}
               >
@@ -1236,7 +1343,12 @@ export default function PregnancyProfileScreen() {
         </SectionCard>
 
         {/* 9. Breastfeeding Plan */}
-        <SectionCard title="Breastfeeding Plan">
+        <SectionCard
+          title="Breastfeeding Plan"
+          subtitle="how you'd like to feed baby"
+          badge={<Drop size={26} fill={stickers.pink} />}
+          badgeTint={stickers.pinkSoft}
+        >
           <InfoRow
             label="Feeding intention"
             value={bp.breastfeedingGoal ?? ''}
@@ -1270,7 +1382,12 @@ export default function PregnancyProfileScreen() {
         </SectionCard>
 
         {/* 10. Nesting Checklist */}
-        <SectionCard title="Nesting Checklist">
+        <SectionCard
+          title="Nesting Checklist"
+          subtitle="getting your nest baby-ready"
+          badge={<Moon size={26} fill={stickers.blue} />}
+          badgeTint={stickers.blueSoft}
+        >
           {NESTING_ITEMS.map((item) => (
             <Pressable
               key={item}
@@ -1281,8 +1398,8 @@ export default function PregnancyProfileScreen() {
                 style={[
                   styles.checkbox,
                   {
-                    backgroundColor: nestingDone[item] ? '#A2FF86' : 'transparent',
-                    borderColor: nestingDone[item] ? '#A2FF86' : colors.border,
+                    backgroundColor: nestingDone[item] ? stickers.green : 'transparent',
+                    borderColor: nestingDone[item] ? stickers.green : colors.border,
                   },
                 ]}
               >
@@ -1515,6 +1632,32 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 2,
+  },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
+  sectionBadge: {
+    width: 44, height: 44, borderRadius: 22, borderWidth: 1.2,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  sectionSubtitle: { fontSize: 13, marginTop: 2 },
+
+  modalHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  modalHeaderBadge: {
+    width: 44, height: 44, borderRadius: 22, borderWidth: 1.2,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  modalHeaderSub: { fontSize: 13, marginTop: 2 },
+  modalCloseX: {
+    width: 32, height: 32, borderRadius: 16, borderWidth: 1.2,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  optionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    height: 52,
+    borderRadius: 999,
+    marginBottom: 10,
   },
 
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1 },

@@ -110,7 +110,6 @@ import {
   Flower as StickerFlower,
 } from '../ui/Stickers'
 import { BrandedLoader } from '../ui/BrandedLoader'
-import { NotificationBell } from '../ui/NotificationBell'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -635,7 +634,6 @@ export function KidsAnalytics() {
             </Text>
           </View>
           <View style={styles.headerActions}>
-            <NotificationBell />
             <Pressable
               onPress={() => setShowScoreInfo(true)}
               hitSlop={10}

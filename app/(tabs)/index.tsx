@@ -13,7 +13,6 @@ import { useTheme, stickers } from '../../constants/theme'
 import { CycleHome } from '../../components/home/CycleHome'
 import { PregnancyHome } from '../../components/home/PregnancyHome'
 import { KidsHome } from '../../components/home/KidsHome'
-import { NotificationBell } from '../../components/ui/NotificationBell'
 import { Display, DisplayItalic, Body } from '../../components/ui/Typography'
 import { PillButton } from '../../components/ui/PillButton'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
@@ -29,11 +28,6 @@ export default function Home() {
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      {/* Bell icon */}
-      <View style={[styles.bellWrap, { top: insets.top + 12 }]}>
-        <NotificationBell />
-      </View>
-
       {/* Pregnancy gets its own full-width scroll (hero carousel needs SCREEN_W) */}
       {mode === 'pregnancy' && <PregnancyHome topInset={insets.top} />}
 
@@ -82,7 +76,6 @@ export default function Home() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  bellWrap: { position: 'absolute', right: 20, zIndex: 10 },
   scroll: { paddingHorizontal: 20 },
 
   emptyWrap: {

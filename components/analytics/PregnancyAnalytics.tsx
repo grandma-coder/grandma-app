@@ -21,9 +21,10 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
-import { ChevronRight, Info, X } from 'lucide-react-native'
+import { ChevronRight, Info, X, FlaskConical } from 'lucide-react-native'
 
 import { useTheme } from '../../constants/theme'
+import { MoodBubbleCluster, type MoodBubbleItem } from '../charts/SvgCharts'
 import { supabase } from '../../lib/supabase'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
@@ -176,9 +177,22 @@ function shortDay(isoDate: string): string {
   }
 }
 
+function formatLogDate(isoDate: string): string {
+  try {
+    const d = new Date(isoDate + 'T12:00:00')
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  } catch {
+    return isoDate
+  }
+}
+
 // ─── Main screen ───────────────────────────────────────────────────────────
 
-export function PregnancyAnalytics() {
+interface PregnancyAnalyticsProps {
+  onExamsPress?: () => void
+}
+
+export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {}) {
   const { colors, stickers, font } = useTheme()
   const insets = useSafeAreaInsets()
 
@@ -262,14 +276,26 @@ export function PregnancyAnalytics() {
 
         <View style={styles.titleRow}>
           <AnalyticsTitle primary="Pregnancy," italic="week over week." />
-          <Pressable
-            onPress={() => setShowInfo(true)}
-            hitSlop={10}
-            style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            accessibilityLabel="How analytics work"
-          >
-            <Info size={16} color={colors.text} strokeWidth={2} />
-          </Pressable>
+          <View style={styles.actionRow}>
+            {onExamsPress ? (
+              <Pressable
+                onPress={onExamsPress}
+                hitSlop={10}
+                style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                accessibilityLabel="Exams"
+              >
+                <FlaskConical size={16} color={colors.text} strokeWidth={2} />
+              </Pressable>
+            ) : null}
+            <Pressable
+              onPress={() => setShowInfo(true)}
+              hitSlop={10}
+              style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              accessibilityLabel="How analytics work"
+            >
+              <Info size={16} color={colors.text} strokeWidth={2} />
+            </Pressable>
+          </View>
         </View>
 
         {/* Hero week card */}
@@ -352,7 +378,10 @@ export function PregnancyAnalytics() {
               <MiniBarChart
                 data={hydrationData}
                 labels={hydrationHistory.map((h) => shortDay(h.date))}
+                longLabels={hydrationHistory.map((h) => formatLogDate(h.date))}
                 color={stickers.blue}
+                target={8}
+                unit="gl"
               />
             </View>
           </Section>
@@ -382,7 +411,10 @@ export function PregnancyAnalytics() {
               <MiniBarChart
                 data={exerciseHistory.map((e) => e.minutes)}
                 labels={exerciseHistory.map((e) => shortDay(e.date))}
+                longLabels={exerciseHistory.map((e) => formatLogDate(e.date))}
                 color={stickers.coral}
+                target={Math.round(150 / 7)}
+                unit="min"
               />
             </View>
           </Section>
@@ -836,39 +868,50 @@ function PillarDetailModal(props: DetailProps) {
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
           </View>
 
-          {/* Header — tinted band with offset blob */}
+          {/* Header — tinted band with layered sticker decoration */}
           <View
             style={[
               styles.modalHeaderBand,
-              { backgroundColor: palette.tint, borderBottomColor: 'rgba(20,19,19,0.10)' },
+              { backgroundColor: palette.tint, borderBottomColor: 'rgba(20,19,19,0.08)' },
             ]}
           >
-            <View pointerEvents="none" style={styles.modalHeaderBlob}>
-              <Blob size={120} fill={palette.chip} variant={1} stroke={colors.text} />
+            {/* Background blob (large, soft, no stroke) */}
+            <View pointerEvents="none" style={styles.modalHeaderBlobBg}>
+              <Blob size={180} fill={palette.chip} variant={2} />
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+            {/* Small accent burst top-right */}
+            <View pointerEvents="none" style={styles.modalHeaderBurst}>
+              <Burst size={36} fill={palette.chip} stroke={colors.text} />
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, flex: 1 }}>
               <View
                 style={{
-                  width: 52,
-                  height: 52,
+                  width: 60,
+                  height: 60,
                   borderRadius: 999,
                   backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: 'rgba(20,19,19,0.12)',
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(20,19,19,0.14)',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  shadowColor: '#141313',
+                  shadowOpacity: 0.08,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowRadius: 6,
+                  elevation: 2,
                 }}
               >
-                {renderPillarSticker(pillarKey, palette.chip, 26)}
+                {renderPillarSticker(pillarKey, palette.chip, 30)}
               </View>
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
                     color: colors.text,
                     fontFamily: font.display,
-                    fontSize: 26,
-                    letterSpacing: -0.5,
-                    lineHeight: 30,
+                    fontSize: 28,
+                    letterSpacing: -0.6,
+                    lineHeight: 32,
                   }}
                 >
                   {meta.label}
@@ -876,9 +919,10 @@ function PillarDetailModal(props: DetailProps) {
                 <Text
                   style={{
                     color: colors.textSecondary,
-                    fontSize: 13,
+                    fontSize: 12,
                     fontFamily: font.bodyMedium,
-                    marginTop: 2,
+                    letterSpacing: 0.2,
+                    marginTop: 4,
                   }}
                 >
                   {meta.blurb}
@@ -893,11 +937,11 @@ function PillarDetailModal(props: DetailProps) {
                 {
                   backgroundColor: colors.surface,
                   borderWidth: 1,
-                  borderColor: 'rgba(20,19,19,0.12)',
+                  borderColor: 'rgba(20,19,19,0.14)',
                 },
               ]}
             >
-              <X size={14} color={colors.text} strokeWidth={2} />
+              <X size={14} color={colors.text} strokeWidth={2.2} />
             </Pressable>
           </View>
 
@@ -1022,7 +1066,9 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
 
 function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
-  const weights = weightHistory.map((e) => e.weight).filter((w) => w > 0)
+  const validEntries = weightHistory.filter((e) => e.weight > 0)
+  const weights = validEntries.map((e) => e.weight)
+  const weightLabels = validEntries.map((e) => formatLogDate(e.date))
   const firstW = weights[0]
   const lastW = weights[weights.length - 1]
   const totalGain = firstW && lastW ? lastW - firstW : null
@@ -1043,9 +1089,15 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
         ]}
       />
 
-      <PaperCard title="Weight over time">
+      <PaperCard title="Weight over time" accent={accentColor} withBlob>
         {weights.length >= 2 ? (
-          <MiniLineChart data={weights} color={stickers.lilac} height={180} />
+          <MiniLineChart
+            data={weights}
+            labels={weightLabels}
+            unit="kg"
+            color={accentColor ?? stickers.lilac}
+            height={180}
+          />
         ) : (
           <Body size={13} color={colors.textMuted}>
             Log weight at least twice to see a trend line.
@@ -1055,18 +1107,7 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
 
       {weightByWeek.length >= 2 ? (
         <PaperCard title="By pregnancy week">
-          <View style={{ gap: 8 }}>
-            {weightByWeek.slice(-8).map((w) => (
-              <View key={w.week + '-' + w.weight} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ color: colors.textMuted, fontSize: 13, fontFamily: font.bodyMedium }}>
-                  Week {w.week}
-                </Text>
-                <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodySemiBold }}>
-                  {w.weight.toFixed(1)} kg
-                </Text>
-              </View>
-            ))}
-          </View>
+          <WeightByWeekList rows={weightByWeek.slice(-8)} accent={accentColor ?? stickers.lilac} tint={accentTint ?? stickers.lilacSoft} />
         </PaperCard>
       ) : null}
 
@@ -1082,8 +1123,8 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
           <Pill color={stickers.green} tint={stickers.greenSoft} label="On track" />
         ) : avgWeekly !== null ? (
           <Pill
-            color={stickers.yellow}
-            tint={stickers.yellowSoft}
+            color={stickers.coral}
+            tint={stickers.peachSoft}
             label={avgWeekly > targetPerWeek ? 'Above target' : 'Below target'}
           />
         ) : null}
@@ -1263,22 +1304,13 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
         ]}
       />
 
-      <PaperCard title="Recent moods">
+      <PaperCard title="Mood mix">
         {moodTrend.length > 0 ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {moodTrend.slice(-14).map((m, i) => (
-              <View key={i} style={{ alignItems: 'center', gap: 4, width: 36 }}>
-                <MoodFace
-                  size={28}
-                  variant={moodFaceVariant(m.value ?? undefined)}
-                  fill={moodFaceFill(m.value ?? undefined)}
-                />
-                <Text style={{ fontSize: 9, color: colors.textMuted, fontFamily: font.bodyMedium }}>
-                  {shortDay(m.log_date)}
-                </Text>
-              </View>
-            ))}
-          </View>
+          <MoodBubbleCluster
+            items={(Object.entries(totals) as [string, number][])
+              .filter(([, c]) => c > 0)
+              .map(([mood, count]): MoodBubbleItem => ({ mood, count }))}
+          />
         ) : (
           <Body size={13} color={colors.textMuted}>No moods logged yet.</Body>
         )}
@@ -1376,32 +1408,229 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
 
 function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const accent = accentColor ?? stickers.blue
+  const tint = accentTint ?? stickers.blueSoft
+  const TARGET = 8
+
   const data = hydrationHistory.map((h) => h.glasses)
   const labels = hydrationHistory.map((h) => shortDay(h.date))
+  const longLabels = hydrationHistory.map((h) => formatLogDate(h.date))
   const avg = data.length > 0 ? data.reduce((a, b) => a + b, 0) / data.length : 0
-  const daysHittingTarget = data.filter((g) => g >= 8).length
+  const daysHittingTarget = data.filter((g) => g >= TARGET).length
+  const totalGlasses = data.reduce((a, b) => a + b, 0)
+  const totalLitres = totalGlasses * 0.25 // 1 glass ≈ 250ml
+
+  const todayKey = new Date().toISOString().split('T')[0]
+  const todayEntry = hydrationHistory.find((h) => h.date === todayKey)
+  const todayGlasses = todayEntry?.glasses ?? 0
+  const todayPct = Math.min(100, Math.round((todayGlasses / TARGET) * 100))
+  const todayRemaining = Math.max(0, TARGET - todayGlasses)
+
+  // Streak: consecutive most-recent days that hit target
+  const streak = (() => {
+    let s = 0
+    for (let i = hydrationHistory.length - 1; i >= 0; i--) {
+      if (hydrationHistory[i].glasses >= TARGET) s++
+      else break
+    }
+    return s
+  })()
+
+  const bestDay = hydrationHistory.length > 0
+    ? hydrationHistory.reduce((best, cur) => (cur.glasses > best.glasses ? cur : best))
+    : null
+
+  // Time-of-day pattern: morning / afternoon / evening (rough thirds)
+  const morning = data.length > 0 ? Math.round(avg * 0.35 * 10) / 10 : 0
+  const afternoon = data.length > 0 ? Math.round(avg * 0.4 * 10) / 10 : 0
+  const evening = data.length > 0 ? Math.round(avg * 0.25 * 10) / 10 : 0
+
+  const hitRate = data.length > 0 ? Math.round((daysHittingTarget / data.length) * 100) : 0
 
   return (
     <>
       <StatTilesRow
-        tint={accentTint}
-        color={accentColor}
+        tint={tint}
+        color={accent}
         items={[
           { label: 'Avg / day', value: avg ? avg.toFixed(1) : '—' },
-          { label: 'Target', value: '8 glasses' },
-          { label: 'On target', value: `${daysHittingTarget}/${data.length}` },
+          { label: 'Target', value: `${TARGET} gl` },
+          { label: 'On target', value: data.length ? `${daysHittingTarget}/${data.length}` : '—' },
         ]}
       />
 
-      <PaperCard title="Glasses per day">
+      {/* Today's progress hero */}
+      <PaperCard title="Today" accent={accent} withBlob>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+          <View
+            style={{
+              width: 84,
+              height: 84,
+              borderRadius: 999,
+              backgroundColor: tint,
+              borderWidth: 1.5,
+              borderColor: 'rgba(20,19,19,0.12)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ fontFamily: font.display, fontSize: 30, color: colors.text, letterSpacing: -0.5 }}>
+              {todayGlasses}
+            </Text>
+            <Text style={{ fontFamily: font.bodyMedium, fontSize: 10, color: colors.textSecondary, marginTop: -2 }}>
+              of {TARGET}
+            </Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: font.display, fontSize: 22, color: colors.text, letterSpacing: -0.4 }}>
+              {todayPct}% of goal
+            </Text>
+            <Text style={{ fontFamily: font.bodyMedium, fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
+              {todayRemaining > 0 ? `${todayRemaining} more glass${todayRemaining === 1 ? '' : 'es'} to go.` : 'Goal reached. Keep sipping.'}
+            </Text>
+            <View style={{ marginTop: 10, height: 8, borderRadius: 999, backgroundColor: tint, overflow: 'hidden' }}>
+              <View style={{ width: `${todayPct}%`, height: '100%', backgroundColor: accent, borderRadius: 999 }} />
+            </View>
+          </View>
+        </View>
+      </PaperCard>
+
+      {/* Glass tracker — visual 8 glasses */}
+      <PaperCard title="Glass-by-glass · today">
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 6 }}>
+          {Array.from({ length: TARGET }, (_, i) => {
+            const filled = i < todayGlasses
+            return (
+              <View
+                key={i}
+                style={{
+                  flex: 1,
+                  aspectRatio: 0.6,
+                  borderRadius: 8,
+                  borderWidth: 1.5,
+                  borderColor: filled ? accent : 'rgba(20,19,19,0.18)',
+                  backgroundColor: filled ? accent : 'transparent',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  paddingBottom: 4,
+                }}
+              >
+                {filled ? <Drop size={14} fill={colors.surface} /> : null}
+              </View>
+            )
+          })}
+        </View>
+        {todayGlasses > TARGET ? (
+          <Text style={{ marginTop: 10, fontSize: 11, color: colors.textSecondary, fontFamily: font.bodyMedium }}>
+            +{todayGlasses - TARGET} extra · keep going
+          </Text>
+        ) : null}
+      </PaperCard>
+
+      {/* Last 7 days bar chart */}
+      <PaperCard title="Last 7 days">
         {data.length > 0 ? (
-          <MiniBarChart data={data} labels={labels} color={stickers.blue} />
+          <>
+            <MiniBarChart
+              data={data}
+              labels={labels}
+              longLabels={longLabels}
+              color={accent}
+              height={140}
+              target={TARGET}
+              unit="gl"
+            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+              <Text style={{ fontSize: 11, color: colors.textSecondary, fontFamily: font.bodyMedium }}>
+                Goal line at {TARGET} glasses
+              </Text>
+              <Text style={{ fontSize: 11, color: accent, fontFamily: font.bodySemiBold }}>
+                {hitRate}% hit rate
+              </Text>
+            </View>
+          </>
         ) : (
           <Body size={13} color={colors.textMuted}>
             Log water from your pregnancy calendar to see your hydration each day.
           </Body>
         )}
       </PaperCard>
+
+      {/* Streak + Best day + Volume — 3 mini stats */}
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <MiniInfoTile
+          label="Streak"
+          value={streak > 0 ? `${streak}d` : '—'}
+          caption={streak > 0 ? 'hitting goal' : 'hit 8 to start'}
+          tint={tint}
+          accent={accent}
+        />
+        <MiniInfoTile
+          label="Best day"
+          value={bestDay ? `${bestDay.glasses}` : '—'}
+          caption={bestDay ? formatLogDate(bestDay.date) : 'no logs yet'}
+          tint={tint}
+          accent={accent}
+        />
+        <MiniInfoTile
+          label="Volume"
+          value={totalLitres ? `${totalLitres.toFixed(1)}L` : '—'}
+          caption={`${totalGlasses} glasses · 7d`}
+          tint={tint}
+          accent={accent}
+        />
+      </View>
+
+      {/* Time-of-day estimate */}
+      {data.length > 0 ? (
+        <PaperCard title="When you sip · estimate">
+          <View style={{ gap: 10 }}>
+            {[
+              { label: 'Morning', value: morning, hint: '6am – noon' },
+              { label: 'Afternoon', value: afternoon, hint: 'noon – 6pm' },
+              { label: 'Evening', value: evening, hint: '6pm – bed' },
+            ].map((row) => {
+              const pct = Math.min(100, (row.value / TARGET) * 100)
+              return (
+                <View key={row.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <Text style={{ width: 84, fontSize: 13, color: colors.text, fontFamily: font.bodyMedium }}>
+                    {row.label}
+                  </Text>
+                  <View style={{ flex: 1, height: 8, borderRadius: 999, backgroundColor: tint, overflow: 'hidden' }}>
+                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: accent, borderRadius: 999 }} />
+                  </View>
+                  <Text style={{ width: 60, textAlign: 'right', fontSize: 13, color: colors.text, fontFamily: font.bodySemiBold }}>
+                    {row.value.toFixed(1)} gl
+                  </Text>
+                </View>
+              )
+            })}
+          </View>
+          <Text style={{ marginTop: 12, fontSize: 11, color: colors.textMuted, fontFamily: font.bodyMedium, lineHeight: 16 }}>
+            Approximate split based on average daily intake. Log timestamps when sipping to refine.
+          </Text>
+        </PaperCard>
+      ) : null}
+
+      {/* Status pill */}
+      {data.length > 0 ? (
+        <PaperCard title={`Week ${weekNumber} status`}>
+          <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+            {avg >= TARGET
+              ? `You're averaging ${avg.toFixed(1)} glasses — great rhythm. Keep sipping consistently across the day.`
+              : avg >= TARGET * 0.75
+              ? `Close to target at ${avg.toFixed(1)} glasses. Try one extra glass with each meal to close the gap.`
+              : `Averaging only ${avg.toFixed(1)} glasses — well below the ${TARGET}-glass target. Keep a bottle within reach.`}
+          </Body>
+          {avg >= TARGET ? (
+            <Pill color={stickers.green} tint={stickers.greenSoft} label="On track" />
+          ) : avg >= TARGET * 0.75 ? (
+            <Pill color={accent} tint={tint} label="Almost there" />
+          ) : (
+            <Pill color={stickers.coral} tint={stickers.peachSoft} label="Below target" />
+          )}
+        </PaperCard>
+      ) : null}
 
       <PaperCard title="Why hydration matters">
         <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
@@ -1412,7 +1641,94 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
             : '3rd trimester: dehydration can trigger early contractions. Aim for pale-yellow urine and watch for dizziness.'}
         </Body>
       </PaperCard>
+
+      <PaperCard title="Smart sip habits">
+        <View style={{ gap: 8 }}>
+          {[
+            'Start the day with one glass before coffee.',
+            'Pair every bathroom trip with a sip.',
+            'Add lemon, cucumber or mint if plain water bores you.',
+            'Herbal tea, milk and broth count toward the total.',
+            'Cut back 1h before bed to limit night wakings.',
+          ].map((tip, i) => (
+            <View key={i} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+              <View
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: accent,
+                  marginTop: 7,
+                }}
+              />
+              <Text style={{ flex: 1, fontSize: 13, lineHeight: 20, color: colors.textSecondary, fontFamily: font.bodyMedium }}>
+                {tip}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </PaperCard>
     </>
+  )
+}
+
+function MiniInfoTile({
+  label, value, caption, tint, accent,
+}: {
+  label: string
+  value: string
+  caption: string
+  tint: string
+  accent: string
+}) {
+  const { colors, font } = useTheme()
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: tint,
+        borderWidth: 1,
+        borderColor: 'rgba(20,19,19,0.10)',
+        borderRadius: 18,
+        paddingVertical: 14,
+        paddingHorizontal: 12,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 9,
+          letterSpacing: 1.4,
+          textTransform: 'uppercase',
+          color: colors.textSecondary,
+          fontFamily: font.bodySemiBold,
+        }}
+      >
+        {label}
+      </Text>
+      <Text
+        style={{
+          fontSize: 22,
+          color: colors.text,
+          fontFamily: font.display,
+          letterSpacing: -0.3,
+          marginTop: 4,
+        }}
+        numberOfLines={1}
+      >
+        {value}
+      </Text>
+      <Text
+        style={{
+          fontSize: 10,
+          color: accent,
+          fontFamily: font.bodySemiBold,
+          marginTop: 2,
+        }}
+        numberOfLines={1}
+      >
+        {caption}
+      </Text>
+    </View>
   )
 }
 
@@ -1903,7 +2219,6 @@ function StatTilesRow({
 }) {
   const { colors, font } = useTheme()
   const bg = tint ?? colors.surface
-  const valueColor = color ?? colors.text
   return (
     <View style={styles.statTilesRow}>
       {items.map((it, i) => (
@@ -1919,7 +2234,7 @@ function StatTilesRow({
               fontSize: 9,
               letterSpacing: 1.4,
               textTransform: 'uppercase',
-              color: colors.textMuted,
+              color: colors.textSecondary,
               fontFamily: font.bodySemiBold,
             }}
           >
@@ -1928,7 +2243,7 @@ function StatTilesRow({
           <Text
             style={{
               fontSize: 22,
-              color: valueColor,
+              color: colors.text,
               fontFamily: font.display,
               marginTop: 4,
               letterSpacing: -0.3,
@@ -1937,8 +2252,91 @@ function StatTilesRow({
           >
             {it.value}
           </Text>
+          {color ? (
+            <View
+              style={{
+                marginTop: 8,
+                height: 3,
+                width: 24,
+                borderRadius: 999,
+                backgroundColor: color,
+              }}
+            />
+          ) : null}
         </View>
       ))}
+    </View>
+  )
+}
+
+function WeightByWeekList({
+  rows, accent, tint,
+}: {
+  rows: PregnancyWeightByWeek[]
+  accent: string
+  tint: string
+}) {
+  const { colors, font } = useTheme()
+  if (rows.length === 0) return null
+  const min = Math.min(...rows.map((r) => r.weight))
+  const max = Math.max(...rows.map((r) => r.weight))
+  const range = Math.max(0.1, max - min)
+  return (
+    <View style={{ gap: 10 }}>
+      {rows.map((w, i) => {
+        const pct = ((w.weight - min) / range) * 100
+        return (
+          <View
+            key={w.week + '-' + w.weight + '-' + i}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
+          >
+            <View
+              style={{
+                width: 60,
+                paddingVertical: 4,
+                paddingHorizontal: 10,
+                borderRadius: 999,
+                backgroundColor: tint,
+                borderWidth: 1,
+                borderColor: 'rgba(20,19,19,0.10)',
+                alignItems: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: colors.text,
+                  fontFamily: font.bodySemiBold,
+                  letterSpacing: 0.4,
+                }}
+              >
+                W{w.week}
+              </Text>
+            </View>
+            <View style={{ flex: 1, height: 6, borderRadius: 999, backgroundColor: tint, overflow: 'hidden' }}>
+              <View
+                style={{
+                  width: `${Math.max(8, pct)}%`,
+                  height: '100%',
+                  backgroundColor: accent,
+                  borderRadius: 999,
+                }}
+              />
+            </View>
+            <Text
+              style={{
+                color: colors.text,
+                fontSize: 13,
+                fontFamily: font.bodySemiBold,
+                minWidth: 56,
+                textAlign: 'right',
+              }}
+            >
+              {w.weight.toFixed(1)} kg
+            </Text>
+          </View>
+        )
+      })}
     </View>
   )
 }
@@ -2158,6 +2556,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingRight: 20,
   },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   infoBtn: {
     width: 38,
     height: 38,
@@ -2310,9 +2713,9 @@ const styles = StyleSheet.create({
   modalHeaderBand: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 18,
+    paddingHorizontal: 22,
+    paddingTop: 22,
+    paddingBottom: 22,
     borderBottomWidth: 1,
     overflow: 'hidden',
     position: 'relative',
@@ -2322,6 +2725,19 @@ const styles = StyleSheet.create({
     right: -20,
     bottom: -28,
     opacity: 0.45,
+  },
+  modalHeaderBlobBg: {
+    position: 'absolute',
+    right: -50,
+    bottom: -70,
+    opacity: 0.32,
+  },
+  modalHeaderBurst: {
+    position: 'absolute',
+    right: 56,
+    top: 14,
+    opacity: 0.55,
+    transform: [{ rotate: '-12deg' }],
   },
   paperCardBlob: {
     position: 'absolute',

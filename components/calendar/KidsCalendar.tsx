@@ -76,7 +76,6 @@ import { LogTile, LogTileGrid } from './LogTile'
 import { SectionHeader } from './SectionHeader'
 import { AgendaWeekStrip } from './AgendaWeekStrip'
 import { Display, Body } from '../ui/Typography'
-import { NotificationBell } from '../ui/NotificationBell'
 import { logSticker } from './logStickers'
 import {
   FeedingForm,
@@ -1734,8 +1733,6 @@ export function KidsCalendar() {
               style={styles.childScrollFade}
             />
           </View>
-
-          <NotificationBell />
 
           {/* Add-log "+" — inline with child pills per mock */}
           <Pressable

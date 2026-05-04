@@ -9,7 +9,6 @@ import { View, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Display } from '../ui/Typography'
 import { useTheme } from '../../constants/theme'
-import { NotificationBell } from '../ui/NotificationBell'
 import { StickerPalette } from '../stickers/BrandStickers'
 
 const STICKER_INK = '#141313'
@@ -18,11 +17,9 @@ interface AgendaHeaderProps {
   onFilter?: () => void
   onAdd?: () => void
   right?: ReactNode
-  /** Show the notification bell in the header's action cluster. Defaults to true. */
-  showBell?: boolean
 }
 
-export function AgendaHeader({ onFilter, onAdd, right, showBell = true }: AgendaHeaderProps) {
+export function AgendaHeader({ onFilter, onAdd, right }: AgendaHeaderProps) {
   const { colors, isDark } = useTheme()
   const ink = isDark ? colors.text : '#141313'
   const paper = isDark ? colors.surface : StickerPalette.paper
@@ -33,7 +30,6 @@ export function AgendaHeader({ onFilter, onAdd, right, showBell = true }: Agenda
 
       <View style={styles.actions}>
         {right}
-        {showBell && <NotificationBell />}
         {onFilter && (
           <Pressable onPress={onFilter} hitSlop={8}>
             <View style={[styles.circleBtn, { backgroundColor: paper, borderColor: STICKER_INK }]}>

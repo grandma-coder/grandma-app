@@ -99,11 +99,27 @@ const LOG_DISPLAY: Record<string, { label: string; color: string }> = {
   water:       { label: 'Water',        color: '#BDD48C' }, // sage
   vitamins:    { label: 'Vitamins',     color: '#F5B896' }, // peach
   contraction: { label: 'Contractions', color: '#D94A3E' }, // terracotta
+  nutrition:   { label: 'Nutrition',    color: '#BDD48C' }, // sage
+  kegel:       { label: 'Kegel',        color: '#C8A8E8' }, // lilac
+  kick_count:  { label: 'Kicks',        color: '#D94A3E' }, // terracotta
+  nesting:     { label: 'Nesting',      color: '#F5D652' }, // mustard
+  birth_prep:  { label: 'Birth prep',   color: '#F5B896' }, // peach
+  exam_result: { label: 'Exam result',  color: '#F5D652' }, // mustard
 }
 
 function formatLogDay(dateISO: string): string {
   const d = new Date(dateISO + 'T12:00:00')
   return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
+}
+
+function tryParseJSON(s: string): Record<string, unknown> | null {
+  if (!s || (s[0] !== '{' && s[0] !== '[')) return null
+  try {
+    const parsed = JSON.parse(s)
+    return typeof parsed === 'object' && parsed !== null ? parsed : null
+  } catch {
+    return null
+  }
 }
 
 function formatLogDetail(log: {
@@ -114,18 +130,35 @@ function formatLogDetail(log: {
   duration_seconds: number | null
 }): string {
   const parts: string[] = []
+  const meta = log.notes ? tryParseJSON(log.notes) : null
+
   if (log.value) {
     if (log.log_type === 'weight') parts.push(`${log.value} kg`)
     else if (log.log_type === 'kick_count') parts.push(`${log.value} kicks`)
+    else if (log.log_type === 'sleep') parts.push(`${log.value} h`)
+    else if (log.log_type === 'exercise') parts.push(`${log.value} min`)
+    else if (log.log_type === 'nutrition') parts.push(`${log.value} kcal`)
+    else if (log.log_type === 'water') parts.push(`${log.value} ml`)
     else parts.push(log.value)
   }
+
+  if (meta) {
+    if (typeof meta.type === 'string') parts.push(meta.type)
+    if (typeof meta.quality === 'number') parts.push(`quality ${meta.quality}/10`)
+    if (typeof meta.intensity === 'string') parts.push(meta.intensity)
+    if (typeof meta.mealType === 'string') parts.push(meta.mealType)
+  }
+
   if (log.severity) parts.push(log.severity)
   if (log.duration_seconds) {
     const m = Math.floor(log.duration_seconds / 60)
     const s = log.duration_seconds % 60
     parts.push(m > 0 ? `${m}m ${s}s` : `${s}s`)
   }
-  if (log.notes) parts.push(log.notes)
+
+  // Only surface notes when they're actually free-text, not JSON metadata.
+  if (log.notes && !meta) parts.push(log.notes)
+
   return parts.join(' · ') || '—'
 }
 
