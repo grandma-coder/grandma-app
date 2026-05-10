@@ -22,7 +22,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import { ChevronRight, X } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -39,6 +39,7 @@ import { supabase } from '../../lib/supabase'
 import { pregnancyWeeks, getDaysToGo, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import type { PregnancyWeekData } from '../../lib/pregnancyData'
 import { usePregnancyTodayLogs } from '../../lib/analyticsData'
+import { toDateStr } from '../../lib/cycleLogic'
 import type { TodayLogEntry } from '../../lib/analyticsData'
 import {
   PregnancyMoodForm,
@@ -326,7 +327,14 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
     })
   }, [])
 
-  const { data: todayLogs = {} } = usePregnancyTodayLogs(userId)
+  const { data: todayLogs = {}, refetch: refetchTodayLogs } = usePregnancyTodayLogs(userId)
+  // Pull fresh data every time the home screen regains focus (e.g. user
+  // switches back from the calendar after logging something).
+  useFocusEffect(
+    useCallback(() => {
+      void refetchTodayLogs()
+    }, [refetchTodayLogs]),
+  )
 
   const daysToGo = dueDate ? getDaysToGo(dueDate) : null
 
@@ -337,7 +345,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
 
   const renderInlineForm = (): React.ReactElement | null => {
     if (activeLog === null) return null
-    const today = new Date().toISOString().split('T')[0]
+    const today = toDateStr(new Date())
     const onClose = () => {
       setActiveLog(null)
       queryClient.invalidateQueries({ queryKey: ['pregnancy-today-logs', userId] })
@@ -432,7 +440,13 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
       <View style={styles.section}>
         <Pressable
           onPress={() => setBirthGuideVisible(true)}
-          style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
+          style={({ pressed }) => [
+            styles.birthGuideWrap,
+            pressed && {
+              shadowOffset: { width: 0, height: 1 },
+              transform: [{ translateY: 2 }],
+            },
+          ]}
         >
           <PaperCard tint={stickers.greenSoft} radius={20} padding={14} flat style={styles.birthGuideCard}>
             <View style={styles.birthGuideIcon}>
@@ -516,10 +530,20 @@ const styles = StyleSheet.create({
   modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', position: 'absolute', top: 12 },
   modalClose: { position: 'absolute', right: 20, top: 8, padding: 8 },
 
+  birthGuideWrap: {
+    borderRadius: 20,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
   birthGuideCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    borderWidth: 1.5,
+    borderColor: '#141313',
   },
   birthGuideIcon: {
     width: 36,

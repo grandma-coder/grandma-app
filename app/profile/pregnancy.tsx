@@ -30,6 +30,7 @@ import {
   Easing,
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
+import { StickerDateModal } from '../../components/ui/StickerDateModal'
 import { router } from 'expo-router'
 import { Edit2, Check, ChevronRight, X } from 'lucide-react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -288,7 +289,12 @@ function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose:
       </View>
       <Pressable
         onPress={onClose}
-        style={({ pressed }) => [styles.modalCloseX, { borderColor: ink, opacity: pressed ? 0.6 : 1 }]}
+        style={({ pressed }) => [styles.modalCloseX, {
+          borderColor: ink,
+          shadowColor: ink,
+          shadowOffset: { width: 0, height: pressed ? 1 : 2 },
+          transform: [{ translateY: pressed ? 1 : 0 }],
+        }]}
         hitSlop={8}
       >
         <X size={16} color={ink} strokeWidth={2.2} />
@@ -341,12 +347,18 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
                 <Pressable
                   key={opt}
                   onPress={() => setSelected(opt)}
-                  style={[
+                  style={({ pressed }) => [
                     styles.optionPill,
                     {
                       borderColor: ink,
-                      borderWidth: active ? 1.5 : 1,
-                      backgroundColor: active ? st.lilacSoft : 'transparent',
+                      borderWidth: 1.5,
+                      backgroundColor: active ? st.lilacSoft : (isDark ? colors.surface : '#FFFEF8'),
+                      shadowColor: ink,
+                      shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
+                      shadowOpacity: active ? 1 : 0,
+                      shadowRadius: 0,
+                      elevation: active ? 3 : 0,
+                      transform: [{ translateY: active && pressed ? 2 : 0 }],
                     },
                   ]}
                 >
@@ -598,7 +610,9 @@ export default function PregnancyProfileScreen() {
   const setStoreWeekNumber = usePregnancyStore((s) => s.setWeekNumber)
   const setJourneyDueDate = useJourneyStore((s) => s.setDueDate)
   const setJourneyWeekNumber = useJourneyStore((s) => s.setWeekNumber)
-  const weekNumber = dueDate ? getCurrentWeekFromDueDate(dueDate) : (storedWeek ?? 1)
+  const weekNumber: number | null = dueDate
+    ? getCurrentWeekFromDueDate(dueDate)
+    : storedWeek
   const parentName = useJourneyStore((s) => s.parentName) ?? ''
   const babyNameStore = useJourneyStore((s) => s.babyName) ?? ''
 
@@ -717,7 +731,8 @@ export default function PregnancyProfileScreen() {
     }
   }
 
-  const trimester = weekNumber <= 13 ? 1 : weekNumber <= 26 ? 2 : 3
+  const trimester: number | null =
+    weekNumber == null ? null : weekNumber <= 13 ? 1 : weekNumber <= 26 ? 2 : 3
   const daysToGo = dueDate ? getDaysToGo(dueDate) : null
 
   useEffect(() => {
@@ -963,18 +978,20 @@ export default function PregnancyProfileScreen() {
             <Squiggle w={90} h={14} stroke={stickers.coral ?? '#EE7B6D'} />
           </View>
 
-          <View style={styles.heroChips}>
-            <View style={[styles.heroChip, { backgroundColor: stickers.lilacSoft, borderColor: stickers.lilac }]}>
-              <Text style={[styles.heroChipText, { color: isDark ? stickers.lilac : '#3A2A6E', fontFamily: font.bodySemiBold }]}>
-                Week {weekNumber}
-              </Text>
+          {weekNumber != null && trimester != null && (
+            <View style={styles.heroChips}>
+              <View style={[styles.heroChip, { backgroundColor: stickers.lilacSoft, borderColor: stickers.lilac }]}>
+                <Text style={[styles.heroChipText, { color: isDark ? stickers.lilac : '#3A2A6E', fontFamily: font.bodySemiBold }]}>
+                  Week {weekNumber}
+                </Text>
+              </View>
+              <View style={[styles.heroChip, { backgroundColor: stickers.greenSoft, borderColor: stickers.green }]}>
+                <Text style={[styles.heroChipText, { color: isDark ? stickers.green : '#2F4D1A', fontFamily: font.bodySemiBold }]}>
+                  Trimester {trimester}
+                </Text>
+              </View>
             </View>
-            <View style={[styles.heroChip, { backgroundColor: stickers.greenSoft, borderColor: stickers.green }]}>
-              <Text style={[styles.heroChipText, { color: isDark ? stickers.green : '#2F4D1A', fontFamily: font.bodySemiBold }]}>
-                Trimester {trimester}
-              </Text>
-            </View>
-          </View>
+          )}
 
           {daysToGo !== null && (
             <View style={[styles.heroDaysRibbon, { borderColor: stickers.lilac, backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
@@ -1011,8 +1028,8 @@ export default function PregnancyProfileScreen() {
             value={dueDate ? new Date(dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
             onEdit={openDueDatePicker}
           />
-          <InfoRow dotColor={ROW_DOTS[1]} label="Current week" value={dueDate ? `Week ${weekNumber}` : ''} />
-          <InfoRow dotColor={ROW_DOTS[2]} label="Trimester" value={dueDate ? TRIMESTER_LABEL(weekNumber) : ''} />
+          <InfoRow dotColor={ROW_DOTS[1]} label="Current week" value={weekNumber != null ? `Week ${weekNumber}` : ''} />
+          <InfoRow dotColor={ROW_DOTS[2]} label="Trimester" value={weekNumber != null ? TRIMESTER_LABEL(weekNumber) : ''} />
           <InfoRow dotColor={ROW_DOTS[3]} label="Days to go" value={daysToGo != null ? `${daysToGo} days` : ''} />
           <InfoRow
             dotColor={ROW_DOTS[4]}
@@ -1470,103 +1487,32 @@ export default function PregnancyProfileScreen() {
         />
       )}
 
-      <Modal
+      <StickerDateModal
         visible={lmpPickerOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setLmpPickerOpen(false)}
-      >
-        <Pressable
-          style={styles.dateModalBackdrop}
-          onPress={() => setLmpPickerOpen(false)}
-        >
-          <Pressable
-            style={[styles.dateModalSheet, { backgroundColor: colors.bg }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={styles.dateModalHeader}>
-              <Pressable onPress={() => setLmpPickerOpen(false)}>
-                <Text style={[styles.dateModalCancel, { color: colors.textMuted, fontFamily: font.body }]}>Cancel</Text>
-              </Pressable>
-              <Text style={[styles.dateModalTitle, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                LMP date
-              </Text>
-              <Pressable onPress={() => {
-                const d = draftLmpDate
-                const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-                setLmpPickerOpen(false)
-                void saveLmpDate(iso)
-              }}>
-                <Text style={[styles.dateModalSave, { color: colors.primary, fontFamily: font.bodySemiBold }]}>Save</Text>
-              </Pressable>
-            </View>
-            <DateTimePicker
-              value={draftLmpDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              themeVariant={isDark ? 'dark' : 'light'}
-              minimumDate={new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 * 50)}
-              maximumDate={new Date()}
-              onChange={(_, d) => {
-                if (Platform.OS === 'android') {
-                  setLmpPickerOpen(false)
-                  if (d) {
-                    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-                    void saveLmpDate(iso)
-                  }
-                  return
-                }
-                if (d) setDraftLmpDate(d)
-              }}
-            />
-          </Pressable>
-        </Pressable>
-      </Modal>
+        title="LMP date"
+        value={draftLmpDate}
+        onChange={setDraftLmpDate}
+        onClose={() => setLmpPickerOpen(false)}
+        onSave={() => {
+          const d = draftLmpDate
+          const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+          setLmpPickerOpen(false)
+          void saveLmpDate(iso)
+        }}
+        minimumDate={new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 * 50)}
+        maximumDate={new Date()}
+      />
 
-      <Modal
+      <StickerDateModal
         visible={dueDatePickerOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setDueDatePickerOpen(false)}
-      >
-        <Pressable
-          style={styles.dateModalBackdrop}
-          onPress={() => setDueDatePickerOpen(false)}
-        >
-          <Pressable
-            style={[styles.dateModalSheet, { backgroundColor: colors.bg }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={styles.dateModalHeader}>
-              <Pressable onPress={() => setDueDatePickerOpen(false)}>
-                <Text style={[styles.dateModalCancel, { color: colors.textMuted, fontFamily: font.body }]}>Cancel</Text>
-              </Pressable>
-              <Text style={[styles.dateModalTitle, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                Due date
-              </Text>
-              <Pressable onPress={() => applyDueDate(draftDueDate)}>
-                <Text style={[styles.dateModalSave, { color: colors.primary, fontFamily: font.bodySemiBold }]}>Save</Text>
-              </Pressable>
-            </View>
-            <DateTimePicker
-              value={draftDueDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              themeVariant={isDark ? 'dark' : 'light'}
-              minimumDate={new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 * 42)}
-              maximumDate={new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 42)}
-              onChange={(_, d) => {
-                if (Platform.OS === 'android') {
-                  setDueDatePickerOpen(false)
-                  if (d) applyDueDate(d)
-                  return
-                }
-                if (d) setDraftDueDate(d)
-              }}
-            />
-          </Pressable>
-        </Pressable>
-      </Modal>
+        title="Due date"
+        value={draftDueDate}
+        onChange={setDraftDueDate}
+        onClose={() => setDueDatePickerOpen(false)}
+        onSave={() => applyDueDate(draftDueDate)}
+        minimumDate={new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 * 42)}
+        maximumDate={new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 42)}
+      />
 
       <PaperAlert
         visible={savedAlertVisible}
@@ -1647,8 +1593,13 @@ const styles = StyleSheet.create({
   },
   modalHeaderSub: { fontSize: 13, marginTop: 2 },
   modalCloseX: {
-    width: 32, height: 32, borderRadius: 16, borderWidth: 1.2,
+    width: 32, height: 32, borderRadius: 16, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   optionPill: {
     flexDirection: 'row',

@@ -16,7 +16,10 @@ export default function ActivityCard({ title, icon, color, lastEntry, onAdd }: A
         <Text style={styles.headerTitle}>{title}</Text>
         <Pressable
           onPress={onAdd}
-          style={({ pressed }) => [styles.addButton, { opacity: pressed ? 0.8 : 1 }]}
+          style={({ pressed }) => [
+            styles.addButton,
+            pressed && { shadowOffset: { width: 0, height: 1 }, transform: [{ translateY: 2 }] },
+          ]}
         >
           <Text style={styles.addIcon}>+</Text>
         </Pressable>
@@ -63,6 +66,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#7BAE8E',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#141313',
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
   addIcon: {
     fontSize: 24,

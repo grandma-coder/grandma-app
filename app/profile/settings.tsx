@@ -227,11 +227,11 @@ export default function SettingsScreen() {
               backgroundColor: brand.pregnancySoft,
               borderColor: paperBorder,
               shadowColor: shadowInk,
-              shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-              shadowOpacity: 1,
-              shadowRadius: 0,
-              elevation: 4,
-              transform: [{ translateY: pressed ? 2 : 0 }],
+              shadowOffset: { width: 0, height: pressed ? 1 : 4 },
+              shadowOpacity: 0.18,
+              shadowRadius: pressed ? 4 : 10,
+              elevation: 3,
+              transform: [{ translateY: pressed ? 1 : 0 }],
             },
           ]}
         >
@@ -250,11 +250,11 @@ export default function SettingsScreen() {
               backgroundColor: stickers.peachSoft,
               borderColor: stickers.coral,
               shadowColor: shadowInk,
-              shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-              shadowOpacity: 1,
-              shadowRadius: 0,
-              elevation: 4,
-              transform: [{ translateY: pressed ? 2 : 0 }],
+              shadowOffset: { width: 0, height: pressed ? 1 : 4 },
+              shadowOpacity: 0.18,
+              shadowRadius: pressed ? 4 : 10,
+              elevation: 3,
+              transform: [{ translateY: pressed ? 1 : 0 }],
               marginTop: 12,
             },
           ]}
@@ -486,10 +486,10 @@ function UnitSwitch({ options, labels, value, onChange }: {
 function cardShadow(isDark: boolean) {
   return {
     shadowColor: isDark ? CREAM : INK,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: isDark ? 0.25 : 0.12,
+    shadowRadius: 12,
+    elevation: 3,
   }
 }
 

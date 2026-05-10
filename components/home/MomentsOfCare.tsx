@@ -26,7 +26,16 @@ export function MomentsOfCare() {
       <Text style={styles.sectionSubtitle}>Nurturing you while you nurture life</Text>
 
       {MOMENTS.map((moment, i) => (
-        <Pressable key={i} style={({ pressed }) => [pressed && { opacity: 0.85 }]}>
+        <Pressable
+          key={i}
+          style={({ pressed }) => [
+            styles.cardWrap,
+            pressed && {
+              shadowOffset: { width: 0, height: 1 },
+              transform: [{ translateY: 2 }],
+            },
+          ]}
+        >
           <GlassCard style={styles.card}>
             <View style={styles.cardRow}>
               <View style={styles.iconCircle}>
@@ -59,8 +68,18 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 16,
   },
-  card: {
+  cardWrap: {
     marginBottom: 12,
+    borderRadius: 24,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  card: {
+    borderWidth: 1.5,
+    borderColor: '#141313',
   },
   cardRow: {
     flexDirection: 'row',

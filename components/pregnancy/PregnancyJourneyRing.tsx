@@ -69,11 +69,13 @@ function formatWeightUnit(g: number | null): string {
 
 // ─── Date utilities ──────────────────────────────────────────────────────────
 function getWeekDateRange(dueDate: string, week: number): { start: string; end: string } {
-  const due = new Date(dueDate)
-  const start = new Date(due)
-  start.setDate(due.getDate() - (40 - week) * 7)
-  const end = new Date(start)
-  end.setDate(start.getDate() + 6)
+  // Inverse of weekForDate(): week W contains the 7 days ending
+  // (40 - W) * 7 days before the due date.
+  const due = new Date(dueDate + 'T00:00:00')
+  const end = new Date(due)
+  end.setDate(due.getDate() - (40 - week) * 7)
+  const start = new Date(end)
+  start.setDate(end.getDate() - 6)
   const toISO = (d: Date) => d.toISOString().split('T')[0]
   return { start: toISO(start), end: toISO(end) }
 }
@@ -112,55 +114,81 @@ function formatLogDay(dateISO: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
 }
 
-function tryParseJSON(s: string): Record<string, unknown> | null {
-  if (!s || (s[0] !== '{' && s[0] !== '[')) return null
-  try {
-    const parsed = JSON.parse(s)
-    return typeof parsed === 'object' && parsed !== null ? parsed : null
-  } catch {
-    return null
-  }
-}
-
-function formatLogDetail(log: {
+// ─── Pillar grouping ─────────────────────────────────────────────────────────
+// Each log_type rolls up into a single high-level summary for the week.
+// `summarize` returns the right-hand text shown next to the pillar label.
+type WeekLogLite = {
   log_type: string
   value: string | null
   notes: string | null
   severity: string | null
   duration_seconds: number | null
-}): string {
-  const parts: string[] = []
-  const meta = log.notes ? tryParseJSON(log.notes) : null
-
-  if (log.value) {
-    if (log.log_type === 'weight') parts.push(`${log.value} kg`)
-    else if (log.log_type === 'kick_count') parts.push(`${log.value} kicks`)
-    else if (log.log_type === 'sleep') parts.push(`${log.value} h`)
-    else if (log.log_type === 'exercise') parts.push(`${log.value} min`)
-    else if (log.log_type === 'nutrition') parts.push(`${log.value} kcal`)
-    else if (log.log_type === 'water') parts.push(`${log.value} ml`)
-    else parts.push(log.value)
-  }
-
-  if (meta) {
-    if (typeof meta.type === 'string') parts.push(meta.type)
-    if (typeof meta.quality === 'number') parts.push(`quality ${meta.quality}/10`)
-    if (typeof meta.intensity === 'string') parts.push(meta.intensity)
-    if (typeof meta.mealType === 'string') parts.push(meta.mealType)
-  }
-
-  if (log.severity) parts.push(log.severity)
-  if (log.duration_seconds) {
-    const m = Math.floor(log.duration_seconds / 60)
-    const s = log.duration_seconds % 60
-    parts.push(m > 0 ? `${m}m ${s}s` : `${s}s`)
-  }
-
-  // Only surface notes when they're actually free-text, not JSON metadata.
-  if (log.notes && !meta) parts.push(log.notes)
-
-  return parts.join(' · ') || '—'
+  log_date: string
 }
+
+function num(s: string | null): number | null {
+  if (!s) return null
+  const n = parseFloat(s)
+  return Number.isFinite(n) ? n : null
+}
+
+function summarizePillar(type: string, logs: WeekLogLite[]): string {
+  const count = logs.length
+  if (count === 0) return ''
+  const lastByDate = [...logs].sort((a, b) => (a.log_date < b.log_date ? 1 : -1))
+  const last = lastByDate[0]
+  const nums = logs.map((l) => num(l.value)).filter((n): n is number => n != null)
+  const sum = nums.reduce((a, b) => a + b, 0)
+  const avg = nums.length ? sum / nums.length : null
+  const fmt = (n: number, d = 1) => (Math.round(n * 10 ** d) / 10 ** d).toString()
+
+  switch (type) {
+    case 'weight':
+      return last.value ? `${last.value} kg · latest` : `${count}× logged`
+    case 'water':
+      return nums.length ? `${fmt(sum, 0)} ml total · ${count}×` : `${count}× logged`
+    case 'sleep':
+      return avg != null ? `${fmt(avg)} h avg · ${count} nights` : `${count}× logged`
+    case 'exercise':
+      return nums.length ? `${fmt(sum, 0)} min · ${count} sessions` : `${count}× logged`
+    case 'nutrition':
+      return nums.length ? `${fmt(sum, 0)} kcal · ${count} meals` : `${count} meals`
+    case 'kick':
+    case 'kick_count':
+      return nums.length ? `${fmt(sum, 0)} kicks · ${count} sessions` : `${count}× logged`
+    case 'mood': {
+      const moods = logs.map((l) => l.value).filter((v): v is string => !!v)
+      const tally = moods.reduce<Record<string, number>>((acc, m) => {
+        acc[m] = (acc[m] ?? 0) + 1
+        return acc
+      }, {})
+      const top = Object.entries(tally).sort((a, b) => b[1] - a[1])[0]?.[0]
+      return top ? `mostly ${top} · ${count} entries` : `${count} entries`
+    }
+    case 'symptom': {
+      const names = Array.from(new Set(logs.map((l) => l.value).filter((v): v is string => !!v)))
+      if (names.length === 0) return `${count}× logged`
+      if (names.length <= 2) return `${names.join(', ')} · ${count}×`
+      return `${names.slice(0, 2).join(', ')} +${names.length - 2} · ${count}×`
+    }
+    case 'vitamins':
+      return `${count} day${count === 1 ? '' : 's'} taken`
+    case 'contraction':
+      return `${count} session${count === 1 ? '' : 's'}`
+    case 'kegel':
+      return `${count} session${count === 1 ? '' : 's'}`
+    case 'appointment':
+      return `${count} appointment${count === 1 ? '' : 's'}`
+    case 'nesting':
+    case 'birth_prep':
+      return `${count} task${count === 1 ? '' : 's'}`
+    case 'exam_result':
+      return `${count} result${count === 1 ? '' : 's'}`
+    default:
+      return `${count}× logged`
+  }
+}
+
 
 // ─── Pre-calculated dot geometry ────────────────────────────────────────────
 type DotState = 'past' | 'current' | 'future'
@@ -183,16 +211,14 @@ function buildDotConfigs(currentWeek: number): DotConfig[] {
     const bx = CX + RING_R * Math.cos(angleRad)
     const by = CY + RING_R * Math.sin(angleRad)
     const state: DotState = w === currentWeek ? 'current' : w < currentWeek ? 'past' : 'future'
-    // Past fruits grow gently across the journey so later weeks read bigger
-    const pastSize = 14 + (i / 40) * 4   // 14 → 18
-    const size =
-      state === 'current' ? 26 :
-      state === 'past'    ? pastSize :
-      8                                   // future: small outline marker
+    // All weeks render as fruit illustrations — size grows gently along the
+    // journey so later weeks read bigger; current week pops slightly larger.
+    const baseSize = 14 + (i / 40) * 4 // 14 → 18
+    const size = state === 'current' ? 26 : baseSize
     const opacity =
-      state === 'future' ? 1 :
-      state === 'past'   ? 0.55 + (i / Math.max(1, currentWeek)) * 0.40 : // 0.55 → 0.95
-      1
+      state === 'current' ? 1 :
+      state === 'past'    ? 0.55 + (i / Math.max(1, currentWeek)) * 0.40 : // 0.55 → 0.95
+      0.45                                                                  // future: faded but visible
     return { week: w, bx, by, size, state, color: triColor(w), opacity }
   })
 }
@@ -262,10 +288,28 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
   }
 
   const { data: weekLogs = [], refetch: refetchWeekLogs } = useQuery({
-    queryKey: ['pregnancy-week-logs', userId, selectedWeek, dueDate],
+    queryKey: ['pregnancy-week-logs', userId, selectedWeek, dueDate, weekNumber],
     queryFn: async (): Promise<WeekLog[]> => {
-      if (!userId || !dueDate) return []
-      const { start, end } = getWeekDateRange(dueDate, selectedWeek)
+      if (!userId) return []
+      let start: string
+      let end: string
+      if (dueDate) {
+        const range = getWeekDateRange(dueDate, selectedWeek)
+        start = range.start
+        end = range.end
+      } else {
+        // No due date set — fall back to a 7-day window ending today for the
+        // current week, and show nothing for other selected weeks since we
+        // can't anchor them to real dates.
+        if (selectedWeek !== weekNumber) return []
+        const today = new Date()
+        const endD = new Date(today)
+        const startD = new Date(today)
+        startD.setDate(today.getDate() - 6)
+        const toISO = (d: Date) => d.toISOString().split('T')[0]
+        start = toISO(startD)
+        end = toISO(endD)
+      }
       const { data, error } = await supabase
         .from('pregnancy_logs')
         .select('id, log_type, log_date, value, notes, severity, duration_seconds')
@@ -277,7 +321,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
       if (error) throw error
       return (data ?? []) as WeekLog[]
     },
-    enabled: !!userId && !!dueDate,
+    enabled: !!userId,
     staleTime: 0,
     refetchOnMount: 'always',
   })
@@ -288,6 +332,30 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
       void refetchWeekLogs()
     }, [refetchWeekLogs]),
   )
+
+  // Group logs by pillar (log_type) for the high-level summary list.
+  const pillarGroups = useMemo(() => {
+    const byType = new Map<string, WeekLog[]>()
+    for (const log of weekLogs) {
+      const arr = byType.get(log.log_type) ?? []
+      arr.push(log)
+      byType.set(log.log_type, arr)
+    }
+    return Array.from(byType.entries())
+      .map(([type, logs]) => {
+        const display = LOG_DISPLAY[type] ?? { label: type, color: '#999' }
+        const lastDate = logs.reduce((acc, l) => (l.log_date > acc ? l.log_date : acc), logs[0].log_date)
+        return {
+          type,
+          label: display.label,
+          color: display.color,
+          summary: summarizePillar(type, logs),
+          count: logs.length,
+          lastDate,
+        }
+      })
+      .sort((a, b) => (a.lastDate < b.lastDate ? 1 : -1))
+  }, [weekLogs])
 
   // ── Gesture refs ──────────────────────────────────────────────────────────────
   // Strategy: tangent-projection avoids all coordinate-system issues with SVG.
@@ -434,24 +502,11 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
                   opacity: d.opacity,
                 }}
               >
-                {d.state === 'future' ? (
-                  // Tiny hollow circle marker
-                  <Svg width={d.size} height={d.size}>
-                    <Circle
-                      cx={d.size / 2} cy={d.size / 2} r={d.size / 2 - 1}
-                      fill="none"
-                      stroke={d.color}
-                      strokeWidth={1.2}
-                    />
-                  </Svg>
-                ) : (
-                  // Past + current: little fruit silhouette (no eyes/smile at this size)
-                  <BabyIllustration
-                    week={d.week}
-                    size={d.size}
-                    character={false}
-                  />
-                )}
+                <BabyIllustration
+                  week={d.week}
+                  size={d.size}
+                  character={false}
+                />
               </View>
             ))}
           </Animated.View>
@@ -506,29 +561,25 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
         contentContainerStyle={[styles.panelContent, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Trimester meta + status pill */}
-        <View style={styles.metaRow}>
-          <Text style={[styles.metaLabel, { color: col, fontFamily: font.bodySemiBold }]}>
-            WEEK · {triName} TRIMESTER
-          </Text>
+        {/* Size name + status pill — fruit anchors left, status on the right.
+            (Trimester meta row removed; the wheel already shows week/trimester.) */}
+        <View style={styles.sizeRow}>
+          <View style={styles.sizeBlock}>
+            <Text style={[styles.sizeText, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
+              {article}{' '}
+              <Text style={[styles.sizeNameAccent, { color: col, fontFamily: font.italic }]}>
+                {sizeName}
+              </Text>
+            </Text>
+            <Text style={[styles.dateLabel, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
+              {dateLabel} · {triName} trimester
+            </Text>
+          </View>
           <View style={[styles.statusPill, { borderColor: col + '55', backgroundColor: col + '1A' }]}>
             <Text style={[styles.statusPillText, { color: col, fontFamily: font.bodySemiBold }]}>
               {statusLabel}
             </Text>
           </View>
-        </View>
-
-        {/* Size name + date range */}
-        <View style={styles.sizeRow}>
-          <Text style={[styles.dateLabel, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
-            {dateLabel}
-          </Text>
-          <Text style={[styles.sizeText, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
-            {article}{' '}
-            <Text style={[styles.sizeNameAccent, { color: col, fontFamily: font.italic }]}>
-              {sizeName}
-            </Text>
-          </Text>
         </View>
 
         {/* LENGTH / WEIGHT stats — Fraunces serif numbers */}
@@ -572,32 +623,29 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
           <Text style={[styles.sectionLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
             LOGGED THIS WEEK
           </Text>
-          {weekLogs.length > 0 ? (
+          {pillarGroups.length > 0 ? (
             <View style={styles.logList}>
-              {weekLogs.map((log) => {
-                const display = LOG_DISPLAY[log.log_type] ?? { label: log.log_type, color: colors.textSecondary }
-                return (
-                  <View key={log.id} style={styles.logRow}>
-                    <View style={[styles.logDot, { backgroundColor: display.color }]} />
-                    <View style={styles.logBody}>
-                      <View style={styles.logHeader}>
-                        <Text style={[styles.logLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                          {display.label}
-                        </Text>
-                        <Text style={[styles.logDay, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
-                          {formatLogDay(log.log_date)}
-                        </Text>
-                      </View>
-                      <Text
-                        style={[styles.logDetail, { color: colors.textSecondary, fontFamily: font.body }]}
-                        numberOfLines={2}
-                      >
-                        {formatLogDetail(log)}
+              {pillarGroups.map((g) => (
+                <View key={g.type} style={styles.logRow}>
+                  <View style={[styles.logDot, { backgroundColor: g.color }]} />
+                  <View style={styles.logBody}>
+                    <View style={styles.logHeader}>
+                      <Text style={[styles.logLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+                        {g.label}
+                      </Text>
+                      <Text style={[styles.logDay, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
+                        {formatLogDay(g.lastDate)}
                       </Text>
                     </View>
+                    <Text
+                      style={[styles.logDetail, { color: colors.textSecondary, fontFamily: font.body }]}
+                      numberOfLines={2}
+                    >
+                      {g.summary}
+                    </Text>
                   </View>
-                )
-              })}
+                </View>
+              ))}
             </View>
           ) : (
             <Text style={[styles.emptyLogs, { color: colors.textFaint, fontFamily: font.body }]}>
@@ -634,15 +682,14 @@ const styles = StyleSheet.create({
   panelContent: { paddingHorizontal: 24, paddingTop: 12, gap: 18 },
 
   // Trimester meta row
-  metaRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  metaLabel:      { fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', flex: 1 },
   statusPill:     { paddingHorizontal: 11, paddingVertical: 4, borderRadius: 99, borderWidth: 1 },
   statusPillText: { fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase' },
 
   // Size + date row — date small/muted on left, size name big on right
-  sizeRow:        { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 },
+  sizeRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  sizeBlock:      { flex: 1, gap: 4 },
   dateLabel:      { fontSize: 12, letterSpacing: 0.2 },
-  sizeText:       { fontSize: 26, letterSpacing: -0.4, textAlign: 'right' },
+  sizeText:       { fontSize: 26, letterSpacing: -0.4, textAlign: 'left' },
   sizeNameAccent: { fontSize: 26, fontStyle: 'italic', fontWeight: '400' },
 
   // Length / Weight stats

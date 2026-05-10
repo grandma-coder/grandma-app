@@ -18,7 +18,8 @@ import * as ImageManipulator from 'expo-image-manipulator'
 import { Camera, ImagePlus, ScanLine, X } from 'lucide-react-native'
 import { useTheme, brand, stickers as stickerPalette } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
-import { queryClient } from '../../lib/queryClient'
+import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
+import { toDateStr } from '../../lib/cycleLogic'
 import { estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
 import { LogFormSticker } from './LogFormSticker'
 import { useSavedToast } from '../ui/SavedToast'
@@ -134,22 +135,62 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
       }
       if (!uid) throw new Error('Not signed in')
       const uploaded = photoUri ? await uploadPlatePhoto(photoUri, uid) : null
-      const logDate = date ?? new Date().toISOString().split('T')[0]
+      const logDate = date ?? toDateStr(new Date())
       const payload = {
         photoUrl: uploaded,
         foods: foods.map((f) => ({ name: f.name, cals: f.cals, category: f.category })),
         totalCals,
         loggedAt: new Date().toISOString(),
       }
-      await supabase.from('pregnancy_logs').insert({
-        user_id: uid,
-        log_date: logDate,
-        log_type: 'nutrition',
-        value: String(totalCals),
-        notes: JSON.stringify(payload),
-      })
-      await queryClient.invalidateQueries({ queryKey: ['pregnancy-week-logs'] })
+      // Optimistic patch — bump meal count + cals so the home dashboard
+      // reflects the new meal before the insert returns.
+      const todayKey = ['pregnancy-today-logs', uid]
+      const previous = queryClient.getQueryData<Record<string, { value: string | null; notes: string | null; created_at: string }>>(todayKey)
+      const isToday = logDate === toDateStr(new Date())
+      if (isToday) {
+        const prevNutrition = previous?.['nutrition']
+        let prevCount = 0
+        let prevCals = 0
+        let prevEntries: any[] = []
+        if (prevNutrition?.notes) {
+          try {
+            const parsed = JSON.parse(prevNutrition.notes)
+            prevCals = parsed.totalCals ?? 0
+            prevEntries = parsed.entries ?? []
+            prevCount = parsed.entries?.length ?? (prevNutrition.value ? parseInt(prevNutrition.value, 10) : 0)
+          } catch {
+            prevCount = prevNutrition.value ? parseInt(prevNutrition.value, 10) : 0
+          }
+        }
+        const optimisticEntries = [
+          ...prevEntries,
+          { value: String(totalCals), notes: JSON.stringify(payload), created_at: new Date().toISOString() },
+        ]
+        queryClient.setQueryData(todayKey, {
+          ...(previous ?? {}),
+          nutrition: {
+            value: String(prevCount + 1),
+            notes: JSON.stringify({ totalCals: prevCals + totalCals, entries: optimisticEntries }),
+            created_at: new Date().toISOString(),
+          },
+        })
+      }
       onSaved()
+
+      try {
+        const { error } = await supabase.from('pregnancy_logs').insert({
+          user_id: uid,
+          log_date: logDate,
+          log_type: 'nutrition',
+          value: String(totalCals),
+          notes: JSON.stringify(payload),
+        })
+        if (error) throw error
+      } catch (e) {
+        if (isToday) queryClient.setQueryData(todayKey, previous)
+        throw e
+      }
+      void invalidatePregnancyLogQueries()
     } catch (e: any) {
       toast.show({ title: 'Could not save', message: e?.message ?? 'Please try again in a moment.', autoDismiss: 0, accent: '#EE7B6D' })
     } finally {

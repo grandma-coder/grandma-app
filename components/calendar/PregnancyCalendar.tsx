@@ -62,6 +62,7 @@ import {
   Minus,
   Pencil,
   Clock,
+  Camera,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers as stickersLight, stickersDark } from '../../constants/theme'
@@ -70,6 +71,7 @@ import { getTrimester, weekForDate } from '../../lib/pregnancyWeeks'
 import { pregnancyWeeks, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
+import { invalidatePregnancyLogQueries } from '../../lib/queryClient'
 import {
   usePregnancyCalendarLogs,
   usePregnancyTodayLogs,
@@ -87,6 +89,7 @@ import { AppointmentDetailModal } from './AppointmentDetailModal'
 import { LogSheet } from './LogSheet'
 import { LogFormSticker } from './LogFormSticker'
 import { Display, Body, MonoCaps } from '../ui/Typography'
+import { StickerButton } from '../ui/StickerButton'
 import { logSticker } from './logStickers'
 import { MoodFace } from '../stickers/RewardStickers'
 import { WeekDetailModal } from '../home/pregnancy/WeekDetailModal'
@@ -756,19 +759,21 @@ function RoutineManager({
                   <Pressable
                     onPress={handleSave}
                     disabled={!form.name.trim() || saving}
-                    style={({ pressed }) => ({
-                      height: 56,
-                      borderRadius: 999,
-                      backgroundColor: ST_LAVENDER,
-                      borderWidth: 2, borderColor: ST_INK,
-                      alignItems: 'center', justifyContent: 'center',
-                      shadowColor: ST_INK,
-                      shadowOffset: { width: 0, height: pressed ? 2 : 4 },
-                      shadowOpacity: 1, shadowRadius: 0, elevation: 5,
-                      transform: [{ translateY: pressed ? 2 : 0 }],
-                      opacity: (!form.name.trim() || saving) ? 0.4 : 1,
-                      marginTop: 4,
-                    })}
+                    style={({ pressed }) => {
+                      const isDisabled = !form.name.trim() || saving
+                      return {
+                        height: 56,
+                        borderRadius: 999,
+                        backgroundColor: isDisabled ? ST_LAVENDER + '88' : ST_LAVENDER,
+                        borderWidth: 2, borderColor: ST_INK,
+                        alignItems: 'center', justifyContent: 'center',
+                        shadowColor: ST_INK,
+                        shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+                        shadowOpacity: 1, shadowRadius: 0, elevation: 5,
+                        transform: [{ translateY: pressed && !isDisabled ? 2 : 0 }],
+                        marginTop: 4,
+                      }
+                    }}
                   >
                     {saving
                       ? <ActivityIndicator color="#FFF" size="small" />
@@ -1157,6 +1162,7 @@ function LogDetailPopup({
       {
         text: 'Delete', style: 'destructive', onPress: async () => {
           await supabase.from('pregnancy_logs').delete().eq('id', log.id)
+          await invalidatePregnancyLogQueries()
           onDeleted()
         },
       },
@@ -1212,22 +1218,28 @@ function LogDetailPopup({
 
       {/* Actions */}
       <View style={styles.detailActions}>
-        <Pressable onPress={onEdit} style={({ pressed }) => [
-          styles.detailEditBtn,
-          { backgroundColor: brand.pregnancy, borderColor: paperBorder },
-          pressed && { opacity: 0.85 },
-        ]}>
-          <Edit3 size={16} color="#fff" strokeWidth={2} />
-          <Text style={styles.detailActionText}>Edit</Text>
-        </Pressable>
-        <Pressable onPress={handleDelete} style={({ pressed }) => [
-          styles.detailDeleteBtn,
-          { backgroundColor: isDark ? brand.error + '22' : '#FCE3DD', borderColor: paperBorder },
-          pressed && { opacity: 0.85 },
-        ]}>
-          <Trash2 size={16} color={brand.error} strokeWidth={2} />
-          <Text style={[styles.detailActionText, { color: brand.error }]}>Delete</Text>
-        </Pressable>
+        <StickerButton
+          label="Edit"
+          color={brand.pregnancy}
+          colorDark={'#141313'}
+          icon={<Edit3 size={16} color="#fff" strokeWidth={2.2} />}
+          textColor="#fff"
+          height={56}
+          fontSize={15}
+          onPress={onEdit}
+          style={{ flex: 1 }}
+        />
+        <StickerButton
+          label="Delete"
+          color={isDark ? brand.error + '33' : '#FCE3DD'}
+          colorDark={brand.error}
+          icon={<Trash2 size={16} color={brand.error} strokeWidth={2.2} />}
+          textColor={brand.error}
+          height={56}
+          fontSize={15}
+          onPress={handleDelete}
+          style={{ flex: 1 }}
+        />
       </View>
     </View>
   )
@@ -1609,6 +1621,7 @@ export function PregnancyCalendar() {
 
   async function handleDeleteLog(log: PregnancyCalendarLog) {
     await supabase.from('pregnancy_logs').delete().eq('id', log.id)
+    await invalidatePregnancyLogQueries()
     void refetch()
     void refetchToday()
   }
@@ -2127,29 +2140,54 @@ export function PregnancyCalendar() {
           )
         })}
 
-        {/* Add appointment sticker button */}
-        <Pressable
-          onPress={() => setLogForm({ type: 'appointment', date: todayStr })}
-          style={({ pressed }) => ({
-            height: 56,
-            borderRadius: 999,
-            backgroundColor: ST_LAVENDER,
-            borderWidth: 2, borderColor: isDark ? colors.border : ST_INK,
-            alignItems: 'center', justifyContent: 'center',
-            flexDirection: 'row',
-            gap: 10,
-            shadowColor: ST_INK,
-            shadowOffset: { width: 0, height: pressed ? 2 : 4 },
-            shadowOpacity: 1, shadowRadius: 0, elevation: 5,
-            transform: [{ translateY: pressed ? 2 : 0 }],
-            marginTop: 4,
-          })}
-        >
-          <Plus size={18} color="#FFF" strokeWidth={3} />
-          <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.8, textTransform: 'uppercase' }}>
-            Add appointment / exam
-          </Text>
-        </Pressable>
+        {/* Add appointment / exam — side-by-side sticker buttons.
+            Appointment = quick text log; Exam = photo + AI extract via ExamForm. */}
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+          <Pressable
+            onPress={() => setLogForm({ type: 'appointment', date: todayStr })}
+            style={({ pressed }) => ({
+              flex: 1,
+              height: 56,
+              borderRadius: 999,
+              backgroundColor: ST_LAVENDER,
+              borderWidth: 2, borderColor: isDark ? colors.border : ST_INK,
+              alignItems: 'center', justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 8,
+              shadowColor: ST_INK,
+              shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+              shadowOpacity: 1, shadowRadius: 0, elevation: 5,
+              transform: [{ translateY: pressed ? 2 : 0 }],
+            })}
+          >
+            <Plus size={16} color="#FFF" strokeWidth={3} />
+            <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+              Appointment
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setLogForm({ type: 'exam_result', date: todayStr })}
+            style={({ pressed }) => ({
+              flex: 1,
+              height: 56,
+              borderRadius: 999,
+              backgroundColor: isDark ? colors.surface : '#FFFEF8',
+              borderWidth: 2, borderColor: isDark ? colors.border : ST_INK,
+              alignItems: 'center', justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 8,
+              shadowColor: ST_INK,
+              shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+              shadowOpacity: 1, shadowRadius: 0, elevation: 5,
+              transform: [{ translateY: pressed ? 2 : 0 }],
+            })}
+          >
+            <Camera size={16} color={ST_INK} strokeWidth={2.5} />
+            <Text style={{ color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+              Upload exam
+            </Text>
+          </Pressable>
+        </View>
       </View>
     )
   }

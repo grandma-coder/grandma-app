@@ -37,7 +37,7 @@ export function DevelopmentInsight({ weekNumber }: DevelopmentInsightProps) {
         <Text style={styles.body}>{data.developmentFact}</Text>
 
         {/* Record lullaby button */}
-        <Pressable style={({ pressed }) => [styles.actionButton, pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] }]}>
+        <Pressable style={({ pressed }) => [styles.actionButton, pressed && { shadowOffset: { width: 0, height: 2 }, transform: [{ translateY: 2 }] }]}>
           <Ionicons name="mic-outline" size={22} color={THEME_COLORS.pink} />
           <Text style={styles.actionText}>Record a lullaby</Text>
         </Pressable>
@@ -123,6 +123,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     borderRadius: 999,
     paddingHorizontal: 24,
+    borderWidth: 2,
+    borderColor: '#141313',
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 5,
   },
   actionText: {
     fontSize: 14,

@@ -11,7 +11,6 @@ import { supabase } from './supabase'
 
 export interface UserProfile {
   id: string
-  user_id: string
   name: string | null
   dob: string | null
   photo_url: string | null
@@ -20,10 +19,11 @@ export interface UserProfile {
 }
 
 async function fetchProfile(userId: string): Promise<UserProfile | null> {
+  // `profiles.id` IS the auth user id — there is no separate `user_id` column.
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, user_id, name, dob, photo_url, location, language')
-    .eq('user_id', userId)
+    .select('id, name, dob, photo_url, location, language')
+    .eq('id', userId)
     .maybeSingle()
   if (error) throw error
   return data as UserProfile | null

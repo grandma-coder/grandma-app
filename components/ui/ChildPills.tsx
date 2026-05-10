@@ -141,13 +141,13 @@ export function ChildPill({ label, age, active, color, onPress, showDot = true }
           borderColor: active ? ST_INK : inkBorder,
           borderWidth: active ? 1.5 : 1,
           borderRadius: radius.full,
-          // Sticker-pop ink shadow on active state only
+          // Soft sticker shadow on active state only
           shadowColor: ST_INK,
-          shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
-          shadowOpacity: active ? 1 : 0,
-          shadowRadius: 0,
-          elevation: active ? 4 : 0,
-          transform: [{ translateY: active && pressed ? 2 : 0 }],
+          shadowOffset: { width: 0, height: active ? (pressed ? 1 : 4) : 0 },
+          shadowOpacity: active ? 0.18 : 0,
+          shadowRadius: active ? (pressed ? 4 : 10) : 0,
+          elevation: active ? 3 : 0,
+          transform: [{ translateY: active && pressed ? 1 : 0 }],
         },
       ]}
     >
@@ -186,12 +186,14 @@ export function ChildPill({ label, age, active, color, onPress, showDot = true }
 const styles = StyleSheet.create({
   scrollRow: {
     paddingHorizontal: 16,
+    paddingVertical: 6,
     gap: 8,
     alignItems: 'center',
   },
   wrapRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    paddingVertical: 4,
     gap: 8,
     alignItems: 'center',
   },

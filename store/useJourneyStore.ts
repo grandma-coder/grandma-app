@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 type Journey = 'pregnancy' | 'newborn' | 'toddler' | null
 
@@ -20,28 +22,44 @@ interface JourneyStore {
   clearAll: () => void
 }
 
-export const useJourneyStore = create<JourneyStore>((set) => ({
-  journey: null,
-  dueDate: null,
-  lmpDate: null,
-  weekNumber: null,
-  trackedActivities: [],
-  parentName: null,
-  babyName: null,
-  setJourney: (journey) => set({ journey }),
-  setDueDate: (dueDate) => set({ dueDate }),
-  setLmpDate: (lmpDate) => set({ lmpDate }),
-  setWeekNumber: (weekNumber) => set({ weekNumber }),
-  setTrackedActivities: (trackedActivities) => set({ trackedActivities }),
-  setParentName: (parentName) => set({ parentName }),
-  setBabyName: (babyName) => set({ babyName }),
-  clearAll: () => set({
-    journey: null,
-    dueDate: null,
-    lmpDate: null,
-    weekNumber: null,
-    trackedActivities: [],
-    parentName: null,
-    babyName: null,
-  }),
-}))
+export const useJourneyStore = create<JourneyStore>()(
+  persist(
+    (set) => ({
+      journey: null,
+      dueDate: null,
+      lmpDate: null,
+      weekNumber: null,
+      trackedActivities: [],
+      parentName: null,
+      babyName: null,
+      setJourney: (journey) => set({ journey }),
+      setDueDate: (dueDate) => set({ dueDate }),
+      setLmpDate: (lmpDate) => set({ lmpDate }),
+      setWeekNumber: (weekNumber) => set({ weekNumber }),
+      setTrackedActivities: (trackedActivities) => set({ trackedActivities }),
+      setParentName: (parentName) => set({ parentName }),
+      setBabyName: (babyName) => set({ babyName }),
+      clearAll: () => set({
+        journey: null,
+        dueDate: null,
+        lmpDate: null,
+        weekNumber: null,
+        trackedActivities: [],
+        parentName: null,
+        babyName: null,
+      }),
+    }),
+    {
+      name: 'grandma-journey',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        journey: state.journey,
+        dueDate: state.dueDate,
+        lmpDate: state.lmpDate,
+        weekNumber: state.weekNumber,
+        parentName: state.parentName,
+        babyName: state.babyName,
+      }),
+    }
+  )
+)

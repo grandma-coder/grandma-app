@@ -14,6 +14,7 @@ import {
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { useTheme } from '../../../constants/theme'
+import { PillButton } from '../../ui/PillButton'
 
 interface Props {
   visible: boolean
@@ -131,38 +132,20 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
           </View>
 
           <View style={styles.footer}>
-            <Pressable
+            <PillButton
+              label="Cancel"
+              variant="paper"
               onPress={onClose}
-              style={[
-                styles.btn,
-                styles.btnGhost,
-                { borderColor: colors.border },
-              ]}
-            >
-              <Text
-                style={{
-                  color: colors.textSecondary,
-                  fontFamily: font.bodyMedium,
-                  fontSize: 14,
-                }}
-              >
-                Cancel
-              </Text>
-            </Pressable>
-            <Pressable
+              height={52}
+              style={{ flex: 1 }}
+            />
+            <PillButton
+              label="Apply"
+              variant="ink"
               onPress={() => onApply(toISO(from), toISO(to))}
-              style={[styles.btn, styles.btnApply, { backgroundColor: colors.text }]}
-            >
-              <Text
-                style={{
-                  color: colors.bg,
-                  fontFamily: font.bodyMedium,
-                  fontSize: 14,
-                }}
-              >
-                Apply
-              </Text>
-            </Pressable>
+              height={52}
+              style={{ flex: 1 }}
+            />
           </View>
         </Pressable>
       </Pressable>

@@ -14,7 +14,8 @@ import {
 } from 'react-native'
 import { useTheme, brand } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
-import { queryClient } from '../../lib/queryClient'
+import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
+import { toDateStr } from '../../lib/cycleLogic'
 import {
   LogWeight, LogWater, LogSleep, LogExercise,
 } from '../stickers/RewardStickers'
@@ -54,16 +55,33 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
   const handleSave = async () => {
     if (!userId || !value.trim()) return
     setSaving(true)
-    const today = new Date().toISOString().split('T')[0]
-    await supabase.from('pregnancy_logs').insert({
-      user_id: userId,
-      log_date: today,
-      log_type: type,
-      value: value.trim(),
+    const today = toDateStr(new Date())
+    const trimmed = value.trim()
+
+    // Optimistic patch — chip flips ✓ before the network call returns.
+    const todayKey = ['pregnancy-today-logs', userId]
+    const previousToday = queryClient.getQueryData<Record<string, { value: string | null; notes: string | null; created_at: string }>>(todayKey)
+    queryClient.setQueryData(todayKey, {
+      ...(previousToday ?? {}),
+      [type]: { value: trimmed, notes: null, created_at: new Date().toISOString() },
     })
-    await queryClient.invalidateQueries({ queryKey: ['pregnancy-week-logs'] })
-    setSaving(false)
+    // Close the form immediately for snappy feedback.
     onSaved()
+    setSaving(false)
+
+    try {
+      const { error } = await supabase.from('pregnancy_logs').insert({
+        user_id: userId,
+        log_date: today,
+        log_type: type,
+        value: trimmed,
+      })
+      if (error) throw error
+    } catch {
+      queryClient.setQueryData(todayKey, previousToday)
+      return
+    }
+    void invalidatePregnancyLogQueries()
   }
 
   return (

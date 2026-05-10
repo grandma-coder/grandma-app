@@ -1,10 +1,13 @@
 /**
- * PillButton — 58px height pill CTA.
+ * PillButton — 58px height pill CTA, sticker-on-paper aesthetic.
  *
  * Variants:
  *   - "ink"     ink-fill primary (default)
- *   - "paper"   paper bg with hairline border (secondary / Google)
+ *   - "paper"   paper bg with ink border (secondary / cancel)
  *   - "accent"  mode-accent fill (use on white cards for emphasis)
+ *
+ * Every variant gets the 1.5–2px ink border + hard offset shadow that
+ * "presses down" on tap, matching the rest of the design system.
  */
 
 import { ReactNode } from 'react'
@@ -26,6 +29,8 @@ interface PillButtonProps {
   height?: number
 }
 
+const INK = '#141313'
+
 export function PillButton({
   label,
   onPress,
@@ -40,38 +45,44 @@ export function PillButton({
 }: PillButtonProps) {
   const { colors, font, isDark } = useTheme()
 
-  const ink = isDark ? colors.text : '#141313'
+  const ink = isDark ? colors.text : INK
   const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
   const bgCanvas = isDark ? colors.bg : '#F3ECD9'
+  const borderInk = isDark ? colors.border : INK
 
-  const variants: Record<PillButtonVariant, { bg: string; fg: string; border?: string }> = {
-    ink: { bg: ink, fg: bgCanvas },
-    paper: { bg: paper, fg: ink, border: paperBorder },
-    accent: { bg: accentColor ?? ink, fg: '#141313' },
+  const variants: Record<PillButtonVariant, { bg: string; fg: string; border: string; shadow: string }> = {
+    ink:    { bg: ink, fg: bgCanvas, border: borderInk, shadow: borderInk },
+    paper:  { bg: paper, fg: ink, border: borderInk, shadow: borderInk },
+    accent: { bg: accentColor ?? ink, fg: INK, border: borderInk, shadow: borderInk },
   }
 
   const v = variants[variant]
+  const isInactive = disabled || loading
 
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled || loading}
+      disabled={isInactive}
       style={({ pressed }) => [
         styles.base,
         {
           height,
           backgroundColor: v.bg,
           borderColor: v.border,
-          borderWidth: v.border ? 1 : 0,
-          opacity: pressed ? 0.88 : disabled || loading ? 0.6 : 1,
-          transform: [{ scale: pressed ? 0.98 : 1 }],
+          borderWidth: 1.5,
+          shadowColor: v.shadow,
+          shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+          shadowOpacity: 1,
+          shadowRadius: 0,
+          elevation: 4,
+          opacity: isInactive ? 0.55 : 1,
+          transform: [{ translateY: pressed && !isInactive ? 2 : 0 }],
         },
         style,
       ]}
     >
       {leading ? <View style={styles.slot}>{leading}</View> : null}
-      <Text style={[styles.label, { fontFamily: font.bodyMedium, color: v.fg }]}>
+      <Text style={[styles.label, { fontFamily: font.bodySemiBold, color: v.fg }]}>
         {loading ? '…' : label}
       </Text>
       {trailing ? <View style={styles.slot}>{trailing}</View> : null}
@@ -88,6 +99,6 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 20,
   },
-  label: { fontSize: 16 },
+  label: { fontSize: 16, letterSpacing: -0.2 },
   slot: { alignItems: 'center', justifyContent: 'center' },
 })

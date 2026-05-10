@@ -448,6 +448,17 @@ type Tab = 'today' | 'reads' | 'history'
 
 const STICKER_INK = '#141313'
 
+function mixWithWhite(hex: string, whiteAmount: number): string {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  const mr = Math.round(r + (255 - r) * whiteAmount)
+  const mg = Math.round(g + (255 - g) * whiteAmount)
+  const mb = Math.round(b + (255 - b) * whiteAmount)
+  return `rgb(${mr}, ${mg}, ${mb})`
+}
+
 const stickerShadow = {
   shadowColor: STICKER_INK,
   shadowOffset: { width: 0, height: 3 },
@@ -515,7 +526,7 @@ function CollapsibleCard({
               ci.askCta,
               {
                 borderColor: STICKER_INK,
-                backgroundColor: color + '22',
+                backgroundColor: mixWithWhite(color, 0.78),
                 transform: [{ translateY: pressed ? 1 : 0 }],
               },
             ]}

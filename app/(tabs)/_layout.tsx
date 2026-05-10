@@ -22,6 +22,8 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
+import { useJourneyStore } from '../../store/useJourneyStore'
+import { useProfile } from '../../lib/useProfile'
 import { getModeConfig } from '../../lib/modeConfig'
 import { useTheme, brand, getModeColor } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
@@ -100,12 +102,13 @@ const WHEEL_ITEMS: WheelItem[] = [
   },
 ]
 
-// Fan layout — items arc from lower-left (208°) to lower-right (332°),
-// radiating upward from a pivot at the + button. Smaller R = tighter fan.
-const FAN_RADIUS = 148
-const FAN_START_DEG = 208
-const FAN_END_DEG = 332
-const STICKER_SIZE = 88
+// Fan layout — items arc from lower-left (210°) to lower-right (330°),
+// radiating upward from a pivot at the + button. Wider R lets the labels
+// breathe under each sticker without colliding with the headline above.
+const FAN_RADIUS = 168
+const FAN_START_DEG = 210
+const FAN_END_DEG = 330
+const STICKER_SIZE = 84
 const ICON_SIZE = 20
 
 function CenterTabButton() {
@@ -114,6 +117,13 @@ function CenterTabButton() {
   const { colors, isDark } = useTheme()
   const mode = useModeStore((s) => s.mode)
   const accentColor = getModeColor(mode)
+  const { data: profile } = useProfile()
+  const parentName = useJourneyStore((s) => s.parentName)
+  // Prefer the saved profile name; fall back to the onboarding journey name,
+  // then to the friendly default. Use only the first token so long names stay
+  // on one line in the headline.
+  const fullName = (profile?.name ?? parentName ?? '').trim()
+  const userName = fullName.split(/\s+/)[0] || 'dear'
   const [open, setOpen] = useState(false)
 
   // Animated values
@@ -160,8 +170,9 @@ function CenterTabButton() {
   const pivotX = SCREEN_W / 2
   const pivotY = SCREEN_H - insets.bottom - 44 - 14
 
-  // Theme-aware scrim — cream wash in light mode, warm ink in dark
-  const scrimColor = isDark ? 'rgba(12,10,8,0.88)' : 'rgba(243,236,217,0.92)'
+  // Theme-aware scrim — fully opaque paper/ink so the home screen never
+  // bleeds through and competes with the menu's typography.
+  const scrimColor = isDark ? '#0E0B08' : StickerPalette.cream
   const inkColor = isDark ? '#F5EDDC' : '#141313'
   const ink3Color = isDark ? 'rgba(245,237,220,0.55)' : '#6E6763'
 
@@ -211,15 +222,19 @@ function CenterTabButton() {
           <Drop size={28} fill={StickerPalette.blue} />
         </Animated.View>
 
-        {/* Prompt — "where to, dear?" serif + italic accent */}
+        {/* Prompt — "where to, dear?" serif + italic accent.
+            Sits well below the status bar in its own band so it never
+            collides with the home greeting underneath. */}
         <Animated.View
           pointerEvents="none"
-          style={[styles.prompt, { top: insets.top + 56, opacity: overlayAnim }]}
+          style={[styles.prompt, { top: insets.top + 88, opacity: overlayAnim }]}
         >
+          <Text style={[styles.promptKicker, { color: ink3Color }]}>· menu ·</Text>
           <Text style={[styles.promptLine, { color: inkColor }]}>
             where to,{' '}
-            <Text style={[styles.promptItalic, { color: accentColor }]}>dear?</Text>
+            <Text style={[styles.promptItalic, { color: accentColor }]}>{userName}?</Text>
           </Text>
+          <View style={[styles.promptRule, { backgroundColor: ink3Color }]} />
           <Text style={[styles.promptCaps, { color: ink3Color }]}>pick a corner</Text>
         </Animated.View>
 
@@ -342,7 +357,7 @@ function useUnreadNotificationCount() {
 
   useEffect(() => {
     const channel = supabase
-      .channel('notification-count-tabbar')
+      .channel(`notification-count-tabbar-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'notifications' },
@@ -545,22 +560,38 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  promptKicker: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 11,
+    letterSpacing: 2.4,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+    opacity: 0.7,
   },
   promptLine: {
     fontFamily: 'Fraunces_600SemiBold',
-    fontSize: 24,
-    letterSpacing: -0.4,
-    lineHeight: 28,
+    fontSize: 34,
+    letterSpacing: -0.6,
+    lineHeight: 38,
+    textAlign: 'center',
   },
   promptItalic: {
     fontFamily: 'InstrumentSerif_400Regular_Italic',
     fontStyle: 'italic',
   },
+  promptRule: {
+    width: 36,
+    height: 1,
+    marginTop: 16,
+    opacity: 0.45,
+  },
   promptCaps: {
-    marginTop: 8,
+    marginTop: 12,
     fontFamily: 'DMSans_500Medium',
     fontSize: 11,
-    letterSpacing: 1.6,
+    letterSpacing: 1.8,
     textTransform: 'uppercase',
   },
   fanItemWrap: {
@@ -581,20 +612,26 @@ const styles = StyleSheet.create({
   labelPill: {
     borderRadius: 999,
     borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    shadowColor: STICKER_INK,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
   },
   labelText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 11.5,
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    letterSpacing: 0.1,
   },
   subtitle: {
-    marginTop: 3,
+    marginTop: 4,
     fontFamily: 'InstrumentSerif_400Regular_Italic',
     fontStyle: 'italic',
-    fontSize: 10.5,
+    fontSize: 11,
     textAlign: 'center',
-    maxWidth: 104,
+    maxWidth: 110,
+    opacity: 0.72,
   },
 })
 

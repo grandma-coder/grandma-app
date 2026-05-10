@@ -175,7 +175,7 @@ export default function TransitionScreen() {
           style={({ pressed }) => [
             styles.ctaButton,
             { backgroundColor: content.color, borderRadius: radius.full },
-            pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+            pressed && { shadowOffset: { width: 0, height: 2 }, transform: [{ translateY: 2 }] },
           ]}
         >
           <Text style={styles.ctaText}>Let's go, dear</Text>
@@ -260,6 +260,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    borderWidth: 2,
+    borderColor: '#141313',
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 5,
   },
   ctaText: {
     fontSize: 17,

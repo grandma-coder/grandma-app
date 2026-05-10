@@ -9,7 +9,7 @@
  *      · WHAT TO PREPARE (action cards with colored icon squares)
  */
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   View,
   Text,
@@ -19,6 +19,12 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native'
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated'
 import { X, ArrowLeft, ChevronRight } from 'lucide-react-native'
 import { useTheme } from '../../../constants/theme'
 import { getWeekData } from '../../../lib/pregnancyData'
@@ -28,6 +34,7 @@ import { getPrepGuide } from '../../../lib/prepGuide'
 import { StickerIcon } from './stickerIcons'
 import { AnimatedFruit } from './AnimatedFruit'
 
+const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
 
 interface Props {
@@ -96,24 +103,28 @@ function PrepDetailSheet({
 
   return (
     <View style={[styles.prepDetailRoot, { backgroundColor: isDark ? colors.bg : '#FFFEF8' }]}>
-      <Pressable onPress={onBack} style={styles.prepBackRow} hitSlop={8}>
-        <ArrowLeft size={18} color={accent} strokeWidth={2} />
-        <Text style={[styles.prepBackText, { color: accent }]}>Back</Text>
-      </Pressable>
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.prepDetailScroll}
+      >
+        <Pressable onPress={onBack} style={styles.prepBackRow} hitSlop={8}>
+          <ArrowLeft size={18} color={accent} strokeWidth={2} />
+          <Text style={[styles.prepBackText, { color: accent }]}>Back</Text>
+        </Pressable>
 
-      <View style={[styles.prepDetailHeader, { backgroundColor: isDark ? colors.surface : 'rgba(20,19,19,0.04)' }]}>
-        <View style={[styles.prepIconBox, { backgroundColor: accentSoft }]}>
-          <StickerIcon name={item.i} size={36} />
+        <View style={[styles.prepDetailHeader, { backgroundColor: isDark ? colors.surface : 'rgba(20,19,19,0.04)' }]}>
+          <View style={[styles.prepIconBox, { backgroundColor: accentSoft }]}>
+            <StickerIcon name={item.i} size={36} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.prepDetailTitle, { color: ink }]}>{item.t}</Text>
+            <Text style={[styles.prepDetailSummary, { color: ink3 }]}>
+              {item.d}
+            </Text>
+          </View>
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.prepDetailTitle, { color: ink }]}>{item.t}</Text>
-          <Text style={[styles.prepDetailSummary, { color: ink3 }]}>
-            {item.d}
-          </Text>
-        </View>
-      </View>
 
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
         <Text style={[styles.prepSectionTitle, { color: ink3 }]}>WHY NOW</Text>
         <Text style={[styles.prepDetailContent, { color: ink2 }]}>
           {guide.why}
@@ -145,6 +156,34 @@ function PrepDetailSheet({
 export function WeekDetailModal({ visible, week, onClose }: Props) {
   const { colors, isDark } = useTheme()
   const [selectedPrep, setSelectedPrep] = useState<PrepItemDef | null>(null)
+  // Keep the last prep item rendered while sliding back so the animation has content
+  const [pendingPrep, setPendingPrep] = useState<PrepItemDef | null>(null)
+  const slide = useSharedValue(0) // 0 = main, 1 = prep detail
+
+  useEffect(() => {
+    if (selectedPrep) {
+      setPendingPrep(selectedPrep)
+      slide.value = withTiming(1, { duration: 280, easing: Easing.out(Easing.cubic) })
+    } else {
+      slide.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) }, (finished) => {
+        if (finished) {
+          // Clear pending after the animation completes (runs on UI thread → defer to JS)
+        }
+      })
+      // Clear after the animation duration so the view stays mounted while sliding back
+      const t = setTimeout(() => setPendingPrep(null), 280)
+      return () => clearTimeout(t)
+    }
+  }, [selectedPrep, slide])
+
+  const mainAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: -slide.value * SCREEN_W * 0.25 }],
+    opacity: 1 - slide.value * 0.4,
+  }))
+
+  const prepAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: (1 - slide.value) * SCREEN_W }],
+  }))
 
   const weekData = getWeekData(week)
   const content = getWeekContent(week)
@@ -195,15 +234,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
         />
 
         <View style={[styles.sheet, { backgroundColor: paperBg }]}>
-          {selectedPrep ? (
-            <PrepDetailSheet
-              item={selectedPrep}
-              week={week}
-              onBack={() => setSelectedPrep(null)}
-              accent={pal.accent}
-              accentSoft={pal.accentSoft}
-            />
-          ) : (
+          <Animated.View style={[styles.layer, mainAnimStyle]} pointerEvents={selectedPrep ? 'none' : 'auto'}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 36 }}>
               {/* Hero — inherits card's palette */}
               <View style={[styles.hero, { backgroundColor: pal.bg }]}>
@@ -298,7 +329,22 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                 )}
               </View>
             </ScrollView>
-          )}
+          </Animated.View>
+
+          <Animated.View
+            style={[styles.layer, prepAnimStyle]}
+            pointerEvents={selectedPrep ? 'auto' : 'none'}
+          >
+            {pendingPrep ? (
+              <PrepDetailSheet
+                item={pendingPrep}
+                week={week}
+                onBack={() => setSelectedPrep(null)}
+                accent={pal.accent}
+                accentSoft={pal.accentSoft}
+              />
+            ) : null}
+          </Animated.View>
         </View>
       </View>
     </Modal>
@@ -312,10 +358,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(20,19,19,0.55)',
   },
   sheet: {
-    maxHeight: SCREEN_H * 0.92,
+    height: SCREEN_H * 0.95,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     overflow: 'hidden',
+  },
+  layer: {
+    ...StyleSheet.absoluteFillObject,
   },
 
   // Hero
@@ -478,8 +527,12 @@ const styles = StyleSheet.create({
 
   // Prep drill-down sub-sheet
   prepDetailRoot: {
-    minHeight: SCREEN_H * 0.7,
-    padding: 24,
+    flex: 1,
+  },
+  prepDetailScroll: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 48,
   },
   prepBackRow: {
     flexDirection: 'row',

@@ -105,7 +105,14 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderRadius: borderRadius.lg,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: '#141313',
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 5,
   },
   appleButton: {
     backgroundColor: '#000000',
@@ -118,8 +125,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
+    shadowOffset: { width: 0, height: 2 },
+    transform: [{ translateY: 2 }],
   },
   loading: {
     opacity: 0.6,

@@ -3,9 +3,13 @@
  *
  * Active:   full color fill + matching darker border + hard offset shadow (sticker-on-paper)
  * Inactive: soft tint fill + color border — always readable, never ghost on cream
+ *
+ * Optional `icon` (rendered to the left of the label) and `tone="destructive"`
+ * (forces white/coral text on a coral fill so destructive actions read as such).
  */
 
-import { Pressable, Text, StyleSheet, ViewStyle, StyleProp } from 'react-native'
+import { Pressable, Text, View, StyleSheet, ViewStyle, StyleProp } from 'react-native'
+import { ReactNode } from 'react'
 import { useTheme } from '../../constants/theme'
 
 interface StickerButtonProps {
@@ -16,6 +20,10 @@ interface StickerButtonProps {
   colorSoft?: string
   /** Shadow / border color — slightly darker than `color`. Defaults to color. */
   colorDark?: string
+  /** Optional element rendered to the left of the label (e.g. lucide icon) */
+  icon?: ReactNode
+  /** "primary" reads as a filled CTA (white text only when bg is dark). Default reads ink on color. */
+  textColor?: string
   onPress?: () => void
   active?: boolean
   disabled?: boolean
@@ -24,11 +32,15 @@ interface StickerButtonProps {
   style?: StyleProp<ViewStyle>
 }
 
+const INK = '#141313'
+
 export function StickerButton({
   label,
   color,
   colorSoft,
   colorDark,
+  icon,
+  textColor,
   onPress,
   active = true,
   disabled = false,
@@ -40,6 +52,7 @@ export function StickerButton({
 
   const shadow = colorDark ?? color
   const inactiveBg = colorSoft ?? color + '55'
+  const resolvedTextColor = textColor ?? INK
 
   return (
     <Pressable
@@ -63,12 +76,13 @@ export function StickerButton({
         style,
       ]}
     >
+      {icon ? <View style={{ marginRight: 8 }}>{icon}</View> : null}
       <Text
         style={[
           styles.label,
           {
             fontFamily: font.bodySemiBold,
-            color: '#141313',
+            color: resolvedTextColor,
             fontSize,
           },
         ]}

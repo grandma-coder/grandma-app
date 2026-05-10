@@ -288,8 +288,6 @@ export default function RootLayout() {
           <Stack.Screen name="child-picker" options={{ presentation: 'modal' }} />
           <Stack.Screen name="airtag-setup" options={{ presentation: 'modal' }} />
           <Stack.Screen name="birth-plan" />
-          <Stack.Screen name="channels" />
-          <Stack.Screen name="exchange" />
           <Stack.Screen name="insights" />
           <Stack.Screen name="grandma-talk" options={{ presentation: 'modal' }} />
           <Stack.Screen name="profile" />

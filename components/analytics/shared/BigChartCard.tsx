@@ -107,9 +107,9 @@ const styles = StyleSheet.create({
   },
   blob: {
     position: 'absolute',
-    top: -10,
-    right: -10,
-    opacity: 0.7,
+    top: 8,
+    right: 8,
+    opacity: 0.55,
   },
   label: {
     fontSize: 10,

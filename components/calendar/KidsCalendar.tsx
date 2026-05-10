@@ -2193,19 +2193,21 @@ export function KidsCalendar() {
                     <Pressable
                       onPress={saveRoutine}
                       disabled={!routineForm.name.trim() || routineSaving}
-                      style={({ pressed }) => ({
-                        height: 56,
-                        borderRadius: 999,
-                        backgroundColor: ST_PURPLE,
-                        borderWidth: 2, borderColor: ST_INK,
-                        alignItems: 'center', justifyContent: 'center',
-                        shadowColor: ST_INK,
-                        shadowOffset: { width: 0, height: pressed ? 2 : 4 },
-                        shadowOpacity: 1, shadowRadius: 0, elevation: 5,
-                        transform: [{ translateY: pressed ? 2 : 0 }],
-                        opacity: (!routineForm.name.trim() || routineSaving) ? 0.4 : 1,
-                        marginTop: 4,
-                      })}
+                      style={({ pressed }) => {
+                        const isDisabled = !routineForm.name.trim() || routineSaving
+                        return {
+                          height: 56,
+                          borderRadius: 999,
+                          backgroundColor: isDisabled ? ST_PURPLE + '88' : ST_PURPLE,
+                          borderWidth: 2, borderColor: ST_INK,
+                          alignItems: 'center', justifyContent: 'center',
+                          shadowColor: ST_INK,
+                          shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+                          shadowOpacity: 1, shadowRadius: 0, elevation: 5,
+                          transform: [{ translateY: pressed && !isDisabled ? 2 : 0 }],
+                          marginTop: 4,
+                        }
+                      }}
                     >
                       {routineSaving
                         ? <ActivityIndicator color="#FFF" size="small" />

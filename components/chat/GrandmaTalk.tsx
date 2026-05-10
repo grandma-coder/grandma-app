@@ -881,7 +881,6 @@ export function GrandmaTalk() {
   const [isStreaming, setIsStreaming] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([])
-  const [showBehaviorDropdown, setShowBehaviorDropdown] = useState(false)
 
   const hasUserMessages = messages.some((m) => m.role === 'user')
   const suggestions = getSuggestions(allBehaviors, chatBehavior, childName, childAge)
@@ -1104,18 +1103,6 @@ export function GrandmaTalk() {
             grandma{' '}
             <Text style={[styles.headerTitleItalic, { fontFamily: font.italic }]}>talk</Text>
           </Text>
-          {allBehaviors.length > 1 && (
-            <Pressable
-              onPress={() => setShowBehaviorDropdown((v) => !v)}
-              style={[styles.behaviorBadge, { backgroundColor: modeColor + '22', borderColor: modeColor + '44' }]}
-              hitSlop={6}
-            >
-              <Text style={[styles.behaviorBadgeLabel, { color: modeColor, fontFamily: font.bodySemiBold }]}>
-                {getBehaviorLabel(chatBehavior)}
-              </Text>
-              <ChevronDown size={11} color={modeColor} strokeWidth={2.5} />
-            </Pressable>
-          )}
         </View>
         <Pressable
           onPress={() => setShowHistory(true)}
@@ -1277,53 +1264,6 @@ export function GrandmaTalk() {
           </Pressable>
         </View>
       </KeyboardAvoidingView>
-
-      {/* Behavior dropdown overlay */}
-      {showBehaviorDropdown && (
-        <Pressable
-          style={[StyleSheet.absoluteFill, { zIndex: 20 }]}
-          onPress={() => setShowBehaviorDropdown(false)}
-        >
-          <View style={[
-            styles.dropdown,
-            {
-              top: insets.top + 58,
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              shadowColor: '#000',
-            },
-          ]}>
-            {allBehaviors.map((b) => {
-              const isActive = b === chatBehavior
-              const color = getBehaviorColor(b)
-              return (
-                <Pressable
-                  key={b}
-                  onPress={() => {
-                    handleBehaviorSwitch(b)
-                    setShowBehaviorDropdown(false)
-                  }}
-                  style={({ pressed }) => [
-                    styles.dropdownItem,
-                    isActive && { backgroundColor: color + '12' },
-                    pressed && { backgroundColor: color + '18' },
-                  ]}
-                >
-                  <Text style={styles.dropdownEmoji}>{getBehaviorEmoji(b)}</Text>
-                  <Text style={[
-                    styles.dropdownLabel,
-                    { color: isActive ? color : colors.text },
-                    isActive && { fontWeight: '700' },
-                  ]}>
-                    {getBehaviorLabel(b)}
-                  </Text>
-                  {isActive && <Check size={15} color={color} strokeWidth={2.5} />}
-                </Pressable>
-              )
-            })}
-          </View>
-        </Pressable>
-      )}
 
       {/* History overlay */}
       {showHistory && (

@@ -31,7 +31,8 @@ import {
   getModeColorSoft,
 } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
-import { queryClient } from '../../lib/queryClient'
+import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
+import { toDateStr } from '../../lib/cycleLogic'
 import { LogFormSticker } from './LogFormSticker'
 import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Burst as BurstSticker, Star as StarSticker } from '../stickers/BrandStickers'
@@ -52,15 +53,45 @@ async function savePregnancyLog(
   } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
 
-  const { error } = await supabase.from('pregnancy_logs').insert({
-    user_id: session.user.id,
-    log_date: date,
-    log_type: type,
-    value: value ?? null,
-    notes: notes ?? null,
-  })
-  if (error) throw error
-  await queryClient.invalidateQueries({ queryKey: ['pregnancy-week-logs'] })
+  // ── Optimistic patch ───────────────────────────────────────────────────
+  // Flip the UI to "logged" the instant the user taps save, before the
+  // network insert completes. Rolled back if the insert errors.
+  const userId = session.user.id
+  const todayKey = ['pregnancy-today-logs', userId]
+  const isToday = date === toDateStr(new Date())
+  const previousToday = isToday
+    ? queryClient.getQueryData<Record<string, { value: string | null; notes: string | null; created_at: string }>>(todayKey)
+    : undefined
+  if (isToday) {
+    const optimisticEntry = {
+      value: value ?? null,
+      notes: notes ?? null,
+      created_at: new Date().toISOString(),
+    }
+    queryClient.setQueryData(todayKey, {
+      ...(previousToday ?? {}),
+      [type]: optimisticEntry,
+    })
+  }
+
+  try {
+    const { error } = await supabase.from('pregnancy_logs').insert({
+      user_id: userId,
+      log_date: date,
+      log_type: type,
+      value: value ?? null,
+      notes: notes ?? null,
+    })
+    if (error) throw error
+  } catch (e) {
+    // Roll back the optimistic patch and re-throw so the form surfaces it.
+    if (isToday) queryClient.setQueryData(todayKey, previousToday)
+    throw e
+  }
+
+  // Pull truth from server in the background — keeps charts / journey ring
+  // / calendar in sync without blocking the UI we already updated.
+  void invalidatePregnancyLogQueries()
 }
 
 // ─── Mood Form ─────────────────────────────────────────────────────────────

@@ -6,6 +6,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from './supabase'
 import { useChildStore } from '../store/useChildStore'
+import { toDateStr } from './cycleLogic'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -936,7 +937,7 @@ export function usePregnancyMoodTrend(userId: string, weeks = 12) {
         .select('log_date, value')
         .eq('user_id', userId)
         .eq('log_type', 'mood')
-        .gte('log_date', since.toISOString().split('T')[0])
+        .gte('log_date', toDateStr(since))
         .order('log_date', { ascending: true })
       if (error) throw error
       return data ?? []
@@ -995,7 +996,7 @@ export function usePregnancyWellbeingScore(userId: string) {
     queryFn: async (): Promise<PregnancyWellbeingScore> => {
       const since = new Date()
       since.setDate(since.getDate() - 7)
-      const sinceStr = since.toISOString().split('T')[0]
+      const sinceStr = toDateStr(since)
 
       const { data, error } = await supabase
         .from('pregnancy_logs')
@@ -1052,7 +1053,7 @@ export function usePregnancySleepHistory(userId: string, weeks = 4) {
         .select('log_date, value')
         .eq('user_id', userId)
         .eq('log_type', 'sleep')
-        .gte('log_date', since.toISOString().split('T')[0])
+        .gte('log_date', toDateStr(since))
         .order('log_date', { ascending: true })
       if (error) throw error
       return (data ?? []).map(r => ({
@@ -1075,7 +1076,7 @@ export function usePregnancyHydrationHistory(userId: string, days = 7) {
         .select('log_date, value')
         .eq('user_id', userId)
         .eq('log_type', 'water')
-        .gte('log_date', since.toISOString().split('T')[0])
+        .gte('log_date', toDateStr(since))
         .order('log_date', { ascending: true })
       if (error) throw error
       return (data ?? []).map(r => ({
@@ -1095,7 +1096,7 @@ export function usePregnancyNutritionMatrix(userId: string, days = 7) {
       for (let i = days - 1; i >= 0; i--) {
         const d = new Date()
         d.setDate(d.getDate() - i)
-        dates.push(d.toISOString().split('T')[0])
+        dates.push(toDateStr(d))
       }
 
       const since = dates[0]
@@ -1139,7 +1140,7 @@ export function usePregnancyTodayLogs(userId: string | undefined) {
     queryKey: ['pregnancy-today-logs', userId],
     queryFn: async (): Promise<Record<string, TodayLogEntry>> => {
       if (!userId) return {}
-      const today = new Date().toISOString().split('T')[0]
+      const today = toDateStr(new Date())
       const { data, error } = await supabase
         .from('pregnancy_logs')
         .select('log_type, value, notes, created_at')
@@ -1247,7 +1248,7 @@ export function usePregnancyExerciseHistory(userId: string, days = 14) {
         .select('log_date, value, notes')
         .eq('user_id', userId)
         .eq('log_type', 'exercise')
-        .gte('log_date', since.toISOString().split('T')[0])
+        .gte('log_date', toDateStr(since))
         .order('log_date', { ascending: true })
       if (error) throw error
       return (data ?? []).map((r) => ({
@@ -1277,7 +1278,7 @@ export function usePregnancyContractions(userId: string, days = 14) {
         .select('log_date, value, notes, created_at')
         .eq('user_id', userId)
         .eq('log_type', 'contraction')
-        .gte('log_date', since.toISOString().split('T')[0])
+        .gte('log_date', toDateStr(since))
         .order('log_date', { ascending: true })
       if (error) throw error
       const byDate: Record<string, { count: number; intervals: number[] }> = {}
@@ -1316,7 +1317,7 @@ export function usePregnancyKickTimeOfDay(userId: string, days = 30) {
         .select('created_at')
         .eq('user_id', userId)
         .eq('log_type', 'kick_count')
-        .gte('log_date', since.toISOString().split('T')[0])
+        .gte('log_date', toDateStr(since))
       if (error) throw error
       const buckets = new Array(24).fill(0)
       for (const r of data ?? []) {

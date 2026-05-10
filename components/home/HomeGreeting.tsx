@@ -30,7 +30,7 @@ export function HomeGreeting({
 }: HomeGreetingProps) {
   const { colors, isDark } = useTheme()
   const ink = isDark ? colors.text : '#141313'
-  const displayName = name?.trim() || 'dear'
+  const displayName = name?.trim().split(/\s+/)[0] || 'dear'
 
   return (
     <View style={styles.wrap}>

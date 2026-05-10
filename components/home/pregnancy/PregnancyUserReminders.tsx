@@ -157,45 +157,47 @@ export function PregnancyUserReminders({ userId }: Props) {
 
   return (
     <View style={{ gap: 10 }}>
-      {/* Add toggle */}
-      <View style={styles.addRow}>
+      {/* Reminder card — always visible, expands on tap */}
+      <View style={[styles.inputCard, {
+        backgroundColor: isDark ? colors.surface : '#FFFEF8',
+        borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
+        shadowColor: '#141313',
+        shadowOpacity: isDark ? 0 : 0.07,
+        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 4 },
+      }]}>
+        <View style={{ position: 'absolute', top: -10, right: 14, transform: [{ rotate: '15deg' }] }} pointerEvents="none">
+          <StarSticker size={36} fill={stickers.yellow} stroke="#141313" />
+        </View>
+
         <Pressable
-          onPress={() => { setShowInput(!showInput); setNewText('') }}
-          style={[styles.addBtn, { backgroundColor: ACCENT + '15', borderRadius: radius.full }]}
+          onPress={() => { setShowInput(!showInput); if (!showInput) setNewText('') }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: showInput ? 4 : 0 }}
         >
-          <Plus size={13} color={ACCENT} strokeWidth={2.5} />
-          <Text style={[styles.addBtnText, { color: ACCENT }]}>Add reminder</Text>
+          <View style={{
+            width: 32, height: 32, borderRadius: 16,
+            backgroundColor: stickers.yellow,
+            borderWidth: 1.5, borderColor: '#141313',
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Bell size={13} color="#141313" strokeWidth={2.5} />
+          </View>
+          <Text style={{ flex: 1, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', color: colors.text, letterSpacing: -0.3 }}>
+            Add reminder
+          </Text>
+          <View style={{
+            width: 28, height: 28, borderRadius: 14,
+            backgroundColor: showInput ? 'rgba(20,19,19,0.06)' : ACCENT + '18',
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            {showInput
+              ? <X size={14} color={colors.textSecondary} strokeWidth={2.5} />
+              : <Plus size={14} color={ACCENT} strokeWidth={2.5} />}
+          </View>
         </Pressable>
-      </View>
 
-      {/* Input panel */}
-      {showInput && (
-        <View style={[styles.inputCard, {
-          backgroundColor: isDark ? colors.surface : '#FFFEF8',
-          borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
-          shadowColor: '#141313',
-          shadowOpacity: isDark ? 0 : 0.07,
-          shadowRadius: 14,
-          shadowOffset: { width: 0, height: 4 },
-        }]}>
-          <View style={{ position: 'absolute', top: -10, right: 14, transform: [{ rotate: '15deg' }] }} pointerEvents="none">
-            <StarSticker size={36} fill={stickers.yellow} stroke="#141313" />
-          </View>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <View style={{
-              width: 32, height: 32, borderRadius: 16,
-              backgroundColor: stickers.yellow,
-              borderWidth: 1.5, borderColor: '#141313',
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Bell size={13} color="#141313" strokeWidth={2.5} />
-            </View>
-            <Text style={{ fontSize: 16, fontFamily: 'Fraunces_600SemiBold', color: colors.text, letterSpacing: -0.3 }}>
-              Add reminder
-            </Text>
-          </View>
-
+        {showInput && (
+          <>
           <TextInput
             style={[styles.textInput, {
               color: colors.text,
@@ -358,8 +360,9 @@ export function PregnancyUserReminders({ userId }: Props) {
               )}
             </View>
           )}
-        </View>
-      )}
+          </>
+        )}
+      </View>
 
       {/* Active list */}
       {active.length > 0 && (

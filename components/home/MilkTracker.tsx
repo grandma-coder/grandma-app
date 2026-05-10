@@ -33,7 +33,10 @@ export function MilkTracker({ onLog }: MilkTrackerProps) {
             onPress={() => onLog?.(type.id)}
             style={({ pressed }) => [
               styles.feedButton,
-              pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] },
+              pressed && {
+                shadowOffset: { width: 0, height: 1 },
+                transform: [{ translateY: 2 }],
+              },
             ]}
           >
             <type.Sticker size={32} />
@@ -72,9 +75,14 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     backgroundColor: colors.surfaceGlass,
     borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderColor: '#141313',
     gap: 6,
+    shadowColor: '#141313',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   feedIcon: {
     fontSize: 24,
