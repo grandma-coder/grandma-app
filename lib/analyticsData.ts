@@ -627,9 +627,25 @@ function buildRoutineComplianceData(logs: ChildLog[], dates: string[], labels: s
   }
 
   const totalSkips = skippedLogs.length
-  // Skip rate: skips vs (skips + actual logs) in the 7-day window
-  const windowLogs = logs.filter((l) => l.type !== 'skipped' && dates.includes(l.date)).length
-  const skipRate = windowLogs + totalSkips > 0 ? Math.round((totalSkips / (windowLogs + totalSkips)) * 100) : 0
+  // Skip rate: skips ÷ total routine OUTCOMES (skips + done routines) in
+  // the window. Previous denominator counted ALL non-skipped logs (food,
+  // sleep, mood, etc.) which made the rate trivially small for active
+  // families — adherence looked great regardless of how many routines
+  // were actually skipped. Now we only count logs that carry a routineId
+  // tag (i.e. logs created from a routine prefill), matching skipRate's
+  // unit.
+  const doneRoutineLogs = logs.filter((l) => {
+    if (l.type === 'skipped' || !dates.includes(l.date)) return false
+    try {
+      const v = parseValue(l.value)
+      return !!v?.routineId
+    } catch {
+      return false
+    }
+  }).length
+  const skipRate = doneRoutineLogs + totalSkips > 0
+    ? Math.round((totalSkips / (doneRoutineLogs + totalSkips)) * 100)
+    : 0
 
   const mostSkipped = Object.entries(routineSkipCounts)
     .map(([name, count]) => ({ name, count }))
