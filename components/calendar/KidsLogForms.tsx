@@ -236,13 +236,13 @@ async function saveChildLog(
 
   const { data: child } = await supabase
     .from('children')
-    .select('user_id')
+    .select('parent_id')
     .eq('id', childId)
     .single()
 
   const { error } = await supabase.from('child_logs').insert({
     child_id: childId,
-    user_id: child?.user_id ?? session.user.id,
+    user_id: child?.parent_id ?? session.user.id,
     date: date ?? toDateStr(new Date()),
     type,
     value: value ?? null,
