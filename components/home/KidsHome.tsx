@@ -1109,8 +1109,16 @@ export function KidsHome() {
           // Per-day count
           feedingDayMap[log.date] = (feedingDayMap[log.date] || 0) + 1
         }
-        else feedingBottle++
-        feedingMlTotal += Number(parsed.amount) || 0
+        // Only count as bottle when feedType is actually 'bottle'.
+        // Previously `else feedingBottle++` caught solids logs and any
+        // log with a missing/unknown feedType, inflating the bottle count
+        // for mixed-fed families and skewing the breast-vs-bottle ratio
+        // shown on the home dashboard.
+        else if (ft === 'bottle') feedingBottle++
+        // Amount in ml applies to bottle feeds — only accumulate when we
+        // are actually counting a bottle, otherwise a solids `amount`
+        // (rare) would pollute the per-bottle average.
+        if (ft === 'bottle') feedingMlTotal += Number(parsed.amount) || 0
       }
 
       // Calorie tracking (for solids & mixed stages)
