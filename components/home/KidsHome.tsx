@@ -4178,7 +4178,12 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
                 <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 110, gap: 6 }}>
                   {dailySleep.map((hrs, i) => {
                     const ratio = Math.max(hrs / maxHrs, 0.02)
-                    const hitTarget = hrs >= dailySleepTarget * 0.85
+                    // Bar color must agree with the legend underneath. The legend
+                    // says "below target ({dailySleepTarget}h/day)" — so any day
+                    // strictly below the target shows yellow. The previous 0.85
+                    // buffer painted 85–100% days green while the legend still
+                    // claimed they were below target, contradicting itself.
+                    const hitTarget = dailySleepTarget > 0 && hrs >= dailySleepTarget
                     const barColor = hrs === 0 ? ST_BLUE_SOFT : (hitTarget ? ST_BLUE : ST_YELLOW)
                     return (
                       <View key={i} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
