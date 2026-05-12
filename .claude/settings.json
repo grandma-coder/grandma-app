@@ -132,10 +132,48 @@
       "Bash(git -C /Users/igorcarvalhorodrigues/Projects/grandma-app commit -m ' *)",
       "Bash(grep -n \"brand\\\\|heroColor\\\\|heroBorder\\\\|#[A-Fa-f0-9]\\\\{3,6\\\\}\" /Users/igorcarvalhorodrigues/Projects/grandma-app/constants/theme.ts)",
       "Bash(grep -E \"\\\\.\\(ts|tsx|js\\)$\")",
-      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(chmod +x .claude/hooks/*.sh)",
+      "Bash(npm test *)",
+      "Bash(git worktree *)",
+      "Bash(git branch *)"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/igorcarvalhorodrigues/Projects/grandma-app/.claude/hooks/tsc-check.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/igorcarvalhorodrigues/Projects/grandma-app/.claude/hooks/supabase-guard.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/igorcarvalhorodrigues/Projects/grandma-app/.claude/hooks/stop-status.sh"
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {

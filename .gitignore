@@ -49,3 +49,8 @@ skills-lock.json
 # Design handoff bundles (large, local-only)
 docs/Claude design studio*/
 docs/claude-design/
+
+# Pitch decks & large binaries (keep local, store in Drive/Notion)
+*.pptx
+*.key
+*.pdf
