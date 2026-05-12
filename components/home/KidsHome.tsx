@@ -803,8 +803,37 @@ export function KidsHome() {
   useEffect(() => {
     if (!child?.id) return
     AsyncStorage.getItem(`grandma-vaccine-scheduled-${child.id}`).then(json => {
-      if (json) try { setScheduledVaccines(JSON.parse(json)) } catch {}
-      else setScheduledVaccines({})
+      if (json) {
+        try {
+          const parsed = JSON.parse(json) as Record<string, string>
+          // One-time migration: existing entries are keyed by `${name}-${i}`
+          // (no country prefix). Treat them as US schedule entries — that
+          // matches the pre-feature default. Country-prefixed keys pass
+          // through unchanged.
+          const defaultCountry = child.countryCode ?? 'US'
+          const migrated: Record<string, string> = {}
+          let dirty = false
+          for (const [k, v] of Object.entries(parsed)) {
+            if (k.includes(':')) {
+              migrated[k] = v
+            } else {
+              migrated[`${defaultCountry}:${k}`] = v
+              dirty = true
+            }
+          }
+          setScheduledVaccines(migrated)
+          if (dirty) {
+            AsyncStorage.setItem(
+              `grandma-vaccine-scheduled-${child.id}`,
+              JSON.stringify(migrated),
+            ).catch(() => {})
+          }
+        } catch {
+          setScheduledVaccines({})
+        }
+      } else {
+        setScheduledVaccines({})
+      }
     })
   }, [child?.id])
 
@@ -7112,7 +7141,11 @@ function buildVaccineScheduleTree(
         dueAge: ageLabel,
         status,
         givenDate,
-        scheduleKey: `${v.name}-${i}`,
+        // Namespace by country so scheduled appointments don't leak across
+        // schedules. E.g. a US "Hepatitis B-0" entry should not surface as
+        // "matched" when the user switches to a UK schedule that has no
+        // equivalent first-dose Hepatitis B.
+        scheduleKey: `${countryCode}:${v.name}-${i}`,
       })
     }
   }
