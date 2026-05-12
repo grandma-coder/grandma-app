@@ -1087,11 +1087,24 @@ export function KidsCalendar() {
 
   /** Save a new or edited routine */
   async function saveRoutine() {
+    // Routines must belong to a specific child. In "All Kids" view there is
+    // no defensible default — the previous code silently fell back to the
+    // active child / children[0] and parents got routines silently attached
+    // to the wrong kid.
+    if (selectedChildId === 'all' && children.length > 1) {
+      Alert.alert(
+        'Pick a child',
+        'Routines are saved per child. Switch from "All Kids" to one of your children first.',
+      )
+      return
+    }
     setRoutineSaving(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Not authenticated')
-      const childId = selectedChildId !== 'all' ? selectedChildId : (activeChild?.id ?? children[0]?.id)
+      // Multi-kid case is blocked above; in single-kid accounts "all" still
+      // resolves to that one child (the only safe inference).
+      const childId = selectedChildId !== 'all' ? selectedChildId : children[0]?.id
       if (!childId) throw new Error('Select a child first')
 
       if (routineEditing) {
