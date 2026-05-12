@@ -20,7 +20,7 @@ export function GrandmaBall({ thinking = false, onPress }: GrandmaBallProps) {
           colors={[THEME_COLORS.blue, THEME_COLORS.pink]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[styles.gradientRing, shadows.glowBlue]}
+          style={[styles.gradientRing, shadows.cardPop]}
         >
           <View style={styles.innerRing}>
             <Ionicons

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, THEME_COLORS, borderRadius, typography } from '../../constants/theme'
 
 interface SymptomEntry {
@@ -79,7 +79,7 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
 
       {/* Severity selector (when a symptom is selected) */}
       {selectedSymptom && (
-        <GlassCard style={styles.severityCard}>
+        <PaperCard radius={28} padding={20} style={styles.severityCard}>
           <Text style={styles.severityTitle}>
             How severe is your {SYMPTOMS.find((s) => s.id === selectedSymptom)?.label?.toLowerCase()}?
           </Text>
@@ -94,7 +94,7 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
               </Pressable>
             ))}
           </View>
-        </GlassCard>
+        </PaperCard>
       )}
 
       {/* Today's logged symptoms */}

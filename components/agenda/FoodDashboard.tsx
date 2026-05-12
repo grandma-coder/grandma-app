@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, THEME_COLORS, borderRadius, shadows } from '../../constants/theme'
 
 interface FoodEntry {
@@ -88,7 +88,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
 
       {/* Expanded meal action */}
       {selectedMeal && (
-        <GlassCard style={styles.actionCard}>
+        <PaperCard radius={28} padding={20} style={styles.actionCard}>
           <Text style={styles.actionTitle}>Log {MEALS.find((m) => m.id === selectedMeal)?.label}</Text>
           <Text style={styles.actionDesc}>
             Take a photo and AI will analyze the nutritional content, or add details manually.
@@ -119,7 +119,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
               <Text style={styles.actionBtnText}>Manual</Text>
             </Pressable>
           </View>
-        </GlassCard>
+        </PaperCard>
       )}
 
       {/* Logged entries */}
@@ -129,7 +129,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
           {entries.map((entry) => {
             const meal = MEALS.find((m) => m.id === entry.mealType)
             return (
-              <GlassCard key={entry.id} style={styles.entryCard}>
+              <PaperCard radius={28} padding={20} key={entry.id} style={styles.entryCard}>
                 <View style={styles.entryRow}>
                   {entry.photoUri && (
                     <Image source={{ uri: entry.photoUri }} style={styles.entryPhoto} />
@@ -150,7 +150,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
                     )}
                   </View>
                 </View>
-              </GlassCard>
+              </PaperCard>
             )
           })}
         </View>

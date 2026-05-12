@@ -51,7 +51,8 @@ The entire UI — tabs, pillars, home dashboard, vault sections, AI context — 
 | AI | Claude Sonnet `claude-sonnet-4-20250514` | Via Supabase Edge Functions only |
 | Payments | RevenueCat (`react-native-purchases` v9) | Monthly + annual tiers |
 | Animation | react-native-reanimated v4 | Pregnancy ring spin, sticker hero, transitions |
-| Charts | Custom SVG (`components/charts/SvgCharts.tsx`) | Line + bar charts, no external chart deps |
+| Charts | Custom SVG (`components/charts/`) | `MoodBubbleCluster`, `MoodStickerStrip`, `VaccineScheduleTree`, `SvgCharts` — no external chart deps |
+| i18n | Local in `lib/i18n/` | 12 languages + English, driven by `useLanguageStore` |
 | Language | TypeScript strict | All routes, stores, edge functions typed |
 
 ### Critical syntax reminders
@@ -122,71 +123,131 @@ The 2026 redesign replaced the old neon-dark direction with a warm, editorial, s
 ```
 app/                      Expo Router screens (file = route)
 ├── (auth)/               welcome, sign-in, sign-up
-├── onboarding/           journey, parent-name, due-date, baby-name, activities, child-profile
 ├── (tabs)/               index (home), agenda, library, vault, exchange (garage), settings
-├── profile/              account, kids, care-circle, badges, health-history,
-│                         memories, pregnancy
-├── channel/              index, [id], create, thread/[id]
+├── onboarding/           journey, parent-name, due-date, baby-name, activities,
+│                         child-profile, transition + per-mode subdirs cycle/, kids/, pregnancy/
+├── profile/              account, personal, kids, care-circle, badges, health-history,
+│                         memories, pregnancy, emergency-insurance, notifications, privacy,
+│                         settings
+├── channel/              [id], create, thread/[id], info/[id]
+├── channels/             index, [id], thread/ (top-level channels list)
 ├── garage/               [id], create, share, profile
+├── exchange/             [id], create
+├── exams/                index, [id]
 ├── pillar/[id]           Pillar detail
 ├── grandma-talk          Full AI chat screen
 ├── insights              Analytics + history tab
-├── leaderboard           Community rankings
-├── daily-rewards         Streaks + badges
-├── notifications         Notification center
-├── connections           Care circle
+├── leaderboard, daily-rewards, notifications, connections
+├── dev-panel             Internal dev tools
 └── scan, paywall, birth-plan, airtag-setup, child-picker,
     invite-caregiver, manage-caregivers, accept-invite
 
 components/
-├── ui/                   GlassCard, PaperCard, PaperAlert, PillButton,
-│                         GradientButton, CosmicBackground, ScreenHeader,
-│                         Stickers, Typography, StepSlider, …
-├── home/                 GrandmaBall, ModeSwitcher, PregnancyHome, KidsHome,
-│                         PrePregHome, ActivityCard, …
-│   └── pregnancy/        WeekCard, VitalsCarousel, AffirmationRevealCard,
-│                         RemindersSection, AppointmentDetailModal
-├── prepreg/              CyclePhaseRing, WeekStrip, HormoneChart, HealthDashboard
-├── pregnancy/            PregnancyJourneyRing (calendar), BirthTypeCard,
-│                         MilkControl, PartnerDashboard, WeeklyInsight
-├── kids/                 LocationCard, SleepCircle, MoodAnalysis,
-│                         CaloriesCard, GrowthLeaps
-├── calendar/             PregnancyCalendar, PregnancyLogForms, KidsCalendar,
-│                         KidsLogForms, CycleCalendar, LogSheet, LogTile,
-│                         AppointmentDetailModal, AgendaWeekStrip
-├── vault/                EmergencyCard, DocumentSection, DocumentUpload,
-│                         VaccineRecord
+├── ui/                   PaperCard, PaperAlert, PillButton,
+│                         StickerButton, StickerDateModal, CosmicBackground, ScreenHeader,
+│                         Stickers, AnimatedSticker, Typography, StepSlider, SoftStatCard,
+│                         StatRow, FormRow, ChildPills, AvatarPicker, GrandmaLogo,
+│                         NotificationBell, ThemeProvider, DevModeBanner, …
+├── home/                 GrandmaBall, ModeSwitcher, HomeGreeting, PregnancyHome, KidsHome,
+│                         CycleHome, PillarGrid, ActivityCard, DailyPulse, BabySizeCard,
+│                         GrandmaWisdom, MomentsOfCare, MilkTracker, NannyUpdatesFeed
+│   ├── cycle/            YourCycleCard, HormonesCard, FertileWindowStrip, CyclePillarsGrid,
+│                         CycleHomeDetailSheets, WisdomCard
+│   └── pregnancy/        WeekCard, WeekRuler, WeekDetailModal, TodaySummaryCard,
+│                         TodayDashboardModal, AffirmationRevealCard, AffirmationShareModal,
+│                         RemindersSection, PregnancyUserReminders, AppointmentDetailModal,
+│                         WeightTrendCard, AnimatedFruit
+├── prepreg/              CyclePhaseRing, WeekStrip, HormoneChart, HealthDashboard,
+│                         DailyInsights, ChecklistCard, LearningModule, PartnerView
+├── pregnancy/            PregnancyJourneyRing, BirthGuideModal, BirthDetailModal,
+│                         BirthTypeCard, MilkControl, PartnerDashboard, WeeklyInsight
+├── kids/                 KidsJourneyRing, LocationCard
+│                         (sleep/mood/calories/growth-leaps live inside KidsHome + KidsAnalytics)
+├── agenda/               ActivityTimeline, AppointmentList, CalendarView, ContractionTimer,
+│                         CycleTracker, FoodDashboard, FoodPhotoEntry, KickCounter,
+│                         NannyNotesPanel, PrePregChecklist, SymptomLogger
+├── calendar/             PregnancyCalendar, PregnancyLogForms, SimplePregnancyLogForm,
+│                         PregnancyMealForm, KidsCalendar, KidsLogForms, CycleCalendar,
+│                         LogForms, LogFormSticker, LogSheet, LogTile, AppointmentDetailModal,
+│                         AgendaWeekStrip, AgendaHeader, ActivityPillCard, SegmentedTabs
+├── charts/               SvgCharts (exports MoodBubbleCluster, MoodStickerStrip,
+│                         VaccineScheduleTree, line/bar), FullScreenChart, GalleryCharts
+├── analytics/            CycleAnalytics, KidsAnalytics, PregnancyAnalytics, CycleDetailSheets
+│   └── shared/           AnalyticsHeader, BigChartCard, CustomRangeModal, HealthScoreRing,
+│                         MiniCharts, MiniStatTile, PeriodSelector
+├── vault/                EmergencyCard, DocumentSection, DocumentUpload, VaccineRecord
+├── exams/                ExamForm
 ├── exchange/             ListingCard
 ├── channels/             ChannelCard, ThreadCard
+├── connections/          ChannelsScreen, ChannelsTab, GarageScreen, GarageTab
+├── chat/                 GrandmaTalk
 ├── pillar/               PillarCard, TipCard
-├── insights/             InsightCard, MetricsHighlight
-├── stickers/             RewardStickers, BrandStickers
-├── charts/               SvgCharts
+├── insights/             InsightsScreen
+├── profile/              ProfileHero, BadgesStrip, MyJourneyPillGrid
+├── stickers/             BrandStickers, RewardStickers, BadgeIcon, LineIcons
+├── onboarding/           OnboardingStep
 └── auth/                 SocialAuthButtons
 
 lib/
 ├── supabase.ts           Supabase client (ExpoSecureStoreAdapter)
+├── queryClient.ts        React Query client
 ├── claude.ts             callNana() → invokes nana-chat edge function
+├── grandmaChat.ts        Chat session helpers
 ├── cycleLogic.ts         Menstrual cycle engine
+├── cycleAnalytics.ts     Cycle stats
 ├── modeConfig.ts         Per-mode tabs / pillars / vault sections
 ├── pillars.ts            Kids pillars (9)
 ├── pregnancyPillars.ts   Pregnancy pillars (9)
 ├── prePregPillars.ts     Pre-pregnancy pillars (6)
+├── pillarStickerMap.ts   Pillar → sticker mapping
 ├── pregnancyData.ts      40-week baby development data
+├── pregnancyWeeks.ts     Week math + due-date derivation
+├── pregnancyInsights.ts  Per-week insights
+├── pregnancyAffirmations.ts  Daily affirmations
+├── pregnancyAppointments.ts  Appointment schedule
+├── pregnancyReads.ts     Weekly content
+├── pregnancySeeds.ts     Seed data
+├── prepregnancyData.ts   Pre-preg content
+├── prepGuide.ts          Pre-pregnancy guide content
+├── birthData.ts          Birth plan content
+├── birthGuide/           Birth guide module
+├── birthGuideData.ts     Birth guide step data
+├── growthLeaps.ts        Kids leap data
+├── vaccineInfo.ts        Vaccine catalog
+├── weekStats.ts          Length/weight per week
+├── weekContent.ts        Weekly content blocks
+├── weekDetailData.ts     Weekly detail-modal data
+├── foodTracking.ts       Kids food logging
+├── foodAi.ts             Food scan AI helpers
+├── foodCalories.ts       Calorie estimation
+├── moodFace.ts           Mood face variant + fill mapper
 ├── analyticsData.ts      Today/week metric hooks
 ├── insights.ts           Analytics engine
 ├── notificationEngine.ts Notification scheduling
+├── notifications.ts      Notification CRUD helpers
 ├── leaderboard.ts        Points + rankings
 ├── badgeSync.ts          Achievement award logic
 ├── channels.ts           Community CRUD
 ├── channelPosts.ts       80+ seed posts
+├── channelSticker.ts     Channel sticker mapping
 ├── garage.ts             Marketplace helpers
+├── garagePosts.ts        Marketplace seeds
+├── exchange.ts           Exchange helpers
+├── airtag.ts             AirTag location
+├── revenue.ts            RevenueCat init
 ├── auth-providers.ts     Apple / Google sign-in
-├── moodFace.ts           Mood face variant + fill mapper
-├── weekStats.ts          Length/weight per week
-└── i18n/                 Translation system (~180/500 keys, in progress)
+├── scan.ts               Camera scan helpers
+├── photoSafety.ts        Photo content safety checks
+├── vault.ts              Vault CRUD
+├── examData.ts           Exam content
+├── emergencyInsurance.ts Insurance card data
+├── emojiToSticker.tsx    Emoji → sticker JSX
+├── devSeed.ts            Dev-only seeding
+├── profileStatus.ts      Profile completeness
+├── useProfile.ts         Profile hook
+└── i18n/                 Translation system (en + 11 languages)
 
-store/                    Zustand stores (see table below)
+store/                    Zustand stores — 21 total (see table below)
 
 constants/
 └── theme.ts              All design tokens (brand, stickers, light/dark, fonts, radius)
@@ -204,8 +265,10 @@ supabase/
 |---|---|---|
 | `useModeStore` | ✅ | Active journey mode (pre-preg / pregnancy / kids) |
 | `useThemeStore` | ✅ | Light/dark theme |
+| `useLanguageStore` | ✅ | Active language (12 + en) |
 | `useChildStore` | — | Children array, active child, caregiver role/permissions |
 | `useChatStore` | — | AI chat message history |
+| `useGrandmaHistoryStore` | — | Past chat sessions |
 | `useJourneyStore` | ✅ | Onboarding data (parentName, dueDate, babyName, activities) |
 | `useOnboardingStore` | — | General onboarding state |
 | `useCycleOnboardingStore` | ✅ | Pre-pregnancy onboarding |
@@ -214,12 +277,15 @@ supabase/
 | `usePregnancyStore` | — | Week, weight, mood, symptoms |
 | `useFoodStore` | — | Food entries + ratings |
 | `useVaultStore` | — | Documents, emergency card |
+| `useEmergencyInsuranceStore` | ✅ | Insurance card |
 | `useExchangeStore` | — | Marketplace listings + saved |
 | `useChannelsStore` | — | Channels, threads |
 | `useBehaviorStore` | ✅ | Journey modes & behaviors per user |
 | `useBadgeStore` | ✅ | Achievement badges |
 | `useGoalsStore` | ✅ | User goals |
-| `useNotificationsStore` | — | Notification state |
+| `useDevStore` | — | Dev-only flags |
+
+> Notifications are not in a Zustand store — they live in `lib/notifications.ts` + React Query.
 
 ---
 
@@ -272,6 +338,8 @@ Apply with `supabase db push`.
 | Function | JWT | Purpose |
 |---|---|---|
 | `nana-chat` | no-verify | Guru Grandma AI — 3-mode context + 24 pillar prompts |
+| `grandma-chat` | no-verify | Newer chat surface (sessions + history) |
+| `food-ai` | no-verify | Food photo → nutrition + ranking (Claude Vision) |
 | `scan-image` | no-verify | Claude Vision — 4 scan types with child context |
 | `generate-insights` | no-verify | Analytics generation per mode |
 | `invite-caregiver` | required | Token-based caregiver invite |
@@ -300,7 +368,7 @@ Paywall: [`app/paywall.tsx`](app/paywall.tsx). RevenueCat init in `lib/revenue.t
 A single, slider-based log form is shared across home and calendar surfaces (one source of truth, consistent paper-sheet styling):
 
 - **Source forms:** [`components/calendar/PregnancyLogForms.tsx`](components/calendar/PregnancyLogForms.tsx) — `SleepLogForm`, `WeightLogForm`, `WaterLogForm`, `ExerciseLogForm`, `VitaminsLogForm`, `KegelLogForm`, `KickCountForm`, `PregnancyMoodForm`, `PregnancySymptomsForm`, `AppointmentForm`, `NutritionLogForm`, `ContractionTimerLogForm`, …
-- **Consumers:** Calendar (`PregnancyCalendar`), home vital cards (`VitalsCarousel`), home routines + reminders (`PregnancyHome`)
+- **Consumers:** Calendar (`PregnancyCalendar`), home today summary (`TodaySummaryCard`), home routines + reminders (`PregnancyHome`)
 - **Save helper:** internal `savePregnancyLog(date, type, value, notes)` writes to `pregnancy_logs` and invalidates `['pregnancy-week-logs']` and `['pregnancy-today-logs']`
 - **Display:** the calendar Journey ring's "LOGGED THIS WEEK" panel renders structured log entries (label · value · severity · duration · notes · day) per selected week
 
@@ -363,14 +431,19 @@ See [`.claude/rules/code-style.md`](.claude/rules/code-style.md) and [`.claude/r
 
 ---
 
-## Status snapshot (2026-05-02)
+## Status snapshot (2026-05-11)
 
 - ✅ Three journey modes wired end-to-end (mode switcher, per-mode home, agenda, library, vault)
-- ✅ Pregnancy: live week from due date, journey ring with structured weekly log readout, weekly milestone, profile editing, sticker hero
-- ✅ Kids: nutrition ranking, breastfeeding insights, sticker log forms
-- ✅ Cream-paper / sticker-collage redesign across light + dark
+- ✅ Cream-paper / sticker-collage redesign across light + dark (supersedes neon-dark-purple)
+- ✅ Pregnancy: live week from due date, journey ring with structured weekly log readout, unified Today summary card, user reminders, birth guide collapsed-by-default, mood bubble chart, sticker hero, profile editing
+- ✅ Kids: nutrition ranking, breastfeeding insights, sticker log forms, MoodBubbleCluster (replaced line chart), SleepDetailModal, custom range modal
+- ✅ Health/Vaccines: VaccineScheduleTree (replaced BlockTower), vaccine date picker as sticker card, info modal
+- ✅ Analytics: interactive charts, polished detail modals
+- ✅ Agenda: restyled segmented tabs, week strip, child selectors, date range pills in sticker style
+- ✅ Chat: restyled Past Conversations panel; `grandma-chat` edge function alongside `nana-chat`
+- ✅ Food: `food-ai` edge function for photo → nutrition ranking
 - ✅ Unified pregnancy log forms (slider-based, paper sheet) shared between calendar and home
-- 🚧 i18n coverage — system built; ~180/500 keys done across 3 wired-up screens (7-wave plan)
+- 🚧 i18n coverage — 12 languages wired via `useLanguageStore`; ~180/500 keys done (7-wave plan)
 - 🚧 Vault polish, marketplace listing flows, leaderboard rewards loop
 
 ---

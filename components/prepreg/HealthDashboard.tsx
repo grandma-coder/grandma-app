@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { useAppTheme } from '../ui/ThemeProvider'
 import { colors, THEME_COLORS, borderRadius, shadows } from '../../constants/theme'
 import { LiquidFillBottle } from '../charts/GalleryCharts'
@@ -21,7 +21,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
   return (
     <View style={styles.container}>
       {/* Hydration Card */}
-      <GlassCard style={styles.card}>
+      <PaperCard radius={28} padding={20} style={styles.card}>
         <View style={styles.cardHeader}>
           <View style={[styles.iconBox, { backgroundColor: '#4D96FF15' }]}>
             <Ionicons name="water" size={22} color="#4D96FF" />
@@ -72,12 +72,12 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
           <Ionicons name="add-circle" size={20} color="#4D96FF" />
           <Text style={styles.addWaterText}>Add Glass</Text>
         </Pressable>
-      </GlassCard>
+      </PaperCard>
 
       {/* Sleep + Supplements row */}
       <View style={styles.metricsRow}>
         {/* Sleep Card */}
-        <GlassCard style={styles.metricCard}>
+        <PaperCard radius={28} padding={20} style={styles.metricCard}>
           <View style={[styles.metricIcon, { backgroundColor: '#B983FF15' }]}>
             <Ionicons name="moon" size={20} color="#B983FF" />
           </View>
@@ -91,20 +91,20 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
               <Ionicons name="checkmark" size={10} color={THEME_COLORS.green} />
             </View>
           )}
-        </GlassCard>
+        </PaperCard>
 
         {/* Supplements Card */}
-        <GlassCard style={styles.metricCard}>
+        <PaperCard radius={28} padding={20} style={styles.metricCard}>
           <View style={[styles.metricIcon, { backgroundColor: '#FF8AD815' }]}>
             <Ionicons name="medical" size={20} color="#FF8AD8" />
           </View>
           <Text style={[styles.metricValue, { color: tc.text }]}>Folic</Text>
           <Text style={[styles.metricUnit, { color: tc.textTertiary }]}>400mcg</Text>
           <Text style={[styles.metricLabel, { color: tc.textTertiary }]}>PRENATAL</Text>
-        </GlassCard>
+        </PaperCard>
 
         {/* Exercise Card */}
-        <GlassCard style={styles.metricCard}>
+        <PaperCard radius={28} padding={20} style={styles.metricCard}>
           <View style={[styles.metricIcon, { backgroundColor: '#A2FF8615' }]}>
             <Ionicons name="fitness" size={20} color="#A2FF86" />
           </View>
@@ -113,11 +113,11 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
           </Text>
           <Text style={[styles.metricUnit, { color: tc.textTertiary }]}>min</Text>
           <Text style={[styles.metricLabel, { color: tc.textTertiary }]}>EXERCISE</Text>
-        </GlassCard>
+        </PaperCard>
       </View>
 
       {/* Nutrition tip */}
-      <GlassCard style={styles.nutritionTip}>
+      <PaperCard radius={28} padding={20} style={styles.nutritionTip}>
         <View style={styles.nutritionHeader}>
           <Ionicons name="nutrition" size={18} color={THEME_COLORS.green} />
           <Text style={styles.nutritionTitle}>NUTRITION TIP</Text>
@@ -125,7 +125,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
         <Text style={[styles.nutritionText, { color: tc.textSecondary }]}>
           Take your folic acid (400mcg) daily — ideally 1-3 months before conceiving. It prevents neural tube defects and is the single most important supplement for pre-conception.
         </Text>
-      </GlassCard>
+      </PaperCard>
     </View>
   )
 }

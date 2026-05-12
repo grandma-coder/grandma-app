@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, borderRadius } from '../../constants/theme'
 import type { ChecklistItem } from '../../lib/prepregnancyData'
 
@@ -27,7 +27,7 @@ export function ChecklistCard({ items, onToggle }: ChecklistCardProps) {
   const progress = items.length > 0 ? doneCount / items.length : 0
 
   return (
-    <GlassCard>
+    <PaperCard radius={28} padding={20}>
       <View style={styles.header}>
         <Text style={styles.title}>Preparation Checklist</Text>
         <Text style={styles.counter}>{doneCount}/{items.length}</Text>
@@ -54,7 +54,7 @@ export function ChecklistCard({ items, onToggle }: ChecklistCardProps) {
           </Pressable>
         )
       })}
-    </GlassCard>
+    </PaperCard>
   )
 }
 

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors } from '../../constants/theme'
 import { getWeekData } from '../../lib/pregnancyData'
 
@@ -12,7 +12,7 @@ export function WeeklyInsight({ weekNumber }: WeeklyInsightProps) {
   const data = getWeekData(weekNumber)
 
   return (
-    <GlassCard>
+    <PaperCard radius={28} padding={20}>
       <Text style={styles.label}>WEEK {weekNumber} DEEP DIVE</Text>
 
       <View style={styles.section}>
@@ -45,7 +45,7 @@ export function WeeklyInsight({ weekNumber }: WeeklyInsightProps) {
         </View>
         <Text style={styles.body}>{data.momTip}</Text>
       </View>
-    </GlassCard>
+    </PaperCard>
   )
 }
 

@@ -21,7 +21,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { getModeConfig } from '../../lib/modeConfig'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { GlassCard } from '../../components/ui/GlassCard'
+import { PaperCard } from '../../components/ui/PaperCard'
 import { GrandmaBall } from '../../components/home/GrandmaBall'
 import { colors, THEME_COLORS, typography, spacing, borderRadius } from '../../constants/theme'
 import type { PillarId, Pillar } from '../../types'
@@ -148,7 +148,7 @@ export default function Library() {
 
         {/* Channels placeholder */}
         <Text style={styles.pillarsLabel}>COMMUNITY CHANNELS</Text>
-        <GlassCard>
+        <PaperCard radius={28} padding={20}>
           <View style={styles.channelPlaceholder}>
             <Text style={{ fontSize: 28, marginBottom: 8, fontFamily: 'Fraunces_600SemiBold' }}>💬</Text>
             <Text style={styles.channelTitle}>Coming Soon</Text>
@@ -156,7 +156,7 @@ export default function Library() {
               Join channels for birth stories, breastfeeding support, recipes, and local meetups.
             </Text>
           </View>
-        </GlassCard>
+        </PaperCard>
       </ScrollView>
     )
   }

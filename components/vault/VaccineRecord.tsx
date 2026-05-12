@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, borderRadius } from '../../constants/theme'
 
 export interface VaccineEntry {
@@ -23,7 +23,7 @@ function formatDate(dateStr: string): string {
 export function VaccineRecord({ vaccines }: VaccineRecordProps) {
   if (vaccines.length === 0) {
     return (
-      <GlassCard style={styles.container}>
+      <PaperCard radius={28} padding={20} style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Vaccine Records</Text>
         </View>
@@ -31,12 +31,12 @@ export function VaccineRecord({ vaccines }: VaccineRecordProps) {
           <Ionicons name="medical-outline" size={28} color={colors.textTertiary} />
           <Text style={styles.emptyText}>No vaccines recorded yet</Text>
         </View>
-      </GlassCard>
+      </PaperCard>
     )
   }
 
   return (
-    <GlassCard style={styles.container}>
+    <PaperCard radius={28} padding={20} style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Vaccine Records</Text>
         <Text style={styles.count}>{vaccines.length} recorded</Text>
@@ -70,7 +70,7 @@ export function VaccineRecord({ vaccines }: VaccineRecordProps) {
           </View>
         </View>
       ))}
-    </GlassCard>
+    </PaperCard>
   )
 }
 

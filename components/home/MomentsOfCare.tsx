@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import type { ComponentType } from 'react'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { LogExercise, LogSleep } from '../stickers/RewardStickers'
 import { colors, borderRadius } from '../../constants/theme'
 
@@ -36,7 +36,7 @@ export function MomentsOfCare() {
             },
           ]}
         >
-          <GlassCard style={styles.card}>
+          <PaperCard radius={28} padding={20} style={styles.card}>
             <View style={styles.cardRow}>
               <View style={styles.iconCircle}>
                 <moment.Sticker size={28} />
@@ -46,7 +46,7 @@ export function MomentsOfCare() {
                 <Text style={styles.cardDescription}>{moment.description}</Text>
               </View>
             </View>
-          </GlassCard>
+          </PaperCard>
         </Pressable>
       ))}
     </View>

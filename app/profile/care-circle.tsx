@@ -327,7 +327,7 @@ function friendlyTypeLabel(type: string, value: string | null): string {
 
 function PhotoPickerAvatar({ uri, onPick, size = 96 }: { uri: string; onPick: (newUri: string) => void; size?: number }) {
   const { colors, stickers, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
+  const ink = colors.text
 
   async function pickPhoto() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -691,7 +691,7 @@ export default function CareCircleScreen() {
             style={[
               styles.toggleText,
               {
-                color: tab === 'members' ? '#141313' : colors.textSecondary,
+                color: tab === 'members' ? stickers.lilacInk : colors.textSecondary,
                 fontFamily: tab === 'members' ? font.bodySemiBold : font.bodyMedium,
               },
             ]}
@@ -710,7 +710,7 @@ export default function CareCircleScreen() {
             style={[
               styles.toggleText,
               {
-                color: tab === 'activity' ? '#141313' : colors.textSecondary,
+                color: tab === 'activity' ? stickers.lilacInk : colors.textSecondary,
                 fontFamily: tab === 'activity' ? font.bodySemiBold : font.bodyMedium,
               },
             ]}
@@ -754,8 +754,8 @@ export default function CareCircleScreen() {
             const permKeys = Object.entries(m.permissions).filter(([k, v]) => v === true && !k.startsWith('_')).map(([k]) => k)
             const title = m.displayName || m.role.charAt(0).toUpperCase() + m.role.slice(1)
             const isPaused = m.permissions._paused === true
-            const statusColor = isPaused ? stickers.coral : '#7BB36F'
-            const pendingColor = '#E8A435'
+            const statusColor = isPaused ? stickers.coral : stickers.green
+            const pendingColor = stickers.yellow
 
             return (
               <View
@@ -798,7 +798,7 @@ export default function CareCircleScreen() {
                     ) : null}
                     <View style={styles.memberBadges}>
                       <View style={[styles.badge, { backgroundColor: roleColor + (isDark ? '32' : '38') }]}>
-                        <Text style={[styles.badgeText, { color: isDark ? roleColor : '#3A3533', fontFamily: font.bodySemiBold }]}>
+                        <Text style={[styles.badgeText, { color: isDark ? roleColor : colors.textSecondary, fontFamily: font.bodySemiBold }]}>
                           {m.role.charAt(0).toUpperCase() + m.role.slice(1)}
                         </Text>
                       </View>
@@ -810,18 +810,18 @@ export default function CareCircleScreen() {
                           : stickers.green + (isDark ? '32' : '50'),
                       }]}>
                         {isPaused ? (
-                          <Pause size={10} color={isDark ? stickers.coral : '#B43E2E'} />
+                          <Pause size={10} color={stickers.coralInk} />
                         ) : isPending ? (
-                          <Clock size={10} color={isDark ? '#F0CE4C' : '#7C5E0F'} />
+                          <Clock size={10} color={stickers.yellowInk} />
                         ) : (
-                          <Check size={10} color={isDark ? '#C5DA98' : '#3F5919'} />
+                          <Check size={10} color={stickers.greenInk} />
                         )}
                         <Text style={[styles.badgeText, {
                           color: isPaused
-                            ? (isDark ? stickers.coral : '#B43E2E')
+                            ? stickers.coralInk
                             : isPending
-                            ? (isDark ? '#F0CE4C' : '#7C5E0F')
-                            : (isDark ? '#C5DA98' : '#3F5919'),
+                            ? stickers.yellowInk
+                            : stickers.greenInk,
                           fontFamily: font.bodySemiBold,
                         }]}>
                           {isPaused ? 'Paused' : m.status}
@@ -864,7 +864,7 @@ export default function CareCircleScreen() {
                             style={[
                               styles.childChipText,
                               {
-                                color: isDark ? colors.text : '#141313',
+                                color: colors.text,
                                 fontFamily: font.bodySemiBold,
                               },
                             ]}
@@ -903,8 +903,8 @@ export default function CareCircleScreen() {
                     onPress={() => resendInvite(m)}
                     style={[styles.resendBtn, { backgroundColor: stickers.lilac + (isDark ? '28' : '38') }]}
                   >
-                    <Mail size={14} color={isDark ? stickers.lilac : '#3A2A6E'} strokeWidth={2} />
-                    <Text style={[styles.resendText, { color: isDark ? stickers.lilac : '#3A2A6E', fontFamily: font.bodySemiBold }]}>Resend Invite</Text>
+                    <Mail size={14} color={stickers.lilacInk} strokeWidth={2} />
+                    <Text style={[styles.resendText, { color: stickers.lilacInk, fontFamily: font.bodySemiBold }]}>Resend Invite</Text>
                   </Pressable>
                 )}
 
@@ -921,8 +921,8 @@ export default function CareCircleScreen() {
                     style={[styles.actionBtn, { borderColor: colors.borderStrong }]}
                     onPress={() => pauseMember(m)}
                   >
-                    {isPaused ? <Check size={14} color={isDark ? stickers.green : '#3F5919'} /> : <Pause size={14} color={isDark ? '#F0CE4C' : '#7C5E0F'} />}
-                    <Text style={[styles.actionText, { color: isPaused ? (isDark ? stickers.green : '#3F5919') : (isDark ? '#F0CE4C' : '#7C5E0F'), fontFamily: font.bodySemiBold }]}>{isPaused ? 'Activate' : 'Pause'}</Text>
+                    {isPaused ? <Check size={14} color={stickers.greenInk} /> : <Pause size={14} color={stickers.yellowInk} />}
+                    <Text style={[styles.actionText, { color: isPaused ? stickers.greenInk : stickers.yellowInk, fontFamily: font.bodySemiBold }]}>{isPaused ? 'Activate' : 'Pause'}</Text>
                   </Pressable>
                   <Pressable
                     style={[styles.actionBtn, { borderColor: stickers.coral + '40' }]}
@@ -1064,7 +1064,7 @@ export default function CareCircleScreen() {
                         <View style={styles.activityFooter}>
                           <View style={[styles.childTag, { backgroundColor: stickers.blue + (isDark ? '28' : '40') }]}>
                             <FlowerSticker size={10} petal={stickers.blue} center={stickers.yellow} />
-                            <Text style={[styles.childTagText, { color: isDark ? stickers.blue : '#1F4A7A', fontFamily: font.bodySemiBold }]}>{a.childName}</Text>
+                            <Text style={[styles.childTagText, { color: stickers.blueInk, fontFamily: font.bodySemiBold }]}>{a.childName}</Text>
                           </View>
                           <Text style={[styles.activityTime, { color: colors.textMuted, fontFamily: font.body }]}>{a.date}</Text>
                         </View>
@@ -1121,7 +1121,7 @@ function FilterChip({ label, active, onPress, kind = 'kid' }: { label: string; a
       ) : (
         <HeartSticker size={14} fill={stickers.coral} />
       )}
-      <Text style={[styles.filterChipText, { color: active ? (isDark ? stickers.lilac : '#3A2A6E') : colors.textMuted, fontFamily: font.bodySemiBold }]}>{label}</Text>
+      <Text style={[styles.filterChipText, { color: active ? stickers.lilacInk : colors.textMuted, fontFamily: font.bodySemiBold }]}>{label}</Text>
     </Pressable>
   )
 }
@@ -1135,7 +1135,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
   const paper = colors.surface
   const paperBorder = colors.border
   const inkActiveBg = stickers.lilac + (isDark ? '32' : '40')
-  const inkActiveText = isDark ? stickers.lilac : '#3A2A6E'
+  const inkActiveText = stickers.lilacInk
 
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
@@ -1274,7 +1274,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {/* Progress dots */}
           <View style={sheetStyles.progressRow}>
             {[1, 2, 3, 4].map((s) => (
-              <View key={s} style={[sheetStyles.progressDot, { backgroundColor: s <= step ? (isDark ? stickers.lilac : '#3A2A6E') : colors.borderLight }]} />
+              <View key={s} style={[sheetStyles.progressDot, { backgroundColor: s <= step ? stickers.lilacInk : colors.borderLight }]} />
             ))}
           </View>
 
@@ -1335,11 +1335,11 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       onPress={() => toggleChild(c.id)}
                       style={[sheetStyles.chip, {
                         backgroundColor: active ? stickers.blue + (isDark ? '32' : '40') : paper,
-                        borderColor: active ? (isDark ? stickers.blue : '#1F4A7A') : paperBorder,
+                        borderColor: active ? stickers.blueInk : paperBorder,
                       }]}
                     >
-                      {active && <Check size={12} color={isDark ? stickers.blue : '#1F4A7A'} strokeWidth={3} />}
-                      <Text style={[sheetStyles.chipText, { color: active ? (isDark ? stickers.blue : '#1F4A7A') : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
+                      {active && <Check size={12} color={stickers.blueInk} strokeWidth={3} />}
+                      <Text style={[sheetStyles.chipText, { color: active ? stickers.blueInk : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
                     </Pressable>
                   )
                 })}
@@ -1495,9 +1495,9 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
 }
 
 function SheetButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
-  const { colors, font, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
-  const inkText = isDark ? colors.bg : '#F3ECD9'
+  const { colors, font } = useTheme()
+  const ink = colors.text
+  const inkText = colors.bg
   return (
     <Pressable
       onPress={onPress}
@@ -1538,7 +1538,7 @@ function EditMemberSheet({ member, onClose, onSaved }: {
   const paper = colors.surface
   const paperBorder = colors.border
   const inkActiveBg = stickers.lilac + (isDark ? '32' : '40')
-  const inkActiveText = isDark ? stickers.lilac : '#3A2A6E'
+  const inkActiveText = stickers.lilacInk
 
   const [editName, setEditName] = useState(member.displayName)
   const [editPhotoUri, setEditPhotoUri] = useState(member.photoUrl)

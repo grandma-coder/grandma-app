@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, borderRadius } from '../../constants/theme'
 
 interface LocationCardProps {
@@ -23,7 +23,7 @@ function timeAgo(dateStr: string): string {
 export function LocationCard({ childName, connected, lastUpdate, onSetup }: LocationCardProps) {
   if (!connected) {
     return (
-      <GlassCard style={styles.container}>
+      <PaperCard radius={28} padding={20} style={styles.container}>
         <View style={styles.row}>
           <View style={styles.iconCircle}>
             <Ionicons name="location-outline" size={22} color={colors.textTertiary} />
@@ -36,12 +36,12 @@ export function LocationCard({ childName, connected, lastUpdate, onSetup }: Loca
         <Pressable onPress={onSetup} style={styles.setupBtn}>
           <Text style={styles.setupText}>Set Up AirTag</Text>
         </Pressable>
-      </GlassCard>
+      </PaperCard>
     )
   }
 
   return (
-    <GlassCard variant="accent" style={styles.container}>
+    <PaperCard radius={28} padding={20} style={styles.container}>
       <View style={styles.row}>
         <View style={[styles.iconCircle, styles.iconCircleActive]}>
           <Ionicons name="location" size={22} color={colors.accent} />
@@ -62,7 +62,7 @@ export function LocationCard({ childName, connected, lastUpdate, onSetup }: Loca
         <Ionicons name="navigate-circle-outline" size={32} color={colors.textTertiary} />
         <Text style={styles.mapPlaceholderText}>Map view coming soon</Text>
       </View>
-    </GlassCard>
+    </PaperCard>
   )
 }
 

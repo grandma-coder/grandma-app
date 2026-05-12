@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { View, Text, Pressable, TextInput, Modal, ScrollView, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, THEME_COLORS, borderRadius, shadows, typography } from '../../constants/theme'
 
 export interface AppointmentEntry {
@@ -69,7 +69,7 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
   function renderAppointment(appt: AppointmentEntry) {
     const typeInfo = TYPES.find((t) => t.id === appt.type) ?? TYPES[6]
     return (
-      <GlassCard key={appt.id} style={styles.apptCard}>
+      <PaperCard radius={28} padding={20} key={appt.id} style={styles.apptCard}>
         <View style={styles.apptRow}>
           <View style={[styles.apptIconBox, { backgroundColor: typeInfo.color + '15' }]}>
             <Ionicons name={typeInfo.icon as any} size={20} color={typeInfo.color} />
@@ -87,7 +87,7 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
             </Text>
           </View>
         </View>
-      </GlassCard>
+      </PaperCard>
     )
   }
 
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    ...shadows.glow,
+    ...shadows.pop,
   },
   submitText: {
     fontSize: 14,

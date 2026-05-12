@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { CyclePhaseRing } from '../prepreg/CyclePhaseRing'
 import { getCycleInfo, getMonthCycleDots, toDateStr } from '../../lib/cycleLogic'
 import type { CycleInfo } from '../../lib/cycleLogic'
@@ -53,7 +53,7 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
       <CyclePhaseRing cycleInfo={cycleInfo} />
 
       {/* Selected date phase info */}
-      <GlassCard style={styles.dateInfoCard}>
+      <PaperCard radius={28} padding={20} style={styles.dateInfoCard}>
         <View style={styles.dateInfoHeader}>
           <View style={[styles.datePhaseDot, { backgroundColor: selectedInfo.phaseColor }]} />
           <Text style={styles.dateInfoPhase}>{selectedInfo.phaseLabel}</Text>
@@ -68,7 +68,7 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
             <Text style={styles.fertileText}>Fertile window — {selectedInfo.conceptionProbability} chance of conception</Text>
           </View>
         )}
-      </GlassCard>
+      </PaperCard>
 
       {/* Quick log buttons */}
       <Text style={styles.sectionLabel}>QUICK LOG</Text>
@@ -118,7 +118,7 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
       ))}
 
       {/* Nutrition for this phase */}
-      <GlassCard style={styles.nutritionCard}>
+      <PaperCard radius={28} padding={20} style={styles.nutritionCard}>
         <View style={styles.nutritionHeader}>
           <Ionicons name="nutrition" size={18} color={THEME_COLORS.green} />
           <Text style={styles.nutritionTitle}>NUTRITION FOR {cycleInfo.phaseLabel.toUpperCase()}</Text>
@@ -126,7 +126,7 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
         {cycleInfo.nutritionTips.map((tip, i) => (
           <Text key={i} style={styles.nutritionItem}>• {tip}</Text>
         ))}
-      </GlassCard>
+      </PaperCard>
     </View>
   )
 }

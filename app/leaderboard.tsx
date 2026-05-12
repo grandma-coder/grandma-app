@@ -365,9 +365,9 @@ export default function LeaderboardScreen() {
   const { colors, radius, stickers, font, isDark } = useTheme()
   const insets = useSafeAreaInsets()
 
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
 
   const [entries, setEntries] = useState<LeaderEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -466,7 +466,7 @@ export default function LeaderboardScreen() {
                 style={[
                   styles.tabPillText,
                   {
-                    color: isActive ? (isDark ? colors.bg : '#FFFEF8') : colors.textSecondary,
+                    color: isActive ? colors.textInverse : colors.textSecondary,
                     fontFamily: font.bodySemiBold,
                   },
                 ]}
@@ -477,7 +477,7 @@ export default function LeaderboardScreen() {
                 style={[
                   styles.tabPillCount,
                   {
-                    color: isActive ? (isDark ? colors.bg : '#FFFEF8') : colors.textMuted,
+                    color: isActive ? colors.textInverse : colors.textMuted,
                     fontFamily: font.body,
                   },
                 ]}
@@ -583,9 +583,9 @@ function Podium({
   onPress: (e: LeaderEntry) => void
 }) {
   const { colors, stickers, font, radius, isDark } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
 
   // Reorder for visual: [2, 1, 3]
   const order = [entries[1], entries[0], entries[2]].filter(Boolean)
@@ -629,7 +629,7 @@ function Podium({
               accent={fill + (isDark ? '22' : '33')}
               initial={(entry.name || '?').trim().charAt(0).toUpperCase()}
               textColor={ink}
-              borderColor="rgba(20,19,19,0.12)"
+              borderColor={colors.borderStrong}
               borderWidth={1.5}
             />
 
@@ -665,9 +665,9 @@ function LeaderRow({
   onPress: () => void
 }) {
   const { colors, stickers, font, radius, isDark } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
 
   const meTint = isDark ? stickers.pinkSoft : stickers.pinkSoft
   const meBorder = stickers.coral
@@ -697,7 +697,7 @@ function LeaderRow({
         accent={isMe ? stickers.pink : stickers.yellowSoft}
         initial={(entry.name || '?').trim().charAt(0).toUpperCase()}
         textColor={ink}
-        borderColor={isMe ? stickers.coral : 'rgba(20,19,19,0.12)'}
+        borderColor={isMe ? stickers.coral : colors.borderStrong}
         borderWidth={1.5}
       />
 
@@ -752,9 +752,9 @@ function StatChip({ icon, value }: { icon: React.ReactNode; value: number }) {
 
 function SoloCheer() {
   const { colors, stickers, font, radius, isDark } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
 
   return (
     <View
@@ -789,7 +789,7 @@ function SoloCheer() {
 
 function YouCard({ entry, onPress }: { entry: LeaderEntry; onPress: () => void }) {
   const { colors, stickers, font, radius, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
+  const ink = colors.text
 
   return (
     <Pressable
@@ -844,8 +844,8 @@ function EmptyState() {
 
 function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => void }) {
   const { colors, stickers, font, radius, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = colors.text
+  const paperBorder = colors.border
 
   const rankFill =
     entry.rank === 1 ? stickers.yellow :
@@ -958,8 +958,8 @@ function ProfileStat({
   tint: string
 }) {
   const { colors, font, radius, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const ink = colors.text
+  const paperBorder = colors.border
 
   return (
     <View

@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import type { ComponentType } from 'react'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { PillarBreastfeeding, LogFeeding, NotifyRoutine } from '../stickers/RewardStickers'
 import { colors, borderRadius } from '../../constants/theme'
 
@@ -20,7 +20,7 @@ interface MilkTrackerProps {
 
 export function MilkTracker({ onLog }: MilkTrackerProps) {
   return (
-    <GlassCard style={styles.container}>
+    <PaperCard radius={28} padding={20} style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Milk Control</Text>
         <Ionicons name="time-outline" size={16} color={colors.textTertiary} />
@@ -46,7 +46,7 @@ export function MilkTracker({ onLog }: MilkTrackerProps) {
       </View>
 
       <Text style={styles.hint}>Tap to start tracking a session</Text>
-    </GlassCard>
+    </PaperCard>
   )
 }
 

@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, borderRadius } from '../../constants/theme'
 
 interface DocumentUploadProps {
@@ -10,7 +10,7 @@ interface DocumentUploadProps {
 
 export function DocumentUpload({ onCamera, onFilePick }: DocumentUploadProps) {
   return (
-    <GlassCard style={styles.container}>
+    <PaperCard radius={28} padding={20} style={styles.container}>
       <View style={styles.iconCircle}>
         <Ionicons name="cloud-upload-outline" size={32} color={colors.accent} />
       </View>
@@ -33,7 +33,7 @@ export function DocumentUpload({ onCamera, onFilePick }: DocumentUploadProps) {
       <Pressable onPress={onFilePick} style={styles.addRecordBtn}>
         <Text style={styles.addRecordText}>Add Record</Text>
       </Pressable>
-    </GlassCard>
+    </PaperCard>
   )
 }
 

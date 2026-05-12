@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { useAppTheme } from '../ui/ThemeProvider'
 import { colors, THEME_COLORS, borderRadius } from '../../constants/theme'
 import type { CycleInfo } from '../../lib/cycleLogic'
@@ -90,7 +90,7 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
 
       {/* Activities + Nutrition row */}
       <View style={styles.listsRow}>
-        <GlassCard style={styles.listCard}>
+        <PaperCard radius={28} padding={20} style={styles.listCard}>
           <View style={styles.listHeader}>
             <Ionicons name="fitness" size={16} color={THEME_COLORS.green} />
             <Text style={styles.listTitle}>ACTIVITIES</Text>
@@ -98,9 +98,9 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
           {cycleInfo.activities.slice(0, 4).map((act, i) => (
             <Text key={i} style={[styles.listItem, { color: tc.textSecondary }]}>• {act}</Text>
           ))}
-        </GlassCard>
+        </PaperCard>
 
-        <GlassCard style={styles.listCard}>
+        <PaperCard radius={28} padding={20} style={styles.listCard}>
           <View style={styles.listHeader}>
             <Ionicons name="nutrition" size={16} color={THEME_COLORS.orange} />
             <Text style={[styles.listTitle, { color: tc.textTertiary }]}>NUTRITION</Text>
@@ -108,7 +108,7 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
           {cycleInfo.nutritionTips.slice(0, 3).map((tip, i) => (
             <Text key={i} style={[styles.listItem, { color: tc.textSecondary }]} numberOfLines={2}>• {tip}</Text>
           ))}
-        </GlassCard>
+        </PaperCard>
       </View>
     </View>
   )

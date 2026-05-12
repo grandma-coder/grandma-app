@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, THEME_COLORS, borderRadius, typography } from '../../constants/theme'
 
 interface ChecklistItem {
@@ -32,7 +32,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
   return (
     <View style={styles.container}>
       {/* Progress header */}
-      <GlassCard style={styles.progressCard}>
+      <PaperCard radius={28} padding={20} style={styles.progressCard}>
         <View style={styles.progressHeader}>
           <View>
             <Text style={styles.progressTitle}>{pct}% COMPLETE</Text>
@@ -47,7 +47,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, { width: `${pct}%` }]} />
         </View>
-      </GlassCard>
+      </PaperCard>
 
       {/* Checklist items */}
       {items.map((item) => {
@@ -58,7 +58,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
             onPress={() => onToggle?.(item.id)}
             style={({ pressed }) => [pressed && { opacity: 0.8 }]}
           >
-            <GlassCard style={styles.itemCard}>
+            <PaperCard radius={28} padding={20} style={styles.itemCard}>
               <View style={styles.itemRow}>
                 <View style={[
                   styles.checkbox,
@@ -85,7 +85,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
                   <Text style={styles.itemDesc}>{item.description}</Text>
                 </View>
               </View>
-            </GlassCard>
+            </PaperCard>
           </Pressable>
         )
       })}

@@ -1,6 +1,6 @@
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, borderRadius } from '../../constants/theme'
 
 interface FoodPhotoEntryProps {
@@ -24,7 +24,7 @@ export function FoodPhotoEntry({
   onRate,
 }: FoodPhotoEntryProps) {
   return (
-    <GlassCard style={styles.container}>
+    <PaperCard radius={28} padding={20} style={styles.container}>
       <Text style={styles.title}>Log a Meal</Text>
       <Text style={styles.mealType}>{mealType.toUpperCase()}</Text>
 
@@ -60,7 +60,7 @@ export function FoodPhotoEntry({
           ))}
         </View>
       </View>
-    </GlassCard>
+    </PaperCard>
   )
 }
 

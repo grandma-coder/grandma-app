@@ -80,8 +80,8 @@ export default function HealthHistoryScreen() {
   const { colors, font, stickers, isDark, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const paperBorder = colors.border
 
   const [events, setEvents] = useState<HealthEvent[]>([])
   const [filterChild, setFilterChild] = useState<string | null>(null)
@@ -171,27 +171,27 @@ export default function HealthHistoryScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* ─── Quick Stats ──────────────────────────────────────────── */}
         <View style={styles.statsRow}>
-          <StatCard icon={Syringe} color={isDark ? stickers.green : '#3F5919'} bg={stickers.green} num={vaccines.length} label="Vaccines" onPress={() => setDetailSection('vaccine')} />
-          <StatCard icon={Pill} color={isDark ? stickers.blue : '#1F4A7A'} bg={stickers.blue} num={medications.length} label="Meds" onPress={() => setDetailSection('medicine')} />
-          <StatCard icon={Thermometer} color={isDark ? stickers.coral : '#B43E2E'} bg={stickers.coral} num={temperatures.length} label="Temps" onPress={() => setDetailSection('temperature')} />
-          <StatCard icon={Star} color={isDark ? '#F0CE4C' : '#7C5E0F'} bg={stickers.yellow} num={milestones.length} label="Milestones" onPress={() => setDetailSection('milestone')} />
+          <StatCard icon={Syringe} color={stickers.greenInk} bg={stickers.green} num={vaccines.length} label="Vaccines" onPress={() => setDetailSection('vaccine')} />
+          <StatCard icon={Pill} color={stickers.blueInk} bg={stickers.blue} num={medications.length} label="Meds" onPress={() => setDetailSection('medicine')} />
+          <StatCard icon={Thermometer} color={stickers.coralInk} bg={stickers.coral} num={temperatures.length} label="Temps" onPress={() => setDetailSection('temperature')} />
+          <StatCard icon={Star} color={stickers.yellowInk} bg={stickers.yellow} num={milestones.length} label="Milestones" onPress={() => setDetailSection('milestone')} />
         </View>
 
         {/* ─── Vaccine Tracker ──────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('vaccine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <SectionHeader icon={Syringe} color={isDark ? stickers.green : '#3F5919'} title="Vaccines" />
+          <SectionHeader icon={Syringe} color={stickers.greenInk} title="Vaccines" />
           {vaccines.length > 0 ? (
             <View style={styles.vaccineList}>
               {vaccines.slice(0, 3).map((v) => (
                 <View key={v.id} style={styles.vaccineItem}>
-                  <Check size={14} color={isDark ? stickers.green : '#3F5919'} strokeWidth={2.5} />
+                  <Check size={14} color={stickers.greenInk} strokeWidth={2.5} />
                   <Text style={[styles.vaccineText, { color: colors.text, fontFamily: font.bodyMedium }]}>{v.value}</Text>
                   <Text style={[styles.vaccineDate, { color: colors.textMuted, fontFamily: font.body }]}>{new Date(v.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</Text>
                 </View>
               ))}
               {vaccines.length > 3 && (
                 <View style={[styles.moreChip, { backgroundColor: stickers.green + (isDark ? '24' : '32'), borderColor: stickers.green + (isDark ? '40' : '60') }]}>
-                  <Text style={[styles.moreChipText, { color: isDark ? stickers.green : '#3F5919', fontFamily: font.bodySemiBold }]}>+{vaccines.length - 3} more</Text>
+                  <Text style={[styles.moreChipText, { color: stickers.greenInk, fontFamily: font.bodySemiBold }]}>+{vaccines.length - 3} more</Text>
                 </View>
               )}
             </View>
@@ -203,7 +203,7 @@ export default function HealthHistoryScreen() {
           )}
           {/* Next recommended */}
           <View style={[styles.nextVaccine, { backgroundColor: stickers.green + (isDark ? '20' : '30') }]}>
-            <Text style={[styles.nextLabel, { color: isDark ? stickers.green : '#3F5919', fontFamily: font.bodySemiBold }]}>Recommended Schedule</Text>
+            <Text style={[styles.nextLabel, { color: stickers.greenInk, fontFamily: font.bodySemiBold }]}>Recommended Schedule</Text>
             <Text style={[styles.nextText, { color: colors.textSecondary, fontFamily: font.body }]}>
               {VACCINE_SCHEDULE.filter((v) => !givenVaccineNames.has(v.name)).slice(0, 2).map((v) => `${v.name} (${v.ages[0]})`).join(', ') || 'All up to date!'}
             </Text>
@@ -212,11 +212,11 @@ export default function HealthHistoryScreen() {
 
         {/* ─── Medications ──────────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('medicine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <SectionHeader icon={Pill} color={isDark ? stickers.blue : '#1F4A7A'} title="Medications" />
+          <SectionHeader icon={Pill} color={stickers.blueInk} title="Medications" />
           {medications.length > 0 ? (
             medications.slice(0, 3).map((m) => (
               <View key={m.id} style={styles.medItem}>
-                <View style={[styles.medDot, { backgroundColor: stickers.blue, borderColor: isDark ? colors.border : 'rgba(20,19,19,0.18)' }]} />
+                <View style={[styles.medDot, { backgroundColor: stickers.blue, borderColor: colors.borderStrong }]} />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.medName, { color: colors.text, fontFamily: font.bodyMedium }]}>{m.value}</Text>
                   {m.notes ? <Text style={[styles.medNotes, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>{m.notes}</Text> : null}
@@ -233,7 +233,7 @@ export default function HealthHistoryScreen() {
           {/* Active meds from child profiles */}
           {children.some((c) => c.medications.length > 0) && (
             <View style={[styles.activeMeds, { backgroundColor: stickers.blue + (isDark ? '20' : '30') }]}>
-              <Text style={[styles.nextLabel, { color: isDark ? stickers.blue : '#1F4A7A', fontFamily: font.bodySemiBold }]}>Current Medications</Text>
+              <Text style={[styles.nextLabel, { color: stickers.blueInk, fontFamily: font.bodySemiBold }]}>Current Medications</Text>
               {children.filter((c) => c.medications.length > 0).map((c) => (
                 <Text key={c.id} style={[styles.nextText, { color: colors.textSecondary, fontFamily: font.body }]}>{c.name}: {c.medications.join(', ')}</Text>
               ))}
@@ -243,7 +243,7 @@ export default function HealthHistoryScreen() {
 
         {/* ─── Growth ───────────────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('growth')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <SectionHeader icon={TrendingUp} color={isDark ? stickers.blue : '#1F4A7A'} title="Growth" />
+          <SectionHeader icon={TrendingUp} color={stickers.blueInk} title="Growth" />
           {growthEntries.length > 0 ? (
             <>
               {/* Separate weight + height lines */}
@@ -253,8 +253,8 @@ export default function HealthHistoryScreen() {
                 const latestWeight = growthEntries.find((g) => g.value.toLowerCase().includes('weight'))
                 const latestHeight = growthEntries.find((g) => g.value.toLowerCase().includes('height'))
 
-                const wColor = isDark ? stickers.blue : '#1F4A7A'
-                const hColor = isDark ? stickers.peach : '#A6532A'
+                const wColor = stickers.blueInk
+                const hColor = stickers.peachInk
                 return (
                   <>
                     {/* Weight bars */}
@@ -314,12 +314,12 @@ export default function HealthHistoryScreen() {
 
         {/* ─── Milestones ───────────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('milestone')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <SectionHeader icon={Star} color={isDark ? '#F0CE4C' : '#7C5E0F'} title="Milestones" />
+          <SectionHeader icon={Star} color={stickers.yellowInk} title="Milestones" />
           {milestones.length > 0 ? (
             <View style={styles.milestoneList}>
               {milestones.slice(0, 4).map((m) => (
                 <View key={m.id} style={styles.milestoneItem}>
-                  <View style={[styles.milestoneDot, { backgroundColor: stickers.yellow, borderColor: isDark ? colors.border : 'rgba(20,19,19,0.18)' }]} />
+                  <View style={[styles.milestoneDot, { backgroundColor: stickers.yellow, borderColor: colors.borderStrong }]} />
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.milestoneText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{m.value}</Text>
                     <Text style={[styles.milestoneDate, { color: colors.textMuted, fontFamily: font.body }]}>
@@ -349,7 +349,7 @@ export default function HealthHistoryScreen() {
           if (alertKids.length === 0) return null
           return (
           <View style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <SectionHeader icon={AlertTriangle} color={isDark ? stickers.coral : '#B43E2E'} title="Allergies & Alerts" showChevron={false} />
+            <SectionHeader icon={AlertTriangle} color={stickers.coralInk} title="Allergies & Alerts" showChevron={false} />
             {alertKids.map((c) => (
               <View key={c.id} style={styles.refChild}>
                 <Text style={[styles.refChildName, { color: colors.text, fontFamily: font.display }]}>{c.name}</Text>
@@ -357,7 +357,7 @@ export default function HealthHistoryScreen() {
                   <View style={styles.refChipRow}>
                     {c.allergies.filter((a) => a && a.toLowerCase() !== 'no').map((a) => (
                       <View key={a} style={[styles.refChip, { backgroundColor: stickers.coral + (isDark ? '28' : '32') }]}>
-                        <Text style={[styles.refChipText, { color: isDark ? stickers.coral : '#B43E2E', fontFamily: font.bodySemiBold }]}>{a}</Text>
+                        <Text style={[styles.refChipText, { color: stickers.coralInk, fontFamily: font.bodySemiBold }]}>{a}</Text>
                       </View>
                     ))}
                   </View>
@@ -366,8 +366,8 @@ export default function HealthHistoryScreen() {
                   <View style={styles.refChipRow}>
                     {c.medications.map((m) => (
                       <View key={m} style={[styles.refChip, { backgroundColor: stickers.blue + (isDark ? '28' : '32') }]}>
-                        <Pill size={10} color={isDark ? stickers.blue : '#1F4A7A'} strokeWidth={2} />
-                        <Text style={[styles.refChipText, { color: isDark ? stickers.blue : '#1F4A7A', fontFamily: font.bodySemiBold }]}>{m}</Text>
+                        <Pill size={10} color={stickers.blueInk} strokeWidth={2} />
+                        <Text style={[styles.refChipText, { color: stickers.blueInk, fontFamily: font.bodySemiBold }]}>{m}</Text>
                       </View>
                     ))}
                   </View>
@@ -402,8 +402,8 @@ export default function HealthHistoryScreen() {
 
 function SectionHeader({ icon: Icon, color, title, showChevron = true }: { icon: any; color: string; title: string; showChevron?: boolean }) {
   const { colors, font, isDark } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.18)'
+  const paper = colors.surface
+  const paperBorder = colors.borderStrong
   return (
     <View style={styles.sectionHeader}>
       <View style={[styles.sectionIconBadge, { backgroundColor: paper, borderColor: paperBorder }]}>
@@ -419,8 +419,8 @@ function SectionHeader({ icon: Icon, color, title, showChevron = true }: { icon:
 
 function StatCard({ icon: Icon, color, bg, num, label, onPress }: any) {
   const { colors, font, isDark } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.18)'
+  const paper = colors.surface
+  const paperBorder = colors.borderStrong
   return (
     <Pressable
       onPress={onPress}
@@ -447,8 +447,8 @@ function StatCard({ icon: Icon, color, bg, num, label, onPress }: any) {
 function DetailPopup({ section, events, onClose }: { section: string; events: HealthEvent[]; onClose: () => void }) {
   const { colors, font, stickers, isDark } = useTheme()
   const insets = useSafeAreaInsets()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const paperBorder = colors.border
   const cfg = TYPE_CFG[section] ?? { label: section, icon: FileText, color: colors.textMuted, placeholder: '' }
   const Icon = cfg.icon
 
@@ -496,7 +496,7 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
               <View style={styles.detailItemTop}>
                 <Text style={[styles.detailItemValue, { color: colors.text, fontFamily: font.display }]}>{e.value}</Text>
                 <View style={[styles.detailChildBadge, { backgroundColor: stickers.blue + (isDark ? '28' : '40') }]}>
-                  <Text style={[styles.detailChildText, { color: isDark ? stickers.blue : '#1F4A7A', fontFamily: font.bodySemiBold }]}>{e.childName}</Text>
+                  <Text style={[styles.detailChildText, { color: stickers.blueInk, fontFamily: font.bodySemiBold }]}>{e.childName}</Text>
                 </View>
               </View>
               {e.notes ? <Text style={[styles.detailItemNotes, { color: colors.textMuted, fontFamily: font.body }]}>{e.notes}</Text> : null}
@@ -518,8 +518,8 @@ const ADD_TYPES = Object.entries(TYPE_CFG).map(([id, cfg]) => ({ id, ...cfg }))
 function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
   const { colors, font, stickers, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const paperBorder = colors.border
 
   const [eventType, setEventType] = useState<string | null>(null)
   const [selectedChild, setSelectedChild] = useState(children.length === 1 ? children[0]?.id ?? '' : '')

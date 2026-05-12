@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, borderRadius } from '../../constants/theme'
 
 export interface DocumentItem {
@@ -42,7 +42,7 @@ export function DocumentSection({
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <GlassCard style={styles.container}>
+    <PaperCard radius={28} padding={20} style={styles.container}>
       <Pressable onPress={() => setExpanded(!expanded)} style={styles.header}>
         <View style={styles.iconCircle}>
           <Text style={styles.icon}>{icon}</Text>
@@ -96,7 +96,7 @@ export function DocumentSection({
           )}
         </View>
       )}
-    </GlassCard>
+    </PaperCard>
   )
 }
 

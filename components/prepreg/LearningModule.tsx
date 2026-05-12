@@ -1,5 +1,5 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, borderRadius } from '../../constants/theme'
 import type { LearningModule as LearningModuleType } from '../../lib/prepregnancyData'
 
@@ -11,7 +11,7 @@ interface LearningModuleProps {
 export function LearningModule({ module, onPress }: LearningModuleProps) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.85 }]}>
-      <GlassCard style={styles.container}>
+      <PaperCard radius={28} padding={20} style={styles.container}>
         <View style={styles.row}>
           <View style={styles.iconCircle}>
             <Text style={styles.icon}>{module.icon}</Text>
@@ -22,7 +22,7 @@ export function LearningModule({ module, onPress }: LearningModuleProps) {
             <Text style={styles.lessons}>{module.lessons} lessons</Text>
           </View>
         </View>
-      </GlassCard>
+      </PaperCard>
     </Pressable>
   )
 }

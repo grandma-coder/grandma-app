@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, borderRadius } from '../../constants/theme'
 
 interface FeedSession {
@@ -29,7 +29,7 @@ function formatTime(dateStr: string): string {
 
 export function MilkControl({ sessions = [], onStartSession }: MilkControlProps) {
   return (
-    <GlassCard>
+    <PaperCard radius={28} padding={20}>
       <Text style={styles.title}>Milk Control</Text>
       <Text style={styles.subtitle}>Track breast, bottle, and pump sessions</Text>
 
@@ -72,7 +72,7 @@ export function MilkControl({ sessions = [], onStartSession }: MilkControlProps)
           Tap a button above to start tracking a feeding session.
         </Text>
       )}
-    </GlassCard>
+    </PaperCard>
   )
 }
 

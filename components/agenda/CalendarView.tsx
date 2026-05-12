@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   cellSelected: {
     backgroundColor: THEME_COLORS.yellow,
     borderRadius: 18,
-    ...shadows.glow,
+    ...shadows.pop,
     transform: [{ scale: 1.1 }],
     zIndex: 10,
   },
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   weekCellSelected: {
     backgroundColor: THEME_COLORS.yellow,
     borderColor: THEME_COLORS.yellow,
-    ...shadows.glow,
+    ...shadows.pop,
   },
   weekDayLabel: {
     fontSize: 10,

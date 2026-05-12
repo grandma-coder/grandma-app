@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { RoleNanny, RoleFamily } from '../stickers/RewardStickers'
 import { colors, borderRadius } from '../../constants/theme'
 
@@ -22,7 +22,7 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
         <View style={styles.header}>
           <Text style={styles.title}>Nanny Updates</Text>
         </View>
-        <GlassCard>
+        <PaperCard radius={28} padding={20}>
           <View style={styles.empty}>
             <View style={styles.emptyIcon}><RoleFamily size={48} /></View>
             <Text style={styles.emptyText}>No nanny updates yet</Text>
@@ -30,7 +30,7 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
               Invite a caregiver to start seeing their notes here
             </Text>
           </View>
-        </GlassCard>
+        </PaperCard>
       </View>
     )
   }
@@ -43,7 +43,7 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
       </View>
 
       {updates.map((update) => (
-        <GlassCard key={update.id} style={styles.updateCard}>
+        <PaperCard radius={28} padding={20} key={update.id} style={styles.updateCard}>
           <View style={styles.updateHeader}>
             <View style={styles.avatar}>
               <RoleNanny size={26} />
@@ -59,7 +59,7 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
               </View>
             ))}
           </View>
-        </GlassCard>
+        </PaperCard>
       ))}
     </View>
   )

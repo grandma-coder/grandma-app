@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, THEME_COLORS, borderRadius, shadows, typography } from '../../constants/theme'
 import { PulseBubblesLive } from '../charts/GalleryCharts'
 
@@ -65,7 +65,7 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
   return (
     <View style={styles.container}>
       {/* Main counter card */}
-      <GlassCard style={styles.counterCard}>
+      <PaperCard radius={28} padding={20} style={styles.counterCard}>
         <Text style={styles.counterLabel}>KICK COUNTER</Text>
         <Text style={styles.counterSubtitle}>
           Goal: 10 kicks in under 2 hours
@@ -124,14 +124,14 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
             </Pressable>
           </>
         )}
-      </GlassCard>
+      </PaperCard>
 
       {/* Past sessions */}
       {sessions.length > 0 && (
         <View>
           <Text style={styles.sectionLabel}>RECENT SESSIONS</Text>
           {sessions.slice(0, 5).map((session) => (
-            <GlassCard key={session.id} style={styles.sessionCard}>
+            <PaperCard radius={28} padding={20} key={session.id} style={styles.sessionCard}>
               <View style={styles.sessionRow}>
                 <View style={styles.sessionIconBox}>
                   <Ionicons name="footsteps-outline" size={18} color={THEME_COLORS.pink} />
@@ -146,18 +146,18 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
                   {new Date(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                 </Text>
               </View>
-            </GlassCard>
+            </PaperCard>
           ))}
         </View>
       )}
 
       {/* Info card */}
-      <GlassCard style={styles.infoCard}>
+      <PaperCard radius={28} padding={20} style={styles.infoCard}>
         <Ionicons name="information-circle-outline" size={20} color={THEME_COLORS.blue} />
         <Text style={styles.infoText}>
           Count movements (kicks, rolls, jabs) starting from week 28. If you don't feel 10 movements in 2 hours, contact your healthcare provider.
         </Text>
-      </GlassCard>
+      </PaperCard>
     </View>
   )
 }
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     backgroundColor: THEME_COLORS.yellow,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.glow,
+    ...shadows.pop,
   },
   startText: {
     fontSize: 12,
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
-    ...shadows.glowPink,
+    ...shadows.cardPop,
   },
   kickText: {
     fontSize: 10,

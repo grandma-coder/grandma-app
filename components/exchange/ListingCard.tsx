@@ -1,6 +1,6 @@
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, borderRadius } from '../../constants/theme'
 import type { Listing } from '../../lib/exchange'
 
@@ -22,7 +22,7 @@ export function ListingCard({ listing, saved, onPress, onSave }: ListingCardProp
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.9 }]}>
-      <GlassCard style={styles.container} noPadding>
+      <PaperCard radius={28} padding={0} style={styles.container}>
         {/* Photo */}
         {listing.photos.length > 0 ? (
           <Image source={{ uri: listing.photos[0] }} style={styles.photo} resizeMode="cover" />
@@ -70,7 +70,7 @@ export function ListingCard({ listing, saved, onPress, onSave }: ListingCardProp
             </Pressable>
           </View>
         </View>
-      </GlassCard>
+      </PaperCard>
     </Pressable>
   )
 }

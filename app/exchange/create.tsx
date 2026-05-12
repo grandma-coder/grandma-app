@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { createListing, type ListingType, type ListingCategory, type ListingCondition } from '../../lib/exchange'
 import { useExchangeStore } from '../../store/useExchangeStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { GradientButton } from '../../components/ui/GradientButton'
+import { PillButton } from '../../components/ui/PillButton'
 import { colors, typography, spacing, borderRadius } from '../../constants/theme'
 
 const LISTING_TYPES: { id: ListingType; label: string; icon: string }[] = [
@@ -179,8 +179,10 @@ export default function CreateListing() {
             </>
           )}
 
-          <GradientButton
-            title="Post to Garage"
+          <PillButton
+            label="Post to Garage"
+            variant="ink"
+            height={72}
             onPress={handlePost}
             loading={loading}
             style={{ marginTop: 24 }}

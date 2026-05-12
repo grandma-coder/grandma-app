@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, THEME_COLORS, borderRadius, shadows, typography } from '../../constants/theme'
 
 interface Contraction {
@@ -89,7 +89,7 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
 
   return (
     <View style={styles.container}>
-      <GlassCard style={styles.mainCard}>
+      <PaperCard radius={28} padding={20} style={styles.mainCard}>
         <Text style={styles.title}>CONTRACTION TIMER</Text>
         <Text style={styles.subtitle}>
           Track timing and duration between contractions
@@ -158,14 +158,14 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
             <Text style={styles.resetText}>Reset</Text>
           </Pressable>
         )}
-      </GlassCard>
+      </PaperCard>
 
       {/* History */}
       {intervals.length > 0 && (
         <View>
           <Text style={styles.sectionLabel}>THIS SESSION</Text>
           {intervals.map((item, i) => (
-            <GlassCard key={i} style={styles.historyCard}>
+            <PaperCard radius={28} padding={20} key={i} style={styles.historyCard}>
               <View style={styles.historyRow}>
                 <Text style={styles.historyNum}>#{i + 1}</Text>
                 <View style={{ flex: 1 }}>
@@ -179,18 +179,18 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
                   )}
                 </View>
               </View>
-            </GlassCard>
+            </PaperCard>
           ))}
         </View>
       )}
 
       {/* Info */}
-      <GlassCard style={styles.infoCard}>
+      <PaperCard radius={28} padding={20} style={styles.infoCard}>
         <Ionicons name="information-circle-outline" size={20} color={THEME_COLORS.blue} />
         <Text style={styles.infoText}>
           The 5-1-1 rule: head to the hospital when contractions are 5 minutes apart, lasting 1 minute each, for at least 1 hour.
         </Text>
-      </GlassCard>
+      </PaperCard>
     </View>
   )
 }
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    ...shadows.glow,
+    ...shadows.pop,
   },
   mainButtonText: {
     fontSize: 14,

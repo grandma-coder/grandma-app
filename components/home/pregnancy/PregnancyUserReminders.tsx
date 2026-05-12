@@ -455,23 +455,28 @@ function ReminderRow({
     }}>
       <Pressable
         onPress={onToggle}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: r.done }}
+        accessibilityLabel={r.done ? 'Mark as not done' : 'Mark as done'}
+        hitSlop={6}
         style={{
-          width: 36, height: 36, borderRadius: 18,
-          backgroundColor: badgeBg,
-          borderWidth: 1.5,
-          borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#141313',
+          width: 32, height: 32, borderRadius: 10,
+          backgroundColor: r.done ? badgeBg : 'transparent',
+          borderWidth: 2,
+          borderColor: r.done
+            ? (isDark ? 'rgba(255,255,255,0.18)' : '#141313')
+            : isOverdue
+            ? '#EE7B6D'
+            : isDueToday
+            ? '#C09A2C'
+            : (isDark ? 'rgba(255,255,255,0.30)' : 'rgba(20,19,19,0.35)'),
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
           marginTop: 1,
         }}
       >
-        {isOverdue
-          ? <Bell size={13} color={badgeIconColor} strokeWidth={2.5} />
-          : (isDueToday || r.flagged)
-          ? <Clock size={13} color={badgeIconColor} strokeWidth={2.5} />
-          : <View style={{ width: 11, height: 11, borderRadius: 6, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(20,19,19,0.35)' }} />
-        }
+        {r.done ? <Check size={16} color={badgeIconColor} strokeWidth={3} /> : null}
       </Pressable>
 
       <View style={{ flex: 1, gap: 6, paddingTop: 2 }}>

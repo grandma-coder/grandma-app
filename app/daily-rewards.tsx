@@ -23,6 +23,7 @@ import {
   stickers as stickerPalette,
   getModeColor,
   getModeColorSoft,
+  radius,
 } from '../constants/theme'
 import { Display, DisplayItalic, Body, MonoCaps } from '../components/ui/Typography'
 import { ScreenHeader } from '../components/ui/ScreenHeader'
@@ -111,12 +112,12 @@ export default function DailyRewardsScreen() {
 
   const accent = getModeColor(mode, isDark)
   const accentSoft = getModeColorSoft(mode, isDark)
-  const ink = isDark ? colors.text : '#141313'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperRaised = isDark ? colors.surfaceRaised : '#F7F0DF'
-  const line = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const bg = isDark ? colors.bg : '#F3ECD9'
+  const ink = colors.text
+  const ink3 = colors.textMuted
+  const paper = colors.surface
+  const paperRaised = colors.surfaceRaised
+  const line = colors.border
+  const bg = colors.bg
 
   const checkIn = useBadgeStore((s) => s.checkIn)
   const currentStreak = useBadgeStore((s) => s.currentStreak)
@@ -981,7 +982,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: radius.md,
   },
   badgeIconWrap: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
   badgeName: { fontSize: 11, textAlign: 'center' },
@@ -1006,7 +1007,7 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 10,
     borderWidth: 1,
-    borderRadius: 22,
+    borderRadius: radius.md,
   },
   categoryCardTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   categorySticker: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
@@ -1021,7 +1022,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
     padding: 16,
-    borderRadius: 24,
+    borderRadius: radius.lg,
     borderWidth: 1,
   },
   leaderIcon: {
@@ -1092,7 +1093,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 16,
+    borderRadius: radius.md,
     borderWidth: 1,
   },
   modalDot: { width: 12, height: 12, borderRadius: 6 },
@@ -1120,7 +1121,7 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 10,
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: radius.md,
   },
   catBadgeStickerWrap: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   catBadgeLock: {

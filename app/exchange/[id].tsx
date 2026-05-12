@@ -5,8 +5,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getListingById, type Listing } from '../../lib/exchange'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { GlassCard } from '../../components/ui/GlassCard'
-import { GradientButton } from '../../components/ui/GradientButton'
+import { PaperCard } from '../../components/ui/PaperCard'
+import { PillButton } from '../../components/ui/PillButton'
 import { colors, typography, spacing, borderRadius } from '../../constants/theme'
 
 export default function ListingDetail() {
@@ -82,15 +82,15 @@ export default function ListingDetail() {
             )}
           </View>
 
-          <GradientButton title="I'm Interested" onPress={() => {}} style={{ marginTop: 24 }} />
+          <PillButton label="I'm Interested" variant="ink" onPress={() => {}} style={{ marginTop: 24 }} />
 
           {/* Comments section placeholder */}
-          <GlassCard style={styles.commentSection}>
+          <PaperCard radius={28} padding={20} style={styles.commentSection}>
             <Text style={styles.commentTitle}>Comments</Text>
             <Text style={styles.commentPlaceholder}>
               Comments and deal discussions will appear here.
             </Text>
-          </GlassCard>
+          </PaperCard>
         </View>
       </ScrollView>
     </CosmicBackground>

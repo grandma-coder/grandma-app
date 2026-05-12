@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors } from '../../constants/theme'
 import type { Channel } from '../../lib/channels'
 
@@ -12,7 +12,7 @@ interface ChannelCardProps {
 export function ChannelCard({ channel, onPress }: ChannelCardProps) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.85 }]}>
-      <GlassCard style={styles.container}>
+      <PaperCard radius={28} padding={20} style={styles.container}>
         <View style={styles.row}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{channel.channelType === 'private' ? '🔒' : '#'}</Text>
@@ -31,7 +31,7 @@ export function ChannelCard({ channel, onPress }: ChannelCardProps) {
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
         </View>
-      </GlassCard>
+      </PaperCard>
     </Pressable>
   )
 }

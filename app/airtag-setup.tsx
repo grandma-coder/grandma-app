@@ -3,8 +3,8 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CosmicBackground } from '../components/ui/CosmicBackground'
-import { GlassCard } from '../components/ui/GlassCard'
-import { GradientButton } from '../components/ui/GradientButton'
+import { PaperCard } from '../components/ui/PaperCard'
+import { PillButton } from '../components/ui/PillButton'
 import { colors, typography, spacing } from '../constants/theme'
 
 export default function AirTagSetup() {
@@ -28,7 +28,7 @@ export default function AirTagSetup() {
         </View>
 
         <View style={styles.steps}>
-          <GlassCard style={styles.step}>
+          <PaperCard radius={28} padding={20} style={styles.step}>
             <View style={styles.stepRow}>
               <View style={styles.stepNumber}>
                 <Text style={styles.stepNumberText}>1</Text>
@@ -40,9 +40,9 @@ export default function AirTagSetup() {
                 </Text>
               </View>
             </View>
-          </GlassCard>
+          </PaperCard>
 
-          <GlassCard style={styles.step}>
+          <PaperCard radius={28} padding={20} style={styles.step}>
             <View style={styles.stepRow}>
               <View style={styles.stepNumber}>
                 <Text style={styles.stepNumberText}>2</Text>
@@ -54,9 +54,9 @@ export default function AirTagSetup() {
                 </Text>
               </View>
             </View>
-          </GlassCard>
+          </PaperCard>
 
-          <GlassCard style={styles.step}>
+          <PaperCard radius={28} padding={20} style={styles.step}>
             <View style={styles.stepRow}>
               <View style={styles.stepNumber}>
                 <Text style={styles.stepNumberText}>3</Text>
@@ -68,14 +68,15 @@ export default function AirTagSetup() {
                 </Text>
               </View>
             </View>
-          </GlassCard>
+          </PaperCard>
         </View>
 
         <View style={styles.bottom}>
-          <GradientButton
-            title="Enable Location Tracking"
+          <PillButton
+            label="Enable Location Tracking"
+            variant="ink"
+            height={72}
             onPress={() => {
-              // TODO: Request permissions + native AirTag integration
               router.back()
             }}
           />

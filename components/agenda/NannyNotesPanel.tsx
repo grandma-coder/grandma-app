@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, Pressable, Modal, ScrollView, StyleSheet,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, THEME_COLORS, borderRadius, shadows } from '../../constants/theme'
 
 export interface NoteEntry {
@@ -77,7 +77,7 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
         notes.map((note) => {
           const topic = TOPICS.find((t) => t.id === note.topic) ?? TOPICS[5]
           return (
-            <GlassCard key={note.id} style={styles.noteCard}>
+            <PaperCard radius={28} padding={20} key={note.id} style={styles.noteCard}>
               {/* Header */}
               <View style={styles.noteHeader}>
                 <View style={[styles.noteTopicDot, { backgroundColor: topic.color }]} />
@@ -91,7 +91,7 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
               <Text style={styles.noteAuthor}>
                 {note.authorName} · {note.authorRole}
               </Text>
-            </GlassCard>
+            </PaperCard>
           )
         })
       )}
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    ...shadows.glow,
+    ...shadows.pop,
   },
   submitText: {
     fontSize: 14,

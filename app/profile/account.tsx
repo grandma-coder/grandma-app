@@ -23,9 +23,9 @@ export default function AccountScreen() {
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
 
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const dangerLabel = isDark ? '#F29082' : '#B43E2E'
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const dangerLabel = stickers.coralInk
 
   const [email, setEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')

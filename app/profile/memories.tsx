@@ -67,8 +67,8 @@ export default function MemoriesScreen() {
   const { colors, font, stickers, isDark, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const paperBorder = colors.border
 
   const [allPosts, setAllPosts] = useState<MemoryPost[]>([])
   const [loading, setLoading] = useState(true)
@@ -335,10 +335,10 @@ export default function MemoriesScreen() {
             onPress={() => setFilterChild(null)}
             style={[styles.chip, {
               backgroundColor: !filterChild ? stickers.lilac + (isDark ? '32' : '40') : paper,
-              borderColor: !filterChild ? (isDark ? stickers.lilac : '#3A2A6E') : paperBorder,
+              borderColor: !filterChild ? (stickers.lilacInk) : paperBorder,
             }]}
           >
-            <Text style={[styles.chipText, { color: !filterChild ? (isDark ? stickers.lilac : '#3A2A6E') : colors.text, fontFamily: font.bodySemiBold }]}>All Kids</Text>
+            <Text style={[styles.chipText, { color: !filterChild ? (stickers.lilacInk) : colors.text, fontFamily: font.bodySemiBold }]}>All Kids</Text>
           </Pressable>
           {children.map((c) => (
             <Pressable
@@ -346,10 +346,10 @@ export default function MemoriesScreen() {
               onPress={() => setFilterChild(filterChild === c.id ? null : c.id)}
               style={[styles.chip, {
                 backgroundColor: filterChild === c.id ? stickers.blue + (isDark ? '32' : '40') : paper,
-                borderColor: filterChild === c.id ? (isDark ? stickers.blue : '#1F4A7A') : paperBorder,
+                borderColor: filterChild === c.id ? (stickers.blueInk) : paperBorder,
               }]}
             >
-              <Text style={[styles.chipText, { color: filterChild === c.id ? (isDark ? stickers.blue : '#1F4A7A') : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
+              <Text style={[styles.chipText, { color: filterChild === c.id ? (stickers.blueInk) : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -372,11 +372,11 @@ export default function MemoriesScreen() {
             }}
             style={[styles.monthDropdown, {
               backgroundColor: filterMonth ? stickers.yellow + (isDark ? '28' : '40') : paper,
-              borderColor: filterMonth ? (isDark ? '#F0CE4C' : '#7C5E0F') : paperBorder,
+              borderColor: filterMonth ? (stickers.yellowInk) : paperBorder,
             }]}
           >
-            <Calendar size={14} color={filterMonth ? (isDark ? '#F0CE4C' : '#7C5E0F') : colors.textMuted} strokeWidth={2} />
-            <Text style={[styles.monthDropdownText, { color: filterMonth ? (isDark ? '#F0CE4C' : '#7C5E0F') : colors.text, fontFamily: font.bodySemiBold }]}>
+            <Calendar size={14} color={filterMonth ? (stickers.yellowInk) : colors.textMuted} strokeWidth={2} />
+            <Text style={[styles.monthDropdownText, { color: filterMonth ? (stickers.yellowInk) : colors.text, fontFamily: font.bodySemiBold }]}>
               {filterMonth ? formatMonth(filterMonth) : 'All Time'}
             </Text>
             <ChevronRight size={14} color={colors.textMuted} style={{ transform: [{ rotate: '90deg' }] }} />

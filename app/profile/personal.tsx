@@ -25,7 +25,7 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
-import { useTheme } from '../../constants/theme'
+import { useTheme, getModeColor } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
@@ -318,7 +318,7 @@ export default function PersonalProfile() {
   }
 
   const initial = (name.trim()[0] ?? 'I').toUpperCase()
-  const accentColor = isDark ? '#C4B5EF' : '#B7A6E8'
+  const accentColor = getModeColor('preg', isDark)
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -401,7 +401,7 @@ export default function PersonalProfile() {
               <Ionicons
                 name="checkmark-circle"
                 size={18}
-                color={isDark ? '#1A1713' : '#F3ECD9'}
+                color={colors.bg}
               />
             }
             style={{ marginTop: 16 }}
@@ -428,8 +428,8 @@ function PaperField({
   multiline?: boolean
 }) {
   const { colors, font, isDark } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const border = colors.border
   return (
     <View style={styles.field}>
       <MonoCaps color={colors.textMuted}>{label}</MonoCaps>
@@ -469,8 +469,8 @@ function LocationField({
   onChange: (v: string) => void
 }) {
   const { colors, font, isDark } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const border = colors.border
   const [query, setQuery] = useState(value)
   const [results, setResults] = useState<LocationResult[]>([])
   const [showResults, setShowResults] = useState(false)
@@ -593,8 +593,8 @@ function LanguageField({
   onChange: (v: string) => void
 }) {
   const { colors, font, isDark } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const border = colors.border
   const insets = useSafeAreaInsets()
 
   const [modalVisible, setModalVisible] = useState(false)
@@ -726,10 +726,10 @@ function AllergyField({
   onChange: (v: string[]) => void
 }) {
   const { colors, font, stickers, isDark } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const border = colors.border
   const chipBg = stickers.coral + (isDark ? '24' : '22')
-  const chipFg = isDark ? stickers.coral : '#B43E2E'
+  const chipFg = stickers.coralInk
 
   const [query, setQuery] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)

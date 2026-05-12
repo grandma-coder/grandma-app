@@ -58,8 +58,6 @@ import {
   Burst as BurstSticker,
 } from '../../components/ui/Stickers'
 
-/** Neon orange — insurance accent per design system */
-const INSURANCE_ORANGE = '#FF6B35'
 import { useEmergencyInsuranceStore } from '../../store/useEmergencyInsuranceStore'
 import {
   getEmergencyContacts,
@@ -110,8 +108,8 @@ export default function EmergencyInsuranceScreen() {
   const toast = useSavedToast()
   const paper = colors.surface
   const paperBorder = colors.border
-  const coralInk = isDark ? stickers.coral : '#B43E2E'
-  const peachInk = isDark ? stickers.peach : '#A6532A'
+  const coralInk = stickers.coralInk
+  const peachInk = stickers.peachInk
 
   const store = useEmergencyInsuranceStore()
   const [loading, setLoading] = useState(true)
@@ -293,8 +291,8 @@ export default function EmergencyInsuranceScreen() {
                       </Text>
                       {contact.isPrimary && (
                         <View style={[styles.primaryBadge, { backgroundColor: stickers.yellow + (isDark ? '32' : '50') }]}>
-                          <Star size={10} color={isDark ? '#F0CE4C' : '#7C5E0F'} strokeWidth={2.5} fill={isDark ? '#F0CE4C' : '#7C5E0F'} />
-                          <Text style={[styles.primaryText, { color: isDark ? '#F0CE4C' : '#7C5E0F', fontFamily: font.bodySemiBold }]}>Primary</Text>
+                          <Star size={10} color={stickers.yellowInk} strokeWidth={2.5} fill={stickers.yellowInk} />
+                          <Text style={[styles.primaryText, { color: stickers.yellowInk, fontFamily: font.bodySemiBold }]}>Primary</Text>
                         </View>
                       )}
                     </View>
@@ -353,14 +351,14 @@ export default function EmergencyInsuranceScreen() {
                 >
                   <View style={styles.planHeader}>
                     <View style={[styles.planTypeIcon, { backgroundColor: stickers.peach + (isDark ? '32' : '40') }]}>
-                      <Building2 size={18} color={isDark ? stickers.peach : '#A6532A'} strokeWidth={2} />
+                      <Building2 size={18} color={stickers.peachInk} strokeWidth={2} />
                     </View>
                     <View style={styles.planHeaderText}>
                       <Text style={[styles.planProvider, { color: colors.text, fontFamily: font.display }]}>
                         {plan.providerName}
                       </Text>
                       <View style={[styles.planTypeBadge, { backgroundColor: stickers.peach + (isDark ? '32' : '40') }]}>
-                        <Text style={[styles.planTypeText, { color: isDark ? stickers.peach : '#A6532A', fontFamily: font.bodySemiBold }]}>
+                        <Text style={[styles.planTypeText, { color: stickers.peachInk, fontFamily: font.bodySemiBold }]}>
                           {planTypeLabel(plan.planType)}
                         </Text>
                       </View>
@@ -552,7 +550,7 @@ function ContactFormModal({
             <Text style={[styles.modalBigTitle, { color: colors.text, fontFamily: font.display }]}>
               {isEdit ? 'Edit Contact' : 'Add Contact'}
             </Text>
-            <Text style={[styles.modalItalic, { color: isDark ? stickers.coral : '#B43E2E', fontFamily: font.italic }]}>
+            <Text style={[styles.modalItalic, { color: stickers.coralInk, fontFamily: font.italic }]}>
               someone to call
             </Text>
           </View>
@@ -640,9 +638,9 @@ function ContactFormModal({
           >
             <Star
               size={18}
-              color={isPrimary ? (isDark ? '#F0CE4C' : '#7C5E0F') : colors.textMuted}
+              color={isPrimary ? (stickers.yellowInk) : colors.textMuted}
               strokeWidth={2}
-              fill={isPrimary ? (isDark ? '#F0CE4C' : '#7C5E0F') : 'transparent'}
+              fill={isPrimary ? (stickers.yellowInk) : 'transparent'}
             />
             <Text style={[styles.toggleLabel, { color: colors.text, fontFamily: font.bodyMedium }]}>Primary contact</Text>
             <View
@@ -712,7 +710,7 @@ function PlanFormModal({
   const toast = useSavedToast()
   const paper = colors.surface
   const paperBorder = colors.border
-  const accent = isDark ? stickers.peach : '#A6532A'
+  const accent = stickers.peachInk
   const accentBg = stickers.peachSoft
   const coral = stickers.coral
   const isEdit = !!plan
@@ -809,7 +807,7 @@ function PlanFormModal({
             <Text style={[styles.modalBigTitle, { color: colors.text, fontFamily: font.display }]}>
               {isEdit ? 'Edit Plan' : 'Add Insurance Plan'}
             </Text>
-            <Text style={[styles.modalItalic, { color: isDark ? stickers.coral : '#B43E2E', fontFamily: font.italic }]}>
+            <Text style={[styles.modalItalic, { color: stickers.coralInk, fontFamily: font.italic }]}>
               keep your card on hand
             </Text>
           </View>
@@ -849,7 +847,7 @@ function PlanFormModal({
                 ]}
               >
                 <Camera size={16} color="#FFFEF8" strokeWidth={2.5} />
-                <Text style={[styles.scanBtnText, { color: '#FFFEF8', fontFamily: font.bodySemiBold }]}>Camera</Text>
+                <Text style={[styles.scanBtnText, { color: colors.surface, fontFamily: font.bodySemiBold }]}>Camera</Text>
               </Pressable>
               <Pressable
                 onPress={() => handleScanCard(false)}

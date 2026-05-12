@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors, borderRadius } from '../../constants/theme'
 
 interface PartnerViewProps {
@@ -11,7 +11,7 @@ interface PartnerViewProps {
 export function PartnerView({ partnerConnected = false, onInvite }: PartnerViewProps) {
   if (partnerConnected) {
     return (
-      <GlassCard variant="accent">
+      <PaperCard radius={28} padding={20}>
         <View style={styles.row}>
           <View style={styles.iconCircle}>
             <Ionicons name="heart" size={22} color={colors.accent} />
@@ -22,12 +22,12 @@ export function PartnerView({ partnerConnected = false, onInvite }: PartnerViewP
           </View>
           <Ionicons name="checkmark-circle" size={22} color={colors.success} />
         </View>
-      </GlassCard>
+      </PaperCard>
     )
   }
 
   return (
-    <GlassCard>
+    <PaperCard radius={28} padding={20}>
       <View style={styles.row}>
         <View style={styles.iconCircle}>
           <Text style={{ fontSize: 22 }}>💑</Text>
@@ -43,7 +43,7 @@ export function PartnerView({ partnerConnected = false, onInvite }: PartnerViewP
         <Ionicons name="person-add-outline" size={16} color={colors.accent} />
         <Text style={styles.inviteText}>Send Invite</Text>
       </Pressable>
-    </GlassCard>
+    </PaperCard>
   )
 }
 

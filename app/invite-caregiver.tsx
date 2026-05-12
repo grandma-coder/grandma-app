@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   roleChipActive: {
     borderColor: THEME_COLORS.yellow,
     backgroundColor: 'rgba(244, 253, 80, 0.06)',
-    ...shadows.glow,
+    ...shadows.pop,
   },
   roleLabel: {
     fontSize: 15,
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     height: 96,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.glow,
+    ...shadows.pop,
   },
   sendButtonInner: {
     flexDirection: 'row',

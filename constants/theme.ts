@@ -42,11 +42,6 @@ export const brand = {
   pregnancySoft: '#E0D5F3',
   kidsSoft: '#D4E3F3',
 
-  // Legacy mode colors kept for any components not yet migrated
-  prePregnancyLegacy: '#FF8AD8',
-  pregnancyLegacy: '#B983FF',
-  kidsLegacy: '#4D96FF',
-
   // Cycle phase colors
   phase: {
     menstrual: '#E8557A',
@@ -68,37 +63,65 @@ export const brand = {
 export const stickers = {
   yellow: '#F5D652',
   yellowSoft: '#FBEA9E',
+  yellowInk: '#7C5E0F',       // dark text/icon tint on cream
   blue: '#9DC3E8',
   blueSoft: '#CFE0F0',
+  blueInk: '#1F4A7A',         // dark text/icon tint on cream
   pink: '#F2B2C7',
   pinkSoft: '#F9D8E2',
+  pinkInk: '#8E3A56',         // dark text/icon tint on cream
   green: '#BDD48C',
   greenSoft: '#DDE7BB',
+  greenInk: '#3F5919',        // dark text/icon tint on cream
   lilac: '#C8B6E8',
   lilacSoft: '#E3D8F2',
+  lilacInk: '#3A2A6E',        // dark text/icon tint on cream
   peach: '#F5B896',
   peachSoft: '#F9D6C0',
+  peachInk: '#8B4A26',        // dark text/icon tint on cream
   coral: '#EE7B6D',
+  coralInk: '#B43E2E',        // dark text/icon tint on cream
   charcoal: '#2A2624',
 } as const
 
 // Dark mode sticker overrides (slightly brighter)
+// `*Ink` in dark uses the regular sticker hue — icons need to brighten, not darken.
 export const stickersDark = {
   yellow: '#F0CE4C',
   yellowSoft: '#3A3116',
+  yellowInk: '#F0CE4C',
   blue: '#A5C8EC',
   blueSoft: '#1C2A3A',
+  blueInk: '#A5C8EC',
   pink: '#F5BBCF',
   pinkSoft: '#36222A',
+  pinkInk: '#F5BBCF',
   green: '#C5DA98',
   greenSoft: '#283016',
+  greenInk: '#C5DA98',
   lilac: '#D0BFEC',
   lilacSoft: '#2A2340',
+  lilacInk: '#D0BFEC',
   peach: '#F7C09D',
   peachSoft: '#3A2618',
+  peachInk: '#F7C09D',
   coral: '#F29082',
+  coralInk: '#F29082',
   charcoal: '#F5EDDC',
 } as const
+
+// ─── CHART SERIES — canonical ordered palette for data viz ─────────────────
+// Use in order for series 1, 2, 3, … in any chart. Colors are picked from the
+// sticker palette for visual coherence with the rest of the system.
+
+export const chartSeries = [
+  stickers.lilac,   // #C8B6E8  primary series — matches pregnancy brand
+  stickers.peach,   // #F5B896  secondary
+  stickers.green,   // #BDD48C  tertiary
+  stickers.blue,    // #9DC3E8  quaternary
+  stickers.yellow,  // #F5D652  quinary
+  stickers.coral,   // #EE7B6D  sixth — also the destructive accent, use last
+] as const
 
 // ─── LIGHT MODE TOKENS — cream paper canvas ─────────────────────────────────
 
@@ -250,9 +273,6 @@ export const font = {
   body: 'DMSans_400Regular',               // UI body
   bodyMedium: 'DMSans_500Medium',          // medium weight UI
   bodySemiBold: 'DMSans_600SemiBold',      // semibold UI labels
-  // Legacy — kept for screens not yet migrated
-  displayLegacy: 'CabinetGrotesk-Black',
-  bodyLegacy: 'Satoshi-Variable',
 } as const
 
 // ─── useTheme() HOOK ───────────────────────────────────────────────────────
@@ -330,20 +350,20 @@ export const colors = {
   warning: darkTokens.warning,
   info: darkTokens.secondary,
   pillar: {
-    milk: brand.kidsLegacy,
-    food: '#A2FF86',
-    nutrition: '#F59E0B',
-    vaccines: brand.prePregnancyLegacy,
-    clothes: '#FF6B35',
+    milk: brand.kids,
+    food: stickers.green,
+    nutrition: brand.accent,
+    vaccines: brand.prePregnancy,
+    clothes: stickers.coral,
     recipes: darkTokens.surface,
-    habits: '#A2FF86',
-    milestones: brand.pregnancyLegacy,
-    medicine: brand.prePregnancyLegacy,
+    habits: stickers.green,
+    milestones: brand.pregnancy,
+    medicine: brand.prePregnancy,
   },
   role: {
-    parent: 'rgba(162, 255, 134, 0.15)',
-    nanny: 'rgba(185, 131, 255, 0.15)',
-    family: 'rgba(255, 107, 53, 0.15)',
+    parent: 'rgba(189, 212, 140, 0.15)',  // stickers.green @ 15%
+    nanny: 'rgba(200, 182, 232, 0.15)',   // stickers.lilac @ 15%
+    family: 'rgba(238, 123, 109, 0.15)',  // stickers.coral @ 15%
   },
   tabBar: darkTokens.tabBg,
   tabBarInactive: darkTokens.tabInactive,

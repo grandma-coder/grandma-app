@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { GlassCard } from '../ui/GlassCard'
+import { PaperCard } from '../ui/PaperCard'
 import { colors } from '../../constants/theme'
 
 interface PartnerDashboardProps {
@@ -35,7 +35,7 @@ export function PartnerDashboard({ weekNumber, partnerName }: PartnerDashboardPr
   const tip = getPartnerTip(weekNumber)
 
   return (
-    <GlassCard>
+    <PaperCard radius={28} padding={20}>
       <View style={styles.header}>
         <Ionicons name="heart" size={20} color={colors.accent} />
         <Text style={styles.title}>
@@ -56,7 +56,7 @@ export function PartnerDashboard({ weekNumber, partnerName }: PartnerDashboardPr
           <Text style={styles.actionText}>Partner's guide</Text>
         </View>
       </View>
-    </GlassCard>
+    </PaperCard>
   )
 }
 
