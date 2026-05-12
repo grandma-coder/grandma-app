@@ -2914,7 +2914,9 @@ function NutritionCard({ stage, caloriesTotal, caloriesTarget, feedingCount, fee
       ) : (
         <>
           <Text style={[s.metricValue, { color: coral }]}>
-            {caloriesTotal > 0 ? `${Math.round(pct * 100)}% of daily` : `${meals} meals`}
+            {caloriesTotal > 0
+              ? (target > 0 ? `${Math.round(pct * 100)}% of daily` : `${caloriesTotal} kcal`)
+              : `${meals} meals`}
           </Text>
           <Text style={[s.metricSmall, { color: ink3 }]}>
             {feedingCount > 0 ? `+ ${feedingCount} bottles (${feedingMl}ml)` : 'Tap for breakdown'}
@@ -5439,11 +5441,16 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
   const ageLabel = formatAge(birthDate)
 
   async function handleSave() {
+    // Every goal floors at 1 — a goal of 0 means percent math like
+    // (current / target) shows "0% of daily" against a target that
+    // doesn't really exist, which reads as a failure on the dashboard
+    // rather than "no goal set." Falling back to the suggested value
+    // when the input is blank or non-numeric also prevents that case.
     const newGoals: MetricGoals = {
       sleep: Math.max(1, Number(sleep) || suggested.sleep),
-      calories: Math.max(0, Number(calories) || suggested.calories),
+      calories: Math.max(1, Number(calories) || suggested.calories),
       feedings: Math.max(1, Number(feedings) || suggested.feedings),
-      feedingMl: Math.max(0, Number(feedingMl) || suggested.feedingMl),
+      feedingMl: Math.max(1, Number(feedingMl) || suggested.feedingMl),
       activity: Math.max(1, Number(activity) || suggested.activity),
     }
     store.setAllGoals(childId, newGoals)
