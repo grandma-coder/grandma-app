@@ -267,11 +267,17 @@ async function updateChildLog(
   id: string,
   value?: string | null,
   notes?: string | null,
-  photos?: string[]
+  photos?: string[],
+  date?: string,
 ) {
   const { error } = await supabase
     .from('child_logs')
-    .update({ value: value ?? null, notes: notes ?? null, ...(photos ? { photos } : {}) })
+    .update({
+      value: value ?? null,
+      notes: notes ?? null,
+      ...(photos ? { photos } : {}),
+      ...(date ? { date } : {}),
+    })
     .eq('id', id)
   if (error) throw error
 }
@@ -974,7 +980,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
         } else {
           value = JSON.stringify({ feedType: 'bottle', time: startTime, amount: amount || undefined, ...routineMeta })
         }
-        await updateChildLog(editLog.id, tagWithRoutine(value, prefill) ?? value, feedType === 'solids' ? (description || null) : null, finalPhotos.length ? finalPhotos : undefined)
+        await updateChildLog(editLog.id, tagWithRoutine(value, prefill) ?? value, feedType === 'solids' ? (description || null) : null, finalPhotos.length ? finalPhotos : undefined, logDate)
         onSaved()
         return
       }
@@ -1687,7 +1693,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
       const value = JSON.stringify(valueObj)
       const taggedValue = tagWithRoutine(value, prefill) ?? value
       if (editLog) {
-        await updateChildLog(editLog.id, taggedValue, notes || null)
+        await updateChildLog(editLog.id, taggedValue, notes || null, undefined, logDate)
         onSaved()
         return
       }
@@ -1814,7 +1820,7 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
         : 'note'
       const tagged = tagWithRoutine(value || eventType, prefill) ?? (value || eventType)
       if (editLog) {
-        await updateChildLog(editLog.id, tagged, notes || null)
+        await updateChildLog(editLog.id, tagged, notes || null, undefined, logDate)
         onSaved()
         return
       }
@@ -1932,7 +1938,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
     setSaving(true)
     try {
       if (editLog) {
-        await updateChildLog(editLog.id, mood, notes || null)
+        await updateChildLog(editLog.id, mood, notes || null, undefined, logDate)
         onSaved()
         return
       }
@@ -2192,7 +2198,7 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
       })
       const tagged = tagWithRoutine(value, prefill) ?? value
       if (editLog) {
-        await updateChildLog(editLog.id, tagged, notes || null)
+        await updateChildLog(editLog.id, tagged, notes || null, undefined, logDate)
         onSaved()
         return
       }
@@ -2375,7 +2381,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
       }
       const uploadedPhotos = upload.urls.length ? upload.urls : undefined
       if (editLog) {
-        await updateChildLog(editLog.id, value, notes || null, uploadedPhotos)
+        await updateChildLog(editLog.id, value, notes || null, uploadedPhotos, logDate)
         onSaved()
         return
       }
