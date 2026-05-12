@@ -934,13 +934,16 @@ export function KidsCalendar() {
           try {
             const rv = JSON.parse(routine.value)
             const lv = log.value ? JSON.parse(log.value) : null
-            // If a specific meal is set on the routine, require it to match
-            if (rv.meal && lv?.meal) return rv.meal === lv.meal
-            // If a feedType is set, require it to match
-            if (rv.feedType && lv?.feedType) return rv.feedType === lv.feedType
+            // If the routine pins a meal (e.g. "breakfast"), the log MUST have
+            // the matching meal. A log without a meal field is not a match —
+            // otherwise an evening dinner log would mark a breakfast routine
+            // as done.
+            if (rv.meal) return lv?.meal === rv.meal
+            // Same rule for feedType: routine says "bottle" → require bottle.
+            if (rv.feedType) return lv?.feedType === rv.feedType
           } catch {}
         }
-        // No specific criteria — any food/feeding log for this child counts
+        // No specific criteria on the routine — any food/feeding log counts.
         return true
       }
 
@@ -950,13 +953,13 @@ export function KidsCalendar() {
           try {
             const rv = JSON.parse(routine.value)
             const lv = log.value ? JSON.parse(log.value) : null
-            // If a name is set, require exact name match (prevents false dedup)
-            if (rv.name && lv?.name) return rv.name === lv.name
-            // If activityType is set, require it to match
-            if (rv.activityType && lv?.activityType) return rv.activityType === lv.activityType
+            // If routine pins a name or activityType, the log must match
+            // exactly. Missing field on the log = mismatch (not a free pass).
+            if (rv.name) return lv?.name === rv.name
+            if (rv.activityType) return lv?.activityType === rv.activityType
           } catch {}
         }
-        // No name/type set → match by time proximity (within 1 hour)
+        // No name/type criterion → fall back to time proximity (within 1 hour).
         if (routine.time) {
           const rHour = parseInt(routine.time.split(':')[0])
           try {
