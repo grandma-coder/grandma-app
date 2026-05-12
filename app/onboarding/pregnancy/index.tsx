@@ -149,11 +149,19 @@ export default function PregnancyOnboarding() {
 
       // Save due date + initial data as pregnancy logs
       if (store.dueDate) {
-        const logs = [
+        const today = new Date().toISOString().split('T')[0]
+        type PregLogRow = {
+          user_id: string
+          log_date: string
+          log_type: 'note' | 'mood'
+          value: string | null
+          notes: string | null
+        }
+        const logs: PregLogRow[] = [
           {
             user_id: userId,
-            date: new Date().toISOString().split('T')[0],
-            type: 'note' as const,
+            log_date: today,
+            log_type: 'note',
             value: 'onboarding',
             notes: JSON.stringify({
               dueDate: store.dueDate,
@@ -170,10 +178,10 @@ export default function PregnancyOnboarding() {
         if (store.mood) {
           logs.push({
             user_id: userId,
-            date: new Date().toISOString().split('T')[0],
-            type: 'mood' as const,
+            log_date: today,
+            log_type: 'mood',
             value: store.mood,
-            notes: null as any,
+            notes: null,
           })
         }
 
