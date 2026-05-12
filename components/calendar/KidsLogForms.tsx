@@ -181,6 +181,19 @@ async function stabiliseUri(uri: string): Promise<string> {
 // ─── Photo upload helper ───────────────────────────────────────────────────
 
 /**
+ * Generates an unguessable URL-safe token using a 36-char alphabet.
+ * 22 chars ≈ 113 bits, well above what a public-bucket policy needs.
+ */
+function randomToken(len: number): string {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  let out = ''
+  for (let i = 0; i < len; i++) {
+    out += alphabet[Math.floor(Math.random() * alphabet.length)]
+  }
+  return out
+}
+
+/**
  * Upload photos to storage. Returns the successfully-uploaded URLs and a
  * count of failed uploads so callers can decide what to do (warn the user,
  * block the save, etc.). Previously this swallowed all failures silently.
@@ -193,7 +206,14 @@ async function uploadPhotos(uris: string[]): Promise<{ urls: string[]; failed: n
   let failed = 0
   for (const uri of uris) {
     try {
-      const path = `kids-logs/${session.user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`
+      // The garage-photos bucket has a public SELECT policy (used for the
+      // marketplace). Until child photos move to a properly RLS'd
+      // kids-photos bucket, mitigate by making URLs unguessable: 22-char
+      // random token (~128 bits of entropy) rather than 4 chars.
+      // TODO(privacy): create kids-photos bucket with caregiver-scoped RLS
+      // (see child_caregivers join) and switch this upload target.
+      const token = `${Date.now().toString(36)}_${randomToken(22)}`
+      const path = `kids-logs/${session.user.id}/${token}.jpg`
       const formData = new FormData()
       formData.append('', { uri, name: path.split('/').pop(), type: 'image/jpeg' } as any)
       const { error } = await supabase.storage
