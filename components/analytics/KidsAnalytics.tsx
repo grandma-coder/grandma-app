@@ -1410,7 +1410,16 @@ function buildInsightHighlights(
   }
 
   let trend: InsightTrend | null = null
-  const trendPillar = PILLAR_ORDER.find((k) => scores[k].hasData && Math.abs(scores[k].trend) >= 10)
+  // Pick the pillar with the largest absolute trend (≥10%), not the first
+  // one that crosses 10% in PILLAR_ORDER. The old find() hid a 40% activity
+  // decline behind a 12% nutrition wobble simply because nutrition came
+  // earlier in the array.
+  const trendPillar = PILLAR_ORDER
+    .filter((k) => scores[k].hasData && Math.abs(scores[k].trend) >= 10)
+    .reduce<PillarKey | null>(
+      (best, k) => (best === null || Math.abs(scores[k].trend) > Math.abs(scores[best].trend) ? k : best),
+      null,
+    )
   if (trendPillar) {
     const direction: 'improving' | 'declining' = scores[trendPillar].trend > 0 ? 'improving' : 'declining'
     const delta = Math.abs(scores[trendPillar].trend)
