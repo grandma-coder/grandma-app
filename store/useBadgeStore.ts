@@ -156,34 +156,15 @@ interface BadgeState {
   }) => string[]  // returns newly earned badge IDs
 }
 
-// Demo badges to show visual states (remove when real data flows)
-const DEMO_BADGES: EarnedBadge[] = [
-  { badgeId: 'streak_3',         earnedAt: '2026-03-20T10:00:00Z' },
-  { badgeId: 'streak_7',         earnedAt: '2026-03-24T10:00:00Z' },
-  { badgeId: 'streak_14',        earnedAt: '2026-03-31T10:00:00Z' },
-  { badgeId: 'streak_30',        earnedAt: '2026-04-10T10:00:00Z' },
-  { badgeId: 'nutrition_first',  earnedAt: '2026-03-15T08:00:00Z' },
-  { badgeId: 'nutrition_variety', earnedAt: '2026-04-01T12:00:00Z' },
-  { badgeId: 'sleep_first',      earnedAt: '2026-03-15T20:00:00Z' },
-  { badgeId: 'sleep_week',       earnedAt: '2026-03-22T20:00:00Z' },
-  { badgeId: 'mood_first',       earnedAt: '2026-03-16T10:00:00Z' },
-  { badgeId: 'health_vaccine',   earnedAt: '2026-03-18T14:00:00Z' },
-  { badgeId: 'growth_first',     earnedAt: '2026-03-19T09:00:00Z' },
-  { badgeId: 'milestone_first_log', earnedAt: '2026-03-15T07:00:00Z' },
-  { badgeId: 'milestone_100_logs',  earnedAt: '2026-04-05T16:00:00Z' },
-  { badgeId: 'community_first',  earnedAt: '2026-03-28T11:00:00Z' },
-  { badgeId: 'daily_checkin_7',  earnedAt: '2026-03-22T07:00:00Z' },
-]
-
 export const useBadgeStore = create<BadgeState>()(
   persist(
     (set, get) => ({
-      earnedBadges: DEMO_BADGES,
-      totalPoints: 485,
-      currentStreak: 30,
-      longestStreak: 30,
-      lastCheckInDate: localDateStr(new Date()),
-      totalCheckIns: 42,
+      earnedBadges: [],
+      totalPoints: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      lastCheckInDate: null,
+      totalCheckIns: 0,
       hydrated: false,
 
       setHydrated: (h) => set({ hydrated: h }),
@@ -336,17 +317,17 @@ export const useBadgeStore = create<BadgeState>()(
     }),
     {
       name: 'grandma-badges',
-      version: 2,
+      version: 3,
       migrate: (persisted: any, version: number) => {
-        // Reset to demo data when migrating from v0/v1
-        if (version < 2) {
+        // v3: wipe demo seed state that earlier versions shipped with.
+        if (version < 3) {
           return {
-            earnedBadges: DEMO_BADGES,
-            totalPoints: 485,
-            currentStreak: 30,
-            longestStreak: 30,
-            lastCheckInDate: localDateStr(new Date()),
-            totalCheckIns: 42,
+            earnedBadges: [],
+            totalPoints: 0,
+            currentStreak: 0,
+            longestStreak: 0,
+            lastCheckInDate: null,
+            totalCheckIns: 0,
           }
         }
         return persisted as any
