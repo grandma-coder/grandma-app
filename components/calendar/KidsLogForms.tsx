@@ -1818,7 +1818,21 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
         : eventType === 'Vaccine' ? 'vaccine'
         : eventType === 'Medicine' ? 'medicine'
         : 'note'
-      const tagged = tagWithRoutine(value || eventType, prefill) ?? (value || eventType)
+      // For typed events the `value` is the actual name shown on the
+      // dashboard (the vaccine name, the medicine name, the temperature
+      // reading). Falling back to the eventType label produced visible
+      // trash like a "vaccine" row literally named "Vaccine" on the home
+      // health card. Require the user to fill it in.
+      const trimmedValue = value.trim()
+      if (!trimmedValue && (logType === 'vaccine' || logType === 'medicine' || logType === 'temperature')) {
+        Alert.alert(
+          `Add a ${eventType.toLowerCase()} name`,
+          `Please enter the ${eventType.toLowerCase()} before saving so it shows up correctly in your health history.`,
+        )
+        return
+      }
+      const finalValue = trimmedValue || eventType
+      const tagged = tagWithRoutine(finalValue, prefill) ?? finalValue
       if (editLog) {
         await updateChildLog(editLog.id, tagged, notes || null, undefined, logDate)
         onSaved()
