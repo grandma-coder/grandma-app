@@ -807,21 +807,43 @@ export function KidsHome() {
     })
   }
 
+  // Re-entrancy guard: rapid taps on "Mark given" would otherwise insert
+  // duplicate child_logs rows before the first insert returns.
+  const markingVaccineRef = useRef<Set<string>>(new Set())
+
   async function markVaccineGiven(childId: string, vaccineName: string, date: string, vaccineKey: string) {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
-    await supabase.from('child_logs').insert({
-      child_id: childId,
-      user_id: session.user.id,
-      date,
-      type: 'vaccine',
-      value: vaccineName,
-      notes: 'Logged from home dashboard',
-      logged_by: session.user.id,
-    })
-    // Remove from scheduled and reload history
-    setVaccineDate(childId, vaccineKey, null)
-    loadHealthHistory(childId)
+    // Block marking a future-dated appointment as given — produces a false
+    // medical record (e.g. tap "given" on a scheduled appt 3 weeks out).
+    const today = toDateStr(new Date())
+    if (date > today) {
+      Alert.alert(
+        'Future date',
+        'You can mark a vaccine as given only on or after the appointment day. If it happened today, update the date first.',
+      )
+      return
+    }
+
+    const guardKey = `${childId}:${vaccineKey}`
+    if (markingVaccineRef.current.has(guardKey)) return
+    markingVaccineRef.current.add(guardKey)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      await supabase.from('child_logs').insert({
+        child_id: childId,
+        user_id: session.user.id,
+        date,
+        type: 'vaccine',
+        value: vaccineName,
+        notes: 'Logged from home dashboard',
+        logged_by: session.user.id,
+      })
+      // Remove from scheduled and reload history
+      setVaccineDate(childId, vaccineKey, null)
+      loadHealthHistory(childId)
+    } finally {
+      markingVaccineRef.current.delete(guardKey)
+    }
   }
 
   function persistReminders(list: Reminder[]) {
