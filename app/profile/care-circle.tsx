@@ -299,7 +299,14 @@ function friendlyTypeLabel(type: string, value: string | null): string {
     const v = value ? JSON.parse(value) : null
     if (type === 'feeding' && v?.feedType === 'breast') return 'Breastfeed'
     if (type === 'feeding' && v?.feedType === 'bottle') return 'Bottle Feed'
-    if (type === 'mood' && typeof v === 'string') return `Mood: ${v.charAt(0).toUpperCase() + v.slice(1)}`
+    // Mood can be a bare string (legacy) or { mood: 'happy', routineId, ... }
+    // (the routine-tagged shape introduced when mood is logged from a routine).
+    if (type === 'mood') {
+      const moodId = typeof v === 'string' ? v : v?.mood
+      if (typeof moodId === 'string' && moodId) {
+        return `Mood: ${moodId.charAt(0).toUpperCase() + moodId.slice(1)}`
+      }
+    }
   } catch {
     if (type === 'mood' && value) return `Mood: ${value.charAt(0).toUpperCase() + value.slice(1)}`
   }

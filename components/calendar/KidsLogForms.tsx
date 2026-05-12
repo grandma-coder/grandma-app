@@ -1964,19 +1964,33 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
     setChildId(editLog.child_id)
     setLogDate(editLog.date)
     if (editLog.notes) setNotes(editLog.notes)
-    if (editLog.value && MOODS.some((m) => m.id === editLog.value)) setMood(editLog.value)
+    // Accept both shapes: bare string ("happy") or JSON wrapped
+    // ({ mood: "happy", routineId, routineName }).
+    if (editLog.value) {
+      let v: any = editLog.value
+      try { v = JSON.parse(editLog.value) } catch {}
+      const moodId = typeof v === 'string' ? v : v?.mood
+      if (moodId && MOODS.some((m) => m.id === moodId)) setMood(moodId)
+    }
   }, [editLog?.id])
 
   async function save() {
     if (!childId || !mood) return
     setSaving(true)
     try {
+      // When this log is tagged to a routine (prefill present), serialize
+      // mood as JSON so tagWithRoutine can survive the round-trip. Without
+      // the wrap, the bare string "happy" is not valid JSON and the helper
+      // returns it unchanged, losing the routineId tag entirely.
+      const wrappedValue = prefill?.routineId
+        ? JSON.stringify({ mood, routineId: prefill.routineId, routineName: prefill.name ?? undefined })
+        : mood
       if (editLog) {
-        await updateChildLog(editLog.id, mood, notes || null, undefined, logDate)
+        await updateChildLog(editLog.id, wrappedValue, notes || null, undefined, logDate)
         onSaved()
         return
       }
-      await saveChildLog(childId, 'mood', mood, notes || undefined, undefined, logDate)
+      await saveChildLog(childId, 'mood', wrappedValue, notes || undefined, undefined, logDate)
       if (routineEnabled && !prefill) {
         await saveAsRoutine(childId, 'mood', 'Mood check', null, startTime, routineDays)
       }

@@ -1063,10 +1063,13 @@ export function KidsHome() {
     const moodCounts: Record<string, number> = {}
     const moodByDay: Record<string, Record<string, number>> = {}
     for (const log of rangeLogs.filter((l) => l.type === 'mood')) {
-      let mood = log.value
+      let mood: any = log.value
       try { mood = typeof mood === 'string' ? JSON.parse(mood) : mood } catch {}
-      if (typeof mood === 'string') {
-        const key = mood.toLowerCase()
+      // Accept both shapes: a bare string ("happy") or the routine-tagged
+      // object ({ mood: "happy", routineId, routineName }).
+      const moodId = typeof mood === 'string' ? mood : mood?.mood
+      if (typeof moodId === 'string') {
+        const key = moodId.toLowerCase()
         moodCounts[key] = (moodCounts[key] || 0) + 1
         if (!moodByDay[log.date]) moodByDay[log.date] = {}
         moodByDay[log.date][key] = (moodByDay[log.date][key] || 0) + 1
