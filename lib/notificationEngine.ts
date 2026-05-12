@@ -578,7 +578,7 @@ export async function generateCaregiverNotifications(
   // Get caregiver names
   const caregiverIds = [...new Set(caregiverLogs.map((l) => l.logged_by).filter(Boolean))]
   const { data: profiles } = await supabase
-    .from('profiles')
+    .from('profiles_public')
     .select('id, name')
     .in('id', caregiverIds)
 

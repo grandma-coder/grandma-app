@@ -68,7 +68,7 @@ export async function fetchFeed(opts?: {
   if (missingNamePosts.length > 0) {
     const authorIds = [...new Set(missingNamePosts.map((p) => p.author_id))]
     const { data: profiles } = await supabase
-      .from('profiles')
+      .from('profiles_public')
       .select('id, name')
       .in('id', authorIds)
 
@@ -267,7 +267,7 @@ export async function fetchComments(postId: string): Promise<GarageComment[]> {
   if (missing.length > 0) {
     const authorIds = [...new Set(missing.map((c) => c.author_id))]
     const { data: profiles } = await supabase
-      .from('profiles')
+      .from('profiles_public')
       .select('id, name')
       .in('id', authorIds)
 
@@ -318,7 +318,7 @@ export async function searchUsers(query: string): Promise<{ id: string; name: st
   if (!query || query.length < 2) return []
 
   const { data } = await supabase
-    .from('profiles')
+    .from('profiles_public')
     .select('id, name')
     .ilike('name', `%${query}%`)
     .limit(10)

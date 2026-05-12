@@ -61,7 +61,7 @@ async function getCurrentUserName(): Promise<string | null> {
   const { data: profile } = await supabase
     .from('profiles')
     .select('name')
-    .eq('user_id', session.user.id)
+    .eq('id', session.user.id)
     .single()
 
   _cachedUserId = session.user.id
@@ -157,7 +157,7 @@ export async function fetchMessages(channelId: string): Promise<ChannelPost[]> {
   if (needsName.length > 0) {
     const authorIds = [...new Set(needsName.map((p) => p.author_id))]
     const { data: profiles } = await supabase
-      .from('profiles')
+      .from('profiles_public')
       .select('user_id, name')
       .in('user_id', authorIds)
 
@@ -263,7 +263,7 @@ export async function fetchThreadReplies(parentId: string): Promise<ChannelPost[
   if (missing.length > 0) {
     const authorIds = [...new Set(missing.map((r) => r.author_id))]
     const { data: profiles } = await supabase
-      .from('profiles')
+      .from('profiles_public')
       .select('user_id, name')
       .in('user_id', authorIds)
 
@@ -410,7 +410,7 @@ export async function searchChannelMembers(
 
   const userIds = members.map((m: any) => m.user_id)
   const { data: profiles } = await supabase
-    .from('profiles')
+    .from('profiles_public')
     .select('user_id, name')
     .in('user_id', userIds)
     .ilike('name', `%${query}%`)
@@ -466,7 +466,7 @@ export async function fetchChannelRatings(channelId: string): Promise<ChannelRat
   if (missing.length > 0) {
     const userIds = [...new Set(missing.map((r) => r.user_id))]
     const { data: profiles } = await supabase
-      .from('profiles')
+      .from('profiles_public')
       .select('user_id, name')
       .in('user_id', userIds)
     if (profiles) {
@@ -589,7 +589,7 @@ export async function transferChannelOwnership(channelId: string, newOwnerId: st
   // Post system message
   const authorName = await getCurrentUserName()
   const { data: newOwnerProfile } = await supabase
-    .from('profiles')
+    .from('profiles_public')
     .select('name')
     .eq('user_id', newOwnerId)
     .single()
@@ -614,7 +614,7 @@ export async function getChannelMembers(channelId: string): Promise<{ user_id: s
 
   const userIds = memberRows.map((m: any) => m.user_id)
   const { data: profiles } = await supabase
-    .from('profiles')
+    .from('profiles_public')
     .select('user_id, name')
     .in('user_id', userIds)
 
@@ -689,19 +689,20 @@ export async function notifyMentions(
   if (!session) return
   const authorName = await getCurrentUserName()
 
-  const notifications = mentionedUserIds
-    .filter((uid) => uid !== session.user.id) // don't notify self
-    .map((uid) => ({
-      user_id: uid,
-      type: 'mention',
-      title: `${authorName ?? 'Someone'} mentioned you in #${channelName}`,
-      body: messageContent.slice(0, 100),
-      data: { channelId },
-    }))
+  const recipients = mentionedUserIds.filter((uid) => uid !== session.user.id)
 
-  if (notifications.length > 0) {
-    await supabase.from('notifications').insert(notifications)
-  }
+  await Promise.all(
+    recipients.map((uid) =>
+      supabase.rpc('create_notification', {
+        p_user_id: uid,
+        p_type: 'mention',
+        p_title: `${authorName ?? 'Someone'} mentioned you in #${channelName}`,
+        p_body: messageContent.slice(0, 100),
+        p_data: { channelId },
+        p_channel_id: channelId,
+      })
+    )
+  )
 }
 
 // ─── Private Channel Requests ─────────────────────────────────────────────
@@ -746,7 +747,7 @@ export async function getPendingRequests(channelId: string): Promise<ChannelRequ
   // Enrich with user names
   const userIds = requests.map((r: any) => r.user_id)
   const { data: profiles } = await supabase
-    .from('profiles')
+    .from('profiles_public')
     .select('user_id, name')
     .in('user_id', userIds)
 
@@ -776,7 +777,7 @@ export async function approveRequest(requestId: string, channelId: string, userI
 
   // Post system message
   const { data: profile } = await supabase
-    .from('profiles')
+    .from('profiles_public')
     .select('name')
     .eq('user_id', userId)
     .single()

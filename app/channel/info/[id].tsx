@@ -144,7 +144,7 @@ export default function ChannelInfoScreen() {
       if (memberRows && memberRows.length > 0) {
         const userIds = memberRows.map((m: any) => m.user_id)
         const { data: profiles } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, name')
           .in('user_id', userIds)
 

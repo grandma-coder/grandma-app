@@ -636,7 +636,7 @@ export function KidsCalendar() {
         const loggedByIds = [...new Set((data as ChildLog[]).map((l) => l.logged_by).filter(Boolean) as string[])]
         if (loggedByIds.length > 0) {
           const { data: profiles } = await supabase
-            .from('profiles')
+            .from('profiles_public')
             .select('id, name')
             .in('id', loggedByIds)
           if (profiles) {
