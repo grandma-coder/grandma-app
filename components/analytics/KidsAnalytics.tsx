@@ -556,7 +556,16 @@ export function KidsAnalytics() {
   }
 
   function handleCustomApply(from: string, to: string) {
-    setCustomRange({ from, to })
+    // Guard against inverted ranges. Without this, `to < from` silently
+    // produced an empty result set in analyticsData (the .gte/.lte pair
+    // matches nothing) and the user saw a blank dashboard with no hint
+    // that they typed the dates in the wrong order.
+    if (from && to && from > to) {
+      const swapped = { from: to, to: from }
+      setCustomRange(swapped)
+    } else {
+      setCustomRange({ from, to })
+    }
     setPeriod('custom')
     setShowCustomModal(false)
   }
