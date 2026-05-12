@@ -180,11 +180,17 @@ async function stabiliseUri(uri: string): Promise<string> {
 
 // ─── Photo upload helper ───────────────────────────────────────────────────
 
-async function uploadPhotos(uris: string[]): Promise<string[]> {
+/**
+ * Upload photos to storage. Returns the successfully-uploaded URLs and a
+ * count of failed uploads so callers can decide what to do (warn the user,
+ * block the save, etc.). Previously this swallowed all failures silently.
+ */
+async function uploadPhotos(uris: string[]): Promise<{ urls: string[]; failed: number }> {
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session || uris.length === 0) return []
+  if (!session || uris.length === 0) return { urls: [], failed: 0 }
 
-  const publicUrls: string[] = []
+  const urls: string[] = []
+  let failed = 0
   for (const uri of uris) {
     try {
       const path = `kids-logs/${session.user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`
@@ -195,11 +201,15 @@ async function uploadPhotos(uris: string[]): Promise<string[]> {
         .upload(path, formData, { contentType: 'multipart/form-data', upsert: true })
       if (!error) {
         const { data: urlData } = supabase.storage.from('garage-photos').getPublicUrl(path)
-        publicUrls.push(urlData.publicUrl)
+        urls.push(urlData.publicUrl)
+      } else {
+        failed += 1
       }
-    } catch {}
+    } catch {
+      failed += 1
+    }
   }
-  return publicUrls
+  return { urls, failed }
 }
 
 // ─── Safe camera launcher ─────────────────────────────────────────────────
@@ -940,8 +950,15 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
     if (!childId) return
     setSaving(true)
     try {
-      const uploadedPhotos = photos.some((p) => !p.startsWith('http')) ? await uploadPhotos(photos.filter((p) => !p.startsWith('http'))) : []
-      const finalPhotos = [...photos.filter((p) => p.startsWith('http')), ...uploadedPhotos]
+      const toUpload = photos.filter((p) => !p.startsWith('http'))
+      const upload = toUpload.length ? await uploadPhotos(toUpload) : { urls: [], failed: 0 }
+      if (upload.failed > 0) {
+        Alert.alert(
+          'Some photos didn\'t upload',
+          `${upload.failed} of ${toUpload.length} photos failed to upload. Saving the rest — you can edit and re-add the missing ones later.`,
+        )
+      }
+      const finalPhotos = [...photos.filter((p) => p.startsWith('http')), ...upload.urls]
       if (editLog) {
         // Edit mode — UPDATE existing log, preserving original routine metadata
         let routineMeta: { routineId?: string; routineName?: string } = {}
@@ -2012,8 +2029,24 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
     if (!childId) return
     setSaving(true)
     try {
-      const uploadedPhotos = await uploadPhotos(photos)
-      await saveChildLog(childId, 'photo', 'memory', caption || undefined, uploadedPhotos, logDate)
+      const upload = await uploadPhotos(photos)
+      // A "memory" log with zero photos is not a memory — block the save
+      // if every upload failed so the user can retry instead of creating
+      // an empty record.
+      if (photos.length > 0 && upload.urls.length === 0) {
+        Alert.alert(
+          'Photos didn\'t upload',
+          'None of the photos could be uploaded. Check your connection and try again.',
+        )
+        return
+      }
+      if (upload.failed > 0) {
+        Alert.alert(
+          'Some photos didn\'t upload',
+          `${upload.failed} of ${photos.length} photos failed. Saving the memory with the ones that worked.`,
+        )
+      }
+      await saveChildLog(childId, 'photo', 'memory', caption || undefined, upload.urls, logDate)
       onSaved()
     } catch (e: any) {
       Alert.alert('Error', e.message)
@@ -2333,7 +2366,14 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
         consistency: showPooDetails ? (consistency ?? undefined) : undefined,
         time: logTime,
       })
-      const uploadedPhotos = photos.length ? await uploadPhotos(photos) : undefined
+      const upload = photos.length ? await uploadPhotos(photos) : { urls: [], failed: 0 }
+      if (upload.failed > 0) {
+        Alert.alert(
+          'Some photos didn\'t upload',
+          `${upload.failed} of ${photos.length} photos failed. Saving the diaper log anyway.`,
+        )
+      }
+      const uploadedPhotos = upload.urls.length ? upload.urls : undefined
       if (editLog) {
         await updateChildLog(editLog.id, value, notes || null, uploadedPhotos)
         onSaved()
