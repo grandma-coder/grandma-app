@@ -87,7 +87,7 @@ const GROWTH_LEAPS = [
     week: 8, name: 'Patterns', desc: 'Recognizing simple repeating patterns in the world',
     ageRange: '7–8 weeks', duration: '1–2 weeks', difficulty: 2,
     brainNote: 'Your baby\'s brain starts detecting repeating patterns in sound, movement, and visual input. This is the foundation for all future learning — understanding that the world is predictable and has structure.',
-    color: '#4D96FF',
+    color: brand.kids,
     phases: [
       { label: 'Stormy', desc: 'Night waking, cluster feeding, and fussiness spike as the brain works overtime to catalog patterns.' },
       { label: 'Peak Leap', desc: 'Baby is actively building neural pathways for pattern recognition. Intense brain work.' },
@@ -207,7 +207,7 @@ const GROWTH_LEAPS = [
     week: 75, name: 'Systems', desc: 'Understanding complex systems with interacting parts',
     ageRange: '70–75 weeks', duration: '4–6 weeks', difficulty: 4,
     brainNote: 'The final Wonder Week leap — toddler\'s brain now models complex systems: family dynamics, nature, society, cause-and-effect chains with many links. This is the foundation of adult thinking. The questions become deep, the roleplay becomes rich, and independence flourishes.',
-    color: '#4D96FF',
+    color: brand.kids,
     phases: [
       { label: 'Stormy', desc: 'Defiance and strong-willed behavior peak. Toddler is asserting their new understanding of how systems work.' },
       { label: 'Peak Leap', desc: 'Brain is modeling complex systems — family, seasons, routines, social hierarchies.' },
@@ -443,7 +443,7 @@ import { LogSheet } from '../calendar/LogSheet'
 import { SleepForm, KidsMoodForm, FeedingForm, ActivityForm } from '../calendar/KidsLogForms'
 
 const MOOD_COLORS: Record<string, string> = {
-  happy: '#FBBF24', calm: '#6EC96E', energetic: '#4D96FF', fussy: '#FF9800', cranky: '#FF7070',
+  happy: '#FBBF24', calm: '#6EC96E', energetic: brand.kids, fussy: '#FF9800', cranky: '#FF7070',
 }
 const MOOD_LABELS: Record<string, string> = {
   happy: 'Happy', calm: 'Calm', energetic: 'Active', fussy: 'Fussy', cranky: 'Cranky',
@@ -1665,19 +1665,46 @@ export function KidsHome() {
 
       {/* ─── Reminders ────────────────────────────────────────── */}
       <View style={s.sectionHeader}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Pressable
+          onPress={() => reminders.length > 0 && setRemindersModalVisible(true)}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}
+          hitSlop={6}
+        >
           <View style={{ transform: [{ rotate: '10deg' }] }}>
             <FlowerSticker size={28} petal="#C8B6E8" center="#F5D652" />
           </View>
           <Text style={[s.sectionTitle, { color: colors.text }]}>Reminders</Text>
-        </View>
-        <Pressable
-          onPress={() => { setShowReminderInput(!showReminderInput); setNewReminderText('') }}
-          style={[s.addReminderBtn, { backgroundColor: brand.kids + '15', borderRadius: radius.full }]}
-        >
-          <Plus size={13} color={brand.kids} strokeWidth={2.5} />
-          <Text style={[s.addReminderBtnText, { color: brand.kids }]}>Add</Text>
+          {reminders.length > 0 ? (
+            <View style={{
+              paddingHorizontal: 8,
+              paddingVertical: 2,
+              borderRadius: 999,
+              backgroundColor: brand.kids + '18',
+            }}>
+              <Text style={{ fontSize: 11, fontFamily: 'DMSans_700Bold', color: brand.kids, letterSpacing: 0.3 }}>
+                {reminders.filter(r => !r.done).length}
+              </Text>
+            </View>
+          ) : null}
         </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {reminders.length > 0 ? (
+            <Pressable
+              onPress={() => setRemindersModalVisible(true)}
+              style={[s.addReminderBtn, { backgroundColor: 'rgba(20,19,19,0.05)', borderRadius: radius.full }]}
+              hitSlop={6}
+            >
+              <Text style={[s.addReminderBtnText, { color: colors.textSecondary }]}>View all</Text>
+            </Pressable>
+          ) : null}
+          <Pressable
+            onPress={() => { setShowReminderInput(!showReminderInput); setNewReminderText('') }}
+            style={[s.addReminderBtn, { backgroundColor: brand.kids + '15', borderRadius: radius.full }]}
+          >
+            <Plus size={13} color={brand.kids} strokeWidth={2.5} />
+            <Text style={[s.addReminderBtnText, { color: brand.kids }]}>Add</Text>
+          </Pressable>
+        </View>
       </View>
 
       {showReminderInput && (
@@ -5678,28 +5705,31 @@ function ReminderRow({
         <GripVertical size={13} color={colors.textMuted} strokeWidth={2} />
       </View>
 
-      {/* Sticker badge — tappable checkbox */}
+      {/* Tappable checkbox — clearly indicates "mark as done" */}
       <Pressable
         onPress={onToggle}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: r.done }}
+        accessibilityLabel={r.done ? 'Mark as not done' : 'Mark as done'}
+        hitSlop={6}
         style={{
-          width: 36, height: 36, borderRadius: 18,
-          backgroundColor: badgeBg,
-          borderWidth: 1.5,
-          borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#141313',
+          width: 32, height: 32, borderRadius: 10,
+          backgroundColor: r.done ? badgeBg : 'transparent',
+          borderWidth: 2,
+          borderColor: r.done
+            ? (isDark ? 'rgba(255,255,255,0.18)' : '#141313')
+            : isOverdue
+            ? '#EE7B6D'
+            : isDueToday
+            ? '#C09A2C'
+            : (isDark ? 'rgba(255,255,255,0.30)' : 'rgba(20,19,19,0.35)'),
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
           marginTop: 1,
         }}
       >
-        {r.done
-          ? <Check size={14} color={badgeIconColor} strokeWidth={3} />
-          : isOverdue
-          ? <Bell size={13} color={badgeIconColor} strokeWidth={2.5} />
-          : (isDueToday || r.flagged)
-          ? <Clock size={13} color={badgeIconColor} strokeWidth={2.5} />
-          : <View style={{ width: 11, height: 11, borderRadius: 6, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(20,19,19,0.35)' }} />
-        }
+        {r.done ? <Check size={16} color={badgeIconColor} strokeWidth={3} /> : null}
       </Pressable>
 
       {/* Text + tags */}
@@ -6927,11 +6957,12 @@ function buildVaccineScheduleTree(
   const schedule = getScheduleForCountry(countryCode)
   const milestoneMap = new Map<number, AgeMilestone>()
 
+  const normalize = (s: string) => s.trim().toLowerCase()
   for (const v of schedule) {
-    const firstWord = v.name.toLowerCase().split(' ')[0]
-    const doseCount = givenVaccines.filter((g) =>
-      g.value.toLowerCase().includes(firstWord)
-    ).length
+    // Exact-name match — substring matching collides across vaccines
+    // (e.g. Hepatitis A vs Hepatitis B, DTaP vs DTaP/IPV/Hib).
+    const target = normalize(v.name)
+    const doseCount = givenVaccines.filter((g) => normalize(g.value) === target).length
 
     for (let i = 0; i < v.monthRanges.length; i++) {
       const [monthMin, monthMax] = v.monthRanges[i]
@@ -7011,11 +7042,13 @@ function getNextDueVaccines(birthDate: string, givenVaccines: HealthRecord[], co
   const result: UpcomingVaccine[] = []
   const schedule = getScheduleForCountry(countryCode)
 
+  const normalize = (s: string) => s.trim().toLowerCase()
   for (const v of schedule) {
-    // Count how many doses of this vaccine are already logged
-    const doseCount = givenVaccines.filter((g) =>
-      g.value.toLowerCase().includes(v.name.toLowerCase().split(' ')[0])
-    ).length
+    // Count how many doses of this vaccine are already logged.
+    // Exact-name match — substring matching collides across vaccines
+    // (e.g. Hepatitis A vs Hepatitis B, DTaP vs DTaP/IPV/Hib).
+    const target = normalize(v.name)
+    const doseCount = givenVaccines.filter((g) => normalize(g.value) === target).length
 
     if (doseCount >= v.monthRanges.length) continue // all doses done
 
