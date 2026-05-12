@@ -80,6 +80,12 @@ const TABS: { key: TabKey; label: string }[] = [
 
 // ─── Data Fetching ────────────────────────────────────────────────────────────
 
+// Leaderboard fetch bounds. The leaderboard is a discovery surface, not a
+// system of record — capping is fine and prevents O(users) growth as the
+// user base scales.
+const PROFILE_CAP = 500       // top profiles surfaced in the leaderboard
+const AGGREGATE_ROW_CAP = 5000 // upper bound for each per-table aggregation
+
 async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return []
@@ -88,13 +94,45 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
     .from('profiles_public')
     .select('id, name, photo_url, user_role')
     .not('name', 'is', null)
+    .limit(PROFILE_CAP)
 
   if (!profiles || profiles.length === 0) return []
 
-  const { data: caregiverLinks } = await supabase
-    .from('child_caregivers')
-    .select('user_id, role')
-    .eq('status', 'accepted')
+  // 5 aggregations are independent — fire in parallel rather than serially.
+  const ninetyDaysAgo = new Date()
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+
+  const [
+    { data: caregiverLinks },
+    { data: garagePosts },
+    { data: channelPosts },
+    { data: memberships },
+    { data: logs },
+  ] = await Promise.all([
+    supabase
+      .from('child_caregivers')
+      .select('user_id, role')
+      .eq('status', 'accepted')
+      .limit(AGGREGATE_ROW_CAP),
+    supabase
+      .from('garage_posts')
+      .select('author_id, like_count, comment_count')
+      .limit(AGGREGATE_ROW_CAP),
+    supabase
+      .from('channel_posts')
+      .select('author_id, reaction_count, reply_count')
+      .is('reply_to_id', null)
+      .limit(AGGREGATE_ROW_CAP),
+    supabase
+      .from('channel_members')
+      .select('user_id')
+      .limit(AGGREGATE_ROW_CAP),
+    supabase
+      .from('child_logs')
+      .select('user_id')
+      .gte('date', toDateStr(ninetyDaysAgo))
+      .limit(AGGREGATE_ROW_CAP),
+  ])
 
   const caregiverRoleMap = new Map<string, string>()
   for (const link of caregiverLinks ?? []) {
@@ -102,10 +140,6 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
       caregiverRoleMap.set(link.user_id, link.role)
     }
   }
-
-  const { data: garagePosts } = await supabase
-    .from('garage_posts')
-    .select('author_id, like_count, comment_count')
 
   const garageByUser = new Map<string, { posts: number; likes: number }>()
   for (const p of garagePosts ?? []) {
@@ -115,11 +149,6 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
     garageByUser.set(p.author_id, cur)
   }
 
-  const { data: channelPosts } = await supabase
-    .from('channel_posts')
-    .select('author_id, reaction_count, reply_count')
-    .is('reply_to_id', null)
-
   const channelByUser = new Map<string, { posts: number; reactions: number }>()
   for (const p of channelPosts ?? []) {
     const cur = channelByUser.get(p.author_id) || { posts: 0, reactions: 0 }
@@ -128,21 +157,10 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
     channelByUser.set(p.author_id, cur)
   }
 
-  const { data: memberships } = await supabase
-    .from('channel_members')
-    .select('user_id')
-
   const membershipCount = new Map<string, number>()
   for (const m of memberships ?? []) {
     membershipCount.set(m.user_id, (membershipCount.get(m.user_id) || 0) + 1)
   }
-
-  const ninetyDaysAgo = new Date()
-  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
-  const { data: logs } = await supabase
-    .from('child_logs')
-    .select('user_id')
-    .gte('date', toDateStr(ninetyDaysAgo))
 
   const logCount = new Map<string, number>()
   for (const l of logs ?? []) {
