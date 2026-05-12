@@ -637,12 +637,25 @@ function TimeChip({
 
 // ─── Duration calculator from start/end time ──────────────────────────────
 
-function calcDuration(start: string, end: string): string {
+/**
+ * Format a duration between two HH:MM time strings.
+ *
+ * `allowOvernight: true` (sleep) wraps an end-before-start pair around
+ * midnight (22:00 → 06:00 = 8h). `allowOvernight: false` (activity) treats
+ * the same pair as a user error and returns '' so the UI surfaces no
+ * duration rather than silently saving a 23h "playtime" entry.
+ */
+function calcDuration(start: string, end: string, allowOvernight = true): string {
   if (!start || !end) return ''
   const [sh, sm] = start.split(':').map(Number)
   const [eh, em] = end.split(':').map(Number)
+  if ([sh, sm, eh, em].some((n) => !Number.isFinite(n))) return ''
   let mins = (eh * 60 + em) - (sh * 60 + sm)
-  if (mins <= 0) mins += 24 * 60 // overnight
+  if (mins === 0) return ''
+  if (mins < 0) {
+    if (!allowOvernight) return ''
+    mins += 24 * 60
+  }
   if (mins >= 60) {
     const h = Math.floor(mins / 60)
     const m = mins % 60
@@ -1692,7 +1705,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
     } catch {}
   }, [editLog?.id])
 
-  const autoDuration = useMemo(() => calcDuration(startTime, endTime), [startTime, endTime])
+  const autoDuration = useMemo(() => calcDuration(startTime, endTime, true), [startTime, endTime])
 
   const qualities = ['Great', 'Good', 'Restless', 'Poor']
 
@@ -2222,7 +2235,10 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
     } catch {}
   }, [editLog?.id])
 
-  const autoDuration = useMemo(() => calcDuration(startTime, endTime), [startTime, endTime])
+  // Activities aren't overnight events — an end-before-start almost always
+  // means the user transposed two fields, so we surface no duration rather
+  // than silently saving a 23-hour playtime.
+  const autoDuration = useMemo(() => calcDuration(startTime, endTime, false), [startTime, endTime])
 
   async function save() {
     if (!childId || !activityType) return
