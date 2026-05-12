@@ -871,14 +871,31 @@ export function KidsHome() {
     const r = reminders.find(r => r.id === id)
     if (!r) return
     const nowDone = !r.done
+    const archivedAt = nowDone ? new Date().toISOString() : null
     const updated = reminders.map(rem =>
       rem.id === id
-        ? { ...rem, done: nowDone, archivedAt: nowDone ? new Date().toISOString() : null }
+        ? { ...rem, done: nowDone, archivedAt }
         : rem
     )
     persistReminders(updated)
+    // Mirror the reminder's done state onto the notification row's `data.done_at`
+    // (NOT `is_read` — that flag must stay tied to whether the user actually
+    // opened the notification, otherwise notification unread counts get polluted
+    // and tapping the notification later would silently archive the reminder).
+    // Preserve the data fields written at addReminder() time.
     if (r.notifId) {
-      supabase.from('notifications').update({ is_read: nowDone }).eq('id', r.notifId).then(() => {})
+      supabase
+        .from('notifications')
+        .update({
+          data: {
+            childId: r.childId ?? null,
+            dueDate: r.dueDate ?? null,
+            dueTime: r.dueTime ?? null,
+            done_at: archivedAt,
+          },
+        })
+        .eq('id', r.notifId)
+        .then(() => {})
     }
   }
 
@@ -6981,9 +6998,7 @@ function buildVaccineScheduleTree(
 
       let givenDate: string | undefined
       if (status === 'done') {
-        const match = givenVaccines.filter((g) =>
-          g.value.toLowerCase().includes(firstWord)
-        )[i]
+        const match = givenVaccines.filter((g) => normalize(g.value) === target)[i]
         givenDate = match?.date
       }
 
