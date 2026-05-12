@@ -17,6 +17,7 @@ import {
 import { router } from 'expo-router'
 import { ChevronRight, Check, X, Lock, Info } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { toDateStr } from '../lib/cycleLogic'
 import {
   useTheme,
   stickers as stickerPalette,
@@ -135,7 +136,7 @@ export default function DailyRewardsScreen() {
     })
   }, [])
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = toDateStr(new Date())
   const alreadyCheckedIn = lastCheckInDate === today
 
   const [showReward, setShowReward] = useState(false)

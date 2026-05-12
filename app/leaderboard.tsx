@@ -28,6 +28,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { toDateStr } from '../lib/cycleLogic'
 import {
   User,
   X,
@@ -84,7 +85,7 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
   if (!session) return []
 
   const { data: profiles } = await supabase
-    .from('profiles')
+    .from('profiles_public')
     .select('id, name, photo_url, user_role')
     .not('name', 'is', null)
 
@@ -141,7 +142,7 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
   const { data: logs } = await supabase
     .from('child_logs')
     .select('user_id')
-    .gte('date', ninetyDaysAgo.toISOString().split('T')[0])
+    .gte('date', toDateStr(ninetyDaysAgo))
 
   const logCount = new Map<string, number>()
   for (const l of logs ?? []) {

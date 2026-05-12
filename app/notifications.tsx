@@ -1,9 +1,9 @@
 /**
- * Notifications Inbox — cream-paper redesign.
+ * Notifications Inbox — cream-paper redesign, design-system aligned.
  *
- * Functionality (filter, mark read, navigation, refresh, date grouping) is
- * unchanged. This file only restyles the screen to the design system tokens
- * (Fraunces / DM Sans / sticker palette / paper surfaces).
+ * All colors, fonts, radii, and shadows go through `useTheme()` / theme tokens.
+ * Empty state uses the canonical <EmptyState>. Behavior chips use getModeColor
+ * so dark mode auto-brightens.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -33,7 +33,6 @@ import {
   Flame,
   Sparkles,
   FileBarChart,
-  Moon,
   Shield,
   Activity,
   Clock,
@@ -46,12 +45,14 @@ import {
   type AppNotification,
 } from '../lib/channelPosts'
 import { runNotificationEngine } from '../lib/notificationEngine'
-import { useTheme, getModeColor } from '../constants/theme'
+import { toDateStr } from '../lib/cycleLogic'
+import { useTheme, getModeColor, radius, spacing } from '../constants/theme'
 import { useModeStore } from '../store/useModeStore'
 import { useBehaviorStore, type Behavior } from '../store/useBehaviorStore'
 import { useChildStore } from '../store/useChildStore'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
-import { Display, MonoCaps } from '../components/ui/Typography'
+import { Display } from '../components/ui/Typography'
+import { EmptyState } from '../components/ui/EmptyState'
 
 // ─── Type → Visual Config ───────────────────────────────────────────────────
 
@@ -124,10 +125,6 @@ function getTypeConfig(type: string): TypeConfig {
 function navigateForNotification(item: AppNotification) {
   const data = item.data || {}
 
-  // A notification about a child is always a kids-mode notification.
-  // Switch journey mode + active child first so the destination screen
-  // (Analytics, Calendar, etc.) renders the kids variant with the right
-  // child selected — instead of the user's currently active behavior.
   if (data.childId) {
     const { children, setActiveChild } = useChildStore.getState()
     const target = children.find((c) => c.id === data.childId)
@@ -209,8 +206,8 @@ interface DateSection {
 }
 
 function groupByDate(notifications: AppNotification[]): DateSection[] {
-  const today = new Date().toISOString().split('T')[0]
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+  const today = toDateStr(new Date())
+  const yesterday = toDateStr(new Date(Date.now() - 86400000))
 
   const groups: Record<string, { label: string; date: string; items: AppNotification[] }> = {}
   for (const n of notifications) {
@@ -246,7 +243,6 @@ type BehaviorFilter = 'all' | Behavior
 const COMMUNITY_TYPES = new Set(['mention', 'reply', 'like', 'channel', 'care_circle_invite', 'care_circle_accepted'])
 
 function inferBehavior(n: AppNotification): Behavior | null {
-  // Explicit tag from generator wins
   const tagged = n.data?.behavior
   if (tagged === 'pregnancy' || tagged === 'pre-pregnancy' || tagged === 'kids') {
     return tagged
@@ -259,7 +255,7 @@ function inferBehavior(n: AppNotification): Behavior | null {
 function matchesBehaviorFilter(n: AppNotification, filter: BehaviorFilter): boolean {
   if (filter === 'all') return true
   const b = inferBehavior(n)
-  if (b === null) return true // community / untagged → visible in all
+  if (b === null) return true
   return b === filter
 }
 
@@ -269,16 +265,17 @@ const BEHAVIOR_LABELS: Record<Behavior, string> = {
   kids: 'Kids',
 }
 
-const BEHAVIOR_COLORS: Record<Behavior, string> = {
-  'pre-pregnancy': '#FF8AD8',
-  pregnancy: '#B983FF',
-  kids: '#4D96FF',
+// Map Behavior → mode key used by getModeColor()
+function behaviorToMode(b: Behavior): 'pre' | 'preg' | 'kids' {
+  if (b === 'pre-pregnancy') return 'pre'
+  if (b === 'pregnancy') return 'preg'
+  return 'kids'
 }
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export default function NotificationsScreen() {
-  const { colors, stickers, radius, isDark, font } = useTheme()
+  const { colors, stickers, isDark, font } = useTheme()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
   const accent = getModeColor(mode, isDark)
@@ -364,10 +361,9 @@ export default function NotificationsScreen() {
             {unreadCount > 0 && (
               <View style={[styles.titleCount, {
                 backgroundColor: stickers.coral,
-                borderWidth: 1.5,
-                borderColor: isDark ? 'transparent' : '#141313',
+                borderColor: isDark ? 'transparent' : colors.text,
               }]}>
-                <Text style={[styles.titleCountText, { color: '#FFFEF8', fontFamily: 'DMSans_700Bold' }]}>
+                <Text style={[styles.titleCountText, { color: colors.surface, fontFamily: font.bodySemiBold }]}>
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </Text>
               </View>
@@ -393,7 +389,7 @@ export default function NotificationsScreen() {
           {(['all', ...enrolledBehaviors] as BehaviorFilter[]).map((b) => {
             const isActive = activeBehavior === b
             const label = b === 'all' ? 'All' : BEHAVIOR_LABELS[b]
-            const chipColor = b === 'all' ? accent : BEHAVIOR_COLORS[b]
+            const chipColor = b === 'all' ? accent : getModeColor(behaviorToMode(b), isDark)
             const count =
               b === 'all'
                 ? notifications.length
@@ -408,27 +404,28 @@ export default function NotificationsScreen() {
                   styles.filterChip,
                   {
                     backgroundColor: isActive
-                      ? (b === 'all' ? '#141313' : chipColor + '26')
-                      : (isDark ? colors.surface : '#FFFEF8'),
+                      ? (b === 'all' ? colors.text : chipColor + '26')
+                      : colors.surface,
                     borderColor: isActive
-                      ? (b === 'all' ? '#141313' : (isDark ? chipColor : '#141313'))
-                      : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
-                    borderWidth: 1.5,
-                    borderRadius: 999,
+                      ? (b === 'all' ? colors.text : (isDark ? chipColor : colors.text))
+                      : colors.borderStrong,
                   },
                 ]}
               >
                 {b !== 'all' && (
-                  <View style={[styles.behaviorDot, { backgroundColor: BEHAVIOR_COLORS[b], borderWidth: 1, borderColor: isDark ? 'transparent' : '#141313' }]} />
+                  <View style={[styles.behaviorDot, {
+                    backgroundColor: chipColor,
+                    borderColor: isDark ? 'transparent' : colors.text,
+                  }]} />
                 )}
                 <Text
                   style={[
                     styles.filterChipText,
                     {
                       color: isActive
-                        ? (b === 'all' ? '#FFFEF8' : (isDark ? chipColor : '#141313'))
-                        : (isDark ? colors.textMuted : 'rgba(20,19,19,0.6)'),
-                      fontFamily: 'DMSans_700Bold',
+                        ? (b === 'all' ? colors.surface : (isDark ? chipColor : colors.text))
+                        : colors.textMuted,
+                      fontFamily: font.bodySemiBold,
                     },
                   ]}
                 >
@@ -438,10 +435,13 @@ export default function NotificationsScreen() {
                   <View
                     style={[
                       styles.filterCount,
-                      { backgroundColor: isActive ? '#141313' : (isDark ? 'rgba(245,237,220,0.12)' : 'rgba(20,19,19,0.10)') },
+                      { backgroundColor: isActive ? colors.text : colors.surfaceRaised },
                     ]}
                   >
-                    <Text style={[styles.filterCountText, { color: isActive ? '#FFFEF8' : (isDark ? colors.textSecondary : '#141313'), fontFamily: 'DMSans_700Bold' }]}>
+                    <Text style={[styles.filterCountText, {
+                      color: isActive ? colors.surface : colors.textSecondary,
+                      fontFamily: font.bodySemiBold,
+                    }]}>
                       {count}
                     </Text>
                   </View>
@@ -472,12 +472,8 @@ export default function NotificationsScreen() {
               style={[
                 styles.filterChip,
                 {
-                  backgroundColor: isActive
-                    ? (tab === 'All' ? '#141313' : (isDark ? colors.surface : '#FFFEF8'))
-                    : (isDark ? colors.surface : '#FFFEF8'),
-                  borderColor: isActive ? '#141313' : (isDark ? colors.border : 'rgba(20,19,19,0.18)'),
-                  borderWidth: 1.5,
-                  borderRadius: 999,
+                  backgroundColor: isActive && tab === 'All' ? colors.text : colors.surface,
+                  borderColor: isActive ? colors.text : colors.borderStrong,
                 },
               ]}
             >
@@ -486,9 +482,9 @@ export default function NotificationsScreen() {
                   styles.filterChipText,
                   {
                     color: isActive
-                      ? (tab === 'All' ? '#FFFEF8' : (isDark ? colors.text : '#141313'))
-                      : (isDark ? colors.textMuted : 'rgba(20,19,19,0.6)'),
-                    fontFamily: 'DMSans_700Bold',
+                      ? (tab === 'All' ? colors.surface : colors.text)
+                      : colors.textMuted,
+                    fontFamily: font.bodySemiBold,
                   },
                 ]}
               >
@@ -498,10 +494,13 @@ export default function NotificationsScreen() {
                 <View
                   style={[
                     styles.filterCount,
-                    { backgroundColor: isActive ? '#141313' : (isDark ? 'rgba(245,237,220,0.12)' : 'rgba(20,19,19,0.10)') },
+                    { backgroundColor: isActive ? colors.text : colors.surfaceRaised },
                   ]}
                 >
-                  <Text style={[styles.filterCountText, { color: isActive ? '#FFFEF8' : (isDark ? colors.textSecondary : '#141313'), fontFamily: 'DMSans_700Bold' }]}>
+                  <Text style={[styles.filterCountText, {
+                    color: isActive ? colors.surface : colors.textSecondary,
+                    fontFamily: font.bodySemiBold,
+                  }]}>
                     {count}
                   </Text>
                 </View>
@@ -516,28 +515,25 @@ export default function NotificationsScreen() {
         sections={sections}
         keyExtractor={(item) => item.id}
         contentContainerStyle={
-          sections.length === 0 ? styles.emptyContent : { paddingBottom: insets.bottom + 24 }
+          sections.length === 0 ? styles.emptyContent : { paddingBottom: insets.bottom + spacing.lg }
         }
         renderSectionHeader={({ section }) => (
           <View style={[styles.sectionHeader, { backgroundColor: colors.bg }]}>
-            <Text style={{
-              fontSize: 11,
-              fontFamily: 'DMSans_700Bold',
-              letterSpacing: 1.6,
-              color: isDark ? colors.textMuted : 'rgba(20,19,19,0.5)',
-              textTransform: 'uppercase',
-            }}>{section.title}</Text>
+            <Text style={[styles.sectionHeaderText, {
+              fontFamily: font.bodySemiBold,
+              color: colors.textMuted,
+            }]}>{section.title}</Text>
           </View>
         )}
         renderItem={({ item }) => {
           const cfg = getTypeConfig(item.type)
           const stickerColor = stickers[cfg.stickerKey]
-          const stickerInk = isDark ? 'rgba(255,255,255,0.18)' : '#141313'
+          const stickerInk = isDark ? colors.borderLight : colors.text
           const cardBg = item.is_read
-            ? (isDark ? colors.surface : '#FFFEF8')
+            ? colors.surface
             : (isDark ? colors.surfaceRaised : stickerColor + '14')
           const cardBorder = item.is_read
-            ? (isDark ? colors.border : 'rgba(20,19,19,0.1)')
+            ? colors.border
             : (isDark ? stickerColor + '40' : stickerColor + '70')
 
           return (
@@ -545,79 +541,61 @@ export default function NotificationsScreen() {
               <Pressable
                 onPress={() => handleTap(item)}
                 style={({ pressed }) => [
+                  styles.row,
                   {
-                    flexDirection: 'row',
-                    alignItems: 'flex-start',
-                    gap: 12,
-                    padding: 14,
                     backgroundColor: cardBg,
-                    borderRadius: 22,
-                    borderWidth: 1.5,
                     borderColor: cardBorder,
-                    shadowColor: '#141313',
                     shadowOpacity: isDark ? 0 : 0.04,
-                    shadowRadius: 6,
-                    shadowOffset: { width: 0, height: 2 },
                   },
                   pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
                 ]}
               >
                 {/* Sticker badge */}
                 <View
-                  style={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: 21,
+                  style={[styles.stickerBadge, {
                     backgroundColor: stickerColor,
-                    borderWidth: 1.5,
                     borderColor: stickerInk,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
+                  }]}
                 >
-                  <cfg.Icon size={18} color={isDark ? '#FFFFFF' : '#141313'} />
+                  <cfg.Icon size={18} color={isDark ? colors.textInverse : colors.text} />
                 </View>
                 <View style={styles.rowContent}>
                   <View style={styles.rowTitleRow}>
                     <Text
                       style={[styles.rowTitle, {
-                        color: isDark ? colors.text : '#141313',
-                        fontFamily: 'Fraunces_700Bold',
-                        letterSpacing: -0.2,
+                        color: colors.text,
+                        fontFamily: font.display,
                       }]}
                       numberOfLines={2}
                     >
                       {item.title}
                     </Text>
                     {!item.is_read && (
-                      <View style={[styles.unreadDot, { backgroundColor: stickerColor, borderWidth: 1, borderColor: stickerInk }]} />
+                      <View style={[styles.unreadDot, {
+                        backgroundColor: stickerColor,
+                        borderColor: stickerInk,
+                      }]} />
                     )}
                   </View>
                   {item.body ? (
                     <Text
-                      style={[styles.rowBody, { color: isDark ? colors.textMuted : 'rgba(20,19,19,0.65)', fontFamily: font.body }]}
+                      style={[styles.rowBody, { color: colors.textMuted, fontFamily: font.body }]}
                       numberOfLines={2}
                     >
                       {item.body}
                     </Text>
                   ) : null}
                   <View style={styles.rowFooter}>
-                    <Text style={[styles.rowTime, { color: isDark ? colors.textFaint : 'rgba(20,19,19,0.4)', fontFamily: font.body }]}>
+                    <Text style={[styles.rowTime, { color: colors.textFaint, fontFamily: font.body }]}>
                       {timeAgo(item.created_at)}
                     </Text>
                     <Text
-                      style={{
-                        fontSize: 10,
-                        fontFamily: 'DMSans_700Bold',
-                        letterSpacing: 1.4,
-                        color: isDark ? stickerColor : '#141313',
+                      style={[styles.categoryChip, {
+                        fontFamily: font.bodySemiBold,
+                        color: isDark ? stickerColor : colors.text,
                         backgroundColor: stickerColor + (isDark ? '24' : '30'),
-                        paddingHorizontal: 8,
-                        paddingVertical: 3,
-                        borderRadius: 999,
-                        borderWidth: 1,
                         borderColor: stickerColor + (isDark ? '40' : '80'),
-                      }}
+                      }]}
                     >
                       {cfg.category.toUpperCase()}
                     </Text>
@@ -628,30 +606,23 @@ export default function NotificationsScreen() {
           )
         }}
         ListEmptyComponent={() => (
-          <View style={styles.emptyWrap}>
-            <View
-              style={[
-                styles.emptyIconWrap,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-            >
-              <Bell size={28} color={colors.textMuted} strokeWidth={1.6} />
-            </View>
-            <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-              {activeFilter === 'All' ? 'No notifications yet' : `No ${activeFilter.toLowerCase()} notifications`}
-            </Text>
-            <Text style={[styles.emptySubtext, { color: colors.textMuted, fontFamily: font.body }]}>
-              {activeFilter === 'All'
+          <EmptyState
+            icon={<Bell size={36} color={colors.textMuted} strokeWidth={1.6} />}
+            iconBg={colors.surface}
+            title={activeFilter === 'All' ? 'No notifications yet' : `No ${activeFilter.toLowerCase()} notifications`}
+            message={
+              activeFilter === 'All'
                 ? 'Grandma will notify you about wellness changes, routine reminders, health alerts, and more.'
-                : 'Notifications in this category will appear here.'}
-            </Text>
-          </View>
+                : 'Notifications in this category will appear here.'
+            }
+          />
         )}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={accent}
+            colors={[accent]}
           />
         }
         stickySectionHeadersEnabled
@@ -668,20 +639,20 @@ const styles = StyleSheet.create({
 
   // Top bar
   topBar: {
-    paddingBottom: 12,
-    paddingHorizontal: 16,
+    paddingBottom: spacing.sm + 4,
+    paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
   },
   topBarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.sm + 4,
     minHeight: 44,
   },
   backBtn: {
     width: 38,
     height: 38,
-    borderRadius: 999,
+    borderRadius: radius.full,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -690,13 +661,14 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   titleCount: {
     minWidth: 26,
     height: 22,
     borderRadius: 11,
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.sm,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -713,17 +685,18 @@ const styles = StyleSheet.create({
   filterRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
   },
   filterRowBehavior: {
-    paddingBottom: 4,
+    paddingBottom: spacing.xs,
   },
   behaviorDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
+    borderWidth: 1,
   },
   filterChip: {
     flexDirection: 'row',
@@ -731,6 +704,8 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 6,
     paddingHorizontal: 14,
+    borderWidth: 1.5,
+    borderRadius: radius.full,
   },
   filterChipText: { fontSize: 13 },
   filterCount: {
@@ -745,49 +720,68 @@ const styles = StyleSheet.create({
 
   // Section headers
   sectionHeader: {
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 8,
+    paddingHorizontal: spacing.md + 4,
+    paddingTop: spacing.md - 2,
+    paddingBottom: spacing.sm,
+  },
+  sectionHeaderText: {
+    fontSize: 11,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
   },
 
   // Notification rows
   rowOuter: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm + 4,
+    padding: spacing.md - 2,
+    borderRadius: radius.md + 2,
+    borderWidth: 1.5,
+    shadowColor: '#141313',
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  stickerBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   rowContent: { flex: 1 },
-  rowTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  rowTitle: { fontSize: 15, flex: 1, lineHeight: 20 },
-  unreadDot: { width: 9, height: 9, borderRadius: 5, marginTop: 6 },
+  rowTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  rowTitle: { fontSize: 15, flex: 1, lineHeight: 20, letterSpacing: -0.2 },
+  unreadDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    borderWidth: 1,
+    marginTop: 6,
+  },
   rowBody: { fontSize: 14, marginTop: 4, lineHeight: 20 },
   rowFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
-    gap: 8,
+    marginTop: spacing.sm + 2,
+    gap: spacing.sm,
   },
   rowTime: { fontSize: 12 },
-
-  // Empty state
-  emptyContent: { flex: 1 },
-  emptyWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-    paddingBottom: 80,
-    gap: 10,
-  },
-  emptyIconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  categoryChip: {
+    fontSize: 10,
+    letterSpacing: 1.4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radius.full,
     borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
   },
-  emptyTitle: { fontSize: 18, textAlign: 'center' },
-  emptySubtext: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+
+  // Empty state container
+  emptyContent: { flex: 1 },
 })

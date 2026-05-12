@@ -72,6 +72,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { toDateStr } from '../../lib/cycleLogic'
 import { useChildStore } from '../../store/useChildStore'
 import { LineChart, BarChart, BubbleGrid, MoodBubbleCluster } from '../charts/SvgCharts'
 import { FullScreenChart } from '../charts/FullScreenChart'
@@ -3299,7 +3300,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             const measureScore = Math.min(totalMeasurements / 4, 1) * 7
             const sevenDaysAgo = new Date()
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-            const recentDate = sevenDaysAgo.toISOString().split('T')[0]
+            const recentDate = toDateStr(sevenDaysAgo)
             const hasRecent = analytics.growth.weights.some((w) => w.date >= recentDate)
               || analytics.growth.heights.some((h) => h.date >= recentDate)
             const recencyBonus = hasRecent ? 3 : 1

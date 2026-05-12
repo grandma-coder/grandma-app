@@ -4,6 +4,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from './supabase'
+import { toDateStr } from './cycleLogic'
 
 export interface LeaderboardEntry {
   user_id: string
@@ -50,7 +51,7 @@ export async function fetchLeaderboard(limit = 20): Promise<LeaderboardEntry[]> 
 async function fetchLeaderboardFallback(limit: number): Promise<LeaderboardEntry[]> {
   // Get all profiles with names
   const { data: profiles } = await supabase
-    .from('profiles')
+    .from('profiles_public')
     .select('id, name, photo_url')
     .not('name', 'is', null)
     .limit(50)
@@ -101,7 +102,7 @@ async function fetchLeaderboardFallback(limit: number): Promise<LeaderboardEntry
       .from('child_logs')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', p.id)
-      .gte('date', ninetyDaysAgo.toISOString().split('T')[0])
+      .gte('date', toDateStr(ninetyDaysAgo))
 
     const gp = garagePosts ?? 0
     const cp = channelPosts ?? 0
