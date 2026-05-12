@@ -477,6 +477,20 @@ function toDateStr(d: any): string {
   return String(d).substring(0, 10)
 }
 
+/**
+ * Inclusive day count between two local-midnight Dates, immune to DST.
+ *
+ * Using `(end - start) / 86_400_000 + 1` gives the wrong answer across
+ * spring-forward / fall-back boundaries because those days are 23h or 25h
+ * long in millisecond terms. Compute via UTC-midnight equivalents of the
+ * local calendar dates instead.
+ */
+function daysInclusive(start: Date, end: Date): number {
+  const s = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())
+  const e = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate())
+  return Math.round((e - s) / 86400000) + 1
+}
+
 // Ring colors for the 3 pillars
 const PILLAR_COLORS = {
   sleep: '#9DC3E8',       // sticker blue
@@ -3022,7 +3036,7 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
   // Build last 7 (or range) day bars for mini sparkline
   const start = new Date(startDate + 'T00:00:00')
   const end   = new Date(endDate   + 'T00:00:00')
-  const totalDays = Math.min(Math.round((end.getTime() - start.getTime()) / 86400000) + 1, 7)
+  const totalDays = Math.min(daysInclusive(start, end), 7)
   const sparkDays = Array.from({ length: totalDays }, (_, i) => {
     const d = new Date(end)
     d.setDate(d.getDate() - (totalDays - 1 - i))
@@ -3164,7 +3178,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     const start = new Date(startDate + 'T00:00:00')
     const end   = new Date(endDate   + 'T00:00:00')
-    const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1
+    const totalDays = daysInclusive(start, end)
 
     if (totalDays <= 7) {
       return Array.from({ length: totalDays }, (_, i) => {
@@ -3206,7 +3220,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
   const avgPerDay = (() => {
     const start = new Date(startDate + 'T00:00:00')
     const end   = new Date(endDate   + 'T00:00:00')
-    const days = Math.round((end.getTime() - start.getTime()) / 86400000) + 1
+    const days = daysInclusive(start, end)
     return (count / days).toFixed(1)
   })()
 
