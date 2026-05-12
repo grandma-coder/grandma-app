@@ -806,18 +806,33 @@ export function useKidsAnalytics(
         throw new Error('No children found')
       }
 
+      // Fetch most-recent first so a 2000-row truncation (active families on
+      // long ranges) drops the OLDEST rows, not the newest. The previous ASC
+      // ordering silently hid the last few weeks/months on year views.
+      const FETCH_LIMIT = 2000
       const { data: logs, error } = await supabase
         .from('child_logs')
         .select('id, child_id, date, type, value, notes, photos, created_at')
         .in('child_id', childIds)
         .gte('date', minFetchSince)
         .lte('date', window.toDate)
-        .order('created_at', { ascending: true })
-        .limit(2000)
+        .order('created_at', { ascending: false })
+        .limit(FETCH_LIMIT)
 
       if (error) throw error
 
-      const allLogs: ChildLog[] = (logs ?? []) as ChildLog[]
+      // Re-sort ascending in memory so downstream builders that assume
+      // chronological order behave the same as before.
+      const allLogs: ChildLog[] = ((logs ?? []) as ChildLog[])
+        .slice()
+        .sort((a, b) => a.created_at.localeCompare(b.created_at))
+
+      if (allLogs.length >= FETCH_LIMIT) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[analyticsData] fetch hit ${FETCH_LIMIT}-row cap for window ${minFetchSince}…${window.toDate}; oldest entries may be missing.`,
+        )
+      }
       const { dates, labels } = window
 
       // Derive the age of the child we're analyzing (single-child only).
