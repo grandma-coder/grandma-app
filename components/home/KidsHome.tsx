@@ -9,7 +9,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import {
   View, Text, Pressable, ScrollView, StyleSheet, Dimensions, Image, Modal, TextInput, Platform,
-  Animated, PanResponder,
+  Animated, PanResponder, Alert,
 } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -5409,7 +5409,15 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) await store.saveToSupabase(childId, user.id)
-    } catch {}
+    } catch (err: any) {
+      // Surface the failure instead of silently closing the modal — otherwise
+      // the user sees a "saved" UX while local + remote state diverge.
+      Alert.alert(
+        'Goals not saved',
+        err?.message ?? 'Could not save goals to the server. They are saved on this device and will retry next sync.',
+      )
+      return
+    }
     onSaved()
     onClose()
   }
