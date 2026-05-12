@@ -28,6 +28,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
+import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
 import { LogSheet } from '../../components/calendar/LogSheet'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -610,7 +611,7 @@ function EditChildSheet({
               themeVariant={isDark ? 'dark' : 'light'}
               onChange={(_, d) => {
                 if (Platform.OS === 'android') setShowDatePicker(false)
-                if (d) setBirthDate(d.toISOString().split('T')[0])
+                if (d) setBirthDate(toDateStr(d))
               }}
             />
           )}
@@ -873,7 +874,7 @@ function AddChildSheet({
               themeVariant={isDark ? 'dark' : 'light'}
               onChange={(_, d) => {
                 if (Platform.OS === 'android') setShowDatePicker(false)
-                if (d) setBirthDate(d.toISOString().split('T')[0])
+                if (d) setBirthDate(toDateStr(d))
               }}
             />
           )}
