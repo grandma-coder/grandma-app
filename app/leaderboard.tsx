@@ -118,10 +118,13 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
       .from('garage_posts')
       .select('author_id, like_count, comment_count')
       .limit(AGGREGATE_ROW_CAP),
+    // Channel engagement: count BOTH top-level posts and replies. The
+    // previous .is('reply_to_id', null) filter excluded replies entirely
+    // from the aggregate — repliers contributed zero posts and zero
+    // reactions to the leaderboard regardless of how active they were.
     supabase
       .from('channel_posts')
-      .select('author_id, reaction_count, reply_count')
-      .is('reply_to_id', null)
+      .select('author_id, reaction_count, reply_count, reply_to_id')
       .limit(AGGREGATE_ROW_CAP),
     supabase
       .from('channel_members')
@@ -160,10 +163,15 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
     garageByUser.set(p.author_id, cur)
   }
 
-  const channelByUser = new Map<string, { posts: number; reactions: number }>()
+  // Split top-level posts from replies. Both contribute to the displayed
+  // `channel.posts` count, but points score them differently below so a
+  // user who writes thoughtful new threads is still weighted higher than
+  // one who only replies.
+  const channelByUser = new Map<string, { posts: number; replies: number; reactions: number }>()
   for (const p of channelPosts ?? []) {
-    const cur = channelByUser.get(p.author_id) || { posts: 0, reactions: 0 }
-    cur.posts++
+    const cur = channelByUser.get(p.author_id) || { posts: 0, replies: 0, reactions: 0 }
+    if (p.reply_to_id) cur.replies++
+    else cur.posts++
     cur.reactions += p.reaction_count || 0
     channelByUser.set(p.author_id, cur)
   }
@@ -180,7 +188,7 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
 
   const entries: LeaderEntry[] = profiles.map((p: any) => {
     const garage = garageByUser.get(p.id) || { posts: 0, likes: 0 }
-    const channel = channelByUser.get(p.id) || { posts: 0, reactions: 0 }
+    const channel = channelByUser.get(p.id) || { posts: 0, replies: 0, reactions: 0 }
     const cj = membershipCount.get(p.id) || 0
     const cl = logCount.get(p.id) || 0
 
@@ -188,6 +196,7 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
       garage.posts * 5 +
       garage.likes * 1 +
       channel.posts * 3 +
+      channel.replies * 1 +     // replies count for engagement, but less than authoring
       channel.reactions * 1 +
       cj * 2 +
       cl * 1
@@ -200,7 +209,9 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
       caregiver_role: caregiverRoleMap.get(p.id) || null,
       garage_posts: garage.posts,
       garage_likes: garage.likes,
-      channel_posts: channel.posts,
+      // Surface both top-level posts and replies in the display so the
+      // chip reflects total channel activity, not just thread starters.
+      channel_posts: channel.posts + channel.replies,
       channel_reactions: channel.reactions,
       channels_joined: cj,
       child_logs: cl,
