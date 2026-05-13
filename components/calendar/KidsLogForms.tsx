@@ -1049,9 +1049,34 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
           const orig = JSON.parse(editLog.value ?? '{}')
           if (orig.routineId) routineMeta = { routineId: orig.routineId, routineName: orig.routineName }
         } catch {}
+        // NOTE: child_logs.type is set on insert as 'food' for solids and
+        // 'feeding' for breast/bottle. updateChildLog does NOT change the
+        // type column — so if a user opens a food log and switches feedType
+        // to bottle, the row stays type='food' but holds a feeding payload.
+        // Downstream readers normalize food↔feeding when aggregating
+        // (KidsCalendar.normalizeType, isRoutineDone) so this is tolerable.
+        // The proper fix is to add type to the update payload, but that
+        // shifts the row across analytics buckets retroactively — flagged
+        // as a separate follow-up.
         let value: string
         if (feedType === 'solids') {
-          value = JSON.stringify({ feedType: 'solids', meal, quality, time: startTime, isNewFood, newFoodName: isNewFood ? newFoodName : undefined, hasReaction, reactionFood: hasReaction ? reactionFood : undefined, reactionDesc: hasReaction ? reactionDesc : undefined, estimatedCals: totalEstimatedCals || undefined, ...routineMeta })
+          value = JSON.stringify({
+            feedType: 'solids',
+            meal,
+            quality,
+            time: startTime,
+            isNewFood,
+            newFoodName: isNewFood ? newFoodName : undefined,
+            hasReaction,
+            reactionFood: hasReaction ? reactionFood : undefined,
+            reactionDesc: hasReaction ? reactionDesc : undefined,
+            estimatedCals: totalEstimatedCals || undefined,
+            // Preserve the matched-foods catalogue on edit so the calorie
+            // breakdown shown in the detail modal doesn't disappear after
+            // the first save+edit cycle. The CREATE path writes this too.
+            matchedFoods: calorieMatches.length > 0 ? calorieMatches.map((m) => m.food) : undefined,
+            ...routineMeta,
+          })
         } else if (feedType === 'breast') {
           value = JSON.stringify({ feedType: 'breast', time: startTime, duration: duration || undefined, side: breastSide || undefined, ...routineMeta })
         } else {
