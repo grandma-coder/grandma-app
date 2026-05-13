@@ -743,56 +743,102 @@ export function KidsHome() {
     if (child) syncGoals(child.id)
   }, [child?.id])
 
-  // Load reminders from AsyncStorage (seed realistic data once on first run)
+  // Load reminders from Supabase. Backfills from AsyncStorage on first
+  // run so users with locally-stored reminders don't lose them. The
+  // canned-demo seed previously injected here has been removed — new
+  // users start with an empty list (matches the same fix applied to
+  // useBadgeStore demo data).
   useEffect(() => {
     if (!child?.id || children.length === 0) return
-    const SEED_FLAG = `grandma-reminders-seeded-v1-${child.id}`
-    AsyncStorage.multiGet([`grandma-reminders-${child.id}`, SEED_FLAG]).then(([[, json], [, seeded]]) => {
-      if (!seeded) {
-        // Build one-time seed with realistic reminders for all kids
-        const today = new Date()
-        const days = (n: number) => {
-          const d = new Date(today); d.setDate(d.getDate() + n)
-          return localDateStr(d)
+    const childId = child.id
+    let cancelled = false
+
+    async function hydrate() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session || cancelled) return
+      const userId = session.user.id
+
+      // Read all reminders the user can see for this account (own + shared
+      // via care_circle). The query is filtered to active context — both
+      // own user_id and rows for any of the children currently in the
+      // store (the RLS policy already enforces access).
+      const childIds = children.map((c) => c.id)
+      const { data, error } = await supabase
+        .from('kids_reminders')
+        .select('id, user_id, child_id, text, done, flagged, due_date, due_time, archived_at, notif_id, sort_order')
+        .or(`user_id.eq.${userId}${childIds.length > 0 ? `,child_id.in.(${childIds.join(',')})` : ''}`)
+        .order('sort_order', { ascending: true })
+      if (error || cancelled) return
+
+      const fromServer: Reminder[] = (data ?? []).map((row: any) => ({
+        id: row.id,
+        text: row.text,
+        done: !!row.done,
+        dueDate: row.due_date ?? null,
+        dueTime: row.due_time ?? null,
+        notifId: row.notif_id ?? null,
+        archivedAt: row.archived_at ?? null,
+        childId: row.child_id ?? null,
+        flagged: !!row.flagged,
+      }))
+
+      // One-time backfill from AsyncStorage. We only attempt this if the
+      // server is empty for the user — once any row exists we treat the
+      // server as authoritative. Local entries with `id: "seed-*"` are
+      // the demo data from the prior implementation; they are SKIPPED
+      // so the migration doesn't carry counterfeit reminders into the
+      // database (mirrors the useBadgeStore demo-state fix).
+      if (fromServer.length === 0) {
+        try {
+          const json = await AsyncStorage.getItem(`grandma-reminders-${childId}`)
+          if (json) {
+            const parsed = JSON.parse(json) as Reminder[]
+            const realOnly = (Array.isArray(parsed) ? parsed : [])
+              .filter((r) => typeof r?.id === 'string' && !r.id.startsWith('seed-'))
+            if (realOnly.length > 0) {
+              const rows = realOnly.map((r, idx) => ({
+                user_id: userId,
+                child_id: r.childId ?? null,
+                text: r.text,
+                done: !!r.done,
+                flagged: !!r.flagged,
+                due_date: r.dueDate ?? null,
+                due_time: r.dueTime ?? null,
+                archived_at: r.archivedAt ?? null,
+                notif_id: r.notifId ?? null,
+                sort_order: idx,
+              }))
+              const { data: inserted } = await supabase
+                .from('kids_reminders')
+                .insert(rows)
+                .select('id, user_id, child_id, text, done, flagged, due_date, due_time, archived_at, notif_id, sort_order')
+              if (inserted) {
+                for (const row of inserted) {
+                  fromServer.push({
+                    id: row.id,
+                    text: row.text,
+                    done: !!row.done,
+                    dueDate: row.due_date ?? null,
+                    dueTime: row.due_time ?? null,
+                    notifId: row.notif_id ?? null,
+                    archivedAt: row.archived_at ?? null,
+                    childId: row.child_id ?? null,
+                    flagged: !!row.flagged,
+                  })
+                }
+              }
+            }
+          }
+        } catch {
+          // Best-effort migration — fall through to empty list.
         }
-        const perChild: { text: string; dueDate: string | null }[][] = [
-          // First child (oldest)
-          [
-            { text: 'Schedule 2-year checkup with pediatrician', dueDate: days(3) },
-            { text: 'Buy vitamin D drops', dueDate: days(1) },
-            { text: 'Order new shoes — size 6', dueDate: days(7) },
-            { text: 'Book speech therapy evaluation', dueDate: days(10) },
-            { text: 'Renew health insurance plan', dueDate: days(18) },
-          ],
-          // Second child (infant ~3mo)
-          [
-            { text: '4-month vaccine appointment', dueDate: days(4) },
-            { text: 'Buy more diapers (size 2)', dueDate: days(2) },
-            { text: 'Follow up with lactation consultant', dueDate: days(6) },
-            { text: 'Schedule tummy time log review', dueDate: null },
-          ],
-          // Third child (newborn)
-          [
-            { text: 'Register birth certificate at city hall', dueDate: days(10) },
-            { text: 'Newborn hearing test follow-up', dueDate: days(2) },
-            { text: 'Buy baby monitor', dueDate: days(3) },
-            { text: 'First pediatrician visit', dueDate: days(1) },
-          ],
-        ]
-        const seed: Reminder[] = []
-        children.forEach((c, i) => {
-          const items = perChild[i] ?? perChild[perChild.length - 1]
-          items.forEach((item, j) => {
-            seed.push({ id: `seed-${c.id}-${j}`, text: item.text, done: false, dueDate: item.dueDate, notifId: null, childId: c.id })
-          })
-        })
-        setReminders(seed)
-        AsyncStorage.setItem(`grandma-reminders-${child.id}`, JSON.stringify(seed))
-        AsyncStorage.setItem(SEED_FLAG, '1')
-      } else if (json) {
-        try { setReminders(JSON.parse(json)) } catch {}
       }
-    })
+
+      if (!cancelled) setReminders(fromServer)
+    }
+
+    hydrate()
+    return () => { cancelled = true }
   }, [child?.id, children.length])
 
   // Load health history from Supabase
@@ -948,40 +994,75 @@ export function KidsHome() {
     }
   }
 
-  function persistReminders(list: Reminder[]) {
-    setReminders(list)
-    if (child?.id) AsyncStorage.setItem(`grandma-reminders-${child.id}`, JSON.stringify(list))
+  /**
+   * Apply an optimistic local update + a Supabase mutation. The local state
+   * updates immediately so the UI feels responsive; if the server call
+   * fails the error surfaces via console.error so the next sync round can
+   * pick it up. (We deliberately don't roll back optimistic state — for
+   * reminders, a temporary local-server drift is less disruptive than a
+   * disappearing entry.)
+   */
+  function applyReminders(next: Reminder[]) {
+    setReminders(next)
   }
 
   async function addReminder() {
     if (!newReminderText.trim()) return
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
     const dueDate = newReminderDate ? localDateStr(newReminderDate) : null
     const dueTime = newReminderTime
       ? `${String(newReminderTime.getHours()).padStart(2, '0')}:${String(newReminderTime.getMinutes()).padStart(2, '0')}`
       : null
     let notifId: string | null = null
 
-    // Insert a Supabase notification so it shows in the notifications feed
+    // Insert a Supabase notification so the reminder also shows in the feed.
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        const bodyParts: string[] = []
-        if (dueDate) bodyParts.push(`Due ${dueDate}`)
-        if (dueTime) bodyParts.push(`at ${formatTime12h(dueTime)}`)
-        const { data } = await supabase.from('notifications').insert({
-          user_id: session.user.id,
-          type: 'reminder',
-          title: newReminderText.trim(),
-          body: bodyParts.length ? bodyParts.join(' ') : 'No due date',
-          data: { childId: child?.id, dueDate, dueTime },
-          is_read: false,
-        }).select('id').single()
-        notifId = data?.id ?? null
-      }
+      const bodyParts: string[] = []
+      if (dueDate) bodyParts.push(`Due ${dueDate}`)
+      if (dueTime) bodyParts.push(`at ${formatTime12h(dueTime)}`)
+      const { data } = await supabase.from('notifications').insert({
+        user_id: session.user.id,
+        type: 'reminder',
+        title: newReminderText.trim(),
+        body: bodyParts.length ? bodyParts.join(' ') : 'No due date',
+        data: { childId: child?.id, dueDate, dueTime },
+        is_read: false,
+      }).select('id').single()
+      notifId = data?.id ?? null
     } catch {}
 
-    const r: Reminder = { id: Date.now().toString(), text: newReminderText.trim(), done: false, dueDate, dueTime, notifId, childId: newReminderChildId }
-    persistReminders([...reminders, r])
+    const sortOrder = reminders.length
+    const { data, error } = await supabase
+      .from('kids_reminders')
+      .insert({
+        user_id: session.user.id,
+        child_id: newReminderChildId,
+        text: newReminderText.trim(),
+        done: false,
+        flagged: false,
+        due_date: dueDate,
+        due_time: dueTime,
+        notif_id: notifId,
+        sort_order: sortOrder,
+      })
+      .select('id')
+      .single()
+    if (error || !data) {
+      console.error('kids_reminders insert failed:', error?.message)
+      return
+    }
+
+    const r: Reminder = {
+      id: data.id,
+      text: newReminderText.trim(),
+      done: false,
+      dueDate,
+      dueTime,
+      notifId,
+      childId: newReminderChildId,
+    }
+    applyReminders([...reminders, r])
     setNewReminderText('')
     setNewReminderDate(null)
     setNewReminderTime(null)
@@ -1001,12 +1082,16 @@ export function KidsHome() {
         ? { ...rem, done: nowDone, archivedAt }
         : rem
     )
-    persistReminders(updated)
-    // Mirror the reminder's done state onto the notification row's `data.done_at`
-    // (NOT `is_read` — that flag must stay tied to whether the user actually
-    // opened the notification, otherwise notification unread counts get polluted
-    // and tapping the notification later would silently archive the reminder).
-    // Preserve the data fields written at addReminder() time.
+    applyReminders(updated)
+    // Persist to Supabase. The notification row's data.done_at also moves
+    // (NOT is_read — see the earlier decoupling commit for context).
+    supabase
+      .from('kids_reminders')
+      .update({ done: nowDone, archived_at: archivedAt })
+      .eq('id', id)
+      .then(({ error }) => {
+        if (error) console.error('kids_reminders toggle failed:', error.message)
+      })
     if (r.notifId) {
       supabase
         .from('notifications')
@@ -1026,19 +1111,64 @@ export function KidsHome() {
   function deleteReminder(id: string) {
     const r = reminders.find(r => r.id === id)
     if (r?.notifId) supabase.from('notifications').delete().eq('id', r.notifId).then(() => {})
-    persistReminders(reminders.filter(r => r.id !== id))
+    applyReminders(reminders.filter(r => r.id !== id))
+    supabase
+      .from('kids_reminders')
+      .delete()
+      .eq('id', id)
+      .then(({ error }) => {
+        if (error) console.error('kids_reminders delete failed:', error.message)
+      })
   }
 
   function flagReminder(id: string) {
-    persistReminders(reminders.map(r => r.id === id ? { ...r, flagged: !r.flagged } : r))
+    const r = reminders.find(r => r.id === id)
+    if (!r) return
+    const nextFlagged = !r.flagged
+    applyReminders(reminders.map(rem => rem.id === id ? { ...rem, flagged: nextFlagged } : rem))
+    supabase
+      .from('kids_reminders')
+      .update({ flagged: nextFlagged })
+      .eq('id', id)
+      .then(({ error }) => {
+        if (error) console.error('kids_reminders flag failed:', error.message)
+      })
   }
 
   function editReminder(id: string, newText: string) {
     const updated = reminders.map(r => r.id === id ? { ...r, text: newText } : r)
-    persistReminders(updated)
+    applyReminders(updated)
+    supabase
+      .from('kids_reminders')
+      .update({ text: newText })
+      .eq('id', id)
+      .then(({ error }) => {
+        if (error) console.error('kids_reminders edit failed:', error.message)
+      })
     const r = reminders.find(r => r.id === id)
     if (r?.notifId) {
       supabase.from('notifications').update({ title: newText }).eq('id', r.notifId).then(() => {})
+    }
+  }
+
+  /**
+   * Re-order reminders. Writes the new sort_order back to Supabase for every
+   * row so the order survives a refetch. Optimistic local update first.
+   */
+  function reorderReminders(next: Reminder[]) {
+    applyReminders(next)
+    // Build a per-row update list. Doing them as individual eq('id', ...)
+    // updates because Supabase's bulk upsert needs a unique constraint to
+    // target and we don't want to overwrite text/done/flagged here.
+    for (let i = 0; i < next.length; i++) {
+      const r = next[i]
+      supabase
+        .from('kids_reminders')
+        .update({ sort_order: i })
+        .eq('id', r.id)
+        .then(({ error }) => {
+          if (error) console.error('kids_reminders reorder failed:', error.message)
+        })
     }
   }
 
@@ -2153,7 +2283,7 @@ export function KidsHome() {
         onDelete={deleteReminder}
         onEdit={editReminder}
         onFlag={flagReminder}
-        onReorder={persistReminders}
+        onReorder={reorderReminders}
         colors={colors}
         allChildren={children}
       />
