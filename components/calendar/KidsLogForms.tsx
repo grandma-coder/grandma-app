@@ -1801,7 +1801,17 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
       }
       await saveChildLog(childId, 'sleep', taggedValue, notes || undefined, undefined, logDate)
       if (routineEnabled && !prefill) {
-        const isNap = parseInt(startTime.split(':')[0]) < 16
+        // Nap vs Bedtime classifier.
+        // Previously: any sleep starting before 4pm became "Nap" — but
+        // afternoon naps starting at 4–5pm got misclassified as bedtime.
+        // Now: parse autoDuration (format "8h", "8h 30m", or "45m") into
+        // minutes, then call it bedtime when duration >= 4h OR start hour
+        // is past 6pm.
+        const startHour = parseInt(startTime.split(':')[0])
+        const m = autoDuration.match(/(?:(\d+)h)?\s*(?:(\d+)m)?/)
+        const durMins = m ? (parseInt(m[1] || '0') * 60 + parseInt(m[2] || '0')) : 0
+        const longSleep = durMins >= 240 // 4h
+        const isNap = !longSleep && startHour < 18
         await saveAsRoutine(childId, 'sleep', isNap ? 'Nap' : 'Bedtime', JSON.stringify({ startTime, quality }), startTime, routineDays)
       }
       onSaved()

@@ -1757,7 +1757,7 @@ function GrandmaInsightDetailSheet({
           {!highlights.strength && !highlights.concern && !highlights.trend && (
             <View style={[styles.insightEmpty, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
               <Text style={[styles.insightEmptyText, { color: colors.textSecondary, fontFamily: font.body }]}>
-                Keep logging — more detailed highlights appear once there's a full week of data.
+                Keep logging — more detailed highlights appear once there's enough data in this range.
               </Text>
             </View>
           )}
@@ -3366,24 +3366,29 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           })()}
 
           {/* Latest measurements — always shown */}
-          {(analytics.growth.weights.length >= 1 || analytics.growth.heights.length >= 1) && (
-            <View style={[styles.statRow]}>
-              {analytics.growth.weights.length >= 1 && (
-                <StatPill
-                  label={`Weight (${new Date(analytics.growth.weights.at(-1)!.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}
-                  value={`${analytics.growth.weights.at(-1)!.value}kg`}
-                  color={PILLAR_CONFIG.health.color}
-                />
-              )}
-              {analytics.growth.heights.length >= 1 && (
-                <StatPill
-                  label={`Height (${new Date(analytics.growth.heights.at(-1)!.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}
-                  value={`${analytics.growth.heights.at(-1)!.value}cm`}
-                  color={PILLAR_CONFIG.growth.color}
-                />
-              )}
-            </View>
-          )}
+          {(() => {
+            const lastWeight = analytics.growth.weights[analytics.growth.weights.length - 1]
+            const lastHeight = analytics.growth.heights[analytics.growth.heights.length - 1]
+            if (!lastWeight && !lastHeight) return null
+            return (
+              <View style={[styles.statRow]}>
+                {lastWeight && (
+                  <StatPill
+                    label={`Weight (${new Date(lastWeight.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}
+                    value={`${lastWeight.value}kg`}
+                    color={PILLAR_CONFIG.health.color}
+                  />
+                )}
+                {lastHeight && (
+                  <StatPill
+                    label={`Height (${new Date(lastHeight.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}
+                    value={`${lastHeight.value}cm`}
+                    color={PILLAR_CONFIG.growth.color}
+                  />
+                )}
+              </View>
+            )
+          })()}
 
           {/* Line charts when enough data */}
           {analytics.growth.weights.length >= 2 && (

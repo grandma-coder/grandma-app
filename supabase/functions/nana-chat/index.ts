@@ -71,11 +71,27 @@ function buildSystemPrompt(child: any, pillarId: string, mode: string, weekNumbe
     const weekInfo = weekNumber ? `The user is pregnant at week ${weekNumber} (trimester ${weekNumber <= 13 ? 1 : weekNumber <= 26 ? 2 : 3}).` : 'The user is pregnant.'
     modeContext = `${weekInfo} Focus on pregnancy-specific advice: symptoms, baby development, nutrition, birth planning, and preparation. Always tailor advice to the current trimester.`
   } else {
-    const childInfo = child
-      ? `Child: ${child.name}, ${child.ageMonths} months old, ${child.weightKg}kg.`
-        + (child.allergies?.length ? ` Allergies: ${child.allergies.join(', ')}.` : '')
-        + (child.medications?.length ? ` Medications: ${child.medications.join(', ')}.` : '')
-      : 'No child profile provided.'
+    // Guard each field defensively — child payload comes from the client
+    // and may have undefined ageMonths/weightKg for incomplete profiles.
+    // Without guards the prompt printed "undefined months old, undefinedkg"
+    // which is both ugly and confusing for the model.
+    let childInfo = 'No child profile provided.'
+    if (child) {
+      const parts: string[] = []
+      if (child.name) parts.push(`Name: ${child.name}`)
+      if (typeof child.ageMonths === 'number' && Number.isFinite(child.ageMonths)) {
+        parts.push(`${child.ageMonths} months old`)
+      }
+      if (typeof child.weightKg === 'number' && Number.isFinite(child.weightKg) && child.weightKg > 0) {
+        parts.push(`${child.weightKg}kg`)
+      }
+      const baseLine = parts.length > 0 ? `Child: ${parts.join(', ')}.` : 'Child profile present but fields incomplete.'
+      const allergies = Array.isArray(child.allergies) && child.allergies.length
+        ? ` Allergies: ${child.allergies.join(', ')}.` : ''
+      const meds = Array.isArray(child.medications) && child.medications.length
+        ? ` Medications: ${child.medications.join(', ')}.` : ''
+      childInfo = baseLine + allergies + meds
+    }
     modeContext = `The user has a baby/child. ${childInfo}`
   }
 

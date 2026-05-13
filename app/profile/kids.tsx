@@ -607,7 +607,9 @@ function EditChildSheet({
               mode="date"
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               maximumDate={new Date()}
-              minimumDate={new Date(2005, 0, 1)}
+              // Min DOB ~25 years before today — covers older kids/teens whose
+              // parents might still want to track them in the app.
+              minimumDate={new Date(new Date().getFullYear() - 25, 0, 1)}
               themeVariant={isDark ? 'dark' : 'light'}
               onChange={(_, d) => {
                 if (Platform.OS === 'android') setShowDatePicker(false)
@@ -870,7 +872,9 @@ function AddChildSheet({
               mode="date"
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               maximumDate={new Date()}
-              minimumDate={new Date(2005, 0, 1)}
+              // Min DOB ~25 years before today — covers older kids/teens whose
+              // parents might still want to track them in the app.
+              minimumDate={new Date(new Date().getFullYear() - 25, 0, 1)}
               themeVariant={isDark ? 'dark' : 'light'}
               onChange={(_, d) => {
                 if (Platform.OS === 'android') setShowDatePicker(false)

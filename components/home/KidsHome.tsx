@@ -449,6 +449,26 @@ const MOOD_COLORS: Record<string, string> = {
 const MOOD_LABELS: Record<string, string> = {
   happy: 'Happy', calm: 'Calm', energetic: 'Active', fussy: 'Fussy', cranky: 'Cranky',
 }
+
+/**
+ * Map any historical mood value to a currently-displayed bucket. The mood
+ * options have shifted over time (older builds had 'sad' / 'tired'); the
+ * home dashboard's iteration only knows about the current 5, so legacy
+ * values were aggregated into moodCounts but never rendered — silently
+ * disappearing from the bar chart and the dominant-mood readout.
+ */
+const LEGACY_MOOD_MAP: Record<string, string> = {
+  sad: 'cranky',
+  tired: 'fussy',
+  upset: 'cranky',
+  content: 'calm',
+  active: 'energetic',
+}
+function normalizeMoodKey(raw: string): string {
+  const k = String(raw).toLowerCase().trim()
+  if (MOOD_LABELS[k]) return k
+  return LEGACY_MOOD_MAP[k] ?? k
+}
 const MOOD_EMOJI: Record<string, string> = {
   cranky: '😠', fussy: '😟', energetic: '😐', calm: '🙂', happy: '😊',
 }
@@ -1298,7 +1318,9 @@ export function KidsHome() {
       // object ({ mood: "happy", routineId, routineName }).
       const moodId = typeof mood === 'string' ? mood : mood?.mood
       if (typeof moodId === 'string') {
-        const key = moodId.toLowerCase()
+        // Normalize legacy values (e.g. 'sad' → 'cranky') so old logs
+        // still surface in the iteration over the current mood set.
+        const key = normalizeMoodKey(moodId)
         moodCounts[key] = (moodCounts[key] || 0) + 1
         if (!moodByDay[log.date]) moodByDay[log.date] = {}
         moodByDay[log.date][key] = (moodByDay[log.date][key] || 0) + 1
@@ -5565,10 +5587,15 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
   const { colors, radius } = useTheme()
   const [expandedType, setExpandedType] = useState<string | null>(null)
 
-  // Reset expansion each time modal opens
+  // Reset expansion when the modal closes AND whenever the displayed child
+  // changes — otherwise the previous child's expanded type lingered while
+  // the entries beneath it swapped out.
   useEffect(() => {
     if (!visible) setExpandedType(null)
   }, [visible])
+  useEffect(() => {
+    setExpandedType(null)
+  }, [childName])
 
   const avgPerActiveDay = activeDays > 0 ? Math.round((activityCount / activeDays) * 10) / 10 : 0
   const ranked = Object.entries(breakdown)

@@ -73,6 +73,7 @@ type CategoryKey =
   | 'Insights'
   | 'Community'
   | 'Care Circle'
+  | 'Pregnancy'
   | 'Other'
 
 interface TypeConfig {
@@ -110,6 +111,9 @@ const TYPE_CONFIG: Record<string, TypeConfig> = {
   // Care circle
   care_circle_invite:   { Icon: Heart,      stickerKey: 'pink',   category: 'Care Circle' },
   care_circle_accepted: { Icon: Heart,      stickerKey: 'pink',   category: 'Care Circle' },
+  // Pregnancy
+  pregnancy_week:   { Icon: Sparkles,       stickerKey: 'lilac',  category: 'Pregnancy' },
+  appointment:      { Icon: CalendarClock,  stickerKey: 'lilac',  category: 'Pregnancy' },
   // Other
   reminder:         { Icon: Bell,           stickerKey: 'yellow', category: 'Other'    },
 }
@@ -142,16 +146,28 @@ function navigateForNotification(item: AppNotification) {
     useModeStore.getState().setMode('pre-pregnancy')
   }
 
+  // Pregnancy mode has no kid vault destinations (vaccines, growth, goals
+  // tied to a child). Route those types to analytics or agenda instead.
+  const currentMode = useModeStore.getState().mode
+  const isPregnancy = currentMode === 'pregnancy'
+  const isPrePregnancy = currentMode === 'pre-pregnancy'
+
   switch (item.type) {
     case 'wellness_drop':
     case 'wellness_improve':
     case 'daily_summary':
     case 'weekly_report':
     case 'health_alert':
+      // In pregnancy / pre-pregnancy mode the vault has no analytics surface;
+      // send the user to the dedicated insights screen instead.
+      router.push(isPregnancy || isPrePregnancy ? '/insights' : '/(tabs)/vault')
+      break
     case 'vaccine_due':
     case 'goal_achieved':
     case 'goal_missed':
-      router.push('/(tabs)/vault')
+      // Pregnancy + pre-pregnancy don't have vaccine / kid goal destinations.
+      // Route to insights so the notification leads somewhere useful.
+      router.push(isPregnancy || isPrePregnancy ? '/insights' : '/(tabs)/vault')
       break
     case 'missing_data':
     case 'routine_missed':
@@ -177,7 +193,12 @@ function navigateForNotification(item: AppNotification) {
       router.push('/manage-caregivers')
       break
     case 'reminder':
+    case 'appointment':
       router.push('/(tabs)/agenda')
+      break
+    case 'pregnancy_week':
+      // Week-milestone push → home so the week ring + today summary land in view.
+      router.push('/(tabs)')
       break
     default:
       break
@@ -242,12 +263,18 @@ type BehaviorFilter = 'all' | Behavior
 
 const COMMUNITY_TYPES = new Set(['mention', 'reply', 'like', 'channel', 'care_circle_invite', 'care_circle_accepted'])
 
+const PREGNANCY_TYPES = new Set(['pregnancy_week', 'appointment'])
+const PREGNANCY_DATA_KEYS = ['weekNumber', 'dueDate', 'trimester'] as const
+
 function inferBehavior(n: AppNotification): Behavior | null {
   const tagged = n.data?.behavior
   if (tagged === 'pregnancy' || tagged === 'pre-pregnancy' || tagged === 'kids') {
     return tagged
   }
   if (n.data?.childId) return 'kids'
+  if (PREGNANCY_TYPES.has(n.type)) return 'pregnancy'
+  // Untagged but carries pregnancy-shaped data → treat as pregnancy.
+  if (n.data && PREGNANCY_DATA_KEYS.some((k) => k in n.data!)) return 'pregnancy'
   if (COMMUNITY_TYPES.has(n.type)) return null
   return null
 }

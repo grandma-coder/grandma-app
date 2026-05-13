@@ -117,12 +117,20 @@ export default function Scan() {
 
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
+        // Truncate the reply before persisting. Claude scan replies can run
+        // 2–5KB; storing the full text in jsonb across many scans bloats
+        // the row and the storage bill. The displayed reply still uses the
+        // in-memory full version (set above); this is purely for history.
+        const REPLY_PERSIST_MAX = 1800
+        const persistedReply = reply.length > REPLY_PERSIST_MAX
+          ? reply.slice(0, REPLY_PERSIST_MAX) + '…'
+          : reply
         const { error: insErr } = await supabase.from('scan_history').insert({
           user_id: session.user.id,
           child_id: child?.id ?? null,
           scan_type: scanType,
           image_url: uri,
-          result_json: { reply },
+          result_json: { reply: persistedReply, truncated: reply.length > REPLY_PERSIST_MAX },
         })
         if (insErr) {
           console.warn('[scan] failed to record scan_history:', insErr.message)

@@ -221,6 +221,18 @@ export default function Library() {
           </View>
         </View>
 
+        {/* Chat persistence requires an active child (kids mode). When the
+            user is on "All Kids" view we still allow chatting, but warn
+            that the history won't save — otherwise the bug felt random
+            ("why don't my messages stick?"). */}
+        {mode === 'kids' && !child ? (
+          <View style={{ marginHorizontal: 16, marginTop: 8, padding: 12, borderRadius: 12, backgroundColor: colors.surfaceRaised }}>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.body }}>
+              Pick a child to save chat history. This conversation will end when you leave the screen.
+            </Text>
+          </View>
+        ) : null}
+
         {messages.length === 0 ? (
           <EmptyState />
         ) : (
