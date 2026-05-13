@@ -13,12 +13,13 @@ import { useTheme } from '../../../constants/theme'
 import { MonoCaps, Body } from '../../ui/Typography'
 import { Heart as HeartSticker, Star as StarSticker } from '../../stickers/BrandStickers'
 import { supabase } from '../../../lib/supabase'
+import { toDateStr } from '../../../lib/cycleLogic'
 import { AffirmationShareModal } from './AffirmationShareModal'
 
 // ─── Fetch daily affirmation from Supabase ────────────────────────────────────
 
 async function loadDailyAffirmation(): Promise<string> {
-  const today = new Date().toISOString().split('T')[0]
+  const today = toDateStr(new Date())
   const cacheKey = `affirmation_${today}`
 
   try {
@@ -68,13 +69,13 @@ async function loadDailyAffirmation(): Promise<string> {
 // ─── Check if already revealed today ─────────────────────────────────────────
 
 async function wasRevealedToday(): Promise<boolean> {
-  const today = new Date().toISOString().split('T')[0]
+  const today = toDateStr(new Date())
   const val = await AsyncStorage.getItem(`affirmation_revealed_${today}`).catch(() => null)
   return val === '1'
 }
 
 async function markRevealedToday(): Promise<void> {
-  const today = new Date().toISOString().split('T')[0]
+  const today = toDateStr(new Date())
   await AsyncStorage.setItem(`affirmation_revealed_${today}`, '1').catch(() => {})
 }
 

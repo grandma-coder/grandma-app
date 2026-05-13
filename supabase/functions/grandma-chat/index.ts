@@ -70,9 +70,12 @@ Deno.serve(async (req) => {
       .single()
 
     // ─── Fetch last 7 days of logs ─────────────────────────────────────
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    const sinceDate = sevenDaysAgo.toISOString().split('T')[0]
+    // Edge function runs in UTC; client-side log_date is local YYYY-MM-DD.
+    // Subtract 8 days instead of 7 so the window covers both ends across
+    // timezones (off-by-one mitigation; client-side filtering trims excess).
+    const eightDaysAgo = new Date()
+    eightDaysAgo.setUTCDate(eightDaysAgo.getUTCDate() - 8)
+    const sinceDate = `${eightDaysAgo.getUTCFullYear()}-${String(eightDaysAgo.getUTCMonth() + 1).padStart(2, '0')}-${String(eightDaysAgo.getUTCDate()).padStart(2, '0')}`
 
     // ─── Fetch logs for ALL enrolled behaviors ──────────────────────
     let recentLogs = ''

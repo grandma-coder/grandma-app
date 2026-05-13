@@ -33,7 +33,6 @@ const SCAN_TYPES = [
 export default function Scan() {
   const insets = useSafeAreaInsets()
   const child = useChildStore((s) => s.activeChild)
-  const children = useChildStore((s) => s.children)
   const [scanType, setScanType] = useState('medicine')
   const [loading, setLoading] = useState(false)
   const [isPremium, setIsPremium] = useState(false)
@@ -41,24 +40,26 @@ export default function Scan() {
   const [imageUri, setImageUri] = useState<string | null>(null)
   const [result, setResult] = useState<string | null>(null)
 
-  // FREE_SCAN_LIMIT applies per-account, not per-child. Counting scans across
-  // every child the user has avoids a 2-child family getting 6 free scans
-  // instead of the intended 3.
-  const childIdsKey = children.map((c) => c.id).sort().join(',')
+  // FREE_SCAN_LIMIT applies per-account, not per-child. Count scans by
+  // user_id so pregnancy / pre-pregnancy users (with no child) are also
+  // gated correctly. Legacy rows tied only to child_id were backfilled with
+  // user_id in migration 20260512150000.
   useEffect(() => {
-    checkPremium().then(setIsPremium).catch(() => {})
-    const childIds = children.map((c) => c.id)
-    if (childIds.length === 0) {
-      setScanCount(0)
-      return
+    let alive = true
+    checkPremium().then((p) => alive && setIsPremium(p)).catch(() => {})
+    ;(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session || !alive) return
+      const { count } = await supabase
+        .from('scan_history')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', session.user.id)
+      if (alive) setScanCount(count ?? 0)
+    })()
+    return () => {
+      alive = false
     }
-    supabase
-      .from('scan_history')
-      .select('id', { count: 'exact', head: true })
-      .in('child_id', childIds)
-      .then(({ count }) => setScanCount(count ?? 0))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [childIdsKey])
+  }, [])
 
   async function pickImage(useCamera: boolean) {
     if (!isPremium && scanCount >= FREE_SCAN_LIMIT) {
@@ -114,14 +115,20 @@ export default function Scan() {
 
       setResult(reply)
 
-      if (child?.id) {
-        await supabase.from('scan_history').insert({
-          child_id: child.id,
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const { error: insErr } = await supabase.from('scan_history').insert({
+          user_id: session.user.id,
+          child_id: child?.id ?? null,
           scan_type: scanType,
           image_url: uri,
           result_json: { reply },
         })
-        setScanCount((prev) => prev + 1)
+        if (insErr) {
+          console.warn('[scan] failed to record scan_history:', insErr.message)
+        } else {
+          setScanCount((prev) => prev + 1)
+        }
       }
     } catch (e: any) {
       Alert.alert('Scan failed', e.message)

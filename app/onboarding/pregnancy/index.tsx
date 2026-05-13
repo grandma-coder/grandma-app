@@ -15,6 +15,7 @@ import {
   StyleSheet,
   Platform,
   KeyboardAvoidingView,
+  Alert,
 } from 'react-native'
 import DatePickerField from '../../../components/ui/DatePickerField'
 import { router } from 'expo-router'
@@ -27,9 +28,10 @@ import {
   type BirthPlace,
   type PregnancyMood,
 } from '../../../store/usePregnancyOnboardingStore'
-import { usePregnancyStore } from '../../../store/usePregnancyStore'
+import { usePregnancyStore, type MoodType } from '../../../store/usePregnancyStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
+import { toDateStr } from '../../../lib/cycleLogic'
 import { seedPregnancyData } from '../../../lib/pregnancySeeds'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -123,83 +125,93 @@ export default function PregnancyOnboarding() {
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
   async function saveAndFinish() {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return onboardingComplete()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return onboardingComplete()
 
-      const userId = session.user.id
+    const userId = session.user.id
 
-      // Update profile with conditions/allergies if provided
-      if (store.conditionsText) {
-        await supabase.from('profiles').upsert(
-          {
-            id: userId,
-            health_notes: store.conditionsText,
-          },
-          { onConflict: 'id' }
+    // ── 1. Optional: profile health notes. Non-blocking on failure. ──────
+    if (store.conditionsText) {
+      const { error: profileErr } = await supabase.from('profiles').upsert(
+        {
+          id: userId,
+          health_notes: store.conditionsText,
+        },
+        { onConflict: 'id' }
+      )
+      if (profileErr) console.warn('[onboarding] profile upsert failed:', profileErr.message)
+    }
+
+    // ── 2. REQUIRED: pregnancy behavior row. Block on failure. ───────────
+    const { error: behaviorErr } = await supabase.from('behaviors').insert({
+      user_id: userId,
+      type: 'pregnancy',
+      active: true,
+    })
+    if (behaviorErr) {
+      Alert.alert(
+        'Couldn\'t finish onboarding',
+        `Saving your pregnancy info failed: ${behaviorErr.message}. Please try again.`
+      )
+      return
+    }
+
+    // ── 3. REQUIRED: due-date note + optional mood. Block on failure. ────
+    if (store.dueDate) {
+      const today = toDateStr(new Date())
+      type PregLogRow = {
+        user_id: string
+        log_date: string
+        log_type: 'note' | 'mood'
+        value: string | null
+        notes: string | null
+      }
+      const logs: PregLogRow[] = [
+        {
+          user_id: userId,
+          log_date: today,
+          log_type: 'note',
+          value: 'onboarding',
+          notes: JSON.stringify({
+            dueDate: store.dueDate,
+            firstPregnancy: store.firstPregnancy,
+            birthPlace: store.birthPlace,
+            careProvider: store.careProvider,
+            partnerName: store.partnerName,
+            weekNumber: calcWeekNumber(store.dueDate),
+          }),
+        },
+      ]
+
+      if (store.mood) {
+        logs.push({
+          user_id: userId,
+          log_date: today,
+          log_type: 'mood',
+          value: store.mood,
+          notes: null,
+        })
+      }
+
+      const { error: logsErr } = await supabase.from('pregnancy_logs').insert(logs)
+      if (logsErr) {
+        Alert.alert(
+          'Couldn\'t finish onboarding',
+          `Saving your due date failed: ${logsErr.message}. Please try again.`
         )
+        return
       }
 
-      // Create pregnancy behavior
-      await supabase.from('behaviors').insert({
-        user_id: userId,
-        type: 'pregnancy',
-        active: true,
-      })
-
-      // Save due date + initial data as pregnancy logs
-      if (store.dueDate) {
-        const today = new Date().toISOString().split('T')[0]
-        type PregLogRow = {
-          user_id: string
-          log_date: string
-          log_type: 'note' | 'mood'
-          value: string | null
-          notes: string | null
-        }
-        const logs: PregLogRow[] = [
-          {
-            user_id: userId,
-            log_date: today,
-            log_type: 'note',
-            value: 'onboarding',
-            notes: JSON.stringify({
-              dueDate: store.dueDate,
-              firstPregnancy: store.firstPregnancy,
-              birthPlace: store.birthPlace,
-              careProvider: store.careProvider,
-              partnerName: store.partnerName,
-              weekNumber: calcWeekNumber(store.dueDate),
-            }),
-          },
-        ]
-
-        // Save initial mood if selected
-        if (store.mood) {
-          logs.push({
-            user_id: userId,
-            log_date: today,
-            log_type: 'mood',
-            value: store.mood,
-            notes: null,
-          })
-        }
-
-        await supabase.from('pregnancy_logs').insert(logs)
-
-        // Also set pregnancy store for immediate use in the app
-        pregnancyStore.setDueDate(store.dueDate)
-        pregnancyStore.setWeekNumber(calcWeekNumber(store.dueDate))
-        if (store.mood) {
-          pregnancyStore.setMood(store.mood as any)
-        }
-
-        // Seed 14 days of sample data in background — never blocks onboarding
-        const seedWeek = calcWeekNumber(store.dueDate)
-        seedPregnancyData(userId, seedWeek, store.dueDate).catch(console.warn)
+      // Local stores (safe — DB persistence already confirmed above).
+      pregnancyStore.setDueDate(store.dueDate)
+      pregnancyStore.setWeekNumber(calcWeekNumber(store.dueDate))
+      if (store.mood) {
+        pregnancyStore.setMood(store.mood as MoodType)
       }
-    } catch (e) {
-      console.warn('Failed to save pregnancy onboarding:', e)
+
+      // Seed 14 days of sample data in background — never blocks onboarding.
+      const seedWeek = calcWeekNumber(store.dueDate)
+      seedPregnancyData(userId, seedWeek, store.dueDate).catch(console.warn)
     }
 
     store.clearAll()

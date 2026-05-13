@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { getWeekData } from '../../lib/pregnancyData'
 import { getWeekStat } from '../../lib/weekStats'
+import { toDateStr } from '../../lib/cycleLogic'
 import { useTheme } from '../../constants/theme'
 
 // ─── Layout constants ────────────────────────────────────────────────────────
@@ -76,7 +77,7 @@ function getWeekDateRange(dueDate: string, week: number): { start: string; end: 
   end.setDate(due.getDate() - (40 - week) * 7)
   const start = new Date(end)
   start.setDate(end.getDate() - 6)
-  const toISO = (d: Date) => d.toISOString().split('T')[0]
+  const toISO = (d: Date) => toDateStr(d)
   return { start: toISO(start), end: toISO(end) }
 }
 
@@ -306,7 +307,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
         const endD = new Date(today)
         const startD = new Date(today)
         startD.setDate(today.getDate() - 6)
-        const toISO = (d: Date) => d.toISOString().split('T')[0]
+        const toISO = (d: Date) => toDateStr(d)
         start = toISO(startD)
         end = toISO(endD)
       }

@@ -20,11 +20,10 @@ import { useChildStore } from '../../store/useChildStore'
 import { useModeStore } from '../../store/useModeStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { getModeConfig } from '../../lib/modeConfig'
-import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { PaperCard } from '../../components/ui/PaperCard'
 import { GrandmaBall } from '../../components/home/GrandmaBall'
-import { colors, THEME_COLORS, typography, spacing, borderRadius } from '../../constants/theme'
-import type { PillarId, Pillar } from '../../types'
+import { useTheme, getModeColor } from '../../constants/theme'
+import type { PillarId } from '../../types'
 
 interface ChatMessage {
   id: string
@@ -34,6 +33,7 @@ interface ChatMessage {
 
 export default function Library() {
   const insets = useSafeAreaInsets()
+  const { colors, font, radius, isDark } = useTheme()
   const child = useChildStore((s) => s.activeChild)
   const mode = useModeStore((s) => s.mode)
   const modeConfig = getModeConfig(mode)
@@ -46,6 +46,14 @@ export default function Library() {
   const [input, setInput] = useState(suggestion ?? '')
   const [loading, setLoading] = useState(false)
   const flatListRef = useRef<FlatList>(null)
+
+  const accent = getModeColor(mode, isDark)
+  const subtitleCopy =
+    mode === 'pre-pregnancy'
+      ? 'Your conception guide'
+      : mode === 'pregnancy'
+        ? 'Your pregnancy companion'
+        : 'Your parenting wisdom guide'
 
   useEffect(() => {
     if (!child) return
@@ -107,8 +115,20 @@ export default function Library() {
     const isUser = item.role === 'user'
     return (
       <View style={[styles.msgRow, isUser && styles.msgRowUser]}>
-        <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}>
-          <Text style={[styles.bubbleText, isUser && styles.bubbleTextUser]}>
+        <View
+          style={[
+            styles.bubble,
+            isUser
+              ? { backgroundColor: accent, borderBottomRightRadius: 4 }
+              : { backgroundColor: colors.surface, borderTopLeftRadius: 4, borderWidth: 1, borderColor: colors.border },
+          ]}
+        >
+          <Text
+            style={[
+              styles.bubbleText,
+              { color: isUser ? colors.textInverse : colors.text, fontFamily: font.body },
+            ]}
+          >
             {item.content}
           </Text>
         </View>
@@ -123,13 +143,17 @@ export default function Library() {
         showsVerticalScrollIndicator={false}
       >
         <GrandmaBall onPress={() => {}} />
-        <Text style={styles.emptyTitle}>Guru Grandma</Text>
-        <Text style={styles.emptySubtitle}>
+        <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display }]}>
+          Guru Grandma
+        </Text>
+        <Text style={[styles.emptySubtitle, { color: colors.textMuted, fontFamily: font.body }]}>
           I'm not your doctor, dear — but I can share wisdom on pre-pregnancy, pregnancy, feeding, vaccines, emergencies, and so much more.
         </Text>
 
         {/* Knowledge Pillars — mode-specific */}
-        <Text style={styles.pillarsLabel}>KNOWLEDGE PILLARS</Text>
+        <Text style={[styles.pillarsLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          KNOWLEDGE PILLARS
+        </Text>
         <View style={styles.pillarsGrid}>
           {modePillars.map((pillar) => (
             <Pressable
@@ -137,22 +161,34 @@ export default function Library() {
               onPress={() => router.push(`/pillar/${pillar.id}`)}
               style={({ pressed }) => [
                 styles.pillarChip,
-                pressed && { opacity: 0.8 },
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  borderRadius: radius.full,
+                },
+                pressed && { opacity: 0.85 },
               ]}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${pillar.name} pillar`}
             >
               <Text style={styles.pillarIcon}>{pillar.icon}</Text>
-              <Text style={styles.pillarName}>{pillar.name}</Text>
+              <Text style={[styles.pillarName, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+                {pillar.name}
+              </Text>
             </Pressable>
           ))}
         </View>
 
         {/* Channels placeholder */}
-        <Text style={styles.pillarsLabel}>COMMUNITY CHANNELS</Text>
+        <Text style={[styles.pillarsLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          COMMUNITY CHANNELS
+        </Text>
         <PaperCard radius={28} padding={20}>
           <View style={styles.channelPlaceholder}>
-            <Text style={{ fontSize: 28, marginBottom: 8, fontFamily: 'Fraunces_600SemiBold' }}>💬</Text>
-            <Text style={styles.channelTitle}>Coming Soon</Text>
-            <Text style={styles.channelSubtitle}>
+            <Text style={[styles.channelTitle, { color: colors.text, fontFamily: font.display }]}>
+              Coming Soon
+            </Text>
+            <Text style={[styles.channelSubtitle, { color: colors.textMuted, fontFamily: font.body }]}>
               Join channels for birth stories, breastfeeding support, recipes, and local meetups.
             </Text>
           </View>
@@ -162,7 +198,7 @@ export default function Library() {
   }
 
   return (
-    <CosmicBackground>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -171,13 +207,16 @@ export default function Library() {
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <View style={styles.headerRow}>
             <View>
-              <Text style={styles.title}>Guru{'\n'}<Text style={{ color: THEME_COLORS.yellow, fontStyle: 'italic' }}>Grandma</Text></Text>
-              <Text style={styles.headerSubtitle}>
-            {mode === 'pre-pregnancy' ? 'Your conception guide' : mode === 'pregnancy' ? 'Your pregnancy companion' : 'Your parenting wisdom guide'}
-          </Text>
+              <Text style={[styles.title, { color: colors.text, fontFamily: font.display }]}>
+                Guru{'\n'}
+                <Text style={{ color: accent, fontStyle: 'italic' }}>Grandma</Text>
+              </Text>
+              <Text style={[styles.headerSubtitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+                {subtitleCopy}
+              </Text>
             </View>
-            <View style={styles.sparkleBox}>
-              <Ionicons name="sparkles" size={20} color={THEME_COLORS.yellow} />
+            <View style={[styles.sparkleBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Ionicons name="sparkles" size={20} color={accent} />
             </View>
           </View>
         </View>
@@ -198,10 +237,19 @@ export default function Library() {
         {/* Input bar */}
         <View style={[styles.inputBar, { paddingBottom: insets.bottom + 8 }]}>
           <TextInput
-            style={styles.input}
-            selectionColor={colors.neon.blue}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                color: colors.text,
+                fontFamily: font.body,
+                borderRadius: radius.md,
+              },
+            ]}
+            selectionColor={accent}
             placeholder="Ask Grandma..."
-            placeholderTextColor={colors.textTertiary}
+            placeholderTextColor={colors.textFaint}
             value={input}
             onChangeText={setInput}
             multiline
@@ -211,22 +259,27 @@ export default function Library() {
           <Pressable
             onPress={send}
             disabled={loading || !input.trim()}
-            style={[styles.sendButton, (!input.trim() || loading) && { opacity: 0.4 }]}
+            style={[
+              styles.sendButton,
+              { backgroundColor: accent, borderRadius: radius.sm },
+              (!input.trim() || loading) && { opacity: 0.4 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Send message to Grandma"
           >
             {loading ? (
-              <ActivityIndicator size="small" color="#1A1030" />
+              <ActivityIndicator size="small" color={colors.textInverse} />
             ) : (
-              <Ionicons name="arrow-up" size={20} color="#1A1030" />
+              <Ionicons name="arrow-up" size={20} color={colors.textInverse} />
             )}
           </Pressable>
         </View>
       </KeyboardAvoidingView>
-    </CosmicBackground>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  // matches HTML: header.shrink-0.pt-14.px-8.flex.justify-between.items-start
   header: {
     paddingHorizontal: 32,
     paddingBottom: 16,
@@ -236,71 +289,58 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  // matches HTML: text-2xl font-light tracking-tight leading-tight uppercase + text-4xl font-bold neon-yellow italic
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '300',
-    color: '#FFFFFF',
     textTransform: 'uppercase',
     letterSpacing: -0.5,
-    lineHeight: 28,
+    lineHeight: 32,
   },
-  // matches HTML: text-sm text-purple-200/60 mt-1 uppercase tracking-[0.2em]
   headerSubtitle: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: 'rgba(200,180,255,0.6)',
+    fontSize: 12,
+    fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 3,
-    marginTop: 4,
+    marginTop: 6,
   },
-  // matches HTML: w-12 h-12 rounded-2xl bg-white/5 border border-white/10
   sparkleBox: {
     width: 48,
     height: 48,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // matches HTML: px-6 pt-10 pb-4 space-y-10
   emptyScroll: {
     paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingTop: 32,
     paddingBottom: 20,
     alignItems: 'center',
   },
-  // matches HTML: text-2xl font-bold mb-3 tracking-tight
   emptyTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
-    color: '#FFFFFF',
     letterSpacing: -0.5,
-    marginBottom: 12, fontFamily: 'Fraunces_600SemiBold' },
-  // matches HTML: text-purple-100/70 text-[15px] leading-relaxed max-w-[280px]
+    marginTop: 24,
+    marginBottom: 12,
+  },
   emptySubtitle: {
     fontSize: 15,
     fontWeight: '400',
-    color: 'rgba(200,180,255,0.7)',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 40,
-    maxWidth: 280,
+    maxWidth: 320,
   },
-  // matches HTML: text-[11px] font-bold tracking-[0.2em] text-white/40 uppercase
   pillarsLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.4)',
     letterSpacing: 3,
     textTransform: 'uppercase',
     alignSelf: 'flex-start',
     marginBottom: 16,
     paddingLeft: 4,
   },
-  // matches HTML: flex flex-wrap gap-2.5
   pillarsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -308,17 +348,13 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     width: '100%',
   },
-  // matches HTML: glass-pill px-5 py-2.5 rounded-full flex items-center gap-2 text-sm font-medium
   pillarChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 999,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
   pillarIcon: {
     fontSize: 16,
@@ -326,23 +362,18 @@ const styles = StyleSheet.create({
   pillarName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#FFFFFF',
   },
-  // matches HTML: glass-pill rounded-3xl p-6 border-dashed
   channelPlaceholder: {
     paddingVertical: 0,
   },
-  // matches HTML: text-lg font-semibold
   channelTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  // matches HTML: text-xs text-white/40
   channelSubtitle: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
+    fontSize: 13,
+    lineHeight: 19,
   },
   messageList: {
     paddingHorizontal: 24,
@@ -358,33 +389,13 @@ const styles = StyleSheet.create({
   bubble: {
     maxWidth: '85%',
     borderRadius: 24,
-    padding: 20,
-  },
-  bubbleUser: {
-    backgroundColor: THEME_COLORS.yellow,
-    borderBottomRightRadius: 4,
-    shadowColor: THEME_COLORS.yellow,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-  },
-  bubbleAssistant: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderTopLeftRadius: 4,
+    padding: 16,
   },
   bubbleText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.9)',
-    lineHeight: 24,
+    lineHeight: 22,
   },
-  bubbleTextUser: {
-    color: '#1A1030',
-    fontWeight: '700',
-  },
-  // matches HTML: px-6 pb-6 → glass-pill rounded-2xl p-2 pl-5
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -392,35 +403,20 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
   },
-  // matches HTML: bg-transparent flex-1 text-sm, inside glass-pill container
   input: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
     height: 52,
     paddingHorizontal: 20,
     paddingRight: 52,
     fontSize: 14,
     fontWeight: '500',
-    color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
-  // matches HTML: bg-neon-yellow text-[#1A1030] w-10 h-10 rounded-xl
   sendButton: {
     width: 40,
     height: 40,
-    backgroundColor: THEME_COLORS.yellow,
-    borderRadius: 12,
     marginLeft: -48,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  sendText: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#1A1030',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
   },
 })

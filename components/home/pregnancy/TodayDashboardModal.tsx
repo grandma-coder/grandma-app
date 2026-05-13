@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import Svg, { Path as SvgPath, Circle as SvgCircle } from 'react-native-svg'
 import { useTheme } from '../../../constants/theme'
+import { toDateStr } from '../../../lib/cycleLogic'
 import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
 import { PaperCard } from '../../ui/PaperCard'
@@ -38,7 +39,7 @@ const MOOD_LABELS: Record<string, string> = {
 async function fetchHistory(userId: string, logType: string, days = 7): Promise<Point[]> {
   const since = new Date()
   since.setDate(since.getDate() - days + 1)
-  const from = since.toISOString().split('T')[0]
+  const from = toDateStr(since)
   const { data } = await supabase
     .from('pregnancy_logs')
     .select('log_date, value')
@@ -58,7 +59,7 @@ function fillDays(history: Point[], days = 7): { values: number[]; labels: strin
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date()
     d.setDate(d.getDate() - i)
-    const dateStr = d.toISOString().split('T')[0]
+    const dateStr = toDateStr(d)
     const match = history.find((h) => h.date === dateStr)
     values.push(match ? match.value : 0)
     labels.push(d.toLocaleDateString('en-US', { weekday: 'narrow' }))

@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { colors, THEME_COLORS, borderRadius, shadows, typography } from '../../constants/theme'
+import { supabase } from '../../lib/supabase'
+import { toDateStr } from '../../lib/cycleLogic'
+import { queryClient } from '../../lib/queryClient'
 
 interface Contraction {
   start: number
@@ -24,6 +27,7 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
   const [contractions, setContractions] = useState<Contraction[]>([])
   const [isActive, setIsActive] = useState(false)
   const [elapsed, setElapsed] = useState(0)
+  const [saving, setSaving] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startTimeRef = useRef(0)
 
@@ -39,6 +43,28 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
     }
   }, [isActive])
 
+  async function persistContraction(durationSeconds: number, intervalSeconds: number) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const { error } = await supabase.from('pregnancy_logs').insert({
+        user_id: session.user.id,
+        log_date: toDateStr(new Date()),
+        log_type: 'contraction',
+        value: durationSeconds.toString(),
+        notes: JSON.stringify({ intervalSeconds }),
+      })
+      if (error) {
+        Alert.alert('Save failed', `Contraction not saved: ${error.message}`)
+        return
+      }
+      queryClient.invalidateQueries({ queryKey: ['pregnancy-week-logs'] })
+      queryClient.invalidateQueries({ queryKey: ['pregnancy-today-logs'] })
+    } catch (e: any) {
+      Alert.alert('Save failed', e?.message ?? 'Could not save contraction.')
+    }
+  }
+
   function handlePress() {
     if (!isActive) {
       // Start a contraction
@@ -49,15 +75,40 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
       // End current contraction
       setIsActive(false)
       if (intervalRef.current) clearInterval(intervalRef.current)
+      const endTs = Date.now()
       setContractions((prev) => {
         const updated = [...prev]
         const last = updated[updated.length - 1]
         if (last && !last.end) {
-          updated[updated.length - 1] = { ...last, end: Date.now() }
+          updated[updated.length - 1] = { ...last, end: endTs }
+          const durationSeconds = Math.round((endTs - last.start) / 1000)
+          const prevCompleted = updated.slice(0, -1).filter((c) => c.end)
+          const prevEnd = prevCompleted.length > 0 ? prevCompleted[prevCompleted.length - 1].end! : null
+          const intervalSeconds = prevEnd ? Math.round((last.start - prevEnd) / 1000) : 0
+          // Fire-and-forget; surfaces alert on failure.
+          persistContraction(durationSeconds, intervalSeconds)
         }
         return updated
       })
       setElapsed(0)
+    }
+  }
+
+  async function handleSaveSession() {
+    if (!onSave || saving) return
+    const completed = contractions.filter((c) => c.end)
+    if (completed.length === 0) return
+    setSaving(true)
+    try {
+      const payload = completed.map((c, i) => {
+        const durationSeconds = Math.round((c.end! - c.start) / 1000)
+        const prev = completed[i - 1]
+        const intervalSeconds = prev ? Math.round((c.start - prev.end!) / 1000) : 0
+        return { durationSeconds, intervalSeconds }
+      })
+      onSave(payload)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -152,11 +203,29 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
           </View>
         )}
 
-        {/* Reset */}
+        {/* Session controls */}
         {contractions.length > 0 && !isActive && (
-          <Pressable onPress={handleReset} style={styles.resetButton}>
-            <Text style={styles.resetText}>Reset</Text>
-          </Pressable>
+          <View style={styles.sessionControls}>
+            {onSave && (
+              <Pressable
+                onPress={handleSaveSession}
+                disabled={saving}
+                style={[styles.saveButton, saving && { opacity: 0.5 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Save contraction session"
+              >
+                <Text style={styles.saveButtonText}>{saving ? 'Saving…' : 'Save session'}</Text>
+              </Pressable>
+            )}
+            <Pressable
+              onPress={handleReset}
+              style={styles.resetButton}
+              accessibilityRole="button"
+              accessibilityLabel="Reset contraction session"
+            >
+              <Text style={styles.resetText}>Reset</Text>
+            </Pressable>
+          </View>
         )}
       </PaperCard>
 
@@ -294,9 +363,30 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  resetButton: {
+  sessionControls: {
     marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  saveButton: {
+    flex: 1,
+    backgroundColor: THEME_COLORS.blue,
+    paddingVertical: 14,
+    borderRadius: 999,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.textOnAccent,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  resetButton: {
     paddingVertical: 10,
+    paddingHorizontal: 14,
   },
   resetText: {
     fontSize: 14,

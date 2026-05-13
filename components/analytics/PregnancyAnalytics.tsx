@@ -26,6 +26,7 @@ import { ChevronRight, Info, X, FlaskConical } from 'lucide-react-native'
 import { useTheme } from '../../constants/theme'
 import { MoodBubbleCluster, type MoodBubbleItem } from '../charts/SvgCharts'
 import { supabase } from '../../lib/supabase'
+import { toDateStr } from '../../lib/cycleLogic'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import {
@@ -1420,7 +1421,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
   const totalGlasses = data.reduce((a, b) => a + b, 0)
   const totalLitres = totalGlasses * 0.25 // 1 glass ≈ 250ml
 
-  const todayKey = new Date().toISOString().split('T')[0]
+  const todayKey = toDateStr(new Date())
   const todayEntry = hydrationHistory.find((h) => h.date === todayKey)
   const todayGlasses = todayEntry?.glasses ?? 0
   const todayPct = Math.min(100, Math.round((todayGlasses / TARGET) * 100))
