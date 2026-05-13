@@ -12,7 +12,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import {
   Plus, Bell, Clock, X, Check, Pencil, Flag, Trash2,
 } from 'lucide-react-native'
-import { useTheme, brand } from '../../../constants/theme'
+import { useTheme, getModeColor, brand } from '../../../constants/theme'
 import { Star as StarSticker } from '../../ui/Stickers'
 import { supabase } from '../../../lib/supabase'
 
@@ -47,10 +47,9 @@ function localDateStr(d: Date): string {
   return `${yyyy}-${mm}-${dd}`
 }
 
-const ACCENT = brand.pregnancy
-
 export function PregnancyUserReminders({ userId }: Props) {
   const { colors, radius, isDark, stickers } = useTheme()
+  const ACCENT = getModeColor('pregnancy', isDark)
 
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [showInput, setShowInput] = useState(false)
@@ -257,7 +256,7 @@ export function PregnancyUserReminders({ userId }: Props) {
                 }}
               >
                 <Bell size={11} color={newTime ? '#C06030' : colors.textSecondary} strokeWidth={2} />
-                <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: newTime ? '#C06030' : colors.textSecondary }}>
+                <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: newTime ? stickers.peachInk : colors.textSecondary }}>
                   {newTime
                     ? formatTime12h(`${String(newTime.getHours()).padStart(2, '0')}:${String(newTime.getMinutes()).padStart(2, '0')}`)
                     : 'Set time'}
@@ -278,10 +277,12 @@ export function PregnancyUserReminders({ userId }: Props) {
                 backgroundColor: ACCENT,
                 borderRadius: radius.full,
                 borderWidth: 1.5,
-                borderColor: isDark ? ACCENT : '#141313',
+                borderColor: isDark ? ACCENT : colors.text,
               }]}
+              accessibilityRole="button"
+              accessibilityLabel="Save reminder"
             >
-              <Text style={styles.saveBtnText}>Save</Text>
+              <Text style={[styles.saveBtnText, { color: colors.textInverse }]}>Save</Text>
             </Pressable>
           </View>
 
@@ -292,7 +293,7 @@ export function PregnancyUserReminders({ userId }: Props) {
               marginTop: 6,
               borderWidth: 1.5,
               borderColor: isDark ? colors.border : 'rgba(20,19,19,0.1)',
-              backgroundColor: isDark ? colors.surfaceRaised : '#FFFFFF',
+              backgroundColor: colors.surface,
             }}>
               <DateTimePicker
                 value={newDate ?? new Date()}
@@ -330,7 +331,7 @@ export function PregnancyUserReminders({ userId }: Props) {
               marginTop: 6,
               borderWidth: 1.5,
               borderColor: isDark ? colors.border : 'rgba(20,19,19,0.1)',
-              backgroundColor: isDark ? colors.surfaceRaised : '#FFFFFF',
+              backgroundColor: colors.surface,
             }}>
               <DateTimePicker
                 value={newTime ?? (() => { const d = new Date(); d.setHours(9, 0, 0, 0); return d })()}
@@ -355,7 +356,7 @@ export function PregnancyUserReminders({ userId }: Props) {
                     borderTopColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
                   }}
                 >
-                  <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: '#C06030' }}>Done</Text>
+                  <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: stickers.peachInk }}>Done</Text>
                 </Pressable>
               )}
             </View>
@@ -378,6 +379,7 @@ export function PregnancyUserReminders({ userId }: Props) {
               colors={colors}
               isDark={isDark}
               stickers={stickers}
+              accent={ACCENT}
             />
           ))}
         </View>
@@ -387,7 +389,7 @@ export function PregnancyUserReminders({ userId }: Props) {
 }
 
 function ReminderRow({
-  r, onToggle, onDelete, onEdit, onFlag, colors, isDark, stickers,
+  r, onToggle, onDelete, onEdit, onFlag, colors, isDark, stickers, accent,
 }: {
   r: Reminder
   onToggle: () => void
@@ -397,7 +399,9 @@ function ReminderRow({
   colors: any
   isDark: boolean
   stickers: any
+  accent: string
 }) {
+  const ACCENT = accent
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const due = r.dueDate ? new Date(r.dueDate + 'T00:00:00') : null
   const diffDays = due ? Math.round((due.getTime() - today.getTime()) / 86400000) : null
@@ -436,7 +440,7 @@ function ReminderRow({
     : (isDark ? colors.border : 'rgba(20,19,19,0.1)')
 
   const badgeBg = isOverdue ? '#EE7B6D' : (r.flagged || isDueToday) ? stickers.yellow : stickers.blue
-  const badgeIconColor = isOverdue ? '#FFFFFF' : '#141313'
+  const badgeIconColor = isOverdue ? colors.textInverse : colors.text
 
   return (
     <View style={{
@@ -587,6 +591,5 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 13,
     fontFamily: 'DMSans_700Bold',
-    color: '#FFFFFF',
   },
 })
