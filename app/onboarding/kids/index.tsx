@@ -17,6 +17,7 @@ import {
   Platform,
   ScrollView,
   KeyboardAvoidingView,
+  Alert,
 } from 'react-native'
 import DatePickerField from '../../../components/ui/DatePickerField'
 import * as ImagePicker from 'expo-image-picker'
@@ -160,9 +161,25 @@ export default function KidsOnboarding() {
           invited_by: userId,
           accepted_at: new Date().toISOString(),
         }))
-        // Insert into child_caregivers so root layout can load children on next open
-        const { error: ccError } = await supabase.from('child_caregivers').insert(caregiverLinks)
-        if (ccError) console.warn('child_caregivers insert:', ccError.message)
+        // Insert into child_caregivers so root layout can load children on next open.
+        // This link is REQUIRED for the user to see their own kids after relaunch —
+        // children RLS reads via the caregiver join. If the insert fails we surface
+        // it instead of moving on silently with broken state, but we attempt one
+        // immediate retry first (transient network failure is the common case).
+        let ccError: { message: string } | null = null
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const { error } = await supabase.from('child_caregivers').insert(caregiverLinks)
+          if (!error) { ccError = null; break }
+          ccError = error
+        }
+        if (ccError) {
+          Alert.alert(
+            'Setup didn\'t fully complete',
+            'We saved your child profile but couldn\'t set up access. Please reopen the app, or contact support if your children don\'t appear on the home screen.',
+          )
+          // eslint-disable-next-line no-console
+          console.error('child_caregivers insert failed after retry:', ccError.message)
+        }
 
         // Create care_circle entry for the parent (self)
         const { error: circleError } = await supabase.from('care_circle').insert({
@@ -173,7 +190,12 @@ export default function KidsOnboarding() {
           children_access: childIds,
           status: 'accepted',
         })
-        if (circleError) console.warn('care_circle insert:', circleError.message)
+        if (circleError) {
+          // care_circle is less critical (caregiver invites use a different
+          // path) but still worth surfacing if it fails.
+          // eslint-disable-next-line no-console
+          console.warn('care_circle insert:', circleError.message)
+        }
 
         // Create caregiver entry if provided
         if (store.caregiverName && store.caregiverRole) {
