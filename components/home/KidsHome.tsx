@@ -1137,14 +1137,29 @@ export function KidsHome() {
 
   function deleteReminder(id: string) {
     const r = reminders.find(r => r.id === id)
-    if (r?.notifId) supabase.from('notifications').delete().eq('id', r.notifId).then(() => {})
+    if (!r) return
+    // Snapshot the prior list so we can roll back if the server delete fails.
+    // Deleted reminders feel surprising if they reappear later (resurrection
+    // on next hydrate) — toggles are easier to recover from than deletes.
+    const prev = reminders
     applyReminders(reminders.filter(r => r.id !== id))
     supabase
       .from('kids_reminders')
       .delete()
       .eq('id', id)
       .then(({ error }) => {
-        if (error) console.error('kids_reminders delete failed:', error.message)
+        if (error) {
+          console.error('kids_reminders delete failed:', error.message)
+          // Roll the local list back so the user can see + retry.
+          applyReminders(prev)
+          return
+        }
+        // Only delete the linked notification AFTER the reminder row is
+        // confirmed gone — otherwise a failed reminder delete leaves an
+        // orphaned notification deleted with no row backing it.
+        if (r.notifId) {
+          supabase.from('notifications').delete().eq('id', r.notifId).then(() => {})
+        }
       })
   }
 

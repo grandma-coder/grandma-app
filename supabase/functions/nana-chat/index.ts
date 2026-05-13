@@ -2,7 +2,7 @@
 // @ts-nocheck — Deno Edge Function: TS errors in VS Code are expected (runs in Deno, not Node)
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +12,18 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
+  }
+
+  // Fail fast and clearly if the secret was never set. Previously the
+  // non-null assertion at module load did nothing (Deno doesn't throw on
+  // missing env at the `!` site) and the failure showed up as an
+  // 'authentication_error: Could not parse authorization header' deep in
+  // the Anthropic call — much harder to diagnose.
+  if (!ANTHROPIC_API_KEY) {
+    return new Response(
+      JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured on this Supabase project.' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
 
   try {

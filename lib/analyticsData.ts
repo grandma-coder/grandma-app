@@ -421,11 +421,43 @@ function buildGrowthData(logs: ChildLog[]): GrowthData {
   const weights: GrowthData['weights'] = []
   const heights: GrowthData['heights'] = []
 
+  // The growth-event writer in app/profile/health-history.tsx produces
+  // bare strings like "Weight: 7.5 kg" / "Height: 78 cm" (NOT JSON), so
+  // the old parseValue → typeof === 'object' gate excluded every real
+  // log. Parse the same family of formats parseGrowthValue handles:
+  //   "Weight: 7.5 kg"  · "weight 7,5kg"  · "16 lbs"  · "33 inches"
+  // and normalize imperial → kg/cm so downstream charts always see the
+  // metric unit.
+  const numPattern = '([0-9]+(?:[.,][0-9]+)?)'
+  const wRe = new RegExp(`weight[:\\s]+${numPattern}\\s*(kg|lbs?|lb)`, 'i')
+  const hRe = new RegExp(`height[:\\s]+${numPattern}\\s*(cm|in|inches?|inch)`, 'i')
+  const toNum = (raw: string) => parseFloat(raw.replace(',', '.'))
+
   for (const log of growthLogs) {
-    const val = parseValue(log.value)
-    if (val && typeof val === 'object') {
-      if (val.weight) weights.push({ value: parseFloat(val.weight), date: log.date })
-      if (val.height) heights.push({ value: parseFloat(val.height), date: log.date })
+    const raw = (log.value ?? '').toString()
+    // Try the JSON shape first (in case a future writer adopts it)
+    try {
+      const val = JSON.parse(raw)
+      if (val && typeof val === 'object') {
+        if (val.weight) weights.push({ value: parseFloat(val.weight), date: log.date })
+        if (val.height) heights.push({ value: parseFloat(val.height), date: log.date })
+        continue
+      }
+    } catch {}
+    // Bare-string fallback (current writer shape)
+    const wm = raw.match(wRe)
+    if (wm) {
+      const n = toNum(wm[1])
+      const unit = wm[2].toLowerCase()
+      const kg = unit === 'kg' ? n : n * 0.45359237
+      if (Number.isFinite(kg) && kg > 0) weights.push({ value: Number(kg.toFixed(2)), date: log.date })
+    }
+    const hm = raw.match(hRe)
+    if (hm) {
+      const n = toNum(hm[1])
+      const unit = hm[2].toLowerCase()
+      const cm = unit === 'cm' ? n : n * 2.54
+      if (Number.isFinite(cm) && cm > 0) heights.push({ value: Number(cm.toFixed(1)), date: log.date })
     }
   }
 
@@ -562,10 +594,20 @@ function scoreSleep(data: SleepData): PillarScore {
   const raw = Math.min(qualityScore * 0.85 + consistencyBonus, 10)
   const value = Math.round(raw * 10) / 10
 
-  // Trend: average of last 3 days vs first 3
-  const first3 = data.dailyHours.slice(0, 3).reduce((a, b) => a + b, 0) / 3
-  const last3 = data.dailyHours.slice(4).reduce((a, b) => a + b, 0) / 3
-  const trend = first3 > 0 ? Math.round(((last3 - first3) / first3) * 100) : 0
+  // Trend: average of the second half vs the first half of the window.
+  // Previously this read `slice(0, 3)` vs `slice(4)` and divided by a
+  // hardcoded 3 — two bugs in the same line:
+  //   1. `slice(4)` skipped day 3 entirely (off-by-one with `slice(0, 3)`).
+  //   2. The fixed `/ 3` denominator gave wildly wrong averages on the
+  //      30-day and 90-day windows (e.g. dividing a 26-day sum by 3).
+  // Now splits the actual window at its midpoint.
+  const len = data.dailyHours.length
+  const mid = Math.floor(len / 2)
+  const firstHalf = data.dailyHours.slice(0, mid)
+  const secondHalf = data.dailyHours.slice(mid)
+  const firstAvg = firstHalf.length > 0 ? firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length : 0
+  const lastAvg = secondHalf.length > 0 ? secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length : 0
+  const trend = firstAvg > 0 ? Math.round(((lastAvg - firstAvg) / firstAvg) * 100) : 0
 
   return { value, label: scoreLabel(value), trend, hasData: true }
 }

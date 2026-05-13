@@ -89,7 +89,11 @@ export function GrowthPercentileChart({
     return estimatePercentile(metric, sex, latest.ageMonths, latest.value)
   }, [latest, metric, sex])
 
-  if (bands.length < 2 || !yRange) {
+  // Guard a zero-width window. childAgeMonths >= 300 (25+ years) collapses
+  // fromMonths and toMonths to the same value after clamping, which would
+  // divide by zero inside xFor(). Also catches malformed birthDates that
+  // produce ages outside the table.
+  if (bands.length < 2 || !yRange || window.toMonths <= window.fromMonths) {
     return (
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
