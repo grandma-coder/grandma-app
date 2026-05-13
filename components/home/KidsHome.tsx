@@ -236,8 +236,14 @@ function getGrowthLeap(birthDate: string) {
     const leapEnd = leap.week + 1
 
     if (weekAge >= leapStart && weekAge <= leapEnd) {
+      // 4-week window (leap.week-2 .. leap.week+1) split into 3 even phases.
+      // Previously: phase 0 = 2wk, phase 1 = 1wk, phase 2 = rest — phase 1
+      // ("Peak Leap") only stuck for a single week and Phase 3 ("Emerging")
+      // never marked the leap complete because the loop returned 'active'.
+      // Now: split the 4-week window evenly across the 3 phases.
       const offset = weekAge - leapStart
-      const phaseIndex = offset <= 1 ? 0 : offset === 2 ? 1 : 2
+      const total = leapEnd - leapStart + 1 // inclusive count, 4 weeks here
+      const phaseIndex = Math.min(2, Math.floor((offset / total) * 3))
       const progress = (weekAge - leapStart) / (leapEnd - leapStart)
       return { ...leap, status: 'active' as const, index: i, weekAge, progress, phaseIndex, completedCount }
     }

@@ -13,7 +13,7 @@
  *  9. Ask Grandma passes full analytics context automatically
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Animated, {
   useSharedValue,
   useAnimatedProps,
@@ -39,6 +39,7 @@ import {
   Modal,
 } from 'react-native'
 import { router } from 'expo-router'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import Svg, {
   Path,
   Circle,
@@ -425,9 +426,13 @@ function getHealthTips(
   // ── Diaper
   if (analytics.diaper.hasData) {
     const { totalCount, typeCounts } = analytics.diaper
-    const avgPerDay = (totalCount / 7).toFixed(1)
+    // Denominator was hardcoded to 7 even when the window was 30 days,
+    // which made the "low diaper count" tip trigger constantly on long
+    // ranges. Use the actual day count from dailyCounts.
+    const windowDays = Math.max(1, analytics.diaper.dailyCounts.length)
+    const avgPerDay = (totalCount / windowDays).toFixed(1)
     const poopPct = totalCount > 0 ? Math.round((typeCounts.poop + typeCounts.mixed) / totalCount * 100) : 0
-    if (ageMonths < 6 && totalCount / 7 < 6) {
+    if (ageMonths < 6 && totalCount / windowDays < 6) {
       tips.push({
         title: 'Low Diaper Count',
         body: `${avgPerDay} diapers/day — newborns typically need 8-12. Check hydration.`,
@@ -495,7 +500,9 @@ function buildGrandmaContext(
   }
   if (analytics.diaper.hasData) {
     const { totalCount, typeCounts } = analytics.diaper
-    lines.push(`Diapers: ${totalCount} this week (${typeCounts.pee} pee, ${typeCounts.poop} poop, ${typeCounts.mixed} mixed) — avg ${(totalCount / 7).toFixed(1)}/day`)
+    const windowDays = Math.max(1, analytics.diaper.dailyCounts.length)
+    const windowLabel = windowDays === 7 ? 'this week' : `last ${windowDays} days`
+    lines.push(`Diapers: ${totalCount} ${windowLabel} (${typeCounts.pee} pee, ${typeCounts.poop} poop, ${typeCounts.mixed} mixed) — avg ${(totalCount / windowDays).toFixed(1)}/day`)
   }
 
   const lowest = PILLAR_ORDER.reduce<PillarKey | null>((min, key) => {
@@ -972,7 +979,12 @@ function TipDetailModal({
       ? buildGrandmaContext(scores, analytics, childName, ageMonths) + `\n\nI have a specific question about: ${tip.title} — ${tip.body}`
       : `${tip.title}: ${tip.body}`
     onClose()
-    setTimeout(() => router.push({ pathname: '/grandma-talk', params: { insightContext: ctx } } as any), 150)
+    // Stash the (potentially large) context in AsyncStorage rather than the
+    // router params — Android URL params silently truncate around 2KB and
+    // grandma-talk-side consumers can pull it from the key when they're
+    // wired up. Use a tiny marker param so consumers know to look.
+    AsyncStorage.setItem('grandma-insight-context', ctx).catch(() => {})
+    setTimeout(() => router.push({ pathname: '/grandma-talk', params: { hasInsightContext: '1' } } as any), 150)
   }
 
   return (
@@ -1117,28 +1129,45 @@ function WellnessScoreArc({
     transform: [{ scale: 0.85 + 0.15 * scoreOpacity.value }],
   }))
 
+  // Track whether we've animated in yet — only the FIRST mount resets to 0
+  // and runs the staggered intro. Subsequent updates (child swap, score
+  // change) spring smoothly from the current values to the new targets so
+  // the polygon doesn't collapse to center on every refresh.
+  const hasAnimatedInRef = useRef(false)
   useEffect(() => {
-    p0.value = 0; p1.value = 0; p2.value = 0
-    p3.value = 0; p4.value = 0; p5.value = 0
-    scoreOpacity.value = 0
-
     const spring = { damping: 14, stiffness: 90, mass: 0.8 }
     // No-data axes get a small minimum so the polygon doesn't collapse to center
     const targets = PILLAR_ORDER.map((key) => scores[key].hasData ? scores[key].value / 10 : 0.08)
-    p0.value = withDelay(0,   withSpring(targets[0], spring))
-    p1.value = withDelay(100, withSpring(targets[1], spring))
-    p2.value = withDelay(200, withSpring(targets[2], spring))
-    p3.value = withDelay(300, withSpring(targets[3], spring))
-    p4.value = withDelay(400, withSpring(targets[4], spring))
-    p5.value = withDelay(500, withSpring(targets[5], spring))
-    scoreOpacity.value = withDelay(600, withTiming(1, { duration: 400, easing: Easing.out(Easing.quad) }))
-    // Start continuous breathing after entrance
-    breathe.value = 0
-    breathe.value = withDelay(1000, withRepeat(
-      withTiming(2 * Math.PI, { duration: 4000, easing: Easing.linear }),
-      -1,  // infinite
-      false // restart from 0 each cycle (full sine wave)
-    ))
+
+    if (!hasAnimatedInRef.current) {
+      // First mount — full staggered intro from 0
+      p0.value = 0; p1.value = 0; p2.value = 0
+      p3.value = 0; p4.value = 0; p5.value = 0
+      scoreOpacity.value = 0
+      p0.value = withDelay(0,   withSpring(targets[0], spring))
+      p1.value = withDelay(100, withSpring(targets[1], spring))
+      p2.value = withDelay(200, withSpring(targets[2], spring))
+      p3.value = withDelay(300, withSpring(targets[3], spring))
+      p4.value = withDelay(400, withSpring(targets[4], spring))
+      p5.value = withDelay(500, withSpring(targets[5], spring))
+      scoreOpacity.value = withDelay(600, withTiming(1, { duration: 400, easing: Easing.out(Easing.quad) }))
+      // Start continuous breathing after entrance
+      breathe.value = 0
+      breathe.value = withDelay(1000, withRepeat(
+        withTiming(2 * Math.PI, { duration: 4000, easing: Easing.linear }),
+        -1, false
+      ))
+      hasAnimatedInRef.current = true
+    } else {
+      // Subsequent updates — spring directly from current to new without
+      // resetting to 0 (which caused the polygon to snap to center).
+      p0.value = withSpring(targets[0], spring)
+      p1.value = withSpring(targets[1], spring)
+      p2.value = withSpring(targets[2], spring)
+      p3.value = withSpring(targets[3], spring)
+      p4.value = withSpring(targets[4], spring)
+      p5.value = withSpring(targets[5], spring)
+    }
   }, [childId, scores.overall])
 
   const hasAnyData = PILLAR_ORDER.some((k) => scores[k].hasData)
@@ -1505,7 +1534,8 @@ function GrandmaInsightCard({
     const ctx = buildGrandmaContext(scores, analytics, childName, ageMonths)
     setConfirmOpen(false)
     setTimeout(() => {
-      router.push({ pathname: '/grandma-talk', params: { insightContext: ctx } } as any)
+      AsyncStorage.setItem('grandma-insight-context', ctx).catch(() => {})
+      router.push({ pathname: '/grandma-talk', params: { hasInsightContext: '1' } } as any)
     }, 150)
   }
 

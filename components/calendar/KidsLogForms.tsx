@@ -813,21 +813,35 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       })
   }, [feedType, childId])
 
-  // Timer tick
+  // Timer tick.
+  // Elapsed time is computed from Date.now() - start (not a tick counter)
+  // so backgrounding doesn't drift. Per-side seconds also derive from the
+  // elapsed delta — previously they incremented +1 per tick, so if the JS
+  // thread paused while backgrounded the per-side total drifted relative
+  // to the wall-clock total. AppState wake-up forces a re-evaluation.
   useEffect(() => {
     if (!timerActive) {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
       return
     }
     timerStartRef.current = Date.now() - timerSeconds * 1000
-    timerRef.current = setInterval(() => {
+    const sideStartRef = { current: timerSide === 'left' ? leftSeconds : rightSeconds }
+    const sideEpochRef = { current: Date.now() }
+    const tick = () => {
       const elapsed = Math.floor((Date.now() - timerStartRef.current) / 1000)
       setTimerSeconds(elapsed)
-      // Track per-side time
-      if (timerSide === 'left') setLeftSeconds((p) => p + 1)
-      else setRightSeconds((p) => p + 1)
-    }, 1000)
-    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+      const sideElapsed = sideStartRef.current + Math.floor((Date.now() - sideEpochRef.current) / 1000)
+      if (timerSide === 'left') setLeftSeconds(sideElapsed)
+      else setRightSeconds(sideElapsed)
+    }
+    timerRef.current = setInterval(tick, 1000)
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') tick()
+    })
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+      sub.remove()
+    }
   }, [timerActive, timerSide])
 
   // Switch side alert
@@ -916,14 +930,25 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
     }
   }
 
-  /** Enrich a typed food tag via the food-ai backend (used when local DB misses) */
+  /** Enrich a typed food tag via the food-ai backend (used when local DB misses).
+   *  Stale responses are dropped: each call captures the foodTag's name at
+   *  submit time and only applies the result if the tag at that index still
+   *  has the matching name (i.e. the user hasn't replaced it). Avoids the
+   *  race where a slow request finishes after the user edited or removed
+   *  the tag and overwrites it with old data. */
   async function enrichTagWithAi(indexAtSubmit: number, name: string) {
     setAiLoadingIdx((prev) => { const next = new Set(prev); next.add(indexAtSubmit); return next })
     try {
       const res = await estimateFromText({ text: name, childAgeMonths, meal: meal ?? undefined })
       const first = res.foods[0]
       if (first) {
-        setFoodTags((prev) => prev.map((t, i) => (i === indexAtSubmit ? aiItemToTag(first) : t)))
+        setFoodTags((prev) => {
+          const target = prev[indexAtSubmit]
+          if (!target || target.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
+            return prev // stale — user changed the tag while we were waiting
+          }
+          return prev.map((t, i) => (i === indexAtSubmit ? aiItemToTag(first) : t))
+        })
       }
     } catch {
       // Silent — user can still tap the ⚠︎ on the tag to enter kcal manually
@@ -1297,8 +1322,16 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 onSubmitEditing={() => {
                   const trimmed = foodInput.trim()
                   if (!trimmed) return
+                  // De-dupe by case-insensitive name. Previously the same
+                  // food could be added 3 times in a row, multiplying its
+                  // calorie contribution against the daily target.
+                  const lower = trimmed.toLowerCase()
                   const match = matchSingleTag(trimmed)
                   setFoodTags((prev) => {
+                    if (prev.some((t) => t.name.trim().toLowerCase() === lower)) {
+                      setFoodInput('')
+                      return prev
+                    }
                     const idx = prev.length
                     // Kick off AI enrichment in the background if the local DB missed
                     if (!match) enrichTagWithAi(idx, trimmed)
