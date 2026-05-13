@@ -51,7 +51,9 @@ import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useChildStore } from '../../store/useChildStore'
 import { useGrandmaHistoryStore, type ChatSession } from '../../store/useGrandmaHistoryStore'
+import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { sendGrandmaMessage, type ChatMessage } from '../../lib/grandmaChat'
+import { weekForDate } from '../../lib/pregnancyWeeks'
 import { ChildPills, formatChildAge } from '../ui/ChildPills'
 
 // ─── Lightweight Markdown Renderer ────────────────────────────────────────
@@ -853,6 +855,8 @@ export function GrandmaTalk() {
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
+  const pregnancyDueDate = usePregnancyStore((s) => s.dueDate)
+  const pregnancyStoredWeek = usePregnancyStore((s) => s.weekNumber)
   const upsertSession = useGrandmaHistoryStore((s) => s.upsertSession)
   const params = useLocalSearchParams<{ insightContext?: string; screen?: string }>()
 
@@ -980,12 +984,17 @@ export function GrandmaTalk() {
       .filter((m) => m.role === 'user' || m.role === 'assistant')
       .map((m) => ({ role: m.role, content: m.content }))
 
+    const liveWeek = pregnancyDueDate
+      ? weekForDate(pregnancyDueDate, new Date().toISOString().slice(0, 10))
+      : pregnancyStoredWeek ?? null
     const context = {
       behavior: chatBehavior,
       allBehaviors,
       screen,
       insight: insightContext,
       activeChildId: activeChild?.id,
+      weekNumber: chatBehavior === 'pregnancy' ? liveWeek : null,
+      dueDate: chatBehavior === 'pregnancy' ? pregnancyDueDate : null,
     }
     const assistantId = nextId()
     setMessages((prev) => [...prev, { id: assistantId, role: 'assistant', content: '' }])

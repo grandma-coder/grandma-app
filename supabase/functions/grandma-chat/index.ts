@@ -57,6 +57,8 @@ Deno.serve(async (req) => {
     const insightContext = context?.insight ?? null
     const screen = context?.screen ?? null
     const activeChildId = context?.activeChildId ?? null
+    const pregnancyWeek: number | null = typeof context?.weekNumber === 'number' ? context.weekNumber : null
+    const pregnancyDueDate: string | null = typeof context?.dueDate === 'string' ? context.dueDate : null
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
@@ -164,6 +166,14 @@ Deno.serve(async (req) => {
       ? `User profile: ${profile.name ?? 'Unknown'}${profile.location ? `, located in ${profile.location}` : ''}${profile.health_notes ? `. Health notes: ${profile.health_notes}` : ''}${profile.allergies?.length ? `. Allergies: ${profile.allergies.join(', ')}` : ''}${profile.conditions?.length ? `. Conditions: ${profile.conditions.join(', ')}` : ''}`
       : ''
 
+    // Pregnancy-specific context: week + trimester + due date
+    let pregnancyContext = ''
+    if (behavior === 'pregnancy' && pregnancyWeek && pregnancyWeek >= 1 && pregnancyWeek <= 42) {
+      const trimester = pregnancyWeek <= 13 ? 'first' : pregnancyWeek <= 26 ? 'second' : 'third'
+      const dueLine = pregnancyDueDate ? ` Due date: ${pregnancyDueDate}.` : ''
+      pregnancyContext = `\n\nPregnancy context: The user is at WEEK ${pregnancyWeek} of pregnancy (${trimester} trimester).${dueLine} Tailor every pregnancy answer to this exact week — reference baby's development at this stage, week-appropriate symptoms, what to expect in the next 1–2 weeks, and trimester-specific guidance. Never give generic "what to expect when pregnant" responses when you have the week.`
+    }
+
     const insightNote = insightContext
       ? `\n\nThe user is asking about this insight: "${insightContext}". Use it as context for your response.`
       : ''
@@ -183,6 +193,7 @@ She may ask about any of them. Answer using whichever context is most relevant t
       behaviorList,
       multiBehaviorNote,
       profileContext,
+      pregnancyContext,
       recentLogs,
       insightNote,
       topicKnowledge,
@@ -489,6 +500,7 @@ interface PromptContext {
   behaviorList: string
   multiBehaviorNote: string
   profileContext: string
+  pregnancyContext: string
   recentLogs: string
   insightNote: string
   topicKnowledge: string
@@ -572,7 +584,7 @@ suggestion3: A third question
 
 Currently viewing: ${ctx.behavior}
 Enrolled journeys: ${ctx.behaviorList}${ctx.multiBehaviorNote}
-${ctx.profileContext}
+${ctx.profileContext}${ctx.pregnancyContext}
 ${ctx.recentLogs ? `\n${ctx.recentLogs}` : ''}
 ${ctx.insightNote}
 ${ctx.topicKnowledge}

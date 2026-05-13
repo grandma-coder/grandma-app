@@ -22,6 +22,10 @@ export interface ChatContext {
   insight?: string
   /** Active child ID for focused context */
   activeChildId?: string
+  /** Pregnancy week (1–42). Forwarded so Grandma can give week-specific advice. */
+  weekNumber?: number | null
+  /** Pregnancy due date (YYYY-MM-DD). Lets the edge function compute trimester. */
+  dueDate?: string | null
 }
 
 export interface GrandmaResponse {
@@ -67,7 +71,8 @@ export async function sendGrandmaMessage(
       mode: context.behavior,
       childContext: null,
       pillarId: null,
-      weekNumber: null,
+      weekNumber: context.weekNumber ?? null,
+      dueDate: context.dueDate ?? null,
     },
   })
 
