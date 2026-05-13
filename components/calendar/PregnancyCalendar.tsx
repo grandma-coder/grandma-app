@@ -121,21 +121,23 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const COLOR_GREEN = '#A2FF86'
-const COLOR_AMBER = '#FBBF24'
-const COLOR_BLUE = '#60B4FF'
-const COLOR_ORANGE = '#FF6B35'
+// Legacy accent constants — kept as locals so existing inline refs still work.
+// Sourced from the new sticker / brand palette (no neons).
+const COLOR_GREEN = stickersLight.green     // #BDD48C
+const COLOR_AMBER = stickersLight.yellow    // #F5D652
+const COLOR_BLUE = stickersLight.blue       // #9DC3E8
+const COLOR_ORANGE = stickersLight.coral    // #EE7B6D
 
-// Trimester colors — brand.trimester doesn't exist, use direct values
+// Trimester colors — from brand.trimester.{first|second|third}
 const TRIMESTER_TINT: Record<1 | 2 | 3, string> = {
-  1: COLOR_GREEN + '20',
-  2: brand.pregnancy + '20',
-  3: COLOR_AMBER + '20',
+  1: brand.trimester.first + '20',
+  2: brand.trimester.second + '20',
+  3: brand.trimester.third + '20',
 }
 const TRIMESTER_COLOR: Record<1 | 2 | 3, string> = {
-  1: COLOR_GREEN,
-  2: brand.pregnancy,
-  3: COLOR_AMBER,
+  1: brand.trimester.first,
+  2: brand.trimester.second,
+  3: brand.trimester.third,
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -187,7 +189,7 @@ const LOG_META: Record<string, { label: string; icon: typeof Smile; color: strin
   kick_count:  { label: 'Kicks',       icon: Baby,         color: brand.pregnancy },
   weight:      { label: 'Weight',      icon: Scale,        color: COLOR_AMBER },
   appointment: { label: 'Appointment', icon: Calendar,     color: COLOR_AMBER },
-  exam_result: { label: 'Exam Result', icon: FlaskConical, color: brand.phase?.ovulation ?? '#C084FC' },
+  exam_result: { label: 'Exam Result', icon: FlaskConical, color: brand.phase.ovulation },
   nutrition:   { label: 'Nutrition',   icon: Leaf,         color: COLOR_GREEN },
   kegel:       { label: 'Kegel',       icon: Zap,          color: brand.pregnancy },
   nesting:     { label: 'Nesting',     icon: Home,         color: COLOR_ORANGE },
@@ -206,13 +208,13 @@ const MOOD_LABEL: Record<string, string> = {
 /** Maps a saturated meta color to a fixed pastel hex usable as a sticker fill. */
 function softTintFor(c: string): string {
   switch (c) {
-    case COLOR_GREEN:  return '#D7E9C2'
-    case COLOR_BLUE:   return '#CFE0F0'
-    case COLOR_AMBER:  return '#FBE3C2'
-    case COLOR_ORANGE: return '#FBE0DC'
-    case brand.error:  return '#FBE0DC'
-    case brand.pregnancy: return '#DCD2F2'
-    default:           return '#E0D6F4'
+    case COLOR_GREEN:     return stickersLight.greenSoft
+    case COLOR_BLUE:      return stickersLight.blueSoft
+    case COLOR_AMBER:     return stickersLight.yellowSoft
+    case COLOR_ORANGE:    return stickersLight.peachSoft
+    case brand.error:     return stickersLight.peachSoft
+    case brand.pregnancy: return brand.pregnancySoft
+    default:              return brand.pregnancySoft
   }
 }
 
@@ -374,10 +376,10 @@ function QuickLogSheet({
   const { colors, isDark, font } = useTheme()
   const insets = useSafeAreaInsets()
 
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const bg = isDark ? colors.bg : '#F3ECD9'
-  const ink = isDark ? colors.text : '#141313'
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const bg = colors.bg
+  const ink = colors.text
   const accent = brand.pregnancy
 
   return (
@@ -415,7 +417,7 @@ function QuickLogSheet({
             style={({ pressed }) => [
               styles.manageRoutinesBtn,
               {
-                backgroundColor: isDark ? colors.surfaceRaised : '#E0D6F4',
+                backgroundColor: brand.pregnancySoft,
                 borderColor: ink,
                 borderWidth: 1.5,
                 shadowColor: ink,
@@ -466,8 +468,8 @@ function RoutineManager({
 
   // Sticker palette (pregnancy = lavender accent)
   const ST_INK = '#141313'
-  const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
-  const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+  const ST_PAPER = colors.surface
+  const ST_CREAM = colors.surfaceRaised
   const ST_SHEET = isDark ? colors.bg : '#FAF6E8'
   const ST_LAVENDER = isDark ? '#C4B5EF' : brand.pregnancy
   const ST_LAVENDER_SOFT = '#E0D6F4'
@@ -569,7 +571,7 @@ function RoutineManager({
           value={form.name}
           onChangeText={(t) => setForm((p) => ({ ...p, name: t }))}
           placeholder="Routine name"
-          placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+          placeholderTextColor={colors.textMuted}
           underlineColorAndroid="transparent"
           style={{
             color: isDark ? colors.text : ST_INK,
@@ -632,7 +634,7 @@ function RoutineManager({
           value={form.time}
           onChangeText={(t) => setForm((p) => ({ ...p, time: t }))}
           placeholder="08:00"
-          placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+          placeholderTextColor={colors.textMuted}
           keyboardType="numbers-and-punctuation"
           style={{
             flex: 1,
@@ -715,7 +717,7 @@ function RoutineManager({
                 <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 24, letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' }}>
                   Manage Routines
                 </Text>
-                <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 13, fontFamily: 'DMSans_500Medium' }}>
+                <Text style={{ color: colors.textMuted, fontSize: 13, fontFamily: 'DMSans_500Medium' }}>
                   Recurring activities for your pregnancy
                 </Text>
               </View>
@@ -827,7 +829,7 @@ function RoutineManager({
                           <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 14, fontFamily: 'Fraunces_700Bold' }}>
                             {r.name}
                           </Text>
-                          <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 12, fontFamily: 'DMSans_500Medium' }}>
+                          <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'DMSans_500Medium' }}>
                             {r.time ? `${fmtTime(r.time)} · ` : ''}{daysLabel}
                           </Text>
                         </View>
@@ -1005,7 +1007,7 @@ function RoutineManager({
               <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, textAlign: 'center' }}>
                 Delete Routine?
               </Text>
-              <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 14, fontFamily: 'DMSans_500Medium', textAlign: 'center', lineHeight: 20 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: 'DMSans_500Medium', textAlign: 'center', lineHeight: 20 }}>
                 This routine will be removed and won't show up anymore. You can always add it back later.
               </Text>
 
@@ -1098,10 +1100,10 @@ function LogDetailPopup({
   const Icon = meta.icon
   const stickerCfg = DETAIL_STICKER[log.log_type] ?? { tintKey: 'yellowSoft' as const, label: meta.label }
   const stickerTint = s[stickerCfg.tintKey]
-  const ink = isDark ? colors.text : '#141313'
-  const inkMuted = isDark ? colors.textSecondary : 'rgba(20,19,19,0.55)'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.18)'
+  const ink = colors.text
+  const inkMuted = colors.textSecondary
+  const paper = colors.surface
+  const paperBorder = colors.borderStrong
 
   // Parse value + notes
   const rawValue = log.value ?? ''
@@ -1901,8 +1903,8 @@ export function PregnancyCalendar() {
 
   function renderAppointmentsView() {
     const ST_INK = '#141313'
-    const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
-    const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+    const ST_PAPER = colors.surface
+    const ST_CREAM = colors.surfaceRaised
     const ST_LAVENDER = isDark ? '#C4B5EF' : brand.pregnancy
     const ST_GREEN = isDark ? '#9DD68A' : '#86C46F'
     const ST_CORAL = isDark ? '#F2A088' : '#E58968'
@@ -1975,7 +1977,7 @@ export function PregnancyCalendar() {
               <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.4 }}>
                 Pregnancy path
               </Text>
-              <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 11, fontFamily: 'DMSans_700Bold', letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'DMSans_700Bold', letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4 }}>
                 {STANDARD_APPOINTMENTS.length} milestones · 40 weeks
               </Text>
             </View>
@@ -2022,7 +2024,7 @@ export function PregnancyCalendar() {
                 )}
                 {/* Beads */}
                 {curveBeads.map((b) => {
-                  const fill = b.status === 'done' ? ST_GREEN : b.status === 'next' ? ST_CORAL : (isDark ? colors.surface : '#FFFEF8')
+                  const fill = b.status === 'done' ? ST_GREEN : b.status === 'next' ? ST_CORAL : (colors.surface)
                   const r = b.status === 'next' ? 9 : 7
                   return (
                     <SvgG key={b.appt.id}>
@@ -2047,7 +2049,7 @@ export function PregnancyCalendar() {
                   const labelColor =
                     b.status === 'done' ? ST_GREEN
                     : b.status === 'next' ? ST_CORAL
-                    : (isDark ? colors.textMuted : '#8A8480')
+                    : (colors.textMuted)
                   return (
                     <Pressable
                       key={b.appt.id}
@@ -2080,15 +2082,15 @@ export function PregnancyCalendar() {
           <View style={{ flexDirection: 'row', gap: 14, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: isDark ? colors.border : '#E8DEC6' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ST_GREEN, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
-              <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 11, fontFamily: 'DMSans_600SemiBold' }}>Done</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'DMSans_600SemiBold' }}>Done</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ST_CORAL, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
-              <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 11, fontFamily: 'DMSans_600SemiBold' }}>Soon</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'DMSans_600SemiBold' }}>Soon</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: isDark ? colors.surface : '#FFFEF8', borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
-              <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 11, fontFamily: 'DMSans_600SemiBold' }}>Upcoming</Text>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.surface, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'DMSans_600SemiBold' }}>Upcoming</Text>
             </View>
           </View>
         </View>
@@ -2099,7 +2101,7 @@ export function PregnancyCalendar() {
           const isNext = !isDone && weekNumber >= appt.week - 2
           const status: 'done' | 'next' | 'future' = isDone ? 'done' : isNext ? 'next' : 'future'
 
-          const beadColor = isDone ? ST_GREEN : isNext ? ST_CORAL : (isDark ? colors.surface : '#FFFEF8')
+          const beadColor = isDone ? ST_GREEN : isNext ? ST_CORAL : (colors.surface)
 
           const wrappedIcon = (
             <View
@@ -2171,7 +2173,7 @@ export function PregnancyCalendar() {
               flex: 1,
               height: 56,
               borderRadius: 999,
-              backgroundColor: isDark ? colors.surface : '#FFFEF8',
+              backgroundColor: colors.surface,
               borderWidth: 2, borderColor: isDark ? colors.border : ST_INK,
               alignItems: 'center', justifyContent: 'center',
               flexDirection: 'row',
@@ -2348,10 +2350,10 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#B983FF',
+    shadowColor: '#141313',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
     elevation: 6,
   },
 

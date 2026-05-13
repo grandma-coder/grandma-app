@@ -56,6 +56,16 @@ export const brand = {
     second: '#81C995',
     third: '#FFAB76',
   },
+
+  // Labor & birth phase colors — used by InsightsScreen birth-stages section.
+  // Narrative: dawn → wave → spark → sky → blossom.
+  laborPhases: {
+    early: '#BDD48C',       // sticker green — dawn / latent
+    active: '#C8B6E8',      // sticker lilac — wave / active
+    transition: '#F5D652',  // sticker yellow — spark / transition
+    birth: '#9DC3E8',       // sticker blue — sky / birth + golden hour
+    postpartum: '#F2B2C7',  // sticker pink — blossom / recovery
+  },
 } as const
 
 // ─── STICKER PALETTE (always available, used as accents) ────────────────────

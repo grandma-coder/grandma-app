@@ -1,7 +1,14 @@
+/**
+ * CyclePhaseRing — the 28-day cycle dot ring with center countdown.
+ *
+ * Phase colors map to brand.phase tokens (menstrual / follicular / ovulation /
+ * luteal). Today's dot pulses via CycleTodayPulse. Everything is token-driven
+ * so the ring reads correctly in both light and dark mode.
+ */
+
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { useAppTheme } from '../ui/ThemeProvider'
-import { THEME_COLORS, borderRadius } from '../../constants/theme'
+import { useTheme, radius } from '../../constants/theme'
 import { CycleTodayPulse } from '../charts/GalleryCharts'
 import type { CycleInfo } from '../../lib/cycleLogic'
 
@@ -11,44 +18,38 @@ interface CyclePhaseRingProps {
   onAddPeriod?: () => void
 }
 
-// Phase colors for the 28 ring dots
-function getDotColor(day: number, info: CycleInfo): string {
-  if (day <= info.periodLength) return THEME_COLORS.pink    // Menstruation
-  if (day < info.fertileStart) return '#F4FD50'             // Follicular (yellow)
-  if (day >= info.fertileStart && day <= info.fertileEnd) return THEME_COLORS.green // Ovulation/Fertile
-  return '#B983FF'                                           // Luteal (purple)
-}
-
-// matches HTML: .relative.w-[210px].h-[210px] with transform-origin 0 100px
 const RING_SIZE = 210
-const RING_RADIUS = 100 // matches HTML transform-origin: 0 100px
+const RING_RADIUS = 100
 const DOT_SIZE = 8
 
 export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePhaseRingProps) {
-  const { colors: tc } = useAppTheme()
-  const { cycleDay, phaseLabel, phaseColor, daysUntilPeriod, cycleLength } = cycleInfo
+  const { colors, brand, font } = useTheme()
+  const { cycleDay, daysUntilPeriod, cycleLength } = cycleInfo
   const showData = cycleDay > 0
   const center = RING_SIZE / 2
 
-  // Generate 28 dots positioned in a circle (matches HTML rotation pattern)
+  // Phase colors come from the design system (brand.phase.*)
+  const getDotColor = (day: number): string => {
+    if (day <= cycleInfo.periodLength) return brand.phase.menstrual
+    if (day < cycleInfo.fertileStart) return brand.phase.follicular
+    if (day >= cycleInfo.fertileStart && day <= cycleInfo.fertileEnd) return brand.phase.ovulation
+    return brand.phase.luteal
+  }
+
   const dots = Array.from({ length: cycleLength }, (_, i) => {
     const day = i + 1
-    // HTML uses rotate(0deg) to rotate(347.1deg), which is i * (360/28)
     const angleDeg = i * (360 / cycleLength)
-    const angleRad = (angleDeg - 90) * (Math.PI / 180) // -90 to start at top
+    const angleRad = (angleDeg - 90) * (Math.PI / 180)
     const x = Math.cos(angleRad) * RING_RADIUS
     const y = Math.sin(angleRad) * RING_RADIUS
     const isToday = day === cycleDay
-    const color = getDotColor(day, cycleInfo)
+    const color = getDotColor(day)
     return { day, x, y, isToday, color }
   })
 
   return (
-    // matches HTML: .relative.flex.justify-center.items-center.py-10.min-h-[320px]
     <View style={styles.container}>
-      {/* Ring wrapper — matches: .relative.w-[210px].h-[210px] */}
       <View style={styles.ringWrapper}>
-        {/* Render 28 dots */}
         {dots.map((dot) => {
           const size = dot.isToday ? 12 : DOT_SIZE
           return (
@@ -64,21 +65,19 @@ export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePh
                   left: center + dot.x - size / 2,
                   top: center + dot.y - size / 2,
                 },
-                // matches HTML: today dot has scale-150 ring-2 ring-white/50
                 dot.isToday && {
                   borderWidth: 2,
-                  borderColor: 'rgba(255,255,255,0.5)',
+                  borderColor: colors.borderStrong,
                   shadowColor: dot.color,
                   shadowOffset: { width: 0, height: 0 },
-                  shadowOpacity: 0.8,
-                  shadowRadius: 8,
+                  shadowOpacity: 0.5,
+                  shadowRadius: 6,
                 },
               ]}
             />
           )
         })}
 
-        {/* Animated ripple on today's dot (pattern 14 — pulse bubbles) */}
         {(() => {
           const today = dots.find((d) => d.isToday)
           if (!today) return null
@@ -92,39 +91,56 @@ export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePh
           )
         })()}
 
-        {/* Center content */}
         <View style={styles.center}>
           {showData ? (
             <>
-              <Text style={[styles.periodLabel, { color: tc.textTertiary }]}>
+              <Text style={[styles.periodLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
                 PERIOD IN
               </Text>
               <View style={styles.countdownRow}>
-                <Text style={styles.countdownNumber}>{daysUntilPeriod}</Text>
-                <Text style={styles.countdownUnit}>days</Text>
+                <Text style={[styles.countdownNumber, { color: colors.text, fontFamily: font.display }]}>
+                  {daysUntilPeriod}
+                </Text>
+                <Text style={[styles.countdownUnit, { color: colors.textSecondary, fontFamily: font.body }]}>
+                  days
+                </Text>
               </View>
               <Pressable
                 onPress={onAddPeriod}
                 style={({ pressed }) => [
                   styles.addPeriodBtn,
-                  pressed && { transform: [{ scale: 0.95 }] },
+                  {
+                    backgroundColor: brand.prePregnancy,
+                    borderColor: colors.text,
+                  },
+                  pressed && { transform: [{ translateY: 2 }] },
                 ]}
               >
-                <Text style={styles.addPeriodText}>Add Period</Text>
+                <Text style={[styles.addPeriodText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+                  Add Period
+                </Text>
               </Pressable>
             </>
           ) : (
             <>
-              <Ionicons name="flower-outline" size={48} color={THEME_COLORS.pink} style={{ opacity: 0.6 }} />
-              <Text style={[styles.noDataTitle, { color: tc.text }]}>Start Tracking</Text>
+              <Ionicons name="flower-outline" size={48} color={brand.prePregnancy} style={{ opacity: 0.6 }} />
+              <Text style={[styles.noDataTitle, { color: colors.text, fontFamily: font.display }]}>
+                Start Tracking
+              </Text>
               <Pressable
                 onPress={onAddPeriod}
                 style={({ pressed }) => [
                   styles.addPeriodBtn,
-                  pressed && { transform: [{ scale: 0.95 }] },
+                  {
+                    backgroundColor: brand.prePregnancy,
+                    borderColor: colors.text,
+                  },
+                  pressed && { transform: [{ translateY: 2 }] },
                 ]}
               >
-                <Text style={styles.addPeriodText}>Add Period</Text>
+                <Text style={[styles.addPeriodText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+                  Add Period
+                </Text>
               </Pressable>
             </>
           )}
@@ -134,27 +150,34 @@ export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePh
       {/* Phase legend */}
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: THEME_COLORS.pink }]} />
-          <Text style={[styles.legendText, { color: tc.textTertiary }]}>Period</Text>
+          <View style={[styles.legendDot, { backgroundColor: brand.phase.menstrual }]} />
+          <Text style={[styles.legendText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Period</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#F4FD50' }]} />
-          <Text style={[styles.legendText, { color: tc.textTertiary }]}>Follicular</Text>
+          <View style={[styles.legendDot, { backgroundColor: brand.phase.follicular }]} />
+          <Text style={[styles.legendText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Follicular</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: THEME_COLORS.green }]} />
-          <Text style={[styles.legendText, { color: tc.textTertiary }]}>Ovulation</Text>
+          <View style={[styles.legendDot, { backgroundColor: brand.phase.ovulation }]} />
+          <Text style={[styles.legendText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Ovulation</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#B983FF' }]} />
-          <Text style={[styles.legendText, { color: tc.textTertiary }]}>Luteal</Text>
+          <View style={[styles.legendDot, { backgroundColor: brand.phase.luteal }]} />
+          <Text style={[styles.legendText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Luteal</Text>
         </View>
       </View>
 
-      {/* Edit period link */}
       {showData && onEditPeriod && (
-        <Pressable onPress={onEditPeriod} style={styles.editButton}>
-          <Text style={styles.editButtonText}>Edit period dates</Text>
+        <Pressable
+          onPress={onEditPeriod}
+          style={[
+            styles.editButton,
+            { borderColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.editButtonText, { color: brand.prePregnancy, fontFamily: font.bodySemiBold }]}>
+            Edit period dates
+          </Text>
         </Pressable>
       )}
     </View>
@@ -162,24 +185,19 @@ export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePh
 }
 
 const styles = StyleSheet.create({
-  // matches HTML: .relative.flex.justify-center.items-center.py-10.min-h-[320px]
   container: {
     alignItems: 'center',
     paddingVertical: 40,
     minHeight: 320,
   },
-
-  // matches HTML: .relative.w-[210px].h-[210px]
   ringWrapper: {
     width: RING_SIZE,
     height: RING_SIZE,
     position: 'relative',
   },
-
   dot: {
     position: 'absolute',
   },
-
   center: {
     position: 'absolute',
     top: 0,
@@ -189,12 +207,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  // matches HTML: text-[10px] tracking-[0.3em] font-bold text-white/50 uppercase mb-1
   periodLabel: {
     fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 4,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
     marginBottom: 4,
   },
@@ -203,46 +218,32 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     marginBottom: 16,
   },
-  // matches HTML: text-5xl font-display font-bold text-white
   countdownNumber: {
     fontSize: 48,
-    fontWeight: '700',
-    color: '#FFFFFF', fontFamily: 'Fraunces_600SemiBold' },
-  // matches HTML: text-lg ml-1
+    letterSpacing: -0.8,
+  },
   countdownUnit: {
     fontSize: 18,
-    fontWeight: '400',
-    color: '#FFFFFF',
     marginLeft: 4,
   },
-
-  // matches HTML: px-5 py-2.5 bg-[#FF8AD8] text-[#1A1030] rounded-full text-xs font-bold uppercase tracking-wider neon-shadow-pink
   addPeriodBtn: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: '#FF8AD8',
-    borderRadius: 999,
-    shadowColor: '#FF8AD8',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 15,
+    borderRadius: radius.full,
+    borderWidth: 1.5,
   },
   addPeriodText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#1A1030',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },
-
   noDataTitle: {
     fontSize: 18,
-    fontWeight: '900',
     textTransform: 'uppercase',
+    letterSpacing: -0.4,
     marginTop: 12,
     marginBottom: 12,
   },
-
   legendRow: {
     flexDirection: 'row',
     gap: 16,
@@ -260,22 +261,17 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 10,
-    fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1.2,
   },
-
   editButton: {
     marginTop: 12,
     paddingHorizontal: 20,
     paddingVertical: 8,
-    borderRadius: borderRadius.full,
+    borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
   editButtonText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: THEME_COLORS.pink,
   },
 })

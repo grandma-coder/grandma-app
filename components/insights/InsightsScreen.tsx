@@ -22,7 +22,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTheme, brand, THEME_COLORS, stickers as stickerPalette, getModeColor, getModeColorSoft } from '../../constants/theme'
+import { useTheme, brand, stickers as stickerPalette, getModeColor, getModeColorSoft } from '../../constants/theme'
 import { stickerForEmoji } from '../../lib/emojiToSticker'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
 import { NotifyHealthAlert, TalkMaster } from '../stickers/RewardStickers'
@@ -55,25 +55,25 @@ const TYPE_CONFIG: Record<InsightType, {
   tip: string
 }> = {
   pattern: {
-    icon: Lightbulb, color: '#C9A300', // ink-readable yellow
+    icon: Lightbulb, color: stickerPalette.yellowInk,
     gradient: [stickerPalette.yellowSoft, stickerPalette.yellowSoft + '00'],
     label: 'Pattern', detailIcon: Brain,
     tip: 'Patterns become clearer with consistent logging over time.',
   },
   trend: {
-    icon: TrendingUp, color: '#5C8C3A', // ink-readable green
+    icon: TrendingUp, color: stickerPalette.greenInk,
     gradient: [stickerPalette.greenSoft, stickerPalette.greenSoft + '00'],
     label: 'Trend', detailIcon: Zap,
     tip: 'Trends are calculated from your recent 30-day activity window.',
   },
   upcoming: {
-    icon: CalendarClock, color: '#3F6FA8', // ink-readable blue
+    icon: CalendarClock, color: stickerPalette.blueInk,
     gradient: [stickerPalette.blueSoft, stickerPalette.blueSoft + '00'],
     label: 'Upcoming', detailIcon: CalendarClock,
     tip: 'Predictions improve as we learn more about your unique rhythms.',
   },
   nudge: {
-    icon: Sparkles, color: '#B85174', // ink-readable pink
+    icon: Sparkles, color: stickerPalette.pinkInk,
     gradient: [stickerPalette.pinkSoft, stickerPalette.pinkSoft + '00'],
     label: 'Nudge', detailIcon: Heart,
     tip: 'Small daily habits make the biggest difference over time.',
@@ -96,12 +96,12 @@ interface Article {
 }
 
 const CATEGORY_META: Record<ArticleCategory, { label: string; icon: typeof Moon; color: string }> = {
-  sleep:       { label: 'Sleep',       icon: Moon,    color: '#7A5BB8' }, // ink-readable lilac
-  feeding:     { label: 'Feeding',     icon: Apple,   color: '#5C8C3A' }, // green
-  development: { label: 'Development', icon: Brain,   color: '#3F6FA8' }, // blue
-  behavior:    { label: 'Behavior',    icon: Heart,   color: '#B85174' }, // pink
-  health:      { label: 'Health',      icon: Shield,  color: '#C9A300' }, // yellow
-  you:         { label: 'For You',     icon: Coffee,  color: stickerPalette.coral },
+  sleep:       { label: 'Sleep',       icon: Moon,    color: stickerPalette.lilacInk },
+  feeding:     { label: 'Feeding',     icon: Apple,   color: stickerPalette.greenInk },
+  development: { label: 'Development', icon: Brain,   color: stickerPalette.blueInk },
+  behavior:    { label: 'Behavior',    icon: Heart,   color: stickerPalette.pinkInk },
+  health:      { label: 'Health',      icon: Shield,  color: stickerPalette.yellowInk },
+  you:         { label: 'For You',     icon: Coffee,  color: stickerPalette.coralInk },
 }
 
 const ARTICLES: Article[] = [
@@ -507,13 +507,13 @@ function CollapsibleCard({
   const Sticker = stickerForEmoji(emoji)
 
   return (
-    <View style={[ci.card, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+    <View style={[ci.card, { backgroundColor: colors.surface }]}>
       <Pressable onPress={() => onToggle(id)} style={ci.cardHeader}>
         <View style={[ci.cardStickerWrap, { backgroundColor: color + '28' }]}>
           <Sticker size={26} />
         </View>
         <Text style={[ci.cardTitle, { color: colors.text, flex: 1 }]}>{title}</Text>
-        <View style={[ci.cardChevronPill, { backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF' }]}>
+        <View style={[ci.cardChevronPill, { backgroundColor: colors.surfaceRaised }]}>
           <Text style={[ci.cardChevron, { color: STICKER_INK + 'A0' }]}>{isOpen ? '▲' : '▼'}</Text>
         </View>
       </Pressable>
@@ -545,7 +545,7 @@ function CollapsibleCard({
 // Static data hoisted outside component to avoid re-creation on every render
 const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: string; content: string[] }> = [
   {
-    id: 'early_labor', emoji: '🌅', color: '#A2FF86', title: 'Early signs & latent labor',
+    id: 'early_labor', emoji: '🌅', color: brand.laborPhases.early, title: 'Early signs & latent labor',
     content: [
       'Cervix dilates from 0–6cm. Contractions are irregular and mild (5–30 min apart).',
       'Stay home: rest, eat lightly, time contractions, keep busy.',
@@ -554,7 +554,7 @@ const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: str
     ],
   },
   {
-    id: 'active_labor', emoji: '🌊', color: '#B983FF', title: 'Active labor',
+    id: 'active_labor', emoji: '🌊', color: brand.laborPhases.active, title: 'Active labor',
     content: [
       'Cervix 6–10cm. Contractions every 3–5 min, lasting 60–90 sec, very intense.',
       '5-1-1 rule: contractions every 5 min, lasting 1 min, for 1 hour → go to hospital.',
@@ -563,7 +563,7 @@ const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: str
     ],
   },
   {
-    id: 'transition', emoji: '💫', color: '#FBBF24', title: 'Transition & pushing',
+    id: 'transition', emoji: '💫', color: brand.laborPhases.transition, title: 'Transition & pushing',
     content: [
       'Fully dilated (10cm). The hardest but shortest phase — usually 15–60 min.',
       'Contractions are 2–3 min apart. Intense pressure, shaking, nausea are normal.',
@@ -572,7 +572,7 @@ const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: str
     ],
   },
   {
-    id: 'birth', emoji: '👶', color: '#6AABF7', title: 'Birth & golden hour',
+    id: 'birth', emoji: '👶', color: brand.laborPhases.birth, title: 'Birth & golden hour',
     content: [
       "Skin-to-skin immediately: regulates baby's temperature, heart rate, and breathing.",
       'Delayed cord clamping (1–3 min): transfers 80–100mL of blood = important for iron.',
@@ -581,7 +581,7 @@ const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: str
     ],
   },
   {
-    id: 'postpartum', emoji: '🌸', color: '#FF8AD8', title: 'Recovery & postpartum',
+    id: 'postpartum', emoji: '🌸', color: brand.laborPhases.postpartum, title: 'Recovery & postpartum',
     content: [
       'Lochia (postpartum bleeding): red 3–4 days, pink/brown 2 weeks, creamy to week 6.',
       'Baby blues: days 3–5 as hormones crash. Normal. Postpartum depression: more than 2 weeks → seek help.',
@@ -640,7 +640,7 @@ function PregnancyInsightsContent() {
       </View>
 
       <CollapsibleCard
-        id="weekTip" emoji="💡" color="#FBBF24" title={`Week ${weekNumber} tip`}
+        id="weekTip" emoji="💡" color={stickerPalette.yellow} title={`Week ${weekNumber} tip`}
         expandedMap={expandedCards} onToggle={toggleCard}
       >
         <Text style={[ci.bodyText, { color: colors.textSecondary }]}>{weekData.momTip}</Text>
@@ -663,7 +663,7 @@ function PregnancyInsightsContent() {
       </CollapsibleCard>
 
       <CollapsibleCard
-        id="affirmation" emoji="✨" color="#FF8AD8" title="Today's affirmation"
+        id="affirmation" emoji="✨" color={brand.prePregnancy} title="Today's affirmation"
         expandedMap={expandedCards} onToggle={toggleCard}
       >
         <Text style={[ci.affirmationText, { color: colors.text }]}>"{affirmation}"</Text>
@@ -671,7 +671,7 @@ function PregnancyInsightsContent() {
 
       {upcomingAppt && (
         <CollapsibleCard
-          id="appointment" emoji="📅" color="#FBBF24" title={`Next: ${upcomingAppt.name}`}
+          id="appointment" emoji="📅" color={stickerPalette.yellow} title={`Next: ${upcomingAppt.name}`}
           expandedMap={expandedCards} onToggle={toggleCard}
         >
           <Text style={[ci.bodyText, { color: colors.textSecondary }]}>
@@ -727,7 +727,7 @@ function PregnancyInsightsContent() {
           key={read.id}
           id={`read_${read.id}`}
           emoji={read.category === 'birth_prep' ? '🏥' : read.category === 'nutrition' ? '🥗' : read.category === 'mental_health' ? '🧠' : '📖'}
-          color={read.category === 'birth_prep' ? '#FBBF24' : read.category === 'nutrition' ? '#A2FF86' : brand.pregnancy}
+          color={read.category === 'birth_prep' ? stickerPalette.yellow : read.category === 'nutrition' ? stickerPalette.green : brand.pregnancy}
           title={read.title}
           expandedMap={expandedCards}
           onToggle={toggleCard}
@@ -748,7 +748,7 @@ function PregnancyInsightsContent() {
           style={({ pressed }) => [
             ci.topBackBtn,
             {
-              backgroundColor: isDark ? colors.surface : '#FFFEF8',
+              backgroundColor: colors.surface,
               borderColor: STICKER_INK,
               transform: [{ translateY: pressed ? 1 : 0 }],
               ...stickerShadowSm,
@@ -769,7 +769,7 @@ function PregnancyInsightsContent() {
               style={({ pressed }) => [
                 ci.tabPill,
                 {
-                  backgroundColor: active ? colors.accentSoft : (isDark ? colors.surface : '#FFFEF8'),
+                  backgroundColor: active ? colors.accentSoft : (colors.surface),
                   borderColor: active ? STICKER_INK : colors.borderStrong,
                   transform: [{ translateY: active && pressed ? 2 : 0 }],
                   ...(active ? stickerShadowSm : { shadowOpacity: 0, elevation: 0 }),
@@ -1029,7 +1029,7 @@ export function InsightsScreen() {
             style={({ pressed }) => [
               s.backBtn,
               {
-                backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                backgroundColor: colors.surface,
                 borderColor: STICKER_INK,
                 transform: [{ translateY: pressed ? 1 : 0 }],
                 ...stickerShadowSm,
@@ -1060,7 +1060,7 @@ export function InsightsScreen() {
                 style={({ pressed }) => [
                   s.tabPill,
                   {
-                    backgroundColor: active ? modeAccentSoft : (isDark ? colors.surface : '#FFFEF8'),
+                    backgroundColor: active ? modeAccentSoft : (colors.surface),
                     borderColor: active ? STICKER_INK : colors.borderStrong,
                     transform: [{ translateY: active && pressed ? 2 : 0 }],
                     ...(active ? stickerShadowSm : { shadowOpacity: 0, elevation: 0 }),
@@ -1099,7 +1099,7 @@ export function InsightsScreen() {
                   <Sun size={22} color={STICKER_INK} strokeWidth={2.5} />
                 </View>
               </View>
-              <View style={[s.tipBox, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: STICKER_INK + '18' }]}>
+              <View style={[s.tipBox, { backgroundColor: colors.surface, borderColor: STICKER_INK + '18' }]}>
                 <View style={s.tipBoxHeader}>
                   <Sparkles size={12} color={colors.accent} strokeWidth={2.5} />
                   <Text style={[s.tipBoxLabel, { color: colors.accent }]}>Today's tip</Text>
@@ -1117,16 +1117,16 @@ export function InsightsScreen() {
 
             {/* Week at a Glance */}
             {metrics && metrics.totalLogs > 0 && (
-              <View style={[s.weekCard, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+              <View style={[s.weekCard, { backgroundColor: colors.surface }]}>
                 <View style={s.weekHeader}>
                   <View style={[s.weekIconWrap, { backgroundColor: stickerPalette.blueSoft }]}>
                     <BarChart3 size={15} color={STICKER_INK} strokeWidth={2.5} />
                   </View>
                   <Text style={[s.weekTitle, { color: colors.text }]}>This Week</Text>
                   {metrics.logStreak > 0 && (
-                    <View style={[s.streakBadge, { backgroundColor: '#FFE7CE' }]}>
-                      <Flame size={11} color="#C2410C" strokeWidth={2.5} />
-                      <Text style={[s.streakText, { color: '#C2410C' }]}>{metrics.logStreak}d</Text>
+                    <View style={[s.streakBadge, { backgroundColor: stickerPalette.peachSoft }]}>
+                      <Flame size={11} color={stickerPalette.peachInk} strokeWidth={2.5} />
+                      <Text style={[s.streakText, { color: stickerPalette.peachInk }]}>{metrics.logStreak}d</Text>
                     </View>
                   )}
                 </View>
@@ -1139,7 +1139,7 @@ export function InsightsScreen() {
                     const maxAct = Math.max(...metrics.recentActivity.map(d => d.count), 1)
                     const h = day.count > 0 ? Math.max((day.count / maxAct) * 36, 8) : 4
                     const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-                    const barColor = day.count > 0 ? stickerPalette.lilac : (isDark ? colors.surfaceRaised : '#EDE3CC')
+                    const barColor = day.count > 0 ? stickerPalette.lilac : (colors.surfaceRaised)
                     return (
                       <View key={day.date} style={s.miniBarCol}>
                         <View style={[s.miniBar, { height: h, backgroundColor: barColor, borderRadius: 6, borderColor: day.count > 0 ? STICKER_INK + '40' : 'transparent' }]} />
@@ -1169,7 +1169,7 @@ export function InsightsScreen() {
               <View
                 style={[s.generatingBanner, { backgroundColor: colors.accentSoft }]}
               >
-                <View style={[s.generatingDot, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+                <View style={[s.generatingDot, { backgroundColor: colors.surface }]}>
                   <GrandmaLogo size={42} mode="auto" motion="sparkle" animate />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -1182,10 +1182,10 @@ export function InsightsScreen() {
             {/* Error */}
             {error && !generating && (
               <View style={s.errorBanner}>
-                <AlertTriangle size={16} color="#C62828" strokeWidth={2.5} />
-                <Text style={[s.errorText, { color: '#C62828' }]}>{error}</Text>
+                <AlertTriangle size={16} color={brand.error} strokeWidth={2.5} />
+                <Text style={[s.errorText, { color: brand.error }]}>{error}</Text>
                 <Pressable onPress={handleGenerate} hitSlop={8} style={s.errorRetryBtn}>
-                  <RefreshCw size={13} color="#C62828" strokeWidth={2.5} />
+                  <RefreshCw size={13} color={brand.error} strokeWidth={2.5} />
                   <Text style={s.errorRetryText}>Retry</Text>
                 </Pressable>
               </View>
@@ -1199,7 +1199,7 @@ export function InsightsScreen() {
             )}
 
             {!isLoading && !generating && insights.length === 0 && (
-              <View style={[s.noInsightsCard, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+              <View style={[s.noInsightsCard, { backgroundColor: colors.surface }]}>
                 <Sparkles size={26} color={colors.textMuted} strokeWidth={1.5} />
                 <Text style={[s.noInsightsTitle, { color: colors.text }]}>No AI insights yet</Text>
                 <Text style={[s.noInsightsBody, { color: colors.textMuted }]}>
@@ -1222,7 +1222,7 @@ export function InsightsScreen() {
                     <Text style={[s.sectionLabel, { color: colors.accent }]}>Grandma's Insights</Text>
                   </View>
                   <View style={[s.sectionLine, { backgroundColor: STICKER_INK + '15' }]} />
-                  <Pressable onPress={handleGenerate} hitSlop={8} style={[s.regenBtn, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+                  <Pressable onPress={handleGenerate} hitSlop={8} style={[s.regenBtn, { backgroundColor: colors.surface }]}>
                     <RefreshCw size={13} color={colors.accent} strokeWidth={2.5} />
                   </Pressable>
                 </View>
@@ -1289,7 +1289,7 @@ export function InsightsScreen() {
                 style={({ pressed }) => [
                   s.categoryPill,
                   {
-                    backgroundColor: articleCategory === 'all' ? colors.accent : (isDark ? colors.surface : '#FFFEF8'),
+                    backgroundColor: articleCategory === 'all' ? colors.accent : (colors.surface),
                     borderColor: articleCategory === 'all' ? STICKER_INK : colors.borderStrong,
                     transform: [{ translateY: articleCategory === 'all' && pressed ? 2 : 0 }],
                     ...(articleCategory === 'all' ? stickerShadowSm : { shadowOpacity: 0, elevation: 0 }),
@@ -1308,7 +1308,7 @@ export function InsightsScreen() {
                     style={({ pressed }) => [
                       s.categoryPill,
                       {
-                        backgroundColor: active ? meta.color + '35' : (isDark ? colors.surface : '#FFFEF8'),
+                        backgroundColor: active ? meta.color + '35' : (colors.surface),
                         borderColor: active ? STICKER_INK : colors.borderStrong,
                         transform: [{ translateY: active && pressed ? 2 : 0 }],
                         ...(active ? stickerShadowSm : { shadowOpacity: 0, elevation: 0 }),
@@ -1322,7 +1322,7 @@ export function InsightsScreen() {
             </ScrollView>
 
             {filteredArticles.length === 0 && (
-              <View style={[s.noArticlesWrap, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+              <View style={[s.noArticlesWrap, { backgroundColor: colors.surface }]}>
                 <BookOpen size={24} color={colors.textMuted} strokeWidth={1.5} />
                 <Text style={[s.noArticlesText, { color: colors.textMuted }]}>
                   No articles match this filter for {childName}'s age. Try "All".
@@ -1349,7 +1349,7 @@ export function InsightsScreen() {
               </View>
             )}
             {!isLoadingHistory && archivedInsights.length === 0 && (
-              <View style={[s.historyEmpty, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+              <View style={[s.historyEmpty, { backgroundColor: colors.surface }]}>
                 <Clock size={26} color={colors.textMuted} strokeWidth={1.5} />
                 <Text style={[s.historyEmptyTitle, { color: colors.text }]}>No past insights</Text>
                 <Text style={[s.historyEmptyBody, { color: colors.textMuted }]}>
@@ -1417,7 +1417,7 @@ function ArticleCard({ article, onTap }: { article: Article; onTap: () => void }
         { marginBottom: 14, transform: [{ translateY: pressed ? 2 : 0 }] },
       ]}
     >
-      <View style={[s.articleCard, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+      <View style={[s.articleCard, { backgroundColor: colors.surface }]}>
         <View style={[s.articleColorBar, { backgroundColor: meta.color }]} />
         <View style={s.articleContent}>
           <View style={s.articleMeta}>
@@ -1457,7 +1457,7 @@ function ArticleDetailModal({
         <Pressable style={s.modalBackdrop} onPress={onClose} />
         <View style={s.modalSheet}>
           <View
-            style={[s.modalContent, { backgroundColor: isDark ? colors.surface : '#FFFEF8', paddingBottom: insets.bottom + 24 }]}
+            style={[s.modalContent, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 24 }]}
           >
             <View style={s.modalHandle}>
               <View style={[s.handleBar, { backgroundColor: STICKER_INK + '40' }]} />
@@ -1468,7 +1468,7 @@ function ArticleDetailModal({
               style={({ pressed }) => [
                 s.modalClose,
                 {
-                  backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
+                  backgroundColor: colors.surfaceRaised,
                   borderColor: STICKER_INK + '24',
                   transform: [{ translateY: pressed ? 1 : 0 }],
                   ...stickerShadowSm,
@@ -1520,7 +1520,7 @@ function InsightCard({
   const { colors, isDark } = useTheme()
   const Icon = config.icon
   const tilt = index % 2 === 0 ? '-0.6deg' : '0.6deg'
-  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paper = colors.surface
 
   return (
     <Pressable
@@ -1590,7 +1590,7 @@ function HistoryCard({
         { marginBottom: 10, transform: [{ translateY: pressed ? 2 : 0 }] },
       ]}
     >
-      <View style={[s.historyCard, { backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+      <View style={[s.historyCard, { backgroundColor: colors.surface }]}>
         <View style={[s.historyIconWrap, { backgroundColor: config.gradient[0] }]}>
           <Icon size={16} color={STICKER_INK} strokeWidth={2.5} />
         </View>
@@ -1631,7 +1631,7 @@ function InsightDetailModal({
         <Pressable style={s.modalBackdrop} onPress={onClose} />
         <View style={s.modalSheet}>
           <View
-            style={[s.modalContent, { backgroundColor: isDark ? colors.surface : '#FFFEF8', paddingBottom: insets.bottom + 24 }]}
+            style={[s.modalContent, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 24 }]}
           >
             <View style={s.modalHandle}>
               <View style={[s.handleBar, { backgroundColor: STICKER_INK + '40' }]} />
@@ -1642,7 +1642,7 @@ function InsightDetailModal({
               style={({ pressed }) => [
                 s.modalClose,
                 {
-                  backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
+                  backgroundColor: colors.surfaceRaised,
                   borderColor: STICKER_INK + '24',
                   transform: [{ translateY: pressed ? 1 : 0 }],
                   ...stickerShadowSm,
@@ -1670,7 +1670,7 @@ function InsightDetailModal({
             <Text style={[s.modalBody, { color: colors.textSecondary }]}>{insight.body}</Text>
             <View style={[s.modalDivider, { backgroundColor: STICKER_INK + '15' }]} />
             <View style={[s.tipCard, { backgroundColor: config.gradient[0], borderColor: STICKER_INK }]}>
-              <View style={[s.tipIconDisc, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: STICKER_INK }]}>
+              <View style={[s.tipIconDisc, { backgroundColor: colors.surface, borderColor: STICKER_INK }]}>
                 <DetailIcon size={16} color={config.color} strokeWidth={2.75} />
               </View>
               <View style={{ flex: 1 }}>
@@ -1697,7 +1697,7 @@ function InsightDetailModal({
                 <Pressable onPress={onRestore}
                   style={({ pressed }) => [
                     s.secondaryBtn,
-                    { backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF', transform: [{ translateY: pressed ? 1 : 0 }] },
+                    { backgroundColor: colors.surfaceRaised, transform: [{ translateY: pressed ? 1 : 0 }] },
                   ]}
                 >
                   <RotateCcw size={18} color={colors.accent} strokeWidth={2.5} />
@@ -1706,7 +1706,7 @@ function InsightDetailModal({
                 <Pressable onPress={onArchive}
                   style={({ pressed }) => [
                     s.secondaryBtn,
-                    { backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF', transform: [{ translateY: pressed ? 1 : 0 }] },
+                    { backgroundColor: colors.surfaceRaised, transform: [{ translateY: pressed ? 1 : 0 }] },
                   ]}
                 >
                   <X size={18} color={colors.textMuted} strokeWidth={2.5} />
@@ -1778,7 +1778,7 @@ const s = StyleSheet.create({
   weekHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
   weekIconWrap: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: STICKER_INK + '20' },
   weekTitle: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', flex: 1, letterSpacing: -0.3 },
-  streakBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1, borderColor: '#FB923C40' },
+  streakBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1, borderColor: stickerPalette.peach + '60' },
   streakText: { fontSize: 11, fontFamily: 'DMSans_700Bold' },
   weekNarrative: { fontSize: 13, fontFamily: 'DMSans_500Medium', lineHeight: 20, marginBottom: 16 },
   miniBars: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 4, marginBottom: 14, paddingHorizontal: 4 },
@@ -1795,10 +1795,10 @@ const s = StyleSheet.create({
   generatingDot: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: STICKER_INK + '24', overflow: 'hidden' },
   generatingTitle: { fontSize: 14, fontFamily: 'DMSans_700Bold' },
   generatingSubtext: { fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 1 },
-  errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, marginBottom: 16, backgroundColor: '#FFE3E3', borderWidth: 1.5, borderColor: '#C62828', borderRadius: 18, ...stickerShadowSm },
+  errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, marginBottom: 16, backgroundColor: stickerPalette.peachSoft, borderWidth: 1.5, borderColor: brand.error, borderRadius: 18, ...stickerShadowSm },
   errorText: { fontSize: 13, fontFamily: 'DMSans_500Medium', flex: 1 },
-  errorRetryBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: '#C62828', backgroundColor: '#FFFEF8' },
-  errorRetryText: { fontSize: 11, fontFamily: 'DMSans_700Bold', color: '#C62828' },
+  errorRetryBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: brand.error },
+  errorRetryText: { fontSize: 11, fontFamily: 'DMSans_700Bold', color: brand.error },
   loadingWrap: { paddingVertical: 40, alignItems: 'center' },
 
   // AI Insights section
