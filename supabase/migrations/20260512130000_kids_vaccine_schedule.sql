@@ -74,9 +74,13 @@ CREATE POLICY "caregivers delete kids_vaccine_schedule"
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_kids_vaccine_schedule_child
   ON kids_vaccine_schedule (child_id);
+-- NOTE: previously used `WHERE scheduled_date >= CURRENT_DATE` to make this
+-- a smaller partial index, but Postgres requires index predicates to be
+-- IMMUTABLE — CURRENT_DATE is STABLE, not IMMUTABLE. A full index works
+-- fine for the upcoming-appointments query; the table will stay small
+-- (one row per child × vaccine schedule entry).
 CREATE INDEX IF NOT EXISTS idx_kids_vaccine_schedule_date
-  ON kids_vaccine_schedule (scheduled_date)
-  WHERE scheduled_date >= CURRENT_DATE;
+  ON kids_vaccine_schedule (scheduled_date);
 
 -- updated_at trigger
 CREATE OR REPLACE FUNCTION touch_kids_vaccine_schedule_updated_at() RETURNS TRIGGER AS $$
