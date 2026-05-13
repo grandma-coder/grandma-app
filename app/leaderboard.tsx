@@ -228,7 +228,13 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
 
 function filterByTab(entries: LeaderEntry[], tab: TabKey): LeaderEntry[] {
   if (tab === 'all') return entries
-  if (tab === 'moms') return entries.filter((e) => e.user_role === 'parent' && e.caregiver_role === 'parent')
+  // Moms = anyone whose primary identity is "parent": user_role==='parent'
+  // AND either has a 'parent' caregiver_role OR has no caregiver record
+  // (a solo parent who hasn't been added to anyone's care_circle is still
+  // a parent — the previous filter excluded them entirely).
+  if (tab === 'moms') return entries.filter((e) =>
+    e.user_role === 'parent' && (e.caregiver_role === 'parent' || e.caregiver_role === null)
+  )
   if (tab === 'caregivers') return entries.filter((e) => e.caregiver_role === 'nanny' || e.caregiver_role === 'family')
   if (tab === 'partners') return entries.filter((e) => e.user_role === 'partner' || e.caregiver_role === 'family')
   return entries

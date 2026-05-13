@@ -141,17 +141,40 @@ export default function KidsOnboarding() {
         country_code: c.countryCode || 'US',
       }))
 
-      const { data: insertedChildren } = await supabase
+      const { data: insertedChildren, error: insertError } = await supabase
         .from('children')
         .insert(childrenToInsert)
-        .select()
+        .select('id, name, birth_date, parent_id, allergies, conditions, country_code, sex, blood_type, medications, dietary_restrictions, preferred_foods, disliked_foods, pediatrician, notes')
 
-      if (insertedChildren && insertedChildren.length > 0) {
-        const childIds = insertedChildren.map((c: any) => c.id)
+      if (insertError) {
+        Alert.alert(
+          'Could not save your kids',
+          insertError.message || 'Please check your connection and try again.',
+        )
+        // eslint-disable-next-line no-console
+        console.error('children insert failed:', insertError.message)
+        return
+      }
+
+      // Even on a successful insert, the .select() can come back empty
+      // when the children RLS read policy requires a child_caregivers
+      // join (chicken-and-egg: we haven't inserted those rows yet).
+      // Refetch by parent_id as a backup if the initial select is empty.
+      let resolvedChildren = insertedChildren as any[] | null
+      if (!resolvedChildren || resolvedChildren.length === 0) {
+        const { data: refetched } = await supabase
+          .from('children')
+          .select('id, name, birth_date, parent_id, allergies, conditions, country_code, sex, blood_type, medications, dietary_restrictions, preferred_foods, disliked_foods, pediatrician, notes')
+          .eq('parent_id', userId)
+        resolvedChildren = refetched ?? []
+      }
+
+      if (resolvedChildren && resolvedChildren.length > 0) {
+        const childIds = resolvedChildren.map((c: any) => c.id)
         const userEmail = session.user.email ?? ''
 
         // Create child_caregivers entries so root layout can load children
-        const caregiverLinks = insertedChildren.map((c: any) => ({
+        const caregiverLinks = resolvedChildren.map((c: any) => ({
           child_id: c.id,
           user_id: userId,
           email: userEmail,
@@ -209,10 +232,14 @@ export default function KidsOnboarding() {
           })
         }
 
-        // Set children in the app store for immediate use
-        const mapped: ChildWithRole[] = insertedChildren.map((c: any) => ({
+        // Set children in the app store for immediate use.
+        // parent_id is the canonical column on the children table; the
+        // ?? c.user_id fallback referenced a non-existent column and
+        // would have resolved to undefined for rows without parent_id.
+        // Falling back to userId (the current auth user) instead.
+        const mapped: ChildWithRole[] = resolvedChildren.map((c: any) => ({
           id: c.id,
-          parentId: c.parent_id ?? c.user_id,
+          parentId: c.parent_id ?? userId,
           name: c.name,
           birthDate: c.birth_date ?? c.dob ?? '',
           weightKg: 0,
