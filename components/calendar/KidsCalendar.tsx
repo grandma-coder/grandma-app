@@ -807,13 +807,27 @@ export function KidsCalendar() {
   }
 
   function openEdit(log: ChildLog) {
-    // Map log type → sheet type
+    // Map log type → sheet type.
+    // Every type listed in the ChildLog union must map here — the previous
+    // `?? 'feeding'` fallback sent growth/milestone/wake_up logs into the
+    // FeedingForm, which then rewrote their `value` as a food shape on save.
     const LOG_TO_SHEET: Record<string, LogType> = {
-      food: 'feeding', feeding: 'feeding', sleep: 'sleep',
-      temperature: 'health', vaccine: 'health', medicine: 'health', note: 'health',
+      food: 'feeding', feeding: 'feeding',
+      sleep: 'sleep', wake_up: 'sleep',
+      temperature: 'health', vaccine: 'health', medicine: 'health',
+      growth: 'health', milestone: 'health', note: 'health',
       mood: 'mood', photo: 'memory', activity: 'activity', diaper: 'diaper',
     }
-    const sheetLogType = LOG_TO_SHEET[log.type] ?? 'feeding'
+    const sheetLogType = LOG_TO_SHEET[log.type]
+    if (!sheetLogType) {
+      // Unknown type → don't risk a destructive edit in the wrong form.
+      // Surfacing a no-op alert beats silently reshaping the row.
+      Alert.alert(
+        'Can\'t edit this log',
+        `This log type (${log.type}) doesn't have an editor yet. Delete and re-create if you need to change it.`,
+      )
+      return
+    }
     setEditingLog({ id: log.id, child_id: log.child_id, date: log.date, type: log.type, value: log.value, notes: log.notes, photos: log.photos ?? [] })
     setSelectedLog(null)
     setSheetType(sheetLogType)
