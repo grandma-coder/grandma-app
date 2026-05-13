@@ -55,11 +55,19 @@ serve(async (req) => {
 })
 
 function buildSystemPrompt(child: any, pillarId: string, mode: string, weekNumber: number | null): string {
+  // Normalize mode at the boundary. `mode ?? 'kids'` later (line 88 pre-W43)
+  // only handled null/undefined — an empty string or an unrecognized value
+  // passed through unchanged, printing "Current mode: " with no context and
+  // leaving Claude with no journey grounding.
+  const VALID_MODES = ['pre-pregnancy', 'pregnancy', 'kids'] as const
+  const effectiveMode: typeof VALID_MODES[number] =
+    (VALID_MODES as readonly string[]).includes(mode) ? (mode as typeof VALID_MODES[number]) : 'kids'
+
   // Mode-specific context
   let modeContext = ''
-  if (mode === 'pre-pregnancy') {
+  if (effectiveMode === 'pre-pregnancy') {
     modeContext = `The user is preparing to conceive. Focus on fertility, health optimization, cycle tracking, nutrition prep, emotional readiness, and partner support. There is no child or pregnancy yet.`
-  } else if (mode === 'pregnancy') {
+  } else if (effectiveMode === 'pregnancy') {
     const weekInfo = weekNumber ? `The user is pregnant at week ${weekNumber} (trimester ${weekNumber <= 13 ? 1 : weekNumber <= 26 ? 2 : 3}).` : 'The user is pregnant.'
     modeContext = `${weekInfo} Focus on pregnancy-specific advice: symptoms, baby development, nutrition, birth planning, and preparation. Always tailor advice to the current trimester.`
   } else {
@@ -85,7 +93,7 @@ You cover the ENTIRE parenting journey:
 - Birthing & postpartum: labor, recovery, breastfeeding initiation, emotional health
 - Baby & kids: feeding, sleep, vaccines, milestones, nutrition, habits, medicine
 
-Current mode: ${mode ?? 'kids'}
+Current mode: ${effectiveMode}
 ${modeContext}
 ${pillarNote}
 
