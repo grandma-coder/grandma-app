@@ -5,13 +5,17 @@
  * sticker-icon rows.
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { View, ScrollView, Switch, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme } from '../../constants/theme'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useTheme, getModeColor } from '../../constants/theme'
+import { useModeStore } from '../../store/useModeStore'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, Body, MonoCaps } from '../../components/ui/Typography'
 import { Sun, Sparkle, Star, Moon, Heart, Flower, Leaf } from '../../components/ui/Stickers'
+
+const STORAGE_KEY = 'grandma:notification_prefs:v1'
 
 type StickerName = 'sun' | 'sparkle' | 'star' | 'moon' | 'heart' | 'flower' | 'leaf'
 
@@ -54,12 +58,44 @@ function StickerFor({ name, size = 34 }: { name: StickerName; size?: number }) {
 }
 
 export default function NotificationsScreen() {
-  const { colors, font, brand, stickers, radius, spacing } = useTheme()
+  const { colors, font, stickers, radius, spacing, isDark } = useTheme()
   const insets = useSafeAreaInsets()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getModeColor(mode, isDark)
 
   const [toggles, setToggles] = useState<Record<string, boolean>>(
     Object.fromEntries(NOTIFICATION_SETTINGS.map((n) => [n.id, n.default]))
   )
+  const [hydrated, setHydrated] = useState(false)
+
+  // Load persisted toggles on mount.
+  useEffect(() => {
+    let alive = true
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((raw) => {
+        if (!alive) return
+        if (raw) {
+          try {
+            const stored = JSON.parse(raw) as Record<string, boolean>
+            setToggles((prev) => ({ ...prev, ...stored }))
+          } catch {
+            // ignore parse errors — fall back to defaults
+          }
+        }
+        setHydrated(true)
+      })
+      .catch(() => setHydrated(true))
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  // Persist whenever toggles change (only after first hydration so we don't
+  // overwrite stored prefs with defaults on mount).
+  useEffect(() => {
+    if (!hydrated) return
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toggles)).catch(() => {})
+  }, [toggles, hydrated])
 
   function handleToggle(id: string) {
     setToggles((prev) => ({ ...prev, [id]: !prev[id] }))
@@ -113,9 +149,10 @@ export default function NotificationsScreen() {
                       <Switch
                         value={toggles[notif.id]}
                         onValueChange={() => handleToggle(notif.id)}
-                        trackColor={{ false: colors.borderStrong, true: brand.pregnancy }}
-                        thumbColor="#FFFFFF"
+                        trackColor={{ false: colors.borderStrong, true: accent }}
+                        thumbColor={colors.surface}
                         ios_backgroundColor={colors.borderStrong}
+                        accessibilityLabel={notif.label}
                       />
                     </View>
                     {i < items.length - 1 && (

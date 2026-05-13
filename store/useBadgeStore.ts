@@ -32,7 +32,7 @@ export interface BadgeDef {
   tier: 'bronze' | 'silver' | 'gold' | 'diamond'
 }
 
-export type BadgeCategory = 'streak' | 'nutrition' | 'sleep' | 'mood' | 'health' | 'growth' | 'community' | 'milestone' | 'daily'
+export type BadgeCategory = 'streak' | 'nutrition' | 'sleep' | 'mood' | 'health' | 'growth' | 'community' | 'milestone' | 'daily' | 'pregnancy'
 
 export const BADGE_DEFS: BadgeDef[] = [
   // ═══ STREAK BADGES ═══
@@ -89,6 +89,18 @@ export const BADGE_DEFS: BadgeDef[] = [
   { id: 'daily_checkin_7',   name: 'Week Regular',     description: 'Checked in 7 days',         icon: '📅', category: 'daily', color: '#A07FDC', tier: 'bronze' },
   { id: 'daily_checkin_30',  name: 'Monthly Devotion',  description: 'Checked in 30 days',        icon: '📅', category: 'daily', color: '#A07FDC', tier: 'silver' },
   { id: 'daily_checkin_100', name: 'Centurion Parent',  description: 'Checked in 100 days',       icon: '📅', category: 'daily', color: '#A07FDC', tier: 'gold' },
+
+  // ═══ PREGNANCY BADGES ═══
+  { id: 'pregnancy_first_log',    name: 'Bump Watcher',       description: 'Logged your first pregnancy entry',  icon: '🤰', category: 'pregnancy', color: '#B7A6E8', tier: 'bronze' },
+  { id: 'pregnancy_kicks_first',  name: 'First Flutter',      description: 'Logged your first kick session',     icon: '👶', category: 'pregnancy', color: '#B7A6E8', tier: 'bronze' },
+  { id: 'pregnancy_kicks_week',   name: 'Kick Routine',       description: 'Kicks logged 7 days in a row',       icon: '👣', category: 'pregnancy', color: '#B7A6E8', tier: 'silver' },
+  { id: 'pregnancy_weight_first', name: 'Weighing In',        description: 'Logged your first weight',           icon: '⚖️', category: 'pregnancy', color: '#B7A6E8', tier: 'bronze' },
+  { id: 'pregnancy_weight_track', name: 'Steady Climb',       description: 'Logged weight 10 times',             icon: '📈', category: 'pregnancy', color: '#B7A6E8', tier: 'silver' },
+  { id: 'pregnancy_appt_first',   name: 'Appointment Pro',    description: 'Logged your first appointment',      icon: '🏥', category: 'pregnancy', color: '#B7A6E8', tier: 'bronze' },
+  { id: 'pregnancy_appt_five',    name: 'Appointment Veteran', description: 'Logged 5 appointments',              icon: '🩺', category: 'pregnancy', color: '#B7A6E8', tier: 'silver' },
+  { id: 'pregnancy_week_12',      name: 'First Trimester',    description: 'Reached week 12',                    icon: '🌱', category: 'pregnancy', color: '#B7A6E8', tier: 'bronze' },
+  { id: 'pregnancy_week_27',      name: 'Second Trimester',   description: 'Reached week 27',                    icon: '🌿', category: 'pregnancy', color: '#B7A6E8', tier: 'silver' },
+  { id: 'pregnancy_week_40',      name: 'Full Term',          description: 'Reached week 40',                    icon: '🌟', category: 'pregnancy', color: '#B7A6E8', tier: 'gold' },
 ]
 
 // ─── Daily Reward Tiers ───────────────────────────────────────────────────────
@@ -153,6 +165,12 @@ interface BadgeState {
     createdChannels: number
     nutritionScore7Day: number
     sleepScore7Day: number
+    /** Pregnancy metrics (all optional — only kids data triggers if these are 0). */
+    pregnancyLogsTotal?: number
+    pregnancyKicksDays?: number
+    pregnancyWeightEntries?: number
+    pregnancyAppointments?: number
+    pregnancyCurrentWeek?: number
   }) => string[]  // returns newly earned badge IDs
 }
 
@@ -311,6 +329,19 @@ export const useBadgeStore = create<BadgeState>()(
         for (const s of streakMap) {
           if (data.streak >= s) earn(`streak_${s}`)
         }
+
+        // Pregnancy
+        if ((data.pregnancyLogsTotal ?? 0) >= 1) earn('pregnancy_first_log')
+        if ((data.pregnancyKicksDays ?? 0) >= 1) earn('pregnancy_kicks_first')
+        if ((data.pregnancyKicksDays ?? 0) >= 7) earn('pregnancy_kicks_week')
+        if ((data.pregnancyWeightEntries ?? 0) >= 1) earn('pregnancy_weight_first')
+        if ((data.pregnancyWeightEntries ?? 0) >= 10) earn('pregnancy_weight_track')
+        if ((data.pregnancyAppointments ?? 0) >= 1) earn('pregnancy_appt_first')
+        if ((data.pregnancyAppointments ?? 0) >= 5) earn('pregnancy_appt_five')
+        const week = data.pregnancyCurrentWeek ?? 0
+        if (week >= 12) earn('pregnancy_week_12')
+        if (week >= 27) earn('pregnancy_week_27')
+        if (week >= 40) earn('pregnancy_week_40')
 
         return newBadges
       },

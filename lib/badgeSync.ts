@@ -34,6 +34,11 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
     channelResult,
     reactionsResult,
     createdChannelsResult,
+    pregLogsResult,
+    pregKicksResult,
+    pregWeightResult,
+    pregApptResult,
+    profileResult,
   ] = await Promise.all([
     // Total child logs
     supabase
@@ -114,6 +119,44 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
       .from('channels')
       .select('id', { count: 'exact', head: true })
       .eq('owner_id', userId),
+
+    // Total pregnancy logs
+    supabase
+      .from('pregnancy_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId),
+
+    // Pregnancy kick-count days (distinct log_date with kick_count entries)
+    supabase
+      .from('pregnancy_logs')
+      .select('log_date')
+      .eq('user_id', userId)
+      .eq('log_type', 'kick_count'),
+
+    // Pregnancy weight entries
+    supabase
+      .from('pregnancy_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('log_type', 'weight'),
+
+    // Pregnancy appointments
+    supabase
+      .from('pregnancy_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('log_type', 'appointment'),
+
+    // Onboarding note row carries dueDate in JSON notes — used for current week.
+    supabase
+      .from('pregnancy_logs')
+      .select('notes')
+      .eq('user_id', userId)
+      .eq('log_type', 'note')
+      .eq('value', 'onboarding')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   // Calculate streak — count back from today; also include today if logged
@@ -181,6 +224,24 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
     (sum: number, p: any) => sum + (p.like_count || 0), 0,
   )
 
+  // Pregnancy metrics
+  const pregnancyKicksDays = new Set((pregKicksResult.data ?? []).map((r: any) => r.log_date)).size
+  let pregnancyCurrentWeek = 0
+  const notesRaw = (profileResult.data as { notes?: string | null } | null)?.notes
+  if (notesRaw) {
+    try {
+      const parsed = JSON.parse(notesRaw) as { dueDate?: string }
+      if (parsed.dueDate) {
+        const due = new Date(parsed.dueDate + 'T00:00:00')
+        const now = new Date()
+        const daysLeft = Math.ceil((due.getTime() - now.getTime()) / 86400000)
+        pregnancyCurrentWeek = Math.max(1, Math.min(42, 40 - Math.floor(daysLeft / 7)))
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }
+
   // Sync to badge store
   const newBadges = useBadgeStore.getState().syncFromData({
     totalLogs: logsResult.count ?? 0,
@@ -200,6 +261,11 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
     createdChannels: createdChannelsResult.count ?? 0,
     nutritionScore7Day: 0, // would need analytics data
     sleepScore7Day: 0,
+    pregnancyLogsTotal: pregLogsResult.count ?? 0,
+    pregnancyKicksDays,
+    pregnancyWeightEntries: pregWeightResult.count ?? 0,
+    pregnancyAppointments: pregApptResult.count ?? 0,
+    pregnancyCurrentWeek,
   })
 
   // ── Fetch user's points from the same source as the leaderboard ─────────
