@@ -64,6 +64,7 @@ import { MoodBubbleCluster } from '../charts/SvgCharts'
 import type { MoodBubbleItem } from '../charts/SvgCharts'
 
 const SW = Dimensions.get('window').width
+const SH = Dimensions.get('window').height
 const AnimatedSvgCircle = Reanimated.createAnimatedComponent(SvgCircle)
 
 // ─── Growth Leap Data ────────────────────────────────────────────────────────
@@ -4809,36 +4810,50 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
               </View>
             )}
 
-            {/* Allergies */}
-            {child.allergies.length > 0 && (
-              <>
-                <View style={s.modalSectionRow}>
-                  <View style={{ transform: [{ rotate: '-10deg' }] }}>
-                    <HeartSticker size={22} fill="#F2B2C7" stroke={stickerInk} />
-                  </View>
-                  <Text style={[s.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>Allergies</Text>
+            {/* Allergies. Section renders even when empty so the parent has
+                a one-tap path to add the first allergy (routes to profile/kids
+                where the full editor lives). */}
+            <>
+              <View style={s.modalSectionRow}>
+                <View style={{ transform: [{ rotate: '-10deg' }] }}>
+                  <HeartSticker size={22} fill="#F2B2C7" stroke={stickerInk} />
                 </View>
-                <View style={[s.healthTagsRow, { marginTop: 4 }]}>
-                  {child.allergies.map((a, i) => (
-                    <View key={i} style={{
-                      flexDirection: 'row', alignItems: 'center', gap: 6,
-                      paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1.5,
-                      backgroundColor: isDark ? '#36222A' : '#FDEEF2',
-                      borderColor: isDark ? '#F5BBCF40' : 'rgba(20,19,19,0.18)',
+                <Text style={[s.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>Allergies</Text>
+              </View>
+              <View style={[s.healthTagsRow, { marginTop: 4 }]}>
+                {child.allergies.map((a, i) => (
+                  <View key={i} style={{
+                    flexDirection: 'row', alignItems: 'center', gap: 6,
+                    paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1.5,
+                    backgroundColor: isDark ? '#36222A' : '#FDEEF2',
+                    borderColor: isDark ? '#F5BBCF40' : 'rgba(20,19,19,0.18)',
+                  }}>
+                    <View style={{
+                      width: 16, height: 16, borderRadius: 8,
+                      backgroundColor: '#F2B2C7', borderWidth: 1, borderColor: stickerInk,
+                      alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <View style={{
-                        width: 16, height: 16, borderRadius: 8,
-                        backgroundColor: '#F2B2C7', borderWidth: 1, borderColor: stickerInk,
-                        alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <AlertCircle size={9} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={2.5} />
-                      </View>
-                      <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', color: isDark ? '#F5BBCF' : '#141313' }}>{a}</Text>
+                      <AlertCircle size={9} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={2.5} />
                     </View>
-                  ))}
-                </View>
-              </>
-            )}
+                    <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', color: isDark ? '#F5BBCF' : '#141313' }}>{a}</Text>
+                  </View>
+                ))}
+                <Pressable
+                  onPress={() => { onClose(); router.push('/profile/kids') }}
+                  style={{
+                    flexDirection: 'row', alignItems: 'center', gap: 6,
+                    paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1.5,
+                    backgroundColor: 'transparent',
+                    borderColor: isDark ? 'rgba(245,187,207,0.4)' : 'rgba(20,19,19,0.18)',
+                    borderStyle: 'dashed',
+                  }}
+                >
+                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_600SemiBold', color: isDark ? '#F5BBCF' : '#6E6763' }}>
+                    {child.allergies.length === 0 ? '+ Add allergy' : '+ Add'}
+                  </Text>
+                </Pressable>
+              </View>
+            </>
 
             {/* Medications from child profile */}
             {child.medications.length > 0 && (
@@ -5973,10 +5988,14 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
             </Text>
           </View>
 
-          {/* Goal cards — sticker rows */}
+          {/* Goal cards — sticker rows.
+              maxHeight was hardcoded 360px which cut off the last metric on
+              iPhone SE / small Androids. Now ~50% of the screen height
+              (with floor + ceiling) so the modal stays usable on every
+              form factor. */}
           <ScrollView
-            style={{ maxHeight: 360 }}
-            showsVerticalScrollIndicator={false}
+            style={{ maxHeight: Math.max(300, Math.min(SH * 0.5, 500)) }}
+            showsVerticalScrollIndicator={true}
             contentContainerStyle={s.gsCardList}
           >
             {metrics.map((m, idx) => {
