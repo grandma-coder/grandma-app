@@ -3283,7 +3283,13 @@ export function KidsCalendar() {
                         <Text style={[styles.popupEditText, { color: '#FFFEF8' }]}>Edit</Text>
                       </Pressable>
                       <Pressable
-                        onPress={() => handleDeleteLog(selectedLog.id)}
+                        onPress={() => {
+                          // Route through the unlogTarget confirmation modal
+                          // so a stray tap doesn't permanently destroy a log.
+                          // handleDeleteLog was firing immediately on press —
+                          // no confirm, no undo.
+                          setUnlogTarget(selectedLog)
+                        }}
                         style={({ pressed }) => [
                           styles.popupDeleteBtn,
                           {
