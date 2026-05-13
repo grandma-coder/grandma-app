@@ -2198,13 +2198,22 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
 
   async function save() {
     if (!childId) return
+    // A "memory" log without any photo is meaningless — downstream readers
+    // (home dashboard, future photo gallery) filter by photos.length > 0
+    // and orphan empty-memory rows. Block the save instead of writing one.
+    if (photos.length === 0) {
+      Alert.alert(
+        'Add a photo',
+        'Memories need at least one photo. Tap the camera or gallery to add one.',
+      )
+      return
+    }
     setSaving(true)
     try {
       const upload = await uploadPhotos(photos)
-      // A "memory" log with zero photos is not a memory — block the save
-      // if every upload failed so the user can retry instead of creating
-      // an empty record.
-      if (photos.length > 0 && upload.urls.length === 0) {
+      // If every upload failed, block the save so the user can retry
+      // instead of creating an empty record.
+      if (upload.urls.length === 0) {
         Alert.alert(
           'Photos didn\'t upload',
           'None of the photos could be uploaded. Check your connection and try again.',
