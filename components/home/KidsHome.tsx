@@ -3230,11 +3230,14 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
         return { label: dayNames[d.getDay()], dates: [iso] }
       })
     }
-    // Weekly buckets
+    // Weekly buckets. Cap at 104 (~2 years) — defends against malformed
+    // start/end dates that could otherwise cause a runaway loop even
+    // though the normal cursor <= end guard handles the well-formed case.
     const weeks: { label: string; dates: string[] }[] = []
     let wNum = 1
     let cursor = new Date(start)
-    while (cursor <= end) {
+    const MAX_WEEKS = 104
+    while (cursor <= end && wNum <= MAX_WEEKS) {
       const bucket: string[] = []
       for (let d = 0; d < 7; d++) {
         if (cursor > end) break
