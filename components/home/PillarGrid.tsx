@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { colors, THEME_COLORS, borderRadius, shadows } from '../../constants/theme'
+import { colors, brand, stickers, borderRadius, shadows } from '../../constants/theme'
 import { pillars } from '../../lib/pillars'
 import type { Pillar } from '../../types'
 import { getPillarSticker } from '../../lib/pillarStickerMap'

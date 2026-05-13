@@ -2,7 +2,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useAppTheme } from '../ui/ThemeProvider'
-import { colors, THEME_COLORS, borderRadius } from '../../constants/theme'
+import { colors, brand, stickers, borderRadius } from '../../constants/theme'
 import type { CycleInfo } from '../../lib/cycleLogic'
 
 interface DailyInsightsProps {
@@ -78,7 +78,7 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
       {/* Tips section */}
       <View style={styles.tipsSection}>
         <Text style={[styles.tipsTitle, { color: tc.text }]}>
-          <Ionicons name="sparkles" size={14} color={THEME_COLORS.yellow} /> PHASE TIPS
+          <Ionicons name="sparkles" size={14} color={stickers.yellow} /> PHASE TIPS
         </Text>
         {cycleInfo.dailyTips.slice(0, 3).map((tip, i) => (
           <View key={i} style={styles.tipRow}>
@@ -92,7 +92,7 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
       <View style={styles.listsRow}>
         <PaperCard radius={28} padding={20} style={styles.listCard}>
           <View style={styles.listHeader}>
-            <Ionicons name="fitness" size={16} color={THEME_COLORS.green} />
+            <Ionicons name="fitness" size={16} color={stickers.green} />
             <Text style={styles.listTitle}>ACTIVITIES</Text>
           </View>
           {cycleInfo.activities.slice(0, 4).map((act, i) => (
@@ -102,7 +102,7 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
 
         <PaperCard radius={28} padding={20} style={styles.listCard}>
           <View style={styles.listHeader}>
-            <Ionicons name="nutrition" size={16} color={THEME_COLORS.orange} />
+            <Ionicons name="nutrition" size={16} color={stickers.coral} />
             <Text style={[styles.listTitle, { color: tc.textTertiary }]}>NUTRITION</Text>
           </View>
           {cycleInfo.nutritionTips.slice(0, 3).map((tip, i) => (
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: THEME_COLORS.pink,
+    backgroundColor: brand.prePregnancy,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: THEME_COLORS.pink,
+    backgroundColor: brand.prePregnancy,
     marginTop: 5,
   },
   tipText: {

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, THEME_COLORS, shadows } from '../../constants/theme'
+import { colors, brand, stickers, shadows } from '../../constants/theme'
 
 interface GrandmaBallProps {
   thinking?: boolean
@@ -17,7 +17,7 @@ export function GrandmaBall({ thinking = false, onPress }: GrandmaBallProps) {
       >
         {/* Gradient ring */}
         <LinearGradient
-          colors={[THEME_COLORS.blue, THEME_COLORS.pink]}
+          colors={[brand.kids, brand.prePregnancy]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.gradientRing, shadows.cardPop]}
@@ -26,7 +26,7 @@ export function GrandmaBall({ thinking = false, onPress }: GrandmaBallProps) {
             <Ionicons
               name="happy-outline"
               size={52}
-              color={THEME_COLORS.yellow}
+              color={stickers.yellow}
               style={{ opacity: 0.9 }}
             />
           </View>
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: THEME_COLORS.green,
+    backgroundColor: stickers.green,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,

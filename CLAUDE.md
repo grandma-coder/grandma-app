@@ -15,7 +15,7 @@ Parenting companion app covering **Pre-Pregnancy → Pregnancy → Kids**. The e
 - Shadows: only `shadows.card` / `cardPop` / `pop` / `subtle`. **Never** `shadows.glow*` (legacy neon)
 - Mode color: `getModeColor(mode, isDark)` — never hardcode per mode
 - Use `useTheme()` for colors / `brand` for fixed brand / `stickers` for palette / `font` for font families
-- Buttons are pills, filled (no outline-only). Use `GradientButton` / `PillButton` / `StickerButton`
+- Buttons are pills, filled (no outline-only). Use `PillButton` / `StickerButton`
 - `GlassCard` was deleted (legacy neon system) — use `PaperCard` everywhere
 - Raw hex is allowed only inside sticker/illustration SVG path files (these *are* the assets)
 
@@ -376,7 +376,7 @@ Equivalent forms exist for **Kids** (`KidsLogForms`) and **Pre-Pregnancy** (cycl
 - **Never mock the mode system** — read from `useModeStore`, don't hardcode mode checks
 - **Never use raw hex inline** — import tokens from `constants/theme.ts`. See `DESIGN_SYSTEM.md` for the full ruleset. The only exception is SVG path strings in sticker/illustration files.
 - **Light theme is default** — cream paper canvas, paper-white cards, hairline borders, no neon glow shadows (only `shadows.card`/`cardPop`/`pop`/`subtle` are allowed)
-- **Buttons are pills** — `radius.full` (999), filled, no outline-only. Use `GradientButton` / `PillButton` / `StickerButton`. Cards use `radius.lg` (28); inputs `radius.md` (20)
+- **Buttons are pills** — `radius.full` (999), filled, no outline-only. Use `PillButton` / `StickerButton`. Cards use `radius.lg` (28); inputs `radius.md` (20)
 - **Expo Router navigation** — `router.push()` / `router.replace()`, never `navigation.navigate()`
 - **Zustand v5 named import** — `import { create } from 'zustand'`
 - **React Query v5 object syntax** — `useQuery({ queryKey: [...], queryFn: ... })`

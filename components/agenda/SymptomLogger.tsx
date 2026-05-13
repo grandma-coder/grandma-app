@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { colors, THEME_COLORS, borderRadius, typography } from '../../constants/theme'
+import { colors, brand, stickers, borderRadius, typography } from '../../constants/theme'
 
 interface SymptomEntry {
   id: string
@@ -31,9 +31,9 @@ const SYMPTOMS = [
 ]
 
 const SEVERITY_OPTIONS: { id: 'mild' | 'moderate' | 'strong'; label: string; color: string }[] = [
-  { id: 'mild', label: 'Mild', color: THEME_COLORS.green },
-  { id: 'moderate', label: 'Moderate', color: THEME_COLORS.yellow },
-  { id: 'strong', label: 'Strong', color: THEME_COLORS.orange },
+  { id: 'mild', label: 'Mild', color: stickers.green },
+  { id: 'moderate', label: 'Moderate', color: stickers.yellow },
+  { id: 'strong', label: 'Strong', color: stickers.coral },
 ]
 
 export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLoggerProps) {
@@ -70,7 +70,7 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
               </View>
               <Text style={styles.symptomLabel}>{s.label}</Text>
               {isLogged && (
-                <Ionicons name="checkmark-circle" size={14} color={THEME_COLORS.green} style={{ position: 'absolute', top: 6, right: 6 }} />
+                <Ionicons name="checkmark-circle" size={14} color={stickers.green} style={{ position: 'absolute', top: 6, right: 6 }} />
               )}
             </Pressable>
           )

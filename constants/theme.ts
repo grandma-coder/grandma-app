@@ -328,16 +328,6 @@ export function getModeColorSoft(mode: 'pre' | 'preg' | 'kids' | string, isDark 
 // ─── LEGACY EXPORTS ────────────────────────────────────────────────────────
 // Kept for existing components. Prefer useTheme() for new code.
 
-export const THEME_COLORS = {
-  yellow: stickers.yellow,
-  pink: brand.prePregnancy,
-  orange: stickers.coral,
-  blue: brand.kids,
-  green: stickers.green,
-  purple: brand.pregnancy,
-  dark: darkTokens.bg,
-} as const
-
 export const colors = {
   background: darkTokens.bg,
   surface: darkTokens.surface,
@@ -347,7 +337,6 @@ export const colors = {
   accentGlow: darkTokens.primary,
   accentMuted: darkTokens.primaryTint,
   accentDark: brand.primaryDark,
-  neon: THEME_COLORS,
   text: darkTokens.text,
   textSecondary: darkTokens.textSecondary,
   textTertiary: darkTokens.textMuted,

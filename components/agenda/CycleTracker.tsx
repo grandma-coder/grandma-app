@@ -5,7 +5,7 @@ import { PaperCard } from '../ui/PaperCard'
 import { CyclePhaseRing } from '../prepreg/CyclePhaseRing'
 import { getCycleInfo, getMonthCycleDots, toDateStr } from '../../lib/cycleLogic'
 import type { CycleInfo } from '../../lib/cycleLogic'
-import { colors, THEME_COLORS, borderRadius, typography } from '../../constants/theme'
+import { colors, brand, stickers, borderRadius, typography } from '../../constants/theme'
 
 interface CycleTrackerProps {
   selectedDate: string
@@ -15,10 +15,10 @@ interface CycleTrackerProps {
 const QUICK_LOGS = [
   { type: 'period_start', label: 'Period Started', icon: 'water-outline', color: '#FF6B6B' },
   { type: 'period_end', label: 'Period Ended', icon: 'water-outline', color: '#FFA07A' },
-  { type: 'ovulation', label: 'Ovulation Sign', icon: 'flower-outline', color: THEME_COLORS.green },
-  { type: 'symptom', label: 'Symptom', icon: 'pulse-outline', color: THEME_COLORS.yellow },
-  { type: 'basal_temp', label: 'Basal Temp', icon: 'thermometer-outline', color: THEME_COLORS.blue },
-  { type: 'intercourse', label: 'Intercourse', icon: 'heart-outline', color: THEME_COLORS.pink },
+  { type: 'ovulation', label: 'Ovulation Sign', icon: 'flower-outline', color: stickers.green },
+  { type: 'symptom', label: 'Symptom', icon: 'pulse-outline', color: stickers.yellow },
+  { type: 'basal_temp', label: 'Basal Temp', icon: 'thermometer-outline', color: brand.kids },
+  { type: 'intercourse', label: 'Intercourse', icon: 'heart-outline', color: brand.prePregnancy },
 ]
 
 const SYMPTOM_OPTIONS = [
@@ -64,7 +64,7 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
         {/* Fertility indicator */}
         {selectedInfo.isFertile && (
           <View style={styles.fertileBanner}>
-            <Ionicons name="flower" size={16} color={THEME_COLORS.green} />
+            <Ionicons name="flower" size={16} color={stickers.green} />
             <Text style={styles.fertileText}>Fertile window — {selectedInfo.conceptionProbability} chance of conception</Text>
           </View>
         )}
@@ -120,7 +120,7 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
       {/* Nutrition for this phase */}
       <PaperCard radius={28} padding={20} style={styles.nutritionCard}>
         <View style={styles.nutritionHeader}>
-          <Ionicons name="nutrition" size={18} color={THEME_COLORS.green} />
+          <Ionicons name="nutrition" size={18} color={stickers.green} />
           <Text style={styles.nutritionTitle}>NUTRITION FOR {cycleInfo.phaseLabel.toUpperCase()}</Text>
         </View>
         {cycleInfo.nutritionTips.map((tip, i) => (
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: THEME_COLORS.green + '15',
+    backgroundColor: stickers.green + '15',
     borderRadius: borderRadius.full,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   fertileText: {
     fontSize: 12,
     fontWeight: '700',
-    color: THEME_COLORS.green,
+    color: stickers.green,
     flex: 1,
   },
 
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   nutritionTitle: {
     fontSize: 11,
     fontWeight: '900',
-    color: THEME_COLORS.green,
+    color: stickers.green,
     letterSpacing: 1,
   },
   nutritionItem: {

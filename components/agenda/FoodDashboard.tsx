@@ -3,7 +3,7 @@ import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { PaperCard } from '../ui/PaperCard'
-import { colors, THEME_COLORS, borderRadius, shadows } from '../../constants/theme'
+import { colors, brand, stickers, borderRadius, shadows } from '../../constants/theme'
 
 interface FoodEntry {
   id: string
@@ -21,10 +21,10 @@ interface FoodDashboardProps {
 }
 
 const MEALS = [
-  { id: 'breakfast', label: 'Breakfast', icon: 'sunny-outline', color: THEME_COLORS.yellow },
-  { id: 'lunch', label: 'Lunch', icon: 'restaurant-outline', color: THEME_COLORS.green },
-  { id: 'dinner', label: 'Dinner', icon: 'moon-outline', color: THEME_COLORS.blue },
-  { id: 'snack', label: 'Snack', icon: 'cafe-outline', color: THEME_COLORS.pink },
+  { id: 'breakfast', label: 'Breakfast', icon: 'sunny-outline', color: stickers.yellow },
+  { id: 'lunch', label: 'Lunch', icon: 'restaurant-outline', color: stickers.green },
+  { id: 'dinner', label: 'Dinner', icon: 'moon-outline', color: brand.kids },
+  { id: 'snack', label: 'Snack', icon: 'cafe-outline', color: brand.prePregnancy },
 ]
 
 export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: FoodDashboardProps) {
@@ -79,7 +79,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
               </View>
               <Text style={styles.mealLabel}>{meal.label}</Text>
               {logged && (
-                <Ionicons name="checkmark-circle" size={16} color={THEME_COLORS.green} style={{ position: 'absolute', top: 10, right: 10 }} />
+                <Ionicons name="checkmark-circle" size={16} color={stickers.green} style={{ position: 'absolute', top: 10, right: 10 }} />
               )}
             </Pressable>
           )
@@ -97,7 +97,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
           <View style={styles.actionButtons}>
             <Pressable
               onPress={() => handleTakePhoto(selectedMeal)}
-              style={[styles.actionBtn, { backgroundColor: THEME_COLORS.yellow }]}
+              style={[styles.actionBtn, { backgroundColor: stickers.yellow }]}
             >
               <Ionicons name="camera" size={20} color={colors.textOnAccent} />
               <Text style={[styles.actionBtnText, { color: colors.textOnAccent }]}>Photo + AI</Text>
@@ -144,7 +144,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
                     )}
                     {entry.aiAnalysis && (
                       <View style={styles.aiTag}>
-                        <Ionicons name="sparkles" size={12} color={THEME_COLORS.yellow} />
+                        <Ionicons name="sparkles" size={12} color={stickers.yellow} />
                         <Text style={styles.aiTagText}>{entry.aiAnalysis}</Text>
                       </View>
                     )}
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   aiTagText: {
     fontSize: 11,
     fontWeight: '600',
-    color: THEME_COLORS.yellow,
+    color: stickers.yellow,
   },
 
   // Empty

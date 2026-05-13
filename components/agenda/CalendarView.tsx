@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, THEME_COLORS, borderRadius, shadows } from '../../constants/theme'
+import { colors, brand, stickers, borderRadius, shadows } from '../../constants/theme'
 
 export type CalendarViewMode = 'month' | 'week' | 'day'
 
@@ -193,7 +193,7 @@ export function CalendarView({
               <Text
                 style={[
                   styles.weekDayNum,
-                  isToday && !isSelected && { color: THEME_COLORS.yellow },
+                  isToday && !isSelected && { color: stickers.yellow },
                   isSelected && { color: colors.textOnAccent },
                 ]}
               >
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   viewModePillActive: {
-    backgroundColor: THEME_COLORS.yellow,
+    backgroundColor: stickers.yellow,
   },
   viewModeText: {
     fontSize: 11,
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   cellSelected: {
-    backgroundColor: THEME_COLORS.yellow,
+    backgroundColor: stickers.yellow,
     borderRadius: 18,
     ...shadows.pop,
     transform: [{ scale: 1.1 }],
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cellTextToday: {
-    color: THEME_COLORS.yellow,
+    color: stickers.yellow,
     fontWeight: '900',
   },
   cellTextSelected: {
@@ -414,8 +414,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   weekCellSelected: {
-    backgroundColor: THEME_COLORS.yellow,
-    borderColor: THEME_COLORS.yellow,
+    backgroundColor: stickers.yellow,
+    borderColor: stickers.yellow,
     ...shadows.pop,
   },
   weekDayLabel: {
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
   dayViewDate: {
     fontSize: 56,
     fontWeight: '900',
-    color: THEME_COLORS.yellow,
+    color: stickers.yellow,
     marginBottom: 4, fontFamily: 'Fraunces_600SemiBold' },
   dayViewWeekday: {
     fontSize: 16,

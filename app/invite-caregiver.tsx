@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
-import { colors, THEME_COLORS, borderRadius, shadows } from '../constants/theme'
+import { colors, brand, stickers, borderRadius, shadows } from '../constants/theme'
 
 const ROLES = [
   { id: 'nanny', label: 'Nanny', icon: 'person-outline' as const },
@@ -70,7 +70,7 @@ export default function InviteCaregiver() {
           {/* Title */}
           <Text style={styles.title}>
             Invite a{'\n'}
-            <Text style={{ color: THEME_COLORS.yellow }}>caregiver</Text>
+            <Text style={{ color: stickers.yellow }}>caregiver</Text>
           </Text>
           <Text style={styles.subtitle}>
             They'll get access to {child?.name ?? "Rio"}'s profile and your personalized parenting wisdom guide.
@@ -81,7 +81,7 @@ export default function InviteCaregiver() {
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
-              selectionColor={colors.neon.blue}
+              selectionColor={brand.kids}
               placeholder="nanny@email.com"
               placeholderTextColor={colors.textTertiary}
               value={email}
@@ -111,7 +111,7 @@ export default function InviteCaregiver() {
                   <Ionicons
                     name={r.icon}
                     size={28}
-                    color={isActive ? THEME_COLORS.yellow : colors.textTertiary}
+                    color={isActive ? stickers.yellow : colors.textTertiary}
                   />
                   <Text style={[styles.roleLabel, isActive && styles.roleLabelActive]}>
                     {r.label}
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   roleChipActive: {
-    borderColor: THEME_COLORS.yellow,
+    borderColor: stickers.yellow,
     backgroundColor: 'rgba(244, 253, 80, 0.06)',
     ...shadows.pop,
   },
@@ -253,10 +253,10 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
   roleLabelActive: {
-    color: THEME_COLORS.yellow,
+    color: stickers.yellow,
   },
   sendButton: {
-    backgroundColor: THEME_COLORS.yellow,
+    backgroundColor: stickers.yellow,
     borderRadius: borderRadius['2xl'],
     height: 96,
     justifyContent: 'center',

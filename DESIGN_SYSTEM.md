@@ -282,7 +282,7 @@ shadows.subtle   // 4 / 8 — light interactive
 | Icon-only header back | `ScreenHeader` (handles this) | Never roll your own. |
 | Icon-only inline (small action) | `<Pressable hitSlop={12}>` with a 38×38 or 44×44 paper-pill child. | Match `ScreenHeader.backBtn` style (38×38, `borderRadius: 999`, hairline border). |
 
-> **Do not use `GradientButton` in new code.** It renders the legacy neon-yellow pill with `shadows.glow` — it's from the dead design system. It still ships for back-compat only. If you see it on a screen you're editing, leave it alone unless the user asks to migrate.
+> `GradientButton` (legacy neon-yellow pill with `shadows.glow`) was deleted. If you find a reference somewhere, replace it with `PillButton variant="ink"`.
 
 #### 2.1.1 `PillButton`
 
@@ -780,7 +780,7 @@ Branch *inside* one component on `mode` — don't create per-mode siblings unles
 
 ### Shape
 - [ ] Cards: `PaperCard` (default `radius.md` 20; pass 28 for hero, 36 for modal)
-- [ ] Buttons: `PillButton` (58 / 72), `StickerButton` (52), or `ScreenHeader` back. **Not** `GradientButton` (legacy)
+- [ ] Buttons: `PillButton` (58 / 72), `StickerButton` (52), or `ScreenHeader` back
 - [ ] Inputs: `TextField` for free-text; `FormRow` for row-style. `radius.md` (20)
 - [ ] Validation errors: `FieldError` (auto-rendered by `TextField`)
 - [ ] Empty list / "no content yet": `EmptyState`

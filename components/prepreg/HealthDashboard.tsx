@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useAppTheme } from '../ui/ThemeProvider'
-import { colors, THEME_COLORS, borderRadius, shadows } from '../../constants/theme'
+import { colors, brand, stickers, borderRadius, shadows } from '../../constants/theme'
 import { LiquidFillBottle } from '../charts/GalleryCharts'
 import { DAILY_WATER_GOAL, getHydrationLevel } from '../../lib/cycleLogic'
 
@@ -87,8 +87,8 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
           <Text style={[styles.metricUnit, { color: tc.textTertiary }]}>hours</Text>
           <Text style={[styles.metricLabel, { color: tc.textTertiary }]}>SLEEP</Text>
           {sleepHours > 0 && sleepHours >= 7 && (
-            <View style={[styles.metricBadge, { backgroundColor: THEME_COLORS.green + '20' }]}>
-              <Ionicons name="checkmark" size={10} color={THEME_COLORS.green} />
+            <View style={[styles.metricBadge, { backgroundColor: stickers.green + '20' }]}>
+              <Ionicons name="checkmark" size={10} color={stickers.green} />
             </View>
           )}
         </PaperCard>
@@ -119,7 +119,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
       {/* Nutrition tip */}
       <PaperCard radius={28} padding={20} style={styles.nutritionTip}>
         <View style={styles.nutritionHeader}>
-          <Ionicons name="nutrition" size={18} color={THEME_COLORS.green} />
+          <Ionicons name="nutrition" size={18} color={stickers.green} />
           <Text style={styles.nutritionTitle}>NUTRITION TIP</Text>
         </View>
         <Text style={[styles.nutritionText, { color: tc.textSecondary }]}>
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   nutritionTitle: {
     fontSize: 11,
     fontWeight: '900',
-    color: THEME_COLORS.green,
+    color: stickers.green,
     letterSpacing: 1,
   },
   nutritionText: {

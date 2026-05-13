@@ -10,7 +10,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { getModeConfig } from '../../lib/modeConfig'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { ListingCard } from '../../components/exchange/ListingCard'
-import { colors, THEME_COLORS, borderRadius, shadows, spacing, typography } from '../../constants/theme'
+import { colors, brand, stickers, borderRadius, shadows, spacing, typography } from '../../constants/theme'
 import type { Listing } from '../../lib/exchange'
 
 const TYPE_FILTERS = ['All', 'Sell', 'Trade', 'Free'] as const
@@ -96,10 +96,10 @@ export default function Exchange() {
             {/* Floating placeholder cards */}
             <View style={styles.placeholderCards}>
               <View style={[styles.placeholderCard, styles.placeholderPink]}>
-                <Ionicons name="help-outline" size={32} color={THEME_COLORS.pink} />
+                <Ionicons name="help-outline" size={32} color={brand.prePregnancy} />
               </View>
               <View style={[styles.placeholderCard, styles.placeholderBlue]}>
-                <Ionicons name="help-outline" size={32} color={THEME_COLORS.blue} />
+                <Ionicons name="help-outline" size={32} color={brand.kids} />
               </View>
             </View>
 
@@ -113,7 +113,7 @@ export default function Exchange() {
               style={styles.gradientBtnWrap}
             >
               <LinearGradient
-                colors={[THEME_COLORS.yellow, THEME_COLORS.orange]}
+                colors={[stickers.yellow, stickers.coral]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.gradientBtn}

@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { colors, THEME_COLORS, borderRadius, typography } from '../../constants/theme'
+import { colors, brand, stickers, borderRadius, typography } from '../../constants/theme'
 
 interface ChecklistItem {
   id: string
@@ -17,11 +17,11 @@ interface PrePregChecklistProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  health: THEME_COLORS.pink,
-  fertility: THEME_COLORS.green,
-  lifestyle: THEME_COLORS.blue,
-  financial: THEME_COLORS.yellow,
-  emotional: THEME_COLORS.purple,
+  health: brand.prePregnancy,
+  fertility: stickers.green,
+  lifestyle: brand.kids,
+  financial: stickers.yellow,
+  emotional: brand.pregnancy,
 }
 
 export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
@@ -51,7 +51,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
 
       {/* Checklist items */}
       {items.map((item) => {
-        const catColor = CATEGORY_COLORS[item.category] ?? THEME_COLORS.blue
+        const catColor = CATEGORY_COLORS[item.category] ?? brand.kids
         return (
           <Pressable
             key={item.id}
@@ -62,7 +62,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
               <View style={styles.itemRow}>
                 <View style={[
                   styles.checkbox,
-                  item.completed && { backgroundColor: THEME_COLORS.green, borderColor: THEME_COLORS.green },
+                  item.completed && { backgroundColor: stickers.green, borderColor: stickers.green },
                 ]}>
                   {item.completed && (
                     <Ionicons name="checkmark" size={14} color="#1A1030" />
@@ -130,14 +130,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: THEME_COLORS.green + '20',
+    backgroundColor: stickers.green + '20',
     alignItems: 'center',
     justifyContent: 'center',
   },
   progressNumber: {
     fontSize: 20,
     fontWeight: '900',
-    color: THEME_COLORS.green,
+    color: stickers.green,
   },
   progressBar: {
     height: 6,
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 3,
-    backgroundColor: THEME_COLORS.green,
+    backgroundColor: stickers.green,
   },
 
   itemCard: {

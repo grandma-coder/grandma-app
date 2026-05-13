@@ -4,7 +4,7 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { colors, THEME_COLORS, borderRadius, shadows } from '../../constants/theme'
+import { colors, brand, stickers, borderRadius, shadows } from '../../constants/theme'
 
 export interface NoteEntry {
   id: string
@@ -21,12 +21,12 @@ interface NotesPanelProps {
 }
 
 const TOPICS = [
-  { id: 'food', label: 'Food', icon: 'restaurant-outline', color: THEME_COLORS.green },
-  { id: 'vaccine', label: 'Vaccine', icon: 'medkit-outline', color: THEME_COLORS.pink },
-  { id: 'activity', label: 'Activity', icon: 'body-outline', color: THEME_COLORS.blue },
-  { id: 'health', label: 'Health', icon: 'heart-outline', color: THEME_COLORS.orange },
-  { id: 'reminder', label: 'Reminder', icon: 'alarm-outline', color: THEME_COLORS.yellow },
-  { id: 'general', label: 'General', icon: 'document-text-outline', color: THEME_COLORS.purple },
+  { id: 'food', label: 'Food', icon: 'restaurant-outline', color: stickers.green },
+  { id: 'vaccine', label: 'Vaccine', icon: 'medkit-outline', color: brand.prePregnancy },
+  { id: 'activity', label: 'Activity', icon: 'body-outline', color: brand.kids },
+  { id: 'health', label: 'Health', icon: 'heart-outline', color: stickers.coral },
+  { id: 'reminder', label: 'Reminder', icon: 'alarm-outline', color: stickers.yellow },
+  { id: 'general', label: 'General', icon: 'document-text-outline', color: brand.pregnancy },
 ]
 
 function timeAgo(dateStr: string): string {
@@ -60,7 +60,7 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
         onPress={() => setShowCompose(true)}
         style={({ pressed }) => [styles.addButton, pressed && { transform: [{ scale: 0.97 }] }]}
       >
-        <Ionicons name="add-circle-outline" size={20} color={THEME_COLORS.yellow} />
+        <Ionicons name="add-circle-outline" size={20} color={stickers.yellow} />
         <Text style={styles.addButtonText}>Add Note</Text>
       </Pressable>
 
@@ -143,7 +143,7 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
             <Text style={styles.modalLabel}>NOTE</Text>
             <TextInput
               style={styles.textArea}
-              selectionColor={THEME_COLORS.blue}
+              selectionColor={brand.kids}
               placeholder="Write your note here..."
               placeholderTextColor={colors.textTertiary}
               value={noteText}
@@ -188,14 +188,14 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: borderRadius.full,
     borderWidth: 2,
-    borderColor: THEME_COLORS.yellow,
+    borderColor: stickers.yellow,
     borderStyle: 'dashed',
     marginBottom: 20,
   },
   addButtonText: {
     fontSize: 14,
     fontWeight: '800',
-    color: THEME_COLORS.yellow,
+    color: stickers.yellow,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     flex: 2,
     height: 56,
     borderRadius: borderRadius.full,
-    backgroundColor: THEME_COLORS.yellow,
+    backgroundColor: stickers.yellow,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

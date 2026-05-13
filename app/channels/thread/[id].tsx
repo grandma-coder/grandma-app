@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getReplies, postReply, type Reply } from '../../../lib/channels'
 import { CosmicBackground } from '../../../components/ui/CosmicBackground'
-import { colors, typography, spacing, borderRadius } from '../../../constants/theme'
+import { colors, brand, typography, spacing, borderRadius } from '../../../constants/theme'
 
 export default function ThreadDetail() {
   const insets = useSafeAreaInsets()
@@ -78,7 +78,7 @@ export default function ThreadDetail() {
         <View style={[styles.inputBar, { paddingBottom: insets.bottom + 8 }]}>
           <TextInput
             style={styles.input}
-            selectionColor={colors.neon.blue}
+            selectionColor={brand.kids}
             placeholder="Write a reply..."
             placeholderTextColor={colors.textTertiary}
             value={input}

@@ -10,7 +10,7 @@ import { createListing, type ListingType, type ListingCategory, type ListingCond
 import { useExchangeStore } from '../../store/useExchangeStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { PillButton } from '../../components/ui/PillButton'
-import { colors, typography, spacing, borderRadius } from '../../constants/theme'
+import { colors, brand, typography, spacing, borderRadius } from '../../constants/theme'
 
 const LISTING_TYPES: { id: ListingType; label: string; icon: string }[] = [
   { id: 'sell', label: 'Sell', icon: '💰' },
@@ -112,7 +112,7 @@ export default function CreateListing() {
           <Text style={styles.label}>TITLE *</Text>
           <TextInput
             style={styles.input}
-            selectionColor={colors.neon.blue}
+            selectionColor={brand.kids}
             placeholder="e.g. Baby Bjorn Carrier"
             placeholderTextColor={colors.textTertiary}
             value={title}
@@ -123,7 +123,7 @@ export default function CreateListing() {
           <Text style={styles.label}>DESCRIPTION</Text>
           <TextInput
             style={[styles.input, styles.inputMulti]}
-            selectionColor={colors.neon.blue}
+            selectionColor={brand.kids}
             placeholder="Tell parents about the item..."
             placeholderTextColor={colors.textTertiary}
             value={description}
@@ -169,7 +169,7 @@ export default function CreateListing() {
               <Text style={styles.label}>PRICE ($)</Text>
               <TextInput
                 style={styles.input}
-                selectionColor={colors.neon.blue}
+                selectionColor={brand.kids}
                 placeholder="0.00"
                 placeholderTextColor={colors.textTertiary}
                 value={price}

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { THEME_COLORS } from '../../constants/theme'
+import { brand, stickers } from '../../constants/theme'
 import { HormoneWave } from '../charts/GalleryCharts'
 import type { CycleInfo } from '../../lib/cycleLogic'
 
@@ -24,7 +24,7 @@ export function HormoneChart({ cycleInfo }: HormoneChartProps) {
       <View style={styles.chartWrap}>
         <HormoneWave
           progress={progress}
-          color={THEME_COLORS.pink}
+          color={brand.prePregnancy}
           height={120}
           label={cycleInfo.cycleDay > 0 ? `DAY ${cycleInfo.cycleDay}` : undefined}
         />
