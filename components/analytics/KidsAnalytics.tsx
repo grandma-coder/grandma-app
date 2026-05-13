@@ -2738,6 +2738,18 @@ interface MathStep {
 // score-math card — the modal flow is header → tiles → "How this score works"
 // → body charts. We render nothing here so the data hooks/conditionals upstream
 // stay valid without surfacing a calculation table that's not in the design.
+/**
+ * Score-math breakdown card — currently a no-op placeholder.
+ *
+ * Renders nothing today. The 8 call sites compute the steps/final values
+ * because the math is also useful for the surrounding "explain" copy and
+ * because the wiring is ready for when this card is brought back.
+ *
+ * If the card is determined to be permanently scrapped (rather than just
+ * hidden), the 8 call sites + their IIFE wrappers can be removed in a
+ * dedicated cleanup commit. Leaving them in place for now keeps the
+ * scoring math visible alongside the user-facing copy.
+ */
 function ScoreMathCard(_props: {
   title: string
   steps: MathStep[]
