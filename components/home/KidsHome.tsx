@@ -1557,11 +1557,27 @@ export function KidsHome() {
       </View>
 
       {/* ─── Child Selector ──────────────────────────────────── */}
-      {children.length > 1 && (
+      {children.length > 1 && (() => {
+        // Build the 3 visible pills. Earlier this was `children.slice(0, 3)`,
+        // so selecting the 4th kid via the overflow modal left them invisible
+        // in the bar — the row felt frozen. Now we always include the active
+        // child and fill the remaining slots with the first non-active kids.
+        const visibleKids = (() => {
+          const active = children.find((c) => c.id === child.id)
+          if (!active) return children.slice(0, 3)
+          const others = children.filter((c) => c.id !== child.id)
+          return [active, ...others].slice(0, 3)
+        })()
+        // Keep CHILD_COLORS stable per-child by indexing into the original
+        // children array (otherwise a child's color would shift each time
+        // they enter or leave the visible slot).
+        const colorIdxByChildId = new Map<string, number>()
+        children.forEach((c, i) => colorIdxByChildId.set(c.id, i))
+        return (
         <View style={s.childPills}>
-          {children.slice(0, 3).map((c, idx) => {
+          {visibleKids.map((c) => {
             const active = c.id === child.id
-            const kidColor = CHILD_COLORS[idx % CHILD_COLORS.length]
+            const kidColor = CHILD_COLORS[(colorIdxByChildId.get(c.id) ?? 0) % CHILD_COLORS.length]
             const ST_INK = '#141313'
             return (
               <Pressable key={c.id} onPress={() => setActiveChild(c)}
@@ -1592,7 +1608,8 @@ export function KidsHome() {
             </Pressable>
           )}
         </View>
-      )}
+        )
+      })()}
 
       {/* ─── Overflow Kids Modal ──────────────────────────────── */}
       <Modal visible={overflowKidsVisible} transparent animationType="slide">
