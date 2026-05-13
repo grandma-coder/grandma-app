@@ -34,6 +34,7 @@ import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
+import { GrowthPercentileChart } from '../kids/GrowthPercentileChart'
 import { Heart as HeartSticker, Flower as FlowerSticker, Burst as BurstSticker, Star as StarSticker, Cross as CrossSticker, Moon as MoonSticker, Sparkle as SparkleSticker, Leaf as LeafSticker, Pill as PillSticker } from '../ui/Stickers'
 import { StickerPalette } from '../stickers/BrandStickers'
 import { Flame as FlameSticker } from '../stickers/RewardStickers'
@@ -1498,7 +1499,7 @@ export function KidsHome() {
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={{
-              backgroundColor: isDark ? colors.surface : '#FFFEF8',
+              backgroundColor: colors.surface,
               borderTopLeftRadius: 32,
               borderTopRightRadius: 32,
               borderTopWidth: 1.5,
@@ -1522,12 +1523,12 @@ export function KidsHome() {
 
             {/* Header */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ color: isDark ? colors.text : '#141313', fontSize: 24, letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' }}>Custom Range</Text>
+              <Text style={{ color: colors.text, fontSize: 24, letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' }}>Custom Range</Text>
               <Pressable
                 onPress={() => setCustomPickerVisible(false)}
                 style={({ pressed }) => ({
                   width: 36, height: 36, borderRadius: 18,
-                  backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
+                  backgroundColor: colors.surfaceRaised,
                   borderWidth: 1.5, borderColor: '#141313',
                   alignItems: 'center', justifyContent: 'center',
                   shadowColor: '#141313',
@@ -1543,8 +1544,8 @@ export function KidsHome() {
             {/* START / END chips */}
             {(() => {
               const ST_INK = '#141313'
-              const ST_YELLOW = isDark ? '#F0CE4C' : '#F5D652'
-              const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+              const ST_YELLOW = stickers.yellow
+              const ST_CREAM = colors.surfaceRaised
               return (
                 <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
                   <Pressable
@@ -1612,7 +1613,7 @@ export function KidsHome() {
               display="spinner"
               maximumDate={customPickerActive === 'start' ? customDraft.end : new Date()}
               minimumDate={customPickerActive === 'end' ? customDraft.start : undefined}
-              textColor={isDark ? colors.text : '#141313'}
+              textColor={colors.text}
               accentColor="#141313"
               themeVariant={isDark ? 'dark' : 'light'}
               style={{ width: '100%' }}
@@ -1636,7 +1637,7 @@ export function KidsHome() {
               style={({ pressed }) => ({
                 height: 60,
                 borderRadius: 999,
-                backgroundColor: isDark ? '#F0CE4C' : '#F5D652',
+                backgroundColor: stickers.yellow,
                 borderWidth: 2, borderColor: '#141313',
                 alignItems: 'center', justifyContent: 'center',
                 shadowColor: '#141313',
@@ -1695,7 +1696,7 @@ export function KidsHome() {
         style={({ pressed }) => [
           s.setGoalsBtn,
           {
-            backgroundColor: isDark ? colors.surface : '#FFFEF8',
+            backgroundColor: colors.surface,
             borderColor: isDark ? colors.border : '#141313',
             shadowColor: '#141313',
             shadowOffset: { width: 0, height: pressed ? 1 : 3 },
@@ -1718,7 +1719,7 @@ export function KidsHome() {
         >
           <StarSticker size={20} fill="#F5D652" stroke="#141313" />
         </View>
-        <Text style={[s.setGoalsBtnText, { color: isDark ? colors.text : '#141313', fontFamily: 'Fraunces_700Bold' }]}>Set Goals</Text>
+        <Text style={[s.setGoalsBtnText, { color: colors.text, fontFamily: 'Fraunces_700Bold' }]}>Set Goals</Text>
         <Text style={[s.setGoalsBtnHint, { color: isDark ? colors.textMuted : 'rgba(20,19,19,0.55)', fontFamily: 'DMSans_500Medium' }]}>
           Customize daily targets
         </Text>
@@ -1730,7 +1731,7 @@ export function KidsHome() {
             alignItems: 'center', justifyContent: 'center',
           }}
         >
-          <ChevronRight size={13} color={isDark ? colors.text : '#141313'} strokeWidth={2.4} />
+          <ChevronRight size={13} color={colors.text} strokeWidth={2.4} />
         </View>
       </Pressable>
 
@@ -1802,7 +1803,7 @@ export function KidsHome() {
 
       {showReminderInput && (
         <View style={[s.reminderInputCard, {
-          backgroundColor: isDark ? colors.surface : '#FFFEF8',
+          backgroundColor: colors.surface,
           borderRadius: 28,
           borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
           shadowColor: '#141313',
@@ -1831,7 +1832,7 @@ export function KidsHome() {
               backgroundColor: isDark ? colors.surfaceRaised : 'rgba(20,19,19,0.04)',
               borderRadius: 16,
               borderWidth: 1,
-              borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+              borderColor: colors.border,
               paddingHorizontal: 14,
               paddingVertical: 11,
             }]}
@@ -1979,7 +1980,7 @@ export function KidsHome() {
                     paddingVertical: 12,
                     backgroundColor: isDark ? colors.surface : stickers.blue + '18',
                     borderTopWidth: 1,
-                    borderTopColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                    borderTopColor: colors.border,
                   }}
                 >
                   <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: brand.kids }}>Done — confirm date</Text>
@@ -2032,7 +2033,7 @@ export function KidsHome() {
                     paddingVertical: 12,
                     backgroundColor: isDark ? colors.surface : stickers.peach + '18',
                     borderTopWidth: 1,
-                    borderTopColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                    borderTopColor: colors.border,
                   }}
                 >
                   <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: '#C06030' }}>Done — confirm time</Text>
@@ -2330,10 +2331,10 @@ function HeroTiles({
   onLogActivity?: () => void
 }) {
   const { colors, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
+  const ink = colors.text
   const ink3 = isDark ? colors.textSecondary : '#6E6763'
   const lineColor = isDark ? colors.borderStrong : 'rgba(20,19,19,0.08)'
-  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paper = colors.surface
 
   // Sticker-palette soft bgs — bumped contrast in dark mode so cards read as
   // tinted paper rather than near-black olive.
@@ -2853,8 +2854,8 @@ function MoodCard({ moodCounts, dominantMood }: { moodCounts: Record<string, num
   // Pastel-soft yellow tile (sticker palette)
   const tileBg = isDark ? 'rgba(245,214,82,0.16)' : '#FBEA9E'
   const tileBorder = isDark ? 'rgba(245,214,82,0.28)' : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const ink = colors.text
+  const ink3 = colors.textMuted
 
   return (
     <View style={[s.metricCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
@@ -2920,8 +2921,8 @@ function NutritionCard({ stage, caloriesTotal, caloriesTarget, feedingCount, fee
   const tileBg = isDark ? 'rgba(242,178,199,0.14)' : '#F9D8E2'
   const tileBorder = isDark ? 'rgba(242,178,199,0.28)' : 'rgba(20,19,19,0.08)'
   const coral = '#EE7B6D'
-  const ink = isDark ? colors.text : '#141313'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const ink = colors.text
+  const ink3 = colors.textMuted
 
   return (
     <View style={[s.metricCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
@@ -2989,11 +2990,11 @@ function HealthCard({ reminders, healthHistory, child }: {
   const overdueCount = nextVaccines.filter(v => v.overdue).length
   const nextVaccine = nextVaccines[0]
 
-  const tileBg = isDark ? colors.surface : '#FFFEF8'
-  const tileBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const tileBg = colors.surface
+  const tileBorder = colors.border
   const green = '#BDD48C'
-  const ink = isDark ? colors.text : '#141313'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const ink = colors.text
+  const ink3 = colors.textMuted
 
   const statusBg = overdueCount > 0
     ? (isDark ? brand.error + '22' : brand.error + '15')
@@ -3094,12 +3095,12 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
   }), 1)
 
   const stickerInk = isDark ? 'rgba(255,255,255,0.18)' : '#141313'
-  const ink = isDark ? colors.text : '#141313'
+  const ink = colors.text
   const ink3 = isDark ? colors.textMuted : 'rgba(20,19,19,0.5)'
 
   return (
     <View style={[s.diaperFullCard, {
-      backgroundColor: isDark ? colors.surface : '#FFFEF8',
+      backgroundColor: colors.surface,
       borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
       borderWidth: 1.5,
       shadowColor: '#141313',
@@ -3710,7 +3711,7 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
   const { colors, isDark } = useTheme()
   const ink = colors.text
   const ink3 = colors.textMuted
-  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paper = colors.surface
   const paperBorder = colors.border
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -3808,7 +3809,7 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
   onSetVaccineDate: (key: string, date: string | null) => void
   onMarkVaccineGiven: (name: string, date: string, key: string) => Promise<void>
 }) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, stickers } = useTheme()
   const milestones = useMemo(
     () => buildVaccineScheduleTree(child.birthDate ?? '', healthHistory.vaccines, child.countryCode ?? 'US'),
     [child.birthDate, healthHistory.vaccines, child.countryCode],
@@ -3834,11 +3835,11 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
 
   // Sticker palette (cream-paper design system) — bright fills + ink borders for the sticker-on-paper feel
   const ST_INK = '#141313'
-  const ST_GREEN = isDark ? '#C5DA98' : '#BDD48C'
+  const ST_GREEN = stickers.green
   const ST_GREEN_SOFT = isDark ? '#283016' : '#DDE7BB'
-  const ST_YELLOW = isDark ? '#F0CE4C' : '#F5D652'
+  const ST_YELLOW = stickers.yellow
   const ST_YELLOW_SOFT = isDark ? '#3A3116' : '#FBEA9E'
-  const ST_PEACH = isDark ? '#F7C09D' : '#F5B896'
+  const ST_PEACH = stickers.peach
   const ST_PEACH_SOFT = isDark ? '#3A2618' : '#F9D6C0'
   const ST_CREAM = isDark ? colors.surface : '#F7F0DF'
   const ST_LINE = isDark ? 'rgba(245,237,220,0.20)' : 'rgba(20,19,19,0.20)'
@@ -4052,7 +4053,7 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                       {isPickerOpen && (
                         <View style={{
                           marginTop: 6, marginBottom: 12, marginLeft: 10, marginRight: 4,
-                          backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                          backgroundColor: colors.surface,
                           borderWidth: 1.5, borderColor: ST_INK,
                           borderRadius: 22, padding: 12,
                           shadowColor: ST_INK,
@@ -4181,12 +4182,12 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
   childName?: string
   childColor?: string
 }) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, stickers } = useTheme()
   const ST_INK = '#141313'
   const ST_BLUE = isDark ? '#A5C9F0' : '#9DC3E8'
   const ST_BLUE_SOFT = isDark ? '#1F2A3A' : '#CFE0F0'
-  const ST_YELLOW = isDark ? '#F0CE4C' : '#F5D652'
-  const PAPER = isDark ? colors.surface : '#FFFEF8'
+  const ST_YELLOW = stickers.yellow
+  const PAPER = colors.surface
   const ink = isDark ? colors.text : ST_INK
   const ink3 = colors.textMuted
   const pct = sleepTarget > 0 ? Math.round((sleepTotal / sleepTarget) * 100) : 0
@@ -4291,9 +4292,9 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
   const { weight, height } = parseGrowthValue(healthHistory.growth)
   const [activityBreakdownVisible, setActivityBreakdownVisible] = useState(false)
 
-  const paper = isDark ? colors.surface : '#FFFEF8'
+  const paper = colors.surface
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.12)'
-  const ink = isDark ? colors.text : '#141313'
+  const ink = colors.text
   const ink3 = isDark ? colors.textMuted : 'rgba(20,19,19,0.5)'
   const stickerInk = isDark ? 'rgba(255,255,255,0.18)' : '#141313'
 
@@ -4366,6 +4367,76 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                 <Text style={[s.hdBannerStatSub, { color: ink3 }]}>of {sleepTarget.toFixed(0)}h</Text>
               </View>
             </View>
+
+            {/* WHO/CDC growth percentile charts.
+                Rendered before Latest Growth so the chart's context is
+                visible above the numeric summary.
+                Only shows for boys/girls (the standards don't have a
+                neutral table) and when at least one measurement exists. */}
+            {(child.sex === 'male' || child.sex === 'female') &&
+              healthHistory.growth.length > 0 &&
+              child.birthDate && (() => {
+                const sex = child.sex as 'male' | 'female'
+                // Build {ageMonths, value} arrays for weight + height.
+                const weightPts: { ageMonths: number; value: number; date: string }[] = []
+                const heightPts: { ageMonths: number; value: number; date: string }[] = []
+                const birth = new Date(child.birthDate + 'T00:00:00')
+                for (const g of healthHistory.growth) {
+                  if (!g.date) continue
+                  const measured = new Date(g.date + 'T00:00:00')
+                  if (isNaN(measured.getTime())) continue
+                  const ageMonths =
+                    (measured.getFullYear() - birth.getFullYear()) * 12 +
+                    (measured.getMonth() - birth.getMonth()) +
+                    (measured.getDate() - birth.getDate()) / 30
+                  // Reuse parseGrowthValue but on the single entry. Cheaper:
+                  // pattern-match weight + height inline here.
+                  const wMatch = (g.value || '').match(/([0-9]+(?:[.,][0-9]+)?)\s*(kg|lbs?|lb)/i)
+                  const hMatch = (g.value || '').match(/([0-9]+(?:[.,][0-9]+)?)\s*(cm|in|inches?|inch)/i)
+                  if (wMatch) {
+                    const n = parseFloat(wMatch[1].replace(',', '.'))
+                    const unit = wMatch[2].toLowerCase()
+                    const kg = unit === 'kg' ? n : n * 0.45359237
+                    if (Number.isFinite(kg) && kg > 0) weightPts.push({ ageMonths, value: kg, date: g.date })
+                  }
+                  if (hMatch) {
+                    const n = parseFloat(hMatch[1].replace(',', '.'))
+                    const unit = hMatch[2].toLowerCase()
+                    const cm = unit === 'cm' ? n : n * 2.54
+                    if (Number.isFinite(cm) && cm > 0) heightPts.push({ ageMonths, value: cm, date: g.date })
+                  }
+                }
+                const ageMonths =
+                  (new Date().getFullYear() - birth.getFullYear()) * 12 +
+                  (new Date().getMonth() - birth.getMonth())
+                const chartWidth = SW - 64
+                return (
+                  <View style={{ gap: 12, marginTop: 4 }}>
+                    {weightPts.length > 0 && (
+                      <GrowthPercentileChart
+                        title="Weight-for-age"
+                        metric="weight"
+                        sex={sex}
+                        childAgeMonths={ageMonths}
+                        childName={child.name}
+                        points={weightPts}
+                        width={chartWidth}
+                      />
+                    )}
+                    {heightPts.length > 0 && (
+                      <GrowthPercentileChart
+                        title="Height-for-age"
+                        metric="height"
+                        sex={sex}
+                        childAgeMonths={ageMonths}
+                        childName={child.name}
+                        points={heightPts}
+                        width={chartWidth}
+                      />
+                    )}
+                  </View>
+                )
+              })()}
 
             {/* Latest Growth */}
             {(weight || height) && (
@@ -5798,7 +5869,7 @@ function ReminderRow({
     ? (isDark ? 'rgba(245,214,82,0.08)' : '#FFFDE8')
     : isDragging
     ? (isDark ? brand.kids + '18' : brand.kidsSoft)
-    : (isDark ? colors.surface : '#FFFEF8')
+    : (colors.surface)
 
   const cardBorder = r.done
     ? (isDark ? 'rgba(189,212,140,0.28)' : 'rgba(189,212,140,0.65)')
@@ -5893,7 +5964,7 @@ function ReminderRow({
             style={{
               fontSize: 15,
               fontFamily: r.done ? 'DMSans_400Regular' : 'Fraunces_600SemiBold',
-              color: r.done ? colors.textMuted : (isDark ? colors.text : '#141313'),
+              color: r.done ? colors.textMuted : (colors.text),
               textDecorationLine: r.done ? 'line-through' : 'none',
               lineHeight: 21,
             }}
@@ -6202,7 +6273,7 @@ function RemindersModal({
                     paddingHorizontal: 16,
                     borderRadius: 999,
                     borderWidth: 1.5,
-                    backgroundColor: isAll ? '#F5D652' : (isDark ? colors.surface : '#FFFEF8'),
+                    backgroundColor: isAll ? '#F5D652' : (colors.surface),
                     borderColor: isDark ? (isAll ? '#F5D652' : colors.border) : '#141313',
                   }}
                 >
@@ -6245,7 +6316,7 @@ function RemindersModal({
                     paddingHorizontal: 14,
                     borderRadius: 999,
                     borderWidth: 1.5,
-                    backgroundColor: isActive ? kidColor : (isDark ? colors.surface : '#FFFEF8'),
+                    backgroundColor: isActive ? kidColor : (colors.surface),
                     borderColor: isDark ? (isActive ? kidColor : colors.border) : '#141313',
                   }}
                 >
@@ -6261,7 +6332,7 @@ function RemindersModal({
         <View style={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4 }}>
           <View style={{
             flexDirection: 'row',
-            backgroundColor: isDark ? colors.surface : '#FFFEF8',
+            backgroundColor: colors.surface,
             borderRadius: 999,
             borderWidth: 1.5,
             borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
@@ -6374,7 +6445,7 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
   const currentPhaseName = phaseIndex >= 0 ? (leap.phases[phaseIndex]?.label ?? '') : ''
 
   const stickerInk = isDark ? 'rgba(255,255,255,0.18)' : '#141313'
-  const ink = isDark ? colors.text : '#141313'
+  const ink = colors.text
   const ink3 = isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'
 
   // Sticker-green soft for "done", mode-color soft for active, paper otherwise
@@ -6382,7 +6453,7 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
     ? (isDark ? 'rgba(189,212,140,0.16)' : '#EDF5E2')
     : isActive
       ? (isDark ? leapColor + '18' : leapColor + '20')
-      : (isDark ? colors.surface : '#FFFEF8')
+      : (colors.surface)
   const border = isDone
     ? (isDark ? 'rgba(189,212,140,0.35)' : 'rgba(20,19,19,0.12)')
     : isActive
@@ -6517,12 +6588,12 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
   const phaseCurrent = [phaseIndex === 0, phaseIndex === 1, phaseIndex === 2]
 
   // Paper tokens
-  const paperBg = isDark ? colors.bg : '#F3ECD9'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const ink = isDark ? colors.text : '#141313'
-  const ink2 = isDark ? colors.textSecondary : '#3A3533'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
-  const line = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paperBg = colors.bg
+  const paper = colors.surface
+  const ink = colors.text
+  const ink2 = colors.textSecondary
+  const ink3 = colors.textMuted
+  const line = colors.border
   const yellowSoft = isDark ? 'rgba(245,214,82,0.20)' : '#FBEA9E'
   const pinkSoft = isDark ? 'rgba(242,178,199,0.20)' : '#F9D8E2'
   const blueSoft = isDark ? 'rgba(157,195,232,0.20)' : '#CFE0F0'
@@ -6602,7 +6673,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
             activeIndex={isActive ? leap.index : -1}
             isAllDone={isDone}
             onSelect={(i) => setSelectedLeapIdx(i)}
-            tokens={{ paper, ink, ink2, ink3, line, yellowSoft, pinkSoft, blueSoft, greenSoft, lilacSoft, isDark, surface: isDark ? colors.surface : '#FFFEF8' }}
+            tokens={{ paper, ink, ink2, ink3, line, yellowSoft, pinkSoft, blueSoft, greenSoft, lilacSoft, isDark, surface: colors.surface }}
           />
         </ScrollView>
       </View>
@@ -6817,12 +6888,12 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
   const phaseCurrent = isThisActive ? [(currentPhaseIndex === 0), (currentPhaseIndex === 1), (currentPhaseIndex === 2)] : [false, false, false]
 
   // Paper tokens
-  const paperBg = isDark ? colors.bg : '#F3ECD9'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const ink = isDark ? colors.text : '#141313'
-  const ink2 = isDark ? colors.textSecondary : '#3A3533'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
-  const line = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paperBg = colors.bg
+  const paper = colors.surface
+  const ink = colors.text
+  const ink2 = colors.textSecondary
+  const ink3 = colors.textMuted
+  const line = colors.border
   const yellowSoft = isDark ? 'rgba(245,214,82,0.20)' : '#FBEA9E'
   const pinkSoft = isDark ? 'rgba(242,178,199,0.20)' : '#F9D8E2'
   const blueSoft = isDark ? 'rgba(157,195,232,0.20)' : '#CFE0F0'
