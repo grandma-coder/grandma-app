@@ -2979,17 +2979,21 @@ function HealthCard({ reminders, healthHistory, child }: {
   const lastVaccine = healthHistory.vaccines[0]
   const { weight, height } = parseGrowthValue(healthHistory.growth)
   const growthSummary = [weight, height].filter(Boolean).join(' · ') || null
-  const upcomingCount = getNextDueVaccines(child.birthDate ?? '', healthHistory.vaccines, child.countryCode ?? 'US').length
-  const overdueCount = getNextDueVaccines(child.birthDate ?? '', healthHistory.vaccines, child.countryCode ?? 'US').filter(v => v.overdue).length
+  // Memoize the schedule walk — previously called 3× per render in this
+  // component (.length, .filter(overdue), and again for nextVaccine).
+  const nextVaccines = useMemo(
+    () => getNextDueVaccines(child.birthDate ?? '', healthHistory.vaccines, child.countryCode ?? 'US'),
+    [child.birthDate, child.countryCode, healthHistory.vaccines],
+  )
+  const upcomingCount = nextVaccines.length
+  const overdueCount = nextVaccines.filter(v => v.overdue).length
+  const nextVaccine = nextVaccines[0]
 
   const tileBg = isDark ? colors.surface : '#FFFEF8'
   const tileBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
   const green = '#BDD48C'
   const ink = isDark ? colors.text : '#141313'
   const ink3 = isDark ? colors.textMuted : '#6E6763'
-
-  const nextVaccines = getNextDueVaccines(child.birthDate ?? '', healthHistory.vaccines, child.countryCode ?? 'US')
-  const nextVaccine = nextVaccines[0]
 
   const statusBg = overdueCount > 0
     ? (isDark ? brand.error + '22' : brand.error + '15')
