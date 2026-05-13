@@ -397,6 +397,20 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
             .map(([k, v]) => (v === true ? k : `${v}`))
           return parts.join(' · ') || notes || ''
         }
+        case 'note': {
+          // Free-form health events (Doctor visit / Injury / Other) are
+          // stored as { eventType, description }. Show the user's
+          // description if it differs from the eventType label; otherwise
+          // just the eventType.
+          if (parsed.eventType && typeof parsed.eventType === 'string') {
+            const desc = typeof parsed.description === 'string' ? parsed.description : ''
+            if (desc && desc !== parsed.eventType) {
+              return `${parsed.eventType}: ${desc}`
+            }
+            return parsed.eventType
+          }
+          return notes ?? ''
+        }
       }
     }
   } catch {

@@ -1905,11 +1905,38 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
     setChildId(editLog.child_id)
     setLogDate(editLog.date)
     if (editLog.notes) setNotes(editLog.notes)
-    // Reverse-map log type to event label
-    const typeToLabel: Record<string, string> = { temperature: 'Temperature', vaccine: 'Vaccine', medicine: 'Medicine', note: 'Other' }
-    if (typeToLabel[editLog.type]) setEventType(typeToLabel[editLog.type])
-    else if (HEALTH_EVENTS.includes(editLog.type)) setEventType(editLog.type)
-    if (editLog.value) setValue(editLog.value)
+    // Reverse-map log type to event label.
+    // For 'note' rows the eventType (Doctor visit / Injury / Other) is
+    // packed into the JSON value — extract it so the form opens on the
+    // right pill and shows the user's text without the JSON wrapper.
+    const typeToLabel: Record<string, string> = { temperature: 'Temperature', vaccine: 'Vaccine', medicine: 'Medicine' }
+    if (editLog.type === 'note') {
+      try {
+        const v = JSON.parse(editLog.value ?? '{}')
+        if (v && typeof v.eventType === 'string' && HEALTH_EVENTS.includes(v.eventType)) {
+          setEventType(v.eventType)
+        } else {
+          setEventType('Other')
+        }
+        if (typeof v?.description === 'string') {
+          setValue(v.description === v.eventType ? '' : v.description)
+        } else if (typeof editLog.value === 'string') {
+          // Pre-W40 row: value was a bare string.
+          setValue(editLog.value)
+        }
+      } catch {
+        setEventType('Other')
+        if (editLog.value) setValue(editLog.value)
+      }
+    } else if (typeToLabel[editLog.type]) {
+      setEventType(typeToLabel[editLog.type])
+      if (editLog.value) setValue(editLog.value)
+    } else if (HEALTH_EVENTS.includes(editLog.type)) {
+      setEventType(editLog.type)
+      if (editLog.value) setValue(editLog.value)
+    } else if (editLog.value) {
+      setValue(editLog.value)
+    }
   }, [editLog?.id])
 
   async function save() {
@@ -1933,7 +1960,15 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
         )
         return
       }
-      const finalValue = trimmedValue || eventType
+      // For typed events keep value as the bare name. For free-form events
+      // (Doctor visit / Injury / Other → logType='note') pack the eventType
+      // into a JSON value so the subtype survives — the previous code
+      // collapsed all three to indistinguishable 'note' rows and the Visits
+      // view couldn't tell them apart.
+      const finalValue =
+        logType === 'note'
+          ? JSON.stringify({ eventType, description: trimmedValue || eventType })
+          : (trimmedValue || eventType)
       const tagged = tagWithRoutine(finalValue, prefill) ?? finalValue
       if (editLog) {
         await updateChildLog(editLog.id, tagged, notes || null, undefined, logDate)
