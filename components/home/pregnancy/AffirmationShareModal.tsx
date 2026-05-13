@@ -9,6 +9,8 @@ import {
   ScrollView,
   Animated,
   Easing,
+  Platform,
+  Linking,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import ViewShot, { captureRef } from 'react-native-view-shot'
@@ -303,19 +305,38 @@ function TemplateTile({
   const handleTapSave = async () => {
     if (!shotRef.current) return
     if (styleMode === 'text') {
+      // iOS supports image clipboard; Android falls back to share sheet so
+      // the user can drop it directly into Instagram / Messages / etc.
       try {
-        const base64 = await captureRef(shotRef.current, { format: 'png', quality: 1, result: 'base64' })
-        await Clipboard.setImageAsync(base64)
-        toast.show({ title: 'Copied!', message: 'Paste into your Story or a message.', autoDismiss: 1800 })
+        if (Platform.OS === 'ios') {
+          const base64 = await captureRef(shotRef.current, { format: 'png', quality: 1, result: 'base64' })
+          await Clipboard.setImageAsync(base64)
+          toast.show({ title: 'Copied!', message: 'Paste into your Story or a message.', autoDismiss: 1800 })
+        } else {
+          const uri = await captureRef(shotRef.current, { format: 'png', quality: 1, result: 'tmpfile' })
+          const available = await Sharing.isAvailableAsync()
+          if (available) {
+            await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Share affirmation' })
+          } else {
+            toast.show({ title: 'Sharing unavailable', message: 'Tap and hold to save instead.', autoDismiss: 2400 })
+          }
+        }
       } catch {
-        toast.show({ title: 'Copy failed', message: "Couldn't create image. Try again.", autoDismiss: 1800 })
+        toast.show({ title: 'Share failed', message: "Couldn't create image. Try again.", autoDismiss: 1800 })
       }
       return
     }
     try {
       const { status } = await MediaLibrary.requestPermissionsAsync()
       if (status !== 'granted') {
-        toast.show({ title: 'Photos access needed', message: 'Enable Photos access in Settings to save templates.', autoDismiss: 2400 })
+        // No image-clipboard fallback on Android either, so route the user
+        // to Settings directly — there's no way forward without permission.
+        toast.show({
+          title: 'Photos access needed',
+          message: 'Opening Settings — enable Photos access for grandma.app.',
+          autoDismiss: 2400,
+        })
+        setTimeout(() => Linking.openSettings().catch(() => {}), 500)
         return
       }
       const uri = await captureRef(shotRef.current, captureArgs)
@@ -330,11 +351,22 @@ function TemplateTile({
   const handleLongCopy = async () => {
     if (!shotRef.current) return
     try {
-      const base64 = await captureRef(shotRef.current, { format: 'png', quality: 0.95, result: 'base64' })
-      await Clipboard.setImageAsync(base64)
-      toast.show({ title: 'Copied!', message: 'Paste into your Story or a message.', autoDismiss: 1800 })
+      if (Platform.OS === 'ios') {
+        const base64 = await captureRef(shotRef.current, { format: 'png', quality: 0.95, result: 'base64' })
+        await Clipboard.setImageAsync(base64)
+        toast.show({ title: 'Copied!', message: 'Paste into your Story or a message.', autoDismiss: 1800 })
+      } else {
+        // Android: copy isn't supported for images — share-sheet instead.
+        const uri = await captureRef(shotRef.current, { format: 'png', quality: 0.95, result: 'tmpfile' })
+        const available = await Sharing.isAvailableAsync()
+        if (available) {
+          await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Share affirmation' })
+        } else {
+          toast.show({ title: 'Sharing unavailable', message: 'Try the Save button instead.', autoDismiss: 2400 })
+        }
+      }
     } catch {
-      toast.show({ title: 'Copy failed', message: "Couldn't create image. Try again.", autoDismiss: 1800 })
+      toast.show({ title: 'Share failed', message: "Couldn't create image. Try again.", autoDismiss: 1800 })
     }
   }
 

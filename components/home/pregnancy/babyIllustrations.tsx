@@ -183,6 +183,11 @@ function characterOverlay(size: number) {
 }
 
 function weekSvg(week: number) {
+  // Clamp out-of-range inputs (e.g. transient week=0 during due-date edits)
+  // so the switch doesn't fall through to the pumpkin fallback for early
+  // weeks. Week 1 / week 40 illustrations are the canonical endpoints.
+  if (week < 1) week = 1
+  if (week > 42) week = 42
   switch (week) {
     case 1:
       return (

@@ -84,14 +84,16 @@ function useWeightCardData(userId: string | undefined) {
           .single(),
       ])
       if (!alive) return
-      const rows = (weightRes.data ?? [])
-        .map((r: any) => ({ date: r.log_date as string, weight: parseFloat(r.value ?? '0') }))
+      type WeightRow = { log_date: string; value: string | null }
+      const rows = ((weightRes.data ?? []) as WeightRow[])
+        .map((r) => ({ date: r.log_date, weight: parseFloat(r.value ?? '0') }))
         .filter((r) => !isNaN(r.weight) && r.weight > 0)
       setEntries(rows)
 
-      const bp = (profileRes.data?.birth_preferences as any) ?? {}
-      const pre = bp.prePregnancyWeight ? parseFloat(bp.prePregnancyWeight) : null
-      const h = bp.height ? parseFloat(bp.height) : null
+      type BirthPrefs = { prePregnancyWeight?: string | number; height?: string | number }
+      const bp = ((profileRes.data?.birth_preferences as BirthPrefs | undefined) ?? {}) as BirthPrefs
+      const pre = bp.prePregnancyWeight ? parseFloat(String(bp.prePregnancyWeight)) : null
+      const h = bp.height ? parseFloat(String(bp.height)) : null
       setProfile({
         prePregWeight: pre && !isNaN(pre) ? pre : null,
         heightCm: h && !isNaN(h) ? h : null,
