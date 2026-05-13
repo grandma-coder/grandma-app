@@ -134,9 +134,20 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
       .limit(AGGREGATE_ROW_CAP),
   ])
 
+  // A user can hold multiple caregiver roles (e.g. parent of their own
+  // child AND a nanny in another family). For leaderboard bucketing we
+  // surface the strongest identity. Precedence is deterministic so the
+  // displayed role doesn't shift based on the row order returned by
+  // Supabase. (Lower index = higher priority.)
+  const ROLE_PRIORITY = ['parent', 'partner', 'family', 'nanny'] as const
+  const rolePriority = (r: string) => {
+    const idx = ROLE_PRIORITY.indexOf(r as typeof ROLE_PRIORITY[number])
+    return idx === -1 ? ROLE_PRIORITY.length : idx
+  }
   const caregiverRoleMap = new Map<string, string>()
   for (const link of caregiverLinks ?? []) {
-    if (!caregiverRoleMap.has(link.user_id) || link.role !== 'parent') {
+    const current = caregiverRoleMap.get(link.user_id)
+    if (!current || rolePriority(link.role) < rolePriority(current)) {
       caregiverRoleMap.set(link.user_id, link.role)
     }
   }
