@@ -981,7 +981,24 @@ export function KidsCalendar() {
             if (rv.feedType) return lv?.feedType === rv.feedType
           } catch {}
         }
-        // No specific criteria on the routine — any food/feeding log counts.
+        // Routine without meal/feedType but WITH a time → require the log
+        // to be within ±2 hours of that time. Otherwise a 9pm feed marks
+        // a 7am-scheduled "Morning bottle" routine as done.
+        if (routine.time) {
+          const rHour = parseInt(routine.time.split(':')[0])
+          try {
+            const lv = log.value ? JSON.parse(log.value) : null
+            if (lv?.startTime || lv?.time) {
+              const t = String(lv.startTime ?? lv.time)
+              const lHour = parseInt(t.split(':')[0])
+              if (Number.isFinite(lHour)) return Math.abs(lHour - rHour) <= 2
+            }
+          } catch {}
+          // Fallback when the log payload has no time: use created_at hour.
+          const logHour = new Date(log.created_at).getHours()
+          return Math.abs(logHour - rHour) <= 2
+        }
+        // No criteria AND no time — any food/feeding log on the day counts.
         return true
       }
 
