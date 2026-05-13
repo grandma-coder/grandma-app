@@ -7104,6 +7104,8 @@ function buildVaccineScheduleTree(
     const target = normalize(v.name)
     const doseCount = givenVaccines.filter((g) => normalize(g.value) === target).length
 
+    const isAnnualSchedule = v.monthRanges.some(([, max]) => max === ANNUAL_VACCINE_SENTINEL)
+
     for (let i = 0; i < v.monthRanges.length; i++) {
       const [monthMin, monthMax] = v.monthRanges[i]
       const ageLabel = v.ages[i]
@@ -7111,6 +7113,27 @@ function buildVaccineScheduleTree(
       let status: MilestoneVaccineItem['status']
       if (i < doseCount) {
         status = 'done'
+      } else if (isAnnualSchedule) {
+        // Annual vaccines: cap "overdue" against the time since the last
+        // given dose, not the age domain — otherwise monthMax=999 means
+        // the child must be ~83 years old to be marked overdue.
+        if (ageMonths < monthMin - 2) {
+          status = 'future'
+        } else if (doseCount === 0) {
+          status = ageMonths > monthMin + 2 ? 'overdue' : 'upcoming'
+        } else {
+          const lastDate = givenVaccines
+            .filter((g) => normalize(g.value) === target)
+            .map((g) => g.date)
+            .sort()
+            .pop()
+          const monthsSinceLast = lastDate ? monthsSince(lastDate) : Infinity
+          status = monthsSinceLast >= ANNUAL_OVERDUE_MONTHS
+            ? 'overdue'
+            : monthsSinceLast >= 11
+              ? 'upcoming'
+              : 'future'
+        }
       } else if (ageMonths > monthMax + 1) {
         status = 'overdue'
       } else if (ageMonths >= monthMin - 2) {
@@ -7178,6 +7201,21 @@ interface UpcomingVaccine {
   overdue: boolean
 }
 
+// Sentinel monthMax used in the schedule for annual / recurring vaccines
+// (e.g. Influenza [6, 999] = "from 6 months onward, every year"). The
+// overdue check for these doses lives in the date domain (months since
+// last given) rather than the age domain (otherwise `ageMonths > 1000`
+// would mean a child has to be 83 to be flagged for a missed flu shot).
+const ANNUAL_VACCINE_SENTINEL = 999
+const ANNUAL_OVERDUE_MONTHS = 13 // 12-month cycle + 1 month grace
+
+function monthsSince(dateStr: string): number {
+  const d = new Date(dateStr)
+  if (Number.isNaN(d.getTime())) return Infinity
+  const now = new Date()
+  return (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth())
+}
+
 function getNextDueVaccines(birthDate: string, givenVaccines: HealthRecord[], countryCode: string = 'US'): UpcomingVaccine[] {
   if (!birthDate) return []
   const ageMonths = getAgeMonths(birthDate)
@@ -7186,25 +7224,64 @@ function getNextDueVaccines(birthDate: string, givenVaccines: HealthRecord[], co
 
   const normalize = (s: string) => s.trim().toLowerCase()
   for (const v of schedule) {
-    // Count how many doses of this vaccine are already logged.
-    // Exact-name match — substring matching collides across vaccines
-    // (e.g. Hepatitis A vs Hepatitis B, DTaP vs DTaP/IPV/Hib).
     const target = normalize(v.name)
-    const doseCount = givenVaccines.filter((g) => normalize(g.value) === target).length
+    const matchedDoses = givenVaccines.filter((g) => normalize(g.value) === target)
+    const doseCount = matchedDoses.length
 
-    if (doseCount >= v.monthRanges.length) continue // all doses done
+    const isAnnualSchedule = v.monthRanges.some(([, max]) => max === ANNUAL_VACCINE_SENTINEL)
 
-    const [minMo, maxMo] = v.monthRanges[doseCount]
-    // Show if: child is within 2 months of becoming eligible, or overdue (up to 18 months)
-    const isUpcoming = ageMonths >= minMo - 2 && ageMonths <= maxMo + 18
+    if (!isAnnualSchedule && doseCount >= v.monthRanges.length) continue // all doses done
+
+    // Annual vaccines reuse the same monthRange every year. Non-annual
+    // vaccines advance through monthRanges by doseCount.
+    const rangeIdx = isAnnualSchedule
+      ? Math.min(doseCount, v.monthRanges.length - 1)
+      : doseCount
+    const [minMo, maxMo] = v.monthRanges[rangeIdx]
+
+    let overdue = false
+    let isUpcoming = false
+
+    if (isAnnualSchedule) {
+      // Child must be old enough for the vaccine, then surface every year.
+      if (ageMonths < minMo - 2) continue
+      if (doseCount === 0) {
+        // Never received — overdue once they cross the minimum age window.
+        overdue = ageMonths > minMo + 2
+        isUpcoming = true
+      } else {
+        // Last dose: overdue if it's been > 13 months since the most
+        // recent administration (yearly + grace).
+        const lastDate = matchedDoses
+          .map((g) => g.date)
+          .sort()
+          .pop()
+        const monthsSinceLast = lastDate ? monthsSince(lastDate) : Infinity
+        if (monthsSinceLast >= ANNUAL_OVERDUE_MONTHS) {
+          overdue = true
+          isUpcoming = true
+        } else if (monthsSinceLast >= 11) {
+          // Due window: within 2 months of the next annual dose.
+          isUpcoming = true
+        }
+      }
+    } else {
+      // Regular scheduled dose: show if within 2 months of becoming
+      // eligible, or overdue (up to 18 months past max age).
+      isUpcoming = ageMonths >= minMo - 2 && ageMonths <= maxMo + 18
+      overdue = ageMonths > maxMo + 1
+    }
+
     if (!isUpcoming) continue
 
     result.push({
       key: `${v.name}-${doseCount}`,
       name: v.name,
-      doseLabel: v.monthRanges.length > 1 ? `dose ${doseCount + 1}` : '',
-      dueAge: v.ages[doseCount],
-      overdue: ageMonths > maxMo + 1,
+      doseLabel: isAnnualSchedule
+        ? (doseCount === 0 ? '' : `dose ${doseCount + 1}`)
+        : (v.monthRanges.length > 1 ? `dose ${doseCount + 1}` : ''),
+      dueAge: v.ages[Math.min(doseCount, v.ages.length - 1)],
+      overdue,
     })
     if (result.length >= 5) break
   }
