@@ -1264,7 +1264,7 @@ export function KidsHome() {
 
     // ── Sleep ──
     let sleepTotal = 0
-    let goodSleep = 0, totalSleepLogs = 0
+    let goodSleep = 0, poorSleep = 0, totalSleepLogs = 0
     for (const log of rangeLogs.filter((l) => l.type === 'sleep')) {
       let val: any = log.value
       try { val = typeof val === 'string' ? JSON.parse(val) : val } catch {}
@@ -1273,8 +1273,19 @@ export function KidsHome() {
       totalSleepLogs++
       const q = typeof val === 'object' && val ? (val.quality || '').toLowerCase() : ''
       if (q === 'great' || q === 'good') goodSleep++
+      else if (q === 'poor') poorSleep++
     }
-    const sleepQuality = totalSleepLogs === 0 ? 'No data' : goodSleep / totalSleepLogs >= 0.7 ? 'Great' : goodSleep / totalSleepLogs >= 0.4 ? 'Solid' : 'Restless'
+    // 4 tiers — surfacing Poor separately matters because the previous
+    // 3-tier collapse hid streaks of bad nights inside "Restless" (a
+    // softer label that reads as "a bit choppy" in copy).
+    const ratio = totalSleepLogs === 0 ? 0 : goodSleep / totalSleepLogs
+    const poorRatio = totalSleepLogs === 0 ? 0 : poorSleep / totalSleepLogs
+    const sleepQuality =
+      totalSleepLogs === 0 ? 'No data' :
+      poorRatio >= 0.5 ? 'Poor' :
+      ratio >= 0.7 ? 'Great' :
+      ratio >= 0.4 ? 'Solid' :
+      'Restless'
     const sleepTarget = g.sleep * days
 
     // ── Mood ──
@@ -3686,11 +3697,11 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
       <View style={s.modalOverlay}>
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           <View style={s.modalHeader}>
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={[s.modalTitle, { color: colors.text }]}>Mood Trends</Text>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <Text style={[s.modalTitle, { color: colors.text }]} numberOfLines={1}>Mood Trends</Text>
               {childName && childColor && (
-                <View style={{ backgroundColor: childColor + '25', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: childColor + '60' }}>
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: childColor }}>{childName}</Text>
+                <View style={{ backgroundColor: childColor + '25', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: childColor + '60', flexShrink: 1 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: childColor }} numberOfLines={1}>{childName}</Text>
                 </View>
               )}
             </View>
@@ -3856,8 +3867,11 @@ function getActivityPillar(explicitType: string | undefined, name?: string): Act
       if (p.patterns.some((rx) => rx.test(n))) return id as ActivityPillarId
     }
   }
-  // 3) Last-resort default — generic parenting entries land in Care.
-  return 'care'
+  // 3) Last-resort default — unknown activities land in Social rather than
+  // Care. Care is reserved for explicit caretaking entries (bath, diaper,
+  // nap, massage); defaulting unknowns to Care silently inflated the Care
+  // bucket with generic "did something with kid" entries.
+  return 'social'
 }
 
 function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, radius }: {
@@ -4403,6 +4417,7 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
     Great:    { tag: 'On a roll', tagBg: '#BDD48C', blurb: 'Most days are landing close to or above target. Sleep regulation is doing its quiet magic — keep the rhythm.' },
     Solid:    { tag: 'Solid base', tagBg: '#F5D652', blurb: 'Sleep is consistent enough to support growth and mood. A few short nights are normal at this age.' },
     Restless: { tag: 'A bit choppy', tagBg: '#F5B896', blurb: 'Several nights are running short. Watch for over-tiredness signs and try moving bedtime 15 minutes earlier for a few days.' },
+    Poor:     { tag: 'Tough stretch', tagBg: '#F2C9C2', blurb: 'Most nights are running short or fragmented. If this has continued for a week, consider checking in with your pediatrician about sleep routines or possible disruptions (illness, teething, schedule shifts).' },
     'No data':{ tag: 'Add a log', tagBg: '#E8E4DC', blurb: 'No sleep entries yet for this range. Logging even one sleep helps the rings fill in.' },
   }
   const q = qualityCopy[sleepQuality] ?? qualityCopy['No data']
