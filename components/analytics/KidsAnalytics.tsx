@@ -13,7 +13,7 @@
  *  9. Ask Grandma passes full analytics context automatically
  */
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import Animated, {
   useSharedValue,
   useAnimatedProps,
@@ -530,13 +530,16 @@ export function KidsAnalytics() {
   const [showCustomModal, setShowCustomModal] = useState(false)
 
   // Map the selected period to an analytics window.
-  const analyticsRange = (() => {
+  // Memoize against the actual inputs so the reference is stable between
+  // renders (otherwise downstream comparisons of object identity, including
+  // React Query's internal effect-deps, see a fresh object every render).
+  const analyticsRange = useMemo(() => {
     if (period === 'custom' && customRange) {
       return { kind: 'custom' as const, from: customRange.from, to: customRange.to }
     }
     const days = period === 'week' ? 7 : period === 'month' ? 30 : period === '3mo' ? 90 : period === 'year' ? 365 : 7
     return { kind: 'last' as const, days }
-  })()
+  }, [period, customRange?.from, customRange?.to])
 
   const customLabel = customRange
     ? (() => {
