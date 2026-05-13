@@ -1958,10 +1958,14 @@ function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
   const { colors, stickers, font } = useTheme()
   const [showModal, setShowModal] = useState(false)
   const adherenceRate = 100 - data.skipRate
+  // Three tiers: ≥70 healthy (green), 40–69 watch (coral), <40 alarm
+  // (brand.error). The duplicate `coral : coral` branch made the 40
+  // threshold dead code so users with severe routine drift saw the same
+  // color as a mild lapse.
   const adherenceColor =
     adherenceRate >= 70 ? stickers.green :
     adherenceRate >= 40 ? stickers.coral :
-    stickers.coral
+    brand.error
   const tint = adherenceRate >= 70 ? stickers.greenSoft : stickers.peachSoft
 
   return (
