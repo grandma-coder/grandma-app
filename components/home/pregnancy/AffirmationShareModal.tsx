@@ -109,9 +109,9 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
   const templates = useMemo(() => templatesForMode(mode), [mode])
 
   const { stickers } = useTheme()
-  const paperBg = isDark ? colors.bg : '#F3ECD9'
-  const cardBg = isDark ? colors.surface : '#FFFEF8'
-  const borderCol = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paperBg = colors.bg
+  const cardBg = colors.surface
+  const borderCol = colors.border
 
   const handleHeaderShare = async () => {
     const first = templates[0]

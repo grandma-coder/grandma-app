@@ -26,11 +26,11 @@ export default function DueDate() {
   const [mode, setMode] = useState<Mode>('due')
   const [dateInput, setDateInput] = useState('')
 
-  const bg = isDark ? colors.bg : '#F3ECD9'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const bg = colors.bg
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
+  const ink3 = colors.textMuted
 
   function calculateWeek(date: Date): number {
     const now = new Date()
@@ -50,6 +50,23 @@ export default function DueDate() {
     }
     const parsed = new Date(dateInput)
     const week = calculateWeek(parsed)
+
+    // Clamp out-of-range dates. Pregnancy spans 0–42 weeks; reject inputs
+    // outside that band so an LMP from 2 years ago doesn't produce a
+    // week-104 week number, and a due date 5 years out doesn't write
+    // a negative one.
+    if (mode === 'lmp' && week > 42) {
+      Alert.alert('Date too far in the past', 'Last period must be within the last 10 months.')
+      return
+    }
+    if (mode === 'due') {
+      const daysOut = (parsed.getTime() - Date.now()) / 86400000
+      if (daysOut > 300 || daysOut < -90) {
+        Alert.alert('Date out of range', 'Due date must be within the next 10 months.')
+        return
+      }
+    }
+
     if (mode === 'due') setDueDate(dateInput)
     else setLmpDate(dateInput)
     setWeekNumber(week)

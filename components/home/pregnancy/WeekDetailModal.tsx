@@ -97,12 +97,12 @@ function PrepDetailSheet({
 }: { item: PrepItemDef; week: number; onBack: () => void; accent: string; accentSoft: string }) {
   const { colors, isDark } = useTheme()
   const guide = getPrepGuide(item, week)
-  const ink = isDark ? colors.text : '#141313'
-  const ink2 = isDark ? colors.textSecondary : '#3A3533'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const ink = colors.text
+  const ink2 = colors.textSecondary
+  const ink3 = colors.textMuted
 
   return (
-    <View style={[styles.prepDetailRoot, { backgroundColor: isDark ? colors.bg : '#FFFEF8' }]}>
+    <View style={[styles.prepDetailRoot, { backgroundColor: colors.surface }]}>
       <ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
@@ -213,9 +213,9 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
   const pillBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(20,19,19,0.14)'
   const prepCardBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(20,19,19,0.035)'
   const prepCardBorder = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(20,19,19,0.08)'
-  const bodyInk = isDark ? colors.text : '#141313'
-  const bodyInk2 = isDark ? colors.textSecondary : '#3A3533'
-  const bodyInk3 = isDark ? colors.textMuted : '#6E6763'
+  const bodyInk = colors.text
+  const bodyInk2 = colors.textSecondary
+  const bodyInk3 = colors.textMuted
 
   return (
     <Modal

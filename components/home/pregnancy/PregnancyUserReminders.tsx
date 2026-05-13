@@ -158,7 +158,7 @@ export function PregnancyUserReminders({ userId }: Props) {
     <View style={{ gap: 10 }}>
       {/* Reminder card — always visible, expands on tap */}
       <View style={[styles.inputCard, {
-        backgroundColor: isDark ? colors.surface : '#FFFEF8',
+        backgroundColor: colors.surface,
         borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
         shadowColor: '#141313',
         shadowOpacity: isDark ? 0 : 0.07,
@@ -431,7 +431,7 @@ function ReminderRow({
     ? (isDark ? 'rgba(245,214,82,0.10)' : '#FFFBE6')
     : isDueToday
     ? (isDark ? 'rgba(245,214,82,0.08)' : '#FFFDE8')
-    : (isDark ? colors.surface : '#FFFEF8')
+    : (colors.surface)
 
   const cardBorder = isOverdue
     ? (isDark ? 'rgba(238,123,109,0.28)' : 'rgba(238,123,109,0.38)')
@@ -507,7 +507,7 @@ function ReminderRow({
             style={{
               fontSize: 15,
               fontFamily: 'Fraunces_600SemiBold',
-              color: isDark ? colors.text : '#141313',
+              color: colors.text,
               lineHeight: 21,
             }}
             numberOfLines={2}
@@ -519,7 +519,7 @@ function ReminderRow({
             ? (isDark ? brand.error + '22' : '#F5B896')
             : isDueToday
               ? (isDark ? '#F5D65222' : '#F5D652')
-              : (isDark ? colors.surfaceRaised : '#FFFEF8')
+              : (colors.surfaceRaised)
           const dueBorder = isDark
             ? isOverdue ? brand.error + '60' : isDueToday ? '#F5D65270' : colors.border
             : '#141313'

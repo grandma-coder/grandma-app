@@ -24,12 +24,12 @@ export default function BabyName() {
   const mode = useModeStore((s) => s.mode)
   const [name, setName] = useState('')
 
-  const bg = isDark ? colors.bg : '#F3ECD9'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
-  const ink4 = isDark ? colors.textFaint : '#A69E93'
+  const bg = colors.bg
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
+  const ink3 = colors.textMuted
+  const ink4 = colors.textFaint
 
   function handleContinue() {
     if (name.trim()) setBabyName(name.trim())

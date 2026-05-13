@@ -298,7 +298,7 @@ function WeightDetailModal(props: DetailProps) {
     entries, weekNumber, bandLow, bandHigh, chartWidth,
   } = props
   const { colors, font, stickers, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
+  const ink = colors.text
   const paperBorderStrong = isDark ? colors.border : 'rgba(20,19,19,0.18)'
 
   const recent = [...entries].reverse().slice(0, 8)
@@ -351,7 +351,7 @@ function WeightDetailModal(props: DetailProps) {
         </View>
 
         {/* Trend chart with target band */}
-        <View style={[styles.chartCard, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: paperBorderStrong }]}>
+        <View style={[styles.chartCard, { backgroundColor: colors.surface, borderColor: paperBorderStrong }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <MonoCaps size={10} color={colors.textMuted}>TREND · LAST {chartPoints.length} ENTRIES</MonoCaps>
             <View style={[styles.legendDot, { backgroundColor: stickers.lilac, borderColor: ink }]} />
@@ -376,7 +376,7 @@ function WeightDetailModal(props: DetailProps) {
         </View>
 
         {/* IOM target band */}
-        <View style={[styles.stickerBlock, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: paperBorderStrong }]}>
+        <View style={[styles.stickerBlock, { backgroundColor: colors.surface, borderColor: paperBorderStrong }]}>
           <MonoCaps size={10} color={colors.textMuted}>IOM TARGET · {band.label.toUpperCase()}</MonoCaps>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
             <Display size={26} color={ink}>{band.low}–{band.high}</Display>
@@ -395,7 +395,7 @@ function WeightDetailModal(props: DetailProps) {
 
         {/* Recent entries */}
         {recent.length > 0 && (
-          <View style={[styles.stickerBlock, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: paperBorderStrong }]}>
+          <View style={[styles.stickerBlock, { backgroundColor: colors.surface, borderColor: paperBorderStrong }]}>
             <MonoCaps size={10} color={colors.textMuted} style={{ marginBottom: 6 }}>RECENT ENTRIES</MonoCaps>
             {recent.map((e, i) => {
               const prev = i < recent.length - 1 ? recent[i + 1] : null

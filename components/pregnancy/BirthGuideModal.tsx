@@ -18,7 +18,6 @@ import {
 } from '../ui/Stickers'
 import type { BirthTopicKey } from '../../lib/birthGuideData'
 
-const INK = '#141313'
 
 interface BirthGuideModalProps {
   visible: boolean
@@ -63,10 +62,10 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
   const insets = useSafeAreaInsets()
   const [detailTopic, setDetailTopic] = useState<BirthTopicKey | null>(null)
 
-  const ink = isDark ? colors.text : INK
-  const inkMuted = isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : INK
+  const ink = colors.text
+  const inkMuted = colors.textMuted
+  const paper = colors.surface
+  const paperBorder = isDark ? colors.border : colors.text
 
   const handleClose = () => {
     setDetailTopic(null)
@@ -119,7 +118,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                   {
                     backgroundColor: paper,
                     borderColor: paperBorder,
-                    shadowColor: INK,
+                    shadowColor: colors.text,
                     shadowOffset: { width: 0, height: pressed ? 1 : 3 },
                     shadowOpacity: 1,
                     shadowRadius: 0,
@@ -148,7 +147,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                       {
                         backgroundColor: isDark ? colors.surfaceRaised : item.bg,
                         borderColor: paperBorder,
-                        shadowColor: INK,
+                        shadowColor: colors.text,
                         shadowOffset: { width: 0, height: pressed ? 1 : 3 },
                         shadowOpacity: 1,
                         shadowRadius: 0,
@@ -173,7 +172,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
               {/* Also in this guide */}
               <MonoCaps
                 size={11}
-                color={isDark ? colors.textMuted : INK}
+                color={isDark ? colors.textMuted : colors.text}
                 style={{ marginTop: 22, marginBottom: 10, letterSpacing: 1.6 }}
               >
                 ALSO IN THIS GUIDE
@@ -189,7 +188,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                       {
                         backgroundColor: paper,
                         borderColor: paperBorder,
-                        shadowColor: INK,
+                        shadowColor: colors.text,
                         shadowOffset: { width: 0, height: pressed ? 1 : 2 },
                         shadowOpacity: 1,
                         shadowRadius: 0,

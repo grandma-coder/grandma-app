@@ -29,7 +29,6 @@ import {
   Animated,
   Easing,
 } from 'react-native'
-import DateTimePicker from '@react-native-community/datetimepicker'
 import { StickerDateModal } from '../../components/ui/StickerDateModal'
 import { router } from 'expo-router'
 import { Edit2, Check, ChevronRight, X } from 'lucide-react-native'
@@ -168,8 +167,8 @@ interface EditFieldModalProps {
 
 function EditFieldModal({ visible, label, value, onSave, onClose, multiline = false }: EditFieldModalProps) {
   const { colors, font, isDark, stickers: st } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const paperBorder = colors.border
   const [text, setText] = useState(value)
   useEffect(() => { setText(value) }, [value])
 
@@ -274,7 +273,7 @@ function modalAccent(label: string, stickers: ReturnType<typeof useTheme>['stick
 
 function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose: () => void; stickers: ReturnType<typeof useTheme>['stickers'] }) {
   const { colors, font, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
+  const ink = colors.text
   const accent = modalAccent(label, st)
   return (
     <View style={styles.modalHeader}>
@@ -305,9 +304,9 @@ function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose:
 
 function OptionsSheet({ visible, label, value, options, onSave, onClose }: OptionsSheetProps) {
   const { colors, font, isDark, stickers: st } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
 
   const isInList = (v: string) => options.includes(v)
   const initialSelected = !value ? '' : isInList(value) ? value : 'Other'
@@ -352,7 +351,7 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
                     {
                       borderColor: ink,
                       borderWidth: 1.5,
-                      backgroundColor: active ? st.lilacSoft : (isDark ? colors.surface : '#FFFEF8'),
+                      backgroundColor: active ? st.lilacSoft : (colors.surface),
                       shadowColor: ink,
                       shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
                       shadowOpacity: active ? 1 : 0,
@@ -434,8 +433,8 @@ const WHEEL_PAD = ((WHEEL_VISIBLE - 1) / 2) * WHEEL_ITEM_HEIGHT
 
 function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: WheelSheetProps) {
   const { colors, font, isDark, stickers: st } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const paper = colors.surface
+  const paperBorder = colors.border
   const initialIndex = Math.max(0, options.indexOf(value))
   const [selected, setSelected] = useState(initialIndex >= 0 ? initialIndex : 0)
   const scrollRef = useRef<ScrollView>(null)
@@ -530,9 +529,9 @@ interface SectionCardProps {
 
 function SectionCard({ title, subtitle, badge, badgeTint, children }: SectionCardProps) {
   const { colors, font, isDark } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
   return (
     <View style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
       <View style={styles.sectionHeader}>
@@ -565,7 +564,7 @@ interface InfoRowProps {
 
 function InfoRow({ label, value, onEdit, dotColor }: InfoRowProps) {
   const { colors, font, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
+  const ink = colors.text
   const inkSoft = isDark ? colors.textSecondary : '#3A3533'
   const muted = isDark ? colors.textMuted : '#A69E93'
   return (
@@ -994,7 +993,7 @@ export default function PregnancyProfileScreen() {
           )}
 
           {daysToGo !== null && (
-            <View style={[styles.heroDaysRibbon, { borderColor: stickers.lilac, backgroundColor: isDark ? colors.surface : '#FFFEF8' }]}>
+            <View style={[styles.heroDaysRibbon, { borderColor: stickers.lilac, backgroundColor: colors.surface }]}>
               <Sparkle size={14} fill={stickers.yellow} />
               <Text style={[styles.heroDaysText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
                 {daysToGo} days to go

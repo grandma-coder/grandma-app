@@ -380,12 +380,17 @@ function CollageStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
   const { t } = useTranslation()
   const screenW = Dimensions.get('window').width
   const unreadNotifications = useUnreadNotificationCount()
+  const mode = useModeStore((s) => s.mode)
+  const modeConfig = getModeConfig(mode)
 
+  // Tab labels come from modeConfig so pregnancy shows "Documents" and
+  // pre-pregnancy shows "Planner" / hides the vault tab. Falls back to the
+  // i18n string if the modeConfig label is missing.
   const TAB_CFG: Record<string, TabStickerCfg> = {
-    index:    { icon: Home,      label: t('tab_home'),      color: StickerPalette.yellow },
-    agenda:   { icon: Calendar,  label: t('tab_calendar'),  color: StickerPalette.blue },
-    vault:    { icon: BarChart3, label: t('tab_analytics'), color: StickerPalette.green },
-    settings: { icon: User,      label: t('tab_profile'),   color: StickerPalette.lilac },
+    index:    { icon: Home,      label: modeConfig.tabs.index.label   || t('tab_home'),      color: StickerPalette.yellow },
+    agenda:   { icon: Calendar,  label: modeConfig.tabs.agenda.label  || t('tab_calendar'),  color: StickerPalette.blue },
+    vault:    { icon: BarChart3, label: modeConfig.tabs.vault.label   || t('tab_analytics'), color: StickerPalette.green },
+    settings: { icon: User,      label: modeConfig.tabs.settings.label || t('tab_profile'),  color: StickerPalette.lilac },
   }
 
   // Filter to visible routes — expo-router converts href:null into

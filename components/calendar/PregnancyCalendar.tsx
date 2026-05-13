@@ -65,7 +65,7 @@ import {
   Camera,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers as stickersLight, stickersDark } from '../../constants/theme'
+import { useTheme, brand, stickers as stickersLight, stickersDark, getModeColor } from '../../constants/theme'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getTrimester, weekForDate } from '../../lib/pregnancyWeeks'
 import { pregnancyWeeks, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
@@ -380,7 +380,7 @@ function QuickLogSheet({
   const paperBorder = colors.border
   const bg = colors.bg
   const ink = colors.text
-  const accent = brand.pregnancy
+  const accent = getModeColor('preg', isDark)
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -471,7 +471,7 @@ function RoutineManager({
   const ST_PAPER = colors.surface
   const ST_CREAM = colors.surfaceRaised
   const ST_SHEET = isDark ? colors.bg : '#FAF6E8'
-  const ST_LAVENDER = isDark ? '#C4B5EF' : brand.pregnancy
+  const ST_LAVENDER = getModeColor('preg', isDark)
   const ST_LAVENDER_SOFT = '#E0D6F4'
   const ST_RED = isDark ? '#E66B6B' : brand.error
 
@@ -1905,7 +1905,7 @@ export function PregnancyCalendar() {
     const ST_INK = '#141313'
     const ST_PAPER = colors.surface
     const ST_CREAM = colors.surfaceRaised
-    const ST_LAVENDER = isDark ? '#C4B5EF' : brand.pregnancy
+    const ST_LAVENDER = getModeColor('preg', isDark)
     const ST_GREEN = isDark ? '#9DD68A' : '#86C46F'
     const ST_CORAL = isDark ? '#F2A088' : '#E58968'
 

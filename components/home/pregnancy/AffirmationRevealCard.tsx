@@ -159,6 +159,12 @@ interface Variant {
 
 // Tuple form keeps 50+ variants compact. Each row:
 // [paperBg, washColor, accent, halo, heartFill, starFill, btn1, btn2, ink, muted]
+//
+// Note (design system): this palette is treated as an illustration-data
+// file per DESIGN_SYSTEM.md §0 — the 50 hand-tuned variants are part of
+// the visual asset, not generic UI surfaces. Where a value maps cleanly
+// to a sticker/brand token we use one (`S.lilac`, `S.peach`, …); the
+// rest are intentional palette literals.
 type V = [string, string, string, string, string, string, string, string, string, string]
 
 function buildVariants(stickers: ReturnType<typeof useTheme>['stickers']): Variant[] {

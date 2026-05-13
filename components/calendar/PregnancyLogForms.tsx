@@ -24,7 +24,6 @@ import {
 import Svg, { Path } from 'react-native-svg'
 import {
   useTheme,
-  brand,
   stickers as stickersLight,
   stickersDark,
   getModeColor,
@@ -148,7 +147,7 @@ export function PregnancyMoodForm({
                 styles.moodBtn,
                 {
                   backgroundColor: active ? getModeColorSoft('preg', isDark) : colors.surface,
-                  borderColor: active ? brand.pregnancy : colors.border,
+                  borderColor: active ? getModeColor('preg', isDark) : colors.border,
                   borderRadius: radius.lg,
                 },
               ]}
@@ -161,7 +160,7 @@ export function PregnancyMoodForm({
               <Text
                 style={[
                   styles.moodLabel,
-                  { color: active ? brand.pregnancy : colors.textSecondary },
+                  { color: active ? getModeColor('preg', isDark) : colors.textSecondary },
                 ]}
               >
                 {m.label}
@@ -258,18 +257,18 @@ export function PregnancySymptomsForm({
                 styles.chip,
                 {
                   backgroundColor: active ? getModeColorSoft('preg', isDark) : colors.surface,
-                  borderColor: active ? brand.pregnancy : colors.border,
+                  borderColor: active ? getModeColor('preg', isDark) : colors.border,
                   borderRadius: radius.full,
                 },
               ]}
             >
               {active && (
-                <Check size={12} color={brand.pregnancy} strokeWidth={3} />
+                <Check size={12} color={getModeColor('preg', isDark)} strokeWidth={3} />
               )}
               <Text
                 style={[
                   styles.chipText,
-                  { color: active ? brand.pregnancy : colors.text },
+                  { color: active ? getModeColor('preg', isDark) : colors.text },
                 ]}
               >
                 {sym}
@@ -356,8 +355,8 @@ export function AppointmentForm({
   const ST_INK = '#141313'
   const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
   const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
-  const ST_LAVENDER = isDark ? '#C4B5EF' : brand.pregnancy
-  const ST_LAVENDER_SOFT = brand.pregnancySoft
+  const ST_LAVENDER = isDark ? '#C4B5EF' : getModeColor('preg', isDark)
+  const ST_LAVENDER_SOFT = getModeColorSoft('preg', isDark)
   const inkBorder = isDark ? colors.border : ST_INK
   const inkText = isDark ? colors.text : ST_INK
 
@@ -653,7 +652,7 @@ function SaveButton({
 }) {
   const { colors, isDark } = useTheme()
   const ST_INK = '#141313'
-  const ST_LAVENDER = isDark ? colors.primary : brand.pregnancy
+  const ST_LAVENDER = isDark ? colors.primary : getModeColor('preg', isDark)
   const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
   const isDisabled = !!disabled
   return (
@@ -797,13 +796,13 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
             style={[
               styles.chip,
               {
-                backgroundColor: exerciseType === t ? brand.pregnancy + '24' : colors.surface,
-                borderColor: exerciseType === t ? brand.pregnancy : colors.border,
+                backgroundColor: exerciseType === t ? getModeColor('preg', isDark) + '24' : colors.surface,
+                borderColor: exerciseType === t ? getModeColor('preg', isDark) : colors.border,
                 borderRadius: radius.full,
               },
             ]}
           >
-            <Text style={[styles.chipText, { color: exerciseType === t ? brand.pregnancy : colors.text }]}>{t}</Text>
+            <Text style={[styles.chipText, { color: exerciseType === t ? getModeColor('preg', isDark) : colors.text }]}>{t}</Text>
           </Pressable>
         ))}
       </View>
@@ -819,7 +818,7 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
             {
               color: colors.text,
               backgroundColor: colors.surface,
-              borderColor: brand.pregnancy,
+              borderColor: getModeColor('preg', isDark),
               borderRadius: radius.lg,
             },
           ]}
@@ -831,7 +830,7 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
         max={120}
         value={minutes}
         onChange={setMinutes}
-        color={brand.pregnancy}
+        color={getModeColor('preg', isDark)}
         unit="min"
       />
       <SaveButton onPress={save} saving={saving} disabled={!canSave} />
@@ -885,13 +884,13 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
               style={[
                 styles.chip,
                 {
-                  backgroundColor: active ? brand.pregnancy + '24' : colors.surface,
-                  borderColor: active ? brand.pregnancy : colors.border,
+                  backgroundColor: active ? getModeColor('preg', isDark) + '24' : colors.surface,
+                  borderColor: active ? getModeColor('preg', isDark) : colors.border,
                   borderRadius: radius.full,
                 },
               ]}
             >
-              <Text style={[styles.chipText, { color: active ? brand.pregnancy : colors.text }]}>{tag}</Text>
+              <Text style={[styles.chipText, { color: active ? getModeColor('preg', isDark) : colors.text }]}>{tag}</Text>
             </Pressable>
           )
         })}
@@ -942,7 +941,7 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
         max={20}
         value={sets}
         onChange={setSets}
-        color={brand.pregnancy}
+        color={getModeColor('preg', isDark)}
         unit={sets === 1 ? 'set' : 'sets'}
       />
       <SaveButton onPress={save} saving={saving} disabled={false} />
@@ -1143,13 +1142,13 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
             style={[
               styles.chip,
               {
-                backgroundColor: nestingCategory === cat ? brand.pregnancy + '24' : colors.surface,
-                borderColor: nestingCategory === cat ? brand.pregnancy : colors.border,
+                backgroundColor: nestingCategory === cat ? getModeColor('preg', isDark) + '24' : colors.surface,
+                borderColor: nestingCategory === cat ? getModeColor('preg', isDark) : colors.border,
                 borderRadius: radius.full,
               },
             ]}
           >
-            <Text style={[styles.chipText, { color: nestingCategory === cat ? brand.pregnancy : colors.text }]}>{cat}</Text>
+            <Text style={[styles.chipText, { color: nestingCategory === cat ? getModeColor('preg', isDark) : colors.text }]}>{cat}</Text>
           </Pressable>
         ))}
       </View>
@@ -1168,7 +1167,7 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
         style={[styles.toggleRow2, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
       >
         <Text style={[styles.toggleLabel, { color: colors.text }]}>Already done?</Text>
-        <View style={[styles.togglePill, { backgroundColor: done ? brand.pregnancy : colors.border }]}>
+        <View style={[styles.togglePill, { backgroundColor: done ? getModeColor('preg', isDark) : colors.border }]}>
           <View style={[styles.toggleThumb, { marginLeft: done ? 20 : 2 }]} />
         </View>
       </Pressable>
@@ -1230,13 +1229,13 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
             style={[
               styles.chip,
               {
-                backgroundColor: birthPrepCategory === cat ? brand.pregnancy + '24' : colors.surface,
-                borderColor: birthPrepCategory === cat ? brand.pregnancy : colors.border,
+                backgroundColor: birthPrepCategory === cat ? getModeColor('preg', isDark) + '24' : colors.surface,
+                borderColor: birthPrepCategory === cat ? getModeColor('preg', isDark) : colors.border,
                 borderRadius: radius.full,
               },
             ]}
           >
-            <Text style={[styles.chipText, { color: birthPrepCategory === cat ? brand.pregnancy : colors.text }]}>{cat}</Text>
+            <Text style={[styles.chipText, { color: birthPrepCategory === cat ? getModeColor('preg', isDark) : colors.text }]}>{cat}</Text>
           </Pressable>
         ))}
       </View>
@@ -1247,7 +1246,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
           placeholder="Custom category"
           placeholderTextColor={colors.textMuted}
           autoFocus
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: brand.pregnancy, borderRadius: radius.lg }]}
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: getModeColor('preg', isDark), borderRadius: radius.lg }]}
         />
       )}
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Due by week</Text>
@@ -1256,7 +1255,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
         max={42}
         value={dueWeek}
         onChange={setDueWeek}
-        color={brand.pregnancy}
+        color={getModeColor('preg', isDark)}
         unit={`week${dueWeek === 1 ? '' : 's'}`}
       />
       <Pressable
@@ -1264,7 +1263,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
         style={[styles.toggleRow2, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
       >
         <Text style={[styles.toggleLabel, { color: colors.text }]}>Already done?</Text>
-        <View style={[styles.togglePill, { backgroundColor: done ? brand.pregnancy : colors.border }]}>
+        <View style={[styles.togglePill, { backgroundColor: done ? getModeColor('preg', isDark) : colors.border }]}>
           <View style={[styles.toggleThumb, { marginLeft: done ? 20 : 2 }]} />
         </View>
       </Pressable>
@@ -1308,7 +1307,7 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
         max={180}
         value={durationSec}
         onChange={setDurationSec}
-        color={brand.pregnancy}
+        color={getModeColor('preg', isDark)}
         unit="sec"
       />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Interval (minutes apart)</Text>
@@ -1317,7 +1316,7 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
         max={30}
         value={intervalMin}
         onChange={setIntervalMin}
-        color={brand.pregnancy}
+        color={getModeColor('preg', isDark)}
         unit={intervalMin === 1 ? 'minute' : 'minutes'}
       />
       <TextInput

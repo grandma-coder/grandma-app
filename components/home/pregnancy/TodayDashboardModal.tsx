@@ -105,7 +105,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
   })()
   const exerciseLogged = !!todayLogs['exercise']
 
-  const ink = isDark ? colors.text : '#141313'
+  const ink = colors.text
   const muted = colors.textMuted
 
   return (
@@ -247,7 +247,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         </View>
 
         {/* 7-day weight sparkline */}
-        <PaperCard tint={isDark ? colors.surface : '#FFFEF8'} radius={20} padding={18} flat>
+        <PaperCard tint={colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
             <LogWeight size={18} />
             <MonoCaps size={10} color={muted}>WEIGHT · LAST 7 DAYS</MonoCaps>
@@ -266,7 +266,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         </PaperCard>
 
         {/* 7-day hydration bars */}
-        <PaperCard tint={isDark ? colors.surface : '#FFFEF8'} radius={20} padding={18} flat>
+        <PaperCard tint={colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
             <LogWater size={18} />
             <MonoCaps size={10} color={muted}>HYDRATION · LAST 7 DAYS</MonoCaps>
