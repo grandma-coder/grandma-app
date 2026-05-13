@@ -46,6 +46,8 @@ import {
 } from '../components/stickers/RewardStickers'
 import { BadgeIcon } from '../components/stickers/BadgeIcon'
 import { useModeStore } from '../store/useModeStore'
+import { usePregnancyStore } from '../store/usePregnancyStore'
+import { weekForDate } from '../lib/pregnancyWeeks'
 import {
   useBadgeStore,
   DAILY_REWARDS,
@@ -82,13 +84,20 @@ const CATEGORY_CONFIG: {
   { key: 'daily',     label: 'Daily',      color: 'yellow', soft: 'yellowSoft', Sticker: QuestRibbon },
 ]
 
-// Mode-specific daily quest copy (falls back to reward label for unknown modes).
-const MODE_QUEST_COPY: Record<string, string> = {
-  pre: 'Log your cervical mucus & BBT',
-  'pre-pregnancy': 'Log your cervical mucus & BBT',
-  preg: 'Drink 8 glasses of water',
-  pregnancy: 'Drink 8 glasses of water',
-  kids: 'Track 3 feedings & bedtime',
+// Mode-specific daily quest copy. Pregnancy quest is week-aware so the
+// copy escalates with the trimester (water early → kicks mid → birth prep
+// late). Returns a single string given the live mode + (optional) week.
+function questCopyForMode(mode: string, week: number | null): string {
+  if (mode === 'pre-pregnancy') return 'Log your cervical mucus & BBT'
+  if (mode === 'kids') return 'Track 3 feedings & bedtime'
+  if (mode === 'pregnancy') {
+    if (week == null) return 'Drink 8 glasses of water'
+    if (week < 13) return 'Drink water + log a symptom'
+    if (week < 28) return 'Log weight + a quick mood check'
+    if (week < 36) return 'Count 10 kicks in one hour'
+    return 'Pack the hospital bag · prep for birth'
+  }
+  return ''
 }
 
 // Points breakdown shown in the info modal — mapped to sticker palette.
@@ -176,7 +185,12 @@ export default function DailyRewardsScreen() {
   const progressPct = totalBadges > 0 ? Math.round((earnedCount / totalBadges) * 100) : 0
 
   const todaysReward = DAILY_REWARDS.find((r) => r.day === dayInCycle) ?? DAILY_REWARDS[0]
-  const questCopy = MODE_QUEST_COPY[mode] ?? todaysReward.label
+  const pregnancyDueDate = usePregnancyStore.getState().dueDate
+  const pregnancyStoredWeek = usePregnancyStore.getState().weekNumber
+  const liveWeek = pregnancyDueDate
+    ? weekForDate(pregnancyDueDate, toDateStr(new Date()))
+    : pregnancyStoredWeek
+  const questCopy = questCopyForMode(mode, liveWeek) || todaysReward.label
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>

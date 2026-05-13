@@ -90,9 +90,14 @@ export function ChannelsScreen() {
   const trending = channels.slice(0, 5)
   const suggested = channels.filter((c) => {
     const tags = BEHAVIOR_TAGS[mode] ?? []
-    return tags.some((t) =>
-      c.name.toLowerCase().includes(t) || (c.description ?? '').toLowerCase().includes(t)
-    )
+    const name = c.name.toLowerCase()
+    const desc = (c.description ?? '').toLowerCase()
+    return tags.some((t) => {
+      // Word-boundary match so "pregnancy" doesn't match "pre-pregnancy"
+      // (Pre-Pregnancy Trying channel was polluting the pregnancy segment).
+      const re = new RegExp(`(?<![a-z-])${t}(?![a-z])`)
+      return re.test(name) || re.test(desc)
+    })
   }).slice(0, 5)
 
   const searchResults = search

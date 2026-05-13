@@ -1,7 +1,16 @@
 import { supabase } from './supabase'
 
 export type ListingType = 'sell' | 'trade' | 'donate'
-export type ListingCategory = 'clothing' | 'toys' | 'gear' | 'furniture' | 'books' | 'other'
+export type ListingCategory =
+  | 'clothing'
+  | 'toys'
+  | 'gear'
+  | 'furniture'
+  | 'books'
+  | 'maternity_wear'
+  | 'nursery_setup'
+  | 'prenatal_supplies'
+  | 'other'
 export type ListingCondition = 'new' | 'like_new' | 'good' | 'fair'
 export type ListingStatus = 'available' | 'pending' | 'sold' | 'donated' | 'traded'
 

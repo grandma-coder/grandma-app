@@ -24,6 +24,9 @@ const CATEGORIES: { id: ListingCategory; label: string }[] = [
   { id: 'gear', label: 'Gear' },
   { id: 'furniture', label: 'Furniture' },
   { id: 'books', label: 'Books' },
+  { id: 'maternity_wear', label: 'Maternity Wear' },
+  { id: 'nursery_setup', label: 'Nursery Setup' },
+  { id: 'prenatal_supplies', label: 'Prenatal Supplies' },
   { id: 'other', label: 'Other' },
 ]
 
