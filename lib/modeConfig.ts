@@ -44,8 +44,10 @@ const PRE_PREGNANCY_CONFIG: ModeConfig = {
     index: { visible: true, label: 'Home', icon: 'home-outline' },
     agenda: { visible: true, label: 'Planner', icon: 'calendar-outline' },
     library: { visible: true, label: 'Library', icon: 'book-outline' },
-    // CLAUDE.md spec: vault tab is hidden in pre-pregnancy mode.
-    vault: { visible: false, label: 'Analytics', icon: 'bar-chart-outline' },
+    // Re-purposed for pre-pregnancy: the "vault" slot surfaces cycle/hormone
+    // analytics instead of documents. CLAUDE.md said "hidden in pre-pregnancy"
+    // because pre-preg has no medical vault — but parents want the insights.
+    vault: { visible: true, label: 'Analytics', icon: 'bar-chart-outline' },
     exchange: { visible: true, label: 'Garage', icon: 'pricetag-outline' },
     settings: { visible: true, label: 'Settings', icon: 'settings-outline' },
   },
