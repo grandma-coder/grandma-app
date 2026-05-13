@@ -34,6 +34,9 @@ interface ActivityPillCardProps {
   pulse?: boolean
   /** Show a small green check next to the title to mark the entry as logged */
   logged?: boolean
+  /** Name of the caregiver who logged this entry. Rendered as a "by X" line
+   *  under the subtitle so parents can see who in the care circle added it. */
+  loggedBy?: string
 }
 
 export function ActivityPillCard({
@@ -46,6 +49,7 @@ export function ActivityPillCard({
   noChevron,
   pulse,
   logged,
+  loggedBy,
 }: ActivityPillCardProps) {
   const { colors, isDark, font } = useTheme()
   const { fill, ink } = getTint(tint, isDark)
@@ -97,6 +101,11 @@ export function ActivityPillCard({
         {subtitle ? (
           <Body size={12} color={textMuted} style={{ marginTop: 2 }}>
             {subtitle}
+          </Body>
+        ) : null}
+        {loggedBy ? (
+          <Body size={11} color={textMuted} style={{ marginTop: 2, fontStyle: 'italic' }}>
+            by {loggedBy}
           </Body>
         ) : null}
       </View>

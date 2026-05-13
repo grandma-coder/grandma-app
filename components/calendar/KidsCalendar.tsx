@@ -575,6 +575,7 @@ export function KidsCalendar() {
   const [pulsingLogIds, setPulsingLogIds] = useState<Set<string>>(() => new Set())
   const [loading, setLoading] = useState(false)
   const [profileNames, setProfileNames] = useState<Record<string, string>>({}) // userId → display name
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [selectedLog, setSelectedLog] = useState<ChildLog | null>(null)
   const [unlogTarget, setUnlogTarget] = useState<ChildLog | null>(null)
   const [unlogging, setUnlogging] = useState(false)
@@ -654,6 +655,15 @@ export function KidsCalendar() {
   }, [year, month, selectedChildId, children])
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
+
+  // Cache current user id once so log cards can decide whether to show
+  // a "by <name>" line (only for entries logged by other caregivers, not
+  // the viewer themselves).
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUserId(session?.user.id ?? null)
+    })
+  }, [])
 
   useEffect(() => {
     const currentIds = new Set<string>()
@@ -1429,6 +1439,7 @@ export function KidsCalendar() {
       onPress: () => void
       pulse?: boolean
       logged?: boolean
+      loggedBy?: string
     }
 
     const rows: Row[] = []
@@ -1460,6 +1471,12 @@ export function KidsCalendar() {
       const summaryStr = formatLogDisplay(log.type, log.value, log.notes)
       const ci = childIndexMap.get(log.child_id) ?? 0
       const childName = children.find((c) => c.id === log.child_id)?.name
+      // Surface the caregiver who logged this when it wasn't the viewer.
+      // (profileNames is populated by fetchLogs after monthLogs returns.)
+      const loggedByName =
+        log.logged_by && log.logged_by !== currentUserId
+          ? profileNames[log.logged_by]
+          : undefined
       rows.push({
         key: `l-${log.id}`,
         time: activityTimeDisplay(log),
@@ -1472,6 +1489,7 @@ export function KidsCalendar() {
         onPress: () => { setSelectedLog(log); setEditing(false) },
         pulse: pulsingLogIds.has(log.id),
         logged: true,
+        loggedBy: loggedByName,
       })
     }
 
@@ -1510,6 +1528,7 @@ export function KidsCalendar() {
                     onPress={r.onPress}
                     pulse={r.pulse}
                     logged={r.logged}
+                    loggedBy={r.loggedBy}
                   />
                 </View>
               </View>
