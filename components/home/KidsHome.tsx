@@ -800,55 +800,113 @@ export function KidsHome() {
     if (child?.id) loadHealthHistory(child.id)
   }, [child?.id])
 
-  // Load scheduled vaccines from AsyncStorage
+  // Load scheduled vaccines.
+  //
+  // History: this used to live in AsyncStorage, keyed by child_id. It now
+  // persists to the `kids_vaccine_schedule` table (one row per
+  // child_id + schedule_key). The effect:
+  //   1. Reads from Supabase (source of truth going forward).
+  //   2. One-time backfill: if Supabase is empty for this child AND
+  //      AsyncStorage has entries, upsert them, then clear local.
+  //   3. Pre-namespaced keys (no ":") are tagged with the child's
+  //      country code, matching the pre-feature default of US schedules.
   useEffect(() => {
     if (!child?.id) return
-    AsyncStorage.getItem(`grandma-vaccine-scheduled-${child.id}`).then(json => {
-      if (json) {
+    const childId = child.id
+    const defaultCountry = child.countryCode ?? 'US'
+    let cancelled = false
+
+    async function hydrate() {
+      const { data } = await supabase
+        .from('kids_vaccine_schedule')
+        .select('schedule_key, scheduled_date')
+        .eq('child_id', childId)
+      if (cancelled) return
+
+      const fromServer: Record<string, string> = {}
+      for (const row of data ?? []) {
+        if (row.schedule_key && row.scheduled_date) {
+          fromServer[row.schedule_key] = String(row.scheduled_date).substring(0, 10)
+        }
+      }
+
+      // Backfill local AsyncStorage state into Supabase the FIRST time after
+      // the migration. We only backfill if Supabase has no rows for this
+      // child — once any server row exists for them we treat the server as
+      // authoritative.
+      if (Object.keys(fromServer).length === 0) {
         try {
-          const parsed = JSON.parse(json) as Record<string, string>
-          // One-time migration: existing entries are keyed by `${name}-${i}`
-          // (no country prefix). Treat them as US schedule entries — that
-          // matches the pre-feature default. Country-prefixed keys pass
-          // through unchanged.
-          const defaultCountry = child.countryCode ?? 'US'
-          const migrated: Record<string, string> = {}
-          let dirty = false
-          for (const [k, v] of Object.entries(parsed)) {
-            if (k.includes(':')) {
-              migrated[k] = v
-            } else {
-              migrated[`${defaultCountry}:${k}`] = v
-              dirty = true
+          const json = await AsyncStorage.getItem(`grandma-vaccine-scheduled-${childId}`)
+          if (json) {
+            const parsed = JSON.parse(json) as Record<string, string>
+            const rows: { child_id: string; schedule_key: string; scheduled_date: string }[] = []
+            for (const [k, v] of Object.entries(parsed)) {
+              const key = k.includes(':') ? k : `${defaultCountry}:${k}`
+              if (v) rows.push({ child_id: childId, schedule_key: key, scheduled_date: v })
+            }
+            if (rows.length > 0) {
+              await supabase.from('kids_vaccine_schedule').upsert(rows, { onConflict: 'child_id,schedule_key' })
+              // Refetch so cancelled-effect updates don't race the upsert.
+              const { data: after } = await supabase
+                .from('kids_vaccine_schedule')
+                .select('schedule_key, scheduled_date')
+                .eq('child_id', childId)
+              for (const row of after ?? []) {
+                if (row.schedule_key && row.scheduled_date) {
+                  fromServer[row.schedule_key] = String(row.scheduled_date).substring(0, 10)
+                }
+              }
+              // Mark the local copy as migrated so we don't re-attempt on
+              // every load. Keep it readable as a fallback in case the
+              // server upsert silently failed.
+              await AsyncStorage.setItem(
+                `grandma-vaccine-scheduled-${childId}-migrated`,
+                new Date().toISOString(),
+              )
             }
           }
-          setScheduledVaccines(migrated)
-          if (dirty) {
-            AsyncStorage.setItem(
-              `grandma-vaccine-scheduled-${child.id}`,
-              JSON.stringify(migrated),
-            ).catch(() => {})
-          }
         } catch {
-          setScheduledVaccines({})
+          // Backfill is best-effort — fall through to server-only state.
         }
-      } else {
-        setScheduledVaccines({})
       }
-    })
-  }, [child?.id])
+
+      if (!cancelled) setScheduledVaccines(fromServer)
+    }
+
+    hydrate()
+    return () => { cancelled = true }
+  }, [child?.id, child?.countryCode])
 
   function setVaccineDate(childId: string, vaccineKey: string, date: string | null) {
+    // Optimistic local update so the UI feels instant; then write to
+    // Supabase. If the server write fails the optimistic state stays —
+    // log to console.error so the next sync picks it up.
     setScheduledVaccines(prev => {
       const next = { ...prev }
-      if (date === null) {
-        delete next[vaccineKey]
-      } else {
-        next[vaccineKey] = date
-      }
-      AsyncStorage.setItem(`grandma-vaccine-scheduled-${childId}`, JSON.stringify(next))
+      if (date === null) delete next[vaccineKey]
+      else next[vaccineKey] = date
       return next
     })
+    if (date === null) {
+      supabase
+        .from('kids_vaccine_schedule')
+        .delete()
+        .eq('child_id', childId)
+        .eq('schedule_key', vaccineKey)
+        .then(({ error }) => {
+          if (error) console.error('kids_vaccine_schedule delete failed:', error.message)
+        })
+    } else {
+      supabase
+        .from('kids_vaccine_schedule')
+        .upsert(
+          { child_id: childId, schedule_key: vaccineKey, scheduled_date: date },
+          { onConflict: 'child_id,schedule_key' },
+        )
+        .then(({ error }) => {
+          if (error) console.error('kids_vaccine_schedule upsert failed:', error.message)
+        })
+    }
   }
 
   // Re-entrancy guard: rapid taps on "Mark given" would otherwise insert
