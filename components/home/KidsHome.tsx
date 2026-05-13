@@ -2402,6 +2402,7 @@ export function KidsHome() {
         dailySleep={rangeData.dailySleep}
         dailySleepTarget={rangeData.dailySleepTarget}
         dayLabels={rangeData.dayLabels}
+        dateRange={dateRange}
         childName={child?.name}
         childColor={CHILD_COLORS[children.findIndex(c => c.id === child?.id) % CHILD_COLORS.length]}
       />
@@ -4377,13 +4378,14 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
   )
 }
 
-function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQuality, dailySleep, dailySleepTarget, dayLabels, childName, childColor }: {
+function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQuality, dailySleep, dailySleepTarget, dayLabels, dateRange, childName, childColor }: {
   visible: boolean; onClose: () => void
   sleepTotal: number; sleepTarget: number
   sleepQuality: string
   dailySleep: number[]
   dailySleepTarget: number
   dayLabels: string[]
+  dateRange: DateRange
   childName?: string
   childColor?: string
 }) {
@@ -4444,7 +4446,17 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
               </View>
             </View>
             <View>
-              <Text style={{ fontSize: 11, fontFamily: 'DMSans_700Bold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 8, paddingLeft: 2 }}>By day</Text>
+              <Text style={{ fontSize: 11, fontFamily: 'DMSans_700Bold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 8, paddingLeft: 2 }}>Past 7 days</Text>
+              {/* Make the scope explicit when the active range is wider than
+                  7 days. The chart data is sourced from the last-7 mini-ring
+                  pipeline (see comment at dailySleep build site); the hero
+                  total above reflects the full active range — surface that
+                  difference instead of relying on the user to notice. */}
+              {dateRange !== '7days' && dateRange !== 'today' && dateRange !== 'yesterday' ? (
+                <Text style={{ fontSize: 11, fontFamily: 'DMSans_500Medium', color: ink3, marginBottom: 8, paddingLeft: 2, fontStyle: 'italic' }}>
+                  Bars show the most recent 7 days; the total above reflects the wider range.
+                </Text>
+              ) : null}
               <View style={{ backgroundColor: PAPER, borderRadius: 22, borderWidth: 1.5, borderColor: ST_INK, paddingHorizontal: 14, paddingVertical: 16, shadowColor: ST_INK, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 3 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 110, gap: 6 }}>
                   {dailySleep.map((hrs, i) => {
