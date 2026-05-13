@@ -3817,6 +3817,10 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
   const [pickerDate, setPickerDate] = useState(new Date())
   const [infoVaccine, setInfoVaccine] = useState<{ name: string; doseLabel: string; info: VaccineInfo | null; accent: string } | null>(null)
+  // Some Android DateTimePicker builds fire `set` twice for a single confirm
+  // (notably across rotation). Track which scheduleKey we've already
+  // written so the duplicate doesn't corrupt scheduledVaccines.
+  const datePickerWroteRef = useRef<string | null>(null)
 
   const ink = colors.text
   const ink3 = colors.textMuted
@@ -4068,14 +4072,26 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                             onChange={(e: DateTimePickerEvent, d?: Date) => {
                               if (Platform.OS === 'android') setExpandedKey(null)
                               if (e.type === 'set' && d) {
+                                // Some Android builds fire `set` twice on a
+                                // single confirm (notably across rotation /
+                                // double-tap). Guard so onSetVaccineDate
+                                // can't write the same date twice.
+                                if (datePickerWroteRef.current === vax.scheduleKey) return
+                                datePickerWroteRef.current = vax.scheduleKey
                                 setPickerDate(d)
                                 const y = d.getFullYear()
                                 const mo = String(d.getMonth() + 1).padStart(2, '0')
                                 const day = String(d.getDate()).padStart(2, '0')
                                 onSetVaccineDate(vax.scheduleKey, `${y}-${mo}-${day}`)
                                 if (Platform.OS === 'android') setExpandedKey(null)
+                                // Release the guard on the next tick so the
+                                // picker can be reopened cleanly.
+                                setTimeout(() => { datePickerWroteRef.current = null }, 0)
                               }
-                              if (e.type === 'dismissed') setExpandedKey(null)
+                              if (e.type === 'dismissed') {
+                                datePickerWroteRef.current = null
+                                setExpandedKey(null)
+                              }
                             }}
                           />
                           {Platform.OS === 'ios' && (
