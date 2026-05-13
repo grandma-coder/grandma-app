@@ -985,8 +985,52 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
     }
   }
 
+  /**
+   * Compare the food being logged against the child's known allergies.
+   * Returns a list of triggering allergens (empty when clear). Matching is
+   * substring + case-insensitive on both sides — "peanut" matches "peanut
+   * butter" both ways. This is intentionally permissive: false positives
+   * (a confirm dialog) are far cheaper than missing a real allergen.
+   */
+  function detectAllergenMatches(): string[] {
+    const child = children.find((c) => c.id === childId)
+    const allergies = child?.allergies ?? []
+    if (allergies.length === 0 || feedType !== 'solids') return []
+    const foodStrings: string[] = []
+    for (const t of foodTags) {
+      if (t.name) foodStrings.push(t.name)
+      if (t.match?.food) foodStrings.push(t.match.food)
+    }
+    if (isNewFood && newFoodName) foodStrings.push(newFoodName)
+    if (description) foodStrings.push(description)
+    if (foodStrings.length === 0) return []
+    const haystack = foodStrings.join(' ').toLowerCase()
+    return allergies.filter((a) => {
+      const needle = a.trim().toLowerCase()
+      if (!needle) return false
+      return haystack.includes(needle)
+    })
+  }
+
   async function save() {
     if (!childId) return
+    // Allergy check — confirm with the user before saving if any logged
+    // food matches a known allergen on the child profile. Returning a
+    // Promise so the existing setSaving flow stays linear.
+    const allergens = detectAllergenMatches()
+    if (allergens.length > 0) {
+      const confirmed = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          allergens.length === 1 ? 'Allergy warning' : 'Allergy warnings',
+          `This food appears to contain ${allergens.join(', ')}, which is listed as an allergy. Are you sure you want to log it?`,
+          [
+            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Log anyway', style: 'destructive', onPress: () => resolve(true) },
+          ],
+        )
+      })
+      if (!confirmed) return
+    }
     setSaving(true)
     try {
       const toUpload = photos.filter((p) => !p.startsWith('http'))
