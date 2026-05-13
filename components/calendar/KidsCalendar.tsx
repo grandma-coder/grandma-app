@@ -2044,7 +2044,14 @@ export function KidsCalendar() {
         visible={showRoutineManager}
         animationType="slide"
         transparent
-        onRequestClose={() => { setShowRoutineManager(false); setRoutineEditing(null); setRoutineFilterKid(null) }}
+        onRequestClose={() => {
+          setShowRoutineManager(false)
+          setRoutineEditing(null)
+          setRoutineFilterKid(null)
+          // Reset the form so a stale name/type from a half-finished edit
+          // doesn't bleed into the next open.
+          setRoutineForm({ name: '', type: 'activity', time: '09:00', days: [0,1,2,3,4,5,6] })
+        }}
       >
         {(() => {
           const ST_INK = '#141313'
@@ -2052,7 +2059,12 @@ export function KidsCalendar() {
           const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
           const ST_SHEET = isDark ? colors.bg : '#FAF6E8'
           const ST_PURPLE = isDark ? '#A07FDC' : '#7048B8'
-          const closeManager = () => { setShowRoutineManager(false); setRoutineEditing(null); setRoutineFilterKid(null) }
+          const closeManager = () => {
+            setShowRoutineManager(false)
+            setRoutineEditing(null)
+            setRoutineFilterKid(null)
+            setRoutineForm({ name: '', type: 'activity', time: '09:00', days: [0,1,2,3,4,5,6] })
+          }
           return (
             <>
               <Pressable style={styles.popupBackdrop} onPress={closeManager} />
