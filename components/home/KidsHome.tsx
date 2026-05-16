@@ -1613,15 +1613,23 @@ export function KidsHome() {
 
       {/* ─── Child Selector ──────────────────────────────────── */}
       {children.length > 1 && (() => {
-        // Build the 3 visible pills. Earlier this was `children.slice(0, 3)`,
-        // so selecting the 4th kid via the overflow modal left them invisible
-        // in the bar — the row felt frozen. Now we always include the active
-        // child and fill the remaining slots with the first non-active kids.
+        // Keep the kid pills in stable order — tapping a pill should NOT
+        // re-shuffle the row (previously the active kid was forced into
+        // slot 0, so tapping the rightmost kid made it jump left, which
+        // felt like the row was "swiping to the first position").
+        //
+        // Default: show the first 3 children in their original order.
+        // Edge case: when the active child sits outside the top 3 (only
+        // possible with 4+ kids when one is picked via the overflow
+        // modal), swap them into the last visible slot so the active kid
+        // stays on screen. Otherwise leave the row untouched.
         const visibleKids = (() => {
+          const top3 = children.slice(0, 3)
+          const activeInTop3 = top3.some((c) => c.id === child.id)
+          if (activeInTop3 || !child) return top3
           const active = children.find((c) => c.id === child.id)
-          if (!active) return children.slice(0, 3)
-          const others = children.filter((c) => c.id !== child.id)
-          return [active, ...others].slice(0, 3)
+          if (!active) return top3
+          return [...top3.slice(0, 2), active]
         })()
         // Keep CHILD_COLORS stable per-child by indexing into the original
         // children array (otherwise a child's color would shift each time
