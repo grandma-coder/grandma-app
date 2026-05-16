@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
+import { GrandmaLogo } from './grandma-logo'
 import {
   HeartSticker,
   FlowerSticker,
@@ -58,100 +59,6 @@ const stages: StageConfig[] = [
     colorSoft: 'rgba(168, 216, 234, 0.3)',
   },
 ]
-
-// Large blinking Grandma Eye
-function GrandmaEyeLarge({
-  color = '#C8B6E2',
-  isBlinking = false,
-  size = 180,
-}: {
-  color?: string
-  isBlinking?: boolean
-  size?: number
-}) {
-  const scale = size / 180
-
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 180 180"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="transition-all duration-500"
-    >
-      {/* Outer glow pulse */}
-      <ellipse
-        cx="90"
-        cy="90"
-        rx="80"
-        ry="55"
-        fill={color}
-        fillOpacity="0.12"
-        className="animate-pulse"
-        style={{ animationDuration: '2.5s' }}
-      />
-
-      {/* Top lashes - hide when blinking */}
-      <g
-        className="transition-all duration-150 origin-center"
-        style={{
-          transformOrigin: '90px 90px',
-          opacity: isBlinking ? 0 : 1,
-          transform: isBlinking ? 'scaleY(0)' : 'scaleY(1)',
-        }}
-      >
-        <path d="M35 78 L22 55" stroke="var(--ink)" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M50 62 L35 38" stroke="var(--ink)" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M70 50 L58 25" stroke="var(--ink)" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M90 45 L90 18" stroke="var(--ink)" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M110 50 L122 25" stroke="var(--ink)" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M130 62 L145 38" stroke="var(--ink)" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M145 78 L158 55" stroke="var(--ink)" strokeWidth="2.5" strokeLinecap="round" />
-      </g>
-
-      {/* Eye almond shape */}
-      <ellipse
-        cx="90"
-        cy="90"
-        rx="65"
-        ry={isBlinking ? 4 : 42}
-        fill="white"
-        stroke="var(--ink)"
-        strokeWidth="2.5"
-        className="transition-all duration-150"
-      />
-
-      {/* Iris */}
-      <circle
-        cx="90"
-        cy="90"
-        r="28"
-        fill={color}
-        className="transition-all duration-500"
-        style={{ opacity: isBlinking ? 0 : 1 }}
-      />
-
-      {/* Heart pupil */}
-      <path
-        d="M90 78 C83 71 72 75 72 84 C72 95 90 106 90 106 C90 106 108 95 108 84 C108 75 97 71 90 78Z"
-        fill="var(--ink)"
-        className="transition-all duration-150"
-        style={{ opacity: isBlinking ? 0 : 1 }}
-      />
-
-      {/* Highlight */}
-      <circle
-        cx="80"
-        cy="82"
-        r="5"
-        fill="white"
-        className="transition-all duration-150"
-        style={{ opacity: isBlinking ? 0 : 1 }}
-      />
-    </svg>
-  )
-}
 
 export function AnimatedHeroCard({ className }: { className?: string }) {
   const [currentStage, setCurrentStage] = useState(0)
@@ -391,8 +298,8 @@ export function AnimatedHeroCard({ className }: { className?: string }) {
             }}
           >
             {/* The big Grandma Eye */}
-            <div className="flex justify-center">
-              <GrandmaEyeLarge color={stage.color} isBlinking={isBlinking} size={180} />
+            <div className="flex justify-center" style={{ opacity: isBlinking ? 0 : 1, transition: 'opacity 150ms' }}>
+              <GrandmaLogo size={180} animation="blink" />
             </div>
 
             {/* Stage info below eye */}
