@@ -19,6 +19,13 @@ interface RequestBody {
     allergies: string[]
     medications: string[]
   }
+  /** Pregnancy context (caller passes this when behavior=pregnancy and there's no child). */
+  pregnancyContext?: {
+    weekNumber: number | null
+    dueDate: string | null
+    allergies?: string[]
+    conditions?: string[]
+  }
 }
 
 serve(async (req) => {
@@ -38,13 +45,13 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, mediaType, scanType, childContext }: RequestBody = await req.json()
+    const { imageBase64, mediaType, scanType, childContext, pregnancyContext }: RequestBody = await req.json()
 
     if (!imageBase64) {
       throw new Error('No image provided')
     }
 
-    const systemPrompt = buildScanPrompt(scanType, childContext)
+    const systemPrompt = buildScanPrompt(scanType, childContext, pregnancyContext)
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -98,7 +105,11 @@ serve(async (req) => {
   }
 })
 
-function buildScanPrompt(scanType: string, child?: RequestBody['childContext']): string {
+function buildScanPrompt(
+  scanType: string,
+  child?: RequestBody['childContext'],
+  pregnancy?: RequestBody['pregnancyContext'],
+): string {
   if (scanType === 'insurance_card') {
     return `You are a precise OCR assistant for grandma.app. Extract insurance card information from the image.
 
@@ -145,6 +156,37 @@ Rules:
   "flagged": string[],
   "notes": string | null
 }`
+  }
+
+  // Pregnancy persona — used when the caller is in pregnancy mode and has
+  // no child yet (most pregnancy users). Falls back to the child branch
+  // when child context is provided, since some pregnancy users also have
+  // older kids.
+  if (!child && pregnancy) {
+    const trimester = pregnancy.weekNumber
+      ? pregnancy.weekNumber <= 13 ? 'first' : pregnancy.weekNumber <= 26 ? 'second' : 'third'
+      : 'unknown'
+    const weekInfo = pregnancy.weekNumber
+      ? `User is pregnant at week ${pregnancy.weekNumber} (${trimester} trimester).`
+      : 'User is pregnant; week number not provided.'
+    const dueLine = pregnancy.dueDate ? ` Due date: ${pregnancy.dueDate}.` : ''
+    const allergyLine = pregnancy.allergies?.length ? ` Allergies: ${pregnancy.allergies.join(', ')}.` : ''
+    const conditionLine = pregnancy.conditions?.length ? ` Conditions: ${pregnancy.conditions.join(', ')}.` : ''
+
+    return `You are Guru Grandma — a warm, wise, knowledgeable pregnancy companion powered by grandma.app who can read product labels, medicine boxes, supplement bottles, and food packaging.
+
+${weekInfo}${dueLine}${allergyLine}${conditionLine}
+
+Rules:
+- Analyze the image carefully and give a clear, warm summary tailored to pregnancy
+- If it's medicine: identify the product and active ingredients, and call out pregnancy safety categories where relevant (e.g. acetaminophen generally safe; NSAIDs avoid in 3rd trimester). If the user's trimester is known, weight your guidance for that trimester.
+- If it's a prenatal vitamin / supplement: list the key vitamins + doses (folate, iron, DHA, calcium, vitamin D, iodine) and flag if any are below standard prenatal recommendations
+- If it's food: flag pregnancy-specific concerns — listeria risk (soft cheese, deli meats, cold smoked fish), high-mercury fish, raw/undercooked items, unpasteurized dairy, alcohol, excessive caffeine, raw sprouts. Cross-reference any allergies above.
+- Use plain everyday language, never medical jargon without explanation
+- NEVER diagnose. Frame all health content as guidance, not diagnosis.
+- NEVER invent drug dosages — only reference what is visible on the packaging or established guidelines (ACOG, WHO)
+- Always end with a gentle note to consult their OB/GYN or midwife if uncertain
+- Structure your response with clear sections using line breaks`
   }
 
   const childInfo = child

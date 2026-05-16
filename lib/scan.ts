@@ -1,11 +1,19 @@
 import { supabase } from './supabase'
 import type { Child } from '../types'
 
+interface PregnancyScanContext {
+  weekNumber: number | null
+  dueDate: string | null
+  allergies?: string[]
+  conditions?: string[]
+}
+
 interface ScanParams {
   imageBase64: string
   mediaType: 'image/jpeg' | 'image/png' | 'image/webp'
   scanType: string
   child?: Child | null
+  pregnancy?: PregnancyScanContext | null
 }
 
 function getAgeInMonths(birthDate: string): number {
@@ -14,7 +22,7 @@ function getAgeInMonths(birthDate: string): number {
   return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
 }
 
-export async function scanImage({ imageBase64, mediaType, scanType, child }: ScanParams): Promise<string> {
+export async function scanImage({ imageBase64, mediaType, scanType, child, pregnancy }: ScanParams): Promise<string> {
   const childContext = child ? {
     name: child.name,
     ageMonths: getAgeInMonths(child.birthDate),
@@ -23,8 +31,10 @@ export async function scanImage({ imageBase64, mediaType, scanType, child }: Sca
     medications: child.medications,
   } : undefined
 
+  const pregnancyContext = pregnancy ?? undefined
+
   const { data, error } = await supabase.functions.invoke('scan-image', {
-    body: { imageBase64, mediaType, scanType, childContext },
+    body: { imageBase64, mediaType, scanType, childContext, pregnancyContext },
   })
 
   if (error) throw new Error(error.message)

@@ -13,6 +13,9 @@ import * as ImageManipulator from 'expo-image-manipulator'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useChildStore } from '../store/useChildStore'
+import { useModeStore } from '../store/useModeStore'
+import { usePregnancyStore } from '../store/usePregnancyStore'
+import { weekForDate } from '../lib/pregnancyWeeks'
 import { scanImage } from '../lib/scan'
 import { supabase } from '../lib/supabase'
 import { checkPremium } from '../lib/revenue'
@@ -33,6 +36,9 @@ const SCAN_TYPES = [
 export default function Scan() {
   const insets = useSafeAreaInsets()
   const child = useChildStore((s) => s.activeChild)
+  const mode = useModeStore((s) => s.mode)
+  const pregnancyDueDate = usePregnancyStore((s) => s.dueDate)
+  const pregnancyStoredWeek = usePregnancyStore((s) => s.weekNumber)
   const [scanType, setScanType] = useState('medicine')
   const [loading, setLoading] = useState(false)
   const [isPremium, setIsPremium] = useState(false)
@@ -106,11 +112,23 @@ export default function Scan() {
 
       if (!manipulated.base64) throw new Error('Failed to encode image')
 
+      // For pregnancy users (no child), pass week + due date so the edge
+      // function builds a pregnancy-aware prompt instead of falling back
+      // to the generic kids persona.
+      const liveWeek = pregnancyDueDate
+        ? weekForDate(pregnancyDueDate, new Date().toISOString().slice(0, 10))
+        : pregnancyStoredWeek ?? null
+      const pregnancy =
+        mode === 'pregnancy' && !child
+          ? { weekNumber: liveWeek, dueDate: pregnancyDueDate ?? null }
+          : null
+
       const reply = await scanImage({
         imageBase64: manipulated.base64,
         mediaType: 'image/jpeg',
         scanType,
         child,
+        pregnancy,
       })
 
       setResult(reply)
