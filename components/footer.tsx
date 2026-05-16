@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { InlineHeartSticker, LilacHeartSticker } from './stickers'
+import { LilacHeartSticker } from './stickers'
+import { GrandmaLogo } from './grandma-logo'
 
 export function Footer() {
   return (
@@ -17,17 +18,20 @@ export function Footer() {
           <div>
             <Link
               href="/"
-              className="inline-flex items-center mb-4"
-              style={{
-                fontFamily: 'var(--font-fraunces), var(--font-display)',
-                fontWeight: 600,
-                fontSize: '24px',
-                letterSpacing: '-0.02em',
-                color: 'var(--ink)',
-              }}
+              className="inline-flex items-center gap-2 mb-4"
             >
-              Grandma
-              <InlineHeartSticker size={14} fill="var(--lavender)" />
+              <GrandmaLogo size={36} animation="heartbeat" />
+              <span
+                style={{
+                  fontFamily: 'var(--font-fraunces), var(--font-display)',
+                  fontWeight: 600,
+                  fontSize: '24px',
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                }}
+              >
+                grandma
+              </span>
             </Link>
             <p
               className="text-[14px] leading-[1.5] mb-6"

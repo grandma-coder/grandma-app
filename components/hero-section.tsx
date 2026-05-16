@@ -1,15 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  RoseHeartSticker,
-  SunSticker,
-  MoonSticker,
-  LeafSticker,
-  SparkleSticker,
-  FootprintSticker,
-  FlowerSticker,
-} from './stickers'
+import { AnimatedHeroCard } from './animated-hero-card'
 
 export function HeroSection() {
   const [email, setEmail] = useState('')
@@ -88,105 +80,9 @@ export function HeroSection() {
             </p>
           </div>
 
-          {/* Right column - Sticker collage */}
-          <div className="relative min-h-[400px] lg:min-h-[520px]">
-            {/* Main card */}
-            <div
-              className="relative mx-auto max-w-[380px] p-8 rounded-[28px] border shadow-[var(--shadow-card)]"
-              style={{
-                background: 'var(--surface)',
-                borderColor: 'var(--border)',
-              }}
-            >
-              {/* Week ring */}
-              <div className="flex flex-col items-center mb-6">
-                <div className="relative w-[200px] h-[200px]">
-                  {/* Ring background */}
-                  <svg
-                    className="w-full h-full"
-                    viewBox="0 0 200 200"
-                    aria-hidden="true"
-                  >
-                    {/* Background ring */}
-                    <circle
-                      cx="100"
-                      cy="100"
-                      r="80"
-                      fill="none"
-                      stroke="var(--lavender-soft)"
-                      strokeWidth="14"
-                    />
-                    {/* Progress ring */}
-                    <circle
-                      cx="100"
-                      cy="100"
-                      r="80"
-                      fill="none"
-                      stroke="var(--lavender)"
-                      strokeWidth="14"
-                      strokeDasharray="302 503"
-                      strokeLinecap="round"
-                      transform="rotate(-90 100 100)"
-                    />
-                  </svg>
-                  {/* Center text */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span
-                      className="text-[36px] font-semibold tracking-[-0.02em]"
-                      style={{ fontFamily: 'var(--font-fraunces), var(--font-display)' }}
-                    >
-                      WEEK 24
-                    </span>
-                    <span
-                      className="text-[16px] mt-1"
-                      style={{
-                        fontFamily: 'var(--font-instrument-serif), var(--font-italic)',
-                        fontStyle: 'italic',
-                        color: 'var(--ink-secondary)',
-                      }}
-                    >
-                      lemon size
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Chat bubble */}
-              <div
-                className="p-4 rounded-[20px]"
-                style={{ background: 'var(--lavender-soft)' }}
-              >
-                <p
-                  className="text-[15px] text-center"
-                  style={{ color: 'var(--ink)' }}
-                >
-                  {"you're doing beautifully today"}
-                </p>
-              </div>
-            </div>
-
-            {/* Floating stickers */}
-            <div className="absolute top-[-20px] left-[10%] lg:left-[-10%]">
-              <RoseHeartSticker size={56} rotate={-12} />
-            </div>
-            <div className="absolute top-[10%] right-[-5%] lg:right-[-15%]">
-              <SunSticker size={64} rotate={8} />
-            </div>
-            <div className="absolute top-[45%] right-[-10%] lg:right-[-20%]">
-              <MoonSticker size={52} rotate={-6} />
-            </div>
-            <div className="absolute bottom-[20%] left-[-5%] lg:left-[-15%]">
-              <LeafSticker size={48} rotate={16} />
-            </div>
-            <div className="absolute bottom-[5%] right-[10%]">
-              <SparkleSticker size={44} rotate={-18} />
-            </div>
-            <div className="absolute top-[60%] left-[-8%] lg:left-[-18%]">
-              <FootprintSticker size={40} rotate={10} />
-            </div>
-            <div className="absolute top-[25%] right-[5%] lg:right-[-5%]">
-              <FlowerSticker size={50} rotate={-14} />
-            </div>
+          {/* Right column - Animated Hero Card */}
+          <div className="relative flex items-center justify-center min-h-[400px] lg:min-h-[520px]">
+            <AnimatedHeroCard />
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { InlineHeartSticker } from './stickers'
+import { GrandmaLogo } from './grandma-logo'
 
 export function Navigation() {
   const [scrolled, setScrolled] = useState(false)
@@ -43,21 +43,29 @@ export function Navigation() {
         }}
       >
         <div className="flex items-center justify-between">
-          {/* Wordmark */}
+          {/* Logo + Wordmark */}
           <Link
             href="/"
-            className={`transition-all duration-[380ms] flex items-center`}
+            className={`transition-all duration-[380ms] flex items-center gap-2`}
             style={{
-              fontFamily: 'var(--font-fraunces), var(--font-display)',
-              fontWeight: 600,
-              fontSize: scrolled ? '22px' : '28px',
-              letterSpacing: '-0.02em',
-              color: 'var(--ink)',
               transitionTimingFunction: 'var(--ease-paper)',
             }}
           >
-            Grandma
-            <InlineHeartSticker size={scrolled ? 14 : 16} fill="var(--lavender)" />
+            <GrandmaLogo 
+              size={scrolled ? 36 : 44} 
+              animation="heartbeat"
+            />
+            <span
+              style={{
+                fontFamily: 'var(--font-fraunces), var(--font-display)',
+                fontWeight: 600,
+                fontSize: scrolled ? '22px' : '28px',
+                letterSpacing: '-0.02em',
+                color: 'var(--ink)',
+              }}
+            >
+              grandma
+            </span>
           </Link>
 
           {/* Desktop Nav Links */}

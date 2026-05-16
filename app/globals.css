@@ -347,3 +347,45 @@ body {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+/* Custom Tailwind utilities for stickers and mode colors */
+@theme inline {
+  --color-paper: var(--surface);
+  --color-cream: var(--bg);
+  --color-cream-deep: var(--surface-raised);
+  --color-ink: var(--ink);
+  --color-line: var(--border);
+  --color-sticker-yellow: var(--sticker-yellow);
+  --color-sticker-coral: var(--sticker-coral);
+  --color-sticker-leaf: var(--sticker-green);
+  --color-mode-lavender: var(--lavender);
+  --color-mode-rose: var(--rose);
+  --color-mode-blue: var(--blue-powder);
+}
+
+/* Floating animations for stickers */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0) rotate(var(--rotate, 0deg));
+  }
+  50% {
+    transform: translateY(-12px) rotate(calc(var(--rotate, 0deg) + 3deg));
+  }
+}
+
+@keyframes float-medium {
+  0%, 100% {
+    transform: translateY(0) rotate(var(--rotate, 0deg));
+  }
+  50% {
+    transform: translateY(-8px) rotate(calc(var(--rotate, 0deg) - 2deg));
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 4s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-medium 3s ease-in-out infinite;
+}
