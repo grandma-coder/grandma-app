@@ -152,19 +152,50 @@ export default function KidsOnboarding() {
       if (behaviorErr) console.warn('[onboarding] behaviors upsert failed:', behaviorErr.message)
 
       // Insert children
-      const childrenToInsert = store.children.map((c) => ({
+      // Upload any local-file photo URIs to Storage so they survive a cold
+      // relaunch. Icon-avatar values (key strings) pass through unchanged.
+      async function resolvePhotoForUpload(photoUri: string | null | undefined): Promise<string | null> {
+        if (!photoUri) return null
+        if (isIconAvatar(photoUri)) return photoUri
+        if (!photoUri.startsWith('file:') && !photoUri.startsWith('content:')) return photoUri
+        try {
+          const ext = (photoUri.split('.').pop()?.split('?')[0] ?? 'jpg').toLowerCase()
+          const path = `child-photos/${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
+          const res = await fetch(photoUri)
+          const buf = await res.arrayBuffer()
+          const { error: upErr } = await supabase.storage
+            .from('garage-photos')
+            .upload(path, buf, { contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`, upsert: true })
+          if (upErr) {
+            console.warn('[onboarding] child photo upload failed:', upErr.message)
+            return null
+          }
+          const { data } = supabase.storage.from('garage-photos').getPublicUrl(path)
+          return data.publicUrl
+        } catch (e) {
+          console.warn('[onboarding] child photo upload exception:', e)
+          return null
+        }
+      }
+
+      const resolvedPhotos = await Promise.all(
+        store.children.map((c) => resolvePhotoForUpload(c.photoUri))
+      )
+
+      const childrenToInsert = store.children.map((c, i) => ({
         parent_id: userId,
         name: c.name,
         birth_date: c.birthDate || null,
         allergies: c.allergies,
         conditions: c.conditionsText ? [c.conditionsText] : [],
         country_code: c.countryCode || 'US',
+        photo_url: resolvedPhotos[i],
       }))
 
       const { data: insertedChildren, error: insertError } = await supabase
         .from('children')
         .insert(childrenToInsert)
-        .select('id, name, birth_date, parent_id, allergies, conditions, country_code, sex, blood_type, medications, dietary_restrictions, preferred_foods, disliked_foods, pediatrician, notes')
+        .select('id, name, birth_date, parent_id, allergies, conditions, country_code, photo_url, sex, blood_type, medications, dietary_restrictions, preferred_foods, disliked_foods, pediatrician, notes')
 
       if (insertError) {
         Alert.alert(
@@ -184,7 +215,7 @@ export default function KidsOnboarding() {
       if (!resolvedChildren || resolvedChildren.length === 0) {
         const { data: refetched } = await supabase
           .from('children')
-          .select('id, name, birth_date, parent_id, allergies, conditions, country_code, sex, blood_type, medications, dietary_restrictions, preferred_foods, disliked_foods, pediatrician, notes')
+          .select('id, name, birth_date, parent_id, allergies, conditions, country_code, photo_url, sex, blood_type, medications, dietary_restrictions, preferred_foods, disliked_foods, pediatrician, notes')
           .eq('parent_id', userId)
         resolvedChildren = refetched ?? []
       }
@@ -240,7 +271,20 @@ export default function KidsOnboarding() {
           console.warn('care_circle insert:', circleError.message)
         }
 
-        // Create caregiver entry if provided
+        // Partner entry — pending invite slot, name only (no email yet).
+        if (store.partnerName) {
+          await supabase.from('care_circle').insert({
+            owner_id: userId,
+            role: 'partner',
+            permissions: ['view', 'log_activity', 'chat', 'edit_child', 'emergency'],
+            children_access: childIds,
+            status: 'pending',
+            invite_email: null,
+            invite_name: store.partnerName,
+          })
+        }
+
+        // Caregiver entry if provided.
         if (store.caregiverName && store.caregiverRole) {
           await supabase.from('care_circle').insert({
             owner_id: userId,
@@ -249,6 +293,7 @@ export default function KidsOnboarding() {
             children_access: childIds,
             status: 'pending',
             invite_email: null,
+            invite_name: store.caregiverName,
           })
         }
 
@@ -275,6 +320,7 @@ export default function KidsOnboarding() {
           pediatrician: c.pediatrician ?? null,
           notes: c.notes ?? '',
           countryCode: c.country_code ?? 'US',
+          photoUrl: c.photo_url ?? null,
           caregiverRole: 'parent' as const,
           permissions: { view: true, log_activity: true, chat: true },
         }))
@@ -505,6 +551,16 @@ function StepChildDob({
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
   const childName = child?.name || `Child ${childIdx + 1}`
 
+  // App targets ages 0–5; warn if older. Bound the picker minimum at 18y
+  // to avoid the previous arbitrary 2005 cutoff that silently rejected
+  // valid pre-2005 dates with no explanation.
+  const minDate = new Date()
+  minDate.setFullYear(minDate.getFullYear() - 18)
+  const ageYears = child?.birthDate
+    ? (Date.now() - new Date(child.birthDate + 'T00:00:00').getTime()) / (365.25 * 86_400_000)
+    : null
+  const tooOld = ageYears !== null && ageYears > 6
+
   return (
     <OnboardingStep
       step={step}
@@ -521,8 +577,16 @@ function StepChildDob({
           placeholder="Tap to select a date"
           modalTitle={`${childName}'s birth date`}
           maximumDate={new Date()}
-          minimumDate={new Date(2005, 0, 1)}
+          minimumDate={minDate}
         />
+
+        {tooOld && (
+          <View style={[stepStyles.ageBadge, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 8 }]}>
+            <Text style={[stepStyles.ageBadgeText, { color: colors.textMuted, fontWeight: '500' }]}>
+              Grandma's tuned for ages 0–5, but you can still continue.
+            </Text>
+          </View>
+        )}
 
         {child?.birthDate && (
           <View style={[stepStyles.ageBadge, { backgroundColor: colors.primaryTint, borderRadius: radius.lg }]}>
@@ -1069,13 +1133,13 @@ function CompletionScreen({
           style={({ pressed }) => [
             completeStyles.button,
             {
-              backgroundColor: colors.primary,
-              borderRadius: radius.lg,
+              backgroundColor: brand.kids,
+              borderRadius: radius.full,
             },
             pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
           ]}
         >
-          <Text style={completeStyles.buttonText}>Let's Go</Text>
+          <Text style={[completeStyles.buttonText, { color: colors.bg }]}>Let's Go</Text>
         </Pressable>
       </View>
     </View>
@@ -1309,7 +1373,6 @@ const completeStyles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
     letterSpacing: 0.3,
   },
 })

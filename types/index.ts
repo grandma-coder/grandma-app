@@ -16,6 +16,7 @@ export interface Child {
   pediatrician: { name: string; phone: string; clinic: string } | null
   notes: string
   countryCode: string
+  photoUrl?: string | null
 }
 
 export interface Message {

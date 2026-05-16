@@ -188,59 +188,6 @@ export function leapStatusForWeek(weekAge: number, leapWeek: number): GrowthLeap
   return 'future'
 }
 
-export interface ActiveGrowthLeap {
-  leap: GrowthLeap
-  index: number
-  weekAge: number
-  /** 'active' = currently in the leap window. 'upcoming' = next future leap. 'done' = past final leap. */
-  status: 'active' | 'upcoming' | 'done'
-  /** 0..1 progress through the current leap window (active only) */
-  progress: number
-  /** -1 if not active; otherwise 0/1/2 = stormy/peak/emerging */
-  phaseIndex: number
-  /** Weeks until the next leap starts (upcoming only) */
-  weeksUntil?: number
-  /** How many leaps have already finished */
-  completedCount: number
-}
-
-/** Returns the leap currently happening, the next upcoming leap, or 'done' if past the last. */
-export function getActiveGrowthLeap(birthDateISO: string): ActiveGrowthLeap | null {
-  if (!birthDateISO) return null
-  const birth = new Date(birthDateISO)
-  if (isNaN(birth.getTime())) return null
-  const now = new Date()
-  const weekAge = Math.max(0, Math.floor((now.getTime() - birth.getTime()) / (7 * 24 * 60 * 60 * 1000)))
-
-  let completedCount = 0
-  for (let i = 0; i < GROWTH_LEAPS.length; i++) {
-    const leap = GROWTH_LEAPS[i]
-    const start = leap.week - 2
-    const end = leap.week + 1
-
-    if (weekAge >= start && weekAge <= end) {
-      const offset = weekAge - start
-      const phaseIndex = offset <= 1 ? 0 : offset === 2 ? 1 : 2
-      const progress = (weekAge - start) / (end - start)
-      return { leap, index: i, weekAge, status: 'active', progress, phaseIndex, completedCount }
-    }
-    if (weekAge < start) {
-      return { leap, index: i, weekAge, status: 'upcoming', progress: 0, phaseIndex: -1, weeksUntil: start - weekAge, completedCount }
-    }
-    completedCount = i + 1
-  }
-  // Past the last leap
-  return {
-    leap: GROWTH_LEAPS[GROWTH_LEAPS.length - 1],
-    index: GROWTH_LEAPS.length - 1,
-    weekAge,
-    status: 'done',
-    progress: 1,
-    phaseIndex: -1,
-    completedCount: GROWTH_LEAPS.length,
-  }
-}
-
 /** Compute child's age in weeks from birth date. */
 export function weekAgeFromBirth(birthDateISO: string): number {
   if (!birthDateISO) return 0

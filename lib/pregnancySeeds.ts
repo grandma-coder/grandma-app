@@ -3,11 +3,12 @@
 // Only runs if the user has zero existing logs (never overwrites real data)
 
 import { supabase } from './supabase'
+import { toDateStr } from './cycleLogic'
 
 function daysAgo(n: number): string {
   const d = new Date()
   d.setDate(d.getDate() - n)
-  return d.toISOString().split('T')[0]
+  return toDateStr(d)
 }
 
 export async function seedPregnancyData(

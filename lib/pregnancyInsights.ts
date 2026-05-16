@@ -93,6 +93,12 @@ export const WEEK_FOCUS: WeekRangeFocus[] = [
 ]
 
 export function getBirthFocusForWeek(week: number): BirthFocusCard {
-  const range = WEEK_FOCUS.find(r => week >= r.weekStart && week <= r.weekEnd)
-  return range?.focus ?? WEEK_FOCUS[2].focus // default to week 21-27 content
+  // Clamp to the supported range (4–40). Pre-clamp users (weeks 1–3) see the
+  // first-trimester card, and post-clamp users (41–42, overdue) see the
+  // labor-readiness card from the last range, instead of the previous
+  // off-by-fallback that returned week 21–27 "Labor Signs" content for
+  // weeks 1–3.
+  const safeWeek = Math.max(4, Math.min(40, week))
+  const range = WEEK_FOCUS.find(r => safeWeek >= r.weekStart && safeWeek <= r.weekEnd)
+  return range?.focus ?? WEEK_FOCUS[0].focus
 }

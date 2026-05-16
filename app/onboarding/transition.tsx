@@ -67,7 +67,30 @@ export default function TransitionScreen() {
   const progressAnim = useRef(new Animated.Value(0)).current
   const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Redirect home if we landed here without a valid next-behavior. Must be in
+  // an effect — calling router.replace during render triggers React's "cannot
+  // update during render" warning and can double-navigate in concurrent mode.
   useEffect(() => {
+    if (!content) router.replace('/(tabs)' as any)
+  }, [content])
+
+  // Keep the latest handleContinue in a ref so the auto-advance timer always
+  // reads current state instead of capturing a stale closure on first mount.
+  const handleContinueRef = useRef<() => void>(() => {})
+  function handleContinue() {
+    if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current)
+    if (!nextBehavior || !content) {
+      router.replace('/(tabs)' as any)
+      return
+    }
+    switchTo(nextBehavior)
+    setMode(nextBehavior)
+    router.replace(content.route as any)
+  }
+  handleContinueRef.current = handleContinue
+
+  useEffect(() => {
+    if (!content) return
     // Entrance animation
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
@@ -82,24 +105,13 @@ export default function TransitionScreen() {
     }).start()
 
     autoAdvanceTimer.current = setTimeout(() => {
-      handleContinue()
+      handleContinueRef.current()
     }, AUTO_ADVANCE_MS)
 
     return () => {
       if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current)
     }
-  }, [])
-
-  function handleContinue() {
-    if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current)
-    if (!nextBehavior || !content) {
-      router.replace('/(tabs)' as any)
-      return
-    }
-    switchTo(nextBehavior)
-    setMode(nextBehavior)
-    router.replace(content.route as any)
-  }
+  }, [content])
 
   function handleSkip() {
     if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current)
@@ -126,7 +138,7 @@ export default function TransitionScreen() {
   }
 
   if (!content) {
-    router.replace('/(tabs)' as any)
+    // Effect above will run the redirect. Render nothing in the meantime.
     return null
   }
 
@@ -172,14 +184,21 @@ export default function TransitionScreen() {
         {/* CTA */}
         <Pressable
           onPress={handleContinue}
+          accessibilityRole="button"
+          accessibilityLabel="Continue to next step"
           style={({ pressed }) => [
             styles.ctaButton,
-            { backgroundColor: content.color, borderRadius: radius.full },
+            {
+              backgroundColor: content.color,
+              borderRadius: radius.full,
+              borderColor: colors.text,
+              shadowColor: colors.text,
+            },
             pressed && { shadowOffset: { width: 0, height: 2 }, transform: [{ translateY: 2 }] },
           ]}
         >
-          <Text style={styles.ctaText}>Let's go, dear</Text>
-          <ChevronRight size={20} color="#FFFFFF" strokeWidth={2.5} />
+          <Text style={[styles.ctaText, { color: colors.bg }]}>Let's go, dear</Text>
+          <ChevronRight size={20} color={colors.bg} strokeWidth={2.5} />
         </Pressable>
 
         {/* Skip */}
@@ -261,8 +280,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderWidth: 2,
-    borderColor: '#141313',
-    shadowColor: '#141313',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 0,
@@ -271,7 +288,6 @@ const styles = StyleSheet.create({
   ctaText: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
   skipBtn: {
     paddingVertical: 8,

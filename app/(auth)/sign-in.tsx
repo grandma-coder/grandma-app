@@ -38,10 +38,28 @@ export default function SignIn() {
   }, [])
 
   async function signIn() {
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail || !password) {
+      Alert.alert('Missing info', 'Please enter your email and password.')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      Alert.alert('Invalid email', 'Please enter a valid email address.')
+      return
+    }
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) Alert.alert('Error', error.message)
-    setLoading(false)
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password,
+      })
+      if (error) Alert.alert('Sign-in failed', error.message)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Network error'
+      Alert.alert('Sign-in failed', msg)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleApple() {
@@ -181,9 +199,14 @@ export default function SignIn() {
           />
 
           {/* Forgot */}
-          <Text style={[styles.forgot, { fontFamily: font.body, color: ink3 }]}>
-            Forgot password?
-          </Text>
+          <Pressable
+            onPress={() => router.push('/(auth)/forgot-password')}
+            hitSlop={8}
+          >
+            <Text style={[styles.forgot, { fontFamily: font.body, color: ink3 }]}>
+              Forgot password?
+            </Text>
+          </Pressable>
 
           {/* CTA */}
           <Pressable
@@ -218,6 +241,20 @@ export default function SignIn() {
   )
 }
 
+interface InputFieldProps {
+  label: string
+  value: string
+  onChangeText: (v: string) => void
+  secureTextEntry?: boolean
+  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad'
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters'
+  paper: string
+  paperBorder: string
+  ink: string
+  ink4: string
+  font: { display: string; body: string; bodyMedium: string; bodySemiBold: string }
+}
+
 function InputField({
   label,
   value,
@@ -230,7 +267,7 @@ function InputField({
   ink,
   ink4,
   font,
-}: any) {
+}: InputFieldProps) {
   return (
     <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
       <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
@@ -242,7 +279,7 @@ function InputField({
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
-        style={[styles.inputText, { fontFamily: font.display, color: ink }]}
+        style={[styles.inputText, { fontFamily: font.body, color: ink }]}
         selectionColor={ink}
         placeholderTextColor={ink4}
       />

@@ -67,12 +67,16 @@ export default function JourneyScreen() {
   const isAddMode = params.addMode === 'true'
 
   const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
-  const toggleBehavior = useBehaviorStore((s) => s.toggleBehavior)
   const enroll = useBehaviorStore((s) => s.enroll)
   const switchTo = useBehaviorStore((s) => s.switchTo)
   const buildQueue = useOnboardingStore((s) => s.buildQueue)
   const setMode = useModeStore((s) => s.setMode)
 
+  // Both first-time and add-mode buffer selections in local state and only
+  // persist on continue. Previously, first-time mode toggled the persisted
+  // `enrolledBehaviors` store on every card tap — an app kill between tap
+  // and continue left the user with a half-enrolled behavior and the root
+  // guard treating onboarding as "complete" with no data behind it.
   const [newSelections, setNewSelections] = useState<Behavior[]>([])
 
   const bg = isDark ? colors.bg : '#F3ECD9'
@@ -85,15 +89,18 @@ export default function JourneyScreen() {
   const unenrolledBehaviors = JOURNEYS.filter((j) => !enrolledBehaviors.includes(j.id))
   const allEnrolled = unenrolledBehaviors.length === 0
 
-  const selections = isAddMode ? newSelections : enrolledBehaviors
+  const selections = newSelections
   const hasSelection = selections.length > 0
 
   function handleToggle(b: Behavior) {
-    if (isAddMode) {
-      setNewSelections((prev) => (prev.includes(b) ? [] : [b]))
-    } else {
-      toggleBehavior(b)
-    }
+    setNewSelections((prev) => {
+      if (isAddMode) {
+        // Add-mode: single-select replacement.
+        return prev.includes(b) ? [] : [b]
+      }
+      // First-time: multi-select toggle.
+      return prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]
+    })
   }
 
   function handleContinue() {
@@ -101,19 +108,21 @@ export default function JourneyScreen() {
 
     if (isAddMode) {
       const behavior = newSelections[0]
+      if (!behavior) return
       enroll(behavior)
       buildQueue([behavior])
       setMode(behavior)
       switchTo(behavior)
       router.replace(FIRST_ROUTE[behavior] as any)
-    } else {
-      for (const b of selections) enroll(b)
-      buildQueue(selections)
-      const first = useOnboardingStore.getState().currentOnboarding!
-      setMode(first)
-      switchTo(first)
-      router.push(FIRST_ROUTE[first] as any)
+      return
     }
+    for (const b of newSelections) enroll(b)
+    buildQueue(newSelections)
+    const first = useOnboardingStore.getState().currentOnboarding
+    if (!first) return
+    setMode(first)
+    switchTo(first)
+    router.push(FIRST_ROUTE[first] as any)
   }
 
   // All enrolled — warm empty state
@@ -177,9 +186,7 @@ export default function JourneyScreen() {
         <View style={styles.cards}>
           {JOURNEYS.map((journey) => {
             const isEnrolled = enrolledBehaviors.includes(journey.id)
-            const isSelected = isAddMode
-              ? newSelections.includes(journey.id)
-              : enrolledBehaviors.includes(journey.id)
+            const isSelected = newSelections.includes(journey.id)
             const isDimmed = isAddMode && isEnrolled
             const softBg = getModeColorSoft(journey.modeKey, isDark)
             const accent = getModeColor(journey.modeKey, isDark)

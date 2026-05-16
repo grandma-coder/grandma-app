@@ -31,19 +31,40 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false)
 
   async function signUp() {
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail || !password) {
+      Alert.alert('Missing info', 'Please enter an email and password.')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      Alert.alert('Invalid email', 'Please enter a valid email address.')
+      return
+    }
+    if (password.length < 6) {
+      Alert.alert('Password too short', 'Use at least 6 characters.')
+      return
+    }
     setLoading(true)
-    const { error } = await supabase.auth.signUp({ email, password })
-    if (error) {
-      Alert.alert('Error', error.message)
-    } else {
+    try {
+      const { error } = await supabase.auth.signUp({ email: trimmedEmail, password })
+      if (error) {
+        Alert.alert('Sign-up failed', error.message)
+        return
+      }
       toast.show({
         title: 'Welcome aboard!',
         message: 'Check your email to confirm your account, then sign in.',
-        autoDismiss: 2800,
+        autoDismiss: 3200,
       })
-      setTimeout(() => router.replace('/(auth)/sign-in'), 1200)
+      // Wait for the toast to finish before swapping screens (which would
+      // unmount the toast provider host and dismiss the message early).
+      setTimeout(() => router.replace('/(auth)/sign-in'), 3200)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Network error'
+      Alert.alert('Sign-up failed', msg)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const bg = isDark ? colors.bg : '#F3ECD9'
@@ -106,7 +127,7 @@ export default function SignUp() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              style={[styles.inputText, { fontFamily: font.display, color: ink }]}
+              style={[styles.inputText, { fontFamily: font.body, color: ink }]}
               selectionColor={ink}
               placeholder="your@email.com"
               placeholderTextColor={ink4}
@@ -121,7 +142,7 @@ export default function SignUp() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              style={[styles.inputText, { fontFamily: font.display, color: ink }]}
+              style={[styles.inputText, { fontFamily: font.body, color: ink }]}
               selectionColor={ink}
               placeholder="min 6 characters"
               placeholderTextColor={ink4}

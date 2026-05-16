@@ -6,7 +6,7 @@
  * Saves answers to Supabase pregnancy_logs, behaviors, and profiles.
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import {
   View,
   Text,
@@ -28,6 +28,7 @@ import {
   type BirthPlace,
   type PregnancyMood,
 } from '../../../store/usePregnancyOnboardingStore'
+import { useCycleOnboardingStore } from '../../../store/useCycleOnboardingStore'
 import { usePregnancyStore, type MoodType } from '../../../store/usePregnancyStore'
 import { useJourneyStore } from '../../../store/useJourneyStore'
 import { useBehaviorStore } from '../../../store/useBehaviorStore'
@@ -280,6 +281,19 @@ function StepDueDate({
   const { colors, radius } = useTheme()
   const dueDate = usePregnancyOnboardingStore((s) => s.dueDate)
   const setDueDate = usePregnancyOnboardingStore((s) => s.setDueDate)
+
+  // If the user ran pre-preg onboarding first and entered an LMP, derive the
+  // expected due date (LMP + 280 days) and pre-populate the picker. Skipped
+  // when the user has already typed a due date this session.
+  useEffect(() => {
+    if (dueDate) return
+    const lmp = useCycleOnboardingStore.getState().lastPeriodDate
+    if (!lmp) return
+    const lmpDate = new Date(lmp + 'T00:00:00')
+    if (isNaN(lmpDate.getTime())) return
+    lmpDate.setDate(lmpDate.getDate() + 280)
+    setDueDate(toDateStr(lmpDate))
+  }, [dueDate, setDueDate])
 
   const maxDue = (() => {
     const d = new Date()
@@ -654,13 +668,13 @@ function CompletionScreen({
           style={({ pressed }) => [
             completeStyles.button,
             {
-              backgroundColor: colors.primary,
-              borderRadius: radius.lg,
+              backgroundColor: brand.pregnancy,
+              borderRadius: radius.full,
             },
             pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
           ]}
         >
-          <Text style={completeStyles.buttonText}>Let's Go</Text>
+          <Text style={[completeStyles.buttonText, { color: colors.bg }]}>Let's Go</Text>
         </Pressable>
       </View>
     </View>
@@ -863,7 +877,6 @@ const completeStyles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
     letterSpacing: 0.3,
   },
 })

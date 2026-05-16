@@ -96,6 +96,13 @@ export function toDateStr(d: Date): string {
 
 export function getCycleInfo(config: Partial<CycleConfig>, forDate?: string): CycleInfo {
   const cfg = { ...DEFAULT_CONFIG, ...config }
+  // Medical normal range is ~21–45 days. Below 15, ovulationDay = cycleLength
+  // - lutealPhase becomes <= 1, putting ovulation inside the menstruation
+  // window and breaking phase math. Clamp to a defensible lower bound so
+  // the engine never produces a nonsensical phase from a partial / typo
+  // value carried over from onboarding.
+  if (cfg.cycleLength < 21) cfg.cycleLength = 21
+  if (cfg.cycleLength > 60) cfg.cycleLength = 60
   const today = forDate ?? toDateStr(new Date())
 
   if (!cfg.lastPeriodStart) {

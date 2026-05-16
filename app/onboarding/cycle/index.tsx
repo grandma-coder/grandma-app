@@ -22,7 +22,7 @@ import { router } from 'expo-router'
 import { Sparkles } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
-import { useTheme, brand } from '../../../constants/theme'
+import { useTheme, brand, getModeColor, getModeColorSoft } from '../../../constants/theme'
 import {
   useCycleOnboardingStore,
   type ConditionChip,
@@ -291,7 +291,9 @@ function StepCycleLength({
   total: number
   onContinue: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('pre-pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const cycleLength = useCycleOnboardingStore((s) => s.cycleLength)
   const unknown = useCycleOnboardingStore((s) => s.cycleLengthUnknown)
   const setCycleLength = useCycleOnboardingStore((s) => s.setCycleLength)
@@ -330,13 +332,13 @@ function StepCycleLength({
           style={[
             stepStyles.chip,
             {
-              backgroundColor: unknown ? colors.primaryTint : colors.surface,
-              borderColor: unknown ? colors.primary : colors.border,
+              backgroundColor: unknown ? modeSoft : colors.surface,
+              borderColor: unknown ? mode : colors.border,
               borderRadius: radius.lg,
             },
           ]}
         >
-          <Text style={[stepStyles.chipText, { color: unknown ? colors.primary : colors.textSecondary }]}>
+          <Text style={[stepStyles.chipText, { color: unknown ? mode : colors.textSecondary }]}>
             I don't know
           </Text>
         </Pressable>
@@ -367,7 +369,9 @@ function StepPeriodDuration({
   total: number
   onContinue: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('pre-pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const duration = useCycleOnboardingStore((s) => s.periodDuration)
   const setDuration = useCycleOnboardingStore((s) => s.setPeriodDuration)
 
@@ -388,8 +392,8 @@ function StepPeriodDuration({
             style={[
               stepStyles.durationChip,
               {
-                backgroundColor: duration === n ? colors.primaryTint : colors.surface,
-                borderColor: duration === n ? colors.primary : colors.border,
+                backgroundColor: duration === n ? modeSoft : colors.surface,
+                borderColor: duration === n ? mode : colors.border,
                 borderRadius: radius.lg,
               },
             ]}
@@ -397,7 +401,7 @@ function StepPeriodDuration({
             <Text
               style={[
                 stepStyles.durationChipText,
-                { color: duration === n ? colors.primary : colors.text },
+                { color: duration === n ? mode : colors.text },
               ]}
             >
               {n} days
@@ -429,7 +433,9 @@ function StepConditions({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('pre-pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const conditions = useCycleOnboardingStore((s) => s.conditions)
   const toggle = useCycleOnboardingStore((s) => s.toggleCondition)
 
@@ -451,8 +457,8 @@ function StepConditions({
               style={[
                 stepStyles.conditionChip,
                 {
-                  backgroundColor: selected ? colors.primaryTint : colors.surface,
-                  borderColor: selected ? colors.primary : colors.border,
+                  backgroundColor: selected ? modeSoft : colors.surface,
+                  borderColor: selected ? mode : colors.border,
                   borderRadius: radius.full,
                 },
               ]}
@@ -460,7 +466,7 @@ function StepConditions({
               <Text
                 style={[
                   stepStyles.conditionChipText,
-                  { color: selected ? colors.primary : colors.text },
+                  { color: selected ? mode : colors.text },
                 ]}
               >
                 {opt.label}
@@ -484,7 +490,9 @@ function StepTempUnit({
   total: number
   onContinue: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('pre-pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const unit = useCycleOnboardingStore((s) => s.tempUnit)
   const setUnit = useCycleOnboardingStore((s) => s.setTempUnit)
 
@@ -522,7 +530,9 @@ function StepTTCDuration({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('pre-pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const duration = useCycleOnboardingStore((s) => s.tryingDuration)
   const setDuration = useCycleOnboardingStore((s) => s.setTryingDuration)
 
@@ -544,8 +554,8 @@ function StepTTCDuration({
               style={[
                 stepStyles.conditionChip,
                 {
-                  backgroundColor: selected ? colors.primaryTint : colors.surface,
-                  borderColor: selected ? colors.primary : colors.border,
+                  backgroundColor: selected ? modeSoft : colors.surface,
+                  borderColor: selected ? mode : colors.border,
                   borderRadius: radius.full,
                 },
               ]}
@@ -553,7 +563,7 @@ function StepTTCDuration({
               <Text
                 style={[
                   stepStyles.conditionChipText,
-                  { color: selected ? colors.primary : colors.text },
+                  { color: selected ? mode : colors.text },
                 ]}
               >
                 {opt.label}
@@ -608,7 +618,9 @@ function StepTTCSupplements({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('pre-pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const supplements = useCycleOnboardingStore((s) => s.supplements)
   const setSupplements = useCycleOnboardingStore((s) => s.setSupplements)
 
@@ -644,13 +656,15 @@ function StepTTCSupplements({
 
 function CompletionScreen({ onFinish }: { onFinish: () => void }) {
   const insets = useSafeAreaInsets()
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('pre-pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
 
   return (
     <View style={[completeStyles.root, { backgroundColor: colors.bg }]}>
       <View style={completeStyles.content}>
-        <View style={[completeStyles.iconCircle, { backgroundColor: colors.primaryTint }]}>
-          <Sparkles size={40} color={colors.primary} strokeWidth={2} />
+        <View style={[completeStyles.iconCircle, { backgroundColor: modeSoft }]}>
+          <Sparkles size={40} color={mode} strokeWidth={2} />
         </View>
 
         <Text style={[completeStyles.title, { color: colors.text }]}>
@@ -669,13 +683,13 @@ function CompletionScreen({ onFinish }: { onFinish: () => void }) {
           style={({ pressed }) => [
             completeStyles.button,
             {
-              backgroundColor: colors.primary,
-              borderRadius: radius.lg,
+              backgroundColor: mode,
+              borderRadius: radius.full,
             },
             pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
           ]}
         >
-          <Text style={completeStyles.buttonText}>Let's Go</Text>
+          <Text style={[completeStyles.buttonText, { color: colors.bg }]}>Let's Go</Text>
         </Pressable>
       </View>
     </View>
@@ -693,7 +707,9 @@ function TogglePill({
   active: boolean
   onPress: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('pre-pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
 
   return (
     <Pressable
@@ -701,8 +717,8 @@ function TogglePill({
       style={[
         stepStyles.togglePill,
         {
-          backgroundColor: active ? colors.primaryTint : colors.surface,
-          borderColor: active ? colors.primary : colors.border,
+          backgroundColor: active ? modeSoft : colors.surface,
+          borderColor: active ? mode : colors.border,
           borderRadius: radius.lg,
         },
       ]}
@@ -710,7 +726,7 @@ function TogglePill({
       <Text
         style={[
           stepStyles.togglePillText,
-          { color: active ? colors.primary : colors.textSecondary },
+          { color: active ? mode : colors.textSecondary },
         ]}
       >
         {label}
@@ -865,7 +881,6 @@ const completeStyles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
     letterSpacing: 0.3,
   },
 })
