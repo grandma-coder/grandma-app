@@ -28,8 +28,10 @@ export const useModeStore = create<ModeStore>()(
       name: 'grandma-mode',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ mode: state.mode, cycleIntent: state.cycleIntent }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHydrated(true)
+      // See useBehaviorStore for the rationale — must flip hydrated
+      // even when there's nothing persisted to rehydrate from.
+      onRehydrateStorage: () => () => {
+        useModeStore.setState({ hydrated: true })
       },
     }
   )

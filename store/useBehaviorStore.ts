@@ -102,8 +102,14 @@ export const useBehaviorStore = create<BehaviorStore>()(
         enrolledBehaviors: state.enrolledBehaviors,
         currentBehavior: state.currentBehavior,
       }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHydrated(true)
+      // The rehydration callback runs after AsyncStorage finishes reading.
+      // `state` is undefined when there's nothing persisted yet (fresh
+      // install or cleared storage). Using `state?.setHydrated(true)` in
+      // that case silently no-ops and the app hangs on the loading screen
+      // forever. Flip the flag via setState so it always fires, even when
+      // there was no state to rehydrate from.
+      onRehydrateStorage: () => () => {
+        useBehaviorStore.setState({ hydrated: true })
       },
     }
   )

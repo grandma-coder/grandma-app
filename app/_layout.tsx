@@ -127,65 +127,47 @@ export default function RootLayout() {
   const behaviorHydrated = useBehaviorStore((s) => s.hydrated)
 
   // ─── Auth listener ────────────────────────────────────────────────────────
+  //
+  // One code path loads user data, driven by onAuthStateChange:
+  //   - INITIAL_SESSION fires on subscribe with the stored session (cold start).
+  //   - SIGNED_IN fires after sign-in / sign-up / OAuth return.
+  //   - SIGNED_OUT clears state.
+  //
+  // Previously we had a parallel getSession() chain racing the listener — on
+  // OAuth returns that meant route-guard could fire before profile / children
+  // / behaviors were loaded, redirecting returning users back to onboarding.
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session)
-      if (session) {
-        // Load user profile role + journey mode
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('user_role, journey_mode')
-          .eq('id', session.user.id)
-          .single()
-        if (profile?.user_role) setUserRole(profile.user_role)
-        if (profile?.journey_mode) {
-          setMode(profile.journey_mode as any)
-        }
+    let cancelled = false
 
-        // Load all children accessible via child_caregivers
-        const { data: links } = await supabase
-          .from('child_caregivers')
-          .select('role, permissions, children(*)')
-          .eq('user_id', session.user.id)
-          .eq('status', 'accepted')
+    async function loadUserData(uid: string) {
+      // Profile: user_role + journey_mode. Errors are non-fatal but logged.
+      const { data: profile, error: profileErr } = await supabase
+        .from('profiles')
+        .select('user_role, journey_mode')
+        .eq('id', uid)
+        .single()
+      if (profileErr && profileErr.code !== 'PGRST116') {
+        console.warn('[auth] profile load failed:', profileErr.message)
+      }
+      if (cancelled) return
+      if (profile?.user_role) setUserRole(profile.user_role)
+      if (profile?.journey_mode) setMode(profile.journey_mode as any)
 
-        if (links && links.length > 0) {
-          const mapped: ChildWithRole[] = links
-            .filter((l: any) => l.children)
-            .map((l: any) => {
-              const c = l.children
-              return {
-                id: c.id,
-                parentId: c.parent_id,
-                name: c.name,
-                birthDate: c.birth_date ?? '',
-                weightKg: c.weight_kg ?? 0,
-                heightCm: c.height_cm ?? 0,
-                sex: c.sex ?? '',
-                bloodType: c.blood_type ?? '',
-                allergies: c.allergies ?? [],
-                medications: c.medications ?? [],
-                conditions: c.conditions ?? [],
-                dietaryRestrictions: c.dietary_restrictions ?? [],
-                preferredFoods: c.preferred_foods ?? [],
-                dislikedFoods: c.disliked_foods ?? [],
-                pediatrician: c.pediatrician ?? null,
-                notes: c.notes ?? '',
-                countryCode: c.country_code ?? 'US',
-                caregiverRole: l.role,
-                permissions: l.permissions ?? DEFAULT_PERMISSIONS,
-              }
-            })
-          setChildren(mapped)
-          setHasChildren(true)
-        } else {
-          // Fallback: load own children directly
-          const { data: ownChildren } = await supabase
-            .from('children')
-            .select('*')
-            .eq('parent_id', session.user.id)
-          if (ownChildren && ownChildren.length > 0) {
-            const mapped: ChildWithRole[] = ownChildren.map((c: any) => ({
+      // Children via child_caregivers join.
+      const { data: links, error: linksErr } = await supabase
+        .from('child_caregivers')
+        .select('role, permissions, children(*)')
+        .eq('user_id', uid)
+        .eq('status', 'accepted')
+      if (linksErr) console.warn('[auth] child_caregivers load failed:', linksErr.message)
+      if (cancelled) return
+
+      if (links && links.length > 0) {
+        const mapped: ChildWithRole[] = links
+          .filter((l: any) => l.children)
+          .map((l: any) => {
+            const c = l.children
+            return {
               id: c.id,
               parentId: c.parent_id,
               name: c.name,
@@ -203,48 +185,104 @@ export default function RootLayout() {
               pediatrician: c.pediatrician ?? null,
               notes: c.notes ?? '',
               countryCode: c.country_code ?? 'US',
-              caregiverRole: 'parent' as const,
-              permissions: DEFAULT_PERMISSIONS,
-            }))
-            setChildren(mapped)
-            setHasChildren(true)
-          }
-        }
-
-        // Restore enrolled behaviors from Supabase if local store is empty
-        // (handles app reinstall / cleared storage scenarios).
-        // We intentionally don't filter by `active` — any behavior row means the user
-        // has data for that journey and should see it in the switcher.
-        const localBehaviors = useBehaviorStore.getState().enrolledBehaviors
-        if (localBehaviors.length === 0) {
-          const { data: dbBehaviors } = await supabase
-            .from('behaviors')
-            .select('type')
-            .eq('user_id', session.user.id)
-          if (dbBehaviors && dbBehaviors.length > 0) {
-            const types = dbBehaviors.map((b: any) => b.type === 'cycle' ? 'pre-pregnancy' : b.type)
-            useBehaviorStore.getState().setBehaviors(types)
-          }
-        }
-
-        if (session.user.id) {
-          initRevenueCat(session.user.id).catch(() => {})
-          // Generate smart notifications on app open (deduped per day)
-          runNotificationEngine().catch(() => {})
-          // Sync badges from real activity data
-          syncBadgesFromSupabase().catch(() => {})
+              caregiverRole: l.role,
+              permissions: l.permissions ?? DEFAULT_PERMISSIONS,
+            }
+          })
+        setChildren(mapped)
+        setHasChildren(true)
+      } else {
+        // Fallback: own children directly.
+        const { data: ownChildren, error: ownErr } = await supabase
+          .from('children')
+          .select('*')
+          .eq('parent_id', uid)
+        if (ownErr) console.warn('[auth] children fallback load failed:', ownErr.message)
+        if (cancelled) return
+        if (ownChildren && ownChildren.length > 0) {
+          const mapped: ChildWithRole[] = ownChildren.map((c: any) => ({
+            id: c.id,
+            parentId: c.parent_id,
+            name: c.name,
+            birthDate: c.birth_date ?? '',
+            weightKg: c.weight_kg ?? 0,
+            heightCm: c.height_cm ?? 0,
+            sex: c.sex ?? '',
+            bloodType: c.blood_type ?? '',
+            allergies: c.allergies ?? [],
+            medications: c.medications ?? [],
+            conditions: c.conditions ?? [],
+            dietaryRestrictions: c.dietary_restrictions ?? [],
+            preferredFoods: c.preferred_foods ?? [],
+            dislikedFoods: c.disliked_foods ?? [],
+            pediatrician: c.pediatrician ?? null,
+            notes: c.notes ?? '',
+            countryCode: c.country_code ?? 'US',
+            caregiverRole: 'parent' as const,
+            permissions: DEFAULT_PERMISSIONS,
+          }))
+          setChildren(mapped)
+          setHasChildren(true)
         }
       }
-      setLoading(false)
-    })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      if (!session) setLoading(false)
-    })
+      // Restore enrolled behaviors from Supabase if local store is empty
+      // (handles app reinstall / cleared storage scenarios).
+      const localBehaviors = useBehaviorStore.getState().enrolledBehaviors
+      if (localBehaviors.length === 0) {
+        const { data: dbBehaviors, error: behErr } = await supabase
+          .from('behaviors')
+          .select('type')
+          .eq('user_id', uid)
+        if (behErr) console.warn('[auth] behaviors load failed:', behErr.message)
+        if (cancelled) return
+        if (dbBehaviors && dbBehaviors.length > 0) {
+          const types = dbBehaviors.map((b: any) =>
+            b.type === 'cycle' ? 'pre-pregnancy' : b.type
+          )
+          useBehaviorStore.getState().setBehaviors(types)
+        }
+      }
 
-    return () => subscription.unsubscribe()
-  }, [])
+      initRevenueCat(uid).catch(() => {})
+      runNotificationEngine().catch(() => {})
+      syncBadgesFromSupabase().catch(() => {})
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        setSession(newSession)
+        if (event === 'SIGNED_OUT' || !newSession) {
+          setLoading(false)
+          return
+        }
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          try {
+            await loadUserData(newSession.user.id)
+          } catch (e) {
+            console.warn('[auth] loadUserData failed:', e)
+          }
+          if (!cancelled) setLoading(false)
+        }
+      }
+    )
+
+    // Safety net: if onAuthStateChange never fires (e.g. Supabase client
+    // can't reach the storage adapter, network is dead, or a query in
+    // loadUserData hangs silently), unblock the loading screen after
+    // 10s so the user lands on /auth/welcome instead of staring at the
+    // spinner forever. Without this the app appears bricked on a stuck
+    // launch — see #stuck-on-loading reports.
+    const safety = setTimeout(() => {
+      if (!cancelled) setLoading(false)
+    }, 10000)
+
+    return () => {
+      cancelled = true
+      clearTimeout(safety)
+      subscription.unsubscribe()
+    }
+  }, [setChildren, setMode])
 
   // ─── Route guard ──────────────────────────────────────────────────────────
   // Onboarding is complete when user has enrolled behaviors (works for all

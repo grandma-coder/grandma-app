@@ -157,8 +157,10 @@ export const useGoalsStore = create<GoalsState>()(
       name: 'grandma-goals',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ goals: state.goals }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHydrated(true)
+      // See useBehaviorStore for the rationale — must flip hydrated
+      // even when there's nothing persisted to rehydrate from.
+      onRehydrateStorage: () => () => {
+        useGoalsStore.setState({ hydrated: true })
       },
     }
   )

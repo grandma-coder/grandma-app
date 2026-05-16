@@ -79,8 +79,10 @@ export const useLanguageStore = create<LanguageStore>()(
       name: 'grandma-language',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ language: state.language }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHydrated(true)
+      // See useBehaviorStore for the rationale — must flip hydrated
+      // even when there's nothing persisted to rehydrate from.
+      onRehydrateStorage: () => () => {
+        useLanguageStore.setState({ hydrated: true })
       },
     }
   )
