@@ -140,14 +140,27 @@ export default function RootLayout() {
     let cancelled = false
 
     async function loadUserData(uid: string) {
+      console.log('[auth] loadUserData start uid:', uid)
+
       // Profile: user_role + journey_mode. Errors are non-fatal but logged.
       const { data: profile, error: profileErr } = await supabase
         .from('profiles')
         .select('user_role, journey_mode')
         .eq('id', uid)
         .single()
-      if (profileErr && profileErr.code !== 'PGRST116') {
-        console.warn('[auth] profile load failed:', profileErr.message)
+      if (profileErr) {
+        // PGRST116 = no rows returned. This means the profile row is missing
+        // for an authenticated user — most likely the row was never created
+        // on sign-up, OR the user signed up against a different Supabase
+        // project than the one currently configured. Surface it loudly so
+        // the symptom (empty profile + no data) maps to the cause.
+        if (profileErr.code === 'PGRST116') {
+          console.warn(`[auth] profile row MISSING for uid=${uid} — sign-up likely didn't seed it, or env points at a different DB`)
+        } else {
+          console.warn('[auth] profile load failed:', profileErr.message)
+        }
+      } else {
+        console.log('[auth] profile loaded:', profile)
       }
       if (cancelled) return
       if (profile?.user_role) setUserRole(profile.user_role)
@@ -160,6 +173,7 @@ export default function RootLayout() {
         .eq('user_id', uid)
         .eq('status', 'accepted')
       if (linksErr) console.warn('[auth] child_caregivers load failed:', linksErr.message)
+      else console.log(`[auth] child_caregivers found: ${links?.length ?? 0}`)
       if (cancelled) return
 
       if (links && links.length > 0) {
@@ -185,6 +199,7 @@ export default function RootLayout() {
               pediatrician: c.pediatrician ?? null,
               notes: c.notes ?? '',
               countryCode: c.country_code ?? 'US',
+              photoUrl: c.photo_url ?? null,
               caregiverRole: l.role,
               permissions: l.permissions ?? DEFAULT_PERMISSIONS,
             }
@@ -218,11 +233,15 @@ export default function RootLayout() {
             pediatrician: c.pediatrician ?? null,
             notes: c.notes ?? '',
             countryCode: c.country_code ?? 'US',
+            photoUrl: c.photo_url ?? null,
             caregiverRole: 'parent' as const,
             permissions: DEFAULT_PERMISSIONS,
           }))
           setChildren(mapped)
           setHasChildren(true)
+          console.log(`[auth] fallback children loaded: ${ownChildren.length}`)
+        } else {
+          console.log('[auth] no children found via fallback either — user has zero kids in this DB')
         }
       }
 
@@ -235,6 +254,7 @@ export default function RootLayout() {
           .select('type')
           .eq('user_id', uid)
         if (behErr) console.warn('[auth] behaviors load failed:', behErr.message)
+        else console.log(`[auth] behaviors found: ${dbBehaviors?.length ?? 0}`)
         if (cancelled) return
         if (dbBehaviors && dbBehaviors.length > 0) {
           const types = dbBehaviors.map((b: any) =>
@@ -251,8 +271,10 @@ export default function RootLayout() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        console.log(`[auth] event=${event} hasSession=${!!newSession} uid=${newSession?.user?.id?.slice(0, 8) ?? 'null'}`)
         setSession(newSession)
         if (event === 'SIGNED_OUT' || !newSession) {
+          console.log('[auth] no session — unblock loading, route guard will send to /(auth)/welcome')
           setLoading(false)
           return
         }

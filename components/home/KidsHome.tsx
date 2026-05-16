@@ -30,6 +30,7 @@ import {
 } from 'lucide-react-native'
 import * as Haptics from 'expo-haptics'
 import { useTheme, brand, stickers, font } from '../../constants/theme'
+import { EmptyState } from '../ui/EmptyState'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
@@ -1575,7 +1576,24 @@ export function KidsHome() {
     })
   }
 
-  if (!child) return null
+  // No child available yet — could be a freshly-signed-in user with no
+  // kids in the DB, or a logged-out user who somehow slipped past the
+  // route guard. Either way, show an actionable empty state instead of
+  // a blank screen.
+  if (!child) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center' }}>
+        <EmptyState
+          icon={<HeartSticker size={36} fill={stickers.pink} />}
+          iconBg={stickers.pinkSoft}
+          title="Welcome to grandma.app"
+          message="Add your first child to start tracking sleep, mood, growth, and more."
+          ctaLabel="Add a child"
+          onCtaPress={() => router.push('/onboarding/child-profile' as any)}
+        />
+      </View>
+    )
+  }
 
   const growthLeap = getGrowthLeap(child.birthDate)
   const firstName = (profileName || parentName)?.split(' ')[0] || ''
