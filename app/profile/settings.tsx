@@ -19,6 +19,7 @@ import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
 import { supabase } from '../../lib/supabase'
+import { signOut } from '../../lib/signOut'
 
 const INK = '#141313'
 const CREAM = '#F5EDDC'
@@ -47,9 +48,8 @@ export default function SettingsScreen() {
   async function handleSignOut(global: boolean) {
     setSigningOut(true)
     try {
-      await supabase.auth.signOut(global ? { scope: 'global' } : undefined)
       setSignOutModalVisible(false)
-      router.replace('/(auth)/welcome')
+      await signOut(global ? 'global' : 'local')
     } catch (e: any) {
       Alert.alert('Error', e.message)
     } finally {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, Pressable, Alert, StyleSheet, ActivityIndicator } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -6,10 +6,30 @@ import { supabase } from '../lib/supabase'
 import { colors } from '../constants/theme'
 
 export default function AcceptInvite() {
-  const { token } = useLocalSearchParams<{ token: string }>()
+  const params = useLocalSearchParams<{ token: string | string[] }>()
+  const token = Array.isArray(params.token) ? params.token[0] : params.token
   const [loading, setLoading] = useState(false)
   const [accepted, setAccepted] = useState(false)
   const [childName, setChildName] = useState('')
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
+  // Gate on session — the accept-invite edge function requires a JWT.
+  // Preserve the token through sign-in via a query param so the user
+  // resumes here after authenticating.
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (cancelled) return
+      if (!session) {
+        const t = token ? `?invite=${encodeURIComponent(token)}` : ''
+        router.replace(`/(auth)/welcome${t}` as Parameters<typeof router.replace>[0])
+        return
+      }
+      setCheckingAuth(false)
+    })()
+    return () => { cancelled = true }
+  }, [token])
 
   async function handleAccept() {
     if (!token) {
@@ -33,6 +53,14 @@ export default function AcceptInvite() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (checkingAuth) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator color={colors.accent} style={{ marginTop: 120 }} />
+      </View>
+    )
   }
 
   if (accepted) {

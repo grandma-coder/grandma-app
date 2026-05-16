@@ -29,6 +29,8 @@ import {
   type PregnancyMood,
 } from '../../../store/usePregnancyOnboardingStore'
 import { usePregnancyStore, type MoodType } from '../../../store/usePregnancyStore'
+import { useJourneyStore } from '../../../store/useJourneyStore'
+import { useBehaviorStore } from '../../../store/useBehaviorStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr } from '../../../lib/cycleLogic'
@@ -78,16 +80,16 @@ const BIRTH_PLACE_OPTIONS: { id: BirthPlace; label: string }[] = [
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 function calcWeekNumber(dueDateStr: string): number {
-  const due = new Date(dueDateStr)
+  const due = new Date(dueDateStr + 'T00:00:00')
   const now = new Date()
   const diffMs = due.getTime() - now.getTime()
   const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-  const week = 40 - Math.floor(daysLeft / 7)
+  const week = 40 - Math.ceil(daysLeft / 7)
   return Math.max(1, Math.min(42, week))
 }
 
 function daysUntil(dueDateStr: string): number {
-  const due = new Date(dueDateStr)
+  const due = new Date(dueDateStr + 'T00:00:00')
   const now = new Date()
   return Math.max(0, Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
 }
@@ -124,30 +126,36 @@ export default function PregnancyOnboarding() {
 
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
-  async function saveAndFinish() {
+  async function saveAndFinish(): Promise<void> {
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return onboardingComplete()
+    if (!session) return onboardingComplete('pregnancy')
 
     const userId = session.user.id
+    const parentName = useJourneyStore.getState().parentName ?? null
 
-    // ── 1. Optional: profile health notes. Non-blocking on failure. ──────
-    if (store.conditionsText) {
-      const { error: profileErr } = await supabase.from('profiles').upsert(
-        {
-          id: userId,
-          health_notes: store.conditionsText,
-        },
-        { onConflict: 'id' }
-      )
-      if (profileErr) console.warn('[onboarding] profile upsert failed:', profileErr.message)
+    // ── 1. Profile: journey mode + parent name + optional health notes. ──
+    const profilePayload: Record<string, unknown> = {
+      id: userId,
+      journey_mode: 'pregnancy',
     }
+    if (parentName) profilePayload.name = parentName
+    if (store.conditionsText) profilePayload.health_notes = store.conditionsText
+    if (store.dueDate) profilePayload.due_date = store.dueDate
+    const { error: profileErr } = await supabase
+      .from('profiles')
+      .upsert(profilePayload, { onConflict: 'id' })
+    if (profileErr) console.warn('[onboarding] profile upsert failed:', profileErr.message)
 
     // ── 2. REQUIRED: pregnancy behavior row. Block on failure. ───────────
-    const { error: behaviorErr } = await supabase.from('behaviors').insert({
-      user_id: userId,
-      type: 'pregnancy',
-      active: true,
-    })
+    useBehaviorStore.getState().enroll('pregnancy')
+    const { error: behaviorErr } = await supabase.from('behaviors').upsert(
+      {
+        user_id: userId,
+        type: 'pregnancy',
+        active: true,
+      },
+      { onConflict: 'user_id,type' }
+    )
     if (behaviorErr) {
       Alert.alert(
         'Couldn\'t finish onboarding',
@@ -215,7 +223,7 @@ export default function PregnancyOnboarding() {
     }
 
     store.clearAll()
-    onboardingComplete()
+    onboardingComplete('pregnancy')
   }
 
 

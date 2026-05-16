@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
+import { signOut } from '../../lib/signOut'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
 import { useSavedToast } from '../../components/ui/SavedToast'
@@ -68,8 +69,7 @@ export default function AccountScreen() {
         text: 'Sign Out All',
         style: 'destructive',
         onPress: async () => {
-          await supabase.auth.signOut({ scope: 'global' })
-          router.replace('/(auth)/welcome')
+          await signOut('global')
         },
       },
     ])

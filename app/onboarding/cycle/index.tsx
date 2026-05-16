@@ -32,6 +32,8 @@ import {
 import { supabase } from '../../../lib/supabase'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { useModeStore } from '../../../store/useModeStore'
+import { useJourneyStore } from '../../../store/useJourneyStore'
+import { useBehaviorStore } from '../../../store/useBehaviorStore'
 
 // ─── Step IDs ──────────────────────────────────────────────────────────────
 
@@ -95,26 +97,40 @@ export default function CycleOnboarding() {
 
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
-  async function saveAndFinish() {
+  async function saveAndFinish(): Promise<void> {
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return onboardingComplete()
+      if (!session) return onboardingComplete('pre-pregnancy')
 
       const userId = session.user.id
+      const parentName = useJourneyStore.getState().parentName ?? null
 
-      // Update profile with cycle preferences
-      await supabase.from('profiles').upsert({
+      // Profile: persist journey mode + parent name so cold restarts don't
+      // reset the user to the default mode.
+      const profilePayload: Record<string, unknown> = {
         id: userId,
-      }, { onConflict: 'id' })
+        journey_mode: 'pre-pregnancy',
+      }
+      if (parentName) profilePayload.name = parentName
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .upsert(profilePayload, { onConflict: 'id' })
+      if (profileErr) console.warn('[onboarding] profile upsert failed:', profileErr.message)
 
-      // Create behavior record
-      await supabase.from('behaviors').insert({
-        user_id: userId,
-        type: 'cycle',
-        active: true,
-      })
+      // Behavior row. Schema CHECK constraint requires `cycle` (remapped to
+      // `pre-pregnancy` on read in app/_layout.tsx).
+      useBehaviorStore.getState().enroll('pre-pregnancy')
+      const { error: behaviorErr } = await supabase.from('behaviors').upsert(
+        {
+          user_id: userId,
+          type: 'cycle',
+          active: true,
+        },
+        { onConflict: 'user_id,type' }
+      )
+      if (behaviorErr) console.warn('[onboarding] behaviors upsert failed:', behaviorErr.message)
 
-      // Create initial cycle log if we have a last period date
+      // Initial cycle log if we have a last period date
       if (store.lastPeriodDate) {
         await supabase.from('cycle_logs').insert({
           user_id: userId,
@@ -133,15 +149,14 @@ export default function CycleOnboarding() {
         })
       }
     } catch (e) {
-      // Non-blocking — user can still proceed
+      // Non-blocking — local mode set below so user can still proceed.
       console.warn('Failed to save cycle onboarding:', e)
     }
 
     useModeStore.getState().setCycleIntent(store.tryingToConceive ? 'ttc' : 'tracking')
-    useModeStore.getState().setMode('pre-pregnancy')
 
     store.clearAll()
-    onboardingComplete()
+    onboardingComplete('pre-pregnancy')
   }
 
   // ─── Render current step ────────────────────────────────────────────────

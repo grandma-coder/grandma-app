@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../constants/theme'
 import { supabase } from '../lib/supabase'
+import { signOut } from '../lib/signOut'
 import { seedCycleData, seedKidsData, seedPregnancyData, seedExamData, seedAllData, wipeAllDemoData, repairBehaviorsFromData } from '../lib/devSeed'
 import { useModeStore } from '../store/useModeStore'
 import { useJourneyStore } from '../store/useJourneyStore'
@@ -33,11 +34,6 @@ const ONBOARDING_FLOWS: Array<[string, string]> = [
   ['Pre-pregnancy onboarding', '/onboarding/cycle'],
   ['Pregnancy onboarding', '/onboarding/pregnancy'],
   ['Kids onboarding', '/onboarding/kids'],
-  ['Activities onboarding', '/onboarding/activities'],
-  ['Parent name', '/onboarding/parent-name'],
-  ['Due date', '/onboarding/due-date'],
-  ['Baby name', '/onboarding/baby-name'],
-  ['Child profile', '/onboarding/child-profile'],
   ['Transition', '/onboarding/transition'],
 ]
 
@@ -189,9 +185,7 @@ export default function DevPanel() {
           text: 'Sign out',
           style: 'destructive',
           onPress: async () => {
-            queryClient.clear()
-            await supabase.auth.signOut()
-            router.replace('/' as Parameters<typeof router.replace>[0])
+            await signOut()
           },
         },
       ]

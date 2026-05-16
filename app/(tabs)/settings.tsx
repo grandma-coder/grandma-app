@@ -29,6 +29,7 @@ import { useBadgeStore, BADGE_DEFS } from '../../store/useBadgeStore'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { supabase } from '../../lib/supabase'
+import { signOut } from '../../lib/signOut'
 import { checkPremium } from '../../lib/revenue'
 import { useTranslation } from '../../lib/i18n'
 import { useDevPanel } from '../../context/DevPanelContext'
@@ -119,8 +120,7 @@ export default function ProfileScreen() {
         text: t('profile_signOut'),
         style: 'destructive',
         onPress: async () => {
-          await supabase.auth.signOut()
-          router.replace('/(auth)/welcome')
+          await signOut()
         },
       },
     ])

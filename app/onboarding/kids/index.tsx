@@ -32,6 +32,8 @@ import {
   type CaregiverRole,
 } from '../../../store/useKidsOnboardingStore'
 import { useChildStore } from '../../../store/useChildStore'
+import { useJourneyStore } from '../../../store/useJourneyStore'
+import { useBehaviorStore } from '../../../store/useBehaviorStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
 import type { ChildWithRole } from '../../../types'
@@ -117,19 +119,37 @@ export default function KidsOnboarding() {
 
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
-  async function saveAndFinish() {
+  async function saveAndFinish(): Promise<void> {
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return onboardingComplete()
+      if (!session) return onboardingComplete('kids')
 
       const userId = session.user.id
+      const parentName = useJourneyStore.getState().parentName ?? null
 
-      // Create behavior
-      await supabase.from('behaviors').insert({
-        user_id: userId,
-        type: 'kids',
-        active: true,
-      })
+      // Profile: persist journey mode + parent name so cold restarts don't
+      // reset the user to the default mode.
+      const profilePayload: Record<string, unknown> = {
+        id: userId,
+        journey_mode: 'kids',
+      }
+      if (parentName) profilePayload.name = parentName
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .upsert(profilePayload, { onConflict: 'id' })
+      if (profileErr) console.warn('[onboarding] profile upsert failed:', profileErr.message)
+
+      // Behavior row
+      useBehaviorStore.getState().enroll('kids')
+      const { error: behaviorErr } = await supabase.from('behaviors').upsert(
+        {
+          user_id: userId,
+          type: 'kids',
+          active: true,
+        },
+        { onConflict: 'user_id,type' }
+      )
+      if (behaviorErr) console.warn('[onboarding] behaviors upsert failed:', behaviorErr.message)
 
       // Insert children
       const childrenToInsert = store.children.map((c) => ({
@@ -260,12 +280,18 @@ export default function KidsOnboarding() {
         }))
         setChildrenStore(mapped)
       }
+      // Reached only when all required writes succeeded.
+      store.clearAll()
+      onboardingComplete('kids')
     } catch (e) {
-      console.warn('Failed to save kids onboarding:', e)
+      const msg = e instanceof Error ? e.message : String(e)
+      console.warn('Failed to save kids onboarding:', msg)
+      Alert.alert(
+        "Couldn't finish setup",
+        `${msg}\n\nPlease check your connection and try again. Your answers are still here.`
+      )
+      // Do NOT clear the draft or navigate — let the user retry.
     }
-
-    store.clearAll()
-    onboardingComplete()
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────

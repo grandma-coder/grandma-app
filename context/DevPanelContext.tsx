@@ -25,6 +25,7 @@ import { useBehaviorStore, type Behavior } from '../store/useBehaviorStore'
 import { useModeStore } from '../store/useModeStore'
 import { useOnboardingStore } from '../store/useOnboardingStore'
 import { supabase } from '../lib/supabase'
+import { signOut } from '../lib/signOut'
 
 const IS_DEV = __DEV__ || process.env.EXPO_PUBLIC_ENABLE_DEV_PANEL === 'true'
 
@@ -105,7 +106,7 @@ function DevPanel({ visible, onClose }: { visible: boolean; onClose: () => void 
   async function resetAuth() {
     Alert.alert('Sign Out', 'This will sign you out.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: async () => { await supabase.auth.signOut(); onClose() } },
+      { text: 'Sign Out', style: 'destructive', onPress: async () => { onClose(); await signOut() } },
     ])
   }
 

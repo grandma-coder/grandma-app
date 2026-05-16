@@ -69,9 +69,9 @@ export function getDaysToGo(dueDate: string): number {
  * Clamped to [1, 42] so the UI stays valid for early/late inputs.
  */
 export function getCurrentWeekFromDueDate(dueDate: string): number {
-  const due = new Date(dueDate)
+  const due = new Date(dueDate + 'T00:00:00')
   const now = new Date()
   const daysLeft = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  const week = 40 - Math.floor(daysLeft / 7)
+  const week = 40 - Math.ceil(daysLeft / 7)
   return Math.max(1, Math.min(42, week))
 }
