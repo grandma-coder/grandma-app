@@ -301,6 +301,110 @@ export interface TranslationKeys {
   pregnancy_appt_scheduleInAgenda: string
   pregnancy_appt_askGrandma: string
 
+  // ─── ContractionTimer (Wave 2) ────────────────────────────────────────
+  preg_contractions_title: string
+  preg_contractions_subtitle: string
+  preg_contractions_inProgress: string
+  preg_contractions_ready: string
+  preg_contractions_ended: string
+  preg_contractions_started: string
+  preg_contractions_alert511: string
+  preg_contractions_total: string
+  preg_contractions_avgDuration: string
+  preg_contractions_avgInterval: string
+  preg_contractions_saving: string
+  preg_contractions_saveSession: string
+  preg_contractions_reset: string
+  preg_contractions_thisSession: string
+  preg_contractions_durationSeconds: string     // "{{seconds}}s duration"
+  preg_contractions_intervalApart: string       // "{{minutes}}m {{seconds}}s apart"
+  preg_contractions_rule511: string
+
+  // ─── KickCounter (Wave 2) ─────────────────────────────────────────────
+  preg_kicks_title: string
+  preg_kicks_goal: string
+  preg_kicks_startSession: string
+  preg_kicks_kicksLabel: string
+  preg_kicks_timeLabel: string
+  preg_kicks_goalReached: string
+  preg_kicks_tapForKick: string
+  preg_kicks_endSession: string
+  preg_kicks_recentSessions: string
+  preg_kicks_countLabel: string                 // "{{count}} kicks"
+  preg_kicks_info: string
+
+  // ─── AppointmentList (Wave 2) ─────────────────────────────────────────
+  preg_appts_addButton: string
+  preg_appts_upcoming: string
+  preg_appts_past: string
+  preg_appts_emptyTitle: string
+  preg_appts_emptyDesc: string
+  preg_appts_modalTitle: string
+  preg_appts_label_type: string
+  preg_appts_label_title: string
+  preg_appts_label_doctor: string
+  preg_appts_label_notes: string
+  preg_appts_placeholder_title: string
+  preg_appts_placeholder_doctor: string
+  preg_appts_placeholder_notes: string
+  preg_appts_submitAdd: string
+  preg_appts_type_checkup: string
+  preg_appts_type_bloodwork: string
+  preg_appts_type_ultrasound: string
+  preg_appts_type_glucose: string
+  preg_appts_type_fertility: string
+  preg_appts_type_specialist: string
+  preg_appts_type_other: string
+
+  // ─── PregnancyLogForms — Mood + Symptoms (Wave 2) ─────────────────────
+  preg_form_mood_question: string
+  preg_form_mood_notesPlaceholder: string
+  preg_mood_excited: string
+  preg_mood_happy: string
+  preg_mood_okay: string
+  preg_mood_anxious: string
+  preg_mood_energetic: string
+  preg_form_symptoms_question: string
+  preg_form_symptoms_notesPlaceholder: string
+  preg_symptom_nausea: string
+  preg_symptom_fatigue: string
+  preg_symptom_backPain: string
+  preg_symptom_headache: string
+  preg_symptom_swelling: string
+  preg_symptom_heartburn: string
+  preg_symptom_insomnia: string
+  preg_symptom_cramps: string
+  preg_symptom_moodSwings: string
+  preg_symptom_cravings: string
+  preg_symptom_braxtonHicks: string
+  preg_symptom_shortBreath: string
+
+  // ─── PregnancyLogForms — other forms (Wave 2) ─────────────────────────
+  preg_form_appt_title: string
+  preg_form_appt_typePlaceholder: string
+  preg_form_appt_doctorPlaceholder: string
+  preg_form_appt_notesPlaceholder: string
+  preg_form_kick_title: string
+  preg_form_kick_subtitle: string
+  preg_form_kick_countLabel: string
+  preg_form_kick_durationLabel: string
+  preg_form_sleep_title: string
+  preg_form_sleep_hoursLabel: string
+  preg_form_sleep_qualityLabel: string
+  preg_form_weight_title: string
+  preg_form_weight_kgLabel: string
+  preg_form_water_title: string
+  preg_form_water_glassesLabel: string
+  preg_form_exercise_title: string
+  preg_form_exercise_typeLabel: string
+  preg_form_exercise_minutesLabel: string
+  preg_form_vitamins_title: string
+  preg_form_vitamins_takenLabel: string
+  preg_form_kegel_title: string
+  preg_form_kegel_setsLabel: string
+  preg_form_nutrition_title: string
+  preg_form_nutrition_caloriesLabel: string
+
   // ─── Pre-pregnancy-specific ────────────────────────────────────────────
   prepreg_cycleDay: string
   prepreg_period: string

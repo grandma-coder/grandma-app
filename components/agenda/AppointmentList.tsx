@@ -3,6 +3,7 @@ import { View, Text, Pressable, TextInput, Modal, ScrollView, StyleSheet } from 
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 type ThemeShape = ReturnType<typeof useTheme>
 
@@ -29,15 +30,17 @@ interface TypeOption {
   color: string
 }
 
-function buildTypes(stickers: ThemeShape['stickers']): TypeOption[] {
+type TFn = ReturnType<typeof useTranslation>['t']
+
+function buildTypes(stickers: ThemeShape['stickers'], t: TFn): TypeOption[] {
   return [
-    { id: 'checkup', label: 'Checkup', icon: 'medkit-outline', color: stickers.blue },
-    { id: 'bloodwork', label: 'Bloodwork', icon: 'water-outline', color: stickers.coral },
-    { id: 'ultrasound', label: 'Ultrasound', icon: 'image-outline', color: stickers.pink },
-    { id: 'glucose_test', label: 'Glucose Test', icon: 'flask-outline', color: stickers.yellow },
-    { id: 'fertility', label: 'Fertility', icon: 'flower-outline', color: stickers.green },
-    { id: 'specialist', label: 'Specialist', icon: 'person-outline', color: stickers.lilac },
-    { id: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline', color: stickers.peach },
+    { id: 'checkup', label: t('preg_appts_type_checkup'), icon: 'medkit-outline', color: stickers.blue },
+    { id: 'bloodwork', label: t('preg_appts_type_bloodwork'), icon: 'water-outline', color: stickers.coral },
+    { id: 'ultrasound', label: t('preg_appts_type_ultrasound'), icon: 'image-outline', color: stickers.pink },
+    { id: 'glucose_test', label: t('preg_appts_type_glucose'), icon: 'flask-outline', color: stickers.yellow },
+    { id: 'fertility', label: t('preg_appts_type_fertility'), icon: 'flower-outline', color: stickers.green },
+    { id: 'specialist', label: t('preg_appts_type_specialist'), icon: 'person-outline', color: stickers.lilac },
+    { id: 'other', label: t('preg_appts_type_other'), icon: 'ellipsis-horizontal-outline', color: stickers.peach },
   ]
 }
 
@@ -50,7 +53,8 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
   const theme = useTheme()
   const { colors, stickers, radius } = theme
   const styles = useMemo(() => makeStyles(theme), [theme])
-  const TYPES = useMemo(() => buildTypes(stickers), [stickers])
+  const { t } = useTranslation()
+  const TYPES = useMemo(() => buildTypes(stickers, t), [stickers, t])
 
   const [showAdd, setShowAdd] = useState(false)
   const [title, setTitle] = useState('')
@@ -117,19 +121,19 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
         accessibilityLabel="Add appointment"
       >
         <Ionicons name="add-circle-outline" size={20} color={colors.textInverse} />
-        <Text style={styles.addButtonText}>Add Appointment</Text>
+        <Text style={styles.addButtonText}>{t('preg_appts_addButton')}</Text>
       </Pressable>
 
       {upcoming.length > 0 && (
         <View>
-          <Text style={styles.sectionLabel}>UPCOMING</Text>
+          <Text style={styles.sectionLabel}>{t('preg_appts_upcoming')}</Text>
           {upcoming.map(renderAppointment)}
         </View>
       )}
 
       {past.length > 0 && (
         <View>
-          <Text style={styles.sectionLabel}>PAST</Text>
+          <Text style={styles.sectionLabel}>{t('preg_appts_past')}</Text>
           {past.map(renderAppointment)}
         </View>
       )}
@@ -137,9 +141,9 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
       {appointments.length === 0 && (
         <View style={styles.emptyState}>
           <Ionicons name="medical-outline" size={40} color={colors.textMuted} />
-          <Text style={styles.emptyTitle}>No appointments</Text>
+          <Text style={styles.emptyTitle}>{t('preg_appts_emptyTitle')}</Text>
           <Text style={styles.emptyDesc}>
-            Add doctor visits, ultrasounds, and checkups to keep track of your appointments.
+            {t('preg_appts_emptyDesc')}
           </Text>
         </View>
       )}
@@ -157,9 +161,9 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
         >
           <Pressable style={styles.modalSheet} onPress={() => { /* swallow */ }}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>New Appointment</Text>
+            <Text style={styles.modalTitle}>{t('preg_appts_modalTitle')}</Text>
 
-            <Text style={styles.modalLabel}>TYPE</Text>
+            <Text style={styles.modalLabel}>{t('preg_appts_label_type')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.typeRow}>
               {TYPES.map((type) => {
                 const isActive = selectedType === type.id
@@ -181,31 +185,31 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
               })}
             </ScrollView>
 
-            <Text style={styles.modalLabel}>TITLE</Text>
+            <Text style={styles.modalLabel}>{t('preg_appts_label_title')}</Text>
             <TextInput
               style={styles.input}
               selectionColor={stickers.blue}
-              placeholder="e.g. OB/GYN checkup"
+              placeholder={t('preg_appts_placeholder_title')}
               placeholderTextColor={colors.textFaint}
               value={title}
               onChangeText={setTitle}
             />
 
-            <Text style={styles.modalLabel}>DOCTOR (OPTIONAL)</Text>
+            <Text style={styles.modalLabel}>{t('preg_appts_label_doctor')}</Text>
             <TextInput
               style={styles.input}
               selectionColor={stickers.blue}
-              placeholder="Doctor's name"
+              placeholder={t('preg_appts_placeholder_doctor')}
               placeholderTextColor={colors.textFaint}
               value={doctorName}
               onChangeText={setDoctorName}
             />
 
-            <Text style={styles.modalLabel}>NOTES (OPTIONAL)</Text>
+            <Text style={styles.modalLabel}>{t('preg_appts_label_notes')}</Text>
             <TextInput
               style={[styles.input, { minHeight: 80 }]}
               selectionColor={stickers.blue}
-              placeholder="Any notes..."
+              placeholder={t('preg_appts_placeholder_notes')}
               placeholderTextColor={colors.textFaint}
               value={notes}
               onChangeText={setNotes}
@@ -220,7 +224,7 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
                 accessibilityRole="button"
                 accessibilityLabel="Cancel"
               >
-                <Text style={styles.cancelText}>Cancel</Text>
+                <Text style={styles.cancelText}>{t('common_cancel')}</Text>
               </Pressable>
               <Pressable
                 onPress={handleSubmit}
@@ -229,7 +233,7 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
                 accessibilityRole="button"
                 accessibilityLabel="Add appointment"
               >
-                <Text style={styles.submitText}>Add</Text>
+                <Text style={styles.submitText}>{t('preg_appts_submitAdd')}</Text>
                 <Ionicons name="add-circle" size={18} color={colors.textInverse} />
               </Pressable>
             </View>

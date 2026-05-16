@@ -32,6 +32,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
 import { toDateStr } from '../../lib/cycleLogic'
+import { useTranslation } from '../../lib/i18n'
 import { LogFormSticker } from './LogFormSticker'
 import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Burst as BurstSticker, Star as StarSticker } from '../stickers/BrandStickers'
@@ -95,13 +96,15 @@ async function savePregnancyLog(
 
 // ─── Mood Form ─────────────────────────────────────────────────────────────
 
-const MOODS = [
-  { id: 'excited', label: 'Excited' },
-  { id: 'happy', label: 'Happy' },
-  { id: 'okay', label: 'Okay' },
-  { id: 'anxious', label: 'Anxious' },
-  { id: 'energetic', label: 'Energetic' },
-] as const
+// Mood ids are stable; labels resolved via i18n at render time.
+const MOOD_IDS = ['excited', 'happy', 'okay', 'anxious', 'energetic'] as const
+const MOOD_LABEL_KEYS = {
+  excited: 'preg_mood_excited',
+  happy: 'preg_mood_happy',
+  okay: 'preg_mood_okay',
+  anxious: 'preg_mood_anxious',
+  energetic: 'preg_mood_energetic',
+} as const
 
 export function PregnancyMoodForm({
   date,
@@ -112,6 +115,7 @@ export function PregnancyMoodForm({
 }) {
   const { colors, radius, isDark } = useTheme()
   const s = isDark ? stickersDark : stickersLight
+  const { t } = useTranslation()
   const [mood, setMood] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -133,16 +137,16 @@ export function PregnancyMoodForm({
     <View style={styles.form}>
       <LogFormSticker
         type="mood"
-        label="How are you feeling today?"
+        label={t('preg_form_mood_question')}
         tint={s.yellowSoft}
       />
       <View style={styles.moodRow}>
-        {MOODS.map((m) => {
-          const active = mood === m.id
+        {MOOD_IDS.map((id) => {
+          const active = mood === id
           return (
             <Pressable
-              key={m.id}
-              onPress={() => setMood(m.id)}
+              key={id}
+              onPress={() => setMood(id)}
               style={[
                 styles.moodBtn,
                 {
@@ -153,8 +157,8 @@ export function PregnancyMoodForm({
               ]}
             >
               <MoodFace
-                variant={moodFaceVariant(m.id)}
-                fill={moodFaceFill(m.id)}
+                variant={moodFaceVariant(id)}
+                fill={moodFaceFill(id)}
                 size={44}
               />
               <Text
@@ -163,7 +167,7 @@ export function PregnancyMoodForm({
                   { color: active ? getModeColor('preg', isDark) : colors.textSecondary },
                 ]}
               >
-                {m.label}
+                {t(MOOD_LABEL_KEYS[id])}
               </Text>
             </Pressable>
           )
@@ -172,7 +176,7 @@ export function PregnancyMoodForm({
       <TextInput
         value={notes}
         onChangeText={setNotes}
-        placeholder="How are you feeling?"
+        placeholder={t('preg_form_mood_notesPlaceholder')}
         placeholderTextColor={colors.textMuted}
         multiline
         style={[
@@ -192,20 +196,22 @@ export function PregnancyMoodForm({
 
 // ─── Symptoms Form ─────────────────────────────────────────────────────────
 
-const SYMPTOMS = [
-  'Nausea',
-  'Fatigue',
-  'Back pain',
-  'Headache',
-  'Swelling',
-  'Heartburn',
-  'Insomnia',
-  'Cramps',
-  'Mood swings',
-  'Cravings',
-  'Braxton Hicks',
-  'Shortness of breath',
-]
+// Symptom labels keyed for i18n. The stored value uses the English label
+// (legacy stable ID) so existing logs survive translation changes.
+const SYMPTOM_OPTIONS = [
+  { id: 'Nausea', key: 'preg_symptom_nausea' },
+  { id: 'Fatigue', key: 'preg_symptom_fatigue' },
+  { id: 'Back pain', key: 'preg_symptom_backPain' },
+  { id: 'Headache', key: 'preg_symptom_headache' },
+  { id: 'Swelling', key: 'preg_symptom_swelling' },
+  { id: 'Heartburn', key: 'preg_symptom_heartburn' },
+  { id: 'Insomnia', key: 'preg_symptom_insomnia' },
+  { id: 'Cramps', key: 'preg_symptom_cramps' },
+  { id: 'Mood swings', key: 'preg_symptom_moodSwings' },
+  { id: 'Cravings', key: 'preg_symptom_cravings' },
+  { id: 'Braxton Hicks', key: 'preg_symptom_braxtonHicks' },
+  { id: 'Shortness of breath', key: 'preg_symptom_shortBreath' },
+] as const
 
 export function PregnancySymptomsForm({
   date,
@@ -216,6 +222,7 @@ export function PregnancySymptomsForm({
 }) {
   const { colors, radius, isDark } = useTheme()
   const s = isDark ? stickersDark : stickersLight
+  const { t } = useTranslation()
   const [selected, setSelected] = useState<string[]>([])
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -243,16 +250,16 @@ export function PregnancySymptomsForm({
     <View style={styles.form}>
       <LogFormSticker
         type="symptom"
-        label="What's going on with your body?"
+        label={t('preg_form_symptoms_question')}
         tint={s.peachSoft}
       />
       <View style={styles.chipGrid}>
-        {SYMPTOMS.map((sym) => {
-          const active = selected.includes(sym)
+        {SYMPTOM_OPTIONS.map((opt) => {
+          const active = selected.includes(opt.id)
           return (
             <Pressable
-              key={sym}
-              onPress={() => toggle(sym)}
+              key={opt.id}
+              onPress={() => toggle(opt.id)}
               style={[
                 styles.chip,
                 {
@@ -271,7 +278,7 @@ export function PregnancySymptomsForm({
                   { color: active ? getModeColor('preg', isDark) : colors.text },
                 ]}
               >
-                {sym}
+                {t(opt.key)}
               </Text>
             </Pressable>
           )
@@ -280,7 +287,7 @@ export function PregnancySymptomsForm({
       <TextInput
         value={notes}
         onChangeText={setNotes}
-        placeholder="Additional notes"
+        placeholder={t('preg_form_symptoms_notesPlaceholder')}
         placeholderTextColor={colors.textMuted}
         multiline
         style={[

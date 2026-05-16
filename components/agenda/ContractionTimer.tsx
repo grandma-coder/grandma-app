@@ -8,6 +8,7 @@ type ThemeShape = ReturnType<typeof useTheme>
 import { supabase } from '../../lib/supabase'
 import { toDateStr } from '../../lib/cycleLogic'
 import { queryClient } from '../../lib/queryClient'
+import { useTranslation } from '../../lib/i18n'
 
 interface Contraction {
   start: number
@@ -29,6 +30,7 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
   const theme = useTheme()
   const { colors, stickers, font, radius } = theme
   const styles = useMemo(() => makeStyles(theme), [theme])
+  const { t } = useTranslation()
 
   const [contractions, setContractions] = useState<Contraction[]>([])
   const [isActive, setIsActive] = useState(false)
@@ -142,14 +144,14 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
   return (
     <View style={styles.container}>
       <PaperCard radius={radius.lg} padding={20} style={styles.mainCard}>
-        <Text style={styles.title}>CONTRACTION TIMER</Text>
+        <Text style={styles.title}>{t('preg_contractions_title')}</Text>
         <Text style={styles.subtitle}>
-          Track timing and duration between contractions
+          {t('preg_contractions_subtitle')}
         </Text>
 
         <Text style={styles.timer}>{formatTime(elapsed)}</Text>
         <Text style={styles.timerLabel}>
-          {isActive ? 'CONTRACTION IN PROGRESS' : 'READY'}
+          {isActive ? t('preg_contractions_inProgress') : t('preg_contractions_ready')}
         </Text>
 
         <Pressable
@@ -168,7 +170,7 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
             color={colors.textInverse}
           />
           <Text style={styles.mainButtonText}>
-            {isActive ? 'CONTRACTION ENDED' : 'CONTRACTION STARTED'}
+            {isActive ? t('preg_contractions_ended') : t('preg_contractions_started')}
           </Text>
         </Pressable>
 
@@ -176,7 +178,7 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
           <View style={styles.alertBanner}>
             <Ionicons name="alert-circle" size={20} color={stickers.coral} />
             <Text style={styles.alertText}>
-              Contractions are close together! Consider heading to the hospital (5-1-1 rule).
+              {t('preg_contractions_alert511')}
             </Text>
           </View>
         )}
@@ -185,19 +187,19 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
               <Text style={styles.statValue}>{completedContractions.length}</Text>
-              <Text style={styles.statLabel}>TOTAL</Text>
+              <Text style={styles.statLabel}>{t('preg_contractions_total')}</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statValue}>
                 {avgDuration > 0 ? `${Math.round(avgDuration)}s` : '--'}
               </Text>
-              <Text style={styles.statLabel}>AVG DURATION</Text>
+              <Text style={styles.statLabel}>{t('preg_contractions_avgDuration')}</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statValue}>
                 {avgInterval > 0 ? `${Math.round(avgInterval / 60)}m` : '--'}
               </Text>
-              <Text style={styles.statLabel}>AVG INTERVAL</Text>
+              <Text style={styles.statLabel}>{t('preg_contractions_avgInterval')}</Text>
             </View>
           </View>
         )}
@@ -212,7 +214,7 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
                 accessibilityRole="button"
                 accessibilityLabel="Save contraction session"
               >
-                <Text style={styles.saveButtonText}>{saving ? 'Saving…' : 'Save session'}</Text>
+                <Text style={styles.saveButtonText}>{saving ? t('preg_contractions_saving') : t('preg_contractions_saveSession')}</Text>
               </Pressable>
             )}
             <Pressable
@@ -221,7 +223,7 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
               accessibilityRole="button"
               accessibilityLabel="Reset contraction session"
             >
-              <Text style={styles.resetText}>Reset</Text>
+              <Text style={styles.resetText}>{t('preg_contractions_reset')}</Text>
             </Pressable>
           </View>
         )}
@@ -229,18 +231,21 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
 
       {intervals.length > 0 && (
         <View>
-          <Text style={styles.sectionLabel}>THIS SESSION</Text>
+          <Text style={styles.sectionLabel}>{t('preg_contractions_thisSession')}</Text>
           {intervals.map((item, i) => (
             <PaperCard radius={radius.lg} padding={20} key={i} style={styles.historyCard}>
               <View style={styles.historyRow}>
                 <Text style={styles.historyNum}>#{i + 1}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.historyDuration}>
-                    {Math.round(item.duration)}s duration
+                    {t('preg_contractions_durationSeconds', { seconds: Math.round(item.duration) })}
                   </Text>
                   {item.interval > 0 && (
                     <Text style={styles.historyInterval}>
-                      {Math.round(item.interval / 60)}m {Math.round(item.interval % 60)}s apart
+                      {t('preg_contractions_intervalApart', {
+                        minutes: Math.round(item.interval / 60),
+                        seconds: Math.round(item.interval % 60),
+                      })}
                     </Text>
                   )}
                 </View>
@@ -253,7 +258,7 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
       <PaperCard radius={radius.lg} padding={20} style={styles.infoCard}>
         <Ionicons name="information-circle-outline" size={20} color={stickers.blue} />
         <Text style={styles.infoText}>
-          The 5-1-1 rule: head to the hospital when contractions are 5 minutes apart, lasting 1 minute each, for at least 1 hour.
+          {t('preg_contractions_rule511')}
         </Text>
       </PaperCard>
     </View>

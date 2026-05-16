@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useTheme } from '../../constants/theme'
 import { PulseBubblesLive } from '../charts/GalleryCharts'
+import { useTranslation } from '../../lib/i18n'
 
 type ThemeShape = ReturnType<typeof useTheme>
 
@@ -29,6 +30,7 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
   const theme = useTheme()
   const { colors, stickers, radius } = theme
   const styles = useMemo(() => makeStyles(theme), [theme])
+  const { t } = useTranslation()
 
   const [counting, setCounting] = useState(false)
   const [kickCount, setKickCount] = useState(0)
@@ -71,9 +73,9 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
   return (
     <View style={styles.container}>
       <PaperCard radius={radius.lg} padding={20} style={styles.counterCard}>
-        <Text style={styles.counterLabel}>KICK COUNTER</Text>
+        <Text style={styles.counterLabel}>{t('preg_kicks_title')}</Text>
         <Text style={styles.counterSubtitle}>
-          Goal: 10 kicks in under 2 hours
+          {t('preg_kicks_goal')}
         </Text>
 
         {!counting ? (
@@ -84,7 +86,7 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
             accessibilityLabel="Start kick counting session"
           >
             <Ionicons name="play" size={32} color={colors.textInverse} />
-            <Text style={styles.startText}>START SESSION</Text>
+            <Text style={styles.startText}>{t('preg_kicks_startSession')}</Text>
           </Pressable>
         ) : (
           <>
@@ -97,18 +99,18 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
             <View style={styles.displayRow}>
               <View style={styles.displayBox}>
                 <Text style={styles.displayNumber}>{kickCount}</Text>
-                <Text style={styles.displayLabel}>KICKS</Text>
+                <Text style={styles.displayLabel}>{t('preg_kicks_kicksLabel')}</Text>
               </View>
               <View style={styles.displayBox}>
                 <Text style={styles.displayNumber}>{formatDuration(elapsedSeconds)}</Text>
-                <Text style={styles.displayLabel}>TIME</Text>
+                <Text style={styles.displayLabel}>{t('preg_kicks_timeLabel')}</Text>
               </View>
             </View>
 
             {goalReached && (
               <View style={styles.goalBanner}>
                 <Ionicons name="checkmark-circle" size={20} color={stickers.green} />
-                <Text style={styles.goalText}>Goal reached! Baby is active and healthy.</Text>
+                <Text style={styles.goalText}>{t('preg_kicks_goalReached')}</Text>
               </View>
             )}
 
@@ -119,7 +121,7 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
               accessibilityLabel="Record a kick"
             >
               <Ionicons name="hand-left" size={48} color={colors.textInverse} />
-              <Text style={styles.kickText}>TAP FOR KICK</Text>
+              <Text style={styles.kickText}>{t('preg_kicks_tapForKick')}</Text>
             </Pressable>
 
             <Pressable
@@ -129,7 +131,7 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
               accessibilityLabel="End kick session"
             >
               <Ionicons name="stop-circle-outline" size={20} color={stickers.coral} />
-              <Text style={styles.endText}>End Session</Text>
+              <Text style={styles.endText}>{t('preg_kicks_endSession')}</Text>
             </Pressable>
           </>
         )}
@@ -137,7 +139,7 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
 
       {sessions.length > 0 && (
         <View>
-          <Text style={styles.sectionLabel}>RECENT SESSIONS</Text>
+          <Text style={styles.sectionLabel}>{t('preg_kicks_recentSessions')}</Text>
           {sessions.slice(0, 5).map((session) => (
             <PaperCard radius={radius.lg} padding={20} key={session.id} style={styles.sessionCard}>
               <View style={styles.sessionRow}>
@@ -145,7 +147,7 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
                   <Ionicons name="footsteps-outline" size={18} color={stickers.pink} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.sessionKicks}>{session.count} kicks</Text>
+                  <Text style={styles.sessionKicks}>{t('preg_kicks_countLabel', { count: session.count })}</Text>
                   <Text style={styles.sessionDuration}>
                     {formatDuration(session.durationSeconds)}
                   </Text>
@@ -162,7 +164,7 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
       <PaperCard radius={radius.lg} padding={20} style={styles.infoCard}>
         <Ionicons name="information-circle-outline" size={20} color={stickers.blue} />
         <Text style={styles.infoText}>
-          Count movements (kicks, rolls, jabs) starting from week 28. If you don't feel 10 movements in 2 hours, contact your healthcare provider.
+          {t('preg_kicks_info')}
         </Text>
       </PaperCard>
     </View>
