@@ -134,11 +134,12 @@ export function OnboardingStep({
         </View>
       </View>
 
-      {/* Input area — no flex so content clusters under the question; the
-          bottom CTA is anchored via marginTop:auto on the bottom container. */}
+      {/* Input area — flex:1 with centered content so the input sits in
+          the visual middle between question and button, rather than
+          hugging either edge. Grids that overflow scroll naturally. */}
       <View style={styles.content}>{children}</View>
 
-      {/* Bottom action — pushed to the bottom by the marginTop:'auto' */}
+      {/* Bottom action — anchored to the bottom by the parent flex layout */}
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 16 }]}>
         <PillButton
           label={continueLabel}
@@ -187,12 +188,13 @@ const styles = StyleSheet.create({
   },
 
   content: {
+    flex: 1,
     paddingHorizontal: 24,
     paddingTop: 22,
+    justifyContent: 'center',
   },
 
   bottom: {
-    marginTop: 'auto',
     paddingHorizontal: 24,
     paddingTop: 8,
   },

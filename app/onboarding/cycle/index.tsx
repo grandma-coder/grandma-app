@@ -269,6 +269,7 @@ function StepLastPeriod({
     >
       <View style={stepStyles.centered}>
         <DatePickerField
+          inline
           label=""
           value={date || ''}
           onChange={setDate}

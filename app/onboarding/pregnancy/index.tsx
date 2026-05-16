@@ -318,6 +318,7 @@ function StepDueDate({
     >
       <View style={stepStyles.centered}>
         <DatePickerField
+          inline
           label=""
           value={dueDate || ''}
           onChange={setDueDate}

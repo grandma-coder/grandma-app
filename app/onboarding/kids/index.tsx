@@ -581,6 +581,7 @@ function StepChildDob({
     >
       <View style={stepStyles.centered}>
         <DatePickerField
+          inline
           label=""
           value={child?.birthDate || ''}
           onChange={(iso) => updateChild(childIdx, { birthDate: iso })}

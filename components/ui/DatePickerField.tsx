@@ -47,6 +47,15 @@ interface DatePickerFieldProps {
   modalTitle?: string
   /** Override mode accent (e.g. fixed pink in cycle flow). */
   accentColor?: string
+  /**
+   * If true, renders the spinner directly in the page flow (iOS) instead
+   * of behind a tap-to-open trigger button + modal. Used in onboarding
+   * date steps where there's room for a full picker.
+   *
+   * Android still falls back to the trigger+native-dialog pattern because
+   * RN's DateTimePicker has no in-page mode on Android.
+   */
+  inline?: boolean
 }
 
 function toISO(d: Date): string {
@@ -85,6 +94,7 @@ export default function DatePickerField({
   minimumDate,
   modalTitle,
   accentColor,
+  inline = false,
 }: DatePickerFieldProps) {
   const { colors, isDark } = useTheme()
   const mode = useModeStore((s) => s.mode)
@@ -117,6 +127,36 @@ export default function DatePickerField({
   function handleApply() {
     onChange(toISO(draft))
     setOpen(false)
+  }
+
+  // Inline mode (iOS): commit the draft on every wheel change so the
+  // continue button enables as soon as the user spins to a date. No
+  // trigger button, no modal, no Done button.
+  function handleInlineChange(_: DateTimePickerEvent, selectedDate?: Date) {
+    if (!selectedDate) return
+    setDraft(selectedDate)
+    onChange(toISO(selectedDate))
+  }
+
+  // Inline render — iOS only. Android falls through to the trigger pattern
+  // because there's no in-page DateTimePicker on Android.
+  if (inline && Platform.OS === 'ios') {
+    return (
+      <View style={styles.inlineWrap}>
+        <DateTimePicker
+          value={value ? new Date(value + 'T00:00:00') : draft}
+          mode="date"
+          display="spinner"
+          onChange={handleInlineChange}
+          maximumDate={maximumDate}
+          minimumDate={minimumDate}
+          textColor={isDark ? colors.text : ST_INK}
+          accentColor={ST_INK}
+          themeVariant={isDark ? 'dark' : 'light'}
+          style={{ width: '100%' }}
+        />
+      </View>
+    )
   }
 
   const trigger = (
@@ -257,6 +297,10 @@ export default function DatePickerField({
 }
 
 const styles = StyleSheet.create({
+  inlineWrap: {
+    width: '100%',
+    alignItems: 'center',
+  },
   label: {
     fontSize: 11,
     fontFamily: 'DMSans_700Bold',
