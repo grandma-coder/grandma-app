@@ -42,6 +42,8 @@ interface OnboardingStepProps {
   question: string
   /** Optional italic accent — rendered on a second line after `question` */
   italicSuffix?: string
+  /** Optional sticker rendered to the right of the question for mode flavor */
+  sticker?: React.ReactNode
   children: React.ReactNode
   onContinue: () => void
   onSkip?: () => void
@@ -56,6 +58,7 @@ export function OnboardingStep({
   total,
   question,
   italicSuffix,
+  sticker,
   children,
   onContinue,
   onSkip,
@@ -113,23 +116,29 @@ export function OnboardingStep({
           )}
         </View>
 
-        {/* Question */}
-        <View style={styles.questionWrap}>
-          <Display size={32} color={ink}>
-            {question}
-          </Display>
-          {italicSuffix && (
-            <DisplayItalic size={32} color={ink}>
-              {italicSuffix}
-            </DisplayItalic>
-          )}
+        {/* Question + optional sticker accent on the right */}
+        <View style={styles.questionRow}>
+          <View style={styles.questionWrap}>
+            <Display size={32} color={ink}>
+              {question}
+            </Display>
+            {italicSuffix && (
+              <DisplayItalic size={32} color={ink}>
+                {italicSuffix}
+              </DisplayItalic>
+            )}
+          </View>
+          {sticker ? (
+            <View style={styles.stickerSlot}>{sticker}</View>
+          ) : null}
         </View>
       </View>
 
-      {/* Input area */}
+      {/* Input area — no flex so content clusters under the question; the
+          bottom CTA is anchored via marginTop:auto on the bottom container. */}
       <View style={styles.content}>{children}</View>
 
-      {/* Bottom action */}
+      {/* Bottom action — pushed to the bottom by the marginTop:'auto' */}
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 16 }]}>
         <PillButton
           label={continueLabel}
@@ -165,15 +174,25 @@ const styles = StyleSheet.create({
   stepCount: { fontSize: 13 },
   skipHeaderText: { fontSize: 13 },
 
-  questionWrap: { marginTop: 4 },
+  questionRow: {
+    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  questionWrap: { flex: 1 },
+  stickerSlot: {
+    marginTop: 4,
+    transform: [{ rotate: '8deg' }],
+  },
 
   content: {
-    flex: 1,
     paddingHorizontal: 24,
     paddingTop: 22,
   },
 
   bottom: {
+    marginTop: 'auto',
     paddingHorizontal: 24,
     paddingTop: 8,
   },

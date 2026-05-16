@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   triggerText: {
     flex: 1,
     fontSize: 16,
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: 'DMSans_600SemiBold',
     letterSpacing: -0.2,
   },
 

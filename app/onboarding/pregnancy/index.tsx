@@ -19,10 +19,11 @@ import {
 } from 'react-native'
 import DatePickerField from '../../../components/ui/DatePickerField'
 import { router } from 'expo-router'
-import { Heart } from 'lucide-react-native'
+import { Heart as HeartIcon } from 'lucide-react-native'
+import { Heart, Star, Moon, Sun, Flower, Cloud } from '../../../components/ui/Stickers'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
-import { useTheme, brand, getModeColor, getModeColorSoft } from '../../../constants/theme'
+import { useTheme, brand, stickers, getModeColor, getModeColorSoft } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import {
   usePregnancyOnboardingStore,
@@ -311,6 +312,7 @@ function StepDueDate({
       step={step}
       total={TOTAL_STEPS}
       question={t('preg_onboard_step_dueDate')}
+      sticker={<Heart size={56} fill={stickers.lilac} />}
       onContinue={onContinue}
       continueDisabled={!dueDate}
     >
@@ -361,6 +363,7 @@ function StepFirstPregnancy({
       step={step}
       total={TOTAL_STEPS}
       question={t('preg_onboard_step_firstPregnancy')}
+      sticker={<Star size={52} fill={stickers.yellow} />}
       onContinue={onContinue}
       continueDisabled={first === null}
     >
@@ -395,6 +398,7 @@ function StepMood({
       step={step}
       total={TOTAL_STEPS}
       question={t('preg_onboard_step_mood')}
+      sticker={<Sun size={56} fill={stickers.peach} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -455,6 +459,7 @@ function StepBirthPlace({
       step={step}
       total={TOTAL_STEPS}
       question={t('preg_onboard_step_birthPlace')}
+      sticker={<Cloud size={64} fill={stickers.blue} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -514,6 +519,7 @@ function StepCareProvider({
       step={step}
       total={TOTAL_STEPS}
       question={t('preg_onboard_step_careProvider')}
+      sticker={<Flower size={56} petal={stickers.lilac} center={stickers.yellow} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -560,6 +566,7 @@ function StepConditions({
       step={step}
       total={TOTAL_STEPS}
       question={t('preg_onboard_step_conditions')}
+      sticker={<Moon size={52} fill={stickers.lilac} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -606,6 +613,7 @@ function StepPartner({
       step={step}
       total={TOTAL_STEPS}
       question={t('preg_onboard_step_partner')}
+      sticker={<Heart size={56} fill={stickers.pink} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -656,7 +664,7 @@ function CompletionScreen({
         <View
           style={[completeStyles.iconCircle, { backgroundColor: brand.pregnancy + '20' }]}
         >
-          <Heart size={40} color={brand.pregnancy} strokeWidth={2} fill={brand.pregnancy} />
+          <HeartIcon size={40} color={brand.pregnancy} strokeWidth={2} fill={brand.pregnancy} />
         </View>
 
         <Text style={[completeStyles.title, { color: colors.text }]}>

@@ -22,7 +22,8 @@ import { router } from 'expo-router'
 import { Sparkles } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
-import { useTheme, brand, getModeColor, getModeColorSoft } from '../../../constants/theme'
+import { Flower, Drop, Moon, Sun, Leaf } from '../../../components/ui/Stickers'
+import { useTheme, brand, stickers, getModeColor, getModeColorSoft } from '../../../constants/theme'
 import {
   useCycleOnboardingStore,
   type ConditionChip,
@@ -261,6 +262,7 @@ function StepLastPeriod({
       step={step}
       total={total}
       question="When did your last period start?"
+      sticker={<Flower size={56} petal={stickers.pink} center={stickers.yellow} />}
       onContinue={onContinue}
       onSkip={onSkip}
       continueDisabled={!date}
@@ -306,6 +308,7 @@ function StepCycleLength({
       step={step}
       total={total}
       question="How long is your usual cycle?"
+      sticker={<Moon size={52} fill={stickers.lilac} />}
       onContinue={onContinue}
     >
       <View style={stepStyles.inputRow}>
@@ -382,6 +385,7 @@ function StepPeriodDuration({
       step={step}
       total={total}
       question="How long does your period usually last?"
+      sticker={<Drop size={52} fill={stickers.coral} />}
       onContinue={onContinue}
     >
       <View style={stepStyles.chipGrid}>
@@ -393,8 +397,9 @@ function StepPeriodDuration({
               stepStyles.durationChip,
               {
                 backgroundColor: duration === n ? modeSoft : colors.surface,
-                borderColor: duration === n ? mode : colors.border,
-                borderRadius: radius.lg,
+                borderColor: duration === n ? mode : colors.text,
+                shadowColor: colors.text,
+                borderRadius: radius.full,
               },
             ]}
           >
@@ -444,6 +449,7 @@ function StepConditions({
       step={step}
       total={total}
       question="Any conditions we should know about?"
+      sticker={<Leaf size={56} fill={stickers.green} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -458,7 +464,8 @@ function StepConditions({
                 stepStyles.conditionChip,
                 {
                   backgroundColor: selected ? modeSoft : colors.surface,
-                  borderColor: selected ? mode : colors.border,
+                  borderColor: selected ? mode : colors.text,
+                  shadowColor: colors.text,
                   borderRadius: radius.full,
                 },
               ]}
@@ -501,6 +508,7 @@ function StepTempUnit({
       step={step}
       total={total}
       question="Temperature unit preference?"
+      sticker={<Sun size={56} fill={stickers.yellow} />}
       onContinue={onContinue}
     >
       <View style={stepStyles.toggleRow}>
@@ -541,6 +549,7 @@ function StepTTCDuration({
       step={step}
       total={total}
       question="How long have you been trying?"
+      sticker={<Flower size={56} petal={stickers.pink} center={stickers.yellow} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -555,7 +564,8 @@ function StepTTCDuration({
                 stepStyles.conditionChip,
                 {
                   backgroundColor: selected ? modeSoft : colors.surface,
-                  borderColor: selected ? mode : colors.border,
+                  borderColor: selected ? mode : colors.text,
+                  shadowColor: colors.text,
                   borderRadius: radius.full,
                 },
               ]}
@@ -595,6 +605,7 @@ function StepTTCTemperature({
       step={step}
       total={total}
       question="Are you tracking your temperature each morning?"
+      sticker={<Sun size={56} fill={stickers.yellow} />}
       onContinue={onContinue}
     >
       <View style={stepStyles.toggleRow}>
@@ -629,6 +640,7 @@ function StepTTCSupplements({
       step={step}
       total={total}
       question="Any supplements you're taking?"
+      sticker={<Leaf size={56} fill={stickers.green} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -792,16 +804,24 @@ const stepStyles = StyleSheet.create({
   durationChip: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderWidth: 1,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   durationChipText: {
     fontSize: 16,
     fontWeight: '600',
   },
   conditionChip: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 20,
-    borderWidth: 1,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   conditionChipText: {
     fontSize: 15,
@@ -815,7 +835,11 @@ const stepStyles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   togglePillText: {
     fontSize: 16,

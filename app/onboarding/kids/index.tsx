@@ -22,10 +22,11 @@ import {
 import DatePickerField from '../../../components/ui/DatePickerField'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
-import { Star, Camera, User, Plus, Minus, Check } from 'lucide-react-native'
+import { Star as StarIcon, Camera, User, Plus, Minus, Check } from 'lucide-react-native'
+import { Star, Heart, Moon, Sun, Flower, Cloud, Leaf } from '../../../components/ui/Stickers'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
-import { useTheme, brand } from '../../../constants/theme'
+import { useTheme, brand, stickers, getModeColor, getModeColorSoft } from '../../../constants/theme'
 import { AvatarView, AvatarPickerModal, isIconAvatar } from '../../../components/ui/AvatarPicker'
 import {
   useKidsOnboardingStore,
@@ -432,6 +433,8 @@ function StepChildCount({
   onContinue: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('kids', isDark)
+  const modeSoft = getModeColorSoft('kids', isDark)
   const count = useKidsOnboardingStore((s) => s.childCount)
   const setCount = useKidsOnboardingStore((s) => s.setChildCount)
 
@@ -440,6 +443,7 @@ function StepChildCount({
       step={step}
       total={total}
       question="How many children are you tracking?"
+      sticker={<Star size={56} fill={stickers.blue} />}
       onContinue={onContinue}
     >
       <View style={stepStyles.counterRow}>
@@ -459,8 +463,8 @@ function StepChildCount({
           <Minus size={24} color={colors.text} strokeWidth={2.5} />
         </Pressable>
 
-        <View style={[stepStyles.counterDisplay, { backgroundColor: colors.primaryTint, borderRadius: radius.xl }]}>
-          <Text style={[stepStyles.counterNumber, { color: colors.primary }]}>{count}</Text>
+        <View style={[stepStyles.counterDisplay, { backgroundColor: modeSoft, borderRadius: radius.xl }]}>
+          <Text style={[stepStyles.counterNumber, { color: mode }]}>{count}</Text>
         </View>
 
         <Pressable
@@ -499,6 +503,8 @@ function StepChildName({
   onContinue: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('kids', isDark)
+  const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
 
@@ -509,6 +515,7 @@ function StepChildName({
       step={step}
       total={total}
       question={`${label}What is their name?`}
+      sticker={<Heart size={52} fill={stickers.pink} />}
       onContinue={onContinue}
       continueDisabled={!child?.name.trim()}
     >
@@ -546,7 +553,9 @@ function StepChildDob({
   childIdx: number
   onContinue: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('kids', isDark)
+  const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
   const childName = child?.name || `Child ${childIdx + 1}`
@@ -566,6 +575,7 @@ function StepChildDob({
       step={step}
       total={total}
       question={`When was ${childName} born?`}
+      sticker={<Sun size={56} fill={stickers.yellow} />}
       onContinue={onContinue}
       continueDisabled={!child?.birthDate}
     >
@@ -589,8 +599,8 @@ function StepChildDob({
         )}
 
         {child?.birthDate && (
-          <View style={[stepStyles.ageBadge, { backgroundColor: colors.primaryTint, borderRadius: radius.lg }]}>
-            <Text style={[stepStyles.ageBadgeText, { color: colors.primary }]}>
+          <View style={[stepStyles.ageBadge, { backgroundColor: modeSoft, borderRadius: radius.lg }]}>
+            <Text style={[stepStyles.ageBadgeText, { color: mode }]}>
               {formatAge(child.birthDate)}
             </Text>
           </View>
@@ -640,6 +650,8 @@ function StepChildCountry({
   onContinue: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('kids', isDark)
+  const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
   const childName = child?.name || `Child ${childIdx + 1}`
@@ -658,6 +670,7 @@ function StepChildCountry({
       step={step}
       total={total}
       question={`Where does ${childName} live?`}
+      sticker={<Cloud size={64} fill={stickers.blue} />}
       onContinue={onContinue}
     >
       <View>
@@ -667,16 +680,16 @@ function StepChildCountry({
             onPress={() => { setOpen(true); setQuery('') }}
             style={[
               stepStyles.countryRow,
-              { backgroundColor: colors.primaryTint, borderColor: colors.primary, borderRadius: radius.lg, marginBottom: 12 },
+              { backgroundColor: modeSoft, borderColor: mode, borderRadius: radius.lg, marginBottom: 12 },
             ]}
           >
-            <Text style={[stepStyles.countryName, { color: colors.primary, flex: 1 }]}>{selectedCountry.name}</Text>
-            <Check size={16} color={colors.primary} strokeWidth={2.5} />
+            <Text style={[stepStyles.countryName, { color: mode, flex: 1 }]}>{selectedCountry.name}</Text>
+            <Check size={16} color={mode} strokeWidth={2.5} />
           </Pressable>
         )}
 
         {/* Search input */}
-        <View style={[stepStyles.countrySearch, { backgroundColor: colors.surface, borderColor: open ? colors.primary : colors.border, borderRadius: radius.lg }]}>
+        <View style={[stepStyles.countrySearch, { backgroundColor: colors.surface, borderColor: open ? mode : colors.border, borderRadius: radius.lg }]}>
           <TextInput
             value={query}
             onChangeText={(t) => { setQuery(t); setOpen(true) }}
@@ -704,13 +717,13 @@ function StepChildCountry({
                     }}
                     style={[
                       stepStyles.countryDropdownItem,
-                      { backgroundColor: isSelected ? colors.primaryTint : 'transparent' },
+                      { backgroundColor: isSelected ? modeSoft : 'transparent' },
                     ]}
                   >
-                    <Text style={[stepStyles.countryName, { color: isSelected ? colors.primary : colors.text, flex: 1 }]}>
+                    <Text style={[stepStyles.countryName, { color: isSelected ? mode : colors.text, flex: 1 }]}>
                       {c.name}
                     </Text>
-                    {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
+                    {isSelected && <Check size={14} color={mode} strokeWidth={2.5} />}
                   </Pressable>
                 )
               })}
@@ -743,12 +756,14 @@ function StepChildPhoto({
   onSkip: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('kids', isDark)
+  const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
   const childName = child?.name || `Child ${childIdx + 1}`
   const [pickerOpen, setPickerOpen] = useState(false)
   const childInitial = (childName[0] ?? 'K').toUpperCase()
-  const childAccent = colors.primary
+  const childAccent = mode
 
   async function pickImage() {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -767,6 +782,7 @@ function StepChildPhoto({
       step={step}
       total={total}
       question={`Pick a photo or icon for ${childName}`}
+      sticker={<Flower size={56} petal={stickers.blue} center={stickers.yellow} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -827,6 +843,8 @@ function StepChildAllergies({
   onSkip: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('kids', isDark)
+  const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const toggleAllergy = useKidsOnboardingStore((s) => s.toggleAllergy)
   const childName = child?.name || `Child ${childIdx + 1}`
@@ -836,6 +854,7 @@ function StepChildAllergies({
       step={step}
       total={total}
       question={`Any allergies for ${childName}?`}
+      sticker={<Leaf size={56} fill={stickers.green} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -849,17 +868,18 @@ function StepChildAllergies({
               style={[
                 stepStyles.allergyChip,
                 {
-                  backgroundColor: selected ? colors.primaryTint : colors.surface,
-                  borderColor: selected ? colors.primary : colors.border,
+                  backgroundColor: selected ? modeSoft : colors.surface,
+                  borderColor: selected ? mode : colors.text,
+                  shadowColor: colors.text,
                   borderRadius: radius.full,
                 },
               ]}
             >
-              {selected && <Check size={14} color={colors.primary} strokeWidth={3} />}
+              {selected && <Check size={14} color={mode} strokeWidth={3} />}
               <Text
                 style={[
                   stepStyles.allergyChipText,
-                  { color: selected ? colors.primary : colors.text },
+                  { color: selected ? mode : colors.text },
                 ]}
               >
                 {allergy}
@@ -888,6 +908,8 @@ function StepChildConditions({
   onSkip: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('kids', isDark)
+  const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
   const childName = child?.name || `Child ${childIdx + 1}`
@@ -897,6 +919,7 @@ function StepChildConditions({
       step={step}
       total={total}
       question={`Any conditions or medications for ${childName}?`}
+      sticker={<Moon size={52} fill={stickers.lilac} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -934,6 +957,8 @@ function StepPartner({
   onSkip: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('kids', isDark)
+  const modeSoft = getModeColorSoft('kids', isDark)
   const partner = useKidsOnboardingStore((s) => s.partnerName)
   const setPartner = useKidsOnboardingStore((s) => s.setPartnerName)
 
@@ -942,6 +967,7 @@ function StepPartner({
       step={step}
       total={total}
       question="Want to add your partner?"
+      sticker={<Heart size={56} fill={stickers.pink} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -982,6 +1008,8 @@ function StepCaregiver({
   onSkip: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('kids', isDark)
+  const modeSoft = getModeColorSoft('kids', isDark)
   const role = useKidsOnboardingStore((s) => s.caregiverRole)
   const name = useKidsOnboardingStore((s) => s.caregiverName)
   const setRole = useKidsOnboardingStore((s) => s.setCaregiverRole)
@@ -992,6 +1020,7 @@ function StepCaregiver({
       step={step}
       total={total}
       question="Want to add a caregiver?"
+      sticker={<Star size={56} fill={stickers.blue} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -1006,8 +1035,9 @@ function StepCaregiver({
               style={[
                 stepStyles.roleChip,
                 {
-                  backgroundColor: selected ? colors.primaryTint : colors.surface,
-                  borderColor: selected ? colors.primary : colors.border,
+                  backgroundColor: selected ? modeSoft : colors.surface,
+                  borderColor: selected ? mode : colors.text,
+                  shadowColor: colors.text,
                   borderRadius: radius.full,
                 },
               ]}
@@ -1015,7 +1045,7 @@ function StepCaregiver({
               <Text
                 style={[
                   stepStyles.roleChipText,
-                  { color: selected ? colors.primary : colors.text },
+                  { color: selected ? mode : colors.text },
                 ]}
               >
                 {opt.label}
@@ -1060,6 +1090,8 @@ function CompletionScreen({
 }) {
   const insets = useSafeAreaInsets()
   const { colors, radius, isDark } = useTheme()
+  const mode = getModeColor('kids', isDark)
+  const modeSoft = getModeColorSoft('kids', isDark)
 
   return (
     <View style={[completeStyles.root, { backgroundColor: colors.bg }]}>
@@ -1071,7 +1103,7 @@ function CompletionScreen({
         showsVerticalScrollIndicator={false}
       >
         <View style={[completeStyles.iconCircle, { backgroundColor: brand.kids + '20' }]}>
-          <Star size={40} color={brand.kids} strokeWidth={2} fill={brand.kids} />
+          <StarIcon size={40} color={brand.kids} strokeWidth={2} fill={brand.kids} />
         </View>
 
         <Text style={[completeStyles.title, { color: colors.text }]}>
@@ -1275,18 +1307,26 @@ const stepStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    borderWidth: 1,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   allergyChipText: {
     fontSize: 14,
     fontWeight: '600',
   },
   roleChip: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 20,
-    borderWidth: 1,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   roleChipText: {
     fontSize: 15,
