@@ -115,7 +115,7 @@ export function MeetGrandmaSection() {
                   fontWeight: 400,
                 }}
               >
-                Guru Grandma
+                Grandma
               </em>
               .
             </h2>
@@ -180,7 +180,7 @@ export function MeetGrandmaSection() {
                   className="text-[16px] font-semibold"
                   style={{ fontFamily: 'var(--font-fraunces), var(--font-display)' }}
                 >
-                  Guru Grandma
+                  Grandma
                 </span>
                 <span
                   className="w-2 h-2 rounded-full ml-1"
