@@ -84,7 +84,7 @@ export function StickerDateModal({
             <StarSticker size={64} fill={accent.fill} stroke={ST_INK} />
           </View>
 
-          <View style={[styles.handleBar, { backgroundColor: isDark ? colors.border : '#14131340' }]} />
+          <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
 
           <View style={styles.headerRow}>
             <Text style={[styles.title, { color: isDark ? colors.text : ST_INK }]}>{title}</Text>

@@ -21,10 +21,10 @@ interface ScreenHeaderProps {
 }
 
 export function ScreenHeader({ title, onBack, hideBack, right, style }: ScreenHeaderProps) {
-  const { colors, font, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const { colors, font } = useTheme()
+  const ink = colors.text
+  const paper = colors.surface
+  const paperBorder = colors.border
 
   const handleBack = () => {
     if (onBack) return onBack()

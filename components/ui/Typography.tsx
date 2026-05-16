@@ -51,8 +51,8 @@ export function DisplayItalic({ children, color, size = 40, align, style, ...res
 }
 
 export function MonoCaps({ children, color, size = 10, align, style, ...rest }: TextVariantProps) {
-  const { font, colors, isDark } = useTheme()
-  const fallback = isDark ? colors.textFaint : '#A69E93'
+  const { font, colors } = useTheme()
+  const fallback = colors.textFaint
   return (
     <Text
       {...rest}

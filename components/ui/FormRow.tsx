@@ -31,13 +31,13 @@ export function FormRow({
   showChevron = true,
   style,
 }: FormRowProps) {
-  const { colors, font, isDark } = useTheme()
+  const { colors, font, stickers } = useTheme()
 
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
-  const ink4 = isDark ? colors.textFaint : '#A69E93'
-  const stickerBg = stickerTint ?? (isDark ? 'rgba(245,214,82,0.14)' : '#FBEA9E')
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
+  const ink4 = colors.textFaint
+  const stickerBg = stickerTint ?? stickers.yellowSoft
 
   const Container: any = onPress ? Pressable : View
 

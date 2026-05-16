@@ -166,7 +166,7 @@ export default function DatePickerField({
   return (
     <View>
       {label ? (
-        <Text style={[styles.label, { color: isDark ? colors.textMuted : '#6E6763' }]}>{label}</Text>
+        <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
       ) : null}
       {trigger}
 
@@ -188,7 +188,7 @@ export default function DatePickerField({
             </View>
 
             {/* Drag handle */}
-            <View style={[styles.handleBar, { backgroundColor: isDark ? colors.border : '#14131340' }]} />
+            <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
 
             {/* Header */}
             <View style={styles.headerRow}>

@@ -29,8 +29,6 @@ interface PillButtonProps {
   height?: number
 }
 
-const INK = '#141313'
-
 export function PillButton({
   label,
   onPress,
@@ -45,15 +43,15 @@ export function PillButton({
 }: PillButtonProps) {
   const { colors, font, isDark } = useTheme()
 
-  const ink = isDark ? colors.text : INK
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const bgCanvas = isDark ? colors.bg : '#F3ECD9'
-  const borderInk = isDark ? colors.border : INK
+  const ink = colors.text
+  const paper = colors.surface
+  const bgCanvas = colors.bg
+  const borderInk = isDark ? colors.border : colors.text
 
   const variants: Record<PillButtonVariant, { bg: string; fg: string; border: string; shadow: string }> = {
     ink:    { bg: ink, fg: bgCanvas, border: borderInk, shadow: borderInk },
     paper:  { bg: paper, fg: ink, border: borderInk, shadow: borderInk },
-    accent: { bg: accentColor ?? ink, fg: INK, border: borderInk, shadow: borderInk },
+    accent: { bg: accentColor ?? ink, fg: colors.text, border: borderInk, shadow: borderInk },
   }
 
   const v = variants[variant]

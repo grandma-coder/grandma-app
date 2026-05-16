@@ -86,7 +86,7 @@ function SavedToastOverlay({
   opts: ShowOptions
   onClose: () => void
 }) {
-  const { colors, isDark, stickers } = useTheme()
+  const { colors, stickers } = useTheme()
   const autoMs = opts.autoDismiss ?? 2400
   const wantsButton = opts.showButton ?? autoMs === 0
 
@@ -112,10 +112,10 @@ function SavedToastOverlay({
   const title = opts.title ?? 'Saved'
   const message = opts.message ?? 'Your changes have been saved.'
 
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const borderInk = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(20,19,19,0.1)'
-  const ink = isDark ? colors.text : '#141313'
-  const muted = isDark ? colors.textMuted : '#6E6763'
+  const paper = colors.surface
+  const borderInk = colors.border
+  const ink = colors.text
+  const muted = colors.textMuted
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>

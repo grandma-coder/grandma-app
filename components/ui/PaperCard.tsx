@@ -29,10 +29,10 @@ export function PaperCard({
   padding = 16,
   borderColor,
 }: PaperCardProps) {
-  const { colors, isDark } = useTheme()
+  const { colors } = useTheme()
 
-  const bg = tint ?? (isDark ? colors.surface : '#FFFEF8')
-  const border = borderColor ?? (isDark ? colors.border : 'rgba(20,19,19,0.08)')
+  const bg = tint ?? colors.surface
+  const border = borderColor ?? colors.border
 
   return (
     <View

@@ -231,7 +231,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sizeName: {
-    fontFamily: 'Fraunces_500Medium',
+    // Fraunces_500Medium isn't loaded in the bundle (see app/_layout.tsx);
+    // fall back to the canonical 600 weight so Android doesn't drop to
+    // the system serif.
+    fontFamily: 'Fraunces_600SemiBold',
     fontSize: 20,
     letterSpacing: -0.3,
     textAlign: 'right',
