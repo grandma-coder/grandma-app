@@ -14,6 +14,7 @@ import { MonoCaps, Body } from '../../ui/Typography'
 import { Heart as HeartSticker, Star as StarSticker } from '../../stickers/BrandStickers'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr } from '../../../lib/cycleLogic'
+import { useTranslation } from '../../../lib/i18n'
 import { AffirmationShareModal } from './AffirmationShareModal'
 
 // ─── Fetch daily affirmation from Supabase ────────────────────────────────────
@@ -245,6 +246,7 @@ function pickVariantIndex(count: number): number {
 
 export function AffirmationRevealCard() {
   const { stickers } = useTheme()
+  const { t } = useTranslation()
   const variants = buildVariants(stickers)
   const variant = variants[pickVariantIndex(variants.length)]
   const [text, setText] = useState<string | null>(null)
@@ -431,7 +433,7 @@ export function AffirmationRevealCard() {
 
 
       <MonoCaps size={10} color={accent} style={{ marginBottom: 12 }}>
-        DAILY AFFIRMATION
+        {t('pregnancy_dailyAffirmation')}
       </MonoCaps>
 
       {/* Glow burst overlay */}
@@ -448,7 +450,7 @@ export function AffirmationRevealCard() {
       {!revealed ? (
         <View style={styles.hiddenState}>
           <Body size={14} color={inkMuted} style={styles.hiddenHint}>
-            Your daily wisdom awaits...
+            {t('pregnancy_affirmationAwaits')}
           </Body>
 
           <Pressable
@@ -468,7 +470,7 @@ export function AffirmationRevealCard() {
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
             />
-            <Text style={[styles.revealBtnText, { color: '#1A1030' }]}>Reveal today's  →</Text>
+            <Text style={[styles.revealBtnText, { color: '#1A1030' }]}>{t('pregnancy_revealToday')}</Text>
           </Pressable>
         </View>
       ) : (
@@ -477,7 +479,7 @@ export function AffirmationRevealCard() {
             {text ?? '...'}
           </Text>
           <Body size={11} color={inkMuted} style={{ marginTop: 10 }}>
-            Come back tomorrow for a new affirmation
+            {t('pregnancy_comeBackTomorrow')}
           </Body>
           {text ? (
             <Pressable
@@ -497,7 +499,7 @@ export function AffirmationRevealCard() {
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
               />
-              <Text style={[styles.shareBtnText, { color: '#1A1030' }]}>Share ↗</Text>
+              <Text style={[styles.shareBtnText, { color: '#1A1030' }]}>{t('pregnancy_share')}</Text>
             </Pressable>
           ) : null}
         </Animated.View>

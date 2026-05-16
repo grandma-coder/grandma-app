@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { BirthTypeCard } from '../components/pregnancy/BirthTypeCard'
 import { BirthDetailModal } from '../components/pregnancy/BirthDetailModal'
 import { Flower, Star, Heart, Bottle, Sparkle } from '../components/ui/Stickers'
+import { MissingStickers } from '../components/stickers/MissingStickers'
 import { birthTypes, hospitalBagChecklist } from '../lib/birthData'
 import type { BirthTopicKey } from '../lib/birthGuideData'
 import { useTheme, spacing, radius, getModeColor } from '../constants/theme'
@@ -94,6 +95,9 @@ export default function BirthPlan() {
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </Pressable>
 
+        <View style={{ alignItems: 'center', marginBottom: 8 }}>
+          <MissingStickers.PregnancyBirthPlanHero size={120} />
+        </View>
         <Text style={[styles.title, { color: colors.text, fontFamily: font.display }]}>Birth Planning</Text>
         <Text style={[styles.subtitleItalic, { color: stickers.coral, fontFamily: font.italic }]}>
           explore your options, prepare for the big day, dear
@@ -117,7 +121,7 @@ export default function BirthPlan() {
 
         {/* Hospital Bag */}
         <View style={styles.sectionLabelRow}>
-          <Star size={16} fill={stickers.yellow} />
+          <MissingStickers.PregnancyHospitalBag size={24} />
           <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
             HOSPITAL BAG · {doneCount}/{total}
           </Text>

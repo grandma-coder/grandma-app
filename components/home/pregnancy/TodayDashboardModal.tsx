@@ -11,6 +11,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import Svg, { Path as SvgPath, Circle as SvgCircle } from 'react-native-svg'
 import { useTheme } from '../../../constants/theme'
 import { toDateStr } from '../../../lib/cycleLogic'
+import { useTranslation } from '../../../lib/i18n'
 import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
 import { PaperCard } from '../../ui/PaperCard'
@@ -69,6 +70,7 @@ function fillDays(history: Point[], days = 7): { values: number[]; labels: strin
 
 export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, userId }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const [weightHist, setWeightHist] = useState<Point[]>([])
   const [waterHist, setWaterHist] = useState<Point[]>([])
   const [sleepHist, setSleepHist] = useState<Point[]>([])
@@ -111,7 +113,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
   return (
     <LogSheet
       visible={visible}
-      title="Today's dashboard"
+      title={t('pregnancy_todayDashboard')}
       onClose={onClose}
       chip={`Week ${weekNumber}`}
       chipColor={stickers.lilac}
@@ -130,10 +132,10 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
             />
             <View style={{ flex: 1 }}>
               <Display size={28} color={ink}>
-                {moodKey ? (MOOD_LABELS[moodKey] ?? moodKey) : 'Not logged yet'}
+                {moodKey ? (MOOD_LABELS[moodKey] ?? moodKey) : t('pregnancy_dashboard_notLoggedYet')}
               </Display>
               <Body size={12} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
-                {moodKey ? 'How you felt today' : 'Tap + Mood above to log'}
+                {moodKey ? t('pregnancy_dashboard_howYouFelt') : t('pregnancy_dashboard_tapMoodAbove')}
               </Body>
             </View>
           </View>
@@ -147,7 +149,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
             <Display size={32} color={ink}>{waterVal}</Display>
-            <Body size={14} color={muted} style={{ fontFamily: font.italic }}>/ 8 glasses</Body>
+            <Body size={14} color={muted} style={{ fontFamily: font.italic }}>{t('pregnancy_dashboard_perEight')}</Body>
           </View>
           <View style={styles.dropletRow}>
             {Array.from({ length: 8 }, (_, i) => (
@@ -168,8 +170,8 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
             </Display>
             <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
               {sleepVal !== null
-                ? sleepVal >= 7 ? 'Restful night' : 'Could use more'
-                : 'Not logged'}
+                ? sleepVal >= 7 ? t('pregnancy_dashboard_restfulNight') : t('pregnancy_dashboard_couldUseMore')
+                : t('pregnancy_dashboard_notLogged')}
             </Body>
             {sleepVal !== null && (
               <View style={[styles.tileBar, { backgroundColor: 'rgba(20,19,19,0.08)' }]}>

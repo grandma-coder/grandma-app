@@ -11,6 +11,7 @@ import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-nati
 import { router } from 'expo-router'
 import { X } from 'lucide-react-native'
 import { useTheme } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 import { PaperCard } from '../../ui/PaperCard'
 import { StickerButton } from '../../ui/StickerButton'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
@@ -39,14 +40,15 @@ interface Props {
 
 export function AppointmentDetailModal({ visible, appointment, currentWeek, onClose }: Props) {
   const { colors, stickers } = useTheme()
+  const { t } = useTranslation()
   if (!appointment) return null
 
   const typeInfo = TYPE_LABEL[appointment.type]
   const weeksAway = appointment.week - currentWeek
   const timingLabel =
-    weeksAway === 0 ? 'This week' :
-    weeksAway === 1 ? 'Next week' :
-    weeksAway > 0 ? `In ${weeksAway} weeks` : 'Overdue'
+    weeksAway === 0 ? t('pregnancy_appt_thisWeek') :
+    weeksAway === 1 ? t('pregnancy_appt_nextWeek') :
+    weeksAway > 0 ? t('pregnancy_appt_inWeeks', { count: weeksAway }) : t('pregnancy_appt_overdue')
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -98,7 +100,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
             <PaperCard tint={stickers.blueSoft} radius={16} padding={14} flat style={styles.card}>
               <View style={styles.cardHeader}>
                 <LogUltrasound size={20} />
-                <MonoCaps size={10} color={colors.textMuted}>WHAT TO EXPECT</MonoCaps>
+                <MonoCaps size={10} color={colors.textMuted}>{t('pregnancy_appt_whatToExpect')}</MonoCaps>
               </View>
               <Body size={13} color={colors.text} style={{ lineHeight: 19 }}>
                 {appointment.whatToExpect}
@@ -122,13 +124,13 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
             {/* CTAs */}
             <View style={styles.ctaRow}>
               <StickerButton
-                label="Schedule in agenda"
+                label={t('pregnancy_appt_scheduleInAgenda')}
                 color={stickers.lilac}
                 colorSoft={stickers.lilacSoft}
                 onPress={() => { onClose(); router.push('/(tabs)/agenda') }}
               />
               <StickerButton
-                label="Ask Grandma"
+                label={t('pregnancy_appt_askGrandma')}
                 color={stickers.yellow}
                 colorSoft={stickers.yellowSoft}
                 active={false}

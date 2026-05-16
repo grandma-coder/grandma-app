@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { useTheme } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 import { PaperCard } from '../../ui/PaperCard'
 import {
   NotifyAppointmentDue, TipRead, LogKicks,
@@ -42,6 +43,7 @@ export function RemindersSection({
   onOpenAppointment,
 }: Props) {
   const { colors, stickers } = useTheme()
+  const { t } = useTranslation()
 
   const items: ReminderItem[] = []
 
@@ -52,7 +54,9 @@ export function RemindersSection({
       id: 'appointment',
       Sticker: NotifyAppointmentDue,
       title: appt.name,
-      subtitle: `Week ${appt.week} · ${appt.prepNote}`,
+      // appt.prepNote is content data (English-only today; falls in a later
+      // data-content wave). The "Week N ·" wrapper goes through i18n.
+      subtitle: `${t('pregnancy_week')} ${appt.week} · ${appt.prepNote}`,
       tint: stickers.yellowSoft,
       accent: stickers.yellow,
       onPress: () => onOpenAppointment(appt),
@@ -65,7 +69,7 @@ export function RemindersSection({
     items.push({
       id: 'week_tip',
       Sticker: TipRead,
-      title: `Week ${weekNumber} tip`,
+      title: t('pregnancy_reminder_weekTip', { week: weekNumber }),
       subtitle: weekData.momTip,
       tint: stickers.lilacSoft,
       accent: stickers.lilac,
@@ -78,8 +82,8 @@ export function RemindersSection({
     items.push({
       id: 'kicks',
       Sticker: LogKicks,
-      title: 'Log your kick count',
-      subtitle: 'Track 10 movements — aim to finish within 2 hours',
+      title: t('pregnancy_reminder_kickCountTitle'),
+      subtitle: t('pregnancy_reminder_kickCountSubtitle'),
       tint: stickers.greenSoft,
       accent: stickers.green,
       onPress: () => onLog('kick_count'),

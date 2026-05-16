@@ -237,6 +237,70 @@ export interface TranslationKeys {
   pregnancy_weightGain: string
   pregnancy_birthPlan: string
 
+  // ─── Pregnancy home (Wave 1) ──────────────────────────────────────────
+  pregnancy_todaysRoutines: string
+  pregnancy_reminders: string
+  pregnancy_birthGuideTitle: string
+  pregnancy_birthGuideSubtitle: string
+  pregnancy_grandmaCtaSubtitle: string
+  pregnancy_waterChip: string                 // "{{count}}/8 glasses"
+  pregnancy_weekDay: string                    // "Week {{week}} · {{weekday}}"
+  pregnancy_routineDone: string                // "✓ {{label}}"
+  // Inline log sheet titles
+  pregnancy_logTitle_mood: string
+  pregnancy_logTitle_symptom: string
+  pregnancy_logTitle_appointment: string
+  pregnancy_logTitle_kicks: string
+  pregnancy_logTitle_vitamins: string
+  pregnancy_logTitle_water: string
+  pregnancy_logTitle_weight: string
+  pregnancy_logTitle_sleep: string
+  pregnancy_logTitle_exercise: string
+  pregnancy_logTitle_kegel: string
+  pregnancy_logTitle_nutrition: string
+
+  // ─── TodaySummaryCard (Wave 1) ────────────────────────────────────────
+  pregnancy_todayAtGlance: string
+  pregnancy_summaryHint_balanced: string
+  pregnancy_summaryHint_progress: string        // "{{done}}/{{total}} routines logged today."
+  pregnancy_summaryHint_started: string         // "Started — {{remaining}} more to round out the day."
+  pregnancy_summaryHint_empty: string
+
+  // ─── TodayDashboardModal (Wave 1) ─────────────────────────────────────
+  pregnancy_todayDashboard: string
+  pregnancy_dashboard_notLoggedYet: string
+  pregnancy_dashboard_howYouFelt: string
+  pregnancy_dashboard_tapMoodAbove: string
+  pregnancy_dashboard_perEight: string          // "/ 8 glasses"
+  pregnancy_dashboard_restfulNight: string
+  pregnancy_dashboard_couldUseMore: string
+  pregnancy_dashboard_notLogged: string
+  pregnancy_dashboard_kcal: string              // "~{{count}} kcal"
+  pregnancy_dashboard_doneToday: string
+  pregnancy_dashboard_sessionsToday: string
+  pregnancy_dashboard_loggedToday: string
+
+  // ─── RemindersSection (Wave 1) ────────────────────────────────────────
+  pregnancy_reminder_weekTip: string            // "Week {{week}} tip"
+  pregnancy_reminder_kickCountTitle: string
+  pregnancy_reminder_kickCountSubtitle: string
+
+  // ─── AffirmationRevealCard chrome (Wave 1) ────────────────────────────
+  pregnancy_dailyAffirmation: string
+  pregnancy_affirmationAwaits: string
+  pregnancy_revealToday: string
+  pregnancy_comeBackTomorrow: string
+  pregnancy_share: string
+
+  // ─── AppointmentDetailModal (Wave 1) ──────────────────────────────────
+  pregnancy_appt_thisWeek: string
+  pregnancy_appt_nextWeek: string
+  pregnancy_appt_inWeeks: string                // "In {{count}} weeks"
+  pregnancy_appt_overdue: string
+  pregnancy_appt_whatToExpect: string
+  pregnancy_appt_scheduleInAgenda: string
+  pregnancy_appt_askGrandma: string
+
   // ─── Pre-pregnancy-specific ────────────────────────────────────────────
   prepreg_cycleDay: string
   prepreg_period: string

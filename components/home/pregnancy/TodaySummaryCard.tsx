@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { useTheme } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 import { PaperCard } from '../../ui/PaperCard'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
 import {
@@ -32,6 +33,7 @@ const MOOD_LABELS: Record<string, string> = {
 
 export function TodaySummaryCard({ todayLogs, weekNumber, userId }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
 
   const weightVal = todayLogs['weight']?.value ? parseFloat(todayLogs['weight'].value) : null
@@ -96,10 +98,13 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId }: Props) {
   ].filter(Boolean).length
   const totalTrackable = 5
   const summaryHint =
-    completed === totalTrackable ? 'Beautifully balanced day.'
-    : completed >= 3 ? `${completed}/${totalTrackable} routines logged today.`
-    : completed >= 1 ? `Started — ${totalTrackable - completed} more to round out the day.`
-    : 'Tap a routine above to log your first.'
+    completed === totalTrackable
+      ? t('pregnancy_summaryHint_balanced')
+      : completed >= 3
+        ? t('pregnancy_summaryHint_progress', { done: completed, total: totalTrackable })
+        : completed >= 1
+          ? t('pregnancy_summaryHint_started', { remaining: totalTrackable - completed })
+          : t('pregnancy_summaryHint_empty')
 
   return (
     <View style={styles.wrap}>
@@ -110,7 +115,7 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId }: Props) {
         <PaperCard tint={paper} radius={24} padding={18}>
           <View style={styles.headerRow}>
             <View style={{ flex: 1 }}>
-              <Display size={22} color={ink}>Today at a glance</Display>
+              <Display size={22} color={ink}>{t('pregnancy_todayAtGlance')}</Display>
               <Body size={12} color={colors.textMuted} style={{ marginTop: 2, fontFamily: font.italic }}>
                 {summaryHint}
               </Body>

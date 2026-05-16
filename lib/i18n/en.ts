@@ -234,6 +234,69 @@ export const en: TranslationKeys = {
   pregnancy_weightGain: 'Weight Gain',
   pregnancy_birthPlan: 'Birth Plan',
 
+  // Pregnancy home (Wave 1)
+  pregnancy_todaysRoutines: "TODAY'S ROUTINES",
+  pregnancy_reminders: 'REMINDERS',
+  pregnancy_birthGuideTitle: 'Birth Guide',
+  pregnancy_birthGuideSubtitle: 'Natural · C-Section · Home · Water',
+  pregnancy_grandmaCtaSubtitle: 'Questions, worries, or just need a pep talk',
+  pregnancy_waterChip: '{{count}}/8 glasses',
+  pregnancy_weekDay: 'Week {{week}} · {{weekday}}',
+  pregnancy_routineDone: '✓ {{label}}',
+  pregnancy_logTitle_mood: 'Log mood',
+  pregnancy_logTitle_symptom: 'Log symptom',
+  pregnancy_logTitle_appointment: 'New appointment',
+  pregnancy_logTitle_kicks: 'Kick counter',
+  pregnancy_logTitle_vitamins: 'Log vitamins',
+  pregnancy_logTitle_water: 'Hydration',
+  pregnancy_logTitle_weight: 'Log weight',
+  pregnancy_logTitle_sleep: 'Log sleep',
+  pregnancy_logTitle_exercise: 'Log movement',
+  pregnancy_logTitle_kegel: 'Log kegels',
+  pregnancy_logTitle_nutrition: 'Log meal',
+
+  // TodaySummaryCard (Wave 1)
+  pregnancy_todayAtGlance: 'Today at a glance',
+  pregnancy_summaryHint_balanced: 'Beautifully balanced day.',
+  pregnancy_summaryHint_progress: '{{done}}/{{total}} routines logged today.',
+  pregnancy_summaryHint_started: 'Started — {{remaining}} more to round out the day.',
+  pregnancy_summaryHint_empty: 'Tap a routine above to log your first.',
+
+  // TodayDashboardModal (Wave 1)
+  pregnancy_todayDashboard: "Today's dashboard",
+  pregnancy_dashboard_notLoggedYet: 'Not logged yet',
+  pregnancy_dashboard_howYouFelt: 'How you felt today',
+  pregnancy_dashboard_tapMoodAbove: 'Tap + Mood above to log',
+  pregnancy_dashboard_perEight: '/ 8 glasses',
+  pregnancy_dashboard_restfulNight: 'Restful night',
+  pregnancy_dashboard_couldUseMore: 'Could use more',
+  pregnancy_dashboard_notLogged: 'Not logged',
+  pregnancy_dashboard_kcal: '~{{count}} kcal',
+  pregnancy_dashboard_doneToday: 'Done today',
+  pregnancy_dashboard_sessionsToday: 'Sessions today',
+  pregnancy_dashboard_loggedToday: 'Logged today',
+
+  // RemindersSection (Wave 1)
+  pregnancy_reminder_weekTip: 'Week {{week}} tip',
+  pregnancy_reminder_kickCountTitle: 'Log your kick count',
+  pregnancy_reminder_kickCountSubtitle: 'Track 10 movements — aim to finish within 2 hours',
+
+  // AffirmationRevealCard chrome (Wave 1)
+  pregnancy_dailyAffirmation: 'DAILY AFFIRMATION',
+  pregnancy_affirmationAwaits: 'Your daily wisdom awaits...',
+  pregnancy_revealToday: "Reveal today's  →",
+  pregnancy_comeBackTomorrow: 'Come back tomorrow for a new affirmation',
+  pregnancy_share: 'Share ↗',
+
+  // AppointmentDetailModal (Wave 1)
+  pregnancy_appt_thisWeek: 'This week',
+  pregnancy_appt_nextWeek: 'Next week',
+  pregnancy_appt_inWeeks: 'In {{count}} weeks',
+  pregnancy_appt_overdue: 'Overdue',
+  pregnancy_appt_whatToExpect: 'WHAT TO EXPECT',
+  pregnancy_appt_scheduleInAgenda: 'Schedule in agenda',
+  pregnancy_appt_askGrandma: 'Ask Grandma',
+
   // Pre-pregnancy
   prepreg_cycleDay: 'Cycle Day',
   prepreg_period: 'Period',

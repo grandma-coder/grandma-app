@@ -30,6 +30,7 @@ import { useTheme } from '../../constants/theme'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
+import { useTranslation } from '../../lib/i18n'
 import { HomeGreeting } from './HomeGreeting'
 import { PaperCard } from '../ui/PaperCard'
 import { Leaf } from '../ui/Stickers'
@@ -206,11 +207,12 @@ interface QuickLogStripProps {
 
 function QuickLogStrip({ todayLogs, weekNumber, onPressRoutine }: QuickLogStripProps) {
   const { colors, isDark, stickers } = useTheme()
+  const { t } = useTranslation()
   const visible = ROUTINES.filter((r) => !r.minWeek || weekNumber >= r.minWeek)
 
   return (
     <View style={styles.section}>
-      <MonoCaps style={{ marginBottom: 12 }}>TODAY'S ROUTINES</MonoCaps>
+      <MonoCaps style={{ marginBottom: 12 }}>{t('pregnancy_todaysRoutines')}</MonoCaps>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickLogRow}>
         {visible.map((routine) => {
           const logged = todayLogs[routine.type]
@@ -239,7 +241,11 @@ function QuickLogStrip({ todayLogs, weekNumber, onPressRoutine }: QuickLogStripP
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <routine.Sticker size={18} />
                 <Text style={[styles.quickChipText, { color: chipTextColor }]}>
-                  {isWater && isDone ? `${waterCount}/8 glasses` : isDone ? `✓ ${routine.label}` : `+ ${routine.label}`}
+                  {isWater && isDone
+                    ? t('pregnancy_waterChip', { count: waterCount })
+                    : isDone
+                      ? t('pregnancy_routineDone', { label: routine.label })
+                      : `+ ${routine.label}`}
                 </Text>
               </View>
             </Pressable>
@@ -254,6 +260,7 @@ function QuickLogStrip({ todayLogs, weekNumber, onPressRoutine }: QuickLogStripP
 
 function GrandmaCTA() {
   const { colors, isDark, stickers } = useTheme()
+  const { t } = useTranslation()
   return (
     <View style={styles.section}>
       <Pressable onPress={() => router.push('/grandma-talk')}>
@@ -265,9 +272,9 @@ function GrandmaCTA() {
             motion="float"
           />
           <View style={styles.grandmaBody}>
-            <Display size={18} color={colors.text}>Ask Grandma</Display>
+            <Display size={18} color={colors.text}>{t('pregnancy_appt_askGrandma')}</Display>
             <Body size={13} color={colors.textMuted} style={{ marginTop: 2, lineHeight: 18 }}>
-              Questions, worries, or just need a pep talk
+              {t('pregnancy_grandmaCtaSubtitle')}
             </Body>
           </View>
           <ChevronRight size={20} color={stickers.lilac} strokeWidth={2} />
@@ -284,18 +291,19 @@ type InlineLogType =
   | 'vitamins' | 'water' | 'weight' | 'sleep' | 'exercise' | 'kegel' | 'nutrition'
   | null
 
-const INLINE_LOG_TITLE: Record<Exclude<InlineLogType, null>, string> = {
-  mood: 'Log mood',
-  symptom: 'Log symptom',
-  appointment: 'New appointment',
-  kick_count: 'Kick counter',
-  vitamins: 'Log vitamins',
-  water: 'Hydration',
-  weight: 'Log weight',
-  sleep: 'Log sleep',
-  exercise: 'Log movement',
-  kegel: 'Log kegels',
-  nutrition: 'Log meal',
+// Map InlineLogType → translation key for the inline log sheet title.
+const INLINE_LOG_TITLE_KEY: Record<Exclude<InlineLogType, null>, string> = {
+  mood: 'pregnancy_logTitle_mood',
+  symptom: 'pregnancy_logTitle_symptom',
+  appointment: 'pregnancy_logTitle_appointment',
+  kick_count: 'pregnancy_logTitle_kicks',
+  vitamins: 'pregnancy_logTitle_vitamins',
+  water: 'pregnancy_logTitle_water',
+  weight: 'pregnancy_logTitle_weight',
+  sleep: 'pregnancy_logTitle_sleep',
+  exercise: 'pregnancy_logTitle_exercise',
+  kegel: 'pregnancy_logTitle_kegel',
+  nutrition: 'pregnancy_logTitle_nutrition',
 }
 
 interface PregnancyHomeProps { topInset?: number }
@@ -304,6 +312,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
   const { colors, isDark, stickers } = useTheme()
   const insets = useSafeAreaInsets()
   const queryClient = useQueryClient()
+  const { t } = useTranslation()
 
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
   const dueDate = usePregnancyStore((s) => s.dueDate) ?? ''
@@ -368,8 +377,10 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
     return null
   }
 
+  // Uses the device locale instead of forcing en-US so the weekday name
+  // matches the user's language.
   const weekdayLabel = new Date()
-    .toLocaleDateString('en-US', { weekday: 'long' })
+    .toLocaleDateString(undefined, { weekday: 'long' })
     .toUpperCase()
 
   return (
@@ -382,7 +393,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
       <View style={{ paddingHorizontal: 20, marginBottom: 12 }}>
         <HomeGreeting
           name={displayName}
-          microLabel={`WEEK ${weekNumber} · ${weekdayLabel}`}
+          microLabel={t('pregnancy_weekDay', { week: weekNumber, weekday: weekdayLabel })}
         />
       </View>
 
@@ -416,7 +427,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
 
       {/* 5. Reminders */}
       <View style={styles.section}>
-        <MonoCaps style={{ marginBottom: 12 }}>REMINDERS</MonoCaps>
+        <MonoCaps style={{ marginBottom: 12 }}>{t('pregnancy_reminders')}</MonoCaps>
         <RemindersSection
           weekNumber={weekNumber}
           todayLogs={todayLogs}
@@ -454,10 +465,10 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.birthGuideTitle, { color: colors.text }]} numberOfLines={1}>
-                Birth Guide
+                {t('pregnancy_birthGuideTitle')}
               </Text>
               <Text style={[styles.birthGuideSub, { color: colors.textMuted }]} numberOfLines={2}>
-                Natural · C-Section · Home · Water
+                {t('pregnancy_birthGuideSubtitle')}
               </Text>
             </View>
             <ChevronRight size={14} color={stickers.green} strokeWidth={2} />
@@ -492,7 +503,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
       {/* Inline log forms — same shell as the calendar */}
       <LogSheet
         visible={activeLog !== null}
-        title={activeLog ? INLINE_LOG_TITLE[activeLog] : ''}
+        title={activeLog ? t(INLINE_LOG_TITLE_KEY[activeLog] as any) : ''}
         onClose={() => setActiveLog(null)}
       >
         {renderInlineForm()}
