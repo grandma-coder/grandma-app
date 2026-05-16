@@ -127,6 +127,7 @@ serve(async (req) => {
         body: ins.body,
         behavior,
         child_id: null,
+        is_starter: true,
       }))
 
       const { data: inserted, error: insertErr } = await supabase

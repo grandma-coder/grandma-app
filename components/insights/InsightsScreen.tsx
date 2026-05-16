@@ -980,8 +980,10 @@ export function InsightsScreen() {
     if (isLoading || generating) return
     if (!metrics || metrics.totalLogs === 0) return
 
-    // All current insights are starter nudges — user has data but AI hasn't run
-    const allStarter = insights.length > 0 && insights.every((i) => STARTER_TITLES.has(i.title))
+    // All current insights are starter nudges — user has data but AI hasn't run.
+    // Prefer the server-set `is_starter` flag; fall back to the title-match Set
+    // for legacy rows inserted before the flag existed.
+    const allStarter = insights.length > 0 && insights.every((i) => i.is_starter || STARTER_TITLES.has(i.title))
     // Or no insights at all despite having data
     const noInsights = insights.length === 0
 

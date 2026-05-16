@@ -116,6 +116,8 @@ export function BirthDetailModal({
             <Pressable
               onPress={handleClose}
               hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
               style={({ pressed }) => [
                 styles.closeChip,
                 {
@@ -209,6 +211,8 @@ export function BirthDetailModal({
           <View style={styles.ctaPad}>
             <Pressable
               onPress={handleAskGrandma}
+              accessibilityRole="button"
+              accessibilityLabel="Ask Grandma anything about this topic"
               style={({ pressed }) => [
                 styles.cta,
                 {

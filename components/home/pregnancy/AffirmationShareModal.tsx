@@ -380,6 +380,9 @@ function TemplateTile({
       onPress={handleTapSave}
       onLongPress={handleLongCopy}
       delayLongPress={600}
+      accessibilityRole="button"
+      accessibilityLabel="Affirmation template. Tap to save or share. Long press to copy."
+      accessibilityHint="Long press for sharing options"
       style={({ pressed }) => [
         styles.tile,
         {

@@ -54,7 +54,13 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
         <Pressable style={styles.overlayBg} onPress={onClose} />
         <View style={[styles.sheet, { backgroundColor: colors.bgWarm }]}>
           <View style={styles.handle} />
-          <Pressable onPress={onClose} style={styles.close}>
+          <Pressable
+            onPress={onClose}
+            style={styles.close}
+            accessibilityRole="button"
+            accessibilityLabel="Close appointment details"
+            hitSlop={10}
+          >
             <X size={18} color={colors.textMuted} strokeWidth={2} />
           </Pressable>
 

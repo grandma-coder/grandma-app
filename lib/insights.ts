@@ -16,6 +16,8 @@ export interface Insight {
   child_id: string | null
   archived: boolean
   created_at: string
+  /** True for the pre-data nudge rows generate-insights writes when the user has no logs yet. */
+  is_starter?: boolean
 }
 
 /** Fetch active (non-archived) insights for the current user */

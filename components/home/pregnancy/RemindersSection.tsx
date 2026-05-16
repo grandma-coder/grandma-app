@@ -95,6 +95,8 @@ export function RemindersSection({
           key={item.id}
           onPress={item.onPress}
           style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
+          accessibilityRole="button"
+          accessibilityLabel={`${item.title}. ${item.subtitle}`}
         >
           <PaperCard tint={item.tint} radius={20} padding={14} flat style={styles.item}>
             <View style={styles.iconWrap}>

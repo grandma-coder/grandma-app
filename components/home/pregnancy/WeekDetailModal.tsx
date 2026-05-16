@@ -108,7 +108,13 @@ function PrepDetailSheet({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.prepDetailScroll}
       >
-        <Pressable onPress={onBack} style={styles.prepBackRow} hitSlop={8}>
+        <Pressable
+          onPress={onBack}
+          style={styles.prepBackRow}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Back to week details"
+        >
           <ArrowLeft size={18} color={accent} strokeWidth={2} />
           <Text style={[styles.prepBackText, { color: accent }]}>Back</Text>
         </Pressable>
@@ -238,7 +244,13 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 36 }}>
               {/* Hero — inherits card's palette */}
               <View style={[styles.hero, { backgroundColor: pal.bg }]}>
-                <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={10}>
+                <Pressable
+                  onPress={onClose}
+                  style={styles.closeBtn}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close week details"
+                >
                   <X size={18} color="#141313" strokeWidth={2.5} />
                 </Pressable>
 
@@ -306,6 +318,8 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                       <Pressable
                         key={`${item.i}-${i}`}
                         onPress={() => setSelectedPrep(item)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${item.t}. Tap to read more.`}
                         style={({ pressed }) => [
                           styles.prepCard,
                           {

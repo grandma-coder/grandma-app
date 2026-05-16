@@ -113,6 +113,8 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
               <Pressable
                 onPress={handleClose}
                 hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Close birth guide"
                 style={({ pressed }) => [
                   styles.closeChip,
                   {
@@ -142,6 +144,8 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                   <Pressable
                     key={item.key}
                     onPress={() => setDetailTopic(item.key)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${item.title}. ${item.subtitle}`}
                     style={({ pressed }) => [
                       styles.typeCard,
                       {
@@ -183,6 +187,8 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                   <Pressable
                     key={item.key}
                     onPress={() => setDetailTopic(item.key)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${item.title}. ${item.subtitle}`}
                     style={({ pressed }) => [
                       styles.extraRow,
                       {
