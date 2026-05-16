@@ -35,6 +35,7 @@ import { Edit2, Check, ChevronRight, X } from 'lucide-react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -601,6 +602,7 @@ function InfoRow({ label, value, onEdit, dotColor }: InfoRowProps) {
 
 export default function PregnancyProfileScreen() {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
@@ -1023,13 +1025,13 @@ export default function PregnancyProfileScreen() {
         >
           <InfoRow
             dotColor={ROW_DOTS[0]}
-            label="Due date"
-            value={dueDate ? new Date(dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
+            label={t('preg_profile_dueDate')}
+            value={dueDate ? new Date(dueDate + 'T12:00:00').toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
             onEdit={openDueDatePicker}
           />
-          <InfoRow dotColor={ROW_DOTS[1]} label="Current week" value={weekNumber != null ? `Week ${weekNumber}` : ''} />
-          <InfoRow dotColor={ROW_DOTS[2]} label="Trimester" value={weekNumber != null ? TRIMESTER_LABEL(weekNumber) : ''} />
-          <InfoRow dotColor={ROW_DOTS[3]} label="Days to go" value={daysToGo != null ? `${daysToGo} days` : ''} />
+          <InfoRow dotColor={ROW_DOTS[1]} label={t('preg_profile_currentWeek')} value={weekNumber != null ? `Week ${weekNumber}` : ''} />
+          <InfoRow dotColor={ROW_DOTS[2]} label={t('preg_profile_trimester')} value={weekNumber != null ? TRIMESTER_LABEL(weekNumber) : ''} />
+          <InfoRow dotColor={ROW_DOTS[3]} label={t('preg_profile_daysToGo')} value={daysToGo != null ? `${daysToGo} days` : ''} />
           <InfoRow
             dotColor={ROW_DOTS[4]}
             label="LMP date"
@@ -1041,10 +1043,10 @@ export default function PregnancyProfileScreen() {
           />
           <InfoRow
             dotColor={ROW_DOTS[5]}
-            label="Conception type"
+            label={t('preg_profile_conceptionType')}
             value={bp.conceptionType ?? ''}
             onEdit={() => setOptionsSheet({
-              label: 'Conception type',
+              label: t('preg_profile_conceptionType'),
               value: bp.conceptionType ?? '',
               options: CONCEPTION_TYPES,
               onSave: (v) => void saveBirthPreferences({ conceptionType: v }),
@@ -1052,10 +1054,10 @@ export default function PregnancyProfileScreen() {
           />
           <InfoRow
             dotColor={ROW_DOTS[0]}
-            label="Blood type"
+            label={t('preg_profile_bloodType')}
             value={profile.bloodType}
             onEdit={() => setOptionsSheet({
-              label: 'Blood type',
+              label: t('preg_profile_bloodType'),
               value: profile.bloodType,
               options: BLOOD_TYPES,
               onSave: (v) => {
@@ -1066,10 +1068,10 @@ export default function PregnancyProfileScreen() {
           />
           <InfoRow
             dotColor={ROW_DOTS[1]}
-            label="Rh factor"
+            label={t('preg_profile_rhFactor')}
             value={bp.rhFactor ?? ''}
             onEdit={() => setOptionsSheet({
-              label: 'Rh factor',
+              label: t('preg_profile_rhFactor'),
               value: bp.rhFactor ?? '',
               options: RH_FACTORS,
               onSave: (v) => void saveBirthPreferences({ rhFactor: v }),
@@ -1077,10 +1079,10 @@ export default function PregnancyProfileScreen() {
           />
           <InfoRow
             dotColor={ROW_DOTS[2]}
-            label="Height"
+            label={t('preg_profile_height')}
             value={bp.height ? `${bp.height} cm` : ''}
             onEdit={() => setWheelSheet({
-              label: 'Height',
+              label: t('preg_profile_height'),
               value: bp.height ?? '170',
               options: HEIGHT_OPTIONS,
               unit: 'cm',
@@ -1101,10 +1103,10 @@ export default function PregnancyProfileScreen() {
           />
           <InfoRow
             dotColor={ROW_DOTS[4]}
-            label="Current weight"
+            label={t('preg_profile_currentWeight')}
             value={currentWeight ? `${currentWeight} kg` : ''}
             onEdit={() => setWheelSheet({
-              label: 'Current weight',
+              label: t('preg_profile_currentWeight'),
               value: currentWeight || '62.0',
               options: WEIGHT_OPTIONS,
               unit: 'kg',
@@ -1113,7 +1115,7 @@ export default function PregnancyProfileScreen() {
           />
           <InfoRow
             dotColor={ROW_DOTS[5]}
-            label="Weight gained"
+            label={t('preg_profile_weightGained')}
             value={(() => {
               const cur = parseFloat(currentWeight)
               const pre = parseFloat(bp.prePregnancyWeight ?? '')
@@ -1152,50 +1154,50 @@ export default function PregnancyProfileScreen() {
           badgeTint={stickers.pinkSoft}
         >
           <InfoRow
-            label="Birth location"
+            label={t('preg_profile_birthLocation')}
             value={bp.birthLocation ?? ''}
             onEdit={() => setOptionsSheet({
-              label: 'Birth location',
+              label: t('preg_profile_birthLocation'),
               value: bp.birthLocation ?? '',
               options: BIRTH_LOCATIONS,
               onSave: (v) => void saveBirthPreferences({ birthLocation: v }),
             })}
           />
           <InfoRow
-            label="Pain management"
+            label={t('preg_profile_painManagement')}
             value={bp.painManagement ?? ''}
             onEdit={() => setOptionsSheet({
-              label: 'Pain management',
+              label: t('preg_profile_painManagement'),
               value: bp.painManagement ?? '',
               options: PAIN_MGMT_OPTIONS,
               onSave: (v) => void saveBirthPreferences({ painManagement: v }),
             })}
           />
           <InfoRow
-            label="Atmosphere"
+            label={t('preg_profile_atmosphere')}
             value={bp.atmosphere ?? ''}
             onEdit={() => setOptionsSheet({
-              label: 'Atmosphere',
+              label: t('preg_profile_atmosphere'),
               value: bp.atmosphere ?? '',
               options: ATMOSPHERE_OPTIONS,
               onSave: (v) => void saveBirthPreferences({ atmosphere: v }),
             })}
           />
           <InfoRow
-            label="Cord cutting"
+            label={t('preg_profile_cordCutting')}
             value={bp.cordCutting ?? ''}
             onEdit={() => setOptionsSheet({
-              label: 'Cord cutting',
+              label: t('preg_profile_cordCutting'),
               value: bp.cordCutting ?? '',
               options: CORD_CUTTING_OPTIONS,
               onSave: (v) => void saveBirthPreferences({ cordCutting: v }),
             })}
           />
           <InfoRow
-            label="Feeding plan"
+            label={t('preg_profile_feedingPlan')}
             value={bp.feedingPlan ?? ''}
             onEdit={() => setOptionsSheet({
-              label: 'Feeding plan',
+              label: t('preg_profile_feedingPlan'),
               value: bp.feedingPlan ?? '',
               options: FEEDING_PLAN_OPTIONS,
               onSave: (v) => void saveBirthPreferences({ feedingPlan: v }),
