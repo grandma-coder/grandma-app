@@ -29,6 +29,7 @@ import { NotifyHealthAlert, TalkMaster } from '../stickers/RewardStickers'
 import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { supabase } from '../../lib/supabase'
 import {
   fetchInsights, fetchArchivedInsights, generateInsights,
   archiveInsight, restoreInsight, archiveStaleInsights,
@@ -867,7 +868,17 @@ export function InsightsScreen() {
 
   const child = activeChild ?? children[0]
   const childName = child?.name ?? 'your child'
-  const ageMonths = child?.birthDate ? getAgeMonths(child.birthDate) : 12
+  // Pregnancy / pre-pregnancy users without a child shouldn't receive
+  // kids-aged article banding. Use 0 (newborn proxy) for pregnancy so the
+  // 0–3 month band lands, and -1 for pre-pregnancy so age-band filters miss
+  // (article list falls back to mode-aware filtering downstream).
+  const ageMonths = child?.birthDate
+    ? getAgeMonths(child.birthDate)
+    : mode === 'pregnancy'
+      ? 0
+      : mode === 'pre-pregnancy'
+        ? -1
+        : 12
 
   const [tab, setTab] = useState<Tab>('today')
   const [refreshing, setRefreshing] = useState(false)
@@ -876,24 +887,43 @@ export function InsightsScreen() {
   const [selectedInsight, setSelectedInsight] = useState<Insight | null>(null)
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
   const [articleCategory, setArticleCategory] = useState<ArticleCategory | 'all'>('all')
+  const [userId, setUserId] = useState<string | null>(null)
+
+  // Partition cached queries by user id so a fresh sign-in doesn't read the
+  // previous account's insights from cache until staleTime expires.
+  useEffect(() => {
+    let alive = true
+    supabase.auth.getSession().then(({ data }) => {
+      if (alive) setUserId(data.session?.user.id ?? null)
+    })
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user.id ?? null)
+    })
+    return () => {
+      alive = false
+      sub.subscription.unsubscribe()
+    }
+  }, [])
 
   const { data: insights = [], isLoading } = useQuery({
-    queryKey: ['insights', mode],
+    queryKey: ['insights', userId, mode],
     queryFn: () => fetchInsights(mode),
     staleTime: 5 * 60 * 1000,
+    enabled: !!userId,
   })
 
   const { data: archivedInsights = [], isLoading: isLoadingHistory } = useQuery({
-    queryKey: ['insights-history', mode],
+    queryKey: ['insights-history', userId, mode],
     queryFn: () => fetchArchivedInsights(mode),
     staleTime: 5 * 60 * 1000,
-    enabled: tab === 'history',
+    enabled: tab === 'history' && !!userId,
   })
 
   const { data: metrics } = useQuery({
-    queryKey: ['behavior-metrics', mode],
+    queryKey: ['behavior-metrics', userId, mode],
     queryFn: () => fetchBehaviorMetrics(mode),
     staleTime: 10 * 60 * 1000,
+    enabled: !!userId,
   })
 
   const onRefresh = useCallback(async () => {

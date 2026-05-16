@@ -29,6 +29,7 @@ import { useBadgeStore, BADGE_DEFS } from '../../store/useBadgeStore'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { supabase } from '../../lib/supabase'
+import { checkPremium } from '../../lib/revenue'
 import { useTranslation } from '../../lib/i18n'
 import { useDevPanel } from '../../context/DevPanelContext'
 import { getSubtitleFor } from '../../lib/profileStatus'
@@ -60,6 +61,7 @@ export default function ProfileScreen() {
   const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null)
   const [joinedYear, setJoinedYear] = useState<number | null>(null)
   const [careCircleCount, setCareCircleCount] = useState<number>(0)
+  const [isPremium, setIsPremium] = useState(false)
 
   // Dev-panel 5-tap trigger on the version text (bottom of screen)
   const { openDevPanel } = useDevPanel()
@@ -83,6 +85,7 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       loadProfile()
+      checkPremium().then(setIsPremium).catch(() => {})
     }, [])
   )
 
@@ -319,7 +322,7 @@ export default function ProfileScreen() {
           <StatRow
             icon={<AnimatedSticker type="Burst" size={18} fill="#C8B6E8" />}
             label={t('profile_subscription')}
-            value="Upgrade"
+            value={isPremium ? 'Premium' : 'Upgrade'}
             onPress={() => router.push('/paywall')}
             isLast
           />
