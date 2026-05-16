@@ -22,7 +22,8 @@ import { router } from 'expo-router'
 import { Heart } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
-import { useTheme, brand } from '../../../constants/theme'
+import { useTheme, brand, getModeColor, getModeColorSoft } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 import {
   usePregnancyOnboardingStore,
   type BirthPlace,
@@ -101,6 +102,7 @@ export default function PregnancyOnboarding() {
   const store = usePregnancyOnboardingStore()
   const pregnancyStore = usePregnancyStore()
   const { handleComplete: onboardingComplete } = useOnboardingComplete()
+  const { t } = useTranslation()
 
   const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -159,8 +161,8 @@ export default function PregnancyOnboarding() {
     )
     if (behaviorErr) {
       Alert.alert(
-        'Couldn\'t finish onboarding',
-        `Saving your pregnancy info failed: ${behaviorErr.message}. Please try again.`
+        t('preg_onboard_errorTitle'),
+        t('preg_onboard_errorBehavior', { message: behaviorErr.message })
       )
       return
     }
@@ -205,8 +207,8 @@ export default function PregnancyOnboarding() {
       const { error: logsErr } = await supabase.from('pregnancy_logs').insert(logs)
       if (logsErr) {
         Alert.alert(
-          'Couldn\'t finish onboarding',
-          `Saving your due date failed: ${logsErr.message}. Please try again.`
+          t('preg_onboard_errorTitle'),
+          t('preg_onboard_errorDueDate', { message: logsErr.message })
         )
         return
       }
@@ -278,7 +280,10 @@ function StepDueDate({
   step: number
   onContinue: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
+  const mode = getModeColor('pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pregnancy', isDark)
   const dueDate = usePregnancyOnboardingStore((s) => s.dueDate)
   const setDueDate = usePregnancyOnboardingStore((s) => s.setDueDate)
 
@@ -305,7 +310,7 @@ function StepDueDate({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
-      question="When is your due date?"
+      question={t('preg_onboard_step_dueDate')}
       onContinue={onContinue}
       continueDisabled={!dueDate}
     >
@@ -325,10 +330,10 @@ function StepDueDate({
           <View
             style={[
               stepStyles.weekBadge,
-              { backgroundColor: colors.primaryTint, borderRadius: radius.lg },
+              { backgroundColor: modeSoft, borderRadius: radius.lg },
             ]}
           >
-            <Text style={[stepStyles.weekBadgeText, { color: colors.primary }]}>
+            <Text style={[stepStyles.weekBadgeText, { color: mode }]}>
               You're at week {calcWeekNumber(dueDate)} — {daysUntil(dueDate)} days to go!
             </Text>
           </View>
@@ -347,6 +352,7 @@ function StepFirstPregnancy({
   step: number
   onContinue: () => void
 }) {
+  const { t } = useTranslation()
   const first = usePregnancyOnboardingStore((s) => s.firstPregnancy)
   const setFirst = usePregnancyOnboardingStore((s) => s.setFirstPregnancy)
 
@@ -354,13 +360,13 @@ function StepFirstPregnancy({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
-      question="Is this your first pregnancy?"
+      question={t('preg_onboard_step_firstPregnancy')}
       onContinue={onContinue}
       continueDisabled={first === null}
     >
       <View style={stepStyles.toggleRow}>
-        <TogglePill label="Yes" active={first === true} onPress={() => setFirst(true)} />
-        <TogglePill label="No" active={first === false} onPress={() => setFirst(false)} />
+        <TogglePill label={t('preg_onboard_yes')} active={first === true} onPress={() => setFirst(true)} />
+        <TogglePill label={t('preg_onboard_no')} active={first === false} onPress={() => setFirst(false)} />
       </View>
     </OnboardingStep>
   )
@@ -377,7 +383,10 @@ function StepMood({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
+  const mode = getModeColor('pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pregnancy', isDark)
   const mood = usePregnancyOnboardingStore((s) => s.mood)
   const setMood = usePregnancyOnboardingStore((s) => s.setMood)
 
@@ -385,7 +394,7 @@ function StepMood({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
-      question="How are you feeling right now?"
+      question={t('preg_onboard_step_mood')}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -399,8 +408,9 @@ function StepMood({
               style={[
                 stepStyles.moodCard,
                 {
-                  backgroundColor: selected ? colors.primaryTint : colors.surface,
-                  borderColor: selected ? colors.primary : colors.border,
+                  backgroundColor: selected ? modeSoft : colors.surface,
+                  borderColor: selected ? mode : colors.text,
+                  shadowColor: colors.text,
                   borderRadius: radius.lg,
                 },
               ]}
@@ -409,7 +419,7 @@ function StepMood({
               <Text
                 style={[
                   stepStyles.moodLabel,
-                  { color: selected ? colors.primary : colors.textSecondary },
+                  { color: selected ? mode : colors.textSecondary },
                 ]}
               >
                 {opt.label}
@@ -433,7 +443,10 @@ function StepBirthPlace({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
+  const mode = getModeColor('pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pregnancy', isDark)
   const place = usePregnancyOnboardingStore((s) => s.birthPlace)
   const setPlace = usePregnancyOnboardingStore((s) => s.setBirthPlace)
 
@@ -441,7 +454,7 @@ function StepBirthPlace({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
-      question="Where are you planning to give birth?"
+      question={t('preg_onboard_step_birthPlace')}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -455,8 +468,9 @@ function StepBirthPlace({
               style={[
                 stepStyles.placeChip,
                 {
-                  backgroundColor: selected ? colors.primaryTint : colors.surface,
-                  borderColor: selected ? colors.primary : colors.border,
+                  backgroundColor: selected ? modeSoft : colors.surface,
+                  borderColor: selected ? mode : colors.text,
+                  shadowColor: colors.text,
                   borderRadius: radius.full,
                 },
               ]}
@@ -464,7 +478,7 @@ function StepBirthPlace({
               <Text
                 style={[
                   stepStyles.placeChipText,
-                  { color: selected ? colors.primary : colors.text },
+                  { color: selected ? mode : colors.text },
                 ]}
               >
                 {opt.label}
@@ -488,7 +502,10 @@ function StepCareProvider({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
+  const mode = getModeColor('pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pregnancy', isDark)
   const provider = usePregnancyOnboardingStore((s) => s.careProvider)
   const setProvider = usePregnancyOnboardingStore((s) => s.setCareProvider)
 
@@ -496,14 +513,14 @@ function StepCareProvider({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
-      question="Who is your care provider?"
+      question={t('preg_onboard_step_careProvider')}
       onContinue={onContinue}
       onSkip={onSkip}
     >
       <TextInput
         value={provider ?? ''}
         onChangeText={setProvider}
-        placeholder="e.g. Dr. Sarah Mitchell"
+        placeholder={t('preg_onboard_careProviderPlaceholder')}
         placeholderTextColor={colors.textMuted}
         style={[
           stepStyles.textInput,
@@ -531,7 +548,10 @@ function StepConditions({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
+  const mode = getModeColor('pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pregnancy', isDark)
   const conditions = usePregnancyOnboardingStore((s) => s.conditionsText)
   const setConditions = usePregnancyOnboardingStore((s) => s.setConditionsText)
 
@@ -539,14 +559,14 @@ function StepConditions({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
-      question="Any conditions or allergies we should know?"
+      question={t('preg_onboard_step_conditions')}
       onContinue={onContinue}
       onSkip={onSkip}
     >
       <TextInput
         value={conditions ?? ''}
         onChangeText={setConditions}
-        placeholder="e.g. Gestational diabetes, penicillin allergy..."
+        placeholder={t('preg_onboard_conditionsPlaceholder')}
         placeholderTextColor={colors.textMuted}
         multiline
         style={[
@@ -574,7 +594,10 @@ function StepPartner({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
+  const mode = getModeColor('pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pregnancy', isDark)
   const partner = usePregnancyOnboardingStore((s) => s.partnerName)
   const setPartner = usePregnancyOnboardingStore((s) => s.setPartnerName)
 
@@ -582,14 +605,14 @@ function StepPartner({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
-      question="Want to add your partner?"
+      question={t('preg_onboard_step_partner')}
       onContinue={onContinue}
       onSkip={onSkip}
     >
       <TextInput
         value={partner ?? ''}
         onChangeText={setPartner}
-        placeholder="Partner's name"
+        placeholder={t('preg_onboard_partnerNamePlaceholder')}
         placeholderTextColor={colors.textMuted}
         style={[
           stepStyles.textInput,
@@ -619,7 +642,10 @@ function CompletionScreen({
   onFinish: () => void
 }) {
   const insets = useSafeAreaInsets()
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
+  const mode = getModeColor('pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pregnancy', isDark)
 
   const days = dueDate ? daysUntil(dueDate) : null
   const week = dueDate ? calcWeekNumber(dueDate) : null
@@ -634,12 +660,11 @@ function CompletionScreen({
         </View>
 
         <Text style={[completeStyles.title, { color: colors.text }]}>
-          Congratulations!
+          {t('preg_onboard_completionTitle')}
         </Text>
 
         <Text style={[completeStyles.message, { color: colors.textSecondary }]}>
-          What an incredible journey you're on. Grandma will be right here with you
-          every step of the way.
+          {t('preg_onboard_completionBody')}
         </Text>
 
         {dueDate && days !== null && week !== null && (
@@ -649,7 +674,7 @@ function CompletionScreen({
               { backgroundColor: colors.surfaceRaised, borderRadius: radius.xl },
             ]}
           >
-            <Text style={[completeStyles.countdownDays, { color: colors.primary }]}>
+            <Text style={[completeStyles.countdownDays, { color: mode }]}>
               {days}
             </Text>
             <Text style={[completeStyles.countdownLabel, { color: colors.textSecondary }]}>
@@ -692,7 +717,10 @@ function TogglePill({
   active: boolean
   onPress: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
+  const mode = getModeColor('pregnancy', isDark)
+  const modeSoft = getModeColorSoft('pregnancy', isDark)
 
   return (
     <Pressable
@@ -700,16 +728,17 @@ function TogglePill({
       style={[
         stepStyles.togglePill,
         {
-          backgroundColor: active ? colors.primaryTint : colors.surface,
-          borderColor: active ? colors.primary : colors.border,
-          borderRadius: radius.lg,
+          backgroundColor: active ? modeSoft : colors.surface,
+          borderColor: active ? mode : colors.text,
+          shadowColor: colors.text,
+          borderRadius: radius.full,
         },
       ]}
     >
       <Text
         style={[
           stepStyles.togglePillText,
-          { color: active ? colors.primary : colors.textSecondary },
+          { color: active ? mode : colors.textSecondary },
         ]}
       >
         {label}
@@ -754,7 +783,11 @@ const stepStyles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   togglePillText: {
     fontSize: 16,
@@ -770,11 +803,15 @@ const stepStyles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     paddingVertical: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     gap: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   moodEmoji: {
-    fontSize: 32, fontFamily: 'Fraunces_600SemiBold' },
+    fontSize: 32 },
   moodLabel: {
     fontSize: 13,
     fontWeight: '600',
@@ -787,7 +824,11 @@ const stepStyles = StyleSheet.create({
   placeChip: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderWidth: 1,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   placeChipText: {
     fontSize: 15,

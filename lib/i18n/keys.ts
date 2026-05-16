@@ -507,6 +507,105 @@ export interface TranslationKeys {
   preg_analytics_stat_bestDay: string
   preg_analytics_stat_volume: string
 
+  // ─── BirthGuideModal (Wave 4) ─────────────────────────────────────────
+  preg_birthGuide_title: string
+  preg_birthGuide_subtitle: string
+  preg_birthGuide_alsoIn: string
+
+  // ─── BirthDetailModal (Wave 4) ────────────────────────────────────────
+  preg_birthDetail_askGrandma: string
+  preg_birthDetail_sources: string
+
+  // ─── WeekDetailModal (Wave 4) ─────────────────────────────────────────
+  preg_weekDetail_heroLabel: string                // "WEEK {{week}} · {{trimester}} TRIMESTER"
+  preg_weekDetail_babyDevelopment: string
+  preg_weekDetail_commonSymptoms: string
+  preg_weekDetail_whatToPrepare: string
+  preg_weekDetail_prep_whyNow: string
+  preg_weekDetail_prep_howToDoIt: string
+  preg_weekDetail_prep_watchFor: string
+
+  // ─── Birth Plan screen (Wave 4) ───────────────────────────────────────
+  preg_birthPlan_title: string
+  preg_birthPlan_italicSubtitle: string
+  preg_birthPlan_typesOfBirth: string
+  preg_birthPlan_hospitalBagHeader: string          // "HOSPITAL BAG · {{done}}/{{total}}"
+  preg_birthPlan_a11y_packed: string                // accessibilityLabel suffix "packed" — keep simple
+  preg_birthPlan_a11y_notPacked: string
+
+  // ─── Onboarding due-date (Wave 4) ─────────────────────────────────────
+  preg_onboard_dueDate_headline1: string
+  preg_onboard_dueDate_headline2: string             // "your bundle."
+  preg_onboard_dueDate_subtitle: string
+  preg_onboard_dueDate_tabDue: string
+  preg_onboard_dueDate_tabLmp: string
+  preg_onboard_dueDate_labelDue: string
+  preg_onboard_dueDate_labelLmp: string
+  preg_onboard_dueDate_placeholder: string
+  preg_onboard_dueDate_weekOfFortyt: string          // "Week {{week}} of 40"
+  preg_onboard_dueDate_continue: string
+
+  // ─── Onboarding baby-name (Wave 4) ────────────────────────────────────
+  preg_onboard_babyName_titleAsk1: string            // "Have you"
+  preg_onboard_babyName_titleAsk2: string            // "chosen a name?"
+  preg_onboard_babyName_titleCare1: string           // "What's your"
+  preg_onboard_babyName_titleCare2: string           // "little one called?"
+  preg_onboard_babyName_subtitleAsk: string
+  preg_onboard_babyName_subtitleCare: string
+  preg_onboard_babyName_labelBaby: string            // "BABY'S NAME (OPTIONAL)"
+  preg_onboard_babyName_labelChild: string           // "CHILD'S NAME"
+  preg_onboard_babyName_placeholderBaby: string
+  preg_onboard_babyName_placeholderChild: string
+  preg_onboard_babyName_skipLink: string
+
+  // ─── Onboarding pregnancy step questions (Wave 4) ─────────────────────
+  preg_onboard_step_dueDate: string
+  preg_onboard_step_firstPregnancy: string
+  preg_onboard_step_mood: string
+  preg_onboard_step_birthPlace: string
+  preg_onboard_step_careProvider: string
+  preg_onboard_step_conditions: string
+  preg_onboard_step_partner: string
+  preg_onboard_partnerNamePlaceholder: string
+  preg_onboard_careProviderPlaceholder: string
+  preg_onboard_conditionsPlaceholder: string
+  preg_onboard_birth_hospital: string
+  preg_onboard_birth_center: string
+  preg_onboard_birth_home: string
+  preg_onboard_birth_undecided: string
+  preg_onboard_mood_excited: string
+  preg_onboard_mood_happy: string
+  preg_onboard_mood_calm: string
+  preg_onboard_mood_anxious: string
+  preg_onboard_mood_tired: string
+  preg_onboard_mood_nauseous: string
+  preg_onboard_yes: string
+  preg_onboard_no: string
+  preg_onboard_completionTitle: string
+  preg_onboard_completionBody: string
+  preg_onboard_completionBadge: string               // "Currently at week {{week}} — {{days}} days to go!"
+  preg_onboard_completionCta: string
+  preg_onboard_errorTitle: string
+  preg_onboard_errorBehavior: string                 // "Saving your pregnancy info failed: {{message}}. Please try again."
+  preg_onboard_errorDueDate: string                  // "Saving your due date failed: {{message}}. Please try again."
+
+  // ─── Profile / pregnancy (Wave 4) ─────────────────────────────────────
+  preg_profile_dueDate: string
+  preg_profile_currentWeek: string
+  preg_profile_trimester: string
+  preg_profile_daysToGo: string
+  preg_profile_conceptionType: string
+  preg_profile_bloodType: string
+  preg_profile_rhFactor: string
+  preg_profile_height: string
+  preg_profile_currentWeight: string
+  preg_profile_weightGained: string
+  preg_profile_birthLocation: string
+  preg_profile_painManagement: string
+  preg_profile_atmosphere: string
+  preg_profile_cordCutting: string
+  preg_profile_feedingPlan: string
+
   // ─── Pre-pregnancy-specific ────────────────────────────────────────────
   prepreg_cycleDay: string
   prepreg_period: string

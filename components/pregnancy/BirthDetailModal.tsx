@@ -14,6 +14,7 @@ import { X, ChevronDown, ChevronUp, MessageCircle, ExternalLink, Info, TriangleA
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Linking } from 'react-native'
 import { useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { Display, Body } from '../ui/Typography'
 import {
   Leaf, Cross, Cloud, Drop, ClockFace, Bolt, Key, Pill, Lungs, Heart, Moon,
@@ -55,6 +56,7 @@ export function BirthDetailModal({
   onAskGrandma,
 }: BirthDetailModalProps) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
@@ -203,6 +205,7 @@ export function BirthDetailModal({
                 inkMuted={inkMuted}
                 paper={paper}
                 paperBorder={paperBorder}
+                label={t('preg_birthDetail_sources')}
               />
             )}
           </ScrollView>
@@ -229,7 +232,7 @@ export function BirthDetailModal({
             >
               <MessageCircle size={16} color={INK} strokeWidth={2.2} />
               <Body size={14} color={INK} style={{ fontFamily: 'DMSans_700Bold' }}>
-                Ask Grandma anything
+                {t('preg_birthDetail_askGrandma')}
               </Body>
             </Pressable>
           </View>
@@ -422,13 +425,14 @@ interface SourcesBlockProps {
   inkMuted: string
   paper: string
   paperBorder: string
+  label: string
 }
 
-function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder }: SourcesBlockProps) {
+function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label }: SourcesBlockProps) {
   return (
     <View style={[styles.sourcesCard, { backgroundColor: paper, borderColor: paperBorder }]}>
       <Body size={12} color={inkMuted} style={{ fontFamily: 'DMSans_700Bold', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 10 }}>
-        Sources
+        {label}
       </Body>
       {sources.map((s, i) => (
         <Pressable

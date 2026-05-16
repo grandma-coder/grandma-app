@@ -27,6 +27,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { X, ArrowLeft, ChevronRight } from 'lucide-react-native'
 import { useTheme } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 import { getWeekData } from '../../../lib/pregnancyData'
 import { getWeekStat, formatWeight } from '../../../lib/weekStats'
 import { getWeekContent, PrepItemDef } from '../../../lib/weekContent'
@@ -96,6 +97,7 @@ function PrepDetailSheet({
   accentSoft,
 }: { item: PrepItemDef; week: number; onBack: () => void; accent: string; accentSoft: string }) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const guide = getPrepGuide(item, week)
   const ink = colors.text
   const ink2 = colors.textSecondary
@@ -131,12 +133,12 @@ function PrepDetailSheet({
           </View>
         </View>
 
-        <Text style={[styles.prepSectionTitle, { color: ink3 }]}>WHY NOW</Text>
+        <Text style={[styles.prepSectionTitle, { color: ink3 }]}>{t('preg_weekDetail_prep_whyNow')}</Text>
         <Text style={[styles.prepDetailContent, { color: ink2 }]}>
           {guide.why}
         </Text>
 
-        <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }]}>HOW TO DO IT</Text>
+        <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }]}>{t('preg_weekDetail_prep_howToDoIt')}</Text>
         {guide.how.map((step, i) => (
           <View key={i} style={styles.prepStepRow}>
             <View style={[styles.prepStepDot, { backgroundColor: accent }]} />
@@ -146,7 +148,7 @@ function PrepDetailSheet({
 
         {guide.watch ? (
           <>
-            <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }]}>WATCH FOR</Text>
+            <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }]}>{t('preg_weekDetail_prep_watchFor')}</Text>
             <View style={[styles.prepWatchBox, { backgroundColor: accentSoft, borderColor: accent + '40' }]}>
               <Text style={[styles.prepDetailContent, { color: ink2 }]}>{guide.watch}</Text>
             </View>
@@ -161,6 +163,7 @@ function PrepDetailSheet({
 
 export function WeekDetailModal({ visible, week, onClose }: Props) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const [selectedPrep, setSelectedPrep] = useState<PrepItemDef | null>(null)
   // Keep the last prep item rendered while sliding back so the animation has content
   const [pendingPrep, setPendingPrep] = useState<PrepItemDef | null>(null)
@@ -260,7 +263,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                 </View>
 
                 <Text style={[styles.heroLabel, { color: pal.metaFg }]}>
-                  WEEK {week} · {TRI_NAMES[tri - 1].toUpperCase()} TRIMESTER
+                  {t('preg_weekDetail_heroLabel', { week, trimester: TRI_NAMES[tri - 1].toUpperCase() })}
                 </Text>
 
                 <Text style={[styles.heroMega, { color: pal.fg }]}>{weekStr}</Text>
@@ -286,7 +289,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
               <View style={styles.body}>
                 {/* Baby's Development */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>BABY'S DEVELOPMENT</Text>
+                  <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>{t('preg_weekDetail_babyDevelopment')}</Text>
                   {content.dev.map((point, i) => (
                     <View key={i} style={styles.devRow}>
                       <View style={[styles.devDot, { backgroundColor: pal.accent }]} />
@@ -297,7 +300,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
 
                 {/* Common Symptoms */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>COMMON SYMPTOMS</Text>
+                  <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>{t('preg_weekDetail_commonSymptoms')}</Text>
                   <View style={styles.pillsRow}>
                     {content.sym.map((sym) => (
                       <View
@@ -313,7 +316,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                 {/* What to Prepare */}
                 {content.prep.length > 0 && (
                   <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>WHAT TO PREPARE</Text>
+                    <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>{t('preg_weekDetail_whatToPrepare')}</Text>
                     {content.prep.map((item, i) => (
                       <Pressable
                         key={`${item.i}-${i}`}

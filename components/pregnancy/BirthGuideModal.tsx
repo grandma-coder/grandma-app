@@ -11,6 +11,7 @@ import { X, ChevronRight } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { Display, MonoCaps, Body } from '../ui/Typography'
 import { BirthDetailModal } from './BirthDetailModal'
 import {
@@ -59,6 +60,7 @@ const EXTRA_TOPICS: ExtraTopicTile[] = [
 
 export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const [detailTopic, setDetailTopic] = useState<BirthTopicKey | null>(null)
 
@@ -105,9 +107,9 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
             {/* Header — Display title + sticker close */}
             <View style={styles.headerRow}>
               <View style={{ flex: 1, paddingRight: 12 }}>
-                <Display size={26} color={ink}>Birth Guide</Display>
+                <Display size={26} color={ink}>{t('preg_birthGuide_title')}</Display>
                 <Body size={13} color={inkMuted} style={{ marginTop: 4 }}>
-                  What do you want to explore?
+                  {t('preg_birthGuide_subtitle')}
                 </Body>
               </View>
               <Pressable
@@ -179,7 +181,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                 color={isDark ? colors.textMuted : colors.text}
                 style={{ marginTop: 22, marginBottom: 10, letterSpacing: 1.6 }}
               >
-                ALSO IN THIS GUIDE
+                {t('preg_birthGuide_alsoIn')}
               </MonoCaps>
 
               <View style={styles.extraList}>

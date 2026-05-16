@@ -11,6 +11,7 @@ import { MissingStickers } from '../components/stickers/MissingStickers'
 import { birthTypes, hospitalBagChecklist } from '../lib/birthData'
 import type { BirthTopicKey } from '../lib/birthGuideData'
 import { useTheme, spacing, radius, getModeColor } from '../constants/theme'
+import { useTranslation } from '../lib/i18n'
 
 const BIRTH_TYPE_TO_TOPIC: Record<string, BirthTopicKey> = {
   'natural': 'natural',
@@ -26,6 +27,7 @@ const BAG_STATE_KEY = 'grandma:hospital_bag_checklist:v1'
 export default function BirthPlan() {
   const insets = useSafeAreaInsets()
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const accent = getModeColor('preg', isDark)
   const [detailTopic, setDetailTopic] = useState<BirthTopicKey | null>(null)
   const [checked, setChecked] = useState<Record<string, boolean>>({})
@@ -98,15 +100,15 @@ export default function BirthPlan() {
         <View style={{ alignItems: 'center', marginBottom: 8 }}>
           <MissingStickers.PregnancyBirthPlanHero size={120} />
         </View>
-        <Text style={[styles.title, { color: colors.text, fontFamily: font.display }]}>Birth Planning</Text>
+        <Text style={[styles.title, { color: colors.text, fontFamily: font.display }]}>{t('preg_birthPlan_title')}</Text>
         <Text style={[styles.subtitleItalic, { color: stickers.coral, fontFamily: font.italic }]}>
-          explore your options, prepare for the big day, dear
+          {t('preg_birthPlan_italicSubtitle')}
         </Text>
 
         {/* Birth Types */}
         <View style={styles.sectionLabelRow}>
           <Flower size={16} petal={stickers.pink} />
-          <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>TYPES OF BIRTH</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('preg_birthPlan_typesOfBirth')}</Text>
         </View>
         {birthTypes.map((bt) => {
           const topicKey = BIRTH_TYPE_TO_TOPIC[bt.id]
@@ -123,7 +125,7 @@ export default function BirthPlan() {
         <View style={styles.sectionLabelRow}>
           <MissingStickers.PregnancyHospitalBag size={24} />
           <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-            HOSPITAL BAG · {doneCount}/{total}
+            {t('preg_birthPlan_hospitalBagHeader', { done: doneCount, total })}
           </Text>
         </View>
         {hospitalBagChecklist.map((section) => {
@@ -159,7 +161,7 @@ export default function BirthPlan() {
                     style={({ pressed }) => [styles.bagItem, pressed && { opacity: 0.7 }]}
                     accessibilityRole="checkbox"
                     accessibilityState={{ checked: isChecked }}
-                    accessibilityLabel={`${item} — ${isChecked ? 'packed' : 'not packed'}`}
+                    accessibilityLabel={`${item} — ${isChecked ? t('preg_birthPlan_a11y_packed') : t('preg_birthPlan_a11y_notPacked')}`}
                   >
                     <View
                       style={[
