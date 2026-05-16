@@ -18,6 +18,8 @@ interface CycleOnboardingStore {
   cycleLengthUnknown: boolean
   periodDuration: number | null
   conditions: ConditionChip[]
+  /** Free-text detail when user selects "other" in the conditions chips. */
+  conditionsOther: string | null
   tempUnit: TempUnit
 
   // TTC extras
@@ -32,6 +34,7 @@ interface CycleOnboardingStore {
   setCycleLengthUnknown: (unknown: boolean) => void
   setPeriodDuration: (duration: number | null) => void
   toggleCondition: (condition: ConditionChip) => void
+  setConditionsOther: (text: string | null) => void
   setTempUnit: (unit: TempUnit) => void
   setTryingToConceive: (ttc: boolean) => void
   setTryingDuration: (duration: TryingDuration | null) => void
@@ -46,6 +49,7 @@ const initialState = {
   cycleLengthUnknown: false,
   periodDuration: 5,
   conditions: [] as ConditionChip[],
+  conditionsOther: null as string | null,
   tempUnit: 'celsius' as TempUnit,
   tryingToConceive: false,
   tryingDuration: null as TryingDuration | null,
@@ -76,6 +80,7 @@ export const useCycleOnboardingStore = create<CycleOnboardingStore>((set, get) =
     })
   },
 
+  setConditionsOther: (conditionsOther) => set({ conditionsOther }),
   setTempUnit: (unit) => set({ tempUnit: unit }),
   setTryingToConceive: (ttc) => set({ tryingToConceive: ttc }),
   setTryingDuration: (duration) => set({ tryingDuration: duration }),

@@ -141,6 +141,7 @@ export default function CycleOnboarding() {
           notes: JSON.stringify({
             cycleLength: store.cycleLength,
             conditions: store.conditions,
+            conditionsOther: store.conditionsOther,
             tempUnit: store.tempUnit,
             tryingToConceive: store.tryingToConceive,
             tryingDuration: store.tryingDuration,
@@ -443,7 +444,10 @@ function StepConditions({
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const conditions = useCycleOnboardingStore((s) => s.conditions)
+  const conditionsOther = useCycleOnboardingStore((s) => s.conditionsOther)
+  const setConditionsOther = useCycleOnboardingStore((s) => s.setConditionsOther)
   const toggle = useCycleOnboardingStore((s) => s.toggleCondition)
+  const otherSelected = conditions.includes('other')
 
   return (
     <OnboardingStep
@@ -483,6 +487,29 @@ function StepConditions({
           )
         })}
       </View>
+
+      {otherSelected && (
+        <View
+          style={[
+            stepStyles.otherInputWrap,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.text,
+              borderRadius: radius.full,
+              shadowColor: colors.text,
+            },
+          ]}
+        >
+          <TextInput
+            value={conditionsOther ?? ''}
+            onChangeText={setConditionsOther}
+            placeholder="Tell us about it..."
+            placeholderTextColor={colors.textMuted}
+            style={[stepStyles.otherInputText, { color: colors.text }]}
+            autoCapitalize="sentences"
+          />
+        </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -801,6 +828,21 @@ const stepStyles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+  },
+  otherInputWrap: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    height: 56,
+    borderWidth: 2,
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  otherInputText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
   durationChip: {
     paddingVertical: 14,

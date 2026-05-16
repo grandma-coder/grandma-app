@@ -14,6 +14,8 @@ export interface ChildDraft {
   birthDate: string | null
   photoUri: string | null
   allergies: string[]
+  /** Free-text detail when user selects "Other" in the allergy grid. */
+  allergiesOther: string | null
   conditionsText: string | null
   countryCode: string
 }
@@ -40,6 +42,7 @@ function emptyChild(): ChildDraft {
     birthDate: null,
     photoUri: null,
     allergies: [],
+    allergiesOther: null,
     conditionsText: null,
     countryCode: 'US',
   }

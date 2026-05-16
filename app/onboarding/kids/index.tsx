@@ -183,11 +183,20 @@ export default function KidsOnboarding() {
         store.children.map((c) => resolvePhotoForUpload(c.photoUri))
       )
 
+      // If "Other" is selected and free-text was provided, append it to the
+      // allergies array so the canonical column captures the detail.
+      function buildAllergies(c: typeof store.children[number]): string[] {
+        if (c.allergies.includes('Other') && c.allergiesOther?.trim()) {
+          return [...c.allergies.filter((a) => a !== 'Other'), c.allergiesOther.trim()]
+        }
+        return c.allergies
+      }
+
       const childrenToInsert = store.children.map((c, i) => ({
         parent_id: userId,
         name: c.name,
         birth_date: c.birthDate || null,
-        allergies: c.allergies,
+        allergies: buildAllergies(c),
         conditions: c.conditionsText ? [c.conditionsText] : [],
         country_code: c.countryCode || 'US',
         photo_url: resolvedPhotos[i],
@@ -531,8 +540,9 @@ function StepChildName({
           {
             color: colors.text,
             backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
+            borderColor: colors.text,
+            shadowColor: colors.text,
+            borderRadius: radius.full,
           },
         ]}
       />
@@ -675,67 +685,71 @@ function StepChildCountry({
       onContinue={onContinue}
     >
       <View>
-        {/* Selected country display */}
-        {selectedCountry && !open && (
-          <Pressable
-            onPress={() => { setOpen(true); setQuery('') }}
-            style={[
-              stepStyles.countryRow,
-              { backgroundColor: modeSoft, borderColor: mode, borderRadius: radius.lg, marginBottom: 12 },
-            ]}
-          >
-            <Text style={[stepStyles.countryName, { color: mode, flex: 1 }]}>{selectedCountry.name}</Text>
-            <Check size={16} color={mode} strokeWidth={2.5} />
-          </Pressable>
-        )}
-
-        {/* Search input */}
-        <View style={[stepStyles.countrySearch, { backgroundColor: colors.surface, borderColor: open ? mode : colors.border, borderRadius: radius.lg }]}>
+        {/* Search input — sticker treatment to match design system */}
+        <View
+          style={[
+            stepStyles.countrySearch,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.text,
+              borderRadius: radius.full,
+              shadowColor: colors.text,
+            },
+          ]}
+        >
           <TextInput
             value={query}
-            onChangeText={(t) => { setQuery(t); setOpen(true) }}
-            onFocus={() => setOpen(true)}
+            onChangeText={setQuery}
             placeholder="Search country..."
-            placeholderTextColor={colors.textMuted ?? 'rgba(255,255,255,0.35)'}
+            placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             style={[stepStyles.countrySearchInput, { color: colors.text }]}
           />
         </View>
 
-        {/* Dropdown list */}
-        {open && (
-          <View style={[stepStyles.countryDropdown, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ maxHeight: 280 }}>
-              {filteredOptions.map((c) => {
-                const isSelected = selected === c.code
-                return (
-                  <Pressable
-                    key={c.code}
-                    onPress={() => {
-                      updateChild(childIdx, { countryCode: c.code })
-                      setQuery('')
-                      setOpen(false)
-                    }}
+        {/* Country chip grid — same chip treatment as allergies */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={{ maxHeight: 360, marginTop: 14 }}
+          nestedScrollEnabled
+        >
+          <View style={stepStyles.chipGrid}>
+            {filteredOptions.map((c) => {
+              const isSelected = selected === c.code
+              return (
+                <Pressable
+                  key={c.code}
+                  onPress={() => updateChild(childIdx, { countryCode: c.code })}
+                  style={[
+                    stepStyles.allergyChip,
+                    {
+                      backgroundColor: isSelected ? modeSoft : colors.surface,
+                      borderColor: isSelected ? mode : colors.text,
+                      shadowColor: colors.text,
+                      borderRadius: radius.full,
+                    },
+                  ]}
+                >
+                  {isSelected && <Check size={14} color={mode} strokeWidth={3} />}
+                  <Text
                     style={[
-                      stepStyles.countryDropdownItem,
-                      { backgroundColor: isSelected ? modeSoft : 'transparent' },
+                      stepStyles.allergyChipText,
+                      { color: isSelected ? mode : colors.text },
                     ]}
                   >
-                    <Text style={[stepStyles.countryName, { color: isSelected ? mode : colors.text, flex: 1 }]}>
-                      {c.name}
-                    </Text>
-                    {isSelected && <Check size={14} color={mode} strokeWidth={2.5} />}
-                  </Pressable>
-                )
-              })}
-              {filteredOptions.length === 0 && (
-                <Text style={[stepStyles.countryName, { color: colors.textMuted ?? 'rgba(255,255,255,0.35)', padding: 16 }]}>
-                  No countries found
-                </Text>
-              )}
-            </ScrollView>
+                    {c.name}
+                  </Text>
+                </Pressable>
+              )
+            })}
+            {filteredOptions.length === 0 && (
+              <Text style={{ color: colors.textMuted, padding: 16, width: '100%' }}>
+                No countries found
+              </Text>
+            )}
           </View>
-        )}
+        </ScrollView>
       </View>
     </OnboardingStep>
   )
@@ -803,14 +817,15 @@ function StepChildPhoto({
               style={[
                 stepStyles.photoPlaceholder,
                 {
-                  backgroundColor: colors.surfaceRaised,
-                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                  borderColor: colors.text,
                   borderRadius: radius.xl,
+                  shadowColor: colors.text,
                 },
               ]}
             >
-              <Camera size={36} color={colors.textMuted} strokeWidth={1.5} />
-              <Text style={[stepStyles.photoHint, { color: colors.textMuted }]}>
+              <Camera size={36} color={colors.text} strokeWidth={1.8} />
+              <Text style={[stepStyles.photoHint, { color: colors.text }]}>
                 Tap to choose photo or icon
               </Text>
             </View>
@@ -848,7 +863,9 @@ function StepChildAllergies({
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const toggleAllergy = useKidsOnboardingStore((s) => s.toggleAllergy)
+  const updateChild = useKidsOnboardingStore((s) => s.updateChild)
   const childName = child?.name || `Child ${childIdx + 1}`
+  const otherSelected = child?.allergies.includes('Other') ?? false
 
   return (
     <OnboardingStep
@@ -889,6 +906,30 @@ function StepChildAllergies({
           )
         })}
       </View>
+
+      {/* Free-text field appears when "Other" is selected */}
+      {otherSelected && (
+        <View
+          style={[
+            stepStyles.otherInputWrap,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.text,
+              borderRadius: radius.full,
+              shadowColor: colors.text,
+            },
+          ]}
+        >
+          <TextInput
+            value={child?.allergiesOther ?? ''}
+            onChangeText={(t) => updateChild(childIdx, { allergiesOther: t })}
+            placeholder="Tell us what other allergies..."
+            placeholderTextColor={colors.textMuted}
+            style={[stepStyles.otherInputText, { color: colors.text }]}
+            autoCapitalize="sentences"
+          />
+        </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -935,7 +976,8 @@ function StepChildConditions({
           {
             color: colors.text,
             backgroundColor: colors.surface,
-            borderColor: colors.border,
+            borderColor: colors.text,
+            shadowColor: colors.text,
             borderRadius: radius.lg,
           },
         ]}
@@ -983,8 +1025,9 @@ function StepPartner({
           {
             color: colors.text,
             backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
+            borderColor: colors.text,
+            shadowColor: colors.text,
+            borderRadius: radius.full,
           },
         ]}
       />
@@ -1069,8 +1112,9 @@ function StepCaregiver({
             {
               color: colors.text,
               backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radius.lg,
+              borderColor: colors.text,
+            shadowColor: colors.text,
+              borderRadius: radius.full,
               marginTop: 16,
             },
           ]}
@@ -1187,19 +1231,42 @@ const stepStyles = StyleSheet.create({
     gap: 16,
   },
   textInput: {
-    borderWidth: 1,
+    borderWidth: 2,
     paddingHorizontal: 20,
     height: 56,
     fontSize: 16,
     fontWeight: '500',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  otherInputWrap: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    height: 56,
+    borderWidth: 2,
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  otherInputText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
   textArea: {
-    borderWidth: 1,
+    borderWidth: 2,
     padding: 16,
     fontSize: 16,
     fontWeight: '500',
     minHeight: 120,
     textAlignVertical: 'top',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   hint: {
     fontSize: 13,
@@ -1261,10 +1328,14 @@ const stepStyles = StyleSheet.create({
     fontWeight: '600',
   },
   countrySearch: {
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    height: 52,
+    borderWidth: 2,
+    paddingHorizontal: 18,
+    height: 56,
     justifyContent: 'center',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   countrySearchInput: {
     fontSize: 16,
@@ -1292,8 +1363,11 @@ const stepStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderStyle: 'dashed',
     gap: 8,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   photoHint: {
     fontSize: 13,
