@@ -279,10 +279,12 @@ export const fontWeight = {
 // 2026 redesign fonts
 export const font = {
   display: 'Fraunces_600SemiBold',         // serif editorial display
+  displayBold: 'Fraunces_700Bold',         // heavier display weight (hero numbers, big titles)
   italic: 'InstrumentSerif_400Regular_Italic', // italic accent
   body: 'DMSans_400Regular',               // UI body
   bodyMedium: 'DMSans_500Medium',          // medium weight UI
   bodySemiBold: 'DMSans_600SemiBold',      // semibold UI labels
+  bodyBold: 'DMSans_700Bold',              // bold UI labels (chip text, emphasised pills)
 } as const
 
 // ─── useTheme() HOOK ───────────────────────────────────────────────────────

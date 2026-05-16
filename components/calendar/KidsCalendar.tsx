@@ -65,7 +65,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, stickers, font } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
@@ -453,10 +453,10 @@ function LogActivitySheet({
     onSelect(type)
   }
 
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const bg = isDark ? colors.bg : '#F3ECD9'
-  const ink = isDark ? colors.text : '#141313'
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const bg = colors.bg
+  const ink = colors.text
   const accent = isDark ? colors.primary : '#7048B8'
 
   return (
@@ -512,13 +512,13 @@ function LogActivitySheet({
           >
             <View style={{
               width: 30, height: 30, borderRadius: 15,
-              backgroundColor: isDark ? colors.surface : '#FFFEF8',
+              backgroundColor: colors.surface,
               borderWidth: 1.5, borderColor: ink,
               alignItems: 'center', justifyContent: 'center',
             }}>
               <Repeat size={15} color={ink} strokeWidth={2.4} />
             </View>
-            <Body size={14} color={ink} style={{ fontFamily: 'DMSans_700Bold', flex: 1, letterSpacing: 0.2 }}>
+            <Body size={14} color={ink} style={{ fontFamily: font.bodyBold, flex: 1, letterSpacing: 0.2 }}>
               Manage Routines
             </Body>
             <ChevronRightSmall size={16} color={ink} />
@@ -1730,7 +1730,7 @@ export function KidsCalendar() {
                     style={({ pressed }) => [
                       styles.childSelectorChip,
                       {
-                        backgroundColor: allActive ? ST_LILAC : (isDark ? colors.surface : '#FFFEF8'),
+                        backgroundColor: allActive ? ST_LILAC : (colors.surface),
                         borderColor: allActive ? ST_INK : paperBorder,
                         borderWidth: allActive ? 1.5 : 1,
                         borderRadius: radius.full,
@@ -1743,7 +1743,7 @@ export function KidsCalendar() {
                       },
                     ]}
                   >
-                    <Text style={[styles.childSelectorText, { fontFamily: allActive ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: allActive ? ST_INK : (isDark ? colors.text : '#141313') }]}>
+                    <Text style={[styles.childSelectorText, { fontFamily: allActive ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: allActive ? ST_INK : (colors.text) }]}>
                       All Kids
                     </Text>
                   </Pressable>
@@ -1764,7 +1764,7 @@ export function KidsCalendar() {
                     style={({ pressed }) => [
                       styles.childSelectorChip,
                       {
-                        backgroundColor: active ? kidColor : (isDark ? colors.surface : '#FFFEF8'),
+                        backgroundColor: active ? kidColor : (colors.surface),
                         borderColor: active ? ST_INK : paperBorder,
                         borderWidth: active ? 1.5 : 1,
                         borderRadius: radius.full,
@@ -1778,7 +1778,7 @@ export function KidsCalendar() {
                     ]}
                   >
                     <View style={[styles.childDot, { backgroundColor: active ? ST_INK : kidColor }]} />
-                    <Text style={[styles.childSelectorText, { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : (isDark ? colors.text : '#141313') }]}>
+                    <Text style={[styles.childSelectorText, { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : (colors.text) }]}>
                       {c.name}
                     </Text>
                   </Pressable>
@@ -1790,14 +1790,14 @@ export function KidsCalendar() {
                   style={[
                     styles.childSelectorChip,
                     {
-                      backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                      backgroundColor: colors.surface,
                       borderColor: paperBorder,
                       borderWidth: 1,
                       borderRadius: radius.full,
                     },
                   ]}
                 >
-                  <Text style={[styles.childSelectorText, { fontFamily: 'DMSans_700Bold', color: isDark ? colors.text : '#141313' }]}>
+                  <Text style={[styles.childSelectorText, { fontFamily: font.bodyBold, color: colors.text }]}>
                     +{hiddenKidsCount} more
                   </Text>
                 </Pressable>
@@ -1841,7 +1841,7 @@ export function KidsCalendar() {
             value={view}
             onChange={(k) => setView(k as 'timeline' | 'journey' | 'visits')}
             activeBg={isDark ? brand.kids + '40' : '#9EC5FF'}
-            activeFg={isDark ? colors.text : '#141313'}
+            activeFg={colors.text}
           />
         </View>
       </View>
@@ -1901,7 +1901,7 @@ export function KidsCalendar() {
               <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
             </View>
             <View style={styles.kidPickerHeader}>
-              <Text style={[styles.kidPickerTitle, { color: isDark ? colors.text : '#141313', fontFamily: 'Fraunces_700Bold' }]}>
+              <Text style={[styles.kidPickerTitle, { color: colors.text, fontFamily: font.displayBold }]}>
                 Pick a kid
               </Text>
               <Pressable
@@ -1909,12 +1909,12 @@ export function KidsCalendar() {
                 hitSlop={12}
                 style={{
                   width: 32, height: 32, borderRadius: 999,
-                  backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                  backgroundColor: colors.surface,
                   borderWidth: 1.2, borderColor: isDark ? colors.border : '#141313',
                   alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                <X size={14} color={isDark ? colors.text : '#141313'} strokeWidth={2.4} />
+                <X size={14} color={colors.text} strokeWidth={2.4} />
               </Pressable>
             </View>
 
@@ -1925,7 +1925,7 @@ export function KidsCalendar() {
                 style={[
                   styles.kidPickerRow,
                   {
-                    backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                    backgroundColor: colors.surface,
                     borderColor: selectedChildId === 'all' ? '#141313' : (isDark ? colors.border : 'rgba(20,19,19,0.10)'),
                     borderWidth: selectedChildId === 'all' ? 1.5 : 1,
                   },
@@ -1944,10 +1944,10 @@ export function KidsCalendar() {
                     />
                   ))}
                 </View>
-                <Text style={[styles.kidPickerName, { color: isDark ? colors.text : '#141313', fontFamily: 'DMSans_700Bold' }]}>
+                <Text style={[styles.kidPickerName, { color: colors.text, fontFamily: font.bodyBold }]}>
                   All Kids
                 </Text>
-                <Text style={[styles.kidPickerMeta, { color: colors.textMuted, fontFamily: 'DMSans_500Medium' }]}>
+                <Text style={[styles.kidPickerMeta, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
                   {children.length} kids
                 </Text>
               </Pressable>
@@ -1962,7 +1962,7 @@ export function KidsCalendar() {
                     style={[
                       styles.kidPickerRow,
                       {
-                        backgroundColor: active ? kc + '22' : (isDark ? colors.surface : '#FFFEF8'),
+                        backgroundColor: active ? kc + '22' : (colors.surface),
                         borderColor: active ? '#141313' : (isDark ? colors.border : 'rgba(20,19,19,0.10)'),
                         borderWidth: active ? 1.5 : 1,
                       },
@@ -1973,11 +1973,11 @@ export function KidsCalendar() {
                       backgroundColor: kc, borderWidth: 1.2, borderColor: '#141313',
                       alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 13, color: '#141313' }}>
+                      <Text style={{ fontFamily: font.displayBold, fontSize: 13, color: '#141313' }}>
                         {c.name.charAt(0).toUpperCase()}
                       </Text>
                     </View>
-                    <Text style={[styles.kidPickerName, { color: isDark ? colors.text : '#141313', fontFamily: 'DMSans_700Bold' }]}>
+                    <Text style={[styles.kidPickerName, { color: colors.text, fontFamily: font.bodyBold }]}>
                       {c.name}
                     </Text>
                     {active && (
@@ -1985,7 +1985,7 @@ export function KidsCalendar() {
                         paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
                         backgroundColor: kc, borderWidth: 1, borderColor: '#141313',
                       }}>
-                        <Text style={{ fontSize: 10, fontFamily: 'DMSans_700Bold', color: '#141313' }}>SELECTED</Text>
+                        <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: '#141313' }}>SELECTED</Text>
                       </View>
                     )}
                   </Pressable>
@@ -2055,8 +2055,8 @@ export function KidsCalendar() {
       >
         {(() => {
           const ST_INK = '#141313'
-          const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
-          const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+          const ST_PAPER = colors.surface
+          const ST_CREAM = colors.surfaceRaised
           const ST_SHEET = isDark ? colors.bg : '#FAF6E8'
           const ST_PURPLE = isDark ? '#A07FDC' : '#7048B8'
           const closeManager = () => {
@@ -2105,10 +2105,10 @@ export function KidsCalendar() {
                     <Repeat size={22} color={ST_PURPLE} strokeWidth={2.2} />
                   </View>
                   <View style={styles.popupHeaderText}>
-                    <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 24, letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' }}>
+                    <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 24, letterSpacing: -0.5, fontFamily: font.display }}>
                       Routines
                     </Text>
-                    <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 13, fontFamily: 'DMSans_500Medium' }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 13, fontFamily: font.bodyMedium }}>
                       Recurring activities for your kids
                     </Text>
                   </View>
@@ -2147,7 +2147,7 @@ export function KidsCalendar() {
                       elevation: 2,
                     }}
                   >
-                    <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }}>
+                    <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }}>
                       New Routine
                     </Text>
                     {/* (form fields below — duplicated in Edit Modal) */}
@@ -2172,7 +2172,7 @@ export function KidsCalendar() {
                           paddingHorizontal: 22,
                           paddingVertical: 0,
                           fontSize: 15,
-                          fontFamily: 'DMSans_600SemiBold',
+                          fontFamily: font.bodySemiBold,
                         }}
                       />
                     </View>
@@ -2244,7 +2244,7 @@ export function KidsCalendar() {
                           paddingHorizontal: 16,
                           paddingVertical: 10,
                           fontSize: 15,
-                          fontFamily: 'DMSans_600SemiBold',
+                          fontFamily: font.bodySemiBold,
                         }}
                         keyboardType="numbers-and-punctuation"
                       />
@@ -2273,7 +2273,7 @@ export function KidsCalendar() {
                               transform: [{ translateY: active && pressed ? 1 : 0 }],
                             })}
                           >
-                            <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', color: active ? '#FFF' : (isDark ? colors.text : ST_INK) }}>
+                            <Text style={{ fontSize: 13, fontFamily: font.bodyBold, color: active ? '#FFF' : (isDark ? colors.text : ST_INK) }}>
                               {name.charAt(0)}
                             </Text>
                           </Pressable>
@@ -2303,7 +2303,7 @@ export function KidsCalendar() {
                     >
                       {routineSaving
                         ? <ActivityIndicator color="#FFF" size="small" />
-                        : <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 15, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                        : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 15, letterSpacing: 0.8, textTransform: 'uppercase' }}>
                             Add Routine
                           </Text>
                       }
@@ -2314,7 +2314,7 @@ export function KidsCalendar() {
                   {/* ─── Existing Routines ─────────────────────────── */}
                   {routines.length > 0 && (
                     <View style={{ marginTop: 20 }}>
-                      <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, marginBottom: 12, paddingHorizontal: 4 }}>
+                      <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3, marginBottom: 12, paddingHorizontal: 4 }}>
                         Active Routines ({routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid).length : routines.length})
                       </Text>
 
@@ -2411,10 +2411,10 @@ export function KidsCalendar() {
                               <Icon size={14} color={isDark ? '#FFF' : ST_INK} strokeWidth={2.2} />
                             </View>
                             <View style={{ flex: 1, gap: 2 }}>
-                              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 14, fontFamily: 'Fraunces_700Bold' }}>
+                              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 14, fontFamily: font.displayBold }}>
                                 {r.name}
                               </Text>
-                              <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 12, fontFamily: 'DMSans_500Medium' }}>
+                              <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium }}>
                                 {r.time ? fmtTime(r.time) : 'Anytime'}
                                 {' · '}
                                 {r.days_of_week.length === 7 ? 'Daily' : r.days_of_week.map((d) => DAY_NAMES[d].charAt(0)).join(' ')}
@@ -2475,8 +2475,8 @@ export function KidsCalendar() {
       >
         {(() => {
           const ST_INK = '#141313'
-          const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
-          const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+          const ST_PAPER = colors.surface
+          const ST_CREAM = colors.surfaceRaised
           const ST_PURPLE = isDark ? '#A07FDC' : '#7048B8'
           return (
             <Pressable
@@ -2510,7 +2510,7 @@ export function KidsCalendar() {
                       }}>
                         <Pencil size={16} color={ST_PURPLE} strokeWidth={2.4} />
                       </View>
-                      <Text style={{ color: ST_INK, fontSize: 20, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }}>
+                      <Text style={{ color: ST_INK, fontSize: 20, fontFamily: font.displayBold, letterSpacing: -0.3 }}>
                         Edit Routine
                       </Text>
                     </View>
@@ -2551,7 +2551,7 @@ export function KidsCalendar() {
                         paddingHorizontal: 22,
                         paddingVertical: 0,
                         fontSize: 15,
-                        fontFamily: 'DMSans_600SemiBold',
+                        fontFamily: font.bodySemiBold,
                       }}
                     />
                   </View>
@@ -2612,7 +2612,7 @@ export function KidsCalendar() {
                         borderColor: isDark ? colors.border : ST_INK,
                         borderWidth: 1.5, borderRadius: 999,
                         paddingHorizontal: 16, paddingVertical: 10,
-                        fontSize: 15, fontFamily: 'DMSans_600SemiBold',
+                        fontSize: 15, fontFamily: font.bodySemiBold,
                       }}
                       keyboardType="numbers-and-punctuation"
                     />
@@ -2641,7 +2641,7 @@ export function KidsCalendar() {
                             transform: [{ translateY: active && pressed ? 1 : 0 }],
                           })}
                         >
-                          <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', color: active ? '#FFF' : (isDark ? colors.text : ST_INK) }}>
+                          <Text style={{ fontSize: 13, fontFamily: font.bodyBold, color: active ? '#FFF' : (isDark ? colors.text : ST_INK) }}>
                             {name.charAt(0)}
                           </Text>
                         </Pressable>
@@ -2665,7 +2665,7 @@ export function KidsCalendar() {
                         transform: [{ translateY: pressed ? 2 : 0 }],
                       })}
                     >
-                      <Text style={{ color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                      <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
                         Cancel
                       </Text>
                     </Pressable>
@@ -2687,7 +2687,7 @@ export function KidsCalendar() {
                     >
                       {routineSaving
                         ? <ActivityIndicator color="#FFF" size="small" />
-                        : <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                        : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
                             Update
                           </Text>
                       }
@@ -2709,8 +2709,8 @@ export function KidsCalendar() {
       >
         {(() => {
           const ST_INK = '#141313'
-          const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
-          const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+          const ST_PAPER = colors.surface
+          const ST_CREAM = colors.surfaceRaised
           const ST_RED = isDark ? '#E66B6B' : brand.error
           return (
             <Pressable
@@ -2745,10 +2745,10 @@ export function KidsCalendar() {
                     <Trash2 size={26} color={ST_RED} strokeWidth={2.2} />
                   </View>
 
-                  <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, textAlign: 'center' }}>
+                  <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, textAlign: 'center' }}>
                     Delete Routine?
                   </Text>
-                  <Text style={{ color: isDark ? colors.textMuted : '#6E6763', fontSize: 14, fontFamily: 'DMSans_500Medium', textAlign: 'center', lineHeight: 20 }}>
+                  <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: font.bodyMedium, textAlign: 'center', lineHeight: 20 }}>
                     This routine will be removed and won't show up anymore. You can always add it back later.
                   </Text>
 
@@ -2770,7 +2770,7 @@ export function KidsCalendar() {
                         opacity: routineDeleting ? 0.5 : 1,
                       })}
                     >
-                      <Text style={{ color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                      <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
                         Cancel
                       </Text>
                     </Pressable>
@@ -2792,7 +2792,7 @@ export function KidsCalendar() {
                     >
                       {routineDeleting
                         ? <ActivityIndicator color="#FFF" size="small" />
-                        : <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                        : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
                             Delete
                           </Text>
                       }
@@ -2941,7 +2941,7 @@ export function KidsCalendar() {
                           {cals !== null && (
                             <View style={{ backgroundColor: '#FF6B3515', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: '#FF6B3530' }}>
                               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4 }}>
-                                <Text style={{ color: '#FF6B35', fontSize: 64, fontWeight: '800', lineHeight: 68, letterSpacing: -2, fontFamily: 'Fraunces_600SemiBold' }}>{cals}</Text>
+                                <Text style={{ color: '#FF6B35', fontSize: 64, fontWeight: '800', lineHeight: 68, letterSpacing: -2, fontFamily: font.display }}>{cals}</Text>
                                 <Text style={{ color: '#FF6B35', fontSize: 20, fontWeight: '700', marginBottom: 10 }}>kcal</Text>
                               </View>
                               <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>Estimated calories</Text>
@@ -3014,13 +3014,13 @@ export function KidsCalendar() {
                           <View style={{ backgroundColor: accentColor + '15', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: accentColor + '30' }}>
                             {isBreast ? (
                               <>
-                                <Text style={{ color: accentColor, fontSize: 48, fontWeight: '800', lineHeight: 52, fontFamily: 'Fraunces_600SemiBold' }}>{fp.duration ? `${fp.duration}` : '—'}</Text>
+                                <Text style={{ color: accentColor, fontSize: 48, fontWeight: '800', lineHeight: 52, fontFamily: font.display }}>{fp.duration ? `${fp.duration}` : '—'}</Text>
                                 <Text style={{ color: accentColor, fontSize: 16, fontWeight: '700', marginTop: 2 }}>minutes</Text>
                                 <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Breastfeeding</Text>
                               </>
                             ) : (
                               <>
-                                <Text style={{ color: accentColor, fontSize: 48, fontWeight: '800', lineHeight: 52, fontFamily: 'Fraunces_600SemiBold' }}>{fp.amount ? `${fp.amount}` : '—'}</Text>
+                                <Text style={{ color: accentColor, fontSize: 48, fontWeight: '800', lineHeight: 52, fontFamily: font.display }}>{fp.amount ? `${fp.amount}` : '—'}</Text>
                                 <Text style={{ color: accentColor, fontSize: 16, fontWeight: '700', marginTop: 2 }}>ml</Text>
                                 <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Bottle feeding</Text>
                               </>
@@ -3064,7 +3064,7 @@ export function KidsCalendar() {
                           <View style={{ backgroundColor: sleepColor + '15', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: sleepColor + '30' }}>
                             <EmojiSticker size={52}>🌙</EmojiSticker>
                             {durStr ? (
-                              <Text style={{ color: sleepColor, fontSize: 56, fontWeight: '800', lineHeight: 64, letterSpacing: -2, marginTop: 6, fontFamily: 'Fraunces_600SemiBold' }}>{durStr}</Text>
+                              <Text style={{ color: sleepColor, fontSize: 56, fontWeight: '800', lineHeight: 64, letterSpacing: -2, marginTop: 6, fontFamily: font.display }}>{durStr}</Text>
                             ) : (
                               <Text style={{ color: sleepColor, fontSize: 20, fontWeight: '700', marginTop: 8 }}>Sleep logged</Text>
                             )}
@@ -3105,7 +3105,7 @@ export function KidsCalendar() {
                           <View style={{ backgroundColor: actColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: actColor + '30' }}>
                             <Text style={{ fontSize: 52, lineHeight: 56 }}>{emoji}</Text>
                             {ap.name ? (
-                              <Text style={{ color: actColor, fontSize: 26, fontWeight: '800', marginTop: 10, textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' }}>{ap.name}</Text>
+                              <Text style={{ color: actColor, fontSize: 26, fontWeight: '800', marginTop: 10, textAlign: 'center', fontFamily: font.display }}>{ap.name}</Text>
                             ) : null}
                             {durUnit && (
                               <>
@@ -3146,7 +3146,7 @@ export function KidsCalendar() {
                         <>
                           <View style={{ backgroundColor: diaperColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: diaperColor + '30' }}>
                             <EmojiSticker size={64}>{dt?.emoji ?? '🍼'}</EmojiSticker>
-                            <Text style={{ color: diaperColor, fontSize: 24, fontWeight: '800', marginTop: 8, fontFamily: 'Fraunces_600SemiBold' }}>{dt?.label ?? 'Diaper'}</Text>
+                            <Text style={{ color: diaperColor, fontSize: 24, fontWeight: '800', marginTop: 8, fontFamily: font.display }}>{dt?.label ?? 'Diaper'}</Text>
                             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Diaper change</Text>
                           </View>
                           {(dp.color || dp.consistency) && (
@@ -3181,7 +3181,7 @@ export function KidsCalendar() {
                       return (
                         <View style={{ backgroundColor: m.color + '12', borderRadius: 24, paddingVertical: 32, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: m.color + '30' }}>
                           <MoodFace size={84} variant={moodFaceVariant(moodVal)} fill={moodFaceFill(moodVal)} />
-                          <Text style={{ color: m.color, fontSize: 32, fontWeight: '800', marginTop: 10, letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' }}>{m.label}</Text>
+                          <Text style={{ color: m.color, fontSize: 32, fontWeight: '800', marginTop: 10, letterSpacing: -1, fontFamily: font.display }}>{m.label}</Text>
                           <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 1, textTransform: 'uppercase' }}>Today's mood</Text>
                         </View>
                       )
@@ -3242,7 +3242,7 @@ export function KidsCalendar() {
                               <IconCmp size={36} color={healthColor} strokeWidth={2.2} />
                             </View>
                             {displayVal && displayVal !== selectedLog.type ? (
-                              <Text style={{ color: healthColor, fontSize: 28, fontWeight: '800', marginTop: 14, textAlign: 'center', letterSpacing: -0.8, fontFamily: 'Fraunces_600SemiBold' }}>{displayVal}</Text>
+                              <Text style={{ color: healthColor, fontSize: 28, fontWeight: '800', marginTop: 14, textAlign: 'center', letterSpacing: -0.8, fontFamily: font.display }}>{displayVal}</Text>
                             ) : null}
                             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 1, textTransform: 'uppercase' }}>
                               {selectedLog.type.charAt(0).toUpperCase() + selectedLog.type.slice(1)}
@@ -3300,8 +3300,8 @@ export function KidsCalendar() {
                         style={({ pressed }) => [
                           styles.popupEditBtn,
                           {
-                            backgroundColor: isDark ? colors.text : '#141313',
-                            borderColor: isDark ? colors.text : '#141313',
+                            backgroundColor: colors.text,
+                            borderColor: colors.text,
                             borderWidth: 1.5,
                             borderRadius: 999,
                           },
@@ -3322,7 +3322,7 @@ export function KidsCalendar() {
                         style={({ pressed }) => [
                           styles.popupDeleteBtn,
                           {
-                            backgroundColor: isDark ? colors.surface : '#FFFEF8',
+                            backgroundColor: colors.surface,
                             borderColor: isDark ? colors.border : '#141313',
                             borderRadius: 999,
                           },
@@ -3415,7 +3415,7 @@ export function KidsCalendar() {
                 <EmojiSticker size={40}>🌟</EmojiSticker>
               </View>
 
-              <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8, textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' }}>
+              <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8, textAlign: 'center', fontFamily: font.display }}>
                 Amazing job!
               </Text>
               <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', textAlign: 'center', marginBottom: 6 }}>
@@ -3437,17 +3437,17 @@ export function KidsCalendar() {
                 return (
                   <View style={{ flexDirection: 'row', gap: 12, marginBottom: 28, width: '100%' }}>
                     <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
-                      <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' }}>{loggedToday.length}</Text>
+                      <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{loggedToday.length}</Text>
                       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>Activities</Text>
                     </View>
                     {totalCals > 0 && (
                       <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
-                        <Text style={{ color: '#FF6B35', fontSize: 28, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' }}>{totalCals}</Text>
+                        <Text style={{ color: '#FF6B35', fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{totalCals}</Text>
                         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>kcal today</Text>
                       </View>
                     )}
                     <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
-                      <Text style={{ color: '#A2FF86', fontSize: 28, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' }}>{selectedDayRoutines.length > 0 ? selectedDayRoutines.length : loggedToday.length}</Text>
+                      <Text style={{ color: '#A2FF86', fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{selectedDayRoutines.length > 0 ? selectedDayRoutines.length : loggedToday.length}</Text>
                       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>Routines</Text>
                     </View>
                   </View>

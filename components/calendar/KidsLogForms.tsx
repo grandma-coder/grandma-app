@@ -47,7 +47,7 @@ import {
   ScanLine,
   X,
 } from 'lucide-react-native'
-import { useTheme, brand, stickers as stickerPalette } from '../../constants/theme'
+import { useTheme, brand, stickers as stickerPalette, font } from '../../constants/theme'
 import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Moon as MoonSticker, Flower, Drop, Star } from '../stickers/BrandStickers'
 import { Smiley, Sleepy, Sad } from '../ui/Stickers'
@@ -113,7 +113,7 @@ const formHeaderStickerStyles = StyleSheet.create({
     elevation: 1,
   },
   label: {
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
     fontSize: 11,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
@@ -423,7 +423,7 @@ const routineStyles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1.5,
     shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 1,
   },
-  toggleText: { flex: 1, fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
+  toggleText: { flex: 1, fontSize: 14, fontFamily: font.bodySemiBold },
   toggleSwitch: { width: 34, height: 20, padding: 3, justifyContent: 'center' },
   toggleKnob: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#FFF' },
   daysRow: { flexDirection: 'row', gap: 6, justifyContent: 'space-between', paddingHorizontal: 4 },
@@ -431,7 +431,7 @@ const routineStyles = StyleSheet.create({
     width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5,
     shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
   },
-  dayText: { fontSize: 12, fontFamily: 'DMSans_600SemiBold' },
+  dayText: { fontSize: 12, fontFamily: font.bodySemiBold },
 })
 
 // ─── Child Selector (shared) ───────────────────────────────────────────────
@@ -514,7 +514,7 @@ function DateChip({
     <View>
       <Pressable
         onPress={openPicker}
-        style={[styles.dateChip, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: (isDark ? colors.border : INK), borderRadius: radius.full }]}
+        style={[styles.dateChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.full }]}
       >
         <CalendarDays size={14} color={inkText} strokeWidth={2} />
         <Text style={[styles.dateChipText, { color: inkText }]}>
@@ -599,10 +599,10 @@ function TimeChip({
     <View>
       <Pressable
         onPress={openPicker}
-        style={[styles.timeChip, { backgroundColor: isDark ? colors.surface : '#FFFEF8', borderColor: (isDark ? colors.border : INK), borderRadius: radius.full }]}
+        style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.full }]}
       >
         <Clock size={12} color={inkText} strokeWidth={2} />
-        <Text style={[styles.timeChipLabel, { color: isDark ? colors.textMuted : '#6E6763' }]}>{label}</Text>
+        <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>{label}</Text>
         <Text style={[styles.timeChipValue, { color: inkText }]}>{formatTimeLabel(value)}</Text>
       </Pressable>
       {showPicker && (
@@ -1879,8 +1879,8 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
       {autoDuration !== '' && (
         <View style={[styles.iconBanner, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '40', borderWidth: 1 }]}>
           <Moon size={20} color={ACCENT} strokeWidth={2} />
-          <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: 'DMSans_600SemiBold' }]}>Sleep session</Text>
-          <Text style={[styles.autoDuration, { color: INK, fontFamily: 'Fraunces_700Bold' }]}>{autoDuration}</Text>
+          <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>Sleep session</Text>
+          <Text style={[styles.autoDuration, { color: INK, fontFamily: font.displayBold }]}>{autoDuration}</Text>
         </View>
       )}
       <View style={styles.chipGrid}>
@@ -2460,8 +2460,8 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
         {autoDuration !== '' && (
           <View style={[styles.iconBanner, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '40', borderWidth: 1 }]}>
             <Dumbbell size={20} color={ACCENT} strokeWidth={2} />
-            <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: 'DMSans_600SemiBold' }]}>Duration</Text>
-            <Text style={[styles.autoDuration, { color: INK, fontFamily: 'Fraunces_700Bold' }]}>{autoDuration}</Text>
+            <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>Duration</Text>
+            <Text style={[styles.autoDuration, { color: INK, fontFamily: font.displayBold }]}>{autoDuration}</Text>
           </View>
         )}
 
@@ -2880,7 +2880,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
           {/* Duration preview */}
           {sleepDuration ? (
             <View style={{ backgroundColor: ACCENT + '12', borderRadius: 14, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: ACCENT + '25' }}>
-              <Text style={{ color: ACCENT, fontSize: 36, letterSpacing: -1, lineHeight: 40, fontFamily: 'Fraunces_600SemiBold' }}>{sleepDuration}</Text>
+              <Text style={{ color: ACCENT, fontSize: 36, letterSpacing: -1, lineHeight: 40, fontFamily: font.display }}>{sleepDuration}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>total sleep</Text>
             </View>
           ) : null}
@@ -2935,7 +2935,7 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
           styles.saveBtnPrimary,
           {
             backgroundColor: disabled
-              ? (isDark ? colors.surface : '#FFFEF8')
+              ? (colors.surface)
               : (isDark ? colors.text : INK),
             borderColor: disabled
               ? (isDark ? colors.border : INK)
@@ -2968,7 +2968,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1.5,
     shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
   },
-  dateChipText: { fontSize: 13, fontFamily: 'DMSans_700Bold' },
+  dateChipText: { fontSize: 13, fontFamily: font.bodyBold },
   datePickerWrap: { marginTop: 4, borderWidth: 1.5, overflow: 'hidden' },
   datePickerDone: { alignItems: 'center', paddingVertical: 10, borderTopWidth: 1 },
   datePickerDoneText: { fontSize: 15, fontWeight: '700' },
@@ -2977,22 +2977,22 @@ const styles = StyleSheet.create({
     paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1.5,
     shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
   },
-  timeChipLabel: { fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 0.8, textTransform: 'uppercase' },
-  timeChipValue: { fontSize: 13, fontFamily: 'DMSans_700Bold' },
+  timeChipLabel: { fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 0.8, textTransform: 'uppercase' },
+  timeChipValue: { fontSize: 13, fontFamily: font.bodyBold },
   childSelectorWrap: { gap: 6 },
-  childSelectorPrompt: { fontSize: 13, fontFamily: 'DMSans_700Bold' },
+  childSelectorPrompt: { fontSize: 13, fontFamily: font.bodyBold },
   childRow: { gap: 8 },
   childChip: {
     paddingVertical: 8, paddingHorizontal: 16, borderWidth: 1.5,
     shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
   },
-  childChipText: { fontSize: 14, fontFamily: 'DMSans_700Bold' },
+  childChipText: { fontSize: 14, fontFamily: font.bodyBold },
   iconBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 12 },
-  bannerLabel: { flex: 1, fontSize: 15, fontFamily: 'DMSans_500Medium' },
-  autoDuration: { fontSize: 18, fontFamily: 'Fraunces_700Bold' },
+  bannerLabel: { flex: 1, fontSize: 15, fontFamily: font.bodyMedium },
+  autoDuration: { fontSize: 18, fontFamily: font.displayBold },
   input: {
     borderWidth: 1.5, paddingHorizontal: 20, minHeight: 52, fontSize: 15,
-    fontFamily: 'DMSans_500Medium', borderRadius: 999,
+    fontFamily: font.bodyMedium, borderRadius: 999,
     shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 1,
   },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -3000,10 +3000,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 9, paddingHorizontal: 14, borderWidth: 1.5,
     shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
   },
-  chipText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  chipText: { fontSize: 13, fontFamily: font.bodySemiBold },
   toggleRow: { flexDirection: 'row', padding: 4 },
   toggleBtn: { flex: 1, alignItems: 'center', paddingVertical: 10 },
-  toggleText: { fontSize: 14, fontFamily: 'DMSans_700Bold' },
+  toggleText: { fontSize: 14, fontFamily: font.bodyBold },
   photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   photoThumb: { width: 72, height: 72 },
   photoDeleteBtn: { position: 'absolute', top: -6, right: -6, backgroundColor: 'rgba(20,19,19,0.75)', borderRadius: 999, width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
@@ -3018,19 +3018,19 @@ const styles = StyleSheet.create({
     flex: 1, alignItems: 'center', paddingVertical: 14, gap: 6, borderWidth: 1.5,
     shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
   },
-  qualityLabel: { fontSize: 11, fontFamily: 'DMSans_700Bold', textAlign: 'center' },
+  qualityLabel: { fontSize: 11, fontFamily: font.bodyBold, textAlign: 'center' },
   flagRow: { flexDirection: 'row', gap: 8 },
   flagChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 9, paddingHorizontal: 14, borderWidth: 1.5,
     shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
   },
-  flagText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  flagText: { fontSize: 13, fontFamily: font.bodySemiBold },
   moodRow: { flexDirection: 'row', gap: 8 },
   moodBtn: {
     flex: 1, alignItems: 'center', paddingVertical: 14, gap: 4, borderWidth: 1.5,
     shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
   },
-  moodLabel: { fontSize: 11, fontFamily: 'DMSans_700Bold' },
+  moodLabel: { fontSize: 11, fontFamily: font.bodyBold },
   saveBtnPrimary: {
     height: 56,
     alignItems: 'center',
@@ -3045,7 +3045,7 @@ const styles = StyleSheet.create({
   },
   saveBtnPrimaryText: {
     fontSize: 16,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     letterSpacing: 0.2,
   },
   saveBtnGhost: {
@@ -3056,11 +3056,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     backgroundColor: 'transparent',
   },
-  saveBtnGhostText: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
+  saveBtnGhostText: { fontSize: 14, fontFamily: font.bodyMedium },
 
   // Scan plate (AI vision)
   scanPlateBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, marginBottom: 12 },
-  scanPlateText: { flex: 1, fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
+  scanPlateText: { flex: 1, fontSize: 14, fontFamily: font.bodySemiBold },
 
   // Calorie banner
   foodTag: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5 },
@@ -3089,7 +3089,7 @@ const styles = StyleSheet.create({
   // Breast feeding
   lastSideBanner: { padding: 12, borderWidth: 1 },
   lastSideLabel: { fontSize: 13, fontWeight: '500', lineHeight: 20 },
-  sectionLabel: { fontSize: 11, fontFamily: 'DMSans_500Medium', textTransform: 'uppercase', letterSpacing: 1.2 },
+  sectionLabel: { fontSize: 11, fontFamily: font.bodyMedium, textTransform: 'uppercase', letterSpacing: 1.2 },
   sideRow: { flexDirection: 'row', gap: 8 },
   sideBtn: { flex: 1, alignItems: 'center', paddingVertical: 16, gap: 8, borderWidth: 1 },
   breastIcon: { flexDirection: 'row', gap: 2, alignItems: 'flex-end' },
@@ -3109,7 +3109,7 @@ const styles = StyleSheet.create({
   timerWrap: { padding: 20, alignItems: 'center', gap: 16 },
   timerSideIndicator: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   timerSideLabel: { fontSize: 16, fontWeight: '700' },
-  timerDisplay: { fontSize: 56, fontWeight: '200', letterSpacing: 2, fontVariant: ['tabular-nums'], fontFamily: 'Fraunces_600SemiBold' },
+  timerDisplay: { fontSize: 56, fontWeight: '200', letterSpacing: 2, fontVariant: ['tabular-nums'], fontFamily: font.display },
   timerBreakdown: { flexDirection: 'row', gap: 12, width: '100%' },
   timerBreakdownItem: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10 },
   timerBreakdownDot: { width: 8, height: 8, borderRadius: 4 },

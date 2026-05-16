@@ -201,10 +201,12 @@ When styling `<Text>` directly:
 const { font, fontSize, colors } = useTheme()
 
 fontFamily: font.display        // Fraunces_600SemiBold       headings + numbers
+fontFamily: font.displayBold    // Fraunces_700Bold           hero numbers, big titles
 fontFamily: font.italic         // InstrumentSerif_400_Italic accent
 fontFamily: font.body           // DMSans_400Regular           body
 fontFamily: font.bodyMedium     // DMSans_500Medium            UI medium
 fontFamily: font.bodySemiBold   // DMSans_600SemiBold          UI labels, button labels
+fontFamily: font.bodyBold       // DMSans_700Bold              chip text, emphasised pills
 ```
 
 | `fontSize` | px | Used for |

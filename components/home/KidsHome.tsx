@@ -29,7 +29,7 @@ import {
   Bell, Trash2, Syringe, Pill, Pencil, GripVertical, Flag, Trophy, Flame, Star,
 } from 'lucide-react-native'
 import * as Haptics from 'expo-haptics'
-import { useTheme, brand, stickers } from '../../constants/theme'
+import { useTheme, brand, stickers, font } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
@@ -1783,7 +1783,7 @@ export function KidsHome() {
 
             {/* Header */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ color: colors.text, fontSize: 24, letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' }}>Custom Range</Text>
+              <Text style={{ color: colors.text, fontSize: 24, letterSpacing: -0.5, fontFamily: font.display }}>Custom Range</Text>
               <Pressable
                 onPress={() => setCustomPickerVisible(false)}
                 style={({ pressed }) => ({
@@ -1826,15 +1826,15 @@ export function KidsHome() {
                       transform: [{ translateY: customPickerActive === 'start' && pressed ? 2 : 0 }],
                     })}
                   >
-                    <Text style={{ fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1.5, color: ST_INK, textTransform: 'uppercase' }}>
+                    <Text style={{ fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1.5, color: ST_INK, textTransform: 'uppercase' }}>
                       Start
                     </Text>
-                    <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ST_INK, letterSpacing: -0.3 }}>
+                    <Text style={{ fontSize: 18, fontFamily: font.display, color: ST_INK, letterSpacing: -0.3 }}>
                       {fmtShortDate(customDraft.start)}
                     </Text>
                   </Pressable>
 
-                  <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ST_INK }}>—</Text>
+                  <Text style={{ fontSize: 18, fontFamily: font.display, color: ST_INK }}>—</Text>
 
                   <Pressable
                     onPress={() => setCustomPickerActive('end')}
@@ -1854,10 +1854,10 @@ export function KidsHome() {
                       transform: [{ translateY: customPickerActive === 'end' && pressed ? 2 : 0 }],
                     })}
                   >
-                    <Text style={{ fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1.5, color: ST_INK, textTransform: 'uppercase' }}>
+                    <Text style={{ fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1.5, color: ST_INK, textTransform: 'uppercase' }}>
                       End
                     </Text>
-                    <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ST_INK, letterSpacing: -0.3 }}>
+                    <Text style={{ fontSize: 18, fontFamily: font.display, color: ST_INK, letterSpacing: -0.3 }}>
                       {fmtShortDate(customDraft.end)}
                     </Text>
                   </Pressable>
@@ -1906,7 +1906,7 @@ export function KidsHome() {
                 transform: [{ translateY: pressed ? 3 : 0 }],
               })}
             >
-              <Text style={{ color: '#141313', fontFamily: 'DMSans_700Bold', fontSize: 16, letterSpacing: 1, textTransform: 'uppercase' }}>Apply Range</Text>
+              <Text style={{ color: '#141313', fontFamily: font.bodyBold, fontSize: 16, letterSpacing: 1, textTransform: 'uppercase' }}>Apply Range</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -1979,14 +1979,14 @@ export function KidsHome() {
         >
           <StarSticker size={20} fill="#F5D652" stroke="#141313" />
         </View>
-        <Text style={[s.setGoalsBtnText, { color: colors.text, fontFamily: 'Fraunces_700Bold' }]}>Set Goals</Text>
-        <Text style={[s.setGoalsBtnHint, { color: isDark ? colors.textMuted : 'rgba(20,19,19,0.55)', fontFamily: 'DMSans_500Medium' }]}>
+        <Text style={[s.setGoalsBtnText, { color: colors.text, fontFamily: font.displayBold }]}>Set Goals</Text>
+        <Text style={[s.setGoalsBtnHint, { color: isDark ? colors.textMuted : 'rgba(20,19,19,0.55)', fontFamily: font.bodyMedium }]}>
           Customize daily targets
         </Text>
         <View
           style={{
             width: 26, height: 26, borderRadius: 13,
-            backgroundColor: isDark ? colors.surfaceRaised : '#FFFEF8',
+            backgroundColor: colors.surface,
             borderWidth: 1.2, borderColor: isDark ? colors.border : '#141313',
             alignItems: 'center', justifyContent: 'center',
           }}
@@ -2035,7 +2035,7 @@ export function KidsHome() {
               borderRadius: 999,
               backgroundColor: brand.kids + '18',
             }}>
-              <Text style={{ fontSize: 11, fontFamily: 'DMSans_700Bold', color: brand.kids, letterSpacing: 0.3 }}>
+              <Text style={{ fontSize: 11, fontFamily: font.bodyBold, color: brand.kids, letterSpacing: 0.3 }}>
                 {reminders.filter(r => !r.done).length}
               </Text>
             </View>
@@ -2082,7 +2082,7 @@ export function KidsHome() {
             <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: stickers.yellow, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
               <Bell size={13} color="#141313" strokeWidth={2.5} />
             </View>
-            <Text style={{ fontSize: 16, fontFamily: 'Fraunces_600SemiBold', color: colors.text, letterSpacing: -0.3 }}>Add reminder</Text>
+            <Text style={{ fontSize: 16, fontFamily: font.display, color: colors.text, letterSpacing: -0.3 }}>Add reminder</Text>
           </View>
 
           {/* Text input */}
@@ -2123,7 +2123,7 @@ export function KidsHome() {
               <Clock size={12} color={newReminderDate ? brand.kids : colors.textSecondary} strokeWidth={2} />
               <Text style={[s.reminderDateBtnText, {
                 color: newReminderDate ? brand.kids : colors.textSecondary,
-                fontFamily: 'DMSans_600SemiBold',
+                fontFamily: font.bodySemiBold,
                 flex: 0,
               }]}>
                 {newReminderDate
@@ -2152,7 +2152,7 @@ export function KidsHome() {
                 }}
               >
                 <Bell size={11} color={newReminderTime ? '#C06030' : colors.textSecondary} strokeWidth={2} />
-                <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: newReminderTime ? '#C06030' : colors.textSecondary }}>
+                <Text style={{ fontSize: 11, fontFamily: font.bodySemiBold, color: newReminderTime ? '#C06030' : colors.textSecondary }}>
                   {newReminderTime
                     ? formatTime12h(`${String(newReminderTime.getHours()).padStart(2, '0')}:${String(newReminderTime.getMinutes()).padStart(2, '0')}`)
                     : 'Set time'}
@@ -2170,7 +2170,7 @@ export function KidsHome() {
 
             {/* Save button */}
             <Pressable onPress={addReminder} style={[s.reminderSaveBtn, { backgroundColor: brand.kids, borderRadius: radius.full, borderWidth: 1.5, borderColor: isDark ? brand.kids : '#141313' }]}>
-              <Text style={[s.reminderSaveBtnText, { fontFamily: 'DMSans_700Bold' }]}>Save</Text>
+              <Text style={[s.reminderSaveBtnText, { fontFamily: font.bodyBold }]}>Save</Text>
             </Pressable>
           </View>
 
@@ -2185,7 +2185,7 @@ export function KidsHome() {
                   borderRadius: radius.full,
                 }]}
               >
-                <Text style={[s.childTagChipText, { color: newReminderChildId === null ? brand.kids : colors.textSecondary, fontFamily: 'DMSans_600SemiBold' }]}>All kids</Text>
+                <Text style={[s.childTagChipText, { color: newReminderChildId === null ? brand.kids : colors.textSecondary, fontFamily: font.bodySemiBold }]}>All kids</Text>
               </Pressable>
               {children.map((c) => (
                 <Pressable
@@ -2197,7 +2197,7 @@ export function KidsHome() {
                     borderRadius: radius.full,
                   }]}
                 >
-                  <Text style={[s.childTagChipText, { color: newReminderChildId === c.id ? brand.kids : colors.textSecondary, fontFamily: 'DMSans_600SemiBold' }]}>{c.name}</Text>
+                  <Text style={[s.childTagChipText, { color: newReminderChildId === c.id ? brand.kids : colors.textSecondary, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -2211,14 +2211,14 @@ export function KidsHome() {
               marginTop: 6,
               borderWidth: 1.5,
               borderColor: isDark ? colors.border : 'rgba(20,19,19,0.1)',
-              backgroundColor: isDark ? colors.surfaceRaised : '#FFFFFF',
+              backgroundColor: colors.surface,
             }}>
               {/* Calendar header label */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 }}>
                 <View style={{ transform: [{ rotate: '-10deg' }] }}>
                   <StarSticker size={18} fill={stickers.blue} stroke="#141313" />
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_600SemiBold', fontSize: 14, color: colors.text, letterSpacing: -0.2 }}>Pick a date</Text>
+                <Text style={{ fontFamily: font.display, fontSize: 14, color: colors.text, letterSpacing: -0.2 }}>Pick a date</Text>
               </View>
               <DateTimePicker
                 value={newReminderDate ?? new Date()}
@@ -2243,7 +2243,7 @@ export function KidsHome() {
                     borderTopColor: colors.border,
                   }}
                 >
-                  <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: brand.kids }}>Done — confirm date</Text>
+                  <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: brand.kids }}>Done — confirm date</Text>
                 </Pressable>
               )}
             </View>
@@ -2257,7 +2257,7 @@ export function KidsHome() {
               marginTop: 6,
               borderWidth: 1.5,
               borderColor: isDark ? colors.border : 'rgba(20,19,19,0.1)',
-              backgroundColor: isDark ? colors.surfaceRaised : '#FFFFFF',
+              backgroundColor: colors.surface,
             }}>
               {/* Header */}
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 }}>
@@ -2265,11 +2265,11 @@ export function KidsHome() {
                   <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: stickers.peach, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
                     <Bell size={10} color="#141313" strokeWidth={2.5} />
                   </View>
-                  <Text style={{ fontFamily: 'Fraunces_600SemiBold', fontSize: 14, color: colors.text, letterSpacing: -0.2 }}>Set a time</Text>
+                  <Text style={{ fontFamily: font.display, fontSize: 14, color: colors.text, letterSpacing: -0.2 }}>Set a time</Text>
                 </View>
                 {newReminderTime && (
                   <Pressable onPress={() => { setNewReminderTime(null) }} hitSlop={8}>
-                    <Text style={{ fontFamily: 'DMSans_600SemiBold', fontSize: 11, color: colors.textMuted }}>Clear</Text>
+                    <Text style={{ fontFamily: font.bodySemiBold, fontSize: 11, color: colors.textMuted }}>Clear</Text>
                   </Pressable>
                 )}
               </View>
@@ -2296,7 +2296,7 @@ export function KidsHome() {
                     borderTopColor: colors.border,
                   }}
                 >
-                  <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: '#C06030' }}>Done — confirm time</Text>
+                  <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: '#C06030' }}>Done — confirm time</Text>
                 </Pressable>
               )}
             </View>
@@ -2314,7 +2314,7 @@ export function KidsHome() {
             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(245,214,82,0.24)', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
               <Bell size={20} color="#EE7B6D" strokeWidth={2} />
             </View>
-            <Text style={[s.remindersEmptyText, { color: colors.text, fontFamily: 'Fraunces_600SemiBold' }]}>No reminders yet</Text>
+            <Text style={[s.remindersEmptyText, { color: colors.text, fontFamily: font.display }]}>No reminders yet</Text>
             <Text style={[s.remindersEmptyHint, { color: colors.textMuted }]}>Add notes, tasks or things to remember</Text>
           </View>
         )
@@ -2591,7 +2591,7 @@ function HeroTiles({
   onLogFeeding?: () => void
   onLogActivity?: () => void
 }) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, font } = useTheme()
   const ink = colors.text
   const ink3 = isDark ? colors.textSecondary : '#6E6763'
   const lineColor = isDark ? colors.borderStrong : 'rgba(20,19,19,0.08)'
@@ -2788,7 +2788,7 @@ function HeroTiles({
             </View>
           </View>
           {activityMeta ? (
-            <Text style={{ fontSize: 11, fontFamily: 'DMSans_500Medium', color: ink3, marginTop: 8, letterSpacing: 0.2 }} numberOfLines={1}>
+            <Text style={{ fontSize: 11, fontFamily: font.bodyMedium, color: ink3, marginTop: 8, letterSpacing: 0.2 }} numberOfLines={1}>
               {activityMeta}
             </Text>
           ) : null}
@@ -2833,13 +2833,13 @@ const tileStyles = StyleSheet.create({
   },
   metaLabel: {
     fontSize: 10,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
     letterSpacing: 1.6,
     textTransform: 'uppercase',
   },
   metaSub: {
     fontSize: 10.5,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     marginTop: 6,
     letterSpacing: 0.3,
   },
@@ -2866,14 +2866,14 @@ const tileStyles = StyleSheet.create({
     borderWidth: 1,
   },
   heroNumber: {
-    fontFamily: 'Fraunces_800ExtraBold',
+    fontFamily: font.displayBold,
     fontSize: 36,
     lineHeight: 38,
     letterSpacing: -1.4,
     fontWeight: '800',
   },
   heroUnit: {
-    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontFamily: font.italic,
     fontStyle: 'italic',
     fontSize: 18,
     fontWeight: '400',
@@ -2881,13 +2881,13 @@ const tileStyles = StyleSheet.create({
     letterSpacing: 0,
   },
   heroSecondary: {
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: font.display,
     fontSize: 22,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
   emptyHero: {
-    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontFamily: font.italic,
     fontStyle: 'italic',
     fontSize: 22,
     opacity: 0.55,
@@ -2895,13 +2895,13 @@ const tileStyles = StyleSheet.create({
     lineHeight: 28,
   },
   moodLabelOn: {
-    fontFamily: 'Fraunces_700Bold',
+    fontFamily: font.displayBold,
     fontSize: 22,
     letterSpacing: -0.5,
     fontWeight: '700',
   },
   moodLabelOff: {
-    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontFamily: font.italic,
     fontStyle: 'italic',
     fontSize: 18,
     opacity: 0.6,
@@ -2909,7 +2909,7 @@ const tileStyles = StyleSheet.create({
   },
   subText: {
     fontSize: 11.5,
-    fontFamily: 'DMSans_400Regular',
+    fontFamily: font.body,
     marginTop: 3,
   },
 })
@@ -2946,7 +2946,7 @@ function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, foc
   onTapRing: (ring: 'sleep' | 'nutrition' | 'activity') => void
   centerData: { value: string; unit: string; pct: number; icon: typeof Moon; color: string }
 }) {
-  const { colors } = useTheme()
+  const { colors, font } = useTheme()
   const size = Math.min(SW - 140, 260)
   const center = size / 2
 
@@ -3070,7 +3070,7 @@ function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, foc
 function MiniRing({ label, progress, color, isToday, hasData }: {
   label: string; progress: number; color: string; isToday: boolean; hasData: boolean
 }) {
-  const { colors } = useTheme()
+  const { colors, font } = useTheme()
   const size = 40
   const strokeW = 3
   const r = (size - strokeW) / 2
@@ -3091,11 +3091,11 @@ function MiniRing({ label, progress, color, isToday, hasData }: {
           )}
         </Svg>
         {hasData ? (
-          <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: isToday ? color : color + 'CC' }}>
+          <Text style={{ fontSize: 10, fontFamily: font.bodySemiBold, color: isToday ? color : color + 'CC' }}>
             {pct >= 100 ? '✓' : `${pct}%`}
           </Text>
         ) : (
-          <Text style={{ fontSize: 11, color: colors.textFaint, fontFamily: 'DMSans_500Medium' }}>—</Text>
+          <Text style={{ fontSize: 11, color: colors.textFaint, fontFamily: font.bodyMedium }}>—</Text>
         )}
       </View>
       <Text style={[s.miniRingLabel, { color: isToday ? color : colors.textMuted }]}>{label}</Text>
@@ -3106,7 +3106,7 @@ function MiniRing({ label, progress, color, isToday, hasData }: {
 // ─── Mood Card ──────────────────────────────────────────────────────────────
 
 function MoodCard({ moodCounts, dominantMood }: { moodCounts: Record<string, number>; dominantMood: string }) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, font } = useTheme()
   const moods = ['happy', 'calm', 'energetic', 'fussy', 'cranky']
   const maxCount = Math.max(...Object.values(moodCounts), 1)
   const hasMoods = Object.values(moodCounts).some((v) => v > 0)
@@ -3164,7 +3164,7 @@ function NutritionCard({ stage, caloriesTotal, caloriesTarget, feedingCount, fee
   feedingCount: number; feedingTarget: number; feedingMl: number
   feedingBreast: number; feedingBottle: number; avgMl: number; meals: number
 }) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, font } = useTheme()
   const ringSize = 60
   const ringR = 24
   const ringCircumference = 2 * Math.PI * ringR
@@ -3236,7 +3236,7 @@ function HealthCard({ reminders, healthHistory, child }: {
   healthHistory: HealthHistoryData
   child: ChildWithRole
 }) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, font } = useTheme()
   const activeReminders = reminders.filter(r => !r.done).length
   const lastVaccine = healthHistory.vaccines[0]
   const { weight, height } = parseGrowthValue(healthHistory.growth)
@@ -3335,7 +3335,7 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
   diaperByDay: Record<string, { pee: number; poop: number; mixed: number }>
   startDate: string; endDate: string
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, isDark, font } = useTheme()
   const total = pee + poop + mixed
   const peeW  = total > 0 ? (pee  / total) * 100 : 0
   const poopW = total > 0 ? (poop / total) * 100 : 0
@@ -3478,7 +3478,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
   dateRange: DateRange; startDate: string; endDate: string
   childName?: string; childColor?: string
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font } = useTheme()
   const total = pee + poop + mixed
 
   // Build date buckets (same logic as MoodDetailModal)
@@ -3605,9 +3605,9 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
                     ? <BurstSticker size={22} fill={stickerFill ?? accent} />
                     : <Icon size={18} color={DIAPER_STICKER_INK} strokeWidth={2.2} />}
                 </View>
-                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.4 }}>{c}</Text>
-                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{label}</Text>
-                <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic', marginTop: 2 }}>
+                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.4 }}>{c}</Text>
+                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{label}</Text>
+                <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: font.italic, fontStyle: 'italic', marginTop: 2 }}>
                   {total > 0 ? Math.round((c / total) * 100) : 0}%
                 </Text>
               </View>
@@ -3636,7 +3636,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
 
           {/* Daily / weekly stacked bar chart — sticker bars */}
           <View style={{ marginTop: 22 }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: 'DMSans_700Bold', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>Trend</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: font.bodyBold, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>Trend</Text>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 4 }}>
               {buckets.map((b, i) => {
                 const h = b.total > 0 ? Math.max((b.total / bucketMax) * BAR_H, 8) : 6
@@ -3672,7 +3672,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
                         )}
                       </View>
                     </View>
-                    <Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic', textAlign: 'center', marginTop: 6 }}>{b.label}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: font.italic, fontStyle: 'italic', textAlign: 'center', marginTop: 6 }}>{b.label}</Text>
                   </View>
                 )
               })}
@@ -3682,7 +3682,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
           {/* Stool color — sticker-style swatch chips */}
           {colorEntries.length > 0 && (
             <View style={{ marginTop: 22 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: 'DMSans_700Bold', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: font.bodyBold, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>
                 Stool Color {poopTotal > 0 ? `· ${poopTotal} logged` : ''}
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -3709,8 +3709,8 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
                       }}
                     >
                       <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: meta.swatch, borderWidth: 1, borderColor: DIAPER_STICKER_INK }} />
-                      <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: 'DMSans_600SemiBold' }}>{meta.label}</Text>
-                      <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: 'Fraunces_700Bold' }}>{cnt}</Text>
+                      <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: font.bodySemiBold }}>{meta.label}</Text>
+                      <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: font.displayBold }}>{cnt}</Text>
                     </View>
                   )
                 })}
@@ -3732,7 +3732,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
   startDate: string; endDate: string
   childName?: string; childColor?: string
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font } = useTheme()
   const moods = ['happy', 'calm', 'energetic', 'fussy', 'cranky']
   const totalMoods = Object.values(moodCounts).reduce((a, b) => a + b, 0)
 
@@ -3972,7 +3972,7 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
   info: VaccineInfo | null
   accent: string
 }) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, font } = useTheme()
   const ink = colors.text
   const ink3 = colors.textMuted
   const paper = colors.surface
@@ -4001,11 +4001,11 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
               <CrossSticker size={32} fill="#FFFEF8" stroke="#141313" />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={{ color: ink, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>
+              <Text style={{ color: ink, fontSize: 22, fontFamily: font.display, letterSpacing: -0.4 }}>
                 {vaccineName}
               </Text>
               {!!doseLabel && (
-                <Text style={{ color: ink3, fontSize: 12, fontFamily: 'DMSans_500Medium', textTransform: 'uppercase', letterSpacing: 1.2 }}>
+                <Text style={{ color: ink3, fontSize: 12, fontFamily: font.bodyMedium, textTransform: 'uppercase', letterSpacing: 1.2 }}>
                   {doseLabel}
                 </Text>
               )}
@@ -4025,37 +4025,37 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
             {info ? (
               <>
                 <View>
-                  <Text style={{ color: ink3, fontSize: 11, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 }}>
+                  <Text style={{ color: ink3, fontSize: 11, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 }}>
                     What it protects against
                   </Text>
-                  <Text style={{ color: ink, fontSize: 15, fontFamily: 'DMSans_500Medium', lineHeight: 22 }}>
+                  <Text style={{ color: ink, fontSize: 15, fontFamily: font.bodyMedium, lineHeight: 22 }}>
                     {info.protects}
                   </Text>
                 </View>
                 <View>
-                  <Text style={{ color: ink3, fontSize: 11, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 }}>
+                  <Text style={{ color: ink3, fontSize: 11, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 }}>
                     Why it matters
                   </Text>
-                  <Text style={{ color: ink, fontSize: 14, fontFamily: 'DMSans_400Regular', lineHeight: 22 }}>
+                  <Text style={{ color: ink, fontSize: 14, fontFamily: font.body, lineHeight: 22 }}>
                     {info.why}
                   </Text>
                 </View>
                 {info.sideEffects && (
                   <View style={{ backgroundColor: paper, borderWidth: 1, borderColor: paperBorder, borderRadius: 18, padding: 14, gap: 4 }}>
-                    <Text style={{ color: ink3, fontSize: 11, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.4 }}>
+                    <Text style={{ color: ink3, fontSize: 11, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.4 }}>
                       Common side effects
                     </Text>
-                    <Text style={{ color: ink, fontSize: 13, fontFamily: 'DMSans_400Regular', lineHeight: 20 }}>
+                    <Text style={{ color: ink, fontSize: 13, fontFamily: font.body, lineHeight: 20 }}>
                       {info.sideEffects}
                     </Text>
                   </View>
                 )}
-                <Text style={{ color: ink3, fontSize: 11, fontFamily: 'DMSans_400Regular', fontStyle: 'italic', textAlign: 'center', marginTop: 8 }}>
+                <Text style={{ color: ink3, fontSize: 11, fontFamily: font.body, fontStyle: 'italic', textAlign: 'center', marginTop: 8 }}>
                   Always check with your pediatrician for advice tailored to your child.
                 </Text>
               </>
             ) : (
-              <Text style={{ color: ink3, fontSize: 14, fontFamily: 'DMSans_400Regular', lineHeight: 22 }}>
+              <Text style={{ color: ink3, fontSize: 14, fontFamily: font.body, lineHeight: 22 }}>
                 We don't have detailed info for this vaccine yet. Please ask your pediatrician about its purpose and timing.
               </Text>
             )}
@@ -4073,7 +4073,7 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
   onSetVaccineDate: (key: string, date: string | null) => void
   onMarkVaccineGiven: (name: string, date: string, key: string) => Promise<void>
 }) {
-  const { colors, isDark, stickers } = useTheme()
+  const { colors, isDark, stickers, font } = useTheme()
   const milestones = useMemo(
     () => buildVaccineScheduleTree(child.birthDate ?? '', healthHistory.vaccines, child.countryCode ?? 'US'),
     [child.birthDate, healthHistory.vaccines, child.countryCode],
@@ -4174,7 +4174,7 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                 shadowRadius: 0, elevation: isDoneMilestone || isPartialMilestone ? 3 : 0,
               }}>
                 <Text style={{
-                  fontSize: 11, fontFamily: 'Fraunces_600SemiBold',
+                  fontSize: 11, fontFamily: font.display,
                   color: isDoneMilestone || isPartialMilestone ? ST_INK : ink3,
                   textAlign: 'center', lineHeight: 13, letterSpacing: -0.2,
                 }}>
@@ -4182,13 +4182,13 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                 </Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.3 }}>
+                <Text style={{ fontSize: 16, fontFamily: font.display, color: ink, letterSpacing: -0.3 }}>
                   {milestone.label}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
                   {isDoneMilestone && <Check size={10} color={ST_INK} strokeWidth={3} />}
                   <Text style={{
-                    fontSize: 11, fontFamily: 'DMSans_600SemiBold',
+                    fontSize: 11, fontFamily: font.bodySemiBold,
                     color: isDoneMilestone || isPartialMilestone ? ST_INK : ink3,
                     textTransform: 'uppercase', letterSpacing: 0.8,
                   }}>
@@ -4202,7 +4202,7 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                 borderWidth: 1.5, borderColor: isExpanded ? ST_INK : ST_LINE,
                 alignItems: 'center', justifyContent: 'center',
               }}>
-                <Text style={{ fontSize: 10, color: isExpanded ? ST_INK : ink3, fontFamily: 'DMSans_700Bold' }}>
+                <Text style={{ fontSize: 10, color: isExpanded ? ST_INK : ink3, fontFamily: font.bodyBold }}>
                   {isExpanded ? '−' : '+'}
                 </Text>
               </View>
@@ -4263,13 +4263,13 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                             )}
                           </View>
                           {/* Name */}
-                          <Text style={{ flex: 1, fontSize: 13, fontFamily: 'DMSans_500Medium', color: ink }}>
+                          <Text style={{ flex: 1, fontSize: 13, fontFamily: font.bodyMedium, color: ink }}>
                             {fullName}
                           </Text>
                         </Pressable>
                         {/* Meta / actions */}
                         {vax.status === 'done' ? (
-                          <Text style={{ fontSize: 11, fontFamily: 'DMSans_500Medium', color: metaColor }}>
+                          <Text style={{ fontSize: 11, fontFamily: font.bodyMedium, color: metaColor }}>
                             {vax.givenDate ? formatHealthDate(vax.givenDate) : ''}
                           </Text>
                         ) : vax.status === 'upcoming' || vax.status === 'overdue' ? (
@@ -4279,7 +4279,7 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                                 setExpandedKey(isPickerOpen ? null : vax.scheduleKey)
                                 setPickerDate(new Date(apptDate + 'T12:00:00'))
                               }}>
-                                <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: ST_INK }}>
+                                <Text style={{ fontSize: 11, fontFamily: font.bodySemiBold, color: ST_INK }}>
                                   {formatHealthDate(apptDate)}
                                 </Text>
                               </Pressable>
@@ -4307,7 +4307,7 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                             </Pressable>
                           )
                         ) : (
-                          <Text style={{ fontSize: 10, fontFamily: 'DMSans_400Regular', color: ink3 }}>
+                          <Text style={{ fontSize: 10, fontFamily: font.body, color: ink3 }}>
                             {vax.dueAge}
                           </Text>
                         )}
@@ -4327,7 +4327,7 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                           elevation: 3,
                         }}>
                           <Text style={{
-                            fontSize: 11, fontFamily: 'DMSans_600SemiBold',
+                            fontSize: 11, fontFamily: font.bodySemiBold,
                             color: ink3, textTransform: 'uppercase', letterSpacing: 1.4,
                             paddingHorizontal: 4, paddingBottom: 4,
                           }}>
@@ -4389,7 +4389,7 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                               })}
                             >
                               <Text style={{
-                                fontSize: 14, fontFamily: 'DMSans_700Bold',
+                                fontSize: 14, fontFamily: font.bodyBold,
                                 color: ST_INK, letterSpacing: -0.2,
                               }}>
                                 Done
@@ -4414,7 +4414,7 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
                 minHeight: 14,
               }}>
                 {isDoneMilestone && (
-                  <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, paddingLeft: 12, paddingTop: 4 }} numberOfLines={1}>
+                  <Text style={{ fontSize: 11, fontFamily: font.body, color: ink3, paddingLeft: 12, paddingTop: 4 }} numberOfLines={1}>
                     {milestone.vaccines.map((v) => v.name.split(' ')[0]).join(' · ')}
                     {milestone.vaccines[0]?.givenDate ? ` · ${formatHealthDate(milestone.vaccines[0].givenDate)}` : ''}
                   </Text>
@@ -4447,7 +4447,7 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
   childName?: string
   childColor?: string
 }) {
-  const { colors, isDark, stickers } = useTheme()
+  const { colors, isDark, stickers, font } = useTheme()
   const ST_INK = '#141313'
   const ST_BLUE = isDark ? '#A5C9F0' : '#9DC3E8'
   const ST_BLUE_SOFT = isDark ? '#1F2A3A' : '#CFE0F0'
@@ -4477,10 +4477,10 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
               <Moon size={28} color={ST_INK} strokeWidth={2} />
             </View>
             <View style={{ flex: 1, gap: 4 }}>
-              <Text style={{ color: ink, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Sleep</Text>
+              <Text style={{ color: ink, fontSize: 22, fontFamily: font.display, letterSpacing: -0.4 }}>Sleep</Text>
               {!!childName && childColor && (
                 <View style={{ backgroundColor: childColor + '22', borderRadius: 999, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderWidth: 1, borderColor: childColor + '40' }}>
-                  <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: childColor }}>{childName}</Text>
+                  <Text style={{ fontSize: 11, fontFamily: font.bodySemiBold, color: childColor }}>{childName}</Text>
                 </View>
               )}
             </View>
@@ -4492,27 +4492,27 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
           </View>
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 8, paddingBottom: 24, gap: 16 }} showsVerticalScrollIndicator={false}>
             <View style={{ backgroundColor: ST_BLUE_SOFT, borderRadius: 22, borderWidth: 1.5, borderColor: ST_INK, padding: 18, gap: 6, shadowColor: ST_INK, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 3 }}>
-              <Text style={{ fontSize: 11, fontFamily: 'DMSans_700Bold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.4 }}>Total this range</Text>
+              <Text style={{ fontSize: 11, fontFamily: font.bodyBold, color: ink3, textTransform: 'uppercase', letterSpacing: 1.4 }}>Total this range</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-                <Text style={{ fontSize: 44, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -1.2, lineHeight: 48 }}>{sleepTotal > 0 ? sleepTotal.toFixed(1) : '—'}</Text>
-                <Text style={{ fontSize: 16, fontFamily: 'DMSans_500Medium', color: ink3 }}>hours</Text>
+                <Text style={{ fontSize: 44, fontFamily: font.display, color: ink, letterSpacing: -1.2, lineHeight: 48 }}>{sleepTotal > 0 ? sleepTotal.toFixed(1) : '—'}</Text>
+                <Text style={{ fontSize: 16, fontFamily: font.bodyMedium, color: ink3 }}>hours</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
                 <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: q.tagBg, borderWidth: 1.2, borderColor: ST_INK }}>
-                  <Text style={{ fontSize: 11, fontFamily: 'DMSans_700Bold', color: ST_INK, textTransform: 'uppercase', letterSpacing: 0.6 }}>{q.tag}</Text>
+                  <Text style={{ fontSize: 11, fontFamily: font.bodyBold, color: ST_INK, textTransform: 'uppercase', letterSpacing: 0.6 }}>{q.tag}</Text>
                 </View>
-                <Text style={{ fontSize: 12, fontFamily: 'DMSans_500Medium', color: ink3 }}>{pct}% of {sleepTarget.toFixed(0)}h target</Text>
+                <Text style={{ fontSize: 12, fontFamily: font.bodyMedium, color: ink3 }}>{pct}% of {sleepTarget.toFixed(0)}h target</Text>
               </View>
             </View>
             <View>
-              <Text style={{ fontSize: 11, fontFamily: 'DMSans_700Bold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 8, paddingLeft: 2 }}>Past 7 days</Text>
+              <Text style={{ fontSize: 11, fontFamily: font.bodyBold, color: ink3, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 8, paddingLeft: 2 }}>Past 7 days</Text>
               {/* Make the scope explicit when the active range is wider than
                   7 days. The chart data is sourced from the last-7 mini-ring
                   pipeline (see comment at dailySleep build site); the hero
                   total above reflects the full active range — surface that
                   difference instead of relying on the user to notice. */}
               {dateRange !== '7days' && dateRange !== 'today' && dateRange !== 'yesterday' ? (
-                <Text style={{ fontSize: 11, fontFamily: 'DMSans_500Medium', color: ink3, marginBottom: 8, paddingLeft: 2, fontStyle: 'italic' }}>
+                <Text style={{ fontSize: 11, fontFamily: font.bodyMedium, color: ink3, marginBottom: 8, paddingLeft: 2, fontStyle: 'italic' }}>
                   Bars show the most recent 7 days; the total above reflects the wider range.
                 </Text>
               ) : null}
@@ -4529,9 +4529,9 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
                     const barColor = hrs === 0 ? ST_BLUE_SOFT : (hitTarget ? ST_BLUE : ST_YELLOW)
                     return (
                       <View key={i} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
-                        <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink, height: 12 }}>{hrs > 0 ? hrs.toFixed(1) : ''}</Text>
+                        <Text style={{ fontSize: 10, fontFamily: font.bodySemiBold, color: ink, height: 12 }}>{hrs > 0 ? hrs.toFixed(1) : ''}</Text>
                         <View style={{ width: '100%', height: Math.max(ratio * 80, 4), backgroundColor: barColor, borderWidth: 1.5, borderColor: ST_INK, borderRadius: 8 }} />
-                        <Text style={{ fontSize: 9, fontFamily: 'DMSans_700Bold', color: ink3, textTransform: 'uppercase', letterSpacing: 0.6 }}>{(dayLabels[i] ?? '').slice(0, 3)}</Text>
+                        <Text style={{ fontSize: 9, fontFamily: font.bodyBold, color: ink3, textTransform: 'uppercase', letterSpacing: 0.6 }}>{(dayLabels[i] ?? '').slice(0, 3)}</Text>
                       </View>
                     )
                   })}
@@ -4539,14 +4539,14 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
                 {dailySleepTarget > 0 && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingLeft: 4 }}>
                     <View style={{ width: 12, height: 4, backgroundColor: ST_YELLOW, borderRadius: 2, borderWidth: 1, borderColor: ST_INK }} />
-                    <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: ink3 }}>below target ({dailySleepTarget}h/day)</Text>
+                    <Text style={{ fontSize: 10, fontFamily: font.bodyMedium, color: ink3 }}>below target ({dailySleepTarget}h/day)</Text>
                   </View>
                 )}
               </View>
             </View>
             <View style={{ backgroundColor: PAPER, borderRadius: 22, borderWidth: 1.5, borderColor: ST_INK, padding: 16, gap: 6, shadowColor: ST_INK, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 3 }}>
-              <Text style={{ fontSize: 11, fontFamily: 'DMSans_700Bold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.4 }}>Quality read · {sleepQuality}</Text>
-              <Text style={{ fontSize: 14, fontFamily: 'DMSans_400Regular', color: ink, lineHeight: 22 }}>{q.blurb}</Text>
+              <Text style={{ fontSize: 11, fontFamily: font.bodyBold, color: ink3, textTransform: 'uppercase', letterSpacing: 1.4 }}>Quality read · {sleepQuality}</Text>
+              <Text style={{ fontSize: 14, fontFamily: font.body, color: ink, lineHeight: 22 }}>{q.blurb}</Text>
             </View>
           </ScrollView>
         </Pressable>
@@ -4564,7 +4564,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
   onMarkVaccineGiven: (name: string, date: string, key: string) => Promise<void>
   activityCount: number; activityBreakdown: Record<string, number>; feedingCount: number; caloriesTotal: number; feedingMl: number; stage: FeedingStage
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, isDark, font } = useTheme()
   const { weight, height } = parseGrowthValue(healthHistory.growth)
   const [activityBreakdownVisible, setActivityBreakdownVisible] = useState(false)
 
@@ -4589,12 +4589,12 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
           {/* Sheet header with Fraunces title + child chip + close */}
           <View style={[s.modalHeader, { gap: 10 }]}>
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Text style={{ color: ink, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>
+              <Text style={{ color: ink, fontSize: 22, fontFamily: font.display, letterSpacing: -0.4 }}>
                 Health Overview
               </Text>
               {childColor && (
                 <View style={{ backgroundColor: childColor + '22', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, borderWidth: 1, borderColor: childColor + '40' }}>
-                  <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: childColor }}>{child.name}</Text>
+                  <Text style={{ fontSize: 11, fontFamily: font.bodySemiBold, color: childColor }}>{child.name}</Text>
                 </View>
               )}
             </View>
@@ -4639,7 +4639,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                 <Text style={[s.hdBannerValue, { color: ink }]}>{sleepQuality}</Text>
               </View>
               <View style={{ alignItems: 'flex-end', gap: 0 }}>
-                <Text style={{ fontSize: 22, fontFamily: 'Fraunces_700Bold', color: ink, letterSpacing: -0.4 }}>{sleepTotal.toFixed(1)}h</Text>
+                <Text style={{ fontSize: 22, fontFamily: font.displayBold, color: ink, letterSpacing: -0.4 }}>{sleepTotal.toFixed(1)}h</Text>
                 <Text style={[s.hdBannerStatSub, { color: ink3 }]}>of {sleepTarget.toFixed(0)}h</Text>
               </View>
             </View>
@@ -4827,7 +4827,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
               }}>
                 <Droplets size={14} color={PILLAR_COLORS.nutrition} strokeWidth={2.2} />
                 <Text style={[s.modalStatLabel, { color: ink3, flex: 1 }]}>Total volume</Text>
-                <Text style={{ fontSize: 14, fontFamily: 'Fraunces_600SemiBold', color: ink }}>{feedingMl.toLocaleString()}ml</Text>
+                <Text style={{ fontSize: 14, fontFamily: font.display, color: ink }}>{feedingMl.toLocaleString()}ml</Text>
               </View>
             )}
 
@@ -4856,7 +4856,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                     }}>
                       <AlertCircle size={9} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={2.5} />
                     </View>
-                    <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', color: isDark ? '#F5BBCF' : '#141313' }}>{a}</Text>
+                    <Text style={{ fontSize: 13, fontFamily: font.bodyBold, color: isDark ? '#F5BBCF' : '#141313' }}>{a}</Text>
                   </View>
                 ))}
                 <Pressable
@@ -4869,7 +4869,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                     borderStyle: 'dashed',
                   }}
                 >
-                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_600SemiBold', color: isDark ? '#F5BBCF' : '#6E6763' }}>
+                  <Text style={{ fontSize: 13, fontFamily: font.bodySemiBold, color: isDark ? '#F5BBCF' : '#6E6763' }}>
                     {child.allergies.length === 0 ? '+ Add allergy' : '+ Add'}
                   </Text>
                 </Pressable>
@@ -5002,14 +5002,14 @@ function CategoryRankCard({ cat, rank, pctOfTotal, barWidth, visible }: {
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-          <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: 'Fraunces_700Bold' }}>{rank + 1}</Text>
+          <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: font.displayBold }}>{rank + 1}</Text>
         </View>
         {/* Color dot */}
         <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: cat.color, borderWidth: 1, borderColor: DIAPER_STICKER_INK }} />
         {/* Label */}
-        <Text style={{ color: DIAPER_STICKER_INK, fontSize: 14, fontFamily: 'DMSans_600SemiBold', flex: 1 }} numberOfLines={1}>{cat.label}</Text>
+        <Text style={{ color: DIAPER_STICKER_INK, fontSize: 14, fontFamily: font.bodySemiBold, flex: 1 }} numberOfLines={1}>{cat.label}</Text>
         {/* Calories */}
-        <Text style={{ color: DIAPER_STICKER_INK, fontSize: 14, fontFamily: 'Fraunces_700Bold' }}>{cat.cals.toLocaleString()} cal</Text>
+        <Text style={{ color: DIAPER_STICKER_INK, fontSize: 14, fontFamily: font.displayBold }}>{cat.cals.toLocaleString()} cal</Text>
       </View>
       {/* Proportion bar + bold % pill */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -5034,7 +5034,7 @@ function CategoryRankCard({ cat, rank, pctOfTotal, barWidth, visible }: {
           minWidth: 46,
           alignItems: 'center',
         }}>
-          <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.2 }}>
+          <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: font.displayBold, letterSpacing: -0.2 }}>
             {pctOfTotal}%
           </Text>
         </View>
@@ -5042,7 +5042,7 @@ function CategoryRankCard({ cat, rank, pctOfTotal, barWidth, visible }: {
       {/* Grandma's note about this category */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
         <Sparkles size={11} color="#6E6763" strokeWidth={2.2} />
-        <Text style={{ color: '#6E6763', fontSize: 12, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic', flex: 1 }}>
+        <Text style={{ color: '#6E6763', fontSize: 12, fontFamily: font.italic, fontStyle: 'italic', flex: 1 }}>
           {note}
         </Text>
       </View>
@@ -5120,7 +5120,7 @@ function BreastfeedingInsights({
 
   return (
     <View style={{ marginTop: 18, gap: 12 }}>
-      <Text style={{ color: '#6E6763', fontSize: 12, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+      <Text style={{ color: '#6E6763', fontSize: 12, fontFamily: font.bodyBold, textTransform: 'uppercase', letterSpacing: 0.8 }}>
         Breastfeeding Insights
       </Text>
 
@@ -5140,10 +5140,10 @@ function BreastfeedingInsights({
           transform: [{ rotate: '-0.6deg' }],
         }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-            <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+            <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: font.bodyBold, textTransform: 'uppercase', letterSpacing: 0.8 }}>
               Side Balance
             </Text>
-            <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic' }}>
+            <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: font.italic, fontStyle: 'italic' }}>
               {feedingLeft} L · {feedingRight} R{feedingBoth > 0 ? ` · ${feedingBoth} both` : ''}
             </Text>
           </View>
@@ -5168,16 +5168,16 @@ function BreastfeedingInsights({
               borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, backgroundColor: StickerPalette.pink,
             }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: DIAPER_STICKER_INK }} />
-              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }}>{leftPct}%</Text>
-              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: 'DMSans_700Bold', letterSpacing: 0.6, textTransform: 'uppercase' }}>Left</Text>
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }}>{leftPct}%</Text>
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: font.bodyBold, letterSpacing: 0.6, textTransform: 'uppercase' }}>Left</Text>
             </View>
             <View style={{
               flexDirection: 'row', alignItems: 'center', gap: 8,
               paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999,
               borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, backgroundColor: StickerPalette.blue,
             }}>
-              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: 'DMSans_700Bold', letterSpacing: 0.6, textTransform: 'uppercase' }}>Right</Text>
-              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }}>{rightPct}%</Text>
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: font.bodyBold, letterSpacing: 0.6, textTransform: 'uppercase' }}>Right</Text>
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }}>{rightPct}%</Text>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: DIAPER_STICKER_INK }} />
             </View>
           </View>
@@ -5200,10 +5200,10 @@ function BreastfeedingInsights({
           transform: [{ rotate: '0.6deg' }],
         }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-            <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+            <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: font.bodyBold, textTransform: 'uppercase', letterSpacing: 0.8 }}>
               Time of Day
             </Text>
-            <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic' }}>
+            <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: font.italic, fontStyle: 'italic' }}>
               peak {peakBucket.range.toLowerCase()}
             </Text>
           </View>
@@ -5219,7 +5219,7 @@ function BreastfeedingInsights({
                   <Text style={{
                     color: DIAPER_STICKER_INK,
                     fontSize: 22,
-                    fontFamily: 'Fraunces_700Bold',
+                    fontFamily: font.displayBold,
                     letterSpacing: -0.5,
                   }}>
                     {count}
@@ -5255,7 +5255,7 @@ function BreastfeedingInsights({
                     borderColor: DIAPER_STICKER_INK,
                     backgroundColor: isPeak ? StickerPalette.peach : StickerPalette.cream,
                   }}>
-                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: 'Fraunces_700Bold' }}>
+                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: font.displayBold }}>
                       {pctOfTotal}%
                     </Text>
                   </View>
@@ -5290,10 +5290,10 @@ function BreastfeedingInsights({
               elevation: 1,
               transform: [{ rotate: `${card.tilt}deg` }],
             }}>
-              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 26, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.5 }} numberOfLines={1} adjustsFontSizeToFit>
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 26, fontFamily: font.displayBold, letterSpacing: -0.5 }} numberOfLines={1} adjustsFontSizeToFit>
                 {card.value}
               </Text>
-              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 10.5, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase', marginTop: 4 }}>
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 10.5, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase', marginTop: 4 }}>
                 {card.label}
               </Text>
             </View>
@@ -5317,7 +5317,7 @@ function BreastfeedingInsights({
               backgroundColor: StickerPalette.yellowSoft,
             }}>
               <Sparkles size={12} color={DIAPER_STICKER_INK} strokeWidth={2.2} style={{ marginTop: 2 }} />
-              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12.5, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic', flex: 1, lineHeight: 17 }}>
+              <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12.5, fontFamily: font.italic, fontStyle: 'italic', flex: 1, lineHeight: 17 }}>
                 {n}
               </Text>
             </View>
@@ -5360,7 +5360,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
   feedingTimes: number[]; feedingDurations: number[]; feedingDays: number
   childName?: string; childColor?: string
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font } = useTheme()
   const isLiquid = stage === 'liquid' || stage === 'mixed'
   const pct = caloriesTarget > 0 ? Math.round((caloriesTotal / caloriesTarget) * 100) : 0
 
@@ -5408,13 +5408,13 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                   <Droplets size={18} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase' }}>Feedings</Text>
-                  <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, marginTop: 2 }}>
+                  <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>Feedings</Text>
+                  <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, marginTop: 2 }}>
                     {feedingCount.toLocaleString()} total
                   </Text>
                 </View>
                 {avgMl > 0 && (
-                  <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic' }}>
+                  <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: font.italic, fontStyle: 'italic' }}>
                     avg {avgMl.toLocaleString()}ml
                   </Text>
                 )}
@@ -5449,8 +5449,8 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                     <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: card.accent, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
                       <card.Icon size={16} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
                     </View>
-                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }} numberOfLines={1}>{card.value}</Text>
-                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 9.5, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{card.label}</Text>
+                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }} numberOfLines={1}>{card.value}</Text>
+                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 9.5, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{card.label}</Text>
                   </View>
                 ))}
               </View>
@@ -5459,8 +5459,8 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
               {(feedingBreast + feedingBottle) > 0 && (
                 <View style={{ marginTop: 18 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: 'DMSans_700Bold', letterSpacing: 0.8, textTransform: 'uppercase' }}>Breast vs Bottle</Text>
-                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic' }}>
+                    <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: font.bodyBold, letterSpacing: 0.8, textTransform: 'uppercase' }}>Breast vs Bottle</Text>
+                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 11, fontFamily: font.italic, fontStyle: 'italic' }}>
                       {Math.round((feedingBreast / (feedingBreast + feedingBottle)) * 100)}% breast
                     </Text>
                   </View>
@@ -5512,7 +5512,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                     alignSelf: 'flex-start',
                   }}>
                     <Sparkles size={13} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
-                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic' }}>
+                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: font.italic, fontStyle: 'italic' }}>
                       {insight}
                     </Text>
                   </View>
@@ -5559,13 +5559,13 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                 <Utensils size={18} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase' }}>{stage === 'mixed' ? 'Solids Calories' : 'Calories'}</Text>
-                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, marginTop: 2 }}>
+                <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>{stage === 'mixed' ? 'Solids Calories' : 'Calories'}</Text>
+                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, marginTop: 2 }}>
                   {caloriesTotal > 0 ? `${caloriesTotal.toLocaleString()} cal` : '—'}
                 </Text>
               </View>
               {stage === 'solids' && (
-                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic' }}>
+                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: font.italic, fontStyle: 'italic' }}>
                   {pct}% of {caloriesTarget.toLocaleString()}
                 </Text>
               )}
@@ -5580,8 +5580,8 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
             return (
               <View style={{ marginTop: 18 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: 'DMSans_700Bold', textTransform: 'uppercase', letterSpacing: 0.8 }}>Breakdown by Category</Text>
-                  <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic' }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: font.bodyBold, textTransform: 'uppercase', letterSpacing: 0.8 }}>Breakdown by Category</Text>
+                  <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: font.italic, fontStyle: 'italic' }}>
                     {ranked.length} {ranked.length === 1 ? 'category' : 'categories'}
                   </Text>
                 </View>
@@ -5620,7 +5620,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
   entries: ActivityEntry[]
   childName?: string; childColor?: string
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font } = useTheme()
   const [expandedType, setExpandedType] = useState<string | null>(null)
 
   // Reset expansion when the modal closes AND whenever the displayed child
@@ -5703,13 +5703,13 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
                 <Zap size={18} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase' }}>Activities</Text>
-                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, marginTop: 2 }}>
+                <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>Activities</Text>
+                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, marginTop: 2 }}>
                   {activityCount > 0 ? activityCount.toLocaleString() : '—'} total
                 </Text>
               </View>
               {activeDays > 0 && rangeDays > 0 && (
-                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic' }}>
+                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: font.italic, fontStyle: 'italic' }}>
                   {activeDays}/{rangeDays} days
                 </Text>
               )}
@@ -5744,8 +5744,8 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
                   <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: card.accent, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
                     <card.Icon size={16} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
                   </View>
-                  <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }} numberOfLines={1}>{card.value}</Text>
-                  <Text style={{ color: DIAPER_STICKER_INK, fontSize: 9.5, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{card.label}</Text>
+                  <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }} numberOfLines={1}>{card.value}</Text>
+                  <Text style={{ color: DIAPER_STICKER_INK, fontSize: 9.5, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{card.label}</Text>
                 </View>
               ))}
             </View>
@@ -5775,7 +5775,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
                           <View style={[s.modalCatDot, { backgroundColor: meta.color }]} />
                           <Text style={[s.modalCatLabel, { color: colors.textSecondary }]}>{meta.label}</Text>
                           <Text style={[s.modalCatValue, { color: colors.text }]}>{count.toLocaleString()}</Text>
-                          <Text style={{ color: meta.color, fontSize: 12, fontFamily: 'DMSans_600SemiBold', minWidth: 40, textAlign: 'right' }}>{typePct}%</Text>
+                          <Text style={{ color: meta.color, fontSize: 12, fontFamily: font.bodySemiBold, minWidth: 40, textAlign: 'right' }}>{typePct}%</Text>
                           <ChevronRight
                             size={14}
                             color={colors.textMuted}
@@ -5790,7 +5790,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
                       {isOpen && (
                         <View style={{ marginTop: 10, marginLeft: 18, gap: 8, borderLeftWidth: 1, borderLeftColor: meta.color + '40', paddingLeft: 12 }}>
                           {typeEntries.length === 0 ? (
-                            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'DMSans_500Medium' }}>
+                            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium }}>
                               No entries in this range
                             </Text>
                           ) : typeEntries.map((entry) => {
@@ -5799,14 +5799,14 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
                               <View key={entry.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
                                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: meta.color, marginTop: 6 }} />
                                 <View style={{ flex: 1 }}>
-                                  <Text style={{ color: colors.text, fontSize: 13, fontFamily: 'DMSans_600SemiBold' }}>
+                                  <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodySemiBold }}>
                                     {entry.name || meta.label}
                                   </Text>
-                                  <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'DMSans_500Medium', marginTop: 1 }}>
+                                  <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodyMedium, marginTop: 1 }}>
                                     {formatEntryDate(entry.date)}{timeLabel ? ` · ${timeLabel}` : ''}
                                   </Text>
                                   {entry.notes ? (
-                                    <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: 'DMSans_400Regular', marginTop: 3, fontStyle: 'italic' }} numberOfLines={2}>
+                                    <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: font.body, marginTop: 3, fontStyle: 'italic' }} numberOfLines={2}>
                                       {entry.notes}
                                     </Text>
                                   ) : null}
@@ -5822,7 +5822,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
               </>
             ) : (
               <View style={{ marginTop: 24, padding: 20, alignItems: 'center' }}>
-                <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: 'DMSans_500Medium', textAlign: 'center' }}>
+                <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: font.bodyMedium, textAlign: 'center' }}>
                   No activities logged in this period
                 </Text>
               </View>
@@ -5841,7 +5841,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
   childId: string; childName: string; birthDate: string
   onSaved: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, isDark, font } = useTheme()
   const store = useGoalsStore()
   const current = store.getGoals(childId, birthDate)
   const suggested = getSuggestedGoals(birthDate)
@@ -6066,7 +6066,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
                       <Minus size={13} color={DIAPER_STICKER_INK} strokeWidth={2.4} />
                     </Pressable>
                     <View style={s.gsStepValue}>
-                      <Text style={[s.gsStepNum, { color: DIAPER_STICKER_INK, fontFamily: 'Fraunces_700Bold' }]}>{m.value || '0'}</Text>
+                      <Text style={[s.gsStepNum, { color: DIAPER_STICKER_INK, fontFamily: font.displayBold }]}>{m.value || '0'}</Text>
                       <Text style={[s.gsStepUnit, { color: '#6E6763' }]}>
                         {m.unit.split('/')[0]}
                       </Text>
@@ -6129,7 +6129,7 @@ function ReminderRow({
   r: Reminder; isLast: boolean; onToggle: () => void; onDelete: () => void; onEdit: (id: string, newText: string) => void; colors: any
   onFlag?: () => void; allChildren?: ChildWithRole[]; isDragging?: boolean; dragHandleProps?: object
 }) {
-  const { isDark, stickers } = useTheme()
+  const { isDark, stickers, font } = useTheme()
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const due = r.dueDate ? new Date(r.dueDate + 'T00:00:00') : null
   const diffDays = due ? Math.round((due.getTime() - today.getTime()) / 86400000) : null
@@ -6243,7 +6243,7 @@ function ReminderRow({
         {editing ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <TextInput
-              style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: colors.text, flex: 1, borderBottomWidth: 1, borderBottomColor: brand.kids, paddingVertical: 2 }}
+              style={{ fontSize: 15, fontFamily: font.display, color: colors.text, flex: 1, borderBottomWidth: 1, borderBottomColor: brand.kids, paddingVertical: 2 }}
               value={editText}
               onChangeText={setEditText}
               onSubmitEditing={commitEdit}
@@ -6285,7 +6285,7 @@ function ReminderRow({
               },
             ]}>
               <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: tagColor, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.4)' : '#141313' }} />
-              <Text style={[s.reminderChildTagText, { color: isDark ? tagColor : '#141313', fontFamily: 'DMSans_700Bold' }]}>{taggedChild.name}</Text>
+              <Text style={[s.reminderChildTagText, { color: isDark ? tagColor : '#141313', fontFamily: font.bodyBold }]}>{taggedChild.name}</Text>
             </View>
           )}
           {dueDateLabel && (() => {
@@ -6293,7 +6293,7 @@ function ReminderRow({
               ? (isDark ? brand.error + '22' : '#F5B896')
               : isDueToday
                 ? (isDark ? '#F5D65222' : '#F5D652')
-                : (isDark ? colors.surfaceRaised : '#FFFEF8')
+                : (colors.surface)
             const dueBorder = isDark
               ? isOverdue ? brand.error + '60' : isDueToday ? '#F5D65270' : colors.border
               : '#141313'
@@ -6308,7 +6308,7 @@ function ReminderRow({
                 borderWidth: 1.2, borderColor: dueBorder,
               }}>
                 <Clock size={9} color={dueInk} strokeWidth={2.5} />
-                <Text style={[s.reminderDueText, { color: dueInk, fontFamily: 'DMSans_700Bold' }]}>{dueDateLabel}</Text>
+                <Text style={[s.reminderDueText, { color: dueInk, fontFamily: font.bodyBold }]}>{dueDateLabel}</Text>
               </View>
             )
           })()}
@@ -6320,7 +6320,7 @@ function ReminderRow({
               borderWidth: 1.2, borderColor: isDark ? '#BDD48C60' : '#141313',
             }}>
               <Check size={9} color={isDark ? '#BDD48C' : '#141313'} strokeWidth={2.5} />
-              <Text style={[s.reminderDueText, { color: isDark ? '#BDD48C' : '#141313', fontFamily: 'DMSans_700Bold' }]}>
+              <Text style={[s.reminderDueText, { color: isDark ? '#BDD48C' : '#141313', fontFamily: font.bodyBold }]}>
                 Done {new Date(r.archivedAt).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
               </Text>
             </View>
@@ -6459,7 +6459,7 @@ function RemindersModal({
   onFlag: (id: string) => void; onReorder: (items: Reminder[]) => void
   allChildren?: ChildWithRole[]
 }) {
-  const { radius, isDark } = useTheme()
+  const { radius, isDark, font } = useTheme()
   const [tab, setTab] = useState<'active' | 'archived'>('active')
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null)
   const [isDraggingReminder, setIsDraggingReminder] = useState(false)
@@ -6534,18 +6534,18 @@ function RemindersModal({
         <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 4, marginBottom: 4 }}>
           {/* Active */}
           <View style={{ flex: 1, backgroundColor: '#F5B896', borderRadius: 16, borderWidth: 1.5, borderColor: '#141313', paddingVertical: 12, alignItems: 'center', gap: 2 }}>
-            <Text style={{ fontSize: 26, fontFamily: 'Fraunces_600SemiBold', color: '#141313', letterSpacing: -0.5 }}>{active.length}</Text>
-            <Text style={{ fontSize: 9, fontFamily: 'DMSans_600SemiBold', color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>Active</Text>
+            <Text style={{ fontSize: 26, fontFamily: font.display, color: '#141313', letterSpacing: -0.5 }}>{active.length}</Text>
+            <Text style={{ fontSize: 9, fontFamily: font.bodySemiBold, color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>Active</Text>
           </View>
           {/* Done this week */}
           <View style={{ flex: 1, backgroundColor: '#BDD48C', borderRadius: 16, borderWidth: 1.5, borderColor: '#141313', paddingVertical: 12, alignItems: 'center', gap: 2 }}>
-            <Text style={{ fontSize: 26, fontFamily: 'Fraunces_600SemiBold', color: '#141313', letterSpacing: -0.5 }}>{thisWeek}</Text>
-            <Text style={{ fontSize: 9, fontFamily: 'DMSans_600SemiBold', color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>Done this week</Text>
+            <Text style={{ fontSize: 26, fontFamily: font.display, color: '#141313', letterSpacing: -0.5 }}>{thisWeek}</Text>
+            <Text style={{ fontSize: 9, fontFamily: font.bodySemiBold, color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>Done this week</Text>
           </View>
           {/* Completion */}
           <View style={{ flex: 1, backgroundColor: '#9DC3E8', borderRadius: 16, borderWidth: 1.5, borderColor: '#141313', paddingVertical: 12, alignItems: 'center', gap: 2 }}>
-            <Text style={{ fontSize: 26, fontFamily: 'Fraunces_600SemiBold', color: '#141313', letterSpacing: -0.5 }}>{completionRate}%</Text>
-            <Text style={{ fontSize: 9, fontFamily: 'DMSans_600SemiBold', color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>Completion</Text>
+            <Text style={{ fontSize: 26, fontFamily: font.display, color: '#141313', letterSpacing: -0.5 }}>{completionRate}%</Text>
+            <Text style={{ fontSize: 9, fontFamily: font.bodySemiBold, color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>Completion</Text>
           </View>
         </View>
 
@@ -6594,7 +6594,7 @@ function RemindersModal({
                       )
                     })}
                   </View>
-                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', letterSpacing: 0.2, color: isDark ? (isAll ? '#141313' : colors.text) : '#141313' }}>All</Text>
+                  <Text style={{ fontSize: 13, fontFamily: font.bodyBold, letterSpacing: 0.2, color: isDark ? (isAll ? '#141313' : colors.text) : '#141313' }}>All</Text>
                 </Pressable>
               )
             })()}
@@ -6620,7 +6620,7 @@ function RemindersModal({
                   }}
                 >
                   <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: kidColor, borderWidth: 1, borderColor: '#141313' }} />
-                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', letterSpacing: 0.2, color: isDark ? (isActive ? '#141313' : colors.text) : '#141313' }}>{c.name}</Text>
+                  <Text style={{ fontSize: 13, fontFamily: font.bodyBold, letterSpacing: 0.2, color: isDark ? (isActive ? '#141313' : colors.text) : '#141313' }}>{c.name}</Text>
                 </Pressable>
               )
             })}
@@ -6707,7 +6707,7 @@ function RemindersModal({
           ) : (
             archivedByDate.map(({ label, items }) => (
               <View key={label} style={{ marginHorizontal: 16, marginTop: 16 }}>
-                <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8 }}>{label}</Text>
+                <Text style={{ fontSize: 10, fontFamily: font.bodySemiBold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8 }}>{label}</Text>
                 <View style={{ gap: 8 }}>
                   {items.map((r, i) => (
                     <ReminderRow
@@ -6735,7 +6735,7 @@ function RemindersModal({
 // ─── Growth Leap Card ───────────────────────────────────────────────────────
 
 function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<typeof getGrowthLeap>>; childName: string }) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, font } = useTheme()
   const [showDetail, setShowDetail] = useState(false)
   const isActive = leap.status === 'active'
   const isDone = leap.status === 'done'
@@ -6786,7 +6786,7 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
           }}>
             {isDone
               ? <Check size={18} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={3} />
-              : <Text style={{ fontSize: 18, fontFamily: 'Fraunces_700Bold', color: isDark ? '#FFFFFF' : '#141313', letterSpacing: -0.4 }}>{leap.index + 1}</Text>
+              : <Text style={{ fontSize: 18, fontFamily: font.displayBold, color: isDark ? '#FFFFFF' : '#141313', letterSpacing: -0.4 }}>{leap.index + 1}</Text>
             }
           </View>
           <View style={{ flex: 1 }}>
@@ -6807,7 +6807,7 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
               borderColor: stickerInk,
             }}>
               <Text style={{
-                fontSize: 10, fontFamily: 'DMSans_700Bold',
+                fontSize: 10, fontFamily: font.bodyBold,
                 textTransform: 'uppercase', letterSpacing: 0.8,
                 color: isActive ? (isDark ? leapColor : '#141313') : isDone ? (isDark ? brand.success : '#141313') : (isDark ? colors.textMuted : '#141313'),
               }}>
@@ -6843,7 +6843,7 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
           })}
         </View>
         <Text style={{
-          fontSize: 11, fontFamily: 'DMSans_600SemiBold', textAlign: 'center',
+          fontSize: 11, fontFamily: font.bodySemiBold, textAlign: 'center',
           color: ink3, marginTop: 4,
         }}>
           {isDone ? `All ${GROWTH_LEAPS.length} leaps completed · Wk ${leap.weekAge}` : `${leap.completedCount}/${GROWTH_LEAPS.length} leaps completed · Wk ${leap.week}`}
@@ -6877,7 +6877,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
   phaseIndex: number
   leapColor: string
 }) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, font } = useTheme()
   const [selectedLeapIdx, setSelectedLeapIdx] = useState<number | null>(null)
   const gl = GROWTH_LEAPS[leap.index]
   if (!gl) return null
@@ -6915,8 +6915,8 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
             <X size={16} color={ink2} strokeWidth={2} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>Growth Leaps</Text>
-            <Text style={{ fontSize: 11, fontFamily: 'DMSans_500Medium', color: ink3, marginTop: 1 }}>{childName} · Week {leap.weekAge}</Text>
+            <Text style={{ fontSize: 18, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>Growth Leaps</Text>
+            <Text style={{ fontSize: 11, fontFamily: font.bodyMedium, color: ink3, marginTop: 1 }}>{childName} · Week {leap.weekAge}</Text>
           </View>
         </View>
 
@@ -6932,19 +6932,19 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
                 <EmojiSticker size={64} style={{ opacity: 0.85 }}>{heroEmoji}</EmojiSticker>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                <Text style={{ fontSize: 11, fontFamily: font.bodySemiBold, color: ink3, textTransform: 'uppercase', letterSpacing: 1.5 }}>
                   {isDone ? 'All complete' : `Leap #${leap.index + 1}`}
                 </Text>
                 <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: heroBadgeBg, borderWidth: 1, borderColor: line }}>
-                  <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: heroBadgeInk, letterSpacing: 0.8 }}>
+                  <Text style={{ fontSize: 10, fontFamily: font.bodySemiBold, color: heroBadgeInk, letterSpacing: 0.8 }}>
                     {heroBadgeText}
                   </Text>
                 </View>
               </View>
-              <Text style={{ fontSize: 24, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.5, lineHeight: 28, maxWidth: '78%' }}>
+              <Text style={{ fontSize: 24, fontFamily: font.display, color: ink, letterSpacing: -0.5, lineHeight: 28, maxWidth: '78%' }}>
                 {isDone ? `Way to go, ${childName}!` : gl.name}
               </Text>
-              <Text style={{ fontSize: 12, fontFamily: 'DMSans_400Regular', color: ink2, lineHeight: 17, maxWidth: '85%' }}>
+              <Text style={{ fontSize: 12, fontFamily: font.body, color: ink2, lineHeight: 17, maxWidth: '85%' }}>
                 {isDone
                   ? `${childName} has completed all ${GROWTH_LEAPS.length} Wonder Weeks.`
                   : `${leap.completedCount} of ${GROWTH_LEAPS.length} leaps done · Tap any node to learn more.`}
@@ -6955,10 +6955,10 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
           {/* Vertical leap path */}
           <View style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <EmojiSticker size={18}>🛤️</EmojiSticker>
-            <Text style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>The 10-Leap Path</Text>
+            <Text style={{ fontSize: 15, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>The 10-Leap Path</Text>
             <View style={{ flex: 1 }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={{ fontSize: 9, fontFamily: 'DMSans_600SemiBold', color: ink3, letterSpacing: 0.6, textTransform: 'uppercase', marginRight: 2 }}>Intensity</Text>
+              <Text style={{ fontSize: 9, fontFamily: font.bodySemiBold, color: ink3, letterSpacing: 0.6, textTransform: 'uppercase', marginRight: 2 }}>Intensity</Text>
               <View style={{ flexDirection: 'row', gap: 2 }}>
                 {[1,2,3,4,5].map((n) => (
                   <View key={n} style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#EE7B6D' }} />
@@ -7143,21 +7143,21 @@ function LeapTimelinePath({
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1 }}>
+                <Text style={{ fontSize: 10, fontFamily: font.bodySemiBold, color: ink3, textTransform: 'uppercase', letterSpacing: 1 }}>
                   Leap #{n.i + 1}
                 </Text>
                 <DifficultyDots difficulty={n.g.difficulty} muted={ink3} />
                 <View style={{ flex: 1 }} />
                 <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: statusBadgeBg, borderWidth: 1, borderColor: line }}>
-                  <Text style={{ fontSize: 9, fontFamily: 'DMSans_600SemiBold', color: statusBadgeInk, letterSpacing: 0.6 }}>
+                  <Text style={{ fontSize: 9, fontFamily: font.bodySemiBold, color: statusBadgeInk, letterSpacing: 0.6 }}>
                     {statusBadge}
                   </Text>
                 </View>
               </View>
-              <Text style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+              <Text style={{ fontSize: 15, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>
                 {n.g.name}
               </Text>
-              <Text style={{ fontSize: 11, fontFamily: 'DMSans_400Regular', color: ink3, lineHeight: 15 }} numberOfLines={2}>
+              <Text style={{ fontSize: 11, fontFamily: font.body, color: ink3, lineHeight: 15 }} numberOfLines={2}>
                 {n.g.desc}
               </Text>
             </View>
@@ -7176,7 +7176,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
   childName: string
   onClose: () => void
 }) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, font } = useTheme()
   const g = GROWTH_LEAPS[leapIdx]
   if (!g) return null
 
@@ -7214,13 +7214,13 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
             <X size={16} color={ink2} strokeWidth={2} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+            <Text style={{ fontSize: 10, fontFamily: font.bodySemiBold, color: ink3, textTransform: 'uppercase', letterSpacing: 1.5 }}>
               Leap #{leapIdx + 1}
             </Text>
-            <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>{g.name}</Text>
+            <Text style={{ fontSize: 18, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>{g.name}</Text>
           </View>
           <View style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: badgeBg, borderWidth: 1, borderColor: line }}>
-            <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: badgeInk, letterSpacing: 0.8 }}>{badgeText}</Text>
+            <Text style={{ fontSize: 10, fontFamily: font.bodySemiBold, color: badgeInk, letterSpacing: 0.8 }}>{badgeText}</Text>
           </View>
         </View>
 
@@ -7234,10 +7234,10 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
             <View style={{ position: 'absolute', right: -4, top: -6, transform: [{ rotate: '12deg' }] }}>
               <EmojiSticker size={72} style={{ opacity: 0.85 }}>{heroEmoji}</EmojiSticker>
             </View>
-            <Text style={{ fontSize: 22, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.4, lineHeight: 26, maxWidth: '78%' }}>
+            <Text style={{ fontSize: 22, fontFamily: font.display, color: ink, letterSpacing: -0.4, lineHeight: 26, maxWidth: '78%' }}>
               {g.desc}
             </Text>
-            <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, lineHeight: 20, marginTop: 4, maxWidth: '92%' }}>
+            <Text style={{ fontSize: 13, fontFamily: font.body, color: ink2, lineHeight: 20, marginTop: 4, maxWidth: '92%' }}>
               {g.brainNote}
             </Text>
           </View>
@@ -7247,16 +7247,16 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
             <View style={{ flex: 1, backgroundColor: pinkSoft, borderRadius: 20, borderWidth: 1, borderColor: line, padding: 14 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <EmojiSticker size={14}>📅</EmojiSticker>
-                <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Typical Age</Text>
+                <Text style={{ fontSize: 10, fontFamily: font.bodySemiBold, color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Typical Age</Text>
               </View>
-              <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 4, letterSpacing: -0.3 }}>{g.ageRange}</Text>
+              <Text style={{ fontSize: 18, fontFamily: font.display, color: ink, marginTop: 4, letterSpacing: -0.3 }}>{g.ageRange}</Text>
             </View>
             <View style={{ flex: 1, backgroundColor: blueSoft, borderRadius: 20, borderWidth: 1, borderColor: line, padding: 14 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <EmojiSticker size={14}>⏱️</EmojiSticker>
-                <Text style={{ fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Duration</Text>
+                <Text style={{ fontSize: 10, fontFamily: font.bodySemiBold, color: ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>Duration</Text>
               </View>
-              <Text style={{ fontSize: 18, fontFamily: 'Fraunces_600SemiBold', color: ink, marginTop: 4, letterSpacing: -0.3 }}>{g.duration}</Text>
+              <Text style={{ fontSize: 18, fontFamily: font.display, color: ink, marginTop: 4, letterSpacing: -0.3 }}>{g.duration}</Text>
             </View>
           </View>
 
@@ -7264,7 +7264,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
               <EmojiSticker size={20}>🌊</EmojiSticker>
-              <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>The 3 Phases</Text>
+              <Text style={{ fontSize: 13, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>The 3 Phases</Text>
             </View>
             {g.phases.map((phase, pi) => {
               const done = phaseDone[pi]
@@ -7278,10 +7278,10 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
                 }}>
                   <EmojiSticker size={28}>{done ? '✅' : PHASE_EMOJI[pi]}</EmojiSticker>
                   <View style={{ flex: 1, gap: 2 }}>
-                    <Text style={{ fontSize: 14, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+                    <Text style={{ fontSize: 14, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>
                       {phase.label}{current ? '  · happening now' : ''}
                     </Text>
-                    <Text style={{ fontSize: 12, fontFamily: 'DMSans_400Regular', color: ink3, lineHeight: 17 }}>
+                    <Text style={{ fontSize: 12, fontFamily: font.body, color: ink3, lineHeight: 17 }}>
                       {phase.desc}
                     </Text>
                   </View>
@@ -7294,7 +7294,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <EmojiSticker size={20}>👀</EmojiSticker>
-              <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+              <Text style={{ fontSize: 13, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>
                 {isThisActive ? `Signs ${childName} may show` : 'Signs to watch for'}
               </Text>
             </View>
@@ -7304,7 +7304,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
                   paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
                   backgroundColor: pinkSoft, borderWidth: 1, borderColor: line,
                 }}>
-                  <Text style={{ fontSize: 12, fontFamily: 'DMSans_500Medium', color: ink2 }}>
+                  <Text style={{ fontSize: 12, fontFamily: font.bodyMedium, color: ink2 }}>
                     {sign}
                   </Text>
                 </View>
@@ -7316,7 +7316,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <EmojiSticker size={20}>💪</EmojiSticker>
-              <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+              <Text style={{ fontSize: 13, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>
                 {isThisDone ? 'Skills gained' : isThisActive ? 'Skills emerging now' : 'Skills that will emerge'}
               </Text>
             </View>
@@ -7324,7 +7324,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
               {g.skills.map((skill, i) => (
                 <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
                   <EmojiSticker size={14} style={{ marginTop: 1 }}>{isThisDone ? '✅' : '✨'}</EmojiSticker>
-                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, flex: 1, lineHeight: 19 }}>
+                  <Text style={{ fontSize: 13, fontFamily: font.body, color: ink2, flex: 1, lineHeight: 19 }}>
                     {skill}
                   </Text>
                 </View>
@@ -7336,7 +7336,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <EmojiSticker size={20}>🎯</EmojiSticker>
-              <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.2 }}>
+              <Text style={{ fontSize: 13, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>
                 Activities to support this leap
               </Text>
             </View>
@@ -7347,9 +7347,9 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
                   padding: 14, flexDirection: 'row', gap: 12, alignItems: 'flex-start',
                 }}>
                   <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: greenSoft, borderWidth: 1, borderColor: line, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 12, fontFamily: 'Fraunces_600SemiBold', color: ink }}>{i + 1}</Text>
+                    <Text style={{ fontSize: 12, fontFamily: font.display, color: ink }}>{i + 1}</Text>
                   </View>
-                  <Text style={{ fontSize: 13, fontFamily: 'DMSans_400Regular', color: ink2, flex: 1, lineHeight: 20 }}>{act}</Text>
+                  <Text style={{ fontSize: 13, fontFamily: font.body, color: ink2, flex: 1, lineHeight: 20 }}>{act}</Text>
                 </View>
               ))}
             </View>
@@ -7361,7 +7361,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
             padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center',
           }}>
             <EmojiSticker size={30}>💡</EmojiSticker>
-            <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: ink, flex: 1, lineHeight: 19 }}>{g.tip}</Text>
+            <Text style={{ fontSize: 13, fontFamily: font.bodyMedium, color: ink, flex: 1, lineHeight: 19 }}>{g.tip}</Text>
           </View>
 
           {/* Done celebration */}
@@ -7371,7 +7371,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
               padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center',
             }}>
               <EmojiSticker size={30}>🎉</EmojiSticker>
-              <Text style={{ fontSize: 13, fontFamily: 'Fraunces_600SemiBold', color: ink, flex: 1, letterSpacing: -0.2 }}>
+              <Text style={{ fontSize: 13, fontFamily: font.display, color: ink, flex: 1, letterSpacing: -0.2 }}>
                 {childName} has completed this leap!
               </Text>
             </View>
@@ -7387,7 +7387,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
 function QuickBtn({ icon: Icon, label, color, onPress }: {
   icon: typeof Utensils; label: string; color: string; onPress?: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font } = useTheme()
   return (
     <Pressable onPress={onPress} style={s.quickBtn}>
       <View style={[s.quickBtnInner, { backgroundColor: color + '12', borderRadius: radius.md }]}>
@@ -7704,49 +7704,49 @@ const s = StyleSheet.create({
   // Child pills — soft tint inactive, colored bg active
   childPills: { flexDirection: 'row', gap: 8, paddingHorizontal: 2, marginBottom: 4, flexWrap: 'nowrap', alignItems: 'center' },
   childPill: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, paddingHorizontal: 16 },
-  pillName: { fontSize: 14, fontFamily: 'DMSans_600SemiBold' },
-  pillAge: { fontSize: 11, fontFamily: 'DMSans_500Medium', opacity: 0.75 },
+  pillName: { fontSize: 14, fontFamily: font.bodySemiBold },
+  pillAge: { fontSize: 11, fontFamily: font.bodyMedium, opacity: 0.75 },
   addChildBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 
   // Date range picker — text-only inactive, soft-accent pill active
   dateRangeRow: { flexDirection: 'row', gap: 6, marginBottom: 6, paddingLeft: 2, paddingRight: 16, paddingVertical: 8 },
   dateRangePill: { paddingVertical: 7, paddingHorizontal: 12, borderWidth: 1 },
-  dateRangeText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  dateRangeText: { fontSize: 13, fontFamily: font.bodySemiBold },
 
   // Past 7 days card — paper bg with Fraunces title + chip legend
   miniRingsCard: { padding: 14, borderWidth: 1, gap: 12, borderRadius: 20 },
   miniRingsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  miniRingsTitle: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.2 },
+  miniRingsTitle: { fontSize: 15, fontFamily: font.display, letterSpacing: -0.2 },
   miniMetricPicker: { flexDirection: 'row', gap: 6 },
   miniMetricBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, paddingHorizontal: 9, borderRadius: 999, borderWidth: 1 },
   miniMetricDot: { width: 8, height: 8, borderRadius: 4 },
-  miniMetricLabel: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  miniMetricLabel: { fontSize: 11, fontFamily: font.bodySemiBold },
   miniRingsRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 },
   miniRingCol: { alignItems: 'center', gap: 6 },
   miniRingOuter: { alignItems: 'center', justifyContent: 'center' },
-  miniRingLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
+  miniRingLabel: { fontSize: 10, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.2 },
 
   // Hero — concentric rings + Fraunces number + mono-caps unit + orange-soft pill
   heroWrap: { alignItems: 'center', paddingVertical: 4 },
   heroCenter: { alignItems: 'center', gap: 2 },
-  heroNumber: { fontSize: 38, letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' },
-  heroUnit: { fontSize: 9, letterSpacing: 1.8, textTransform: 'uppercase', fontFamily: 'DMSans_600SemiBold' },
+  heroNumber: { fontSize: 38, letterSpacing: -1, fontFamily: font.display },
+  heroUnit: { fontSize: 9, letterSpacing: 1.8, textTransform: 'uppercase', fontFamily: font.bodySemiBold },
   heroBadge: { marginTop: 4, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999 },
-  heroBadgeText: { fontSize: 10, fontFamily: 'DMSans_600SemiBold' },
+  heroBadgeText: { fontSize: 10, fontFamily: font.bodySemiBold },
 
   // Legend — paper stat tiles: dot + MONO-CAPS label / Fraunces value / small sub
   legendRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   legendItem: { flex: 1, gap: 2, paddingVertical: 12, paddingHorizontal: 12, borderWidth: 1 },
   legendDotRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
-  legendValue: { fontSize: 22, letterSpacing: -0.4, marginTop: 2, fontFamily: 'Fraunces_600SemiBold' },
-  legendTarget: { fontSize: 11, fontFamily: 'DMSans_400Regular', marginTop: 2 },
+  legendLabel: { fontSize: 10, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.2 },
+  legendValue: { fontSize: 22, letterSpacing: -0.4, marginTop: 2, fontFamily: font.display },
+  legendTarget: { fontSize: 11, fontFamily: font.body, marginTop: 2 },
 
   // Section header
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  sectionTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
-  sectionLink: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  sectionTitle: { fontSize: 22, fontFamily: font.display, letterSpacing: -0.4 },
+  sectionLink: { fontSize: 13, fontFamily: font.bodySemiBold },
 
   // Metric cards — paper bg + mono-caps label + Fraunces value + ink-3 sub
   metricsRow: { flexDirection: 'row', gap: 8, paddingVertical: 4 },
@@ -7754,11 +7754,11 @@ const s = StyleSheet.create({
   metricCard: { flex: 1, height: 182, padding: 14, borderWidth: 1, gap: 2, borderRadius: 18 },
   metricHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
   metricHeaderIcon: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  metricLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
-  metricValue: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', marginTop: 6, letterSpacing: -0.2 },
-  metricSmall: { fontSize: 11, fontFamily: 'DMSans_400Regular', marginTop: 2 },
+  metricLabel: { fontSize: 10, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.2 },
+  metricValue: { fontSize: 15, fontFamily: font.display, marginTop: 6, letterSpacing: -0.2 },
+  metricSmall: { fontSize: 11, fontFamily: font.body, marginTop: 2 },
   metricEmpty: { height: 50, alignItems: 'center', justifyContent: 'center' },
-  metricBigNumber: { fontSize: 28, textAlign: 'center', marginVertical: 4, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
+  metricBigNumber: { fontSize: 28, textAlign: 'center', marginVertical: 4, fontFamily: font.display, letterSpacing: -0.4 },
 
   // Diaper card
   diaperBar: { flexDirection: 'row', height: 6, width: '100%', overflow: 'hidden', marginTop: 4 },
@@ -7767,16 +7767,16 @@ const s = StyleSheet.create({
   // Full-width diaper card
   diaperFullCard: { padding: 16, borderWidth: 1, marginHorizontal: 0, borderRadius: 20 },
   diaperCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
-  diaperCardTitle: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
-  diaperBigCount: { fontSize: 40, letterSpacing: -1, lineHeight: 44, fontFamily: 'Fraunces_600SemiBold' },
+  diaperCardTitle: { fontSize: 10, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.2 },
+  diaperBigCount: { fontSize: 40, letterSpacing: -1, lineHeight: 44, fontFamily: font.display },
   diaperMainRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   diaperChips: { flex: 1, flexDirection: 'row', gap: 6 },
   diaperChip: { flex: 1, flexDirection: 'column', alignItems: 'center', paddingVertical: 8, borderRadius: 14, borderWidth: 1, gap: 2 },
-  diaperChipLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1 },
-  diaperChipCount: { fontSize: 16, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.2 },
+  diaperChipLabel: { fontSize: 10, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1 },
+  diaperChipCount: { fontSize: 16, fontFamily: font.display, letterSpacing: -0.2 },
   diaperSparkRow: { flexDirection: 'row', gap: 2, marginTop: 10, alignItems: 'flex-end' },
   diaperSparkCol: { flex: 1, alignItems: 'center', gap: 3 },
-  diaperSparkLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 0.6 },
+  diaperSparkLabel: { fontSize: 10, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 0.6 },
 
   // Mood bars
   moodBars: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 50, marginBottom: 4 },
@@ -7790,19 +7790,19 @@ const s = StyleSheet.create({
   // Health card (hc)
   hcCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderWidth: 1, borderRadius: 20 },
   hcIconWrap: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  hcEyebrow: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
-  hcPrimary: { fontSize: 15, fontFamily: 'DMSans_600SemiBold', lineHeight: 20 },
-  hcSecondary: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
+  hcEyebrow: { fontSize: 10, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.2 },
+  hcPrimary: { fontSize: 15, fontFamily: font.bodySemiBold, lineHeight: 20 },
+  hcSecondary: { fontSize: 12, fontFamily: font.bodyMedium },
   hcDetailRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginTop: 2 },
   hcDetailItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  hcDetail: { fontSize: 12, fontFamily: 'DMSans_400Regular' },
+  hcDetail: { fontSize: 12, fontFamily: font.body },
   healthStatusPill: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999 },
-  healthStatusText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  healthStatusText: { fontSize: 11, fontFamily: font.bodySemiBold },
   // legacy health row (used by other parts)
   healthList: { gap: 6, marginBottom: 2 },
   healthRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   healthCheck: { width: 14, height: 14, borderRadius: 3, alignItems: 'center', justifyContent: 'center' },
-  healthLabel: { fontSize: 11, fontFamily: 'DMSans_500Medium', flex: 1 },
+  healthLabel: { fontSize: 11, fontFamily: font.bodyMedium, flex: 1 },
 
   // Quick actions
   quickRow: { flexDirection: 'row', justifyContent: 'space-between' },
@@ -7814,11 +7814,11 @@ const s = StyleSheet.create({
   leapCard: { padding: 16, gap: 12, borderWidth: 1, borderRadius: 22 },
   leapHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   leapNumCircle: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 1, flexShrink: 0 },
-  leapNumText: { fontSize: 17, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
-  leapTitle: { fontSize: 17, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 },
-  leapDesc: { fontSize: 12, fontFamily: 'DMSans_400Regular', marginTop: 2, lineHeight: 16 },
+  leapNumText: { fontSize: 17, fontFamily: font.display, letterSpacing: -0.4 },
+  leapTitle: { fontSize: 17, fontFamily: font.display, letterSpacing: -0.3 },
+  leapDesc: { fontSize: 12, fontFamily: font.body, marginTop: 2, lineHeight: 16 },
   leapBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: 1 },
-  leapBadgeText: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 0.6 },
+  leapBadgeText: { fontSize: 10, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 0.6 },
   leapAllDots: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
   leapAllDot: { width: 12, height: 12, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   leapAllDotsLabel: { fontSize: 9, fontWeight: '600', textAlign: 'center', color: 'rgba(255,255,255,0.35)' },
@@ -7854,15 +7854,15 @@ const s = StyleSheet.create({
   addReminderBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 12 },
   addReminderBtnText: { fontSize: 12, fontWeight: '700' },
   reminderInputCard: { padding: 16, borderWidth: 1, gap: 10 },
-  reminderInput: { fontSize: 14, fontFamily: 'DMSans_400Regular' },
+  reminderInput: { fontSize: 14, fontFamily: font.body },
   reminderInputActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   reminderDateBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, flex: 1 },
   reminderDateBtnText: { fontSize: 11, fontWeight: '600', flex: 1 },
   reminderSaveBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
-  reminderSaveBtnText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold', color: '#FFF' },
-  reminderDueText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  reminderSaveBtnText: { fontSize: 13, fontFamily: font.bodySemiBold, color: '#FFF' },
+  reminderDueText: { fontSize: 11, fontFamily: font.bodySemiBold },
   reminderChildTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1 },
-  reminderChildTagText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  reminderChildTagText: { fontSize: 11, fontFamily: font.bodySemiBold },
   childTagChip: { paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1 },
   childTagChipText: { fontSize: 11, fontWeight: '600' },
   reminderSeeAll: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 11, paddingHorizontal: 16 },
@@ -7874,15 +7874,15 @@ const s = StyleSheet.create({
   reminderModalOverlay: { flex: 1, backgroundColor: 'rgba(10,8,6,0.55)', justifyContent: 'flex-end' },
   reminderModal: { height: '90%', borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden' },
   reminderModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 14 },
-  reminderModalTitle: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
+  reminderModalTitle: { fontSize: 24, fontFamily: font.display, letterSpacing: -0.4 },
   reminderMetricStrip: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 24, marginTop: 16, borderRadius: 20, borderWidth: 1, overflow: 'hidden' },
   reminderMetricItem: { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 2 },
-  reminderMetricVal: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
-  reminderMetricLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
+  reminderMetricVal: { fontSize: 24, fontFamily: font.display, letterSpacing: -0.4 },
+  reminderMetricLabel: { fontSize: 10, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.2 },
   reminderMetricDivider: { width: 1, height: 40 },
   reminderTabs: { flexDirection: 'row', borderBottomWidth: 1, marginTop: 12 },
   reminderTab: { flex: 1, alignItems: 'center', paddingBottom: 10, paddingTop: 6 },
-  reminderTabText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold', letterSpacing: 0.1 },
+  reminderTabText: { fontSize: 13, fontFamily: font.bodySemiBold, letterSpacing: 0.1 },
   reminderTabLine: { height: 2.5, width: '50%', borderRadius: 2, marginTop: 8 },
   reminderModalEmpty: { alignItems: 'center', paddingVertical: 48, gap: 8 },
 
@@ -7920,9 +7920,9 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(20,19,19,0.10)',
   },
-  grandmaTitle: { fontSize: 18, fontFamily: 'Fraunces_700Bold', fontWeight: '700', color: '#141313', letterSpacing: -0.4, lineHeight: 22 },
-  grandmaDesc: { fontSize: 12.5, fontFamily: 'DMSans_400Regular', color: '#3A3533', marginTop: 3, lineHeight: 16 },
-  grandmaDescItalic: { fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic', fontSize: 13.5, color: '#3A3533' },
+  grandmaTitle: { fontSize: 18, fontFamily: font.displayBold, fontWeight: '700', color: '#141313', letterSpacing: -0.4, lineHeight: 22 },
+  grandmaDesc: { fontSize: 12.5, fontFamily: font.body, color: '#3A3533', marginTop: 3, lineHeight: 16 },
+  grandmaDescItalic: { fontFamily: font.italic, fontStyle: 'italic', fontSize: 13.5, color: '#3A3533' },
 
   // Rewards — paper cream card with ink text and sticker-color stats
   rewardsCard: {
@@ -7946,14 +7946,14 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(20,19,19,0.10)',
   },
-  rewardsTitle: { fontSize: 17, fontFamily: 'Fraunces_700Bold', fontWeight: '700', color: '#141313', letterSpacing: -0.4, lineHeight: 21 },
-  rewardsDesc: { fontSize: 12, fontFamily: 'DMSans_400Regular', color: '#6E6763', marginTop: 2, lineHeight: 15 },
-  rewardsDescItalic: { fontFamily: 'InstrumentSerif_400Regular_Italic', fontStyle: 'italic', fontSize: 13, color: '#6E6763' },
+  rewardsTitle: { fontSize: 17, fontFamily: font.displayBold, fontWeight: '700', color: '#141313', letterSpacing: -0.4, lineHeight: 21 },
+  rewardsDesc: { fontSize: 12, fontFamily: font.body, color: '#6E6763', marginTop: 2, lineHeight: 15 },
+  rewardsDescItalic: { fontFamily: font.italic, fontStyle: 'italic', fontSize: 13, color: '#6E6763' },
   rewardsStats: { flexDirection: 'row', gap: 10, alignItems: 'center', marginRight: 4 },
   rewardsStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   rewardsStatNum: {
     fontSize: 15,
-    fontFamily: 'Fraunces_700Bold',
+    fontFamily: font.displayBold,
     fontWeight: '700',
     letterSpacing: -0.3,
   },
@@ -7962,7 +7962,7 @@ const s = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(10,8,6,0.55)', justifyContent: 'flex-end' },
   modalContent: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 40, height: '92%', borderTopLeftRadius: 28, borderTopRightRadius: 28 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  modalTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 },
+  modalTitle: { fontSize: 22, fontFamily: font.display, letterSpacing: -0.4 },
   modalClose: { width: 32, height: 32, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   modalSubtitle: { fontSize: 12, fontWeight: '600', marginBottom: 20 },
 
@@ -7983,16 +7983,16 @@ const s = StyleSheet.create({
 
   // Health/Activity modal
   modalStatCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, marginTop: 12, borderRadius: 16, borderWidth: 1 },
-  modalStatLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', textTransform: 'uppercase', letterSpacing: 1.2 },
-  modalStatValue: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', marginTop: 2, letterSpacing: -0.2 },
-  modalStatExtra: { fontSize: 12, fontFamily: 'DMSans_600SemiBold' },
-  modalSectionTitle: { fontSize: 17, fontFamily: 'Fraunces_700Bold', marginTop: 20, marginBottom: 10, letterSpacing: -0.3 },
+  modalStatLabel: { fontSize: 10, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.2 },
+  modalStatValue: { fontSize: 18, fontFamily: font.display, marginTop: 2, letterSpacing: -0.2 },
+  modalStatExtra: { fontSize: 12, fontFamily: font.bodySemiBold },
+  modalSectionTitle: { fontSize: 17, fontFamily: font.displayBold, marginTop: 20, marginBottom: 10, letterSpacing: -0.3 },
   modalSectionRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 22, marginBottom: 8 },
 
   modalTaskRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderBottomWidth: 1 },
   modalTaskCheck: { width: 20, height: 20, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-  modalTaskLabel: { flex: 1, fontSize: 14, fontFamily: 'DMSans_500Medium' },
-  modalTaskStatus: { fontSize: 12, fontFamily: 'DMSans_600SemiBold' },
+  modalTaskLabel: { flex: 1, fontSize: 14, fontFamily: font.bodyMedium },
+  modalTaskStatus: { fontSize: 12, fontFamily: font.bodySemiBold },
 
   modalCatRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 },
   modalCatDot: { width: 10, height: 10, borderRadius: 5 },
@@ -8009,65 +8009,65 @@ const s = StyleSheet.create({
   // Set Goals button
   setGoalsBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1.5, borderRadius: 999 },
   setGoalsBtnIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  setGoalsBtnText: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.2 },
-  setGoalsBtnHint: { flex: 1, fontSize: 12, fontFamily: 'DMSans_400Regular', textAlign: 'right' },
+  setGoalsBtnText: { fontSize: 15, fontFamily: font.display, letterSpacing: -0.2 },
+  setGoalsBtnHint: { flex: 1, fontSize: 12, fontFamily: font.body, textAlign: 'right' },
 
   // Goal Setting Modal (gs = goal sheet)
   gsSheet: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 36, borderTopLeftRadius: 36, borderTopRightRadius: 36 },
   gsDragHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
   gsHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 16 },
-  gsTitle: { fontSize: 28, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.6, lineHeight: 32 },
-  gsSubtitle: { fontSize: 12, fontFamily: 'DMSans_400Regular', marginTop: 4, lineHeight: 17 },
+  gsTitle: { fontSize: 28, fontFamily: font.displayBold, letterSpacing: -0.6, lineHeight: 32 },
+  gsSubtitle: { fontSize: 12, fontFamily: font.body, marginTop: 4, lineHeight: 17 },
   gsCloseBtn: { width: 34, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center', borderWidth: 1, marginTop: 2 },
   gsAgeBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, alignSelf: 'flex-start', marginBottom: 18 },
-  gsAgeBannerText: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
+  gsAgeBannerText: { fontSize: 12, fontFamily: font.bodyMedium },
   gsCardList: { gap: 10, paddingBottom: 4 },
   gsCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: 20, borderWidth: 1 },
   gsCardIcon: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   gsCardInfo: { flex: 1 },
-  gsCardLabel: { fontSize: 15, fontFamily: 'DMSans_600SemiBold' },
-  gsCardDesc: { fontSize: 11, fontFamily: 'DMSans_400Regular', marginTop: 2 },
+  gsCardLabel: { fontSize: 15, fontFamily: font.bodySemiBold },
+  gsCardDesc: { fontSize: 11, fontFamily: font.body, marginTop: 2 },
   gsStepper: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   gsStepBtn: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   gsStepValue: { alignItems: 'center', minWidth: 52 },
-  gsStepNum: { fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, lineHeight: 26 },
-  gsStepUnit: { fontSize: 9, fontFamily: 'DMSans_500Medium', textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 1 },
+  gsStepNum: { fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, lineHeight: 26 },
+  gsStepUnit: { fontSize: 9, fontFamily: font.bodyMedium, textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 1 },
   gsFooter: { marginTop: 20, gap: 10 },
   gsUseSuggestedBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 13, borderRadius: 999, borderWidth: 1 },
-  gsUseSuggestedText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  gsUseSuggestedText: { fontSize: 13, fontFamily: font.bodySemiBold },
   gsSaveBtn: { alignItems: 'center', paddingVertical: 17, borderRadius: 999 },
-  gsSaveBtnText: { fontSize: 16, fontFamily: 'DMSans_700Bold', color: '#FFFFFF' },
+  gsSaveBtnText: { fontSize: 16, fontFamily: font.bodyBold, color: '#FFFFFF' },
 
   // Health tags (allergies)
   healthTagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
   healthTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999 },
-  healthTagText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  healthTagText: { fontSize: 11, fontFamily: font.bodySemiBold },
 
   // Health Detail Modal (hd = health detail)
   hdSleepBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 16 },
   hdSleepIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  hdBannerLabel: { fontSize: 10, fontFamily: 'DMSans_600SemiBold', letterSpacing: 1.2, textTransform: 'uppercase' },
-  hdBannerValue: { fontSize: 20, fontFamily: 'Fraunces_700Bold', marginTop: 2, letterSpacing: -0.3 },
-  hdBannerStat: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 },
-  hdBannerStatSub: { fontSize: 11, fontFamily: 'DMSans_400Regular' },
+  hdBannerLabel: { fontSize: 10, fontFamily: font.bodySemiBold, letterSpacing: 1.2, textTransform: 'uppercase' },
+  hdBannerValue: { fontSize: 20, fontFamily: font.displayBold, marginTop: 2, letterSpacing: -0.3 },
+  hdBannerStat: { fontSize: 18, fontFamily: font.display, letterSpacing: -0.3 },
+  hdBannerStatSub: { fontSize: 11, fontFamily: font.body },
   hdAllergyTag: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 },
-  hdAllergyText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  hdAllergyText: { fontSize: 13, fontFamily: font.bodySemiBold },
   hdVaxIcon: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   hdUrgencyBadge: { paddingVertical: 2, paddingHorizontal: 8, borderRadius: 999 },
-  hdUrgencyText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
-  hdApptText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  hdUrgencyText: { fontSize: 11, fontFamily: font.bodySemiBold },
+  hdApptText: { fontSize: 11, fontFamily: font.bodySemiBold },
   hdVaxBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 },
-  hdVaxBtnText: { fontSize: 12, fontFamily: 'DMSans_600SemiBold' },
-  hdChangeDateText: { fontSize: 11, fontFamily: 'DMSans_500Medium', textAlign: 'right' },
+  hdVaxBtnText: { fontSize: 12, fontFamily: font.bodySemiBold },
+  hdChangeDateText: { fontSize: 11, fontFamily: font.bodyMedium, textAlign: 'right' },
   hdGrowthCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, borderWidth: 1, marginTop: 4 },
   hdGrowthIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  hdGrowthLabel: { fontSize: 9, fontFamily: 'DMSans_600SemiBold', letterSpacing: 1.2, textTransform: 'uppercase' },
-  hdGrowthValue: { fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, marginTop: 2 },
-  hdGrowthDate: { fontSize: 11, fontFamily: 'DMSans_500Medium' },
+  hdGrowthLabel: { fontSize: 9, fontFamily: font.bodySemiBold, letterSpacing: 1.2, textTransform: 'uppercase' },
+  hdGrowthValue: { fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3, marginTop: 2 },
+  hdGrowthDate: { fontSize: 11, fontFamily: font.bodyMedium },
   hdHistoryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 999, marginTop: 20, marginBottom: 8 },
-  hdHistoryBtnText: { fontSize: 15, fontFamily: 'DMSans_700Bold', color: '#FFFFFF' },
+  hdHistoryBtnText: { fontSize: 15, fontFamily: font.bodyBold, color: '#FFFFFF' },
 
   // Vaccine schedule button (legacy — kept for date picker done button)
   vaccineScheduleBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 20, borderWidth: 1 },
-  vaccineScheduleBtnText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  vaccineScheduleBtnText: { fontSize: 11, fontFamily: font.bodySemiBold },
 })
