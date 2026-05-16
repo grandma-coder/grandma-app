@@ -5428,40 +5428,70 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                 )}
               </View>
 
-              {/* 3-tile breakdown — sticker cards */}
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                {[
-                  { Icon: Baby, value: feedingBreast.toLocaleString(), label: 'Breast', fill: StickerPalette.pinkSoft, accent: StickerPalette.pink, tilt: -2 },
-                  { Icon: Milk, value: feedingBottle.toLocaleString(), label: 'Bottle', fill: StickerPalette.blueSoft, accent: StickerPalette.blue, tilt: 2 },
-                  { Icon: Droplets, value: feedingMl > 0 ? `${feedingMl.toLocaleString()}ml` : '—', label: 'Total Vol', fill: StickerPalette.peachSoft, accent: StickerPalette.peach, tilt: -1.5 },
-                ].map((card, i) => (
-                  <View
-                    key={i}
-                    style={{
-                      flex: 1,
-                      backgroundColor: card.fill,
-                      borderRadius: 22,
-                      borderWidth: 1.5,
-                      borderColor: DIAPER_STICKER_INK,
-                      paddingVertical: 14,
-                      paddingHorizontal: 8,
-                      alignItems: 'center',
-                      shadowColor: DIAPER_STICKER_INK,
-                      shadowOffset: { width: 0, height: 3 },
-                      shadowOpacity: 0.12,
-                      shadowRadius: 6,
-                      elevation: 2,
-                      transform: [{ rotate: `${card.tilt}deg` }],
-                    }}
-                  >
-                    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: card.accent, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
-                      <card.Icon size={16} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
+              {/* 3-tile breakdown — sticker cards.
+                  When the total is non-zero but no logs carry a breast/bottle
+                  feedType (legacy or unrecorded), show a hint card instead of
+                  rendering "0 / 0 / —" tiles that imply broken data. */}
+              {(feedingBreast + feedingBottle) > 0 ? (
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {[
+                    { Icon: Baby, value: feedingBreast.toLocaleString(), label: 'Breast', fill: StickerPalette.pinkSoft, accent: StickerPalette.pink, tilt: -2 },
+                    { Icon: Milk, value: feedingBottle.toLocaleString(), label: 'Bottle', fill: StickerPalette.blueSoft, accent: StickerPalette.blue, tilt: 2 },
+                    { Icon: Droplets, value: feedingMl > 0 ? `${feedingMl.toLocaleString()}ml` : '—', label: 'Total Vol', fill: StickerPalette.peachSoft, accent: StickerPalette.peach, tilt: -1.5 },
+                  ].map((card, i) => (
+                    <View
+                      key={i}
+                      style={{
+                        flex: 1,
+                        backgroundColor: card.fill,
+                        borderRadius: 22,
+                        borderWidth: 1.5,
+                        borderColor: DIAPER_STICKER_INK,
+                        paddingVertical: 14,
+                        paddingHorizontal: 8,
+                        alignItems: 'center',
+                        shadowColor: DIAPER_STICKER_INK,
+                        shadowOffset: { width: 0, height: 3 },
+                        shadowOpacity: 0.12,
+                        shadowRadius: 6,
+                        elevation: 2,
+                        transform: [{ rotate: `${card.tilt}deg` }],
+                      }}
+                    >
+                      <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: card.accent, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+                        <card.Icon size={16} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
+                      </View>
+                      <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }} numberOfLines={1}>{card.value}</Text>
+                      <Text style={{ color: DIAPER_STICKER_INK, fontSize: 9.5, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{card.label}</Text>
                     </View>
-                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }} numberOfLines={1}>{card.value}</Text>
-                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 9.5, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{card.label}</Text>
+                  ))}
+                </View>
+              ) : (
+                <View
+                  style={{
+                    padding: 14,
+                    borderRadius: 18,
+                    borderWidth: 1.5,
+                    borderColor: DIAPER_STICKER_INK,
+                    backgroundColor: StickerPalette.peachSoft,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                  }}
+                >
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: StickerPalette.peach, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center' }}>
+                    <Baby size={18} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
                   </View>
-                ))}
-              </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: font.bodyBold, letterSpacing: -0.1 }}>
+                      No breast/bottle detail yet
+                    </Text>
+                    <Text style={{ color: '#6E6763', fontSize: 11.5, fontFamily: font.body, marginTop: 2, lineHeight: 15 }}>
+                      Tag each feed as breast or bottle when logging to see the breakdown here.
+                    </Text>
+                  </View>
+                </View>
+              )}
 
               {/* Breast vs Bottle proportion bar */}
               {(feedingBreast + feedingBottle) > 0 && (

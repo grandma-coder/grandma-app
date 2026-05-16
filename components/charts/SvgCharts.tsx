@@ -697,7 +697,10 @@ export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
                 },
               ]}
             >
-              <View style={bubbleClusterStyles.shine} />
+              {/* Shine highlight — only render in light mode. On dark backgrounds
+                  the white-55% blob reads as a stray gray dot, not a sticker
+                  highlight, so we drop it rather than fight the contrast. */}
+              {!isDark && <View style={bubbleClusterStyles.shine} />}
               <MoodFace
                 size={Math.round(size * 0.55)}
                 variant={variant}
