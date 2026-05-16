@@ -43,6 +43,7 @@ import {
 } from '../../lib/examData'
 import { Display, Body, MonoCaps } from '../../components/ui/Typography'
 import { childColor } from '../../components/ui/ChildPills'
+import { PaperAlert } from '../../components/ui/PaperAlert'
 
 const BEHAVIOR_COLORS: Record<ExamBehavior, string> = {
   'pre-pregnancy': brand.prePregnancy,
@@ -63,6 +64,7 @@ export default function ExamDetailScreen() {
   const signedUrls = useExamPhotoUrls(exam?.photos ?? [])
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<Exam | null>(null)
 
   if (isLoading || !exam) {
     return (
@@ -107,25 +109,23 @@ export default function ExamDetailScreen() {
   }
 
   function handleDelete(currentExam: Exam) {
-    Alert.alert('Delete exam?', 'This removes the record and its photos.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          setDeleting(true)
-          try {
-            await deleteExam(currentExam.id)
-            invalidate()
-            router.back()
-          } catch (e) {
-            Alert.alert('Delete failed', e instanceof Error ? e.message : 'Unknown error')
-          } finally {
-            setDeleting(false)
-          }
-        },
-      },
-    ])
+    setPendingDelete(currentExam)
+  }
+
+  async function confirmDelete() {
+    const currentExam = pendingDelete
+    if (!currentExam) return
+    setPendingDelete(null)
+    setDeleting(true)
+    try {
+      await deleteExam(currentExam.id)
+      invalidate()
+      router.back()
+    } catch (e) {
+      Alert.alert('Delete failed', e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const flagged = exam.extracted?.flagged ?? []
@@ -281,6 +281,17 @@ export default function ExamDetailScreen() {
           )}
         </View>
       </Modal>
+
+      <PaperAlert
+        visible={pendingDelete !== null}
+        title="Delete this exam?"
+        message="This removes the record and its photos."
+        buttons={[
+          { label: 'Cancel', variant: 'secondary' },
+          { label: 'Delete', variant: 'danger', onPress: confirmDelete },
+        ]}
+        onRequestClose={() => setPendingDelete(null)}
+      />
     </View>
   )
 }

@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { colors, brand, stickers, borderRadius, shadows } from '../constants/theme'
+import { useSavedToast } from '../components/ui/SavedToast'
 
 const ROLES = [
   { id: 'nanny', label: 'Nanny', icon: 'person-outline' as const },
@@ -15,6 +16,7 @@ const ROLES = [
 
 export default function InviteCaregiver() {
   const insets = useSafeAreaInsets()
+  const toast = useSavedToast()
   const child = useChildStore((s) => s.activeChild)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('nanny')
@@ -53,7 +55,7 @@ export default function InviteCaregiver() {
   async function copyLink() {
     if (!inviteLink) return
     await Clipboard.setStringAsync(inviteLink)
-    Alert.alert('Copied!', 'Share this link with the caregiver')
+    toast.show({ title: 'Copied!', message: 'Share this link with the caregiver.' })
   }
 
   return (

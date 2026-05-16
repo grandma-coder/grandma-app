@@ -46,6 +46,7 @@ import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
+import { PaperAlert } from '../../components/ui/PaperAlert'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
 import { Heart as HeartSticker, Flower as FlowerSticker, Star as StarSticker } from '../../components/ui/Stickers'
 import { ChildPill, childColor } from '../../components/ui/ChildPills'
@@ -89,6 +90,7 @@ export default function MemoriesScreen() {
 
   // Viewer: which post + which photo inside it
   const [viewPost, setViewPost] = useState<MemoryPost | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<MemoryPost | null>(null)
   const [viewPhotoIdx, setViewPhotoIdx] = useState(0)
 
   // Edit caption
@@ -265,20 +267,19 @@ export default function MemoriesScreen() {
   }
 
   // ─── Delete entire post ─────────────────────────────────────────
-  async function deletePost(post: MemoryPost) {
-    Alert.alert('Delete Memory', `Delete this memory and all ${post.photos.length} photo${post.photos.length > 1 ? 's' : ''}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete All', style: 'destructive',
-        onPress: async () => {
-          try {
-            await supabase.from('child_logs').delete().eq('id', post.logId)
-            setViewPost(null)
-            await loadMemories()
-          } catch (e: any) { Alert.alert('Error', e.message) }
-        },
-      },
-    ])
+  function deletePost(post: MemoryPost) {
+    setPendingDelete(post)
+  }
+
+  async function confirmDeletePost() {
+    const post = pendingDelete
+    if (!post) return
+    setPendingDelete(null)
+    try {
+      await supabase.from('child_logs').delete().eq('id', post.logId)
+      setViewPost(null)
+      await loadMemories()
+    } catch (e: any) { Alert.alert('Error', e.message) }
   }
 
   // ─── Edit caption ───────────────────────────────────────────────
@@ -609,6 +610,17 @@ export default function MemoriesScreen() {
           </ScrollView>
         </View>
       </Modal>
+
+      <PaperAlert
+        visible={pendingDelete !== null}
+        title="Delete this memory?"
+        message={pendingDelete ? `This removes the entry and all ${pendingDelete.photos.length} photo${pendingDelete.photos.length > 1 ? 's' : ''}.` : ''}
+        buttons={[
+          { label: 'Cancel', variant: 'secondary' },
+          { label: 'Delete', variant: 'danger', onPress: confirmDeletePost },
+        ]}
+        onRequestClose={() => setPendingDelete(null)}
+      />
     </View>
   )
 }

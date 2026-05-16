@@ -46,6 +46,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../../constants/theme'
+import { useSavedToast } from '../../../components/ui/SavedToast'
 import { channelSticker } from '../../../lib/channelSticker'
 
 const CREAM = '#F5EFE3'
@@ -74,6 +75,7 @@ const MEDIA_THUMB = (SCREEN_W - 48 - 8) / 4 // 4 columns
 export default function ChannelInfoScreen() {
   const { colors, radius, isDark } = useTheme()
   const insets = useSafeAreaInsets()
+  const toast = useSavedToast()
   const { id } = useLocalSearchParams<{ id: string }>()
 
   // Delete confirm modal state
@@ -304,7 +306,7 @@ export default function ChannelInfoScreen() {
               onPress: async () => {
                 try {
                   await transferChannelOwnership(id, m.user_id)
-                  Alert.alert('Done', `Ownership transferred to ${m.name ?? 'the new host'}.`)
+                  toast.show({ title: 'Done', message: `Ownership transferred to ${m.name ?? 'the new host'}.` })
                   load()
                 } catch (e: any) {
                   Alert.alert('Error', e.message)
@@ -372,7 +374,7 @@ export default function ChannelInfoScreen() {
         onPress: () => {
           import('expo-clipboard').then(({ setStringAsync }) => {
             setStringAsync(channelUrl)
-            Alert.alert('Copied!', 'Channel link copied to clipboard.')
+            toast.show({ title: 'Copied!', message: 'Channel link copied to clipboard.' })
           })
         },
       },

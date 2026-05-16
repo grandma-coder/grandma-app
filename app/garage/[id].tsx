@@ -32,6 +32,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { useSavedToast } from '../../components/ui/SavedToast'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import {
   fetchPost,
@@ -50,6 +51,7 @@ const SCREEN_W = Dimensions.get('window').width
 export default function PostDetail() {
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
+  const toast = useSavedToast()
   const { id } = useLocalSearchParams<{ id: string }>()
 
   const [post, setPost] = useState<GaragePost | null>(null)
@@ -129,7 +131,7 @@ export default function PostDetail() {
         onPress: () => {
           import('expo-clipboard').then(({ setStringAsync }) => {
             setStringAsync(postUrl)
-            Alert.alert('Copied!', 'Link copied to clipboard')
+            toast.show({ title: 'Copied!', message: 'Link copied to clipboard.' })
           })
         },
       },

@@ -7,6 +7,7 @@ import { useChildStore } from '../store/useChildStore'
 import { colors, stickers } from '../constants/theme'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { EmptyState } from '../components/ui/EmptyState'
+import { PaperAlert } from '../components/ui/PaperAlert'
 import { Heart } from '../components/ui/Stickers'
 import { SubscriptionTier, TIER_SEAT_LIMIT } from '../lib/revenue'
 
@@ -36,6 +37,7 @@ export default function ManageCaregivers() {
   const [caregivers, setCaregivers] = useState<CaregiverRow[]>([])
   const [tier, setTier] = useState<SubscriptionTier>('free')
   const [loading, setLoading] = useState(true)
+  const [pendingRevoke, setPendingRevoke] = useState<string | null>(null)
 
   useEffect(() => {
     if (!child?.id) return
@@ -64,21 +66,19 @@ export default function ManageCaregivers() {
   const nextTierLabel = tier === 'free' ? 'Premium Solo' : tier === 'premium_solo' ? 'Family' : null
   const nextTierRoute = tier === 'premium_family' ? null : (tier === 'premium_solo' ? 'premium_family' : 'premium_solo')
 
-  async function revoke(id: string) {
-    Alert.alert('Revoke access', 'This person will lose access to your child\'s data.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Revoke',
-        style: 'destructive',
-        onPress: async () => {
-          await supabase
-            .from('child_caregivers')
-            .update({ status: 'revoked' })
-            .eq('id', id)
-          setCaregivers((prev) => prev.map((c) => c.id === id ? { ...c, status: 'revoked' } : c))
-        },
-      },
-    ])
+  function revoke(id: string) {
+    setPendingRevoke(id)
+  }
+
+  async function confirmRevoke() {
+    const id = pendingRevoke
+    if (!id) return
+    setPendingRevoke(null)
+    await supabase
+      .from('child_caregivers')
+      .update({ status: 'revoked' })
+      .eq('id', id)
+    setCaregivers((prev) => prev.map((c) => c.id === id ? { ...c, status: 'revoked' } : c))
   }
 
   return (
@@ -171,6 +171,17 @@ export default function ManageCaregivers() {
           )}
         />
       )}
+
+      <PaperAlert
+        visible={pendingRevoke !== null}
+        title="Revoke access?"
+        message="This person will lose access to your child's data."
+        buttons={[
+          { label: 'Cancel', variant: 'secondary' },
+          { label: 'Revoke', variant: 'danger', onPress: confirmRevoke },
+        ]}
+        onRequestClose={() => setPendingRevoke(null)}
+      />
     </View>
   )
 }

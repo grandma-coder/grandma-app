@@ -34,6 +34,7 @@ import {
   Search,
 } from 'lucide-react-native'
 import { useTheme, brand } from '../../constants/theme'
+import { useSavedToast } from '../ui/SavedToast'
 import { BrandedLoader } from '../ui/BrandedLoader'
 import {
   fetchFeed,
@@ -64,6 +65,7 @@ const FEED_FILTERS = ['For You', 'Clothing', 'Gear', 'Toys', 'Furniture', 'Books
 
 export function GarageScreen() {
   const { colors, radius, spacing } = useTheme()
+  const toast = useSavedToast()
 
   const [posts, setPosts] = useState<GaragePost[]>([])
   const [loading, setLoading] = useState(true)
@@ -191,7 +193,7 @@ export function GarageScreen() {
         onPress: () => {
           import('expo-clipboard').then(({ setStringAsync }) => {
             setStringAsync(postUrl)
-            Alert.alert('Copied!', 'Link copied to clipboard')
+            toast.show({ title: 'Copied!', message: 'Link copied to clipboard.' })
           })
         },
       },

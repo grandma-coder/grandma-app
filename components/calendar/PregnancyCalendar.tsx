@@ -90,6 +90,7 @@ import { LogSheet } from './LogSheet'
 import { LogFormSticker } from './LogFormSticker'
 import { Display, Body, MonoCaps } from '../ui/Typography'
 import { StickerButton } from '../ui/StickerButton'
+import { PaperAlert } from '../ui/PaperAlert'
 import { logSticker } from './logStickers'
 import { MoodFace } from '../stickers/RewardStickers'
 import { WeekDetailModal } from '../home/pregnancy/WeekDetailModal'
@@ -1095,6 +1096,7 @@ function LogDetailPopup({
   onDeleted: () => void
 }) {
   const { colors, isDark } = useTheme()
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const s = isDark ? stickersDark : stickersLight
   const meta = LOG_META[log.log_type] ?? { label: log.log_type, icon: Calendar, color: brand.pregnancy }
   const Icon = meta.icon
@@ -1158,17 +1160,15 @@ function LogDetailPopup({
   const pills = getPills()
   const plainNotes = rawNotes && !rawNotes.startsWith('{') ? rawNotes : null
 
-  async function handleDelete() {
-    Alert.alert('Delete log?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete', style: 'destructive', onPress: async () => {
-          await supabase.from('pregnancy_logs').delete().eq('id', log.id)
-          await invalidatePregnancyLogQueries()
-          onDeleted()
-        },
-      },
-    ])
+  function handleDelete() {
+    setConfirmingDelete(true)
+  }
+
+  async function confirmDelete() {
+    setConfirmingDelete(false)
+    await supabase.from('pregnancy_logs').delete().eq('id', log.id)
+    await invalidatePregnancyLogQueries()
+    onDeleted()
   }
 
   return (
@@ -1243,6 +1243,17 @@ function LogDetailPopup({
           style={{ flex: 1 }}
         />
       </View>
+
+      <PaperAlert
+        visible={confirmingDelete}
+        title="Delete this log?"
+        message="This cannot be undone."
+        buttons={[
+          { label: 'Cancel', variant: 'secondary' },
+          { label: 'Delete', variant: 'danger', onPress: confirmDelete },
+        ]}
+        onRequestClose={() => setConfirmingDelete(false)}
+      />
     </View>
   )
 }

@@ -57,6 +57,7 @@ import { PillButton } from '../../components/ui/PillButton'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
 import { childColor } from '../../components/ui/ChildPills'
 import { useSavedToast } from '../../components/ui/SavedToast'
+import { PaperAlert } from '../../components/ui/PaperAlert'
 import {
   Heart as HeartSticker,
   Flower as FlowerSticker,
@@ -427,6 +428,7 @@ export default function CareCircleScreen() {
   const [loading, setLoading] = useState(true)
   const [showAddSheet, setShowAddSheet] = useState(false)
   const [editingMember, setEditingMember] = useState<CareCircleMember | null>(null)
+  const [pendingRemove, setPendingRemove] = useState<CareCircleMember | null>(null)
 
   // Activity filters
   const [filterMember, setFilterMember] = useState<string | null>(null)
@@ -565,20 +567,18 @@ export default function CareCircleScreen() {
     ])
   }
 
-  async function removeMember(member: CareCircleMember) {
-    Alert.alert('Remove Member', `Remove ${member.displayName || 'this member'} and revoke all access? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: async () => {
-          for (const id of member.rowIds) {
-            await supabase.from('child_caregivers').update({ status: 'revoked' }).eq('id', id)
-          }
-          loadMembers()
-        },
-      },
-    ])
+  function removeMember(member: CareCircleMember) {
+    setPendingRemove(member)
+  }
+
+  async function confirmRemove() {
+    const member = pendingRemove
+    if (!member) return
+    setPendingRemove(null)
+    for (const id of member.rowIds) {
+      await supabase.from('child_caregivers').update({ status: 'revoked' }).eq('id', id)
+    }
+    loadMembers()
   }
 
   async function updateMember(member: CareCircleMember, updates: { displayName?: string; photoUrl?: string; role?: string; permLevel?: string; childIds?: string[] }) {
@@ -1102,6 +1102,17 @@ export default function CareCircleScreen() {
           }}
         />
       )}
+
+      <PaperAlert
+        visible={pendingRemove !== null}
+        title="Remove member?"
+        message={`Remove ${pendingRemove?.displayName || 'this member'} and revoke all access? This cannot be undone.`}
+        buttons={[
+          { label: 'Cancel', variant: 'secondary' },
+          { label: 'Remove', variant: 'danger', onPress: confirmRemove },
+        ]}
+        onRequestClose={() => setPendingRemove(null)}
+      />
     </View>
   )
 }

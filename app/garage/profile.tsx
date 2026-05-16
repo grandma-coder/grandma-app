@@ -26,6 +26,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { isIconAvatar } from '../../components/ui/AvatarPicker'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
+import { PaperAlert } from '../../components/ui/PaperAlert'
 import { supabase } from '../../lib/supabase'
 import { deletePost, toggleSave, type GaragePost } from '../../lib/garagePosts'
 
@@ -50,6 +51,8 @@ export default function GarageProfileScreen() {
   const [userPhoto, setUserPhoto] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [memberSince, setMemberSince] = useState<string | null>(null)
+  // Pending deletion — when set, the PaperAlert confirms before deletePost() runs.
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null)
 
   useEffect(() => {
     load()
@@ -116,18 +119,16 @@ export default function GarageProfileScreen() {
   }
 
   function handleDelete(postId: string) {
-    Alert.alert('Delete Post', 'This will permanently remove your post.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          setMyPosts((prev) => prev.filter((p) => p.id !== postId))
-          setPostCount((c) => c - 1)
-          try { await deletePost(postId) } catch { load() }
-        },
-      },
-    ])
+    setPendingDelete(postId)
+  }
+
+  async function confirmDelete() {
+    const postId = pendingDelete
+    if (!postId) return
+    setPendingDelete(null)
+    setMyPosts((prev) => prev.filter((p) => p.id !== postId))
+    setPostCount((c) => c - 1)
+    try { await deletePost(postId) } catch { load() }
   }
 
   function handleUnsave(postId: string) {
@@ -258,6 +259,17 @@ export default function GarageProfileScreen() {
           )}
         />
       )}
+
+      <PaperAlert
+        visible={pendingDelete !== null}
+        title="Delete this post?"
+        message="This will permanently remove your post."
+        buttons={[
+          { label: 'Cancel', variant: 'secondary' },
+          { label: 'Delete', variant: 'danger', onPress: confirmDelete },
+        ]}
+        onRequestClose={() => setPendingDelete(null)}
+      />
     </View>
   )
 }

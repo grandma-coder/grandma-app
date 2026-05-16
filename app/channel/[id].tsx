@@ -46,6 +46,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers } from '../../constants/theme'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { useSavedToast } from '../../components/ui/SavedToast'
 import { channelSticker } from '../../lib/channelSticker'
 
 // Cream paper-aesthetic CTA shared with Garage & Channels
@@ -84,6 +85,7 @@ import { BrandedLoader } from '../../components/ui/BrandedLoader'
 export default function ChannelChat() {
   const { colors, radius, isDark } = useTheme()
   const insets = useSafeAreaInsets()
+  const toast = useSavedToast()
   const { id } = useLocalSearchParams<{ id: string }>()
 
   const flatListRef = useRef<FlatList<ChannelPost>>(null)
@@ -448,7 +450,7 @@ export default function ChannelChat() {
                 try {
                   await transferChannelOwnership(id, m.user_id)
                   setIsOwner(false)
-                  Alert.alert('Done', `Ownership transferred to ${m.name ?? 'the new host'}.`)
+                  toast.show({ title: 'Done', message: `Ownership transferred to ${m.name ?? 'the new host'}.` })
                   load()
                 } catch (e: any) {
                   Alert.alert('Error', e.message)
@@ -586,7 +588,7 @@ export default function ChannelChat() {
     const { setStringAsync } = await import('expo-clipboard')
     await setStringAsync(channelUrl)
     setShowShare(false)
-    Alert.alert('Copied!', 'Channel link copied to clipboard.')
+    toast.show({ title: 'Copied!', message: 'Channel link copied to clipboard.' })
   }
 
   async function confirmLeave() {
@@ -634,7 +636,7 @@ export default function ChannelChat() {
     try {
       await rateChannel(id, myRating, myReview || undefined)
       setShowRating(false)
-      Alert.alert('Thanks!', 'Your rating has been submitted.')
+      toast.show({ title: 'Thanks!', message: 'Your rating has been submitted.' })
       load() // Refresh to get updated avg
     } catch (e: any) {
       Alert.alert('Error', e.message)
