@@ -116,17 +116,19 @@ export function Navigation() {
               </svg>
             </button>
 
-            {/* CTA Button */}
-            <Link
-              href="#waitlist"
-              className="btn-primary hidden sm:inline-flex"
-              style={{
-                padding: scrolled ? '12px 20px' : '16px 28px',
-                minHeight: scrolled ? '48px' : '56px',
-              }}
-            >
-              Join the waitlist
-            </Link>
+            {/* CTA Button - only visible on desktop (lg+) */}
+            <div className="hidden lg:block">
+              <Link
+                href="#waitlist"
+                className="btn-primary text-[14px] whitespace-nowrap"
+                style={{
+                  padding: scrolled ? '10px 18px' : '12px 24px',
+                  minHeight: scrolled ? '44px' : '48px',
+                }}
+              >
+                Join the waitlist
+              </Link>
+            </div>
           </div>
         </div>
       </nav>

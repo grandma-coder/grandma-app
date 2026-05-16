@@ -14,346 +14,145 @@ import {
   CloudSticker,
 } from './stickers'
 
-type Stage = 'pre' | 'pregnancy' | 'kids'
-
-interface StageConfig {
-  id: Stage
-  label: string
-  title: string
-  value: string
-  subtitle: string
-  message: string
-  color: string
-  colorSoft: string
-}
-
-const stages: StageConfig[] = [
-  {
-    id: 'pre',
-    label: 'Pre-Pregnancy',
-    title: 'Cycle Day',
-    value: '14',
-    subtitle: 'fertile window',
-    message: 'your body is preparing',
-    color: '#F5C754',
-    colorSoft: 'rgba(245, 199, 84, 0.3)',
-  },
-  {
-    id: 'pregnancy',
-    label: 'Pregnancy',
-    title: 'Week',
-    value: '24',
-    subtitle: 'lemon size',
-    message: "you're doing beautifully",
-    color: '#C8B6E2',
-    colorSoft: 'rgba(200, 182, 226, 0.3)',
-  },
-  {
-    id: 'kids',
-    label: 'Kids',
-    title: 'Month',
-    value: '14',
-    subtitle: 'first steps soon',
-    message: 'every milestone matters',
-    color: '#A8D8EA',
-    colorSoft: 'rgba(168, 216, 234, 0.3)',
-  },
-]
-
 export function AnimatedHeroCard({ className }: { className?: string }) {
-  const [currentStage, setCurrentStage] = useState(0)
   const [isBlinking, setIsBlinking] = useState(false)
-  const [isTransitioning, setIsTransitioning] = useState(false)
 
-  // Auto-cycle stages with blink
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsBlinking(true)
-      setIsTransitioning(true)
-
-      setTimeout(() => {
-        setCurrentStage((prev) => (prev + 1) % stages.length)
-      }, 120)
-
-      setTimeout(() => {
-        setIsBlinking(false)
-        setIsTransitioning(false)
-      }, 240)
-    }, 4000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  // Random blinks
+  // Random blinking
   useEffect(() => {
     const randomBlink = () => {
-      if (!isTransitioning) {
-        setIsBlinking(true)
-        setTimeout(() => setIsBlinking(false), 120)
-      }
+      setIsBlinking(true)
+      setTimeout(() => setIsBlinking(false), 150)
     }
 
-    const interval = setInterval(randomBlink, 2500 + Math.random() * 2000)
-    return () => clearInterval(interval)
-  }, [isTransitioning])
+    // Initial blink after 2s
+    const initialTimeout = setTimeout(randomBlink, 2000)
 
-  const stage = stages[currentStage]
+    // Then random blinks every 2.5-4.5s
+    const interval = setInterval(() => {
+      randomBlink()
+    }, 2500 + Math.random() * 2000)
+
+    return () => {
+      clearTimeout(initialTimeout)
+      clearInterval(interval)
+    }
+  }, [])
 
   return (
-    <div className={cn('relative w-full max-w-[520px] mx-auto', className)}>
-      {/* Keyframes for orbiting */}
+    <div className={cn('relative w-full max-w-[480px] mx-auto', className)}>
+      {/* Floating animation keyframes */}
       <style jsx>{`
-        @keyframes orbit {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        @keyframes float-1 {
+          0%, 100% { transform: translate(0, 0) rotate(var(--r, 0deg)); }
+          50% { transform: translate(5px, -12px) rotate(calc(var(--r, 0deg) + 5deg)); }
         }
-        @keyframes orbit-reverse {
-          from { transform: rotate(360deg); }
-          to { transform: rotate(0deg); }
+        @keyframes float-2 {
+          0%, 100% { transform: translate(0, 0) rotate(var(--r, 0deg)); }
+          50% { transform: translate(-8px, -10px) rotate(calc(var(--r, 0deg) - 4deg)); }
         }
-        @keyframes float-y {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
+        @keyframes float-3 {
+          0%, 100% { transform: translate(0, 0) rotate(var(--r, 0deg)); }
+          50% { transform: translate(6px, -8px) rotate(calc(var(--r, 0deg) + 3deg)); }
         }
-        .orbit-container {
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          transform-origin: center;
-        }
-        .orbit-item {
-          position: absolute;
-          top: 0;
-          left: 50%;
-          transform: translateX(-50%);
-        }
+        .float-1 { animation: float-1 4s ease-in-out infinite; }
+        .float-2 { animation: float-2 5s ease-in-out infinite; }
+        .float-3 { animation: float-3 3.5s ease-in-out infinite; }
       `}</style>
 
-      {/* Stage selector pills */}
-      <div className="flex justify-center gap-2 mb-8">
-        {stages.map((s, i) => (
-          <button
-            key={s.id}
-            onClick={() => {
-              setIsBlinking(true)
-              setIsTransitioning(true)
-              setTimeout(() => {
-                setCurrentStage(i)
-              }, 120)
-              setTimeout(() => {
-                setIsBlinking(false)
-                setIsTransitioning(false)
-              }, 240)
-            }}
-            className="px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 border-2"
-            style={{
-              background: currentStage === i ? s.color : 'transparent',
-              borderColor: s.color,
-              color: 'var(--ink)',
-              opacity: currentStage === i ? 1 : 0.7,
-            }}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Main eye area with orbiting stickers */}
-      <div className="relative" style={{ height: 420 }}>
-        {/* Orbiting stickers - outer ring */}
-        <div
-          className="orbit-container"
-          style={{
-            width: 380,
-            height: 380,
-            marginLeft: -190,
-            marginTop: -190,
-            animation: 'orbit 25s linear infinite',
-          }}
+      {/* Main container */}
+      <div className="relative" style={{ height: 380 }}>
+        
+        {/* Floating stickers around the eye */}
+        
+        {/* Top left - Heart */}
+        <div 
+          className="absolute float-1" 
+          style={{ top: '5%', left: '5%', '--r': '-12deg' } as React.CSSProperties}
         >
-          <div className="orbit-item" style={{ top: 0 }}>
-            <HeartSticker className="w-12 h-12 text-sticker-coral" />
-          </div>
+          <HeartSticker size={52} />
         </div>
 
-        <div
-          className="orbit-container"
-          style={{
-            width: 380,
-            height: 380,
-            marginLeft: -190,
-            marginTop: -190,
-            animation: 'orbit 25s linear infinite',
-            animationDelay: '-3.125s',
-          }}
+        {/* Top right - Flower */}
+        <div 
+          className="absolute float-2" 
+          style={{ top: '8%', right: '8%', '--r': '8deg' } as React.CSSProperties}
         >
-          <div className="orbit-item" style={{ top: 0 }}>
-            <SunSticker className="w-14 h-14 text-sticker-yellow" />
-          </div>
+          <FlowerSticker size={48} />
         </div>
 
-        <div
-          className="orbit-container"
-          style={{
-            width: 380,
-            height: 380,
-            marginLeft: -190,
-            marginTop: -190,
-            animation: 'orbit 25s linear infinite',
-            animationDelay: '-6.25s',
-          }}
+        {/* Right side - Sun */}
+        <div 
+          className="absolute float-3" 
+          style={{ top: '40%', right: '0%', '--r': '5deg' } as React.CSSProperties}
         >
-          <div className="orbit-item" style={{ top: 0 }}>
-            <FlowerSticker className="w-11 h-11 text-mode-lavender" />
-          </div>
+          <SunSticker size={56} />
         </div>
 
-        <div
-          className="orbit-container"
-          style={{
-            width: 380,
-            height: 380,
-            marginLeft: -190,
-            marginTop: -190,
-            animation: 'orbit 25s linear infinite',
-            animationDelay: '-9.375s',
-          }}
+        {/* Bottom right - Sparkle */}
+        <div 
+          className="absolute float-1" 
+          style={{ bottom: '15%', right: '10%', '--r': '-8deg' } as React.CSSProperties}
         >
-          <div className="orbit-item" style={{ top: 0 }}>
-            <MoonSticker className="w-10 h-10 text-mode-lavender" />
-          </div>
+          <SparkleSticker size={40} />
         </div>
 
-        <div
-          className="orbit-container"
-          style={{
-            width: 380,
-            height: 380,
-            marginLeft: -190,
-            marginTop: -190,
-            animation: 'orbit 25s linear infinite',
-            animationDelay: '-12.5s',
-          }}
+        {/* Bottom - Cloud */}
+        <div 
+          className="absolute float-2" 
+          style={{ bottom: '5%', left: '30%', '--r': '3deg' } as React.CSSProperties}
         >
-          <div className="orbit-item" style={{ top: 0 }}>
-            <LeafSticker className="w-10 h-10 text-sticker-leaf" />
-          </div>
+          <CloudSticker size={50} />
         </div>
 
-        <div
-          className="orbit-container"
-          style={{
-            width: 380,
-            height: 380,
-            marginLeft: -190,
-            marginTop: -190,
-            animation: 'orbit 25s linear infinite',
-            animationDelay: '-15.625s',
-          }}
+        {/* Bottom left - Footprint */}
+        <div 
+          className="absolute float-3" 
+          style={{ bottom: '20%', left: '5%', '--r': '10deg' } as React.CSSProperties}
         >
-          <div className="orbit-item" style={{ top: 0 }}>
-            <SparkleSticker className="w-9 h-9 text-sticker-coral" />
-          </div>
+          <FootprintSticker size={38} />
         </div>
 
-        <div
-          className="orbit-container"
-          style={{
-            width: 380,
-            height: 380,
-            marginLeft: -190,
-            marginTop: -190,
-            animation: 'orbit 25s linear infinite',
-            animationDelay: '-18.75s',
-          }}
+        {/* Left side - Leaf */}
+        <div 
+          className="absolute float-1" 
+          style={{ top: '45%', left: '0%', '--r': '-15deg' } as React.CSSProperties}
         >
-          <div className="orbit-item" style={{ top: 0 }}>
-            <CloudSticker className="w-12 h-12 text-mode-blue" />
-          </div>
+          <LeafSticker size={44} />
         </div>
 
-        <div
-          className="orbit-container"
-          style={{
-            width: 380,
-            height: 380,
-            marginLeft: -190,
-            marginTop: -190,
-            animation: 'orbit 25s linear infinite',
-            animationDelay: '-21.875s',
-          }}
+        {/* Top center-left - Moon */}
+        <div 
+          className="absolute float-2" 
+          style={{ top: '0%', left: '25%', '--r': '6deg' } as React.CSSProperties}
         >
-          <div className="orbit-item" style={{ top: 0 }}>
-            <FootprintSticker className="w-9 h-9 text-mode-rose" />
-          </div>
+          <MoonSticker size={42} />
         </div>
 
-        {/* Center card with eye */}
+        {/* Center - Big Grandma Eye */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div
-            className="relative bg-[var(--surface)] rounded-[32px] p-6 transition-all duration-500"
-            style={{
-              boxShadow: `0 12px 40px ${stage.colorSoft}, 0 4px 12px rgba(0,0,0,0.06)`,
-              border: '1px solid var(--border)',
+          <div 
+            className="transition-transform duration-150"
+            style={{ 
+              transform: isBlinking ? 'scaleY(0.1)' : 'scaleY(1)',
+              transformOrigin: 'center',
             }}
           >
-            {/* The big Grandma Eye */}
-            <div className="flex justify-center" style={{ opacity: isBlinking ? 0 : 1, transition: 'opacity 150ms' }}>
-              <GrandmaLogo size={180} animation="blink" />
-            </div>
-
-            {/* Stage info below eye */}
-            <div className="text-center mt-4">
-              <div
-                className="text-[12px] uppercase tracking-[0.12em] mb-1 font-medium transition-colors duration-500"
-                style={{ color: stage.color }}
-              >
-                {stage.title}
-              </div>
-              <div
-                className="text-[52px] font-semibold leading-none transition-opacity duration-200"
-                style={{
-                  fontFamily: 'var(--font-fraunces), var(--font-display)',
-                  color: 'var(--ink)',
-                  opacity: isTransitioning ? 0.3 : 1,
-                }}
-              >
-                {stage.value}
-              </div>
-              <div
-                className="text-[15px] mt-1 transition-opacity duration-200"
-                style={{
-                  fontFamily: 'var(--font-instrument-serif), var(--font-italic)',
-                  fontStyle: 'italic',
-                  color: 'var(--ink-secondary)',
-                  opacity: isTransitioning ? 0.3 : 1,
-                }}
-              >
-                {stage.subtitle}
-              </div>
-
-              {/* Message bubble */}
-              <div
-                className="mt-5 px-5 py-3 rounded-full transition-all duration-500 inline-block"
-                style={{ background: stage.colorSoft }}
-              >
-                <p className="text-[14px]" style={{ color: 'var(--ink)' }}>
-                  {stage.message}
-                </p>
-              </div>
-            </div>
+            <GrandmaLogo size={200} />
           </div>
         </div>
       </div>
 
       {/* Bottom tagline */}
-      <div className="text-center mt-4">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: 'var(--surface-raised)' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <ellipse cx="12" cy="12" rx="9" ry="6" fill={stage.color} stroke="var(--ink)" strokeWidth="1.5" />
-            <path d="M12 9 C10 7 7 8 7 11 C7 14 12 17 12 17 C12 17 17 14 17 11 C17 8 14 7 12 9Z" fill="var(--ink)" />
-          </svg>
-          <span className="text-[12px] font-medium uppercase tracking-[0.08em]" style={{ color: 'var(--ink)' }}>
+      <div className="text-center mt-6">
+        <div 
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full" 
+          style={{ background: 'var(--surface)' }}
+        >
+          <GrandmaLogo size={20} />
+          <span 
+            className="text-[12px] font-medium uppercase tracking-[0.1em]" 
+            style={{ color: 'var(--ink)' }}
+          >
             Grandma is with you
           </span>
         </div>
