@@ -21,7 +21,6 @@ import {
   Linking,
   Image,
 } from 'react-native'
-import DateTimePicker from '@react-native-community/datetimepicker'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'

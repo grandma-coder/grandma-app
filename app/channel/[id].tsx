@@ -44,7 +44,8 @@ import {
   Copy,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, stickers } from '../../constants/theme'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { channelSticker } from '../../lib/channelSticker'
 
 // Cream paper-aesthetic CTA shared with Garage & Channels
@@ -820,15 +821,12 @@ export default function ChannelChat() {
             flatListRef.current?.scrollToEnd({ animated: false })
           }}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <MessageCircle size={40} color={colors.textMuted} strokeWidth={1.5} />
-              <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>
-                No messages yet
-              </Text>
-              <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                Start the conversation!
-              </Text>
-            </View>
+            <EmptyState
+              icon={<MessageCircle size={36} color={stickers.lilac} strokeWidth={1.5} />}
+              iconBg={stickers.lilacSoft}
+              title="No messages yet"
+              message="Start the conversation!"
+            />
           }
           renderItem={({ item }) =>
             item.message_type === 'system_join' || item.message_type === 'system_leave' ? (

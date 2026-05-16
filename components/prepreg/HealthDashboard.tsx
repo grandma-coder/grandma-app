@@ -23,7 +23,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
       {/* Hydration Card */}
       <PaperCard radius={28} padding={20} style={styles.card}>
         <View style={styles.cardHeader}>
-          <View style={[styles.iconBox, { backgroundColor: '#4D96FF15' }]}>
+          <View style={[styles.iconBox, { backgroundColor: brand.kids + '15' }]}>
             <Ionicons name="water" size={22} color="#4D96FF" />
           </View>
           <View style={{ flex: 1 }}>
@@ -52,7 +52,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
                   style={[
                     styles.glass,
                     { borderColor: tc.border },
-                    i < waterGlasses && { backgroundColor: '#4D96FF', borderColor: '#4D96FF' },
+                    i < waterGlasses && { backgroundColor: brand.kids, borderColor: brand.kids },
                   ]}
                 >
                   {i < waterGlasses && (
@@ -78,7 +78,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
       <View style={styles.metricsRow}>
         {/* Sleep Card */}
         <PaperCard radius={28} padding={20} style={styles.metricCard}>
-          <View style={[styles.metricIcon, { backgroundColor: '#B983FF15' }]}>
+          <View style={[styles.metricIcon, { backgroundColor: brand.pregnancy + '15' }]}>
             <Ionicons name="moon" size={20} color="#B983FF" />
           </View>
           <Text style={[styles.metricValue, { color: tc.text }]}>
@@ -95,7 +95,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
 
         {/* Supplements Card */}
         <PaperCard radius={28} padding={20} style={styles.metricCard}>
-          <View style={[styles.metricIcon, { backgroundColor: '#FF8AD815' }]}>
+          <View style={[styles.metricIcon, { backgroundColor: brand.prePregnancy + '15' }]}>
             <Ionicons name="medical" size={20} color="#FF8AD8" />
           </View>
           <Text style={[styles.metricValue, { color: tc.text }]}>Folic</Text>
@@ -105,7 +105,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
 
         {/* Exercise Card */}
         <PaperCard radius={28} padding={20} style={styles.metricCard}>
-          <View style={[styles.metricIcon, { backgroundColor: '#A2FF8615' }]}>
+          <View style={[styles.metricIcon, { backgroundColor: stickers.green + '15' }]}>
             <Ionicons name="fitness" size={20} color="#A2FF86" />
           </View>
           <Text style={[styles.metricValue, { color: tc.text }]}>
@@ -221,13 +221,13 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: borderRadius.full,
     borderWidth: 1.5,
-    borderColor: '#4D96FF',
+    borderColor: brand.kids,
     borderStyle: 'dashed',
   },
   addWaterText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#4D96FF',
+    color: brand.kids,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

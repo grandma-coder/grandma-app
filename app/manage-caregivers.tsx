@@ -4,8 +4,10 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
-import { colors } from '../constants/theme'
+import { colors, stickers } from '../constants/theme'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
+import { EmptyState } from '../components/ui/EmptyState'
+import { Heart } from '../components/ui/Stickers'
 import { SubscriptionTier, TIER_SEAT_LIMIT } from '../lib/revenue'
 
 interface CaregiverRow {
@@ -130,11 +132,12 @@ export default function ManageCaregivers() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons name="people-outline" size={40} color={colors.border} />
-              <Text style={styles.emptyTitle}>No caregivers yet</Text>
-              <Text style={styles.emptySubtitle}>Invite a nanny or family member</Text>
-            </View>
+            <EmptyState
+              icon={<Heart fill={stickers.pink} size={36} />}
+              iconBg={stickers.pinkSoft}
+              title="No caregivers yet"
+              message="Invite a nanny or family member to share care."
+            />
           }
           renderItem={({ item }) => (
             <View style={styles.card}>

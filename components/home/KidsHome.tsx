@@ -29,7 +29,7 @@ import {
   Bell, Trash2, Syringe, Pill, Pencil, GripVertical, Flag, Trophy, Flame, Star,
 } from 'lucide-react-native'
 import * as Haptics from 'expo-haptics'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, stickers } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
@@ -74,7 +74,7 @@ const GROWTH_LEAPS = [
     week: 5, name: 'Changing Sensations', desc: 'Baby discovers a richer world of senses',
     ageRange: '4–5 weeks', duration: '1–2 weeks', difficulty: 2,
     brainNote: 'The nervous system undergoes a first major reorganization. Your baby\'s brain is suddenly receiving far more detailed signals from the senses — sharper sights, richer sounds, new body feelings. It\'s overwhelming and wonderful at the same time.',
-    color: '#B983FF',
+    color: stickers.lilac,
     phases: [
       { label: 'Stormy', desc: 'More crying, clinginess, disrupted sleep. Baby is overwhelmed by the new flood of sensory information.' },
       { label: 'Peak Leap', desc: 'The brain is intensely processing new sensory input. Fussiness may peak before calming.' },
@@ -104,7 +104,7 @@ const GROWTH_LEAPS = [
     week: 12, name: 'Smooth Transitions', desc: 'Movements and muscle control become more fluid',
     ageRange: '11–12 weeks', duration: '1–2 weeks', difficulty: 2,
     brainNote: 'Motor neurons are rapidly myelinating, enabling smoother, more coordinated movements. Your baby transitions from jerky reflexes to intentional, fluid motion — a massive upgrade in physical self-awareness.',
-    color: '#A2FF86',
+    color: stickers.green,
     phases: [
       { label: 'Stormy', desc: 'Sleep disruption, demanding behavior, and increased feeding as energy is redirected to motor development.' },
       { label: 'Peak Leap', desc: 'Motor pathways are rapidly reorganizing. Baby may seem restless or frustrated by new physical sensations.' },
@@ -119,7 +119,7 @@ const GROWTH_LEAPS = [
     week: 19, name: 'Events', desc: 'Understanding that actions happen in sequences',
     ageRange: '14–19 weeks', duration: '3–6 weeks', difficulty: 4,
     brainNote: 'Baby\'s brain starts to perceive the world as a series of events rather than a static blur. Actions have beginnings, middles, and ends. This is the birth of cause-and-effect thinking — and why everything suddenly seems so fascinating.',
-    color: '#FBBF24',
+    color: stickers.yellow,
     phases: [
       { label: 'Stormy', desc: 'Clingy, cries when put down, sleep disrupted. Baby is mentally exhausted from processing complex event chains.' },
       { label: 'Peak Leap', desc: 'Brain is actively linking actions into cause-and-effect chains. Intense cognitive work happening.' },
@@ -134,7 +134,7 @@ const GROWTH_LEAPS = [
     week: 26, name: 'Relationships', desc: 'Grasping how things and people relate to each other',
     ageRange: '22–26 weeks', duration: '4–5 weeks', difficulty: 5,
     brainNote: 'Baby\'s brain builds its first relational maps — understanding that objects and people exist in relation to one another. Distance, closeness, inside/outside, near/far all become meaningful. This triggers object permanence and separation anxiety simultaneously.',
-    color: '#FF8AD8',
+    color: brand.prePregnancy,
     phases: [
       { label: 'Stormy', desc: 'Stranger anxiety and clinginess peak. Baby now understands "you can leave" — which is terrifying.' },
       { label: 'Peak Leap', desc: 'Brain is building relational frameworks at full speed. This is one of the most intense leaps emotionally.' },
@@ -149,7 +149,7 @@ const GROWTH_LEAPS = [
     week: 37, name: 'Categories', desc: 'Grouping the world into mental categories',
     ageRange: '33–37 weeks', duration: '4–5 weeks', difficulty: 3,
     brainNote: 'The brain begins organizing the world into abstract groups — animals, foods, people, colors. This mental filing system is the foundation for language and logic. First words often appear during or just after this leap.',
-    color: '#FF6B35',
+    color: stickers.coral,
     phases: [
       { label: 'Stormy', desc: 'Demanding behavior, picky eating, night waking as the brain reorganizes around categorical thinking.' },
       { label: 'Peak Leap', desc: 'Brain is actively sorting experiences into groups. Baby may seem more selective and opinionated.' },
@@ -164,7 +164,7 @@ const GROWTH_LEAPS = [
     week: 46, name: 'Sequences', desc: 'Following multi-step actions toward a goal',
     ageRange: '41–46 weeks', duration: '4–6 weeks', difficulty: 4,
     brainNote: 'Baby\'s brain learns to chain actions together into purposeful sequences — a monumental shift. Planning, goal-directed behavior, and early problem-solving emerge. This is why everything suddenly needs to be done in order.',
-    color: '#67E8F9',
+    color: stickers.blue,
     phases: [
       { label: 'Stormy', desc: 'Frustration tantrums and whining increase as baby knows what they want to accomplish but can\'t always do it.' },
       { label: 'Peak Leap', desc: 'Brain is chaining multi-step sequences together. Baby is mentally exhausted from planning.' },
@@ -179,7 +179,7 @@ const GROWTH_LEAPS = [
     week: 55, name: 'Programs', desc: 'Understanding flexible programs — different ways to reach a goal',
     ageRange: '49–55 weeks', duration: '4–6 weeks', difficulty: 5,
     brainNote: 'Baby discovers that goals can be achieved in multiple ways — there isn\'t just one path. This "flexible programming" unlocks creative problem-solving and imagination. It also triggers strong opinions, because baby now knows what they want and can envision alternatives.',
-    color: '#A2FF86',
+    color: stickers.green,
     phases: [
       { label: 'Stormy', desc: 'Strong opinions, meltdowns, and sleep regression as toddler grapples with the concept of alternatives.' },
       { label: 'Peak Leap', desc: 'Brain is discovering flexible problem-solving pathways. Toddler is mentally overwhelmed but driven.' },
@@ -194,7 +194,7 @@ const GROWTH_LEAPS = [
     week: 64, name: 'Principles', desc: 'Grasping invisible rules that govern the world',
     ageRange: '59–64 weeks', duration: '5–6 weeks', difficulty: 5,
     brainNote: 'Toddler\'s brain starts internalizing abstract principles — rules that can\'t be seen but govern behavior. Fairness, sharing, and cause-and-consequence become real. This is why "no" becomes a favorite word — toddler is actively testing which principles apply.',
-    color: '#FBBF24',
+    color: stickers.yellow,
     phases: [
       { label: 'Stormy', desc: 'Rule-testing and boundary-pushing intensify. Toddler must test every principle to map how the world works.' },
       { label: 'Peak Leap', desc: 'Brain is internalizing principles and social rules at full speed. Emotional regulation is strained.' },
@@ -451,7 +451,7 @@ import { LogSheet } from '../calendar/LogSheet'
 import { SleepForm, KidsMoodForm, FeedingForm, ActivityForm } from '../calendar/KidsLogForms'
 
 const MOOD_COLORS: Record<string, string> = {
-  happy: '#FBBF24', calm: '#6EC96E', energetic: brand.kids, fussy: '#FF9800', cranky: '#FF7070',
+  happy: stickers.yellow, calm: stickers.green, energetic: brand.kids, fussy: stickers.peach, cranky: stickers.coral,
 }
 const MOOD_LABELS: Record<string, string> = {
   happy: 'Happy', calm: 'Calm', energetic: 'Active', fussy: 'Fussy', cranky: 'Cranky',
@@ -521,9 +521,9 @@ function daysInclusive(start: Date, end: Date): number {
 
 // Ring colors for the 3 pillars
 const PILLAR_COLORS = {
-  sleep: '#9DC3E8',       // sticker blue
-  nutrition: '#EE7B6D',   // sticker coral
-  activity: '#BDD48C',    // sticker green
+  sleep: stickers.blue,
+  nutrition: stickers.coral,
+  activity: stickers.green,
 }
 
 // ─── Date Range ─────────────────────────────────────────────────────────────
@@ -3827,7 +3827,7 @@ type ActivityPillarId = 'movement' | 'creative' | 'learning' | 'social' | 'care'
 const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string; types: string[]; patterns: RegExp[] }> = {
   movement: {
     label: 'Movement',
-    color: '#BDD48C', // sticker green
+    color: stickers.green,
     types: ['sport', 'swim', 'walk', 'playground', 'dance'],
     patterns: [
       /\b(soccer|football|basketball|tennis|baseball|karate|judo|gym|workout|run(ning)?|ski|cycling|bike|biking|skating|scooter)\b/,
@@ -3840,7 +3840,7 @@ const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string;
   },
   creative: {
     label: 'Creative',
-    color: '#F5D652', // sticker yellow
+    color: stickers.yellow,
     types: ['art', 'music'],
     patterns: [
       /\b(art|paint(ing)?|craft(s)?|draw(ing)?|clay|pottery|color(ing)?)\b/,
@@ -3849,7 +3849,7 @@ const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string;
   },
   learning: {
     label: 'Learning',
-    color: '#7A9BD0', // deep blue
+    color: stickers.blue,
     types: ['class', 'school', 'study', 'reading'],
     patterns: [
       /\b(school|kindergarten|preschool|daycare|nursery)\b/,
@@ -3859,7 +3859,7 @@ const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string;
   },
   social: {
     label: 'Social',
-    color: '#E58BB4', // rose
+    color: brand.prePregnancy,
     types: ['playdate'],
     patterns: [
       /\bplaydate\b/,
@@ -3868,7 +3868,7 @@ const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string;
   },
   care: {
     label: 'Care',
-    color: '#F5B896', // peach
+    color: stickers.peach,
     types: [],
     patterns: [
       /\bbath(\s?time)?\b/,
@@ -3881,7 +3881,7 @@ const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string;
   },
   therapy: {
     label: 'Therapy',
-    color: '#B7A6E8', // lavender
+    color: brand.pregnancy,
     types: ['therapy'],
     patterns: [
       /\b(therapy|speech|occupational|physio|physical\s?therapy)\b/,

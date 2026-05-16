@@ -19,11 +19,13 @@ import { router, useLocalSearchParams } from 'expo-router'
 import {
   ArrowLeft,
   Heart,
+  MessageCircle,
   Send,
   User,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../../constants/theme'
+import { useTheme, brand, stickers } from '../../../constants/theme'
+import { EmptyState } from '../../../components/ui/EmptyState'
 import {
   fetchThreadReplies,
   sendMessage,
@@ -184,11 +186,12 @@ export default function ThreadView() {
             </View>
           )}
           ListEmptyComponent={
-            <View style={s.emptyReplies}>
-              <Text style={[s.emptyText, { color: colors.textMuted }]}>
-                No replies yet. Be the first!
-              </Text>
-            </View>
+            <EmptyState
+              icon={<MessageCircle size={36} color={stickers.lilac} strokeWidth={1.5} />}
+              iconBg={stickers.lilacSoft}
+              title="No replies yet"
+              message="Be the first to reply."
+            />
           }
         />
 
