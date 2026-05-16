@@ -1,8 +1,7 @@
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { useAppTheme } from '../ui/ThemeProvider'
-import { colors, brand, stickers, borderRadius } from '../../constants/theme'
+import { useTheme, colors, brand, stickers, borderRadius } from '../../constants/theme'
 import type { CycleInfo } from '../../lib/cycleLogic'
 
 interface DailyInsightsProps {
@@ -11,38 +10,40 @@ interface DailyInsightsProps {
   onAskGrandma?: (question: string) => void
 }
 
+// iconColor uses the saturated sticker; bgColor uses the same hue at ~15% alpha
+// (RN/iOS reads an 'XX' alpha suffix on hex strings).
 const PHASE_INSIGHTS: Record<string, { icon: string; iconColor: string; bgColor: string; title: string; body: string }[]> = {
   menstruation: [
-    { icon: 'heart-outline', iconColor: '#FF6B6B', bgColor: '#FF6B6B15', title: 'Self-care day', body: 'Your body is doing hard work. Prioritize rest, warmth, and nourishing food.' },
-    { icon: 'restaurant-outline', iconColor: '#A2FF86', bgColor: '#A2FF8615', title: 'Eat iron-rich foods', body: 'Spinach, lentils, and red meat help replenish iron lost during menstruation.' },
-    { icon: 'water-outline', iconColor: '#4D96FF', bgColor: '#4D96FF15', title: 'Stay extra hydrated', body: 'You lose more fluids during your period. Aim for 10 glasses of water today.' },
+    { icon: 'heart-outline', iconColor: stickers.coral, bgColor: stickers.coral + '15', title: 'Self-care day', body: 'Your body is doing hard work. Prioritize rest, warmth, and nourishing food.' },
+    { icon: 'restaurant-outline', iconColor: stickers.green, bgColor: stickers.green + '15', title: 'Eat iron-rich foods', body: 'Spinach, lentils, and red meat help replenish iron lost during menstruation.' },
+    { icon: 'water-outline', iconColor: stickers.blue, bgColor: stickers.blue + '15', title: 'Stay extra hydrated', body: 'You lose more fluids during your period. Aim for 10 glasses of water today.' },
   ],
   follicular: [
-    { icon: 'flash-outline', iconColor: '#F4FD50', bgColor: '#F4FD5015', title: 'Energy is rising', body: 'Estrogen is climbing — this is your most energetic phase. Great for exercise and planning.' },
-    { icon: 'fitness-outline', iconColor: '#A2FF86', bgColor: '#A2FF8615', title: 'Best time for workouts', body: 'Your body can handle more intense exercise now. Try HIIT, running, or strength training.' },
-    { icon: 'calendar-outline', iconColor: '#FF8AD8', bgColor: '#FF8AD815', title: 'Fertile window approaching', body: 'Your fertile window opens soon. Start tracking ovulation signs like cervical mucus.' },
+    { icon: 'flash-outline', iconColor: stickers.yellow, bgColor: stickers.yellow + '15', title: 'Energy is rising', body: 'Estrogen is climbing — this is your most energetic phase. Great for exercise and planning.' },
+    { icon: 'fitness-outline', iconColor: stickers.green, bgColor: stickers.green + '15', title: 'Best time for workouts', body: 'Your body can handle more intense exercise now. Try HIIT, running, or strength training.' },
+    { icon: 'calendar-outline', iconColor: brand.prePregnancy, bgColor: brand.prePregnancy + '15', title: 'Fertile window approaching', body: 'Your fertile window opens soon. Start tracking ovulation signs like cervical mucus.' },
   ],
   ovulation: [
-    { icon: 'flower-outline', iconColor: '#A2FF86', bgColor: '#A2FF8615', title: 'Peak fertility!', body: 'The egg has been released. This is the best time to conceive if you are trying.' },
-    { icon: 'eye-outline', iconColor: '#FF8AD8', bgColor: '#FF8AD815', title: 'Watch for signs', body: 'Egg-white cervical mucus, mild cramping (mittelschmerz), and increased libido are all ovulation signs.' },
-    { icon: 'thermometer-outline', iconColor: '#FF6B35', bgColor: '#FF6B3515', title: 'Check your temp', body: 'Basal body temperature rises 0.2-0.5°F after ovulation. Track it each morning before getting up.' },
+    { icon: 'flower-outline', iconColor: stickers.green, bgColor: stickers.green + '15', title: 'Peak fertility!', body: 'The egg has been released. This is the best time to conceive if you are trying.' },
+    { icon: 'eye-outline', iconColor: brand.prePregnancy, bgColor: brand.prePregnancy + '15', title: 'Watch for signs', body: 'Egg-white cervical mucus, mild cramping (mittelschmerz), and increased libido are all ovulation signs.' },
+    { icon: 'thermometer-outline', iconColor: stickers.coral, bgColor: stickers.coral + '15', title: 'Check your temp', body: 'Basal body temperature rises 0.2-0.5°F after ovulation. Track it each morning before getting up.' },
   ],
   luteal: [
-    { icon: 'leaf-outline', iconColor: '#B983FF', bgColor: '#B983FF15', title: 'Two-week wait', body: 'If you tried to conceive, implantation may happen in 6-12 days. Avoid alcohol and excess caffeine.' },
-    { icon: 'nutrition-outline', iconColor: '#A2FF86', bgColor: '#A2FF8615', title: 'Magnesium helps', body: 'Dark chocolate, almonds, and bananas are rich in magnesium — eases PMS symptoms and supports implantation.' },
-    { icon: 'moon-outline', iconColor: '#4D96FF', bgColor: '#4D96FF15', title: 'Prioritize sleep', body: 'Progesterone may make you sleepier. Lean into it — 7-9 hours of sleep supports fertility.' },
+    { icon: 'leaf-outline', iconColor: stickers.lilac, bgColor: stickers.lilac + '15', title: 'Two-week wait', body: 'If you tried to conceive, implantation may happen in 6-12 days. Avoid alcohol and excess caffeine.' },
+    { icon: 'nutrition-outline', iconColor: stickers.green, bgColor: stickers.green + '15', title: 'Magnesium helps', body: 'Dark chocolate, almonds, and bananas are rich in magnesium — eases PMS symptoms and supports implantation.' },
+    { icon: 'moon-outline', iconColor: stickers.blue, bgColor: stickers.blue + '15', title: 'Prioritize sleep', body: 'Progesterone may make you sleepier. Lean into it — 7-9 hours of sleep supports fertility.' },
   ],
 }
 
 export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyInsightsProps) {
-  const { colors: tc } = useAppTheme()
+  const { colors: tc } = useTheme()
   const insights = PHASE_INSIGHTS[cycleInfo.phase] ?? PHASE_INSIGHTS.follicular
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: tc.text }]}>MY DAILY INSIGHTS</Text>
-        <Text style={[styles.headerSub, { color: tc.textTertiary }]}>Today</Text>
+        <Text style={[styles.headerSub, { color: tc.textMuted }]}>Today</Text>
       </View>
 
       {/* Horizontal insight cards */}
@@ -55,7 +56,7 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
         <Pressable onPress={onLogSymptoms} style={[styles.logCard, { backgroundColor: tc.surfaceGlass, borderColor: tc.border }]}>
           <Text style={[styles.logCardTitle, { color: tc.text }]}>Log your{'\n'}symptoms</Text>
           <View style={styles.logCardButton}>
-            <Ionicons name="add" size={18} color="#FFF" />
+            <Ionicons name="add" size={18} color={tc.text} />
           </View>
         </Pressable>
 
@@ -103,7 +104,7 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
         <PaperCard radius={28} padding={20} style={styles.listCard}>
           <View style={styles.listHeader}>
             <Ionicons name="nutrition" size={16} color={stickers.coral} />
-            <Text style={[styles.listTitle, { color: tc.textTertiary }]}>NUTRITION</Text>
+            <Text style={[styles.listTitle, { color: tc.textMuted }]}>NUTRITION</Text>
           </View>
           {cycleInfo.nutritionTips.slice(0, 3).map((tip, i) => (
             <Text key={i} style={[styles.listItem, { color: tc.textSecondary }]} numberOfLines={2}>• {tip}</Text>

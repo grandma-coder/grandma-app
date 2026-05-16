@@ -1,5 +1,12 @@
+/**
+ * WeekStrip — horizontal day-of-week selector with today emphasised as a
+ * filled phase-color circle. Used in the pre-pregnancy agenda above the
+ * cycle ring.
+ */
+
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { toDateStr } from '../../lib/cycleLogic'
+import { useTheme, radius, spacing } from '../../constants/theme'
 import type { CycleInfo } from '../../lib/cycleLogic'
 
 interface WeekStripProps {
@@ -14,7 +21,6 @@ function getStripDates(centerDate: string): { date: Date; dateStr: string }[] {
   const center = new Date(centerDate + 'T00:00:00')
   const dayOfWeek = center.getDay()
   const dates: { date: Date; dateStr: string }[] = []
-  // Show current week starting from Sunday
   for (let i = -dayOfWeek; i < 7 - dayOfWeek; i++) {
     const d = new Date(center)
     d.setDate(center.getDate() + i)
@@ -23,7 +29,8 @@ function getStripDates(centerDate: string): { date: Date; dateStr: string }[] {
   return dates
 }
 
-export function WeekStrip({ selectedDate, onSelectDate, cycleInfo }: WeekStripProps) {
+export function WeekStrip({ onSelectDate, cycleInfo }: WeekStripProps) {
+  const { colors, font } = useTheme()
   const todayStr = toDateStr(new Date())
   const dates = getStripDates(todayStr)
 
@@ -43,21 +50,28 @@ export function WeekStrip({ selectedDate, onSelectDate, cycleInfo }: WeekStripPr
             onPress={() => onSelectDate(dateStr)}
             style={styles.cell}
           >
-            {/* Day label — matches HTML: text-[10px] text-white/40 uppercase mb-2 */}
-            <Text style={[
-              styles.dayLabel,
-              isToday && { color: cycleInfo.phaseColor, fontWeight: '700' },
-            ]}>
+            <Text
+              style={[
+                styles.dayLabel,
+                {
+                  color: isToday ? cycleInfo.phaseColor : colors.textFaint,
+                  fontFamily: isToday ? font.bodySemiBold : font.bodyMedium,
+                },
+              ]}
+            >
               {dayLabel}
             </Text>
 
-            {/* Date — matches HTML: today = w-9 h-9 rounded-full bg-green */}
             {isToday ? (
               <View style={[styles.todayCircle, { backgroundColor: cycleInfo.phaseColor }]}>
-                <Text style={styles.todayText}>{date.getDate()}</Text>
+                <Text style={[styles.todayText, { color: colors.bg, fontFamily: font.bodySemiBold }]}>
+                  {date.getDate()}
+                </Text>
               </View>
             ) : (
-              <Text style={styles.dateText}>{date.getDate()}</Text>
+              <Text style={[styles.dateText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+                {date.getDate()}
+              </Text>
             )}
           </Pressable>
         )
@@ -67,45 +81,31 @@ export function WeekStrip({ selectedDate, onSelectDate, cycleInfo }: WeekStripPr
 }
 
 const styles = StyleSheet.create({
-  // matches HTML: .flex.space-x-4.overflow-x-auto.pb-4
   container: {
-    gap: 16,
-    paddingBottom: 16,
+    gap: spacing.md,
+    paddingBottom: spacing.md,
   },
-
-  // matches HTML: .flex.flex-col.items-center.shrink-0.w-12
   cell: {
     width: 48,
     alignItems: 'center',
   },
-
-  // matches HTML: text-[10px] text-white/40 uppercase mb-2
   dayLabel: {
     fontSize: 10,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.4)',
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
-
-  // matches HTML: text-base font-bold
   dateText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
-
-  // matches HTML: w-9 h-9 rounded-full bg-[#A2FF86] text-[#1A1030]
   todayCircle: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   todayText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1A1030',
   },
 })

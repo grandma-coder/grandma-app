@@ -33,10 +33,15 @@ export function YourCycleCard({
 }: Props) {
   const { colors, stickers, isDark } = useTheme()
 
-  const ink = isDark ? colors.text : '#141313'
-  const cardBg = isDark ? colors.surfaceRaised : '#3A2438'  // plum for light mode hero
-  const cardInk = '#FFFEF8'  // cream-white text on the plum card
-  const cardMuted = 'rgba(255, 254, 248, 0.65)'
+  // Hero treatment: deep-plum card in light mode (mood/intentional accent),
+  // surfaceRaised in dark. Card always uses cream text on a dark fill.
+  const PLUM_HERO = '#3A2438'  // light-mode hero plum — not in tokens; intentional one-off
+  const ink = colors.text
+  const cardBg = isDark ? colors.surfaceRaised : PLUM_HERO
+  // Card always wants cream text on its dark fill (plum or surfaceRaised).
+  const CREAM = '#F5EDDC'
+  const cardInk = CREAM
+  const cardMuted = CREAM + 'A6'                    // ~65% alpha for muted
 
   // Semicircle progress (bottom half of circle)
   const progress = Math.min(1, Math.max(0, cycleDay / Math.max(1, cycleLength)))
@@ -61,7 +66,7 @@ export function YourCycleCard({
             {/* bg track — bottom semicircle */}
             <Path
               d={`M ${RING_STROKE / 2} ${RING_SIZE / 2} A ${RING_RADIUS} ${RING_RADIUS} 0 0 0 ${RING_SIZE - RING_STROKE / 2} ${RING_SIZE / 2}`}
-              stroke={'rgba(255,254,248,0.14)'}
+              stroke={CREAM + '24'}
               strokeWidth={RING_STROKE}
               strokeLinecap="round"
               fill="none"
