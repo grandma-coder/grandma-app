@@ -22,6 +22,7 @@ import { supabase } from '../../lib/supabase'
 import { getWeekData } from '../../lib/pregnancyData'
 import { getWeekStat } from '../../lib/weekStats'
 import { toDateStr } from '../../lib/cycleLogic'
+import { useTranslation } from '../../lib/i18n'
 import { useTheme } from '../../constants/theme'
 
 // ─── Layout constants ────────────────────────────────────────────────────────
@@ -39,7 +40,6 @@ const TRI_COLOR = {
   t3: '#D94A3E', // terracotta — late weeks (rich, ripe)
 } as const
 
-const TRI_NAMES = ['FIRST', 'SECOND', 'THIRD'] as const
 
 function triColor(w: number): string {
   if (w <= 13) return TRI_COLOR.t1
@@ -91,23 +91,25 @@ function formatDateRange(dueDate: string, week: number): string {
 }
 
 // ─── Log type display map — palette harmonized with WeekCard ────────────────
-const LOG_DISPLAY: Record<string, { label: string; color: string }> = {
-  weight:      { label: 'Weight',       color: '#EE7B6D' }, // coral
-  mood:        { label: 'Mood',         color: '#F5D652' }, // mustard
-  kick:        { label: 'Kicks',        color: '#D94A3E' }, // terracotta
-  symptom:     { label: 'Symptom',      color: '#F5B896' }, // peach
-  sleep:       { label: 'Sleep',        color: '#2A1F4A' }, // deep purple
-  appointment: { label: 'Appt',         color: '#F5D652' }, // mustard
-  exercise:    { label: 'Exercise',     color: '#BDD48C' }, // sage
-  water:       { label: 'Water',        color: '#BDD48C' }, // sage
-  vitamins:    { label: 'Vitamins',     color: '#F5B896' }, // peach
-  contraction: { label: 'Contractions', color: '#D94A3E' }, // terracotta
-  nutrition:   { label: 'Nutrition',    color: '#BDD48C' }, // sage
-  kegel:       { label: 'Kegel',        color: '#C8A8E8' }, // lilac
-  kick_count:  { label: 'Kicks',        color: '#D94A3E' }, // terracotta
-  nesting:     { label: 'Nesting',      color: '#F5D652' }, // mustard
-  birth_prep:  { label: 'Birth prep',   color: '#F5B896' }, // peach
-  exam_result: { label: 'Exam result',  color: '#F5D652' }, // mustard
+// Per-log-type color map. Labels resolve via i18n at render time via
+// LOG_LABEL_KEY below.
+const LOG_DISPLAY: Record<string, { labelKey: string; color: string }> = {
+  weight:      { labelKey: 'preg_ring_log_weight',      color: '#EE7B6D' }, // coral
+  mood:        { labelKey: 'preg_ring_log_mood',        color: '#F5D652' }, // mustard
+  kick:        { labelKey: 'preg_ring_log_kicks',       color: '#D94A3E' }, // terracotta
+  symptom:     { labelKey: 'preg_ring_log_symptom',     color: '#F5B896' }, // peach
+  sleep:       { labelKey: 'preg_ring_log_sleep',       color: '#2A1F4A' }, // deep purple
+  appointment: { labelKey: 'preg_ring_log_appointment', color: '#F5D652' }, // mustard
+  exercise:    { labelKey: 'preg_ring_log_exercise',    color: '#BDD48C' }, // sage
+  water:       { labelKey: 'preg_ring_log_water',       color: '#BDD48C' }, // sage
+  vitamins:    { labelKey: 'preg_ring_log_vitamins',    color: '#F5B896' }, // peach
+  contraction: { labelKey: 'preg_ring_log_contraction', color: '#D94A3E' }, // terracotta
+  nutrition:   { labelKey: 'preg_ring_log_nutrition',   color: '#BDD48C' }, // sage
+  kegel:       { labelKey: 'preg_ring_log_kegel',       color: '#C8A8E8' }, // lilac
+  kick_count:  { labelKey: 'preg_ring_log_kicks',       color: '#D94A3E' }, // terracotta
+  nesting:     { labelKey: 'preg_ring_log_nesting',     color: '#F5D652' }, // mustard
+  birth_prep:  { labelKey: 'preg_ring_log_birthPrep',   color: '#F5B896' }, // peach
+  exam_result: { labelKey: 'preg_ring_log_examResult',  color: '#F5D652' }, // mustard
 }
 
 function formatLogDay(dateISO: string): string {
@@ -234,6 +236,7 @@ interface Props {
 export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
   const { font, colors } = useTheme()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
 
   const [userId, setUserId] = useState<string | undefined>()
   useEffect(() => {
@@ -344,19 +347,21 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
     }
     return Array.from(byType.entries())
       .map(([type, logs]) => {
-        const display = LOG_DISPLAY[type] ?? { label: type, color: '#999' }
+        const display = LOG_DISPLAY[type]
+        const label = display ? t(display.labelKey as any) : type
+        const color = display?.color ?? '#999'
         const lastDate = logs.reduce((acc, l) => (l.log_date > acc ? l.log_date : acc), logs[0].log_date)
         return {
           type,
-          label: display.label,
-          color: display.color,
+          label,
+          color,
           summary: summarizePillar(type, logs),
           count: logs.length,
           lastDate,
         }
       })
       .sort((a, b) => (a.lastDate < b.lastDate ? 1 : -1))
-  }, [weekLogs])
+  }, [weekLogs, t])
 
   // ── Gesture refs ──────────────────────────────────────────────────────────────
   // Strategy: tangent-projection avoids all coordinate-system issues with SVG.
@@ -475,10 +480,16 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
   const isPastWeek = selectedWeek < weekNumber
   const weekData = getWeekData(selectedWeek)
   const stat = getWeekStat(selectedWeek)
-  const triName = TRI_NAMES[triIndex(selectedWeek)]
+  const triIdx = triIndex(selectedWeek)
+  const triKey = (['preg_ring_trimester1', 'preg_ring_trimester2', 'preg_ring_trimester3'] as const)[triIdx]
+  const triLabel = t(triKey)
   const sizeName = weekData.babySize.toLowerCase()
   const article = articleFor(sizeName)
-  const statusLabel = isCurrWeek ? 'You are here' : isPastWeek ? 'Completed' : 'Upcoming'
+  const statusLabel = isCurrWeek
+    ? t('preg_ring_statusHere')
+    : isPastWeek
+      ? t('preg_ring_statusCompleted')
+      : t('preg_ring_statusUpcoming')
   const dateLabel = dueDate ? formatDateRange(dueDate, selectedWeek) : '—'
 
   // Theme-aware colors for SVG (must be strings for SVG props)
@@ -539,13 +550,13 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
           <View style={StyleSheet.absoluteFill} pointerEvents="none">
             <View style={styles.centerInner}>
               <Text style={[styles.centerLabel, { color: col, fontFamily: font.bodySemiBold }]}>
-                WEEK
+                {t('preg_ring_weekLabel')}
               </Text>
               <Text style={[styles.centerNumber, { color: col, fontFamily: font.display }]}>
                 {selectedWeek}
               </Text>
               <Text style={[styles.centerStatus, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
-                {isCurrWeek ? 'YOU ARE HERE' : isPastWeek ? 'COMPLETED' : 'UPCOMING'}
+                {isCurrWeek ? t('preg_ring_statusHere') : isPastWeek ? t('preg_ring_statusCompleted') : t('preg_ring_statusUpcoming')}
               </Text>
             </View>
           </View>
@@ -553,7 +564,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
       </View>
 
       <Text style={[styles.hint, { color: colors.textFaint, fontFamily: font.body }]}>
-        ↺ drag to spin · tap any week
+        {t('preg_ring_gestureHint')}
       </Text>
 
       {/* ── Bottom panel ── */}
@@ -573,7 +584,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
               </Text>
             </Text>
             <Text style={[styles.dateLabel, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
-              {dateLabel} · {triName} trimester
+              {dateLabel} · {triLabel}
             </Text>
           </View>
           <View style={[styles.statusPill, { borderColor: col + '55', backgroundColor: col + '1A' }]}>
@@ -587,7 +598,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
         <View style={styles.statsRow}>
           <View style={[styles.statCell, { borderTopColor: col + '66' }]}>
             <Text style={[styles.statLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
-              LENGTH
+              {t('preg_ring_length')}
             </Text>
             <Text style={[styles.statValue, { color: colors.text, fontFamily: font.display }]}>
               {stat.cm}
@@ -598,7 +609,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
           </View>
           <View style={[styles.statCell, { borderTopColor: col + '66' }]}>
             <Text style={[styles.statLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
-              WEIGHT
+              {t('preg_ring_weight')}
             </Text>
             <Text style={[styles.statValue, { color: colors.text, fontFamily: font.display }]}>
               {formatWeightValue(stat.g)}
@@ -612,7 +623,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
         {/* This week milestone note */}
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
-            THIS WEEK
+            {t('preg_ring_thisWeek')}
           </Text>
           <Text style={[styles.noteText, { color: colors.textSecondary, fontFamily: font.body }]}>
             {weekData.developmentFact}
@@ -622,7 +633,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
         {/* Logged this week */}
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
-            LOGGED THIS WEEK
+            {t('preg_ring_loggedThisWeek')}
           </Text>
           {pillarGroups.length > 0 ? (
             <View style={styles.logList}>
@@ -651,10 +662,10 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
           ) : (
             <Text style={[styles.emptyLogs, { color: colors.textFaint, fontFamily: font.body }]}>
               {isCurrWeek
-                ? 'Nothing logged yet this week.'
+                ? t('preg_ring_emptyCurrent')
                 : isPastWeek
-                ? 'No logs recorded for this week.'
-                : 'Future week — nothing to log yet.'}
+                ? t('preg_ring_emptyPast')
+                : t('preg_ring_emptyFuture')}
             </Text>
           )}
         </View>

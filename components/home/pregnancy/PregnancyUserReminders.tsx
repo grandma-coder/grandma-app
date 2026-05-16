@@ -13,6 +13,7 @@ import {
   Plus, Bell, Clock, X, Check, Pencil, Flag, Trash2,
 } from 'lucide-react-native'
 import { useTheme, getModeColor, brand } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 import { Star as StarSticker } from '../../ui/Stickers'
 import { supabase } from '../../../lib/supabase'
 
@@ -49,6 +50,7 @@ function localDateStr(d: Date): string {
 
 export function PregnancyUserReminders({ userId }: Props) {
   const { colors, radius, isDark, stickers } = useTheme()
+  const { t } = useTranslation()
   const ACCENT = getModeColor('pregnancy', isDark)
 
   const [reminders, setReminders] = useState<Reminder[]>([])
@@ -182,7 +184,7 @@ export function PregnancyUserReminders({ userId }: Props) {
             <Bell size={13} color="#141313" strokeWidth={2.5} />
           </View>
           <Text style={{ flex: 1, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', color: colors.text, letterSpacing: -0.3 }}>
-            Add reminder
+            {t('preg_reminders_addButton')}
           </Text>
           <View style={{
             width: 28, height: 28, borderRadius: 14,
@@ -203,7 +205,7 @@ export function PregnancyUserReminders({ userId }: Props) {
               backgroundColor: isDark ? colors.surfaceRaised : 'rgba(20,19,19,0.04)',
               borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
             }]}
-            placeholder="e.g. Take prenatal vitamins, schedule glucose test..."
+            placeholder={t('preg_reminders_inputPlaceholder')}
             placeholderTextColor={colors.textMuted}
             value={newText}
             onChangeText={setNewText}
@@ -230,7 +232,7 @@ export function PregnancyUserReminders({ userId }: Props) {
                 color: newDate ? ACCENT : colors.textSecondary,
                 fontFamily: 'DMSans_600SemiBold',
               }}>
-                {newDate ? newDate.toLocaleDateString('en', { month: 'short', day: 'numeric' }) : 'Set date'}
+                {newDate ? newDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : t('preg_reminders_setDate')}
               </Text>
               {newDate && (
                 <Pressable
@@ -259,7 +261,7 @@ export function PregnancyUserReminders({ userId }: Props) {
                 <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: newTime ? stickers.peachInk : colors.textSecondary }}>
                   {newTime
                     ? formatTime12h(`${String(newTime.getHours()).padStart(2, '0')}:${String(newTime.getMinutes()).padStart(2, '0')}`)
-                    : 'Set time'}
+                    : t('preg_reminders_setTime')}
                 </Text>
                 {newTime && (
                   <Pressable onPress={() => { setNewTime(null); setShowTimePicker(false) }} hitSlop={8}>
@@ -282,7 +284,7 @@ export function PregnancyUserReminders({ userId }: Props) {
               accessibilityRole="button"
               accessibilityLabel="Save reminder"
             >
-              <Text style={[styles.saveBtnText, { color: colors.textInverse }]}>Save</Text>
+              <Text style={[styles.saveBtnText, { color: colors.textInverse }]}>{t('preg_reminders_save')}</Text>
             </Pressable>
           </View>
 
@@ -318,7 +320,7 @@ export function PregnancyUserReminders({ userId }: Props) {
                     borderTopColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
                   }}
                 >
-                  <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: ACCENT }}>Done</Text>
+                  <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: ACCENT }}>{t('preg_reminders_done')}</Text>
                 </Pressable>
               )}
             </View>
@@ -356,7 +358,7 @@ export function PregnancyUserReminders({ userId }: Props) {
                     borderTopColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
                   }}
                 >
-                  <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: stickers.peachInk }}>Done</Text>
+                  <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: stickers.peachInk }}>{t('preg_reminders_done')}</Text>
                 </Pressable>
               )}
             </View>
@@ -380,6 +382,7 @@ export function PregnancyUserReminders({ userId }: Props) {
               isDark={isDark}
               stickers={stickers}
               accent={ACCENT}
+              t={t}
             />
           ))}
         </View>
@@ -389,7 +392,7 @@ export function PregnancyUserReminders({ userId }: Props) {
 }
 
 function ReminderRow({
-  r, onToggle, onDelete, onEdit, onFlag, colors, isDark, stickers, accent,
+  r, onToggle, onDelete, onEdit, onFlag, colors, isDark, stickers, accent, t,
 }: {
   r: Reminder
   onToggle: () => void
@@ -400,6 +403,7 @@ function ReminderRow({
   isDark: boolean
   stickers: any
   accent: string
+  t: ReturnType<typeof useTranslation>['t']
 }) {
   const ACCENT = accent
   const today = new Date(); today.setHours(0, 0, 0, 0)
@@ -411,9 +415,14 @@ function ReminderRow({
   const dueDateColor = isOverdue ? brand.error : isDueToday ? '#C08000' : isDueSoon ? brand.warning : colors.textMuted
   const timeSuffix = r.dueTime ? ` · ${formatTime12h(r.dueTime)}` : ''
   const dueDateLabel = due
-    ? isOverdue ? `${Math.abs(diffDays!)}d overdue${timeSuffix}`
-    : isDueToday ? `Due today${timeSuffix}`
-    : `Due ${due.toLocaleDateString('en', { month: 'short', day: 'numeric' })}${timeSuffix}`
+    ? isOverdue
+      ? t('preg_reminders_dueOverdue', { days: Math.abs(diffDays!), timeSuffix })
+      : isDueToday
+        ? t('preg_reminders_dueToday', { timeSuffix })
+        : t('preg_reminders_dueOn', {
+            date: due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+            timeSuffix,
+          })
     : null
 
   const [editing, setEditing] = useState(false)

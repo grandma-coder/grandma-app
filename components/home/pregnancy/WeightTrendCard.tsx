@@ -14,6 +14,7 @@ import Svg, {
   Circle, Line, Path, Rect, Text as SvgText, Defs, LinearGradient, Stop,
 } from 'react-native-svg'
 import { useTheme } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 import { PaperCard } from '../../ui/PaperCard'
 import { StickerButton } from '../../ui/StickerButton'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
@@ -300,6 +301,7 @@ function WeightDetailModal(props: DetailProps) {
     entries, weekNumber, bandLow, bandHigh, chartWidth,
   } = props
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = colors.text
   const paperBorderStrong = isDark ? colors.border : 'rgba(20,19,19,0.18)'
 
@@ -309,7 +311,7 @@ function WeightDetailModal(props: DetailProps) {
   return (
     <LogSheet
       visible={visible}
-      title="Weight trend"
+      title={t('preg_weight_sheetTitle')}
       onClose={onClose}
       chip={`Week ${weekNumber}`}
       chipColor={stickers.lilac}
@@ -332,7 +334,7 @@ function WeightDetailModal(props: DetailProps) {
             <Display size={22} color={ink} style={{ marginTop: 4 }}>
               {start !== null ? `${start.toFixed(1)}` : '—'}
             </Display>
-            <Body size={11} color={colors.textMuted} style={{ fontFamily: font.italic }}>kg pre-preg</Body>
+            <Body size={11} color={colors.textMuted} style={{ fontFamily: font.italic }}>{t('preg_weight_kgPrePreg')}</Body>
           </View>
 
           <View style={[styles.statTile, { backgroundColor: stickers.greenSoft, borderColor: ink }]}>
@@ -340,7 +342,7 @@ function WeightDetailModal(props: DetailProps) {
             <Display size={22} color={ink} style={{ marginTop: 4 }}>
               {gained !== null ? `${gained >= 0 ? '+' : ''}${gained.toFixed(1)}` : '—'}
             </Display>
-            <Body size={11} color={colors.textMuted} style={{ fontFamily: font.italic }}>kg total</Body>
+            <Body size={11} color={colors.textMuted} style={{ fontFamily: font.italic }}>{t('preg_weight_kgTotal')}</Body>
           </View>
 
           <View style={[styles.statTile, { backgroundColor: stickers.yellowSoft, borderColor: ink }]}>
@@ -348,14 +350,14 @@ function WeightDetailModal(props: DetailProps) {
             <Display size={22} color={ink} style={{ marginTop: 4 }}>
               {pace !== null ? `${pace >= 0 ? '+' : ''}${pace.toFixed(1)}` : '—'}
             </Display>
-            <Body size={11} color={colors.textMuted} style={{ fontFamily: font.italic }}>kg/wk</Body>
+            <Body size={11} color={colors.textMuted} style={{ fontFamily: font.italic }}>{t('preg_weight_kgPerWeek')}</Body>
           </View>
         </View>
 
         {/* Trend chart with target band */}
         <View style={[styles.chartCard, { backgroundColor: colors.surface, borderColor: paperBorderStrong }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <MonoCaps size={10} color={colors.textMuted}>TREND · LAST {chartPoints.length} ENTRIES</MonoCaps>
+            <MonoCaps size={10} color={colors.textMuted}>{t('preg_weight_trendHeader', { count: chartPoints.length })}</MonoCaps>
             <View style={[styles.legendDot, { backgroundColor: stickers.lilac, borderColor: ink }]} />
           </View>
           {chartPoints.length >= 2 ? (
@@ -372,7 +374,7 @@ function WeightDetailModal(props: DetailProps) {
             </View>
           ) : (
             <Body size={12} color={colors.textMuted} style={{ marginTop: 12, fontFamily: font.italic }}>
-              Log weight on at least 2 days to see your trend and IOM target band overlay.
+              {t('preg_weight_emptyHelp')}
             </Body>
           )}
         </View>
@@ -382,7 +384,7 @@ function WeightDetailModal(props: DetailProps) {
           <MonoCaps size={10} color={colors.textMuted}>IOM TARGET · {band.label.toUpperCase()}</MonoCaps>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
             <Display size={26} color={ink}>{band.low}–{band.high}</Display>
-            <Body size={12} color={colors.textMuted} style={{ fontFamily: font.italic }}>kg total gain</Body>
+            <Body size={12} color={colors.textMuted} style={{ fontFamily: font.italic }}>{t('preg_weight_iomBandLabel')}</Body>
           </View>
           {expectedLow !== null && expectedHigh !== null && (
             <Body size={13} color={colors.textSecondary} style={{ marginTop: 10, lineHeight: 18 }}>
@@ -425,7 +427,7 @@ function WeightDetailModal(props: DetailProps) {
 
         {/* CTA — sticker button with ink shadow so it 'sits' on the cream paper */}
         <StickerButton
-          label="Open full insights"
+          label={t('preg_weight_openInsights')}
           color={stickers.lilac}
           colorSoft={stickers.lilacSoft}
           colorDark={ink}
@@ -448,6 +450,7 @@ interface Props {
 
 export function WeightTrendCard({ userId, weekNumber }: Props) {
   const { colors, stickers } = useTheme()
+  const { t } = useTranslation()
   const [detailVisible, setDetailVisible] = useState(false)
   const { entries, profile, loading } = useWeightCardData(userId)
 
@@ -495,20 +498,32 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
 
   // Status
   let status: 'below' | 'on_track' | 'above' | 'no_data' = 'no_data'
-  let statusText = 'Log your weight to see trend'
+  let statusText = t('preg_weight_statusEmpty')
   let statusColor = colors.textMuted
   if (derived.gained !== null) {
     if (derived.gained < expectedLow - 0.5) {
       status = 'below'
-      statusText = `Below target — expected ${expectedLow.toFixed(1)}–${expectedHigh.toFixed(1)} kg by week ${weekNumber}`
+      statusText = t('preg_weight_statusBelow', {
+        low: expectedLow.toFixed(1),
+        high: expectedHigh.toFixed(1),
+        week: weekNumber,
+      })
       statusColor = stickers.peach
     } else if (derived.gained > expectedHigh + 0.5) {
       status = 'above'
-      statusText = `Above target — expected ${expectedLow.toFixed(1)}–${expectedHigh.toFixed(1)} kg by week ${weekNumber}`
+      statusText = t('preg_weight_statusAbove', {
+        low: expectedLow.toFixed(1),
+        high: expectedHigh.toFixed(1),
+        week: weekNumber,
+      })
       statusColor = stickers.coral
     } else {
       status = 'on_track'
-      statusText = `On track — ${derived.gained.toFixed(1)} kg of ${expectedLow.toFixed(1)}–${expectedHigh.toFixed(1)} kg`
+      statusText = t('preg_weight_statusOnTrack', {
+        gain: derived.gained.toFixed(1),
+        low: expectedLow.toFixed(1),
+        high: expectedHigh.toFixed(1),
+      })
       statusColor = stickers.green
     }
   }
@@ -585,7 +600,7 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
           ) : (
             <View style={styles.emptyChart}>
               <Body size={12} color={colors.textMuted} align="center">
-                Log weight twice to see your trend + target band
+                {t('preg_weight_chartEmpty')}
               </Body>
             </View>
           )}
@@ -593,10 +608,10 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
           {/* Footer CTA */}
           <View style={styles.footerRow}>
             <Body size={12} color={colors.textMuted}>
-              Target: {band.low}–{band.high} kg total · {band.label}
+              {t('preg_weight_targetFooter', { low: band.low, high: band.high, label: band.label })}
             </Body>
             <View style={styles.detailsLink}>
-              <Body size={13} color={stickers.lilac} style={{ fontFamily: 'DMSans_600SemiBold' }}>Details</Body>
+              <Body size={13} color={stickers.lilac} style={{ fontFamily: 'DMSans_600SemiBold' }}>{t('preg_weight_details')}</Body>
               <ChevronRight size={14} color={stickers.lilac} strokeWidth={2.5} />
             </View>
           </View>

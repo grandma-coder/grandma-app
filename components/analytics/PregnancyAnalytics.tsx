@@ -27,6 +27,7 @@ import { useTheme } from '../../constants/theme'
 import { MoodBubbleCluster, type MoodBubbleItem } from '../charts/SvgCharts'
 import { supabase } from '../../lib/supabase'
 import { toDateStr } from '../../lib/cycleLogic'
+import { useTranslation } from '../../lib/i18n'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import {
@@ -111,6 +112,21 @@ const PILLAR_META: Record<PillarKey, PillarMeta> = {
   exercise:     { label: 'Movement',      blurb: 'Active minutes per day' },
   contractions: { label: 'Contractions',  blurb: 'Frequency & intervals' },
   birth:        { label: 'Birth Ready',   blurb: 'Plan, bag & paperwork' },
+}
+
+// i18n key for each pillar's display label. Lookups via t(PILLAR_LABEL_KEY[key]).
+const PILLAR_LABEL_KEY: Record<PillarKey, string> = {
+  wellbeing:    'preg_analytics_pillar_wellbeing',
+  weight:       'preg_analytics_pillar_weight',
+  kicks:        'preg_analytics_pillar_kicks',
+  sleep:        'preg_analytics_pillar_sleep',
+  mood:         'preg_analytics_pillar_mood',
+  symptoms:     'preg_analytics_pillar_symptoms',
+  hydration:    'preg_analytics_pillar_hydration',
+  nutrition:    'preg_analytics_pillar_nutrition',
+  exercise:     'preg_analytics_pillar_exercise',
+  contractions: 'preg_analytics_pillar_contractions',
+  birth:        'preg_analytics_pillar_birthReadiness',
 }
 
 interface Palette { tint: string; chip: string; bar: string }
@@ -756,7 +772,9 @@ function PillarRow({
   pillarKey, takeaway, onPress,
 }: { pillarKey: PillarKey; takeaway: Takeaway; onPress: () => void }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const meta = PILLAR_META[pillarKey]
+  const label = t(PILLAR_LABEL_KEY[pillarKey] as any)
   const palette = pillarPalette(pillarKey, stickers)
   const pct = takeaway.pct ?? 0
 
@@ -779,7 +797,7 @@ function PillarRow({
         <View style={{ flex: 1 }}>
           <View style={styles.pillarTitleRow}>
             <Text style={[styles.pillarName, { color: colors.text, fontFamily: font.display }]}>
-              {meta.label}
+              {label}
             </Text>
             {takeaway.trend ? (
               <View style={[styles.trendChip, { backgroundColor: palette.tint }]}>
@@ -847,10 +865,12 @@ interface DetailProps {
 function PillarDetailModal(props: DetailProps) {
   const { pillarKey, onClose } = props
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   if (!pillarKey) return null
   const meta = PILLAR_META[pillarKey]
+  const label = t(PILLAR_LABEL_KEY[pillarKey] as any)
   const palette = pillarPalette(pillarKey, stickers)
   const sheetH = SCREEN_H * 0.87
 
@@ -915,7 +935,7 @@ function PillarDetailModal(props: DetailProps) {
                     lineHeight: 32,
                   }}
                 >
-                  {meta.label}
+                  {label}
                 </Text>
                 <Text
                   style={{
@@ -1067,6 +1087,7 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
 
 function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const validEntries = weightHistory.filter((e) => e.weight > 0)
   const weights = validEntries.map((e) => e.weight)
   const weightLabels = validEntries.map((e) => formatLogDate(e.date))
@@ -1121,12 +1142,12 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
             : 'Trimester 3 often slows to 0.2–0.4 kg per week. Sudden jumps can signal swelling — flag it to your OB.'}
         </Body>
         {onTrack ? (
-          <Pill color={stickers.green} tint={stickers.greenSoft} label="On track" />
+          <Pill color={stickers.green} tint={stickers.greenSoft} label={t('preg_analytics_pill_onTrack')} />
         ) : avgWeekly !== null ? (
           <Pill
             color={stickers.coral}
             tint={stickers.peachSoft}
-            label={avgWeekly > targetPerWeek ? 'Above target' : 'Below target'}
+            label={t('preg_analytics_pill_belowTarget')}
           />
         ) : null}
       </PaperCard>

@@ -405,6 +405,108 @@ export interface TranslationKeys {
   preg_form_nutrition_title: string
   preg_form_nutrition_caloriesLabel: string
 
+  // ─── WeightTrendCard (Wave 3) ─────────────────────────────────────────
+  preg_weight_sheetTitle: string
+  preg_weight_kgPrePreg: string
+  preg_weight_kgTotal: string
+  preg_weight_kgPerWeek: string
+  preg_weight_trendHeader: string                // "TREND · LAST {{count}} ENTRIES"
+  preg_weight_emptyHelp: string
+  preg_weight_iomBandLabel: string
+  preg_weight_iomBandBody: string                // "By week {{week}}, a typical {{cat}} pregnancy gains {{low}}–{{high}} kg total."
+  preg_weight_openInsights: string
+  preg_weight_statusEmpty: string
+  preg_weight_statusBelow: string                // "Below target — expected {{low}}–{{high}} kg by week {{week}}"
+  preg_weight_statusAbove: string                // "Above target — expected {{low}}–{{high}} kg by week {{week}}"
+  preg_weight_statusOnTrack: string              // "On track — {{gain}} kg of {{low}}–{{high}} kg"
+  preg_weight_chartEmpty: string
+  preg_weight_targetFooter: string               // "Target: {{low}}–{{high}} kg total · {{label}}"
+  preg_weight_details: string
+
+  // ─── PregnancyUserReminders (Wave 3) ──────────────────────────────────
+  preg_reminders_addButton: string
+  preg_reminders_inputPlaceholder: string
+  preg_reminders_setDate: string
+  preg_reminders_setTime: string
+  preg_reminders_save: string
+  preg_reminders_done: string                    // iOS picker confirm
+  preg_reminders_dueOverdue: string              // "{{days}}d overdue{{timeSuffix}}"
+  preg_reminders_dueToday: string                // "Due today{{timeSuffix}}"
+  preg_reminders_dueOn: string                   // "Due {{date}}{{timeSuffix}}"
+
+  // ─── PregnancyJourneyRing (Wave 3) ────────────────────────────────────
+  preg_ring_statusHere: string
+  preg_ring_statusCompleted: string
+  preg_ring_statusUpcoming: string
+  preg_ring_weekLabel: string
+  preg_ring_gestureHint: string
+  preg_ring_length: string
+  preg_ring_weight: string
+  preg_ring_thisWeek: string
+  preg_ring_loggedThisWeek: string
+  preg_ring_emptyCurrent: string
+  preg_ring_emptyPast: string
+  preg_ring_emptyFuture: string
+  preg_ring_trimester1: string
+  preg_ring_trimester2: string
+  preg_ring_trimester3: string
+  preg_ring_log_weight: string
+  preg_ring_log_mood: string
+  preg_ring_log_kicks: string
+  preg_ring_log_symptom: string
+  preg_ring_log_sleep: string
+  preg_ring_log_appointment: string
+  preg_ring_log_exercise: string
+  preg_ring_log_water: string
+  preg_ring_log_vitamins: string
+  preg_ring_log_contraction: string
+  preg_ring_log_nutrition: string
+  preg_ring_log_kegel: string
+  preg_ring_log_nesting: string
+  preg_ring_log_birthPrep: string
+  preg_ring_log_examResult: string
+
+  // ─── PregnancyAnalytics (Wave 3) ──────────────────────────────────────
+  preg_analytics_pillar_wellbeing: string
+  preg_analytics_pillar_weight: string
+  preg_analytics_pillar_kicks: string
+  preg_analytics_pillar_sleep: string
+  preg_analytics_pillar_mood: string
+  preg_analytics_pillar_symptoms: string
+  preg_analytics_pillar_hydration: string
+  preg_analytics_pillar_nutrition: string
+  preg_analytics_pillar_exercise: string
+  preg_analytics_pillar_contractions: string
+  preg_analytics_pillar_birthReadiness: string
+  preg_analytics_card_fivePillars: string
+  preg_analytics_card_weightOverTime: string
+  preg_analytics_card_byWeek: string
+  preg_analytics_card_recentKicks: string
+  preg_analytics_card_sleepHoursPerNight: string
+  preg_analytics_card_sleepDebt: string
+  preg_analytics_card_moodMix: string
+  preg_analytics_card_distribution: string
+  preg_analytics_card_breakdown: string
+  preg_analytics_card_worthACall: string
+  preg_analytics_card_today: string
+  preg_analytics_card_hydrationWhy: string
+  preg_analytics_card_smartSip: string
+  preg_analytics_card_dailyNutrient: string
+  preg_analytics_card_trimesterFocus: string
+  preg_analytics_card_minutesPerSession: string
+  preg_analytics_card_safeMovement: string
+  preg_analytics_card_recentContractions: string
+  preg_analytics_card_whenToCall: string
+  preg_analytics_card_suggestedNext: string
+  preg_analytics_card_scoreScale: string
+  preg_analytics_card_howScored: string
+  preg_analytics_pill_onTrack: string
+  preg_analytics_pill_almostThere: string
+  preg_analytics_pill_belowTarget: string
+  preg_analytics_stat_streak: string
+  preg_analytics_stat_bestDay: string
+  preg_analytics_stat_volume: string
+
   // ─── Pre-pregnancy-specific ────────────────────────────────────────────
   prepreg_cycleDay: string
   prepreg_period: string
