@@ -1,0 +1,349 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* ── Canvas ─────────────────────────────────────── */
+  --bg: #F3ECD9;
+  --bg-warm: #EFE5CC;
+  --surface: #FFFEF8;
+  --surface-raised: #F7F0DF;
+
+  /* ── Borders (hairline ink on cream) ────────────── */
+  --border: rgba(20, 19, 19, 0.08);
+  --border-light: rgba(20, 19, 19, 0.05);
+  --border-strong: rgba(20, 19, 19, 0.14);
+
+  /* ── Text (ink on cream — NEVER pure black) ─────── */
+  --ink: #141313;
+  --ink-secondary: #3A3533;
+  --ink-muted: #6E6763;
+  --ink-faint: #A69E93;
+
+  /* ── Brand ──────────────────────────────────────── */
+  --primary: #7048B8;
+  --primary-light: #9B70D4;
+  --primary-dark: #4A2880;
+  --secondary: #3B7DD8;
+
+  /* ── Journey modes (3 stages of the app) ────────── */
+  --rose: #E58BB4;
+  --rose-soft: #F7CFDD;
+  --lavender: #B7A6E8;
+  --lavender-soft: #E0D5F3;
+  --blue-powder: #8BB8E8;
+  --blue-powder-soft: #D4E3F3;
+
+  /* ── Sticker palette (accent decorations) ───────── */
+  --sticker-yellow: #F5D652;
+  --sticker-yellow-soft: #FBEA9E;
+  --sticker-blue: #9DC3E8;
+  --sticker-blue-soft: #CFE0F0;
+  --sticker-pink: #F2B2C7;
+  --sticker-pink-soft: #F9D8E2;
+  --sticker-green: #BDD48C;
+  --sticker-green-soft: #DDE7BB;
+  --sticker-lilac: #C8B6E8;
+  --sticker-lilac-soft: #E3D8F2;
+  --sticker-peach: #F5B896;
+  --sticker-peach-soft: #F9D6C0;
+  --sticker-coral: #EE7B6D;
+  --sticker-charcoal: #2A2624;
+
+  /* ── Radius (these are the ONLY allowed values) ──── */
+  --r-sm: 12px;
+  --r-md: 20px;
+  --r-lg: 28px;
+  --r-xl: 36px;
+  --r-xxl: 48px;
+  --r-full: 999px;
+
+  /* ── Spacing (8pt scale) ────────────────────────── */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 16px;
+  --s-4: 24px;
+  --s-5: 32px;
+  --s-6: 48px;
+  --s-7: 64px;
+  --s-8: 96px;
+  --s-9: 128px;
+
+  /* ── Shadows (only these four exist) ────────────── */
+  --shadow-card: 0 8px 24px rgba(20, 19, 19, 0.08);
+  --shadow-card-hover: 0 14px 32px rgba(20, 19, 19, 0.12);
+  --shadow-stamp: 0 3px 0 var(--ink);
+  --shadow-stamp-press: 0 1px 0 var(--ink);
+
+  /* ── Fonts ──────────────────────────────────────── */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-italic: 'Instrument Serif', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+
+  /* ── Easing (use these curves by name) ──────────── */
+  --ease-paper: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-ink: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-letter: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Shadcn compatibility */
+  --background: var(--bg);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --muted: var(--surface-raised);
+  --muted-foreground: var(--ink-muted);
+  --accent: var(--lavender-soft);
+  --accent-foreground: var(--ink);
+  --destructive: var(--sticker-coral);
+  --destructive-foreground: var(--surface);
+  --input: var(--border);
+  --ring: var(--primary);
+  --radius: 0.625rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--lavender-soft);
+  color: var(--ink);
+}
+
+@theme inline {
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-display);
+  --font-mono: 'DM Mono', monospace;
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--surface);
+  --color-secondary: var(--surface-raised);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--surface-raised);
+  --color-muted-foreground: var(--ink-muted);
+  --color-accent: var(--lavender-soft);
+  --color-accent-foreground: var(--ink);
+  --color-destructive: var(--sticker-coral);
+  --color-destructive-foreground: var(--surface);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--primary);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Typography classes */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-italic {
+  font-family: var(--font-italic);
+  font-style: italic;
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* Eyebrow text style */
+.eyebrow {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 16px;
+}
+
+/* Sticker shadow filter */
+.sticker-shadow {
+  filter: drop-shadow(0 2px 0 rgba(20, 19, 19, 0.06)) drop-shadow(0 6px 10px rgba(20, 19, 19, 0.08));
+}
+
+/* Primary button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 28px;
+  min-height: 56px;
+  background: var(--primary);
+  color: var(--surface);
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--r-full);
+  box-shadow: var(--shadow-stamp);
+  cursor: pointer;
+  transition: transform 120ms var(--ease-ink), box-shadow 120ms var(--ease-ink), background 200ms var(--ease-ink);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 var(--ink);
+  background: var(--primary-light);
+}
+
+.btn-primary:active {
+  transform: translateY(2px);
+  box-shadow: var(--shadow-stamp-press);
+}
+
+/* Secondary button */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 28px;
+  min-height: 56px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--r-full);
+  box-shadow: var(--shadow-stamp);
+  cursor: pointer;
+  transition: transform 120ms var(--ease-ink), box-shadow 120ms var(--ease-ink), background 200ms var(--ease-ink);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 var(--ink);
+  background: var(--surface-raised);
+}
+
+.btn-secondary:active {
+  transform: translateY(2px);
+  box-shadow: var(--shadow-stamp-press);
+}
+
+/* Card styles */
+.card-paper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-card);
+  transition: transform 280ms var(--ease-paper), box-shadow 280ms var(--ease-paper);
+}
+
+.card-paper:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Input styles */
+.input-field {
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--ink);
+  transition: border-color 200ms var(--ease-ink), box-shadow 200ms var(--ease-ink);
+}
+
+.input-field::placeholder {
+  color: var(--ink-faint);
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  border-width: 1.5px;
+  box-shadow: 0 0 0 4px rgba(112, 72, 184, 0.12);
+}
+
+/* Chip/pill styles */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.chip-rose {
+  background: var(--rose-soft);
+  color: var(--ink);
+}
+
+.chip-lavender {
+  background: var(--lavender-soft);
+  color: var(--ink);
+}
+
+.chip-blue {
+  background: var(--blue-powder-soft);
+  color: var(--ink);
+}
+
+/* Scroll progress bar */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--sticker-lilac);
+  z-index: 9999;
+  transition: width 50ms linear;
+}
+
+/* Focus visible styles */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
