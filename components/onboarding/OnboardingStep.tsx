@@ -134,9 +134,8 @@ export function OnboardingStep({
         </View>
       </View>
 
-      {/* Input area — flex:1 with centered content so the input sits in
-          the visual middle between question and button, rather than
-          hugging either edge. Grids that overflow scroll naturally. */}
+      {/* Input area — clusters directly under the question. Bottom CTA
+          is anchored via marginTop:'auto' on the bottom container. */}
       <View style={styles.content}>{children}</View>
 
       {/* Bottom action — anchored to the bottom by the parent flex layout */}
@@ -188,13 +187,12 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    flex: 1,
     paddingHorizontal: 24,
     paddingTop: 22,
-    justifyContent: 'center',
   },
 
   bottom: {
+    marginTop: 'auto',
     paddingHorizontal: 24,
     paddingTop: 8,
   },
