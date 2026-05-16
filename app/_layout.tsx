@@ -85,6 +85,11 @@ export default function RootLayout() {
   const [loading, setLoading] = useState(true)
   const [hasChildren, setHasChildren] = useState(false)
   const [userRole, setUserRole] = useState<string>('parent')
+  // True when EVERY data query for the current session either timed out or
+  // failed. In that state we keep the user where they are instead of
+  // shoving them into onboarding — their data may exist in the DB, we
+  // just couldn't reach it. The user can retry by reloading.
+  const [loadFailed, setLoadFailed] = useState(false)
   const [fontsLoaded] = Font.useFonts({
     Fraunces_600SemiBold,
     Fraunces_700Bold,
@@ -139,42 +144,111 @@ export default function RootLayout() {
   useEffect(() => {
     let cancelled = false
 
+    /**
+     * Wrap a Supabase query in a per-query timeout. If any single query
+     * hangs (RLS deadlock, stale schema cache, dead PostgREST socket),
+     * we want to continue to the next query rather than blocking the
+     * whole user-load flow. Returns the original result or a synthetic
+     * timeout error.
+     */
+    async function withTimeout<T>(
+      label: string,
+      promise: PromiseLike<T>,
+      ms = 6000,
+    ): Promise<T | { data: null; error: { message: string; code: 'TIMEOUT' } }> {
+      return Promise.race([
+        promise as Promise<T>,
+        new Promise<{ data: null; error: { message: string; code: 'TIMEOUT' } }>((resolve) =>
+          setTimeout(() => {
+            console.warn(`[auth] ${label} TIMED OUT after ${ms}ms — likely RLS or schema-cache issue`)
+            resolve({ data: null, error: { message: `${label} timed out after ${ms}ms`, code: 'TIMEOUT' } })
+          }, ms),
+        ),
+      ]) as any
+    }
+
     async function loadUserData(uid: string) {
       console.log('[auth] loadUserData start uid:', uid)
 
-      // Profile: user_role + journey_mode. Errors are non-fatal but logged.
-      const { data: profile, error: profileErr } = await supabase
-        .from('profiles')
-        .select('user_role, journey_mode')
-        .eq('id', uid)
-        .single()
+      // The three independent queries (profile, child_caregivers, behaviors)
+      // fire in parallel. If one hangs, it doesn't block the others — each
+      // has its own 6s timeout. Children-fallback still depends on the
+      // caregivers result, so it runs serially after.
+      const [profileRes, linksRes, behRes] = await Promise.all([
+        withTimeout(
+          'profile query',
+          supabase
+            .from('profiles')
+            .select('user_role, journey_mode')
+            .eq('id', uid)
+            .single(),
+        ),
+        withTimeout(
+          'child_caregivers query',
+          supabase
+            .from('child_caregivers')
+            .select('role, permissions, children(*)')
+            .eq('user_id', uid)
+            .eq('status', 'accepted'),
+        ),
+        withTimeout(
+          'behaviors query',
+          supabase.from('behaviors').select('type').eq('user_id', uid),
+        ),
+      ])
+
+      if (cancelled) return
+
+      // If ALL queries timed out, the network / DB / RLS is wedged and we
+      // shouldn't pretend the user is fresh. The route guard reads
+      // loadFailed and refuses to route into onboarding in that case.
+      const profileTimedOut = (profileRes as any).error?.code === 'TIMEOUT'
+      const linksTimedOut = (linksRes as any).error?.code === 'TIMEOUT'
+      const behTimedOut = (behRes as any).error?.code === 'TIMEOUT'
+      const allTimedOut = profileTimedOut && linksTimedOut && behTimedOut
+      if (allTimedOut) {
+        console.warn('[auth] every data query timed out — keeping user where they are, not routing to onboarding')
+        setLoadFailed(true)
+      } else {
+        setLoadFailed(false)
+      }
+
+      // ─── Profile ─────────────────────────────────────────────────────
+      const { data: profile, error: profileErr } = profileRes as any
       if (profileErr) {
-        // PGRST116 = no rows returned. This means the profile row is missing
-        // for an authenticated user — most likely the row was never created
-        // on sign-up, OR the user signed up against a different Supabase
-        // project than the one currently configured. Surface it loudly so
-        // the symptom (empty profile + no data) maps to the cause.
         if (profileErr.code === 'PGRST116') {
           console.warn(`[auth] profile row MISSING for uid=${uid} — sign-up likely didn't seed it, or env points at a different DB`)
-        } else {
+        } else if (profileErr.code !== 'TIMEOUT') {
           console.warn('[auth] profile load failed:', profileErr.message)
         }
       } else {
         console.log('[auth] profile loaded:', profile)
       }
-      if (cancelled) return
       if (profile?.user_role) setUserRole(profile.user_role)
       if (profile?.journey_mode) setMode(profile.journey_mode as any)
 
-      // Children via child_caregivers join.
-      const { data: links, error: linksErr } = await supabase
-        .from('child_caregivers')
-        .select('role, permissions, children(*)')
-        .eq('user_id', uid)
-        .eq('status', 'accepted')
-      if (linksErr) console.warn('[auth] child_caregivers load failed:', linksErr.message)
-      else console.log(`[auth] child_caregivers found: ${links?.length ?? 0}`)
-      if (cancelled) return
+      // ─── Behaviors (restore enrolled list from server if local is empty) ─
+      const { data: dbBehaviors, error: behErr } = behRes as any
+      if (behErr && behErr.code !== 'TIMEOUT') {
+        console.warn('[auth] behaviors load failed:', behErr.message)
+      } else if (!behErr) {
+        console.log(`[auth] behaviors found: ${dbBehaviors?.length ?? 0}`)
+      }
+      const localBehaviors = useBehaviorStore.getState().enrolledBehaviors
+      if (localBehaviors.length === 0 && dbBehaviors && dbBehaviors.length > 0) {
+        const types = dbBehaviors.map((b: any) =>
+          b.type === 'cycle' ? 'pre-pregnancy' : b.type,
+        )
+        useBehaviorStore.getState().setBehaviors(types)
+      }
+
+      // ─── Children via child_caregivers join ──────────────────────────
+      const { data: links, error: linksErr } = linksRes as any
+      if (linksErr && linksErr.code !== 'TIMEOUT') {
+        console.warn('[auth] child_caregivers load failed:', linksErr.message)
+      } else if (!linksErr) {
+        console.log(`[auth] child_caregivers found: ${links?.length ?? 0}`)
+      }
 
       if (links && links.length > 0) {
         const mapped: ChildWithRole[] = links
@@ -208,11 +282,14 @@ export default function RootLayout() {
         setHasChildren(true)
       } else {
         // Fallback: own children directly.
-        const { data: ownChildren, error: ownErr } = await supabase
-          .from('children')
-          .select('*')
-          .eq('parent_id', uid)
-        if (ownErr) console.warn('[auth] children fallback load failed:', ownErr.message)
+        const fallbackRes = await withTimeout(
+          'children fallback query',
+          supabase.from('children').select('*').eq('parent_id', uid),
+        )
+        const { data: ownChildren, error: ownErr } = fallbackRes as any
+        if (ownErr && ownErr.code !== 'TIMEOUT') {
+          console.warn('[auth] children fallback load failed:', ownErr.message)
+        }
         if (cancelled) return
         if (ownChildren && ownChildren.length > 0) {
           const mapped: ChildWithRole[] = ownChildren.map((c: any) => ({
@@ -244,25 +321,7 @@ export default function RootLayout() {
           console.log('[auth] no children found via fallback either — user has zero kids in this DB')
         }
       }
-
-      // Restore enrolled behaviors from Supabase if local store is empty
-      // (handles app reinstall / cleared storage scenarios).
-      const localBehaviors = useBehaviorStore.getState().enrolledBehaviors
-      if (localBehaviors.length === 0) {
-        const { data: dbBehaviors, error: behErr } = await supabase
-          .from('behaviors')
-          .select('type')
-          .eq('user_id', uid)
-        if (behErr) console.warn('[auth] behaviors load failed:', behErr.message)
-        else console.log(`[auth] behaviors found: ${dbBehaviors?.length ?? 0}`)
-        if (cancelled) return
-        if (dbBehaviors && dbBehaviors.length > 0) {
-          const types = dbBehaviors.map((b: any) =>
-            b.type === 'cycle' ? 'pre-pregnancy' : b.type
-          )
-          useBehaviorStore.getState().setBehaviors(types)
-        }
-      }
+      // (behaviors already handled in the parallel batch above)
 
       initRevenueCat(uid).catch(() => {})
       runNotificationEngine().catch(() => {})
@@ -275,6 +334,9 @@ export default function RootLayout() {
         setSession(newSession)
         if (event === 'SIGNED_OUT' || !newSession) {
           console.log('[auth] no session — unblock loading, route guard will send to /(auth)/welcome')
+          // Clear flags so signing back in starts from a fresh load state.
+          setHasChildren(false)
+          setLoadFailed(false)
           setLoading(false)
           return
         }
@@ -319,11 +381,18 @@ export default function RootLayout() {
     if (!session && !inAuth) {
       router.replace('/(auth)/welcome')
     } else if (session && !hasCompletedOnboarding && segments[0] !== 'onboarding') {
-      router.replace('/onboarding/journey')
+      // When every data query timed out we don't know whether the user
+      // genuinely has no data or whether the DB is unreachable. Stay on
+      // the current screen rather than routing into onboarding — pushing
+      // a returning user into onboarding here would either re-seed
+      // duplicates or wipe their behavior store on continue.
+      if (!loadFailed) {
+        router.replace('/onboarding/journey')
+      }
     } else if (session && hasCompletedOnboarding && inAuth) {
       router.replace('/(tabs)')
     }
-  }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments])
+  }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments, loadFailed])
 
   // ─── Loading state ────────────────────────────────────────────────────────
   if (loading || !behaviorHydrated || !fontsLoaded) {
