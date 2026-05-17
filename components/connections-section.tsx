@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScrollReveal } from './scroll-animations'
-import { PhoneMockup } from './phone-mockup'
 import {
   RoseHeartSticker,
   FlowerSticker,
@@ -11,263 +10,208 @@ import {
   SunSticker,
   MoonSticker,
   LeafSticker,
+  StarSticker,
+  CloudSticker,
 } from './stickers'
 
 type ConnectionTab = 'garage' | 'channels' | 'caregivers'
 
 /* ------------------------------------------------------------------ */
-/*  Garage screen preview                                             */
+/*  Garage illustration - floating items                              */
 /* ------------------------------------------------------------------ */
 
-function GarageScreen() {
-  return (
-    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-8 pb-2">
-        <div className="w-6 h-6 rounded-full border flex items-center justify-center" style={{ borderColor: 'var(--border)' }}>
-          <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M5 1L1 5L5 9" stroke="var(--ink)" strokeWidth="1.5" strokeLinecap="round"/></svg>
-        </div>
-        <span className="text-[11px] font-semibold">Connections</span>
-        <div className="w-6 h-6 relative">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v2M8 12v2M2 8h2M12 8h2" stroke="var(--ink)" strokeWidth="1.5" strokeLinecap="round"/></svg>
-          <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full text-[5px] font-bold text-white flex items-center justify-center" style={{ background: 'var(--rose)' }}>9</span>
-        </div>
-      </div>
-
-      {/* Toggle */}
-      <div className="flex mx-4 mb-3 rounded-full border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-        <div className="flex-1 py-1.5 text-center text-[8px] font-semibold text-white" style={{ background: 'var(--ink)' }}>Garage</div>
-        <div className="flex-1 py-1.5 text-center text-[8px]" style={{ color: 'var(--ink-secondary)' }}>Channels</div>
-      </div>
-
-      {/* Garage header */}
-      <div className="px-4 mb-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-[16px] font-bold" style={{ fontFamily: 'var(--font-fraunces)' }}>Garage.</h3>
-            <p className="text-[8px]" style={{ color: 'var(--ink-secondary)' }}>Gift, trade, and pass on baby things.</p>
-          </div>
-          <div className="flex gap-2">
-            <div className="w-6 h-6 rounded-full border flex items-center justify-center" style={{ borderColor: 'var(--border)' }}>
-              <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="var(--ink)" strokeWidth="1"/><path d="M8 8L10.5 10.5" stroke="var(--ink)" strokeWidth="1" strokeLinecap="round"/></svg>
-            </div>
-            <div className="w-6 h-6 rounded-full border flex items-center justify-center" style={{ borderColor: 'var(--border)' }}>
-              <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 3v6M3 6h6" stroke="var(--ink)" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Categories */}
-      <div className="flex gap-1.5 px-4 mb-3 overflow-x-auto">
-        {['For You', 'Clothing', 'Gear', 'Toys', 'Furniture'].map((cat, i) => (
-          <div
-            key={cat}
-            className="px-2.5 py-1 rounded-full text-[7px] font-medium whitespace-nowrap"
-            style={{
-              background: i === 0 ? 'var(--ink)' : 'transparent',
-              color: i === 0 ? 'white' : 'var(--ink-secondary)',
-              border: `1px solid ${i === 0 ? 'var(--ink)' : 'var(--border)'}`,
-            }}
-          >
-            {cat}
-          </div>
-        ))}
-      </div>
-
-      {/* Item card */}
-      <div className="mx-4 rounded-[12px] border overflow-hidden flex-1" style={{ borderColor: 'var(--sticker-yellow)', background: 'var(--surface)' }}>
-        <div className="flex items-center gap-2 p-2.5">
-          <div className="w-6 h-6 rounded-full border flex items-center justify-center" style={{ borderColor: 'var(--border)' }}>
-            <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="4" r="2" stroke="var(--ink)" strokeWidth="0.8"/><path d="M1 9C1 7 3 5.5 5 5.5C7 5.5 9 7 9 9" stroke="var(--ink)" strokeWidth="0.8"/></svg>
-          </div>
-          <div>
-            <p className="text-[9px] font-semibold">Sarah M.</p>
-            <p className="text-[7px]" style={{ color: 'var(--ink-secondary)' }}>Toys</p>
-          </div>
-          <div className="ml-auto">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="3" cy="6" r="0.8" fill="var(--ink)"/><circle cx="6" cy="6" r="0.8" fill="var(--ink)"/><circle cx="9" cy="6" r="0.8" fill="var(--ink)"/></svg>
-          </div>
-        </div>
-        <div className="aspect-square flex items-center justify-center" style={{ background: 'var(--surface-raised)' }}>
-          <div className="text-center">
-            <SunSticker size={40} rotate={-5} />
-            <p className="text-[9px] mt-2 font-medium">Wooden Puzzle Set</p>
-            <p className="text-[7px]" style={{ color: 'var(--ink-secondary)' }}>Free - pickup only</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-2.5">
-          <div className="flex items-center gap-1">
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 3C5 2 3.5 2.5 3.5 4C3.5 5.5 6 7.5 6 7.5C6 7.5 8.5 5.5 8.5 4C8.5 2.5 7 2 6 3Z" fill="var(--rose)"/></svg>
-            <span className="text-[7px]">3 likes</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 3h8v5a1 1 0 01-1 1H3a1 1 0 01-1-1V3z" stroke="var(--ink)" strokeWidth="0.8"/><path d="M2 3L6 6L10 3" stroke="var(--ink)" strokeWidth="0.8"/></svg>
-            <span className="text-[7px]">1 comment</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Channels screen preview                                           */
-/* ------------------------------------------------------------------ */
-
-function ChannelsScreen() {
-  const channels = [
-    { name: 'Speech & Language', members: 203, icon: <RoseHeartSticker size={14} />, joined: false },
-    { name: 'Grandparent Boundaries', members: 346, icon: <MoonSticker size={14} />, joined: true },
-    { name: 'Work-Life Balance', members: 345, icon: <SunSticker size={14} />, joined: false },
-    { name: 'Childhood Illness', members: 312, icon: <MoonSticker size={14} />, joined: false },
-    { name: 'Meal Prep Sunday', members: 289, icon: <LeafSticker size={14} />, joined: false },
+function GarageIllustration() {
+  const items = [
+    { icon: <SunSticker size={56} rotate={-8} />, label: 'Toys', x: '15%', y: '20%', delay: 0 },
+    { icon: <CloudSticker size={48} rotate={5} />, label: 'Clothing', x: '75%', y: '15%', delay: 0.1 },
+    { icon: <FlowerSticker size={52} rotate={-5} />, label: 'Gear', x: '25%', y: '60%', delay: 0.2 },
+    { icon: <StarSticker size={44} rotate={12} />, label: 'Furniture', x: '70%', y: '55%', delay: 0.15 },
+    { icon: <LeafSticker size={40} rotate={-10} />, label: 'Books', x: '50%', y: '35%', delay: 0.05 },
   ]
 
   return (
-    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-8 pb-2">
-        <div className="w-6 h-6 rounded-full border flex items-center justify-center" style={{ borderColor: 'var(--border)' }}>
-          <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M5 1L1 5L5 9" stroke="var(--ink)" strokeWidth="1.5" strokeLinecap="round"/></svg>
-        </div>
-        <span className="text-[11px] font-semibold">Connections</span>
-        <div className="w-6 h-6" />
-      </div>
-
-      {/* Toggle */}
-      <div className="flex mx-4 mb-3 rounded-full border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-        <div className="flex-1 py-1.5 text-center text-[8px]" style={{ color: 'var(--ink-secondary)' }}>Garage</div>
-        <div className="flex-1 py-1.5 text-center text-[8px] font-semibold text-white" style={{ background: 'var(--ink)' }}>Channels</div>
-      </div>
-
-      {/* Title */}
-      <div className="px-4 mb-3">
-        <h3 className="text-[14px] font-bold" style={{ fontFamily: 'var(--font-fraunces)' }}>Find your community</h3>
-      </div>
-
-      {/* Featured channel */}
-      <div className="mx-4 mb-3 rounded-[12px] p-3" style={{ background: 'var(--rose-soft)' }}>
-        <div className="flex items-center gap-2">
-          <RoseHeartSticker size={20} />
-          <div className="flex-1">
-            <p className="text-[10px] font-semibold">Speech & Language</p>
-            <p className="text-[7px]" style={{ color: 'var(--ink-secondary)' }}>First words, speech delays, therapy recs...</p>
-            <p className="text-[7px]" style={{ color: 'var(--ink-secondary)' }}>203 members</p>
-          </div>
-          <div className="px-2.5 py-1 rounded-full border text-[7px] font-medium" style={{ borderColor: 'var(--ink)' }}>
-            Join
-          </div>
-        </div>
-      </div>
-
-      {/* Search */}
-      <div className="mx-4 mb-3 flex items-center gap-2 px-3 py-2 rounded-full border" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="var(--ink-secondary)" strokeWidth="1"/><path d="M8 8L10.5 10.5" stroke="var(--ink-secondary)" strokeWidth="1" strokeLinecap="round"/></svg>
-        <span className="text-[8px]" style={{ color: 'var(--ink-secondary)' }}>Search channels...</span>
-      </div>
-
-      {/* Trending */}
-      <div className="px-4">
-        <div className="flex items-center gap-1 mb-2">
-          <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 9L5 4L7 7L10 2" stroke="var(--rose)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          <span className="text-[8px] uppercase tracking-[0.06em] font-semibold">Trending</span>
-        </div>
-        <div className="flex flex-col gap-2">
-          {channels.map((ch) => (
-            <div key={ch.name} className="flex items-center gap-2 p-2 rounded-[10px] border" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-              <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'var(--surface-raised)' }}>
-                {ch.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[9px] font-semibold truncate">{ch.name}</p>
-                <p className="text-[7px]" style={{ color: 'var(--ink-secondary)' }}>{ch.members} members</p>
-              </div>
-              {ch.joined ? (
-                <span className="px-2 py-0.5 rounded text-[6px] font-semibold" style={{ background: 'var(--sticker-green)', color: 'white' }}>Joined</span>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><circle cx="4" cy="4" r="2" stroke="var(--ink-secondary)" strokeWidth="0.8"/><circle cx="8" cy="4" r="2" stroke="var(--ink-secondary)" strokeWidth="0.8"/></svg>
-                  <span className="text-[7px]" style={{ color: 'var(--ink-secondary)' }}>{ch.members}</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Caregivers screen preview                                         */
-/* ------------------------------------------------------------------ */
-
-function CaregiversScreen() {
-  const professionals = [
-    { name: 'Maria Santos', role: 'Certified Doula', rating: 4.9, reviews: 47, available: true, color: 'var(--lavender-soft)' },
-    { name: 'Dr. Lisa Chen', role: 'Pediatrician', rating: 4.8, reviews: 123, available: true, color: 'var(--blue-powder-soft)' },
-    { name: 'Ana Kowalski', role: 'Lactation Consultant', rating: 5.0, reviews: 31, available: false, color: 'var(--rose-soft)' },
-    { name: 'James Obi', role: 'Night Nanny', rating: 4.7, reviews: 19, available: true, color: 'var(--sticker-yellow-soft)' },
-  ]
-
-  return (
-    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
-      {/* Header */}
-      <div className="px-4 pt-8 pb-2">
-        <p className="text-[8px] uppercase tracking-[0.06em] font-semibold mb-1" style={{ color: 'var(--ink-secondary)' }}>Connections</p>
-        <h3 className="text-[16px] font-bold" style={{ fontFamily: 'var(--font-fraunces)' }}>
-          Find your{' '}
-          <em style={{ fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic', fontWeight: 400 }}>people</em>.
-        </h3>
-        <p className="text-[8px] mt-1" style={{ color: 'var(--ink-secondary)' }}>
-          Doulas, midwives, nannies, and more near you.
+    <div className="relative w-full h-[320px] lg:h-[400px]">
+      {/* Background circles */}
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] lg:w-[340px] lg:h-[340px] rounded-full opacity-30"
+        style={{ background: 'linear-gradient(135deg, var(--sticker-yellow-soft), var(--rose-soft))' }}
+      />
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] lg:w-[240px] lg:h-[240px] rounded-full"
+        style={{ background: 'var(--surface)' }}
+      />
+      
+      {/* Center text */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center z-10">
+        <p className="text-[48px] lg:text-[64px] font-bold" style={{ fontFamily: 'var(--font-fraunces)', color: 'var(--ink)' }}>
+          Free
         </p>
+        <p className="text-[14px] lg:text-[16px] -mt-1" style={{ color: 'var(--ink-secondary)' }}>to share</p>
       </div>
 
-      {/* Filter tags */}
-      <div className="flex gap-1.5 px-4 py-2 overflow-x-auto">
-        {['All', 'Doulas', 'Midwives', 'Nannies', 'Pediatricians'].map((tag, i) => (
-          <div
-            key={tag}
-            className="px-2.5 py-1 rounded-full text-[7px] font-medium whitespace-nowrap"
-            style={{
-              background: i === 0 ? 'var(--ink)' : 'transparent',
-              color: i === 0 ? 'white' : 'var(--ink-secondary)',
-              border: `1px solid ${i === 0 ? 'var(--ink)' : 'var(--border)'}`,
+      {/* Floating items */}
+      {items.map((item, i) => (
+        <motion.div
+          key={i}
+          className="absolute flex flex-col items-center gap-1"
+          style={{ left: item.x, top: item.y }}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: item.delay, type: 'spring', stiffness: 200 }}
+        >
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 3 + i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            {item.icon}
+          </motion.div>
+          <span className="text-[11px] font-medium" style={{ color: 'var(--ink-secondary)' }}>{item.label}</span>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Channels illustration - community circles                         */
+/* ------------------------------------------------------------------ */
+
+function ChannelsIllustration() {
+  const channels = [
+    { name: 'Speech', color: 'var(--rose-soft)', icon: <RoseHeartSticker size={32} />, members: '203' },
+    { name: 'Boundaries', color: 'var(--lavender-soft)', icon: <MoonSticker size={32} />, members: '346' },
+    { name: 'Work-Life', color: 'var(--sticker-yellow-soft)', icon: <SunSticker size={32} />, members: '345' },
+    { name: 'Meals', color: 'var(--sticker-green-soft)', icon: <LeafSticker size={32} />, members: '289' },
+  ]
+
+  return (
+    <div className="relative w-full h-[320px] lg:h-[400px] flex items-center justify-center">
+      {/* Orbiting circles */}
+      <div className="relative w-[280px] h-[280px] lg:w-[340px] lg:h-[340px]">
+        {/* Center */}
+        <div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100px] h-[100px] lg:w-[120px] lg:h-[120px] rounded-full flex items-center justify-center z-10"
+          style={{ background: 'var(--surface)', boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}
+        >
+          <div className="text-center">
+            <p className="text-[28px] lg:text-[36px] font-bold" style={{ fontFamily: 'var(--font-fraunces)', color: 'var(--ink)' }}>
+              4+
+            </p>
+            <p className="text-[10px] lg:text-[12px] -mt-1" style={{ color: 'var(--ink-secondary)' }}>channels</p>
+          </div>
+        </div>
+
+        {/* Orbiting channels */}
+        {channels.map((ch, i) => {
+          const angle = (i * 90) - 45 // Spread around
+          const radius = 110
+          const x = Math.cos((angle * Math.PI) / 180) * radius
+          const y = Math.sin((angle * Math.PI) / 180) * radius
+
+          return (
+            <motion.div
+              key={i}
+              className="absolute top-1/2 left-1/2 flex flex-col items-center gap-1"
+              style={{ 
+                transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+              }}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.1, type: 'spring' }}
+            >
+              <motion.div
+                className="w-[64px] h-[64px] lg:w-[80px] lg:h-[80px] rounded-full flex items-center justify-center"
+                style={{ background: ch.color, boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
+                whileHover={{ scale: 1.1 }}
+              >
+                {ch.icon}
+              </motion.div>
+              <span className="text-[10px] font-semibold" style={{ color: 'var(--ink)' }}>{ch.name}</span>
+              <span className="text-[9px]" style={{ color: 'var(--ink-secondary)' }}>{ch.members}</span>
+            </motion.div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Caregivers illustration - profile cards                           */
+/* ------------------------------------------------------------------ */
+
+function CaregiversIllustration() {
+  const caregivers = [
+    { name: 'Maria', role: 'Doula', rating: '4.9', color: 'var(--lavender-soft)', initials: 'MS' },
+    { name: 'Lisa', role: 'Pediatrician', rating: '4.8', color: 'var(--blue-powder-soft)', initials: 'LC' },
+    { name: 'Ana', role: 'Lactation', rating: '5.0', color: 'var(--rose-soft)', initials: 'AK' },
+  ]
+
+  return (
+    <div className="relative w-full h-[320px] lg:h-[400px] flex items-center justify-center">
+      <div className="flex gap-4 lg:gap-6">
+        {caregivers.map((cg, i) => (
+          <motion.div
+            key={i}
+            className="relative"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.15, type: 'spring', stiffness: 200 }}
+            style={{ 
+              transform: `translateY(${i === 1 ? '-20px' : '0'})`,
             }}
           >
-            {tag}
-          </div>
-        ))}
-      </div>
-
-      {/* Professional cards */}
-      <div className="flex flex-col gap-2 px-4 pt-2 flex-1">
-        {professionals.map((pro) => (
-          <div key={pro.name} className="flex items-center gap-2.5 p-2.5 rounded-[12px] border" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: pro.color }}>
-              <span className="text-[11px] font-semibold" style={{ fontFamily: 'var(--font-fraunces)' }}>
-                {pro.name.split(' ').map(n => n[0]).join('')}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-semibold">{pro.name}</p>
-              <p className="text-[7px]" style={{ color: 'var(--ink-secondary)' }}>{pro.role}</p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <div className="flex items-center gap-0.5">
-                  <svg width="7" height="7" viewBox="0 0 10 10" fill="none"><path d="M5 1L6.2 3.7L9 4L6.8 6L7.5 9L5 7.5L2.5 9L3.2 6L1 4L3.8 3.7Z" fill="var(--sticker-yellow)" stroke="var(--ink)" strokeWidth="0.5"/></svg>
-                  <span className="text-[7px] font-medium">{pro.rating}</span>
-                </div>
-                <span className="text-[6px]" style={{ color: 'var(--ink-secondary)' }}>({pro.reviews} reviews)</span>
+            <motion.div
+              className="w-[100px] lg:w-[120px] rounded-[20px] p-4 lg:p-5"
+              style={{ 
+                background: 'var(--surface)', 
+                boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+              }}
+              whileHover={{ y: -8, boxShadow: '0 16px 48px rgba(0,0,0,0.12)' }}
+            >
+              {/* Avatar */}
+              <div 
+                className="w-[56px] h-[56px] lg:w-[64px] lg:h-[64px] rounded-full mx-auto mb-3 flex items-center justify-center"
+                style={{ background: cg.color }}
+              >
+                <span 
+                  className="text-[18px] lg:text-[20px] font-semibold"
+                  style={{ fontFamily: 'var(--font-fraunces)', color: 'var(--ink)' }}
+                >
+                  {cg.initials}
+                </span>
               </div>
-            </div>
-            {pro.available ? (
-              <span className="px-2 py-0.5 rounded-full text-[6px] font-semibold" style={{ background: 'var(--sticker-green)', color: 'white', opacity: 0.8 }}>Available</span>
-            ) : (
-              <span className="px-2 py-0.5 rounded-full text-[6px] font-semibold" style={{ background: 'var(--surface-raised)', color: 'var(--ink-secondary)' }}>Waitlist</span>
-            )}
-          </div>
+
+              {/* Info */}
+              <p className="text-[13px] lg:text-[14px] font-semibold text-center" style={{ color: 'var(--ink)' }}>
+                {cg.name}
+              </p>
+              <p className="text-[10px] lg:text-[11px] text-center mb-2" style={{ color: 'var(--ink-secondary)' }}>
+                {cg.role}
+              </p>
+
+              {/* Rating */}
+              <div className="flex items-center justify-center gap-1">
+                <StarSticker size={14} />
+                <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{cg.rating}</span>
+              </div>
+            </motion.div>
+
+            {/* Available badge */}
+            <motion.div
+              className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[9px] font-semibold"
+              style={{ 
+                background: 'var(--sticker-green)', 
+                color: 'white',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              }}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.5 + i * 0.1, type: 'spring' }}
+            >
+              Available
+            </motion.div>
+          </motion.div>
         ))}
       </div>
     </div>
@@ -278,27 +222,37 @@ function CaregiversScreen() {
 /*  Tab config                                                        */
 /* ------------------------------------------------------------------ */
 
-const connectionTabs: { id: ConnectionTab; label: string; tagline: string; description: string; screen: React.ReactNode }[] = [
+const connectionTabs: { 
+  id: ConnectionTab
+  label: string
+  tagline: string
+  description: string
+  features: string[]
+  illustration: React.ReactNode 
+}[] = [
   {
     id: 'garage',
     label: 'Garage',
-    tagline: 'Gift, trade, and pass on baby things.',
-    description: 'A marketplace built for parents. List outgrown gear, find deals on quality items, or give things away to families who need them. No fees, no strangers \u2014 just your community.',
-    screen: <GarageScreen />,
+    tagline: 'Gift, trade, and pass on.',
+    description: 'A marketplace built for parents. List outgrown gear, find deals, or give things away to families who need them.',
+    features: ['Free listings', 'Local community', 'No fees'],
+    illustration: <GarageIllustration />,
   },
   {
     id: 'channels',
     label: 'Channels',
-    tagline: 'Find your community.',
-    description: 'Topic-based channels where parents connect over real experiences. From speech delays to grandparent boundaries, from meal prep to work-life balance. Join what matters to you.',
-    screen: <ChannelsScreen />,
+    tagline: 'Find your people.',
+    description: 'Topic-based channels where parents connect over real experiences. From speech delays to grandparent boundaries.',
+    features: ['Real conversations', 'Moderated spaces', 'Private groups'],
+    illustration: <ChannelsIllustration />,
   },
   {
     id: 'caregivers',
     label: 'Caregivers',
-    tagline: 'Find your people.',
-    description: 'A central place to find doulas, midwives, lactation consultants, pediatricians, and nannies in your area. Read real reviews from other Grandma families. Book with confidence.',
-    screen: <CaregiversScreen />,
+    tagline: 'Trusted help nearby.',
+    description: 'Find doulas, midwives, lactation consultants, pediatricians, and nannies. Read real reviews from Grandma families.',
+    features: ['Verified reviews', 'Book directly', 'Background checks'],
+    illustration: <CaregiversIllustration />,
   },
 ]
 
@@ -339,12 +293,6 @@ export function ConnectionsSection() {
               </em>
               .
             </h2>
-            <p
-              className="text-[17px] lg:text-[19px] leading-[1.6] max-w-[640px] mx-auto"
-              style={{ color: 'var(--ink-secondary)' }}
-            >
-              Trade baby gear, join parent communities, and find caregivers you can trust. All in one place.
-            </p>
           </div>
         </ScrollReveal>
 
@@ -386,59 +334,41 @@ export function ConnectionsSection() {
             transition={{ duration: 0.35 }}
             className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center"
           >
-            {/* Left: Phone mockup */}
-            <div className="flex justify-center lg:justify-start order-2 lg:order-1">
-              <PhoneMockup className="w-[260px]">
-                {activeConfig.screen}
-              </PhoneMockup>
+            {/* Left: Illustration */}
+            <div className="order-2 lg:order-1">
+              {activeConfig.illustration}
             </div>
 
-            {/* Right: Description */}
+            {/* Right: Text content */}
             <div className="order-1 lg:order-2">
-              <p
-                className="text-[24px] lg:text-[32px] font-semibold tracking-[-0.01em] leading-[1.15] mb-4"
+              <h3
+                className="text-[28px] lg:text-[40px] font-semibold tracking-[-0.01em] leading-[1.1] mb-4"
                 style={{ fontFamily: 'var(--font-fraunces), var(--font-display)' }}
               >
                 {activeConfig.tagline}
-              </p>
+              </h3>
               <p
-                className="text-[17px] leading-[1.65] mb-6"
+                className="text-[17px] lg:text-[19px] leading-[1.6] mb-8"
                 style={{ color: 'var(--ink-secondary)' }}
               >
                 {activeConfig.description}
               </p>
 
-              {/* Highlights per tab */}
-              {activeTab === 'garage' && (
-                <ul className="flex flex-col gap-3">
-                  {['Browse by category: Clothing, Gear, Toys, Furniture', 'Like, comment, and message sellers directly', 'Free listings \u2014 donate to families in need', 'Photo posts with social feed experience'].map((item, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ background: 'var(--sticker-yellow)' }} />
-                      <span className="text-[15px]" style={{ color: 'var(--ink-secondary)' }}>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {activeTab === 'channels' && (
-                <ul className="flex flex-col gap-3">
-                  {['Join topic channels that match your stage', 'Trending topics surfaced by the community', 'Suggested channels based on your kids\' ages', 'Search and discover new communities anytime'].map((item, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ background: 'var(--lavender)' }} />
-                      <span className="text-[15px]" style={{ color: 'var(--ink-secondary)' }}>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {activeTab === 'caregivers' && (
-                <ul className="flex flex-col gap-3">
-                  {['Find doulas, midwives, nannies & pediatricians', 'Real reviews from Grandma families', 'Filter by specialty, availability, and location', 'Book consultations directly from the app'].map((item, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ background: 'var(--rose)' }} />
-                      <span className="text-[15px]" style={{ color: 'var(--ink-secondary)' }}>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {/* Feature pills */}
+              <div className="flex flex-wrap gap-3">
+                {activeConfig.features.map((feature) => (
+                  <div
+                    key={feature}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-full border"
+                    style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+                  >
+                    <SparkleSticker size={14} />
+                    <span className="text-[14px] font-medium" style={{ color: 'var(--ink)' }}>
+                      {feature}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.div>
         </AnimatePresence>

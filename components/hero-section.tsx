@@ -98,27 +98,47 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Trust strip */}
+      {/* Trust strip - Bigger text with rotating number animation */}
       <div
-        className="mt-16 lg:mt-24 -mx-6 lg:-mx-12 py-5"
+        className="mt-16 lg:mt-24 -mx-6 lg:-mx-12 py-8 lg:py-10"
         style={{ background: 'var(--bg-warm)' }}
       >
-        <p
-          className="text-center text-[15px]"
-          style={{ color: 'var(--ink-secondary)' }}
-        >
-          Built by parents, for parents. Trusted by{' '}
-          <motion.span
-            key={waitlistCount}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-semibold inline-block"
-            style={{ fontFamily: 'var(--font-fraunces), var(--font-display)' }}
+        <div className="text-center">
+          <p
+            className="text-[18px] lg:text-[22px] mb-2"
+            style={{ color: 'var(--ink-secondary)' }}
           >
-            {waitlistCount.toLocaleString()}+
-          </motion.span>{' '}
-          families on the waitlist.
-        </p>
+            Built by parents, for parents.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <span
+              className="text-[18px] lg:text-[22px]"
+              style={{ color: 'var(--ink-secondary)' }}
+            >
+              Trusted by
+            </span>
+            <motion.span
+              key={waitlistCount}
+              initial={{ rotateX: -90, opacity: 0 }}
+              animate={{ rotateX: 0, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+              className="text-[32px] lg:text-[48px] font-bold inline-block"
+              style={{ 
+                fontFamily: 'var(--font-fraunces), var(--font-display)',
+                color: 'var(--lavender)',
+                textShadow: '0 2px 8px rgba(200, 182, 226, 0.3)',
+              }}
+            >
+              {waitlistCount.toLocaleString()}+
+            </motion.span>
+            <span
+              className="text-[18px] lg:text-[22px]"
+              style={{ color: 'var(--ink-secondary)' }}
+            >
+              families
+            </span>
+          </div>
+        </div>
       </div>
     </section>
   )
