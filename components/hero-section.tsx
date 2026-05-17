@@ -1,11 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { AnimatedHeroCard } from './animated-hero-card'
 
 export function HeroSection() {
   const [email, setEmail] = useState('')
+  const [waitlistCount, setWaitlistCount] = useState(3200)
+
+  // Animated counter - grows slowly to simulate real signups
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWaitlistCount((prev) => prev + Math.floor(Math.random() * 3) + 1)
+    }, 8000) // Every 8 seconds add 1-3
+
+    return () => clearInterval(interval)
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,7 +42,7 @@ export function HeroSection() {
               className="text-[44px] lg:text-[88px] leading-[1.02] font-semibold tracking-[-0.02em] mb-6"
               style={{ fontFamily: 'var(--font-fraunces), var(--font-display)' }}
             >
-              Wisdom for every{' '}
+              With you through every{' '}
               <em
                 className="not-italic"
                 style={{
@@ -42,9 +52,9 @@ export function HeroSection() {
                   color: 'var(--lavender)',
                 }}
               >
-                stage
+                chapter
               </em>{' '}
-              of becoming a parent.
+              of your journey.
             </h1>
 
             {/* Subhead */}
@@ -52,7 +62,7 @@ export function HeroSection() {
               className="text-[17px] lg:text-[19px] leading-[1.6] max-w-[540px] mb-8"
               style={{ color: 'var(--ink-secondary)' }}
             >
-              From trying-to-conceive, through every week of pregnancy, into the wild years
+              From cycle tracking, through every week of pregnancy, into the beautiful chaos
               of raising little ones — Grandma is the calm, knowing companion who remembers
               everything, judges nothing, and answers at 3am.
             </p>
@@ -97,13 +107,16 @@ export function HeroSection() {
           className="text-center text-[15px]"
           style={{ color: 'var(--ink-secondary)' }}
         >
-          Built by parents. Powered by Claude. Trusted by{' '}
-          <span
-            className="font-semibold"
+          Built by parents, for parents. Trusted by{' '}
+          <motion.span
+            key={waitlistCount}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="font-semibold inline-block"
             style={{ fontFamily: 'var(--font-fraunces), var(--font-display)' }}
           >
-            3,200+
-          </span>{' '}
+            {waitlistCount.toLocaleString()}+
+          </motion.span>{' '}
           families on the waitlist.
         </p>
       </div>

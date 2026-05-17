@@ -142,20 +142,28 @@ export function AnimatedHeroCard({ className }: { className?: string }) {
         </div>
       </div>
 
-      {/* Bottom tagline */}
-      <div className="text-center mt-6">
-        <div 
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full" 
-          style={{ background: 'var(--surface)' }}
+      {/* Bottom tagline - Large elegant typography */}
+      <div className="text-center mt-8">
+        <h2 
+          className="text-[32px] lg:text-[48px] font-semibold tracking-[-0.02em]"
+          style={{ 
+            fontFamily: 'var(--font-fraunces), var(--font-display)',
+            color: 'var(--ink)',
+          }}
         >
-          <GrandmaLogo size={20} />
-          <span 
-            className="text-[12px] font-medium uppercase tracking-[0.1em]" 
-            style={{ color: 'var(--ink)' }}
+          grandma{' '}
+          <em
+            className="not-italic"
+            style={{
+              fontFamily: 'var(--font-instrument-serif), var(--font-italic)',
+              fontStyle: 'italic',
+              fontWeight: 400,
+              color: 'var(--rose)',
+            }}
           >
-            Grandma is with you
-          </span>
-        </div>
+            sees you.
+          </em>
+        </h2>
       </div>
     </div>
   )
