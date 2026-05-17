@@ -1,3 +1,5 @@
+'use client'
+
 import {
   LockSticker,
   ShieldSticker,
@@ -6,6 +8,7 @@ import {
   SparkleSticker,
   HeartSticker,
 } from './stickers'
+import { ScrollReveal, StaggerContainer, StaggerItem } from './scroll-animations'
 
 export function TrustStripSection() {
   const trustItems = [
@@ -33,9 +36,9 @@ export function TrustStripSection() {
       aria-label="Trust"
     >
       <div className="max-w-[1280px] mx-auto">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-8 lg:gap-16">
+        <StaggerContainer className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-8 lg:gap-16" staggerDelay={0.15}>
           {trustItems.map((item, index) => (
-            <div key={index} className="flex items-start gap-4">
+            <StaggerItem key={index} className="flex items-start gap-4">
               {/* Icon */}
               <div className="flex-shrink-0">{item.icon}</div>
 
@@ -62,9 +65,9 @@ export function TrustStripSection() {
                   style={{ background: 'var(--ink-faint)' }}
                 />
               )}
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </div>
     </section>
   )
@@ -193,6 +196,7 @@ export function TestimonialsSection() {
     >
       <div className="max-w-[1280px] mx-auto">
         {/* Header */}
+        <ScrollReveal>
         <div className="text-center mb-12 lg:mb-16">
           <p className="eyebrow">BETA TESTERS · NAMES CHANGED</p>
           <h2
@@ -213,13 +217,16 @@ export function TestimonialsSection() {
             say.
           </h2>
         </div>
+        </ScrollReveal>
 
         {/* Cards grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" staggerDelay={0.15}>
           {testimonials.map((testimonial, index) => (
-            <TestimonialCard key={index} {...testimonial} />
+            <StaggerItem key={index}>
+              <TestimonialCard {...testimonial} />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </div>
     </section>
   )
