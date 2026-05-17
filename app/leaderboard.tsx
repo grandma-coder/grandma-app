@@ -50,6 +50,7 @@ import {
   Flower as FlowerSticker,
   Moon as MoonSticker,
 } from '../components/ui/Stickers'
+import { MissingStickers } from '../components/stickers/MissingStickers'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -243,8 +244,9 @@ function filterByTab(entries: LeaderEntry[], tab: TabKey): LeaderEntry[] {
 // ─── Podium — sticker accents per rank ──────────────────────────────────────
 
 function rankSticker(rank: number, size: number, fill: string) {
-  if (rank === 1) return <StarSticker size={size} fill={fill} />
-  if (rank === 2) return <BurstSticker size={size} fill={fill} points={8} />
+  if (rank === 1) return <MissingStickers.LeaderboardRank1 size={size} />
+  if (rank === 2) return <MissingStickers.LeaderboardRank2 size={size} />
+  if (rank === 3) return <MissingStickers.LeaderboardRank3 size={size} />
   return <FlowerSticker size={size} petal={fill} />
 }
 

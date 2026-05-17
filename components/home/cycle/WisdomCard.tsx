@@ -7,7 +7,7 @@
 import { View, StyleSheet } from 'react-native'
 import { useTheme } from '../../../constants/theme'
 import { Display, DisplayItalic, Body } from '../../ui/Typography'
-import { Heart } from '../../ui/Stickers'
+import { PartialStickers } from '../../stickers/PartialStickers'
 
 type Phase = 'menstruation' | 'follicular' | 'ovulation' | 'luteal'
 
@@ -28,7 +28,7 @@ export function WisdomCard({ phase }: Props) {
 
   return (
     <View style={[styles.card, { backgroundColor: stickers.yellow }]}>
-      <Heart size={28} fill={stickers.pink} />
+      <PartialStickers.PrepregHomeWisdom size={56} />
       <View style={styles.titleRow}>
         <Display size={20} color="#141313">Today's</Display>
         <DisplayItalic size={18} color="#141313"> wisdom</DisplayItalic>

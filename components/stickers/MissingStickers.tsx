@@ -122,15 +122,6 @@ const PrepregHormoneLH = ({ size = 100 }) => <S size={size}>
   <Path d="M54 22 L34 54 l14 0 l-6 24 l22 -34 l-14 0 z" fill={HOT_PINK} stroke={STROKE} strokeWidth="1.6" strokeLinejoin="round"/>
 </S>;
 
-// Wisdom card decoration — teacup with heart steam
-const PrepregWisdom = ({ size = 100 }) => <S size={size}>
-  <Path d="M22 50 h44 v18 a14 14 0 0 1 -14 14 h-16 a14 14 0 0 1 -14 -14 z" fill={CREAM} stroke={STROKE} strokeWidth="1.6" strokeLinejoin="round"/>
-  <Path d="M66 56 q12 0 12 8 q0 8 -12 8" fill="none" stroke={STROKE} strokeWidth="1.6"/>
-  <Line x1="22" y1="50" x2="66" y2="50" stroke={STROKE} strokeWidth="1.6"/>
-  <Path d="M34 36 q-4 -6 0 -10 q4 4 0 10 z" fill={HOT_PINK} stroke={STROKE} strokeWidth="1.4"/>
-  <Path d="M46 30 q-4 -6 0 -10 q4 4 0 10 z" fill={PINK} stroke={STROKE} strokeWidth="1.4"/>
-</S>;
-
 // Empty checklist — paper with sparkle
 const PrepregChecklistEmpty = ({ size = 100 }) => <S size={size}>
   <Path d="M28 16 l40 0 q6 0 6 6 l0 56 q0 6 -6 6 l-40 0 q-6 0 -6 -6 l0 -56 q0 -6 6 -6 z" fill={CREAM} stroke={STROKE} strokeWidth="1.6"/>
@@ -842,7 +833,7 @@ export const MissingStickers = {
   PrepregOnboardingCycleTracking, PrepregOnboardingPartner, PrepregOnboardingDoctor,
   PrepregRingMenstruation, PrepregRingFollicular, PrepregRingOvulation, PrepregRingLuteal,
   PrepregFertileWindow, PrepregHormoneEstrogen, PrepregHormoneProgesterone, PrepregHormoneLH,
-  PrepregWisdom, PrepregChecklistEmpty,
+  PrepregChecklistEmpty,
   // Pregnancy
   PregnancyOnboardingDueDate, PregnancyOnboardingPartner, PregnancyTodaySummary,
   PregnancyAffirmation, PregnancyAffirmationShare, PregnancyWeekRuler, PregnancyDashboardHero,

@@ -9,6 +9,7 @@ import { pregnancyPillars } from '../../lib/pregnancyPillars'
 import TipCard from '../../components/pillar/TipCard'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { colors, typography, spacing, borderRadius } from '../../constants/theme'
+import { getPillarSticker } from '../../lib/pillarStickerMap'
 
 export default function PillarDetail() {
   const insets = useSafeAreaInsets()
@@ -45,7 +46,10 @@ export default function PillarDetail() {
         </Pressable>
 
         <View style={[styles.iconCircle, { backgroundColor: pillar.color + '25' }]}>
-          <Text style={styles.icon}>{pillar.icon}</Text>
+          {(() => {
+            const Sticker = getPillarSticker(pillar.id)
+            return Sticker ? <Sticker size={64} /> : <Text style={styles.icon}>{pillar.icon}</Text>
+          })()}
         </View>
         <Text style={styles.name}>{pillar.name}</Text>
         <Text style={styles.description}>{pillar.description}</Text>

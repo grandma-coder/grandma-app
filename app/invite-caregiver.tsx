@@ -8,10 +8,11 @@ import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { colors, brand, stickers, borderRadius, shadows } from '../constants/theme'
 import { useSavedToast } from '../components/ui/SavedToast'
+import { MissingStickers } from '../components/stickers/MissingStickers'
 
 const ROLES = [
-  { id: 'nanny', label: 'Nanny', icon: 'person-outline' as const },
-  { id: 'family', label: 'Family', icon: 'people-outline' as const },
+  { id: 'nanny', label: 'Nanny', Sticker: MissingStickers.CaregiverNanny },
+  { id: 'family', label: 'Family', Sticker: MissingStickers.CaregiverFamily },
 ]
 
 export default function InviteCaregiver() {
@@ -110,11 +111,7 @@ export default function InviteCaregiver() {
                     isActive && styles.roleChipActive,
                   ]}
                 >
-                  <Ionicons
-                    name={r.icon}
-                    size={28}
-                    color={isActive ? stickers.yellow : colors.textTertiary}
-                  />
+                  <r.Sticker size={36} />
                   <Text style={[styles.roleLabel, isActive && styles.roleLabelActive]}>
                     {r.label}
                   </Text>

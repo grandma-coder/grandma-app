@@ -7,6 +7,7 @@ import { View, StyleSheet } from 'react-native'
 import { useTheme } from '../../../constants/theme'
 import { MonoCaps, Body } from '../../ui/Typography'
 import { getCycleInfo, toDateStr, type CycleConfig } from '../../../lib/cycleLogic'
+import { MissingStickers } from '../../stickers/MissingStickers'
 
 interface Props {
   cycleConfig: Pick<CycleConfig, 'lastPeriodStart' | 'cycleLength' | 'periodLength'>
@@ -35,7 +36,10 @@ export function FertileWindowStrip({ cycleConfig }: Props) {
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={styles.header}>
-        <MonoCaps size={10} color={colors.textMuted}>FERTILE WINDOW</MonoCaps>
+        <View style={styles.headerLeft}>
+          <MissingStickers.PrepregFertileWindow size={32} />
+          <MonoCaps size={10} color={colors.textMuted}>FERTILE WINDOW</MonoCaps>
+        </View>
         <Body size={11} color={colors.textMuted}>this week</Body>
       </View>
       <View style={styles.row}>
@@ -96,6 +100,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   row: {
     flexDirection: 'row',

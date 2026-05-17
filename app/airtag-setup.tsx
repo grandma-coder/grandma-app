@@ -6,6 +6,7 @@ import { CosmicBackground } from '../components/ui/CosmicBackground'
 import { PaperCard } from '../components/ui/PaperCard'
 import { PillButton } from '../components/ui/PillButton'
 import { colors, typography, spacing } from '../constants/theme'
+import { MissingStickers } from '../components/stickers/MissingStickers'
 
 export default function AirTagSetup() {
   const insets = useSafeAreaInsets()
@@ -18,9 +19,7 @@ export default function AirTagSetup() {
         </Pressable>
 
         <View style={styles.hero}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="bluetooth" size={40} color={colors.accent} />
-          </View>
+          <MissingStickers.AirtagHero size={120} />
           <Text style={styles.title}>Connect AirTag</Text>
           <Text style={styles.subtitle}>
             Track your child's location in real time by connecting an Apple AirTag to grandma.app.
@@ -30,9 +29,7 @@ export default function AirTagSetup() {
         <View style={styles.steps}>
           <PaperCard radius={28} padding={20} style={styles.step}>
             <View style={styles.stepRow}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>1</Text>
-              </View>
+              <MissingStickers.AirtagStepAttach size={48} />
               <View style={styles.stepContent}>
                 <Text style={styles.stepTitle}>Attach the AirTag</Text>
                 <Text style={styles.stepText}>
@@ -44,9 +41,7 @@ export default function AirTagSetup() {
 
           <PaperCard radius={28} padding={20} style={styles.step}>
             <View style={styles.stepRow}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>2</Text>
-              </View>
+              <MissingStickers.AirtagStepPair size={48} />
               <View style={styles.stepContent}>
                 <Text style={styles.stepTitle}>Pair via Find My</Text>
                 <Text style={styles.stepText}>
@@ -58,9 +53,7 @@ export default function AirTagSetup() {
 
           <PaperCard radius={28} padding={20} style={styles.step}>
             <View style={styles.stepRow}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>3</Text>
-              </View>
+              <MissingStickers.AirtagStepDone size={48} />
               <View style={styles.stepContent}>
                 <Text style={styles.stepTitle}>Enable in grandma.app</Text>
                 <Text style={styles.stepText}>

@@ -23,6 +23,7 @@ import { SectionHeader } from './SectionHeader'
 import { PaperCard } from '../ui/PaperCard'
 import { Display, Body } from '../ui/Typography'
 import { logSticker } from './logStickers'
+import { MissingStickers } from '../stickers/MissingStickers'
 import {
   PeriodStartForm,
   PeriodEndForm,
@@ -220,9 +221,7 @@ export function CycleCalendar() {
         {tab === 'checklist' && (
           <PaperCard style={{ marginTop: 4 }}>
             <View style={styles.tabEmpty}>
-              <View style={[styles.tabEmptyIcon, { backgroundColor: modeColor + '22' }]}>
-                <Check size={22} color={modeColor} strokeWidth={2} />
-              </View>
+              <MissingStickers.PrepregChecklistEmpty size={88} />
               <Display size={20} color={isDark ? colors.text : '#141313'}>Fertility checklist</Display>
               <Body size={13} color={isDark ? colors.textMuted : '#6E6763'} align="center" style={{ marginTop: 6 }}>
                 Build your cycle routine: folate, BBT logging, ovulation tests, and stress care. We'll track your progress here.

@@ -1,4 +1,6 @@
-export type BirthStickerKind = 'leaf' | 'cross' | 'heart' | 'drop'
+export type BirthStickerKind =
+  | 'leaf' | 'cross' | 'heart' | 'drop'   // existing brand stickers
+  | 'vaginal' | 'csection' | 'water'      // purpose-built per-type illustrations
 
 export interface BirthType {
   id: string
@@ -16,7 +18,7 @@ export const birthTypes: BirthType[] = [
     id: 'natural',
     title: 'Natural Birth',
     icon: '🌿',
-    sticker: 'leaf',
+    sticker: 'vaginal',
     description: 'Vaginal delivery without medical interventions like epidurals or induction.',
     pros: [
       'Faster recovery time',
@@ -35,7 +37,7 @@ export const birthTypes: BirthType[] = [
     id: 'c-section',
     title: 'C-Section',
     icon: '🏥',
-    sticker: 'cross',
+    sticker: 'csection',
     description: 'Surgical delivery through an incision in the abdomen and uterus.',
     pros: [
       'Planned scheduling reduces uncertainty',
@@ -73,7 +75,7 @@ export const birthTypes: BirthType[] = [
     id: 'water-birth',
     title: 'Water Birth',
     icon: '🌊',
-    sticker: 'drop',
+    sticker: 'water',
     description: 'Laboring and/or delivering in a warm water pool for natural pain relief.',
     pros: [
       'Warm water provides natural pain relief',

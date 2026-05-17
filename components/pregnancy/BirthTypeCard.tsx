@@ -1,6 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useTheme, radius, spacing } from '../../constants/theme'
 import { Leaf, Cross, Heart, Drop } from '../ui/Stickers'
+import { MissingStickers } from '../stickers/MissingStickers'
 import type { BirthType, BirthStickerKind } from '../../lib/birthData'
 
 interface BirthTypeCardProps {
@@ -11,6 +12,9 @@ interface BirthTypeCardProps {
 function StickerIcon({ kind, size = 44 }: { kind: BirthStickerKind; size?: number }) {
   const { stickers, isDark } = useTheme()
   const stroke = isDark ? '#F5EDDC' : '#141313'
+  if (kind === 'vaginal') return <MissingStickers.PregnancyBirthTypeVaginal size={size} />
+  if (kind === 'csection') return <MissingStickers.PregnancyBirthTypeCsection size={size} />
+  if (kind === 'water') return <MissingStickers.PregnancyBirthTypeWater size={size} />
   if (kind === 'leaf') return <Leaf size={size} fill={stickers.green} stroke={stroke} />
   if (kind === 'cross') return <Cross size={size} fill={stickers.coral} stroke={stroke} />
   if (kind === 'heart') return <Heart size={size} fill={stickers.pink} stroke={stroke} />

@@ -53,6 +53,7 @@ import { useChildStore } from '../store/useChildStore'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { Display } from '../components/ui/Typography'
 import { EmptyState } from '../components/ui/EmptyState'
+import { MissingStickers } from '../components/stickers/MissingStickers'
 
 // ─── Type → Visual Config ───────────────────────────────────────────────────
 
@@ -634,7 +635,7 @@ export default function NotificationsScreen() {
         }}
         ListEmptyComponent={() => (
           <EmptyState
-            icon={<Bell size={36} color={colors.textMuted} strokeWidth={1.6} />}
+            icon={<MissingStickers.NotificationsEmpty size={88} />}
             iconBg={colors.surface}
             title={activeFilter === 'All' ? 'No notifications yet' : `No ${activeFilter.toLowerCase()} notifications`}
             message={

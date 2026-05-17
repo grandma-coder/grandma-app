@@ -23,14 +23,15 @@ import { CosmicBackground } from '../components/ui/CosmicBackground'
 import ResultCard from '../components/ui/ResultCard'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { colors, spacing, borderRadius } from '../constants/theme'
+import { PartialStickers } from '../components/stickers/PartialStickers'
 
 const FREE_SCAN_LIMIT = 3
 
 const SCAN_TYPES = [
-  { id: 'medicine', icon: '💊', label: 'Medicine' },
-  { id: 'food', icon: '🥦', label: 'Food' },
-  { id: 'nutrition', icon: '📊', label: 'Nutrition' },
-  { id: 'general', icon: '📷', label: 'General' },
+  { id: 'medicine', Sticker: PartialStickers.ScanTypeMedicine, label: 'Medicine' },
+  { id: 'food',     Sticker: PartialStickers.ScanTypeFood,     label: 'Food' },
+  { id: 'nutrition',Sticker: PartialStickers.ScanTypeNutrition,label: 'Nutrition' },
+  { id: 'general',  Sticker: PartialStickers.ScanTypeGeneral,  label: 'General' },
 ]
 
 export default function Scan() {
@@ -186,7 +187,7 @@ export default function Scan() {
                 scanType === type.id && styles.typeChipActive,
               ]}
             >
-              <Text style={styles.typeIcon}>{type.icon}</Text>
+              <type.Sticker size={36} />
               <Text
                 style={[
                   styles.typeLabel,

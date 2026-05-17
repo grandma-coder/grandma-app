@@ -2,6 +2,7 @@ import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { colors, borderRadius } from '../../constants/theme'
+import { MissingStickers } from '../stickers/MissingStickers'
 import type { Listing } from '../../lib/exchange'
 
 interface ListingCardProps {
@@ -11,14 +12,14 @@ interface ListingCardProps {
   onSave?: () => void
 }
 
-const TYPE_BADGE: Record<string, { label: string; color: string }> = {
-  sell: { label: 'For Sale', color: colors.accent },
-  trade: { label: 'Trade', color: colors.info },
-  donate: { label: 'Free', color: colors.success },
+const TYPE_STICKER: Record<string, React.FC<{ size?: number }>> = {
+  sell: MissingStickers.GarageListingSell,
+  trade: MissingStickers.GarageListingTrade,
+  donate: MissingStickers.GarageListingDonate,
 }
 
 export function ListingCard({ listing, saved, onPress, onSave }: ListingCardProps) {
-  const badge = TYPE_BADGE[listing.listingType] ?? TYPE_BADGE.sell
+  const Badge = TYPE_STICKER[listing.listingType] ?? TYPE_STICKER.sell
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.9 }]}>
@@ -34,8 +35,8 @@ export function ListingCard({ listing, saved, onPress, onSave }: ListingCardProp
 
         <View style={styles.content}>
           {/* Badge */}
-          <View style={[styles.badge, { backgroundColor: badge.color + '20', borderColor: badge.color + '40' }]}>
-            <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
+          <View style={styles.badgeWrap}>
+            <Badge size={44} />
           </View>
 
           <Text style={styles.title} numberOfLines={2}>{listing.title}</Text>
@@ -94,19 +95,9 @@ const styles = StyleSheet.create({
   content: {
     padding: 14,
   },
-  badge: {
+  badgeWrap: {
     alignSelf: 'flex-start',
-    borderRadius: borderRadius.full,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderWidth: 1,
     marginBottom: 8,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   title: {
     fontSize: 16,
