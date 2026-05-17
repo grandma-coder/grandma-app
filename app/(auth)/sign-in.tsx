@@ -84,10 +84,10 @@ export default function SignIn() {
     }
   }
 
-  const bg = isDark ? colors.bg : '#F3ECD9'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
+  const bg = colors.bg
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
   const ink2 = isDark ? colors.textSecondary : '#3A3533'
   const ink3 = isDark ? colors.textMuted : '#6E6763'
   const ink4 = isDark ? colors.textFaint : '#A69E93'

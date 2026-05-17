@@ -49,7 +49,7 @@ export function MyJourneyPillGrid() {
     if (!isEnrolled) {
       router.push({
         pathname: '/onboarding/journey',
-        params: { addMode: 'true' },
+        params: { addMode: 'true', preselect: b },
       })
       return
     }

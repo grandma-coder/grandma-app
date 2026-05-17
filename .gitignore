@@ -54,3 +54,4 @@ docs/claude-design/
 *.pptx
 *.key
 *.pdf
+.superpowers/

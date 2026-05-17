@@ -689,6 +689,111 @@ export async function seedExamData(): Promise<{ inserted: number }> {
   return { inserted: rows.length }
 }
 
+// ─── Backfill caregiver links ─────────────────────────────────────────────
+
+/**
+ * For each child where `parent_id = current user` but no `child_caregivers`
+ * row links the parent to the child, insert the missing 'parent' caregiver
+ * row. Fixes legacy accounts whose kids were created before onboarding
+ * started writing to `child_caregivers`. The boot path's children-fallback
+ * query masks this issue but care-circle / permission checks stay broken
+ * until the rows exist.
+ */
+export async function backfillCaregiverLinks(): Promise<{
+  scanned: number
+  inserted: number
+  alreadyOk: number
+}> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError) throw new Error(`Session error: ${formatSupabaseError(sessionError)}`)
+  const session = sessionData.session
+  if (!session) throw new Error('Not authenticated')
+  const userId = session.user.id
+  const userEmail = session.user.email ?? ''
+
+  // 1. Find every child where I'm the parent.
+  const { data: myChildren, error: childrenErr } = await supabase
+    .from('children')
+    .select('id, name')
+    .eq('parent_id', userId)
+  if (childrenErr) throw new Error(`children query failed: ${formatSupabaseError(childrenErr)}`)
+  const scanned = myChildren?.length ?? 0
+  if (scanned === 0) return { scanned: 0, inserted: 0, alreadyOk: 0 }
+
+  // 2. Find every existing row for these children that could conflict.
+  // The unique constraint is (child_id, email) — NOT (child_id, user_id) —
+  // so a legacy invite row for the parent's own email already occupies
+  // the slot we need. Find all rows matching either my user_id OR my
+  // email so we can decide between UPDATE and INSERT.
+  const childIds = myChildren!.map((c) => c.id)
+  const { data: existing, error: existingErr } = await supabase
+    .from('child_caregivers')
+    .select('id, child_id, user_id, email, role, status')
+    .in('child_id', childIds)
+    .or(`user_id.eq.${userId},email.eq.${userEmail}`)
+  if (existingErr) throw new Error(`child_caregivers query failed: ${formatSupabaseError(existingErr)}`)
+
+  const rowsToUpdate: string[] = []
+  const properlyLinkedIds = new Set<string>()
+  const occupiedByEmail = new Map<string, string>() // child_id -> row.id
+
+  for (const row of existing ?? []) {
+    const isProperParent = row.user_id === userId && row.role === 'parent' && row.status === 'accepted'
+    if (isProperParent) {
+      properlyLinkedIds.add(row.child_id)
+    } else if (row.email === userEmail) {
+      // Either a pending invite for my own email, or a wrong-role row.
+      // Promote it instead of inserting a duplicate.
+      occupiedByEmail.set(row.child_id, row.id)
+      rowsToUpdate.push(row.id)
+    }
+  }
+
+  // 3a. UPDATE orphan rows to proper parent links.
+  let promoted = 0
+  if (rowsToUpdate.length > 0) {
+    const { error: updErr } = await supabase
+      .from('child_caregivers')
+      .update({
+        user_id: userId,
+        role: 'parent',
+        status: 'accepted',
+        permissions: { view: true, log_activity: true, chat: true, edit_child: true, emergency: true },
+        invited_by: userId,
+        accepted_at: new Date().toISOString(),
+      })
+      .in('id', rowsToUpdate)
+    if (updErr) throw new Error(`Update failed: ${formatSupabaseError(updErr)}`)
+    promoted = rowsToUpdate.length
+    for (const childId of occupiedByEmail.keys()) properlyLinkedIds.add(childId)
+  }
+
+  // 3b. INSERT links for children with no row at all.
+  const missing = myChildren!.filter((c) => !properlyLinkedIds.has(c.id))
+  let inserted = 0
+  if (missing.length > 0) {
+    const rows = missing.map((c) => ({
+      child_id: c.id,
+      user_id: userId,
+      email: userEmail,
+      role: 'parent' as const,
+      status: 'accepted' as const,
+      permissions: { view: true, log_activity: true, chat: true, edit_child: true, emergency: true },
+      invited_by: userId,
+      accepted_at: new Date().toISOString(),
+    }))
+    const { error: insErr } = await supabase.from('child_caregivers').insert(rows)
+    if (insErr) throw new Error(`Insert failed: ${formatSupabaseError(insErr)}`)
+    inserted = missing.length
+  }
+
+  return {
+    scanned,
+    inserted: inserted + promoted,
+    alreadyOk: scanned - inserted - promoted,
+  }
+}
+
 // ─── Wipe all dev data ────────────────────────────────────────────────────
 
 export async function wipeAllDemoData(): Promise<void> {

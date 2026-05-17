@@ -62,7 +62,7 @@ export function CycleHome() {
   const parentName = useJourneyStore((s) => s.parentName)
   const { data: profile } = useProfile()
   const displayName = profile?.name ?? parentName
-  const { data: history } = useCycleHistory()
+  const { data: history, isPending: historyPending } = useCycleHistory()
   const [detailType, setDetailType] = useState<CycleHomeDetailType | null>(null)
 
   // Derive cycle config from latest history, or fall back to a demo
@@ -81,6 +81,14 @@ export function CycleHome() {
 
   const info = getCycleInfo(cycleConfig, toDateStr(new Date()))
   const phaseLabel = info.isFertile ? 'Fertile' : info.phaseLabel
+
+  // Don't render until the cycle history query has resolved — otherwise
+  // the first paint uses the demo fallback (cycleDay derived from "10
+  // days ago"), then flips to the real day once history arrives. Same
+  // flash pattern as PregnancyHome.
+  if (historyPending) {
+    return <View style={[styles.root, { backgroundColor: colors.bg }]} />
+  }
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>

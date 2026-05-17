@@ -14,10 +14,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../constants/theme'
 import { supabase } from '../lib/supabase'
 import { signOut } from '../lib/signOut'
-import { seedCycleData, seedKidsData, seedPregnancyData, seedExamData, seedAllData, wipeAllDemoData, repairBehaviorsFromData } from '../lib/devSeed'
+import { seedCycleData, seedKidsData, seedPregnancyData, seedExamData, seedAllData, wipeAllDemoData, repairBehaviorsFromData, backfillCaregiverLinks } from '../lib/devSeed'
 import { useModeStore } from '../store/useModeStore'
+import { useBehaviorStore, type Behavior } from '../store/useBehaviorStore'
+import { useChildStore } from '../store/useChildStore'
 import { useJourneyStore } from '../store/useJourneyStore'
 import { useDevStore } from '../store/useDevStore'
+import { pillars } from '../lib/pillars'
+import { pregnancyPillars } from '../lib/pregnancyPillars'
+import { prePregPillars } from '../lib/prePregPillars'
 import { MonoCaps, Body } from '../components/ui/Typography'
 import type { JourneyMode } from '../types'
 
@@ -27,17 +32,20 @@ const AUTH_FLOWS: Array<[string, string]> = [
   ['Welcome', '/(auth)/welcome'],
   ['Sign in', '/(auth)/sign-in'],
   ['Sign up', '/(auth)/sign-up'],
+  ['Forgot password', '/(auth)/forgot-password'],
 ]
 
 const ONBOARDING_FLOWS: Array<[string, string]> = [
   ['Journey picker', '/onboarding/journey'],
+  ['Journey picker (add mode)', '/onboarding/journey?addMode=true'],
   ['Pre-pregnancy onboarding', '/onboarding/cycle'],
   ['Pregnancy onboarding', '/onboarding/pregnancy'],
   ['Kids onboarding', '/onboarding/kids'],
+  ['Child profile', '/onboarding/child-profile'],
   ['Transition', '/onboarding/transition'],
 ]
 
-const SCREENS: Array<[string, string]> = [
+const COMMON_SCREENS: Array<[string, string]> = [
   ['Paywall', '/paywall'],
   ['Daily rewards', '/daily-rewards'],
   ['Leaderboard', '/leaderboard'],
@@ -45,20 +53,81 @@ const SCREENS: Array<[string, string]> = [
   ['Grandma talk', '/grandma-talk'],
   ['Insights', '/insights'],
   ['Scan', '/scan'],
-  ['Birth plan', '/birth-plan'],
-  ['Airtag setup', '/airtag-setup'],
-  ['Invite caregiver', '/invite-caregiver'],
-  ['Manage caregivers', '/manage-caregivers'],
-  ['Connections', '/connections'],
-  ['Child picker', '/child-picker'],
 ]
+
+const PROFILE_SCREENS: Array<[string, string]> = [
+  ['Profile · Account', '/profile/account'],
+  ['Profile · Personal', '/profile/personal'],
+  ['Profile · Kids', '/profile/kids'],
+  ['Profile · Health history', '/profile/health-history'],
+  ['Profile · Memories', '/profile/memories'],
+  ['Profile · Care circle', '/profile/care-circle'],
+  ['Profile · Badges', '/profile/badges'],
+  ['Profile · Emergency insurance', '/profile/emergency-insurance'],
+  ['Profile · Notifications', '/profile/notifications'],
+  ['Profile · Privacy', '/profile/privacy'],
+  ['Profile · Pregnancy', '/profile/pregnancy'],
+  ['Profile · Settings', '/profile/settings'],
+]
+
+// ⚠ LEGACY — both still ship the old neon-yellow design. Listed so you
+// can find them, but they're on the design-refresh backlog.
+const CAREGIVER_SCREENS: Array<[string, string]> = [
+  ['Invite caregiver  ⚠ legacy design', '/invite-caregiver'],
+  ['Manage caregivers  ⚠ legacy design', '/manage-caregivers'],
+]
+
+// ⚠ The /connections shell is current design but the Garage tab inside
+// it still renders GarageScreen.tsx (Pastel neon palette). On backlog.
+const COMMUNITY_SCREENS: Array<[string, string]> = [
+  ['Connections (Channels + Garage)', '/connections'],
+  ['Channels list', '/channels'],
+  ['Channel · create', '/channel/create'],
+  ['Garage · profile  ⚠ legacy design', '/garage/profile'],
+  ['Garage · create  ⚠ legacy design', '/garage/create'],
+  ['Garage · share  ⚠ legacy design', '/garage/share'],
+]
+
+const EXCHANGE_SCREENS: Array<[string, string]> = [
+  ['Exchange · create listing', '/exchange/create'],
+]
+
+const PREGNANCY_ONLY: Array<[string, string]> = [
+  ['Birth plan', '/birth-plan'],
+]
+
+// ⚠ DEAD — /airtag-setup file exists but no real screen links to it.
+// Kept here as a parking lot until you decide to delete or rewire.
+const KIDS_ONLY: Array<[string, string]> = [
+  ['AirTag setup  ⚠ dead route, legacy design', '/airtag-setup'],
+]
+
+// Pushing `/(tabs)/*` directly via router.push escapes the tab navigator
+// and renders the screen as a generic stack page (no tab bar, broken
+// header). Use the tab bar instead. We keep just a "go home" jump that
+// lands you in the tabs context — then switch tabs from there.
+const MODE_AWARE_TABS: Array<[string, string]> = [
+  ['Home (in tabs context)', '/(tabs)'],
+]
+
+const PILLARS_BY_MODE: Record<JourneyMode, Array<{ id: string; name: string }>> = {
+  'pre-pregnancy': prePregPillars.map((p) => ({ id: p.id, name: p.name })),
+  pregnancy: pregnancyPillars.map((p) => ({ id: p.id, name: p.name })),
+  kids: pillars.map((p) => ({ id: p.id, name: p.name })),
+}
 
 export default function DevPanel() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const queryClient = useQueryClient()
   const mode = useModeStore((s) => s.mode)
-  const setMode = useModeStore((s) => s.setMode)
+  const setMode = useModeStore((s) => s.setModeUnsafe)
+  const enrolled = useBehaviorStore((s) => s.enrolledBehaviors)
+  const enroll = useBehaviorStore((s) => s.enroll)
+  const unenroll = useBehaviorStore((s) => s.unenroll)
+  const children = useChildStore((s) => s.children)
+  const activeChild = useChildStore((s) => s.activeChild)
+  const setActiveChild = useChildStore((s) => s.setActiveChild)
   const clearJourney = useJourneyStore((s) => s.clearAll)
   const enterDevMode = useDevStore((s) => s.enter)
 
@@ -144,6 +213,16 @@ export default function DevPanel() {
     })
   }
 
+  async function handleBackfillCaregivers() {
+    await run('Backfill caregiver links', async () => {
+      const { scanned, inserted, alreadyOk } = await backfillCaregiverLinks()
+      await queryClient.invalidateQueries()
+      if (scanned === 0) return 'No children found for this account.'
+      if (inserted === 0) return `All ${scanned} children already linked. Nothing to do.`
+      return `Inserted ${inserted} caregiver row${inserted === 1 ? '' : 's'} (${alreadyOk} already OK). Reload to refresh the boot path.`
+    })
+  }
+
   async function handleWipeAll() {
     Alert.alert(
       'Wipe all demo data?',
@@ -202,6 +281,13 @@ export default function DevPanel() {
     Alert.alert('Cache', 'AsyncStorage cleared. Restart the app.')
   }
 
+  function navTo(route: string) {
+    enterDevMode()
+    router.push(route as any)
+  }
+
+  const modePillars = PILLARS_BY_MODE[mode] ?? []
+
   return (
     <>
       <Stack.Screen
@@ -239,6 +325,67 @@ export default function DevPanel() {
           </View>
         </Section>
 
+        {/* Enrollment */}
+        <Section title="ENROLLMENT">
+          <Body size={11} color={colors.textMuted}>
+            Toggle which behaviors are unlocked. Unenrolled modes show locked in the ModeSwitcher.
+          </Body>
+          {(['pre-pregnancy', 'pregnancy', 'kids'] as Behavior[]).map((b) => {
+            const isEnrolled = enrolled.includes(b)
+            return (
+              <Pressable
+                key={b}
+                onPress={() => (isEnrolled ? unenroll(b) : enroll(b))}
+                style={({ pressed }) => [
+                  styles.actionRow,
+                  { borderColor: colors.borderLight, opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Body size={14} color={colors.text} style={{ fontWeight: '600', flex: 1 }}>{b}</Body>
+                <Body size={12} color={isEnrolled ? colors.primary : colors.textMuted}>
+                  {isEnrolled ? '✓ enrolled' : 'locked'}
+                </Body>
+              </Pressable>
+            )
+          })}
+        </Section>
+
+        {/* Active child */}
+        <Section title="ACTIVE CHILD">
+          {children.length === 0 ? (
+            <Body size={12} color={colors.textMuted}>No children loaded.</Body>
+          ) : (
+            <>
+              <Body size={11} color={colors.textMuted}>
+                {activeChild ? `Active: ${activeChild.name}` : 'No active child'}
+              </Body>
+              {children.map((c) => {
+                const isActive = activeChild?.id === c.id
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => setActiveChild(c)}
+                    style={({ pressed }) => [
+                      styles.actionRow,
+                      { borderColor: colors.borderLight, opacity: pressed ? 0.7 : 1 },
+                    ]}
+                  >
+                    <Body size={14} color={colors.text} style={{ fontWeight: '600', flex: 1 }}>
+                      {c.name}
+                    </Body>
+                    <Body size={11} color={colors.textMuted}>
+                      {c.birthDate ? `dob ${c.birthDate}` : ''}
+                    </Body>
+                    {isActive && (
+                      <Ionicons name="checkmark" size={16} color={colors.primary} style={{ marginLeft: 8 }} />
+                    )}
+                  </Pressable>
+                )
+              })}
+            </>
+          )}
+        </Section>
+
         {/* Seeds */}
         <Section title="SEED DATA">
           <ActionRow label="Seed everything"     sub="All behaviors + every child, through today" onPress={handleSeedAll}      busy={busy} />
@@ -247,48 +394,106 @@ export default function DevPanel() {
           <ActionRow label="Seed pregnancy data" sub="90d of logs through today"        onPress={handleSeedPregnancy} busy={busy} />
           <ActionRow label="Seed exam data"      sub="14 exams across all behaviors" onPress={handleSeedExams}     busy={busy} />
           <ActionRow label="Repair behaviors from data" sub="Re-enroll based on children / logs" onPress={handleRepairBehaviors} busy={busy} />
+          <ActionRow label="Backfill caregiver links" sub="Link your account to your own children in child_caregivers (fixes legacy accounts)" onPress={handleBackfillCaregivers} busy={busy} />
           <ActionRow label="Wipe all demo data"  sub="Destructive"               onPress={handleWipeAll}       busy={busy} destructive />
         </Section>
 
         {/* Auth flows */}
         <Section title="AUTH FLOWS">
           {AUTH_FLOWS.map(([label, route]) => (
-            <ActionRow
-              key={route}
-              label={label}
-              onPress={() => { enterDevMode(); router.push(route as any) }}
-              busy={busy}
-            />
+            <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
           ))}
-        </Section>
-
-        {/* Sign out */}
-        <Section title="SIGN OUT">
-          <ActionRow label="Sign out" sub="Clears session + cache" onPress={handleSignOut} busy={busy} destructive />
         </Section>
 
         {/* Onboarding flows */}
         <Section title="ONBOARDING FLOWS">
           {ONBOARDING_FLOWS.map(([label, route]) => (
-            <ActionRow
-              key={route}
-              label={label}
-              onPress={() => { enterDevMode(); router.push(route as any) }}
-              busy={busy}
-            />
+            <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
           ))}
           <ActionRow label="Reset onboarding state" sub="Clears Zustand + AsyncStorage" onPress={handleResetOnboarding} busy={busy} />
         </Section>
 
-        {/* Screens */}
-        <Section title="SCREENS">
-          {SCREENS.map(([label, route]) => (
-            <ActionRow
-              key={route}
-              label={label}
-              onPress={() => { enterDevMode(); router.push(route as any) }}
-              busy={busy}
-            />
+        {/* Mode-aware tabs */}
+        <Section title={`TABS · CURRENT MODE: ${mode.toUpperCase()}`}>
+          <Body size={11} color={colors.textMuted}>
+            Jumps into the tabs navigator. Then use the tab bar to switch between
+            Home / Agenda / Library / Vault / Exchange / Settings — these adapt to the
+            current mode. Pushing /(tabs)/library directly via the dev-panel would
+            render outside the tab bar and break the layout.
+          </Body>
+          {MODE_AWARE_TABS.map(([label, route]) => (
+            <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
+          ))}
+        </Section>
+
+        {/* Pillars */}
+        <Section title={`PILLARS · ${mode.toUpperCase()} (${modePillars.length})`}>
+          <Body size={11} color={colors.textMuted}>
+            ⚠ /pillar/[id] still uses the legacy cosmic palette — on the design-refresh backlog.
+          </Body>
+          {modePillars.length === 0 ? (
+            <Body size={12} color={colors.textMuted}>No pillars for this mode.</Body>
+          ) : (
+            modePillars.map((p) => (
+              <ActionRow
+                key={p.id}
+                label={p.name}
+                sub={p.id}
+                onPress={() => navTo(`/pillar/${p.id}`)}
+                busy={busy}
+              />
+            ))
+          )}
+        </Section>
+
+        {/* Common screens */}
+        <Section title="COMMON SCREENS">
+          {COMMON_SCREENS.map(([label, route]) => (
+            <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
+          ))}
+        </Section>
+
+        {/* Profile screens */}
+        <Section title="PROFILE SCREENS">
+          {PROFILE_SCREENS.map(([label, route]) => (
+            <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
+          ))}
+        </Section>
+
+        {/* Caregiver screens */}
+        <Section title="CAREGIVER SCREENS">
+          <Body size={11} color={colors.textMuted}>
+            Both screens still use the legacy neon design — pending refresh.
+          </Body>
+          {CAREGIVER_SCREENS.map(([label, route]) => (
+            <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
+          ))}
+        </Section>
+
+        {/* Community / Garage */}
+        <Section title="COMMUNITY · CHANNELS · GARAGE">
+          {COMMUNITY_SCREENS.map(([label, route]) => (
+            <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
+          ))}
+        </Section>
+
+        {/* Exchange */}
+        <Section title="EXCHANGE (MARKETPLACE)">
+          {EXCHANGE_SCREENS.map(([label, route]) => (
+            <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
+          ))}
+        </Section>
+
+        {/* Mode-specific */}
+        <Section title="PREGNANCY-ONLY">
+          {PREGNANCY_ONLY.map(([label, route]) => (
+            <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
+          ))}
+        </Section>
+
+        <Section title="KIDS-ONLY">
+          {KIDS_ONLY.map(([label, route]) => (
+            <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
           ))}
         </Section>
 
@@ -296,6 +501,11 @@ export default function DevPanel() {
         <Section title="CACHE">
           <ActionRow label="Clear React Query cache" onPress={handleClearQueryCache} busy={busy} />
           <ActionRow label="Clear AsyncStorage"      onPress={handleClearAsyncStorage} busy={busy} destructive />
+        </Section>
+
+        {/* Sign out */}
+        <Section title="SIGN OUT">
+          <ActionRow label="Sign out" sub="Clears session + cache" onPress={handleSignOut} busy={busy} destructive />
         </Section>
       </ScrollView>
     </>

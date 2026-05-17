@@ -1,10 +1,14 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
 import { colors, borderRadius } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
+import { useBehaviorStore } from '../../store/useBehaviorStore'
 import type { JourneyMode } from '../../types'
 
 export function ModeSwitcher() {
   const { mode, cycleIntent, setMode } = useModeStore()
+  const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
 
   const MODES: { id: JourneyMode; label: string }[] = [
     { id: 'pre-pregnancy', label: cycleIntent === 'ttc' ? 'Dreaming' : 'Cycle' },
@@ -12,19 +16,53 @@ export function ModeSwitcher() {
     { id: 'kids', label: 'Raising' },
   ]
 
+  function handlePress(m: JourneyMode) {
+    const enrolled = enrolledBehaviors.includes(m)
+    if (enrolled) {
+      setMode(m)
+      return
+    }
+    // Locked — route into the add-journey flow with this mode preselected.
+    router.push({
+      pathname: '/onboarding/journey',
+      params: { addMode: 'true', preselect: m },
+    } as any)
+  }
+
   return (
     <View style={styles.container}>
       {MODES.map((m) => {
         const isActive = mode === m.id
+        const isLocked = !enrolledBehaviors.includes(m.id)
         return (
           <Pressable
             key={m.id}
-            onPress={() => setMode(m.id)}
-            style={[styles.pill, isActive && styles.pillActive]}
+            onPress={() => handlePress(m.id)}
+            style={[
+              styles.pill,
+              isActive && styles.pillActive,
+              isLocked && styles.pillLocked,
+            ]}
           >
-            <Text style={[styles.label, isActive && styles.labelActive]}>
-              {m.label}
-            </Text>
+            <View style={styles.pillContent}>
+              {isLocked && (
+                <Ionicons
+                  name="lock-closed"
+                  size={10}
+                  color={colors.textTertiary}
+                  style={styles.lockIcon}
+                />
+              )}
+              <Text
+                style={[
+                  styles.label,
+                  isActive && styles.labelActive,
+                  isLocked && styles.labelLocked,
+                ]}
+              >
+                {m.label}
+              </Text>
+            </View>
           </Pressable>
         )
       })}
@@ -50,6 +88,17 @@ const styles = StyleSheet.create({
   pillActive: {
     backgroundColor: colors.accent,
   },
+  pillLocked: {
+    opacity: 0.55,
+  },
+  pillContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  lockIcon: {
+    opacity: 0.85,
+  },
   label: {
     fontSize: 11,
     fontWeight: '900',
@@ -59,5 +108,8 @@ const styles = StyleSheet.create({
   },
   labelActive: {
     color: colors.textOnAccent,
+  },
+  labelLocked: {
+    color: colors.textTertiary,
   },
 })

@@ -56,7 +56,7 @@ export default function TransitionScreen() {
   const skipCurrentFlow = useOnboardingStore((s) => s.skipCurrentFlow)
   const queue = useOnboardingStore((s) => s.queue)
   const switchTo = useBehaviorStore((s) => s.switchTo)
-  const setMode = useModeStore((s) => s.setMode)
+  const setMode = useModeStore((s) => s.setModeUnsafe)
 
   const nextBehavior = (next as Behavior) ?? null
   const content = nextBehavior ? BEHAVIOR_CONTENT[nextBehavior] : null

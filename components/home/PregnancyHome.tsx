@@ -316,6 +316,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
 
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
   const dueDate = usePregnancyStore((s) => s.dueDate) ?? ''
+  const pregHydrated = usePregnancyStore((s) => s.hydrated)
   // Always derive from due date so the week advances with time;
   // fall back to the stored snapshot only when no due date is set.
   const weekNumber = dueDate ? getCurrentWeekFromDueDate(dueDate) : (storedWeek ?? 1)
@@ -382,6 +383,14 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
   const weekdayLabel = new Date()
     .toLocaleDateString(undefined, { weekday: 'long' })
     .toUpperCase()
+
+  // Don't render the home until the persisted pregnancy store has
+  // rehydrated. Without this gate the first paint reads dueDate as null,
+  // renders week 1, then flips to the real week (e.g. 40) once
+  // AsyncStorage finishes loading — the visible "flash" the user reported.
+  if (!pregHydrated) {
+    return <View style={[styles.root, { backgroundColor: colors.bg }]} />
+  }
 
   return (
     <ScrollView

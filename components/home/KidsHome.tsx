@@ -69,6 +69,11 @@ const SH = Dimensions.get('window').height
 const AnimatedSvgCircle = Reanimated.createAnimatedComponent(SvgCircle)
 
 // ─── Growth Leap Data ────────────────────────────────────────────────────────
+// NOTE: This array intentionally duplicates `lib/growthLeaps.GROWTH_LEAPS` —
+// the canonical version is consumed by `KidsJourneyRing` and uses a different
+// shape (no `difficulty`, raw hex colors). When updating leaps, mirror the
+// change in `lib/growthLeaps.ts` to avoid silent divergence. Tracked as a
+// follow-up dedupe in docs/onboarding-kids-audit-2026-05-15.md (P1-LEAP-DUP).
 
 const GROWTH_LEAPS = [
   {

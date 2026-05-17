@@ -45,6 +45,7 @@ import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
 import { useBehaviorStore } from '../store/useBehaviorStore'
+import { usePregnancyStore } from '../store/usePregnancyStore'
 import { initRevenueCat } from '../lib/revenue'
 import { runNotificationEngine } from '../lib/notificationEngine'
 import { syncBadgesFromSupabase } from '../lib/badgeSync'
@@ -127,7 +128,10 @@ export default function RootLayout() {
   const segments = useSegments()
 
   const setChildren = useChildStore((s) => s.setChildren)
-  const setMode = useModeStore((s) => s.setMode)
+  // Boot path uses setModeUnsafe because the coerce below runs the same
+  // tick as setBehaviors() — the guard would race against the just-set
+  // enrolled list. Coerce safety is enforced manually below.
+  const setMode = useModeStore((s) => s.setModeUnsafe)
   const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
   const behaviorHydrated = useBehaviorStore((s) => s.hydrated)
 
@@ -143,6 +147,16 @@ export default function RootLayout() {
   // / behaviors were loaded, redirecting returning users back to onboarding.
   useEffect(() => {
     let cancelled = false
+    // Track the uid we're already loading for so the SIGNED_IN +
+    // INITIAL_SESSION pair (which fires on every cold start) doesn't run
+    // loadUserData twice.
+    let inFlightUid: string | null = null
+    // On cold boot, SIGNED_IN fires *before* Supabase finishes initializing
+    // its PostgREST connection. Every query in that first burst hangs and
+    // times out (~6s wasted). INITIAL_SESSION fires once the client is
+    // truly ready and its queries succeed in <1s. So: ignore SIGNED_IN
+    // until we've seen INITIAL_SESSION at least once.
+    let sawInitialSession = false
 
     /**
      * Wrap a Supabase query in a per-query timeout. If any single query
@@ -154,21 +168,33 @@ export default function RootLayout() {
     async function withTimeout<T>(
       label: string,
       promise: PromiseLike<T>,
-      ms = 6000,
+      ms = 4000,
     ): Promise<T | { data: null; error: { message: string; code: 'TIMEOUT' } }> {
-      return Promise.race([
-        promise as Promise<T>,
-        new Promise<{ data: null; error: { message: string; code: 'TIMEOUT' } }>((resolve) =>
-          setTimeout(() => {
-            console.warn(`[auth] ${label} TIMED OUT after ${ms}ms — likely RLS or schema-cache issue`)
+      // Plain Promise.race leaks the setTimeout — once the query wins, the
+      // timer still fires later and logs a misleading "TIMED OUT" warning.
+      // Track who wins and clear the loser.
+      let timer: ReturnType<typeof setTimeout> | null = null
+      let settled = false
+      try {
+        const timeoutPromise = new Promise<{ data: null; error: { message: string; code: 'TIMEOUT' } }>((resolve) => {
+          timer = setTimeout(() => {
+            if (settled) return
+            console.warn(`[auth] ${label} TIMED OUT after ${ms}ms (callSeq=${callSeq}) — likely RLS or schema-cache issue`)
             resolve({ data: null, error: { message: `${label} timed out after ${ms}ms`, code: 'TIMEOUT' } })
-          }, ms),
-        ),
-      ]) as any
+          }, ms)
+        })
+        const result = (await Promise.race([promise as Promise<T>, timeoutPromise])) as any
+        settled = true
+        return result
+      } finally {
+        if (timer) clearTimeout(timer)
+      }
     }
 
+    let callSeq = 0
     async function loadUserData(uid: string) {
-      console.log('[auth] loadUserData start uid:', uid)
+      const callId = ++callSeq
+      console.log(`[auth] loadUserData start #${callId} uid:`, uid)
 
       // The three independent queries (profile, child_caregivers, behaviors)
       // fire in parallel. If one hangs, it doesn't block the others — each
@@ -177,9 +203,19 @@ export default function RootLayout() {
       const [profileRes, linksRes, behRes] = await Promise.all([
         withTimeout(
           'profile query',
+          // Intentionally narrow — only the columns the boot path *must*
+          // have. `journey_mode` was previously fetched here but is
+          // re-derivable from useModeStore (persisted) + the behaviors
+          // table, and selecting a column the DB doesn't yet have makes
+          // PostgREST error the whole query out and cascades the rest of
+          // the boot into timeout. Keep this SELECT minimal.
+          //
+          // `due_date` is read so that a fresh install (no AsyncStorage
+          // yet) still renders pregnancy home with the correct week
+          // instead of falling back to week 1 indefinitely.
           supabase
             .from('profiles')
-            .select('user_role, journey_mode')
+            .select('user_role, due_date')
             .eq('id', uid)
             .single(),
         ),
@@ -225,7 +261,17 @@ export default function RootLayout() {
         console.log('[auth] profile loaded:', profile)
       }
       if (profile?.user_role) setUserRole(profile.user_role)
-      if (profile?.journey_mode) setMode(profile.journey_mode as any)
+      // Active mode is resolved from useModeStore (persisted locally) +
+      // the behaviors table below. We don't read it from profiles anymore
+      // (see profile-query comment above).
+
+      // Hydrate the pregnancy store from the DB if the local copy is
+      // empty. Covers a fresh install where AsyncStorage hasn't seen this
+      // user yet — without this, PregnancyHome would render week 1 until
+      // the user re-enters their due date manually.
+      if (profile?.due_date && !usePregnancyStore.getState().dueDate) {
+        usePregnancyStore.getState().setDueDate(profile.due_date)
+      }
 
       // ─── Behaviors (restore enrolled list from server if local is empty) ─
       const { data: dbBehaviors, error: behErr } = behRes as any
@@ -235,11 +281,20 @@ export default function RootLayout() {
         console.log(`[auth] behaviors found: ${dbBehaviors?.length ?? 0}`)
       }
       const localBehaviors = useBehaviorStore.getState().enrolledBehaviors
-      if (localBehaviors.length === 0 && dbBehaviors && dbBehaviors.length > 0) {
-        const types = dbBehaviors.map((b: any) =>
+      const serverTypes: ('pre-pregnancy' | 'pregnancy' | 'kids')[] =
+        dbBehaviors?.map((b: any) =>
           b.type === 'cycle' ? 'pre-pregnancy' : b.type,
-        )
-        useBehaviorStore.getState().setBehaviors(types)
+        ) ?? []
+      if (localBehaviors.length === 0 && serverTypes.length > 0) {
+        useBehaviorStore.getState().setBehaviors(serverTypes)
+      }
+      // Coerce active mode into something the user is actually enrolled in.
+      // Prevents the home screen from rendering Kids when the user has
+      // only Pregnancy enrolled (or vice versa) after a fresh install.
+      const enrolledAfter = useBehaviorStore.getState().enrolledBehaviors
+      const currentMode = useModeStore.getState().mode
+      if (enrolledAfter.length > 0 && !enrolledAfter.includes(currentMode)) {
+        setMode(enrolledAfter[0] as any)
       }
 
       // ─── Children via child_caregivers join ──────────────────────────
@@ -332,19 +387,41 @@ export default function RootLayout() {
       async (event, newSession) => {
         console.log(`[auth] event=${event} hasSession=${!!newSession} uid=${newSession?.user?.id?.slice(0, 8) ?? 'null'}`)
         setSession(newSession)
+        if (event === 'INITIAL_SESSION') sawInitialSession = true
+
         if (event === 'SIGNED_OUT' || !newSession) {
           console.log('[auth] no session — unblock loading, route guard will send to /(auth)/welcome')
           // Clear flags so signing back in starts from a fresh load state.
+          inFlightUid = null
           setHasChildren(false)
           setLoadFailed(false)
           setLoading(false)
           return
         }
+
+        // On cold boot SIGNED_IN fires *before* the Supabase client is
+        // actually ready to query PostgREST. Every request in that burst
+        // hangs. Skip it — INITIAL_SESSION will fire moments later and is
+        // the one that actually works. After we've seen INITIAL_SESSION
+        // once, real sign-in events go through normally.
+        if (event === 'SIGNED_IN' && !sawInitialSession) {
+          console.log('[auth] skip premature SIGNED_IN — waiting for INITIAL_SESSION')
+          return
+        }
+
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          const uid = newSession.user.id
+          if (inFlightUid === uid) {
+            console.log(`[auth] skip duplicate ${event} for uid=${uid.slice(0, 8)} — already loading`)
+            return
+          }
+          inFlightUid = uid
           try {
-            await loadUserData(newSession.user.id)
+            await loadUserData(uid)
           } catch (e) {
             console.warn('[auth] loadUserData failed:', e)
+          } finally {
+            inFlightUid = null
           }
           if (!cancelled) setLoading(false)
         }

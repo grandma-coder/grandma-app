@@ -13,10 +13,9 @@ import {
   Pressable,
   ScrollView,
   Alert,
-  Platform,
   StyleSheet,
 } from 'react-native'
-import DateTimePicker from '@react-native-community/datetimepicker'
+import { StickerDateModal } from '../../components/ui/StickerDateModal'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import {
@@ -408,13 +407,18 @@ function ChipInput({ label, value, onChange, suggestions, chipColor, placeholder
     setShowSuggestions(false)
   }
 
+  // Dedupe at render time — legacy data in Supabase can have duplicate
+  // entries (e.g. ['beans', 'beans']) that would crash React's reconciler
+  // when used as a key. Preserves first occurrence order.
+  const uniqueValue = Array.from(new Set(value))
+
   return (
     <View style={formStyles.field}>
       <MonoCaps color={colors.textMuted}>{label}</MonoCaps>
 
-      {value.length > 0 && (
+      {uniqueValue.length > 0 && (
         <View style={formStyles.chipRow}>
-          {value.map((item) => (
+          {uniqueValue.map((item) => (
             <View key={item} style={[formStyles.chipTag, { backgroundColor: chipColor + (isDark ? '28' : '24') }]}>
               <Text style={[formStyles.chipTagText, { color: chipFg, fontFamily: font.bodySemiBold }]}>{item}</Text>
               <Pressable onPress={() => remove(item)} hitSlop={6}>
@@ -493,7 +497,8 @@ function EditChildSheet({
   const [countryQuery, setCountryQuery] = useState(COUNTRY_OPTIONS.find(c => c.code === (child.countryCode ?? 'US'))?.name ?? 'United States')
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false)
   const [notes, setNotes] = useState(child.notes)
-  const [showDatePicker, setShowDatePicker] = useState(Platform.OS === 'ios')
+  const [dateModalOpen, setDateModalOpen] = useState(false)
+  const [dateDraft, setDateDraft] = useState<Date>(child.birthDate ? new Date(child.birthDate) : new Date())
   const [saving, setSaving] = useState(false)
 
   function splitList(s: string): string[] {
@@ -510,17 +515,27 @@ function EditChildSheet({
     try {
       const pediatrician = pedName.trim() ? { name: pedName.trim(), phone: pedPhone.trim(), clinic: pedClinic.trim() } : null
 
+      // Dedupe chip arrays before writing back — legacy rows can have
+      // duplicates that React then chokes on when used as list keys.
+      const uniq = (a: string[]) => Array.from(new Set(a))
+      const cleanAllergies = uniq(allergies)
+      const cleanMedications = uniq(medications)
+      const cleanConditions = uniq(conditions)
+      const cleanDietary = uniq(dietaryRestrictions)
+      const cleanPreferred = uniq(preferredFoods)
+      const cleanDisliked = uniq(dislikedFoods)
+
       const { error } = await supabase.from('children').update({
         name: name.trim(),
         birth_date: birthDate || null,
         sex: sex || null,
         blood_type: bloodType || null,
-        allergies,
-        medications,
-        conditions,
-        dietary_restrictions: dietaryRestrictions,
-        preferred_foods: preferredFoods,
-        disliked_foods: dislikedFoods,
+        allergies: cleanAllergies,
+        medications: cleanMedications,
+        conditions: cleanConditions,
+        dietary_restrictions: cleanDietary,
+        preferred_foods: cleanPreferred,
+        disliked_foods: cleanDisliked,
         pediatrician,
         notes: notes.trim() || null,
         country_code: countryCode,
@@ -535,12 +550,12 @@ function EditChildSheet({
         sex,
         bloodType,
         countryCode,
-        allergies,
-        medications,
-        conditions,
-        dietaryRestrictions,
-        preferredFoods,
-        dislikedFoods,
+        allergies: cleanAllergies,
+        medications: cleanMedications,
+        conditions: cleanConditions,
+        dietaryRestrictions: cleanDietary,
+        preferredFoods: cleanPreferred,
+        dislikedFoods: cleanDisliked,
         pediatrician,
         notes: notes.trim(),
       })
@@ -578,45 +593,38 @@ function EditChildSheet({
           </View>
 
           <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Birth Date *</MonoCaps></View>
-          {birthDate ? (
-            <View style={[formStyles.ageBadge, { backgroundColor: stickers.lilac + (isDark ? '28' : '40') }]}>
-              <Text style={[formStyles.ageBadgeText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                {formatAge(birthDate)}
-              </Text>
-            </View>
-          ) : null}
-          {Platform.OS === 'android' && !showDatePicker && (
-            <Pressable
-              onPress={() => setShowDatePicker(true)}
-              style={[
-                formStyles.dateBtn,
-                {
-                  backgroundColor: isDark ? colors.surface : '#FFFEF8',
-                  borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
-                },
-              ]}
-            >
-              <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }]}>
-                {birthDate ? new Date(birthDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Select date'}
-              </Text>
-            </Pressable>
-          )}
-          {showDatePicker && (
-            <DateTimePicker
-              value={birthDate ? new Date(birthDate) : new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              maximumDate={new Date()}
-              // Min DOB ~25 years before today — covers older kids/teens whose
-              // parents might still want to track them in the app.
-              minimumDate={new Date(new Date().getFullYear() - 25, 0, 1)}
-              themeVariant={isDark ? 'dark' : 'light'}
-              onChange={(_, d) => {
-                if (Platform.OS === 'android') setShowDatePicker(false)
-                if (d) setBirthDate(toDateStr(d))
-              }}
-            />
-          )}
+          <Pressable
+            onPress={() => {
+              setDateDraft(birthDate ? new Date(birthDate) : new Date())
+              setDateModalOpen(true)
+            }}
+            style={[
+              formStyles.dateBtn,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }]}>
+              {birthDate
+                ? `${new Date(birthDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
+                : 'Select date'}
+            </Text>
+          </Pressable>
+          <StickerDateModal
+            visible={dateModalOpen}
+            title="Birth date"
+            value={dateDraft}
+            onChange={setDateDraft}
+            onClose={() => setDateModalOpen(false)}
+            onSave={() => {
+              setBirthDate(toDateStr(dateDraft))
+              setDateModalOpen(false)
+            }}
+            maximumDate={new Date()}
+            minimumDate={new Date(new Date().getFullYear() - 25, 0, 1)}
+          />
 
           <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Blood Type</MonoCaps></View>
           <View style={formStyles.optionRow}>
@@ -761,7 +769,8 @@ function AddChildSheet({
   const [pedPhone, setPedPhone] = useState('')
   const [pedClinic, setPedClinic] = useState('')
   const [notes, setNotes] = useState('')
-  const [showDatePicker, setShowDatePicker] = useState(Platform.OS === 'ios')
+  const [dateModalOpen, setDateModalOpen] = useState(false)
+  const [dateDraft, setDateDraft] = useState<Date>(new Date())
   const [saving, setSaving] = useState(false)
 
   function splitList(s: string): string[] {
@@ -773,6 +782,7 @@ function AddChildSheet({
     setAllergies([]); setMedications([]); setConditions([])
     setDietaryRestrictions([]); setPreferredFoods([]); setDislikedFoods([])
     setPedName(''); setPedPhone(''); setPedClinic(''); setNotes('')
+    setDateDraft(new Date())
   }
 
   const canSave = name.trim().length > 0 && sex.length > 0 && !!birthDate
@@ -843,45 +853,38 @@ function AddChildSheet({
           </View>
 
           <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Birth Date *</MonoCaps></View>
-          {birthDate ? (
-            <View style={[formStyles.ageBadge, { backgroundColor: stickers.lilac + (isDark ? '28' : '40') }]}>
-              <Text style={[formStyles.ageBadgeText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                {formatAge(birthDate)}
-              </Text>
-            </View>
-          ) : null}
-          {Platform.OS === 'android' && !showDatePicker && (
-            <Pressable
-              onPress={() => setShowDatePicker(true)}
-              style={[
-                formStyles.dateBtn,
-                {
-                  backgroundColor: isDark ? colors.surface : '#FFFEF8',
-                  borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
-                },
-              ]}
-            >
-              <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }]}>
-                {birthDate ? new Date(birthDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Select date'}
-              </Text>
-            </Pressable>
-          )}
-          {showDatePicker && (
-            <DateTimePicker
-              value={birthDate ? new Date(birthDate) : new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              maximumDate={new Date()}
-              // Min DOB ~25 years before today — covers older kids/teens whose
-              // parents might still want to track them in the app.
-              minimumDate={new Date(new Date().getFullYear() - 25, 0, 1)}
-              themeVariant={isDark ? 'dark' : 'light'}
-              onChange={(_, d) => {
-                if (Platform.OS === 'android') setShowDatePicker(false)
-                if (d) setBirthDate(toDateStr(d))
-              }}
-            />
-          )}
+          <Pressable
+            onPress={() => {
+              setDateDraft(birthDate ? new Date(birthDate) : new Date())
+              setDateModalOpen(true)
+            }}
+            style={[
+              formStyles.dateBtn,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }]}>
+              {birthDate
+                ? `${new Date(birthDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
+                : 'Select date'}
+            </Text>
+          </Pressable>
+          <StickerDateModal
+            visible={dateModalOpen}
+            title="Birth date"
+            value={dateDraft}
+            onChange={setDateDraft}
+            onClose={() => setDateModalOpen(false)}
+            onSave={() => {
+              setBirthDate(toDateStr(dateDraft))
+              setDateModalOpen(false)
+            }}
+            maximumDate={new Date()}
+            minimumDate={new Date(new Date().getFullYear() - 25, 0, 1)}
+          />
 
           <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Blood Type</MonoCaps></View>
           <View style={formStyles.optionRow}>
@@ -1046,14 +1049,6 @@ const formStyles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 16, height: 52, fontSize: 15 },
   dateBtn: { paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, borderRadius: 18 },
   dateText: { fontSize: 15 },
-  ageBadge: {
-    alignSelf: 'flex-start',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    marginBottom: 4,
-    borderRadius: 999,
-  },
-  ageBadgeText: { fontSize: 13, letterSpacing: 0.2 },
 
   optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
   optionBtn: { paddingVertical: 10, paddingHorizontal: 18, borderWidth: 1, borderRadius: 999 },

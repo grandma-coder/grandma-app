@@ -136,7 +136,22 @@
       "Bash(chmod +x .claude/hooks/*.sh)",
       "Bash(npm test *)",
       "Bash(git worktree *)",
-      "Bash(git branch *)"
+      "Bash(git branch *)",
+      "Bash(npm run *)",
+      "Bash(grep -n \"import.*from.*supabase\\\\|^import .*$\" app/daily-rewards.tsx)",
+      "Bash(supabase migration *)",
+      "Bash(grep -vE \"^$|^>|noEmit$\")",
+      "Bash(awk 'NR>200 && NR<405 && /^function /' components/analytics/KidsAnalytics.tsx)",
+      "Bash(grep -vE \"^>|^$|noEmit$\")",
+      "Bash(awk '/^function WellnessScoreArc/{found=1; start=NR} found && /^}/{print NR; found=0; exit}' components/analytics/KidsAnalytics.tsx)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(yes)",
+      "Bash(grep -n \"const { colors, radius } = useTheme\\(\\)\" app/onboarding/cycle/index.tsx)",
+      "Bash(grep -n \"const { colors, radius } = useTheme\\(\\)\\\\|const { colors, radius, isDark } = useTheme\\(\\)\\\\|getModeColor\" app/onboarding/pregnancy/index.tsx)",
+      "Bash(grep -n \"const { colors, radius } = useTheme\\(\\)\\\\|const { colors, radius, isDark } = useTheme\\(\\)\\\\|getModeColor\\\\|^import.*theme\" app/onboarding/kids/index.tsx)",
+      "Bash(sed -i '' \"s|const { colors, radius, isDark } = useTheme\\(\\)|const { colors, radius, isDark } = useTheme\\(\\)\\\\n  const mode = getModeColor\\('kids', isDark\\)\\\\n  const modeSoft = getModeColorSoft\\('kids', isDark\\)|g\" app/onboarding/kids/index.tsx)",
+      "Bash(sed -i '' \"s|const { colors, radius } = useTheme\\(\\)|const { colors, radius, isDark } = useTheme\\(\\)\\\\n  const mode = getModeColor\\('kids', isDark\\)\\\\n  const modeSoft = getModeColorSoft\\('kids', isDark\\)|g\" app/onboarding/kids/index.tsx)",
+      "Bash(grep -n 'question={`' app/onboarding/kids/index.tsx)"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"

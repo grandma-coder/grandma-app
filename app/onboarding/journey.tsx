@@ -7,7 +7,7 @@
  *    enrolled shown as dimmed. Single-select, adds to existing journeys.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -62,15 +62,18 @@ const FIRST_ROUTE: Record<Behavior, string> = {
 export default function JourneyScreen() {
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
-  const params = useLocalSearchParams<{ addMode?: string }>()
+  const params = useLocalSearchParams<{ addMode?: string; preselect?: string }>()
 
   const isAddMode = params.addMode === 'true'
+  const preselect = params.preselect as Behavior | undefined
 
   const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
   const enroll = useBehaviorStore((s) => s.enroll)
   const switchTo = useBehaviorStore((s) => s.switchTo)
   const buildQueue = useOnboardingStore((s) => s.buildQueue)
-  const setMode = useModeStore((s) => s.setMode)
+  // Onboarding stages the mode before the per-mode flow finishes calling
+  // enroll() — use the unsafe setter so the guard doesn't reject it.
+  const setMode = useModeStore((s) => s.setModeUnsafe)
 
   // Both first-time and add-mode buffer selections in local state and only
   // persist on continue. Previously, first-time mode toggled the persisted
@@ -78,6 +81,14 @@ export default function JourneyScreen() {
   // and continue left the user with a half-enrolled behavior and the root
   // guard treating onboarding as "complete" with no data behind it.
   const [newSelections, setNewSelections] = useState<Behavior[]>([])
+
+  // When deep-linked from a locked ModeSwitcher pill, pre-select that
+  // journey so the user only needs to tap "Add Journey" to confirm.
+  useEffect(() => {
+    if (preselect && isAddMode && !enrolledBehaviors.includes(preselect)) {
+      setNewSelections([preselect])
+    }
+  }, [preselect, isAddMode, enrolledBehaviors])
 
   const bg = isDark ? colors.bg : '#F3ECD9'
   const paper = isDark ? colors.surface : '#FFFEF8'
