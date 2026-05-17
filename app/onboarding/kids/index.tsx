@@ -35,6 +35,7 @@ import {
 import { useChildStore } from '../../../store/useChildStore'
 import { useJourneyStore } from '../../../store/useJourneyStore'
 import { useBehaviorStore } from '../../../store/useBehaviorStore'
+import { isDevModeActive } from '../../../store/useDevStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
 import type { ChildWithRole } from '../../../types'
@@ -121,6 +122,13 @@ export default function KidsOnboarding() {
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
   async function saveAndFinish(): Promise<void> {
+    // Dev mode: dry run — no DB writes, no photo uploads, no persisted-store
+    // mutations. The dev-store snapshot rolls back everything on exit.
+    if (isDevModeActive()) {
+      store.clearAll()
+      return onboardingComplete('kids')
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return onboardingComplete('kids')

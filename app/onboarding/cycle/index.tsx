@@ -35,6 +35,7 @@ import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { useModeStore } from '../../../store/useModeStore'
 import { useJourneyStore } from '../../../store/useJourneyStore'
 import { useBehaviorStore } from '../../../store/useBehaviorStore'
+import { isDevModeActive } from '../../../store/useDevStore'
 
 // ─── Step IDs ──────────────────────────────────────────────────────────────
 
@@ -99,6 +100,13 @@ export default function CycleOnboarding() {
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
   async function saveAndFinish(): Promise<void> {
+    // Dev mode: dry run — no DB writes, no store mutations beyond what
+    // the snapshot will roll back on exit.
+    if (isDevModeActive()) {
+      store.clearAll()
+      return onboardingComplete('pre-pregnancy')
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return onboardingComplete('pre-pregnancy')

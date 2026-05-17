@@ -34,6 +34,7 @@ import { useCycleOnboardingStore } from '../../../store/useCycleOnboardingStore'
 import { usePregnancyStore, type MoodType } from '../../../store/usePregnancyStore'
 import { useJourneyStore } from '../../../store/useJourneyStore'
 import { useBehaviorStore } from '../../../store/useBehaviorStore'
+import { isDevModeActive } from '../../../store/useDevStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr } from '../../../lib/cycleLogic'
@@ -131,6 +132,12 @@ export default function PregnancyOnboarding() {
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
   async function saveAndFinish(): Promise<void> {
+    // Dev mode: dry run — no DB writes, no persisted-store mutations.
+    if (isDevModeActive()) {
+      store.clearAll()
+      return onboardingComplete('pregnancy')
+    }
+
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return onboardingComplete('pregnancy')
 
