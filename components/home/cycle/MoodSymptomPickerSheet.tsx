@@ -1,0 +1,122 @@
+/**
+ * MoodSymptomPickerSheet — full symptom picker, opens from the strip's "+".
+ * Writes one row per selected symptom to cycle_logs.
+ */
+
+import { useState } from 'react'
+import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
+import { useQueryClient } from '@tanstack/react-query'
+import { useTheme } from '../../../constants/theme'
+import { supabase } from '../../../lib/supabase'
+import { toDateStr } from '../../../lib/cycleLogic'
+import { LogSheet } from '../../calendar/LogSheet'
+import { PillButton } from '../../ui/PillButton'
+
+const SYMPTOMS = [
+  { id: 'cramps',       label: 'Cramps',       sticker: '🩸' },
+  { id: 'tired',        label: 'Tired',        sticker: '😴' },
+  { id: 'bloated',      label: 'Bloated',      sticker: '🎈' },
+  { id: 'headache',     label: 'Headache',     sticker: '🤕' },
+  { id: 'tender',       label: 'Tender',       sticker: '💔' },
+  { id: 'acne',         label: 'Acne',         sticker: '🪞' },
+  { id: 'nausea',       label: 'Nausea',       sticker: '🤢' },
+  { id: 'craving',      label: 'Cravings',     sticker: '🍫' },
+  { id: 'low-mood',     label: 'Low mood',     sticker: '☁️' },
+  { id: 'restless',     label: 'Restless',     sticker: '🌪️' },
+]
+
+interface Props {
+  visible: boolean
+  onClose: () => void
+  initialSelected?: string[]
+}
+
+export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] }: Props) {
+  const { colors, stickers, font, isDark } = useTheme()
+  const qc = useQueryClient()
+  const ink = isDark ? colors.text : '#141313'
+  const [picked, setPicked] = useState<string[]>(initialSelected)
+  const [saving, setSaving] = useState(false)
+
+  function toggle(id: string) {
+    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
+  }
+
+  async function save() {
+    setSaving(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not authenticated')
+      const today = toDateStr(new Date())
+      // Replace today's symptom rows (one row per symptom) so toggling-off works.
+      const { error: delErr } = await supabase
+        .from('cycle_logs')
+        .delete()
+        .eq('user_id', session.user.id)
+        .eq('type', 'symptom')
+        .eq('date', today)
+      if (delErr) throw delErr
+      if (picked.length > 0) {
+        const rows = picked.map((id) => ({
+          user_id: session.user.id,
+          date: today,
+          type: 'symptom',
+          value: id,
+        }))
+        const { error: insErr } = await supabase.from('cycle_logs').insert(rows)
+        if (insErr) throw insErr
+      }
+      await qc.invalidateQueries({ queryKey: ['cycleLogs'] })
+      onClose()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <LogSheet visible={visible} title="Anything today?" onClose={onClose}>
+      <ScrollView style={{ maxHeight: 480 }} contentContainerStyle={styles.body}>
+        <View style={styles.grid}>
+          {SYMPTOMS.map((s) => {
+            const on = picked.includes(s.id)
+            return (
+              <Pressable
+                key={s.id}
+                onPress={() => toggle(s.id)}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: on ? stickers.pinkSoft : colors.surface,
+                    borderColor: on ? ink : colors.border,
+                    borderWidth: on ? 2 : 1,
+                  },
+                ]}
+              >
+                <Text style={{ fontSize: 14 }}>{s.sticker}</Text>
+                <Text style={{ color: ink, fontFamily: font.bodyBold, fontSize: 12 }}>{s.label}</Text>
+              </Pressable>
+            )
+          })}
+        </View>
+        <PillButton
+          label={saving ? 'Saving…' : `Save ${picked.length} symptom${picked.length === 1 ? '' : 's'}`}
+          variant="accent"
+          accentColor={stickers.pink}
+          onPress={save}
+          disabled={saving}
+        />
+      </ScrollView>
+    </LogSheet>
+  )
+}
+
+export const ALL_SYMPTOMS = SYMPTOMS
+
+const styles = StyleSheet.create({
+  body: { gap: 14 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999,
+  },
+})
