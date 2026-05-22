@@ -1,17 +1,16 @@
 /**
- * CycleHome — pre-pregnancy home screen (Slice 1 of redesign).
+ * CycleHome — pre-pregnancy home (final 2026 redesign layout).
  *
- * Section order (interim — Slice 2 will refactor further):
  *   1. HomeGreeting
- *   2. CycleJourneyRing            (replaces YourCycleCard)
- *   3. HormonesCard                (unchanged this slice — deleted in Slice 2)
- *   4. DailyNudgeCard              (replaces WisdomCard)
- *   5. FertileWindowStrip          (unchanged this slice — deleted in Slice 2)
- *   6. CyclePillarsGrid
+ *   2. CycleJourneyRing            (170px ring hero)
+ *   3. FertileWindowCard           (today % + 7-day forecast)
+ *   4. FertilitySignalsCard        (BBT/LH/CM/Sex tiles + sparkline)
+ *   5. DailyNudgeCard              (phase-aware nudge)
+ *   6. MoodSymptomStrip            (mood face + symptom chips)
+ *   7. CyclePillarsGrid            (2×2 + See all → /cycle-pillars)
  */
 
-import { useState } from 'react'
-import { View, ScrollView, StyleSheet, Pressable } from 'react-native'
+import { View, ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
@@ -20,11 +19,11 @@ import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
 import { CycleJourneyRing } from './cycle/CycleJourneyRing'
+import { FertileWindowCard } from './cycle/FertileWindowCard'
 import { FertilitySignalsCard } from './cycle/FertilitySignalsCard'
 import { DailyNudgeCard } from './cycle/DailyNudgeCard'
-import { FertileWindowCard } from './cycle/FertileWindowCard'
+import { MoodSymptomStrip } from './cycle/MoodSymptomStrip'
 import { CyclePillarsGrid } from './cycle/CyclePillarsGrid'
-import { CycleHomeDetailSheet, type CycleHomeDetailType } from './cycle/CycleHomeDetailSheets'
 
 function getMicroLabel(): string {
   const d = new Date()
@@ -61,7 +60,6 @@ export function CycleHome() {
   const { data: profile } = useProfile()
   const displayName = profile?.name ?? parentName
   const { data: history, isPending: historyPending } = useCycleHistory()
-  const [detailType, setDetailType] = useState<CycleHomeDetailType | null>(null)
 
   const cycleConfig: CycleConfig = (() => {
     const latest = history?.cycles[history.cycles.length - 1]
@@ -93,35 +91,26 @@ export function CycleHome() {
           <HomeGreeting name={displayName} microLabel={getMicroLabel()} />
         </View>
 
-        <Pressable onPress={() => setDetailType('cycle')}>
-          <CycleJourneyRing
-            cycleDay={info.cycleDay}
-            cycleLength={info.cycleLength}
-            phaseLabel={info.phaseLabel}
-            phase={info.phase as CyclePhase}
-            titleItalic={getTitleItalic(info.phase as CyclePhase)}
-            subline={getSubline(info)}
-            periodLine={getPeriodLine(info)}
-            hint="↻ tap any day"
-          />
-        </Pressable>
+        <CycleJourneyRing
+          cycleDay={info.cycleDay}
+          cycleLength={info.cycleLength}
+          phaseLabel={info.phaseLabel}
+          phase={info.phase as CyclePhase}
+          titleItalic={getTitleItalic(info.phase as CyclePhase)}
+          subline={getSubline(info)}
+          periodLine={getPeriodLine(info)}
+          hint="↻ tap any day"
+        />
 
+        <FertileWindowCard cycleConfig={cycleConfig} />
         <FertilitySignalsCard />
-
         <View style={styles.cardWrap}>
           <DailyNudgeCard phase={info.phase as CyclePhase} />
         </View>
-
-        <FertileWindowCard cycleConfig={cycleConfig} />
+        <MoodSymptomStrip phase={info.phase as CyclePhase} />
 
         <CyclePillarsGrid />
       </ScrollView>
-
-      <CycleHomeDetailSheet
-        type={detailType}
-        onClose={() => setDetailType(null)}
-        cycleConfig={cycleConfig}
-      />
     </View>
   )
 }
