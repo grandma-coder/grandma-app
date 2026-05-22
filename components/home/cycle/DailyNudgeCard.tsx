@@ -16,6 +16,7 @@ import { useTranslation } from '../../../lib/i18n'
 import { supabase } from '../../../lib/supabase'
 import { getCycleInfo, toDateStr, type CycleConfig } from '../../../lib/cycleLogic'
 import { pickCycleNudge, type NudgeContext } from '../../../lib/cycleNudges'
+import { detectBBTShift } from '../../../lib/cycleConfidence'
 
 interface Props {
   cycleConfig: CycleConfig
@@ -45,16 +46,6 @@ function renderHeadline(s: string, baseColor: string, accentColor: string, font:
   )
 }
 
-/** Detect a post-ovulation BBT shift in the most recent BBT readings. */
-function detectBBTShift(values: number[]): boolean {
-  if (values.length < 7) return false
-  const recent = values.slice(-3)
-  const prior = values.slice(0, -3).slice(-4)
-  if (prior.length < 3) return false
-  const r = recent.reduce((a, b) => a + b, 0) / recent.length
-  const p = prior.reduce((a, b) => a + b, 0) / prior.length
-  return r - p >= 0.25
-}
 
 export function DailyNudgeCard({ cycleConfig }: Props) {
   const { colors, stickers, brand, font, radius, isDark } = useTheme()

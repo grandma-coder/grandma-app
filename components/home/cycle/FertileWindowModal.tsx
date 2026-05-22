@@ -11,14 +11,18 @@
  * The modal uses the LogSheet shell for consistency.
  */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
+import { useQuery } from '@tanstack/react-query'
 import { useTheme } from '../../../constants/theme'
 import { getCycleInfo, dailyFertilityCurve, toDateStr, type CycleConfig } from '../../../lib/cycleLogic'
 import { useCycleHistory } from '../../../lib/cycleAnalytics'
 import { LogSheet } from '../../calendar/LogSheet'
 import { PillButton } from '../../ui/PillButton'
 import { BbtForm, LhForm, CmForm } from '../../calendar/CycleLogForms'
+import { useTranslation } from '../../../lib/i18n'
+import { supabase } from '../../../lib/supabase'
+import { computeFertileConfidence, detectBBTShift } from '../../../lib/cycleConfidence'
 
 interface Props {
   visible: boolean
@@ -28,9 +32,15 @@ interface Props {
 
 export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
   const { colors, stickers, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
   const [openLog, setOpenLog] = useState<'bbt' | 'lh' | 'cm' | null>(null)
   const today = toDateStr(new Date())
+
+  const [userId, setUserId] = useState<string | undefined>()
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data: { session } }) => setUserId(session?.user.id))
+  }, [])
 
   const info = getCycleInfo(cycleConfig)
   const curve = useMemo(
@@ -43,6 +53,61 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
     : '—'
 
   const { data: history } = useCycleHistory()
+
+  const start7d = toDateStr((() => { const d = new Date(); d.setDate(d.getDate() - 6); return d })())
+  const start3d = toDateStr((() => { const d = new Date(); d.setDate(d.getDate() - 2); return d })())
+  const start10d = toDateStr((() => { const d = new Date(); d.setDate(d.getDate() - 9); return d })())
+
+  const { data: bbt7d = [] } = useQuery({
+    queryKey: ['cycleLogs', 'conf-bbt7', userId, today],
+    queryFn: async () => {
+      if (!userId) return []
+      const { data, error } = await supabase
+        .from('cycle_logs').select('value, date')
+        .eq('user_id', userId).eq('type', 'basal_temp')
+        .gte('date', start7d).lte('date', today)
+      if (error) throw error
+      return (data ?? []).map((r) => parseFloat(r.value ?? '')).filter((n) => Number.isFinite(n))
+    },
+    enabled: !!userId,
+  })
+
+  const { data: lh3d = [] } = useQuery({
+    queryKey: ['cycleLogs', 'conf-lh3', userId, today],
+    queryFn: async () => {
+      if (!userId) return []
+      const { data, error } = await supabase
+        .from('cycle_logs').select('value, date')
+        .eq('user_id', userId).eq('type', 'lh')
+        .gte('date', start3d).lte('date', today)
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!userId,
+  })
+
+  const { data: bbt10d = [] } = useQuery({
+    queryKey: ['cycleLogs', 'conf-bbt10', userId, today],
+    queryFn: async () => {
+      if (!userId) return []
+      const { data, error } = await supabase
+        .from('cycle_logs').select('value, date')
+        .eq('user_id', userId).eq('type', 'basal_temp')
+        .gte('date', start10d).lte('date', today)
+        .order('date', { ascending: true })
+      if (error) throw error
+      return (data ?? []).map((r) => parseFloat(r.value ?? '')).filter((n) => Number.isFinite(n))
+    },
+    enabled: !!userId,
+  })
+
+  const conf = computeFertileConfidence({
+    cycleCount: history?.cycles.length ?? 0,
+    bbtCount7d: bbt7d.length,
+    lhCount3d: lh3d.length,
+    shiftConfirmed: detectBBTShift(bbt10d),
+  })
+
   const pastWindows = useMemo(() => {
     const cycles = history?.cycles ?? []
     return cycles
@@ -132,12 +197,14 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
           <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>CONFIDENCE</Text>
           <View style={[styles.conf, { backgroundColor: stickers.greenSoft, borderColor: colors.border }]}>
             <View style={[styles.confBadge, { borderColor: ink, backgroundColor: colors.surface }]}>
-              <Text style={{ color: stickers.coral, fontFamily: font.displayBold, fontSize: 14 }}>—</Text>
+              <Text style={{ color: stickers.coral, fontFamily: font.displayBold, fontSize: 14 }}>{conf.pct}%</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: ink, fontFamily: font.bodyBold, fontSize: 13 }}>Calendar-based estimate</Text>
+              <Text style={{ color: ink, fontFamily: font.bodyBold, fontSize: 13 }}>
+                {conf.pct >= 92 ? 'Calendar + BBT + LH' : conf.pct >= 80 ? 'Calendar + BBT' : 'Calendar-based estimate'}
+              </Text>
               <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11, marginTop: 3 }}>
-                Add BBT + LH for the next 3 days to sharpen the forecast. Confidence math arrives in the next update.
+                {t(conf.explainerKey as any)}
               </Text>
             </View>
           </View>

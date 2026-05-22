@@ -252,6 +252,10 @@ export const en: TranslationKeys = {
   cycle_pillar_financial_planning: 'Financial Planning',
   cycle_pillar_partner_journey: 'Partner Journey',
   cycle_pillar_health_checkups: 'Health Checkups',
+  cycle_conf_calendar: 'Calendar-based estimate. Add BBT + LH for the next 3 days to sharpen the forecast.',
+  cycle_conf_bbt_only: 'Calendar + your BBT. Add LH strips to push confidence above 90%.',
+  cycle_conf_bbt_lh: 'Calendar + BBT + LH — confidence is high. Waiting on the post-ovulation temp shift to lock the peak.',
+  cycle_conf_shift_confirmed: 'BBT shift confirmed. Past peak is locked. Future windows still calendar-based.',
 
   // Pregnancy
   pregnancy_week: 'Week',

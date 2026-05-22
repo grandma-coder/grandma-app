@@ -255,6 +255,10 @@ export interface TranslationKeys {
   cycle_pillar_financial_planning: string
   cycle_pillar_partner_journey: string
   cycle_pillar_health_checkups: string
+  cycle_conf_calendar: string
+  cycle_conf_bbt_only: string
+  cycle_conf_bbt_lh: string
+  cycle_conf_shift_confirmed: string
 
   // ─── Pregnancy-specific ────────────────────────────────────────────────
   pregnancy_week: string
