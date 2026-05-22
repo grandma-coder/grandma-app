@@ -4,10 +4,37 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+// Skeleton appspace integration (Unit 1.12) — optional. When configured, a
+// caregiver invite is mirrored into the child's Skeleton space (best-effort).
+const skeletonApiUrl = (Deno.env.get('SKELETON_API_URL') ?? 'https://api.skeleton.mother.tech').replace(/\/$/, '')
+const skeletonApiKey = Deno.env.get('SKELETON_API_KEY')
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// Best-effort: mirror a caregiver invite into the child's Skeleton space via
+// the Skeleton developer API. No-op when Skeleton isn't configured or the
+// child's space hasn't been provisioned. Never throws — the Grandma invite is
+// the source of truth and must not be blocked by a Skeleton hiccup.
+async function mirrorInviteToSkeleton(child: any, email: string): Promise<void> {
+  if (!skeletonApiKey || !child?.skeleton_space_id || !child?.skeleton_owner_principal_id) return
+  try {
+    await fetch(
+      `${skeletonApiUrl}/api/developer/spaces/${encodeURIComponent(child.skeleton_space_id)}/invite`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${skeletonApiKey}` },
+        body: JSON.stringify({
+          owner_principal_id: child.skeleton_owner_principal_id,
+          members: [{ email: email.toLowerCase(), can_mutate: true }],
+        }),
+      },
+    )
+  } catch (_e) {
+    // swallowed on purpose — best-effort
+  }
 }
 
 serve(async (req) => {
@@ -35,7 +62,7 @@ serve(async (req) => {
     // Verify caller is parent of this child
     const { data: child } = await supabaseAuth
       .from('children')
-      .select('id, parent_id')
+      .select('id, parent_id, skeleton_space_id, skeleton_owner_principal_id')
       .eq('id', childId)
       .eq('parent_id', user.id)
       .single()

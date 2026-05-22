@@ -5,7 +5,6 @@ import * as Clipboard from 'expo-clipboard'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
-import { inviteCaregiverToSkeleton } from '../lib/skeletonSync'
 import { useChildStore } from '../store/useChildStore'
 import { colors, brand, stickers, borderRadius, shadows } from '../constants/theme'
 import { useSavedToast } from '../components/ui/SavedToast'
@@ -47,10 +46,6 @@ export default function InviteCaregiver() {
 
       const link = `grandma-app://invite/${data.inviteToken}`
       setInviteLink(link)
-
-      // Best-effort: mirror the invite into the child's Skeleton space. No-op
-      // if Skeleton isn't configured or the space isn't provisioned yet.
-      void inviteCaregiverToSkeleton(child.id, email.trim().toLowerCase())
     } catch (e: any) {
       Alert.alert('Error', e.message)
     } finally {

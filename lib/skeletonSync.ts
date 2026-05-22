@@ -30,28 +30,3 @@ export async function provisionChildSpace(childId: string): Promise<string | nul
     return null
   }
 }
-
-/**
- * Invite a care-circle member to a child's Skeleton space. Best-effort; the
- * Supabase child_caregivers invite remains the source of truth for the app.
- * Returns true if the Skeleton invite was created. Never throws.
- */
-export async function inviteCaregiverToSkeleton(
-  childId: string,
-  email: string,
-  canMutate = true,
-): Promise<boolean> {
-  try {
-    const { data, error } = await supabase.functions.invoke('skeleton-invite-caregiver', {
-      body: { childId, email, canMutate },
-    })
-    if (error) {
-      console.warn('[skeleton] inviteCaregiverToSkeleton failed:', error.message)
-      return false
-    }
-    return Boolean(data?.invited)
-  } catch (e) {
-    console.warn('[skeleton] inviteCaregiverToSkeleton threw:', e)
-    return false
-  }
-}
