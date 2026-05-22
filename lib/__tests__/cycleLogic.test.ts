@@ -1,4 +1,4 @@
-import { toDateStr } from '../cycleLogic'
+import { toDateStr, dailyFertilityCurve } from '../cycleLogic'
 
 describe('toDateStr', () => {
   it('formats a local date as YYYY-MM-DD', () => {
@@ -16,5 +16,26 @@ describe('toDateStr', () => {
     // toDateStr MUST return the local date so evening logs don't shift to "tomorrow".
     const localEvening = new Date(2026, 4, 11, 23, 30, 0)
     expect(toDateStr(localEvening)).toBe('2026-05-11')
+  })
+})
+
+describe('dailyFertilityCurve', () => {
+  it('returns an entry per cycle day', () => {
+    expect(dailyFertilityCurve(28)).toHaveLength(28)
+    expect(dailyFertilityCurve(30)).toHaveLength(30)
+  })
+
+  it('peaks on the two days at and before ovulation', () => {
+    const c = dailyFertilityCurve(28, 14)
+    // ovulationDay = 28 - 14 = 14 (1-indexed). Indices: day N → c[N-1].
+    expect(c[13]).toBe(70) // day 14 (ovulation)
+    expect(c[12]).toBe(70) // day 13 (one before)
+    expect(c[14]).toBe(48) // day 15 (one after)
+    expect(c[11]).toBe(48) // day 12 (two before)
+  })
+
+  it('clamps cycle length to medical range', () => {
+    expect(dailyFertilityCurve(10)).toHaveLength(21)
+    expect(dailyFertilityCurve(120)).toHaveLength(60)
   })
 })

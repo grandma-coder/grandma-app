@@ -375,3 +375,39 @@ export function getHydrationLevel(glassesConsumed: number): {
   if (pct >= 25) return { percentage: pct, label: 'Low', color: '#FF6B35', message: 'You need more water. Dehydration affects your cycle.' }
   return { percentage: pct, label: 'Very low', color: '#FF6B6B', message: 'Drink water now! Hydration is crucial for conception.' }
 }
+
+/**
+ * Daily conception probability curve for a full cycle (1-indexed days).
+ *
+ * Returns an array of length `cycleLength` where index 0 = day 1.
+ * Values are 0–100. The peak day (ovulation) and the day before peak at ~70.
+ * Calibration matches the FAM-based estimates used by the Fertile Window
+ * card: peak at the two days before ovulation, sharp drop-off either side,
+ * "low" baseline 5–8% during menstruation + early follicular.
+ */
+export function dailyFertilityCurve(cycleLength: number, lutealPhase = 14): number[] {
+  const len = Math.max(21, Math.min(60, Math.round(cycleLength)))
+  const ovulationDay = len - lutealPhase
+  const arr: number[] = []
+  for (let day = 1; day <= len; day++) {
+    arr.push(probabilityForDay(day, ovulationDay))
+  }
+  return arr
+}
+
+function probabilityForDay(day: number, ovulationDay: number): number {
+  const diff = day - ovulationDay
+  // Peak: days ovulation−1 and ovulation
+  if (diff === -1 || diff === 0) return 70
+  // High: ovulation+1, ovulation−2
+  if (diff === 1 || diff === -2) return 48
+  // Medium: ovulation−3, ovulation+2
+  if (diff === -3 || diff === 2) return 22
+  // Low: ovulation−4, ovulation−5
+  if (diff === -4 || diff === -5) return 12
+  // Tail: ovulation−6 / ovulation+3 (sperm survival edge / very early luteal)
+  if (diff === -6 || diff === 3) return 8
+  // Baseline outside the window: 1–6% depending on phase
+  if (diff < -6) return 6
+  return 3
+}
