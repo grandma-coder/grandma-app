@@ -137,7 +137,7 @@ export function DailyNudgeCard({ cycleConfig }: Props) {
         {nudge.pillarId && (
           <View style={[styles.footer, { borderTopColor: colors.border }]}>
             <Text style={[styles.from, { color: colors.textMuted, fontFamily: font.bodyBold }]}>
-              {t('cycle_nudge_from' as any)} · {t(PILLAR_LABEL_KEY[nudge.pillarId] as any)}
+              {t('cycle_nudge_from' as any)}{PILLAR_LABEL_KEY[nudge.pillarId] ? ` · ${t(PILLAR_LABEL_KEY[nudge.pillarId] as any)}` : ''}
             </Text>
             <Text style={[styles.cta, { color: accent, fontFamily: font.bodyBold }]}>
               {t('cycle_nudge_read_more' as any)}
