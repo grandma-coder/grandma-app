@@ -35,6 +35,7 @@ import {
 import { useChildStore } from '../../../store/useChildStore'
 import { useJourneyStore } from '../../../store/useJourneyStore'
 import { useBehaviorStore } from '../../../store/useBehaviorStore'
+import { provisionChildSpace } from '../../../lib/skeletonSync'
 import { isDevModeActive } from '../../../store/useDevStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
@@ -272,6 +273,12 @@ export default function KidsOnboarding() {
           // eslint-disable-next-line no-console
           console.error('child_caregivers insert failed after retry:', ccError.message)
         }
+
+        // Skeleton appspace integration (best-effort — never blocks onboarding).
+        // Provision a Skeleton space per child so the care circle + agents can
+        // share context. Fire-and-forget: failures are logged in skeletonSync
+        // and ignored; Grandma works on Supabase regardless.
+        void Promise.all(resolvedChildren.map((c: any) => provisionChildSpace(c.id)))
 
         // Create care_circle entry for the parent (self)
         const { error: circleError } = await supabase.from('care_circle').insert({
