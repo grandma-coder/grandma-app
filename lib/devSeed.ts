@@ -161,6 +161,16 @@ export async function seedCycleData(): Promise<{ inserted: number }> {
         notes: null,
       }, d)
     }
+
+    // Ovulation — single marker at cycleLength - 14
+    const ovDate = addDays(start, ovDay - 1)
+    pushIfPast({
+      user_id: userId,
+      date: dateStr(ovDate),
+      type: 'ovulation',
+      value: null,
+      notes: null,
+    }, ovDate)
   }
 
   // Guarantee fresh entries dated today so the UI always reflects "current" data
@@ -233,34 +243,254 @@ export async function seedKidsData(): Promise<{ childIds: string[]; inserted: nu
   }> = []
   const today = new Date()
 
+  // Real solids — payload shape must match KidsLogForms food save so
+  // calorie/category estimation works on the home dashboard. Each entry
+  // carries estimatedCals + matchedFoods (matches what the real form writes
+  // when the user picks tagged foods).
+  const SOLID_FOODS = [
+    { name: 'banana', cals: 89, meal: 'breakfast' },
+    { name: 'oatmeal', cals: 150, meal: 'breakfast' },
+    { name: 'avocado', cals: 80, meal: 'lunch' },
+    { name: 'sweet potato', cals: 90, meal: 'lunch' },
+    { name: 'yogurt', cals: 120, meal: 'snack' },
+    { name: 'pasta', cals: 180, meal: 'dinner' },
+    { name: 'rice', cals: 160, meal: 'dinner' },
+    { name: 'eggs', cals: 140, meal: 'breakfast' },
+    { name: 'chicken', cals: 165, meal: 'dinner' },
+    { name: 'peas', cals: 70, meal: 'lunch' },
+  ]
+  const ACTIVITY_IDS = ['class', 'reading', 'sport', 'swim', 'dance', 'music', 'art', 'playground', 'walk', 'playdate']
+  const MILESTONES = ['rolled over', 'sat up', 'first word', 'took first step', 'clapped hands', 'waved']
+
+  // Helpers to produce shapes that match KidsLogForms exactly so the home
+  // dashboard's parsers populate every card.
+  const padHM = (h: number, m: number) => `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  const randomTimeStr = () => padHM(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60))
+  const sleepDurationStr = (totalHours: number) => {
+    const h = Math.floor(totalHours)
+    const m = Math.round((totalHours - h) * 60)
+    return m > 0 ? `${h}h ${m}m` : `${h}h`
+  }
+
   for (const childId of childIds) {
     for (let i = 0; i < 90; i++) {
       const date = dateStr(addDays(today, -i))
-      // Feeding — 4 per day
+
+      // Feeding — alternate breast/bottle, 4/day total. Shape matches the
+      // bottle/breast branches of KidsLogForms.FoodForm.
       for (let f = 0; f < 4; f++) {
+        const isBreast = f % 2 === 0
+        const time = padHM(6 + f * 4, Math.floor(Math.random() * 60))
+        if (isBreast) {
+          rows.push({
+            user_id: userId, child_id: childId, date, type: 'feeding',
+            value: JSON.stringify({
+              feedType: 'breast',
+              time,
+              duration: 10 + Math.floor(Math.random() * 15),
+              side: randFrom(['left', 'right', 'both']),
+            }),
+            notes: null,
+          })
+        } else {
+          rows.push({
+            user_id: userId, child_id: childId, date, type: 'feeding',
+            value: JSON.stringify({
+              feedType: 'bottle',
+              time,
+              amount: 120 + Math.floor(Math.random() * 80),
+            }),
+            notes: null,
+          })
+        }
+      }
+
+      // Solids — 2-3/day with estimatedCals + matchedFoods so calorie ring fills
+      const solidsCount = 2 + Math.floor(Math.random() * 2)
+      for (let s = 0; s < solidsCount; s++) {
+        const food = randFrom(SOLID_FOODS)
         rows.push({
-          user_id: userId, child_id: childId, date, type: 'feeding',
-          value: JSON.stringify({ amount: 120 + Math.floor(Math.random() * 60), kind: 'bottle' }),
+          user_id: userId, child_id: childId, date, type: 'food',
+          value: JSON.stringify({
+            feedType: 'solids',
+            meal: food.meal,
+            quality: randFrom(['great', 'good', 'okay']),
+            time: randomTimeStr(),
+            estimatedCals: food.cals,
+            matchedFoods: [food.name],
+          }),
+          notes: food.name,
+        })
+      }
+
+      // Sleep — nap + bedtime. Shape must include `duration` (string with
+      // leading number, e.g. "1h 30m") + `quality` so the dashboard parses it.
+      const napHours = 1 + Math.random() * 1.5
+      const bedHours = 9 + Math.random() * 2
+      rows.push({
+        user_id: userId, child_id: childId, date, type: 'sleep',
+        value: JSON.stringify({
+          duration: sleepDurationStr(napHours),
+          quality: randFrom(['poor', 'okay', 'good']),
+          startTime: '13:00',
+          endTime: padHM(13 + Math.floor(napHours), Math.round((napHours % 1) * 60)),
+        }),
+        notes: null,
+      })
+      rows.push({
+        user_id: userId, child_id: childId, date, type: 'sleep',
+        value: JSON.stringify({
+          duration: sleepDurationStr(bedHours),
+          quality: randFrom(['okay', 'good', 'great']),
+          startTime: '20:00',
+          endTime: padHM((20 + Math.floor(bedHours)) % 24, Math.round((bedHours % 1) * 60)),
+        }),
+        notes: null,
+      })
+
+      // Diaper — 5/day, shape matches DiaperForm
+      for (let d = 0; d < 5; d++) {
+        const diaperType = randFrom(['pee', 'poop', 'mixed'])
+        rows.push({
+          user_id: userId, child_id: childId, date, type: 'diaper',
+          value: JSON.stringify({
+            diaperType,
+            color: diaperType !== 'pee' ? randFrom(['yellow', 'brown', 'green']) : undefined,
+            time: randomTimeStr(),
+          }),
           notes: null,
         })
       }
-      // Sleep — 2 per day
-      rows.push({ user_id: userId, child_id: childId, date, type: 'sleep', value: JSON.stringify({ hours: 10 + Math.random() * 2 }), notes: null })
-      // Diaper — 5 per day
-      for (let d = 0; d < 5; d++) {
-        rows.push({
-          user_id: userId, child_id: childId, date, type: 'diaper',
-          value: randFrom(['pee', 'poop', 'mixed']), notes: null,
-        })
-      }
+
       // Mood — every other day
       if (i % 2 === 0) {
         rows.push({
           user_id: userId, child_id: childId, date, type: 'mood',
-          value: randFrom(['happy', 'calm', 'fussy']), notes: null,
+          value: randFrom(['happy', 'calm', 'fussy']),
+          notes: null,
+        })
+      }
+
+      // Activity — ~every 2 days. Shape matches ActivityForm.
+      if (i % 2 === 1) {
+        const activityType = randFrom(ACTIVITY_IDS)
+        const start = padHM(9 + Math.floor(Math.random() * 8), 0)
+        rows.push({
+          user_id: userId, child_id: childId, date, type: 'activity',
+          value: JSON.stringify({
+            activityType,
+            startTime: start,
+            endTime: padHM(parseInt(start.slice(0, 2)) + 1, 0),
+          }),
+          notes: null,
+        })
+      }
+
+      // Temperature — ~1/week
+      if (i % 7 === 3) {
+        rows.push({
+          user_id: userId, child_id: childId, date, type: 'temperature',
+          value: (36.5 + Math.random() * 1.2).toFixed(1),
+          notes: null,
+        })
+      }
+
+      // Growth — every 14 days
+      if (i % 14 === 0) {
+        rows.push({
+          user_id: userId, child_id: childId, date, type: 'growth',
+          value: JSON.stringify({
+            weight_kg: (11 + (90 - i) * 0.01 + (Math.random() - 0.5) * 0.2).toFixed(2),
+            height_cm: (85 + (90 - i) * 0.02 + (Math.random() - 0.5) * 0.3).toFixed(1),
+          }),
+          notes: null,
         })
       }
     }
+
+    // Vaccines — 3 historical entries
+    for (const off of [80, 45, 14]) {
+      rows.push({
+        user_id: userId, child_id: childId, date: dateStr(addDays(today, -off)), type: 'vaccine',
+        value: randFrom(['DTaP', 'MMR', 'Hib', 'Hep B', 'Polio (IPV)']),
+        notes: 'Pediatrician visit',
+      })
+    }
+    // Medicine — 2 medicines + 1 vitamin entry so the "Vitamins" health task ticks
+    for (const off of [22, 5]) {
+      rows.push({
+        user_id: userId, child_id: childId, date: dateStr(addDays(today, -off)), type: 'medicine',
+        value: randFrom(['Acetaminophen 80mg', 'Ibuprofen 50mg', 'Saline drops']),
+        notes: null,
+      })
+    }
+    rows.push({
+      user_id: userId, child_id: childId, date: dateStr(addDays(today, -1)), type: 'medicine',
+      value: 'Vitamin D 400IU',
+      notes: null,
+    })
+    // Milestones — health-history modal filters type === 'milestone' (not 'note')
+    for (const off of [70, 35, 10]) {
+      rows.push({
+        user_id: userId, child_id: childId, date: dateStr(addDays(today, -off)), type: 'milestone',
+        value: randFrom(MILESTONES),
+        notes: null,
+      })
+    }
+    // Notes — doctor visits / other events
+    for (const off of [60, 25]) {
+      rows.push({
+        user_id: userId, child_id: childId, date: dateStr(addDays(today, -off)), type: 'note',
+        value: JSON.stringify({ eventType: randFrom(['Doctor visit', 'Injury', 'Other']), text: 'Routine visit, all good' }),
+        notes: null,
+      })
+    }
+
+    // Guarantee today has at least one of every type for this child, with
+    // the SAME shapes the dashboard reads.
+    const todayStr = dateStr(today)
+    rows.push({
+      user_id: userId, child_id: childId, date: todayStr, type: 'feeding',
+      value: JSON.stringify({ feedType: 'bottle', time: '08:00', amount: 150 }),
+      notes: null,
+    })
+    rows.push({
+      user_id: userId, child_id: childId, date: todayStr, type: 'feeding',
+      value: JSON.stringify({ feedType: 'breast', time: '12:00', duration: 15, side: 'left' }),
+      notes: null,
+    })
+    {
+      const food = randFrom(SOLID_FOODS)
+      rows.push({
+        user_id: userId, child_id: childId, date: todayStr, type: 'food',
+        value: JSON.stringify({
+          feedType: 'solids', meal: food.meal, quality: 'great',
+          time: '12:30', estimatedCals: food.cals, matchedFoods: [food.name],
+        }),
+        notes: food.name,
+      })
+    }
+    rows.push({
+      user_id: userId, child_id: childId, date: todayStr, type: 'sleep',
+      value: JSON.stringify({ duration: '1h 30m', quality: 'good', startTime: '13:00', endTime: '14:30' }),
+      notes: null,
+    })
+    rows.push({
+      user_id: userId, child_id: childId, date: todayStr, type: 'diaper',
+      value: JSON.stringify({ diaperType: 'pee', time: '09:00' }),
+      notes: null,
+    })
+    rows.push({
+      user_id: userId, child_id: childId, date: todayStr, type: 'mood', value: 'happy', notes: null,
+    })
+    rows.push({
+      user_id: userId, child_id: childId, date: todayStr, type: 'activity',
+      value: JSON.stringify({ activityType: 'playground', startTime: '15:00', endTime: '16:00' }),
+      notes: null,
+    })
+    rows.push({
+      user_id: userId, child_id: childId, date: todayStr, type: 'temperature', value: '36.8', notes: null,
+    })
   }
 
   const BATCH = 100
@@ -315,7 +545,7 @@ export async function seedPregnancyData(): Promise<{ inserted: number }> {
   const today = new Date()
   const startWeight = 62
 
-  // 90 days of logs: weight weekly, symptoms daily-ish, kicks near term, mood sporadic
+  // 90 days of logs across every pregnancy log type
   for (let i = 0; i < 90; i++) {
     const d = addDays(today, -i)
     const log_date = dateStr(d)
@@ -330,7 +560,7 @@ export async function seedPregnancyData(): Promise<{ inserted: number }> {
       })
     }
 
-    // Symptoms — 3 per week-ish
+    // Symptoms — every other day
     if (i % 2 === 0) {
       rows.push({
         user_id: userId, log_date, log_type: 'symptom',
@@ -339,7 +569,7 @@ export async function seedPregnancyData(): Promise<{ inserted: number }> {
       })
     }
 
-    // Mood — 2 per week
+    // Mood — every 3rd day
     if (i % 3 === 0) {
       rows.push({
         user_id: userId, log_date, log_type: 'mood',
@@ -348,7 +578,7 @@ export async function seedPregnancyData(): Promise<{ inserted: number }> {
       })
     }
 
-    // Kicks — last 14 days, a couple per day
+    // Kicks — last 14 days
     if (i < 14) {
       rows.push({
         user_id: userId, log_date, log_type: 'kick_count',
@@ -356,6 +586,95 @@ export async function seedPregnancyData(): Promise<{ inserted: number }> {
         notes: null,
       })
     }
+
+    // Sleep — most days (skip ~20%)
+    if (Math.random() > 0.2) {
+      const hours = (6 + Math.random() * 3).toFixed(1)
+      rows.push({
+        user_id: userId, log_date, log_type: 'sleep',
+        value: hours,
+        notes: JSON.stringify({ quality: randFrom(['poor', 'okay', 'good', 'great']) }),
+      })
+    }
+
+    // Water — daily, 4–9 glasses
+    rows.push({
+      user_id: userId, log_date, log_type: 'water',
+      value: String(4 + Math.floor(Math.random() * 6)),
+      notes: null,
+    })
+
+    // Exercise — ~3x/week
+    if (i % 2 === 1) {
+      rows.push({
+        user_id: userId, log_date, log_type: 'exercise',
+        value: String(15 + Math.floor(Math.random() * 30)),
+        notes: JSON.stringify({ type: randFrom(['walking', 'yoga', 'swimming', 'stretching']) }),
+      })
+    }
+
+    // Vitamins — daily
+    rows.push({
+      user_id: userId, log_date, log_type: 'vitamins',
+      value: '1',
+      notes: null,
+    })
+
+    // Kegel — every other day
+    if (i % 2 === 0) {
+      rows.push({
+        user_id: userId, log_date, log_type: 'kegel',
+        value: String(2 + Math.floor(Math.random() * 3)),
+        notes: null,
+      })
+    }
+
+    // Nutrition — ~4x/week
+    if (i % 2 === 0) {
+      const tags = ['protein', 'leafy_greens', 'whole_grains', 'fruit', 'dairy', 'iron_rich']
+      const picked = [randFrom(tags), randFrom(tags)]
+      rows.push({
+        user_id: userId, log_date, log_type: 'nutrition',
+        value: [...new Set(picked)].join(','),
+        notes: null,
+      })
+    }
+
+    // Contractions — sporadic in last 21 days (3rd trimester)
+    if (i < 21 && i % 7 === 0) {
+      rows.push({
+        user_id: userId, log_date, log_type: 'contraction',
+        value: String(30 + Math.floor(Math.random() * 60)),
+        notes: JSON.stringify({ intervalMin: 8 + Math.floor(Math.random() * 12) }),
+      })
+    }
+  }
+
+  // Appointments — 4 spaced out (some past, "today" for nearest one)
+  const apptOffsets = [85, 56, 28, 7]
+  for (const off of apptOffsets) {
+    const d = addDays(today, -off)
+    rows.push({
+      user_id: userId, log_date: dateStr(d), log_type: 'appointment',
+      value: randFrom(['Routine prenatal', 'Anatomy scan', 'OB checkup', 'Ultrasound']),
+      notes: 'Provider: Dr. Reyes',
+    })
+  }
+
+  // Notes — a handful sprinkled across the timeline
+  const noteOffsets = [70, 42, 21, 3]
+  for (const off of noteOffsets) {
+    const d = addDays(today, -off)
+    rows.push({
+      user_id: userId, log_date: dateStr(d), log_type: 'note',
+      value: randFrom([
+        'Felt baby move for the first time today',
+        'Long day — needed extra rest',
+        'Talked to partner about birth preferences',
+        'Started reading hypnobirthing book',
+      ]),
+      notes: null,
+    })
   }
 
   // Guarantee fresh entries dated today across all log types
@@ -364,6 +683,12 @@ export async function seedPregnancyData(): Promise<{ inserted: number }> {
   rows.push({ user_id: userId, log_date: todayStr, log_type: 'symptom', value: randFrom(['Nausea', 'Fatigue', 'Back pain', 'Heartburn', 'Swelling']), notes: null })
   rows.push({ user_id: userId, log_date: todayStr, log_type: 'mood', value: randFrom(['great', 'good', 'okay', 'low']), notes: null })
   rows.push({ user_id: userId, log_date: todayStr, log_type: 'kick_count', value: String(10 + Math.floor(Math.random() * 5)), notes: null })
+  rows.push({ user_id: userId, log_date: todayStr, log_type: 'sleep', value: '7.5', notes: JSON.stringify({ quality: 'good' }) })
+  rows.push({ user_id: userId, log_date: todayStr, log_type: 'water', value: '7', notes: null })
+  rows.push({ user_id: userId, log_date: todayStr, log_type: 'exercise', value: '25', notes: JSON.stringify({ type: 'walking' }) })
+  rows.push({ user_id: userId, log_date: todayStr, log_type: 'vitamins', value: '1', notes: null })
+  rows.push({ user_id: userId, log_date: todayStr, log_type: 'kegel', value: '3', notes: null })
+  rows.push({ user_id: userId, log_date: todayStr, log_type: 'nutrition', value: 'protein,leafy_greens', notes: null })
 
   const BATCH = 100
   for (let i = 0; i < rows.length; i += BATCH) {
