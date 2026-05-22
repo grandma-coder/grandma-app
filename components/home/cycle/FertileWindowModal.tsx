@@ -44,8 +44,8 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
 
   const info = getCycleInfo(cycleConfig)
   const curve = useMemo(
-    () => dailyFertilityCurve(info.cycleLength, info.cycleLength - info.ovulationDay),
-    [info.cycleLength, info.ovulationDay],
+    () => dailyFertilityCurve(cycleConfig.cycleLength, cycleConfig.lutealPhase),
+    [cycleConfig.cycleLength, cycleConfig.lutealPhase],
   )
   const daysToPeak = Math.max(0, info.daysUntilOvulation)
   const ovDateLabel = info.ovulationDate
@@ -114,7 +114,7 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
       .slice(-3)
       .reverse()
       .map((c, idx) => {
-        const len = (c as any).length ?? info.cycleLength
+        const len = c.lengthDays ?? info.cycleLength
         return {
           label: `Cycle ${cycles.length - idx}`,
           range: `${formatShort(c.startDate)} – ${formatShort(addDaysISO(c.startDate, len - 1))}`,

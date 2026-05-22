@@ -52,8 +52,8 @@ export function FertileWindowCard({ cycleConfig }: Props) {
 
   const info = getCycleInfo(cycleConfig)
   const curve = useMemo(
-    () => dailyFertilityCurve(info.cycleLength, info.cycleLength - info.ovulationDay),
-    [info.cycleLength, info.ovulationDay],
+    () => dailyFertilityCurve(cycleConfig.cycleLength, cycleConfig.lutealPhase),
+    [cycleConfig.cycleLength, cycleConfig.lutealPhase],
   )
 
   // 7-day forecast = today + 6 days forward (clamped to cycle length).
