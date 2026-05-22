@@ -105,7 +105,7 @@ export function CycleHome() {
         <FertileWindowCard cycleConfig={cycleConfig} />
         <FertilitySignalsCard />
         <View style={styles.cardWrap}>
-          <DailyNudgeCard phase={info.phase as CyclePhase} />
+          <DailyNudgeCard cycleConfig={cycleConfig} />
         </View>
         <MoodSymptomStrip phase={info.phase as CyclePhase} />
 

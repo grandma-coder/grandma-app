@@ -236,6 +236,16 @@ export interface TranslationKeys {
   cycle_nudge_ovulation_body: string
   cycle_nudge_luteal_headline: string
   cycle_nudge_luteal_body: string
+  cycle_nudge_late_headline: string
+  cycle_nudge_late_body: string
+  cycle_nudge_follicular_lh_headline: string
+  cycle_nudge_follicular_lh_body: string
+  cycle_nudge_window_open_headline: string
+  cycle_nudge_window_open_body: string
+  cycle_nudge_ovulation_confirmed_headline: string
+  cycle_nudge_ovulation_confirmed_body: string
+  cycle_nudge_luteal_pms_headline: string
+  cycle_nudge_luteal_pms_body: string
   cycle_nudge_label: string
   cycle_nudge_from: string
   cycle_nudge_read_more: string

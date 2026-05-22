@@ -1,21 +1,24 @@
 /**
- * DailyNudgeCard — full-width nudge on the cycle home.
+ * DailyNudgeCard — full-width nudge on the cycle home (Slice 3, log-aware).
  *
- * Replaces the legacy yellow WisdomCard with a cream-paper PaperCard.
- * In Slice 1 the picker keys off phase only; Slice 3 makes it log-aware.
+ * Now reads today's BBT/LH/CM/mood logs + the 10-day BBT trend to choose
+ * the right template via predicate matching in lib/cycleNudges.ts.
  */
 
+import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
+import { useQuery } from '@tanstack/react-query'
 import { Heart } from '../../ui/Stickers'
 import { PaperCard } from '../../ui/PaperCard'
 import { useTheme } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
-import type { CyclePhase } from '../../../lib/cycleLogic'
-import { pickCycleNudge } from '../../../lib/cycleNudges'
+import { supabase } from '../../../lib/supabase'
+import { getCycleInfo, toDateStr, type CycleConfig } from '../../../lib/cycleLogic'
+import { pickCycleNudge, type NudgeContext } from '../../../lib/cycleNudges'
 
 interface Props {
-  phase: CyclePhase
+  cycleConfig: CycleConfig
 }
 
 const PILLAR_LABEL_KEY: Record<string, string> = {
@@ -27,9 +30,6 @@ const PILLAR_LABEL_KEY: Record<string, string> = {
   'health-checkups': 'cycle_pillar_health_checkups',
 }
 
-/**
- * Renders the headline with the *…* italic span as Fraunces italic.
- */
 function renderHeadline(s: string, baseColor: string, accentColor: string, font: ReturnType<typeof useTheme>['font']) {
   const m = s.match(/^(.*?)\*(.+?)\*(.*)$/)
   if (!m) {
@@ -45,12 +45,80 @@ function renderHeadline(s: string, baseColor: string, accentColor: string, font:
   )
 }
 
-export function DailyNudgeCard({ phase }: Props) {
+/** Detect a post-ovulation BBT shift in the most recent BBT readings. */
+function detectBBTShift(values: number[]): boolean {
+  if (values.length < 7) return false
+  const recent = values.slice(-3)
+  const prior = values.slice(0, -3).slice(-4)
+  if (prior.length < 3) return false
+  const r = recent.reduce((a, b) => a + b, 0) / recent.length
+  const p = prior.reduce((a, b) => a + b, 0) / prior.length
+  return r - p >= 0.25
+}
+
+export function DailyNudgeCard({ cycleConfig }: Props) {
   const { colors, stickers, brand, font, radius, isDark } = useTheme()
   const { t } = useTranslation()
-  const nudge = pickCycleNudge(phase)
   const ink = isDark ? colors.text : '#141313'
   const accent = isDark ? '#EFA2C2' : brand.prePregnancy
+
+  const [userId, setUserId] = useState<string | undefined>()
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data: { session } }) => setUserId(session?.user.id))
+  }, [])
+
+  const info = getCycleInfo(cycleConfig)
+  const today = toDateStr(new Date())
+
+  const { data: todayRows = [] } = useQuery({
+    queryKey: ['cycleLogs', 'nudge', userId, today],
+    queryFn: async () => {
+      if (!userId) return []
+      const { data, error } = await supabase
+        .from('cycle_logs')
+        .select('type, value')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .in('type', ['basal_temp', 'lh', 'cervical_mucus', 'mood'])
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!userId,
+  })
+
+  const { data: bbtTrend = [] } = useQuery({
+    queryKey: ['cycleLogs', 'bbt-trend', userId, today],
+    queryFn: async () => {
+      if (!userId) return []
+      const startD = new Date()
+      startD.setDate(startD.getDate() - 10)
+      const { data, error } = await supabase
+        .from('cycle_logs')
+        .select('value, date')
+        .eq('user_id', userId)
+        .eq('type', 'basal_temp')
+        .gte('date', toDateStr(startD))
+        .order('date', { ascending: true })
+      if (error) throw error
+      return (data ?? [])
+        .map((r) => parseFloat(r.value ?? ''))
+        .filter((n) => Number.isFinite(n))
+    },
+    enabled: !!userId,
+  })
+
+  const ctx: NudgeContext = useMemo(() => ({
+    phase: info.phase,
+    cycleDay: info.cycleDay,
+    hasBBTToday: todayRows.some((r) => r.type === 'basal_temp'),
+    hasLHToday: todayRows.some((r) => r.type === 'lh'),
+    hasCMToday: todayRows.some((r) => r.type === 'cervical_mucus'),
+    moodToday: todayRows.find((r) => r.type === 'mood')?.value ?? null,
+    daysLate: info.cycleDay > info.cycleLength ? info.cycleDay - info.cycleLength : 0,
+    bbtShiftConfirmed: detectBBTShift(bbtTrend),
+  }), [info.phase, info.cycleDay, info.cycleLength, todayRows, bbtTrend])
+
+  const nudge = pickCycleNudge(ctx)
 
   function handlePress() {
     if (nudge.pillarId) router.push(`/pillar/${nudge.pillarId}` as any)
