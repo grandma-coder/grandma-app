@@ -1,19 +1,30 @@
+/**
+ * Pillar detail screen — cream-paper redesign.
+ *
+ * Single screen for all 3 modes (pre-preg / pregnancy / kids). Renders the
+ * pillar's sticker as a hero, then a list of tip cards, then a "Ask Guru
+ * Grandma" suggestion section as rose pill buttons.
+ */
+
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTheme } from '../../constants/theme'
 import { Pillar } from '../../types'
 import { pillars } from '../../lib/pillars'
 import { prePregPillars } from '../../lib/prePregPillars'
 import { pregnancyPillars } from '../../lib/pregnancyPillars'
 import TipCard from '../../components/pillar/TipCard'
-import { CosmicBackground } from '../../components/ui/CosmicBackground'
-import { colors, typography, spacing, borderRadius } from '../../constants/theme'
+import { PillButton } from '../../components/ui/PillButton'
 import { getPillarSticker } from '../../lib/pillarStickerMap'
 
 export default function PillarDetail() {
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
+  const { colors, stickers, font, radius, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
+
   const pillar = (
     pillars.find((p) => p.id === id)
       ?? prePregPillars.find((p) => p.id === id)
@@ -22,11 +33,11 @@ export default function PillarDetail() {
 
   if (!pillar) {
     return (
-      <CosmicBackground>
-        <View style={styles.center}>
-          <Text style={styles.notFound}>Pillar not found</Text>
-        </View>
-      </CosmicBackground>
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <Text style={{ fontSize: 16, color: colors.text, fontFamily: font.body }}>
+          Pillar not found
+        </Text>
+      </View>
     )
   }
 
@@ -37,129 +48,80 @@ export default function PillarDetail() {
     })
   }
 
+  const Sticker = getPillarSticker(pillar.id)
+
   return (
-    <CosmicBackground>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
-        </Pressable>
-
-        <View style={[styles.iconCircle, { backgroundColor: pillar.color + '25' }]}>
-          {(() => {
-            const Sticker = getPillarSticker(pillar.id)
-            return Sticker ? <Sticker size={64} /> : <Text style={styles.icon}>{pillar.icon}</Text>
-          })()}
-        </View>
-        <Text style={styles.name}>{pillar.name}</Text>
-        <Text style={styles.description}>{pillar.description}</Text>
-      </View>
-
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView
-        style={styles.body}
-        contentContainerStyle={[styles.bodyContent, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Tips */}
-        <Text style={styles.sectionTitle}>Tips</Text>
+        <Pressable
+          onPress={() => router.back()}
+          style={[styles.back, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
+          <Ionicons name="arrow-back" size={22} color={ink} />
+        </Pressable>
+
+        <View style={styles.heroWrap}>
+          <View
+            style={[
+              styles.stickerHero,
+              { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full },
+            ]}
+          >
+            {Sticker ? <Sticker size={88} /> : <Text style={{ fontSize: 56 }}>{pillar.icon}</Text>}
+          </View>
+        </View>
+
+        <Text style={[styles.name, { color: ink, fontFamily: font.display }]}>{pillar.name}</Text>
+        <Text style={[styles.subtitle, { color: stickers.coral, fontFamily: font.italic }]}>
+          {pillar.description}
+        </Text>
+
+        <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>Tips</Text>
         {pillar.tips.map((tip, index) => (
           <TipCard key={index} label={tip.label} text={tip.text} />
         ))}
 
-        {/* Suggestions */}
-        <Text style={styles.sectionTitle}>Ask Guru Grandma</Text>
+        <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>Ask Guru Grandma</Text>
         <View style={styles.chipsContainer}>
           {pillar.suggestions.map((suggestion, index) => (
-            <Pressable
+            <PillButton
               key={index}
+              label={suggestion}
+              variant="accent"
+              accentColor={isDark ? '#EFA2C2' : '#E58BB4'}
               onPress={() => handleSuggestion(suggestion)}
-              style={({ pressed }) => [
-                styles.chip,
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <Text style={styles.chipText}>{suggestion}</Text>
-            </Pressable>
+              style={{ alignSelf: 'flex-start' }}
+            />
           ))}
         </View>
       </ScrollView>
-    </CosmicBackground>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  scroll: { paddingHorizontal: 20 },
+  back: {
+    width: 40, height: 40, borderRadius: 20,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, marginBottom: 20,
   },
-  notFound: {
-    fontSize: 16,
-    color: colors.textSecondary,
+  heroWrap: { alignItems: 'center', marginTop: 8, marginBottom: 16 },
+  stickerHero: {
+    width: 132, height: 132, borderWidth: 1.5,
+    alignItems: 'center', justifyContent: 'center',
   },
-  header: {
-    paddingHorizontal: spacing['2xl'],
-    paddingBottom: 24,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceGlass,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  icon: {
-    fontSize: 32, fontFamily: 'Fraunces_600SemiBold' },
-  name: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: 6, fontFamily: 'Fraunces_600SemiBold' },
-  description: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    lineHeight: 22,
-  },
-  body: {
-    flex: 1,
-  },
-  bodyContent: {
-    paddingHorizontal: spacing['2xl'],
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    marginTop: 8,
-    marginBottom: 12,
-  },
-  chipsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  chip: {
-    borderWidth: 1.5,
-    borderRadius: borderRadius.xl,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderColor: colors.borderLight,
-    backgroundColor: colors.surfaceGlass,
-  },
-  chipText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
+  name: { fontSize: 32, letterSpacing: -0.5, marginBottom: 4 },
+  subtitle: { fontSize: 16, lineHeight: 22, marginBottom: 24 },
+  sectionTitle: { fontSize: 22, marginTop: 16, marginBottom: 12 },
+  chipsContainer: { flexDirection: 'column', gap: 10 },
 })
