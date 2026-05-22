@@ -15,14 +15,17 @@ import { supabase } from '../../../lib/supabase'
 import { toDateStr, type CyclePhase } from '../../../lib/cycleLogic'
 import { MoodSymptomPickerSheet, ALL_SYMPTOMS } from './MoodSymptomPickerSheet'
 import { LogSheet } from '../../calendar/LogSheet'
+import { Sad, Smiley, Sleepy } from '../../ui/Stickers'
 
-const MOODS = [
-  { id: '1', sticker: '😞' },
-  { id: '2', sticker: '😕' },
-  { id: '3', sticker: '😐' },
-  { id: '4', sticker: '🙂' },
-  { id: '5', sticker: '😄' },
-]
+type MoodId = '1' | '2' | '3' | '4' | '5'
+
+function MoodFace({ id, size = 22, stickerSet }: { id: MoodId; size?: number; stickerSet: ReturnType<typeof useTheme>['stickers'] }) {
+  if (id === '1' || id === '2') return <Sad size={size} fill={stickerSet.blue} />
+  if (id === '3') return <Sleepy size={size} fill={stickerSet.lilac} />
+  return <Smiley size={size} fill={stickerSet.yellow} />
+}
+
+const MOODS: MoodId[] = ['1', '2', '3', '4', '5']
 
 const PHASE_DEFAULTS: Record<CyclePhase, string[]> = {
   menstruation: ['cramps', 'tired', 'bloated'],
@@ -125,7 +128,7 @@ export function MoodSymptomStrip({ phase }: Props) {
     }
   }
 
-  const moodSticker = MOODS.find((m) => m.id === moodToday)?.sticker ?? '🙂'
+  const moodId = (moodToday as MoodId | null) ?? '4'
 
   return (
     <View style={{ paddingHorizontal: 20, marginTop: 12 }}>
@@ -137,7 +140,7 @@ export function MoodSymptomStrip({ phase }: Props) {
           onPress={() => setMoodSheet(true)}
           style={[styles.face, { backgroundColor: stickers.yellow, borderColor: ink }]}
         >
-          <Text style={{ fontSize: 16 }}>{moodSticker}</Text>
+          <MoodFace id={moodId} size={18} stickerSet={stickers} />
         </Pressable>
 
         <View style={styles.chips}>
@@ -157,7 +160,7 @@ export function MoodSymptomStrip({ phase }: Props) {
                 ]}
               >
                 <Text style={{ fontSize: 11, fontFamily: font.bodyBold, color: ink }}>
-                  {meta?.sticker ?? ''} {meta?.label ?? id}
+                  {meta?.label ?? id}
                 </Text>
               </Pressable>
             )
@@ -179,18 +182,18 @@ export function MoodSymptomStrip({ phase }: Props) {
       />
       <LogSheet visible={moodSheet} title="How's today?" onClose={() => setMoodSheet(false)}>
         <View style={styles.moodRow}>
-          {MOODS.map((m) => {
-            const active = moodToday === m.id
+          {MOODS.map((id) => {
+            const active = moodToday === id
             return (
               <Pressable
-                key={m.id}
-                onPress={() => setMood(m.id)}
+                key={id}
+                onPress={() => setMood(id)}
                 style={[
                   styles.moodOpt,
                   { backgroundColor: active ? stickers.yellow : colors.surfaceRaised, borderColor: active ? ink : colors.border },
                 ]}
               >
-                <Text style={{ fontSize: 26 }}>{m.sticker}</Text>
+                <MoodFace id={id} size={32} stickerSet={stickers} />
               </Pressable>
             )
           })}

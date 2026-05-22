@@ -13,16 +13,16 @@ import { LogSheet } from '../../calendar/LogSheet'
 import { PillButton } from '../../ui/PillButton'
 
 const SYMPTOMS = [
-  { id: 'cramps',       label: 'Cramps',       sticker: '🩸' },
-  { id: 'tired',        label: 'Tired',        sticker: '😴' },
-  { id: 'bloated',      label: 'Bloated',      sticker: '🎈' },
-  { id: 'headache',     label: 'Headache',     sticker: '🤕' },
-  { id: 'tender',       label: 'Tender',       sticker: '💔' },
-  { id: 'acne',         label: 'Acne',         sticker: '🪞' },
-  { id: 'nausea',       label: 'Nausea',       sticker: '🤢' },
-  { id: 'craving',      label: 'Cravings',     sticker: '🍫' },
-  { id: 'low-mood',     label: 'Low mood',     sticker: '☁️' },
-  { id: 'restless',     label: 'Restless',     sticker: '🌪️' },
+  { id: 'cramps',       label: 'Cramps'    },
+  { id: 'tired',        label: 'Tired'     },
+  { id: 'bloated',      label: 'Bloated'   },
+  { id: 'headache',     label: 'Headache'  },
+  { id: 'tender',       label: 'Tender'    },
+  { id: 'acne',         label: 'Acne'      },
+  { id: 'nausea',       label: 'Nausea'    },
+  { id: 'craving',      label: 'Cravings'  },
+  { id: 'low-mood',     label: 'Low mood'  },
+  { id: 'restless',     label: 'Restless'  },
 ]
 
 interface Props {
@@ -92,7 +92,6 @@ export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] 
                   },
                 ]}
               >
-                <Text style={{ fontSize: 14 }}>{s.sticker}</Text>
                 <Text style={{ color: ink, fontFamily: font.bodyBold, fontSize: 12 }}>{s.label}</Text>
               </Pressable>
             )

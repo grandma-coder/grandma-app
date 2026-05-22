@@ -51,13 +51,6 @@ interface Props {
   onSelectDay?: (day: number) => void
 }
 
-function phaseSticker(d: number): string {
-  if (d <= 5) return '🩸'
-  if (d <= 12) return '🌱'
-  if (d <= 16) return '✨'
-  return '🌙'
-}
-
 function phaseTint(d: number, st: ReturnType<typeof useTheme>['stickers']): string {
   if (d <= 5) return st.pinkSoft
   if (d <= 12) return st.greenSoft
@@ -227,9 +220,7 @@ export function CycleJourneyRing({
                   ...(isToday ? { shadowColor: ink, shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 1.5, height: 1.5 }, elevation: 3 } : null),
                 }}
                 pointerEvents="none"
-              >
-                <Text style={{ fontSize: isToday ? 13 : 10 }}>{phaseSticker(d)}</Text>
-              </View>
+              />
             )
           })}
         </Animated.View>

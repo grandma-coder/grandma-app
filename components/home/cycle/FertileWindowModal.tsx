@@ -187,9 +187,9 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
         <View style={styles.section}>
           <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>LOG A SIGNAL TODAY</Text>
           <View style={styles.qlog}>
-            <PillButton label="🌡️  BBT" variant="paper" onPress={() => setOpenLog('bbt')} style={{ flex: 1 }} />
-            <PillButton label="🧪  LH"  variant="paper" onPress={() => setOpenLog('lh')}  style={{ flex: 1 }} />
-            <PillButton label="💧  CM"  variant="paper" onPress={() => setOpenLog('cm')}  style={{ flex: 1 }} />
+            <PillButton label="BBT" variant="paper" onPress={() => setOpenLog('bbt')} style={{ flex: 1 }} />
+            <PillButton label="LH"  variant="paper" onPress={() => setOpenLog('lh')}  style={{ flex: 1 }} />
+            <PillButton label="CM"  variant="paper" onPress={() => setOpenLog('cm')}  style={{ flex: 1 }} />
           </View>
         </View>
 

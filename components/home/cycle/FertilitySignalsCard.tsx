@@ -18,6 +18,7 @@ import { useTheme } from '../../../constants/theme'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr } from '../../../lib/cycleLogic'
 import { PaperCard } from '../../ui/PaperCard'
+import { Drop, Heart, Pill, Sparkle } from '../../ui/Stickers'
 import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
 import { BbtForm, LhForm, CmForm, IntercourseForm } from '../../calendar/CycleLogForms'
@@ -101,12 +102,23 @@ export function FertilitySignalsCard() {
     ? 'Peak today'
     : `${filledCount} of 4 logged`
 
-  const tiles: { key: Tile; label: string; sticker: string; value: string | null }[] = [
-    { key: 'bbt',         label: 'BBT', sticker: '🌡️', value: todayByType.bbt ? `${todayByType.bbt}°` : null },
-    { key: 'lh',          label: 'LH',  sticker: '🧪', value: todayByType.lh },
-    { key: 'cm',          label: 'CM',  sticker: '💧', value: todayByType.cm },
-    { key: 'intercourse', label: 'Sex', sticker: '💞', value: todayByType.intercourse ? 'Logged' : null },
+  const tiles: { key: Tile; label: string; value: string | null }[] = [
+    { key: 'bbt',         label: 'BBT', value: todayByType.bbt ? `${todayByType.bbt}°` : null },
+    { key: 'lh',          label: 'LH',  value: todayByType.lh },
+    { key: 'cm',          label: 'CM',  value: todayByType.cm },
+    { key: 'intercourse', label: 'Sex', value: todayByType.intercourse ? 'Logged' : null },
   ]
+
+  function renderTileSticker(key: Tile, peak: boolean, faded: boolean) {
+    const fill = peak ? '#fff' : faded ? stickers.lilacSoft : undefined
+    const size = 20
+    switch (key) {
+      case 'bbt':         return <Pill size={size} fill={fill ?? stickers.coral} />
+      case 'lh':          return <Sparkle size={size} fill={fill ?? stickers.yellow} />
+      case 'cm':          return <Drop size={size} fill={fill ?? stickers.blue} />
+      case 'intercourse': return <Heart size={size} fill={fill ?? stickers.pink} />
+    }
+  }
 
   function tileBg(t: typeof tiles[number]): string {
     if (t.key === 'lh' && t.value === 'peak') return stickers.coral
@@ -133,7 +145,9 @@ export function FertilitySignalsCard() {
             </Text>
           </View>
           <View style={[styles.sticker, { backgroundColor: stickers.pinkSoft, borderColor: ink }]}>
-            <Text style={{ fontSize: 18 }}>{isPeakToday ? '✨' : '🌡️'}</Text>
+            {isPeakToday
+              ? <Sparkle size={20} fill={stickers.yellow} />
+              : <Heart size={20} fill={stickers.pink} />}
           </View>
         </View>
 
@@ -153,7 +167,9 @@ export function FertilitySignalsCard() {
                   },
                 ]}
               >
-                <Text style={{ fontSize: 18, opacity: filled ? 1 : 0.55 }}>{t.sticker}</Text>
+                <View style={{ opacity: filled ? 1 : 0.55, marginBottom: 2 }}>
+                  {renderTileSticker(t.key, peak, !filled)}
+                </View>
                 <Text style={[styles.tileKey, { color: peak ? '#fff' : colors.textMuted, fontFamily: font.bodyBold }]}>
                   {t.label}
                 </Text>
