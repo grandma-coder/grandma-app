@@ -1,17 +1,13 @@
 /**
- * CycleHome — pre-pregnancy home screen (2026 cream-paper redesign).
+ * CycleHome — pre-pregnancy home screen (Slice 1 of redesign).
  *
- * Layout:
+ * Section order (interim — Slice 2 will refactor further):
  *   1. HomeGreeting
- *   2. YourCycleCard (hero with ring + phase label)
- *   3. HormonesCard + WisdomCard (2-col row)
- *   4. FertileWindowStrip (7-day pills)
- *   5. CyclePillarsGrid (2x2 tappable tiles)
- *
- * Data sources:
- *   - useCycleHistory() for latest period_start + cycle length
- *   - Falls back to a sensible demo config when user has no logs yet
- *     (keeps the screen populated and prevents ugly zero-state on first launch)
+ *   2. CycleJourneyRing            (replaces YourCycleCard)
+ *   3. HormonesCard                (unchanged this slice — deleted in Slice 2)
+ *   4. DailyNudgeCard              (replaces WisdomCard)
+ *   5. FertileWindowStrip          (unchanged this slice — deleted in Slice 2)
+ *   6. CyclePillarsGrid
  */
 
 import { useState } from 'react'
@@ -23,14 +19,12 @@ import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
-import { YourCycleCard } from './cycle/YourCycleCard'
+import { CycleJourneyRing } from './cycle/CycleJourneyRing'
 import { HormonesCard } from './cycle/HormonesCard'
-import { WisdomCard } from './cycle/WisdomCard'
+import { DailyNudgeCard } from './cycle/DailyNudgeCard'
 import { FertileWindowStrip } from './cycle/FertileWindowStrip'
 import { CyclePillarsGrid } from './cycle/CyclePillarsGrid'
 import { CycleHomeDetailSheet, type CycleHomeDetailType } from './cycle/CycleHomeDetailSheets'
-
-// ─── Helpers ───────────────────────────────────────────────────────────────
 
 function getMicroLabel(): string {
   const d = new Date()
@@ -39,22 +33,26 @@ function getMicroLabel(): string {
   return `${day.toUpperCase()} · ${date.toUpperCase()} · CYCLE`
 }
 
-function getStatusLine(info: ReturnType<typeof getCycleInfo>): string {
-  if (info.isFertile) {
-    if (info.conceptionProbability === 'peak') return 'Peak today. Window open.'
-    if (info.daysUntilOvulation >= 0) {
-      return `Ovulation in ${info.daysUntilOvulation} day${info.daysUntilOvulation === 1 ? '' : 's'}.`
-    }
-    return 'Fertile window — log if you can.'
+function getTitleItalic(phase: CyclePhase): string {
+  switch (phase) {
+    case 'menstruation': return 'quiet day'
+    case 'follicular':   return 'rising day'
+    case 'ovulation':    return 'peak day'
+    case 'luteal':       return 'soft day'
   }
-  if (info.phase === 'menstruation') {
-    return `Day ${info.cycleDay} of your period.`
-  }
-  const d = info.daysUntilPeriod
-  return `Next period in ${d} day${d === 1 ? '' : 's'}.`
 }
 
-// ─── Main Component ────────────────────────────────────────────────────────
+function getSubline(info: ReturnType<typeof getCycleInfo>): string {
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return `${today} · ${info.phaseLabel}`
+}
+
+function getPeriodLine(info: ReturnType<typeof getCycleInfo>): string {
+  if (info.phase === 'menstruation') return `Period day ${info.cycleDay} of ~${info.periodLength}`
+  if (info.isFertile && info.conceptionProbability === 'peak') return 'Peak today — window open'
+  if (info.daysUntilOvulation > 0) return `Ovulation in ${info.daysUntilOvulation} day${info.daysUntilOvulation === 1 ? '' : 's'}`
+  return `Next period in ${info.daysUntilPeriod} day${info.daysUntilPeriod === 1 ? '' : 's'}`
+}
 
 export function CycleHome() {
   const { colors } = useTheme()
@@ -65,9 +63,6 @@ export function CycleHome() {
   const { data: history, isPending: historyPending } = useCycleHistory()
   const [detailType, setDetailType] = useState<CycleHomeDetailType | null>(null)
 
-  // Derive cycle config from latest history, or fall back to a demo
-  // (10 days ago, 28-day cycle). This keeps the hero populated when
-  // a user hasn't logged their first period yet.
   const cycleConfig: CycleConfig = (() => {
     const latest = history?.cycles[history.cycles.length - 1]
     const avgLen = history?.avg ?? 28
@@ -80,12 +75,7 @@ export function CycleHome() {
   })()
 
   const info = getCycleInfo(cycleConfig, toDateStr(new Date()))
-  const phaseLabel = info.isFertile ? 'Fertile' : info.phaseLabel
 
-  // Don't render until the cycle history query has resolved — otherwise
-  // the first paint uses the demo fallback (cycleDay derived from "10
-  // days ago"), then flips to the real day once history arrives. Same
-  // flash pattern as PregnancyHome.
   if (historyPending) {
     return <View style={[styles.root, { backgroundColor: colors.bg }]} />
   }
@@ -104,22 +94,26 @@ export function CycleHome() {
         </View>
 
         <Pressable onPress={() => setDetailType('cycle')}>
-          <YourCycleCard
+          <CycleJourneyRing
             cycleDay={info.cycleDay}
             cycleLength={info.cycleLength}
-            phaseLabel={phaseLabel}
-            isFertile={info.isFertile}
-            statusLine={getStatusLine(info)}
+            phaseLabel={info.phaseLabel}
+            phase={info.phase as CyclePhase}
+            titleItalic={getTitleItalic(info.phase as CyclePhase)}
+            subline={getSubline(info)}
+            periodLine={getPeriodLine(info)}
+            hint="↻ tap any day"
           />
         </Pressable>
 
-        <View style={styles.duoRow}>
-          <Pressable style={{ flex: 1 }} onPress={() => setDetailType('hormones')}>
+        <View style={styles.cardWrap}>
+          <Pressable onPress={() => setDetailType('hormones')}>
             <HormonesCard cycleDay={info.cycleDay} cycleLength={info.cycleLength} />
           </Pressable>
-          <Pressable style={{ flex: 1 }} onPress={() => setDetailType('wisdom')}>
-            <WisdomCard phase={info.phase as CyclePhase} />
-          </Pressable>
+        </View>
+
+        <View style={styles.cardWrap}>
+          <DailyNudgeCard phase={info.phase as CyclePhase} />
         </View>
 
         <Pressable onPress={() => setDetailType('fertile')}>
@@ -140,17 +134,7 @@ export function CycleHome() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  scroll: {
-    paddingBottom: 120,
-  },
-  greetingWrap: {
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
-  duoRow: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 20,
-    marginTop: 12,
-  },
+  scroll: { paddingBottom: 120 },
+  greetingWrap: { paddingHorizontal: 20, marginBottom: 12 },
+  cardWrap: { paddingHorizontal: 20, marginTop: 12 },
 })

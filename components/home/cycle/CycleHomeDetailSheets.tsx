@@ -10,13 +10,12 @@ import { View, Text, StyleSheet, ScrollView, Pressable, useWindowDimensions } fr
 import { useTheme } from '../../../constants/theme'
 import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
-import { Heart, Flower } from '../../ui/Stickers'
+import { Flower } from '../../ui/Stickers'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../../lib/cycleLogic'
 import { useCycleHistory } from '../../../lib/cycleAnalytics'
-import { AffirmationShareModal } from '../pregnancy/AffirmationShareModal'
 import { HormonesInteractiveChart } from './HormonesCard'
 
-export type CycleHomeDetailType = 'cycle' | 'hormones' | 'wisdom' | 'fertile'
+export type CycleHomeDetailType = 'cycle' | 'hormones' | 'fertile'
 
 interface Props {
   type: CycleHomeDetailType | null
@@ -27,7 +26,6 @@ interface Props {
 const TITLES: Record<CycleHomeDetailType, string> = {
   cycle: 'Your Cycle',
   hormones: 'Hormones',
-  wisdom: 'Daily Wisdom',
   fertile: 'Fertile Window',
 }
 
@@ -44,7 +42,6 @@ export function CycleHomeDetailSheet({ type, onClose, cycleConfig }: Props) {
       >
         {type === 'cycle' && <CycleDetail cycleConfig={cycleConfig} />}
         {type === 'hormones' && <HormonesDetail cycleConfig={cycleConfig} />}
-        {type === 'wisdom' && <WisdomDetail cycleConfig={cycleConfig} />}
         {type === 'fertile' && <FertileDetailBody cycleConfig={cycleConfig} />}
       </ScrollView>
     </LogSheet>
@@ -192,53 +189,6 @@ function hormoneContext(phase: CyclePhase): string {
     case 'ovulation':    return 'LH surges, estrogen peaks. Libido, confidence, and fertility are all highest right now.'
     case 'luteal':       return 'Progesterone rises after ovulation. Late luteal drops can bring PMS as your body prepares to shed the lining.'
   }
-}
-
-// ─── Wisdom Detail ────────────────────────────────────────────────────────
-
-function WisdomDetail({ cycleConfig }: { cycleConfig: CycleConfig }) {
-  const { colors, stickers, isDark } = useTheme()
-  const info = getCycleInfo(cycleConfig)
-  const ink = isDark ? colors.text : '#141313'
-  const [shareOpen, setShareOpen] = useState(false)
-  const quote = PHASE_QUOTE[info.phase]
-
-  return (
-    <View style={{ gap: 18 }}>
-      <View style={[detailStyles.quoteCard, { backgroundColor: stickers.yellow }]}>
-        <Heart size={22} fill={stickers.pink} />
-        <Body size={14} color="rgba(20,19,19,0.85)" style={{ marginTop: 10, fontStyle: 'italic' }}>
-          "{quote}"
-        </Body>
-        <Pressable
-          onPress={() => setShareOpen(true)}
-          style={({ pressed }) => [
-            detailStyles.shareBtn,
-            { backgroundColor: 'rgba(20,19,19,0.9)', opacity: pressed ? 0.85 : 1 },
-          ]}
-        >
-          <Text style={detailStyles.shareBtnText}>Share ↗</Text>
-        </Pressable>
-      </View>
-
-      <TipsSection title="ACTIVITIES FOR THIS PHASE" tips={info.activities} />
-      <TipsSection title="DAILY TIPS" tips={info.dailyTips} />
-
-      <AffirmationShareModal
-        visible={shareOpen}
-        phrase={quote}
-        mode="prePreg"
-        onClose={() => setShareOpen(false)}
-      />
-    </View>
-  )
-}
-
-const PHASE_QUOTE: Record<CyclePhase, string> = {
-  menstruation: 'Rest well today — your body is working hard, dear.',
-  follicular: 'Energy is rising — a good time to plan something new.',
-  ovulation: 'Peak bloom, dear. Today is a day for joy.',
-  luteal: 'Rest well tonight — tomorrow matters, dear.',
 }
 
 // ─── Fertile Detail Body — synchronous render from cycleConfig ───────────
