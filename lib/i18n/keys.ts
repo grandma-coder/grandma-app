@@ -227,6 +227,25 @@ export interface TranslationKeys {
   paywall_features_insights: string
   paywall_features_vaccineReminders: string
 
+  // ─── Cycle (Pre-Pregnancy) nudges ──────────────────────────────────────
+  cycle_nudge_menstruation_headline: string
+  cycle_nudge_menstruation_body: string
+  cycle_nudge_follicular_headline: string
+  cycle_nudge_follicular_body: string
+  cycle_nudge_ovulation_headline: string
+  cycle_nudge_ovulation_body: string
+  cycle_nudge_luteal_headline: string
+  cycle_nudge_luteal_body: string
+  cycle_nudge_label: string
+  cycle_nudge_from: string
+  cycle_nudge_read_more: string
+  cycle_pillar_fertility: string
+  cycle_pillar_nutrition_prep: string
+  cycle_pillar_emotional_readiness: string
+  cycle_pillar_financial_planning: string
+  cycle_pillar_partner_journey: string
+  cycle_pillar_health_checkups: string
+
   // ─── Pregnancy-specific ────────────────────────────────────────────────
   pregnancy_week: string
   pregnancy_dueDate: string
