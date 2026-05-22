@@ -44,7 +44,11 @@ yarn-error.*
 .superdesign
 .agents/
 .claude/skills/
+.claude/settings.local.json
 skills-lock.json
+
+# Supabase CLI working dir
+supabase/.temp/
 
 # Design handoff bundles (large, local-only)
 docs/Claude design studio*/

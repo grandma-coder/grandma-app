@@ -117,6 +117,14 @@ const PILLARS_BY_MODE: Record<JourneyMode, Array<{ id: string; name: string }>> 
 }
 
 export default function DevPanel() {
+  // Production guard — the dev panel must never be reachable in a release
+  // build, even if a curious tester finds the hidden gesture. Local dev
+  // (expo start) keeps full access because __DEV__ is true there.
+  if (!__DEV__) {
+    router.replace('/(tabs)')
+    return null
+  }
+
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const queryClient = useQueryClient()

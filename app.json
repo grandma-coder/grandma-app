@@ -7,22 +7,28 @@
     "scheme": "grandma-app",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.grandmacoder.grandmaapp",
+      "buildNumber": "2",
+      "icon": "./assets/icon.png",
       "usesAppleSignIn": true,
       "infoPlist": {
-        "NSPhotoLibraryAddUsageDescription": "Save your daily affirmation as an image to share anywhere."
+        "NSPhotoLibraryAddUsageDescription": "Save your daily affirmation as an image to share anywhere.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0A0E1A"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F3ECD9"
       },
       "package": "com.grandmacoder.grandmaapp"
     },
     "plugins": [
       "expo-router",
+      "expo-dev-client",
       "expo-secure-store",
       "@react-native-community/datetimepicker",
       "expo-web-browser",
@@ -31,6 +37,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3e90f69b-67ad-4c0e-82b5-12677de0e331"
+      }
+    },
+    "owner": "grandma.app"
   }
 }
