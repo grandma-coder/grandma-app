@@ -131,6 +131,32 @@ Rules:
 }`
   }
 
+  if (scanType === 'cycle_test') {
+    return `You are a precise OCR + classifier assistant for grandma.app. Classify this image of an ovulation (LH) or pregnancy test strip.
+
+Rules:
+- Look carefully at the test result window. Compare any visible test line to the control line.
+- Return ONLY a valid JSON object — no markdown, no explanation, no backticks.
+- "classification" MUST be one of:
+    "negative"   — no visible test line, or test line clearly fainter than control
+    "faint"      — test line visible but noticeably lighter than control
+    "positive"   — test line as dark as the control (LH surge / pregnancy positive)
+    "peak"       — test line clearly darker than control (strong LH peak)
+    "pregnant"   — clearly two equal lines on a pregnancy test, OR a digital readout saying "pregnant"
+    "invalid"    — no control line visible, expired, smudged beyond reading
+- "confidence" is a number 0.0–1.0 reflecting how clearly the lines are visible.
+- "test_kind" is "lh" if this looks like an ovulation strip, "pregnancy" if this looks like a pregnancy test, or "unknown".
+- "notes" is a 1-sentence plain-language summary the user can read.
+- NEVER guess. If you can't see clearly, use classification "invalid" with low confidence and explain in notes.
+- The JSON schema MUST be exactly:
+{
+  "classification": "negative" | "faint" | "positive" | "peak" | "pregnant" | "invalid",
+  "confidence": number,
+  "test_kind": "lh" | "pregnancy" | "unknown",
+  "notes": string
+}`
+  }
+
   if (scanType === 'exam') {
     return `You are a precise OCR assistant for grandma.app. Extract medical lab / exam / test result information from this image of a medical document.
 
@@ -217,6 +243,7 @@ function getScanQuestion(scanType: string): string {
     nutrition: 'What are the nutritional facts? Is this appropriate for my child\'s age?',
     insurance_card: 'Extract all insurance information from this card. Return ONLY the JSON object, nothing else.',
     exam: 'Extract the medical exam / lab result information from this document. Return ONLY the JSON object, nothing else.',
+    cycle_test: 'Classify this ovulation / pregnancy test strip. Return ONLY the JSON object, nothing else.',
     general: 'What is this product? Tell me anything relevant for my child.',
   }
   return questions[scanType] ?? questions.general
