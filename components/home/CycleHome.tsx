@@ -20,7 +20,7 @@ import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
 import { CycleJourneyRing } from './cycle/CycleJourneyRing'
-import { HormonesCard } from './cycle/HormonesCard'
+import { FertilitySignalsCard } from './cycle/FertilitySignalsCard'
 import { DailyNudgeCard } from './cycle/DailyNudgeCard'
 import { FertileWindowStrip } from './cycle/FertileWindowStrip'
 import { CyclePillarsGrid } from './cycle/CyclePillarsGrid'
@@ -106,11 +106,7 @@ export function CycleHome() {
           />
         </Pressable>
 
-        <View style={styles.cardWrap}>
-          <Pressable onPress={() => setDetailType('hormones')}>
-            <HormonesCard cycleDay={info.cycleDay} cycleLength={info.cycleLength} />
-          </Pressable>
-        </View>
+        <FertilitySignalsCard />
 
         <View style={styles.cardWrap}>
           <DailyNudgeCard phase={info.phase as CyclePhase} />

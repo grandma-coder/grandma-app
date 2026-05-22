@@ -5,17 +5,14 @@
  * Reuses the LogSheet shell for consistency with analytics detail sheets.
  */
 
-import { useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, Pressable, useWindowDimensions } from 'react-native'
+import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { useTheme } from '../../../constants/theme'
 import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
 import { Flower } from '../../ui/Stickers'
-import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../../lib/cycleLogic'
+import { getCycleInfo, toDateStr, type CycleConfig } from '../../../lib/cycleLogic'
 import { useCycleHistory } from '../../../lib/cycleAnalytics'
-import { HormonesInteractiveChart } from './HormonesCard'
-
-export type CycleHomeDetailType = 'cycle' | 'hormones' | 'fertile'
+export type CycleHomeDetailType = 'cycle' | 'fertile'
 
 interface Props {
   type: CycleHomeDetailType | null
@@ -25,7 +22,6 @@ interface Props {
 
 const TITLES: Record<CycleHomeDetailType, string> = {
   cycle: 'Your Cycle',
-  hormones: 'Hormones',
   fertile: 'Fertile Window',
 }
 
@@ -41,7 +37,6 @@ export function CycleHomeDetailSheet({ type, onClose, cycleConfig }: Props) {
         showsVerticalScrollIndicator={false}
       >
         {type === 'cycle' && <CycleDetail cycleConfig={cycleConfig} />}
-        {type === 'hormones' && <HormonesDetail cycleConfig={cycleConfig} />}
         {type === 'fertile' && <FertileDetailBody cycleConfig={cycleConfig} />}
       </ScrollView>
     </LogSheet>
@@ -84,111 +79,6 @@ function CycleDetail({ cycleConfig }: { cycleConfig: CycleConfig }) {
       <TipsSection title="NUTRITION" tips={info.nutritionTips} />
     </View>
   )
-}
-
-// ─── Hormones Detail ──────────────────────────────────────────────────────
-
-function HormonesDetail({ cycleConfig }: { cycleConfig: CycleConfig }) {
-  const { colors, stickers, isDark } = useTheme()
-  const info = getCycleInfo(cycleConfig)
-  const ink = isDark ? colors.text : '#141313'
-  const { width: screenW } = useWindowDimensions()
-  // Sheet padding (24) × 2 outside, chart card padding (16) × 2 inside.
-  const chartW = Math.max(240, screenW - 24 * 2 - 16 * 2)
-  const chartH = 200
-  const chartBg = isDark ? colors.surfaceRaised : colors.bg
-
-  const blurbs = [
-    {
-      color: stickers.coral,
-      name: 'LH',
-      subtitle: 'Luteinizing Hormone',
-      blurb: 'Spikes just before ovulation, triggering the ovary to release the egg. The classic "LH surge" that ovulation kits detect.',
-    },
-    {
-      color: stickers.lilac,
-      name: 'E',
-      subtitle: 'Estrogen',
-      blurb: 'Rises through the follicular phase, peaks before ovulation, and rises again mid-luteal. Shapes mood, energy, and cervical fluid.',
-    },
-    {
-      color: stickers.green,
-      name: 'P',
-      subtitle: 'Progesterone',
-      blurb: 'Rises after ovulation. Keeps the uterine lining stable. Drops sharply before your next period — which is what triggers bleeding.',
-    },
-  ]
-
-  return (
-    <View style={{ gap: 18 }}>
-      <View
-        style={[
-          detailStyles.chartCard,
-          { backgroundColor: chartBg, borderColor: colors.border },
-        ]}
-      >
-        <HormonesInteractiveChart
-          cycleDay={info.cycleDay}
-          cycleLength={info.cycleLength}
-          periodLength={cycleConfig.periodLength ?? 5}
-          lutealPhase={cycleConfig.lutealPhase ?? 14}
-          width={chartW}
-          height={chartH}
-        />
-        <View style={detailStyles.chartLegend}>
-          <ChartLegend color={stickers.coral} label="LH" />
-          <ChartLegend color={stickers.lilac} label="Estrogen" />
-          <ChartLegend color={stickers.green} label="Progesterone" />
-        </View>
-      </View>
-
-      <View style={{ gap: 4 }}>
-        <MonoCaps size={10} color={colors.textMuted}>TODAY'S CONTEXT</MonoCaps>
-        <Display size={22} color={ink}>
-          {info.phaseLabel} · Day {info.cycleDay}
-        </Display>
-        <Body size={13} color={colors.textSecondary} style={{ marginTop: 4 }}>
-          {hormoneContext(info.phase)}
-        </Body>
-      </View>
-
-      <View style={{ gap: 12 }}>
-        {blurbs.map((b) => (
-          <View key={b.name} style={[detailStyles.hormoneRow, { borderColor: colors.border }]}>
-            <View style={[detailStyles.colorChip, { backgroundColor: b.color }]} />
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                <Display size={18} color={ink}>{b.name}</Display>
-                <Body size={12} color={colors.textMuted}>{b.subtitle}</Body>
-              </View>
-              <Body size={13} color={colors.textSecondary} style={{ marginTop: 4 }}>
-                {b.blurb}
-              </Body>
-            </View>
-          </View>
-        ))}
-      </View>
-    </View>
-  )
-}
-
-function ChartLegend({ color, label }: { color: string; label: string }) {
-  const { colors } = useTheme()
-  return (
-    <View style={detailStyles.legendItem}>
-      <View style={[detailStyles.legendDot, { backgroundColor: color }]} />
-      <Body size={12} color={colors.textSecondary}>{label}</Body>
-    </View>
-  )
-}
-
-function hormoneContext(phase: CyclePhase): string {
-  switch (phase) {
-    case 'menstruation': return 'Estrogen and progesterone are at their lowest. Energy and mood often dip — rest is the point.'
-    case 'follicular':   return 'Estrogen climbs. You may feel brighter, more sociable, more physically capable.'
-    case 'ovulation':    return 'LH surges, estrogen peaks. Libido, confidence, and fertility are all highest right now.'
-    case 'luteal':       return 'Progesterone rises after ovulation. Late luteal drops can bring PMS as your body prepares to shed the lining.'
-  }
 }
 
 // ─── Fertile Detail Body — synchronous render from cycleConfig ───────────
@@ -345,64 +235,6 @@ const detailStyles = StyleSheet.create({
   bullet: {
     fontSize: 14,
     lineHeight: 20,
-  },
-  hormoneRow: {
-    flexDirection: 'row',
-    gap: 12,
-    padding: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    alignItems: 'flex-start',
-  },
-  chartCard: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 16,
-    gap: 12,
-  },
-  chartHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  chartLegend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 14,
-    justifyContent: 'center',
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  colorChip: {
-    width: 18,
-    height: 18,
-    borderRadius: 999,
-    marginTop: 4,
-  },
-  quoteCard: {
-    padding: 18,
-    borderRadius: 22,
-  },
-  shareBtn: {
-    alignSelf: 'flex-start',
-    marginTop: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 9,
-    borderRadius: 999,
-  },
-  shareBtnText: {
-    color: '#F5D652',
-    fontFamily: 'DMSans_700Bold',
-    fontSize: 13,
-    letterSpacing: 0.3,
   },
   fertileCurrent: {
     flexDirection: 'row',
