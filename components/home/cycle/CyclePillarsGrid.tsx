@@ -51,7 +51,7 @@ export function CyclePillarsGrid() {
     <View style={styles.section}>
       <View style={styles.header}>
         <Display size={24} color={ink}>Pillars</Display>
-        <Pressable onPress={() => router.push('/library' as any)} hitSlop={8}>
+        <Pressable onPress={() => router.push('/cycle-pillars' as any)} hitSlop={8}>
           <View style={styles.seeAllRow}>
             <Body size={12} color={colors.textMuted}>See all</Body>
             <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
