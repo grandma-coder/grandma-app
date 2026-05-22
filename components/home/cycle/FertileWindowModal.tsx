@@ -1,0 +1,233 @@
+/**
+ * FertileWindowModal — bottom sheet for the FertileWindowCard.
+ *
+ * Sections:
+ *   1. Peak in <N> days countdown
+ *   2. 7-day forecast with color legend
+ *   3. Log a signal today — 3 quick-log buttons (BBT / LH / CM)
+ *   4. Confidence placeholder (Slice 3 wires the math)
+ *   5. Past windows (last 3 cycles)
+ *
+ * The modal uses the LogSheet shell for consistency.
+ */
+
+import { useMemo, useState } from 'react'
+import { View, Text, StyleSheet, ScrollView } from 'react-native'
+import { useTheme } from '../../../constants/theme'
+import { getCycleInfo, dailyFertilityCurve, toDateStr, type CycleConfig } from '../../../lib/cycleLogic'
+import { useCycleHistory } from '../../../lib/cycleAnalytics'
+import { LogSheet } from '../../calendar/LogSheet'
+import { PillButton } from '../../ui/PillButton'
+import { BbtForm, LhForm, CmForm } from '../../calendar/CycleLogForms'
+
+interface Props {
+  visible: boolean
+  onClose: () => void
+  cycleConfig: CycleConfig
+}
+
+export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
+  const { colors, stickers, font, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
+  const [openLog, setOpenLog] = useState<'bbt' | 'lh' | 'cm' | null>(null)
+  const today = toDateStr(new Date())
+
+  const info = getCycleInfo(cycleConfig)
+  const curve = useMemo(
+    () => dailyFertilityCurve(info.cycleLength, info.cycleLength - info.ovulationDay),
+    [info.cycleLength, info.ovulationDay],
+  )
+  const daysToPeak = Math.max(0, info.daysUntilOvulation)
+  const ovDateLabel = info.ovulationDate
+    ? new Date(info.ovulationDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    : '—'
+
+  const { data: history } = useCycleHistory()
+  const pastWindows = useMemo(() => {
+    const cycles = history?.cycles ?? []
+    return cycles
+      .slice(-3)
+      .reverse()
+      .map((c, idx) => {
+        const len = (c as any).length ?? info.cycleLength
+        return {
+          label: `Cycle ${cycles.length - idx}`,
+          range: `${formatShort(c.startDate)} – ${formatShort(addDaysISO(c.startDate, len - 1))}`,
+        }
+      })
+  }, [history, info.cycleLength])
+
+  const fc = useMemo(() => {
+    const out: { pct: number; weekday: string }[] = []
+    const todayD = new Date()
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(todayD)
+      d.setDate(d.getDate() + i)
+      const wd = d.toLocaleDateString('en-US', { weekday: 'short' })
+      const day = ((info.cycleDay - 1 + i) % info.cycleLength) + 1
+      out.push({ pct: curve[day - 1] ?? 0, weekday: wd })
+    }
+    return out
+  }, [curve, info.cycleDay, info.cycleLength])
+
+  return (
+    <LogSheet visible={visible} title="Fertile Window" onClose={onClose}>
+      <ScrollView style={{ maxHeight: 600 }} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>PEAK IN</Text>
+          <View style={[styles.countdown, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.big, { color: stickers.coral, fontFamily: font.displayBold }]}>
+              {daysToPeak}<Text style={{ fontSize: 13, color: colors.textMuted, fontFamily: font.body }}> days</Text>
+            </Text>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ color: ink, fontFamily: font.bodyBold, fontSize: 13 }}>{ovDateLabel}</Text>
+              <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11 }}>projected ovulation</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>7-DAY FORECAST</Text>
+          <View style={[styles.forecast, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.pills}>
+              {fc.map((f, i) => {
+                const isToday = i === 0
+                const bg = f.pct >= 60 ? stickers.coral : f.pct >= 30 ? stickers.pink : f.pct >= 15 ? stickers.pinkSoft : colors.surfaceRaised
+                const fg = f.pct >= 60 ? '#fff' : ink
+                return (
+                  <View
+                    key={i}
+                    style={[
+                      styles.pill,
+                      { backgroundColor: bg, borderColor: isToday ? ink : colors.border, borderWidth: isToday ? 2 : 1 },
+                    ]}
+                  >
+                    <Text style={{ color: fg, fontFamily: font.displayBold, fontSize: 13 }}>{f.pct}</Text>
+                    <Text style={{ color: fg, fontFamily: font.body, fontSize: 8, marginTop: 2, opacity: 0.85, textTransform: 'uppercase', letterSpacing: 1 }}>
+                      {f.weekday.slice(0, 3)}
+                    </Text>
+                  </View>
+                )
+              })}
+            </View>
+            <View style={[styles.legend, { borderTopColor: colors.border }]}>
+              <LegendItem color={colors.surfaceRaised} label="Low" />
+              <LegendItem color={stickers.pinkSoft} label="Mid" />
+              <LegendItem color={stickers.pink} label="High" />
+              <LegendItem color={stickers.coral} label="Peak" />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>LOG A SIGNAL TODAY</Text>
+          <View style={styles.qlog}>
+            <PillButton label="🌡️  BBT" variant="paper" onPress={() => setOpenLog('bbt')} style={{ flex: 1 }} />
+            <PillButton label="🧪  LH"  variant="paper" onPress={() => setOpenLog('lh')}  style={{ flex: 1 }} />
+            <PillButton label="💧  CM"  variant="paper" onPress={() => setOpenLog('cm')}  style={{ flex: 1 }} />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>CONFIDENCE</Text>
+          <View style={[styles.conf, { backgroundColor: stickers.greenSoft, borderColor: colors.border }]}>
+            <View style={[styles.confBadge, { borderColor: ink, backgroundColor: colors.surface }]}>
+              <Text style={{ color: stickers.coral, fontFamily: font.displayBold, fontSize: 14 }}>—</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: ink, fontFamily: font.bodyBold, fontSize: 13 }}>Calendar-based estimate</Text>
+              <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11, marginTop: 3 }}>
+                Add BBT + LH for the next 3 days to sharpen the forecast. Confidence math arrives in the next update.
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {pastWindows.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>PAST WINDOWS</Text>
+            <View style={[styles.history, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              {pastWindows.map((w, i) => (
+                <View
+                  key={i}
+                  style={[styles.histRow, { borderBottomColor: colors.border, borderBottomWidth: i === pastWindows.length - 1 ? 0 : 1 }]}
+                >
+                  <Text style={{ color: ink, fontFamily: font.bodyBold, fontSize: 13 }}>{w.label}</Text>
+                  <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11 }}>{w.range}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        <View style={{ marginTop: 8 }}>
+          <PillButton label="Open full fertility log" variant="accent" accentColor={stickers.pink} onPress={onClose} />
+        </View>
+      </ScrollView>
+
+      <LogSheet visible={openLog === 'bbt'} title="BBT" onClose={() => setOpenLog(null)}>
+        <BbtForm date={today} onSaved={() => setOpenLog(null)} />
+      </LogSheet>
+      <LogSheet visible={openLog === 'lh'} title="LH" onClose={() => setOpenLog(null)}>
+        <LhForm date={today} onSaved={() => setOpenLog(null)} />
+      </LogSheet>
+      <LogSheet visible={openLog === 'cm'} title="CM" onClose={() => setOpenLog(null)}>
+        <CmForm date={today} onSaved={() => setOpenLog(null)} />
+      </LogSheet>
+    </LogSheet>
+  )
+}
+
+function LegendItem({ color, label }: { color: string; label: string }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={styles.legendItem}>
+      <View style={{ width: 12, height: 12, borderRadius: 999, backgroundColor: color, borderWidth: 1, borderColor: '#141313' }} />
+      <Text style={{ color: colors.textMuted, fontFamily: font.bodyBold, fontSize: 9, letterSpacing: 1.1, textTransform: 'uppercase' }}>{label}</Text>
+    </View>
+  )
+}
+
+function formatShort(iso: string): string {
+  return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function addDaysISO(iso: string, days: number): string {
+  const d = new Date(iso + 'T00:00:00')
+  d.setDate(d.getDate() + days)
+  return toDateStr(d)
+}
+
+const styles = StyleSheet.create({
+  body: { gap: 14, paddingBottom: 8 },
+  section: { gap: 6 },
+  label: { fontSize: 9, letterSpacing: 1.6, textTransform: 'uppercase' },
+  countdown: {
+    borderRadius: 18, borderWidth: 1, padding: 14,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
+  big: { fontSize: 38, lineHeight: 40 },
+  forecast: { borderRadius: 18, borderWidth: 1, padding: 12 },
+  pills: { flexDirection: 'row', gap: 4 },
+  pill: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 12 },
+  legend: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    marginTop: 10, paddingTop: 8, borderTopWidth: 1,
+  },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  qlog: { flexDirection: 'row', gap: 6 },
+  conf: {
+    borderRadius: 18, borderWidth: 1, padding: 12,
+    flexDirection: 'row', gap: 12, alignItems: 'center',
+  },
+  confBadge: {
+    width: 48, height: 48, borderRadius: 999, borderWidth: 1.5,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#141313', shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 2, height: 2 },
+  },
+  history: { borderRadius: 18, borderWidth: 1 },
+  histRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 14, paddingVertical: 11,
+  },
+})

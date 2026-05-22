@@ -22,7 +22,7 @@ import { HomeGreeting } from './HomeGreeting'
 import { CycleJourneyRing } from './cycle/CycleJourneyRing'
 import { FertilitySignalsCard } from './cycle/FertilitySignalsCard'
 import { DailyNudgeCard } from './cycle/DailyNudgeCard'
-import { FertileWindowStrip } from './cycle/FertileWindowStrip'
+import { FertileWindowCard } from './cycle/FertileWindowCard'
 import { CyclePillarsGrid } from './cycle/CyclePillarsGrid'
 import { CycleHomeDetailSheet, type CycleHomeDetailType } from './cycle/CycleHomeDetailSheets'
 
@@ -112,9 +112,7 @@ export function CycleHome() {
           <DailyNudgeCard phase={info.phase as CyclePhase} />
         </View>
 
-        <Pressable onPress={() => setDetailType('fertile')}>
-          <FertileWindowStrip cycleConfig={cycleConfig} />
-        </Pressable>
+        <FertileWindowCard cycleConfig={cycleConfig} />
 
         <CyclePillarsGrid />
       </ScrollView>

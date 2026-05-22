@@ -9,10 +9,8 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { useTheme } from '../../../constants/theme'
 import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
-import { Flower } from '../../ui/Stickers'
-import { getCycleInfo, toDateStr, type CycleConfig } from '../../../lib/cycleLogic'
-import { useCycleHistory } from '../../../lib/cycleAnalytics'
-export type CycleHomeDetailType = 'cycle' | 'fertile'
+import { getCycleInfo, type CycleConfig } from '../../../lib/cycleLogic'
+export type CycleHomeDetailType = 'cycle'
 
 interface Props {
   type: CycleHomeDetailType | null
@@ -22,7 +20,6 @@ interface Props {
 
 const TITLES: Record<CycleHomeDetailType, string> = {
   cycle: 'Your Cycle',
-  fertile: 'Fertile Window',
 }
 
 export function CycleHomeDetailSheet({ type, onClose, cycleConfig }: Props) {
@@ -37,7 +34,6 @@ export function CycleHomeDetailSheet({ type, onClose, cycleConfig }: Props) {
         showsVerticalScrollIndicator={false}
       >
         {type === 'cycle' && <CycleDetail cycleConfig={cycleConfig} />}
-        {type === 'fertile' && <FertileDetailBody cycleConfig={cycleConfig} />}
       </ScrollView>
     </LogSheet>
   )
@@ -79,88 +75,6 @@ function CycleDetail({ cycleConfig }: { cycleConfig: CycleConfig }) {
       <TipsSection title="NUTRITION" tips={info.nutritionTips} />
     </View>
   )
-}
-
-// ─── Fertile Detail Body — synchronous render from cycleConfig ───────────
-//
-// Past-windows list is optional and populated from useCycleHistory when it
-// arrives. The current window is always computed synchronously from the
-// cycleConfig the parent already derived — no "Loading…" state.
-
-function FertileDetailBody({ cycleConfig }: { cycleConfig: CycleConfig }) {
-  const { colors, stickers, isDark } = useTheme()
-  const { data: history } = useCycleHistory()
-  const ink = isDark ? colors.text : '#141313'
-
-  const info = getCycleInfo(cycleConfig, toDateStr(new Date()))
-  const startIso = formatFromCycleDay(cycleConfig.lastPeriodStart!, info.fertileStart - 1)
-  const endIso = formatFromCycleDay(cycleConfig.lastPeriodStart!, info.fertileEnd - 1)
-  const todayD = new Date(toDateStr(new Date()) + 'T00:00:00')
-  const endD = new Date(endIso + 'T00:00:00')
-  const daysLeft = Math.max(0, Math.round((endD.getTime() - todayD.getTime()) / 86400000))
-
-  const pastWindows = history
-    ? history.cycles
-        .slice(-4, -1)
-        .filter((c) => c.lengthDays !== null)
-        .map((c) => ({
-          start: formatFromCycleDay(c.startDate, (c.lengthDays as number) - 14 - 5 - 1),
-          end: formatFromCycleDay(c.startDate, (c.lengthDays as number) - 14 + 1 - 1),
-          cycleIdx: history.cycles.indexOf(c) + 1,
-        }))
-    : []
-
-  return (
-    <View style={{ gap: 18 }}>
-      <View style={[detailStyles.fertileCurrent, { backgroundColor: stickers.pinkSoft, borderColor: colors.border }]}>
-        <View style={[detailStyles.fertileChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Flower size={36} petal={stickers.pink} center={stickers.yellow} />
-        </View>
-        <View style={{ flex: 1, gap: 4 }}>
-          <MonoCaps size={10} color={colors.textMuted}>THIS CYCLE</MonoCaps>
-          <Display size={20} color={ink}>
-            {formatShort(startIso)} – {formatShort(endIso)}
-          </Display>
-          <Body size={13} color={colors.textSecondary}>
-            {daysLeft > 0
-              ? `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`
-              : 'Window closed'}
-          </Body>
-        </View>
-      </View>
-
-      <View style={{ gap: 6 }}>
-        <MonoCaps size={10} color={colors.textMuted}>CONCEPTION PROBABILITY</MonoCaps>
-        <Body size={13} color={colors.textSecondary}>
-          PEAK is the 1-2 days right before ovulation. HIGH is the 4-day lead-up. Sperm can survive up to 5 days, so logging a few days before ovulation still counts.
-        </Body>
-      </View>
-
-      {pastWindows.length > 0 && (
-        <View style={{ gap: 6 }}>
-          <MonoCaps size={10} color={colors.textMuted}>PAST WINDOWS</MonoCaps>
-          {pastWindows.map((w) => (
-            <View key={w.cycleIdx} style={[detailStyles.historyRow, { borderColor: colors.borderLight }]}>
-              <Body size={13} color={ink}>Cycle {w.cycleIdx}</Body>
-              <Body size={13} color={colors.textSecondary}>
-                {formatShort(w.start)} – {formatShort(w.end)}
-              </Body>
-            </View>
-          ))}
-        </View>
-      )}
-    </View>
-  )
-}
-
-function formatFromCycleDay(cycleStart: string, dayOffset: number): string {
-  const d = new Date(cycleStart + 'T00:00:00')
-  d.setDate(d.getDate() + dayOffset)
-  return toDateStr(d)
-}
-
-function formatShort(iso: string): string {
-  return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 // ─── Shared helpers ───────────────────────────────────────────────────────
@@ -235,29 +149,5 @@ const detailStyles = StyleSheet.create({
   bullet: {
     fontSize: 14,
     lineHeight: 20,
-  },
-  fertileCurrent: {
-    flexDirection: 'row',
-    gap: 14,
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 22,
-    borderWidth: 1,
-  },
-  fertileChip: {
-    width: 56,
-    height: 56,
-    borderRadius: 999,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  historyRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
 })
