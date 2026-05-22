@@ -1,6 +1,14 @@
 import Purchases, { PurchasesPackage, CustomerInfo } from 'react-native-purchases'
 
-const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY!
+const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? ''
+/**
+ * RevenueCat ships only with a production iOS public key (starts with `appl_`)
+ * or Android (`goog_`). If the bundle was built with a test/sandbox key
+ * (`test_…`), the SDK force-quits the app on launch in non-development builds.
+ * We treat the test key as "RevenueCat disabled" so TestFlight builds can ship
+ * without a paywall while we wire the real production key.
+ */
+const IS_VALID_KEY = API_KEY.startsWith('appl_') || API_KEY.startsWith('goog_')
 
 export type SubscriptionTier = 'free' | 'premium_solo' | 'premium_family'
 export type BillingPeriod = 'monthly' | 'annual'
@@ -36,6 +44,12 @@ export interface TieredPackage {
 }
 
 export async function initRevenueCat(userId?: string) {
+  if (!IS_VALID_KEY) {
+    // No prod key in this build — leave RevenueCat unconfigured. Paywall
+    // surfaces will short-circuit; checkPremium() returns false.
+    if (__DEV__) console.warn('[revenue] RevenueCat disabled: no production API key in EXPO_PUBLIC_REVENUECAT_API_KEY')
+    return
+  }
   Purchases.configure({
     apiKey: API_KEY,
     appUserID: userId ?? undefined,
@@ -43,6 +57,7 @@ export async function initRevenueCat(userId?: string) {
 }
 
 export async function getOfferings(): Promise<PurchasesPackage[]> {
+  if (!IS_VALID_KEY) return []
   const offerings = await Purchases.getOfferings()
   if (!offerings.current) return []
   return offerings.current.availablePackages
@@ -65,11 +80,13 @@ export async function getTieredPackages(): Promise<TieredPackage[]> {
 }
 
 export async function purchasePackage(pkg: PurchasesPackage): Promise<CustomerInfo> {
+  if (!IS_VALID_KEY) throw new Error('Purchases are not available in this build.')
   const { customerInfo } = await Purchases.purchasePackage(pkg)
   return customerInfo
 }
 
 export async function restorePurchases(): Promise<CustomerInfo> {
+  if (!IS_VALID_KEY) throw new Error('Purchases are not available in this build.')
   return await Purchases.restorePurchases()
 }
 
@@ -82,11 +99,13 @@ export function detectTier(customerInfo: CustomerInfo): SubscriptionTier {
 }
 
 export async function checkPremium(): Promise<boolean> {
+  if (!IS_VALID_KEY) return false
   const customerInfo = await Purchases.getCustomerInfo()
   return detectTier(customerInfo) !== 'free'
 }
 
 export async function getCurrentTier(): Promise<SubscriptionTier> {
+  if (!IS_VALID_KEY) return 'free'
   const customerInfo = await Purchases.getCustomerInfo()
   return detectTier(customerInfo)
 }
