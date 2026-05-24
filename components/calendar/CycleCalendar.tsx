@@ -12,7 +12,8 @@ import { View, Text, Pressable, ScrollView, StyleSheet, Modal } from 'react-nati
 import { X, Check, Circle as CircleIcon } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
-import { getCycleInfo, toDateStr, type CyclePhase } from '../../lib/cycleLogic'
+import { getCycleInfo, toDateStr, type CyclePhase, type CycleConfig } from '../../lib/cycleLogic'
+import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { LogSheet } from './LogSheet'
 import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
@@ -125,12 +126,20 @@ export function CycleCalendar() {
     return { year: d.getFullYear(), month: d.getMonth() }
   })
 
-  // Cycle config (mock — will come from Supabase)
-  const cycleConfig = useMemo(() => {
+  // Derive the real cycle config from the user's logged period_start history.
+  // Falls back to a 10-days-ago default so the UI still renders for users
+  // who haven't logged anything yet.
+  const { data: history } = useCycleHistory()
+  const cycleConfig: CycleConfig = useMemo(() => {
+    const latest = history?.cycles[history.cycles.length - 1]
+    const avgLen = history?.avg ?? 28
+    if (latest) {
+      return { lastPeriodStart: latest.startDate, cycleLength: avgLen, periodLength: 5, lutealPhase: 14 }
+    }
     const d = new Date()
     d.setDate(d.getDate() - 10)
     return { lastPeriodStart: toDateStr(d), cycleLength: 28, periodLength: 5, lutealPhase: 14 }
-  }, [])
+  }, [history])
 
   const selectedInfo = getCycleInfo(cycleConfig, selectedDate)
   const modeColor = brand.prePregnancy

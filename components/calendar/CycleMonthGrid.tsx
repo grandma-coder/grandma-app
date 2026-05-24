@@ -7,7 +7,7 @@
  *
  * Tap a day → calls onSelectDate. Selected day gets a phase-accent ring.
  */
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from '../../constants/theme'
@@ -71,6 +71,13 @@ export function CycleMonthGrid({
 
   const today = toDateStr(new Date())
 
+  const [userId, setUserId] = useState<string | undefined>()
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data: { session } }) =>
+      setUserId(session?.user.id),
+    )
+  }, [])
+
   // Build the 6×7 grid of dates
   const cells = useMemo(() => {
     const start = startOfMonthGrid(visibleMonth.year, visibleMonth.month)
@@ -93,19 +100,19 @@ export function CycleMonthGrid({
 
   // Fetch logs for the visible range
   const { data: logs = [] } = useQuery({
-    queryKey: ['cycleLogs', 'monthGrid', monthStart, monthEnd],
+    queryKey: ['cycleLogs', 'monthGrid', userId, monthStart, monthEnd],
     queryFn: async (): Promise<{ date: string; type: string }[]> => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return []
+      if (!userId) return []
       const { data, error } = await supabase
         .from('cycle_logs')
         .select('date, type')
-        .eq('user_id', session.user.id)
+        .eq('user_id', userId)
         .gte('date', monthStart)
         .lte('date', monthEnd)
       if (error) throw error
       return (data ?? []) as { date: string; type: string }[]
     },
+    enabled: !!userId,
   })
 
   const logsByDate = useMemo(() => {

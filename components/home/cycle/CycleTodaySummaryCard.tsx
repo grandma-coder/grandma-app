@@ -83,13 +83,16 @@ export function CycleTodaySummaryCard({ phase }: Props) {
   const seededRef = useRef(false)
   useEffect(() => {
     if (!userId || seededRef.current) return
+    // Flip the ref BEFORE any await so a remount during the async window
+    // (tab switch, etc.) can't re-enter and double-seed. The DB count
+    // check still gates the actual seedCycleData() call.
+    seededRef.current = true
     void (async () => {
       const { count, error } = await supabase
         .from('cycle_logs')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
       if (error || count === null || count > 0) return
-      seededRef.current = true
       try {
         await seedCycleData()
         await qc.invalidateQueries({ queryKey: ['cycleLogs'] })
