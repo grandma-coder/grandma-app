@@ -16,10 +16,9 @@ import { getCycleInfo, toDateStr, type CyclePhase } from '../../lib/cycleLogic'
 import { LogSheet } from './LogSheet'
 import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
-import { AgendaWeekStrip } from './AgendaWeekStrip'
-import { ActivityPillCard } from './ActivityPillCard'
+import { CycleMonthGrid } from './CycleMonthGrid'
+import { CycleDayDetail } from './CycleDayDetail'
 import { LogTile, LogTileGrid } from './LogTile'
-import { SectionHeader } from './SectionHeader'
 import { PaperCard } from '../ui/PaperCard'
 import { Display, Body } from '../ui/Typography'
 import { logSticker } from './logStickers'
@@ -121,12 +120,16 @@ export function CycleCalendar() {
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
   const [sheetType, setSheetType] = useState<LogType | null>(null)
   const [logSheetOpen, setLogSheetOpen] = useState(false)
+  const [visibleMonth, setVisibleMonth] = useState(() => {
+    const d = new Date()
+    return { year: d.getFullYear(), month: d.getMonth() }
+  })
 
   // Cycle config (mock — will come from Supabase)
   const cycleConfig = useMemo(() => {
     const d = new Date()
     d.setDate(d.getDate() - 10)
-    return { lastPeriodStart: toDateStr(d), cycleLength: 28, periodLength: 5 }
+    return { lastPeriodStart: toDateStr(d), cycleLength: 28, periodLength: 5, lutealPhase: 14 }
   }, [])
 
   const selectedInfo = getCycleInfo(cycleConfig, selectedDate)
@@ -162,59 +165,27 @@ export function CycleCalendar() {
         {tab === 'cycle' && (
           <>
             <View style={{ marginBottom: 14 }}>
-              <AgendaWeekStrip
+              <CycleMonthGrid
+                cycleConfig={cycleConfig}
                 selectedDate={selectedDate}
+                visibleMonth={visibleMonth}
                 onSelectDate={setSelectedDate}
-                modeColor={modeColor}
+                onPrevMonth={() => setVisibleMonth((m) => {
+                  const d = new Date(m.year, m.month - 1, 1)
+                  return { year: d.getFullYear(), month: d.getMonth() }
+                })}
+                onNextMonth={() => setVisibleMonth((m) => {
+                  const d = new Date(m.year, m.month + 1, 1)
+                  return { year: d.getFullYear(), month: d.getMonth() }
+                })}
               />
             </View>
 
-            {/* Phase pill */}
-            <PaperCard style={{ marginBottom: 14 }}>
-              <View style={styles.phaseRow}>
-                <View style={[styles.phaseDot, { backgroundColor: phaseColor(selectedInfo.phase) }]} />
-                <Body size={13} color={isDark ? colors.text : '#141313'} style={{ flex: 1, fontWeight: '600' }}>
-                  {selectedInfo.phaseLabel} · Day {selectedInfo.cycleDay}
-                </Body>
-                {selectedInfo.conceptionProbability !== 'none' ? (
-                  <View
-                    style={[
-                      styles.fertilityTag,
-                      {
-                        backgroundColor: isDark ? phaseColor(selectedInfo.phase) + '55' : phaseColor(selectedInfo.phase),
-                        borderColor: isDark ? colors.text : '#141313',
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.fertilityTagText, { color: isDark ? colors.text : '#141313' }]}>
-                      {selectedInfo.conceptionProbability.toUpperCase()} CHANCE
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-              <Body size={13} color={isDark ? colors.textSecondary : '#3A3533'} style={{ marginTop: 6 }}>
-                {selectedInfo.phaseDescription}
-              </Body>
-            </PaperCard>
-
-            <SectionHeader
-              title={`Today · ${formatDayShort(selectedDate)}`}
-              right={`${LOG_ENTRIES.length} to log`}
-              iconColor={modeColor}
+            <CycleDayDetail
+              cycleConfig={cycleConfig}
+              date={selectedDate}
+              onAddLog={() => setLogSheetOpen(true)}
             />
-
-            <View style={{ gap: 10, marginTop: 8 }}>
-              {LOG_ENTRIES.map((e) => (
-                <ActivityPillCard
-                  key={e.id}
-                  icon={logSticker(e.id, 28, isDark)}
-                  title={`Log ${e.label.toLowerCase()}`}
-                  subtitle={e.subtitle}
-                  tint={e.tint}
-                  onPress={() => setSheetType(e.id)}
-                />
-              ))}
-            </View>
           </>
         )}
 
@@ -279,56 +250,11 @@ export function CycleCalendar() {
   )
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
-
-function phaseColor(phase: CyclePhase): string {
-  if (phase === 'menstruation') return brand.phase.menstrual
-  if (phase === 'follicular') return brand.prePregnancy
-  if (phase === 'ovulation') return brand.phase.ovulation
-  return brand.phase.luteal
-}
-
-function formatDayShort(dateStr: string): string {
-  if (!dateStr) return ''
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  })
-}
-
 // ─── Styles ────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { paddingHorizontal: 16 },
-
-  phaseRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  phaseDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  fertilityTag: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 999,
-    borderWidth: 1.5,
-    shadowColor: '#141313',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
-  },
-  fertilityTagText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-    fontFamily: 'DMSans_700Bold',
-  },
 
   tabEmpty: {
     alignItems: 'center',

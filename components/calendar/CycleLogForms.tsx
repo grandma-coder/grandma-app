@@ -93,9 +93,10 @@ function useDayLogToggle(date: string, type: string) {
     staleTime: 0,
   })
 
-  const initialSet = useMemo(() => new Set(initial), [initial])
+  const initialKey = initial.slice().sort().join('|')
+  const initialSet = useMemo(() => new Set(initial), [initialKey])
   const [selected, setSelected] = useState<Set<string>>(initialSet)
-  useEffect(() => { setSelected(new Set(initialSet)) }, [initialSet])
+  useEffect(() => { setSelected(new Set(initialSet)) }, [initialKey])
 
   const [saving, setSaving] = useState(false)
   function toggle(v: string) {
@@ -155,6 +156,8 @@ interface LogFormShellProps {
   phaseHintText: string
   phaseAccent: string
   phaseTint: string
+  /** High-contrast ink-tinted accent for text on top of phaseTint. */
+  phaseInk: string
   children: React.ReactNode
   saveLabel: string
   saveDisabled?: boolean
@@ -163,7 +166,7 @@ interface LogFormShellProps {
 }
 
 function LogFormShell({
-  title, subline, phaseHintText, phaseAccent, phaseTint,
+  title, subline, phaseHintText, phaseAccent, phaseTint, phaseInk,
   children, saveLabel: saveLabelText, saveDisabled, saving, onSave,
 }: LogFormShellProps) {
   const { colors, font } = useTheme()
@@ -181,10 +184,10 @@ function LogFormShell({
       <View
         style={[
           styles.phasePill,
-          { borderColor: phaseAccent, backgroundColor: phaseTint },
+          { borderColor: phaseInk, backgroundColor: phaseTint },
         ]}
       >
-        <Text style={[styles.phasePillText, { color: phaseAccent, fontFamily: font.bodySemiBold }]}>
+        <Text style={[styles.phasePillText, { color: phaseInk, fontFamily: font.bodySemiBold }]}>
           {phaseHintText}
         </Text>
       </View>
@@ -269,10 +272,10 @@ function StickerChip({ sticker, label, selected, accent, onPress }: StickerChipP
 // ─── Phase color helper ─────────────────────────────────────────────────────
 function phaseColors(phase: CyclePhase, stickers: ReturnType<typeof useTheme>['stickers']) {
   switch (phase) {
-    case 'menstruation': return { accent: stickers.coral, tint: stickers.pinkSoft }
-    case 'follicular':   return { accent: stickers.green, tint: stickers.greenSoft }
-    case 'ovulation':    return { accent: stickers.peach, tint: stickers.peachSoft }
-    case 'luteal':       return { accent: stickers.lilac, tint: stickers.lilacSoft }
+    case 'menstruation': return { accent: stickers.coral, tint: stickers.pinkSoft,  ink: stickers.coralInk }
+    case 'follicular':   return { accent: stickers.green, tint: stickers.greenSoft, ink: stickers.greenInk }
+    case 'ovulation':    return { accent: stickers.peach, tint: stickers.peachSoft, ink: stickers.peachInk }
+    case 'luteal':       return { accent: stickers.lilac, tint: stickers.lilacSoft, ink: stickers.lilacInk }
   }
 }
 
@@ -307,6 +310,7 @@ export function PeriodStartForm({
   const invalidate = useInvalidate()
   const accent = stickers.coral
   const tint = stickers.pinkSoft
+  const ink = stickers.coralInk
 
   async function save() {
     if (!flow) return
@@ -329,6 +333,7 @@ export function PeriodStartForm({
       phaseHintText={phaseHint('period_start', phase)}
       phaseAccent={accent}
       phaseTint={tint}
+      phaseInk={ink}
       saveLabel={saveLabel('period_start')}
       saveDisabled={!flow}
       saving={saving}
@@ -375,6 +380,7 @@ export function PeriodEndForm({
   const invalidate = useInvalidate()
   const accent = stickers.coral
   const tint = stickers.pinkSoft
+  const ink = stickers.coralInk
 
   async function save() {
     setSaving(true)
@@ -396,6 +402,7 @@ export function PeriodEndForm({
       phaseHintText={phaseHint('period_end', phase)}
       phaseAccent={accent}
       phaseTint={tint}
+      phaseInk={ink}
       saveLabel={saveLabel('period_end')}
       saving={saving}
       onSave={save}
@@ -420,7 +427,7 @@ export function SymptomsForm({
   const { stickers } = useTheme()
   const toggle = useDayLogToggle(date, 'symptom')
   const [showAll, setShowAll] = useState(false)
-  const { accent, tint } = phaseColors(phase, stickers)
+  const { accent, tint, ink } = phaseColors(phase, stickers)
 
   const suggested = useMemo(() => suggestedForPhase(phase), [phase])
   const visible = useMemo<SymptomId[]>(() => {
@@ -445,6 +452,7 @@ export function SymptomsForm({
       phaseHintText={phaseHint('symptoms', phase)}
       phaseAccent={accent}
       phaseTint={tint}
+      phaseInk={ink}
       saveLabel={saveLabel('symptoms', {
         count: toggle.selectedCount,
         initialCount: toggle.initialCount,
@@ -508,7 +516,7 @@ export function MoodForm({
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
-  const { accent, tint } = phaseColors(phase, stickers)
+  const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
     if (!value) return
@@ -531,6 +539,7 @@ export function MoodForm({
       phaseHintText={phaseHint('mood', phase)}
       phaseAccent={accent}
       phaseTint={tint}
+      phaseInk={ink}
       saveLabel={saveLabel('mood')}
       saveDisabled={!value}
       saving={saving}
@@ -584,7 +593,7 @@ export function BbtForm({
   const [tenths, setTenths] = useState(364)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
-  const { accent, tint } = phaseColors(phase, stickers)
+  const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
     setSaving(true)
@@ -610,6 +619,7 @@ export function BbtForm({
       phaseHintText={phaseHint('bbt', phase)}
       phaseAccent={accent}
       phaseTint={tint}
+      phaseInk={ink}
       saveLabel={saveLabel('bbt')}
       saving={saving}
       onSave={save}
@@ -666,7 +676,7 @@ export function LhForm({
   const [value, setValue] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
-  const { accent, tint } = phaseColors(phase, stickers)
+  const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
     if (!value) return
@@ -689,6 +699,7 @@ export function LhForm({
       phaseHintText={phaseHint('lh', phase)}
       phaseAccent={accent}
       phaseTint={tint}
+      phaseInk={ink}
       saveLabel={saveLabel('lh')}
       saveDisabled={!value}
       saving={saving}
@@ -733,7 +744,7 @@ export function CmForm({
   const [value, setValue] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
-  const { accent, tint } = phaseColors(phase, stickers)
+  const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
     if (!value) return
@@ -756,6 +767,7 @@ export function CmForm({
       phaseHintText={phaseHint('cm', phase)}
       phaseAccent={accent}
       phaseTint={tint}
+      phaseInk={ink}
       saveLabel={saveLabel('cm')}
       saveDisabled={!value}
       saving={saving}
@@ -794,7 +806,7 @@ export function IntimacyForm({
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
-  const { accent, tint } = phaseColors(phase, stickers)
+  const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
     if (!value) return
@@ -817,6 +829,7 @@ export function IntimacyForm({
       phaseHintText={phaseHint('intimacy', phase)}
       phaseAccent={accent}
       phaseTint={tint}
+      phaseInk={ink}
       saveLabel={saveLabel('intimacy')}
       saveDisabled={!value}
       saving={saving}
@@ -871,6 +884,7 @@ export function OvulationForm({
   const invalidate = useInvalidate()
   const accent = stickers.peach
   const tint = stickers.peachSoft
+  const ink = stickers.peachInk
 
   async function save() {
     setSaving(true)
@@ -892,6 +906,7 @@ export function OvulationForm({
       phaseHintText={phaseHint('ovulation', phase)}
       phaseAccent={accent}
       phaseTint={tint}
+      phaseInk={ink}
       saveLabel={saveLabel('ovulation')}
       saving={saving}
       onSave={save}

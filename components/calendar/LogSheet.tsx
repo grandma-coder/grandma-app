@@ -57,8 +57,8 @@ export function LogSheet({ visible, title, onClose, children, chip, chipColor, t
             <View style={styles.titleRow}>
               <Display size={22} color={ink}>{title}</Display>
               {chip ? (
-                <View style={[styles.chip, { backgroundColor: (chipColor ?? ink) + '22', borderColor: (chipColor ?? ink) + '40' }]}>
-                  <Text style={[styles.chipText, { color: chipColor ?? ink }]}>{chip}</Text>
+                <View style={[styles.chip, { backgroundColor: (chipColor ?? ink) + '22', borderColor: (chipColor ?? ink) + '55' }]}>
+                  <Text style={[styles.chipText, { color: ink }]}>{chip}</Text>
                 </View>
               ) : null}
               {titleRight}

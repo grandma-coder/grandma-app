@@ -20,6 +20,7 @@ import { CycleJourneyRingFull } from './cycle/CycleJourneyRingFull'
 import { DailyNudgeCard } from './cycle/DailyNudgeCard'
 import { MoodSymptomStrip } from './cycle/MoodSymptomStrip'
 import { CyclePillarsGrid } from './cycle/CyclePillarsGrid'
+import { CycleTodaySummaryCard } from './cycle/CycleTodaySummaryCard'
 
 function getMicroLabel(): string {
   const d = new Date()
@@ -72,6 +73,8 @@ export function CycleHome() {
           <DailyNudgeCard cycleConfig={cycleConfig} />
         </View>
         <MoodSymptomStrip phase={info.phase as CyclePhase} />
+
+        <CycleTodaySummaryCard phase={info.phase as CyclePhase} />
 
         <CyclePillarsGrid />
       </ScrollView>
