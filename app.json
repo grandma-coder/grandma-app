@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.grandmacoder.grandmaapp",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "icon": "./assets/icon.png",
       "usesAppleSignIn": true,
       "infoPlist": {
@@ -24,7 +24,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F3ECD9"
       },
-      "package": "com.grandmacoder.grandmaapp"
+      "package": "com.grandmacoder.grandmaapp",
+      "versionCode": 3
     },
     "plugins": [
       "expo-router",
