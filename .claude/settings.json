@@ -151,7 +151,9 @@
       "Bash(grep -n \"const { colors, radius } = useTheme\\(\\)\\\\|const { colors, radius, isDark } = useTheme\\(\\)\\\\|getModeColor\\\\|^import.*theme\" app/onboarding/kids/index.tsx)",
       "Bash(sed -i '' \"s|const { colors, radius, isDark } = useTheme\\(\\)|const { colors, radius, isDark } = useTheme\\(\\)\\\\n  const mode = getModeColor\\('kids', isDark\\)\\\\n  const modeSoft = getModeColorSoft\\('kids', isDark\\)|g\" app/onboarding/kids/index.tsx)",
       "Bash(sed -i '' \"s|const { colors, radius } = useTheme\\(\\)|const { colors, radius, isDark } = useTheme\\(\\)\\\\n  const mode = getModeColor\\('kids', isDark\\)\\\\n  const modeSoft = getModeColorSoft\\('kids', isDark\\)|g\" app/onboarding/kids/index.tsx)",
-      "Bash(grep -n 'question={`' app/onboarding/kids/index.tsx)"
+      "Bash(grep -n 'question={`' app/onboarding/kids/index.tsx)",
+      "Bash(supabase --version)",
+      "Bash(env)"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"

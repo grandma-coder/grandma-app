@@ -394,6 +394,7 @@ export default function RootLayout() {
           // Clear flags so signing back in starts from a fresh load state.
           inFlightUid = null
           setHasChildren(false)
+          setUserRole('parent')
           setLoadFailed(false)
           setLoading(false)
           return
@@ -416,6 +417,14 @@ export default function RootLayout() {
             return
           }
           inFlightUid = uid
+          // Re-show the loading splash while we fetch profile / children /
+          // behaviors. Without this, an in-session re-sign-in (after a
+          // SIGNED_OUT set loading=false) would let the route guard run
+          // with stale empty state — bouncing the returning user into
+          // /onboarding/journey for a frame before snapping back to (tabs)
+          // once loadUserData finishes. Showing the splash blocks the
+          // guard until the real data is in.
+          setLoading(true)
           try {
             await loadUserData(uid)
           } catch (e) {

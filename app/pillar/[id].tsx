@@ -20,6 +20,7 @@ import PillarMetrics from '../../components/pillar/PillarMetrics'
 import { PillButton } from '../../components/ui/PillButton'
 import { ScribbleUnderline } from '../../components/ui/ScribbleUnderline'
 import { getPillarSticker } from '../../lib/pillarStickerMap'
+import { usePillarTipBuckets } from '../../lib/pillarAdaptive'
 
 export default function PillarDetail() {
   const insets = useSafeAreaInsets()
@@ -51,6 +52,7 @@ export default function PillarDetail() {
   }
 
   const Sticker = getPillarSticker(pillar.id)
+  const { forYou, general, contextLabel } = usePillarTipBuckets(pillar.id, pillar.tips)
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -99,18 +101,52 @@ export default function PillarDetail() {
           </Text>
         )}
 
-        <View style={styles.sectionHeading}>
+        {forYou.length > 0 && (
+          <>
+            <View style={styles.sectionHeading}>
+              <ScribbleUnderline color={stickers.coral} strokeWidth={2.5}>
+                <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>
+                  For you right now
+                </Text>
+              </ScribbleUnderline>
+            </View>
+            {contextLabel && (
+              <Text
+                style={[
+                  styles.contextLabel,
+                  { color: stickers.coral, fontFamily: font.italic },
+                ]}
+              >
+                {contextLabel}
+              </Text>
+            )}
+            {forYou.map((tip, index) => (
+              <TipCard
+                key={`fy-${index}`}
+                label={tip.label}
+                text={tip.text}
+                index={index + 1}
+                isLast={index === forYou.length - 1}
+                accent={stickers.coral}
+              />
+            ))}
+          </>
+        )}
+
+        <View style={[styles.sectionHeading, { marginTop: forYou.length > 0 ? 24 : 8 }]}>
           <ScribbleUnderline color={stickers.coral} strokeWidth={2.5}>
-            <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>Tips</Text>
+            <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>
+              {forYou.length > 0 ? 'All tips' : 'Tips'}
+            </Text>
           </ScribbleUnderline>
         </View>
-        {pillar.tips.map((tip, index) => (
+        {general.map((tip, index) => (
           <TipCard
-            key={index}
+            key={`g-${index}`}
             label={tip.label}
             text={tip.text}
             index={index + 1}
-            isLast={index === pillar.tips.length - 1}
+            isLast={index === general.length - 1}
             accent={stickers.coral}
           />
         ))}
@@ -156,5 +192,6 @@ const styles = StyleSheet.create({
   intro: { fontSize: 15, lineHeight: 22, marginTop: 8, marginBottom: 16 },
   sectionHeading: { marginTop: 8, marginBottom: 4 },
   sectionTitle: { fontSize: 26, letterSpacing: -0.4 },
+  contextLabel: { fontSize: 14, marginTop: 8, marginBottom: 4, letterSpacing: 0.1 },
   chipsContainer: { flexDirection: 'column', gap: 10, marginTop: 12 },
 })

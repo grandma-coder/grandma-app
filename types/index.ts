@@ -39,6 +39,19 @@ export type PrePregPillarId = 'fertility' | 'nutrition-prep' | 'emotional-readin
 
 export type PillarId = KidsPillarId | PregnancyPillarId | PrePregPillarId
 
+export type CyclePhaseTag = 'menstruation' | 'follicular' | 'ovulation' | 'luteal'
+
+export interface PillarTip {
+  label: string
+  text: string
+  /** Pre-pregnancy: cycle phases when this tip is most relevant. */
+  phases?: CyclePhaseTag[]
+  /** Pregnancy: gestational week range [min, max] inclusive. */
+  weekRange?: [number, number]
+  /** Kids: child age in months [min, max] inclusive. */
+  ageMonthsRange?: [number, number]
+}
+
 export interface Pillar {
   id: PillarId
   name: string
@@ -46,7 +59,7 @@ export interface Pillar {
   description: string
   color: string
   intro?: string
-  tips: { label: string; text: string }[]
+  tips: PillarTip[]
   suggestions: string[]
 }
 
