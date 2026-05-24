@@ -61,7 +61,7 @@ const FIRST_ROUTE: Record<Behavior, string> = {
 
 export default function JourneyScreen() {
   const insets = useSafeAreaInsets()
-  const { colors, font, isDark } = useTheme()
+  const { colors, font, radius, isDark } = useTheme()
   const params = useLocalSearchParams<{ addMode?: string; preselect?: string }>()
 
   const isAddMode = params.addMode === 'true'
@@ -90,12 +90,12 @@ export default function JourneyScreen() {
     }
   }, [preselect, isAddMode, enrolledBehaviors])
 
-  const bg = isDark ? colors.bg : '#F3ECD9'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
-  const ink4 = isDark ? colors.textFaint : '#A69E93'
+  const bg = colors.bg
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
+  const ink3 = colors.textMuted
+  const ink4 = colors.textFaint
 
   const unenrolledBehaviors = JOURNEYS.filter((j) => !enrolledBehaviors.includes(j.id))
   const allEnrolled = unenrolledBehaviors.length === 0
@@ -213,6 +213,7 @@ export default function JourneyScreen() {
                     backgroundColor: isSelected || isDimmed ? softBg : paper,
                     borderColor: isSelected ? accent : paperBorder,
                     borderWidth: isSelected ? 1.5 : 1,
+                    borderRadius: radius.lg,
                     opacity: isDimmed ? 0.55 : 1,
                   },
                   pressed && !isDimmed && { transform: [{ scale: 0.98 }] },
@@ -291,7 +292,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     gap: 14,
-    borderRadius: 26,
   },
 
   stickerCircle: {

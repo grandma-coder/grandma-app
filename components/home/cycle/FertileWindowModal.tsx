@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from '../../../constants/theme'
-import { getCycleInfo, dailyFertilityCurve, toDateStr, type CycleConfig } from '../../../lib/cycleLogic'
+import { getCycleInfo, dailyFertilityCurve, toDateStr, type CycleConfig, type CyclePhase } from '../../../lib/cycleLogic'
 import { useCycleHistory } from '../../../lib/cycleAnalytics'
 import { LogSheet } from '../../calendar/LogSheet'
 import { PillButton } from '../../ui/PillButton'
@@ -233,13 +233,13 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
       </ScrollView>
 
       <LogSheet visible={openLog === 'bbt'} title="BBT" onClose={() => setOpenLog(null)}>
-        <BbtForm date={today} onSaved={() => setOpenLog(null)} />
+        <BbtForm date={today} phase={info.phase as CyclePhase} onSaved={() => setOpenLog(null)} />
       </LogSheet>
       <LogSheet visible={openLog === 'lh'} title="LH" onClose={() => setOpenLog(null)}>
-        <LhForm date={today} onSaved={() => setOpenLog(null)} />
+        <LhForm date={today} phase={info.phase as CyclePhase} onSaved={() => setOpenLog(null)} />
       </LogSheet>
       <LogSheet visible={openLog === 'cm'} title="CM" onClose={() => setOpenLog(null)}>
-        <CmForm date={today} onSaved={() => setOpenLog(null)} />
+        <CmForm date={today} phase={info.phase as CyclePhase} onSaved={() => setOpenLog(null)} />
       </LogSheet>
     </LogSheet>
   )

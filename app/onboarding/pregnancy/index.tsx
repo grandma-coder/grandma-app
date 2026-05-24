@@ -6,7 +6,7 @@
  * Saves answers to Supabase pregnancy_logs, behaviors, and profiles.
  */
 
-import { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import {
   View,
   Text,
@@ -19,8 +19,8 @@ import {
 } from 'react-native'
 import DatePickerField from '../../../components/ui/DatePickerField'
 import { router } from 'expo-router'
-import { Heart as HeartIcon } from 'lucide-react-native'
-import { Heart, Star, Moon, Sun, Flower, Cloud } from '../../../components/ui/Stickers'
+import { Heart, Star, Moon, Sun, Flower, Cloud, Smiley, Sleepy, Sad, Sparkle, Leaf } from '../../../components/ui/Stickers'
+import { PillButton } from '../../../components/ui/PillButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
 import { useTheme, brand, stickers, getModeColor, getModeColorSoft } from '../../../constants/theme'
@@ -65,13 +65,17 @@ const STEPS: StepId[] = [
   'complete',
 ]
 
-const MOOD_OPTIONS: { id: PregnancyMood; emoji: string; label: string }[] = [
-  { id: 'excited', emoji: '🤩', label: 'Excited' },
-  { id: 'happy', emoji: '😊', label: 'Happy' },
-  { id: 'calm', emoji: '😌', label: 'Calm' },
-  { id: 'anxious', emoji: '😰', label: 'Anxious' },
-  { id: 'tired', emoji: '😴', label: 'Tired' },
-  { id: 'nauseous', emoji: '🤢', label: 'Nauseous' },
+const MOOD_OPTIONS: {
+  id: PregnancyMood
+  icon: (size: number) => React.ReactNode
+  label: string
+}[] = [
+  { id: 'excited', label: 'Excited', icon: (s) => <Sparkle size={s} fill={stickers.yellow} /> },
+  { id: 'happy', label: 'Happy', icon: (s) => <Smiley size={s} fill={stickers.yellow} /> },
+  { id: 'calm', label: 'Calm', icon: (s) => <Leaf size={s} fill={stickers.green} /> },
+  { id: 'anxious', label: 'Anxious', icon: (s) => <Cloud size={s} fill={stickers.blue} /> },
+  { id: 'tired', label: 'Tired', icon: (s) => <Sleepy size={s} fill={stickers.lilac} /> },
+  { id: 'nauseous', label: 'Nauseous', icon: (s) => <Sad size={s} fill={stickers.green} /> },
 ]
 
 const BIRTH_PLACE_OPTIONS: { id: BirthPlace; label: string }[] = [
@@ -427,7 +431,7 @@ function StepMood({
                 },
               ]}
             >
-              <Text style={stepStyles.moodEmoji}>{opt.emoji}</Text>
+              <View style={stepStyles.moodIcon}>{opt.icon(40)}</View>
               <Text
                 style={[
                   stepStyles.moodLabel,
@@ -658,7 +662,7 @@ function CompletionScreen({
   onFinish: () => void
 }) {
   const insets = useSafeAreaInsets()
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const { t } = useTranslation()
   const mode = getModeColor('pregnancy', isDark)
   const modeSoft = getModeColorSoft('pregnancy', isDark)
@@ -670,16 +674,28 @@ function CompletionScreen({
     <View style={[completeStyles.root, { backgroundColor: colors.bg }]}>
       <View style={completeStyles.content}>
         <View
-          style={[completeStyles.iconCircle, { backgroundColor: brand.pregnancy + '20' }]}
+          style={[
+            completeStyles.iconCircle,
+            {
+              backgroundColor: modeSoft,
+              borderWidth: 1,
+              borderColor: colors.border,
+            },
+          ]}
         >
-          <HeartIcon size={40} color={brand.pregnancy} strokeWidth={2} fill={brand.pregnancy} />
+          <Heart size={56} fill={stickers.pink} />
         </View>
 
-        <Text style={[completeStyles.title, { color: colors.text }]}>
+        <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.display }]}>
           {t('preg_onboard_completionTitle')}
         </Text>
 
-        <Text style={[completeStyles.message, { color: colors.textSecondary }]}>
+        <Text
+          style={[
+            completeStyles.message,
+            { color: colors.textSecondary, fontFamily: font.body },
+          ]}
+        >
           {t('preg_onboard_completionBody')}
         </Text>
 
@@ -687,16 +703,33 @@ function CompletionScreen({
           <View
             style={[
               completeStyles.countdownCard,
-              { backgroundColor: colors.surfaceRaised, borderRadius: radius.xl },
+              {
+                backgroundColor: colors.surface,
+                borderRadius: radius.lg,
+                borderWidth: 1,
+                borderColor: colors.border,
+              },
             ]}
           >
-            <Text style={[completeStyles.countdownDays, { color: mode }]}>
+            <Text
+              style={[completeStyles.countdownDays, { color: mode, fontFamily: font.display }]}
+            >
               {days}
             </Text>
-            <Text style={[completeStyles.countdownLabel, { color: colors.textSecondary }]}>
+            <Text
+              style={[
+                completeStyles.countdownLabel,
+                { color: colors.textSecondary, fontFamily: font.body },
+              ]}
+            >
               days until you meet your little one
             </Text>
-            <Text style={[completeStyles.countdownWeek, { color: colors.textMuted }]}>
+            <Text
+              style={[
+                completeStyles.countdownWeek,
+                { color: colors.textMuted, fontFamily: font.body },
+              ]}
+            >
               Currently at week {week}
             </Text>
           </View>
@@ -704,19 +737,7 @@ function CompletionScreen({
       </View>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16 }]}>
-        <Pressable
-          onPress={onFinish}
-          style={({ pressed }) => [
-            completeStyles.button,
-            {
-              backgroundColor: brand.pregnancy,
-              borderRadius: radius.full,
-            },
-            pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
-          ]}
-        >
-          <Text style={[completeStyles.buttonText, { color: colors.bg }]}>Let's Go</Text>
-        </Pressable>
+        <PillButton label="Let's Go" variant="ink" onPress={onFinish} />
       </View>
     </View>
   )
@@ -826,8 +847,11 @@ const stepStyles = StyleSheet.create({
     shadowRadius: 0,
     elevation: 3,
   },
-  moodEmoji: {
-    fontSize: 32 },
+  moodIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 44,
+  },
   moodLabel: {
     fontSize: 13,
     fontWeight: '600',
@@ -895,7 +919,8 @@ const completeStyles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' },
+    letterSpacing: -0.5,
+  },
   message: {
     fontSize: 16,
     fontWeight: '500',
@@ -912,7 +937,8 @@ const completeStyles = StyleSheet.create({
   countdownDays: {
     fontSize: 56,
     fontWeight: '900',
-    letterSpacing: -2, fontFamily: 'Fraunces_600SemiBold' },
+    letterSpacing: -2,
+  },
   countdownLabel: {
     fontSize: 15,
     fontWeight: '600',

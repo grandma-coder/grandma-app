@@ -19,10 +19,10 @@ import {
 } from 'react-native'
 import DatePickerField from '../../../components/ui/DatePickerField'
 import { router } from 'expo-router'
-import { Sparkles } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
-import { Flower, Drop, Moon, Sun, Leaf } from '../../../components/ui/Stickers'
+import { Flower, Drop, Moon, Sun, Leaf, Heart } from '../../../components/ui/Stickers'
+import { PillButton } from '../../../components/ui/PillButton'
 import { useTheme, brand, stickers, getModeColor, getModeColorSoft } from '../../../constants/theme'
 import {
   useCycleOnboardingStore,
@@ -303,7 +303,7 @@ function StepCycleLength({
   total: number
   onContinue: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const cycleLength = useCycleOnboardingStore((s) => s.cycleLength)
@@ -332,7 +332,7 @@ function StepCycleLength({
               }}
               keyboardType="number-pad"
               maxLength={2}
-              style={[stepStyles.numberInput, { color: colors.text }]}
+              style={[stepStyles.numberInput, { color: colors.text, fontFamily: font.display }]}
               placeholderTextColor={colors.textMuted}
               placeholder="28"
             />
@@ -704,41 +704,42 @@ function StepTTCSupplements({
 
 function CompletionScreen({ onFinish }: { onFinish: () => void }) {
   const insets = useSafeAreaInsets()
-  const { colors, radius, isDark } = useTheme()
-  const mode = getModeColor('pre-pregnancy', isDark)
+  const { colors, radius, font, isDark } = useTheme()
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
 
   return (
     <View style={[completeStyles.root, { backgroundColor: colors.bg }]}>
       <View style={completeStyles.content}>
-        <View style={[completeStyles.iconCircle, { backgroundColor: modeSoft }]}>
-          <Sparkles size={40} color={mode} strokeWidth={2} />
+        <View
+          style={[
+            completeStyles.iconCircle,
+            {
+              backgroundColor: modeSoft,
+              borderWidth: 1,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Flower size={56} petal={stickers.pink} center={stickers.yellow} />
         </View>
 
-        <Text style={[completeStyles.title, { color: colors.text }]}>
+        <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.display }]}>
           You're all set!
         </Text>
 
-        <Text style={[completeStyles.message, { color: colors.textSecondary }]}>
+        <Text
+          style={[
+            completeStyles.message,
+            { color: colors.textSecondary, fontFamily: font.body },
+          ]}
+        >
           Grandma's got everything she needs to guide you on this beautiful journey.
           Your cycle insights are being personalized just for you.
         </Text>
       </View>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16 }]}>
-        <Pressable
-          onPress={onFinish}
-          style={({ pressed }) => [
-            completeStyles.button,
-            {
-              backgroundColor: mode,
-              borderRadius: radius.full,
-            },
-            pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
-          ]}
-        >
-          <Text style={[completeStyles.buttonText, { color: colors.bg }]}>Let's Go</Text>
-        </Pressable>
+        <PillButton label="Let's Go" variant="ink" onPress={onFinish} />
       </View>
     </View>
   )
@@ -817,7 +818,8 @@ const stepStyles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
     width: 60,
-    textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' },
+    textAlign: 'center',
+  },
   unitLabel: {
     fontSize: 16,
     fontWeight: '500',
@@ -938,7 +940,8 @@ const completeStyles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' },
+    letterSpacing: -0.5,
+  },
   message: {
     fontSize: 16,
     fontWeight: '500',

@@ -858,10 +858,16 @@ export function GrandmaTalk() {
   const pregnancyDueDate = usePregnancyStore((s) => s.dueDate)
   const pregnancyStoredWeek = usePregnancyStore((s) => s.weekNumber)
   const upsertSession = useGrandmaHistoryStore((s) => s.upsertSession)
-  const params = useLocalSearchParams<{ insightContext?: string; screen?: string }>()
+  const params = useLocalSearchParams<{
+    insightContext?: string
+    screen?: string
+    prefill?: string
+    pillarId?: string
+  }>()
 
   const insightContext = params.insightContext ?? undefined
   const screen = params.screen ?? undefined
+  const prefill = params.prefill ?? undefined
 
   const childName = activeChild?.name
   const childAge = activeChild?.birthDate ? formatChildAge(activeChild.birthDate) : undefined
@@ -1029,6 +1035,15 @@ export function GrandmaTalk() {
       setTimeout(() => sendText(autoMessage), 600)
     }
   }, [insightContext, sendText, isStreaming])
+
+  // Auto-send prefill question from pillar suggestions
+  const prefillSentRef = useRef(false)
+  useEffect(() => {
+    if (prefill && !prefillSentRef.current && !isStreaming) {
+      prefillSentRef.current = true
+      setTimeout(() => sendText(prefill), 400)
+    }
+  }, [prefill, sendText, isStreaming])
 
   // Find the index of the last assistant message (for inverted "latest" styling)
   const lastAssistantIndex = useMemo(() => {

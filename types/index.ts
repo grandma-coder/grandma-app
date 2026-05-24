@@ -45,6 +45,7 @@ export interface Pillar {
   icon: string
   description: string
   color: string
+  intro?: string
   tips: { label: string; text: string }[]
   suggestions: string[]
 }

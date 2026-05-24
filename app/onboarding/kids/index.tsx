@@ -22,8 +22,9 @@ import {
 import DatePickerField from '../../../components/ui/DatePickerField'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
-import { Star as StarIcon, Camera, User, Plus, Minus, Check } from 'lucide-react-native'
+import { Camera, User, Plus, Minus, Check } from 'lucide-react-native'
 import { Star, Heart, Moon, Sun, Flower, Cloud, Leaf } from '../../../components/ui/Stickers'
+import { PillButton } from '../../../components/ui/PillButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
 import { useTheme, brand, stickers, getModeColor, getModeColorSoft } from '../../../constants/theme'
@@ -456,7 +457,7 @@ function StepChildCount({
   total: number
   onContinue: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const count = useKidsOnboardingStore((s) => s.childCount)
@@ -488,7 +489,7 @@ function StepChildCount({
         </Pressable>
 
         <View style={[stepStyles.counterDisplay, { backgroundColor: modeSoft, borderRadius: radius.xl }]}>
-          <Text style={[stepStyles.counterNumber, { color: mode }]}>{count}</Text>
+          <Text style={[stepStyles.counterNumber, { color: mode, fontFamily: font.display }]}>{count}</Text>
         </View>
 
         <Pressable
@@ -1149,8 +1150,7 @@ function CompletionScreen({
   onFinish: () => void
 }) {
   const insets = useSafeAreaInsets()
-  const { colors, radius, isDark } = useTheme()
-  const mode = getModeColor('kids', isDark)
+  const { colors, radius, font, isDark } = useTheme()
   const modeSoft = getModeColorSoft('kids', isDark)
 
   return (
@@ -1162,15 +1162,29 @@ function CompletionScreen({
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[completeStyles.iconCircle, { backgroundColor: brand.kids + '20' }]}>
-          <StarIcon size={40} color={brand.kids} strokeWidth={2} fill={brand.kids} />
+        <View
+          style={[
+            completeStyles.iconCircle,
+            {
+              backgroundColor: modeSoft,
+              borderWidth: 1,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Star size={56} fill={stickers.blue} />
         </View>
 
-        <Text style={[completeStyles.title, { color: colors.text }]}>
+        <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.display }]}>
           Welcome to the family!
         </Text>
 
-        <Text style={[completeStyles.message, { color: colors.textSecondary }]}>
+        <Text
+          style={[
+            completeStyles.message,
+            { color: colors.textSecondary, fontFamily: font.body },
+          ]}
+        >
           Grandma can't wait to help you track every beautiful moment.
           Here's who we'll be watching over:
         </Text>
@@ -1185,7 +1199,7 @@ function CompletionScreen({
                 {
                   backgroundColor: colors.surface,
                   borderColor: colors.border,
-                  borderRadius: radius.xl,
+                  borderRadius: radius.lg,
                 },
               ]}
             >
@@ -1220,19 +1234,7 @@ function CompletionScreen({
       </ScrollView>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16, backgroundColor: colors.bg }]}>
-        <Pressable
-          onPress={onFinish}
-          style={({ pressed }) => [
-            completeStyles.button,
-            {
-              backgroundColor: brand.kids,
-              borderRadius: radius.full,
-            },
-            pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
-          ]}
-        >
-          <Text style={[completeStyles.buttonText, { color: colors.bg }]}>Let's Go</Text>
-        </Pressable>
+        <PillButton label="Let's Go" variant="ink" onPress={onFinish} />
       </View>
     </View>
   )
@@ -1329,7 +1331,8 @@ const stepStyles = StyleSheet.create({
   },
   counterNumber: {
     fontSize: 40,
-    fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' },
+    fontWeight: '900',
+  },
   countryRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1444,7 +1447,8 @@ const completeStyles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '900',
     letterSpacing: -0.5,
-    marginBottom: 12, fontFamily: 'Fraunces_600SemiBold' },
+    marginBottom: 12,
+  },
   message: {
     fontSize: 16,
     fontWeight: '500',

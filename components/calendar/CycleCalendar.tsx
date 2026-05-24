@@ -29,9 +29,9 @@ import {
   PeriodEndForm,
   SymptomsForm,
   MoodForm,
-  TemperatureForm,
+  BbtForm,
   IntimacyForm,
-} from './LogForms'
+} from './CycleLogForms'
 import { ExamForm } from '../exams/ExamForm'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -248,22 +248,22 @@ export function CycleCalendar() {
       {/* ─── Bottom sheets per log type ────────────────────────────────── */}
 
       <LogSheet visible={sheetType === 'period_start'} title="Log Period Start" onClose={() => setSheetType(null)}>
-        <PeriodStartForm date={selectedDate} onSaved={handleSaved} />
+        <PeriodStartForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'period_end'} title="Log Period End" onClose={() => setSheetType(null)}>
-        <PeriodEndForm date={selectedDate} onSaved={handleSaved} />
+        <PeriodEndForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'symptom'} title="Log Symptoms" onClose={() => setSheetType(null)}>
-        <SymptomsForm date={selectedDate} onSaved={handleSaved} />
+        <SymptomsForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'mood'} title="Log Mood" onClose={() => setSheetType(null)}>
-        <MoodForm date={selectedDate} onSaved={handleSaved} />
+        <MoodForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'basal_temp'} title="Log Temperature" onClose={() => setSheetType(null)}>
-        <TemperatureForm date={selectedDate} onSaved={handleSaved} />
+        <BbtForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'intercourse'} title="Log Intimacy" onClose={() => setSheetType(null)}>
-        <IntimacyForm date={selectedDate} onSaved={handleSaved} />
+        <IntimacyForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'exam'} title="Log Exam Result" onClose={() => setSheetType(null)}>
         <ExamForm behavior="pre-pregnancy" date={selectedDate} onSaved={() => setSheetType(null)} />

@@ -128,7 +128,8 @@ export function MoodSymptomStrip({ phase }: Props) {
     }
   }
 
-  const moodId = (moodToday as MoodId | null) ?? '4'
+  const moodId = moodToday as MoodId | null
+  const hasMood = moodId != null
 
   return (
     <View style={{ paddingHorizontal: 20, marginTop: 12 }}>
@@ -138,9 +139,22 @@ export function MoodSymptomStrip({ phase }: Props) {
       ]}>
         <Pressable
           onPress={() => setMoodSheet(true)}
-          style={[styles.face, { backgroundColor: stickers.yellow, borderColor: ink }]}
+          style={[
+            styles.face,
+            {
+              backgroundColor: hasMood ? stickers.yellow : colors.surfaceRaised,
+              borderColor: hasMood ? ink : colors.border,
+              borderStyle: hasMood ? 'solid' : 'dashed',
+            },
+          ]}
         >
-          <MoodFace id={moodId} size={18} stickerSet={stickers} />
+          {hasMood ? (
+            <MoodFace id={moodId!} size={18} stickerSet={stickers} />
+          ) : (
+            <Text style={{ fontSize: 16, color: colors.textMuted, fontFamily: font.bodyBold, marginTop: -1 }}>
+              +
+            </Text>
+          )}
         </Pressable>
 
         <View style={styles.chips}>

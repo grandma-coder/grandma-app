@@ -16,7 +16,9 @@ import { pillars } from '../../lib/pillars'
 import { prePregPillars } from '../../lib/prePregPillars'
 import { pregnancyPillars } from '../../lib/pregnancyPillars'
 import TipCard from '../../components/pillar/TipCard'
+import PillarMetrics from '../../components/pillar/PillarMetrics'
 import { PillButton } from '../../components/ui/PillButton'
+import { ScribbleUnderline } from '../../components/ui/ScribbleUnderline'
 import { getPillarSticker } from '../../lib/pillarStickerMap'
 
 export default function PillarDetail() {
@@ -43,8 +45,8 @@ export default function PillarDetail() {
 
   function handleSuggestion(suggestion: string) {
     router.push({
-      pathname: '/(tabs)/library',
-      params: { suggestion, pillarId: pillar!.id },
+      pathname: '/grandma-talk',
+      params: { prefill: suggestion, pillarId: pillar!.id },
     })
   }
 
@@ -84,19 +86,48 @@ export default function PillarDetail() {
           {pillar.description}
         </Text>
 
-        <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>Tips</Text>
+        <PillarMetrics pillarId={pillar.id} />
+
+        {pillar.intro && (
+          <Text
+            style={[
+              styles.intro,
+              { color: colors.textSecondary, fontFamily: font.body },
+            ]}
+          >
+            {pillar.intro}
+          </Text>
+        )}
+
+        <View style={styles.sectionHeading}>
+          <ScribbleUnderline color={stickers.coral} strokeWidth={2.5}>
+            <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>Tips</Text>
+          </ScribbleUnderline>
+        </View>
         {pillar.tips.map((tip, index) => (
-          <TipCard key={index} label={tip.label} text={tip.text} />
+          <TipCard
+            key={index}
+            label={tip.label}
+            text={tip.text}
+            index={index + 1}
+            isLast={index === pillar.tips.length - 1}
+            accent={stickers.coral}
+          />
         ))}
 
-        <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>Ask Guru Grandma</Text>
+        <View style={[styles.sectionHeading, { marginTop: 24 }]}>
+          <ScribbleUnderline color={stickers.coral} strokeWidth={2.5}>
+            <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>
+              Ask Guru Grandma
+            </Text>
+          </ScribbleUnderline>
+        </View>
         <View style={styles.chipsContainer}>
           {pillar.suggestions.map((suggestion, index) => (
             <PillButton
               key={index}
               label={suggestion}
-              variant="accent"
-              accentColor={isDark ? '#EFA2C2' : '#E58BB4'}
+              variant="paper"
               onPress={() => handleSuggestion(suggestion)}
               style={{ alignSelf: 'flex-start' }}
             />
@@ -121,7 +152,9 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   name: { fontSize: 32, letterSpacing: -0.5, marginBottom: 4 },
-  subtitle: { fontSize: 16, lineHeight: 22, marginBottom: 24 },
-  sectionTitle: { fontSize: 22, marginTop: 16, marginBottom: 12 },
-  chipsContainer: { flexDirection: 'column', gap: 10 },
+  subtitle: { fontSize: 16, lineHeight: 22, marginBottom: 16 },
+  intro: { fontSize: 15, lineHeight: 22, marginTop: 8, marginBottom: 16 },
+  sectionHeading: { marginTop: 8, marginBottom: 4 },
+  sectionTitle: { fontSize: 26, letterSpacing: -0.4 },
+  chipsContainer: { flexDirection: 'column', gap: 10, marginTop: 12 },
 })

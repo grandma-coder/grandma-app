@@ -55,3 +55,53 @@ const PILLAR_STICKERS: Record<string, StickerComponent> = {
 export function getPillarSticker(id: string): StickerComponent | null {
   return PILLAR_STICKERS[id] ?? null
 }
+
+/**
+ * Pillar ID → sticker-soft tint key. Use with `useTheme().stickers[key]`
+ * to color the small icon circle on each TipCard. Pick was tuned so each
+ * pillar sits in a different family from its mode neighbors.
+ */
+type StickerTintKey =
+  | 'yellowSoft'
+  | 'blueSoft'
+  | 'pinkSoft'
+  | 'greenSoft'
+  | 'lilacSoft'
+  | 'peachSoft'
+
+const PILLAR_TINTS: Record<string, StickerTintKey> = {
+  // Pre-pregnancy
+  fertility: 'pinkSoft',
+  'fertility-basics': 'pinkSoft',
+  'nutrition-prep': 'greenSoft',
+  'emotional-readiness': 'yellowSoft',
+  'financial-planning': 'peachSoft',
+  'partner-journey': 'lilacSoft',
+  'health-checkups': 'blueSoft',
+
+  // Pregnancy
+  'week-by-week': 'lilacSoft',
+  'symptoms-relief': 'peachSoft',
+  'birth-planning': 'pinkSoft',
+  'breastfeeding-prep': 'pinkSoft',
+  'baby-gear': 'blueSoft',
+  'partner-support': 'lilacSoft',
+  'postpartum-prep': 'greenSoft',
+  'pregnancy-nutrition': 'greenSoft',
+  'emotional-wellness': 'yellowSoft',
+
+  // Kids
+  milk: 'pinkSoft',
+  food: 'greenSoft',
+  nutrition: 'yellowSoft',
+  vaccines: 'blueSoft',
+  clothes: 'peachSoft',
+  recipes: 'peachSoft',
+  habits: 'greenSoft',
+  medicine: 'pinkSoft',
+  milestones: 'lilacSoft',
+}
+
+export function getPillarTintKey(id: string): StickerTintKey {
+  return PILLAR_TINTS[id] ?? 'peachSoft'
+}

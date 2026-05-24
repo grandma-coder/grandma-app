@@ -16,7 +16,8 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTheme } from '../../../constants/theme'
 import { supabase } from '../../../lib/supabase'
-import { toDateStr } from '../../../lib/cycleLogic'
+import { toDateStr, getCycleInfo, type CyclePhase, type CycleConfig } from '../../../lib/cycleLogic'
+import { useCycleHistory } from '../../../lib/cycleAnalytics'
 import { PaperCard } from '../../ui/PaperCard'
 import { Drop, Heart, Pill, Sparkle } from '../../ui/Stickers'
 import { PillButton } from '../../ui/PillButton'
@@ -40,6 +41,15 @@ export function FertilitySignalsCard() {
   }, [])
 
   const today = toDateStr(new Date())
+  const { data: history } = useCycleHistory()
+  const cycleConfig: CycleConfig = (() => {
+    const latest = history?.cycles[history.cycles.length - 1]
+    const avgLen = history?.avg ?? 28
+    if (latest) return { lastPeriodStart: latest.startDate, cycleLength: avgLen, periodLength: 5, lutealPhase: 14 }
+    const d = new Date(); d.setDate(d.getDate() - 10)
+    return { lastPeriodStart: toDateStr(d), cycleLength: 28, periodLength: 5, lutealPhase: 14 }
+  })()
+  const phase = getCycleInfo(cycleConfig, today).phase as CyclePhase
   const startD = new Date()
   startD.setDate(startD.getDate() - (DAYS_BACK - 1))
   const startISO = toDateStr(startD)
@@ -236,16 +246,16 @@ export function FertilitySignalsCard() {
       </PaperCard>
 
       <LogSheet visible={openSheet === 'bbt'} title="BBT" onClose={() => setOpenSheet(null)}>
-        <BbtForm date={today} onSaved={onSaved} />
+        <BbtForm date={today} phase={phase} onSaved={onSaved} />
       </LogSheet>
       <LogSheet visible={openSheet === 'lh'} title="LH test" onClose={() => setOpenSheet(null)}>
-        <LhForm date={today} onSaved={onSaved} />
+        <LhForm date={today} phase={phase} onSaved={onSaved} />
       </LogSheet>
       <LogSheet visible={openSheet === 'cm'} title="Cervical fluid" onClose={() => setOpenSheet(null)}>
-        <CmForm date={today} onSaved={onSaved} />
+        <CmForm date={today} phase={phase} onSaved={onSaved} />
       </LogSheet>
       <LogSheet visible={openSheet === 'intercourse'} title="Intimacy" onClose={() => setOpenSheet(null)}>
-        <IntercourseForm date={today} onSaved={onSaved} />
+        <IntercourseForm date={today} phase={phase} onSaved={onSaved} />
       </LogSheet>
     </View>
   )

@@ -1,13 +1,11 @@
 /**
- * CycleHome — pre-pregnancy home (final 2026 redesign layout).
+ * CycleHome — pre-pregnancy home (full-ring 2026 redesign).
  *
  *   1. HomeGreeting
- *   2. CycleJourneyRing            (170px ring hero)
- *   3. FertileWindowCard           (today % + 7-day forecast)
- *   4. FertilitySignalsCard        (BBT/LH/CM/Sex tiles + sparkline)
- *   5. DailyNudgeCard              (phase-aware nudge)
- *   6. MoodSymptomStrip            (mood face + symptom chips)
- *   7. CyclePillarsGrid            (2×2 + See all → /cycle-pillars)
+ *   2. CycleJourneyRingFull        (full-size phase-sticker ring + day panel)
+ *   3. DailyNudgeCard              (phase-aware nudge)
+ *   4. MoodSymptomStrip            (mood face + symptom chips)
+ *   5. CyclePillarsGrid            (2×2 + See all → /cycle-pillars)
  */
 
 import { View, ScrollView, StyleSheet } from 'react-native'
@@ -18,9 +16,7 @@ import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
-import { CycleJourneyRing } from './cycle/CycleJourneyRing'
-import { FertileWindowCard } from './cycle/FertileWindowCard'
-import { FertilitySignalsCard } from './cycle/FertilitySignalsCard'
+import { CycleJourneyRingFull } from './cycle/CycleJourneyRingFull'
 import { DailyNudgeCard } from './cycle/DailyNudgeCard'
 import { MoodSymptomStrip } from './cycle/MoodSymptomStrip'
 import { CyclePillarsGrid } from './cycle/CyclePillarsGrid'
@@ -30,27 +26,6 @@ function getMicroLabel(): string {
   const day = d.toLocaleDateString('en-US', { weekday: 'long' })
   const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   return `${day.toUpperCase()} · ${date.toUpperCase()} · CYCLE`
-}
-
-function getTitleItalic(phase: CyclePhase): string {
-  switch (phase) {
-    case 'menstruation': return 'quiet day'
-    case 'follicular':   return 'rising day'
-    case 'ovulation':    return 'peak day'
-    case 'luteal':       return 'soft day'
-  }
-}
-
-function getSubline(info: ReturnType<typeof getCycleInfo>): string {
-  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return `${today} · ${info.phaseLabel}`
-}
-
-function getPeriodLine(info: ReturnType<typeof getCycleInfo>): string {
-  if (info.phase === 'menstruation') return `Period day ${info.cycleDay} of ~${info.periodLength}`
-  if (info.isFertile && info.conceptionProbability === 'peak') return 'Peak today — window open'
-  if (info.daysUntilOvulation > 0) return `Ovulation in ${info.daysUntilOvulation} day${info.daysUntilOvulation === 1 ? '' : 's'}`
-  return `Next period in ${info.daysUntilPeriod} day${info.daysUntilPeriod === 1 ? '' : 's'}`
 }
 
 export function CycleHome() {
@@ -91,19 +66,8 @@ export function CycleHome() {
           <HomeGreeting name={displayName} microLabel={getMicroLabel()} />
         </View>
 
-        <CycleJourneyRing
-          cycleDay={info.cycleDay}
-          cycleLength={info.cycleLength}
-          phaseLabel={info.phaseLabel}
-          phase={info.phase as CyclePhase}
-          titleItalic={getTitleItalic(info.phase as CyclePhase)}
-          subline={getSubline(info)}
-          periodLine={getPeriodLine(info)}
-          hint="↻ tap any day"
-        />
+        <CycleJourneyRingFull cycleConfig={cycleConfig} />
 
-        <FertileWindowCard cycleConfig={cycleConfig} />
-        <FertilitySignalsCard />
         <View style={styles.cardWrap}>
           <DailyNudgeCard cycleConfig={cycleConfig} />
         </View>

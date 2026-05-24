@@ -8,9 +8,10 @@
 import { useEffect, useRef } from 'react'
 import { View, Text, Pressable, Animated, StyleSheet, Dimensions } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
-import { Moon, Heart, Star, ChevronRight } from 'lucide-react-native'
+import { Moon, Heart, Star } from '../../components/ui/Stickers'
+import { PillButton } from '../../components/ui/PillButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, stickers } from '../../constants/theme'
 import { useOnboardingStore } from '../../store/useOnboardingStore'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
@@ -19,28 +20,28 @@ const SCREEN_W = Dimensions.get('window').width
 const AUTO_ADVANCE_MS = 8000
 
 const BEHAVIOR_CONTENT: Record<Behavior, {
-  icon: typeof Moon
+  sticker: React.ReactNode
   color: string
   heading: string
   subtext: string
   route: string
 }> = {
   pregnancy: {
-    icon: Heart,
+    sticker: <Heart size={96} fill={stickers.pink} />,
     color: brand.pregnancy,
     heading: "Now, let's talk about\nyour little one on the way",
     subtext: 'Just a few things to help Grandma support you through your pregnancy.',
     route: '/onboarding/pregnancy',
   },
   kids: {
-    icon: Star,
+    sticker: <Star size={96} fill={stickers.blue} />,
     color: brand.kids,
     heading: "Now, let's meet\nyour little ones",
     subtext: 'Tell me about your children so I can help you take the best care of them.',
     route: '/onboarding/kids',
   },
   'pre-pregnancy': {
-    icon: Moon,
+    sticker: <Moon size={96} fill={stickers.lilac} />,
     color: brand.prePregnancy,
     heading: "Now, let's understand\nyour cycle",
     subtext: 'A little about your cycle so I can help you understand your body.',
@@ -49,7 +50,7 @@ const BEHAVIOR_CONTENT: Record<Behavior, {
 }
 
 export default function TransitionScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, font } = useTheme()
   const insets = useSafeAreaInsets()
   const { next } = useLocalSearchParams<{ next: string }>()
 
@@ -142,7 +143,6 @@ export default function TransitionScreen() {
     return null
   }
 
-  const Icon = content.icon
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
@@ -160,21 +160,18 @@ export default function TransitionScreen() {
           },
         ]}
       >
-        {/* Icon with glow */}
-        <View style={styles.iconWrap}>
-          <View style={[styles.iconGlow, { backgroundColor: content.color, opacity: 0.15 }]} />
-          <View style={[styles.iconCircle, { shadowColor: content.color }]}>
-            <Icon size={80} color={content.color} strokeWidth={1.5} />
-          </View>
-        </View>
+        {/* Sticker */}
+        <View style={styles.iconWrap}>{content.sticker}</View>
 
         {/* Heading */}
-        <Text style={[styles.heading, { color: colors.text }]}>
+        <Text style={[styles.heading, { color: colors.text, fontFamily: font.display }]}>
           {content.heading}
         </Text>
 
         {/* Subtext */}
-        <Text style={[styles.subtext, { color: colors.textSecondary }]}>
+        <Text
+          style={[styles.subtext, { color: colors.textSecondary, fontFamily: font.body }]}
+        >
           {content.subtext}
         </Text>
       </Animated.View>
@@ -182,24 +179,9 @@ export default function TransitionScreen() {
       {/* Bottom section */}
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
         {/* CTA */}
-        <Pressable
-          onPress={handleContinue}
-          accessibilityRole="button"
-          accessibilityLabel="Continue to next step"
-          style={({ pressed }) => [
-            styles.ctaButton,
-            {
-              backgroundColor: content.color,
-              borderRadius: radius.full,
-              borderColor: colors.text,
-              shadowColor: colors.text,
-            },
-            pressed && { shadowOffset: { width: 0, height: 2 }, transform: [{ translateY: 2 }] },
-          ]}
-        >
-          <Text style={[styles.ctaText, { color: colors.bg }]}>Let's go, dear</Text>
-          <ChevronRight size={20} color={colors.bg} strokeWidth={2.5} />
-        </Pressable>
+        <View style={styles.ctaWrap}>
+          <PillButton label="Let's go, dear" variant="ink" onPress={handleContinue} />
+        </View>
 
         {/* Skip */}
         <Pressable onPress={handleSkip} style={styles.skipBtn}>
@@ -238,17 +220,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
   },
-  iconGlow: {
-    position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-  },
-  iconCircle: {
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.3,
-    shadowRadius: 24,
-    elevation: 12,
+  ctaWrap: {
+    width: '100%',
   },
 
   // Text
@@ -257,7 +230,8 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     textAlign: 'center',
     letterSpacing: -0.5,
-    lineHeight: 36, fontFamily: 'Fraunces_600SemiBold' },
+    lineHeight: 36,
+  },
   subtext: {
     fontSize: 15,
     fontWeight: '500',
