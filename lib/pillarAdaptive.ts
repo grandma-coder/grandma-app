@@ -10,9 +10,12 @@
 import { useEffect, useState } from 'react'
 import type { PillarTip, PillarId } from '../types'
 import { useCycleHistory } from './cycleAnalytics'
-import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from './cycleLogic'
+import { getCycleInfo, toDateStr, type CycleConfig } from './cycleLogic'
 import { useChildStore } from '../store/useChildStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
+import { splitTips, type AdaptiveContext } from './pillarTipSplit'
+
+export { splitTips, type AdaptiveContext } from './pillarTipSplit'
 
 const PRE_PREG_IDS = new Set<string>([
   'fertility',
@@ -40,13 +43,6 @@ const KIDS_IDS = new Set<string>([
   'recipes', 'habits', 'medicine', 'milestones',
 ])
 
-export interface AdaptiveContext {
-  cyclePhase?: CyclePhase
-  cycleDay?: number
-  pregnancyWeek?: number
-  childAgeMonths?: number
-}
-
 export interface PillarTipBuckets {
   forYou: PillarTip[]
   general: PillarTip[]
@@ -64,42 +60,11 @@ export function usePillarTipBuckets(
   tips: PillarTip[],
 ): PillarTipBuckets {
   const context = useAdaptiveContext(pillarId)
-
-  const forYou: PillarTip[] = []
-  const general: PillarTip[] = []
-
-  for (const tip of tips) {
-    if (matchesContext(tip, context)) {
-      forYou.push(tip)
-    } else {
-      general.push(tip)
-    }
-  }
-
+  const cycleDay = context.cycleDay ?? 1
+  const { forYou, general } = splitTips(tips, context, cycleDay)
   const contextLabel = buildContextLabel(pillarId, context)
 
   return { forYou, general, context, contextLabel }
-}
-
-function matchesContext(tip: PillarTip, ctx: AdaptiveContext): boolean {
-  // Cycle phase
-  if (tip.phases && tip.phases.length > 0) {
-    if (!ctx.cyclePhase) return false
-    return tip.phases.includes(ctx.cyclePhase)
-  }
-  // Pregnancy week
-  if (tip.weekRange) {
-    if (ctx.pregnancyWeek === undefined) return false
-    const [min, max] = tip.weekRange
-    return ctx.pregnancyWeek >= min && ctx.pregnancyWeek <= max
-  }
-  // Kids age (months)
-  if (tip.ageMonthsRange) {
-    if (ctx.childAgeMonths === undefined) return false
-    const [min, max] = tip.ageMonthsRange
-    return ctx.childAgeMonths >= min && ctx.childAgeMonths <= max
-  }
-  return false
 }
 
 function buildContextLabel(pillarId: PillarId, ctx: AdaptiveContext): string | null {
