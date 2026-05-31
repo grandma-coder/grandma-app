@@ -246,6 +246,24 @@ export const en: TranslationKeys = {
   cycle_nudge_label: "TODAY'S NUDGE",
   cycle_nudge_from: 'From',
   cycle_nudge_read_more: 'Read more →',
+  // Menstruation extras
+  cycle_nudge_menstruation_iron_headline: 'Refill your *iron stores*',
+  cycle_nudge_menstruation_iron_body: 'Bleeding draws down iron, dear. Pair a spinach or lentil meal with something citrusy — vitamin C roughly doubles how much you absorb.',
+  cycle_nudge_menstruation_warmth_headline: 'Be *gentle* with yourself today',
+  cycle_nudge_menstruation_warmth_body: 'Prostaglandins drive the cramping. A heat pad and slow movement ease it as well as most painkillers — and your energy floor is lowest now by design.',
+  // Follicular extras
+  cycle_nudge_follicular_plan_headline: 'A good day to *plan ahead*',
+  cycle_nudge_follicular_plan_body: 'Rising estrogen sharpens focus and mood. Use this build phase for the harder thinking, the bigger workouts, the conversations you have been putting off.',
+  cycle_nudge_follicular_hydrate_headline: 'Watch your *cervical mucus*',
+  cycle_nudge_follicular_hydrate_body: 'It should start turning clearer and stretchier as the window approaches. Mucus is mostly water — 2 to 2.5 litres a day keeps the signal readable.',
+  // Ovulation extras
+  cycle_nudge_ovulation_timing_headline: 'The *two days before* matter most',
+  cycle_nudge_ovulation_timing_body: 'Sperm live up to five days; the egg only 12 to 24 hours. Aim for the run-up, not the exact day — frequency beats precision.',
+  // Luteal extras
+  cycle_nudge_luteal_sleep_headline: 'Protect your *sleep* this week',
+  cycle_nudge_luteal_sleep_body: 'Progesterone nudges body temperature up and fragments sleep. A cooler room and an earlier wind-down steady mood more than you would expect.',
+  cycle_nudge_luteal_move_headline: 'A walk beats the *spiral*',
+  cycle_nudge_luteal_move_body: 'Late-luteal dips are hormonal, not a verdict on your life. Twenty minutes of daylight and movement resets the loop better than scrolling does.',
   cycle_pillar_fertility: 'Fertility Basics',
   cycle_pillar_nutrition_prep: 'Nutrition Prep',
   cycle_pillar_emotional_readiness: 'Emotional Readiness',

@@ -249,6 +249,22 @@ export interface TranslationKeys {
   cycle_nudge_label: string
   cycle_nudge_from: string
   cycle_nudge_read_more: string
+  // Daily-rotation extras — optional so non-English locales fall back to en
+  // at runtime until translated (see i18n wave plan).
+  cycle_nudge_menstruation_iron_headline?: string
+  cycle_nudge_menstruation_iron_body?: string
+  cycle_nudge_menstruation_warmth_headline?: string
+  cycle_nudge_menstruation_warmth_body?: string
+  cycle_nudge_follicular_plan_headline?: string
+  cycle_nudge_follicular_plan_body?: string
+  cycle_nudge_follicular_hydrate_headline?: string
+  cycle_nudge_follicular_hydrate_body?: string
+  cycle_nudge_ovulation_timing_headline?: string
+  cycle_nudge_ovulation_timing_body?: string
+  cycle_nudge_luteal_sleep_headline?: string
+  cycle_nudge_luteal_sleep_body?: string
+  cycle_nudge_luteal_move_headline?: string
+  cycle_nudge_luteal_move_body?: string
   cycle_pillar_fertility: string
   cycle_pillar_nutrition_prep: string
   cycle_pillar_emotional_readiness: string
