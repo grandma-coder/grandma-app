@@ -18,6 +18,8 @@ export const prePregPillars: Pillar[] = [
       { label: 'Skip the douching and lube', text: 'Most lubricants are sperm-toxic. If you need one, use a fertility-friendly brand like Pre-Seed. Skip douching entirely — it disrupts vaginal pH.' },
       { label: 'Give it time', text: 'In healthy couples under 35, about 85% conceive within a year of trying. It is not a race, and a normal cycle or two without success is not a problem.' },
       { label: 'When to see a doctor', text: 'See a fertility specialist after 12 months of trying if you are under 35, after 6 months if you are 35-39, and right away if you are 40 or have irregular cycles.' },
+      { label: 'Rest is part of the work', text: 'Your body is selecting the next lead follicle right now, love. A quiet period week sets up a stronger cycle — there is nothing to optimize today.', phases: ['menstruation'] },
+      { label: 'The window is closing', text: 'After ovulation the egg lives only 12 to 24 hours. If you have been timing things, the work is done — the luteal phase is for waiting, not chasing.', phases: ['luteal'] },
     ],
     suggestions: [
       'How do I track my ovulation?',
@@ -69,6 +71,10 @@ export const prePregPillars: Pillar[] = [
       { label: 'Keep a life outside TTC', text: 'Schedule things that have nothing to do with conceiving — a trip, a class, a project. Identity that depends entirely on becoming pregnant gets fragile fast.' },
       { label: 'Sleep is fertility', text: 'Aim for 7-9 hours. Poor sleep disrupts cortisol and reproductive hormones, and a tired version of you is a more anxious version of you.' },
       { label: 'Decide who to tell', text: 'You do not owe anyone an update. Picking one or two safe people — and a clear answer for nosy relatives — protects your energy through the unknowns.' },
+      { label: 'Two-week-wait toolkit', text: 'The luteal stretch is the hardest part, dear. Pick one anchor — a book, a class, a standing call — that exists entirely outside the question of whether you are pregnant.', phases: ['luteal'] },
+      { label: 'Lower the stakes of one test', text: 'A single negative is data, not a sentence. Most cycles do not work even when everything is perfect — that is biology, not failure.', phases: ['luteal'] },
+      { label: 'Let the first days be soft', text: 'If your period came, give yourself the same tenderness you would give a friend. Grief and relief can share a day, and both are allowed.', phases: ['menstruation'] },
+      { label: 'Reset the comparison feed', text: 'Follicular energy is a good moment to curate your inputs — mute the accounts that sting and follow the ones that steady you, before the next wait begins.', phases: ['follicular'] },
     ],
     suggestions: [
       'How do I deal with the stress of trying to conceive?',
