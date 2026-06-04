@@ -15,7 +15,8 @@ import { useChildStore } from '../store/useChildStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
 import { splitTips, type AdaptiveContext } from './pillarTipSplit'
 
-export { splitTips, type AdaptiveContext } from './pillarTipSplit'
+export { splitTips }
+export type { AdaptiveContext }
 
 const PRE_PREG_IDS = new Set<string>([
   'fertility',

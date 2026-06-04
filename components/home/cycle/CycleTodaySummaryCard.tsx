@@ -1,10 +1,11 @@
 /**
  * CycleTodaySummaryCard — "today at a glance" for the Cycle home.
  *
- * Mirrors PregnancyHome's TodaySummaryCard pattern but reads from cycle_logs.
- * Each chip is tappable and opens the matching log sheet. If the user has
- * zero cycle_logs rows in total, we seed realistic sample data once so the
- * card has something to show.
+ * Mirrors PregnancyHome's TodaySummaryCard pattern: chips are read-only
+ * previews of today's cycle_logs and tapping anywhere on the card opens
+ * the full CycleTodayDashboardModal with high-level metrics. If the user
+ * has zero cycle_logs rows in total, we seed realistic sample data once
+ * so the card has something to show.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
@@ -18,10 +19,7 @@ import { PaperCard } from '../../ui/PaperCard'
 import { Display, Body } from '../../ui/Typography'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../../ui/Stickers'
 import { SymptomSticker } from '../../calendar/symptomStickers'
-import { LogSheet } from '../../calendar/LogSheet'
-import {
-  BbtForm, LhForm, CmForm, IntimacyForm, MoodForm, SymptomsForm, PeriodStartForm,
-} from '../../calendar/CycleLogForms'
+import { CycleTodayDashboardModal } from './CycleTodayDashboardModal'
 import type { SymptomId } from '../../../lib/cycleSymptoms'
 
 interface Props {
@@ -29,7 +27,6 @@ interface Props {
 }
 
 type Row = { type: string; value: string | null }
-type SheetType = 'mood' | 'symptoms' | 'bbt' | 'lh' | 'cm' | 'intimacy' | 'period_start' | null
 
 const MOOD_META: Record<string, { Sticker: typeof Sad; fill: string; label: string }> = {
   low:   { Sticker: Sad,    fill: '#EE7B6D', label: 'Low' },
@@ -54,7 +51,7 @@ export function CycleTodaySummaryCard({ phase }: Props) {
   const paper = isDark ? colors.surface : '#FFFEF8'
 
   const [userId, setUserId] = useState<string | undefined>()
-  const [openSheet, setOpenSheet] = useState<SheetType>(null)
+  const [open, setOpen] = useState(false)
   useEffect(() => {
     void supabase.auth.getSession().then(({ data: { session } }) =>
       setUserId(session?.user.id),
@@ -116,7 +113,7 @@ export function CycleTodaySummaryCard({ phase }: Props) {
   const moodMeta = moodValue ? MOOD_META[moodValue] : null
   const topSymptom = symptoms[0] as SymptomId | undefined
 
-  const chips: { key: SheetType; icon: React.ReactNode; label: string }[] = [
+  const chips: { key: string; icon: React.ReactNode; label: string }[] = [
     {
       key: 'mood',
       icon: moodMeta
@@ -173,81 +170,63 @@ export function CycleTodaySummaryCard({ phase }: Props) {
         ? `${completed} of ${totalTrackable} signals logged`
         : completed >= 1
           ? `${totalTrackable - completed} signals left for today`
-          : 'tap any chip — log how today feels'
+          : 'tap to see today’s signals'
 
   const phaseAccent = phaseColor(phase, stickers)
 
-  function closeSheet() { setOpenSheet(null) }
-
   return (
     <View style={styles.wrap}>
-      <PaperCard tint={paper} radius={24} padding={18}>
-        <View style={styles.headerRow}>
-          <View style={{ flex: 1 }}>
-            <Display size={22} color={ink}>Today at a glance</Display>
-            <Body size={12} color={colors.textMuted} style={{ marginTop: 2, fontFamily: font.italic }}>
-              {summaryHint}
-            </Body>
+      <Pressable
+        onPress={() => setOpen(true)}
+        style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1 }]}
+      >
+        <PaperCard tint={paper} radius={24} padding={18}>
+          <View style={styles.headerRow}>
+            <View style={{ flex: 1 }}>
+              <Display size={22} color={ink}>Today at a glance</Display>
+              <Body size={12} color={colors.textMuted} style={{ marginTop: 2, fontFamily: font.italic }}>
+                {summaryHint}
+              </Body>
+            </View>
+            <ChevronRight size={20} color={colors.textMuted} strokeWidth={2} />
           </View>
-          <ChevronRight size={20} color={colors.textMuted} strokeWidth={2} />
-        </View>
 
-        <View style={styles.chipsRow}>
-          {chips.map((c) => (
-            <Pressable
-              key={c.key}
-              onPress={() => setOpenSheet(c.key)}
-              style={({ pressed }) => [
-                styles.chip,
-                { opacity: pressed ? 0.7 : 1 },
+          <View style={styles.chipsRow}>
+            {chips.map((c) => (
+              <View key={c.key} style={styles.chip}>
+                <View style={styles.chipIcon}>{c.icon}</View>
+                <Text
+                  numberOfLines={1}
+                  style={[styles.chipLabel, { color: ink, fontFamily: font.bodySemiBold }]}
+                >
+                  {c.label}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={[styles.progressTrack, { backgroundColor: isDark ? colors.border : 'rgba(20,19,19,0.06)' }]}>
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  width: `${(completed / totalTrackable) * 100}%`,
+                  backgroundColor: completed === totalTrackable ? stickers.green : phaseAccent,
+                },
               ]}
-              hitSlop={4}
-            >
-              <View style={styles.chipIcon}>{c.icon}</View>
-              <Text
-                numberOfLines={1}
-                style={[styles.chipLabel, { color: ink, fontFamily: font.bodySemiBold }]}
-              >
-                {c.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+            />
+          </View>
+        </PaperCard>
+      </Pressable>
 
-        <View style={[styles.progressTrack, { backgroundColor: isDark ? colors.border : 'rgba(20,19,19,0.06)' }]}>
-          <View
-            style={[
-              styles.progressFill,
-              {
-                width: `${(completed / totalTrackable) * 100}%`,
-                backgroundColor: completed === totalTrackable ? stickers.green : phaseAccent,
-              },
-            ]}
-          />
-        </View>
-      </PaperCard>
-
-      <LogSheet visible={openSheet === 'mood'} title="Log Mood" onClose={closeSheet}>
-        <MoodForm date={today} phase={phase} onSaved={closeSheet} />
-      </LogSheet>
-      <LogSheet visible={openSheet === 'symptoms'} title="Log Symptoms" onClose={closeSheet}>
-        <SymptomsForm date={today} phase={phase} onSaved={closeSheet} />
-      </LogSheet>
-      <LogSheet visible={openSheet === 'bbt'} title="Log BBT" onClose={closeSheet}>
-        <BbtForm date={today} phase={phase} onSaved={closeSheet} />
-      </LogSheet>
-      <LogSheet visible={openSheet === 'lh'} title="Log LH" onClose={closeSheet}>
-        <LhForm date={today} phase={phase} onSaved={closeSheet} />
-      </LogSheet>
-      <LogSheet visible={openSheet === 'cm'} title="Log CM" onClose={closeSheet}>
-        <CmForm date={today} phase={phase} onSaved={closeSheet} />
-      </LogSheet>
-      <LogSheet visible={openSheet === 'intimacy'} title="Log Intimacy" onClose={closeSheet}>
-        <IntimacyForm date={today} phase={phase} onSaved={closeSheet} />
-      </LogSheet>
-      <LogSheet visible={openSheet === 'period_start'} title="Period Start" onClose={closeSheet}>
-        <PeriodStartForm date={today} phase={phase} onSaved={closeSheet} />
-      </LogSheet>
+      {userId && (
+        <CycleTodayDashboardModal
+          visible={open}
+          onClose={() => setOpen(false)}
+          phase={phase}
+          userId={userId}
+        />
+      )}
     </View>
   )
 }

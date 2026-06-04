@@ -31,7 +31,11 @@ export default function Home() {
       {/* Pregnancy gets its own full-width scroll (hero carousel needs SCREEN_W) */}
       {mode === 'pregnancy' && <PregnancyHome topInset={insets.top} />}
 
-      {mode !== 'pregnancy' && (
+      {/* Cycle brings its own ScrollView — render it standalone (like pregnancy)
+          rather than nesting it inside the outer one. */}
+      {mode === 'pre-pregnancy' && <CycleHome />}
+
+      {mode !== 'pregnancy' && mode !== 'pre-pregnancy' && (
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -39,7 +43,6 @@ export default function Home() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {mode === 'pre-pregnancy' && <CycleHome />}
         {mode === 'kids' && <KidsHome />}
 
         {/* Empty state — no behavior enrolled */}

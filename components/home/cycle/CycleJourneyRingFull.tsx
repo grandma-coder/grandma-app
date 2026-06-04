@@ -200,12 +200,25 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
   }, [todayStr, selectedDay, cycleDayToday])
 
   // ── Gesture ───────────────────────────────────────────────────────────────
-  const tangentRef = useRef({ x: 0, y: 1 })
-  const lastDxRef = useRef(0)
-  const lastDyRef = useRef(0)
-  const velocityRef = useRef(0)
+  // Rotate by the finger's angle around the ring center. The angle is computed
+  // from the touch-start vector PLUS the gesture's cumulative translation
+  // (g.dx/g.dy), which share one stable origin for the whole drag. We avoid
+  // per-frame e.nativeEvent.locationX/Y: those are relative to whichever sub-view
+  // is under the finger at that instant, so they jump between the SVG layer and
+  // the center overlay mid-drag and make the wheel jitter (worst when crossing
+  // the 6-o'clock anchor where atan2 wraps).
+  const startVecRef = useRef({ x: 0, y: 1 })   // finger vector from center at grant
+  const lastAngleRef = useRef(0)
+  const lastDeltaRef = useRef(0)               // last frame's signed angular step
   const totalMoveRef = useRef(0)
   const initLocRef = useRef({ x: 0, y: 0 })
+
+  // Signed shortest angular delta (deg) from a→b, in (-180, 180].
+  const angleDelta = (a: number, b: number) => {
+    let d = ((b - a) % 360 + 360) % 360
+    if (d > 180) d -= 360
+    return d
+  }
 
   const snapToDay = useCallback((d: number) => {
     const target = 180 - ((d - 1) / cycleLength) * 360
@@ -227,28 +240,27 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
         const lx = e.nativeEvent.locationX
         const ly = e.nativeEvent.locationY
         initLocRef.current = { x: lx, y: ly }
-        const rx = lx - CX
-        const ry = ly - CY
-        const r = Math.sqrt(rx * rx + ry * ry) || RING_R
-        tangentRef.current = { x: -ry / r, y: rx / r }
-        lastDxRef.current = 0
-        lastDyRef.current = 0
-        velocityRef.current = 0
+        // Vector from ring center to the finger at touch-down. If the touch lands
+        // dead-center, fall back to the 6-o'clock anchor so atan2 is defined.
+        let vx = lx - CX
+        let vy = ly - CY
+        if (Math.hypot(vx, vy) < 1) { vx = 0; vy = RING_R }
+        startVecRef.current = { x: vx, y: vy }
+        lastAngleRef.current = Math.atan2(vy, vx) * (180 / Math.PI)
+        lastDeltaRef.current = 0
         totalMoveRef.current = 0
       },
       onPanResponderMove: (_e, g) => {
-        const ddx = g.dx - lastDxRef.current
-        const ddy = g.dy - lastDyRef.current
-        const arc = ddx * tangentRef.current.x + ddy * tangentRef.current.y
-        const delta = (arc / RING_R) * (180 / Math.PI)
+        // Current finger vector from center = start vector + cumulative drag.
+        // One stable origin for the whole gesture → no per-frame jumps.
+        const vx = startVecRef.current.x + g.dx
+        const vy = startVecRef.current.y + g.dy
+        const ang = Math.atan2(vy, vx) * (180 / Math.PI)
+        const delta = angleDelta(lastAngleRef.current, ang)
         rotationDeg.value += delta
-        lastDxRef.current = g.dx
-        lastDyRef.current = g.dy
         totalMoveRef.current += Math.abs(delta)
-        const tangVel = g.vx * tangentRef.current.x + g.vy * tangentRef.current.y
-        velocityRef.current = Math.max(-300, Math.min(300,
-          (tangVel / RING_R) * (180 / Math.PI) * 1000,
-        ))
+        lastDeltaRef.current = delta
+        lastAngleRef.current = ang
       },
       onPanResponderRelease: () => {
         if (totalMoveRef.current < 5) {
@@ -266,8 +278,11 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
           }
           if (best !== null) snapToDay(best + 1)
         } else {
+          // Throw velocity (deg/sec) ≈ last frame's angular step × ~60fps,
+          // clamped so a fast flick can't fling the wheel uncontrollably.
+          const throwVel = Math.max(-600, Math.min(600, lastDeltaRef.current * 60))
           rotationDeg.value = withDecay(
-            { velocity: velocityRef.current, deceleration: 0.94 },
+            { velocity: throwVel, deceleration: 0.94 },
             (finished) => {
               'worklet'
               if (!finished) return
