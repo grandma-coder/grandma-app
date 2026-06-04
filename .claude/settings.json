@@ -153,7 +153,17 @@
       "Bash(sed -i '' \"s|const { colors, radius } = useTheme\\(\\)|const { colors, radius, isDark } = useTheme\\(\\)\\\\n  const mode = getModeColor\\('kids', isDark\\)\\\\n  const modeSoft = getModeColorSoft\\('kids', isDark\\)|g\" app/onboarding/kids/index.tsx)",
       "Bash(grep -n 'question={`' app/onboarding/kids/index.tsx)",
       "Bash(supabase --version)",
-      "Bash(env)"
+      "Bash(env)",
+      "Bash(npx babel *)",
+      "Bash(node -e \"require\\('@babel/core'\\).transformFileSync\\('lib/pillarAdaptive.ts', {presets:[['@babel/preset-typescript']], filename:'lib/pillarAdaptive.ts'}\\); console.log\\('TRANSFORM OK — no duplicate declaration'\\)\")",
+      "Bash(node -e \"require\\('@babel/core'\\).transformFileSync\\('components/home/cycle/CycleJourneyRingFull.tsx', {presets:[['@babel/preset-typescript'],['@babel/preset-react']], filename:'CycleJourneyRingFull.tsx'}\\); console.log\\('✓ CycleJourneyRingFull transforms clean'\\)\")",
+      "Bash(kill 30603 21852 30714)",
+      "Bash(echo \"started, pid $!\")",
+      "Bash(node -e \"require\\('@babel/core'\\).transformFileSync\\('components/home/cycle/CycleJourneyRingFull.tsx', {presets:[['@babel/preset-typescript'],['@babel/preset-react']], filename:'CycleJourneyRingFull.tsx'}\\); console.log\\('✓ transforms clean'\\)\")",
+      "Bash(pkill -9 -f \"expo start\")",
+      "Bash(pkill -9 -f \"metro\")",
+      "Bash(echo \"started pid $!\")",
+      "Bash(curl -s \"http://localhost:8081/index.bundle?platform=ios&dev=true&minify=false\" -o /tmp/ios-bundle.js -w \"HTTP %{http_code}, %{size_download} bytes\\\\n\")"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"
