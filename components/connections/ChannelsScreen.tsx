@@ -23,17 +23,22 @@ import {
   Plus,
   Star,
 } from 'lucide-react-native'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, shadows, getModeColor } from '../../constants/theme'
 import { BrandedLoader } from '../ui/BrandedLoader'
 import { getChannels, type Channel } from '../../lib/channels'
 import { getMyChannelIds, getMyFavoriteChannelIds } from '../../lib/channelPosts'
 import { useModeStore } from '../../store/useModeStore'
 import { useChannelsStore } from '../../store/useChannelsStore'
 import { channelSticker } from '../../lib/channelSticker'
+import { Star as StarSticker } from '../ui/Stickers'
 
-// Cream accent shared with Garage feed — paper-aesthetic CTA
-const CREAM = '#F5EFE3'
-const INK = '#1A1430'
+// ─── Member count copy ──────────────────────────────────────────────────────
+// Soften low/zero counts so seeded + brand-new channels don't read as empty.
+function memberLabel(n: number): string {
+  if (n <= 0) return '✨ Be the first'
+  if (n < 5) return `New · ${n} here`
+  return `${n} members`
+}
 
 // ─── Behavior-based suggestions ────────────────────────────────────────────
 
@@ -46,8 +51,9 @@ const BEHAVIOR_TAGS: Record<string, string[]> = {
 // ─── Main Component ────────────────────────────────────────────────────────
 
 export function ChannelsScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font, stickers, isDark } = useTheme()
   const mode = useModeStore((s) => s.mode)
+  const accent = getModeColor(mode, isDark)
 
   const [channels, setChannels] = useState<Channel[]>([])
   const [myIds, setMyIds] = useState<string[]>([])
@@ -57,18 +63,7 @@ export function ChannelsScreen() {
   const unreadCounts = useChannelsStore((s) => s.unreadCounts)
   const fetchUnreadCounts = useChannelsStore((s) => s.fetchUnreadCounts)
 
-  useEffect(() => {
-    load()
-  }, [])
-
-  // Refresh on focus
-  useFocusEffect(
-    useCallback(() => {
-      load()
-    }, [])
-  )
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       const [all, ids, favIds] = await Promise.all([
@@ -83,7 +78,15 @@ export function ChannelsScreen() {
     } catch {} finally {
       setLoading(false)
     }
-  }
+  }, [fetchUnreadCounts])
+
+  // useFocusEffect fires on mount too (screen is focused on mount), so a
+  // separate mount useEffect would double-load. This single hook covers both.
+  useFocusEffect(
+    useCallback(() => {
+      load()
+    }, [load])
+  )
 
   const myChannels = channels.filter((c) => myIds.includes(c.id))
   const favoriteChannels = channels.filter((c) => favoriteIds.includes(c.id))
@@ -121,18 +124,23 @@ export function ChannelsScreen() {
       contentContainerStyle={styles.scroll}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
-      <Text style={[styles.heading, { color: colors.text }]}>
-        Find your community
-      </Text>
+      {/* Header — editorial serif, matches The Village */}
+      <View style={styles.header}>
+        <Text style={[styles.heading, { color: colors.text, fontFamily: font.display }]}>
+          Find your{'\n'}community.
+        </Text>
+        <Text style={[styles.subheading, { color: colors.textMuted, fontFamily: font.body }]}>
+          Channels for where you are right now.
+        </Text>
+      </View>
 
       {/* Auto-scrolling banner carousel */}
       {!search && suggested.length > 0 && (
-        <BannerCarousel channels={suggested} myIds={myIds} />
+        <BannerCarousel channels={suggested} myIds={myIds} accent={accent} />
       )}
 
       {/* Search */}
-      <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+      <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}>
         <Search size={18} color={colors.textMuted} strokeWidth={2} />
         <TextInput
           value={search}
@@ -146,12 +154,15 @@ export function ChannelsScreen() {
       {/* Search results */}
       {searchResults ? (
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>RESULTS</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>RESULTS</Text>
           {searchResults.length === 0 ? (
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No channels found</Text>
+            <EmptyState
+              title="No channels found"
+              body="Try another search, or start a channel of your own."
+            />
           ) : (
             searchResults.map((c) => (
-              <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} />
+              <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} accent={accent} />
             ))
           )}
         </View>
@@ -160,10 +171,10 @@ export function ChannelsScreen() {
           {/* Suggested */}
           {suggested.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>SUGGESTED FOR YOU</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>SUGGESTED FOR YOU</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
                 {suggested.map((c) => (
-                  <ChannelCardCompact key={c.id} channel={c} joined={myIds.includes(c.id)} />
+                  <ChannelCardCompact key={c.id} channel={c} joined={myIds.includes(c.id)} accent={accent} />
                 ))}
               </ScrollView>
             </View>
@@ -172,11 +183,11 @@ export function ChannelsScreen() {
           {/* Trending */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <TrendingUp size={16} color={brand.accent} strokeWidth={2} />
-              <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0 }]}>TRENDING</Text>
+              <TrendingUp size={16} color={accent} strokeWidth={2.4} />
+              <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0, fontFamily: font.bodySemiBold }]}>TRENDING</Text>
             </View>
             {trending.map((c) => (
-              <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} unread={unreadCounts[c.id]} />
+              <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} unread={unreadCounts[c.id]} accent={accent} />
             ))}
           </View>
 
@@ -184,11 +195,11 @@ export function ChannelsScreen() {
           {favoriteChannels.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Star size={16} color={brand.accent} strokeWidth={2} fill={brand.accent} />
-                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0 }]}>FAVORITES</Text>
+                <StarSticker size={16} fill={stickers.yellow} />
+                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0, fontFamily: font.bodySemiBold }]}>FAVORITES</Text>
               </View>
               {favoriteChannels.map((c) => (
-                <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} unread={unreadCounts[c.id]} />
+                <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} unread={unreadCounts[c.id]} accent={accent} />
               ))}
             </View>
           )}
@@ -197,10 +208,10 @@ export function ChannelsScreen() {
           {myChannels.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0 }]}>MY CHANNELS</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0, fontFamily: font.bodySemiBold }]}>MY CHANNELS</Text>
               </View>
               {myChannels.map((c) => (
-                <ChannelCard key={c.id} channel={c} joined unread={unreadCounts[c.id]} />
+                <ChannelCard key={c.id} channel={c} joined unread={unreadCounts[c.id]} accent={accent} />
               ))}
             </View>
           )}
@@ -208,16 +219,16 @@ export function ChannelsScreen() {
       )}
     </ScrollView>
 
-    {/* Create Channel FAB — cream on dark, matches Garage FAB */}
+    {/* Create Channel FAB — mode-color filled, matches app primary actions */}
     <Pressable
       onPress={() => router.push('/channel/create' as any)}
       style={({ pressed }) => [
         styles.fab,
-        { backgroundColor: CREAM, borderRadius: radius.full, shadowColor: CREAM },
+        { backgroundColor: accent, borderRadius: radius.full, ...shadows.cardPop },
         pressed && { transform: [{ scale: 0.93 }] },
       ]}
     >
-      <Plus size={26} color={INK} strokeWidth={2.5} />
+      <Plus size={26} color={colors.textInverse} strokeWidth={2.6} />
     </Pressable>
     </View>
   )
@@ -227,8 +238,8 @@ export function ChannelsScreen() {
 
 const BANNER_W = Dimensions.get('window').width - 40 // padding 20 each side
 
-function BannerCarousel({ channels, myIds }: { channels: Channel[]; myIds: string[] }) {
-  const { colors, radius, isDark } = useTheme()
+function BannerCarousel({ channels, myIds, accent }: { channels: Channel[]; myIds: string[]; accent: string }) {
+  const { colors, radius, isDark, stickers, font } = useTheme()
   const scrollRef = useRef<ScrollView>(null)
   const indexRef = useRef(0)
 
@@ -259,26 +270,26 @@ function BannerCarousel({ channels, myIds }: { channels: Channel[]; myIds: strin
             <Pressable
               key={c.id}
               onPress={() => router.push(`/channel/${c.id}` as any)}
-              style={[styles.banner, { width: BANNER_W, backgroundColor: sticker.tint, borderRadius: radius.xl }]}
+              style={[styles.banner, { width: BANNER_W, backgroundColor: sticker.tint, borderRadius: radius.lg }]}
             >
               <View style={[styles.bannerIcon, { backgroundColor: sticker.fill + '38' }]}>
                 <StickerIcon size={34} fill={sticker.fill} />
               </View>
               <View style={styles.bannerContent}>
-                <Text style={[styles.bannerName, { color: colors.text }]} numberOfLines={1}>
+                <Text style={[styles.bannerName, { color: colors.text, fontFamily: font.bodyBold }]} numberOfLines={1}>
                   {c.name}
                 </Text>
-                <Text style={[styles.bannerDesc, { color: colors.textSecondary }]} numberOfLines={2}>
+                <Text style={[styles.bannerDesc, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>
                   {c.description ?? 'Join the conversation'}
                 </Text>
                 <View style={styles.bannerMeta}>
-                  <Text style={[styles.bannerMembers, { color: colors.textMuted }]}>
-                    {c.memberCount} members
+                  <Text style={[styles.bannerMembers, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+                    {memberLabel(c.memberCount)}
                   </Text>
                   {c.avgRating > 0 && (
                     <View style={styles.bannerRating}>
-                      <Star size={12} color={brand.accent} strokeWidth={2} fill={brand.accent} />
-                      <Text style={[styles.bannerRatingText, { color: brand.accent }]}>
+                      <StarSticker size={12} fill={stickers.yellow} />
+                      <Text style={[styles.bannerRatingText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>
                         {c.avgRating.toFixed(1)}
                       </Text>
                     </View>
@@ -286,8 +297,8 @@ function BannerCarousel({ channels, myIds }: { channels: Channel[]; myIds: strin
                 </View>
               </View>
               {!joined && (
-                <View style={[styles.bannerJoin, { backgroundColor: CREAM, borderRadius: radius.full }]}>
-                  <Text style={[styles.bannerJoinText, { color: INK }]}>Join</Text>
+                <View style={[styles.bannerJoin, { backgroundColor: accent, borderRadius: radius.full }]}>
+                  <Text style={[styles.bannerJoinText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>Join</Text>
                 </View>
               )}
             </Pressable>
@@ -301,6 +312,7 @@ function BannerCarousel({ channels, myIds }: { channels: Channel[]; myIds: strin
 // ─── Star Rating Display ──────────────────────────────────────────────────
 
 function StarRating({ rating, count }: { rating: number; count: number }) {
+  const { colors, stickers, font } = useTheme()
   if (count === 0) return null
   return (
     <View style={styles.starRow}>
@@ -308,20 +320,36 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
         <Star
           key={i}
           size={10}
-          color={brand.accent}
+          color={stickers.yellow}
           strokeWidth={2}
-          fill={i <= Math.round(rating) ? brand.accent : 'none'}
+          fill={i <= Math.round(rating) ? stickers.yellow : 'none'}
         />
       ))}
-      <Text style={[styles.ratingText, { color: brand.accent }]}>{rating.toFixed(1)}</Text>
+      <Text style={[styles.ratingText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{rating.toFixed(1)}</Text>
+    </View>
+  )
+}
+
+// ─── Empty State ────────────────────────────────────────────────────────────
+
+function EmptyState({ title, body }: { title: string; body: string }) {
+  const { colors, font, stickers } = useTheme()
+  return (
+    <View style={styles.emptyWrap}>
+      <View style={styles.emptyStickers}>
+        <StarSticker size={34} fill={stickers.yellow} />
+        <StarSticker size={26} fill={stickers.pink} />
+      </View>
+      <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display }]}>{title}</Text>
+      <Text style={[styles.emptyBody, { color: colors.textMuted, fontFamily: font.body }]}>{body}</Text>
     </View>
   )
 }
 
 // ─── Channel Card (full) ───────────────────────────────────────────────────
 
-function ChannelCard({ channel, joined, unread }: { channel: Channel; joined: boolean; unread?: number }) {
-  const { colors, radius, isDark } = useTheme()
+function ChannelCard({ channel, joined, unread, accent }: { channel: Channel; joined: boolean; unread?: number; accent: string }) {
+  const { colors, radius, isDark, stickers, font } = useTheme()
   const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
   const StickerIcon = sticker.Component
 
@@ -330,7 +358,7 @@ function ChannelCard({ channel, joined, unread }: { channel: Channel; joined: bo
       onPress={() => router.push(`/channel/${channel.id}` as any)}
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: colors.surface, borderRadius: radius.xl },
+        { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg },
         pressed && { opacity: 0.85 },
       ]}
     >
@@ -338,30 +366,30 @@ function ChannelCard({ channel, joined, unread }: { channel: Channel; joined: bo
         <StickerIcon size={26} fill={sticker.fill} />
       </View>
       <View style={styles.cardContent}>
-        <Text style={[styles.cardName, { color: colors.text }]} numberOfLines={1}>
+        <Text style={[styles.cardName, { color: colors.text, fontFamily: font.bodyBold }]} numberOfLines={1}>
           {channel.name}
         </Text>
-        <Text style={[styles.cardDesc, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.cardDesc, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={1}>
           {channel.description ?? 'Join the conversation'}
         </Text>
       </View>
       <View style={styles.cardRight}>
         {(unread ?? 0) > 0 ? (
-          <View style={[styles.unreadBadge, { backgroundColor: CREAM }]}>
-            <Text style={[styles.unreadText, { color: INK }]}>{unread! > 99 ? '99+' : unread}</Text>
+          <View style={[styles.unreadBadge, { backgroundColor: accent }]}>
+            <Text style={[styles.unreadText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{unread! > 99 ? '99+' : unread}</Text>
           </View>
         ) : (
           <View style={styles.memberRow}>
             <Users size={12} color={colors.textMuted} strokeWidth={2} />
-            <Text style={[styles.memberCount, { color: colors.textMuted }]}>
-              {channel.memberCount}
+            <Text style={[styles.memberCount, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+              {channel.memberCount > 0 ? channel.memberCount : 'New'}
             </Text>
           </View>
         )}
         <StarRating rating={channel.avgRating} count={channel.ratingCount} />
         {joined && (
-          <View style={[styles.joinedBadge, { backgroundColor: brand.success + '20', borderRadius: radius.full }]}>
-            <Text style={[styles.joinedText, { color: brand.success }]}>Joined</Text>
+          <View style={[styles.joinedBadge, { backgroundColor: stickers.greenSoft, borderRadius: radius.full }]}>
+            <Text style={[styles.joinedText, { color: stickers.greenInk, fontFamily: font.bodyBold }]}>Joined</Text>
           </View>
         )}
       </View>
@@ -371,8 +399,8 @@ function ChannelCard({ channel, joined, unread }: { channel: Channel; joined: bo
 
 // ─── Channel Card (compact, for horizontal scroll) ─────────────────────────
 
-function ChannelCardCompact({ channel, joined }: { channel: Channel; joined: boolean }) {
-  const { colors, radius, isDark } = useTheme()
+function ChannelCardCompact({ channel, joined, accent }: { channel: Channel; joined: boolean; accent: string }) {
+  const { colors, radius, isDark, stickers, font } = useTheme()
   const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
   const StickerIcon = sticker.Component
 
@@ -381,22 +409,26 @@ function ChannelCardCompact({ channel, joined }: { channel: Channel; joined: boo
       onPress={() => router.push(`/channel/${channel.id}` as any)}
       style={({ pressed }) => [
         styles.compactCard,
-        { backgroundColor: colors.surface, borderRadius: radius.xl },
+        { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg },
         pressed && { opacity: 0.85 },
       ]}
     >
       <View style={[styles.compactIcon, { backgroundColor: sticker.tint }]}>
         <StickerIcon size={30} fill={sticker.fill} />
       </View>
-      <Text style={[styles.compactName, { color: colors.text }]} numberOfLines={1}>
+      <Text style={[styles.compactName, { color: colors.text, fontFamily: font.bodyBold }]} numberOfLines={1}>
         {channel.name}
       </Text>
-      <Text style={[styles.compactMembers, { color: colors.textMuted }]}>
-        {channel.memberCount} members
+      <Text style={[styles.compactMembers, { color: colors.textMuted, fontFamily: font.bodySemiBold }]} numberOfLines={1}>
+        {memberLabel(channel.memberCount)}
       </Text>
-      {!joined && (
-        <View style={[styles.joinBtn, { backgroundColor: CREAM, borderRadius: radius.full }]}>
-          <Text style={[styles.joinBtnText, { color: INK }]}>Join</Text>
+      {joined ? (
+        <View style={[styles.joinedBadge, { backgroundColor: stickers.greenSoft, borderRadius: radius.full, marginTop: 4 }]}>
+          <Text style={[styles.joinedText, { color: stickers.greenInk, fontFamily: font.bodyBold }]}>Joined</Text>
+        </View>
+      ) : (
+        <View style={[styles.joinBtn, { backgroundColor: accent, borderRadius: radius.full }]}>
+          <Text style={[styles.joinBtnText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>Join</Text>
         </View>
       )}
     </Pressable>
@@ -408,7 +440,9 @@ function ChannelCardCompact({ channel, joined }: { channel: Channel; joined: boo
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   scroll: { paddingHorizontal: 20, paddingBottom: 40 },
-  heading: { fontSize: 24, fontWeight: '800', letterSpacing: -0.3, marginBottom: 16, fontFamily: 'Fraunces_600SemiBold' },
+  header: { marginBottom: 18 },
+  heading: { fontSize: 36, letterSpacing: -1, lineHeight: 40 },
+  subheading: { fontSize: 14, marginTop: 6, lineHeight: 18 },
 
   // Banner carousel
   bannerContainer: { marginBottom: 16 },
@@ -435,36 +469,41 @@ const styles = StyleSheet.create({
   // Sections
   section: { marginBottom: 24 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
-  sectionTitle: { fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 12 },
-  emptyText: { fontSize: 14, fontWeight: '500' },
+  sectionTitle: { fontSize: 12, letterSpacing: 1, marginBottom: 12 },
+
+  // Empty state
+  emptyWrap: { alignItems: 'center', paddingVertical: 24, paddingHorizontal: 24, gap: 8 },
+  emptyStickers: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  emptyTitle: { fontSize: 20, letterSpacing: -0.4, textAlign: 'center' },
+  emptyBody: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
 
   // Horizontal list
   horizontalList: { gap: 12 },
 
   // Card
-  card: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12, marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
+  card: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12, marginBottom: 8, borderWidth: 1, ...shadows.subtle },
   cardIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   cardContent: { flex: 1, gap: 2 },
-  cardName: { fontSize: 15, fontWeight: '700' },
-  cardDesc: { fontSize: 13, fontWeight: '400' },
+  cardName: { fontSize: 15 },
+  cardDesc: { fontSize: 13 },
   cardRight: { alignItems: 'flex-end', gap: 4 },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  memberCount: { fontSize: 12, fontWeight: '600' },
+  memberCount: { fontSize: 12 },
   joinedBadge: { paddingVertical: 2, paddingHorizontal: 8 },
-  joinedText: { fontSize: 10, fontWeight: '700' },
+  joinedText: { fontSize: 10 },
 
   // Unread badge
   unreadBadge: { minWidth: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  unreadText: { fontSize: 11, fontWeight: '800' },
+  unreadText: { fontSize: 11 },
 
   // FAB
-  fab: { position: 'absolute', bottom: 24, right: 20, width: 56, height: 56, alignItems: 'center', justifyContent: 'center', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 8 },
+  fab: { position: 'absolute', bottom: 24, right: 20, width: 56, height: 56, alignItems: 'center', justifyContent: 'center' },
 
   // Compact
-  compactCard: { width: 150, padding: 16, alignItems: 'center', gap: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+  compactCard: { width: 150, padding: 16, alignItems: 'center', gap: 8, borderWidth: 1, ...shadows.subtle },
   compactIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-  compactName: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
-  compactMembers: { fontSize: 12, fontWeight: '500' },
+  compactName: { fontSize: 14, textAlign: 'center' },
+  compactMembers: { fontSize: 12 },
   joinBtn: { paddingVertical: 7, paddingHorizontal: 22, marginTop: 4 },
-  joinBtnText: { fontSize: 13, fontWeight: '800' },
+  joinBtnText: { fontSize: 13 },
 })

@@ -184,15 +184,8 @@ CREATE TRIGGER trg_channel_member_count
   FOR EACH ROW EXECUTE FUNCTION update_channel_member_count();
 
 -- ─── Seed default channels ────────────────────────────────────────────────
-INSERT INTO channels (name, description, category, channel_type, member_count) VALUES
-  ('Fertility & TTC', 'Trying to conceive? Share tips, ask questions, and support each other on the fertility journey.', 'fertility', 'public', 0),
-  ('Pregnancy Journey', 'Week-by-week updates, symptoms, cravings, and everything pregnancy.', 'pregnancy', 'public', 0),
-  ('Birth Stories', 'Share your birth experience and read others — every story matters.', 'pregnancy', 'public', 0),
-  ('Newborn Essentials', 'What do you really need for a newborn? Gear reviews, must-haves, and hacks.', 'parenting', 'public', 0),
-  ('Sleep Training', 'Methods, schedules, and moral support for getting everyone more sleep.', 'parenting', 'public', 0),
-  ('Feeding & Nutrition', 'Breastfeeding, formula, baby-led weaning, toddler meals — all things feeding.', 'feeding', 'public', 0),
-  ('Toddler Milestones', 'Walking, talking, tantrums — celebrate and navigate the toddler years together.', 'milestones', 'public', 0),
-  ('Cycle Wellness', 'Track, understand, and optimize your menstrual cycle and hormonal health.', 'wellness', 'public', 0),
-  ('Parenting Wins', 'Big or small — share your victories and cheer each other on!', 'community', 'public', 0),
-  ('Local Meetups', 'Find parents near you for playdates, walks, coffee, and community.', 'community', 'public', 0)
-ON CONFLICT DO NOTHING;
+-- NEUTRALIZED 2026-06-07: the 10 default seed channels were removed (see
+-- 20260607130000_remove_channel_seed.sql) so a fresh database starts with no
+-- seeded channels. The schema, RLS, and triggers above are preserved; only
+-- the demo-data INSERT was removed. Channels are created only by real users.
+-- (intentionally no INSERT)

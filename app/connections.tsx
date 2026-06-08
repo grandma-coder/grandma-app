@@ -16,19 +16,13 @@ import { ChannelsTab } from '../components/connections/ChannelsTab'
 import { ScreenHeader } from '../components/ui/ScreenHeader'
 
 export default function ConnectionsScreen() {
-  const { colors, font, isDark } = useTheme()
+  const { colors, font } = useTheme()
   const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{ tab?: string }>()
   const [tab, setTab] = useState<'garage' | 'channels'>(
     params.tab === 'channels' ? 'channels' : 'garage'
   )
   const [notifCount, setNotifCount] = useState(0)
-
-  const bg = isDark ? colors.bg : '#F3ECD9'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
 
   useFocusEffect(
     useCallback(() => {
@@ -37,17 +31,17 @@ export default function ConnectionsScreen() {
   )
 
   return (
-    <View style={[styles.root, { backgroundColor: bg }]}>
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
         <ScreenHeader
           title="Connections"
           right={
             <Pressable onPress={() => router.push('/notifications' as any)} hitSlop={8}>
-              <View style={[styles.bellBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
-                <Ionicons name="notifications-outline" size={18} color={ink} />
+              <View style={[styles.bellBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Ionicons name="notifications-outline" size={18} color={colors.text} />
                 {notifCount > 0 && (
                   <View style={[styles.notifBadge, { backgroundColor: brand.error }]}>
-                    <Text style={styles.notifBadgeText}>{notifCount > 9 ? '9+' : notifCount}</Text>
+                    <Text style={[styles.notifBadgeText, { color: colors.textInverse }]}>{notifCount > 9 ? '9+' : notifCount}</Text>
                   </View>
                 )}
               </View>
@@ -57,7 +51,7 @@ export default function ConnectionsScreen() {
       </View>
 
       {/* Segmented pill tab bar */}
-      <View style={[styles.tabBar, { backgroundColor: paper, borderColor: paperBorder }]}>
+      <View style={[styles.tabBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         {(['garage', 'channels'] as const).map((t) => {
           const active = tab === t
           return (
@@ -65,16 +59,19 @@ export default function ConnectionsScreen() {
               <View
                 style={[
                   styles.tabBtn,
-                  { backgroundColor: active ? ink : 'transparent' },
+                  { backgroundColor: active ? colors.text : 'transparent' },
                 ]}
               >
                 <Text
                   style={[
                     styles.tabText,
-                    { fontFamily: font.bodyMedium, color: active ? bg : ink3 },
+                    {
+                      fontFamily: active ? font.bodySemiBold : font.bodyMedium,
+                      color: active ? colors.bg : colors.textMuted,
+                    },
                   ]}
                 >
-                  {t === 'garage' ? 'Garage' : 'Channels'}
+                  {t === 'garage' ? 'Village' : 'Channels'}
                 </Text>
               </View>
             </Pressable>
@@ -110,7 +107,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 3,
   },
-  notifBadgeText: { fontSize: 9, fontWeight: '800', color: '#FFFFFF' },
+  notifBadgeText: { fontSize: 9, fontWeight: '800' },
 
   tabBar: {
     flexDirection: 'row',

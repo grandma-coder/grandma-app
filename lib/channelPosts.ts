@@ -142,13 +142,14 @@ export async function createChannel(opts: {
 // ─── Messages (Posts) ──────────────────────────────────────────────────────
 
 export async function fetchMessages(channelId: string): Promise<ChannelPost[]> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('channel_posts')
     .select('*')
     .eq('channel_id', channelId)
     .is('reply_to_id', null) // Only top-level messages, not thread replies
     .order('created_at', { ascending: true })
     .limit(100)
+  if (error) throw error
 
   const posts = (data ?? []) as ChannelPost[]
 
@@ -284,12 +285,15 @@ export async function toggleReaction(postId: string): Promise<boolean> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
 
-  const { data: existing } = await supabase
+  // maybeSingle: a user who hasn't reacted yet is the normal case (zero rows).
+  // .single() would throw PGRST116 for that, the common path.
+  const { data: existing, error } = await supabase
     .from('post_reactions')
     .select('id')
     .eq('post_id', postId)
     .eq('user_id', session.user.id)
-    .single()
+    .maybeSingle()
+  if (error) throw error
 
   if (existing) {
     await supabase.from('post_reactions').delete().eq('id', existing.id)
@@ -328,8 +332,15 @@ export async function joinChannel(channelId: string): Promise<void> {
 export async function leaveChannel(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
+  // Delete membership first — if it fails we don't want a "left the channel"
+  // message posted while the user is still a member (visible to everyone).
+  const { error } = await supabase
+    .from('channel_members')
+    .delete()
+    .eq('channel_id', channelId)
+    .eq('user_id', session.user.id)
+  if (error) throw error
   await postSystemMessage(channelId, 'system_leave')
-  await supabase.from('channel_members').delete().eq('channel_id', channelId).eq('user_id', session.user.id)
 }
 
 export async function isChannelMember(channelId: string): Promise<boolean> {
@@ -340,7 +351,7 @@ export async function isChannelMember(channelId: string): Promise<boolean> {
     .select('id')
     .eq('channel_id', channelId)
     .eq('user_id', session.user.id)
-    .single()
+    .maybeSingle()
   return !!data
 }
 
@@ -378,17 +389,21 @@ export async function getUnreadCounts(): Promise<Record<string, number>> {
 
   if (!memberships || memberships.length === 0) return {}
 
+  // One count query per channel, run concurrently rather than sequentially —
+  // this is called on every Channels-screen focus, so the serial loop was
+  // N round-trips of latency. (Ideal end-state is a single server-side RPC.)
   const counts: Record<string, number> = {}
-  for (const m of memberships) {
-    const { count } = await supabase
-      .from('channel_posts')
-      .select('*', { count: 'exact', head: true })
-      .eq('channel_id', m.channel_id)
-      .is('reply_to_id', null)
-      .gt('created_at', m.last_read_at ?? '1970-01-01')
-
-    counts[m.channel_id] = count ?? 0
-  }
+  await Promise.all(
+    memberships.map(async (m) => {
+      const { count } = await supabase
+        .from('channel_posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('channel_id', m.channel_id)
+        .is('reply_to_id', null)
+        .gt('created_at', m.last_read_at ?? '1970-01-01')
+      counts[m.channel_id] = count ?? 0
+    })
+  )
 
   return counts
 }
@@ -487,7 +502,7 @@ export async function getMyRating(channelId: string): Promise<{ rating: number; 
     .select('rating, review')
     .eq('channel_id', channelId)
     .eq('user_id', session.user.id)
-    .single()
+    .maybeSingle()
   return data as { rating: number; review: string | null } | null
 }
 
@@ -627,8 +642,15 @@ export async function getChannelMembers(channelId: string): Promise<{ user_id: s
 
 // ─── Delete Messages ───────────────────────────────────────────────────────
 
-export async function deleteMessage(messageId: string): Promise<void> {
-  await supabase.from('channel_posts').delete().eq('id', messageId)
+export async function deleteMessage(messageId: string, authorId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session || session.user.id !== authorId) throw new Error('Unauthorized')
+  const { error } = await supabase
+    .from('channel_posts')
+    .delete()
+    .eq('id', messageId)
+    .eq('author_id', authorId)
+  if (error) throw error
 }
 
 // ─── Notifications ─────────────────────────────────────────────────────────
@@ -730,7 +752,7 @@ export async function getMyRequestStatus(channelId: string): Promise<ChannelRequ
     .eq('user_id', session.user.id)
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
   return (data as ChannelRequest) ?? null
 }
 

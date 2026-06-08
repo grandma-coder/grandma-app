@@ -24,7 +24,6 @@ import {
   Users,
   Star,
   Crown,
-  User,
   Image as ImageIcon,
   Settings,
   Trash2,
@@ -45,12 +44,10 @@ import {
   Zap,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../../constants/theme'
+import { useTheme, brand, getModeColor } from '../../../constants/theme'
+import { useModeStore } from '../../../store/useModeStore'
 import { useSavedToast } from '../../../components/ui/SavedToast'
 import { channelSticker } from '../../../lib/channelSticker'
-
-const CREAM = '#F5EFE3'
-const INK = '#1A1430'
 import { getChannels, type Channel } from '../../../lib/channels'
 import {
   isChannelMember,
@@ -73,7 +70,9 @@ const SCREEN_W = Dimensions.get('window').width
 const MEDIA_THUMB = (SCREEN_W - 48 - 8) / 4 // 4 columns
 
 export default function ChannelInfoScreen() {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, isDark, font, stickers } = useTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getModeColor(mode, isDark)
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -246,8 +245,9 @@ export default function ChannelInfoScreen() {
       {
         text: 'Delete', style: 'destructive',
         onPress: async () => {
+          if (!currentUserId) return
           try {
-            await deleteMessage(msgId)
+            await deleteMessage(msgId, currentUserId)
             setMessages((prev) => prev.filter((m) => m.id !== msgId))
           } catch {}
         },
@@ -411,10 +411,10 @@ export default function ChannelInfoScreen() {
     <View style={[s.root, { backgroundColor: colors.bg }]}>
       {/* Header */}
       <View style={[s.header, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
-        <Pressable onPress={() => router.back()} style={s.headerBtn}>
+        <Pressable onPress={() => router.back()} hitSlop={8} style={({ pressed }) => [s.headerBtn, pressed && { opacity: 0.7 }]}>
           <ArrowLeft size={24} color={colors.text} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: colors.text }]}>Channel Info</Text>
+        <Text style={[s.headerTitle, { color: colors.text, fontFamily: font.display }]}>Channel Info</Text>
         <View style={s.headerBtn} />
       </View>
 
@@ -449,15 +449,15 @@ export default function ChannelInfoScreen() {
                 multiline
               />
               <View style={s.editActions}>
-                <Pressable onPress={() => setEditing(false)} style={[s.editCancelBtn, { borderColor: colors.border, borderRadius: radius.lg }]}>
+                <Pressable onPress={() => setEditing(false)} style={({ pressed }) => [s.editCancelBtn, { borderColor: colors.border, borderRadius: radius.full }, pressed && { opacity: 0.7 }]}>
                   <X size={16} color={colors.textSecondary} />
-                  <Text style={[s.editCancelText, { color: colors.textSecondary }]}>Cancel</Text>
+                  <Text style={[s.editCancelText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>Cancel</Text>
                 </Pressable>
-                <Pressable onPress={handleSaveEdit} disabled={saving} style={[s.editSaveBtn, { backgroundColor: CREAM, borderRadius: radius.full }]}>
-                  {saving ? <ActivityIndicator color={INK} size="small" /> : (
+                <Pressable onPress={handleSaveEdit} disabled={saving} style={({ pressed }) => [s.editSaveBtn, { backgroundColor: accent, borderRadius: radius.full }, pressed && { opacity: 0.85 }]}>
+                  {saving ? <ActivityIndicator color={colors.textInverse} size="small" /> : (
                     <>
-                      <Check size={16} color={INK} />
-                      <Text style={[s.editSaveText, { color: INK }]}>Save</Text>
+                      <Check size={16} color={colors.textInverse} />
+                      <Text style={[s.editSaveText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>Save</Text>
                     </>
                   )}
                 </Pressable>
@@ -465,15 +465,15 @@ export default function ChannelInfoScreen() {
             </View>
           ) : (
             <>
-              <Text style={[s.channelName, { color: colors.text }]}>{channel.name}</Text>
+              <Text style={[s.channelName, { color: colors.text, fontFamily: font.display }]}>{channel.name}</Text>
               {channel.description && (
-                <Text style={[s.channelDesc, { color: colors.textSecondary }]}>{channel.description}</Text>
+                <Text style={[s.channelDesc, { color: colors.textSecondary, fontFamily: font.body }]}>{channel.description}</Text>
               )}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 {channel.channelType === 'private' && (
                   <Lock size={12} color={colors.textMuted} strokeWidth={2} />
                 )}
-                <Text style={[s.channelCategory, { color: colors.textMuted }]}>
+                <Text style={[s.channelCategory, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
                   {channel.channelType === 'private' ? 'Private' : channel.category} channel
                 </Text>
               </View>
@@ -485,20 +485,20 @@ export default function ChannelInfoScreen() {
         <View style={[s.statsRow, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
           <View style={s.stat}>
             <Users size={18} color={colors.primary} strokeWidth={2} />
-            <Text style={[s.statNumber, { color: colors.text }]}>{channel.memberCount}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted }]}>Members</Text>
+            <Text style={[s.statNumber, { color: colors.text, fontFamily: font.display }]}>{channel.memberCount}</Text>
+            <Text style={[s.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Members</Text>
           </View>
           <View style={[s.statDivider, { backgroundColor: colors.borderLight }]} />
           <View style={s.stat}>
-            <Star size={18} color={brand.accent} strokeWidth={2} fill={channel.avgRating > 0 ? brand.accent : 'none'} />
-            <Text style={[s.statNumber, { color: colors.text }]}>{channel.avgRating > 0 ? channel.avgRating.toFixed(1) : '—'}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted }]}>Rating</Text>
+            <Star size={18} color={stickers.yellow} strokeWidth={2} fill={channel.avgRating > 0 ? stickers.yellow : 'none'} />
+            <Text style={[s.statNumber, { color: colors.text, fontFamily: font.display }]}>{channel.avgRating > 0 ? channel.avgRating.toFixed(1) : '—'}</Text>
+            <Text style={[s.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Rating</Text>
           </View>
           <View style={[s.statDivider, { backgroundColor: colors.borderLight }]} />
           <View style={s.stat}>
             <ImageIcon size={18} color={colors.primary} strokeWidth={2} />
-            <Text style={[s.statNumber, { color: colors.text }]}>{sharedMedia.length}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted }]}>Media</Text>
+            <Text style={[s.statNumber, { color: colors.text, fontFamily: font.display }]}>{sharedMedia.length}</Text>
+            <Text style={[s.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Media</Text>
           </View>
         </View>
 
@@ -509,14 +509,14 @@ export default function ChannelInfoScreen() {
               onPress={handleShareChannel}
               style={({ pressed }) => [
                 s.shareBtn,
-                { backgroundColor: CREAM + '14', borderWidth: 1, borderColor: CREAM + '40', borderRadius: radius.full },
+                { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.full },
                 pressed && { opacity: 0.85 },
               ]}
             >
-              <Share2 size={18} color={CREAM} strokeWidth={2} />
+              <Share2 size={18} color={colors.text} strokeWidth={2} />
               <View style={{ flex: 1 }}>
-                <Text style={[s.shareBtnText, { color: CREAM }]}>Share Channel</Text>
-                <Text style={[s.shareBtnSub, { color: colors.textMuted }]}>
+                <Text style={[s.shareBtnText, { color: colors.text, fontFamily: font.bodyBold }]}>Share Channel</Text>
+                <Text style={[s.shareBtnSub, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
                   {channel.channelType === 'private'
                     ? 'Invite link — only members can share'
                     : 'Send invite link via text, WhatsApp, etc.'}
@@ -528,22 +528,32 @@ export default function ChannelInfoScreen() {
 
         {/* Owner / Creator */}
         <View style={s.section}>
-          <Text style={[s.sectionTitle, { color: colors.textMuted }]}>CREATED BY</Text>
+          <Text style={[s.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>CREATED BY</Text>
           <View style={[s.ownerCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-            <View style={[s.ownerAvatar, { backgroundColor: colors.surfaceRaised }]}>
-              <Crown size={18} color={brand.accent} strokeWidth={2} />
-            </View>
+            {/* Owner's sticker identity with a gold crown badge marking the host. */}
+            {(() => {
+              const os = channelSticker(channel.createdBy ?? 'owner', isDark)
+              const OwnerSticker = os.Component
+              return (
+                <View style={[s.ownerAvatar, { backgroundColor: os.tint }]}>
+                  <OwnerSticker size={20} fill={os.fill} />
+                  <View style={[s.ownerCrownBadge, { backgroundColor: colors.surface }]}>
+                    <Crown size={11} color={brand.accent} strokeWidth={2} fill={brand.accent} />
+                  </View>
+                </View>
+              )
+            })()}
             <View style={{ flex: 1 }}>
-              <Text style={[s.ownerName, { color: colors.text }]}>
+              <Text style={[s.ownerName, { color: colors.text, fontFamily: font.bodyBold }]}>
                 {ownerName ?? 'Channel Creator'}
               </Text>
-              <Text style={[s.ownerMeta, { color: colors.textMuted }]}>
+              <Text style={[s.ownerMeta, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
                 Created {new Date(channel.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </Text>
             </View>
             {isOwner && (
               <View style={[s.ownerBadge, { backgroundColor: brand.accent + '20', borderRadius: radius.full }]}>
-                <Text style={[s.ownerBadgeText, { color: brand.accent }]}>You</Text>
+                <Text style={[s.ownerBadgeText, { color: brand.accent, fontFamily: font.bodySemiBold }]}>You</Text>
               </View>
             )}
           </View>
@@ -551,24 +561,28 @@ export default function ChannelInfoScreen() {
 
         {/* Members */}
         <View style={s.section}>
-          <Text style={[s.sectionTitle, { color: colors.textMuted }]}>
+          <Text style={[s.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
             MEMBERS ({members.length})
           </Text>
-          {members.slice(0, 10).map((m) => (
-            <View key={m.user_id} style={[s.memberRow, { borderBottomColor: colors.borderLight }]}>
-              <View style={[s.memberAvatar, { backgroundColor: colors.surfaceRaised }]}>
-                <User size={14} color={colors.textMuted} strokeWidth={1.5} />
+          {members.slice(0, 10).map((m) => {
+            const ms = channelSticker(m.user_id, isDark)
+            const MemberSticker = ms.Component
+            return (
+              <View key={m.user_id} style={[s.memberRow, { borderBottomColor: colors.borderLight }]}>
+                <View style={[s.memberAvatar, { backgroundColor: ms.tint }]}>
+                  <MemberSticker size={16} fill={ms.fill} />
+                </View>
+                <Text style={[s.memberName, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+                  {m.name ?? 'Community Member'}
+                </Text>
+                {m.user_id === channel.createdBy && (
+                  <Crown size={14} color={brand.accent} strokeWidth={2} fill={brand.accent} />
+                )}
               </View>
-              <Text style={[s.memberName, { color: colors.text }]}>
-                {m.name ?? 'Community Member'}
-              </Text>
-              {m.user_id === channel.createdBy && (
-                <Crown size={14} color={brand.accent} strokeWidth={2} />
-              )}
-            </View>
-          ))}
+            )
+          })}
           {members.length > 10 && (
-            <Text style={[s.showMore, { color: colors.primary }]}>
+            <Text style={[s.showMore, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
               +{members.length - 10} more members
             </Text>
           )}
@@ -589,7 +603,7 @@ export default function ChannelInfoScreen() {
         {/* Admin Section (owner only) */}
         {isOwner && (
           <View style={s.section}>
-            <Text style={[s.sectionTitle, { color: colors.textMuted }]}>
+            <Text style={[s.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
               <Shield size={12} color={colors.textMuted} strokeWidth={2} /> ADMIN
             </Text>
 
@@ -598,39 +612,39 @@ export default function ChannelInfoScreen() {
               <View style={[s.metricsCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
                 <View style={s.metricsHeader}>
                   <ChartBar size={16} color={colors.primary} strokeWidth={2} />
-                  <Text style={[s.metricsTitle, { color: colors.text }]}>Channel Metrics</Text>
+                  <Text style={[s.metricsTitle, { color: colors.text, fontFamily: font.bodyBold }]}>Channel Metrics</Text>
                 </View>
                 <View style={s.metricsGrid}>
                   <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
                     <Users size={16} color={colors.primary} strokeWidth={2} />
-                    <Text style={[s.metricValue, { color: colors.text }]}>{metrics.totalMembers}</Text>
-                    <Text style={[s.metricLabel, { color: colors.textMuted }]}>Members</Text>
+                    <Text style={[s.metricValue, { color: colors.text, fontFamily: font.display }]}>{metrics.totalMembers}</Text>
+                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Members</Text>
                   </View>
                   <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-                    <MessageSquare size={16} color={brand.secondary} strokeWidth={2} />
-                    <Text style={[s.metricValue, { color: colors.text }]}>{metrics.totalMessages}</Text>
-                    <Text style={[s.metricLabel, { color: colors.textMuted }]}>Messages</Text>
+                    <MessageSquare size={16} color={colors.secondary} strokeWidth={2} />
+                    <Text style={[s.metricValue, { color: colors.text, fontFamily: font.display }]}>{metrics.totalMessages}</Text>
+                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Messages</Text>
                   </View>
                   <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-                    <ImageIcon size={16} color={brand.accent} strokeWidth={2} />
-                    <Text style={[s.metricValue, { color: colors.text }]}>{metrics.totalMedia}</Text>
-                    <Text style={[s.metricLabel, { color: colors.textMuted }]}>Media</Text>
+                    <ImageIcon size={16} color={colors.primary} strokeWidth={2} />
+                    <Text style={[s.metricValue, { color: colors.text, fontFamily: font.display }]}>{metrics.totalMedia}</Text>
+                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Media</Text>
                   </View>
                   <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-                    <Zap size={16} color={brand.success} strokeWidth={2} />
-                    <Text style={[s.metricValue, { color: colors.text }]}>{metrics.activeToday}</Text>
-                    <Text style={[s.metricLabel, { color: colors.textMuted }]}>Active Today</Text>
+                    <Zap size={16} color={colors.success} strokeWidth={2} />
+                    <Text style={[s.metricValue, { color: colors.text, fontFamily: font.display }]}>{metrics.activeToday}</Text>
+                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Active Today</Text>
                   </View>
                 </View>
                 <View style={[s.metricsFooter, { borderTopColor: colors.borderLight }]}>
                   <View style={s.metricsFooterItem}>
-                    <Text style={[s.metricsFooterValue, { color: colors.primary }]}>{metrics.messagesToday}</Text>
-                    <Text style={[s.metricsFooterLabel, { color: colors.textMuted }]}>msgs today</Text>
+                    <Text style={[s.metricsFooterValue, { color: colors.primary, fontFamily: font.display }]}>{metrics.messagesToday}</Text>
+                    <Text style={[s.metricsFooterLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>msgs today</Text>
                   </View>
                   <View style={[s.metricsFooterDivider, { backgroundColor: colors.borderLight }]} />
                   <View style={s.metricsFooterItem}>
-                    <Text style={[s.metricsFooterValue, { color: colors.primary }]}>{metrics.messagesThisWeek}</Text>
-                    <Text style={[s.metricsFooterLabel, { color: colors.textMuted }]}>this week</Text>
+                    <Text style={[s.metricsFooterValue, { color: colors.primary, fontFamily: font.display }]}>{metrics.messagesThisWeek}</Text>
+                    <Text style={[s.metricsFooterLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>this week</Text>
                   </View>
                 </View>
               </View>
@@ -641,48 +655,52 @@ export default function ChannelInfoScreen() {
               style={[s.adminBtn, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
             >
               <Edit3 size={18} color={colors.primary} strokeWidth={2} />
-              <Text style={[s.adminBtnText, { color: colors.text }]}>Edit Channel Info</Text>
+              <Text style={[s.adminBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Edit Channel Info</Text>
             </Pressable>
 
             <Pressable
               onPress={handleTransferOwnership}
               style={[s.adminBtn, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
             >
-              <ArrowRightLeft size={18} color={brand.accent} strokeWidth={2} />
-              <Text style={[s.adminBtnText, { color: colors.text }]}>Transfer Ownership</Text>
+              <ArrowRightLeft size={18} color={colors.primary} strokeWidth={2} />
+              <Text style={[s.adminBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Transfer Ownership</Text>
             </Pressable>
 
             {/* Pending join requests (private channels) */}
             {pendingRequests.length > 0 && (
               <View style={[s.requestsSection, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
                 <View style={s.requestsHeader}>
-                  <UserPlus size={16} color={brand.accent} strokeWidth={2} />
-                  <Text style={[s.requestsTitle, { color: colors.text }]}>
+                  <UserPlus size={16} color={colors.primary} strokeWidth={2} />
+                  <Text style={[s.requestsTitle, { color: colors.text, fontFamily: font.bodyBold }]}>
                     Pending Requests ({pendingRequests.length})
                   </Text>
                 </View>
-                {pendingRequests.map((req) => (
+                {pendingRequests.map((req) => {
+                  const rs = channelSticker(req.user_id, isDark)
+                  const ReqSticker = rs.Component
+                  return (
                   <View key={req.id} style={[s.requestRow, { borderTopColor: colors.borderLight }]}>
-                    <View style={[s.memberAvatar, { backgroundColor: colors.surfaceRaised }]}>
-                      <User size={14} color={colors.textMuted} strokeWidth={1.5} />
+                    <View style={[s.memberAvatar, { backgroundColor: rs.tint }]}>
+                      <ReqSticker size={16} fill={rs.fill} />
                     </View>
-                    <Text style={[s.memberName, { color: colors.text }]}>
+                    <Text style={[s.memberName, { color: colors.text, fontFamily: font.bodySemiBold }]}>
                       {req.user_name ?? 'Community Member'}
                     </Text>
                     <Pressable
                       onPress={() => handleApproveRequest(req)}
-                      style={[s.requestActionBtn, { backgroundColor: brand.success + '20' }]}
+                      style={[s.requestActionBtn, { backgroundColor: colors.successTint }]}
                     >
-                      <Check size={16} color={brand.success} strokeWidth={2} />
+                      <Check size={16} color={colors.success} strokeWidth={2} />
                     </Pressable>
                     <Pressable
                       onPress={() => handleDenyRequest(req)}
-                      style={[s.requestActionBtn, { backgroundColor: brand.error + '20' }]}
+                      style={[s.requestActionBtn, { backgroundColor: stickers.coralInk + '22' }]}
                     >
-                      <XCircle size={16} color={brand.error} strokeWidth={2} />
+                      <XCircle size={16} color={stickers.coral} strokeWidth={2} />
                     </Pressable>
                   </View>
-                ))}
+                  )
+                })}
               </View>
             )}
 
@@ -691,7 +709,7 @@ export default function ChannelInfoScreen() {
               style={[s.adminBtn, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
             >
               <Settings size={18} color={colors.primary} strokeWidth={2} />
-              <Text style={[s.adminBtnText, { color: colors.text }]}>Manage Messages ({messages.length})</Text>
+              <Text style={[s.adminBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Manage Messages ({messages.length})</Text>
             </Pressable>
 
             {showMessages && messages.length > 0 && (
@@ -699,11 +717,11 @@ export default function ChannelInfoScreen() {
                 {messages.slice(0, 20).map((msg) => (
                   <View key={msg.id} style={[s.modMsgRow, { borderBottomColor: colors.borderLight }]}>
                     <View style={{ flex: 1 }}>
-                      <Text style={[s.modMsgAuthor, { color: colors.text }]}>{msg.author_name ?? 'Member'}</Text>
-                      <Text style={[s.modMsgContent, { color: colors.textSecondary }]} numberOfLines={2}>{msg.content}</Text>
+                      <Text style={[s.modMsgAuthor, { color: colors.text, fontFamily: font.bodyBold }]}>{msg.author_name ?? 'Member'}</Text>
+                      <Text style={[s.modMsgContent, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>{msg.content}</Text>
                     </View>
                     <Pressable onPress={() => handleDeleteMessage(msg.id)} hitSlop={8}>
-                      <Trash2 size={16} color={brand.error} strokeWidth={2} />
+                      <Trash2 size={16} color={stickers.coral} strokeWidth={2} />
                     </Pressable>
                   </View>
                 ))}
@@ -712,10 +730,10 @@ export default function ChannelInfoScreen() {
 
             <Pressable
               onPress={handleDeleteChannel}
-              style={[s.adminBtn, { backgroundColor: brand.error + '10', borderRadius: radius.xl }]}
+              style={[s.adminBtn, { backgroundColor: stickers.coralInk + '14', borderRadius: radius.xl }]}
             >
-              <Trash2 size={18} color={brand.error} strokeWidth={2} />
-              <Text style={[s.adminBtnText, { color: brand.error }]}>Delete Channel</Text>
+              <Trash2 size={18} color={stickers.coral} strokeWidth={2} />
+              <Text style={[s.adminBtnText, { color: stickers.coral, fontFamily: font.bodyBold }]}>Delete Channel</Text>
             </Pressable>
           </View>
         )}
@@ -724,10 +742,10 @@ export default function ChannelInfoScreen() {
         {isMember && !isOwner && (
           <Pressable
             onPress={handleLeave}
-            style={[s.leaveBtn, { backgroundColor: brand.error + '10', borderRadius: radius.xl }]}
+            style={[s.leaveBtn, { backgroundColor: stickers.coralInk + '14', borderRadius: radius.xl }]}
           >
-            <LogOut size={18} color={brand.error} strokeWidth={2} />
-            <Text style={[s.leaveBtnText, { color: brand.error }]}>Leave Channel</Text>
+            <LogOut size={18} color={stickers.coral} strokeWidth={2} />
+            <Text style={[s.leaveBtnText, { color: stickers.coral, fontFamily: font.bodyBold }]}>Leave Channel</Text>
           </Pressable>
         )}
       </ScrollView>
@@ -759,7 +777,7 @@ function DeleteChannelSheet({
   onCancel: () => void
   onConfirm: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font, stickers } = useTheme()
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
@@ -770,13 +788,13 @@ function DeleteChannelSheet({
         >
           <View style={[s.deleteHandle, { backgroundColor: colors.textMuted + '55' }]} />
 
-          <View style={[s.deleteIcon, { backgroundColor: brand.error + '1A' }]}>
-            <Trash2 size={26} color={brand.error} strokeWidth={2} />
+          <View style={[s.deleteIcon, { backgroundColor: stickers.coralInk + '1A' }]}>
+            <Trash2 size={26} color={stickers.coral} strokeWidth={2} />
           </View>
-          <Text style={[s.deleteTitle, { color: colors.text }]}>Delete channel?</Text>
-          <Text style={[s.deleteBody, { color: colors.textSecondary }]}>
+          <Text style={[s.deleteTitle, { color: colors.text, fontFamily: font.display }]}>Delete channel?</Text>
+          <Text style={[s.deleteBody, { color: colors.textSecondary, fontFamily: font.body }]}>
             This permanently deletes{' '}
-            <Text style={{ fontWeight: '800', color: colors.text }}>#{channelName}</Text>
+            <Text style={{ fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
             {' '}and all its messages. This can't be undone.
           </Text>
 
@@ -793,12 +811,12 @@ function DeleteChannelSheet({
             {deleting ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={s.deleteConfirmText}>Delete Forever</Text>
+              <Text style={[s.deleteConfirmText, { fontFamily: font.bodyBold }]}>Delete Forever</Text>
             )}
           </Pressable>
 
           <Pressable onPress={onCancel} style={s.deleteCancel}>
-            <Text style={[s.deleteCancelText, { color: colors.textMuted }]}>Keep Channel</Text>
+            <Text style={[s.deleteCancelText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Keep Channel</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -812,16 +830,16 @@ const s = StyleSheet.create({
 
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
   headerBtn: { width: 40, alignItems: 'center' },
-  headerTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', fontWeight: '700', letterSpacing: -0.3 },
+  headerTitle: { fontSize: 20, letterSpacing: -0.3 },
 
   scroll: { paddingBottom: 60 },
 
   // Channel header
   channelHeader: { alignItems: 'center', paddingVertical: 28, paddingHorizontal: 20, gap: 10 },
   channelIcon: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  channelName: { fontSize: 28, fontFamily: 'Fraunces_600SemiBold', fontWeight: '700', letterSpacing: -0.5, textAlign: 'center' },
-  channelDesc: { fontSize: 14, fontWeight: '400', textAlign: 'center', lineHeight: 20 },
-  channelCategory: { fontSize: 12, fontWeight: '600', textTransform: 'capitalize' },
+  channelName: { fontSize: 28, letterSpacing: -0.5, textAlign: 'center' },
+  channelDesc: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  channelCategory: { fontSize: 12, textTransform: 'capitalize' },
 
   // Edit
   editSection: { width: '100%', gap: 12 },
@@ -847,6 +865,7 @@ const s = StyleSheet.create({
   // Owner card
   ownerCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },
   ownerAvatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  ownerCrownBadge: { position: 'absolute', bottom: -2, right: -2, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   ownerName: { fontSize: 15, fontWeight: '700' },
   ownerMeta: { fontSize: 12, fontWeight: '500', marginTop: 2 },
   ownerBadge: { paddingVertical: 3, paddingHorizontal: 10 },

@@ -137,10 +137,3 @@ export async function postReply(threadId: string, content: string): Promise<Repl
     createdAt: data.created_at,
   }
 }
-
-export async function joinChannel(channelId: string) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not signed in')
-
-  await supabase.from('channel_members').insert({ channel_id: channelId, user_id: user.id })
-}

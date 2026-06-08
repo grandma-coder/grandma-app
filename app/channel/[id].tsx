@@ -2,7 +2,7 @@
  * Channel Chat — real-time messaging interface with threads, mentions, reactions.
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react'
 import {
   View,
   Text,
@@ -31,11 +31,9 @@ import {
   Camera,
   Pin,
   X,
-  User,
   Reply,
   AtSign,
   Star,
-  Trash2,
   LogIn,
   LogOut,
   Lock,
@@ -44,14 +42,11 @@ import {
   Copy,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers } from '../../constants/theme'
+import { useTheme, brand, stickers, shadows, getModeColor, getModeColorSoft } from '../../constants/theme'
+import { useModeStore } from '../../store/useModeStore'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { channelSticker } from '../../lib/channelSticker'
-
-// Cream paper-aesthetic CTA shared with Garage & Channels
-const CREAM = '#F5EFE3'
-const INK = '#1A1430'
 import { getChannels, type Channel } from '../../lib/channels'
 import {
   sendMessage,
@@ -83,7 +78,9 @@ import { BrandedLoader } from '../../components/ui/BrandedLoader'
 // ─── Main Component ───────────────────────────────────────────────────────
 
 export default function ChannelChat() {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, isDark, font } = useTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getModeColor(mode, isDark)
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -95,6 +92,7 @@ export default function ChannelChat() {
   const [messages, setMessages] = useState<ChannelPost[]>([])
   const [isMember, setIsMember] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   // Input state
   const [text, setText] = useState('')
@@ -137,6 +135,7 @@ export default function ChannelChat() {
   const load = useCallback(async () => {
     if (!id) return
     setLoading(true)
+    setLoadError(false)
     try {
       const [allChannels, msgData, member] = await Promise.all([
         getChannels(),
@@ -172,7 +171,7 @@ export default function ChannelChat() {
         setMyRequest(null)
       }
     } catch {
-      // silent
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -188,9 +187,16 @@ export default function ChannelChat() {
   }, [id])
 
   // Refresh reply counts when coming back from thread screen
+  // Skip the focus-refresh on the very first focus (the initial load() already
+  // fetched everything); only refresh on RE-focus, e.g. returning from a thread.
+  const initialFocusDone = useRef(false)
   useFocusEffect(
     useCallback(() => {
-      if (!id || loading) return
+      if (!id) return
+      if (!initialFocusDone.current) {
+        initialFocusDone.current = true
+        return
+      }
       // Re-fetch messages to get fresh reply_count from DB triggers
       fetchMessages(id).then((fresh) => {
         setMessages((prev) => {
@@ -207,16 +213,17 @@ export default function ChannelChat() {
           return merged
         })
       }).catch(() => {})
-    }, [id, loading])
+    }, [id])
   )
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change. Capture + clear the timer so a
+  // fast unmount (back-nav within 100ms) doesn't fire on a dead component.
   useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true })
-      }, 100)
-    }
+    if (messages.length === 0) return
+    const timer = setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true })
+    }, 100)
+    return () => clearTimeout(timer)
   }, [messages.length])
 
   // ─── Realtime subscription ────────────────────────────────────────────
@@ -242,16 +249,10 @@ export default function ChannelChat() {
               return [...prev, newMsg]
             })
           }
-          // If the new message is a reply, increment reply_count on parent immediately
-          if (newMsg.reply_to_id) {
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === newMsg.reply_to_id
-                  ? { ...m, reply_count: (m.reply_count ?? 0) + 1 }
-                  : m
-              )
-            )
-          }
+          // Note: do NOT optimistically increment reply_count here. The DB
+          // trigger fires an authoritative UPDATE on the parent immediately
+          // after a reply INSERT, handled below. Realtime events are not
+          // order-guaranteed, so incrementing here could double-count.
           // Re-mark as read
           markChannelRead(id)
         }
@@ -330,7 +331,7 @@ export default function ChannelChat() {
     if (lastAt >= 0) {
       const before = text.slice(0, lastAt)
       setText(`${before}@${member.name} `)
-      setMentionIds((prev) => [...prev, member.id])
+      setMentionIds((prev) => [...new Set([...prev, member.id])])
     }
     setMentionQuery(null)
     setMentionResults([])
@@ -411,20 +412,27 @@ export default function ChannelChat() {
 
   // ─── Reactions ────────────────────────────────────────────────────────
 
-  async function handleReaction(postId: string) {
-    const reacted = await toggleReaction(postId)
-    setMessages((prev) =>
-      prev.map((m) =>
-        m.id === postId
-          ? {
-              ...m,
-              reaction_count: m.reaction_count + (reacted ? 1 : -1),
-              user_reacted: reacted,
-            }
-          : m
+  // Stable across renders (functional setState, no `messages` dep) so memoized
+  // MessageBubble rows don't re-render on every reaction elsewhere in the list.
+  const handleReaction = useCallback(async (postId: string) => {
+    // Optimistic toggle (clamp at 0 so a double-tap race can't render -1).
+    const apply = (toggle: boolean) =>
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== postId) return m
+          const react = toggle ? !m.user_reacted : m.user_reacted
+          const delta = toggle ? (m.user_reacted ? -1 : 1) : 0
+          return { ...m, user_reacted: react, reaction_count: Math.max(0, m.reaction_count + delta) }
+        })
       )
-    )
-  }
+
+    apply(true)
+    try {
+      await toggleReaction(postId)
+    } catch {
+      apply(true) // toggle back to revert
+    }
+  }, [])
 
   // ─── Join/Leave ───────────────────────────────────────────────────────
 
@@ -624,7 +632,7 @@ export default function ChannelChat() {
         text: 'Delete', style: 'destructive',
         onPress: async () => {
           setMessages((prev) => prev.filter((m) => m.id !== msgId))
-          await deleteMessage(msgId).catch(() => load())
+          await deleteMessage(msgId, authorId).catch(() => load())
         },
       },
     ])
@@ -662,6 +670,24 @@ export default function ChannelChat() {
     )
   }
 
+  // ─── Error state ──────────────────────────────────────────────────────
+  // A failed load used to leave a permanently blank screen. Offer a retry.
+
+  if (loadError) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <EmptyState
+          icon={<Star size={36} color={stickers.coral} strokeWidth={1.5} />}
+          iconBg={stickers.coralInk + '22'}
+          title="Couldn't load this channel"
+          message="Check your connection and try again."
+          ctaLabel="Try again"
+          onCtaPress={load}
+        />
+      </View>
+    )
+  }
+
   // ─── Render ───────────────────────────────────────────────────────────
 
   return (
@@ -694,12 +720,12 @@ export default function ChannelChat() {
             })()
           ) : null}
           <Text
-            style={[styles.headerTitle, { color: colors.text }]}
+            style={[styles.headerTitle, { color: colors.text, fontFamily: font.display }]}
             numberOfLines={1}
           >
             {channel?.name ?? 'Channel'}
           </Text>
-          <Text style={[styles.memberCount, { color: colors.textMuted }]}>
+          <Text style={[styles.memberCount, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
             {channel?.memberCount ?? 0}
           </Text>
           <Users size={12} color={colors.textMuted} strokeWidth={2} />
@@ -714,9 +740,9 @@ export default function ChannelChat() {
         <Pressable onPress={handleFavoriteToggle} hitSlop={8} style={styles.headerIconBtn}>
           <Star
             size={18}
-            color={isFavorited ? brand.accent : colors.textMuted}
+            color={isFavorited ? stickers.yellow : colors.textMuted}
             strokeWidth={2}
-            fill={isFavorited ? brand.accent : 'none'}
+            fill={isFavorited ? stickers.yellow : 'none'}
           />
         </Pressable>
         <Pressable
@@ -724,9 +750,9 @@ export default function ChannelChat() {
           style={[
             styles.joinLeaveBtn,
             {
-              backgroundColor: isMember ? 'transparent' : CREAM,
+              backgroundColor: isMember ? 'transparent' : accent,
               borderWidth: isMember ? 1 : 0,
-              borderColor: isMember ? CREAM + '55' : 'transparent',
+              borderColor: isMember ? colors.borderStrong : 'transparent',
               borderRadius: radius.full,
             },
           ]}
@@ -734,7 +760,7 @@ export default function ChannelChat() {
           <Text
             style={[
               styles.joinLeaveText,
-              { color: isMember ? CREAM : INK },
+              { color: isMember ? colors.textSecondary : colors.textInverse, fontFamily: font.bodyBold },
             ]}
           >
             {isMember && isOwner
@@ -764,38 +790,39 @@ export default function ChannelChat() {
                   <Star
                     key={i}
                     size={14}
-                    color={brand.accent}
+                    color={stickers.yellow}
                     strokeWidth={2}
-                    fill={i <= Math.round(channel.avgRating) ? brand.accent : 'none'}
+                    fill={i <= Math.round(channel.avgRating) ? stickers.yellow : 'none'}
                   />
                 ))}
-                <Text style={[styles.rateBarScore, { color: brand.accent }]}>{channel.avgRating.toFixed(1)}</Text>
+                <Text style={[styles.rateBarScore, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{channel.avgRating.toFixed(1)}</Text>
                 <Text style={[styles.rateBarCount, { color: colors.textMuted }]}>({channel.ratingCount})</Text>
               </>
             ) : (
               <Text style={[styles.rateBarPrompt, { color: colors.textMuted }]}>No ratings yet</Text>
             )}
           </View>
-          <Text style={[styles.rateBarAction, { color: CREAM }]}>
+          <Text style={[styles.rateBarAction, { color: accent, fontFamily: font.bodyBold }]}>
             {myRating > 0 ? 'Edit Rating' : 'Rate Channel'}
           </Text>
         </Pressable>
       )}
 
-      {/* Pinned message banner */}
+      {/* Pinned message banner — tinted with the channel's mode accent so it
+          stays cohesive with the rest of the screen instead of brand purple. */}
       {pinnedMessage && (
         <Pressable
           style={[
             styles.pinnedBanner,
-            { backgroundColor: colors.primaryTint, borderBottomColor: colors.border },
+            { backgroundColor: getModeColorSoft(mode, isDark), borderBottomColor: colors.border },
           ]}
         >
-          <Pin size={14} color={colors.primary} strokeWidth={2} />
+          <Pin size={14} color={accent} strokeWidth={2} />
           <Text
             style={[styles.pinnedBannerText, { color: colors.text }]}
             numberOfLines={1}
           >
-            <Text style={{ fontWeight: '700' }}>
+            <Text style={{ fontFamily: font.bodyBold }}>
               {pinnedMessage.author_name ?? 'Someone'}
             </Text>
             {': '}
@@ -823,12 +850,26 @@ export default function ChannelChat() {
             flatListRef.current?.scrollToEnd({ animated: false })
           }}
           ListEmptyComponent={
-            <EmptyState
-              icon={<MessageCircle size={36} color={stickers.lilac} strokeWidth={1.5} />}
-              iconBg={stickers.lilacSoft}
-              title="No messages yet"
-              message="Start the conversation!"
-            />
+            (() => {
+              // Empty state wears the channel's own sticker identity + tint, and
+              // the copy adapts to whether you've joined yet.
+              const s = channel
+                ? channelSticker(channel.id, isDark, channel.avatarUrl)
+                : null
+              const EmptyIcon = s?.Component
+              return (
+                <EmptyState
+                  icon={EmptyIcon ? <EmptyIcon size={40} fill={s!.fill} /> : undefined}
+                  iconBg={s?.tint ?? stickers.lilacSoft}
+                  title={isMember ? 'No messages yet' : 'Be the first to say hi'}
+                  message={
+                    isMember
+                      ? 'Start the conversation — your story helps someone else feel less alone.'
+                      : `Join ${channel?.name ? `#${channel.name}` : 'this channel'} to start the conversation.`
+                  }
+                />
+              )
+            })()
           }
           renderItem={({ item }) =>
             item.message_type === 'system_join' || item.message_type === 'system_leave' ? (
@@ -893,7 +934,7 @@ export default function ChannelChat() {
             ]}
           >
             {photos.map((uri, i) => (
-              <View key={i} style={styles.photoPreviewWrap}>
+              <View key={uri} style={styles.photoPreviewWrap}>
                 <Image
                   source={{ uri }}
                   style={[styles.photoPreview, { borderRadius: radius.sm }]}
@@ -923,7 +964,7 @@ export default function ChannelChat() {
               numberOfLines={1}
             >
               Replying to{' '}
-              <Text style={{ color: colors.text, fontWeight: '700' }}>
+              <Text style={{ color: colors.text, fontFamily: font.bodyBold }}>
                 {replyTo.author_name ?? 'someone'}
               </Text>
             </Text>
@@ -974,18 +1015,18 @@ export default function ChannelChat() {
                 styles.sendBtn,
                 {
                   backgroundColor:
-                    text.trim() || photos.length > 0 ? CREAM : colors.surfaceRaised,
+                    text.trim() || photos.length > 0 ? accent : colors.surfaceRaised,
                   borderRadius: radius.full,
                 },
                 pressed && { opacity: 0.8 },
               ]}
             >
               {sending ? (
-                <ActivityIndicator color={INK} size="small" />
+                <ActivityIndicator color={colors.textInverse} size="small" />
               ) : (
                 <Send
                   size={18}
-                  color={text.trim() || photos.length > 0 ? INK : colors.textMuted}
+                  color={text.trim() || photos.length > 0 ? colors.textInverse : colors.textMuted}
                   strokeWidth={2}
                 />
               )}
@@ -1002,14 +1043,14 @@ export default function ChannelChat() {
               },
             ]}
           >
-            <Text style={[styles.joinPromptText, { color: colors.textSecondary }]}>
+            <Text style={[styles.joinPromptText, { color: colors.textSecondary, fontFamily: font.body }]}>
               Join this channel to send messages
             </Text>
             <Pressable
               onPress={handleJoinLeave}
-              style={[styles.joinPromptBtn, { backgroundColor: CREAM, borderRadius: radius.full }]}
+              style={[styles.joinPromptBtn, { backgroundColor: accent, borderRadius: radius.full }]}
             >
-              <Text style={[styles.joinPromptBtnText, { color: INK }]}>Join Channel</Text>
+              <Text style={[styles.joinPromptBtnText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>Join Channel</Text>
             </Pressable>
           </View>
         )}
@@ -1030,15 +1071,15 @@ export default function ChannelChat() {
               )
             })()}
 
-            <Text style={[styles.ratingTitle, { color: colors.text }]}>
+            <Text style={[styles.ratingTitle, { color: colors.text, fontFamily: font.display }]}>
               How was #{channel?.name}?
             </Text>
-            <Text style={[styles.ratingSubtitle, { color: colors.textMuted }]}>
+            <Text style={[styles.ratingSubtitle, { color: colors.textMuted, fontFamily: font.body }]}>
               Help others discover great channels
             </Text>
 
             {/* Star selector */}
-            <AnimatedStarRow value={myRating} onChange={setMyRating} />
+            <AnimatedStarRow value={myRating} onChange={setMyRating} starColor={stickers.yellow} />
 
             {/* Review text */}
             <TextInput
@@ -1061,12 +1102,12 @@ export default function ChannelChat() {
               <Pressable
                 onPress={handleSubmitRating}
                 disabled={myRating === 0 || savingRating}
-                style={[styles.ratingSubmitBtn, { backgroundColor: CREAM, borderRadius: radius.full, opacity: myRating === 0 ? 0.4 : 1 }]}
+                style={[styles.ratingSubmitBtn, { backgroundColor: accent, borderRadius: radius.full, opacity: myRating === 0 ? 0.4 : 1 }]}
               >
                 {savingRating ? (
-                  <ActivityIndicator color={INK} size="small" />
+                  <ActivityIndicator color={colors.textInverse} size="small" />
                 ) : (
-                  <Text style={[styles.ratingSubmitText, { color: INK }]}>Submit</Text>
+                  <Text style={[styles.ratingSubmitText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>Submit</Text>
                 )}
               </Pressable>
             </View>
@@ -1099,9 +1140,11 @@ export default function ChannelChat() {
 function AnimatedStarRow({
   value,
   onChange,
+  starColor,
 }: {
   value: number
   onChange: (n: number) => void
+  starColor: string
 }) {
   const anims = useRef([1, 2, 3, 4, 5].map(() => new Animated.Value(1))).current
 
@@ -1120,9 +1163,9 @@ function AnimatedStarRow({
           <Animated.View style={{ transform: [{ scale: anims[i - 1] }] }}>
             <Star
               size={40}
-              color={brand.accent}
+              color={starColor}
               strokeWidth={2}
-              fill={i <= value ? brand.accent : 'none'}
+              fill={i <= value ? starColor : 'none'}
             />
           </Animated.View>
         </Pressable>
@@ -1144,7 +1187,9 @@ function ShareChannelSheet({
   onCopy: () => void
   onShare: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark, font } = useTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getModeColor(mode, isDark)
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -1154,30 +1199,30 @@ function ShareChannelSheet({
           onPress={(e) => e.stopPropagation()}
         >
           <View style={[styles.shareHandle, { backgroundColor: colors.textMuted + '55' }]} />
-          <Text style={[styles.shareTitle, { color: colors.text }]}>Share Channel</Text>
+          <Text style={[styles.shareTitle, { color: colors.text, fontFamily: font.display }]}>Share Channel</Text>
 
           <Pressable
             onPress={onCopy}
             style={({ pressed }) => [
               styles.shareAction,
-              { borderColor: CREAM + '55', borderRadius: radius.full },
+              { borderColor: colors.borderStrong, borderRadius: radius.full },
               pressed && { opacity: 0.75 },
             ]}
           >
-            <Copy size={18} color={CREAM} strokeWidth={2} />
-            <Text style={[styles.shareActionText, { color: CREAM }]}>Copy Link</Text>
+            <Copy size={18} color={colors.text} strokeWidth={2} />
+            <Text style={[styles.shareActionText, { color: colors.text, fontFamily: font.bodyBold }]}>Copy Link</Text>
           </Pressable>
 
           <Pressable
             onPress={onShare}
             style={({ pressed }) => [
               styles.shareActionFilled,
-              { backgroundColor: CREAM, borderRadius: radius.full },
+              { backgroundColor: accent, borderRadius: radius.full },
               pressed && { opacity: 0.85 },
             ]}
           >
-            <Share2 size={18} color={INK} strokeWidth={2.5} />
-            <Text style={[styles.shareActionTextFilled, { color: INK }]}>Share…</Text>
+            <Share2 size={18} color={colors.textInverse} strokeWidth={2.5} />
+            <Text style={[styles.shareActionTextFilled, { color: colors.textInverse, fontFamily: font.bodyBold }]}>Share…</Text>
           </Pressable>
 
           <Pressable onPress={onClose} style={styles.shareCancel}>
@@ -1204,7 +1249,7 @@ function LeaveChannelSheet({
   onCancel: () => void
   onConfirm: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font } = useTheme()
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
@@ -1214,10 +1259,10 @@ function LeaveChannelSheet({
           onPress={(e) => e.stopPropagation()}
         >
           <View style={[styles.shareHandle, { backgroundColor: colors.textMuted + '55' }]} />
-          <Text style={[styles.shareTitle, { color: colors.text }]}>Leave channel?</Text>
-          <Text style={[styles.leaveBody, { color: colors.textSecondary }]}>
+          <Text style={[styles.shareTitle, { color: colors.text, fontFamily: font.display }]}>Leave channel?</Text>
+          <Text style={[styles.leaveBody, { color: colors.textSecondary, fontFamily: font.body }]}>
             You'll stop receiving updates from{' '}
-            <Text style={{ fontWeight: '800', color: colors.text }}>#{channelName}</Text>
+            <Text style={{ fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
             . You can rejoin any time.
           </Text>
 
@@ -1276,18 +1321,30 @@ function SystemMessage({ message }: { message: ChannelPost }) {
 
 // ─── Message Bubble ──────────────────────────────────────────────────────
 
-function MessageBubble({
-  message,
-  onReaction,
-  onLongPress,
-  onThreadPress,
-}: {
+interface MessageBubbleProps {
   message: ChannelPost
   onReaction: () => void
   onLongPress: () => void
   onThreadPress: () => void
-}) {
-  const { colors, radius } = useTheme()
+}
+
+// Memoized so an incoming message / reaction elsewhere in the list doesn't
+// re-render every other bubble. The comparator only re-renders when a field
+// this row actually displays changes (the parent passes fresh inline handlers
+// each render, so a default shallow compare would never hit).
+function MessageBubbleBase({
+  message,
+  onReaction,
+  onLongPress,
+  onThreadPress,
+}: MessageBubbleProps) {
+  const { colors, radius, isDark, font } = useTheme()
+
+  // Per-author sticker identity — deterministic from author id/name, so each
+  // person reads as a consistent sticker instead of a generic gray avatar.
+  const authorKey = message.author_id ?? message.author_name ?? 'member'
+  const s = channelSticker(authorKey, isDark)
+  const AvatarSticker = s.Component
 
   return (
     <Pressable
@@ -1298,19 +1355,19 @@ function MessageBubble({
         pressed && { backgroundColor: colors.surfaceRaised },
       ]}
     >
-      {/* Avatar */}
-      <View style={[styles.avatar, { backgroundColor: colors.surfaceRaised }]}>
-        <User size={18} color={colors.textMuted} strokeWidth={1.5} />
+      {/* Avatar — author's sticker on a soft tint */}
+      <View style={[styles.avatar, { backgroundColor: s.tint }]}>
+        <AvatarSticker size={20} fill={s.fill} />
       </View>
 
       <View style={styles.bubbleContent}>
         {/* Inline reply reference */}
         {message.reply_to_content && (
           <View style={[styles.inlineReplyRef, { backgroundColor: colors.surfaceRaised, borderLeftColor: colors.primary }]}>
-            <Text style={[styles.inlineReplyAuthor, { color: colors.primary }]}>
+            <Text style={[styles.inlineReplyAuthor, { color: colors.primary, fontFamily: font.bodyBold }]}>
               {message.reply_to_author ?? 'someone'}
             </Text>
-            <Text style={[styles.inlineReplyText, { color: colors.textSecondary }]} numberOfLines={1}>
+            <Text style={[styles.inlineReplyText, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={1}>
               {message.reply_to_content}
             </Text>
           </View>
@@ -1318,10 +1375,10 @@ function MessageBubble({
 
         {/* Author + timestamp row */}
         <View style={styles.bubbleHeader}>
-          <Text style={[styles.authorName, { color: colors.text }]}>
+          <Text style={[styles.authorName, { color: colors.text, fontFamily: font.bodyBold }]}>
             {message.author_name ?? 'Community Member'}
           </Text>
-          <Text style={[styles.timestamp, { color: colors.textMuted }]}>
+          <Text style={[styles.timestamp, { color: colors.textMuted, fontFamily: font.body }]}>
             {formatTime(message.created_at)}
           </Text>
         </View>
@@ -1386,12 +1443,24 @@ function MessageBubble({
   )
 }
 
+const MessageBubble = memo(MessageBubbleBase, (a, b) => {
+  const m = a.message, n = b.message
+  return (
+    m.id === n.id &&
+    m.content === n.content &&
+    m.reaction_count === n.reaction_count &&
+    m.user_reacted === n.user_reacted &&
+    m.reply_count === n.reply_count &&
+    m.is_pinned === n.is_pinned
+  )
+})
+
 // ─── Helpers ────────────────────────────────────────────────────────────
 
 // ─── Message Content with share link detection ──────────────────────────
 
 function MessageContent({ content, photos }: { content: string; photos?: string[] }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font } = useTheme()
 
   // Check for [garage:ID] share tag
   const garageMatch = content.match(/\[garage:([a-f0-9-]+)\]/)
@@ -1454,11 +1523,11 @@ function MessageContent({ content, photos }: { content: string; photos?: string[
 
   return (
     <View style={{ gap: 6 }}>
-      <Text style={[styles.messageText, { color: colors.text }]}>
+      <Text style={[styles.messageText, { color: colors.text, fontFamily: font.body }]}>
         {hasMentions
           ? parts.map((part, i) =>
               part.startsWith('@') ? (
-                <Text key={i} style={{ color: colors.primary, fontWeight: '600' }}>{part}</Text>
+                <Text key={i} style={{ color: colors.primary, fontFamily: font.bodySemiBold }}>{part}</Text>
               ) : (
                 <Text key={i}>{part}</Text>
               )
@@ -1538,8 +1607,8 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     marginRight: 12,
   },
-  headerTitle: { fontSize: 20, fontWeight: '700', flexShrink: 1, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 },
-  memberCount: { fontSize: 12, fontWeight: '600', marginLeft: 2 },
+  headerTitle: { fontSize: 20, flexShrink: 1, letterSpacing: -0.3 },
+  memberCount: { fontSize: 12, marginLeft: 2 },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1575,7 +1644,7 @@ const styles = StyleSheet.create({
   ratingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
   ratingCard: { width: 320, padding: 28, gap: 14, alignItems: 'center' },
   ratingStickerBubble: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  ratingTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, textAlign: 'center' },
+  ratingTitle: { fontSize: 22, letterSpacing: -0.4, textAlign: 'center' },
   ratingSubtitle: { fontSize: 13, fontWeight: '500', textAlign: 'center' },
   ratingStars: { flexDirection: 'row', gap: 10, marginTop: 4 },
 
@@ -1583,7 +1652,7 @@ const styles = StyleSheet.create({
   shareOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
   shareSheet: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 34 },
   shareHandle: { width: 44, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 18 },
-  shareTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, textAlign: 'center', marginBottom: 18 },
+  shareTitle: { fontSize: 22, letterSpacing: -0.4, textAlign: 'center', marginBottom: 18 },
   shareAction: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 15, borderWidth: 1, marginBottom: 12 },
   shareActionText: { fontSize: 15, fontWeight: '700' },
   shareActionFilled: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 15 },
@@ -1674,11 +1743,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     maxHeight: 200,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
+    ...shadows.cardPop,
   },
   mentionItem: {
     flexDirection: 'row',
@@ -1707,7 +1772,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#F44336',
+    backgroundColor: brand.error,
     alignItems: 'center',
     justifyContent: 'center',
   },
