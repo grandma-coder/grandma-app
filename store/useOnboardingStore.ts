@@ -25,10 +25,15 @@ interface OnboardingStore {
   queue: Behavior[]
   currentOnboarding: Behavior | null
   completedOnboarding: Behavior[]
+  /** Flipped true once AsyncStorage rehydration completes. The transition
+   *  screen's auto-advance must wait on this, or it can read a null queue
+   *  before rehydration and silently drop the next flow. */
+  hydrated: boolean
 
   buildQueue: (selected: Behavior[]) => void
   completeCurrentFlow: () => void
   skipCurrentFlow: () => void
+  setHydrated: (v: boolean) => void
   reset: () => void
 }
 
@@ -38,6 +43,8 @@ export const useOnboardingStore = create<OnboardingStore>()(
       queue: [],
       currentOnboarding: null,
       completedOnboarding: [],
+      hydrated: false,
+      setHydrated: (hydrated) => set({ hydrated }),
 
       buildQueue: (selected) => {
         const sorted = [...selected].sort((a, b) => PRIORITY[a] - PRIORITY[b])
@@ -81,6 +88,9 @@ export const useOnboardingStore = create<OnboardingStore>()(
     {
       name: 'grandma-onboarding-queue',
       storage: createJSONStorage(() => AsyncStorage),
+      onRehydrateStorage: () => () => {
+        useOnboardingStore.setState({ hydrated: true })
+      },
     }
   )
 )

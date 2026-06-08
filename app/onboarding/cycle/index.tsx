@@ -34,7 +34,7 @@ import { supabase } from '../../../lib/supabase'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { useModeStore } from '../../../store/useModeStore'
 import { useJourneyStore } from '../../../store/useJourneyStore'
-import { useBehaviorStore } from '../../../store/useBehaviorStore'
+import { useBehaviorStore, PRE_PREG_DB_TYPE } from '../../../store/useBehaviorStore'
 import { isDevModeActive } from '../../../store/useDevStore'
 
 // ─── Step IDs ──────────────────────────────────────────────────────────────
@@ -109,7 +109,14 @@ export default function CycleOnboarding() {
 
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return onboardingComplete('pre-pregnancy')
+      if (!session) {
+        // No session (offline / signed-out edge): still enroll locally so the
+        // mode system has a behavior to switch to, then proceed.
+        useBehaviorStore.getState().enroll('pre-pregnancy')
+        useModeStore.getState().setCycleIntent(store.tryingToConceive ? 'ttc' : 'tracking')
+        store.clearAll()
+        return onboardingComplete('pre-pregnancy')
+      }
 
       const userId = session.user.id
       const parentName = useJourneyStore.getState().parentName ?? null
@@ -126,18 +133,20 @@ export default function CycleOnboarding() {
         .upsert(profilePayload, { onConflict: 'id' })
       if (profileErr) console.warn('[onboarding] profile upsert failed:', profileErr.message)
 
-      // Behavior row. Schema CHECK constraint requires `cycle` (remapped to
-      // `pre-pregnancy` on read in app/_layout.tsx).
-      useBehaviorStore.getState().enroll('pre-pregnancy')
+      // Behavior row. Schema CHECK constraint requires PRE_PREG_DB_TYPE
+      // ('cycle'), remapped to 'pre-pregnancy' on read via behaviorFromDbType.
       const { error: behaviorErr } = await supabase.from('behaviors').upsert(
         {
           user_id: userId,
-          type: 'cycle',
+          type: PRE_PREG_DB_TYPE,
           active: true,
         },
         { onConflict: 'user_id,type' }
       )
       if (behaviorErr) console.warn('[onboarding] behaviors upsert failed:', behaviorErr.message)
+      // Enroll locally regardless of the server result — the catch path below
+      // also lets the user proceed, so local enrollment must always happen.
+      useBehaviorStore.getState().enroll('pre-pregnancy')
 
       // Initial cycle log if we have a last period date
       if (store.lastPeriodDate) {
@@ -323,7 +332,7 @@ function StepCycleLength({
     >
       <View style={stepStyles.inputRow}>
         {!unknown && (
-          <View style={[stepStyles.numberInputWrap, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+          <View style={[stepStyles.numberInputWrap, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}>
             <TextInput
               value={cycleLength?.toString() ?? ''}
               onChangeText={(t) => {
@@ -336,7 +345,7 @@ function StepCycleLength({
               placeholderTextColor={colors.textMuted}
               placeholder="28"
             />
-            <Text style={[stepStyles.unitLabel, { color: colors.textSecondary }]}>days</Text>
+            <Text style={[stepStyles.unitLabel, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>days</Text>
           </View>
         )}
 
@@ -351,7 +360,7 @@ function StepCycleLength({
             },
           ]}
         >
-          <Text style={[stepStyles.chipText, { color: unknown ? mode : colors.textSecondary }]}>
+          <Text style={[stepStyles.chipText, { color: unknown ? mode : colors.textSecondary, fontFamily: font.bodySemiBold }]}>
             I don't know
           </Text>
         </Pressable>
@@ -359,7 +368,7 @@ function StepCycleLength({
 
       {/* TTC toggle */}
       <View style={[stepStyles.ttcCard, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-        <Text style={[stepStyles.ttcLabel, { color: colors.text }]}>
+        <Text style={[stepStyles.ttcLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>
           Are you trying to conceive?
         </Text>
         <View style={stepStyles.toggleRow}>
@@ -382,7 +391,7 @@ function StepPeriodDuration({
   total: number
   onContinue: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const duration = useCycleOnboardingStore((s) => s.periodDuration)
@@ -416,7 +425,7 @@ function StepPeriodDuration({
             <Text
               style={[
                 stepStyles.durationChipText,
-                { color: duration === n ? mode : colors.text },
+                { color: duration === n ? mode : colors.text, fontFamily: font.bodySemiBold },
               ]}
             >
               {n} days
@@ -448,7 +457,7 @@ function StepConditions({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const conditions = useCycleOnboardingStore((s) => s.conditions)
@@ -486,7 +495,7 @@ function StepConditions({
               <Text
                 style={[
                   stepStyles.conditionChipText,
-                  { color: selected ? mode : colors.text },
+                  { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
                 ]}
               >
                 {opt.label}
@@ -502,8 +511,8 @@ function StepConditions({
             stepStyles.otherInputWrap,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.text,
-              borderRadius: radius.full,
+              borderColor: colors.border,
+              borderRadius: radius.md,
               shadowColor: colors.text,
             },
           ]}
@@ -513,7 +522,7 @@ function StepConditions({
             onChangeText={setConditionsOther}
             placeholder="Tell us about it..."
             placeholderTextColor={colors.textMuted}
-            style={[stepStyles.otherInputText, { color: colors.text }]}
+            style={[stepStyles.otherInputText, { color: colors.text, fontFamily: font.bodyMedium }]}
             autoCapitalize="sentences"
           />
         </View>
@@ -574,7 +583,7 @@ function StepTTCDuration({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const duration = useCycleOnboardingStore((s) => s.tryingDuration)
@@ -609,7 +618,7 @@ function StepTTCDuration({
               <Text
                 style={[
                   stepStyles.conditionChipText,
-                  { color: selected ? mode : colors.text },
+                  { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
                 ]}
               >
                 {opt.label}
@@ -665,7 +674,7 @@ function StepTTCSupplements({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const supplements = useCycleOnboardingStore((s) => s.supplements)
@@ -692,7 +701,8 @@ function StepTTCSupplements({
             color: colors.text,
             backgroundColor: colors.surface,
             borderColor: colors.border,
-            borderRadius: radius.lg,
+            borderRadius: radius.md,
+            fontFamily: font.bodyMedium,
           },
         ]}
       />
@@ -756,7 +766,7 @@ function TogglePill({
   active: boolean
   onPress: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
 
@@ -775,7 +785,7 @@ function TogglePill({
       <Text
         style={[
           stepStyles.togglePillText,
-          { color: active ? mode : colors.textSecondary },
+          { color: active ? mode : colors.textSecondary, fontFamily: font.bodyBold },
         ]}
       >
         {label}
@@ -800,7 +810,6 @@ const stepStyles = StyleSheet.create({
   },
   dateButtonText: {
     fontSize: 17,
-    fontWeight: '600',
     textAlign: 'center',
   },
   inputRow: {
@@ -816,13 +825,11 @@ const stepStyles = StyleSheet.create({
   },
   numberInput: {
     fontSize: 28,
-    fontWeight: '800',
     width: 60,
     textAlign: 'center',
   },
   unitLabel: {
     fontSize: 16,
-    fontWeight: '500',
   },
   chip: {
     paddingVertical: 14,
@@ -832,7 +839,6 @@ const stepStyles = StyleSheet.create({
   },
   chipText: {
     fontSize: 15,
-    fontWeight: '600',
   },
   chipGrid: {
     flexDirection: 'row',
@@ -852,7 +858,6 @@ const stepStyles = StyleSheet.create({
   },
   otherInputText: {
     fontSize: 16,
-    fontWeight: '500',
   },
   durationChip: {
     paddingVertical: 14,
@@ -865,7 +870,6 @@ const stepStyles = StyleSheet.create({
   },
   durationChipText: {
     fontSize: 16,
-    fontWeight: '600',
   },
   conditionChip: {
     paddingVertical: 14,
@@ -878,7 +882,6 @@ const stepStyles = StyleSheet.create({
   },
   conditionChipText: {
     fontSize: 15,
-    fontWeight: '600',
   },
   toggleRow: {
     flexDirection: 'row',
@@ -896,7 +899,6 @@ const stepStyles = StyleSheet.create({
   },
   togglePillText: {
     fontSize: 16,
-    fontWeight: '700',
   },
   ttcCard: {
     marginTop: 32,
@@ -905,13 +907,11 @@ const stepStyles = StyleSheet.create({
   },
   ttcLabel: {
     fontSize: 16,
-    fontWeight: '700',
   },
   textArea: {
     borderWidth: 1,
     padding: 16,
     fontSize: 16,
-    fontWeight: '500',
     minHeight: 120,
     textAlignVertical: 'top',
   },
@@ -939,12 +939,10 @@ const completeStyles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: '900',
     letterSpacing: -0.5,
   },
   message: {
     fontSize: 16,
-    fontWeight: '500',
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -958,7 +956,6 @@ const completeStyles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: '700',
     letterSpacing: 0.3,
   },
 })

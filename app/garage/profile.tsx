@@ -53,6 +53,7 @@ export default function GarageProfileScreen() {
   const [memberSince, setMemberSince] = useState<string | null>(null)
   // Pending deletion — when set, the PaperAlert confirms before deletePost() runs.
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   useEffect(() => {
     load()
@@ -128,13 +129,21 @@ export default function GarageProfileScreen() {
     setPendingDelete(null)
     setMyPosts((prev) => prev.filter((p) => p.id !== postId))
     setPostCount((c) => c - 1)
-    try { await deletePost(postId) } catch { load() }
+    try {
+      await deletePost(postId)
+    } catch {
+      setErrorMsg("Couldn't delete that post. Please try again.")
+      load() // re-sync — the optimistic removal gets reversed
+    }
   }
 
   function handleUnsave(postId: string) {
     setSavedPosts((prev) => prev.filter((p) => p.id !== postId))
     setSavedCount((c) => c - 1)
-    toggleSave(postId).catch(() => load())
+    toggleSave(postId).catch(() => {
+      setErrorMsg("Couldn't update your saved items. Please try again.")
+      load()
+    })
   }
 
   const currentData = tab === 'posts' ? myPosts : savedPosts
@@ -146,7 +155,7 @@ export default function GarageProfileScreen() {
         <Pressable onPress={() => router.back()} style={s.headerBtn}>
           <ArrowLeft size={24} color={colors.text} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: colors.text }]}>My Garage</Text>
+        <Text style={[s.headerTitle, { color: colors.text }]}>My Village</Text>
         <View style={s.headerBtn} />
       </View>
 
@@ -269,6 +278,13 @@ export default function GarageProfileScreen() {
           { label: 'Delete', variant: 'danger', onPress: confirmDelete },
         ]}
         onRequestClose={() => setPendingDelete(null)}
+      />
+
+      <PaperAlert
+        visible={errorMsg !== null}
+        title="Something went wrong"
+        message={errorMsg ?? undefined}
+        onRequestClose={() => setErrorMsg(null)}
       />
     </View>
   )

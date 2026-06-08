@@ -12,13 +12,25 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export type Behavior = 'pre-pregnancy' | 'pregnancy' | 'kids'
 
+/**
+ * The `behaviors` table CHECK constraint stores pre-pregnancy as `'cycle'`,
+ * while the whole app uses the `'pre-pregnancy'` Behavior literal. This single
+ * constant couples the write (onboarding/cycle) and the read-remap (_layout)
+ * so the two can never silently drift. If you change one, TypeScript points you
+ * at the other. Long-term: migrate the DB constraint to `'pre-pregnancy'`.
+ */
+export const PRE_PREG_DB_TYPE = 'cycle' as const
+
+/** Map a raw `behaviors.type` row value to the app Behavior literal. */
+export function behaviorFromDbType(dbType: string): Behavior {
+  return dbType === PRE_PREG_DB_TYPE ? 'pre-pregnancy' : (dbType as Behavior)
+}
+
 interface BehaviorStore {
   /** All behaviors the user has set up. Data always persists. */
   enrolledBehaviors: Behavior[]
   /** The one active behavior the app is currently showing. */
   currentBehavior: Behavior | null
-  /** Onboarding queue for sequential setup */
-  onboardingQueue: Behavior[]
   hydrated: boolean
 
   enroll: (b: Behavior) => void
@@ -28,8 +40,6 @@ interface BehaviorStore {
   /** Legacy compat for journey onboarding toggle */
   toggleBehavior: (b: Behavior) => void
   setBehaviors: (behaviors: Behavior[]) => void
-  setOnboardingQueue: (queue: Behavior[]) => void
-  nextOnboarding: () => Behavior | null
   setHydrated: (hydrated: boolean) => void
 }
 
@@ -38,7 +48,6 @@ export const useBehaviorStore = create<BehaviorStore>()(
     (set, get) => ({
       enrolledBehaviors: [],
       currentBehavior: null,
-      onboardingQueue: [],
       hydrated: false,
 
       enroll: (b) => {
@@ -82,16 +91,6 @@ export const useBehaviorStore = create<BehaviorStore>()(
         enrolledBehaviors: behaviors,
         currentBehavior: get().currentBehavior ?? behaviors[0] ?? null,
       }),
-
-      setOnboardingQueue: (queue) => set({ onboardingQueue: queue }),
-
-      nextOnboarding: () => {
-        const queue = get().onboardingQueue
-        if (queue.length === 0) return null
-        const [next, ...rest] = queue
-        set({ onboardingQueue: rest })
-        return next
-      },
 
       setHydrated: (hydrated) => set({ hydrated }),
     }),

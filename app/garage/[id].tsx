@@ -1,8 +1,11 @@
 /**
- * Post Detail — Full post view with comments section (Instagram-style).
+ * Post Detail — full post view with comments, restyled to the cream-paper /
+ * sticker-collage system. Action row uses soft-tinted sticker chips (Heart on
+ * pink, comment on blue, send on yellow, save on lilac); typography is Fraunces
+ * display + DM Sans body. All like/save/comment/@mention/share logic unchanged.
  */
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   View,
   Text,
@@ -14,26 +17,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  ActivityIndicator,
   Animated,
   Alert,
   Share,
 } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
-import {
-  ArrowLeft,
-  Heart,
-  MessageCircle,
-  Send,
-  Bookmark,
-  User,
-  MoreHorizontal,
-  Play,
-} from 'lucide-react-native'
+import { MessageCircle, Send, Bookmark, User, MoreHorizontal, Play } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, getModeColor } from '../../constants/theme'
+import { useModeStore } from '../../store/useModeStore'
+import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
+import { Heart as HeartSticker } from '../../components/stickers/BrandStickers'
 import {
   fetchPost,
   fetchComments,
@@ -43,16 +39,18 @@ import {
   searchUsers,
   type GaragePost,
   type GarageComment,
-  type MediaItem,
 } from '../../lib/garagePosts'
 
 const SCREEN_W = Dimensions.get('window').width
 
 export default function PostDetail() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, stickers, font, isDark } = useTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getModeColor(mode, isDark)
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
   const { id } = useLocalSearchParams<{ id: string }>()
+  const ink = isDark ? colors.text : '#141313'
 
   const [post, setPost] = useState<GaragePost | null>(null)
   const [comments, setComments] = useState<GarageComment[]>([])
@@ -67,26 +65,30 @@ export default function PostDetail() {
   const [mentionResults, setMentionResults] = useState<{ id: string; name: string }[]>([])
   const [showMentions, setShowMentions] = useState(false)
 
-  useEffect(() => {
-    if (id) load()
-  }, [id])
-
-  async function load() {
+  const load = useCallback(async () => {
+    if (!id) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const [postData, commentsData] = await Promise.all([
-        fetchPost(id!),
-        fetchComments(id!),
+        fetchPost(id),
+        fetchComments(id),
       ])
       setPost(postData)
       setComments(commentsData)
     } catch {} finally {
       setLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   async function handleLike() {
-    if (!post) return
+    if (!post || !id) return
     setPost({
       ...post,
       user_liked: !post.user_liked,
@@ -97,7 +99,7 @@ export default function PostDetail() {
       Animated.spring(likeScale, { toValue: 1, useNativeDriver: true, speed: 30 }),
     ]).start()
     try {
-      await toggleLike(id!)
+      await toggleLike(id)
     } catch {
       // Revert
       setPost((prev) =>
@@ -107,10 +109,10 @@ export default function PostDetail() {
   }
 
   async function handleSave() {
-    if (!post) return
+    if (!post || !id) return
     setPost({ ...post, user_saved: !post.user_saved })
     try {
-      await toggleSave(id!)
+      await toggleSave(id)
     } catch {
       setPost((prev) => (prev ? { ...prev, user_saved: !prev.user_saved } : prev))
     }
@@ -146,10 +148,10 @@ export default function PostDetail() {
   }
 
   async function handleComment() {
-    if (!commentText.trim() || sending) return
+    if (!commentText.trim() || sending || !id) return
     setSending(true)
     try {
-      const newComment = await addComment(id!, commentText.trim())
+      const newComment = await addComment(id, commentText.trim())
       setComments((prev) => [...prev, newComment])
       setPost((prev) => prev ? { ...prev, comment_count: prev.comment_count + 1 } : prev)
       setCommentText('')
@@ -198,12 +200,15 @@ export default function PostDetail() {
   if (!post) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.errorText, { color: colors.textSecondary }]}>Post not found</Text>
+        <Text style={[styles.errorText, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
+          Post not found
+        </Text>
       </View>
     )
   }
 
   const hasMultipleMedia = post.media.length > 1
+  const canSend = commentText.trim().length > 0
 
   return (
     <KeyboardAvoidingView
@@ -212,27 +217,25 @@ export default function PostDetail() {
       keyboardVerticalOffset={0}
     >
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
-        <Pressable onPress={() => router.back()} style={styles.headerBtn}>
-          <ArrowLeft size={24} color={colors.text} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Post</Text>
-        <View style={styles.headerBtn} />
+      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
+        <ScreenHeader title="Post" onBack={() => router.back()} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Post Author */}
         <View style={styles.postHeader}>
           <View style={styles.authorRow}>
-            <View style={[styles.avatar, { backgroundColor: colors.surfaceRaised }]}>
-              <User size={18} color={colors.textMuted} strokeWidth={1.5} />
+            <View style={[styles.avatar, { backgroundColor: stickers.pinkSoft, borderColor: colors.border, borderRadius: radius.full }]}>
+              <User size={18} color={ink} strokeWidth={2} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.authorName, { color: colors.text }]}>
+              <Text style={[styles.authorName, { color: colors.text, fontFamily: font.display }]}>
                 {post.author_name ?? 'Community Member'}
               </Text>
               {post.category && (
-                <Text style={[styles.categoryText, { color: colors.textMuted }]}>{post.category}</Text>
+                <Text style={[styles.categoryText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+                  {post.category}
+                </Text>
               )}
             </View>
           </View>
@@ -270,7 +273,7 @@ export default function PostDetail() {
                     key={i}
                     style={[
                       styles.dot,
-                      { backgroundColor: i === mediaIndex ? colors.primary : colors.textMuted + '40' },
+                      { backgroundColor: i === mediaIndex ? ink : colors.textMuted + '40' },
                     ]}
                   />
                 ))}
@@ -279,58 +282,78 @@ export default function PostDetail() {
           </View>
         )}
 
-        {/* Actions */}
+        {/* Actions — soft-tinted sticker chips */}
         <View style={styles.actionsRow}>
           <View style={styles.actionsLeft}>
-            <Pressable onPress={handleLike} hitSlop={8}>
+            <ActionChip
+              tint={stickers.pinkSoft}
+              active={post.user_liked}
+              activeTint={stickers.peachSoft}
+              border={colors.border}
+              radiusFull={radius.full}
+              onPress={handleLike}
+              accessibilityLabel={post.user_liked ? 'Unlike' : 'Like'}
+            >
               <Animated.View style={{ transform: [{ scale: likeScale }] }}>
-                <Heart
-                  size={26}
-                  color={post.user_liked ? brand.error : colors.text}
-                  strokeWidth={2}
-                  fill={post.user_liked ? brand.error : 'none'}
-                />
+                <HeartSticker size={22} fill={post.user_liked ? stickers.coral : stickers.pink} />
               </Animated.View>
-            </Pressable>
-            <Pressable hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <MessageCircle size={26} color={colors.text} strokeWidth={2} />
-              {post.comment_count > 0 && (
-                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>{post.comment_count}</Text>
-              )}
-            </Pressable>
-            <Pressable hitSlop={8} onPress={handleShare}>
-              <Send size={24} color={colors.text} strokeWidth={2} />
-            </Pressable>
+            </ActionChip>
+
+            <ActionChip
+              tint={stickers.blueSoft}
+              border={colors.border}
+              radiusFull={radius.full}
+              onPress={() => {}}
+              accessibilityLabel="Comments"
+            >
+              <MessageCircle size={20} color={stickers.blueInk} strokeWidth={2.4} />
+            </ActionChip>
+
+            <ActionChip
+              tint={stickers.yellowSoft}
+              border={colors.border}
+              radiusFull={radius.full}
+              onPress={handleShare}
+              accessibilityLabel="Share"
+            >
+              <Send size={19} color={stickers.yellowInk} strokeWidth={2.4} />
+            </ActionChip>
           </View>
-          <Pressable onPress={handleSave} hitSlop={8}>
+
+          <ActionChip
+            tint={post.user_saved ? stickers.lilac : stickers.lilacSoft}
+            border={colors.border}
+            radiusFull={radius.full}
+            onPress={handleSave}
+            accessibilityLabel={post.user_saved ? 'Saved' : 'Save'}
+          >
             <Bookmark
-              size={26}
-              color={post.user_saved ? colors.primary : colors.text}
-              strokeWidth={2}
-              fill={post.user_saved ? colors.primary : 'none'}
+              size={20}
+              color={stickers.lilacInk}
+              strokeWidth={2.4}
+              fill={post.user_saved ? stickers.lilacInk : 'none'}
             />
-          </Pressable>
+          </ActionChip>
         </View>
 
         {/* Like count */}
         {post.like_count > 0 && (
-          <Text style={[styles.likeCount, { color: colors.text }]}>
+          <Text style={[styles.likeCount, { color: colors.text, fontFamily: font.bodySemiBold }]}>
             {post.like_count.toLocaleString()} {post.like_count === 1 ? 'like' : 'likes'}
           </Text>
         )}
 
-        {/* Caption */}
+        {/* Caption — body subtitle under the title */}
         {post.caption && (
           <View style={styles.captionSection}>
-            <Text style={[styles.captionText, { color: colors.text }]}>
-              <Text style={styles.captionAuthor}>{post.author_name ?? 'Community Member'} </Text>
+            <Text style={[styles.captionText, { color: colors.textSecondary, fontFamily: font.body }]}>
               {post.caption}
             </Text>
           </View>
         )}
 
-        {/* Timestamp */}
-        <Text style={[styles.timestamp, { color: colors.textMuted }]}>
+        {/* Timestamp — italic accent */}
+        <Text style={[styles.timestamp, { color: accent, fontFamily: font.italic }]}>
           {new Date(post.created_at).toLocaleDateString('en-US', {
             month: 'long',
             day: 'numeric',
@@ -339,33 +362,33 @@ export default function PostDetail() {
         </Text>
 
         {/* Comments divider */}
-        <View style={[styles.commentsDivider, { borderTopColor: colors.borderLight }]}>
-          <Text style={[styles.commentsHeader, { color: colors.text }]}>
-            Comments {comments.length > 0 ? `(${comments.length})` : ''}
+        <View style={[styles.commentsDivider, { borderTopColor: colors.border }]}>
+          <Text style={[styles.commentsHeader, { color: colors.text, fontFamily: font.display }]}>
+            Comments{comments.length > 0 ? ` (${comments.length})` : ''}
           </Text>
         </View>
 
         {/* Comments list */}
         {comments.length === 0 ? (
           <View style={styles.noComments}>
-            <Text style={[styles.noCommentsText, { color: colors.textMuted }]}>
+            <Text style={[styles.noCommentsText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
               No comments yet. Start the conversation!
             </Text>
           </View>
         ) : (
           comments.map((comment) => (
             <View key={comment.id} style={styles.commentRow}>
-              <View style={[styles.commentAvatar, { backgroundColor: colors.surfaceRaised }]}>
-                <User size={14} color={colors.textMuted} strokeWidth={1.5} />
+              <View style={[styles.commentAvatar, { backgroundColor: stickers.blueSoft, borderColor: colors.border, borderRadius: radius.full }]}>
+                <User size={14} color={ink} strokeWidth={2} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.commentContent, { color: colors.text }]}>
-                  <Text style={styles.commentAuthor}>
+                <Text style={[styles.commentContent, { color: colors.text, fontFamily: font.body }]}>
+                  <Text style={[styles.commentAuthor, { fontFamily: font.bodySemiBold }]}>
                     {comment.author_name ?? 'Member'}{' '}
                   </Text>
                   <CommentText text={comment.content} />
                 </Text>
-                <Text style={[styles.commentTime, { color: colors.textMuted }]}>
+                <Text style={[styles.commentTime, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
                   {formatTimeAgo(comment.created_at)}
                 </Text>
               </View>
@@ -381,15 +404,15 @@ export default function PostDetail() {
             <Pressable
               key={user.id}
               onPress={() => insertMention(user.name)}
-              style={[styles.mentionItem, { borderBottomColor: colors.borderLight }]}
+              style={[styles.mentionItem, { borderBottomColor: colors.border }]}
             >
-              <View style={[styles.mentionAvatar, { backgroundColor: colors.surfaceRaised }]}>
-                <User size={12} color={colors.textMuted} strokeWidth={1.5} />
+              <View style={[styles.mentionAvatar, { backgroundColor: stickers.pinkSoft, borderColor: colors.border, borderRadius: radius.full }]}>
+                <User size={12} color={ink} strokeWidth={2} />
               </View>
-              <Text style={[styles.mentionName, { color: colors.text }]}>
+              <Text style={[styles.mentionName, { color: colors.text, fontFamily: font.bodySemiBold }]}>
                 {user.name}
               </Text>
-              <Text style={[styles.mentionHandle, { color: colors.textMuted }]}>
+              <Text style={[styles.mentionHandle, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
                 @{user.name.toLowerCase().replace(/\s+/g, '')}
               </Text>
             </Pressable>
@@ -408,34 +431,81 @@ export default function PostDetail() {
           },
         ]}
       >
-        <View style={[styles.commentAvatar, { backgroundColor: colors.surfaceRaised }]}>
-          <User size={14} color={colors.textMuted} strokeWidth={1.5} />
+        <View style={[styles.commentAvatar, { backgroundColor: stickers.pinkSoft, borderColor: colors.border, borderRadius: radius.full }]}>
+          <User size={14} color={ink} strokeWidth={2} />
         </View>
-        <TextInput
-          value={commentText}
-          onChangeText={handleCommentTextChange}
-          placeholder="Add a comment... use @ to tag"
-          placeholderTextColor={colors.textMuted}
-          style={[styles.commentInput, { color: colors.text }]}
-          returnKeyType="send"
-          onSubmitEditing={handleComment}
-        />
-        {commentText.trim().length > 0 && (
-          <Pressable onPress={handleComment} disabled={sending}>
-            <Text style={[styles.postCommentBtn, { color: colors.primary, opacity: sending ? 0.4 : 1 }]}>
-              Post
-            </Text>
-          </Pressable>
-        )}
+        <View style={[styles.inputWrap, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}>
+          <TextInput
+            value={commentText}
+            onChangeText={handleCommentTextChange}
+            placeholder="Add a comment… use @ to tag"
+            placeholderTextColor={colors.textMuted}
+            style={[styles.commentInput, { color: colors.text, fontFamily: font.body }]}
+            returnKeyType="send"
+            onSubmitEditing={handleComment}
+          />
+        </View>
+        <Pressable
+          onPress={handleComment}
+          disabled={!canSend || sending}
+          accessibilityRole="button"
+          accessibilityLabel="Post comment"
+          style={({ pressed }) => [
+            styles.sendBtn,
+            {
+              backgroundColor: canSend ? stickers.yellow : colors.surfaceRaised,
+              borderColor: canSend ? ink : colors.border,
+              borderRadius: radius.full,
+              opacity: sending ? 0.5 : pressed ? 0.85 : 1,
+            },
+          ]}
+        >
+          <Send size={18} color={canSend ? ink : colors.textMuted} strokeWidth={2.4} />
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
+  )
+}
+
+// ─── Action chip — soft-tinted circular button ──────────────────────────────
+
+function ActionChip({
+  children, onPress, tint, activeTint, active, border, radiusFull, accessibilityLabel,
+}: {
+  children: React.ReactNode
+  onPress: () => void
+  tint: string
+  activeTint?: string
+  active?: boolean
+  border: string
+  radiusFull: number
+  accessibilityLabel?: string
+}) {
+  return (
+    <Pressable
+      hitSlop={6}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      style={({ pressed }) => [
+        styles.actionChip,
+        {
+          backgroundColor: active && activeTint ? activeTint : tint,
+          borderColor: border,
+          borderRadius: radiusFull,
+        },
+        pressed && { opacity: 0.82, transform: [{ scale: 0.94 }] },
+      ]}
+    >
+      {children}
+    </Pressable>
   )
 }
 
 // ─── Comment Text with @mention highlighting ─────────────────────────────
 
 function CommentText({ text }: { text: string }) {
-  const { colors } = useTheme()
+  const { colors, font } = useTheme()
 
   // Split by @mentions — pattern: @word (letters, no spaces)
   const parts = text.split(/(@\S+)/g)
@@ -444,7 +514,7 @@ function CommentText({ text }: { text: string }) {
     <>
       {parts.map((part, i) =>
         part.startsWith('@') ? (
-          <Text key={i} style={{ color: colors.primary, fontWeight: '600' }}>
+          <Text key={i} style={{ color: colors.primary, fontFamily: font.bodySemiBold }}>
             {part}
           </Text>
         ) : (
@@ -477,19 +547,7 @@ function formatTimeAgo(dateStr: string): string {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errorText: { fontSize: 16, fontWeight: '500' },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-  },
-  headerBtn: { width: 40, alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700' },
+  errorText: { fontSize: 16 },
 
   // Post header
   postHeader: {
@@ -497,12 +555,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 4,
+    paddingBottom: 12,
   },
   authorRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  avatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  authorName: { fontSize: 14, fontWeight: '700' },
-  categoryText: { fontSize: 11, fontWeight: '500', marginTop: 1 },
+  avatar: { width: 38, height: 38, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  authorName: { fontSize: 18, letterSpacing: -0.3 },
+  categoryText: { fontSize: 12, marginTop: 1 },
 
   // Media
   mediaContainer: { width: SCREEN_W, height: SCREEN_W, position: 'relative' },
@@ -517,39 +576,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 6,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
-  actionsLeft: { flexDirection: 'row', alignItems: 'center', gap: 18 },
+  actionsLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  actionChip: {
+    width: 44,
+    height: 44,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-  likeCount: { fontSize: 14, fontWeight: '700', paddingHorizontal: 16, marginTop: 4 },
+  likeCount: { fontSize: 14, paddingHorizontal: 16, marginTop: 4 },
 
-  // Caption
+  // Caption — body subtitle under the title
   captionSection: { paddingHorizontal: 16, marginTop: 6 },
-  captionText: { fontSize: 14, fontWeight: '400', lineHeight: 20 },
-  captionAuthor: { fontWeight: '700' },
+  captionText: { fontSize: 15, lineHeight: 21 },
 
-  // Timestamp
-  timestamp: { fontSize: 11, fontWeight: '400', paddingHorizontal: 16, marginTop: 8 },
+  // Timestamp — italic accent subtitle
+  timestamp: { fontSize: 16, paddingHorizontal: 16, marginTop: 6 },
 
   // Comments
   commentsDivider: { borderTopWidth: 1, marginTop: 16, paddingTop: 16, marginHorizontal: 16 },
-  commentsHeader: { fontSize: 15, fontWeight: '700' },
+  commentsHeader: { fontSize: 24, letterSpacing: -0.5 },
   noComments: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 20 },
-  noCommentsText: { fontSize: 13, fontWeight: '500' },
+  noCommentsText: { fontSize: 13 },
 
   commentRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingVertical: 8 },
-  commentAvatar: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
-  commentContent: { fontSize: 13, fontWeight: '400', lineHeight: 18 },
-  commentAuthor: { fontWeight: '700' },
-  commentTime: { fontSize: 11, fontWeight: '500', marginTop: 4 },
+  commentAvatar: { width: 30, height: 30, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  commentContent: { fontSize: 13, lineHeight: 18 },
+  commentAuthor: {},
+  commentTime: { fontSize: 11, marginTop: 4 },
 
   // @mention suggestions
   mentionList: { borderTopWidth: 1, maxHeight: 180 },
   mentionItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 16, borderBottomWidth: 1 },
-  mentionAvatar: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  mentionName: { fontSize: 14, fontWeight: '600' },
-  mentionHandle: { fontSize: 12, fontWeight: '500' },
+  mentionAvatar: { width: 28, height: 28, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  mentionName: { fontSize: 14 },
+  mentionHandle: { fontSize: 12 },
 
   // Comment input bar
   commentBar: {
@@ -560,6 +625,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     borderTopWidth: 1,
   },
-  commentInput: { flex: 1, fontSize: 14, fontWeight: '500', paddingVertical: 8 },
-  postCommentBtn: { fontSize: 14, fontWeight: '700' },
+  inputWrap: { flex: 1, borderWidth: 1, paddingHorizontal: 14, justifyContent: 'center' },
+  commentInput: { fontSize: 14, paddingVertical: 10 },
+  sendBtn: { width: 40, height: 40, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 })

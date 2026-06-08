@@ -86,13 +86,11 @@ export default function ShareToChannel() {
 
       await sendMessage(channelId, message, { photos })
 
-      // Increment share count
+      // Increment share count atomically (server-side +1 — avoids the
+      // read-modify-write race when two shares land at once).
       if (postId) {
         try {
-          await supabase
-            .from('garage_posts')
-            .update({ share_count: (post?.share_count ?? 0) + 1 })
-            .eq('id', postId)
+          await supabase.rpc('increment_garage_share_count', { post_id: postId })
         } catch {}
       }
 

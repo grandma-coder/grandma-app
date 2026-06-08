@@ -34,7 +34,7 @@ export const tr: TranslationKeys = {
   menu_grandmaTalk: 'Büyükanne\nile Sohbet',
   menu_insights: 'İçgörüler',
   menu_dailyRewards: 'Günlük\nÖdüller',
-  menu_garage: 'Garaj',
+  menu_garage: 'Köy',
   menu_channels: 'Kanallar',
 
   mode_prePregnancy: 'Hamilelik Öncesi',

@@ -2,49 +2,38 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-type Journey = 'pregnancy' | 'newborn' | 'toddler' | null
-
 interface JourneyStore {
-  journey: Journey
   dueDate: string | null
-  lmpDate: string | null
   weekNumber: number | null
-  trackedActivities: string[]
   parentName: string | null
   babyName: string | null
-  setJourney: (journey: Journey) => void
+  /** Flipped true once AsyncStorage rehydration completes. Gate data-derived
+   *  UI on this to avoid the "week 1 → week 40 flash" — see code-style.md. */
+  hydrated: boolean
   setDueDate: (date: string | null) => void
-  setLmpDate: (date: string | null) => void
   setWeekNumber: (week: number | null) => void
-  setTrackedActivities: (activities: string[]) => void
   setParentName: (name: string | null) => void
   setBabyName: (name: string | null) => void
+  setHydrated: (v: boolean) => void
   clearAll: () => void
 }
 
 export const useJourneyStore = create<JourneyStore>()(
   persist(
     (set) => ({
-      journey: null,
       dueDate: null,
-      lmpDate: null,
       weekNumber: null,
-      trackedActivities: [],
       parentName: null,
       babyName: null,
-      setJourney: (journey) => set({ journey }),
+      hydrated: false,
       setDueDate: (dueDate) => set({ dueDate }),
-      setLmpDate: (lmpDate) => set({ lmpDate }),
       setWeekNumber: (weekNumber) => set({ weekNumber }),
-      setTrackedActivities: (trackedActivities) => set({ trackedActivities }),
       setParentName: (parentName) => set({ parentName }),
       setBabyName: (babyName) => set({ babyName }),
+      setHydrated: (hydrated) => set({ hydrated }),
       clearAll: () => set({
-        journey: null,
         dueDate: null,
-        lmpDate: null,
         weekNumber: null,
-        trackedActivities: [],
         parentName: null,
         babyName: null,
       }),
@@ -53,13 +42,16 @@ export const useJourneyStore = create<JourneyStore>()(
       name: 'grandma-journey',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
-        journey: state.journey,
         dueDate: state.dueDate,
-        lmpDate: state.lmpDate,
         weekNumber: state.weekNumber,
         parentName: state.parentName,
         babyName: state.babyName,
       }),
+      // setState (not state?.setHydrated) so it still flips on a fresh install
+      // where there's nothing to rehydrate — see useBehaviorStore for the why.
+      onRehydrateStorage: () => () => {
+        useJourneyStore.setState({ hydrated: true })
+      },
     }
   )
 )

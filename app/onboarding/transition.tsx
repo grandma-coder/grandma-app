@@ -11,7 +11,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { Moon, Heart, Star } from '../../components/ui/Stickers'
 import { PillButton } from '../../components/ui/PillButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers } from '../../constants/theme'
+import { useTheme, stickers, getModeColor } from '../../constants/theme'
 import { useOnboardingStore } from '../../store/useOnboardingStore'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
@@ -21,28 +21,24 @@ const AUTO_ADVANCE_MS = 8000
 
 const BEHAVIOR_CONTENT: Record<Behavior, {
   sticker: React.ReactNode
-  color: string
   heading: string
   subtext: string
   route: string
 }> = {
   pregnancy: {
     sticker: <Heart size={96} fill={stickers.pink} />,
-    color: brand.pregnancy,
     heading: "Now, let's talk about\nyour little one on the way",
     subtext: 'Just a few things to help Grandma support you through your pregnancy.',
     route: '/onboarding/pregnancy',
   },
   kids: {
     sticker: <Star size={96} fill={stickers.blue} />,
-    color: brand.kids,
     heading: "Now, let's meet\nyour little ones",
     subtext: 'Tell me about your children so I can help you take the best care of them.',
     route: '/onboarding/kids',
   },
   'pre-pregnancy': {
     sticker: <Moon size={96} fill={stickers.lilac} />,
-    color: brand.prePregnancy,
     heading: "Now, let's understand\nyour cycle",
     subtext: 'A little about your cycle so I can help you understand your body.',
     route: '/onboarding/cycle',
@@ -50,7 +46,7 @@ const BEHAVIOR_CONTENT: Record<Behavior, {
 }
 
 export default function TransitionScreen() {
-  const { colors, font } = useTheme()
+  const { colors, font, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const { next } = useLocalSearchParams<{ next: string }>()
 
@@ -185,7 +181,7 @@ export default function TransitionScreen() {
 
         {/* Skip */}
         <Pressable onPress={handleSkip} style={styles.skipBtn}>
-          <Text style={[styles.skipText, { color: colors.textMuted }]}>
+          <Text style={[styles.skipText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
             Skip for now
           </Text>
         </Pressable>
@@ -195,7 +191,7 @@ export default function TransitionScreen() {
           <Animated.View
             style={[
               styles.progressFill,
-              { backgroundColor: content.color, width: progressWidth },
+              { backgroundColor: getModeColor(nextBehavior, isDark), width: progressWidth },
             ]}
           />
         </View>
@@ -227,14 +223,12 @@ const styles = StyleSheet.create({
   // Text
   heading: {
     fontSize: 28,
-    fontWeight: '900',
     textAlign: 'center',
     letterSpacing: -0.5,
     lineHeight: 36,
   },
   subtext: {
     fontSize: 15,
-    fontWeight: '500',
     textAlign: 'center',
     lineHeight: 22,
     maxWidth: 280,
@@ -246,29 +240,11 @@ const styles = StyleSheet.create({
     gap: 16,
     alignItems: 'center',
   },
-  ctaButton: {
-    width: '100%',
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 5,
-  },
-  ctaText: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
   skipBtn: {
     paddingVertical: 8,
   },
   skipText: {
     fontSize: 14,
-    fontWeight: '600',
   },
 
   // Progress

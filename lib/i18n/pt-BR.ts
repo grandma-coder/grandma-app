@@ -37,7 +37,7 @@ export const ptBR: TranslationKeys = {
   menu_grandmaTalk: 'Papo com\na Vovó',
   menu_insights: 'Análises',
   menu_dailyRewards: 'Recompensas\nDiárias',
-  menu_garage: 'Garagem',
+  menu_garage: 'Vila',
   menu_channels: 'Canais',
 
   // Journey Modes

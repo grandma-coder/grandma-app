@@ -1,6 +1,7 @@
 /**
- * MoodSymptomPickerSheet — full symptom picker, opens from the strip's "+".
- * Writes one row per selected symptom to cycle_logs.
+ * MoodSymptomPickerSheet — full symptom picker, opens from the card's "more".
+ * Writes one row per selected symptom to cycle_logs, using the canonical
+ * symptom ids from lib/cycleSymptoms (shared with the calendar log forms).
  */
 
 import { useState } from 'react'
@@ -9,21 +10,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useTheme } from '../../../constants/theme'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr } from '../../../lib/cycleLogic'
+import { ALL_SYMPTOMS } from '../../../lib/cycleSymptoms'
+import { SymptomSticker } from '../../calendar/symptomStickers'
 import { LogSheet } from '../../calendar/LogSheet'
 import { PillButton } from '../../ui/PillButton'
-
-const SYMPTOMS = [
-  { id: 'cramps',       label: 'Cramps'    },
-  { id: 'tired',        label: 'Tired'     },
-  { id: 'bloated',      label: 'Bloated'   },
-  { id: 'headache',     label: 'Headache'  },
-  { id: 'tender',       label: 'Tender'    },
-  { id: 'acne',         label: 'Acne'      },
-  { id: 'nausea',       label: 'Nausea'    },
-  { id: 'craving',      label: 'Cravings'  },
-  { id: 'low-mood',     label: 'Low mood'  },
-  { id: 'restless',     label: 'Restless'  },
-]
 
 interface Props {
   visible: boolean
@@ -77,7 +67,7 @@ export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] 
     <LogSheet visible={visible} title="Anything today?" onClose={onClose}>
       <ScrollView style={{ maxHeight: 480 }} contentContainerStyle={styles.body}>
         <View style={styles.grid}>
-          {SYMPTOMS.map((s) => {
+          {ALL_SYMPTOMS.map((s) => {
             const on = picked.includes(s.id)
             return (
               <Pressable
@@ -92,6 +82,7 @@ export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] 
                   },
                 ]}
               >
+                <SymptomSticker id={s.id} size={16} />
                 <Text style={{ color: ink, fontFamily: font.bodyBold, fontSize: 12 }}>{s.label}</Text>
               </Pressable>
             )
@@ -108,8 +99,6 @@ export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] 
     </LogSheet>
   )
 }
-
-export const ALL_SYMPTOMS = SYMPTOMS
 
 const styles = StyleSheet.create({
   body: { gap: 14 },

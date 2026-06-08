@@ -273,10 +273,10 @@ supabase/
 | `useChatStore` | — | AI chat message history |
 | `useGrandmaHistoryStore` | — | Past chat sessions |
 | `useJourneyStore` | ✅ | Onboarding data (parentName, dueDate, babyName, activities) |
-| `useOnboardingStore` | — | General onboarding state |
-| `useCycleOnboardingStore` | ✅ | Pre-pregnancy onboarding |
-| `usePregnancyOnboardingStore` | ✅ | Pregnancy onboarding |
-| `useKidsOnboardingStore` | ✅ | Kids onboarding |
+| `useOnboardingStore` | ✅ | Multi-behavior onboarding queue (persisted so it survives an app kill mid-queue) |
+| `useCycleOnboardingStore` | — | Pre-pregnancy onboarding (ephemeral — saved to Supabase + cleared on finish) |
+| `usePregnancyOnboardingStore` | — | Pregnancy onboarding (ephemeral — saved + cleared on finish) |
+| `useKidsOnboardingStore` | — | Kids onboarding (ephemeral — saved + cleared on finish) |
 | `usePregnancyStore` | — | Week, weight, mood, symptoms |
 | `useFoodStore` | — | Food entries + ratings |
 | `useVaultStore` | — | Documents + emergency card |

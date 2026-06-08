@@ -34,7 +34,7 @@ export const es: TranslationKeys = {
   menu_grandmaTalk: 'Habla con\nla Abuela',
   menu_insights: 'Análisis',
   menu_dailyRewards: 'Recompensas\nDiarias',
-  menu_garage: 'Garaje',
+  menu_garage: 'Aldea',
   menu_channels: 'Canales',
 
   mode_prePregnancy: 'Pre-Embarazo',

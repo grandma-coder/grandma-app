@@ -34,7 +34,7 @@ export const ja: TranslationKeys = {
   menu_grandmaTalk: 'おばあちゃん\nトーク',
   menu_insights: 'インサイト',
   menu_dailyRewards: 'デイリー\nリワード',
-  menu_garage: 'ガレージ',
+  menu_garage: 'むら',
   menu_channels: 'チャンネル',
 
   mode_prePregnancy: '妊娠前',

@@ -40,6 +40,11 @@ export interface GarageComment {
   created_at: string
 }
 
+interface ProfileName {
+  id: string
+  name: string | null
+}
+
 // ─── Feed ──────────────────────────────────────────────────────────────────
 
 export async function fetchFeed(opts?: {
@@ -60,7 +65,8 @@ export async function fetchFeed(opts?: {
     query = query.eq('category', opts.category)
   }
 
-  const { data } = await query
+  const { data, error } = await query
+  if (error) throw error
   const posts = (data ?? []) as GaragePost[]
 
   // Backfill author names for posts missing them
@@ -73,7 +79,7 @@ export async function fetchFeed(opts?: {
       .in('id', authorIds)
 
     if (profiles) {
-      const nameMap = new Map(profiles.map((p: any) => [p.id, p.name]))
+      const nameMap = new Map((profiles as ProfileName[]).map((p) => [p.id, p.name]))
       for (const post of posts) {
         if (!post.author_name) {
           post.author_name = nameMap.get(post.author_id) ?? null
@@ -100,8 +106,8 @@ export async function fetchFeed(opts?: {
         .in('post_id', postIds),
     ])
 
-    const likedIds = new Set((likesRes.data ?? []).map((r: any) => r.post_id))
-    const savedIds = new Set((savesRes.data ?? []).map((r: any) => r.post_id))
+    const likedIds = new Set((likesRes.data ?? []).map((r) => r.post_id))
+    const savedIds = new Set((savesRes.data ?? []).map((r) => r.post_id))
 
     for (const post of posts) {
       post.user_liked = likedIds.has(post.id)
@@ -113,12 +119,13 @@ export async function fetchFeed(opts?: {
 }
 
 export async function fetchPost(id: string): Promise<GaragePost | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('garage_posts')
     .select('*')
     .eq('id', id)
-    .single()
+    .maybeSingle()
 
+  if (error) throw error
   if (!data) return null
 
   const post = data as GaragePost
@@ -164,6 +171,7 @@ export async function createGaragePost(opts: {
   // Upload media using FormData (most reliable method for RN + Supabase)
   report(0.05, 'Preparing upload...')
   const media: MediaItem[] = []
+  let failedCount = 0
   for (let i = 0; i < opts.mediaUris.length; i++) {
     const item = opts.mediaUris[i]
     report((i / totalMedia) * 0.7 + 0.05, `Uploading ${i + 1} of ${totalMedia}...`)
@@ -173,7 +181,7 @@ export async function createGaragePost(opts: {
       const contentType = item.type === 'video' ? `video/${ext}` : `image/${ext}`
 
       const formData = new FormData()
-      formData.append('', {
+      formData.append('file', {
         uri: item.uri,
         name: path.split('/').pop(),
         type: contentType,
@@ -184,19 +192,24 @@ export async function createGaragePost(opts: {
         .upload(path, formData, { contentType: 'multipart/form-data', upsert: true })
 
       if (uploadError) {
-        console.error('[GARAGE] Upload error:', uploadError.message)
+        failedCount++
       } else {
         const { data: urlData } = supabase.storage.from('garage-media').getPublicUrl(path)
         media.push({ url: urlData.publicUrl, type: item.type })
       }
-    } catch (e: any) {
-      console.error('[GARAGE] Upload exception:', e?.message ?? e)
+    } catch {
+      failedCount++
     }
   }
 
-  // Warn if no media uploaded despite having local files
+  // Hard-fail if nothing uploaded despite having local files.
   if (opts.mediaUris.length > 0 && media.length === 0) {
-    throw new Error('Photos could not be uploaded. Please try again.')
+    throw new Error('Photos could not be uploaded. Please check your connection and try again.')
+  }
+  // Soft-warn the caller if some (but not all) uploads failed — the post will
+  // still be created with whatever succeeded.
+  if (failedCount > 0) {
+    report(0.78, `${failedCount} of ${totalMedia} couldn't upload — continuing with ${media.length}`)
   }
 
   report(0.8, 'Saving post...')
@@ -234,18 +247,21 @@ export async function toggleLike(postId: string): Promise<boolean> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
 
-  const { data: existing } = await supabase
+  const { data: existing, error: checkErr } = await supabase
     .from('garage_post_likes')
     .select('id')
     .eq('post_id', postId)
     .eq('user_id', session.user.id)
-    .single()
+    .maybeSingle()
+  if (checkErr) throw checkErr
 
   if (existing) {
-    await supabase.from('garage_post_likes').delete().eq('id', existing.id)
+    const { error } = await supabase.from('garage_post_likes').delete().eq('id', existing.id)
+    if (error) throw error
     return false
   } else {
-    await supabase.from('garage_post_likes').insert({ post_id: postId, user_id: session.user.id })
+    const { error } = await supabase.from('garage_post_likes').insert({ post_id: postId, user_id: session.user.id })
+    if (error) throw error
     return true
   }
 }
@@ -253,13 +269,14 @@ export async function toggleLike(postId: string): Promise<boolean> {
 // ─── Comments ──────────────────────────────────────────────────────────────
 
 export async function fetchComments(postId: string): Promise<GarageComment[]> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('garage_post_comments')
     .select('*')
     .eq('post_id', postId)
     .order('created_at', { ascending: true })
     .limit(100)
 
+  if (error) throw error
   const comments = (data ?? []) as GarageComment[]
 
   // Backfill author names
@@ -272,7 +289,7 @@ export async function fetchComments(postId: string): Promise<GarageComment[]> {
       .in('id', authorIds)
 
     if (profiles) {
-      const nameMap = new Map(profiles.map((p: any) => [p.id, p.name]))
+      const nameMap = new Map((profiles as ProfileName[]).map((p) => [p.id, p.name]))
       for (const c of comments) {
         if (!c.author_name) {
           c.author_name = nameMap.get(c.author_id) ?? null
@@ -323,10 +340,9 @@ export async function searchUsers(query: string): Promise<{ id: string; name: st
     .ilike('name', `%${query}%`)
     .limit(10)
 
-  return (data ?? []).filter((p: any) => p.name).map((p: any) => ({
-    id: p.id,
-    name: p.name,
-  }))
+  return ((data ?? []) as ProfileName[])
+    .filter((p): p is { id: string; name: string } => !!p.name)
+    .map((p) => ({ id: p.id, name: p.name }))
 }
 
 // ─── Saves / Bookmarks ────────────────────────────────────────────────────
@@ -335,18 +351,21 @@ export async function toggleSave(postId: string): Promise<boolean> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
 
-  const { data: existing } = await supabase
+  const { data: existing, error: checkErr } = await supabase
     .from('garage_post_saves')
     .select('id')
     .eq('post_id', postId)
     .eq('user_id', session.user.id)
-    .single()
+    .maybeSingle()
+  if (checkErr) throw checkErr
 
   if (existing) {
-    await supabase.from('garage_post_saves').delete().eq('id', existing.id)
+    const { error } = await supabase.from('garage_post_saves').delete().eq('id', existing.id)
+    if (error) throw error
     return false
   } else {
-    await supabase.from('garage_post_saves').insert({ post_id: postId, user_id: session.user.id })
+    const { error } = await supabase.from('garage_post_saves').insert({ post_id: postId, user_id: session.user.id })
+    if (error) throw error
     return true
   }
 }
@@ -354,5 +373,23 @@ export async function toggleSave(postId: string): Promise<boolean> {
 // ─── Delete Post ───────────────────────────────────────────────────────────
 
 export async function deletePost(postId: string): Promise<void> {
-  await supabase.from('garage_posts').delete().eq('id', postId)
+  // Fetch the post's media so we can clean up storage objects too — otherwise
+  // deleting the row orphans the uploaded files in the bucket forever.
+  const { data: post } = await supabase
+    .from('garage_posts')
+    .select('media')
+    .eq('id', postId)
+    .maybeSingle()
+
+  const mediaItems = (post?.media ?? []) as MediaItem[]
+  const paths = mediaItems
+    .map((m) => m.url.split('/garage-media/')[1])
+    .filter((p): p is string => !!p)
+  if (paths.length > 0) {
+    // Best-effort: storage cleanup shouldn't block the row deletion.
+    await supabase.storage.from('garage-media').remove(paths).catch(() => {})
+  }
+
+  const { error } = await supabase.from('garage_posts').delete().eq('id', postId)
+  if (error) throw error
 }

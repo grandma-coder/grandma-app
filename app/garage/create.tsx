@@ -1,14 +1,17 @@
 /**
- * Create Post — Full-screen multi-step flow.
+ * Create Post — Full-screen multi-step flow (cream-paper / sticker-collage).
  *
  * Step 1: Add photos & videos (up to 10)
  * Step 2: Title + caption
  * Step 3: Category (with custom "Other" text input)
- * Step 4: Size & age range dropdowns + condition
+ * Step 4: Size & age range + condition
  * Step 5: Preview + publish
+ *
+ * Accent (progress bar, buttons, selected chips) follows the active journey
+ * mode via getModeColor. Dialogs use PaperAlert, not native Alert.
  */
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import {
   View,
   Text,
@@ -16,7 +19,6 @@ import {
   Pressable,
   ScrollView,
   Image,
-  Alert,
   StyleSheet,
   ActivityIndicator,
   Dimensions,
@@ -24,8 +26,8 @@ import {
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { router } from 'expo-router'
-import { checkPhotoSafety } from '../../lib/photoSafety'
 import {
   ArrowLeft,
   Camera,
@@ -36,67 +38,46 @@ import {
   Send,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, getModeColor } from '../../constants/theme'
+import { useModeStore } from '../../store/useModeStore'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
+import { PaperAlert, type PaperAlertButton } from '../../components/ui/PaperAlert'
 import { createGaragePost } from '../../lib/garagePosts'
 
 const SCREEN_W = Dimensions.get('window').width
 const TOTAL_STEPS = 5
+const SAFETY_AGREED_KEY = 'photo-safety-agreed'
 
 const CATEGORIES = ['Clothing', 'Gear', 'Toys', 'Furniture', 'Books', 'Maternity', 'Nursery', 'Other']
 const CONDITIONS = ['New', 'Like New', 'Good', 'Fair', 'Well Loved']
 
 // Age → Size mapping: pick age first, then see relevant sizes
 const AGE_GROUPS = [
-  {
-    label: '0–3 months',
-    sizes: ['Preemie', 'Newborn (NB)', '0–3 months'],
-  },
-  {
-    label: '3–6 months',
-    sizes: ['3–6 months'],
-  },
-  {
-    label: '6–12 months',
-    sizes: ['6–9 months', '9–12 months'],
-  },
-  {
-    label: '1–2 years',
-    sizes: ['12–18 months', '18–24 months', '2T'],
-  },
-  {
-    label: '2–4 years',
-    sizes: ['2T', '3T', '4T'],
-  },
-  {
-    label: '4–6 years',
-    sizes: ['4T', '5T', 'XS (4–5)', 'S (6)'],
-  },
-  {
-    label: '6–8 years',
-    sizes: ['S (6)', 'M (7–8)'],
-  },
-  {
-    label: '8–10 years',
-    sizes: ['M (7–8)', 'L (10–12)'],
-  },
-  {
-    label: '10–12 years',
-    sizes: ['L (10–12)', 'XL (14–16)'],
-  },
-  {
-    label: '12+ years',
-    sizes: ['XL (14–16)', 'XXL (18)'],
-  },
-  {
-    label: 'All ages',
-    sizes: ['One Size', 'Adjustable'],
-  },
+  { label: '0–3 months', sizes: ['Preemie', 'Newborn (NB)', '0–3 months'] },
+  { label: '3–6 months', sizes: ['3–6 months'] },
+  { label: '6–12 months', sizes: ['6–9 months', '9–12 months'] },
+  { label: '1–2 years', sizes: ['12–18 months', '18–24 months', '2T'] },
+  { label: '2–4 years', sizes: ['2T', '3T', '4T'] },
+  { label: '4–6 years', sizes: ['4T', '5T', 'XS (4–5)', 'S (6)'] },
+  { label: '6–8 years', sizes: ['S (6)', 'M (7–8)'] },
+  { label: '8–10 years', sizes: ['M (7–8)', 'L (10–12)'] },
+  { label: '10–12 years', sizes: ['L (10–12)', 'XL (14–16)'] },
+  { label: '12+ years', sizes: ['XL (14–16)', 'XXL (18)'] },
+  { label: 'All ages', sizes: ['One Size', 'Adjustable'] },
 ]
 
+interface AlertState {
+  title: string
+  message?: string
+  buttons?: PaperAlertButton[]
+}
+
 export default function CreatePostScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, stickers, font, isDark, brand } = useTheme()
+  const mode = useModeStore((sel) => sel.mode)
+  const accent = getModeColor(mode, isDark)
   const insets = useSafeAreaInsets()
+  const ink = isDark ? colors.text : '#141313'
 
   const [step, setStep] = useState(1)
 
@@ -122,12 +103,47 @@ export default function CreatePostScreen() {
   const [uploadStatus, setUploadStatus] = useState('')
   const progressAnim = useRef(new Animated.Value(0)).current
 
+  // PaperAlert
+  const [alert, setAlert] = useState<AlertState | null>(null)
+
+  // ─── Photo-safety gate (PaperAlert, persists agreement) ─────────────────
+
+  async function ensurePhotoSafety(onAgree: () => void) {
+    const agreed = await AsyncStorage.getItem(SAFETY_AGREED_KEY)
+    if (agreed === 'true') {
+      onAgree()
+      return
+    }
+    setAlert({
+      title: 'Photo Safety Guidelines',
+      message:
+        "To protect children's privacy and safety:\n\n" +
+        "• Do NOT share photos showing children's faces\n" +
+        '• Blur or crop faces before sharing\n' +
+        '• No identifying information (school names, addresses)\n' +
+        '• Product and item photos are always welcome\n\n' +
+        'Violations will result in content removal and possible account suspension.',
+      buttons: [
+        { label: 'I Decline', variant: 'secondary' },
+        {
+          label: 'I Agree',
+          variant: 'primary',
+          onPress: () => {
+            void AsyncStorage.setItem(SAFETY_AGREED_KEY, 'true')
+            onAgree()
+          },
+        },
+      ],
+    })
+  }
+
   // ─── Media pickers ────────────────────────────────────────────────────
 
-  async function pickMedia() {
-    const safe = await checkPhotoSafety()
-    if (!safe) return
+  function pickMedia() {
+    void ensurePhotoSafety(runPickMedia)
+  }
 
+  async function runPickMedia() {
     // Primary: expo-image-picker (works on real devices, flaky on iOS sim)
     try {
       const result = await ImagePicker.launchImageLibraryAsync({})
@@ -158,15 +174,22 @@ export default function CreatePostScreen() {
           setMedia((prev) => [...prev, ...newItems].slice(0, 10))
         }
       } catch {
-        Alert.alert('Error', 'Could not load photo. Try a different one.')
+        setAlert({ title: 'Error', message: 'Could not load photo. Try a different one.' })
       }
     }
   }
 
-  async function takePhoto() {
+  function takePhoto() {
+    void ensurePhotoSafety(runTakePhoto)
+  }
+
+  async function runTakePhoto() {
     try {
       const perm = await ImagePicker.requestCameraPermissionsAsync()
-      if (!perm.granted) return Alert.alert('Camera permission needed')
+      if (!perm.granted) {
+        setAlert({ title: 'Camera permission needed', message: 'Enable camera access in Settings to take a photo.' })
+        return
+      }
       const result = await ImagePicker.launchCameraAsync({})
       if (!result.canceled && result.assets?.[0]) {
         setMedia((prev) =>
@@ -174,7 +197,7 @@ export default function CreatePostScreen() {
         )
       }
     } catch {
-      Alert.alert('Error', 'Could not capture photo.')
+      setAlert({ title: 'Error', message: 'Could not capture photo.' })
     }
   }
 
@@ -185,11 +208,8 @@ export default function CreatePostScreen() {
   // ─── Navigation ───────────────────────────────────────────────────────
 
   function goBack() {
-    if (step === 1) {
-      router.back()
-    } else {
-      setStep(step - 1)
-    }
+    if (step === 1) router.back()
+    else setStep(step - 1)
   }
 
   function goNext() {
@@ -201,7 +221,7 @@ export default function CreatePostScreen() {
       case 1: return media.length > 0
       case 2: return title.trim().length > 0
       case 3: return category !== null && (category !== 'Other' || customCategory.trim().length > 0)
-      case 4: return true // optional step
+      case 4: return true
       case 5: return true
       default: return false
     }
@@ -211,12 +231,12 @@ export default function CreatePostScreen() {
 
   async function handlePublish() {
     if (media.length === 0) {
-      Alert.alert('No Photos', 'Please add at least one photo before publishing.')
+      setAlert({ title: 'No Photos', message: 'Please add at least one photo before publishing.' })
       return
     }
     setPosting(true)
     setUploadProgress(0)
-    setUploadStatus('Preparing...')
+    setUploadStatus('Preparing…')
     progressAnim.setValue(0)
 
     try {
@@ -225,11 +245,7 @@ export default function CreatePostScreen() {
         caption: [title, caption].filter(Boolean).join('\n\n') || undefined,
         mediaUris: media,
         category: finalCategory ?? undefined,
-        tags: [
-          selectedSize,
-          selectedAge,
-          condition,
-        ].filter(Boolean) as string[],
+        tags: [selectedSize, selectedAge, condition].filter(Boolean) as string[],
         onProgress: (progress, status) => {
           setUploadProgress(progress)
           setUploadStatus(status)
@@ -241,7 +257,6 @@ export default function CreatePostScreen() {
         },
       })
 
-      // Show success briefly, then go back
       setUploadStatus('Published!')
       Animated.timing(progressAnim, {
         toValue: 1,
@@ -253,12 +268,10 @@ export default function CreatePostScreen() {
         router.back()
       }, 600)
     } catch (e: any) {
-      Alert.alert('Upload Error', e.message)
+      setAlert({ title: 'Upload Error', message: e.message })
       setPosting(false)
     }
   }
-
-  // ─── Progress bar ─────────────────────────────────────────────────────
 
   const progress = step / TOTAL_STEPS
 
@@ -269,7 +282,7 @@ export default function CreatePostScreen() {
         <Pressable onPress={goBack} style={s.backBtn} hitSlop={12}>
           <ArrowLeft size={24} color={colors.text} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: colors.text }]}>
+        <Text style={[s.headerTitle, { color: colors.text, fontFamily: font.bodySemiBold }]}>
           {step === 5 ? 'Preview' : `Step ${step} of ${TOTAL_STEPS}`}
         </Text>
         <Pressable onPress={() => router.back()} hitSlop={12}>
@@ -278,13 +291,8 @@ export default function CreatePostScreen() {
       </View>
 
       {/* Progress bar */}
-      <View style={[s.progressTrack, { backgroundColor: colors.borderLight }]}>
-        <View
-          style={[
-            s.progressFill,
-            { width: `${progress * 100}%`, backgroundColor: colors.primary },
-          ]}
-        />
+      <View style={[s.progressTrack, { backgroundColor: colors.border }]}>
+        <View style={[s.progressFill, { width: `${progress * 100}%`, backgroundColor: accent }]} />
       </View>
 
       {/* Step content */}
@@ -295,20 +303,10 @@ export default function CreatePostScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {step === 1 && (
-          <Step1Media
-            media={media}
-            onPickMedia={pickMedia}
-            onTakePhoto={takePhoto}
-            onRemove={removeMedia}
-          />
+          <Step1Media media={media} onPickMedia={pickMedia} onTakePhoto={takePhoto} onRemove={removeMedia} />
         )}
         {step === 2 && (
-          <Step2TitleCaption
-            title={title}
-            onTitleChange={setTitle}
-            caption={caption}
-            onCaptionChange={setCaption}
-          />
+          <Step2TitleCaption title={title} onTitleChange={setTitle} caption={caption} onCaptionChange={setCaption} />
         )}
         {step === 3 && (
           <Step3Category
@@ -325,7 +323,7 @@ export default function CreatePostScreen() {
             selectedAge={selectedAge}
             onAgeChange={(age) => {
               setSelectedAge(age)
-              setSelectedSize(null) // reset size when age changes
+              setSelectedSize(null)
             }}
             selectedSize={selectedSize}
             onSizeChange={setSelectedSize}
@@ -352,15 +350,11 @@ export default function CreatePostScreen() {
             disabled={!canAdvance()}
             style={({ pressed }) => [
               s.nextBtn,
-              {
-                backgroundColor: colors.primary,
-                borderRadius: radius.lg,
-                opacity: canAdvance() ? 1 : 0.35,
-              },
+              { backgroundColor: accent, borderRadius: radius.full, opacity: canAdvance() ? 1 : 0.35 },
               pressed && canAdvance() && { transform: [{ scale: 0.98 }] },
             ]}
           >
-            <Text style={s.nextBtnText}>
+            <Text style={[s.nextBtnText, { color: ink, fontFamily: font.bodyBold }]}>
               {step === 4 ? 'Preview' : 'Next'}
             </Text>
           </Pressable>
@@ -370,20 +364,16 @@ export default function CreatePostScreen() {
             disabled={posting}
             style={({ pressed }) => [
               s.nextBtn,
-              {
-                backgroundColor: colors.primary,
-                borderRadius: radius.lg,
-                opacity: posting ? 0.5 : 1,
-              },
+              { backgroundColor: accent, borderRadius: radius.full, opacity: posting ? 0.5 : 1 },
               pressed && !posting && { transform: [{ scale: 0.98 }] },
             ]}
           >
             {posting ? (
-              <ActivityIndicator color="#FFF" size="small" />
+              <ActivityIndicator color={ink} size="small" />
             ) : (
               <View style={s.publishRow}>
-                <Send size={18} color="#FFF" strokeWidth={2} />
-                <Text style={s.nextBtnText}>Publish</Text>
+                <Send size={18} color={ink} strokeWidth={2.4} />
+                <Text style={[s.nextBtnText, { color: ink, fontFamily: font.bodyBold }]}>Publish</Text>
               </View>
             )}
           </Pressable>
@@ -393,36 +383,41 @@ export default function CreatePostScreen() {
       {/* Upload progress overlay */}
       {posting && (
         <View style={s.uploadOverlay}>
-          <View style={[s.uploadCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+          <View style={[s.uploadCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.xl }]}>
             {uploadProgress >= 1 ? (
               <Check size={32} color={brand.success} strokeWidth={2.5} />
             ) : (
               <BrandedLoader logoSize={64} />
             )}
-            <Text style={[s.uploadStatusText, { color: colors.text }]}>
+            <Text style={[s.uploadStatusText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
               {uploadStatus}
             </Text>
-            <View style={[s.uploadTrack, { backgroundColor: colors.borderLight, borderRadius: radius.sm }]}>
+            <View style={[s.uploadTrack, { backgroundColor: colors.border, borderRadius: radius.sm }]}>
               <Animated.View
                 style={[
                   s.uploadFill,
                   {
-                    backgroundColor: uploadProgress >= 1 ? brand.success : colors.primary,
+                    backgroundColor: uploadProgress >= 1 ? brand.success : accent,
                     borderRadius: radius.sm,
-                    width: progressAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['0%', '100%'],
-                    }),
+                    width: progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
                   },
                 ]}
               />
             </View>
-            <Text style={[s.uploadPercent, { color: colors.textMuted }]}>
+            <Text style={[s.uploadPercent, { color: colors.textMuted, fontFamily: font.bodyBold }]}>
               {Math.round(uploadProgress * 100)}%
             </Text>
           </View>
         </View>
       )}
+
+      <PaperAlert
+        visible={alert !== null}
+        title={alert?.title ?? ''}
+        message={alert?.message}
+        buttons={alert?.buttons}
+        onRequestClose={() => setAlert(null)}
+      />
     </View>
   )
 }
@@ -432,23 +427,23 @@ export default function CreatePostScreen() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function Step1Media({
-  media,
-  onPickMedia,
-  onTakePhoto,
-  onRemove,
+  media, onPickMedia, onTakePhoto, onRemove,
 }: {
   media: { uri: string; type: 'photo' | 'video' }[]
   onPickMedia: () => void
   onTakePhoto: () => void
   onRemove: (i: number) => void
 }) {
-  const { colors, radius } = useTheme()
-  const thumbSize = (SCREEN_W - 48 - 16) / 3 // 3 columns, 24px padding each side, 8px gaps
+  const { colors, radius, stickers, font, isDark, brand } = useTheme()
+  const mode = useModeStore((sel) => sel.mode)
+  const accent = getModeColor(mode, isDark)
+  const ink = isDark ? colors.text : '#141313'
+  const thumbSize = (SCREEN_W - 48 - 16) / 3
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text }]}>Add Photos & Videos</Text>
-      <Text style={[s.stepHint, { color: colors.textSecondary }]}>
+      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>Add Photos & Videos</Text>
+      <Text style={[s.stepHint, { color: colors.textSecondary, fontFamily: font.body }]}>
         Add up to 10 photos or videos. The first one will be the cover.
       </Text>
 
@@ -456,25 +451,19 @@ function Step1Media({
       <View style={s.mediaGrid}>
         {media.map((item, i) => (
           <View key={i} style={[s.mediaThumbWrap, { width: thumbSize, height: thumbSize }]}>
-            <Image
-              source={{ uri: item.uri }}
-              style={[s.mediaThumb, { borderRadius: radius.md }]}
-            />
+            <Image source={{ uri: item.uri }} style={[s.mediaThumb, { borderRadius: radius.md }]} />
             {item.type === 'video' && (
               <View style={s.videoLabel}>
-                <Play size={12} color="#FFF" fill="#FFF" />
+                <Play size={12} color="#FFFFFF" fill="#FFFFFF" />
               </View>
             )}
             {i === 0 && (
-              <View style={[s.coverBadge, { backgroundColor: colors.primary, borderRadius: radius.sm }]}>
-                <Text style={s.coverBadgeText}>Cover</Text>
+              <View style={[s.coverBadge, { backgroundColor: accent, borderRadius: radius.sm }]}>
+                <Text style={[s.coverBadgeText, { color: ink, fontFamily: font.bodyBold }]}>Cover</Text>
               </View>
             )}
-            <Pressable
-              onPress={() => onRemove(i)}
-              style={s.removeMediaBtn}
-            >
-              <X size={12} color="#FFF" />
+            <Pressable onPress={() => onRemove(i)} style={[s.removeMediaBtn, { backgroundColor: brand.error }]}>
+              <X size={12} color="#FFFFFF" strokeWidth={2.6} />
             </Pressable>
           </View>
         ))}
@@ -485,24 +474,24 @@ function Step1Media({
         <View style={s.addMediaRow}>
           <Pressable
             onPress={onPickMedia}
-            style={[s.addMediaBtn, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}
+            style={[s.addMediaBtn, { backgroundColor: stickers.blueSoft, borderColor: colors.border, borderRadius: radius.lg }]}
           >
-            <ImageIcon size={24} color={colors.primary} strokeWidth={2} />
-            <Text style={[s.addMediaText, { color: colors.text }]}>Gallery</Text>
-            <Text style={[s.addMediaSub, { color: colors.textMuted }]}>Photos & Videos</Text>
+            <ImageIcon size={24} color={stickers.blueInk} strokeWidth={2.2} />
+            <Text style={[s.addMediaText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Gallery</Text>
+            <Text style={[s.addMediaSub, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>Photos & Videos</Text>
           </Pressable>
           <Pressable
             onPress={onTakePhoto}
-            style={[s.addMediaBtn, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}
+            style={[s.addMediaBtn, { backgroundColor: stickers.yellowSoft, borderColor: colors.border, borderRadius: radius.lg }]}
           >
-            <Camera size={24} color={colors.primary} strokeWidth={2} />
-            <Text style={[s.addMediaText, { color: colors.text }]}>Camera</Text>
-            <Text style={[s.addMediaSub, { color: colors.textMuted }]}>Take a photo</Text>
+            <Camera size={24} color={stickers.yellowInk} strokeWidth={2.2} />
+            <Text style={[s.addMediaText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Camera</Text>
+            <Text style={[s.addMediaSub, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>Take a photo</Text>
           </Pressable>
         </View>
       )}
 
-      <Text style={[s.mediaCount, { color: colors.textMuted }]}>
+      <Text style={[s.mediaCount, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
         {media.length}/10 added
       </Text>
     </View>
@@ -514,62 +503,49 @@ function Step1Media({
 // ═══════════════════════════════════════════════════════════════════════════
 
 function Step2TitleCaption({
-  title,
-  onTitleChange,
-  caption,
-  onCaptionChange,
+  title, onTitleChange, caption, onCaptionChange,
 }: {
   title: string
   onTitleChange: (t: string) => void
   caption: string
   onCaptionChange: (c: string) => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font } = useTheme()
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text }]}>What are you sharing?</Text>
+      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>What are you sharing?</Text>
 
       {/* Title */}
-      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>TITLE</Text>
+      <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold }]}>TITLE</Text>
       <TextInput
         value={title}
         onChangeText={onTitleChange}
         placeholder='e.g. "Ergobaby Carrier — Barely Used"'
         placeholderTextColor={colors.textMuted}
-        style={[
-          s.textInput,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
-          },
-        ]}
+        style={[s.textInput, {
+          color: colors.text, fontFamily: font.bodyMedium,
+          backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md,
+        }]}
       />
-      <Text style={[s.fieldTip, { color: colors.textMuted }]}>
+      <Text style={[s.fieldTip, { color: colors.textMuted, fontFamily: font.italic }]}>
         Tip: Include brand, item type, and condition for best results
       </Text>
 
       {/* Caption */}
-      <Text style={[s.fieldLabel, { color: colors.textMuted, marginTop: 20 }]}>
+      <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold, marginTop: 20 }]}>
         CAPTION (optional)
       </Text>
       <TextInput
         value={caption}
         onChangeText={onCaptionChange}
-        placeholder="Tell others about this item — why you love it, how it's been used..."
+        placeholder="Tell others about this item — why you love it, how it's been used…"
         placeholderTextColor={colors.textMuted}
         multiline
-        style={[
-          s.textArea,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
-          },
-        ]}
+        style={[s.textArea, {
+          color: colors.text, fontFamily: font.bodyMedium,
+          backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md,
+        }]}
       />
     </View>
   )
@@ -580,22 +556,20 @@ function Step2TitleCaption({
 // ═══════════════════════════════════════════════════════════════════════════
 
 function Step3Category({
-  category,
-  onCategoryChange,
-  customCategory,
-  onCustomCategoryChange,
+  category, onCategoryChange, customCategory, onCustomCategoryChange,
 }: {
   category: string | null
   onCategoryChange: (c: string) => void
   customCategory: string
   onCustomCategoryChange: (c: string) => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, stickers, font, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text }]}>Choose a Category</Text>
-      <Text style={[s.stepHint, { color: colors.textSecondary }]}>
+      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>Choose a Category</Text>
+      <Text style={[s.stepHint, { color: colors.textSecondary, fontFamily: font.body }]}>
         This helps others find your post in the feed.
       </Text>
 
@@ -606,24 +580,14 @@ function Step3Category({
             <Pressable
               key={c}
               onPress={() => onCategoryChange(c)}
-              style={[
-                s.categoryChip,
-                {
-                  backgroundColor: isActive ? colors.primaryTint : colors.surface,
-                  borderColor: isActive ? colors.primary : colors.border,
-                  borderRadius: radius.lg,
-                },
-              ]}
+              style={[s.categoryChip, {
+                backgroundColor: isActive ? stickers.pinkSoft : colors.surface,
+                borderColor: isActive ? ink : colors.border,
+                borderRadius: radius.full,
+              }]}
             >
-              {isActive && <Check size={16} color={colors.primary} strokeWidth={3} />}
-              <Text
-                style={[
-                  s.categoryChipText,
-                  { color: isActive ? colors.primary : colors.text },
-                ]}
-              >
-                {c}
-              </Text>
+              {isActive && <Check size={16} color={ink} strokeWidth={3} />}
+              <Text style={[s.categoryChipText, { color: ink, fontFamily: font.bodySemiBold }]}>{c}</Text>
             </Pressable>
           )
         })}
@@ -632,22 +596,17 @@ function Step3Category({
       {/* Custom category input */}
       {category === 'Other' && (
         <View style={{ marginTop: 16 }}>
-          <Text style={[s.fieldLabel, { color: colors.textMuted }]}>YOUR CATEGORY</Text>
+          <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold }]}>YOUR CATEGORY</Text>
           <TextInput
             value={customCategory}
             onChangeText={onCustomCategoryChange}
             placeholder='e.g. "Stroller Accessories", "Feeding Supplies"'
             placeholderTextColor={colors.textMuted}
             autoFocus
-            style={[
-              s.textInput,
-              {
-                color: colors.text,
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                borderRadius: radius.lg,
-              },
-            ]}
+            style={[s.textInput, {
+              color: colors.text, fontFamily: font.bodyMedium,
+              backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md,
+            }]}
           />
         </View>
       )}
@@ -656,16 +615,11 @@ function Step3Category({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// STEP 4 — Details (condition, size dropdown, age dropdown)
+// STEP 4 — Details (condition, age, size)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function Step4Details({
-  condition,
-  onConditionChange,
-  selectedAge,
-  onAgeChange,
-  selectedSize,
-  onSizeChange,
+  condition, onConditionChange, selectedAge, onAgeChange, selectedSize, onSizeChange,
 }: {
   condition: string | null
   onConditionChange: (c: string) => void
@@ -674,21 +628,21 @@ function Step4Details({
   selectedSize: string | null
   onSizeChange: (s: string | null) => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, stickers, font, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
 
-  // Get sizes for selected age
   const ageGroup = AGE_GROUPS.find((g) => g.label === selectedAge)
   const availableSizes = ageGroup?.sizes ?? []
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text }]}>Item Details</Text>
-      <Text style={[s.stepHint, { color: colors.textSecondary }]}>
+      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>Item Details</Text>
+      <Text style={[s.stepHint, { color: colors.textSecondary, fontFamily: font.body }]}>
         All fields are optional but help others find your item.
       </Text>
 
       {/* Condition */}
-      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>CONDITION</Text>
+      <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold }]}>CONDITION</Text>
       <View style={s.chipRow}>
         {CONDITIONS.map((c) => {
           const isActive = condition === c
@@ -696,33 +650,23 @@ function Step4Details({
             <Pressable
               key={c}
               onPress={() => onConditionChange(c)}
-              style={[
-                s.conditionChip,
-                {
-                  backgroundColor: isActive ? colors.primaryTint : colors.surface,
-                  borderColor: isActive ? colors.primary : colors.border,
-                  borderRadius: radius.full,
-                },
-              ]}
+              style={[s.pillChip, {
+                backgroundColor: isActive ? stickers.pinkSoft : colors.surface,
+                borderColor: isActive ? ink : colors.border,
+                borderRadius: radius.full,
+              }]}
             >
-              <Text
-                style={[
-                  s.conditionChipText,
-                  { color: isActive ? colors.primary : colors.textSecondary },
-                ]}
-              >
-                {c}
-              </Text>
+              <Text style={[s.pillChipText, { color: ink, fontFamily: font.bodySemiBold }]}>{c}</Text>
             </Pressable>
           )
         })}
       </View>
 
       {/* Age range — pick first */}
-      <Text style={[s.fieldLabel, { color: colors.textMuted, marginTop: 24 }]}>
+      <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold, marginTop: 24 }]}>
         AGE RANGE
       </Text>
-      <Text style={[s.fieldTip, { color: colors.textMuted, marginBottom: 8 }]}>
+      <Text style={[s.fieldTip, { color: colors.textMuted, fontFamily: font.italic, marginBottom: 8 }]}>
         Select age first — matching sizes will appear below
       </Text>
       <View style={s.ageGrid}>
@@ -732,24 +676,14 @@ function Step4Details({
             <Pressable
               key={group.label}
               onPress={() => onAgeChange(isActive ? null : group.label)}
-              style={[
-                s.ageChip,
-                {
-                  backgroundColor: isActive ? colors.primaryTint : colors.surface,
-                  borderColor: isActive ? colors.primary : colors.border,
-                  borderRadius: radius.lg,
-                },
-              ]}
+              style={[s.ageChip, {
+                backgroundColor: isActive ? stickers.pinkSoft : colors.surface,
+                borderColor: isActive ? ink : colors.border,
+                borderRadius: radius.full,
+              }]}
             >
-              {isActive && <Check size={14} color={colors.primary} strokeWidth={3} />}
-              <Text
-                style={[
-                  s.ageChipText,
-                  { color: isActive ? colors.primary : colors.text },
-                ]}
-              >
-                {group.label}
-              </Text>
+              {isActive && <Check size={14} color={ink} strokeWidth={3} />}
+              <Text style={[s.ageChipText, { color: ink, fontFamily: font.bodySemiBold }]}>{group.label}</Text>
             </Pressable>
           )
         })}
@@ -758,7 +692,7 @@ function Step4Details({
       {/* Size — shows after age is picked */}
       {selectedAge && availableSizes.length > 0 && (
         <>
-          <Text style={[s.fieldLabel, { color: colors.textMuted, marginTop: 24 }]}>
+          <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold, marginTop: 24 }]}>
             SIZE — {selectedAge}
           </Text>
           <View style={s.chipRow}>
@@ -768,23 +702,13 @@ function Step4Details({
                 <Pressable
                   key={sz}
                   onPress={() => onSizeChange(isActive ? null : sz)}
-                  style={[
-                    s.conditionChip,
-                    {
-                      backgroundColor: isActive ? colors.primaryTint : colors.surface,
-                      borderColor: isActive ? colors.primary : colors.border,
-                      borderRadius: radius.full,
-                    },
-                  ]}
+                  style={[s.pillChip, {
+                    backgroundColor: isActive ? stickers.pinkSoft : colors.surface,
+                    borderColor: isActive ? ink : colors.border,
+                    borderRadius: radius.full,
+                  }]}
                 >
-                  <Text
-                    style={[
-                      s.conditionChipText,
-                      { color: isActive ? colors.primary : colors.textSecondary },
-                    ]}
-                  >
-                    {sz}
-                  </Text>
+                  <Text style={[s.pillChipText, { color: ink, fontFamily: font.bodySemiBold }]}>{sz}</Text>
                 </Pressable>
               )
             })}
@@ -800,13 +724,7 @@ function Step4Details({
 // ═══════════════════════════════════════════════════════════════════════════
 
 function Step5Preview({
-  media,
-  title,
-  caption,
-  category,
-  condition,
-  size,
-  age,
+  media, title, caption, category, condition, size, age,
 }: {
   media: { uri: string; type: 'photo' | 'video' }[]
   title: string
@@ -816,55 +734,53 @@ function Step5Preview({
   size: string | null
   age: string | null
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, stickers, font, isDark } = useTheme()
+  const ink = isDark ? colors.text : '#141313'
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text }]}>Preview Your Post</Text>
+      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>Preview Your Post</Text>
 
       {/* Cover image */}
       {media.length > 0 && (
-        <Image
-          source={{ uri: media[0].uri }}
-          style={[s.previewCover, { borderRadius: radius.xl }]}
-        />
+        <Image source={{ uri: media[0].uri }} style={[s.previewCover, { borderRadius: radius.lg }]} />
       )}
 
       {/* Media count */}
       {media.length > 1 && (
-        <Text style={[s.previewMediaCount, { color: colors.textMuted }]}>
+        <Text style={[s.previewMediaCount, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           +{media.length - 1} more {media.length - 1 === 1 ? 'photo' : 'photos/videos'}
         </Text>
       )}
 
-      {/* Title */}
-      <Text style={[s.previewTitle, { color: colors.text }]}>{title}</Text>
+      {/* Title — editorial serif */}
+      <Text style={[s.previewTitle, { color: colors.text, fontFamily: font.display }]}>{title}</Text>
 
       {/* Caption */}
       {caption ? (
-        <Text style={[s.previewCaption, { color: colors.textSecondary }]}>{caption}</Text>
+        <Text style={[s.previewCaption, { color: colors.textSecondary, fontFamily: font.body }]}>{caption}</Text>
       ) : null}
 
       {/* Tags / badges */}
       <View style={s.previewBadges}>
         {category && (
-          <View style={[s.previewBadge, { backgroundColor: colors.primaryTint, borderRadius: radius.full }]}>
-            <Text style={[s.previewBadgeText, { color: colors.primary }]}>{category}</Text>
+          <View style={[s.previewBadge, { backgroundColor: stickers.pinkSoft, borderColor: ink, borderRadius: radius.full }]}>
+            <Text style={[s.previewBadgeText, { color: ink, fontFamily: font.bodySemiBold }]}>{category}</Text>
           </View>
         )}
         {condition && (
-          <View style={[s.previewBadge, { backgroundColor: colors.surfaceRaised, borderRadius: radius.full }]}>
-            <Text style={[s.previewBadgeText, { color: colors.textSecondary }]}>{condition}</Text>
+          <View style={[s.previewBadge, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
+            <Text style={[s.previewBadgeText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{condition}</Text>
           </View>
         )}
         {size && (
-          <View style={[s.previewBadge, { backgroundColor: colors.surfaceRaised, borderRadius: radius.full }]}>
-            <Text style={[s.previewBadgeText, { color: colors.textSecondary }]}>{size}</Text>
+          <View style={[s.previewBadge, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
+            <Text style={[s.previewBadgeText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{size}</Text>
           </View>
         )}
         {age && (
-          <View style={[s.previewBadge, { backgroundColor: colors.surfaceRaised, borderRadius: radius.full }]}>
-            <Text style={[s.previewBadgeText, { color: colors.textSecondary }]}>{age}</Text>
+          <View style={[s.previewBadge, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
+            <Text style={[s.previewBadgeText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{age}</Text>
           </View>
         )}
       </View>
@@ -888,10 +804,10 @@ const s = StyleSheet.create({
     paddingBottom: 12,
   },
   backBtn: { padding: 4 },
-  headerTitle: { fontSize: 16, fontWeight: '700' },
+  headerTitle: { fontSize: 16 },
 
   // Progress
-  progressTrack: { height: 3, marginHorizontal: 16 },
+  progressTrack: { height: 3, marginHorizontal: 16, borderRadius: 2, overflow: 'hidden' },
   progressFill: { height: 3, borderRadius: 2 },
 
   // Content
@@ -899,120 +815,91 @@ const s = StyleSheet.create({
   contentInner: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 40 },
 
   stepContainer: { gap: 12 },
-  stepTitle: { fontSize: 24, fontWeight: '800', letterSpacing: -0.3, fontFamily: 'Fraunces_600SemiBold' },
-  stepHint: { fontSize: 14, fontWeight: '500', lineHeight: 20, marginBottom: 8 },
+  stepTitle: { fontSize: 28, letterSpacing: -0.5 },
+  stepHint: { fontSize: 14, lineHeight: 20, marginBottom: 8 },
 
   // Field labels
-  fieldLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6 },
-  fieldTip: { fontSize: 12, fontWeight: '500', marginTop: 4, fontStyle: 'italic' },
+  fieldLabel: { fontSize: 11, letterSpacing: 1, marginBottom: 6 },
+  fieldTip: { fontSize: 13, marginTop: 4 },
 
   // Text inputs
-  textInput: { borderWidth: 1, paddingHorizontal: 16, height: 52, fontSize: 15, fontWeight: '500' },
-  textArea: { borderWidth: 1, padding: 16, fontSize: 15, fontWeight: '500', minHeight: 110, textAlignVertical: 'top' },
+  textInput: { borderWidth: 1, paddingHorizontal: 16, height: 56, fontSize: 15 },
+  textArea: { borderWidth: 1, padding: 16, fontSize: 15, minHeight: 110, textAlignVertical: 'top' },
 
   // Media grid (Step 1)
   mediaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   mediaThumbWrap: { position: 'relative' },
   mediaThumb: { width: '100%', height: '100%' },
   videoLabel: {
-    position: 'absolute',
-    bottom: 6,
-    left: 6,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 8,
-    paddingHorizontal: 5,
-    paddingVertical: 3,
+    position: 'absolute', bottom: 6, left: 6,
+    backgroundColor: 'rgba(20,19,19,0.6)', borderRadius: 8,
+    paddingHorizontal: 5, paddingVertical: 3,
   },
-  coverBadge: { position: 'absolute', top: 6, left: 6, paddingVertical: 2, paddingHorizontal: 6 },
-  coverBadgeText: { fontSize: 9, fontWeight: '800', color: '#FFF', letterSpacing: 0.5 },
+  coverBadge: { position: 'absolute', top: 6, left: 6, paddingVertical: 3, paddingHorizontal: 8 },
+  coverBadgeText: { fontSize: 9, letterSpacing: 0.5 },
   removeMediaBtn: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#F44336',
-    alignItems: 'center',
-    justifyContent: 'center',
+    position: 'absolute', top: -4, right: -4,
+    width: 22, height: 22, borderRadius: 11,
+    alignItems: 'center', justifyContent: 'center',
   },
   addMediaRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
   addMediaBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 24,
+    flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 24, borderWidth: 1,
   },
-  addMediaText: { fontSize: 14, fontWeight: '700' },
-  addMediaSub: { fontSize: 11, fontWeight: '500' },
-  mediaCount: { fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 4 },
+  addMediaText: { fontSize: 15 },
+  addMediaSub: { fontSize: 11 },
+  mediaCount: { fontSize: 12, textAlign: 'center', marginTop: 4 },
 
   // Category (Step 3)
   categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderWidth: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 11, paddingHorizontal: 18, borderWidth: 1,
   },
-  categoryChipText: { fontSize: 15, fontWeight: '600' },
+  categoryChipText: { fontSize: 15 },
 
-  // Condition chips (Step 4)
+  // Pill chips (condition + size — Step 4)
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  conditionChip: { paddingVertical: 8, paddingHorizontal: 16, borderWidth: 1 },
-  conditionChipText: { fontSize: 13, fontWeight: '600' },
+  pillChip: { paddingVertical: 9, paddingHorizontal: 16, borderWidth: 1 },
+  pillChipText: { fontSize: 13 },
 
   // Age grid (Step 4)
   ageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   ageChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderWidth: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingVertical: 10, paddingHorizontal: 14, borderWidth: 1,
   },
-  ageChipText: { fontSize: 13, fontWeight: '600' },
+  ageChipText: { fontSize: 13 },
 
   // Preview (Step 5)
   previewCover: { width: '100%', height: SCREEN_W * 0.6, resizeMode: 'cover', marginTop: 8 },
-  previewMediaCount: { fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 6 },
-  previewTitle: { fontSize: 20, fontWeight: '800', marginTop: 16 },
-  previewCaption: { fontSize: 14, fontWeight: '400', lineHeight: 20 },
-  previewBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  previewBadge: { paddingVertical: 5, paddingHorizontal: 12 },
-  previewBadgeText: { fontSize: 12, fontWeight: '700' },
+  previewMediaCount: { fontSize: 12, textAlign: 'center', marginTop: 6 },
+  previewTitle: { fontSize: 24, letterSpacing: -0.4, marginTop: 16 },
+  previewCaption: { fontSize: 14, lineHeight: 20 },
+  previewBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+  previewBadge: { paddingVertical: 6, paddingHorizontal: 13, borderWidth: 1 },
+  previewBadgeText: { fontSize: 12 },
 
   // Upload overlay
   uploadOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 100,
+    backgroundColor: 'rgba(20,19,19,0.5)',
+    alignItems: 'center', justifyContent: 'center', zIndex: 100,
   },
   uploadCard: {
-    width: 260,
-    alignItems: 'center',
-    padding: 32,
-    gap: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 24,
-    elevation: 10,
+    width: 260, alignItems: 'center', padding: 32, gap: 16, borderWidth: 1,
+    shadowColor: '#141313', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18, shadowRadius: 24, elevation: 10,
   },
-  uploadStatusText: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
+  uploadStatusText: { fontSize: 16, textAlign: 'center' },
   uploadTrack: { width: '100%', height: 6, overflow: 'hidden' },
   uploadFill: { height: 6 },
-  uploadPercent: { fontSize: 13, fontWeight: '700' },
+  uploadPercent: { fontSize: 13 },
 
   // Bottom bar
   bottomBar: { paddingHorizontal: 20, paddingTop: 8 },
-  nextBtn: { height: 52, alignItems: 'center', justifyContent: 'center' },
-  nextBtnText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  nextBtn: { height: 56, alignItems: 'center', justifyContent: 'center' },
+  nextBtnText: { fontSize: 16 },
   publishRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 })

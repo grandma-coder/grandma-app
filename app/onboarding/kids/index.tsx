@@ -133,7 +133,13 @@ export default function KidsOnboarding() {
 
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return onboardingComplete('kids')
+      if (!session) {
+        // No session (offline / signed-out edge): enroll locally so the mode
+        // system has a behavior to switch to, then proceed.
+        useBehaviorStore.getState().enroll('kids')
+        store.clearAll()
+        return onboardingComplete('kids')
+      }
 
       const userId = session.user.id
       const parentName = useJourneyStore.getState().parentName ?? null
@@ -267,12 +273,13 @@ export default function KidsOnboarding() {
           ccError = error
         }
         if (ccError) {
-          Alert.alert(
-            'Setup didn\'t fully complete',
-            'We saved your child profile but couldn\'t set up access. Please reopen the app, or contact support if your children don\'t appear on the home screen.',
-          )
+          // Without caregiver links, RLS blocks the user from reading their own
+          // children — completing here would strand them with invisible kids.
+          // Throw to the catch below, which preserves the draft and lets them
+          // retry rather than navigating home into a broken state.
           // eslint-disable-next-line no-console
           console.error('child_caregivers insert failed after retry:', ccError.message)
+          throw new Error('We couldn\'t finish setting up access to your child profile.')
         }
 
         // Skeleton appspace integration (best-effort — never blocks onboarding).
@@ -285,7 +292,7 @@ export default function KidsOnboarding() {
         const { error: circleError } = await supabase.from('care_circle').insert({
           owner_id: userId,
           member_user_id: userId,
-          role: 'partner',
+          role: 'parent',
           permissions: ['view', 'log_activity', 'chat', 'edit_child', 'emergency'],
           children_access: childIds,
           status: 'accepted',
@@ -489,7 +496,7 @@ function StepChildCount({
         </Pressable>
 
         <View style={[stepStyles.counterDisplay, { backgroundColor: modeSoft, borderRadius: radius.xl }]}>
-          <Text style={[stepStyles.counterNumber, { color: mode, fontFamily: font.display }]}>{count}</Text>
+          <Text style={[stepStyles.counterNumber, { color: mode, fontFamily: font.displayBold }]}>{count}</Text>
         </View>
 
         <Pressable
@@ -527,7 +534,7 @@ function StepChildName({
   childCount: number
   onContinue: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -556,9 +563,10 @@ function StepChildName({
           {
             color: colors.text,
             backgroundColor: colors.surface,
-            borderColor: colors.text,
+            borderColor: colors.border,
             shadowColor: colors.text,
-            borderRadius: radius.full,
+            borderRadius: radius.md,
+            fontFamily: font.bodyMedium,
           },
         ]}
       />
@@ -579,7 +587,7 @@ function StepChildDob({
   childIdx: number
   onContinue: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -619,7 +627,7 @@ function StepChildDob({
 
         {tooOld && (
           <View style={[stepStyles.ageBadge, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 8 }]}>
-            <Text style={[stepStyles.ageBadgeText, { color: colors.textMuted, fontWeight: '500' }]}>
+            <Text style={[stepStyles.ageBadgeText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
               Grandma's tuned for ages 0–5, but you can still continue.
             </Text>
           </View>
@@ -627,7 +635,7 @@ function StepChildDob({
 
         {child?.birthDate && (
           <View style={[stepStyles.ageBadge, { backgroundColor: modeSoft, borderRadius: radius.lg }]}>
-            <Text style={[stepStyles.ageBadgeText, { color: mode }]}>
+            <Text style={[stepStyles.ageBadgeText, { color: mode, fontFamily: font.bodySemiBold }]}>
               {formatAge(child.birthDate)}
             </Text>
           </View>
@@ -638,7 +646,10 @@ function StepChildDob({
 }
 
 function formatAge(birthDate: string): string {
-  const born = new Date(birthDate)
+  // Force local-time parsing — `new Date('YYYY-MM-DD')` parses as UTC midnight,
+  // which lands on the prior calendar day in negative-UTC-offset timezones and
+  // throws the age off by a day/month.
+  const born = new Date(birthDate.length === 10 ? birthDate + 'T00:00:00' : birthDate)
   const now = new Date()
   const months = (now.getFullYear() - born.getFullYear()) * 12 + (now.getMonth() - born.getMonth())
   if (months < 1) return 'Newborn'
@@ -676,7 +687,7 @@ function StepChildCountry({
   childIdx: number
   onContinue: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -707,8 +718,8 @@ function StepChildCountry({
             stepStyles.countrySearch,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.text,
-              borderRadius: radius.full,
+              borderColor: colors.border,
+              borderRadius: radius.md,
               shadowColor: colors.text,
             },
           ]}
@@ -719,7 +730,7 @@ function StepChildCountry({
             placeholder="Search country..."
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
-            style={[stepStyles.countrySearchInput, { color: colors.text }]}
+            style={[stepStyles.countrySearchInput, { color: colors.text, fontFamily: font.bodyMedium }]}
           />
         </View>
 
@@ -751,7 +762,7 @@ function StepChildCountry({
                   <Text
                     style={[
                       stepStyles.allergyChipText,
-                      { color: isSelected ? mode : colors.text },
+                      { color: isSelected ? mode : colors.text, fontFamily: font.bodySemiBold },
                     ]}
                   >
                     {c.name}
@@ -786,7 +797,7 @@ function StepChildPhoto({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -841,7 +852,7 @@ function StepChildPhoto({
               ]}
             >
               <Camera size={36} color={colors.text} strokeWidth={1.8} />
-              <Text style={[stepStyles.photoHint, { color: colors.text }]}>
+              <Text style={[stepStyles.photoHint, { color: colors.text, fontFamily: font.bodyMedium }]}>
                 Tap to choose photo or icon
               </Text>
             </View>
@@ -874,7 +885,7 @@ function StepChildAllergies({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -913,7 +924,7 @@ function StepChildAllergies({
               <Text
                 style={[
                   stepStyles.allergyChipText,
-                  { color: selected ? mode : colors.text },
+                  { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
                 ]}
               >
                 {allergy}
@@ -930,8 +941,8 @@ function StepChildAllergies({
             stepStyles.otherInputWrap,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.text,
-              borderRadius: radius.full,
+              borderColor: colors.border,
+              borderRadius: radius.md,
               shadowColor: colors.text,
             },
           ]}
@@ -941,7 +952,7 @@ function StepChildAllergies({
             onChangeText={(t) => updateChild(childIdx, { allergiesOther: t })}
             placeholder="Tell us what other allergies..."
             placeholderTextColor={colors.textMuted}
-            style={[stepStyles.otherInputText, { color: colors.text }]}
+            style={[stepStyles.otherInputText, { color: colors.text, fontFamily: font.bodyMedium }]}
             autoCapitalize="sentences"
           />
         </View>
@@ -965,7 +976,7 @@ function StepChildConditions({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -992,9 +1003,10 @@ function StepChildConditions({
           {
             color: colors.text,
             backgroundColor: colors.surface,
-            borderColor: colors.text,
+            borderColor: colors.border,
             shadowColor: colors.text,
-            borderRadius: radius.lg,
+            borderRadius: radius.md,
+            fontFamily: font.bodyMedium,
           },
         ]}
       />
@@ -1015,7 +1027,7 @@ function StepPartner({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const partner = useKidsOnboardingStore((s) => s.partnerName)
@@ -1041,13 +1053,14 @@ function StepPartner({
           {
             color: colors.text,
             backgroundColor: colors.surface,
-            borderColor: colors.text,
+            borderColor: colors.border,
             shadowColor: colors.text,
-            borderRadius: radius.full,
+            borderRadius: radius.md,
+            fontFamily: font.bodyMedium,
           },
         ]}
       />
-      <Text style={[stepStyles.hint, { color: colors.textMuted }]}>
+      <Text style={[stepStyles.hint, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
         They'll be able to log activities and see updates too.
       </Text>
     </OnboardingStep>
@@ -1067,7 +1080,7 @@ function StepCaregiver({
   onContinue: () => void
   onSkip: () => void
 }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const role = useKidsOnboardingStore((s) => s.caregiverRole)
@@ -1105,7 +1118,7 @@ function StepCaregiver({
               <Text
                 style={[
                   stepStyles.roleChipText,
-                  { color: selected ? mode : colors.text },
+                  { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
                 ]}
               >
                 {opt.label}
@@ -1128,10 +1141,11 @@ function StepCaregiver({
             {
               color: colors.text,
               backgroundColor: colors.surface,
-              borderColor: colors.text,
-            shadowColor: colors.text,
-              borderRadius: radius.full,
+              borderColor: colors.border,
+              shadowColor: colors.text,
+              borderRadius: radius.md,
               marginTop: 16,
+              fontFamily: font.bodyMedium,
             },
           ]}
         />
@@ -1175,7 +1189,7 @@ function CompletionScreen({
           <Star size={56} fill={stickers.blue} />
         </View>
 
-        <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.display }]}>
+        <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.displayBold }]}>
           Welcome to the family!
         </Text>
 
@@ -1219,11 +1233,11 @@ function CompletionScreen({
                 </View>
               )}
               <View style={completeStyles.childInfo}>
-                <Text style={[completeStyles.childName, { color: colors.text }]}>
+                <Text style={[completeStyles.childName, { color: colors.text, fontFamily: font.bodyBold }]}>
                   {child.name}
                 </Text>
                 {child.birthDate && (
-                  <Text style={[completeStyles.childAge, { color: colors.textSecondary }]}>
+                  <Text style={[completeStyles.childAge, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
                     {formatAge(child.birthDate)}
                   </Text>
                 )}
@@ -1252,7 +1266,6 @@ const stepStyles = StyleSheet.create({
     paddingHorizontal: 20,
     height: 56,
     fontSize: 16,
-    fontWeight: '500',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 1,
     shadowRadius: 0,
@@ -1271,13 +1284,11 @@ const stepStyles = StyleSheet.create({
   },
   otherInputText: {
     fontSize: 16,
-    fontWeight: '500',
   },
   textArea: {
     borderWidth: 2,
     padding: 16,
     fontSize: 16,
-    fontWeight: '500',
     minHeight: 120,
     textAlignVertical: 'top',
     shadowOffset: { width: 0, height: 3 },
@@ -1287,7 +1298,6 @@ const stepStyles = StyleSheet.create({
   },
   hint: {
     fontSize: 13,
-    fontWeight: '500',
     marginTop: 12,
     lineHeight: 18,
   },
@@ -1299,7 +1309,6 @@ const stepStyles = StyleSheet.create({
   },
   dateButtonText: {
     fontSize: 17,
-    fontWeight: '600',
     textAlign: 'center',
   },
   ageBadge: {
@@ -1308,7 +1317,6 @@ const stepStyles = StyleSheet.create({
   },
   ageBadgeText: {
     fontSize: 14,
-    fontWeight: '600',
   },
   counterRow: {
     flexDirection: 'row',
@@ -1331,7 +1339,6 @@ const stepStyles = StyleSheet.create({
   },
   counterNumber: {
     fontSize: 40,
-    fontWeight: '900',
   },
   countryRow: {
     flexDirection: 'row',
@@ -1343,7 +1350,6 @@ const stepStyles = StyleSheet.create({
   },
   countryName: {
     fontSize: 15,
-    fontWeight: '600',
   },
   countrySearch: {
     borderWidth: 2,
@@ -1357,7 +1363,6 @@ const stepStyles = StyleSheet.create({
   },
   countrySearchInput: {
     fontSize: 16,
-    fontWeight: '500',
   },
   countryDropdown: {
     borderWidth: 1,
@@ -1389,7 +1394,6 @@ const stepStyles = StyleSheet.create({
   },
   photoHint: {
     fontSize: 13,
-    fontWeight: '500',
   },
   chipGrid: {
     flexDirection: 'row',
@@ -1410,7 +1414,6 @@ const stepStyles = StyleSheet.create({
   },
   allergyChipText: {
     fontSize: 14,
-    fontWeight: '600',
   },
   roleChip: {
     paddingVertical: 14,
@@ -1423,7 +1426,6 @@ const stepStyles = StyleSheet.create({
   },
   roleChipText: {
     fontSize: 15,
-    fontWeight: '600',
   },
 })
 
@@ -1445,13 +1447,11 @@ const completeStyles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: '900',
     letterSpacing: -0.5,
     marginBottom: 12,
   },
   message: {
     fontSize: 16,
-    fontWeight: '500',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 24,
@@ -1485,11 +1485,9 @@ const completeStyles = StyleSheet.create({
   },
   childName: {
     fontSize: 17,
-    fontWeight: '700',
   },
   childAge: {
     fontSize: 14,
-    fontWeight: '500',
   },
   bottom: {
     position: 'absolute',
@@ -1506,7 +1504,6 @@ const completeStyles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: '700',
     letterSpacing: 0.3,
   },
 })

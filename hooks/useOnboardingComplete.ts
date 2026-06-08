@@ -14,38 +14,40 @@ import { useBehaviorStore, Behavior } from '../store/useBehaviorStore'
 import { useModeStore } from '../store/useModeStore'
 
 export function useOnboardingComplete() {
-  const completeCurrentFlow = useOnboardingStore((s) => s.completeCurrentFlow)
+  // Reactive values for the returned hook API (consumers reading hasNext/next).
   const queue = useOnboardingStore((s) => s.queue)
-  const switchTo = useBehaviorStore((s) => s.switchTo)
-  const setMode = useModeStore((s) => s.setMode)
-
   const hasNext = queue.length > 1
   const nextBehavior = queue[1] ?? null
 
   const handleComplete = useCallback(
     (completedBehavior?: Behavior) => {
-      completeCurrentFlow()
+      // Mutate first, THEN read fresh state — the closure-captured `queue`
+      // still holds the just-completed head, so deriving next-flow from it
+      // would misroute or skip in a multi-behavior sequence.
+      useOnboardingStore.getState().completeCurrentFlow()
+      const freshNext = useOnboardingStore.getState().currentOnboarding
 
-      if (hasNext && nextBehavior) {
+      if (freshNext) {
         router.push({
           pathname: '/onboarding/transition',
-          params: { next: nextBehavior },
+          params: { next: freshNext },
         } as any)
         return
       }
 
       // All done — flip mode to the behavior we just finished onboarding for.
-      // Fall back to the first enrolled behavior, then to the queue head.
+      // Fall back to the first enrolled behavior.
       const enrolled = useBehaviorStore.getState().enrolledBehaviors
-      const target: Behavior | null =
-        completedBehavior ?? enrolled[0] ?? queue[0] ?? null
+      const target: Behavior | null = completedBehavior ?? enrolled[0] ?? null
       if (target) {
-        switchTo(target)
-        setMode(target)
+        useBehaviorStore.getState().switchTo(target)
+        // setModeUnsafe: enrollment is guaranteed by the flow's saveAndFinish,
+        // and the guarded setMode would silently no-op if it hadn't landed yet.
+        useModeStore.getState().setModeUnsafe(target)
       }
       router.replace('/(tabs)' as any)
     },
-    [completeCurrentFlow, hasNext, nextBehavior, queue, switchTo, setMode]
+    []
   )
 
   return { handleComplete, hasNext, nextBehavior }

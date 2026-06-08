@@ -34,7 +34,7 @@ export const ar: TranslationKeys = {
   menu_grandmaTalk: 'تحدثي مع\nالجدة',
   menu_insights: 'رؤى',
   menu_dailyRewards: 'مكافآت\nيومية',
-  menu_garage: 'المرآب',
+  menu_garage: 'القرية',
   menu_channels: 'القنوات',
 
   mode_prePregnancy: 'ما قبل الحمل',

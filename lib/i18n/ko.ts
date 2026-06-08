@@ -34,7 +34,7 @@ export const ko: TranslationKeys = {
   menu_grandmaTalk: '할머니와\n대화',
   menu_insights: '인사이트',
   menu_dailyRewards: '일일\n보상',
-  menu_garage: '차고',
+  menu_garage: '마을',
   menu_channels: '채널',
 
   mode_prePregnancy: '임신 준비',

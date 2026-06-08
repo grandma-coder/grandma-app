@@ -44,7 +44,7 @@ import { YesevaOne_400Regular } from '@expo-google-fonts/yeseva-one/400Regular'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
-import { useBehaviorStore } from '../store/useBehaviorStore'
+import { useBehaviorStore, behaviorFromDbType } from '../store/useBehaviorStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
 import { initRevenueCat } from '../lib/revenue'
 import { runNotificationEngine } from '../lib/notificationEngine'
@@ -282,9 +282,7 @@ export default function RootLayout() {
       }
       const localBehaviors = useBehaviorStore.getState().enrolledBehaviors
       const serverTypes: ('pre-pregnancy' | 'pregnancy' | 'kids')[] =
-        dbBehaviors?.map((b: any) =>
-          b.type === 'cycle' ? 'pre-pregnancy' : b.type,
-        ) ?? []
+        dbBehaviors?.map((b: any) => behaviorFromDbType(b.type)) ?? []
       if (localBehaviors.length === 0 && serverTypes.length > 0) {
         useBehaviorStore.getState().setBehaviors(serverTypes)
       }

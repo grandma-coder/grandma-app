@@ -34,7 +34,7 @@ export const zh: TranslationKeys = {
   menu_grandmaTalk: '和奶奶\n聊天',
   menu_insights: '洞察',
   menu_dailyRewards: '每日\n奖励',
-  menu_garage: '车库',
+  menu_garage: '村庄',
   menu_channels: '频道',
 
   mode_prePregnancy: '备孕',

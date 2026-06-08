@@ -34,7 +34,7 @@ export const hi: TranslationKeys = {
   menu_grandmaTalk: 'दादी से\nबात करो',
   menu_insights: 'अंतर्दृष्टि',
   menu_dailyRewards: 'दैनिक\nपुरस्कार',
-  menu_garage: 'गैराज',
+  menu_garage: 'गाँव',
   menu_channels: 'चैनल',
 
   mode_prePregnancy: 'गर्भावस्था पूर्व',

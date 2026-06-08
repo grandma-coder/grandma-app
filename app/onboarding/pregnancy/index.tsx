@@ -23,7 +23,7 @@ import { Heart, Star, Moon, Sun, Flower, Cloud, Smiley, Sleepy, Sad, Sparkle, Le
 import { PillButton } from '../../../components/ui/PillButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
-import { useTheme, brand, stickers, getModeColor, getModeColorSoft } from '../../../constants/theme'
+import { useTheme, brand, stickers, font, getModeColor, getModeColorSoft } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import {
   usePregnancyOnboardingStore,
@@ -142,8 +142,25 @@ export default function PregnancyOnboarding() {
       return onboardingComplete('pregnancy')
     }
 
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return onboardingComplete('pregnancy')
+    try {
+    let session
+    try {
+      session = (await supabase.auth.getSession()).data.session
+    } catch (e) {
+      console.warn('[onboarding] getSession failed:', e)
+      session = null
+    }
+    if (!session) {
+      // No session (offline / signed-out edge): enroll locally so the mode
+      // system has a behavior to switch to, then proceed.
+      useBehaviorStore.getState().enroll('pregnancy')
+      if (store.dueDate) {
+        pregnancyStore.setDueDate(store.dueDate)
+        pregnancyStore.setWeekNumber(calcWeekNumber(store.dueDate))
+      }
+      store.clearAll()
+      return onboardingComplete('pregnancy')
+    }
 
     const userId = session.user.id
     const parentName = useJourneyStore.getState().parentName ?? null
@@ -162,7 +179,6 @@ export default function PregnancyOnboarding() {
     if (profileErr) console.warn('[onboarding] profile upsert failed:', profileErr.message)
 
     // ── 2. REQUIRED: pregnancy behavior row. Block on failure. ───────────
-    useBehaviorStore.getState().enroll('pregnancy')
     const { error: behaviorErr } = await supabase.from('behaviors').upsert(
       {
         user_id: userId,
@@ -172,12 +188,16 @@ export default function PregnancyOnboarding() {
       { onConflict: 'user_id,type' }
     )
     if (behaviorErr) {
+      // Do NOT enroll locally — leaving the user enrolled with no server row
+      // strands them in a broken pregnancy mode on every cold start.
       Alert.alert(
         t('preg_onboard_errorTitle'),
         t('preg_onboard_errorBehavior', { message: behaviorErr.message })
       )
       return
     }
+    // Server row committed — now safe to mark enrolled locally.
+    useBehaviorStore.getState().enroll('pregnancy')
 
     // ── 3. REQUIRED: due-date note + optional mood. Block on failure. ────
     if (store.dueDate) {
@@ -239,6 +259,16 @@ export default function PregnancyOnboarding() {
 
     store.clearAll()
     onboardingComplete('pregnancy')
+    } catch (e) {
+      // Unexpected failure (e.g. SecureStore throw) — surface it and let the
+      // user retry rather than the tap silently doing nothing. Draft is kept.
+      const msg = e instanceof Error ? e.message : String(e)
+      console.warn('Failed to save pregnancy onboarding:', msg)
+      Alert.alert(
+        t('preg_onboard_errorTitle'),
+        t('preg_onboard_errorBehavior', { message: msg })
+      )
+    }
   }
 
 
@@ -546,7 +576,7 @@ function StepCareProvider({
             color: colors.text,
             backgroundColor: colors.surface,
             borderColor: colors.border,
-            borderRadius: radius.lg,
+            borderRadius: radius.md,
           },
         ]}
         autoCapitalize="words"
@@ -594,7 +624,7 @@ function StepConditions({
             color: colors.text,
             backgroundColor: colors.surface,
             borderColor: colors.border,
-            borderRadius: radius.lg,
+            borderRadius: radius.md,
           },
         ]}
       />
@@ -640,7 +670,7 @@ function StepPartner({
             color: colors.text,
             backgroundColor: colors.surface,
             borderColor: colors.border,
-            borderRadius: radius.lg,
+            borderRadius: radius.md,
           },
         ]}
         autoCapitalize="words"
@@ -712,7 +742,7 @@ function CompletionScreen({
             ]}
           >
             <Text
-              style={[completeStyles.countdownDays, { color: mode, fontFamily: font.display }]}
+              style={[completeStyles.countdownDays, { color: mode, fontFamily: font.displayBold }]}
             >
               {days}
             </Text>
@@ -799,7 +829,7 @@ const stepStyles = StyleSheet.create({
   },
   dateButtonText: {
     fontSize: 17,
-    fontWeight: '600',
+    fontFamily: font.bodySemiBold,
     textAlign: 'center',
   },
   weekBadge: {
@@ -809,7 +839,7 @@ const stepStyles = StyleSheet.create({
   },
   weekBadgeText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: font.bodySemiBold,
     textAlign: 'center',
   },
   toggleRow: {
@@ -828,7 +858,7 @@ const stepStyles = StyleSheet.create({
   },
   togglePillText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: font.bodyBold,
   },
   moodGrid: {
     flexDirection: 'row',
@@ -854,7 +884,7 @@ const stepStyles = StyleSheet.create({
   },
   moodLabel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: font.bodySemiBold,
   },
   chipGrid: {
     flexDirection: 'row',
@@ -872,26 +902,26 @@ const stepStyles = StyleSheet.create({
   },
   placeChipText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: font.bodySemiBold,
   },
   textInput: {
     borderWidth: 1,
     paddingHorizontal: 20,
     height: 56,
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: font.bodyMedium,
   },
   textArea: {
     borderWidth: 1,
     padding: 16,
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: font.bodyMedium,
     minHeight: 120,
     textAlignVertical: 'top',
   },
   hint: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: font.bodyMedium,
     marginTop: 12,
     lineHeight: 18,
   },
@@ -918,12 +948,10 @@ const completeStyles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: '900',
     letterSpacing: -0.5,
   },
   message: {
     fontSize: 16,
-    fontWeight: '500',
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -936,17 +964,14 @@ const completeStyles = StyleSheet.create({
   },
   countdownDays: {
     fontSize: 56,
-    fontWeight: '900',
     letterSpacing: -2,
   },
   countdownLabel: {
     fontSize: 15,
-    fontWeight: '600',
     textAlign: 'center',
   },
   countdownWeek: {
     fontSize: 13,
-    fontWeight: '500',
     marginTop: 4,
   },
   bottom: {
@@ -959,7 +984,7 @@ const completeStyles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: font.bodyBold,
     letterSpacing: 0.3,
   },
 })

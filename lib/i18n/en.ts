@@ -37,7 +37,7 @@ export const en: TranslationKeys = {
   menu_grandmaTalk: 'Grandma\nTalk',
   menu_insights: 'Insights',
   menu_dailyRewards: 'Daily\nRewards',
-  menu_garage: 'Garage',
+  menu_garage: 'Village',
   menu_channels: 'Channels',
 
   // Journey Modes
