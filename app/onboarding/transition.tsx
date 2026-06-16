@@ -115,7 +115,6 @@ export default function TransitionScreen() {
     skipCurrentFlow()
 
     // Check if there's another one after skip
-    const remaining = useOnboardingStore.getState().queue
     const nextInQueue = useOnboardingStore.getState().currentOnboarding
 
     if (nextInQueue) {

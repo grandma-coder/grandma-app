@@ -65,7 +65,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
                   item.completed && { backgroundColor: stickers.green, borderColor: stickers.green },
                 ]}>
                   {item.completed && (
-                    <Ionicons name="checkmark" size={14} color="#1A1030" />
+                    <Ionicons name="checkmark" size={14} color={stickers.greenInk} />
                   )}
                 </View>
                 <View style={{ flex: 1 }}>

@@ -20,11 +20,11 @@ import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
 export default function Home() {
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
-  const { colors, isDark } = useTheme()
+  const { colors } = useTheme()
 
-  const bg = isDark ? colors.bg : '#F3ECD9'
-  const ink = isDark ? colors.text : '#141313'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const bg = colors.bg
+  const ink = colors.text
+  const ink3 = colors.textMuted
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
