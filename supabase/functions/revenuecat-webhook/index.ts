@@ -4,10 +4,32 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+// Shared secret configured in the RevenueCat dashboard ("Authorization header"
+// field on the webhook). RevenueCat sends it verbatim in the Authorization
+// header of every POST; we compare it constant-time before any business logic.
+const REVENUECAT_WEBHOOK_SECRET = Deno.env.get('REVENUECAT_WEBHOOK_SECRET') ?? ''
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// Constant-time string comparison — avoids leaking the secret via timing.
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder()
+  const ab = enc.encode(a)
+  const bb = enc.encode(b)
+  // Compare a fixed-length digest of each so length never short-circuits.
+  if (ab.length !== bb.length) {
+    // Still walk a comparison to keep timing uniform, then fail.
+    let diff = 1
+    const max = Math.max(ab.length, bb.length)
+    for (let i = 0; i < max; i++) diff |= (ab[i] ?? 0) ^ (bb[i] ?? 0)
+    return false
+  }
+  let diff = 0
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i]
+  return diff === 0
 }
 
 // Map RevenueCat product IDs and entitlement IDs to our subscription tiers.
@@ -43,6 +65,24 @@ function resolveTier(event: any): 'free' | 'premium_solo' | 'premium_family' | n
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
+  }
+
+  // ─── Verify the webhook is genuinely from RevenueCat ───────────────────
+  // Without this, anyone who knows the URL can POST a forged event and grant
+  // any user_id Premium. Fail closed: if the secret isn't configured, reject.
+  if (!REVENUECAT_WEBHOOK_SECRET) {
+    console.error('REVENUECAT_WEBHOOK_SECRET is not set — rejecting webhook')
+    return new Response(
+      JSON.stringify({ error: 'Webhook not configured' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+  const authHeader = req.headers.get('Authorization') ?? ''
+  if (!timingSafeEqual(authHeader, REVENUECAT_WEBHOOK_SECRET)) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
 
   try {

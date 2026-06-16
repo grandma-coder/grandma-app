@@ -52,8 +52,10 @@ export async function generateInsights(behavior: string): Promise<Insight[]> {
   if (!session) throw new Error('Not authenticated')
 
   try {
+    // user_id is derived server-side from the verified JWT (functions.invoke
+    // attaches the session bearer token automatically) — never sent in the body.
     const { data, error } = await supabase.functions.invoke('generate-insights', {
-      body: { user_id: session.user.id, behavior },
+      body: { behavior },
     })
 
     if (error) {

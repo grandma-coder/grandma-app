@@ -18,16 +18,36 @@ serve(async (req) => {
   }
 
   try {
-    const { user_id, behavior } = await req.json()
+    const { behavior } = await req.json()
 
-    if (!user_id || !behavior) {
+    if (!behavior) {
       return new Response(
-        JSON.stringify({ error: 'user_id and behavior are required' }),
+        JSON.stringify({ error: 'behavior is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    // ─── Authenticate caller; derive user_id from the verified JWT ─────────
+    // Never trust a user_id from the request body — that's an IDOR on every
+    // user's health logs (generate-insights reads cycle/pregnancy/child logs).
+    const authHeader = req.headers.get('Authorization') ?? ''
+    const token = authHeader.replace(/^Bearer\s+/i, '')
+    if (!token) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    const { data: authData, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !authData?.user?.id) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authorization token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    const user_id = authData.user.id
 
     // ─── Fetch last 30 days of logs ──────────────────────────────────────
     const thirtyDaysAgo = new Date()

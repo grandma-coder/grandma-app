@@ -29,7 +29,11 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Extract user_id from JWT — never trust the request body for this
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    // Authenticate the caller — verify the JWT signature, never just decode it.
+    // A decode-only check (atob of the payload) lets anyone forge a `sub` claim
+    // and read any user's PHI. getUser() validates the signature server-side.
     const authHeader = req.headers.get('Authorization') ?? ''
     const token = authHeader.replace(/^Bearer\s+/i, '')
     if (!token) {
@@ -38,19 +42,14 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-
-    // Decode JWT payload (base64url, no verification needed — Supabase service role trusts its own tokens)
-    let user_id: string
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
-      user_id = payload.sub
-      if (!user_id) throw new Error('No sub claim')
-    } catch {
+    const { data: authData, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !authData?.user?.id) {
       return new Response(
         JSON.stringify({ error: 'Invalid authorization token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+    const user_id = authData.user.id
 
     const behavior = context?.behavior ?? 'kids'
     const allBehaviors: string[] = context?.allBehaviors ?? [behavior]
@@ -59,8 +58,6 @@ Deno.serve(async (req) => {
     const activeChildId = context?.activeChildId ?? null
     const pregnancyWeek: number | null = typeof context?.weekNumber === 'number' ? context.weekNumber : null
     const pregnancyDueDate: string | null = typeof context?.dueDate === 'string' ? context.dueDate : null
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     // ─── Fetch user profile ────────────────────────────────────────────
     const { data: profile } = await supabase
@@ -124,6 +121,9 @@ Deno.serve(async (req) => {
 
       childrenData = children ?? []
       const childIds = childrenData.map((c: any) => c.id)
+      // Only honor activeChildId if it actually belongs to this user — otherwise
+      // a forged activeChildId from the body would read another family's child_logs.
+      const ownsActiveChild = activeChildId != null && childIds.includes(activeChildId)
       if (childIds.length > 0) {
         const logQuery = supabase
           .from('child_logs')
@@ -132,7 +132,9 @@ Deno.serve(async (req) => {
           .order('date', { ascending: false })
           .limit(30)
 
-        if (activeChildId) {
+        // Always constrain to the caller's own children. Narrow to the active
+        // child only when ownership is verified.
+        if (ownsActiveChild) {
           logQuery.eq('child_id', activeChildId)
         } else {
           logQuery.in('child_id', childIds)
@@ -148,7 +150,7 @@ Deno.serve(async (req) => {
             `${c.name} (born ${c.dob ?? 'unknown'}${c.allergies?.length ? `, allergies: ${c.allergies.join(', ')}` : ''})`
           ).join(', ') + '\n'
         }
-        if (activeChildId) {
+        if (ownsActiveChild) {
           const activeChildName = childNames[activeChildId] ?? 'Child'
           recentLogs += `Currently discussing: ${activeChildName}\n`
         }
