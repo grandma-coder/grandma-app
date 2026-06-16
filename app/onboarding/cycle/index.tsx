@@ -6,7 +6,7 @@
  * Saves answers to Supabase profiles + behaviors table at the end.
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import {
   View,
   Text,
@@ -73,6 +73,10 @@ export default function CycleOnboarding() {
   const { handleComplete: onboardingComplete } = useOnboardingComplete()
 
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [saving, setSaving] = useState(false)
+  // Re-entrancy guard against a double-tap on "Let's Go" (P2-78). Every path in
+  // saveAndFinish navigates away, so the guard is set once and never released.
+  const savingRef = useRef(false)
 
   const steps = getSteps(store.tryingToConceive)
   const currentStep = steps[currentIndex]
@@ -100,6 +104,11 @@ export default function CycleOnboarding() {
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
   async function saveAndFinish(): Promise<void> {
+    // Guard against double-submit (P2-78).
+    if (savingRef.current) return
+    savingRef.current = true
+    setSaving(true)
+
     // Dev mode: dry run — no DB writes, no store mutations beyond what
     // the snapshot will roll back on exit.
     if (isDevModeActive()) {
@@ -187,6 +196,7 @@ export default function CycleOnboarding() {
     return (
       <CompletionScreen
         onFinish={saveAndFinish}
+        saving={saving}
       />
     )
   }
@@ -715,7 +725,7 @@ function StepTTCSupplements({
 
 // ─── Completion Screen ─────────────────────────────────────────────────────
 
-function CompletionScreen({ onFinish }: { onFinish: () => void }) {
+function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; saving?: boolean }) {
   const insets = useSafeAreaInsets()
   const { colors, radius, font, isDark } = useTheme()
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
@@ -752,7 +762,7 @@ function CompletionScreen({ onFinish }: { onFinish: () => void }) {
       </View>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16 }]}>
-        <PillButton label="Let's Go" variant="ink" onPress={onFinish} />
+        <PillButton label="Let's Go" variant="ink" onPress={onFinish} loading={saving} disabled={saving} />
       </View>
     </View>
   )

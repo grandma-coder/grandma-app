@@ -130,21 +130,32 @@ function getTypeConfig(type: string): TypeConfig {
 function navigateForNotification(item: AppNotification) {
   const data = item.data || {}
 
+  // Switch journey mode only if the user is actually enrolled in the target.
+  // switchTo()/setMode() both silently no-op for an un-enrolled behavior
+  // (see useBehaviorStore), which previously left the user in the wrong mode
+  // while the routing below assumed the switch had landed (P2-86). We never
+  // auto-enroll from a notification tap — that would fabricate a journey the
+  // user never set up. If not enrolled, we leave the current mode and let the
+  // mode-aware routing below pick a valid destination.
+  const switchModeIfEnrolled = (target: 'kids' | 'pregnancy' | 'pre-pregnancy') => {
+    const behaviorStore = useBehaviorStore.getState()
+    const modeStore = useModeStore.getState()
+    if (modeStore.mode === target) return
+    if (!behaviorStore.isEnrolled(target)) return
+    behaviorStore.switchTo(target)
+    modeStore.setMode(target)
+  }
+
   if (data.childId) {
     const { children, setActiveChild } = useChildStore.getState()
     const target = children.find((c) => c.id === data.childId)
     if (target) setActiveChild(target)
 
-    if (useModeStore.getState().mode !== 'kids') {
-      useBehaviorStore.getState().switchTo('kids')
-      useModeStore.getState().setMode('kids')
-    }
-  } else if (data.behavior === 'pregnancy' && useModeStore.getState().mode !== 'pregnancy') {
-    useBehaviorStore.getState().switchTo('pregnancy')
-    useModeStore.getState().setMode('pregnancy')
-  } else if (data.behavior === 'pre-pregnancy' && useModeStore.getState().mode !== 'pre-pregnancy') {
-    useBehaviorStore.getState().switchTo('pre-pregnancy')
-    useModeStore.getState().setMode('pre-pregnancy')
+    switchModeIfEnrolled('kids')
+  } else if (data.behavior === 'pregnancy') {
+    switchModeIfEnrolled('pregnancy')
+  } else if (data.behavior === 'pre-pregnancy') {
+    switchModeIfEnrolled('pre-pregnancy')
   }
 
   // Pregnancy mode has no kid vault destinations (vaccines, growth, goals

@@ -6,7 +6,7 @@
  * Saves children to Supabase children table + care_circle entries.
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import {
 } from 'react-native'
 import DatePickerField from '../../../components/ui/DatePickerField'
 import * as ImagePicker from 'expo-image-picker'
+import * as ImageManipulator from 'expo-image-manipulator'
 import { router } from 'expo-router'
 import { Camera, User, Plus, Minus, Check } from 'lucide-react-native'
 import { Star, Heart, Moon, Sun, Flower, Cloud, Leaf } from '../../../components/ui/Stickers'
@@ -94,6 +95,10 @@ export default function KidsOnboarding() {
   const { handleComplete: onboardingComplete } = useOnboardingComplete()
 
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [saving, setSaving] = useState(false)
+  // Re-entrancy guard: a fast double-tap on "Let's Go" could fire saveAndFinish
+  // twice before the `saving` state re-renders, inserting children twice (P2-78).
+  const savingRef = useRef(false)
 
   const steps = buildSteps(store.childCount)
   const currentStep = steps[currentIndex]
@@ -124,6 +129,13 @@ export default function KidsOnboarding() {
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
   async function saveAndFinish(): Promise<void> {
+    // Guard against double-submit (P2-78). The ref blocks synchronous re-entry
+    // before `saving` state propagates; setSaving drives the button's disabled
+    // state for user feedback.
+    if (savingRef.current) return
+    savingRef.current = true
+    setSaving(true)
+
     // Dev mode: dry run — no DB writes, no photo uploads, no persisted-store
     // mutations. The dev-store snapshot rolls back everything on exit.
     if (isDevModeActive()) {
@@ -156,8 +168,9 @@ export default function KidsOnboarding() {
         .upsert(profilePayload, { onConflict: 'id' })
       if (profileErr) console.warn('[onboarding] profile upsert failed:', profileErr.message)
 
-      // Behavior row
-      useBehaviorStore.getState().enroll('kids')
+      // Behavior row. NOTE: the local `enroll('kids')` is deferred until after
+      // all required writes succeed (see end of try) so an aborted run can't
+      // leave the app enrolled in a mode whose server data never landed.
       const { error: behaviorErr } = await supabase.from('behaviors').upsert(
         {
           user_id: userId,
@@ -176,13 +189,19 @@ export default function KidsOnboarding() {
         if (isIconAvatar(photoUri)) return photoUri
         if (!photoUri.startsWith('file:') && !photoUri.startsWith('content:')) return photoUri
         try {
-          const ext = (photoUri.split('.').pop()?.split('?')[0] ?? 'jpg').toLowerCase()
-          const path = `child-photos/${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
-          const res = await fetch(photoUri)
+          // Compress before upload (the <1MB rule) — resize to a reasonable
+          // avatar width and re-encode as JPEG. Matches lib/vault.ts.
+          const compressed = await ImageManipulator.manipulateAsync(
+            photoUri,
+            [{ resize: { width: 1600 } }],
+            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
+          )
+          const path = `child-photos/${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`
+          const res = await fetch(compressed.uri)
           const buf = await res.arrayBuffer()
           const { error: upErr } = await supabase.storage
             .from('garage-photos')
-            .upload(path, buf, { contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`, upsert: true })
+            .upload(path, buf, { contentType: 'image/jpeg', upsert: true })
           if (upErr) {
             console.warn('[onboarding] child photo upload failed:', upErr.message)
             return null
@@ -359,7 +378,10 @@ export default function KidsOnboarding() {
         }))
         setChildrenStore(mapped)
       }
-      // Reached only when all required writes succeeded.
+      // Reached only when all required writes succeeded. Enroll locally now
+      // (was previously done before the children insert — P2-74) so the mode
+      // system never flips to 'kids' for a run that failed to persist.
+      useBehaviorStore.getState().enroll('kids')
       store.clearAll()
       onboardingComplete('kids')
     } catch (e) {
@@ -369,14 +391,17 @@ export default function KidsOnboarding() {
         "Couldn't finish setup",
         `${msg}\n\nPlease check your connection and try again. Your answers are still here.`
       )
-      // Do NOT clear the draft or navigate — let the user retry.
+      // Do NOT clear the draft or navigate — let the user retry. Release the
+      // submit guard so the retry tap is accepted.
+      savingRef.current = false
+      setSaving(false)
     }
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────
 
   if (currentStep === 'complete') {
-    return <CompletionScreen children={store.children} onFinish={saveAndFinish} />
+    return <CompletionScreen children={store.children} onFinish={saveAndFinish} saving={saving} />
   }
 
   const stepNum = currentIndex + 1
@@ -1159,9 +1184,11 @@ function StepCaregiver({
 function CompletionScreen({
   children,
   onFinish,
+  saving = false,
 }: {
   children: { name: string; birthDate: string | null; photoUri: string | null }[]
   onFinish: () => void
+  saving?: boolean
 }) {
   const insets = useSafeAreaInsets()
   const { colors, radius, font, isDark } = useTheme()
@@ -1248,7 +1275,7 @@ function CompletionScreen({
       </ScrollView>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16, backgroundColor: colors.bg }]}>
-        <PillButton label="Let's Go" variant="ink" onPress={onFinish} />
+        <PillButton label="Let's Go" variant="ink" onPress={onFinish} loading={saving} disabled={saving} />
       </View>
     </View>
   )

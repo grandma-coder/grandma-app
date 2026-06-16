@@ -6,7 +6,7 @@
  * Saves answers to Supabase pregnancy_logs, behaviors, and profiles.
  */
 
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -111,6 +111,9 @@ export default function PregnancyOnboarding() {
   const { t } = useTranslation()
 
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [saving, setSaving] = useState(false)
+  // Re-entrancy guard against a double-tap on "Let's Go" (P2-78).
+  const savingRef = useRef(false)
 
   const currentStep = STEPS[currentIndex]
 
@@ -136,9 +139,18 @@ export default function PregnancyOnboarding() {
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
   async function saveAndFinish(): Promise<void> {
+    // Guard against double-submit (P2-78).
+    if (savingRef.current) return
+    savingRef.current = true
+    setSaving(true)
+    // Released in `finally` on any path that doesn't complete; on success the
+    // screen navigates away (unmounts) so the guard stays set.
+    let completed = false
+
     // Dev mode: dry run — no DB writes, no persisted-store mutations.
     if (isDevModeActive()) {
       store.clearAll()
+      completed = true
       return onboardingComplete('pregnancy')
     }
 
@@ -159,6 +171,7 @@ export default function PregnancyOnboarding() {
         pregnancyStore.setWeekNumber(calcWeekNumber(store.dueDate))
       }
       store.clearAll()
+      completed = true
       return onboardingComplete('pregnancy')
     }
 
@@ -258,6 +271,7 @@ export default function PregnancyOnboarding() {
     }
 
     store.clearAll()
+    completed = true
     onboardingComplete('pregnancy')
     } catch (e) {
       // Unexpected failure (e.g. SecureStore throw) — surface it and let the
@@ -268,6 +282,12 @@ export default function PregnancyOnboarding() {
         t('preg_onboard_errorTitle'),
         t('preg_onboard_errorBehavior', { message: msg })
       )
+    } finally {
+      // Release the submit guard unless we completed (success navigates away).
+      if (!completed) {
+        savingRef.current = false
+        setSaving(false)
+      }
     }
   }
 
@@ -275,7 +295,7 @@ export default function PregnancyOnboarding() {
   // ─── Render ──────────────────────────────────────────────────────────────
 
   if (currentStep === 'complete') {
-    return <CompletionScreen dueDate={store.dueDate} onFinish={saveAndFinish} />
+    return <CompletionScreen dueDate={store.dueDate} onFinish={saveAndFinish} saving={saving} />
   }
 
   return (
@@ -687,9 +707,11 @@ function StepPartner({
 function CompletionScreen({
   dueDate,
   onFinish,
+  saving = false,
 }: {
   dueDate: string | null
   onFinish: () => void
+  saving?: boolean
 }) {
   const insets = useSafeAreaInsets()
   const { colors, radius, font, isDark } = useTheme()
@@ -767,7 +789,7 @@ function CompletionScreen({
       </View>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16 }]}>
-        <PillButton label="Let's Go" variant="ink" onPress={onFinish} />
+        <PillButton label="Let's Go" variant="ink" onPress={onFinish} loading={saving} disabled={saving} />
       </View>
     </View>
   )

@@ -127,10 +127,17 @@ export default function JourneyScreen() {
       router.replace(FIRST_ROUTE[behavior] as any)
       return
     }
-    for (const b of newSelections) enroll(b)
+    // P2-73: do NOT enroll all selections up front. Each per-mode flow enrolls
+    // itself only after its server write succeeds (see each saveAndFinish), so
+    // killing the app mid-queue can't leave the user enrolled in a mode whose
+    // data never persisted. We enroll only `first` here — switchTo() no-ops
+    // unless the target is already enrolled, and we need the first mode active
+    // to render its flow. The queue (useOnboardingStore) drives progression to
+    // the remaining modes independently of enrollment.
     buildQueue(newSelections)
     const first = useOnboardingStore.getState().currentOnboarding
     if (!first) return
+    enroll(first)
     setMode(first)
     switchTo(first)
     router.push(FIRST_ROUTE[first] as any)
