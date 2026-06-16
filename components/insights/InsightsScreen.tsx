@@ -933,22 +933,25 @@ export function InsightsScreen() {
     try {
       await archiveStaleInsights()
       await generateInsights(mode)
-      await queryClient.refetchQueries({ queryKey: ['insights', mode] })
-      queryClient.invalidateQueries({ queryKey: ['behavior-metrics', mode] })
+      // Keys are registered as ['insights', userId, mode] etc. — the userId
+      // MUST be present or React Query's prefix match hits nothing and the
+      // cache never refreshes (the "insights don't update after generate" bug).
+      await queryClient.refetchQueries({ queryKey: ['insights', userId, mode] })
+      queryClient.invalidateQueries({ queryKey: ['behavior-metrics', userId, mode] })
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
       setRefreshing(false)
       setGenerating(false)
     }
-  }, [mode, queryClient])
+  }, [mode, userId, queryClient])
 
   async function handleGenerate() {
     setGenerating(true)
     setError(null)
     try {
       await generateInsights(mode)
-      await queryClient.refetchQueries({ queryKey: ['insights', mode] })
+      await queryClient.refetchQueries({ queryKey: ['insights', userId, mode] })
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Something went wrong'
       setError(msg)
@@ -995,15 +998,15 @@ export function InsightsScreen() {
 
   async function handleArchive(id: string) {
     await archiveInsight(id)
-    queryClient.invalidateQueries({ queryKey: ['insights', mode] })
-    queryClient.invalidateQueries({ queryKey: ['insights-history', mode] })
+    queryClient.invalidateQueries({ queryKey: ['insights', userId, mode] })
+    queryClient.invalidateQueries({ queryKey: ['insights-history', userId, mode] })
     if (selectedInsight?.id === id) setSelectedInsight(null)
   }
 
   async function handleRestore(id: string) {
     await restoreInsight(id)
-    queryClient.invalidateQueries({ queryKey: ['insights', mode] })
-    queryClient.invalidateQueries({ queryKey: ['insights-history', mode] })
+    queryClient.invalidateQueries({ queryKey: ['insights', userId, mode] })
+    queryClient.invalidateQueries({ queryKey: ['insights-history', userId, mode] })
   }
 
   function handleAskGrandma(insight: Insight) {

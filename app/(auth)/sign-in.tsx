@@ -16,12 +16,13 @@ import {
   Platform,
   ScrollView,
 } from 'react-native'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useTheme, stickers } from '../../constants/theme'
 import { Burst } from '../../components/ui/Stickers'
 import { signInWithApple, signInWithGoogle, isAppleSignInAvailable } from '../../lib/auth-providers'
+import { setPendingInvite } from '../../lib/pendingInvite'
 import { Ionicons } from '@expo/vector-icons'
 
 export default function SignIn() {
@@ -32,6 +33,13 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false)
   const [appleAvailable, setAppleAvailable] = useState(false)
   const [oauthLoading, setOauthLoading] = useState<'apple' | 'google' | null>(null)
+
+  // Preserve a caregiver invite token through sign-in (see lib/pendingInvite).
+  const params = useLocalSearchParams<{ invite?: string | string[] }>()
+  useEffect(() => {
+    const raw = Array.isArray(params.invite) ? params.invite[0] : params.invite
+    if (raw) setPendingInvite(raw)
+  }, [params.invite])
 
   useEffect(() => {
     isAppleSignInAvailable().then(setAppleAvailable)

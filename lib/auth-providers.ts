@@ -18,10 +18,11 @@ function bytesToHex(bytes: Uint8Array): string {
 /**
  * Sign in with Apple.
  * Apple's OIDC nonce binding requires the SHA-256 hash of the raw nonce to be
- * embedded in the Apple request, and the raw nonce passed to Supabase for
- * verification. We send `state` as a workaround because expo-apple-authentication
- * does not expose a `nonce` field directly — Supabase compares the raw nonce
- * we pass against `nonce_supported`'s hash inside the JWT.
+ * embedded in the Apple identity token, and the raw nonce passed to Supabase
+ * for verification. We pass the hashed nonce via `nonce` (Apple embeds its hash
+ * in the JWT); Supabase then verifies the raw nonce we hand it against that.
+ * Previously this was sent via `state`, which Apple echoes back unmodified and
+ * does NOT embed in the token — so replay protection was never actually enforced.
  */
 export async function signInWithApple() {
   const rawNonce = bytesToHex(Crypto.getRandomBytes(32))
@@ -35,7 +36,7 @@ export async function signInWithApple() {
       AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
       AppleAuthentication.AppleAuthenticationScope.EMAIL,
     ],
-    state: hashedNonce,
+    nonce: hashedNonce,
   })
 
   if (!credential.identityToken) {

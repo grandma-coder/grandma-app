@@ -58,6 +58,7 @@ import type { Session } from '@supabase/supabase-js'
 import type { ChildWithRole, CaregiverPermissions } from '../types'
 
 import { queryClient } from '../lib/queryClient'
+import { consumePendingInvite } from '../lib/pendingInvite'
 
 /**
  * Set the default font family on every <Text> and <TextInput> once
@@ -91,6 +92,10 @@ export default function RootLayout() {
   // shoving them into onboarding — their data may exist in the DB, we
   // just couldn't reach it. The user can retry by reloading.
   const [loadFailed, setLoadFailed] = useState(false)
+  // True between a PASSWORD_RECOVERY deep-link and the user finishing (or
+  // abandoning) the reset. While true, the route guard must NOT bounce the
+  // recovery session into (tabs) — the user needs to stay on the reset screen.
+  const [recoveryMode, setRecoveryMode] = useState(false)
   const [fontsLoaded] = Font.useFonts({
     Fraunces_600SemiBold,
     Fraunces_700Bold,
@@ -387,9 +392,21 @@ export default function RootLayout() {
         setSession(newSession)
         if (event === 'INITIAL_SESSION') sawInitialSession = true
 
+        // Password recovery deep-link: Supabase establishes a temporary session
+        // and fires PASSWORD_RECOVERY. Route to the reset screen and stop —
+        // do NOT run loadUserData / let the route guard send the user to (tabs),
+        // or they'd never get the chance to set a new password.
+        if (event === 'PASSWORD_RECOVERY') {
+          setRecoveryMode(true)
+          setLoading(false)
+          router.replace('/(auth)/reset-password')
+          return
+        }
+
         if (event === 'SIGNED_OUT' || !newSession) {
           console.log('[auth] no session — unblock loading, route guard will send to /(auth)/welcome')
           // Clear flags so signing back in starts from a fresh load state.
+          setRecoveryMode(false)
           inFlightUid = null
           setHasChildren(false)
           setUserRole('parent')
@@ -460,6 +477,21 @@ export default function RootLayout() {
   useEffect(() => {
     if (loading || !behaviorHydrated) return
 
+    // During password recovery the user holds a valid (temporary) session but
+    // must stay on the reset screen — skip the guard so it can't redirect them.
+    if (recoveryMode) return
+
+    // A caregiver opened an invite link while signed out; we stashed the token
+    // through the auth flow. Now that they're authenticated, resume the accept
+    // flow instead of dropping them on home/onboarding.
+    if (session) {
+      const inviteToken = consumePendingInvite()
+      if (inviteToken) {
+        router.replace(`/accept-invite?token=${encodeURIComponent(inviteToken)}` as Parameters<typeof router.replace>[0])
+        return
+      }
+    }
+
     const inAuth = segments[0] === '(auth)'
 
     if (!session && !inAuth) {
@@ -476,7 +508,7 @@ export default function RootLayout() {
     } else if (session && hasCompletedOnboarding && inAuth) {
       router.replace('/(tabs)')
     }
-  }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments, loadFailed])
+  }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments, loadFailed, recoveryMode])
 
   // ─── Loading state ────────────────────────────────────────────────────────
   if (loading || !behaviorHydrated || !fontsLoaded) {

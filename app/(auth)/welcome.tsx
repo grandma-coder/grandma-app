@@ -18,7 +18,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useTheme, stickers } from '../../constants/theme'
 import { Burst, Blob, Heart, Flower } from '../../components/ui/Stickers'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
@@ -27,10 +27,20 @@ import {
   signInWithGoogle,
   isAppleSignInAvailable,
 } from '../../lib/auth-providers'
+import { setPendingInvite } from '../../lib/pendingInvite'
 
 export default function Welcome() {
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
+
+  // A caregiver invite link opened while signed out lands here as
+  // ?invite=<token> (see app/accept-invite.tsx). Stash it so the root layout
+  // can resume the accept flow once the user authenticates.
+  const params = useLocalSearchParams<{ invite?: string | string[] }>()
+  useEffect(() => {
+    const raw = Array.isArray(params.invite) ? params.invite[0] : params.invite
+    if (raw) setPendingInvite(raw)
+  }, [params.invite])
 
   // ─── Entrance animation ─────────────────────────────────────────────────
   const fadeIn = useRef(new Animated.Value(0)).current
