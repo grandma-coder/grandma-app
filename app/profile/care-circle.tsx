@@ -50,6 +50,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
+import { toDateStr } from '../../lib/cycleLogic'
 import { LogSheet } from '../../components/calendar/LogSheet'
 import { isIconAvatar } from '../../components/ui/AvatarPicker'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -500,7 +501,7 @@ export default function CareCircleScreen() {
       .from('child_logs')
       .select('id, child_id, user_id, date, type, value, notes, logged_by, created_at')
       .in('child_id', childIds)
-      .gte('date', since.toISOString().split('T')[0])
+      .gte('date', toDateStr(since))
       .order('created_at', { ascending: false })
       .limit(100)
 

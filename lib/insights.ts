@@ -3,6 +3,7 @@
  */
 
 import { supabase } from './supabase'
+import { toDateStr } from './cycleLogic'
 
 export type InsightType = 'pattern' | 'trend' | 'upcoming' | 'nudge'
 
@@ -147,7 +148,7 @@ export async function fetchBehaviorMetrics(behavior: string): Promise<BehaviorMe
 
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  const sinceDate = thirtyDaysAgo.toISOString().split('T')[0]
+  const sinceDate = toDateStr(thirtyDaysAgo)
 
   const table =
     behavior === 'pre-pregnancy' ? 'cycle_logs'
@@ -186,7 +187,7 @@ export async function fetchBehaviorMetrics(behavior: string): Promise<BehaviorMe
   for (let i = 6; i >= 0; i--) {
     const d = new Date()
     d.setDate(d.getDate() - i)
-    const dateStr = d.toISOString().split('T')[0]
+    const dateStr = toDateStr(d)
     const count = logs.filter((l: any) => l.date === dateStr).length
     recentActivity.push({ date: dateStr, count })
   }
@@ -198,7 +199,7 @@ export async function fetchBehaviorMetrics(behavior: string): Promise<BehaviorMe
   for (let i = 0; i < 30; i++) {
     const checkDate = new Date(today)
     checkDate.setDate(checkDate.getDate() - i)
-    const checkStr = checkDate.toISOString().split('T')[0]
+    const checkStr = toDateStr(checkDate)
     if (uniqueDates.includes(checkStr)) {
       logStreak++
     } else if (i > 0) {

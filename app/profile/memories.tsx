@@ -44,6 +44,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
+import { toDateStr } from '../../lib/cycleLogic'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
 import { PaperAlert } from '../../components/ui/PaperAlert'
@@ -224,7 +225,7 @@ export default function MemoriesScreen() {
       }
       if (photoUrls.length === 0) throw new Error('Upload failed. Check storage bucket.')
 
-      const dateStr = memoryDate.toISOString().split('T')[0]
+      const dateStr = toDateStr(memoryDate)
       const { error } = await supabase.from('child_logs').insert({
         child_id: selectedChild, user_id: session.user.id,
         date: dateStr, type: 'photo',

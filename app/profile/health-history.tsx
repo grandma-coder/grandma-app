@@ -29,6 +29,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
+import { toDateStr } from '../../lib/cycleLogic'
 import { LogSheet } from '../../components/calendar/LogSheet'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
@@ -552,7 +553,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Not authenticated')
-      const dateStr = eventDate.toISOString().split('T')[0]
+      const dateStr = toDateStr(eventDate)
 
       if (eventType === 'growth') {
         // Save weight and height as separate entries for independent chart lines

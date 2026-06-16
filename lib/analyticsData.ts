@@ -1487,7 +1487,9 @@ export function usePregnancyWeightByWeek(userId: string, dueDate: string | null)
         .eq('log_type', 'weight')
         .order('log_date', { ascending: true })
       if (error) throw error
-      const conception = new Date(dueDate)
+      // Parse as local midnight (not UTC) to match the log_date parse below —
+      // `new Date('YYYY-MM-DD')` is UTC and shifts the week boundary off-by-one.
+      const conception = new Date(dueDate + 'T00:00:00')
       conception.setDate(conception.getDate() - 280)
       const out: PregnancyWeightByWeek[] = []
       for (const r of data ?? []) {

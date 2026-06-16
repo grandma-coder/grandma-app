@@ -16,6 +16,7 @@ import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
 import { weekForDate } from '../lib/pregnancyWeeks'
+import { toDateStr } from '../lib/cycleLogic'
 import { scanImage, ScanLimitReachedError } from '../lib/scan'
 import { supabase } from '../lib/supabase'
 import { checkPremium } from '../lib/revenue'
@@ -117,7 +118,7 @@ export default function Scan() {
       // function builds a pregnancy-aware prompt instead of falling back
       // to the generic kids persona.
       const liveWeek = pregnancyDueDate
-        ? weekForDate(pregnancyDueDate, new Date().toISOString().slice(0, 10))
+        ? weekForDate(pregnancyDueDate, toDateStr(new Date()))
         : pregnancyStoredWeek ?? null
       const pregnancy =
         mode === 'pregnancy' && !child

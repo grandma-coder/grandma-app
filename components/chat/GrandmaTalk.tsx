@@ -54,6 +54,7 @@ import { useGrandmaHistoryStore, type ChatSession } from '../../store/useGrandma
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { sendGrandmaMessage, type ChatMessage } from '../../lib/grandmaChat'
 import { weekForDate } from '../../lib/pregnancyWeeks'
+import { toDateStr } from '../../lib/cycleLogic'
 import { ChildPills, formatChildAge } from '../ui/ChildPills'
 
 // ─── Lightweight Markdown Renderer ────────────────────────────────────────
@@ -991,7 +992,7 @@ export function GrandmaTalk() {
       .map((m) => ({ role: m.role, content: m.content }))
 
     const liveWeek = pregnancyDueDate
-      ? weekForDate(pregnancyDueDate, new Date().toISOString().slice(0, 10))
+      ? weekForDate(pregnancyDueDate, toDateStr(new Date()))
       : pregnancyStoredWeek ?? null
     const context = {
       behavior: chatBehavior,

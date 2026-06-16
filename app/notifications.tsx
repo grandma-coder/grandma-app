@@ -233,7 +233,9 @@ function groupByDate(notifications: AppNotification[]): DateSection[] {
 
   const groups: Record<string, { label: string; date: string; items: AppNotification[] }> = {}
   for (const n of notifications) {
-    const date = n.created_at.split('T')[0]
+    // Local calendar date of the timestamp — `.split('T')[0]` would give the
+    // UTC date and mis-group evening notifications against the local today/yesterday.
+    const date = toDateStr(new Date(n.created_at))
     let label: string
     if (date === today) label = 'Today'
     else if (date === yesterday) label = 'Yesterday'

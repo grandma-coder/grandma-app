@@ -12,7 +12,7 @@
  */
 
 import { supabase } from './supabase'
-import { getCycleInfo } from './cycleLogic'
+import { getCycleInfo, toDateStr } from './cycleLogic'
 import { getWeekData } from './pregnancyData'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -190,14 +190,14 @@ export async function generateMissingDataNotifications(
 export async function generateRoutineNotifications(
   userId: string,
 ): Promise<number> {
-  const dedupeKey = `routines_${new Date().toISOString().split('T')[0]}`
+  const dedupeKey = `routines_${toDateStr(new Date())}`
   const already = await alreadyNotifiedToday(userId, 'routine_missed', dedupeKey)
   if (already) return 0
 
   const today = new Date()
   const dayOfWeek = today.getDay() // 0=Sun..6=Sat
   const nowHHMM = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`
-  const todayDate = today.toISOString().split('T')[0]
+  const todayDate = toDateStr(today)
 
   // Get today's routines that should have happened by now
   const { data: routines } = await supabase
@@ -278,7 +278,7 @@ export async function generateHealthAlertNotifications(
   userId: string,
 ): Promise<number> {
   const notifications: NotificationPayload[] = []
-  const todayDate = new Date().toISOString().split('T')[0]
+  const todayDate = toDateStr(new Date())
   const threeDaysAgo = new Date()
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
 
@@ -287,7 +287,7 @@ export async function generateHealthAlertNotifications(
     .from('child_logs')
     .select('child_id, value, date')
     .eq('type', 'temperature')
-    .gte('date', threeDaysAgo.toISOString().split('T')[0])
+    .gte('date', toDateStr(threeDaysAgo))
     .order('date', { ascending: false })
     .limit(20)
 
@@ -327,7 +327,7 @@ export async function generateHealthAlertNotifications(
 export async function generateGoalNotifications(
   userId: string,
 ): Promise<number> {
-  const dedupeKey = `goals_${new Date().toISOString().split('T')[0]}`
+  const dedupeKey = `goals_${toDateStr(new Date())}`
   const already = await alreadyNotifiedToday(userId, 'goal_achieved', dedupeKey)
   if (already) return 0
 
@@ -349,7 +349,7 @@ export async function generateGoalNotifications(
 
   if (!goals || goals.length === 0) return 0
 
-  const todayDate = new Date().toISOString().split('T')[0]
+  const todayDate = toDateStr(new Date())
   const childMap = new Map(children.map((c) => [c.id, c.name]))
 
   for (const child of children) {
@@ -413,7 +413,7 @@ export async function generateGoalNotifications(
 export async function generateStreakNotifications(
   userId: string,
 ): Promise<number> {
-  const dedupeKey = `streak_${new Date().toISOString().split('T')[0]}`
+  const dedupeKey = `streak_${toDateStr(new Date())}`
   const already = await alreadyNotifiedToday(userId, 'streak', dedupeKey)
   if (already) return 0
 
@@ -433,7 +433,7 @@ export async function generateStreakNotifications(
     checkDate.setDate(checkDate.getDate() - 1) // start from yesterday
 
     for (let i = 0; i < 60; i++) {
-      const dateStr = checkDate.toISOString().split('T')[0]
+      const dateStr = toDateStr(checkDate)
       const { count } = await supabase
         .from('child_logs')
         .select('id', { count: 'exact', head: true })
@@ -464,7 +464,7 @@ export async function generateStreakNotifications(
     if (streak === 0) {
       // Check if day before yesterday had a streak
       checkDate.setDate(new Date().getDate() - 2)
-      const dateStr = checkDate.toISOString().split('T')[0]
+      const dateStr = toDateStr(checkDate)
       const { count } = await supabase
         .from('child_logs')
         .select('id', { count: 'exact', head: true })
@@ -494,11 +494,11 @@ export async function generateStreakNotifications(
 export async function generateDailySummary(
   userId: string,
 ): Promise<number> {
-  const dedupeKey = `daily_summary_${new Date().toISOString().split('T')[0]}`
+  const dedupeKey = `daily_summary_${toDateStr(new Date())}`
   const already = await alreadyNotifiedToday(userId, 'daily_summary', dedupeKey)
   if (already) return 0
 
-  const todayDate = new Date().toISOString().split('T')[0]
+  const todayDate = toDateStr(new Date())
 
   const { data: children } = await supabase
     .from('children')
@@ -550,12 +550,12 @@ export async function generateDailySummary(
 export async function generateCaregiverNotifications(
   userId: string,
 ): Promise<number> {
-  const dedupeKey = `caregiver_${new Date().toISOString().split('T')[0]}`
+  const dedupeKey = `caregiver_${toDateStr(new Date())}`
   const already = await alreadyNotifiedToday(userId, 'care_circle_accepted', dedupeKey)
   if (already) return 0
 
   const notifications: NotificationPayload[] = []
-  const todayDate = new Date().toISOString().split('T')[0]
+  const todayDate = toDateStr(new Date())
 
   // Get user's children
   const { data: children } = await supabase
@@ -616,7 +616,7 @@ export async function generateCaregiverNotifications(
 export async function generateInsightNotifications(
   userId: string,
 ): Promise<number> {
-  const dedupeKey = `insights_${new Date().toISOString().split('T')[0]}`
+  const dedupeKey = `insights_${toDateStr(new Date())}`
   const already = await alreadyNotifiedToday(userId, 'insight', dedupeKey)
   if (already) return 0
 
@@ -710,7 +710,7 @@ export async function generateAppointmentReminders(
 export async function generateChannelActivityNotifications(
   userId: string,
 ): Promise<number> {
-  const dedupeKey = `channels_${new Date().toISOString().split('T')[0]}`
+  const dedupeKey = `channels_${toDateStr(new Date())}`
   const already = await alreadyNotifiedToday(userId, 'channel', dedupeKey)
   if (already) return 0
 
@@ -765,7 +765,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
   if (!pregCount || pregCount === 0) return 0
 
   const notifications: NotificationPayload[] = []
-  const todayDate = new Date().toISOString().split('T')[0]
+  const todayDate = toDateStr(new Date())
 
   // ── Try to read dueDate from onboarding note ──────────────────────────────
   let dueDate: string | null = null
@@ -855,7 +855,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
   }
 
   // ── Strong/severe symptoms in last 24h ────────────────────────────────────
-  const oneDayAgo = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+  const oneDayAgo = toDateStr(new Date(Date.now() - 86400000))
   const { data: severeSymptoms } = await supabase
     .from('pregnancy_logs')
     .select('log_date, value, severity')
@@ -882,7 +882,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
 
   // ── Low kick count (week 28+) ─────────────────────────────────────────────
   if (weekNumber && weekNumber >= 28) {
-    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]
+    const sevenDaysAgo = toDateStr(new Date(Date.now() - 7 * 86400000))
     const { data: kickLogs } = await supabase
       .from('pregnancy_logs')
       .select('log_date, value')
@@ -954,7 +954,7 @@ export async function generateCycleNotifications(userId: string): Promise<number
   })
 
   const notifications: NotificationPayload[] = []
-  const todayDate = new Date().toISOString().split('T')[0]
+  const todayDate = toDateStr(new Date())
 
   // ── Fertile window starting today ─────────────────────────────────────────
   if (info.cycleDay === info.fertileStart && tryingToConceive) {
