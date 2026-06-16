@@ -58,9 +58,11 @@ async function fetchLeaderboardFallback(limit: number): Promise<LeaderboardEntry
 
   if (!profiles || profiles.length === 0) return []
 
-  const entries: LeaderboardEntry[] = []
-
-  for (const p of profiles) {
+  // Run each profile's stat queries concurrently rather than serially — this
+  // path previously issued up to ~300 sequential round-trips (50 profiles ×
+  // ~6 queries). Promise.all keeps it the same query count but parallel, so
+  // wall-clock is one round-trip's worth instead of 300.
+  const entries: LeaderboardEntry[] = await Promise.all(profiles.map(async (p) => {
     // Garage posts
     const { count: garagePosts } = await supabase
       .from('garage_posts')
@@ -111,7 +113,7 @@ async function fetchLeaderboardFallback(limit: number): Promise<LeaderboardEntry
 
     const points = gp * 5 + totalGarageLikes + cp * 3 + totalReactions + cj * 2 + cl
 
-    entries.push({
+    return {
       user_id: p.id,
       name: p.name || 'Anonymous',
       photo_url: p.photo_url,
@@ -122,8 +124,8 @@ async function fetchLeaderboardFallback(limit: number): Promise<LeaderboardEntry
       channels_joined: cj,
       child_logs: cl,
       total_points: points,
-    })
-  }
+    }
+  }))
 
   return entries
     .sort((a, b) => b.total_points - a.total_points)

@@ -13,10 +13,32 @@ export default function ListingDetail() {
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const [listing, setListing] = useState<Listing | null>(null)
+  const [error, setError] = useState(false)
+
+  function loadListing() {
+    if (!id) return
+    setError(false)
+    getListingById(id)
+      .then(setListing)
+      .catch(() => setError(true))
+  }
 
   useEffect(() => {
-    if (id) getListingById(id).then(setListing).catch(() => {})
+    loadListing()
   }, [id])
+
+  if (error) {
+    return (
+      <CosmicBackground>
+        <View style={[styles.container, { paddingTop: insets.top + 20, alignItems: 'center', justifyContent: 'center' }]}>
+          <Text style={styles.loadingText}>Couldn’t load this listing.</Text>
+          <Pressable onPress={loadListing} style={{ marginTop: 16, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.12)' }}>
+            <Text style={styles.loadingText}>Retry</Text>
+          </Pressable>
+        </View>
+      </CosmicBackground>
+    )
+  }
 
   if (!listing) {
     return (

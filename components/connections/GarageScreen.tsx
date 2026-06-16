@@ -209,7 +209,10 @@ export function GarageScreen() {
 
   const current = posts[index]
   const next = posts[index + 1]
-  const deckDone = !loading && (posts.length === 0 || index >= posts.length)
+  // Distinguish a genuinely empty feed (nothing was ever there) from a deck the
+  // user swiped through — they need different copy.
+  const deckEmpty = !loading && posts.length === 0
+  const deckDone = !loading && (deckEmpty || index >= posts.length)
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -258,7 +261,7 @@ export function GarageScreen() {
         ) : loadError && posts.length === 0 ? (
           <DeckError accent={accent} onRetry={loadFeed} />
         ) : deckDone ? (
-          <DeckDone accent={accent} onRefresh={loadFeed} />
+          <DeckDone accent={accent} onRefresh={loadFeed} empty={deckEmpty} />
         ) : (
           <View style={{ width: CARD_W, height: CARD_H }}>
             {/* Background (next) card */}
@@ -554,7 +557,7 @@ function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: strin
   )
 }
 
-function DeckDone({ accent, onRefresh }: { accent: string; onRefresh: () => void }) {
+function DeckDone({ accent, onRefresh, empty = false }: { accent: string; onRefresh: () => void; empty?: boolean }) {
   const { colors, font, stickers } = useTheme()
   return (
     <View style={styles.doneWrap}>
@@ -563,16 +566,18 @@ function DeckDone({ accent, onRefresh }: { accent: string; onRefresh: () => void
         <HeartSticker size={40} fill={stickers.coral} />
       </View>
       <Text style={[styles.doneTitle, { color: colors.text, fontFamily: font.display }]}>
-        That’s everyone for now
+        {empty ? 'Nothing here yet' : 'That’s everyone for now'}
       </Text>
       <Text style={[styles.doneBody, { color: colors.textMuted, fontFamily: font.body }]}>
-        You’ve been through the whole village. Check back later or pull in a new batch.
+        {empty
+          ? 'No listings in the garage right now. Be the first to post — or check back soon.'
+          : 'You’ve been through the whole village. Check back later or pull in a new batch.'}
       </Text>
       <View style={styles.doneBtn}>
         <PillButton
           variant="accent"
           accentColor={accent}
-          label="Refresh the deck"
+          label={empty ? 'Refresh' : 'Refresh the deck'}
           onPress={onRefresh}
         />
       </View>

@@ -80,7 +80,10 @@ export async function signInWithGoogle() {
   })
 
   if (result.type !== 'success' || !result.url) {
-    throw new Error('Google sign-in was cancelled')
+    // Message must match the string the callers (welcome/sign-in) check to
+    // suppress the alert on user-cancel — otherwise cancelling shows a spurious
+    // "Sign-In Error".
+    throw new Error('Google sign-in was cancelled or failed')
   }
 
   const url = new URL(result.url)

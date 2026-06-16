@@ -1,3 +1,4 @@
+import * as ImageManipulator from 'expo-image-manipulator'
 import { supabase } from './supabase'
 
 export type DocumentCategory = 'exams' | 'hospital' | 'insurance' | 'vaccines' | 'other'
@@ -57,11 +58,29 @@ export async function uploadDocument(input: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not signed in')
 
+  // Compress images before upload (the <1MB rule). Skip PDFs / non-images —
+  // the manipulator only handles bitmaps. Detect via fileType or extension.
+  const rawExt = (input.fileUri.split('.').pop() ?? 'dat').toLowerCase()
+  const isImage =
+    (input.fileType?.startsWith('image/') ?? false) ||
+    ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(rawExt)
+
+  let uploadUri = input.fileUri
+  let ext = rawExt
+  if (isImage) {
+    const manipulated = await ImageManipulator.manipulateAsync(
+      input.fileUri,
+      [{ resize: { width: 1600 } }],
+      { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
+    )
+    uploadUri = manipulated.uri
+    ext = 'jpg'
+  }
+
   // Upload file to Supabase Storage
-  const ext = input.fileUri.split('.').pop() ?? 'dat'
   const path = `${user.id}/${Date.now()}.${ext}`
 
-  const response = await fetch(input.fileUri)
+  const response = await fetch(uploadUri)
   const blob = await response.blob()
 
   const { error: uploadError } = await supabase.storage

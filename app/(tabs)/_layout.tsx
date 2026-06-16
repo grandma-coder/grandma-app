@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabase'
 import {
   Home, Calendar, BarChart3, User, Sparkles, Plus,
   MessageCircle, Lightbulb, ShoppingBag, Users, Gift,
+  FileText, Shield,
   LucideIcon,
 } from 'lucide-react-native'
 import Svg, { Path } from 'react-native-svg'
@@ -386,10 +387,18 @@ function CollageStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
   // Tab labels come from modeConfig so pregnancy shows "Documents" and
   // pre-pregnancy shows "Planner" / hides the vault tab. Falls back to the
   // i18n string if the modeConfig label is missing.
+  // The vault slot means different things per mode (pre-preg Analytics,
+  // pregnancy Documents, kids Health), so its icon must follow the mode rather
+  // than being hardcoded to BarChart3.
+  const vaultIcon: LucideIcon =
+    mode === 'pregnancy' ? FileText
+    : mode === 'kids' ? Shield
+    : BarChart3
+
   const TAB_CFG: Record<string, TabStickerCfg> = {
     index:    { icon: Home,      label: modeConfig.tabs.index.label   || t('tab_home'),      color: StickerPalette.yellow },
     agenda:   { icon: Calendar,  label: modeConfig.tabs.agenda.label  || t('tab_calendar'),  color: StickerPalette.blue },
-    vault:    { icon: BarChart3, label: modeConfig.tabs.vault.label   || t('tab_analytics'), color: StickerPalette.green },
+    vault:    { icon: vaultIcon, label: modeConfig.tabs.vault.label   || t('tab_analytics'), color: StickerPalette.green },
     settings: { icon: User,      label: modeConfig.tabs.settings.label || t('tab_profile'),  color: StickerPalette.lilac },
   }
 

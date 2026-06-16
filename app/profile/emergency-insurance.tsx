@@ -483,19 +483,11 @@ function ContactFormModal({
   const [saving, setSaving] = useState(false)
   const [showRelPicker, setShowRelPicker] = useState(false)
 
-  // Reset form when modal opens
-  useState(() => {
-    if (visible) {
-      setName(contact?.name ?? '')
-      setRelationship(contact?.relationship ?? 'spouse')
-      setPhone(contact?.phone ?? '')
-      setEmail(contact?.email ?? '')
-      setIsPrimary(contact?.isPrimary ?? false)
-      setNotes(contact?.notes ?? '')
-    }
-  })
+  // (Removed a misused `useState(() => {...})` here — useState's initializer
+  // runs ONCE on mount, never on `visible` changes, so it never reset the form.
+  // The Modal's `onShow={resetForm}` below already handles reset correctly.)
 
-  // Also reset on visibility change
+  // Reset on visibility change
   const resetForm = useCallback(() => {
     setName(contact?.name ?? '')
     setRelationship(contact?.relationship ?? 'spouse')

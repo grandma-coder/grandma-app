@@ -51,8 +51,16 @@ export default function ChannelBrowser() {
             <Text style={styles.emptyIcon}>💬</Text>
             <Text style={styles.emptyTitle}>No channels yet</Text>
             <Text style={styles.emptySubtitle}>
-              Community channels for birth stories, breastfeeding, recipes, and local meetups are coming soon.
+              Be the first — start a channel for birth stories, breastfeeding, recipes, or a local meetup.
             </Text>
+            <Pressable
+              onPress={() => router.push('/channel/create')}
+              accessibilityRole="button"
+              style={styles.emptyCta}
+            >
+              <Ionicons name="add" size={18} color={colors.textOnAccent} />
+              <Text style={styles.emptyCtaText}>Create a Channel</Text>
+            </Pressable>
           </View>
         ) : (
           <FlatList
@@ -124,5 +132,20 @@ const styles = StyleSheet.create({
     ...typography.bodySecondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  emptyCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 22,
+    borderRadius: 999,
+    backgroundColor: colors.accent,
+  },
+  emptyCtaText: {
+    ...typography.body,
+    color: colors.textOnAccent,
+    fontWeight: '600',
   },
 })
