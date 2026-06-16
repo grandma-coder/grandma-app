@@ -41,8 +41,18 @@ serve(async (req) => {
     if (invite.status === 'accepted') throw new Error('This invite has already been accepted')
     if (invite.status === 'revoked') throw new Error('This invite has been revoked')
 
-    // Verify email matches
-    if (invite.email.toLowerCase() !== user.email?.toLowerCase()) {
+    // Verify email matches — but only for email invites. Link / SMS invites
+    // have no known recipient email, so they're created with a placeholder
+    // (e.g. "<token>@invite.local" / "@pending"). For those, the invite TOKEN
+    // is the authorization, so we skip the email check entirely. An exact-match
+    // check here blocked every link/SMS invite (the placeholder never equals
+    // the accepting user's real email).
+    const inviteEmail = (invite.email ?? '').toLowerCase()
+    const isPlaceholderEmail =
+      inviteEmail === '' ||
+      inviteEmail.endsWith('@invite.local') ||
+      inviteEmail.endsWith('@pending')
+    if (!isPlaceholderEmail && inviteEmail !== user.email?.toLowerCase()) {
       throw new Error('This invite was sent to a different email address')
     }
 
