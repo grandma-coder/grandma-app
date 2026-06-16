@@ -8,9 +8,22 @@ const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// CORS: mobile clients send no Origin, so '*' is the safe default. Set
+// ALLOWED_ORIGINS (comma-separated) to lock a future web client down.
+const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
+  .split(',').map((s) => s.trim()).filter(Boolean)
+
+function corsHeadersFor(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin') ?? ''
+  const allowOrigin =
+    ALLOWED_ORIGINS.length === 0 ? '*'
+    : ALLOWED_ORIGINS.includes(origin) ? origin
+    : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
 }
 
 // Fast model for text, vision-capable model for images
@@ -105,6 +118,7 @@ Rules:
 - Calories are integers. Round to the nearest kcal.`
 
 serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   // Authenticate the caller — open Anthropic relay otherwise. Verify the JWT.

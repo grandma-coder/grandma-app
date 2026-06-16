@@ -7,12 +7,36 @@ const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// CORS: mobile clients send no Origin, so '*' is the safe default. If
+// ALLOWED_ORIGINS (comma-separated) is set and the request Origin matches,
+// echo that specific origin instead — lets a future web client be locked down
+// without a code change and without breaking the mobile app.
+const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
+  .split(',').map((s) => s.trim()).filter(Boolean)
+
+function corsHeadersFor(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin') ?? ''
+  const allowOrigin =
+    ALLOWED_ORIGINS.length === 0 ? '*'
+    : ALLOWED_ORIGINS.includes(origin) ? origin
+    : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
+}
+
+/** Strip newlines + cap length on any user-controlled string interpolated into
+ *  the system prompt, so a crafted value (e.g. a child's name) can't inject
+ *  prompt instructions or blow up the context. */
+function sanitizeForPrompt(v: unknown, max = 200): string {
+  if (v == null) return ''
+  return String(v).replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, max)
 }
 
 serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -112,7 +136,10 @@ function buildSystemPrompt(child: any, pillarId: string, mode: string, weekNumbe
     let childInfo = 'No child profile provided.'
     if (child) {
       const parts: string[] = []
-      if (child.name) parts.push(`Name: ${child.name}`)
+      // Sanitize free-text fields — they're client-controlled and interpolated
+      // straight into the system prompt (prompt-injection surface).
+      const safeName = sanitizeForPrompt(child.name, 80)
+      if (safeName) parts.push(`Name: ${safeName}`)
       if (typeof child.ageMonths === 'number' && Number.isFinite(child.ageMonths)) {
         parts.push(`${child.ageMonths} months old`)
       }
@@ -121,9 +148,9 @@ function buildSystemPrompt(child: any, pillarId: string, mode: string, weekNumbe
       }
       const baseLine = parts.length > 0 ? `Child: ${parts.join(', ')}.` : 'Child profile present but fields incomplete.'
       const allergies = Array.isArray(child.allergies) && child.allergies.length
-        ? ` Allergies: ${child.allergies.join(', ')}.` : ''
+        ? ` Allergies: ${sanitizeForPrompt(child.allergies.join(', '), 200)}.` : ''
       const meds = Array.isArray(child.medications) && child.medications.length
-        ? ` Medications: ${child.medications.join(', ')}.` : ''
+        ? ` Medications: ${sanitizeForPrompt(child.medications.join(', '), 200)}.` : ''
       childInfo = baseLine + allergies + meds
     }
     modeContext = `The user has a baby/child. ${childInfo}`

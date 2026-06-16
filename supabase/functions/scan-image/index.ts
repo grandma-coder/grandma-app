@@ -12,9 +12,29 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const FREE_SCAN_LIMIT = 3
 const VALID_SCAN_TYPES = ['medicine', 'food', 'nutrition', 'insurance_card', 'exam', 'cycle_test', 'general']
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// CORS: mobile clients send no Origin, so '*' is the safe default. Set
+// ALLOWED_ORIGINS (comma-separated) to lock a future web client down.
+const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
+  .split(',').map((s) => s.trim()).filter(Boolean)
+
+function corsHeadersFor(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin') ?? ''
+  const allowOrigin =
+    ALLOWED_ORIGINS.length === 0 ? '*'
+    : ALLOWED_ORIGINS.includes(origin) ? origin
+    : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
+}
+
+/** Strip newlines + cap length on client-controlled strings interpolated into
+ *  the scan system prompt (prompt-injection surface). */
+function sanitizeForPrompt(v: unknown, max = 200): string {
+  if (v == null) return ''
+  return String(v).replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, max)
 }
 
 interface RequestBody {
@@ -38,6 +58,7 @@ interface RequestBody {
 }
 
 serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -257,9 +278,9 @@ Rules:
     const weekInfo = pregnancy.weekNumber
       ? `User is pregnant at week ${pregnancy.weekNumber} (${trimester} trimester).`
       : 'User is pregnant; week number not provided.'
-    const dueLine = pregnancy.dueDate ? ` Due date: ${pregnancy.dueDate}.` : ''
-    const allergyLine = pregnancy.allergies?.length ? ` Allergies: ${pregnancy.allergies.join(', ')}.` : ''
-    const conditionLine = pregnancy.conditions?.length ? ` Conditions: ${pregnancy.conditions.join(', ')}.` : ''
+    const dueLine = pregnancy.dueDate ? ` Due date: ${sanitizeForPrompt(pregnancy.dueDate, 40)}.` : ''
+    const allergyLine = pregnancy.allergies?.length ? ` Allergies: ${sanitizeForPrompt(pregnancy.allergies.join(', '))}.` : ''
+    const conditionLine = pregnancy.conditions?.length ? ` Conditions: ${sanitizeForPrompt(pregnancy.conditions.join(', '))}.` : ''
 
     return `You are Guru Grandma — a warm, wise, knowledgeable pregnancy companion powered by grandma.app who can read product labels, medicine boxes, supplement bottles, and food packaging.
 
@@ -278,9 +299,9 @@ Rules:
   }
 
   const childInfo = child
-    ? `Child: ${child.name}, ${child.ageMonths} months old, ${child.weightKg}kg.`
-      + (child.allergies?.length ? ` Allergies: ${child.allergies.join(', ')}.` : '')
-      + (child.medications?.length ? ` Medications: ${child.medications.join(', ')}.` : '')
+    ? `Child: ${sanitizeForPrompt(child.name, 80)}, ${child.ageMonths} months old, ${child.weightKg}kg.`
+      + (child.allergies?.length ? ` Allergies: ${sanitizeForPrompt(child.allergies.join(', '))}.` : '')
+      + (child.medications?.length ? ` Medications: ${sanitizeForPrompt(child.medications.join(', '))}.` : '')
     : 'No child profile provided.'
 
   return `You are Guru Grandma — a warm, wise, knowledgeable parenting guide powered by grandma.app who can read product labels, medicine boxes, and food packaging.
