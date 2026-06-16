@@ -32,7 +32,7 @@ serve(async (req) => {
     // Find the invite
     const { data: invite, error: findError } = await supabase
       .from('child_caregivers')
-      .select('id, child_id, email, status, children(name)')
+      .select('id, child_id, email, status, invite_token_expires_at, children(name)')
       .eq('invite_token', token)
       .single()
 
@@ -40,6 +40,12 @@ serve(async (req) => {
 
     if (invite.status === 'accepted') throw new Error('This invite has already been accepted')
     if (invite.status === 'revoked') throw new Error('This invite has been revoked')
+
+    // Reject expired invites (token lifecycle is managed by a DB trigger that
+    // sets invite_token_expires_at = now() + 7 days when an invite is issued).
+    if (invite.invite_token_expires_at && new Date(invite.invite_token_expires_at) < new Date()) {
+      throw new Error('This invite has expired. Please ask for a new one.')
+    }
 
     // Verify email matches — but only for email invites. Link / SMS invites
     // have no known recipient email, so they're created with a placeholder
