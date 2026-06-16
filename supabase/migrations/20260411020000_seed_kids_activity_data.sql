@@ -18,6 +18,15 @@ DECLARE
   act_name text;
   memo_text text;
 BEGIN
+  -- Dev-only seed (already applied on existing envs; editing doesn't re-run it).
+  -- Self-limiting anyway — only fires if children named Rio/Bahia exist — but
+  -- gate it explicitly so a fresh deploy never seeds fake data. Opt in with
+  -- `app.seed_dev_data = 'on'`.
+  IF COALESCE(current_setting('app.seed_dev_data', true), 'off') <> 'on' THEN
+    RAISE NOTICE 'seed_kids_activity_data skipped (app.seed_dev_data not on)';
+    RETURN;
+  END IF;
+
   SELECT id, parent_id INTO v_rio_id, v_user_id
     FROM children WHERE lower(name) = 'rio' LIMIT 1;
   SELECT id INTO v_bahia_id

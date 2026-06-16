@@ -6,6 +6,15 @@ DO $$
 DECLARE
   v_user_id UUID;
 BEGIN
+  -- Dev-only seed. This migration already ran on existing environments (editing
+  -- it here does NOT re-run it — db push only applies unapplied migrations), but
+  -- gating it stops a FRESH deploy from seeding fake data onto the first real
+  -- signup ("oldest auth user"). Set `app.seed_dev_data = 'on'` to opt in.
+  IF COALESCE(current_setting('app.seed_dev_data', true), 'off') <> 'on' THEN
+    RAISE NOTICE 'seed_pregnancy_logs skipped (app.seed_dev_data not on)';
+    RETURN;
+  END IF;
+
   SELECT id INTO v_user_id FROM auth.users ORDER BY created_at ASC LIMIT 1;
   IF v_user_id IS NULL THEN
     RETURN;
