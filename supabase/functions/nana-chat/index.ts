@@ -1,8 +1,11 @@
 // deno-lint-ignore-file
 // @ts-nocheck — Deno Edge Function: TS errors in VS Code are expected (runs in Deno, not Node)
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,6 +26,25 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured on this Supabase project.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
+  // Authenticate the caller — this is an open Anthropic relay otherwise
+  // (anyone with the URL could burn the API budget). Verify the JWT signature.
+  const authHeader = req.headers.get('Authorization') ?? ''
+  const token = authHeader.replace(/^Bearer\s+/i, '')
+  if (!token) {
+    return new Response(
+      JSON.stringify({ error: 'Missing authorization token' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  const { data: authData, error: authError } = await supabase.auth.getUser(token)
+  if (authError || !authData?.user?.id) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid authorization token' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 

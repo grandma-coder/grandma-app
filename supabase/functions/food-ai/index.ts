@@ -2,8 +2,11 @@
 // food-ai: identify foods + estimate calories from text OR a plate photo.
 // Returns structured JSON so the caller (FeedingForm) can auto-populate tags.
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -103,6 +106,24 @@ Rules:
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+
+  // Authenticate the caller — open Anthropic relay otherwise. Verify the JWT.
+  const authHeader = req.headers.get('Authorization') ?? ''
+  const token = authHeader.replace(/^Bearer\s+/i, '')
+  if (!token) {
+    return new Response(
+      JSON.stringify({ error: 'Missing authorization token', foods: [], totalCals: 0 }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  const { data: authData, error: authError } = await supabase.auth.getUser(token)
+  if (authError || !authData?.user?.id) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid authorization token', foods: [], totalCals: 0 }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
 
   try {
     const body: RequestBody = await req.json()

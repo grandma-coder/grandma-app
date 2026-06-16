@@ -16,7 +16,7 @@ import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
 import { weekForDate } from '../lib/pregnancyWeeks'
-import { scanImage } from '../lib/scan'
+import { scanImage, ScanLimitReachedError } from '../lib/scan'
 import { supabase } from '../lib/supabase'
 import { checkPremium } from '../lib/revenue'
 import { CosmicBackground } from '../components/ui/CosmicBackground'
@@ -158,6 +158,12 @@ export default function Scan() {
         }
       }
     } catch (e: any) {
+      // Server enforces the free-tier quota and may 402 even if the local
+      // count looked under-limit (e.g. scans recorded on another device).
+      if (e instanceof ScanLimitReachedError) {
+        router.push('/paywall')
+        return
+      }
       Alert.alert('Scan failed', e.message)
     } finally {
       setLoading(false)

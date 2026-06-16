@@ -1,6 +1,15 @@
 import { supabase } from './supabase'
 import type { Child } from '../types'
 
+/** Thrown when the server rejects a scan because the free-tier limit is reached.
+ *  The scan screen catches this and routes to the paywall. */
+export class ScanLimitReachedError extends Error {
+  constructor() {
+    super('Free scan limit reached')
+    this.name = 'ScanLimitReachedError'
+  }
+}
+
 interface PregnancyScanContext {
   weekNumber: number | null
   dueDate: string | null
@@ -37,7 +46,14 @@ export async function scanImage({ imageBase64, mediaType, scanType, child, pregn
     body: { imageBase64, mediaType, scanType, childContext, pregnancyContext },
   })
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    // The edge function enforces the free-tier quota and returns 402 with
+    // { code: 'scan_limit_reached' }. Surface it as a typed error so the
+    // caller can route to the paywall instead of showing a generic failure.
+    const status = (error as { context?: Response }).context?.status
+    if (status === 402) throw new ScanLimitReachedError()
+    throw new Error(error.message)
+  }
   if (!data?.reply) throw new Error('No response from Grandma')
 
   return data.reply as string

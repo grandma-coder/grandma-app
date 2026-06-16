@@ -1,7 +1,16 @@
 // @ts-nocheck — Deno Edge Function: TS errors in VS Code are expected (runs in Deno, not Node)
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+// Free tier may run a limited number of scans (lifetime, per account) — must
+// match FREE_SCAN_LIMIT in app/scan.tsx. Enforced server-side here so the
+// client-side gate can't simply be bypassed.
+const FREE_SCAN_LIMIT = 3
+const VALID_SCAN_TYPES = ['medicine', 'food', 'nutrition', 'insurance_card', 'exam', 'cycle_test', 'general']
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,11 +53,64 @@ serve(async (req) => {
     )
   }
 
+  // Authenticate the caller — open Anthropic Vision relay otherwise. Verify JWT.
+  const authHeader = req.headers.get('Authorization') ?? ''
+  const token = authHeader.replace(/^Bearer\s+/i, '')
+  if (!token) {
+    return new Response(
+      JSON.stringify({ error: 'Missing authorization token' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  const { data: authData, error: authError } = await supabase.auth.getUser(token)
+  if (authError || !authData?.user?.id) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid authorization token' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+  const userId = authData.user.id
+
   try {
     const { imageBase64, mediaType, scanType, childContext, pregnancyContext }: RequestBody = await req.json()
 
     if (!imageBase64) {
       throw new Error('No image provided')
+    }
+
+    // Validate scanType against the known set (also guards prompt injection via
+    // an unexpected scanType branch).
+    if (!VALID_SCAN_TYPES.includes(scanType)) {
+      return new Response(
+        JSON.stringify({ error: `Unknown scanType: ${scanType}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Server-side free-tier quota enforcement. The client also gates + records
+    // scans (app/scan.tsx); this is the authoritative check so the client gate
+    // can't be bypassed. Count is lifetime per account to match the client.
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_tier, subscription_status')
+      .eq('id', userId)
+      .single()
+    const isPremium =
+      profile?.subscription_tier === 'premium_solo' ||
+      profile?.subscription_tier === 'premium_family' ||
+      profile?.subscription_status === 'premium'
+    if (!isPremium) {
+      const { count } = await supabase
+        .from('scan_history')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+      if ((count ?? 0) >= FREE_SCAN_LIMIT) {
+        return new Response(
+          JSON.stringify({ error: 'Free scan limit reached', code: 'scan_limit_reached' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
     }
 
     const systemPrompt = buildScanPrompt(scanType, childContext, pregnancyContext)
