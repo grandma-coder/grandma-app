@@ -1435,6 +1435,10 @@ export function usePregnancyBirthReadiness(userId: string) {
           .limit(1)
           .maybeSingle(),
       ])
+      // Surface query failures as a real React Query error instead of silently
+      // computing a false 0% readiness from empty data.
+      if (logsRes.error) throw logsRes.error
+      if (docsRes.error) throw docsRes.error
       const logs = logsRes.data ?? []
       const docs = docsRes.data ?? []
       const birthPlanCount = logs.filter((l) => l.log_type === 'birth_prep').length

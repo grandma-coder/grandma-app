@@ -444,11 +444,17 @@ export default function CareCircleScreen() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('child_caregivers')
       .select('*')
       .eq('invited_by', session.user.id)
       .neq('status', 'revoked')
+
+    if (error) {
+      console.warn('[care-circle] failed to load members:', error.message)
+      Alert.alert('Couldn’t load care circle', 'Please check your connection and try again.')
+      return
+    }
 
     // Group by email — one member may have access to multiple children
     const rows = (data ?? []) as any[]
@@ -558,9 +564,14 @@ export default function CareCircleScreen() {
       {
         text: action,
         onPress: async () => {
-          for (const id of member.rowIds) {
-            const newPerms = { ...member.permissions, _paused: !isPaused }
-            await supabase.from('child_caregivers').update({ permissions: newPerms }).eq('id', id)
+          try {
+            for (const id of member.rowIds) {
+              const newPerms = { ...member.permissions, _paused: !isPaused }
+              const { error } = await supabase.from('child_caregivers').update({ permissions: newPerms }).eq('id', id)
+              if (error) throw error
+            }
+          } catch (e: any) {
+            Alert.alert(`Couldn’t ${action.toLowerCase()} access`, e?.message ?? 'Please try again.')
           }
           loadMembers()
         },

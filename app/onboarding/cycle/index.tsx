@@ -150,7 +150,7 @@ export default function CycleOnboarding() {
 
       // Initial cycle log if we have a last period date
       if (store.lastPeriodDate) {
-        await supabase.from('cycle_logs').insert({
+        const { error: cycleErr } = await supabase.from('cycle_logs').insert({
           user_id: userId,
           date: store.lastPeriodDate,
           type: 'period_start',
@@ -166,6 +166,9 @@ export default function CycleOnboarding() {
             supplements: store.supplements,
           }),
         })
+        // Don't block onboarding on this, but at least record the failure so
+        // a lost first-period entry is diagnosable rather than silent.
+        if (cycleErr) console.warn('[onboarding] cycle_logs insert failed:', cycleErr.message)
       }
     } catch (e) {
       // Non-blocking — local mode set below so user can still proceed.

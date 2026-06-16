@@ -148,9 +148,12 @@ export const useGoalsStore = create<GoalsState>()(
           { child_id: childId, user_id: userId, metric: 'activity',  daily_target: goals.activity,  unit: 'count',   updated_at: now },
         ]
 
-        await supabase
+        const { error } = await supabase
           .from('child_goals')
           .upsert(rows, { onConflict: 'child_id,metric' })
+        // Throw so the caller's try/catch can surface a failed save instead of
+        // the goals silently not persisting to the server.
+        if (error) throw error
       },
     }),
     {

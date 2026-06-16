@@ -59,14 +59,17 @@ export default function Library() {
     if (!child) return
     supabase
       .from('chat_messages')
-      .select('*')
+      .select('id, role, content')
       .eq('child_id', child.id)
       .order('created_at', { ascending: true })
       .limit(50)
-      .then(({ data }) => {
-        if (data) {
-          setMessages(data.map((m: any) => ({ id: m.id, role: m.role, content: m.content })))
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('[library] failed to load chat history:', error.message)
+          return
         }
+        const rows = (data ?? []) as { id: string; role: ChatMessage['role']; content: string }[]
+        setMessages(rows.map((m) => ({ id: m.id, role: m.role, content: m.content })))
       })
   }, [child?.id])
 

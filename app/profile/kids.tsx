@@ -143,7 +143,11 @@ export default function KidsProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await supabase.from('children').delete().eq('id', child.id)
+              // Supabase returns errors in { error }, not as a throw — destructure
+              // or a failed delete (e.g. RLS) silently "succeeds" and the child
+              // reappears on next refetch.
+              const { error } = await supabase.from('children').delete().eq('id', child.id)
+              if (error) throw error
               setChildren(children.filter((c) => c.id !== child.id))
             } catch (e: any) {
               Alert.alert('Error', e.message)

@@ -109,10 +109,16 @@ export async function deleteDocument(documentId: string): Promise<void> {
     .single()
 
   if (doc?.file_path) {
-    await supabase.storage.from('vault-documents').remove([doc.file_path])
+    // Surface a failed storage removal — silently ignoring it orphans the file
+    // in the bucket while the row is gone.
+    const { error: storageErr } = await supabase.storage.from('vault-documents').remove([doc.file_path])
+    if (storageErr) throw storageErr
   }
 
-  await supabase.from('vault_documents').delete().eq('id', documentId)
+  // Throw on DB delete failure — otherwise the record reappears on refetch and
+  // the user thinks the delete silently failed.
+  const { error } = await supabase.from('vault_documents').delete().eq('id', documentId)
+  if (error) throw error
 }
 
 export async function getEmergencyCard(childId: string) {
