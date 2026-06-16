@@ -220,11 +220,7 @@ function QuickLogStrip({ todayLogs, weekNumber, onPressRoutine }: QuickLogStripP
           const isWater = routine.type === 'water'
           const waterCount = isWater && logged?.value ? parseInt(logged.value, 10) : 0
 
-          const chipBg = isDone
-            ? stickers.greenSoft
-            : isDark
-            ? colors.surface
-            : '#FFFEF8'
+          const chipBg = isDone ? stickers.greenSoft : colors.surface
           const chipBorder = isDone
             ? (isDark ? stickers.green : '#9FB86A')
             : colors.border

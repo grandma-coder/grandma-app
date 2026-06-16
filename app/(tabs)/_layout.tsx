@@ -117,7 +117,7 @@ function CenterTabButton() {
   const { t } = useTranslation()
   const { colors, isDark } = useTheme()
   const mode = useModeStore((s) => s.mode)
-  const accentColor = getModeColor(mode)
+  const accentColor = getModeColor(mode, isDark)
   const { data: profile } = useProfile()
   const parentName = useJourneyStore((s) => s.parentName)
   // Prefer the saved profile name; fall back to the onboarding journey name,
