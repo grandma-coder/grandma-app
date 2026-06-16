@@ -139,6 +139,10 @@ export default function RootLayout() {
   const setMode = useModeStore((s) => s.setModeUnsafe)
   const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
   const behaviorHydrated = useBehaviorStore((s) => s.hydrated)
+  // Gate rendering on mode hydration too — otherwise the tab layout renders
+  // once with the default mode ('kids') before AsyncStorage restores the real
+  // one, flashing the wrong tabs/pillars for a frame.
+  const modeHydrated = useModeStore((s) => s.hydrated)
 
   // ─── Auth listener ────────────────────────────────────────────────────────
   //
@@ -515,7 +519,7 @@ export default function RootLayout() {
   }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments, loadFailed, recoveryMode])
 
   // ─── Loading state ────────────────────────────────────────────────────────
-  if (loading || !behaviorHydrated || !fontsLoaded) {
+  if (loading || !behaviorHydrated || !modeHydrated || !fontsLoaded) {
     return <LoadingScreen />
   }
 

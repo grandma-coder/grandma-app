@@ -1034,7 +1034,10 @@ export function InsightsScreen() {
   const filteredArticles = useMemo(() => {
     return ARTICLES.filter(a => {
       const categoryMatch = articleCategory === 'all' || a.category === articleCategory
-      const ageMatch = ageMonths >= a.ageMin && ageMonths <= a.ageMax
+      // ageMonths is -1 for pre-pregnancy (no child) — applying the age band
+      // would hide every article. Bypass the age filter in that case so TTC
+      // users still see content; otherwise filter by the child's age band.
+      const ageMatch = ageMonths < 0 || (ageMonths >= a.ageMin && ageMonths <= a.ageMax)
       return categoryMatch && ageMatch
     })
   }, [articleCategory, ageMonths])
@@ -1085,9 +1088,11 @@ export function InsightsScreen() {
             const active = tab === t
             const label = t === 'today' ? 'Today' : t === 'reads' ? 'Reads' : 'History'
             const Icon = t === 'today' ? Sun : t === 'reads' ? BookOpen : Clock
-            const modeKey = mode === 'pre-pregnancy' ? 'pre' : 'kids'
-            const modeAccent = getModeColor(modeKey, isDark)
-            const modeAccentSoft = getModeColorSoft(modeKey, isDark)
+            // getModeColor accepts the full mode string for all three journeys
+            // — pass it straight through. The old 'pre' | 'kids' mapping gave
+            // pregnancy users the kids accent.
+            const modeAccent = getModeColor(mode, isDark)
+            const modeAccentSoft = getModeColorSoft(mode, isDark)
             return (
               <Pressable
                 key={t}

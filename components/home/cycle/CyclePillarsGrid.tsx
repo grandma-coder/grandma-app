@@ -9,6 +9,7 @@ import { useTheme } from '../../../constants/theme'
 import { Display, Body } from '../../ui/Typography'
 import { Leaf, Flower, Moon, Heart } from '../../ui/Stickers'
 import { ChevronRight } from 'lucide-react-native'
+import { prePregPillars } from '../../../lib/prePregPillars'
 
 interface PillarTile {
   id: string              // routes to /pillar/[id]
@@ -18,6 +19,9 @@ interface PillarTile {
   tint: 'green' | 'lilac' | 'blue' | 'peach'
 }
 
+// Curated 4-tile dashboard (stat-style labels, intentionally NOT the raw pillar
+// titles). Each id must be a real pre-pregnancy pillar so the /pillar/[id] route
+// resolves — asserted below against prePregPillars so a typo/drift can't 404.
 const TILES: PillarTile[] = [
   { id: 'nutrition-prep',      title: 'Nutrition',  subtitle: '6 articles',      sticker: 'leaf',   tint: 'green'  },
   { id: 'fertility',           title: 'Hormones',   subtitle: 'Fresh',           sticker: 'flower', tint: 'lilac'  },
@@ -25,9 +29,18 @@ const TILES: PillarTile[] = [
   { id: 'emotional-readiness', title: 'Mental',     subtitle: 'Check-in',        sticker: 'heart',  tint: 'peach'  },
 ]
 
+if (__DEV__) {
+  const validIds = new Set<string>(prePregPillars.map((p) => p.id))
+  for (const t of TILES) {
+    if (!validIds.has(t.id)) {
+      console.warn(`[CyclePillarsGrid] tile id "${t.id}" is not a prePregPillars id — /pillar/${t.id} will 404`)
+    }
+  }
+}
+
 export function CyclePillarsGrid() {
   const { colors, stickers, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
+  const ink = colors.text
 
   function tintBg(tint: PillarTile['tint']): string {
     switch (tint) {

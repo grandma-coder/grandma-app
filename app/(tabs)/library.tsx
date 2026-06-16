@@ -192,7 +192,11 @@ export default function Library() {
               Coming Soon
             </Text>
             <Text style={[styles.channelSubtitle, { color: colors.textMuted, fontFamily: font.body }]}>
-              Join channels for birth stories, breastfeeding support, recipes, and local meetups.
+              {mode === 'pre-pregnancy'
+                ? 'Join channels for TTC journeys, cycle tips, fertility support, and local meetups.'
+                : mode === 'pregnancy'
+                  ? 'Join channels for birth stories, bump updates, prenatal tips, and local meetups.'
+                  : 'Join channels for parenting wins, feeding support, recipes, and local meetups.'}
             </Text>
           </View>
         </PaperCard>
@@ -224,14 +228,18 @@ export default function Library() {
           </View>
         </View>
 
-        {/* Chat persistence requires an active child (kids mode). When the
-            user is on "All Kids" view we still allow chatting, but warn
-            that the history won't save — otherwise the bug felt random
-            ("why don't my messages stick?"). */}
-        {mode === 'kids' && !child ? (
+        {/* Chat persistence is keyed by child_id, so it only saves when a child
+            is active. Kids users can pick a child; pre-pregnancy / pregnancy
+            users have no child, so their history never persists — warn in BOTH
+            cases instead of silently dropping messages (the "why don't my
+            messages stick?" bug). Full non-kids persistence is tracked as a
+            follow-up (needs a user_id/mode key on chat_messages). */}
+        {!child ? (
           <View style={{ marginHorizontal: 16, marginTop: 8, padding: 12, borderRadius: 12, backgroundColor: colors.surfaceRaised }}>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.body }}>
-              Pick a child to save chat history. This conversation will end when you leave the screen.
+              {mode === 'kids'
+                ? 'Pick a child to save chat history. This conversation will end when you leave the screen.'
+                : 'This conversation won’t be saved yet — it will end when you leave the screen.'}
             </Text>
           </View>
         ) : null}
