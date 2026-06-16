@@ -54,6 +54,7 @@ import { Smiley, Sleepy, Sad } from '../ui/Stickers'
 import { ChildPill, childColor } from '../ui/ChildPills'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
+import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodCalories'
 import type { CalorieMatch } from '../../lib/foodCalories'
 import { estimateFromText, estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
@@ -281,6 +282,8 @@ async function saveChildLog(
     logged_by: session.user.id,
   })
   if (error) throw error
+  // Refresh home + calendar + analytics that read child_logs.
+  await invalidateKidsLogQueries()
 }
 
 async function updateChildLog(
@@ -300,6 +303,7 @@ async function updateChildLog(
     })
     .eq('id', id)
   if (error) throw error
+  await invalidateKidsLogQueries()
 }
 
 // ─── Save as Routine helper ────────────────────────────────────────────────

@@ -131,6 +131,7 @@ export default function Scan() {
         scanType,
         child,
         pregnancy,
+        mode,
       })
 
       setResult(reply)

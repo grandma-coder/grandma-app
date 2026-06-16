@@ -27,6 +27,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import { useTheme, getModeColor } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
+import { queryClient } from '../../lib/queryClient'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
@@ -303,6 +304,9 @@ export default function PersonalProfile() {
       }, { onConflict: 'id' })
 
       if (error) throw error
+      // Refresh the cached profile so name/photo update immediately instead of
+      // showing stale values until the 5-minute staleTime elapses.
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
       toast.show({
         title: 'Saved',
         message: 'Your profile has been updated.',

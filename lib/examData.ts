@@ -123,11 +123,15 @@ export function useExam(examId: string | undefined) {
     queryKey: ['exam', examId],
     queryFn: async (): Promise<Exam | null> => {
       if (!examId) return null
+      // Defense-in-depth: filter by user_id too rather than relying solely on RLS.
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return null
       const { data, error } = await supabase
         .from('exams')
         .select('*')
         .eq('id', examId)
-        .single()
+        .eq('user_id', user.id)
+        .maybeSingle()
       if (error) throw error
       return data ? toExam(data as ExamRow) : null
     },
@@ -194,10 +198,14 @@ export async function updateExam(examId: string, input: UpdateExamInput): Promis
   if (input.extracted !== undefined) patch.extracted = input.extracted
   if (input.provider !== undefined) patch.provider = input.provider
 
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+
   const { data, error } = await supabase
     .from('exams')
     .update(patch)
     .eq('id', examId)
+    .eq('user_id', user.id) // defense-in-depth alongside RLS
     .select()
     .single()
 
@@ -206,19 +214,24 @@ export async function updateExam(examId: string, input: UpdateExamInput): Promis
 }
 
 export async function deleteExam(examId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+
   // Best-effort: remove storage objects for this exam before deleting the row.
   const { data: row } = await supabase
     .from('exams')
     .select('photos')
     .eq('id', examId)
-    .single()
+    .eq('user_id', user.id)
+    .maybeSingle()
 
   const paths: string[] = (row?.photos as string[] | null) ?? []
   if (paths.length > 0) {
     await supabase.storage.from(EXAM_BUCKET).remove(paths)
   }
 
-  await supabase.from('exams').delete().eq('id', examId)
+  const { error } = await supabase.from('exams').delete().eq('id', examId).eq('user_id', user.id)
+  if (error) throw error
 }
 
 // ─── Photo upload + AI extract ─────────────────────────────────────────────

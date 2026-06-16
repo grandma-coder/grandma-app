@@ -95,12 +95,15 @@ export async function toggleSave(listingId: string): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not signed in')
 
-  const { data: existing } = await supabase
+  // maybeSingle, not single — the common first-save case has zero rows and
+  // .single() throws PGRST116 on no rows, breaking the very first save.
+  const { data: existing, error } = await supabase
     .from('exchange_saves')
     .select('id')
     .eq('listing_id', listingId)
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
+  if (error) throw error
 
   if (existing) {
     await supabase.from('exchange_saves').delete().eq('id', existing.id)
@@ -151,5 +154,7 @@ function mapListing(d: any): Listing {
     photos: d.photos ?? [],
     locationText: d.location_text,
     createdAt: d.created_at,
+    saveCount: d.save_count ?? 0,
+    commentCount: d.comment_count ?? 0,
   }
 }

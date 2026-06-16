@@ -23,6 +23,9 @@ interface ScanParams {
   scanType: string
   child?: Child | null
   pregnancy?: PregnancyScanContext | null
+  /** Active journey mode — lets the edge fn pick the right persona when both
+   *  child and pregnancy context are absent/ambiguous. */
+  mode?: 'pre-pregnancy' | 'pregnancy' | 'kids'
 }
 
 function getAgeInMonths(birthDate: string): number {
@@ -31,7 +34,7 @@ function getAgeInMonths(birthDate: string): number {
   return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
 }
 
-export async function scanImage({ imageBase64, mediaType, scanType, child, pregnancy }: ScanParams): Promise<string> {
+export async function scanImage({ imageBase64, mediaType, scanType, child, pregnancy, mode }: ScanParams): Promise<string> {
   const childContext = child ? {
     name: child.name,
     ageMonths: getAgeInMonths(child.birthDate),
@@ -43,7 +46,7 @@ export async function scanImage({ imageBase64, mediaType, scanType, child, pregn
   const pregnancyContext = pregnancy ?? undefined
 
   const { data, error } = await supabase.functions.invoke('scan-image', {
-    body: { imageBase64, mediaType, scanType, childContext, pregnancyContext },
+    body: { imageBase64, mediaType, scanType, childContext, pregnancyContext, mode },
   })
 
   if (error) {

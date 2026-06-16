@@ -199,7 +199,8 @@ export default function RootLayout() {
     let callSeq = 0
     async function loadUserData(uid: string) {
       const callId = ++callSeq
-      console.log(`[auth] loadUserData start #${callId} uid:`, uid)
+      // Truncate the uid — don't emit full auth UUIDs in production logs.
+      console.log(`[auth] loadUserData start #${callId} uid:`, uid.slice(0, 8))
 
       // The three independent queries (profile, child_caregivers, behaviors)
       // fire in parallel. If one hangs, it doesn't block the others — each
@@ -263,7 +264,10 @@ export default function RootLayout() {
           console.warn('[auth] profile load failed:', profileErr.message)
         }
       } else {
-        console.log('[auth] profile loaded:', profile)
+        // The full profile row carries PII (name, due_date, health notes) — only
+        // dump it in dev; in prod just confirm the load succeeded.
+        if (__DEV__) console.log('[auth] profile loaded:', profile)
+        else console.log('[auth] profile loaded')
       }
       if (profile?.user_role) setUserRole(profile.user_role)
       // Active mode is resolved from useModeStore (persisted locally) +

@@ -373,7 +373,10 @@ export const useBadgeStore = create<BadgeState>()(
         totalCheckIns: state.totalCheckIns,
       }),
       onRehydrateStorage: () => (state) => {
-        state?.setHydrated(true)
+        // On a fresh install there's no persisted state, so `state` is undefined
+        // and `state?.setHydrated(true)` no-ops — the gate would never flip.
+        // Set it on the store directly so hydration completes either way.
+        useBadgeStore.setState({ hydrated: true })
       },
     },
   ),
