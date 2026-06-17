@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { View, Text, FlatList, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Pressable } from 'react-native'
@@ -8,10 +8,12 @@ import { getChannels } from '../../lib/channels'
 import { useChannelsStore } from '../../store/useChannelsStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { ChannelCard } from '../../components/channels/ChannelCard'
-import { colors, typography, spacing } from '../../constants/theme'
+import { typography, spacing, useTheme } from '../../constants/theme'
 import type { Channel } from '../../lib/channels'
 
 export default function ChannelBrowser() {
+  const { colors } = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   const insets = useSafeAreaInsets()
   const { channels, loading, setChannels, setLoading } = useChannelsStore()
 
@@ -58,7 +60,7 @@ export default function ChannelBrowser() {
               accessibilityRole="button"
               style={styles.emptyCta}
             >
-              <Ionicons name="add" size={18} color={colors.textOnAccent} />
+              <Ionicons name="add" size={18} color={colors.textInverse} />
               <Text style={styles.emptyCtaText}>Create a Channel</Text>
             </Pressable>
           </View>
@@ -82,7 +84,7 @@ export default function ChannelBrowser() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -145,7 +147,7 @@ const styles = StyleSheet.create({
   },
   emptyCtaText: {
     ...typography.body,
-    color: colors.textOnAccent,
+    color: colors.textInverse,
     fontWeight: '600',
   },
 })

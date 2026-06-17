@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { colors, borderRadius } from '../../constants/theme'
+import { useTheme, borderRadius } from '../../constants/theme'
 
 interface DocumentUploadProps {
   onCamera?: () => void
@@ -9,29 +9,30 @@ interface DocumentUploadProps {
 }
 
 export function DocumentUpload({ onCamera, onFilePick }: DocumentUploadProps) {
+  const { colors } = useTheme()
   return (
     <PaperCard radius={28} padding={20} style={styles.container}>
-      <View style={styles.iconCircle}>
+      <View style={[styles.iconCircle, { backgroundColor: colors.primaryTint }]}>
         <Ionicons name="cloud-upload-outline" size={32} color={colors.accent} />
       </View>
-      <Text style={styles.title}>Secure New Document</Text>
-      <Text style={styles.subtitle}>
+      <Text style={[styles.title, { color: colors.text }]}>Secure New Document</Text>
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>
         Drop any medical file here or use your camera to scan physical records.
       </Text>
 
       <View style={styles.buttonRow}>
-        <Pressable onPress={onCamera} style={styles.button}>
+        <Pressable onPress={onCamera} style={[styles.button, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
           <Ionicons name="camera-outline" size={20} color={colors.text} />
-          <Text style={styles.buttonText}>Scan</Text>
+          <Text style={[styles.buttonText, { color: colors.text }]}>Scan</Text>
         </Pressable>
-        <Pressable onPress={onFilePick} style={styles.button}>
+        <Pressable onPress={onFilePick} style={[styles.button, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
           <Ionicons name="folder-outline" size={20} color={colors.text} />
-          <Text style={styles.buttonText}>Upload</Text>
+          <Text style={[styles.buttonText, { color: colors.text }]}>Upload</Text>
         </Pressable>
       </View>
 
-      <Pressable onPress={onFilePick} style={styles.addRecordBtn}>
-        <Text style={styles.addRecordText}>Add Record</Text>
+      <Pressable onPress={onFilePick} style={[styles.addRecordBtn, { backgroundColor: colors.accent }]}>
+        <Text style={[styles.addRecordText, { color: colors.textInverse }]}>Add Record</Text>
       </Pressable>
     </PaperCard>
   )
@@ -47,7 +48,6 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.accentMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
@@ -55,12 +55,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.text,
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 13,
-    color: colors.textTertiary,
     textAlign: 'center',
     lineHeight: 18,
     marginBottom: 20,
@@ -77,18 +75,14 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: colors.surfaceGlass,
     borderRadius: borderRadius.full,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   buttonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
   },
   addRecordBtn: {
-    backgroundColor: colors.accent,
     borderRadius: borderRadius.full,
     paddingHorizontal: 28,
     paddingVertical: 12,
@@ -96,6 +90,5 @@ const styles = StyleSheet.create({
   addRecordText: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.textOnAccent,
   },
 })

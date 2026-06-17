@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, brand, stickers, borderRadius, shadows } from '../../constants/theme'
+import { stickers, borderRadius, shadows, useTheme } from '../../constants/theme'
 
 export type CalendarViewMode = 'month' | 'week' | 'day'
 
@@ -51,6 +51,8 @@ export function CalendarView({
   viewMode = 'month',
   onViewModeChange,
 }: CalendarViewProps) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const [viewDate, setViewDate] = useState(() => {
     const d = selectedDate ? new Date(selectedDate) : new Date()
     return { year: d.getFullYear(), month: d.getMonth() }
@@ -133,7 +135,7 @@ export function CalendarView({
         {dots.length > 0 && (
           <View style={styles.dotsRow}>
             {dots.slice(0, 3).map((dot, i) => (
-              <View key={i} style={[styles.dot, { backgroundColor: isSelected ? colors.textOnAccent : dot.color }]} />
+              <View key={i} style={[styles.dot, { backgroundColor: isSelected ? colors.textInverse : dot.color }]} />
             ))}
           </View>
         )}
@@ -187,14 +189,14 @@ export function CalendarView({
               onPress={() => onSelectDate(ds)}
               style={[styles.weekCell, isSelected && styles.weekCellSelected]}
             >
-              <Text style={[styles.weekDayLabel, isSelected && { color: colors.textOnAccent }]}>
+              <Text style={[styles.weekDayLabel, isSelected && { color: colors.textInverse }]}>
                 {DAYS[i].substring(0, 3)}
               </Text>
               <Text
                 style={[
                   styles.weekDayNum,
                   isToday && !isSelected && { color: stickers.yellow },
-                  isSelected && { color: colors.textOnAccent },
+                  isSelected && { color: colors.textInverse },
                 ]}
               >
                 {d.getDate()}
@@ -202,7 +204,7 @@ export function CalendarView({
               {dots.length > 0 && (
                 <View style={styles.dotsRow}>
                   {dots.slice(0, 2).map((dot, j) => (
-                    <View key={j} style={[styles.dot, { backgroundColor: isSelected ? colors.textOnAccent : dot.color }]} />
+                    <View key={j} style={[styles.dot, { backgroundColor: isSelected ? colors.textInverse : dot.color }]} />
                   ))}
                 </View>
               )}
@@ -278,7 +280,7 @@ export function CalendarView({
   )
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {
     marginBottom: 8,
   },
@@ -305,12 +307,12 @@ const styles = StyleSheet.create({
   viewModeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: colors.textTertiary,
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   viewModeTextActive: {
-    color: colors.textOnAccent,
+    color: colors.textInverse,
   },
 
   // Month header
@@ -348,7 +350,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 11,
     fontWeight: '700',
-    color: colors.textTertiary,
+    color: colors.textMuted,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
@@ -382,7 +384,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   cellTextSelected: {
-    color: colors.textOnAccent,
+    color: colors.textInverse,
     fontWeight: '900',
   },
 
@@ -421,7 +423,7 @@ const styles = StyleSheet.create({
   weekDayLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: colors.textTertiary,
+    color: colors.textMuted,
     textTransform: 'uppercase',
   },
   weekDayNum: {
@@ -474,7 +476,7 @@ const styles = StyleSheet.create({
   },
   dayViewEmpty: {
     fontSize: 14,
-    color: colors.textTertiary,
+    color: colors.textMuted,
     fontStyle: 'italic',
   },
 })

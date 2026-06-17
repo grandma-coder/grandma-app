@@ -1,7 +1,8 @@
+import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { PaperCard } from '../ui/PaperCard'
 import { RoleNanny, RoleFamily } from '../stickers/RewardStickers'
-import { colors, borderRadius } from '../../constants/theme'
+import { useTheme, borderRadius } from '../../constants/theme'
 
 interface NannyUpdate {
   id: string
@@ -16,6 +17,9 @@ interface NannyUpdatesFeedProps {
 }
 
 export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
+
   if (updates.length === 0) {
     return (
       <View style={styles.container}>
@@ -65,7 +69,7 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
   )
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {
     marginBottom: 20,
   },
@@ -98,7 +102,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.accentMuted,
+    backgroundColor: colors.primaryTint,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -110,7 +114,7 @@ const styles = StyleSheet.create({
   },
   timeAgo: {
     fontSize: 12,
-    color: colors.textTertiary,
+    color: colors.textMuted,
   },
   updateContent: {
     fontSize: 14,
@@ -154,7 +158,7 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 13,
-    color: colors.textTertiary,
+    color: colors.textMuted,
     textAlign: 'center',
   },
 })

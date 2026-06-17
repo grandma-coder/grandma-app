@@ -1,7 +1,8 @@
+import { useMemo } from 'react'
 import { View, Text, StyleSheet, Pressable } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, brand, stickers, shadows } from '../../constants/theme'
+import { useTheme, brand, stickers, shadows } from '../../constants/theme'
 
 interface GrandmaBallProps {
   thinking?: boolean
@@ -9,6 +10,9 @@ interface GrandmaBallProps {
 }
 
 export function GrandmaBall({ thinking = false, onPress }: GrandmaBallProps) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
+
   return (
     <View style={styles.wrapper}>
       <Pressable
@@ -41,7 +45,7 @@ export function GrandmaBall({ thinking = false, onPress }: GrandmaBallProps) {
   )
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   wrapper: {
     alignItems: 'center',
     marginBottom: 20,
@@ -55,7 +59,7 @@ const styles = StyleSheet.create({
   innerRing: {
     flex: 1,
     borderRadius: 75,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.surfaceRaised,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -72,6 +76,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,
-    borderColor: colors.background,
+    borderColor: colors.bg,
   },
 })

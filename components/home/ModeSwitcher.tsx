@@ -1,12 +1,15 @@
+import { useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { colors, borderRadius } from '../../constants/theme'
+import { useTheme, borderRadius } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
 import type { JourneyMode } from '../../types'
 
 export function ModeSwitcher() {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const { mode, cycleIntent, setMode } = useModeStore()
   const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
 
@@ -49,7 +52,7 @@ export function ModeSwitcher() {
                 <Ionicons
                   name="lock-closed"
                   size={10}
-                  color={colors.textTertiary}
+                  color={colors.textMuted}
                   style={styles.lockIcon}
                 />
               )}
@@ -70,7 +73,7 @@ export function ModeSwitcher() {
   )
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: colors.surfaceGlass,
@@ -102,14 +105,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: '900',
-    color: colors.textTertiary,
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   labelActive: {
-    color: colors.textOnAccent,
+    color: colors.textInverse,
   },
   labelLocked: {
-    color: colors.textTertiary,
+    color: colors.textMuted,
   },
 })

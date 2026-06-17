@@ -1,7 +1,8 @@
+import { useMemo } from 'react'
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { colors, borderRadius } from '../../constants/theme'
+import { useTheme } from '../../constants/theme'
 import { MissingStickers } from '../stickers/MissingStickers'
 import type { Listing } from '../../lib/exchange'
 
@@ -19,6 +20,8 @@ const TYPE_STICKER: Record<string, React.FC<{ size?: number }>> = {
 }
 
 export function ListingCard({ listing, saved, onPress, onSave }: ListingCardProps) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   const Badge = TYPE_STICKER[listing.listingType] ?? TYPE_STICKER.sell
 
   return (
@@ -29,7 +32,7 @@ export function ListingCard({ listing, saved, onPress, onSave }: ListingCardProp
           <Image source={{ uri: listing.photos[0] }} style={styles.photo} resizeMode="cover" />
         ) : (
           <View style={styles.photoPlaceholder}>
-            <Ionicons name="image-outline" size={32} color={colors.textTertiary} />
+            <Ionicons name="image-outline" size={32} color={colors.textMuted} />
           </View>
         )}
 
@@ -60,14 +63,14 @@ export function ListingCard({ listing, saved, onPress, onSave }: ListingCardProp
               <Ionicons
                 name={saved ? 'bookmark' : 'bookmark-outline'}
                 size={18}
-                color={saved ? colors.accent : colors.textTertiary}
+                color={saved ? colors.accent : colors.textMuted}
               />
             </Pressable>
             <Pressable style={styles.actionBtn}>
-              <Ionicons name="chatbubble-outline" size={18} color={colors.textTertiary} />
+              <Ionicons name="chatbubble-outline" size={18} color={colors.textMuted} />
             </Pressable>
             <Pressable style={styles.actionBtn}>
-              <Ionicons name="share-outline" size={18} color={colors.textTertiary} />
+              <Ionicons name="share-outline" size={18} color={colors.textMuted} />
             </Pressable>
           </View>
         </View>
@@ -76,7 +79,7 @@ export function ListingCard({ listing, saved, onPress, onSave }: ListingCardProp
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {
     marginBottom: 14,
     overflow: 'hidden',
@@ -118,7 +121,7 @@ const styles = StyleSheet.create({
   },
   meta: {
     fontSize: 12,
-    color: colors.textTertiary,
+    color: colors.textMuted,
     textTransform: 'capitalize',
   },
   actions: {

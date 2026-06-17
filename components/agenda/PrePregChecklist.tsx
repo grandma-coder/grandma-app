@@ -1,7 +1,8 @@
+import { useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { colors, brand, stickers, borderRadius, typography } from '../../constants/theme'
+import { brand, stickers, borderRadius, useTheme } from '../../constants/theme'
 
 interface ChecklistItem {
   id: string
@@ -25,6 +26,8 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const completed = items.filter((i) => i.completed).length
   const total = items.length
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0
@@ -72,7 +75,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
                   <View style={styles.itemHeader}>
                     <Text style={[
                       styles.itemTitle,
-                      item.completed && { textDecorationLine: 'line-through', color: colors.textTertiary },
+                      item.completed && { textDecorationLine: 'line-through', color: colors.textMuted },
                     ]}>
                       {item.title}
                     </Text>
@@ -92,7 +95,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
 
       {items.length === 0 && (
         <View style={styles.emptyState}>
-          <Ionicons name="checkbox-outline" size={40} color={colors.textTertiary} />
+          <Ionicons name="checkbox-outline" size={40} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>Your checklist is empty</Text>
           <Text style={styles.emptyDesc}>
             Preparation tasks will appear here to guide your journey to conception.
@@ -103,7 +106,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
   )
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {},
 
   progressCard: {
@@ -123,7 +126,7 @@ const styles = StyleSheet.create({
   },
   progressSubtitle: {
     fontSize: 12,
-    color: colors.textTertiary,
+    color: colors.textMuted,
     marginTop: 2,
   },
   progressCircle: {
@@ -211,7 +214,7 @@ const styles = StyleSheet.create({
   },
   emptyDesc: {
     fontSize: 13,
-    color: colors.textTertiary,
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,

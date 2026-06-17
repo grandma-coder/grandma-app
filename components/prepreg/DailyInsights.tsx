@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { useTheme, colors, brand, stickers, borderRadius } from '../../constants/theme'
+import { useTheme, brand, stickers, borderRadius } from '../../constants/theme'
 import type { CycleInfo } from '../../lib/cycleLogic'
 
 interface DailyInsightsProps {
@@ -94,7 +94,7 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
         <PaperCard radius={28} padding={20} style={styles.listCard}>
           <View style={styles.listHeader}>
             <Ionicons name="fitness" size={16} color={stickers.green} />
-            <Text style={styles.listTitle}>ACTIVITIES</Text>
+            <Text style={[styles.listTitle, { color: tc.textMuted }]}>ACTIVITIES</Text>
           </View>
           {cycleInfo.activities.slice(0, 4).map((act, i) => (
             <Text key={i} style={[styles.listItem, { color: tc.textSecondary }]}>• {act}</Text>
@@ -127,13 +127,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 14,
     fontWeight: '900',
-    color: colors.text,
     letterSpacing: 1,
   },
   headerSub: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.textTertiary,
   },
 
   scrollContent: {
@@ -144,17 +142,14 @@ const styles = StyleSheet.create({
   logCard: {
     width: 120,
     height: 150,
-    backgroundColor: colors.surfaceGlass,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
     padding: 16,
     justifyContent: 'space-between',
   },
   logCardTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: colors.text,
     lineHeight: 18,
   },
   logCardButton: {
@@ -184,13 +179,11 @@ const styles = StyleSheet.create({
   insightTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: colors.text,
     lineHeight: 15,
   },
   insightBody: {
     fontSize: 10,
     fontWeight: '500',
-    color: colors.textSecondary,
     lineHeight: 14,
   },
 
@@ -201,7 +194,6 @@ const styles = StyleSheet.create({
   tipsTitle: {
     fontSize: 12,
     fontWeight: '900',
-    color: colors.text,
     letterSpacing: 1,
     marginBottom: 10,
   },
@@ -222,7 +214,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontWeight: '500',
-    color: colors.textSecondary,
     lineHeight: 18,
   },
 
@@ -242,13 +233,11 @@ const styles = StyleSheet.create({
   listTitle: {
     fontSize: 10,
     fontWeight: '900',
-    color: colors.textTertiary,
     letterSpacing: 1,
   },
   listItem: {
     fontSize: 11,
     fontWeight: '500',
-    color: colors.textSecondary,
     lineHeight: 16,
     marginBottom: 4,
   },

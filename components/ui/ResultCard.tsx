@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, ScrollView, Pressable } from 'react-native'
-import { colors, borderRadius } from '../../constants/theme'
+import { useTheme, borderRadius } from '../../constants/theme'
 import { TalkMaster } from '../stickers/RewardStickers'
 
 interface ResultCardProps {
@@ -9,6 +9,7 @@ interface ResultCardProps {
 }
 
 export default function ResultCard({ result, scanType, onClose }: ResultCardProps) {
+  const { colors } = useTheme()
   const title = {
     medicine: 'Medicine Analysis',
     food: 'Food Analysis',
@@ -18,16 +19,16 @@ export default function ResultCard({ result, scanType, onClose }: ResultCardProp
 
   return (
     <View style={styles.overlay}>
-      <View style={styles.card}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{title}</Text>
-          <Pressable onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeText}>Done</Text>
+      <View style={[styles.card, { backgroundColor: colors.surface }]}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+          <Pressable onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.accent }]}>
+            <Text style={[styles.closeText, { color: colors.textInverse }]}>Done</Text>
           </Pressable>
         </View>
         <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
           <View style={styles.emoji}><TalkMaster size={56} /></View>
-          <Text style={styles.resultText}>{result}</Text>
+          <Text style={[styles.resultText, { color: colors.textSecondary }]}>{result}</Text>
         </ScrollView>
       </View>
     </View>
@@ -41,7 +42,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   card: {
-    backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '80%',
@@ -53,21 +53,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
   },
   closeButton: {
-    backgroundColor: colors.accent,
     borderRadius: borderRadius.lg,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   closeText: {
-    color: colors.textOnAccent,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -79,7 +75,6 @@ const styles = StyleSheet.create({
     marginBottom: 12, fontFamily: 'Fraunces_600SemiBold' },
   resultText: {
     fontSize: 15,
-    color: colors.textSecondary,
     lineHeight: 24,
   },
 })

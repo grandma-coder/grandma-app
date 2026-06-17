@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   View, Text, TextInput, Pressable, ScrollView, Alert, StyleSheet,
   KeyboardAvoidingView, Platform,
@@ -10,7 +10,7 @@ import { createListing, type ListingType, type ListingCategory, type ListingCond
 import { useExchangeStore } from '../../store/useExchangeStore'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { PillButton } from '../../components/ui/PillButton'
-import { colors, brand, typography, spacing, borderRadius } from '../../constants/theme'
+import { brand, typography, spacing, borderRadius, useTheme } from '../../constants/theme'
 
 const LISTING_TYPES: { id: ListingType; label: string; icon: string }[] = [
   { id: 'sell', label: 'Sell', icon: '💰' },
@@ -38,6 +38,8 @@ const CONDITIONS: { id: ListingCondition; label: string }[] = [
 ]
 
 export default function CreateListing() {
+  const { colors } = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   const insets = useSafeAreaInsets()
   const addListing = useExchangeStore((s) => s.addListing)
 
@@ -117,7 +119,7 @@ export default function CreateListing() {
             style={styles.input}
             selectionColor={brand.kids}
             placeholder="e.g. Baby Bjorn Carrier"
-            placeholderTextColor={colors.textTertiary}
+            placeholderTextColor={colors.textMuted}
             value={title}
             onChangeText={setTitle}
           />
@@ -128,7 +130,7 @@ export default function CreateListing() {
             style={[styles.input, styles.inputMulti]}
             selectionColor={brand.kids}
             placeholder="Tell parents about the item..."
-            placeholderTextColor={colors.textTertiary}
+            placeholderTextColor={colors.textMuted}
             value={description}
             onChangeText={setDescription}
             multiline
@@ -174,7 +176,7 @@ export default function CreateListing() {
                 style={styles.input}
                 selectionColor={brand.kids}
                 placeholder="0.00"
-                placeholderTextColor={colors.textTertiary}
+                placeholderTextColor={colors.textMuted}
                 value={price}
                 onChangeText={setPrice}
                 keyboardType="decimal-pad"
@@ -196,7 +198,7 @@ export default function CreateListing() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {
     paddingHorizontal: spacing['2xl'],
   },
@@ -222,7 +224,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.textTertiary,
+    color: colors.textMuted,
     letterSpacing: 1,
     marginBottom: 8,
     marginTop: 16,
@@ -266,7 +268,7 @@ const styles = StyleSheet.create({
   },
   pillActive: {
     borderColor: colors.accent,
-    backgroundColor: colors.accentMuted,
+    backgroundColor: colors.primaryTint,
   },
   pillIcon: {
     fontSize: 14,
@@ -274,7 +276,7 @@ const styles = StyleSheet.create({
   pillLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textTertiary,
+    color: colors.textMuted,
   },
   pillLabelActive: {
     color: colors.accent,

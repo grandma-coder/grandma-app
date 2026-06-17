@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, brand, stickers, borderRadius, shadows, font } from '../../constants/theme'
+import { useTheme, brand, stickers, borderRadius, shadows, font } from '../../constants/theme'
 import { getWeekData } from '../../lib/pregnancyData'
 
 interface DevelopmentInsightProps {
@@ -9,6 +9,7 @@ interface DevelopmentInsightProps {
 }
 
 export function DevelopmentInsight({ weekNumber }: DevelopmentInsightProps) {
+  const { colors } = useTheme()
   const data = getWeekData(weekNumber)
 
   return (
@@ -39,7 +40,7 @@ export function DevelopmentInsight({ weekNumber }: DevelopmentInsightProps) {
         {/* Record lullaby button */}
         <Pressable style={({ pressed }) => [styles.actionButton, pressed && { shadowOffset: { width: 0, height: 2 }, transform: [{ translateY: 2 }] }]}>
           <Ionicons name="mic-outline" size={22} color={brand.prePregnancy} />
-          <Text style={styles.actionText}>Record a lullaby</Text>
+          <Text style={[styles.actionText, { color: colors.surface }]}>Record a lullaby</Text>
         </Pressable>
       </View>
     </LinearGradient>
@@ -136,7 +137,6 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 14,
     fontWeight: '900',
-    color: colors.surface,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },

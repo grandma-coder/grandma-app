@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   View,
   Text,
@@ -23,7 +23,7 @@ import { checkPremium } from '../lib/revenue'
 import { CosmicBackground } from '../components/ui/CosmicBackground'
 import ResultCard from '../components/ui/ResultCard'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
-import { colors, spacing, borderRadius } from '../constants/theme'
+import { spacing, borderRadius, useTheme } from '../constants/theme'
 import { PartialStickers } from '../components/stickers/PartialStickers'
 
 const FREE_SCAN_LIMIT = 3
@@ -37,6 +37,130 @@ const SCAN_TYPES = [
 
 export default function Scan() {
   const insets = useSafeAreaInsets()
+  const { colors } = useTheme()
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing['2xl'],
+      paddingBottom: 16,
+    },
+    backButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.surfaceGlass,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    typesRow: {
+      flexDirection: 'row',
+      paddingHorizontal: spacing.lg,
+      gap: 8,
+      marginBottom: 16,
+    },
+    typeChip: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderRadius: borderRadius.md,
+      backgroundColor: colors.surfaceGlass,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+    },
+    typeChipActive: {
+      borderColor: colors.accent,
+      backgroundColor: colors.primaryTint,
+    },
+    typeIcon: {
+      fontSize: 20,
+      marginBottom: 4,
+    },
+    typeLabel: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: colors.textMuted,
+    },
+    typeLabelActive: {
+      color: colors.accent,
+    },
+    previewContainer: {
+      flex: 1,
+      marginHorizontal: spacing.lg,
+      borderRadius: borderRadius.lg,
+      overflow: 'hidden',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    preview: {
+      flex: 1,
+    },
+    placeholder: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 12,
+    },
+    placeholderText: {
+      fontSize: 15,
+      color: colors.textMuted,
+    },
+    loadingOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(10, 14, 26, 0.9)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 12,
+    },
+    loadingText: {
+      fontSize: 15,
+      color: colors.text,
+      fontWeight: '600',
+    },
+    actions: {
+      flexDirection: 'row',
+      paddingHorizontal: spacing.lg,
+      paddingTop: 12,
+      gap: 12,
+    },
+    actionButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      backgroundColor: colors.accent,
+      borderRadius: borderRadius.md,
+      paddingVertical: 14,
+    },
+    actionButtonSecondary: {
+      backgroundColor: colors.surfaceGlass,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    actionText: {
+      color: colors.textInverse,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    actionTextSecondary: {
+      color: colors.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+  }), [colors])
   const child = useChildStore((s) => s.activeChild)
   const mode = useModeStore((s) => s.mode)
   const pregnancyDueDate = usePregnancyStore((s) => s.dueDate)
@@ -214,7 +338,7 @@ export default function Scan() {
             <Image source={{ uri: imageUri }} style={styles.preview} resizeMode="contain" />
           ) : (
             <View style={styles.placeholder}>
-              <Ionicons name="scan-outline" size={64} color={colors.textTertiary} />
+              <Ionicons name="scan-outline" size={64} color={colors.textMuted} />
               <Text style={styles.placeholderText}>
                 Take a photo or pick from library
               </Text>
@@ -234,7 +358,7 @@ export default function Scan() {
             onPress={() => pickImage(true)}
             disabled={loading}
           >
-            <Ionicons name="camera" size={22} color={colors.textOnAccent} />
+            <Ionicons name="camera" size={22} color={colors.textInverse} />
             <Text style={styles.actionText}>Camera</Text>
           </Pressable>
           <Pressable
@@ -266,127 +390,3 @@ export default function Scan() {
     </CosmicBackground>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing['2xl'],
-    paddingBottom: 16,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceGlass,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  typesRow: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    gap: 8,
-    marginBottom: 16,
-  },
-  typeChip: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.surfaceGlass,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  typeChipActive: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentMuted,
-  },
-  typeIcon: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  typeLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.textTertiary,
-  },
-  typeLabelActive: {
-    color: colors.accent,
-  },
-  previewContainer: {
-    flex: 1,
-    marginHorizontal: spacing.lg,
-    borderRadius: borderRadius.lg,
-    overflow: 'hidden',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  preview: {
-    flex: 1,
-  },
-  placeholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 12,
-  },
-  placeholderText: {
-    fontSize: 15,
-    color: colors.textTertiary,
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(10, 14, 26, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: 15,
-    color: colors.text,
-    fontWeight: '600',
-  },
-  actions: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    paddingTop: 12,
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.accent,
-    borderRadius: borderRadius.md,
-    paddingVertical: 14,
-  },
-  actionButtonSecondary: {
-    backgroundColor: colors.surfaceGlass,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  actionText: {
-    color: colors.textOnAccent,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  actionTextSecondary: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-})

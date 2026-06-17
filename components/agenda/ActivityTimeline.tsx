@@ -1,5 +1,6 @@
+import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { colors, borderRadius } from '../../constants/theme'
+import { useTheme } from '../../constants/theme'
 
 export interface TimelineEntry {
   id: string
@@ -37,6 +38,9 @@ function formatTime(dateStr: string): string {
 }
 
 export function ActivityTimeline({ entries, loading }: ActivityTimelineProps) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
+
   if (loading) {
     return (
       <View style={styles.empty}>
@@ -92,7 +96,7 @@ export function ActivityTimeline({ entries, loading }: ActivityTimelineProps) {
   )
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {
     marginTop: 8,
   },
@@ -139,7 +143,7 @@ const styles = StyleSheet.create({
   },
   time: {
     fontSize: 12,
-    color: colors.textTertiary,
+    color: colors.textMuted,
   },
   value: {
     fontSize: 14,
@@ -148,13 +152,13 @@ const styles = StyleSheet.create({
   },
   notes: {
     fontSize: 13,
-    color: colors.textTertiary,
+    color: colors.textMuted,
     fontStyle: 'italic',
     marginTop: 4,
   },
   loggedBy: {
     fontSize: 11,
-    color: colors.textTertiary,
+    color: colors.textMuted,
     marginTop: 4,
   },
   empty: {
@@ -172,7 +176,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: colors.textTertiary,
+    color: colors.textMuted,
     textAlign: 'center',
   },
 })

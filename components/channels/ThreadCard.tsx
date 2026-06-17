@@ -1,6 +1,7 @@
+import { useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, borderRadius } from '../../constants/theme'
+import { useTheme } from '../../constants/theme'
 import type { Thread } from '../../lib/channels'
 
 interface ThreadCardProps {
@@ -18,6 +19,8 @@ function timeAgo(dateStr: string): string {
 }
 
 export function ThreadCard({ thread, onPress }: ThreadCardProps) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   return (
     <Pressable
       onPress={onPress}
@@ -32,7 +35,7 @@ export function ThreadCard({ thread, onPress }: ThreadCardProps) {
       <Text style={styles.title} numberOfLines={2}>{thread.title}</Text>
       <Text style={styles.content} numberOfLines={2}>{thread.content}</Text>
       <View style={styles.metaRow}>
-        <Ionicons name="chatbubble-outline" size={12} color={colors.textTertiary} />
+        <Ionicons name="chatbubble-outline" size={12} color={colors.textMuted} />
         <Text style={styles.metaText}>{thread.replyCount} replies</Text>
         <Text style={styles.metaDot}>·</Text>
         <Text style={styles.metaText}>{timeAgo(thread.createdAt)}</Text>
@@ -41,7 +44,7 @@ export function ThreadCard({ thread, onPress }: ThreadCardProps) {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {
     paddingVertical: 14,
     borderBottomWidth: 1,
@@ -79,9 +82,9 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 11,
-    color: colors.textTertiary,
+    color: colors.textMuted,
   },
   metaDot: {
-    color: colors.textTertiary,
+    color: colors.textMuted,
   },
 })

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { View, Text, TextInput, Pressable, Alert, StyleSheet, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import * as Clipboard from 'expo-clipboard'
@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
-import { colors, brand, stickers, borderRadius, shadows } from '../constants/theme'
+import { borderRadius, shadows, useTheme } from '../constants/theme'
 import { useSavedToast } from '../components/ui/SavedToast'
 import { MissingStickers } from '../components/stickers/MissingStickers'
 
@@ -18,6 +18,163 @@ const ROLES = [
 export default function InviteCaregiver() {
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
+  const { colors, brand, stickers } = useTheme()
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.bg,
+      paddingHorizontal: 24,
+    },
+    header: {
+      alignItems: 'flex-end',
+      marginBottom: 24,
+    },
+    closeButton: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.surfaceGlass,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: 48,
+      fontWeight: '900',
+      color: colors.text,
+      marginBottom: 12,
+      textTransform: 'uppercase',
+      lineHeight: 50,
+      letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' },
+    subtitle: {
+      fontSize: 15,
+      color: colors.textMuted,
+      marginBottom: 32,
+      lineHeight: 22,
+    },
+    label: {
+      fontSize: 10,
+      fontWeight: '900',
+      color: colors.textMuted,
+      letterSpacing: 3,
+      textTransform: 'uppercase',
+      marginBottom: 10,
+      fontFamily: undefined, // mono style handled by letterSpacing
+    },
+    inputWrapper: {
+      position: 'relative' as const,
+      marginBottom: 28,
+    },
+    input: {
+      backgroundColor: colors.surfaceGlass,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: borderRadius.xl,
+      paddingHorizontal: 24,
+      paddingRight: 56,
+      height: 80,
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    inputIconBox: {
+      position: 'absolute' as const,
+      right: 24,
+      top: 0,
+      bottom: 0,
+      justifyContent: 'center',
+    },
+    roleRow: {
+      flexDirection: 'row',
+      gap: 12,
+      marginBottom: 32,
+    },
+    roleChip: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 10,
+      height: 128,
+      borderRadius: borderRadius.xl,
+      backgroundColor: colors.surfaceGlass,
+      borderWidth: 2,
+      borderColor: colors.border,
+    },
+    roleChipActive: {
+      borderColor: stickers.yellow,
+      backgroundColor: 'rgba(244, 253, 80, 0.06)',
+      ...shadows.pop,
+    },
+    roleLabel: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.textMuted,
+    },
+    roleLabelActive: {
+      color: stickers.yellow,
+    },
+    sendButton: {
+      backgroundColor: stickers.yellow,
+      borderRadius: borderRadius['2xl'],
+      height: 96,
+      justifyContent: 'center',
+      alignItems: 'center',
+      ...shadows.pop,
+    },
+    sendButtonInner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    sendText: {
+      color: '#1A1030',
+      fontSize: 16,
+      fontWeight: '900',
+      textTransform: 'uppercase',
+      letterSpacing: 1.5,
+    },
+    footerText: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: colors.textMuted,
+      letterSpacing: 2,
+      textTransform: 'uppercase',
+      textAlign: 'center',
+      marginTop: 24,
+    },
+    successContainer: {
+      alignItems: 'center',
+      paddingTop: 40,
+    },
+    successEmoji: {
+      fontSize: 48,
+      marginBottom: 16, fontFamily: 'Fraunces_600SemiBold' },
+    linkCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      width: '100%',
+      backgroundColor: colors.surface,
+      borderRadius: borderRadius.sm,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginTop: 20,
+      marginBottom: 24,
+    },
+    linkText: {
+      flex: 1,
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    doneButton: {
+      paddingVertical: 12,
+    },
+    doneText: {
+      color: colors.accent,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  }), [colors, brand, stickers])
   const child = useChildStore((s) => s.activeChild)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('nanny')
@@ -64,7 +221,7 @@ export default function InviteCaregiver() {
       {/* Close button top-right */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.closeButton}>
-          <Ionicons name="close" size={22} color={colors.textTertiary} />
+          <Ionicons name="close" size={22} color={colors.textMuted} />
         </Pressable>
       </View>
 
@@ -86,14 +243,14 @@ export default function InviteCaregiver() {
               style={styles.input}
               selectionColor={brand.kids}
               placeholder="nanny@email.com"
-              placeholderTextColor={colors.textTertiary}
+              placeholderTextColor={colors.textMuted}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
             />
             <View style={styles.inputIconBox}>
-              <Ionicons name="mail-outline" size={20} color={colors.textTertiary} />
+              <Ionicons name="mail-outline" size={20} color={colors.textMuted} />
             </View>
           </View>
 
@@ -127,7 +284,7 @@ export default function InviteCaregiver() {
             style={[styles.sendButton, loading && { opacity: 0.6 }]}
           >
             {loading ? (
-              <ActivityIndicator color={colors.textOnAccent} />
+              <ActivityIndicator color="#1A1030" />
             ) : (
               <View style={styles.sendButtonInner}>
                 <Text style={styles.sendText}>Send Invite</Text>
@@ -160,160 +317,3 @@ export default function InviteCaregiver() {
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    paddingHorizontal: 24,
-  },
-  header: {
-    alignItems: 'flex-end',
-    marginBottom: 24,
-  },
-  closeButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.surfaceGlass,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: '900',
-    color: colors.text,
-    marginBottom: 12,
-    textTransform: 'uppercase',
-    lineHeight: 50,
-    letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' },
-  subtitle: {
-    fontSize: 15,
-    color: colors.textTertiary,
-    marginBottom: 32,
-    lineHeight: 22,
-  },
-  label: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: colors.textTertiary,
-    letterSpacing: 3,
-    textTransform: 'uppercase',
-    marginBottom: 10,
-    fontFamily: undefined, // mono style handled by letterSpacing
-  },
-  inputWrapper: {
-    position: 'relative' as const,
-    marginBottom: 28,
-  },
-  input: {
-    backgroundColor: colors.surfaceGlass,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.xl,
-    paddingHorizontal: 24,
-    paddingRight: 56,
-    height: 80,
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  inputIconBox: {
-    position: 'absolute' as const,
-    right: 24,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-  },
-  roleRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 32,
-  },
-  roleChip: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    height: 128,
-    borderRadius: borderRadius.xl,
-    backgroundColor: colors.surfaceGlass,
-    borderWidth: 2,
-    borderColor: colors.border,
-  },
-  roleChipActive: {
-    borderColor: stickers.yellow,
-    backgroundColor: 'rgba(244, 253, 80, 0.06)',
-    ...shadows.pop,
-  },
-  roleLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.textTertiary,
-  },
-  roleLabelActive: {
-    color: stickers.yellow,
-  },
-  sendButton: {
-    backgroundColor: stickers.yellow,
-    borderRadius: borderRadius['2xl'],
-    height: 96,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.pop,
-  },
-  sendButtonInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  sendText: {
-    color: '#1A1030',
-    fontSize: 16,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-  },
-  footerText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: colors.textTertiary,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    marginTop: 24,
-  },
-  successContainer: {
-    alignItems: 'center',
-    paddingTop: 40,
-  },
-  successEmoji: {
-    fontSize: 48,
-    marginBottom: 16, fontFamily: 'Fraunces_600SemiBold' },
-  linkCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.sm,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: 20,
-    marginBottom: 24,
-  },
-  linkText: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.textTertiary,
-  },
-  doneButton: {
-    paddingVertical: 12,
-  },
-  doneText: {
-    color: colors.accent,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-})

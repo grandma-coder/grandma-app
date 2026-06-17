@@ -1,8 +1,9 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { useMemo } from 'react'
 import type { ComponentType } from 'react'
 import { PaperCard } from '../ui/PaperCard'
 import { LogExercise, LogSleep } from '../stickers/RewardStickers'
-import { colors, borderRadius } from '../../constants/theme'
+import { useTheme } from '../../constants/theme'
 
 type StickerFn = ComponentType<{ size?: number; fill?: string; stroke?: string }>
 
@@ -20,6 +21,9 @@ const MOMENTS: Array<{ Sticker: StickerFn; title: string; description: string }>
 ]
 
 export function MomentsOfCare() {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
+
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Moments of Care</Text>
@@ -53,7 +57,7 @@ export function MomentsOfCare() {
   )
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {
     marginBottom: 20,
   },
@@ -89,7 +93,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.accentMuted,
+    backgroundColor: colors.primaryTint,
     alignItems: 'center',
     justifyContent: 'center',
   },

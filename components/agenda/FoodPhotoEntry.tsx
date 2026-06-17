@@ -1,7 +1,8 @@
+import { useMemo } from 'react'
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { colors, borderRadius } from '../../constants/theme'
+import { borderRadius, useTheme } from '../../constants/theme'
 
 interface FoodPhotoEntryProps {
   onTakePhoto: () => void
@@ -23,6 +24,9 @@ export function FoodPhotoEntry({
   rating = 0,
   onRate,
 }: FoodPhotoEntryProps) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
+
   return (
     <PaperCard radius={28} padding={20} style={styles.container}>
       <Text style={styles.title}>Log a Meal</Text>
@@ -54,7 +58,7 @@ export function FoodPhotoEntry({
               <Ionicons
                 name={s <= rating ? 'star' : 'star-outline'}
                 size={22}
-                color={s <= rating ? colors.accent : colors.textTertiary}
+                color={s <= rating ? colors.accent : colors.textMuted}
               />
             </Pressable>
           ))}
@@ -64,7 +68,7 @@ export function FoodPhotoEntry({
   )
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {
     marginBottom: 16,
   },
@@ -77,7 +81,7 @@ const styles = StyleSheet.create({
   mealType: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.textTertiary,
+    color: colors.textMuted,
     letterSpacing: 1,
     marginBottom: 12,
   },

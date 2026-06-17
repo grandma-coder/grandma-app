@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { PaperCard } from '../ui/PaperCard'
-import { colors, brand, stickers, borderRadius, shadows } from '../../constants/theme'
+import { brand, stickers, borderRadius, useTheme } from '../../constants/theme'
 
 interface FoodEntry {
   id: string
@@ -28,6 +28,8 @@ const MEALS = [
 ]
 
 export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: FoodDashboardProps) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null)
 
   async function handleTakePhoto(mealType: string) {
@@ -99,8 +101,8 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
               onPress={() => handleTakePhoto(selectedMeal)}
               style={[styles.actionBtn, { backgroundColor: stickers.yellow }]}
             >
-              <Ionicons name="camera" size={20} color={colors.textOnAccent} />
-              <Text style={[styles.actionBtnText, { color: colors.textOnAccent }]}>Photo + AI</Text>
+              <Ionicons name="camera" size={20} color={colors.textInverse} />
+              <Text style={[styles.actionBtnText, { color: colors.textInverse }]}>Photo + AI</Text>
             </Pressable>
 
             <Pressable
@@ -159,7 +161,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
       {/* Empty hint */}
       {entries.length === 0 && !selectedMeal && (
         <View style={styles.emptyHint}>
-          <Ionicons name="nutrition-outline" size={32} color={colors.textTertiary} />
+          <Ionicons name="nutrition-outline" size={32} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>No meals logged today</Text>
           <Text style={styles.emptyDesc}>
             Tap a meal above to log food. Take a photo and Guru Grandma will analyze the protein, carbs, and nutrients.
@@ -170,7 +172,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
   )
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {},
 
   // Meal grid
@@ -252,7 +254,7 @@ const styles = StyleSheet.create({
   entriesLabel: {
     fontSize: 10,
     fontWeight: '900',
-    color: colors.textTertiary,
+    color: colors.textMuted,
     letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 10,
@@ -317,7 +319,7 @@ const styles = StyleSheet.create({
   },
   emptyDesc: {
     fontSize: 13,
-    color: colors.textTertiary,
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,

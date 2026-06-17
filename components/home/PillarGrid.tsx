@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { colors, brand, stickers, borderRadius, shadows } from '../../constants/theme'
+import { useTheme, borderRadius, shadows } from '../../constants/theme'
 import { pillars } from '../../lib/pillars'
 import type { Pillar } from '../../types'
 import { getPillarSticker } from '../../lib/pillarStickerMap'
@@ -10,6 +10,22 @@ interface PillarGridProps {
 }
 
 export function PillarGrid({ lastActivities = {} }: PillarGridProps) {
+  const { colors, brand, stickers } = useTheme()
+
+  // Reconstructed from legacy colors.pillar (theme-independent brand/sticker tokens).
+  // `recipes` falls back to the theme surface per P3-107 composite rule.
+  const pillarColors: Record<string, string> = {
+    milk: brand.kids,
+    food: stickers.green,
+    nutrition: brand.accent,
+    vaccines: brand.prePregnancy,
+    clothes: stickers.coral,
+    recipes: colors.surface,
+    habits: stickers.green,
+    milestones: brand.pregnancy,
+    medicine: brand.prePregnancy,
+  }
+
   function handlePress(pillar: Pillar) {
     router.push(`/pillar/${pillar.id}`)
   }
@@ -17,7 +33,7 @@ export function PillarGrid({ lastActivities = {} }: PillarGridProps) {
   return (
     <View style={styles.grid}>
       {pillars.map((pillar) => {
-        const bgColor = (colors.pillar as Record<string, string>)[pillar.id] ?? colors.surface
+        const bgColor = pillarColors[pillar.id] ?? colors.surface
         const isDark = bgColor === '#241845' || bgColor === '#141414'
         const textColor = isDark ? '#FFFFFF' : '#000000'
         const Sticker = getPillarSticker(pillar.id)

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -5,11 +6,101 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CosmicBackground } from '../components/ui/CosmicBackground'
 import { PaperCard } from '../components/ui/PaperCard'
 import { PillButton } from '../components/ui/PillButton'
-import { colors, typography, spacing } from '../constants/theme'
+import { typography, spacing, useTheme } from '../constants/theme'
 import { MissingStickers } from '../components/stickers/MissingStickers'
 
 export default function AirTagSetup() {
   const insets = useSafeAreaInsets()
+  const { colors } = useTheme()
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingHorizontal: spacing['2xl'],
+    },
+    closeBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.surfaceGlass,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignSelf: 'flex-end',
+    },
+    hero: {
+      alignItems: 'center',
+      marginTop: 20,
+      marginBottom: 32,
+    },
+    iconCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: colors.primaryTint,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 20,
+    },
+    title: {
+      ...typography.heading,
+      marginBottom: 8,
+    },
+    subtitle: {
+      ...typography.bodySecondary,
+      textAlign: 'center',
+      lineHeight: 22,
+      paddingHorizontal: 16,
+    },
+    steps: {
+      gap: 10,
+    },
+    step: {
+      // no extra padding needed
+    },
+    stepRow: {
+      flexDirection: 'row',
+      gap: 14,
+      alignItems: 'flex-start',
+    },
+    stepNumber: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stepNumberText: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.textInverse,
+    },
+    stepContent: {
+      flex: 1,
+    },
+    stepTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 3,
+    },
+    stepText: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      lineHeight: 18,
+    },
+    bottom: {
+      marginTop: 'auto',
+      gap: 12,
+    },
+    note: {
+      fontSize: 11,
+      color: colors.textMuted,
+      textAlign: 'center',
+      lineHeight: 16,
+    },
+  }), [colors])
 
   return (
     <CosmicBackground>
@@ -81,93 +172,3 @@ export default function AirTagSetup() {
     </CosmicBackground>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: spacing['2xl'],
-  },
-  closeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceGlass,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignSelf: 'flex-end',
-  },
-  hero: {
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 32,
-  },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.accentMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    ...typography.heading,
-    marginBottom: 8,
-  },
-  subtitle: {
-    ...typography.bodySecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: 16,
-  },
-  steps: {
-    gap: 10,
-  },
-  step: {
-    // no extra padding needed
-  },
-  stepRow: {
-    flexDirection: 'row',
-    gap: 14,
-    alignItems: 'flex-start',
-  },
-  stepNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepNumberText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textOnAccent,
-  },
-  stepContent: {
-    flex: 1,
-  },
-  stepTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 3,
-  },
-  stepText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
-  },
-  bottom: {
-    marginTop: 'auto',
-    gap: 12,
-  },
-  note: {
-    fontSize: 11,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-})

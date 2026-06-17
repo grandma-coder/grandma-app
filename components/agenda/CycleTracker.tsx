@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { CyclePhaseRing } from '../prepreg/CyclePhaseRing'
 import { getCycleInfo, getMonthCycleDots, toDateStr } from '../../lib/cycleLogic'
 import type { CycleInfo } from '../../lib/cycleLogic'
-import { colors, brand, stickers, borderRadius, typography } from '../../constants/theme'
+import { colors as staticColors, brand, stickers, borderRadius, typography, useTheme } from '../../constants/theme'
 
 interface CycleTrackerProps {
   selectedDate: string
@@ -33,10 +33,12 @@ const SYMPTOM_OPTIONS = [
   { id: 'cm_eggwhite', label: 'CM: Egg White', icon: 'water', color: stickers.green },
   { id: 'cm_creamy', label: 'CM: Creamy', icon: 'water', color: stickers.yellow },
   { id: 'cm_sticky', label: 'CM: Sticky', icon: 'water', color: stickers.peach },
-  { id: 'cm_dry', label: 'CM: Dry', icon: 'water-outline', color: colors.textTertiary },
+  { id: 'cm_dry', label: 'CM: Dry', icon: 'water-outline', color: staticColors.textTertiary },
 ]
 
 export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   // Demo: period started 10 days ago — in production from Supabase
   const [lastPeriodStart] = useState(() => {
     const d = new Date()
@@ -131,7 +133,7 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
   )
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {},
 
   dateInfoCard: {
@@ -159,7 +161,7 @@ const styles = StyleSheet.create({
   dateInfoDay: {
     fontSize: 12,
     fontWeight: '800',
-    color: colors.textTertiary,
+    color: colors.textMuted,
   },
   dateInfoDesc: {
     fontSize: 13,
@@ -186,6 +188,7 @@ const styles = StyleSheet.create({
 
   sectionLabel: {
     ...typography.label,
+    color: colors.textMuted,
     marginBottom: 12,
   },
 

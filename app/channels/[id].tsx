@@ -6,9 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getThreads, type Thread } from '../../lib/channels'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { ThreadCard } from '../../components/channels/ThreadCard'
-import { colors, typography, spacing } from '../../constants/theme'
+import { typography, spacing, useTheme } from '../../constants/theme'
 
 export default function ChannelDetail() {
+  const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const [threads, setThreads] = useState<Thread[]>([])
@@ -27,7 +28,10 @@ export default function ChannelDetail() {
     <CosmicBackground>
       <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Pressable
+            onPress={() => router.back()}
+            style={[styles.backBtn, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}
+          >
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </Pressable>
           <Text style={styles.title}>Channel</Text>
@@ -75,11 +79,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surfaceGlass,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
   },
   title: {
     ...typography.title,

@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useAppTheme } from '../ui/ThemeProvider'
-import { colors, brand, stickers, borderRadius, shadows } from '../../constants/theme'
+import { brand, stickers, borderRadius, shadows } from '../../constants/theme'
 import { LiquidFillBottle } from '../charts/GalleryCharts'
 import { DAILY_WATER_GOAL, getHydrationLevel } from '../../lib/cycleLogic'
 
@@ -152,19 +152,16 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     fontWeight: '900',
-    color: colors.text,
     letterSpacing: 1,
   },
   cardSubtitle: {
     fontSize: 11,
-    color: colors.textTertiary,
     marginTop: 2,
   },
 
   progressBarBg: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.border,
     overflow: 'hidden',
     marginBottom: 8,
   },
@@ -183,7 +180,6 @@ const styles = StyleSheet.create({
   },
   progressGoal: {
     fontSize: 12,
-    color: colors.textTertiary,
   },
 
   bottleRow: {
@@ -208,7 +204,6 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 6,
     borderWidth: 1.5,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -254,18 +249,15 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: 22,
     fontWeight: '900',
-    color: colors.text,
   },
   metricUnit: {
     fontSize: 10,
     fontWeight: '600',
-    color: colors.textTertiary,
     marginBottom: 4,
   },
   metricLabel: {
     fontSize: 9,
     fontWeight: '900',
-    color: colors.textTertiary,
     letterSpacing: 1,
   },
   metricBadge: {
@@ -296,7 +288,6 @@ const styles = StyleSheet.create({
   nutritionText: {
     fontSize: 13,
     fontWeight: '500',
-    color: colors.textSecondary,
     lineHeight: 19,
   },
 })

@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { colors, brand, stickers, borderRadius, typography } from '../../constants/theme'
+import { stickers, borderRadius, typography, useTheme } from '../../constants/theme'
 
 interface SymptomEntry {
   id: string
@@ -37,6 +37,8 @@ const SEVERITY_OPTIONS: { id: 'mild' | 'moderate' | 'strong'; label: string; col
 ]
 
 export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLoggerProps) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const [selectedSymptom, setSelectedSymptom] = useState<string | null>(null)
   const todayEntries = entries.filter((e) => e.date === selectedDate)
 
@@ -124,7 +126,7 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
       {/* Empty state */}
       {todayEntries.length === 0 && !selectedSymptom && (
         <View style={styles.emptyState}>
-          <Ionicons name="pulse-outline" size={40} color={colors.textTertiary} />
+          <Ionicons name="pulse-outline" size={40} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>No symptoms logged</Text>
           <Text style={styles.emptyDesc}>
             Tap a symptom above to log how you're feeling today. Track patterns across your pregnancy.
@@ -135,11 +137,12 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
   )
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {},
 
   sectionLabel: {
     ...typography.label,
+    color: colors.textMuted,
     marginBottom: 12,
   },
 
@@ -245,7 +248,7 @@ const styles = StyleSheet.create({
   },
   emptyDesc: {
     fontSize: 13,
-    color: colors.textTertiary,
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { colors, borderRadius } from '../../constants/theme'
+import { useTheme } from '../../constants/theme'
 
 export interface DocumentItem {
   id: string
@@ -39,51 +39,52 @@ export function DocumentSection({
   onViewDocument,
   onAddDocument,
 }: DocumentSectionProps) {
+  const { colors } = useTheme()
   const [expanded, setExpanded] = useState(false)
 
   return (
     <PaperCard radius={28} padding={20} style={styles.container}>
       <Pressable onPress={() => setExpanded(!expanded)} style={styles.header}>
-        <View style={styles.iconCircle}>
+        <View style={[styles.iconCircle, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
           <Text style={styles.icon}>{icon}</Text>
         </View>
         <View style={styles.headerText}>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.count}>{documents.length} Files</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+            <Text style={[styles.count, { color: colors.textMuted }]}>{documents.length} Files</Text>
           </View>
-          <Text style={styles.description} numberOfLines={expanded ? undefined : 1}>
+          <Text style={[styles.description, { color: colors.textMuted }]} numberOfLines={expanded ? undefined : 1}>
             {description}
           </Text>
         </View>
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
           size={18}
-          color={colors.textTertiary}
+          color={colors.textMuted}
         />
       </Pressable>
 
       {expanded && (
-        <View style={styles.body}>
+        <View style={[styles.body, { borderTopColor: colors.border }]}>
           {documents.length === 0 ? (
-            <Text style={styles.emptyText}>No documents yet</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No documents yet</Text>
           ) : (
             documents.map((doc) => (
               <Pressable
                 key={doc.id}
                 onPress={() => onViewDocument?.(doc)}
-                style={styles.docRow}
+                style={[styles.docRow, { borderBottomColor: colors.border }]}
               >
                 <Ionicons name="document-outline" size={18} color={colors.textSecondary} />
                 <View style={styles.docInfo}>
-                  <Text style={styles.docTitle} numberOfLines={1}>{doc.title}</Text>
-                  <Text style={styles.docMeta}>
+                  <Text style={[styles.docTitle, { color: colors.text }]} numberOfLines={1}>{doc.title}</Text>
+                  <Text style={[styles.docMeta, { color: colors.textMuted }]}>
                     {doc.fileType?.toUpperCase()}
                     {doc.fileSizeBytes ? ` · ${formatSize(doc.fileSizeBytes)}` : ''}
                     {` · ${formatDate(doc.createdAt)}`}
                   </Text>
                 </View>
-                <Ionicons name="download-outline" size={18} color={colors.textTertiary} />
+                <Ionicons name="download-outline" size={18} color={colors.textMuted} />
               </Pressable>
             ))
           )}
@@ -91,7 +92,7 @@ export function DocumentSection({
           {onAddDocument && (
             <Pressable onPress={onAddDocument} style={styles.addBtn}>
               <Ionicons name="add" size={16} color={colors.accent} />
-              <Text style={styles.addText}>Add Document</Text>
+              <Text style={[styles.addText, { color: colors.accent }]}>Add Document</Text>
             </Pressable>
           )}
         </View>
@@ -113,11 +114,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surfaceGlass,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
   },
   icon: {
     fontSize: 20,
@@ -133,15 +132,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.text,
   },
   count: {
     fontSize: 12,
-    color: colors.textTertiary,
   },
   description: {
     fontSize: 12,
-    color: colors.textTertiary,
     marginTop: 2,
     lineHeight: 16,
   },
@@ -149,11 +145,9 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   emptyText: {
     fontSize: 13,
-    color: colors.textTertiary,
     textAlign: 'center',
     paddingVertical: 8,
   },
@@ -163,7 +157,6 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   docInfo: {
     flex: 1,
@@ -171,11 +164,9 @@ const styles = StyleSheet.create({
   docTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
   },
   docMeta: {
     fontSize: 11,
-    color: colors.textTertiary,
     marginTop: 2,
   },
   addBtn: {
@@ -189,6 +180,5 @@ const styles = StyleSheet.create({
   addText: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.accent,
   },
 })

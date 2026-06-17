@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { View, Text, ScrollView, Image, Pressable, StyleSheet } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -7,9 +7,11 @@ import { getListingById, type Listing } from '../../lib/exchange'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { PaperCard } from '../../components/ui/PaperCard'
 import { PillButton } from '../../components/ui/PillButton'
-import { colors, typography, spacing, borderRadius } from '../../constants/theme'
+import { typography, spacing, borderRadius, useTheme } from '../../constants/theme'
 
 export default function ListingDetail() {
+  const { colors } = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const [listing, setListing] = useState<Listing | null>(null)
@@ -71,7 +73,7 @@ export default function ListingDetail() {
           <Image source={{ uri: listing.photos[0] }} style={styles.photo} resizeMode="cover" />
         ) : (
           <View style={styles.photoPlaceholder}>
-            <Ionicons name="image-outline" size={48} color={colors.textTertiary} />
+            <Ionicons name="image-outline" size={48} color={colors.textMuted} />
           </View>
         )}
 
@@ -119,7 +121,7 @@ export default function ListingDetail() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {
     paddingHorizontal: spacing['2xl'],
   },
@@ -198,6 +200,6 @@ const styles = StyleSheet.create({
   },
   commentPlaceholder: {
     fontSize: 13,
-    color: colors.textTertiary,
+    color: colors.textMuted,
   },
 })

@@ -10,7 +10,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { getModeConfig } from '../../lib/modeConfig'
 import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { ListingCard } from '../../components/exchange/ListingCard'
-import { colors, brand, stickers, borderRadius, shadows, spacing, typography } from '../../constants/theme'
+import { brand, stickers, borderRadius, shadows, spacing, typography } from '../../constants/theme'
 import type { Listing } from '../../lib/exchange'
 
 const TYPE_FILTERS = ['All', 'Sell', 'Trade', 'Free'] as const

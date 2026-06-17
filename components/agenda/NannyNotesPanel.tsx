@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   View, Text, TextInput, Pressable, Modal, ScrollView, StyleSheet,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { colors, brand, stickers, borderRadius, shadows } from '../../constants/theme'
+import { brand, stickers, borderRadius, shadows, useTheme } from '../../constants/theme'
 
 export interface NoteEntry {
   id: string
@@ -39,6 +39,8 @@ function timeAgo(dateStr: string): string {
 }
 
 export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const [showCompose, setShowCompose] = useState(false)
   const [selectedTopic, setSelectedTopic] = useState('general')
   const [noteText, setNoteText] = useState('')
@@ -67,7 +69,7 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
       {/* Notes list */}
       {notes.length === 0 ? (
         <View style={styles.empty}>
-          <Ionicons name="document-text-outline" size={40} color={colors.textTertiary} />
+          <Ionicons name="document-text-outline" size={40} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>No notes yet</Text>
           <Text style={styles.emptyDesc}>
             Add notes about food, vaccines, activities, health, or reminders. All caregivers can see and contribute.
@@ -129,7 +131,7 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
                     <Ionicons
                       name={topic.icon as any}
                       size={16}
-                      color={isActive ? topic.color : colors.textTertiary}
+                      color={isActive ? topic.color : colors.textMuted}
                     />
                     <Text style={[styles.topicChipText, isActive && { color: topic.color }]}>
                       {topic.label}
@@ -145,7 +147,7 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
               style={styles.textArea}
               selectionColor={brand.kids}
               placeholder="Write your note here..."
-              placeholderTextColor={colors.textTertiary}
+              placeholderTextColor={colors.textMuted}
               value={noteText}
               onChangeText={setNoteText}
               multiline
@@ -166,7 +168,7 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
                 disabled={!noteText.trim()}
               >
                 <Text style={styles.submitText}>Add Note</Text>
-                <Ionicons name="send" size={16} color={colors.textOnAccent} />
+                <Ionicons name="send" size={16} color={colors.textInverse} />
               </Pressable>
             </View>
           </View>
@@ -176,7 +178,7 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
   )
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: {},
 
   // Add button
@@ -214,7 +216,7 @@ const styles = StyleSheet.create({
   },
   emptyDesc: {
     fontSize: 13,
-    color: colors.textTertiary,
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,
@@ -244,7 +246,7 @@ const styles = StyleSheet.create({
   },
   noteTime: {
     fontSize: 11,
-    color: colors.textTertiary,
+    color: colors.textMuted,
   },
   noteContent: {
     fontSize: 15,
@@ -256,7 +258,7 @@ const styles = StyleSheet.create({
   noteAuthor: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.textTertiary,
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -300,7 +302,7 @@ const styles = StyleSheet.create({
   modalLabel: {
     fontSize: 10,
     fontWeight: '900',
-    color: colors.textTertiary,
+    color: colors.textMuted,
     letterSpacing: 3,
     textTransform: 'uppercase',
     marginBottom: 10,
@@ -326,7 +328,7 @@ const styles = StyleSheet.create({
   topicChipText: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.textTertiary,
+    color: colors.textMuted,
     textTransform: 'uppercase',
   },
 
@@ -378,7 +380,7 @@ const styles = StyleSheet.create({
   submitText: {
     fontSize: 14,
     fontWeight: '900',
-    color: colors.textOnAccent,
+    color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },

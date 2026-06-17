@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   View, Text, FlatList, TextInput, Pressable, StyleSheet,
   KeyboardAvoidingView, Platform,
@@ -8,9 +8,11 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getReplies, postReply, type Reply } from '../../../lib/channels'
 import { CosmicBackground } from '../../../components/ui/CosmicBackground'
-import { colors, brand, typography, spacing, borderRadius } from '../../../constants/theme'
+import { brand, typography, spacing, borderRadius, useTheme } from '../../../constants/theme'
 
 export default function ThreadDetail() {
+  const { colors } = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const [replies, setReplies] = useState<Reply[]>([])
@@ -80,7 +82,7 @@ export default function ThreadDetail() {
             style={styles.input}
             selectionColor={brand.kids}
             placeholder="Write a reply..."
-            placeholderTextColor={colors.textTertiary}
+            placeholderTextColor={colors.textMuted}
             value={input}
             onChangeText={setInput}
             multiline
@@ -90,7 +92,7 @@ export default function ThreadDetail() {
             disabled={loading || !input.trim()}
             style={[styles.sendBtn, (!input.trim() || loading) && { opacity: 0.4 }]}
           >
-            <Ionicons name="send" size={16} color={colors.textOnAccent} />
+            <Ionicons name="send" size={16} color={colors.textInverse} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -98,7 +100,7 @@ export default function ThreadDetail() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -141,7 +143,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.surfaceRaised,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -153,7 +155,7 @@ const styles = StyleSheet.create({
   },
   replyTime: {
     fontSize: 11,
-    color: colors.textTertiary,
+    color: colors.textMuted,
   },
   replyContent: {
     fontSize: 14,
@@ -166,7 +168,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: colors.textTertiary,
+    color: colors.textMuted,
   },
   inputBar: {
     flexDirection: 'row',
@@ -175,7 +177,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    backgroundColor: colors.background,
+    backgroundColor: colors.bg,
   },
   input: {
     flex: 1,

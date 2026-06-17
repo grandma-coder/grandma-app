@@ -1,11 +1,40 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, Alert, StyleSheet, ActivityIndicator } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../lib/supabase'
-import { colors } from '../constants/theme'
+import { useTheme } from '../constants/theme'
 
 export default function AcceptInvite() {
+  const { colors } = useTheme()
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1, backgroundColor: colors.bg,
+      paddingHorizontal: 24, paddingTop: 80, alignItems: 'center',
+    },
+    backButton: {
+      position: 'absolute', top: 60, left: 24,
+      width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface,
+      justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border,
+    },
+    emoji: { fontSize: 56, marginBottom: 20 },
+    title: { fontSize: 26, fontWeight: '700', color: colors.text, marginBottom: 8, textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' },
+    subtitle: { fontSize: 15, color: colors.textMuted, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
+    permissionsCard: {
+      width: '100%', backgroundColor: colors.surface, borderRadius: 16, padding: 20,
+      borderWidth: 1, borderColor: colors.border, marginBottom: 32, gap: 14,
+    },
+    permissionsTitle: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 4 },
+    permRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    permText: { fontSize: 14, color: colors.textSecondary },
+    button: {
+      width: '100%', backgroundColor: colors.accent, borderRadius: 16,
+      paddingVertical: 16, alignItems: 'center',
+    },
+    buttonText: { color: colors.textInverse, fontSize: 16, fontWeight: '700' },
+    declineButton: { paddingVertical: 16 },
+    declineText: { color: colors.textMuted, fontSize: 14 },
+  }), [colors])
   const params = useLocalSearchParams<{ token: string | string[] }>()
   const token = Array.isArray(params.token) ? params.token[0] : params.token
   const [loading, setLoading] = useState(false)
@@ -112,7 +141,7 @@ export default function AcceptInvite() {
         style={[styles.button, loading && { opacity: 0.6 }]}
       >
         {loading ? (
-          <ActivityIndicator color={colors.textOnAccent} />
+          <ActivityIndicator color={colors.textInverse} />
         ) : (
           <Text style={styles.buttonText}>Accept invite</Text>
         )}
@@ -124,32 +153,3 @@ export default function AcceptInvite() {
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1, backgroundColor: colors.background,
-    paddingHorizontal: 24, paddingTop: 80, alignItems: 'center',
-  },
-  backButton: {
-    position: 'absolute', top: 60, left: 24,
-    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface,
-    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border,
-  },
-  emoji: { fontSize: 56, marginBottom: 20 },
-  title: { fontSize: 26, fontWeight: '700', color: colors.text, marginBottom: 8, textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' },
-  subtitle: { fontSize: 15, color: colors.textTertiary, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
-  permissionsCard: {
-    width: '100%', backgroundColor: colors.surface, borderRadius: 16, padding: 20,
-    borderWidth: 1, borderColor: colors.border, marginBottom: 32, gap: 14,
-  },
-  permissionsTitle: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 4 },
-  permRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  permText: { fontSize: 14, color: colors.textSecondary },
-  button: {
-    width: '100%', backgroundColor: colors.accent, borderRadius: 16,
-    paddingVertical: 16, alignItems: 'center',
-  },
-  buttonText: { color: colors.textOnAccent, fontSize: 16, fontWeight: '700' },
-  declineButton: { paddingVertical: 16 },
-  declineText: { color: colors.textTertiary, fontSize: 14 },
-})
