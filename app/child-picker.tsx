@@ -7,15 +7,15 @@ import type { ChildWithRole } from '../types'
 import { useTheme } from '../constants/theme'
 
 export default function ChildPicker() {
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
 
   const ROLE_COLORS: Record<string, string> = {
     parent: colors.primaryTint,
-    nanny: 'rgba(196, 181, 253, 0.15)',
-    family: 'rgba(253, 186, 116, 0.15)',
+    nanny: stickers.lilacSoft,
+    family: stickers.peachSoft,
   }
 
   const styles = useMemo(() => StyleSheet.create({

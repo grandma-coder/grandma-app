@@ -4,7 +4,6 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getThreads, type Thread } from '../../lib/channels'
-import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { ThreadCard } from '../../components/channels/ThreadCard'
 import { typography, spacing, useTheme } from '../../constants/theme'
 
@@ -25,7 +24,7 @@ export default function ChannelDetail() {
   }, [id])
 
   return (
-    <CosmicBackground>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
         <View style={styles.header}>
           <Pressable
@@ -60,7 +59,7 @@ export default function ChannelDetail() {
           />
         )}
       </View>
-    </CosmicBackground>
+    </View>
   )
 }
 

@@ -1,12 +1,33 @@
+/**
+ * Invite Caregiver — cream-paper redesign.
+ *
+ * Sends a caregiver invite for the active child and surfaces a shareable
+ * deep-link. Two states: the invite form (email + relationship role) and the
+ * success view (copyable invite link). This is a visual re-skin — the invite
+ * generation, clipboard share, and navigation logic are unchanged.
+ */
+
 import { useMemo, useState } from 'react'
-import { View, Text, TextInput, Pressable, Alert, StyleSheet, ActivityIndicator } from 'react-native'
+import {
+  View,
+  TextInput,
+  Pressable,
+  Alert,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native'
 import { router } from 'expo-router'
 import * as Clipboard from 'expo-clipboard'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
-import { borderRadius, shadows, useTheme } from '../constants/theme'
+import { useTheme, radius, spacing } from '../constants/theme'
+import { Display, MonoCaps, Body } from '../components/ui/Typography'
+import { PaperCard } from '../components/ui/PaperCard'
+import { PillButton } from '../components/ui/PillButton'
 import { useSavedToast } from '../components/ui/SavedToast'
 import { MissingStickers } from '../components/stickers/MissingStickers'
 
@@ -18,163 +39,104 @@ const ROLES = [
 export default function InviteCaregiver() {
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
-  const { colors, brand, stickers } = useTheme()
+  const { colors, font, stickers, brand } = useTheme()
+
   const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.bg,
-      paddingHorizontal: 24,
+    },
+    scroll: {
+      paddingHorizontal: spacing.lg,
+      gap: 14,
     },
     header: {
       alignItems: 'flex-end',
-      marginBottom: 24,
+      marginBottom: spacing.sm,
     },
     closeButton: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      backgroundColor: colors.surfaceGlass,
+      width: 38,
+      height: 38,
+      borderRadius: radius.full,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
       justifyContent: 'center',
       alignItems: 'center',
     },
-    title: {
-      fontSize: 48,
-      fontWeight: '900',
-      color: colors.text,
-      marginBottom: 12,
-      textTransform: 'uppercase',
-      lineHeight: 50,
-      letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' },
     subtitle: {
-      fontSize: 15,
-      color: colors.textMuted,
-      marginBottom: 32,
-      lineHeight: 22,
+      marginTop: 8,
+      marginBottom: 12,
     },
-    label: {
-      fontSize: 10,
-      fontWeight: '900',
-      color: colors.textMuted,
-      letterSpacing: 3,
-      textTransform: 'uppercase',
-      marginBottom: 10,
-      fontFamily: undefined, // mono style handled by letterSpacing
+    field: {
+      gap: 8,
     },
-    inputWrapper: {
-      position: 'relative' as const,
-      marginBottom: 28,
-    },
-    input: {
-      backgroundColor: colors.surfaceGlass,
+    inputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: borderRadius.xl,
-      paddingHorizontal: 24,
-      paddingRight: 56,
-      height: 80,
-      fontSize: 16,
-      fontWeight: '700',
-      color: colors.text,
+      borderRadius: radius.md,
+      paddingHorizontal: 16,
+      height: 56,
+      gap: 10,
     },
-    inputIconBox: {
-      position: 'absolute' as const,
-      right: 24,
-      top: 0,
-      bottom: 0,
-      justifyContent: 'center',
+    inputInner: {
+      flex: 1,
+      fontSize: 15,
+      paddingVertical: 0,
     },
     roleRow: {
       flexDirection: 'row',
       gap: 12,
-      marginBottom: 32,
     },
     roleChip: {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
       gap: 10,
-      height: 128,
-      borderRadius: borderRadius.xl,
-      backgroundColor: colors.surfaceGlass,
-      borderWidth: 2,
+      paddingVertical: 22,
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
       borderColor: colors.border,
     },
     roleChipActive: {
-      borderColor: stickers.yellow,
-      backgroundColor: 'rgba(244, 253, 80, 0.06)',
-      ...shadows.pop,
+      borderColor: colors.text,
+      backgroundColor: stickers.yellowSoft,
     },
-    roleLabel: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: colors.textMuted,
+    footer: {
+      marginTop: spacing.lg,
+      alignItems: 'center',
     },
-    roleLabelActive: {
-      color: stickers.yellow,
+    successWrap: {
+      alignItems: 'center',
+      paddingTop: spacing.xl,
+      gap: 6,
     },
-    sendButton: {
-      backgroundColor: stickers.yellow,
-      borderRadius: borderRadius['2xl'],
-      height: 96,
+    stickerBadge: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: stickers.greenSoft,
+      alignItems: 'center',
       justifyContent: 'center',
-      alignItems: 'center',
-      ...shadows.pop,
+      marginBottom: spacing.md,
     },
-    sendButtonInner: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10,
-    },
-    sendText: {
-      color: '#1A1030',
-      fontSize: 16,
-      fontWeight: '900',
-      textTransform: 'uppercase',
-      letterSpacing: 1.5,
-    },
-    footerText: {
-      fontSize: 10,
-      fontWeight: '600',
-      color: colors.textMuted,
-      letterSpacing: 2,
-      textTransform: 'uppercase',
-      textAlign: 'center',
-      marginTop: 24,
-    },
-    successContainer: {
-      alignItems: 'center',
-      paddingTop: 40,
-    },
-    successEmoji: {
-      fontSize: 48,
-      marginBottom: 16, fontFamily: 'Fraunces_600SemiBold' },
     linkCard: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
       width: '100%',
-      backgroundColor: colors.surface,
-      borderRadius: borderRadius.sm,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: colors.border,
-      marginTop: 20,
-      marginBottom: 24,
-    },
-    linkText: {
-      flex: 1,
-      fontSize: 13,
-      color: colors.textMuted,
+      marginTop: spacing.lg,
+      marginBottom: spacing.md,
     },
     doneButton: {
       paddingVertical: 12,
     },
-    doneText: {
-      color: colors.accent,
-      fontSize: 16,
-      fontWeight: '600',
-    },
-  }), [colors, brand, stickers])
+  }), [colors, font, stickers, brand])
+
   const child = useChildStore((s) => s.activeChild)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('nanny')
@@ -217,103 +179,148 @@ export default function InviteCaregiver() {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }]}>
-      {/* Close button top-right */}
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.closeButton}>
-          <Ionicons name="close" size={22} color={colors.textMuted} />
-        </Pressable>
-      </View>
-
-      {!inviteLink ? (
-        <>
-          {/* Title */}
-          <Text style={styles.title}>
-            Invite a{'\n'}
-            <Text style={{ color: stickers.yellow }}>caregiver</Text>
-          </Text>
-          <Text style={styles.subtitle}>
-            They'll get access to {child?.name ?? "Rio"}'s profile and your personalized parenting wisdom guide.
-          </Text>
-
-          {/* Email input */}
-          <Text style={styles.label}>Email Address</Text>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.input}
-              selectionColor={brand.kids}
-              placeholder="nanny@email.com"
-              placeholderTextColor={colors.textMuted}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <View style={styles.inputIconBox}>
-              <Ionicons name="mail-outline" size={20} color={colors.textMuted} />
-            </View>
+    <View style={styles.container}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={[
+            styles.scroll,
+            { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xl },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Close button top-right */}
+          <View style={styles.header}>
+            <Pressable
+              onPress={() => router.back()}
+              style={styles.closeButton}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
+              <Ionicons name="close" size={20} color={colors.textMuted} />
+            </Pressable>
           </View>
 
-          {/* Role selection */}
-          <Text style={styles.label}>Select Relationship Role</Text>
-          <View style={styles.roleRow}>
-            {ROLES.map((r) => {
-              const isActive = role === r.id
-              return (
-                <Pressable
-                  key={r.id}
-                  onPress={() => setRole(r.id)}
-                  style={[
-                    styles.roleChip,
-                    isActive && styles.roleChipActive,
-                  ]}
-                >
-                  <r.Sticker size={36} />
-                  <Text style={[styles.roleLabel, isActive && styles.roleLabelActive]}>
-                    {r.label}
-                  </Text>
-                </Pressable>
-              )
-            })}
-          </View>
+          {!inviteLink ? (
+            <>
+              {/* Title */}
+              <Display size={40} color={colors.text}>
+                Invite a caregiver
+              </Display>
+              <Body size={15} color={colors.textMuted} style={styles.subtitle}>
+                They'll get access to {child?.name ?? 'your child'}'s profile and
+                your personalized parenting wisdom guide.
+              </Body>
 
-          {/* Send button */}
-          <Pressable
-            onPress={handleInvite}
-            disabled={loading}
-            style={[styles.sendButton, loading && { opacity: 0.6 }]}
-          >
-            {loading ? (
-              <ActivityIndicator color="#1A1030" />
-            ) : (
-              <View style={styles.sendButtonInner}>
-                <Text style={styles.sendText}>Send Invite</Text>
-                <Ionicons name="send" size={18} color="#1A1030" />
+              {/* Email input */}
+              <View style={styles.field}>
+                <MonoCaps color={colors.textMuted}>Email Address</MonoCaps>
+                <View style={styles.inputRow}>
+                  <Ionicons name="mail-outline" size={18} color={colors.textMuted} />
+                  <TextInput
+                    style={[styles.inputInner, { color: colors.text, fontFamily: font.body }]}
+                    selectionColor={brand.secondary}
+                    placeholder="nanny@email.com"
+                    placeholderTextColor={colors.textMuted}
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                </View>
               </View>
-            )}
-          </Pressable>
 
-          {/* Footer */}
-          <Text style={styles.footerText}>Secured by Parental System V.2</Text>
-        </>
-      ) : (
-        <View style={styles.successContainer}>
-          <Text style={styles.successEmoji}>🎉</Text>
-          <Text style={styles.title}>Invite sent!</Text>
-          <Text style={styles.subtitle}>
-            Share this link with {email}
-          </Text>
+              {/* Role selection */}
+              <View style={styles.field}>
+                <MonoCaps color={colors.textMuted}>Relationship Role</MonoCaps>
+                <View style={styles.roleRow}>
+                  {ROLES.map((r) => {
+                    const isActive = role === r.id
+                    return (
+                      <Pressable
+                        key={r.id}
+                        onPress={() => setRole(r.id)}
+                        style={[styles.roleChip, isActive && styles.roleChipActive]}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Select role ${r.label}`}
+                      >
+                        <r.Sticker size={36} />
+                        <Body
+                          size={15}
+                          color={isActive ? colors.text : colors.textMuted}
+                          style={{ fontFamily: font.bodySemiBold }}
+                        >
+                          {r.label}
+                        </Body>
+                      </Pressable>
+                    )
+                  })}
+                </View>
+              </View>
 
-          <Pressable onPress={copyLink} style={styles.linkCard}>
-            <Text style={styles.linkText} numberOfLines={2}>{inviteLink}</Text>
-            <Ionicons name="copy-outline" size={20} color={colors.accent} />
-          </Pressable>
+              {/* Send button */}
+              <PillButton
+                label={loading ? 'Sending…' : 'Send Invite'}
+                variant="ink"
+                onPress={handleInvite}
+                disabled={loading}
+                loading={loading}
+                height={72}
+                trailing={
+                  !loading ? (
+                    <Ionicons name="send" size={16} color={colors.bg} />
+                  ) : undefined
+                }
+                style={{ marginTop: spacing.sm }}
+              />
 
-          <Pressable onPress={() => router.back()} style={styles.doneButton}>
-            <Text style={styles.doneText}>Done</Text>
-          </Pressable>
-        </View>
-      )}
+              {/* Footer */}
+              <View style={styles.footer}>
+                <MonoCaps color={colors.textFaint}>Secured by Parental System V.2</MonoCaps>
+              </View>
+            </>
+          ) : (
+            <View style={styles.successWrap}>
+              <View style={styles.stickerBadge}>
+                <Ionicons name="checkmark" size={36} color={stickers.greenInk} />
+              </View>
+              <Display size={36} align="center" color={colors.text}>
+                Invite sent!
+              </Display>
+              <Body size={15} align="center" color={colors.textMuted}>
+                Share this link with {email}
+              </Body>
+
+              <Pressable onPress={copyLink} style={styles.linkCard} accessibilityRole="button" accessibilityLabel="Copy invite link">
+                <PaperCard flat padding={16} radius={radius.md} style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <Body size={13} color={colors.textMuted} numberOfLines={2} style={{ flex: 1 }}>
+                      {inviteLink}
+                    </Body>
+                    <Ionicons name="copy-outline" size={20} color={colors.primary} />
+                  </View>
+                </PaperCard>
+              </Pressable>
+
+              <Pressable
+                onPress={() => router.back()}
+                style={styles.doneButton}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Done"
+              >
+                <Body size={16} color={colors.primary} style={{ fontFamily: font.bodySemiBold }}>
+                  Done
+                </Body>
+              </Pressable>
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   )
 }

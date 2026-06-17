@@ -24,9 +24,9 @@ export default function ManageCaregivers() {
   const { colors, stickers } = useTheme()
 
   const STATUS_COLORS: Record<string, string> = {
-    pending: 'rgba(253, 186, 116, 0.15)',
+    pending: stickers.peachSoft,
     accepted: colors.primaryTint,
-    revoked: 'rgba(248, 113, 113, 0.15)',
+    revoked: colors.surfaceRaised,
   }
 
   const STATUS_TEXT_COLORS: Record<string, string> = {
@@ -201,7 +201,7 @@ export default function ManageCaregivers() {
                       </Text>
                     </View>
                     {item.is_locked && (
-                      <View style={[styles.statusBadge, { backgroundColor: 'rgba(253, 186, 116, 0.15)' }]}>
+                      <View style={[styles.statusBadge, { backgroundColor: stickers.peachSoft }]}>
                         <Text style={[styles.statusText, { color: colors.warning }]}>read-only</Text>
                       </View>
                     )}

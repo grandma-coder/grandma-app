@@ -20,7 +20,6 @@ import { toDateStr } from '../lib/cycleLogic'
 import { scanImage, ScanLimitReachedError } from '../lib/scan'
 import { supabase } from '../lib/supabase'
 import { checkPremium } from '../lib/revenue'
-import { CosmicBackground } from '../components/ui/CosmicBackground'
 import ResultCard from '../components/ui/ResultCard'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { spacing, borderRadius, useTheme } from '../constants/theme'
@@ -297,7 +296,7 @@ export default function Scan() {
   }
 
   return (
-    <CosmicBackground>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
         {/* Header */}
         <View style={styles.header}>
@@ -387,6 +386,6 @@ export default function Scan() {
           />
         )}
       </View>
-    </CosmicBackground>
+    </View>
   )
 }

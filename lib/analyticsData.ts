@@ -181,13 +181,26 @@ function getRangeDays(fromISO: string, toISO: string): { dates: string[]; labels
   return getLastNDays(diffDays, to)
 }
 
-function parseValue(value: string | null): any {
+// A log's `value` column is heterogeneous JSON across log types (food/sleep/
+// diaper/activity/skip each carry different keys), or a bare string (mood), or
+// null. Return `unknown` so callers must narrow — no unchecked `any` coercions.
+type ParsedLogValue = Record<string, unknown> | unknown[] | string | number | boolean | null
+
+function parseValue(value: string | null): ParsedLogValue {
   if (!value) return null
   try {
-    return JSON.parse(value)
+    return JSON.parse(value) as ParsedLogValue
   } catch {
     return value
   }
+}
+
+// Narrow a parsed value to a plain object (rejects arrays/primitives/null),
+// replicating the `val && typeof val === 'object'` guard the call sites use.
+function asRecord(value: ParsedLogValue): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null
 }
 
 // ─── Transform Functions ──────────────────────────────────────────────────────
@@ -251,26 +264,25 @@ function buildNutritionData(
     if (dayIdx === -1) continue
 
     mealFreq[dayIdx]++
-    const val = parseValue(log.value)
+    const val = asRecord(parseValue(log.value))
 
-    const feedType: 'breast' | 'bottle' | 'solids' | undefined =
-      val && typeof val === 'object' ? val.feedType : undefined
+    const feedType = val ? val.feedType : undefined
 
     if (feedType === 'breast') {
       breastSessions[dayIdx]++
     } else if (feedType === 'bottle') {
       bottleSessions[dayIdx]++
-      const amount = parseFloat(val?.amount ?? '')
+      const amount = parseFloat(String(val?.amount ?? ''))
       if (!isNaN(amount)) bottleMl[dayIdx] += amount
     }
 
     // Solids quality — only meaningful for mixed/solids phases.
-    if (val && typeof val === 'object' && val.quality) {
+    if (val && val.quality) {
       if (val.quality === 'ate_well') good[dayIdx]++
       else if (val.quality === 'ate_little') little[dayIdx]++
       else if (val.quality === 'did_not_eat') none[dayIdx]++
 
-      if (val.newFoodName) {
+      if (typeof val.newFoodName === 'string') {
         foodCounts[val.newFoodName] = (foodCounts[val.newFoodName] || 0) + 1
       }
     }
@@ -315,18 +327,18 @@ function buildSleepData(logs: ChildLog[], dates: string[], labels: string[]): Sl
   let sleepDays = 0
 
   for (const log of sleepLogs) {
-    const val = parseValue(log.value)
+    const val = asRecord(parseValue(log.value))
     const dayIdx = dates.indexOf(log.date)
 
-    if (val && typeof val === 'object') {
-      const hours = parseFloat(val.duration) || 0
+    if (val) {
+      const hours = parseFloat(String(val.duration)) || 0
       if (dayIdx !== -1) {
         dailyHours[dayIdx] += hours
       }
       totalHours += hours
       sleepDays++
 
-      const q = (val.quality || '').toLowerCase()
+      const q = String(val.quality || '').toLowerCase()
       if (q === 'great') qualityCounts.great++
       else if (q === 'good') qualityCounts.good++
       else if (q === 'restless') qualityCounts.restless++
@@ -355,7 +367,7 @@ function buildMoodData(logs: ChildLog[], dates: string[], labels: string[]): Moo
   const moodTotals: Record<string, number> = {}
 
   for (const log of moodLogs) {
-    const mood = (typeof log.value === 'string' ? log.value : parseValue(log.value)) as string
+    const mood = typeof log.value === 'string' ? log.value : parseValue(log.value)
     if (!mood || typeof mood !== 'string') continue
 
     const moodKey = mood.toLowerCase().trim().replace(/['"]/g, '')
@@ -481,9 +493,9 @@ function buildDiaperData(logs: ChildLog[], dates: string[], labels: string[]): D
     const dayIdx = dates.indexOf(log.date)
     if (dayIdx !== -1) dailyCounts[dayIdx]++
 
-    const val = parseValue(log.value)
-    if (val && typeof val === 'object') {
-      const dt = (val.diaperType || '') as keyof typeof typeCounts
+    const val = asRecord(parseValue(log.value))
+    if (val) {
+      const dt = String(val.diaperType || '') as keyof typeof typeCounts
       if (dt in typeCounts) typeCounts[dt]++
 
       if (val.color) {
@@ -661,8 +673,8 @@ function buildRoutineComplianceData(logs: ChildLog[], dates: string[], labels: s
     const dayIdx = dates.indexOf(log.date)
     if (dayIdx !== -1) weeklySkips[dayIdx]++
     try {
-      const val = parseValue(log.value)
-      if (val?.routineName) {
+      const val = asRecord(parseValue(log.value))
+      if (val && typeof val.routineName === 'string') {
         routineSkipCounts[val.routineName] = (routineSkipCounts[val.routineName] || 0) + 1
       }
     } catch {}
@@ -679,7 +691,7 @@ function buildRoutineComplianceData(logs: ChildLog[], dates: string[], labels: s
   const doneRoutineLogs = logs.filter((l) => {
     if (l.type === 'skipped' || !dates.includes(l.date)) return false
     try {
-      const v = parseValue(l.value)
+      const v = asRecord(parseValue(l.value))
       return !!v?.routineId
     } catch {
       return false
@@ -748,8 +760,8 @@ function buildActivityData(logs: ChildLog[], dates: string[], labels: string[]):
     const dayIdx = dates.indexOf(log.date)
     if (dayIdx !== -1) dailySessions[dayIdx]++
     try {
-      const parsed = parseValue(log.value)
-      if (parsed?.activityType) typeSet.add(parsed.activityType as string)
+      const parsed = asRecord(parseValue(log.value))
+      if (typeof parsed?.activityType === 'string') typeSet.add(parsed.activityType)
       if (parsed?.duration) {
         const mins = parseFloat(String(parsed.duration))
         if (!isNaN(mins)) totalMinutes += mins

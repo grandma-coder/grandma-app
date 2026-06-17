@@ -603,6 +603,7 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
   const insets = useSafeAreaInsets()
   const sessions = useGrandmaHistoryStore((s) => s.sessions)
   const deleteSession = useGrandmaHistoryStore((s) => s.deleteSession)
+  const hydrated = useGrandmaHistoryStore((s) => s.hydrated)
 
   // Sticker palette
   const ST_INK = '#141313'
@@ -643,7 +644,11 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
         </Pressable>
       </View>
 
-      {sessions.length === 0 ? (
+      {/* Wait for AsyncStorage to rehydrate before deciding empty vs. list —
+          otherwise the first render flashes "No past chats yet". */}
+      {!hydrated ? (
+        <View style={histStyles.empty} />
+      ) : sessions.length === 0 ? (
         <View style={histStyles.empty}>
           <MessageCircle size={48} color={ink3} strokeWidth={1.5} />
           <Text style={{ fontSize: 22, fontFamily: 'Fraunces_600SemiBold', color: ink, textAlign: 'center', letterSpacing: -0.4 }}>
@@ -934,7 +939,11 @@ export function GrandmaTalk() {
       messages,
     }
     upsertSession(session)
-  }, [messages])
+    // Persist frequency is intentionally driven by `messages` (P2-23: streaming
+    // churns `messages`, so this already fires per chunk — do not change that
+    // here). The other deps only guard against stale closures saving an outdated
+    // behavior/childName; none are mutated by this effect, so no extra thrash.
+  }, [messages, chatBehavior, childName, upsertSession])
 
   // Refresh greeting when behavior or active child changes — only if user hasn't sent anything yet
   useEffect(() => {

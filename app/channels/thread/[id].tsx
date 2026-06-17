@@ -7,7 +7,6 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getReplies, postReply, type Reply } from '../../../lib/channels'
-import { CosmicBackground } from '../../../components/ui/CosmicBackground'
 import { brand, typography, spacing, borderRadius, useTheme } from '../../../constants/theme'
 
 export default function ThreadDetail() {
@@ -38,7 +37,7 @@ export default function ThreadDetail() {
   }
 
   return (
-    <CosmicBackground>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -96,7 +95,7 @@ export default function ThreadDetail() {
           </Pressable>
         </View>
       </KeyboardAvoidingView>
-    </CosmicBackground>
+    </View>
   )
 }
 

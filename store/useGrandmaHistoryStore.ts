@@ -24,15 +24,18 @@ export interface ChatSession {
 
 interface GrandmaHistoryStore {
   sessions: ChatSession[]
+  hydrated: boolean
   upsertSession: (session: ChatSession) => void
   deleteSession: (id: string) => void
   clearAll: () => void
+  setHydrated: (hydrated: boolean) => void
 }
 
 export const useGrandmaHistoryStore = create<GrandmaHistoryStore>()(
   persist(
     (set) => ({
       sessions: [],
+      hydrated: false,
 
       upsertSession: (session) =>
         set((state) => {
@@ -53,10 +56,19 @@ export const useGrandmaHistoryStore = create<GrandmaHistoryStore>()(
         set((state) => ({ sessions: state.sessions.filter((s) => s.id !== id) })),
 
       clearAll: () => set({ sessions: [] }),
+
+      setHydrated: (hydrated) => set({ hydrated }),
     }),
     {
       name: 'grandma-chat-history',
       storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({ sessions: state.sessions }),
+      // Flip the flag via setState so it always fires, even on a fresh install
+      // where `state` is undefined (nothing persisted yet). See useBehaviorStore
+      // for the canonical pattern + the "week 1 → week 40 flash" incident.
+      onRehydrateStorage: () => () => {
+        useGrandmaHistoryStore.setState({ hydrated: true })
+      },
     }
   )
 )

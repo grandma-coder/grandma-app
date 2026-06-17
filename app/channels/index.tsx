@@ -6,7 +6,6 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getChannels } from '../../lib/channels'
 import { useChannelsStore } from '../../store/useChannelsStore'
-import { CosmicBackground } from '../../components/ui/CosmicBackground'
 import { ChannelCard } from '../../components/channels/ChannelCard'
 import { typography, spacing, useTheme } from '../../constants/theme'
 import type { Channel } from '../../lib/channels'
@@ -34,7 +33,7 @@ export default function ChannelBrowser() {
   }
 
   return (
-    <CosmicBackground>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -80,7 +79,7 @@ export default function ChannelBrowser() {
           />
         )}
       </View>
-    </CosmicBackground>
+    </View>
   )
 }
 

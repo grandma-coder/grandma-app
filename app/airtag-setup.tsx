@@ -3,7 +3,6 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { CosmicBackground } from '../components/ui/CosmicBackground'
 import { PaperCard } from '../components/ui/PaperCard'
 import { PillButton } from '../components/ui/PillButton'
 import { typography, spacing, useTheme } from '../constants/theme'
@@ -103,7 +102,7 @@ export default function AirTagSetup() {
   }), [colors])
 
   return (
-    <CosmicBackground>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={[styles.container, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }]}>
         <Pressable onPress={() => router.back()} style={styles.closeBtn}>
           <Ionicons name="close" size={22} color={colors.text} />
@@ -169,6 +168,6 @@ export default function AirTagSetup() {
           </Text>
         </View>
       </View>
-    </CosmicBackground>
+    </View>
   )
 }
