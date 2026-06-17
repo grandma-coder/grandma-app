@@ -587,8 +587,13 @@ export default function CareCircleScreen() {
     const member = pendingRemove
     if (!member) return
     setPendingRemove(null)
-    for (const id of member.rowIds) {
-      await supabase.from('child_caregivers').update({ status: 'revoked' }).eq('id', id)
+    try {
+      for (const id of member.rowIds) {
+        const { error } = await supabase.from('child_caregivers').update({ status: 'revoked' }).eq('id', id)
+        if (error) throw error
+      }
+    } catch (e: any) {
+      Alert.alert("Couldn’t remove caregiver", e?.message ?? 'Please try again.')
     }
     loadMembers()
   }

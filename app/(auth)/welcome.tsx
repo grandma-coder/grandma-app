@@ -19,7 +19,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
-import { useTheme, stickers } from '../../constants/theme'
+import { useTheme } from '../../constants/theme'
 import { Burst, Blob, Heart, Flower } from '../../components/ui/Stickers'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
 import {
@@ -31,7 +31,7 @@ import { setPendingInvite } from '../../lib/pendingInvite'
 
 export default function Welcome() {
   const insets = useSafeAreaInsets()
-  const { colors, font, isDark } = useTheme()
+  const { colors, font, stickers } = useTheme()
 
   // A caregiver invite link opened while signed out lands here as
   // ?invite=<token> (see app/accept-invite.tsx). Stash it so the root layout
@@ -65,8 +65,9 @@ export default function Welcome() {
     try {
       setLoading('apple')
       await signInWithApple()
-    } catch (e: any) {
-      if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert('Sign-In Error', e.message)
+    } catch (e: unknown) {
+      const err = e as { code?: string; message?: string }
+      if (err.code !== 'ERR_REQUEST_CANCELED') Alert.alert('Sign-In Error', err.message ?? 'Please try again.')
     } finally {
       setLoading(null)
     }
@@ -76,8 +77,9 @@ export default function Welcome() {
     try {
       setLoading('google')
       await signInWithGoogle()
-    } catch (e: any) {
-      if (e.message !== 'Google sign-in was cancelled or failed') Alert.alert('Sign-In Error', e.message)
+    } catch (e: unknown) {
+      const err = e as { message?: string }
+      if (err.message !== 'Google sign-in was cancelled or failed') Alert.alert('Sign-In Error', err.message ?? 'Please try again.')
     } finally {
       setLoading(null)
     }
@@ -94,20 +96,20 @@ export default function Welcome() {
     <View style={[styles.root, { backgroundColor: bg }]}>
       {/* ── Decorative stickers (positioned absolutely) ── */}
       <View style={[styles.stickerTL, { transform: [{ rotate: '-18deg' }] }]}>
-        <Blob size={110} fill={isDark ? stickers.yellow : '#F5D652'} variant={1} />
+        <Blob size={110} fill={stickers.yellow} variant={1} />
       </View>
       <View style={[styles.stickerTR, { transform: [{ rotate: '24deg' }] }]}>
-        <Burst size={90} fill={isDark ? stickers.pink : '#F2B2C7'} />
+        <Burst size={90} fill={stickers.pink} />
       </View>
       <View style={[styles.stickerMidL, { transform: [{ rotate: '-8deg' }] }]}>
         <Flower
           size={80}
-          petal={isDark ? stickers.lilac : '#C8B6E8'}
-          center={isDark ? stickers.yellow : '#F5D652'}
+          petal={stickers.lilac}
+          center={stickers.yellow}
         />
       </View>
       <View style={styles.stickerMidR}>
-        <Heart size={70} fill={isDark ? stickers.blue : '#9DC3E8'} />
+        <Heart size={70} fill={stickers.blue} />
       </View>
 
       {/* ── Content ── */}

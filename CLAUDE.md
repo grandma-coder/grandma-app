@@ -280,7 +280,7 @@ supabase/
 | `usePregnancyStore` | — | Week, weight, mood, symptoms |
 | `useFoodStore` | — | Food entries + ratings |
 | `useVaultStore` | — | Documents + emergency card |
-| `useEmergencyInsuranceStore` | ✅ | Insurance card |
+| `useEmergencyInsuranceStore` | — | Insurance card (intentionally not persisted — always fetched fresh from Supabase) |
 | `useExchangeStore` | — | Marketplace listings + saved |
 | `useChannelsStore` | — | Channels + threads |
 | `useBehaviorStore` | ✅ | Journey modes & behaviors per user |
