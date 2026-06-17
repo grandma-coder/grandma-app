@@ -533,7 +533,6 @@ export default function TabLayout() {
           name="vault"
           options={{ title: '', href: config.tabs.vault.visible ? undefined : null }}
         />
-        <Tabs.Screen name="exchange" options={{ title: '', href: null }} />
         <Tabs.Screen name="settings" options={{ title: '' }} />
       </Tabs>
     </Animated.View>

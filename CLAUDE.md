@@ -67,7 +67,7 @@ The app's entire UI is driven by `useModeStore`. Every screen, tab label, pillar
 | **Home** | Cycle phase ring + hormone chart + fertile window | Week ring + baby size + TodaySummaryCard + Affirmations + Reminders + Appointments | Sleep circle, mood, calories, growth leaps + pillar grid |
 | **Planner** | Cycle / Checklist / Appointments | Timeline / Journey / Appointments | Timeline / Food / Notes |
 | **Library** | 6 fertility pillars | 9 pregnancy pillars | 9 kids pillars |
-| **Vault** | Hidden | Ultrasound, tests, birth plan | Exams, hospital, vaccines |
+| **Vault** | Repurposed as **Analytics** — the vault tab slot surfaces cycle/fertility insights (`CycleAnalytics`), not documents (no medical vault for pre-preg) | Ultrasound, tests, birth plan | Exams, hospital, vaccines |
 
 Mode is persisted via AsyncStorage. Users switch via `ModeSwitcher` on the home screen.
 

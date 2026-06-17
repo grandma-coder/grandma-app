@@ -14,7 +14,6 @@ import { useChatStore } from '../store/useChatStore'
 import { useFoodStore } from '../store/useFoodStore'
 import { useVaultStore } from '../store/useVaultStore'
 import { useEmergencyInsuranceStore } from '../store/useEmergencyInsuranceStore'
-import { useExchangeStore } from '../store/useExchangeStore'
 import { useChannelsStore } from '../store/useChannelsStore'
 import { useOnboardingStore } from '../store/useOnboardingStore'
 import { useCycleOnboardingStore } from '../store/useCycleOnboardingStore'
@@ -111,7 +110,6 @@ export async function signOut(scope: Scope = 'local'): Promise<void> {
     useFoodStore,
     useVaultStore,
     useEmergencyInsuranceStore,
-    useExchangeStore,
     useChannelsStore,
     useOnboardingStore,
     useCycleOnboardingStore,
