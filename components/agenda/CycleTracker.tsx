@@ -13,8 +13,8 @@ interface CycleTrackerProps {
 }
 
 const QUICK_LOGS = [
-  { type: 'period_start', label: 'Period Started', icon: 'water-outline', color: '#FF6B6B' },
-  { type: 'period_end', label: 'Period Ended', icon: 'water-outline', color: '#FFA07A' },
+  { type: 'period_start', label: 'Period Started', icon: 'water-outline', color: brand.phase.menstrual },
+  { type: 'period_end', label: 'Period Ended', icon: 'water-outline', color: stickers.peach },
   { type: 'ovulation', label: 'Ovulation Sign', icon: 'flower-outline', color: stickers.green },
   { type: 'symptom', label: 'Symptom', icon: 'pulse-outline', color: stickers.yellow },
   { type: 'basal_temp', label: 'Basal Temp', icon: 'thermometer-outline', color: brand.kids },
@@ -22,17 +22,17 @@ const QUICK_LOGS = [
 ]
 
 const SYMPTOM_OPTIONS = [
-  { id: 'cramps', label: 'Cramps', icon: 'flash-outline', color: '#FF6B6B' },
-  { id: 'bloating', label: 'Bloating', icon: 'resize-outline', color: '#FDBA74' },
-  { id: 'headache', label: 'Headache', icon: 'flash-outline', color: '#FDE68A' },
-  { id: 'fatigue', label: 'Fatigue', icon: 'bed-outline', color: '#93C5FD' },
-  { id: 'mood_swings', label: 'Mood Swings', icon: 'happy-outline', color: '#C4B5FD' },
-  { id: 'breast_tenderness', label: 'Breast Pain', icon: 'body-outline', color: '#F9A8D4' },
-  { id: 'acne', label: 'Acne', icon: 'ellipse-outline', color: '#FCA5A5' },
-  { id: 'nausea', label: 'Nausea', icon: 'water-outline', color: '#86EFAC' },
-  { id: 'cm_eggwhite', label: 'CM: Egg White', icon: 'water', color: '#A2FF86' },
-  { id: 'cm_creamy', label: 'CM: Creamy', icon: 'water', color: '#FDE68A' },
-  { id: 'cm_sticky', label: 'CM: Sticky', icon: 'water', color: '#FDBA74' },
+  { id: 'cramps', label: 'Cramps', icon: 'flash-outline', color: brand.phase.menstrual },
+  { id: 'bloating', label: 'Bloating', icon: 'resize-outline', color: stickers.peach },
+  { id: 'headache', label: 'Headache', icon: 'flash-outline', color: stickers.yellow },
+  { id: 'fatigue', label: 'Fatigue', icon: 'bed-outline', color: stickers.blue },
+  { id: 'mood_swings', label: 'Mood Swings', icon: 'happy-outline', color: stickers.lilac },
+  { id: 'breast_tenderness', label: 'Breast Pain', icon: 'body-outline', color: stickers.pink },
+  { id: 'acne', label: 'Acne', icon: 'ellipse-outline', color: stickers.coral },
+  { id: 'nausea', label: 'Nausea', icon: 'water-outline', color: stickers.green },
+  { id: 'cm_eggwhite', label: 'CM: Egg White', icon: 'water', color: stickers.green },
+  { id: 'cm_creamy', label: 'CM: Creamy', icon: 'water', color: stickers.yellow },
+  { id: 'cm_sticky', label: 'CM: Sticky', icon: 'water', color: stickers.peach },
   { id: 'cm_dry', label: 'CM: Dry', icon: 'water-outline', color: colors.textTertiary },
 ]
 

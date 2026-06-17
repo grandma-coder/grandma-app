@@ -10,7 +10,7 @@ import {
 } from 'react-native'
 import { Lock } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme } from '../../constants/theme'
+import { useTheme, brand, stickers } from '../../constants/theme'
 import {
   useBadgeStore,
   BADGE_DEFS,
@@ -22,19 +22,19 @@ import { Display, MonoCaps } from '../../components/ui/Typography'
 import { BadgeIcon } from '../../components/stickers/BadgeIcon'
 
 const SECTIONS: { key: BadgeCategory; label: string; color: string }[] = [
-  { key: 'streak',    label: 'Streaks',    color: '#F59E0B' },
-  { key: 'daily',     label: 'Daily Rewards', color: '#A07FDC' },
-  { key: 'nutrition', label: 'Nutrition',  color: '#A2FF86' },
-  { key: 'sleep',     label: 'Sleep',      color: '#B983FF' },
-  { key: 'mood',      label: 'Mood',       color: '#FF8AD8' },
-  { key: 'health',    label: 'Health',     color: '#4D96FF' },
-  { key: 'growth',    label: 'Growth',     color: '#F59E0B' },
-  { key: 'community', label: 'Community',  color: '#7048B8' },
-  { key: 'milestone', label: 'Milestones', color: '#FF6B35' },
+  { key: 'streak',    label: 'Streaks',    color: brand.accent },
+  { key: 'daily',     label: 'Daily Rewards', color: brand.primaryLight },
+  { key: 'nutrition', label: 'Nutrition',  color: stickers.green },
+  { key: 'sleep',     label: 'Sleep',      color: stickers.lilac },
+  { key: 'mood',      label: 'Mood',       color: stickers.pink },
+  { key: 'health',    label: 'Health',     color: stickers.blue },
+  { key: 'growth',    label: 'Growth',     color: brand.accent },
+  { key: 'community', label: 'Community',  color: brand.primary },
+  { key: 'milestone', label: 'Milestones', color: stickers.coral },
 ]
 
 export default function BadgeWalletScreen() {
-  const { colors, font, isDark } = useTheme()
+  const { colors, font } = useTheme()
   const insets = useSafeAreaInsets()
   const earnedBadges = useBadgeStore((s) => s.earnedBadges)
   const totalPoints = useBadgeStore((s) => s.totalPoints)
@@ -43,11 +43,13 @@ export default function BadgeWalletScreen() {
   const earnedCount = earnedBadges.length
   const totalCount = BADGE_DEFS.length
 
-  const bg = isDark ? colors.bg : '#F3ECD9'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const ink = isDark ? colors.text : '#141313'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  // useTheme()'s colors already resolves light/dark; the prior `isDark ? colors.x : '<lightHex>'`
+  // ternaries just re-stated the light token values.
+  const bg = colors.bg
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
+  const ink3 = colors.textMuted
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>

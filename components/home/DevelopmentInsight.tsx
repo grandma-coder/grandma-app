@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, brand, stickers, borderRadius, shadows } from '../../constants/theme'
+import { colors, brand, stickers, borderRadius, shadows, font } from '../../constants/theme'
 import { getWeekData } from '../../lib/pregnancyData'
 
 interface DevelopmentInsightProps {
@@ -103,10 +103,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: '900',
-    color: '#000000',
+    color: stickers.charcoal,
     letterSpacing: -1,
     lineHeight: 38,
-    marginBottom: 16, fontFamily: 'Fraunces_600SemiBold' },
+    marginBottom: 16,
+    fontFamily: font.display,
+  },
   body: {
     fontSize: 16,
     fontWeight: '500',
@@ -120,12 +122,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     height: 64,
-    backgroundColor: '#000000',
+    backgroundColor: stickers.charcoal,
     borderRadius: 999,
     paddingHorizontal: 24,
     borderWidth: 2,
-    borderColor: '#141313',
-    shadowColor: '#141313',
+    borderColor: stickers.charcoal,
+    shadowColor: stickers.charcoal,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 0,
@@ -134,7 +136,7 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 14,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: colors.surface,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },
