@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
 import { ChevronRight, Info, X, FlaskConical } from 'lucide-react-native'
 
-import { useTheme } from '../../constants/theme'
+import { useTheme, font } from '../../constants/theme'
 import { MoodBubbleCluster, type MoodBubbleItem } from '../charts/SvgCharts'
 import { supabase } from '../../lib/supabase'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -2377,7 +2377,7 @@ function Pill({ color, tint, label }: { color: string; tint: string; label: stri
         borderColor: 'rgba(20,19,19,0.12)',
       }}
     >
-      <Text style={{ color, fontSize: 12, fontFamily: 'DMSans_600SemiBold' }}>{label}</Text>
+      <Text style={{ color, fontSize: 12, fontFamily: font.bodySemiBold }}>{label}</Text>
     </View>
   )
 }
@@ -2843,12 +2843,12 @@ const styles = StyleSheet.create({
   },
   rankText: {
     fontSize: 11,
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: font.display,
   },
   listLabel: {
     flex: 1,
     fontSize: 14,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     textTransform: 'capitalize',
   },
   countChip: {
@@ -2859,7 +2859,7 @@ const styles = StyleSheet.create({
   },
   countText: {
     fontSize: 11,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
   },
   moodStripCard: {
     borderWidth: 1,
