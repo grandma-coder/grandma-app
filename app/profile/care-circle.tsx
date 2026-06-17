@@ -50,6 +50,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
+import { SignedImage, PHOTO_BUCKETS } from '../../lib/photoSigning'
 import { toDateStr } from '../../lib/cycleLogic'
 import { LogSheet } from '../../components/calendar/LogSheet'
 import { isIconAvatar } from '../../components/ui/AvatarPicker'
@@ -380,21 +381,22 @@ function PhotoPickerAvatar({ uri, onPick, size = 96 }: { uri: string; onPick: (n
 }
 
 async function uploadCaregiverPhoto(localUri: string, userId: string): Promise<string> {
+  // Caregiver avatars go to the PRIVATE profile-avatars bucket keyed by
+  // {userId}/ (the uploading owner's id). Store the storage PATH; it's signed
+  // at read time via AvatarView.
   const ext = localUri.split('.').pop()?.split('?')[0] ?? 'jpg'
-  const path = `caregivers/${userId}/${Date.now()}.${ext}`
+  const path = `${userId}/${Date.now()}.${ext}`
 
   const response = await fetch(localUri)
   const blob = await response.blob()
 
-  // Try garage-photos bucket first, fallback to creating it
   const { error } = await supabase.storage
-    .from('garage-photos')
+    .from('profile-avatars')
     .upload(path, blob, { contentType: `image/${ext}`, upsert: true })
 
   if (error) throw error
 
-  const { data } = supabase.storage.from('garage-photos').getPublicUrl(path)
-  return data.publicUrl
+  return path
 }
 
 const photoStyles = StyleSheet.create({
@@ -609,8 +611,11 @@ export default function CareCircleScreen() {
       for (const p of perms) permObj[p] = true
       permObj._display_name = updates.displayName ?? member.displayName
 
-      // Upload new photo if it's a local file
-      if (updates.photoUrl && !updates.photoUrl.startsWith('http') && session) {
+      // Upload new photo only if it's a freshly-picked LOCAL file. A stored
+      // value is now a private-bucket storage PATH (or a legacy http URL, or an
+      // icon: sentinel) — all of those pass through unchanged.
+      const isLocalFile = (v?: string) => !!v && (v.startsWith('file:') || v.startsWith('content:'))
+      if (updates.photoUrl && isLocalFile(updates.photoUrl) && session) {
         try {
           const url = await uploadCaregiverPhoto(updates.photoUrl, session.user.id)
           permObj._photo_url = url
@@ -807,7 +812,7 @@ export default function CareCircleScreen() {
                     ]}
                   >
                     {m.photoUrl && !isIconAvatar(m.photoUrl) ? (
-                      <Image source={{ uri: m.photoUrl }} style={styles.memberPhoto} />
+                      <SignedImage value={m.photoUrl} bucket={PHOTO_BUCKETS.avatar} style={styles.memberPhoto} />
                     ) : (
                       <FlowerSticker size={26} petal={roleColor} center={stickers.yellow} />
                     )}
@@ -1221,7 +1226,9 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
       if (name.trim()) permObj._display_name = name.trim()
 
       if (photoUri) {
-        if (photoUri.startsWith('http')) {
+        // Only a freshly-picked local file needs uploading; a stored path /
+        // legacy http URL / icon sentinel passes through unchanged.
+        if (!photoUri.startsWith('file:') && !photoUri.startsWith('content:')) {
           permObj._photo_url = photoUri
         } else {
           try {

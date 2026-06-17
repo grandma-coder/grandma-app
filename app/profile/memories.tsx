@@ -44,6 +44,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
+import { SignedImage, PHOTO_BUCKETS } from '../../lib/photoSigning'
 import { toDateStr } from '../../lib/cycleLogic'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
@@ -211,16 +212,18 @@ export default function MemoriesScreen() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Not authenticated')
 
+      // Memory photos go to the PRIVATE child-photos bucket keyed by
+      // {childId}/ (storage RLS scopes them to the parent + accepted
+      // caregivers). We store the storage PATH; it's signed at read time.
       const photoUrls: string[] = []
       for (const uri of pendingPhotos) {
         const ext = uri.split('.').pop()?.split('?')[0] ?? 'jpg'
-        const path = `memories/${session.user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`
+        const path = `${selectedChild}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`
         const res = await fetch(uri)
         const buf = await res.arrayBuffer()
-        const { error } = await supabase.storage.from('garage-photos').upload(path, buf, { contentType: `image/${ext}`, upsert: true })
+        const { error } = await supabase.storage.from('child-photos').upload(path, buf, { contentType: `image/${ext}`, upsert: true })
         if (!error) {
-          const { data } = supabase.storage.from('garage-photos').getPublicUrl(path)
-          photoUrls.push(data.publicUrl)
+          photoUrls.push(path)
         }
       }
       if (photoUrls.length === 0) throw new Error('Upload failed. Check storage bucket.')
@@ -420,7 +423,7 @@ export default function MemoriesScreen() {
                   delayLongPress={500}
                   style={styles.gridItem}
                 >
-                  <Image source={{ uri: p.photos[0] }} style={styles.gridImage} resizeMode="cover" />
+                  <SignedImage value={p.photos[0]} bucket={PHOTO_BUCKETS.child} style={styles.gridImage} resizeMode="cover" />
                   {/* Multi-photo badge */}
                   {p.photos.length > 1 && (
                     <View style={styles.carouselBadge}>
@@ -445,7 +448,7 @@ export default function MemoriesScreen() {
         <Modal visible animationType="fade">
           <View style={[styles.viewerRoot, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
             {/* Photo */}
-            <Image source={{ uri: viewPost.photos[viewPhotoIdx] }} style={styles.viewerImage} resizeMode="contain" />
+            <SignedImage value={viewPost.photos[viewPhotoIdx]} bucket={PHOTO_BUCKETS.child} style={styles.viewerImage} resizeMode="contain" />
 
             {/* Top bar */}
             <View style={[styles.viewerTop, { top: insets.top + 8 }]}>

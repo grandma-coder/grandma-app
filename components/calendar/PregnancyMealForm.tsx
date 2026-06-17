@@ -33,15 +33,16 @@ interface Props {
 
 async function uploadPlatePhoto(uri: string, userId: string): Promise<string | null> {
   try {
-    const path = `pregnancy-meals/${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`
+    // Meal photos go to the PRIVATE pregnancy-nutrition bucket keyed by
+    // {userId}/ (owner-only). Store the storage PATH; signed at read time.
+    const path = `${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`
     const formData = new FormData()
     formData.append('', { uri, name: path.split('/').pop(), type: 'image/jpeg' } as any)
     const { error } = await supabase.storage
-      .from('garage-photos')
+      .from('pregnancy-nutrition')
       .upload(path, formData, { contentType: 'multipart/form-data', upsert: true })
     if (error) return null
-    const { data } = supabase.storage.from('garage-photos').getPublicUrl(path)
-    return data.publicUrl
+    return path
   } catch {
     return null
   }

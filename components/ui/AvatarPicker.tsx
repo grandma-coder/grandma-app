@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { X, Camera, ImagePlus } from 'lucide-react-native'
 import { useTheme } from '../../constants/theme'
 import { Display, Body, MonoCaps } from './Typography'
+import { usePhotoUrl, PHOTO_BUCKETS, type PhotoBucket } from '../../lib/photoSigning'
 import {
   Bear,
   Heart,
@@ -106,6 +107,12 @@ interface AvatarViewProps {
   textColor?: string
   borderColor?: string
   borderWidth?: number
+  /**
+   * Which private bucket the photo lives in, when `value` is a bare storage
+   * path. Defaults to profile-avatars (user/caregiver). Pass 'child-photos'
+   * for a child's avatar. Icon sentinels + legacy public URLs ignore this.
+   */
+  bucket?: PhotoBucket
 }
 
 export function AvatarView({
@@ -116,10 +123,14 @@ export function AvatarView({
   textColor,
   borderColor,
   borderWidth = 3,
+  bucket = PHOTO_BUCKETS.avatar,
 }: AvatarViewProps) {
   const { colors, font } = useTheme()
   const iconKey = parseIconAvatar(value)
   const hasPhoto = !!value && !isIconAvatar(value)
+  // Resolve to a renderable URL: bare storage paths get a short-lived signed
+  // URL; icon sentinels + legacy public URLs pass straight through.
+  const resolvedUri = usePhotoUrl(value, bucket)
 
   return (
     <View
@@ -135,8 +146,8 @@ export function AvatarView({
         overflow: 'hidden',
       }}
     >
-      {hasPhoto ? (
-        <Image source={{ uri: value as string }} style={{ width: size, height: size, borderRadius: 999 }} />
+      {hasPhoto && resolvedUri ? (
+        <Image source={{ uri: resolvedUri }} style={{ width: size, height: size, borderRadius: 999 }} />
       ) : iconKey ? (
         ICON_REGISTRY.find((i) => i.key === iconKey)!.render(Math.round(size * 0.62))
       ) : (

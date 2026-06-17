@@ -199,30 +199,27 @@ function randomToken(len: number): string {
  * count of failed uploads so callers can decide what to do (warn the user,
  * block the save, etc.). Previously this swallowed all failures silently.
  */
-async function uploadPhotos(uris: string[]): Promise<{ urls: string[]; failed: number }> {
+async function uploadPhotos(childId: string, uris: string[]): Promise<{ urls: string[]; failed: number }> {
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session || uris.length === 0) return { urls: [], failed: 0 }
+  if (!session || !childId || uris.length === 0) return { urls: [], failed: 0 }
 
+  // Child health-log photos go to the PRIVATE child-photos bucket, keyed by
+  // {childId}/ so storage RLS scopes them to the parent + accepted caregivers
+  // of that child. We store the storage PATH (signed at read time), not a
+  // public URL. Returned values are paths — `urls` name kept for caller parity.
   const urls: string[] = []
   let failed = 0
   for (const uri of uris) {
     try {
-      // The garage-photos bucket has a public SELECT policy (used for the
-      // marketplace). Until child photos move to a properly RLS'd
-      // kids-photos bucket, mitigate by making URLs unguessable: 22-char
-      // random token (~128 bits of entropy) rather than 4 chars.
-      // TODO(privacy): create kids-photos bucket with caregiver-scoped RLS
-      // (see child_caregivers join) and switch this upload target.
       const token = `${Date.now().toString(36)}_${randomToken(22)}`
-      const path = `kids-logs/${session.user.id}/${token}.jpg`
+      const path = `${childId}/${token}.jpg`
       const formData = new FormData()
       formData.append('', { uri, name: path.split('/').pop(), type: 'image/jpeg' } as any)
       const { error } = await supabase.storage
-        .from('garage-photos')
+        .from('child-photos')
         .upload(path, formData, { contentType: 'multipart/form-data', upsert: true })
       if (!error) {
-        const { data: urlData } = supabase.storage.from('garage-photos').getPublicUrl(path)
-        urls.push(urlData.publicUrl)
+        urls.push(path)
       } else {
         failed += 1
       }
@@ -1063,7 +1060,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
     setSaving(true)
     try {
       const toUpload = photos.filter((p) => !p.startsWith('http'))
-      const upload = toUpload.length ? await uploadPhotos(toUpload) : { urls: [], failed: 0 }
+      const upload = toUpload.length ? await uploadPhotos(childId, toUpload) : { urls: [], failed: 0 }
       if (upload.failed > 0) {
         Alert.alert(
           'Some photos didn\'t upload',
@@ -2257,7 +2254,7 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
     }
     setSaving(true)
     try {
-      const upload = await uploadPhotos(photos)
+      const upload = await uploadPhotos(childId, photos)
       // If every upload failed, block the save so the user can retry
       // instead of creating an empty record.
       if (upload.urls.length === 0) {
@@ -2596,7 +2593,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
         consistency: showPooDetails ? (consistency ?? undefined) : undefined,
         time: logTime,
       })
-      const upload = photos.length ? await uploadPhotos(photos) : { urls: [], failed: 0 }
+      const upload = photos.length ? await uploadPhotos(childId, photos) : { urls: [], failed: 0 }
       if (upload.failed > 0) {
         Alert.alert(
           'Some photos didn\'t upload',

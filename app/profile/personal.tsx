@@ -258,18 +258,20 @@ export default function PersonalProfile() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) throw new Error('Not authenticated')
 
+    // Avatars go to the PRIVATE profile-avatars bucket keyed by {userId}/.
+    // Store the storage PATH (signed at read time via AvatarView), not a
+    // public URL.
     const ext = localUri.split('.').pop()?.split('?')[0] ?? 'jpg'
-    const path = `profiles/${session.user.id}/${Date.now()}.${ext}`
+    const path = `${session.user.id}/${Date.now()}.${ext}`
     const response = await fetch(localUri)
     const blob = await response.blob()
 
     const { error } = await supabase.storage
-      .from('garage-photos')
+      .from('profile-avatars')
       .upload(path, blob, { contentType: `image/${ext}`, upsert: true })
 
     if (error) throw error
-    const { data } = supabase.storage.from('garage-photos').getPublicUrl(path)
-    return data.publicUrl
+    return path
   }
 
   async function handleAvatarChange(value: string | null) {

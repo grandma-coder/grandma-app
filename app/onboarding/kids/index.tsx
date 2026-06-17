@@ -184,39 +184,48 @@ export default function KidsOnboarding() {
       // Insert children
       // Upload any local-file photo URIs to Storage so they survive a cold
       // relaunch. Icon-avatar values (key strings) pass through unchanged.
-      async function resolvePhotoForUpload(photoUri: string | null | undefined): Promise<string | null> {
+      // Child photos live in the PRIVATE `child-photos` bucket keyed by
+      // {childId}/... so storage RLS (and caregivers) can read them by child.
+      // The child row doesn't exist yet at this point, so we insert first
+      // (photo_url null for to-be-uploaded files) then upload + UPDATE per the
+      // returned id. Icon sentinels + already-remote values are stored as-is.
+      function photoToStoreAtInsert(photoUri: string | null | undefined): string | null {
         if (!photoUri) return null
         if (isIconAvatar(photoUri)) return photoUri
-        if (!photoUri.startsWith('file:') && !photoUri.startsWith('content:')) return photoUri
+        // A local file gets uploaded post-insert; store null for now.
+        if (photoUri.startsWith('file:') || photoUri.startsWith('content:')) return null
+        // Anything else (a pre-existing remote URL) passes through unchanged.
+        return photoUri
+      }
+
+      // Upload a local child photo to child-photos/{childId}/... and return the
+      // storage PATH (signed at read time), or null on failure.
+      async function uploadChildPhoto(childId: string, photoUri: string): Promise<string | null> {
         try {
-          // Compress before upload (the <1MB rule) — resize to a reasonable
-          // avatar width and re-encode as JPEG. Matches lib/vault.ts.
+          // Compress before upload (the <1MB rule). Matches lib/vault.ts.
           const compressed = await ImageManipulator.manipulateAsync(
             photoUri,
             [{ resize: { width: 1600 } }],
             { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
           )
-          const path = `child-photos/${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`
+          const path = `${childId}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`
           const res = await fetch(compressed.uri)
           const buf = await res.arrayBuffer()
           const { error: upErr } = await supabase.storage
-            .from('garage-photos')
+            .from('child-photos')
             .upload(path, buf, { contentType: 'image/jpeg', upsert: true })
           if (upErr) {
             console.warn('[onboarding] child photo upload failed:', upErr.message)
             return null
           }
-          const { data } = supabase.storage.from('garage-photos').getPublicUrl(path)
-          return data.publicUrl
+          return path
         } catch (e) {
           console.warn('[onboarding] child photo upload exception:', e)
           return null
         }
       }
 
-      const resolvedPhotos = await Promise.all(
-        store.children.map((c) => resolvePhotoForUpload(c.photoUri))
-      )
+      const resolvedPhotos = store.children.map((c) => photoToStoreAtInsert(c.photoUri))
 
       // If "Other" is selected and free-text was provided, append it to the
       // allergies array so the canonical column captures the detail.
@@ -263,6 +272,25 @@ export default function KidsOnboarding() {
           .select('id, name, birth_date, parent_id, allergies, conditions, country_code, photo_url, sex, blood_type, medications, dietary_restrictions, preferred_foods, disliked_foods, pediatrician, notes')
           .eq('parent_id', userId)
         resolvedChildren = refetched ?? []
+      }
+
+      // Upload any local child photos now that we have child ids, then write the
+      // storage PATH back to photo_url. Keyed by {childId}/ for the child-photos
+      // RLS. Match each inserted child to its source store child by name (order
+      // is reliable on the direct insert but the refetch fallback isn't).
+      if (resolvedChildren && resolvedChildren.length > 0) {
+        await Promise.all(
+          resolvedChildren.map(async (rc: any) => {
+            const src = store.children.find((c) => c.name === rc.name && !!c.photoUri)
+            const uri = src?.photoUri
+            if (!uri || isIconAvatar(uri) || !(uri.startsWith('file:') || uri.startsWith('content:'))) return
+            const path = await uploadChildPhoto(rc.id, uri)
+            if (path) {
+              rc.photo_url = path
+              await supabase.from('children').update({ photo_url: path }).eq('id', rc.id)
+            }
+          })
+        )
       }
 
       if (resolvedChildren && resolvedChildren.length > 0) {
