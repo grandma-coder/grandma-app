@@ -8,6 +8,7 @@
  *   5. CyclePillarsGrid            (2×2 + See all → /cycle-pillars)
  */
 
+import { useMemo } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
@@ -36,6 +37,9 @@ export function CycleHome() {
   const { data: profile } = useProfile()
   const displayName = profile?.name ?? parentName
   const { data: history, isPending: historyPending } = useCycleHistory()
+  // Date-based label only changes day-to-day; memo it so it isn't rebuilt on
+  // every render (string formatting via toLocaleDateString twice per call).
+  const microLabel = useMemo(() => getMicroLabel(), [])
 
   const cycleConfig: CycleConfig = (() => {
     const latest = history?.cycles[history.cycles.length - 1]
@@ -64,7 +68,7 @@ export function CycleHome() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.greetingWrap}>
-          <HomeGreeting name={displayName} microLabel={getMicroLabel()} />
+          <HomeGreeting name={displayName} microLabel={microLabel} />
         </View>
 
         <CycleJourneyRingFull cycleConfig={cycleConfig} />

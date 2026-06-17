@@ -6,7 +6,7 @@
  * Tap a row → paper profile sheet with sticker accents.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   View,
   Text,
@@ -426,6 +426,12 @@ export default function LeaderboardScreen() {
 
   const filtered = filterByTab(entries, activeTab)
   const ranked = filtered.map((e, i) => ({ ...e, rank: i + 1 }))
+  // Per-tab counts for the pill badges — was recomputing filterByTab once per
+  // tab on every render (5+ passes over `entries`). Memo on `entries`.
+  const tabCounts = useMemo(
+    () => Object.fromEntries(TABS.map((t) => [t.key, filterByTab(entries, t.key).length])) as Record<TabKey, number>,
+    [entries],
+  )
   const myEntry = entries.find((e) => e.user_id === myUserId)
   const myRankedEntry = ranked.find((e) => e.user_id === myUserId)
 
@@ -478,7 +484,7 @@ export default function LeaderboardScreen() {
       >
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key
-          const count = filterByTab(entries, tab.key).length
+          const count = tabCounts[tab.key]
           return (
             <Pressable
               key={tab.key}

@@ -114,26 +114,29 @@ function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarous
 
   const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current
 
-  const renderItem = ({ item }: { item: HeroItem }) => {
-    const isCurrent = item.week === currentWeek
-    const daysLabel =
-      isCurrent && daysToGo !== null
-        ? `${daysToGo} days to go`
-        : item.week < currentWeek
-        ? 'past week'
-        : `${item.week - currentWeek} weeks ahead`
+  const renderItem = useCallback(
+    ({ item }: { item: HeroItem }) => {
+      const isCurrent = item.week === currentWeek
+      const daysLabel =
+        isCurrent && daysToGo !== null
+          ? `${daysToGo} days to go`
+          : item.week < currentWeek
+          ? 'past week'
+          : `${item.week - currentWeek} weeks ahead`
 
-    return (
-      <View style={{ width: SCREEN_W, paddingHorizontal: 20 }}>
-        <WeekCard
-          week={item.week}
-          daysLabel={daysLabel}
-          width={SCREEN_W - 40}
-          onPress={() => onPressWeek(item.week)}
-        />
-      </View>
-    )
-  }
+      return (
+        <View style={{ width: SCREEN_W, paddingHorizontal: 20 }}>
+          <WeekCard
+            week={item.week}
+            daysLabel={daysLabel}
+            width={SCREEN_W - 40}
+            onPress={() => onPressWeek(item.week)}
+          />
+        </View>
+      )
+    },
+    [currentWeek, daysToGo, onPressWeek],
+  )
 
   return (
     <View>
