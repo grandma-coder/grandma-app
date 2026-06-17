@@ -2,6 +2,7 @@ import type { JourneyMode, Pillar } from '../types'
 import { pillars as kidsPillars } from './pillars'
 import { pregnancyPillars } from './pregnancyPillars'
 import { prePregPillars } from './prePregPillars'
+import { stickers } from '../constants/theme'
 
 interface TabConfig {
   visible: boolean
@@ -78,10 +79,10 @@ const PREGNANCY_CONFIG: ModeConfig = {
   ],
   pillars: pregnancyPillars,
   vaultSections: [
-    { key: 'ultrasound', title: 'Ultrasound Images', description: 'Upload your ultrasound photos by week', icon: 'image-outline', color: '#F9A8D4' },
-    { key: 'test_results', title: 'Test Results', description: 'Blood work, glucose test, screenings', icon: 'flask-outline', color: '#86EFAC' },
-    { key: 'birth_plan', title: 'Birth Plan', description: 'Your birth preferences and hospital bag', icon: 'document-text-outline', color: '#C4B5FD' },
-    { key: 'insurance', title: 'Insurance & Coverage', description: 'Maternity coverage and claims', icon: 'card-outline', color: '#FDBA74' },
+    { key: 'ultrasound', title: 'Ultrasound Images', description: 'Upload your ultrasound photos by week', icon: 'image-outline', color: stickers.pink },
+    { key: 'test_results', title: 'Test Results', description: 'Blood work, glucose test, screenings', icon: 'flask-outline', color: stickers.green },
+    { key: 'birth_plan', title: 'Birth Plan', description: 'Your birth preferences and hospital bag', icon: 'document-text-outline', color: stickers.lilac },
+    { key: 'insurance', title: 'Insurance & Coverage', description: 'Maternity coverage and claims', icon: 'card-outline', color: stickers.peach },
   ],
   exchangeFilters: ['All', 'Maternity Wear', 'Nursery Setup', 'Baby Gear', 'Books', 'Other'],
   aiContextLabel: 'pregnancy',
@@ -103,10 +104,10 @@ const KIDS_CONFIG: ModeConfig = {
   ],
   pillars: kidsPillars,
   vaultSections: [
-    { key: 'exams', title: 'Exams & Lab Results', description: 'Blood work, checkups, and screenings', icon: 'flask-outline', color: '#FF8AD8' },
-    { key: 'hospital', title: 'Hospital Records', description: 'Birth records and hospital stays', icon: 'medkit-outline', color: '#A2FF86' },
-    { key: 'insurance', title: 'Insurance', description: 'Health insurance and claims', icon: 'card-outline', color: '#FF6B35' },
-    { key: 'vaccines', title: 'Vaccine Records', description: 'Vaccination history and schedule', icon: 'shield-checkmark-outline', color: '#4D96FF' },
+    { key: 'exams', title: 'Exams & Lab Results', description: 'Blood work, checkups, and screenings', icon: 'flask-outline', color: stickers.pink },
+    { key: 'hospital', title: 'Hospital Records', description: 'Birth records and hospital stays', icon: 'medkit-outline', color: stickers.green },
+    { key: 'insurance', title: 'Insurance', description: 'Health insurance and claims', icon: 'card-outline', color: stickers.coral },
+    { key: 'vaccines', title: 'Vaccine Records', description: 'Vaccination history and schedule', icon: 'shield-checkmark-outline', color: stickers.blue },
   ],
   exchangeFilters: ['All', 'Clothing', 'Toys', 'Gear', 'Furniture', 'Books', 'Other'],
   aiContextLabel: 'kids',

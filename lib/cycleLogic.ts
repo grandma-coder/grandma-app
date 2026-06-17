@@ -15,6 +15,8 @@
  * So ovulation = cycleLength - 14.
  */
 
+import { brand, stickers } from '../constants/theme'
+
 export type CyclePhase = 'menstruation' | 'follicular' | 'ovulation' | 'luteal'
 
 export interface CycleInfo {
@@ -189,7 +191,7 @@ function getEmptyCycleInfo(cfg: CycleConfig): CycleInfo {
     phase: 'follicular',
     phaseLabel: 'Not Tracking',
     phaseDescription: 'Log your last period start date to begin tracking your cycle.',
-    phaseColor: '#C4B5FD',
+    phaseColor: stickers.lilac,
     daysUntilPeriod: 0,
     daysUntilOvulation: 0,
     isFertile: false,
@@ -232,10 +234,10 @@ function getPhaseDescription(phase: CyclePhase): string {
 
 function getPhaseColor(phase: CyclePhase): string {
   switch (phase) {
-    case 'menstruation': return '#FF6B6B'
-    case 'follicular': return '#FF8AD8'
-    case 'ovulation': return '#A2FF86'
-    case 'luteal': return '#B983FF'
+    case 'menstruation': return brand.phase.menstrual
+    case 'follicular': return brand.phase.follicular
+    case 'ovulation': return brand.phase.ovulation
+    case 'luteal': return brand.phase.luteal
   }
 }
 
@@ -345,11 +347,11 @@ export function getMonthCycleDots(
     const info = getCycleInfo(cfg, dateStr)
 
     if (info.phase === 'menstruation') {
-      dots.push({ date: dateStr, color: '#FF6B6B', type: 'period' })
+      dots.push({ date: dateStr, color: brand.phase.menstrual, type: 'period' })
     } else if (info.cycleDay === info.ovulationDay) {
-      dots.push({ date: dateStr, color: '#A2FF86', type: 'ovulation' })
+      dots.push({ date: dateStr, color: brand.phase.ovulation, type: 'ovulation' })
     } else if (info.isFertile) {
-      dots.push({ date: dateStr, color: '#F4FD50', type: 'fertile' })
+      dots.push({ date: dateStr, color: stickers.yellow, type: 'fertile' })
     }
   }
 
@@ -369,11 +371,11 @@ export function getHydrationLevel(glassesConsumed: number): {
   message: string
 } {
   const pct = Math.min(100, Math.round((glassesConsumed / DAILY_WATER_GOAL) * 100))
-  if (pct >= 100) return { percentage: pct, label: 'Great!', color: '#4D96FF', message: 'You hit your water goal! Keep it up.' }
-  if (pct >= 75) return { percentage: pct, label: 'Almost there', color: '#4D96FF', message: 'Just a couple more glasses to go.' }
-  if (pct >= 50) return { percentage: pct, label: 'Halfway', color: '#F4FD50', message: 'Keep drinking — hydration helps fertility.' }
-  if (pct >= 25) return { percentage: pct, label: 'Low', color: '#FF6B35', message: 'You need more water. Dehydration affects your cycle.' }
-  return { percentage: pct, label: 'Very low', color: '#FF6B6B', message: 'Drink water now! Hydration is crucial for conception.' }
+  if (pct >= 100) return { percentage: pct, label: 'Great!', color: stickers.blue, message: 'You hit your water goal! Keep it up.' }
+  if (pct >= 75) return { percentage: pct, label: 'Almost there', color: stickers.blue, message: 'Just a couple more glasses to go.' }
+  if (pct >= 50) return { percentage: pct, label: 'Halfway', color: stickers.yellow, message: 'Keep drinking — hydration helps fertility.' }
+  if (pct >= 25) return { percentage: pct, label: 'Low', color: stickers.coral, message: 'You need more water. Dehydration affects your cycle.' }
+  return { percentage: pct, label: 'Very low', color: brand.phase.menstrual, message: 'Drink water now! Hydration is crucial for conception.' }
 }
 
 /**

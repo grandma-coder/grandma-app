@@ -6,6 +6,8 @@
  * observable signs, emerging skills, parent-led activities, and a tip.
  */
 
+import { stickers } from '../constants/theme'
+
 export interface GrowthLeapPhase {
   label: string
   desc: string
@@ -31,7 +33,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
     week: 5, name: 'Changing Sensations', desc: 'Baby discovers a richer world of senses',
     ageRange: '4–5 weeks', duration: '1–2 weeks',
     brainNote: 'The nervous system undergoes a first major reorganization. Your baby\'s brain is suddenly receiving far more detailed signals from the senses — sharper sights, richer sounds, new body feelings. It\'s overwhelming and wonderful at the same time.',
-    color: '#B983FF',
+    color: stickers.lilac,
     phases: [
       { label: 'Stormy', desc: 'More crying, clinginess, disrupted sleep. Baby is overwhelmed by the new flood of sensory information.' },
       { label: 'Peak Leap', desc: 'The brain is intensely processing new sensory input. Fussiness may peak before calming.' },
@@ -46,7 +48,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
     week: 8, name: 'Patterns', desc: 'Recognizing simple repeating patterns in the world',
     ageRange: '7–8 weeks', duration: '1–2 weeks',
     brainNote: 'Your baby\'s brain starts detecting repeating patterns in sound, movement, and visual input. This is the foundation for all future learning — understanding that the world is predictable and has structure.',
-    color: '#4D96FF',
+    color: stickers.blue,
     phases: [
       { label: 'Stormy', desc: 'Night waking, cluster feeding, and fussiness spike as the brain works overtime to catalog patterns.' },
       { label: 'Peak Leap', desc: 'Baby is actively building neural pathways for pattern recognition. Intense brain work.' },
@@ -61,7 +63,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
     week: 12, name: 'Smooth Transitions', desc: 'Movements and muscle control become more fluid',
     ageRange: '11–12 weeks', duration: '1–2 weeks',
     brainNote: 'Motor neurons are rapidly myelinating, enabling smoother, more coordinated movements. Your baby transitions from jerky reflexes to intentional, fluid motion — a massive upgrade in physical self-awareness.',
-    color: '#A2FF86',
+    color: stickers.green,
     phases: [
       { label: 'Stormy', desc: 'Sleep disruption, demanding behavior, and increased feeding as energy is redirected to motor development.' },
       { label: 'Peak Leap', desc: 'Motor pathways are rapidly reorganizing. Baby may seem restless or frustrated by new physical sensations.' },
@@ -76,7 +78,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
     week: 19, name: 'Events', desc: 'Understanding that actions happen in sequences',
     ageRange: '14–19 weeks', duration: '3–6 weeks',
     brainNote: 'Baby\'s brain starts to perceive the world as a series of events rather than a static blur. Actions have beginnings, middles, and ends. This is the birth of cause-and-effect thinking — and why everything suddenly seems so fascinating.',
-    color: '#FBBF24',
+    color: stickers.yellow,
     phases: [
       { label: 'Stormy', desc: 'Clingy, cries when put down, sleep disrupted. Baby is mentally exhausted from processing complex event chains.' },
       { label: 'Peak Leap', desc: 'Brain is actively linking actions into cause-and-effect chains. Intense cognitive work happening.' },
@@ -91,7 +93,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
     week: 26, name: 'Relationships', desc: 'Grasping how things and people relate to each other',
     ageRange: '22–26 weeks', duration: '4–5 weeks',
     brainNote: 'Baby\'s brain builds its first relational maps — understanding that objects and people exist in relation to one another. Distance, closeness, inside/outside, near/far all become meaningful. This triggers object permanence and separation anxiety simultaneously.',
-    color: '#FF8AD8',
+    color: stickers.pink,
     phases: [
       { label: 'Stormy', desc: 'Stranger anxiety and clinginess peak. Baby now understands "you can leave" — which is terrifying.' },
       { label: 'Peak Leap', desc: 'Brain is building relational frameworks at full speed. This is one of the most intense leaps emotionally.' },
@@ -106,7 +108,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
     week: 37, name: 'Categories', desc: 'Grouping the world into mental categories',
     ageRange: '33–37 weeks', duration: '4–5 weeks',
     brainNote: 'The brain begins organizing the world into abstract groups — animals, foods, people, colors. This mental filing system is the foundation for language and logic. First words often appear during or just after this leap.',
-    color: '#FF6B35',
+    color: stickers.coral,
     phases: [
       { label: 'Stormy', desc: 'Demanding behavior, picky eating, night waking as the brain reorganizes around categorical thinking.' },
       { label: 'Peak Leap', desc: 'Brain is actively sorting experiences into groups. Baby may seem more selective and opinionated.' },
@@ -121,7 +123,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
     week: 46, name: 'Sequences', desc: 'Following multi-step actions toward a goal',
     ageRange: '41–46 weeks', duration: '4–6 weeks',
     brainNote: 'Baby\'s brain learns to chain actions together into purposeful sequences — a monumental shift. Planning, goal-directed behavior, and early problem-solving emerge. This is why everything suddenly needs to be done in order.',
-    color: '#67E8F9',
+    color: stickers.blue,
     phases: [
       { label: 'Stormy', desc: 'Frustration tantrums and whining increase as baby knows what they want to accomplish but can\'t always do it.' },
       { label: 'Peak Leap', desc: 'Brain is chaining multi-step sequences together. Baby is mentally exhausted from planning.' },
@@ -136,7 +138,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
     week: 55, name: 'Programs', desc: 'Understanding flexible programs — different ways to reach a goal',
     ageRange: '49–55 weeks', duration: '4–6 weeks',
     brainNote: 'Baby discovers that goals can be achieved in multiple ways — there isn\'t just one path. This "flexible programming" unlocks creative problem-solving and imagination. It also triggers strong opinions, because baby now knows what they want and can envision alternatives.',
-    color: '#A2FF86',
+    color: stickers.green,
     phases: [
       { label: 'Stormy', desc: 'Strong opinions, meltdowns, and sleep regression as toddler grapples with the concept of alternatives.' },
       { label: 'Peak Leap', desc: 'Brain is discovering flexible problem-solving pathways. Toddler is mentally overwhelmed but driven.' },
@@ -151,7 +153,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
     week: 64, name: 'Principles', desc: 'Grasping invisible rules that govern the world',
     ageRange: '59–64 weeks', duration: '5–6 weeks',
     brainNote: 'Toddler\'s brain starts internalizing abstract principles — rules that can\'t be seen but govern behavior. Fairness, sharing, and cause-and-consequence become real. This is why "no" becomes a favorite word — toddler is actively testing which principles apply.',
-    color: '#FBBF24',
+    color: stickers.yellow,
     phases: [
       { label: 'Stormy', desc: 'Rule-testing and boundary-pushing intensify. Toddler must test every principle to map how the world works.' },
       { label: 'Peak Leap', desc: 'Brain is internalizing principles and social rules at full speed. Emotional regulation is strained.' },
@@ -166,7 +168,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
     week: 75, name: 'Systems', desc: 'Understanding complex systems with interacting parts',
     ageRange: '70–75 weeks', duration: '4–6 weeks',
     brainNote: 'The final Wonder Week leap — toddler\'s brain now models complex systems: family dynamics, nature, society, cause-and-effect chains with many links. This is the foundation of adult thinking. The questions become deep, the roleplay becomes rich, and independence flourishes.',
-    color: '#4D96FF',
+    color: stickers.blue,
     phases: [
       { label: 'Stormy', desc: 'Defiance and strong-willed behavior peak. Toddler is asserting their new understanding of how systems work.' },
       { label: 'Peak Leap', desc: 'Brain is modeling complex systems — family, seasons, routines, social hierarchies.' },
