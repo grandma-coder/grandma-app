@@ -755,7 +755,13 @@ export function KidsCalendar() {
 
   async function handleDeleteLog(logId: string) {
     const log = selectedLog
-    await supabase.from('child_logs').delete().eq('id', logId)
+    const { error } = await supabase.from('child_logs').delete().eq('id', logId)
+    if (error) {
+      // Don't run the optimistic cleanup below — that would hide an entry the
+      // DB still holds, so it reappears on the next fetch (a ghost delete).
+      Alert.alert('Could not delete', error.message)
+      return
+    }
     // If it was a skipped-routine log, unmark so the routine becomes pending again
     if (log?.type === 'skipped') {
       try {
@@ -796,7 +802,12 @@ export function KidsCalendar() {
     if (!unlogTarget) return
     setUnlogging(true)
     const target = unlogTarget
-    await supabase.from('child_logs').delete().eq('id', target.id)
+    const { error } = await supabase.from('child_logs').delete().eq('id', target.id)
+    if (error) {
+      Alert.alert('Could not remove', error.message)
+      setUnlogging(false)
+      return
+    }
     // Clear optimistic "done" marks for this date so the matching routine
     // re-appears as pending immediately (not just after fetchLogs resolves).
     const normType = (t: string) => (t === 'food' ? 'feeding' : t)

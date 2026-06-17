@@ -390,6 +390,14 @@ export async function deletePost(postId: string): Promise<void> {
     await supabase.storage.from('garage-media').remove(paths).catch(() => {})
   }
 
-  const { error } = await supabase.from('garage_posts').delete().eq('id', postId)
+  // Defense-in-depth: scope the delete to the caller's own posts in addition
+  // to RLS, so a bug in the row policy can't let one user delete another's post.
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not signed in')
+  const { error } = await supabase
+    .from('garage_posts')
+    .delete()
+    .eq('id', postId)
+    .eq('author_id', session.user.id)
   if (error) throw error
 }

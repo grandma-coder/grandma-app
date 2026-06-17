@@ -10,7 +10,7 @@
 
 import React, { useState } from 'react'
 import {
-  View, Text, Pressable, StyleSheet, Dimensions, ActivityIndicator,
+  View, Text, Pressable, StyleSheet, Dimensions, ActivityIndicator, Alert,
 } from 'react-native'
 import { useTheme, brand } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
@@ -77,8 +77,12 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
         value: trimmed,
       })
       if (error) throw error
-    } catch {
+    } catch (e) {
+      // Roll back the optimistic chip AND tell the user — otherwise the ✓
+      // silently un-flips and the log appears lost with no explanation.
       queryClient.setQueryData(todayKey, previousToday)
+      const msg = e instanceof Error ? e.message : 'Please try again.'
+      Alert.alert("Couldn't save", msg)
       return
     }
     void invalidatePregnancyLogQueries()

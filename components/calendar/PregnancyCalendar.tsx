@@ -1166,7 +1166,11 @@ function LogDetailPopup({
 
   async function confirmDelete() {
     setConfirmingDelete(false)
-    await supabase.from('pregnancy_logs').delete().eq('id', log.id)
+    const { error } = await supabase.from('pregnancy_logs').delete().eq('id', log.id)
+    if (error) {
+      Alert.alert('Could not delete', error.message)
+      return
+    }
     await invalidatePregnancyLogQueries()
     onDeleted()
   }
@@ -1633,7 +1637,11 @@ export function PregnancyCalendar() {
   }
 
   async function handleDeleteLog(log: PregnancyCalendarLog) {
-    await supabase.from('pregnancy_logs').delete().eq('id', log.id)
+    const { error } = await supabase.from('pregnancy_logs').delete().eq('id', log.id)
+    if (error) {
+      Alert.alert('Could not delete', error.message)
+      return
+    }
     await invalidatePregnancyLogQueries()
     void refetch()
     void refetchToday()
