@@ -72,7 +72,7 @@ import {
   X,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, font } from '../../constants/theme'
 import { toDateStr } from '../../lib/cycleLogic'
 import { useChildStore } from '../../store/useChildStore'
 import { LineChart, BarChart, BubbleGrid, MoodBubbleCluster } from '../charts/SvgCharts'
@@ -647,7 +647,7 @@ export function KidsAnalytics() {
             <Text
               style={[
                 styles.headerSub,
-                { color: colors.textSecondary, fontFamily: 'DMSans_400Regular' },
+                { color: colors.textSecondary, fontFamily: font.body },
               ]}
             >
               {getAgeLabel(ageMonths)}
@@ -1303,19 +1303,19 @@ function WellnessScoreArc({
         >
           {activePillar ? (
             <>
-              <Text style={{ fontSize: 34, fontWeight: '900', color: PILLAR_CONFIG[activePillar].color, lineHeight: 38, fontFamily: 'Fraunces_600SemiBold' }}>
+              <Text style={{ fontSize: 34, fontWeight: '900', color: PILLAR_CONFIG[activePillar].color, lineHeight: 38, fontFamily: font.display }}>
                 {scores[activePillar].hasData ? scores[activePillar].value.toFixed(1) : '—'}
               </Text>
-              <Text style={{ fontSize: 10, fontWeight: '700', fontFamily: 'DMSans_600SemiBold', color: PILLAR_CONFIG[activePillar].color + 'AA', marginTop: 2, letterSpacing: 0.5 }}>
+              <Text style={{ fontSize: 10, fontWeight: '700', fontFamily: font.bodySemiBold, color: PILLAR_CONFIG[activePillar].color + 'AA', marginTop: 2, letterSpacing: 0.5 }}>
                 {PILLAR_CONFIG[activePillar].label.toLowerCase()}
               </Text>
             </>
           ) : (
             <>
-              <Text style={{ fontSize: 34, fontWeight: '900', color: overallC, lineHeight: 38, fontFamily: 'Fraunces_600SemiBold' }}>
+              <Text style={{ fontSize: 34, fontWeight: '900', color: overallC, lineHeight: 38, fontFamily: font.display }}>
                 {hasAnyData ? overall.toFixed(1) : '—'}
               </Text>
-              <Text style={{ fontSize: 10, fontWeight: '600', fontFamily: 'DMSans_600SemiBold', color: colors.textSecondary, marginTop: 2 }}>
+              <Text style={{ fontSize: 10, fontWeight: '600', fontFamily: font.bodySemiBold, color: colors.textSecondary, marginTop: 2 }}>
                 thriving
               </Text>
             </>
@@ -2634,7 +2634,7 @@ function ActivitySection({ ageMonths, childName }: { ageMonths: number; childNam
         <View style={styles.pillarInfo}>
           <Text style={[styles.pillarName, { color: colors.text }]}>Activity</Text>
           <Text style={[styles.pillarTakeaway, { color: colors.textMuted }]} numberOfLines={2}>{target}</Text>
-          <Text style={[{ fontSize: 11, fontWeight: '500', fontFamily: 'DMSans_500Medium', color: colors.textMuted, marginTop: 2 }]} numberOfLines={2}>{tip}</Text>
+          <Text style={[{ fontSize: 11, fontWeight: '500', fontFamily: font.bodyMedium, color: colors.textMuted, marginTop: 2 }]} numberOfLines={2}>{tip}</Text>
         </View>
         <ChevronRight size={18} color={colors.textMuted} />
       </Pressable>
@@ -2703,7 +2703,7 @@ function ActivityModal({
               </View>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>Activity Guide</Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500', fontFamily: 'DMSans_500Medium' }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500', fontFamily: font.bodyMedium }}>
                   {childName} · recommended split
                 </Text>
               </View>
@@ -2726,20 +2726,20 @@ function ActivityModal({
                 <EmojiSticker size={26}>{item.emoji}</EmojiSticker>
                 <View style={{ flex: 1, gap: 6 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }}>{item.label}</Text>
-                    <Text style={{ color: ACTIVITY_COLOR, fontSize: 18, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' }}>{item.pct}%</Text>
+                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', fontFamily: font.bodySemiBold }}>{item.label}</Text>
+                    <Text style={{ color: ACTIVITY_COLOR, fontSize: 18, fontWeight: '900', fontFamily: font.display }}>{item.pct}%</Text>
                   </View>
                   <View style={{ height: 6, borderRadius: 3, backgroundColor: ACTIVITY_COLOR + '15', overflow: 'hidden' }}>
                     <View style={{ width: `${item.pct}%`, height: '100%', backgroundColor: ACTIVITY_COLOR + 'CC', borderRadius: 3 }} />
                   </View>
-                  <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500', fontFamily: 'DMSans_500Medium' }}>{item.tip}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500', fontFamily: font.bodyMedium }}>{item.tip}</Text>
                 </View>
               </View>
             ))}
 
             <View style={{ backgroundColor: ACTIVITY_COLOR + '10', borderRadius: radius.xl, padding: 16, borderWidth: 1, borderColor: ACTIVITY_COLOR + '25', flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
               <EmojiSticker size={18}>💡</EmojiSticker>
-              <Text style={{ flex: 1, color: ACTIVITY_COLOR, fontSize: 13, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' }}>
+              <Text style={{ flex: 1, color: ACTIVITY_COLOR, fontSize: 13, fontWeight: '700', fontFamily: font.bodySemiBold }}>
                 {ageMonths < 12
                   ? 'Aim for 20–30 min tummy time daily, spread across sessions.'
                   : ageMonths < 36
@@ -3017,12 +3017,12 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               <Text style={[styles.chartTitle, { color: colors.text }]}>Breast vs Bottle</Text>
               <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
                 <View style={{ flex: 1, alignItems: 'center', padding: 16, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }}>
-                  <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 28, fontFamily: 'Fraunces_600SemiBold' }}>{totalBreast}</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 4 }}>breast sessions</Text>
+                  <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 28, fontFamily: font.display }}>{totalBreast}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium, marginTop: 4 }}>breast sessions</Text>
                 </View>
                 <View style={{ flex: 1, alignItems: 'center', padding: 16, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }}>
-                  <Text style={{ color: brand.secondary, fontSize: 28, fontFamily: 'Fraunces_600SemiBold' }}>{totalBottle}</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 4 }}>
+                  <Text style={{ color: brand.secondary, fontSize: 28, fontFamily: font.display }}>{totalBottle}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium, marginTop: 4 }}>
                     {totalBottleMl > 0 ? `${Math.round(totalBottleMl)}ml total` : 'bottles'}
                   </Text>
                 </View>
@@ -3063,11 +3063,11 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                     }}
                   >
                     <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: rankColor(i) + '25', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: rankColor(i), fontSize: 12, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' }}>#{i + 1}</Text>
+                      <Text style={{ color: rankColor(i), fontSize: 12, fontWeight: '900', fontFamily: font.display }}>#{i + 1}</Text>
                     </View>
-                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: 'DMSans_600SemiBold', flex: 1 }}>{food.label}</Text>
+                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: font.bodySemiBold, flex: 1 }}>{food.label}</Text>
                     <View style={{ backgroundColor: PILLAR_CONFIG.nutrition.color + '20', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 }}>
-                      <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 14, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' }}>×{food.count}</Text>
+                      <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 14, fontWeight: '800', fontFamily: font.display }}>×{food.count}</Text>
                     </View>
                   </View>
                 ))}
@@ -3292,7 +3292,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                 <View key={type} style={{ marginBottom: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                     <EmojiSticker size={14}>{getHealthEventEmoji(type)}</EmojiSticker>
-                    <Text style={{ color: getEventColor(type), fontSize: 11, fontWeight: '600', fontFamily: 'DMSans_600SemiBold', letterSpacing: 1.4 }}>
+                    <Text style={{ color: getEventColor(type), fontSize: 11, fontWeight: '600', fontFamily: font.bodySemiBold, letterSpacing: 1.4 }}>
                       {getHealthEventLabel(type).toUpperCase()}
                     </Text>
                   </View>
@@ -3560,24 +3560,24 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                   <View style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ fontSize: 12 }}>{item.emoji}</Text>
                   </View>
-                  <Text style={{ flex: 1, color: colors.text, fontSize: 14, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.1 }}>
+                  <Text style={{ flex: 1, color: colors.text, fontSize: 14, fontFamily: font.display, letterSpacing: -0.1 }}>
                     {item.label}
                   </Text>
-                  <Text style={{ color: COLOR, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 }}>
+                  <Text style={{ color: COLOR, fontSize: 16, fontFamily: font.display, letterSpacing: -0.3 }}>
                     {item.pct}%
                   </Text>
                 </View>
                 <View style={{ height: 6, borderRadius: 999, backgroundColor: colors.surfaceRaised, marginTop: 6, overflow: 'hidden' }}>
                   <View style={{ width: `${item.pct}%`, height: '100%', backgroundColor: COLOR }} />
                 </View>
-                <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'DMSans_400Regular', lineHeight: 14, marginTop: 4 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.body, lineHeight: 14, marginTop: 4 }}>
                   {item.tip}
                 </Text>
               </View>
             ))}
             <View style={{ backgroundColor: COLOR + '15', borderRadius: radius.md, padding: 12, marginTop: 8, borderWidth: 1, borderColor: COLOR + '30', flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
               <Text style={{ fontSize: 14, lineHeight: 16 }}>📋</Text>
-              <Text style={{ color: COLOR, fontSize: 12, fontFamily: 'DMSans_500Medium', flex: 1, lineHeight: 16 }}>
+              <Text style={{ color: COLOR, fontSize: 12, fontFamily: font.bodyMedium, flex: 1, lineHeight: 16 }}>
                 {ageMonths < 12
                   ? 'Aim for 20–30 min tummy time daily, spread across sessions.'
                   : ageMonths < 36
@@ -3698,7 +3698,7 @@ function StackedBarChart({ good, little, none, labels, width = 300, height = 200
                 strokeDasharray={i === 0 ? undefined : '3,5'}
                 strokeLinecap="round"
               />
-              <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end" fontFamily="DMSans_500Medium">
+              <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end" fontFamily={font.bodyMedium}>
                 {tick}
               </SvgText>
             </G>
@@ -3778,12 +3778,12 @@ function Donut({ size = 100, pct, color, label, bgRing }: {
           />
         </Svg>
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color, letterSpacing: -0.5 }}>
+          <Text style={{ fontSize: 20, fontFamily: font.display, color, letterSpacing: -0.5 }}>
             {pct}%
           </Text>
         </View>
       </View>
-      <Text style={{ fontSize: 12, color: '#6E6763', fontFamily: 'DMSans_500Medium' }}>{label}</Text>
+      <Text style={{ fontSize: 12, color: '#6E6763', fontFamily: font.bodyMedium }}>{label}</Text>
     </View>
   )
 }
@@ -3881,7 +3881,7 @@ function MealsLineChart({
               x={p.x} y={p.y + 3}
               textAnchor="middle"
               fontSize={10}
-              fontFamily="Fraunces_600SemiBold"
+              fontFamily={font.display}
               fill={p.v > 0 ? color : colors.textMuted}
             >
               {p.v}
@@ -3891,7 +3891,7 @@ function MealsLineChart({
               x={p.x} y={svgH + 14}
               textAnchor="middle"
               fontSize={10}
-              fontFamily="DMSans_400Regular"
+              fontFamily={font.body}
               fill={colors.textMuted}
             >
               {labels[i]}
@@ -3943,9 +3943,9 @@ function HighlightBarChart({
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', height, paddingLeft: 22, gap: 4, position: 'relative' }}>
         {/* Y axis labels — left edge, 3 only, no grid lines */}
         <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, justifyContent: 'space-between', paddingVertical: 2 }}>
-          <Text style={{ fontSize: 10, color: colors.textMuted, fontFamily: 'DMSans_400Regular' }}>{fmt(yTop)}</Text>
-          <Text style={{ fontSize: 10, color: colors.textMuted, fontFamily: 'DMSans_400Regular' }}>{fmt(yMid)}</Text>
-          <Text style={{ fontSize: 10, color: colors.textMuted, fontFamily: 'DMSans_400Regular' }}>0</Text>
+          <Text style={{ fontSize: 10, color: colors.textMuted, fontFamily: font.body }}>{fmt(yTop)}</Text>
+          <Text style={{ fontSize: 10, color: colors.textMuted, fontFamily: font.body }}>{fmt(yMid)}</Text>
+          <Text style={{ fontSize: 10, color: colors.textMuted, fontFamily: font.body }}>0</Text>
         </View>
         {data.map((v, i) => {
           const pct = Math.max((v / maxV) * 100, v > 0 ? 2 : 0)
@@ -3956,7 +3956,7 @@ function HighlightBarChart({
               {isMax && (
                 <View style={{ position: 'absolute', top: -2, left: 0, right: 0, alignItems: 'center' }}>
                   <View style={{ backgroundColor: color + '22', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 }}>
-                    <Text style={{ fontSize: 10, fontFamily: 'Fraunces_600SemiBold', color }}>
+                    <Text style={{ fontSize: 10, fontFamily: font.display, color }}>
                       {fmt(v)}{unit}
                     </Text>
                   </View>
@@ -3978,7 +3978,7 @@ function HighlightBarChart({
           <Text key={i} style={{
             flex: 1, textAlign: 'center', fontSize: 10,
             color: i === maxIdx && data[i] > 0 ? color : colors.textMuted,
-            fontFamily: i === maxIdx && data[i] > 0 ? 'DMSans_600SemiBold' : 'DMSans_400Regular',
+            fontFamily: i === maxIdx && data[i] > 0 ? font.bodySemiBold : font.body,
           }}>
             {l}
           </Text>
@@ -4128,8 +4128,8 @@ const styles = StyleSheet.create({
 
   // Header
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  screenTitle: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' },
-  screenSub: { fontSize: 14, fontWeight: '500', fontFamily: 'DMSans_500Medium', marginTop: 2 },
+  screenTitle: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5, fontFamily: font.display },
+  screenSub: { fontSize: 14, fontWeight: '500', fontFamily: font.bodyMedium, marginTop: 2 },
   infoBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
 
   // Header — 2026 redesign
@@ -4174,8 +4174,8 @@ const styles = StyleSheet.create({
   // Child selector
   childRow: { gap: 10, paddingVertical: 4 },
   childChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 18, borderWidth: 1 },
-  childChipName: { fontSize: 15, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' },
-  childChipAge: { fontSize: 12, fontWeight: '500', fontFamily: 'DMSans_500Medium' },
+  childChipName: { fontSize: 15, fontWeight: '700', fontFamily: font.bodySemiBold },
+  childChipAge: { fontSize: 12, fontWeight: '500', fontFamily: font.bodyMedium },
 
   // Arc
   arcContainer: { alignItems: 'center', marginTop: 8, overflow: 'visible' },
@@ -4183,20 +4183,20 @@ const styles = StyleSheet.create({
   arcTooltip: { marginTop: 10, padding: 16, borderWidth: 1, gap: 8, width: '100%' },
   arcTooltipHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   arcTooltipIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  arcTooltipTitle: { fontSize: 16, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold' },
-  arcTooltipBody: { fontSize: 14, fontWeight: '500', fontFamily: 'DMSans_500Medium', lineHeight: 20 },
+  arcTooltipTitle: { fontSize: 16, fontWeight: '800', fontFamily: font.display },
+  arcTooltipBody: { fontSize: 14, fontWeight: '500', fontFamily: font.bodyMedium, lineHeight: 20 },
   arcInfoHint: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 10, paddingVertical: 4 },
-  arcInfoText: { fontSize: 12, fontWeight: '500', fontFamily: 'DMSans_500Medium' },
+  arcInfoText: { fontSize: 12, fontWeight: '500', fontFamily: font.bodyMedium },
 
   // Insight card
   insightCard: { padding: 16, gap: 10 },
   insightHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   insightBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999 },
-  insightBadgeText: { fontSize: 12, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' },
-  insightDate: { fontSize: 11, fontWeight: '500', fontFamily: 'DMSans_500Medium' },
-  insightMessage: { fontSize: 14, fontWeight: '600', fontFamily: 'DMSans_600SemiBold', lineHeight: 21 },
+  insightBadgeText: { fontSize: 12, fontWeight: '700', fontFamily: font.bodySemiBold },
+  insightDate: { fontSize: 11, fontWeight: '500', fontFamily: font.bodyMedium },
+  insightMessage: { fontSize: 14, fontWeight: '600', fontFamily: font.bodySemiBold, lineHeight: 21 },
   insightButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 20, alignSelf: 'flex-start' },
-  insightButtonText: { fontSize: 14, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' },
+  insightButtonText: { fontSize: 14, fontWeight: '700', fontFamily: font.bodySemiBold },
 
   // Grandma insight — 2026 paper redesign
   grandmaInsightPaper: {
@@ -4248,34 +4248,34 @@ const styles = StyleSheet.create({
   // Tips
   tipsSection: { gap: 12 },
   tipsSectionHeader: { gap: 3 },
-  tipsSectionTitle: { fontSize: 12, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold', letterSpacing: 2 },
-  tipsSectionSub: { fontSize: 13, fontWeight: '500', fontFamily: 'DMSans_500Medium' },
+  tipsSectionTitle: { fontSize: 12, fontWeight: '900', fontFamily: font.display, letterSpacing: 2 },
+  tipsSectionSub: { fontSize: 13, fontWeight: '500', fontFamily: font.bodyMedium },
   tipsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tipCard: { width: (SCREEN_W - 40 - 8) / 2, padding: 12, gap: 8 },
   tipIconWrap: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  tipTitle: { fontSize: 13, fontWeight: '800', fontFamily: 'Fraunces_600SemiBold', lineHeight: 18 },
-  tipBody: { fontSize: 11, fontWeight: '500', fontFamily: 'DMSans_500Medium', lineHeight: 15 },
+  tipTitle: { fontSize: 13, fontWeight: '800', fontFamily: font.display, lineHeight: 18 },
+  tipBody: { fontSize: 11, fontWeight: '500', fontFamily: font.bodyMedium, lineHeight: 15 },
   tipTapHint: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 1 },
-  tipTapText: { fontSize: 10, fontWeight: '600', fontFamily: 'DMSans_600SemiBold' },
+  tipTapText: { fontSize: 10, fontWeight: '600', fontFamily: font.bodySemiBold },
   askButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, marginTop: 2 },
-  askButtonText: { fontSize: 15, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' },
+  askButtonText: { fontSize: 15, fontWeight: '700', fontFamily: font.bodySemiBold },
 
   // Pillar section
   pillarSection: { gap: 12 },
-  pillarSectionTitle: { fontSize: 13, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold', letterSpacing: 2, marginBottom: 4 },
+  pillarSectionTitle: { fontSize: 13, fontWeight: '900', fontFamily: font.display, letterSpacing: 2, marginBottom: 4 },
   pillarRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
   pillarIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   pillarInfo: { flex: 1, gap: 6 },
   pillarNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  pillarName: { fontSize: 16, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' },
+  pillarName: { fontSize: 16, fontWeight: '700', fontFamily: font.bodySemiBold },
   trendBadge: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  trendText: { fontSize: 12, fontWeight: '700', fontFamily: 'DMSans_600SemiBold' },
+  trendText: { fontSize: 12, fontWeight: '700', fontFamily: font.bodySemiBold },
   pillarBarBg: { height: 8, width: '100%', overflow: 'hidden' },
   pillarBarFill: { height: '100%' },
-  pillarTakeaway: { fontSize: 12, fontWeight: '500', fontFamily: 'DMSans_500Medium' },
+  pillarTakeaway: { fontSize: 12, fontWeight: '500', fontFamily: font.bodyMedium },
   pillarScoreWrap: { flexDirection: 'row', alignItems: 'baseline', marginRight: 4 },
-  pillarScoreValue: { fontSize: 22, fontWeight: '900', fontFamily: 'Fraunces_600SemiBold' },
-  pillarScoreOf: { fontSize: 12, fontWeight: '600', fontFamily: 'DMSans_600SemiBold' },
+  pillarScoreValue: { fontSize: 22, fontWeight: '900', fontFamily: font.display },
+  pillarScoreOf: { fontSize: 12, fontWeight: '600', fontFamily: font.bodySemiBold },
 
   // Pillar row — 2026 paper redesign
   pillarPaper: {
@@ -4400,8 +4400,8 @@ const styles = StyleSheet.create({
 
   // Detail body
   detailBody: { gap: 16, paddingTop: 8 },
-  detailExplain: { fontSize: 14, fontFamily: 'DMSans_400Regular', lineHeight: 20, paddingHorizontal: 4 },
-  helpCardCaps: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.2, marginBottom: 4 },
+  detailExplain: { fontSize: 14, fontFamily: font.body, lineHeight: 20, paddingHorizontal: 4 },
+  helpCardCaps: { fontSize: 15, fontFamily: font.display, letterSpacing: -0.2, marginBottom: 4 },
 
   // Chart card — paper-cutout sticker style (no harsh black shadow)
   card: {
@@ -4413,85 +4413,85 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   chartHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  chartTitle: { fontSize: 15, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.1 },
+  chartTitle: { fontSize: 15, fontFamily: font.display, letterSpacing: -0.1 },
   chartBody: { alignItems: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 
 
   // Labels & Legend
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  label: { fontSize: 12, fontFamily: 'DMSans_500Medium', textAlign: 'center' },
+  label: { fontSize: 12, fontFamily: font.bodyMedium, textAlign: 'center' },
   legendRow: { flexDirection: 'row', gap: 16, marginTop: 12, justifyContent: 'center' },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendLabel: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
+  legendLabel: { fontSize: 12, fontFamily: font.bodyMedium },
 
   // Events
   eventRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   eventDot: { width: 12, height: 12, borderRadius: 6 },
-  eventLabel: { fontSize: 15, fontFamily: 'DMSans_500Medium' },
-  eventDate: { fontSize: 13, fontFamily: 'DMSans_400Regular' },
+  eventLabel: { fontSize: 15, fontFamily: font.bodyMedium },
+  eventDate: { fontSize: 13, fontFamily: font.body },
 
   // Vaccines
   vaccineGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 },
   vaccineChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1 },
-  vaccineText: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
+  vaccineText: { fontSize: 14, fontFamily: font.bodyMedium },
 
   // Sleep quality bars
   qualityWrap: { width: '100%', gap: 12, paddingVertical: 6 },
   qualityRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   qualityEmoji: { fontSize: 18, width: 28, textAlign: 'center' },
-  qualityLabel: { fontSize: 14, fontFamily: 'DMSans_500Medium', width: 64 },
+  qualityLabel: { fontSize: 14, fontFamily: font.bodyMedium, width: 64 },
   qualityBarBg: { flex: 1, height: 16, overflow: 'hidden' },
   qualityBarFill: { height: '100%' },
-  qualityPct: { fontSize: 14, fontFamily: 'Fraunces_600SemiBold', width: 44, textAlign: 'right' },
+  qualityPct: { fontSize: 14, fontFamily: font.display, width: 44, textAlign: 'right' },
 
   // Stat row — paper tiles like the design-system mockup
   statRow: { flexDirection: 'row', gap: 8, padding: 0, backgroundColor: 'transparent' as any },
   statPill: { flex: 1, alignItems: 'center', paddingVertical: 16, paddingHorizontal: 10, gap: 2 },
-  statValue: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, lineHeight: 28 },
-  statLabel: { fontSize: 11, fontFamily: 'DMSans_400Regular', textAlign: 'center', lineHeight: 14, marginTop: 2 },
+  statValue: { fontSize: 24, fontFamily: font.display, letterSpacing: -0.4, lineHeight: 28 },
+  statLabel: { fontSize: 11, fontFamily: font.body, textAlign: 'center', lineHeight: 14, marginTop: 2 },
 
   // Loading / Error / Empty
   loadingWrap: { alignItems: 'center', gap: 10, paddingVertical: 32 },
-  loadingText: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
+  loadingText: { fontSize: 14, fontFamily: font.bodyMedium },
   errorCard: { padding: 20, alignItems: 'center', gap: 10 },
-  errorText: { fontSize: 15, fontFamily: 'DMSans_600SemiBold' },
-  errorRetry: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
+  errorText: { fontSize: 15, fontFamily: font.bodySemiBold },
+  errorRetry: { fontSize: 14, fontFamily: font.bodyMedium },
   emptyCard: { padding: 24, alignItems: 'center', gap: 10 },
-  emptyText: { fontSize: 14, fontFamily: 'DMSans_500Medium', textAlign: 'center', lineHeight: 20 },
+  emptyText: { fontSize: 14, fontFamily: font.bodyMedium, textAlign: 'center', lineHeight: 20 },
   emptyAll: { padding: 40, alignItems: 'center', gap: 14, marginTop: 16 },
-  emptyAllTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold' },
-  emptyAllSub: { fontSize: 15, fontFamily: 'DMSans_400Regular', textAlign: 'center', lineHeight: 22 },
+  emptyAllTitle: { fontSize: 20, fontFamily: font.display },
+  emptyAllSub: { fontSize: 15, fontFamily: font.body, textAlign: 'center', lineHeight: 22 },
 
   // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   modalSheet: { marginHorizontal: 0 },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12 },
-  modalTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold' },
+  modalTitle: { fontSize: 22, fontFamily: font.display },
   modalClose: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 
   // Score info modal
   scoreHighlight: { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 20, marginHorizontal: 20, marginBottom: 20, borderWidth: 1 },
-  scoreHighlightNum: { fontSize: 44, fontFamily: 'Fraunces_600SemiBold' },
-  scoreHighlightLabel: { fontSize: 16, fontFamily: 'DMSans_600SemiBold' },
-  scoreHighlightSub: { fontSize: 13, fontFamily: 'DMSans_400Regular', marginTop: 2 },
-  infoSectionLabel: { fontSize: 12, fontFamily: 'DMSans_600SemiBold', letterSpacing: 1.5, marginHorizontal: 20, marginBottom: 10 },
+  scoreHighlightNum: { fontSize: 44, fontFamily: font.display },
+  scoreHighlightLabel: { fontSize: 16, fontFamily: font.bodySemiBold },
+  scoreHighlightSub: { fontSize: 13, fontFamily: font.body, marginTop: 2 },
+  infoSectionLabel: { fontSize: 12, fontFamily: font.bodySemiBold, letterSpacing: 1.5, marginHorizontal: 20, marginBottom: 10 },
   bandRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20 },
   bandDot: { width: 12, height: 12, borderRadius: 6 },
-  bandLabel: { flex: 1, fontSize: 15, fontFamily: 'DMSans_500Medium' },
-  bandRange: { fontSize: 14, fontFamily: 'DMSans_400Regular' },
+  bandLabel: { flex: 1, fontSize: 15, fontFamily: font.bodyMedium },
+  bandRange: { fontSize: 14, fontFamily: font.body },
   pillarInfoCard: { marginHorizontal: 20, padding: 16, gap: 10 },
   pillarInfoHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pillarInfoIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  pillarInfoName: { flex: 1, fontSize: 15, fontFamily: 'DMSans_600SemiBold' },
-  pillarInfoWeight: { fontSize: 13, fontFamily: 'DMSans_500Medium' },
+  pillarInfoName: { flex: 1, fontSize: 15, fontFamily: font.bodySemiBold },
+  pillarInfoWeight: { fontSize: 13, fontFamily: font.bodyMedium },
   pillarInfoScoreBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
-  pillarInfoScoreText: { fontSize: 14, fontFamily: 'Fraunces_600SemiBold' },
-  pillarInfoBody: { fontSize: 13, fontFamily: 'DMSans_400Regular', lineHeight: 19 },
+  pillarInfoScoreText: { fontSize: 14, fontFamily: font.display },
+  pillarInfoBody: { fontSize: 13, fontFamily: font.body, lineHeight: 19 },
   ageBanner: { marginHorizontal: 20, marginBottom: 10, padding: 18, borderWidth: 1, gap: 8 },
-  ageBannerTitle: { fontSize: 15, fontFamily: 'DMSans_600SemiBold' },
-  ageBannerBody: { fontSize: 14, fontFamily: 'DMSans_400Regular', lineHeight: 21 },
+  ageBannerTitle: { fontSize: 15, fontFamily: font.bodySemiBold },
+  ageBannerBody: { fontSize: 14, fontFamily: font.body, lineHeight: 21 },
 
   // Grandma insight detail sheet
   insightDetailSheet: { marginHorizontal: 16, marginBottom: 16, padding: 22, gap: 14 },
@@ -4528,10 +4528,10 @@ const styles = StyleSheet.create({
   tipModalContent: { marginHorizontal: 20, marginBottom: 20, padding: 24, gap: 16 },
   tipModalHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   tipModalIconWrap: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-  tipModalTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', lineHeight: 28 },
+  tipModalTitle: { fontSize: 22, fontFamily: font.display, lineHeight: 28 },
   tipModalSummary: { padding: 14 },
-  tipModalSummaryText: { fontSize: 15, fontFamily: 'DMSans_500Medium', lineHeight: 22 },
-  tipModalDetail: { fontSize: 15, fontFamily: 'DMSans_400Regular', lineHeight: 23 },
+  tipModalSummaryText: { fontSize: 15, fontFamily: font.bodyMedium, lineHeight: 22 },
+  tipModalDetail: { fontSize: 15, fontFamily: font.body, lineHeight: 23 },
   tipAskBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderWidth: 1, marginTop: 4 },
-  tipAskBtnText: { fontSize: 16, fontFamily: 'DMSans_600SemiBold' },
+  tipAskBtnText: { fontSize: 16, fontFamily: font.bodySemiBold },
 })
