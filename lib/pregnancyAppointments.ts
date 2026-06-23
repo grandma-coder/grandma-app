@@ -5,6 +5,12 @@
 // flu shot, COVID booster) are intentionally not in the curve to keep it
 // focused — they surface contextually elsewhere.
 
+// User-facing attribution for the schedule screen (audit Medium #13: surface
+// the ACOG basis to users, not only in this code comment).
+export const APPOINTMENTS_SOURCE_NOTE =
+  "Milestone weeks follow ACOG-recommended prenatal care. General information " +
+  "only — your clinic's exact schedule may differ; follow your provider."
+
 export interface StandardAppointment {
   id: string
   week: number
