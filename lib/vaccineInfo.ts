@@ -5,6 +5,11 @@
  * Lookup is fuzzy: matches the first word of the schedule's vaccine name
  * (lowercased) against keys here. Multi-language entries (Hepatite, Hépatite,
  * Hepatitis) all collapse to the same English key via the alias map.
+ *
+ * General information only — vaccine timing varies by country. Always follow
+ * your country's official schedule and your pediatrician. HepB birth-dose
+ * framing reflects the Dec 2025 CDC/ACIP individual-decision shift for infants
+ * of HepB-negative mothers: https://www.cdc.gov/media/releases/2025/2025-hepatitis-b-immunization.html
  */
 
 export interface VaccineInfo {
@@ -19,7 +24,8 @@ export interface VaccineInfo {
 const VACCINE_INFO: Record<string, VaccineInfo> = {
   hepatitisb: {
     protects: 'Hepatitis B — a serious liver infection that can be passed from mother to baby.',
-    why: 'The first dose at birth protects against infection at the most vulnerable moment. The full series gives near-lifelong protection against liver damage and liver cancer caused by hep B.',
+    // CLINICAL-REVIEW: pending sign-off — Dec 2025 CDC/ACIP individual-decision shift for HepB-negative mothers.
+    why: 'A first dose is often given at or shortly after birth — timing depends on your country and the mother\'s HepB status. The full series gives near-lifelong protection against liver damage and liver cancer caused by hep B.',
     sideEffects: 'Mild soreness at the injection site or low fever for a day or two.',
   },
   hepatitisa: {
@@ -169,12 +175,12 @@ const VACCINE_INFO: Record<string, VaccineInfo> = {
   },
   hepatite: {
     protects: 'Hepatitis B (Portuguese name) — a serious liver infection.',
-    why: 'The first dose at birth protects against infection at the most vulnerable moment. Full series gives lasting protection.',
+    why: 'A first dose is often given at or shortly after birth — timing depends on your country and the mother\'s HepB status. Full series gives lasting protection.',
     sideEffects: 'Mild soreness or low-grade fever for a day or two.',
   },
   hepatite_b: {
     protects: 'Hepatitis B — a serious liver infection that can be passed from mother to baby.',
-    why: 'The first dose at birth protects against infection at the most vulnerable moment. Full series gives lasting protection.',
+    why: 'A first dose is often given at or shortly after birth — timing depends on your country and the mother\'s HepB status. Full series gives lasting protection.',
     sideEffects: 'Mild soreness or low-grade fever for a day or two.',
   },
   hepatite_a: {
@@ -184,7 +190,7 @@ const VACCINE_INFO: Record<string, VaccineInfo> = {
   },
   hépatite: {
     protects: 'Hepatitis B (French) — a serious liver infection that can be passed from mother to baby.',
-    why: 'The first dose at birth protects against infection at the most vulnerable moment. Full series gives lasting protection.',
+    why: 'A first dose is often given at or shortly after birth — timing depends on your country and the mother\'s HepB status. Full series gives lasting protection.',
     sideEffects: 'Mild soreness or low-grade fever for a day or two.',
   },
   rotavírus: {
