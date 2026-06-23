@@ -58,58 +58,58 @@ async function fetchLeaderboardFallback(limit: number): Promise<LeaderboardEntry
 
   if (!profiles || profiles.length === 0) return []
 
-  // Run each profile's stat queries concurrently rather than serially — this
-  // path previously issued up to ~300 sequential round-trips (50 profiles ×
-  // ~6 queries). Promise.all keeps it the same query count but parallel, so
-  // wall-clock is one round-trip's worth instead of 300.
-  const entries: LeaderboardEntry[] = await Promise.all(profiles.map(async (p) => {
-    // Garage posts
-    const { count: garagePosts } = await supabase
-      .from('garage_posts')
-      .select('id', { count: 'exact', head: true })
-      .eq('author_id', p.id)
+  const profileIds = profiles.map((p) => p.id)
 
-    // Garage likes received
-    const { data: garageLikes } = await supabase
-      .from('garage_posts')
-      .select('like_count')
-      .eq('author_id', p.id)
+  const ninetyDaysAgo = new Date()
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
 
-    const totalGarageLikes = (garageLikes ?? []).reduce((sum: number, post: any) => sum + (post.like_count || 0), 0)
+  // Batch the aggregations: one query per table across ALL profiles using
+  // `.in(...)`, then tally in memory. This previously fanned out to ~6 queries
+  // PER profile (up to ~300 round-trips); it is now a fixed 4 parallel queries
+  // regardless of profile count.
+  const [garageRes, channelRes, membersRes, childLogsRes] = await Promise.all([
+    supabase.from('garage_posts').select('author_id, like_count').in('author_id', profileIds),
+    supabase.from('channel_posts').select('author_id, reaction_count').in('author_id', profileIds),
+    supabase.from('channel_members').select('user_id').in('user_id', profileIds),
+    supabase.from('child_logs').select('user_id').in('user_id', profileIds).gte('date', toDateStr(ninetyDaysAgo)),
+  ])
 
-    // Channel posts
-    const { count: channelPosts } = await supabase
-      .from('channel_posts')
-      .select('id', { count: 'exact', head: true })
-      .eq('author_id', p.id)
+  // Per-user tallies keyed by profile id.
+  const garagePosts = new Map<string, number>()
+  const garageLikes = new Map<string, number>()
+  for (const row of garageRes.data ?? []) {
+    const id = (row as any).author_id as string
+    garagePosts.set(id, (garagePosts.get(id) ?? 0) + 1)
+    garageLikes.set(id, (garageLikes.get(id) ?? 0) + ((row as any).like_count || 0))
+  }
 
-    // Channel reactions received
-    const { data: channelReactions } = await supabase
-      .from('channel_posts')
-      .select('reaction_count')
-      .eq('author_id', p.id)
+  const channelPosts = new Map<string, number>()
+  const channelReactions = new Map<string, number>()
+  for (const row of channelRes.data ?? []) {
+    const id = (row as any).author_id as string
+    channelPosts.set(id, (channelPosts.get(id) ?? 0) + 1)
+    channelReactions.set(id, (channelReactions.get(id) ?? 0) + ((row as any).reaction_count || 0))
+  }
 
-    const totalReactions = (channelReactions ?? []).reduce((sum: number, post: any) => sum + (post.reaction_count || 0), 0)
+  const channelsJoined = new Map<string, number>()
+  for (const row of membersRes.data ?? []) {
+    const id = (row as any).user_id as string
+    channelsJoined.set(id, (channelsJoined.get(id) ?? 0) + 1)
+  }
 
-    // Channels joined
-    const { count: channelsJoined } = await supabase
-      .from('channel_members')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', p.id)
+  const childLogs = new Map<string, number>()
+  for (const row of childLogsRes.data ?? []) {
+    const id = (row as any).user_id as string
+    childLogs.set(id, (childLogs.get(id) ?? 0) + 1)
+  }
 
-    // Child logs (last 90 days)
-    const ninetyDaysAgo = new Date()
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
-    const { count: childLogs } = await supabase
-      .from('child_logs')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', p.id)
-      .gte('date', toDateStr(ninetyDaysAgo))
-
-    const gp = garagePosts ?? 0
-    const cp = channelPosts ?? 0
-    const cj = channelsJoined ?? 0
-    const cl = childLogs ?? 0
+  const entries: LeaderboardEntry[] = profiles.map((p) => {
+    const gp = garagePosts.get(p.id) ?? 0
+    const totalGarageLikes = garageLikes.get(p.id) ?? 0
+    const cp = channelPosts.get(p.id) ?? 0
+    const totalReactions = channelReactions.get(p.id) ?? 0
+    const cj = channelsJoined.get(p.id) ?? 0
+    const cl = childLogs.get(p.id) ?? 0
 
     const points = gp * 5 + totalGarageLikes + cp * 3 + totalReactions + cj * 2 + cl
 
@@ -125,7 +125,7 @@ async function fetchLeaderboardFallback(limit: number): Promise<LeaderboardEntry
       child_logs: cl,
       total_points: points,
     }
-  }))
+  })
 
   return entries
     .sort((a, b) => b.total_points - a.total_points)

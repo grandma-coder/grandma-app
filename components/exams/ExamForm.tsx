@@ -26,6 +26,7 @@ import { Camera, ImagePlus, Sparkles, X } from 'lucide-react-native'
 
 import { useTheme, brand, stickers as stickersLight, stickersDark } from '../../constants/theme'
 import { LogFormSticker } from '../calendar/LogFormSticker'
+import { toDateStr } from '../../lib/cycleLogic'
 import {
   type ExamBehavior,
   type ExamExtracted,
@@ -61,7 +62,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
   const [result, setResult] = useState('')
   const [provider, setProvider] = useState('')
   const [notes, setNotes] = useState('')
-  const [examDate, setExamDate] = useState(date ?? new Date().toISOString().slice(0, 10))
+  const [examDate, setExamDate] = useState(date ?? toDateStr(new Date()))
   const [photos, setPhotos] = useState<
     { storagePath: string; localUri: string }[]
   >([])
@@ -131,7 +132,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
             if (ex.title) setTitle((t) => t || ex.title!)
             if (ex.result) setResult((r) => r || ex.result!)
             if (ex.provider) setProvider((p) => p || ex.provider!)
-            if (ex.examDate) setExamDate((d) => d === (date ?? new Date().toISOString().slice(0, 10)) ? ex.examDate! : d)
+            if (ex.examDate) setExamDate((d) => d === (date ?? toDateStr(new Date())) ? ex.examDate! : d)
             if (ex.notes) setNotes((n) => n || ex.notes!)
           }
         } catch {

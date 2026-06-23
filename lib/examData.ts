@@ -13,6 +13,7 @@
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { supabase } from './supabase'
+import { toDateStr } from './cycleLogic'
 
 const EXAM_BUCKET = 'scan-images'
 const SIGNED_URL_TTL_SECONDS = 60 * 60 // 1 hour
@@ -166,7 +167,7 @@ export async function createExam(input: CreateExamInput): Promise<Exam> {
       title: input.title,
       result: input.result ?? null,
       notes: input.notes ?? null,
-      exam_date: input.examDate ?? new Date().toISOString().slice(0, 10),
+      exam_date: input.examDate ?? toDateStr(new Date()),
       photos: input.photos ?? [],
       extracted: input.extracted ?? null,
       provider: input.provider ?? null,
