@@ -134,6 +134,8 @@ export function useRegularity() {
     lengthDays: c.lengthDays as number,
   }))
 
+  // The ±2-day window is THIS APP'S display metric for "regular", not a
+  // medical definition — ACOG tolerates ~7–9 days of cycle-to-cycle variation.
   const regularCount = deviations.filter((d) => d.delta <= 2).length
   const percent = Math.round((regularCount / closed.length) * 100)
 
