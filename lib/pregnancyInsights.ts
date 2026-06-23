@@ -1,5 +1,6 @@
 // lib/pregnancyInsights.ts
 // Birth focus content keyed by week range, shown in Insights → Today tab
+// General pregnancy information, not medical advice — see lib/medicalSources.ts.
 
 export interface BirthFocusCard {
   title: string

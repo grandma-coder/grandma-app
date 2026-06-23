@@ -1,3 +1,9 @@
+/**
+ * Per-week pregnancy development data shown across the pregnancy home + week
+ * detail surfaces. babyLength values are crown-heel population estimates
+ * reconciled with lib/weekStats.ts (Hadlock/Perinatology.com). General
+ * information only — not a measurement of your baby. See lib/medicalSources.ts.
+ */
 export interface PregnancyWeekData {
   week: number
   babySize: string
