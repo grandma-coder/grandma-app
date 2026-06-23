@@ -1781,7 +1781,7 @@ export function KidsCalendar() {
                       },
                     ]}
                   >
-                    <Text style={[styles.childSelectorText, { fontFamily: allActive ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: allActive ? ST_INK : (colors.text) }]}>
+                    <Text style={[styles.childSelectorText, { fontFamily: allActive ? font.bodyBold : font.bodySemiBold, color: allActive ? ST_INK : (colors.text) }]}>
                       All Kids
                     </Text>
                   </Pressable>
@@ -1816,7 +1816,7 @@ export function KidsCalendar() {
                     ]}
                   >
                     <View style={[styles.childDot, { backgroundColor: active ? ST_INK : kidColor }]} />
-                    <Text style={[styles.childSelectorText, { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : (colors.text) }]}>
+                    <Text style={[styles.childSelectorText, { fontFamily: active ? font.bodyBold : font.bodySemiBold, color: active ? ST_INK : (colors.text) }]}>
                       {c.name}
                     </Text>
                   </Pressable>
@@ -2092,10 +2092,10 @@ export function KidsCalendar() {
         }}
       >
         {(() => {
-          const ST_INK = '#141313'
+          const ST_INK = colors.text
           const ST_PAPER = colors.surface
           const ST_CREAM = colors.surfaceRaised
-          const ST_SHEET = isDark ? colors.bg : '#FAF6E8'
+          const ST_SHEET = colors.surfaceRaised
           // Mode-colored accent (powder blue for Kids), matching how the
           // Pregnancy routine manager uses getModeColor('preg', …) for lavender.
           const ST_PURPLE = getModeColor('kids', isDark)
@@ -2113,8 +2113,8 @@ export function KidsCalendar() {
                   styles.popupSheet,
                   {
                     backgroundColor: ST_SHEET,
-                    borderTopLeftRadius: 32,
-                    borderTopRightRadius: 32,
+                    borderTopLeftRadius: radius.xl,
+                    borderTopRightRadius: radius.xl,
                     borderTopWidth: 1.5,
                     borderLeftWidth: 1.5,
                     borderRightWidth: 1.5,
@@ -2125,7 +2125,7 @@ export function KidsCalendar() {
               >
                 {/* Drag handle */}
                 <View style={styles.popupHandleWrap}>
-                  <View style={[styles.popupHandle, { backgroundColor: isDark ? colors.border : '#14131340' }]} />
+                  <View style={[styles.popupHandle, { backgroundColor: isDark ? colors.border : colors.borderLight }]} />
                 </View>
 
                 {/* Header */}
@@ -2134,8 +2134,8 @@ export function KidsCalendar() {
                     style={{
                       width: 48,
                       height: 48,
-                      borderRadius: 24,
-                      backgroundColor: isDark ? colors.surfaceRaised : '#E9DFFB',
+                      borderRadius: radius.full,
+                      backgroundColor: isDark ? colors.surfaceRaised : brand.primaryTint,
                       borderWidth: 1.5,
                       borderColor: ST_INK,
                       alignItems: 'center',
@@ -2155,7 +2155,7 @@ export function KidsCalendar() {
                   <Pressable
                     onPress={closeManager}
                     style={({ pressed }) => ({
-                      width: 36, height: 36, borderRadius: 18,
+                      width: 36, height: 36, borderRadius: radius.full,
                       backgroundColor: ST_CREAM,
                       borderWidth: 1.5, borderColor: ST_INK,
                       alignItems: 'center', justifyContent: 'center',
@@ -2175,7 +2175,7 @@ export function KidsCalendar() {
                   <View
                     style={{
                       backgroundColor: ST_PAPER,
-                      borderRadius: 22,
+                      borderRadius: radius.lg,
                       borderWidth: 1.5,
                       borderColor: isDark ? colors.border : ST_INK,
                       padding: 16,
@@ -2197,7 +2197,7 @@ export function KidsCalendar() {
                       backgroundColor: ST_CREAM,
                       borderColor: isDark ? colors.border : ST_INK,
                       borderWidth: 1.5,
-                      borderRadius: 999,
+                      borderRadius: radius.full,
                       height: 56,
                       justifyContent: 'center',
                     }}>
@@ -2205,7 +2205,7 @@ export function KidsCalendar() {
                         value={routineForm.name}
                         onChangeText={(t) => setRoutineForm((f) => ({ ...f, name: t }))}
                         placeholder="Routine name (e.g. Morning bottle)"
-                        placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+                        placeholderTextColor={colors.textMuted}
                         underlineColorAndroid="transparent"
                         style={{
                           color: isDark ? colors.text : ST_INK,
@@ -2224,14 +2224,14 @@ export function KidsCalendar() {
                         const active = routineForm.type === t
                         // Solid pastel fills (avoid alpha — hard shadow bleeds through translucent bgs on iOS)
                         const activeBgLight = ({
-                          feeding: '#CFE0F0',
-                          food: '#CFE0F0',
-                          sleep: '#DCD2F2',
-                          diaper: '#CFE0F0',
-                          activity: '#D7E9C2',
-                          mood: '#FBE3C2',
-                          health: '#F9D8E2',
-                        } as Record<string, string>)[t] || '#E9DFFB'
+                          feeding: stickers.blueSoft,
+                          food: stickers.blueSoft,
+                          sleep: stickers.lilacSoft,
+                          diaper: stickers.blueSoft,
+                          activity: stickers.greenSoft,
+                          mood: stickers.peachSoft,
+                          health: stickers.pinkSoft,
+                        } as Record<string, string>)[t] || brand.primaryTint
                         const activeBg = isDark ? meta.color : activeBgLight
                         const labelColor = active ? (isDark ? '#FFF' : ST_INK) : (isDark ? colors.text : ST_INK)
                         return (
@@ -2241,7 +2241,7 @@ export function KidsCalendar() {
                             style={({ pressed }) => ({
                               paddingHorizontal: 14,
                               paddingVertical: 8,
-                              borderRadius: 999,
+                              borderRadius: radius.full,
                               borderWidth: 1.5,
                               borderColor: isDark && !active ? colors.border : ST_INK,
                               backgroundColor: active ? activeBg : ST_CREAM,
@@ -2252,7 +2252,7 @@ export function KidsCalendar() {
                               transform: [{ translateY: active && pressed ? 1 : 0 }],
                             })}
                           >
-                            <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }}>
+                            <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? font.bodyBold : font.bodySemiBold }}>
                               {meta.label}
                             </Text>
                           </Pressable>
@@ -2263,7 +2263,7 @@ export function KidsCalendar() {
                     {/* Time */}
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <View style={{
-                        width: 32, height: 32, borderRadius: 16,
+                        width: 32, height: 32, borderRadius: radius.full,
                         backgroundColor: ST_CREAM, borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
                         alignItems: 'center', justifyContent: 'center',
                       }}>
@@ -2273,14 +2273,14 @@ export function KidsCalendar() {
                         value={routineForm.time}
                         onChangeText={(t) => setRoutineForm((f) => ({ ...f, time: t }))}
                         placeholder="HH:MM"
-                        placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+                        placeholderTextColor={colors.textMuted}
                         style={{
                           flex: 1,
                           color: isDark ? colors.text : ST_INK,
                           backgroundColor: ST_CREAM,
                           borderColor: isDark ? colors.border : ST_INK,
                           borderWidth: 1.5,
-                          borderRadius: 999,
+                          borderRadius: radius.full,
                           paddingHorizontal: 16,
                           paddingVertical: 10,
                           fontSize: 15,
@@ -2302,7 +2302,7 @@ export function KidsCalendar() {
                               days: active ? f.days.filter((d) => d !== i) : [...f.days, i].sort(),
                             }))}
                             style={({ pressed }) => ({
-                              width: 36, height: 36, borderRadius: 18,
+                              width: 36, height: 36, borderRadius: radius.full,
                               alignItems: 'center', justifyContent: 'center',
                               borderWidth: 1.5, borderColor: isDark && !active ? colors.border : ST_INK,
                               backgroundColor: active ? ST_PURPLE : ST_CREAM,
@@ -2329,7 +2329,7 @@ export function KidsCalendar() {
                         const isDisabled = !routineForm.name.trim() || routineSaving
                         return {
                           height: 56,
-                          borderRadius: 999,
+                          borderRadius: radius.full,
                           backgroundColor: isDisabled ? ST_PURPLE + '88' : ST_PURPLE,
                           borderWidth: 2, borderColor: ST_INK,
                           alignItems: 'center', justifyContent: 'center',
@@ -2369,9 +2369,9 @@ export function KidsCalendar() {
                                 style={({ pressed }) => ({
                                   paddingHorizontal: 14,
                                   paddingVertical: 8,
-                                  borderRadius: 999,
+                                  borderRadius: radius.full,
                                   borderWidth: 1.5, borderColor: ST_INK,
-                                  backgroundColor: allActive ? '#C8B6E8' : ST_CREAM,
+                                  backgroundColor: allActive ? stickers.lilac : ST_CREAM,
                                   shadowColor: ST_INK,
                                   shadowOffset: { width: 0, height: allActive ? (pressed ? 1 : 2) : 0 },
                                   shadowOpacity: allActive ? 1 : 0,
@@ -2379,7 +2379,7 @@ export function KidsCalendar() {
                                   transform: [{ translateY: allActive && pressed ? 1 : 0 }],
                                 })}
                               >
-                                <Text style={{ color: ST_INK, fontSize: 13, fontFamily: allActive ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }}>
+                                <Text style={{ color: ST_INK, fontSize: 13, fontFamily: allActive ? font.bodyBold : font.bodySemiBold }}>
                                   All Kids
                                 </Text>
                               </Pressable>
@@ -2398,7 +2398,7 @@ export function KidsCalendar() {
                                   gap: 6,
                                   paddingHorizontal: 14,
                                   paddingVertical: 8,
-                                  borderRadius: 999,
+                                  borderRadius: radius.full,
                                   borderWidth: 1.5, borderColor: ST_INK,
                                   backgroundColor: active ? cc : ST_CREAM,
                                   shadowColor: ST_INK,
@@ -2408,8 +2408,8 @@ export function KidsCalendar() {
                                   transform: [{ translateY: active && pressed ? 1 : 0 }],
                                 })}
                               >
-                                <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: active ? ST_INK : cc, borderWidth: 1, borderColor: ST_INK }} />
-                                <Text style={{ color: ST_INK, fontSize: 13, fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }}>
+                                <View style={{ width: 7, height: 7, borderRadius: radius.full, backgroundColor: active ? ST_INK : cc, borderWidth: 1, borderColor: ST_INK }} />
+                                <Text style={{ color: ST_INK, fontSize: 13, fontFamily: active ? font.bodyBold : font.bodySemiBold }}>
                                   {child.name}
                                 </Text>
                               </Pressable>
@@ -2432,7 +2432,7 @@ export function KidsCalendar() {
                               padding: 12,
                               marginBottom: 10,
                               backgroundColor: ST_PAPER,
-                              borderRadius: 18,
+                              borderRadius: radius.md,
                               borderWidth: 1.5,
                               borderColor: isDark ? colors.border : ST_INK,
                               shadowColor: ST_INK,
@@ -2443,7 +2443,7 @@ export function KidsCalendar() {
                             }}
                           >
                             <View style={{
-                              width: 32, height: 32, borderRadius: 16,
+                              width: 32, height: 32, borderRadius: radius.full,
                               backgroundColor: isDark ? meta.color : (meta.color + '40'),
                               borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
                               alignItems: 'center', justifyContent: 'center',
@@ -2467,7 +2467,7 @@ export function KidsCalendar() {
                                 setRoutineForm({ name: r.name, type: r.type, time: r.time ?? '09:00', days: r.days_of_week })
                               }}
                               style={({ pressed }) => ({
-                                width: 32, height: 32, borderRadius: 16,
+                                width: 32, height: 32, borderRadius: radius.full,
                                 backgroundColor: ST_CREAM,
                                 borderWidth: 1.5, borderColor: ST_INK,
                                 alignItems: 'center', justifyContent: 'center',
@@ -2482,8 +2482,8 @@ export function KidsCalendar() {
                             <Pressable
                               onPress={() => deleteRoutine(r.id)}
                               style={({ pressed }) => ({
-                                width: 32, height: 32, borderRadius: 16,
-                                backgroundColor: isDark ? '#3A1E1E' : '#FBE0DC',
+                                width: 32, height: 32, borderRadius: radius.full,
+                                backgroundColor: stickers.peachSoft,
                                 borderWidth: 1.5, borderColor: ST_INK,
                                 alignItems: 'center', justifyContent: 'center',
                                 shadowColor: ST_INK,
@@ -2514,7 +2514,7 @@ export function KidsCalendar() {
         onRequestClose={cancelRoutineEdit}
       >
         {(() => {
-          const ST_INK = '#141313'
+          const ST_INK = colors.text
           const ST_PAPER = colors.surface
           const ST_CREAM = colors.surfaceRaised
           // Mode-colored accent (powder blue for Kids), matching how the
@@ -2529,7 +2529,7 @@ export function KidsCalendar() {
                 <View
                   style={{
                     backgroundColor: ST_PAPER,
-                    borderRadius: 24,
+                    borderRadius: radius.lg,
                     borderWidth: 1.5,
                     borderColor: isDark ? colors.border : ST_INK,
                     padding: 18,
@@ -2545,8 +2545,8 @@ export function KidsCalendar() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <View style={{
-                        width: 36, height: 36, borderRadius: 18,
-                        backgroundColor: '#E9DFFB',
+                        width: 36, height: 36, borderRadius: radius.full,
+                        backgroundColor: brand.primaryTint,
                         borderWidth: 1.5, borderColor: ST_INK,
                         alignItems: 'center', justifyContent: 'center',
                       }}>
@@ -2559,7 +2559,7 @@ export function KidsCalendar() {
                     <Pressable
                       onPress={cancelRoutineEdit}
                       style={({ pressed }) => ({
-                        width: 32, height: 32, borderRadius: 16,
+                        width: 32, height: 32, borderRadius: radius.full,
                         backgroundColor: ST_CREAM,
                         borderWidth: 1.5, borderColor: ST_INK,
                         alignItems: 'center', justifyContent: 'center',
@@ -2578,7 +2578,7 @@ export function KidsCalendar() {
                     backgroundColor: ST_CREAM,
                     borderColor: isDark ? colors.border : ST_INK,
                     borderWidth: 1.5,
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     height: 56,
                     justifyContent: 'center',
                   }}>
@@ -2586,7 +2586,7 @@ export function KidsCalendar() {
                       value={routineForm.name}
                       onChangeText={(t) => setRoutineForm((f) => ({ ...f, name: t }))}
                       placeholder="Routine name"
-                      placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+                      placeholderTextColor={colors.textMuted}
                       underlineColorAndroid="transparent"
                       style={{
                         color: isDark ? colors.text : ST_INK,
@@ -2604,9 +2604,9 @@ export function KidsCalendar() {
                       const meta = LOG_META[t]
                       const active = routineForm.type === t
                       const activeBgLight = ({
-                        feeding: '#CFE0F0', food: '#CFE0F0', sleep: '#DCD2F2',
-                        diaper: '#CFE0F0', activity: '#D7E9C2', mood: '#FBE3C2', health: '#F9D8E2',
-                      } as Record<string, string>)[t] || '#E9DFFB'
+                        feeding: stickers.blueSoft, food: stickers.blueSoft, sleep: stickers.lilacSoft,
+                        diaper: stickers.blueSoft, activity: stickers.greenSoft, mood: stickers.peachSoft, health: stickers.pinkSoft,
+                      } as Record<string, string>)[t] || brand.primaryTint
                       const activeBg = isDark ? meta.color : activeBgLight
                       const labelColor = active ? (isDark ? '#FFF' : ST_INK) : (isDark ? colors.text : ST_INK)
                       return (
@@ -2615,7 +2615,7 @@ export function KidsCalendar() {
                           onPress={() => setRoutineForm((f) => ({ ...f, type: t }))}
                           style={({ pressed }) => ({
                             paddingHorizontal: 14, paddingVertical: 8,
-                            borderRadius: 999, borderWidth: 1.5,
+                            borderRadius: radius.full, borderWidth: 1.5,
                             borderColor: isDark && !active ? colors.border : ST_INK,
                             backgroundColor: active ? activeBg : ST_CREAM,
                             shadowColor: ST_INK,
@@ -2625,7 +2625,7 @@ export function KidsCalendar() {
                             transform: [{ translateY: active && pressed ? 1 : 0 }],
                           })}
                         >
-                          <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }}>
+                          <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? font.bodyBold : font.bodySemiBold }}>
                             {meta.label}
                           </Text>
                         </Pressable>
@@ -2636,7 +2636,7 @@ export function KidsCalendar() {
                   {/* Time */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <View style={{
-                      width: 32, height: 32, borderRadius: 16,
+                      width: 32, height: 32, borderRadius: radius.full,
                       backgroundColor: ST_CREAM, borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
                       alignItems: 'center', justifyContent: 'center',
                     }}>
@@ -2646,13 +2646,13 @@ export function KidsCalendar() {
                       value={routineForm.time}
                       onChangeText={(t) => setRoutineForm((f) => ({ ...f, time: t }))}
                       placeholder="HH:MM"
-                      placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+                      placeholderTextColor={colors.textMuted}
                       style={{
                         flex: 1,
                         color: isDark ? colors.text : ST_INK,
                         backgroundColor: ST_CREAM,
                         borderColor: isDark ? colors.border : ST_INK,
-                        borderWidth: 1.5, borderRadius: 999,
+                        borderWidth: 1.5, borderRadius: radius.full,
                         paddingHorizontal: 16, paddingVertical: 10,
                         fontSize: 15, fontFamily: font.bodySemiBold,
                       }}
@@ -2672,7 +2672,7 @@ export function KidsCalendar() {
                             days: active ? f.days.filter((d) => d !== i) : [...f.days, i].sort(),
                           }))}
                           style={({ pressed }) => ({
-                            width: 36, height: 36, borderRadius: 18,
+                            width: 36, height: 36, borderRadius: radius.full,
                             alignItems: 'center', justifyContent: 'center',
                             borderWidth: 1.5, borderColor: isDark && !active ? colors.border : ST_INK,
                             backgroundColor: active ? ST_PURPLE : ST_CREAM,
@@ -2697,7 +2697,7 @@ export function KidsCalendar() {
                       onPress={cancelRoutineEdit}
                       style={({ pressed }) => ({
                         flex: 1, height: 52,
-                        borderRadius: 999,
+                        borderRadius: radius.full,
                         backgroundColor: ST_CREAM,
                         borderWidth: 1.5, borderColor: ST_INK,
                         alignItems: 'center', justifyContent: 'center',
@@ -2716,7 +2716,7 @@ export function KidsCalendar() {
                       disabled={!routineForm.name.trim() || routineSaving}
                       style={({ pressed }) => ({
                         flex: 1.4, height: 52,
-                        borderRadius: 999,
+                        borderRadius: radius.full,
                         backgroundColor: ST_PURPLE,
                         borderWidth: 2, borderColor: ST_INK,
                         alignItems: 'center', justifyContent: 'center',
@@ -2750,10 +2750,10 @@ export function KidsCalendar() {
         onRequestClose={() => !routineDeleting && setConfirmDeleteRoutineId(null)}
       >
         {(() => {
-          const ST_INK = '#141313'
+          const ST_INK = colors.text
           const ST_PAPER = colors.surface
           const ST_CREAM = colors.surfaceRaised
-          const ST_RED = isDark ? '#E66B6B' : brand.error
+          const ST_RED = brand.error
           return (
             <Pressable
               style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', paddingHorizontal: 32 }}
@@ -2763,7 +2763,7 @@ export function KidsCalendar() {
                 <View
                   style={{
                     backgroundColor: ST_PAPER,
-                    borderRadius: 26,
+                    borderRadius: radius.xl,
                     borderWidth: 1.5,
                     borderColor: isDark ? colors.border : ST_INK,
                     padding: 22,
@@ -2776,8 +2776,8 @@ export function KidsCalendar() {
                 >
                   {/* Sticker trash icon */}
                   <View style={{
-                    width: 60, height: 60, borderRadius: 30,
-                    backgroundColor: isDark ? '#3A1E1E' : '#FBE0DC',
+                    width: 60, height: 60, borderRadius: radius.full,
+                    backgroundColor: stickers.peachSoft,
                     borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
                     alignItems: 'center', justifyContent: 'center',
                     shadowColor: ST_INK,
@@ -2801,7 +2801,7 @@ export function KidsCalendar() {
                       disabled={routineDeleting}
                       style={({ pressed }) => ({
                         flex: 1, height: 52,
-                        borderRadius: 999,
+                        borderRadius: radius.full,
                         backgroundColor: ST_CREAM,
                         borderWidth: 1.5, borderColor: ST_INK,
                         alignItems: 'center', justifyContent: 'center',
@@ -2821,7 +2821,7 @@ export function KidsCalendar() {
                       disabled={routineDeleting}
                       style={({ pressed }) => ({
                         flex: 1, height: 52,
-                        borderRadius: 999,
+                        borderRadius: radius.full,
                         backgroundColor: ST_RED,
                         borderWidth: 2, borderColor: ST_INK,
                         alignItems: 'center', justifyContent: 'center',

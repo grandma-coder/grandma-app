@@ -65,7 +65,7 @@ import {
   Camera,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers as stickersLight, stickersDark, getModeColor } from '../../constants/theme'
+import { useTheme, brand, stickers as stickersLight, stickersDark, getModeColor, font, radius } from '../../constants/theme'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getTrimester, weekForDate } from '../../lib/pregnancyWeeks'
 import { pregnancyWeeks, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
@@ -438,7 +438,7 @@ function QuickLogSheet({
             }}>
               <Calendar size={15} color={ink} strokeWidth={2.4} />
             </View>
-            <Body size={14} color={ink} style={{ fontFamily: 'DMSans_700Bold', flex: 1, letterSpacing: 0.2 }}>
+            <Body size={14} color={ink} style={{ fontFamily: font.bodyBold, flex: 1, letterSpacing: 0.2 }}>
               Manage Routines
             </Body>
             <ChevronRight size={16} color={ink} strokeWidth={2.4} />
@@ -464,16 +464,16 @@ function RoutineManager({
   onSaved: () => void
   onDeleted: () => void
 }) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, font, radius, stickers } = useTheme()
   const insets = useSafeAreaInsets()
 
   // Sticker palette (pregnancy = lavender accent)
-  const ST_INK = '#141313'
+  const ST_INK = colors.text
   const ST_PAPER = colors.surface
   const ST_CREAM = colors.surfaceRaised
-  const ST_SHEET = isDark ? colors.bg : '#FAF6E8'
+  const ST_SHEET = colors.surfaceRaised
   const ST_LAVENDER = getModeColor('preg', isDark)
-  const ST_LAVENDER_SOFT = '#E0D6F4'
+  const ST_LAVENDER_SOFT = brand.pregnancySoft
   const ST_RED = isDark ? '#E66B6B' : brand.error
 
   const DEFAULT_FORM = { name: '', type: 'vitamins' as string, time: '08:00', days: [0,1,2,3,4,5,6] as number[] }
@@ -567,7 +567,7 @@ function RoutineManager({
         backgroundColor: ST_CREAM,
         borderColor: ST_INK,
         borderWidth: 1.5,
-        borderRadius: 999,
+        borderRadius: radius.full,
         height: 56,
         justifyContent: 'center',
       }}>
@@ -582,7 +582,7 @@ function RoutineManager({
             paddingHorizontal: 22,
             paddingVertical: 0,
             fontSize: 15,
-            fontFamily: 'DMSans_600SemiBold',
+            fontFamily: font.bodySemiBold,
           }}
         />
       </View>
@@ -606,7 +606,7 @@ function RoutineManager({
               onPress={() => setForm((p) => ({ ...p, type: t }))}
               style={({ pressed }) => ({
                 paddingHorizontal: 14, paddingVertical: 8,
-                borderRadius: 999,
+                borderRadius: radius.full,
                 borderWidth: 1.5,
                 borderColor: isDark && !active ? colors.border : ST_INK,
                 backgroundColor: active ? activeBg : ST_CREAM,
@@ -617,7 +617,7 @@ function RoutineManager({
                 transform: [{ translateY: active && pressed ? 1 : 0 }],
               })}
             >
-              <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }}>
+              <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? font.bodyBold : font.bodySemiBold }}>
                 {meta.label}
               </Text>
             </Pressable>
@@ -628,7 +628,7 @@ function RoutineManager({
       {/* Time */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View style={{
-          width: 32, height: 32, borderRadius: 16,
+          width: 32, height: 32, borderRadius: radius.full,
           backgroundColor: ST_CREAM, borderWidth: 1.5, borderColor: ST_INK,
           alignItems: 'center', justifyContent: 'center',
         }}>
@@ -645,9 +645,9 @@ function RoutineManager({
             color: isDark ? colors.text : ST_INK,
             backgroundColor: ST_CREAM,
             borderColor: ST_INK,
-            borderWidth: 1.5, borderRadius: 999,
+            borderWidth: 1.5, borderRadius: radius.full,
             paddingHorizontal: 16, paddingVertical: 10,
-            fontSize: 15, fontFamily: 'DMSans_600SemiBold',
+            fontSize: 15, fontFamily: font.bodySemiBold,
           }}
         />
       </View>
@@ -661,7 +661,7 @@ function RoutineManager({
               key={idx}
               onPress={() => toggleDay(idx)}
               style={({ pressed }) => ({
-                width: 36, height: 36, borderRadius: 18,
+                width: 36, height: 36, borderRadius: radius.full,
                 alignItems: 'center', justifyContent: 'center',
                 borderWidth: 1.5,
                 borderColor: isDark && !active ? colors.border : ST_INK,
@@ -673,7 +673,7 @@ function RoutineManager({
                 transform: [{ translateY: active && pressed ? 1 : 0 }],
               })}
             >
-              <Text style={{ fontSize: 13, fontFamily: 'DMSans_700Bold', color: active ? '#FFF' : (isDark ? colors.text : ST_INK) }}>
+              <Text style={{ fontSize: 13, fontFamily: font.bodyBold, color: active ? '#FFF' : (isDark ? colors.text : ST_INK) }}>
                 {label}
               </Text>
             </Pressable>
@@ -693,8 +693,8 @@ function RoutineManager({
               position: 'absolute', bottom: 0, left: 0, right: 0,
               maxHeight: '90%',
               backgroundColor: ST_SHEET,
-              borderTopLeftRadius: 32,
-              borderTopRightRadius: 32,
+              borderTopLeftRadius: radius.xl,
+              borderTopRightRadius: radius.xl,
               borderTopWidth: 1.5,
               borderLeftWidth: 1.5,
               borderRightWidth: 1.5,
@@ -704,13 +704,13 @@ function RoutineManager({
           >
             {/* Drag handle */}
             <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
-              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: isDark ? colors.border : '#14131340' }} />
+              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: isDark ? colors.border : colors.borderLight }} />
             </View>
 
             {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 6, paddingBottom: 14, gap: 12 }}>
               <View style={{
-                width: 48, height: 48, borderRadius: 24,
+                width: 48, height: 48, borderRadius: radius.full,
                 backgroundColor: isDark ? colors.surfaceRaised : ST_LAVENDER_SOFT,
                 borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
                 alignItems: 'center', justifyContent: 'center',
@@ -718,17 +718,17 @@ function RoutineManager({
                 <Calendar size={22} color={ST_LAVENDER} strokeWidth={2.2} />
               </View>
               <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 24, letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' }}>
+                <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 24, letterSpacing: -0.5, fontFamily: font.display }}>
                   Manage Routines
                 </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 13, fontFamily: 'DMSans_500Medium' }}>
+                <Text style={{ color: colors.textMuted, fontSize: 13, fontFamily: font.bodyMedium }}>
                   Recurring activities for your pregnancy
                 </Text>
               </View>
               <Pressable
                 onPress={onClose}
                 style={({ pressed }) => ({
-                  width: 36, height: 36, borderRadius: 18,
+                  width: 36, height: 36, borderRadius: radius.full,
                   backgroundColor: ST_CREAM,
                   borderWidth: 1.5, borderColor: ST_INK,
                   alignItems: 'center', justifyContent: 'center',
@@ -748,7 +748,7 @@ function RoutineManager({
                 <View
                   style={{
                     backgroundColor: ST_PAPER,
-                    borderRadius: 22,
+                    borderRadius: radius.lg,
                     borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
                     padding: 16, gap: 12,
                     shadowColor: ST_INK,
@@ -757,7 +757,7 @@ function RoutineManager({
                     shadowRadius: 0, elevation: 2,
                   }}
                 >
-                  <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }}>
+                  <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }}>
                     New Routine
                   </Text>
                   {formFields}
@@ -769,7 +769,7 @@ function RoutineManager({
                       const isDisabled = !form.name.trim() || saving
                       return {
                         height: 56,
-                        borderRadius: 999,
+                        borderRadius: radius.full,
                         backgroundColor: isDisabled ? ST_LAVENDER + '88' : ST_LAVENDER,
                         borderWidth: 2, borderColor: ST_INK,
                         alignItems: 'center', justifyContent: 'center',
@@ -783,7 +783,7 @@ function RoutineManager({
                   >
                     {saving
                       ? <ActivityIndicator color="#FFF" size="small" />
-                      : <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 15, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                      : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 15, letterSpacing: 0.8, textTransform: 'uppercase' }}>
                           Add Routine
                         </Text>
                     }
@@ -794,7 +794,7 @@ function RoutineManager({
               {/* Active routines list */}
               {routines.length > 0 && (
                 <View style={{ marginTop: 20 }}>
-                  <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, marginBottom: 12, paddingHorizontal: 4 }}>
+                  <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3, marginBottom: 12, paddingHorizontal: 4 }}>
                     Active Routines ({routines.length})
                   </Text>
                   {routines.map((r) => {
@@ -813,7 +813,7 @@ function RoutineManager({
                           padding: 12,
                           marginBottom: 10,
                           backgroundColor: ST_PAPER,
-                          borderRadius: 18,
+                          borderRadius: radius.md,
                           borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
                           shadowColor: ST_INK,
                           shadowOffset: { width: 0, height: 2 },
@@ -822,7 +822,7 @@ function RoutineManager({
                         }}
                       >
                         <View style={{
-                          width: 32, height: 32, borderRadius: 16,
+                          width: 32, height: 32, borderRadius: radius.full,
                           backgroundColor: isDark ? meta.color : softTintFor(meta.color || ST_LAVENDER),
                           borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
                           alignItems: 'center', justifyContent: 'center',
@@ -830,17 +830,17 @@ function RoutineManager({
                           <Icon size={14} color={isDark ? '#FFF' : ST_INK} strokeWidth={2.2} />
                         </View>
                         <View style={{ flex: 1, gap: 2 }}>
-                          <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 14, fontFamily: 'Fraunces_700Bold' }}>
+                          <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 14, fontFamily: font.displayBold }}>
                             {r.name}
                           </Text>
-                          <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'DMSans_500Medium' }}>
+                          <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium }}>
                             {r.time ? `${fmtTime(r.time)} · ` : ''}{daysLabel}
                           </Text>
                         </View>
                         <Pressable
                           onPress={() => openEdit(r)}
                           style={({ pressed }) => ({
-                            width: 32, height: 32, borderRadius: 16,
+                            width: 32, height: 32, borderRadius: radius.full,
                             backgroundColor: ST_CREAM,
                             borderWidth: 1.5, borderColor: ST_INK,
                             alignItems: 'center', justifyContent: 'center',
@@ -855,8 +855,8 @@ function RoutineManager({
                         <Pressable
                           onPress={() => setConfirmDeleteId(r.id)}
                           style={({ pressed }) => ({
-                            width: 32, height: 32, borderRadius: 16,
-                            backgroundColor: isDark ? '#3A1E1E' : '#FBE0DC',
+                            width: 32, height: 32, borderRadius: radius.full,
+                            backgroundColor: stickers.peachSoft,
                             borderWidth: 1.5, borderColor: ST_INK,
                             alignItems: 'center', justifyContent: 'center',
                             shadowColor: ST_INK,
@@ -887,7 +887,7 @@ function RoutineManager({
             <View
               style={{
                 backgroundColor: ST_PAPER,
-                borderRadius: 24,
+                borderRadius: radius.lg,
                 borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
                 padding: 18, gap: 12,
                 shadowColor: ST_INK,
@@ -899,21 +899,21 @@ function RoutineManager({
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <View style={{
-                    width: 36, height: 36, borderRadius: 18,
+                    width: 36, height: 36, borderRadius: radius.full,
                     backgroundColor: ST_LAVENDER_SOFT,
                     borderWidth: 1.5, borderColor: ST_INK,
                     alignItems: 'center', justifyContent: 'center',
                   }}>
                     <Pencil size={16} color={ST_LAVENDER} strokeWidth={2.4} />
                   </View>
-                  <Text style={{ color: ST_INK, fontSize: 20, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3 }}>
+                  <Text style={{ color: ST_INK, fontSize: 20, fontFamily: font.displayBold, letterSpacing: -0.3 }}>
                     Edit Routine
                   </Text>
                 </View>
                 <Pressable
                   onPress={cancelEdit}
                   style={({ pressed }) => ({
-                    width: 32, height: 32, borderRadius: 16,
+                    width: 32, height: 32, borderRadius: radius.full,
                     backgroundColor: ST_CREAM,
                     borderWidth: 1.5, borderColor: ST_INK,
                     alignItems: 'center', justifyContent: 'center',
@@ -935,7 +935,7 @@ function RoutineManager({
                   onPress={cancelEdit}
                   style={({ pressed }) => ({
                     flex: 1, height: 52,
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     backgroundColor: ST_CREAM,
                     borderWidth: 1.5, borderColor: ST_INK,
                     alignItems: 'center', justifyContent: 'center',
@@ -945,7 +945,7 @@ function RoutineManager({
                     transform: [{ translateY: pressed ? 2 : 0 }],
                   })}
                 >
-                  <Text style={{ color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                  <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
                     Cancel
                   </Text>
                 </Pressable>
@@ -954,7 +954,7 @@ function RoutineManager({
                   disabled={!form.name.trim() || saving}
                   style={({ pressed }) => ({
                     flex: 1.4, height: 52,
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     backgroundColor: ST_LAVENDER,
                     borderWidth: 2, borderColor: ST_INK,
                     alignItems: 'center', justifyContent: 'center',
@@ -967,7 +967,7 @@ function RoutineManager({
                 >
                   {saving
                     ? <ActivityIndicator color="#FFF" size="small" />
-                    : <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                    : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
                         Update
                       </Text>
                   }
@@ -988,7 +988,7 @@ function RoutineManager({
             <View
               style={{
                 backgroundColor: ST_PAPER,
-                borderRadius: 26,
+                borderRadius: radius.xl,
                 borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
                 padding: 22, gap: 14,
                 alignItems: 'center',
@@ -998,8 +998,8 @@ function RoutineManager({
               }}
             >
               <View style={{
-                width: 60, height: 60, borderRadius: 30,
-                backgroundColor: isDark ? '#3A1E1E' : '#FBE0DC',
+                width: 60, height: 60, borderRadius: radius.full,
+                backgroundColor: stickers.peachSoft,
                 borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
                 alignItems: 'center', justifyContent: 'center',
                 shadowColor: ST_INK,
@@ -1008,10 +1008,10 @@ function RoutineManager({
               }}>
                 <Trash2 size={26} color={ST_RED} strokeWidth={2.2} />
               </View>
-              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.3, textAlign: 'center' }}>
+              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, textAlign: 'center' }}>
                 Delete Routine?
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: 'DMSans_500Medium', textAlign: 'center', lineHeight: 20 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: font.bodyMedium, textAlign: 'center', lineHeight: 20 }}>
                 This routine will be removed and won't show up anymore. You can always add it back later.
               </Text>
 
@@ -1021,7 +1021,7 @@ function RoutineManager({
                   disabled={deleting}
                   style={({ pressed }) => ({
                     flex: 1, height: 52,
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     backgroundColor: ST_CREAM,
                     borderWidth: 1.5, borderColor: ST_INK,
                     alignItems: 'center', justifyContent: 'center',
@@ -1032,7 +1032,7 @@ function RoutineManager({
                     opacity: deleting ? 0.5 : 1,
                   })}
                 >
-                  <Text style={{ color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                  <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
                     Cancel
                   </Text>
                 </Pressable>
@@ -1041,7 +1041,7 @@ function RoutineManager({
                   disabled={deleting}
                   style={({ pressed }) => ({
                     flex: 1, height: 52,
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     backgroundColor: ST_RED,
                     borderWidth: 2, borderColor: ST_INK,
                     alignItems: 'center', justifyContent: 'center',
@@ -1054,7 +1054,7 @@ function RoutineManager({
                 >
                   {deleting
                     ? <ActivityIndicator color="#FFF" size="small" />
-                    : <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                    : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
                         Delete
                       </Text>
                   }
@@ -2003,10 +2003,10 @@ export function PregnancyCalendar() {
           {/* Header */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: 'Fraunces_700Bold', letterSpacing: -0.4 }}>
+              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.4 }}>
                 Pregnancy path
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'DMSans_700Bold', letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodyBold, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4 }}>
                 {STANDARD_APPOINTMENTS.length} milestones · 40 weeks
               </Text>
             </View>
@@ -2016,7 +2016,7 @@ export function PregnancyCalendar() {
               borderRadius: 999,
               paddingHorizontal: 10, paddingVertical: 5,
             }}>
-              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 10, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase' }}>
+              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>
                 Trimester {trimester}
               </Text>
             </View>
@@ -2095,7 +2095,7 @@ export function PregnancyCalendar() {
                       <Text style={{
                         color: labelColor,
                         fontSize: 11,
-                        fontFamily: b.status === 'next' ? 'DMSans_700Bold' : 'DMSans_600SemiBold',
+                        fontFamily: b.status === 'next' ? font.bodyBold : font.bodySemiBold,
                         letterSpacing: 0.4,
                       }}>
                         W{b.appt.week}
@@ -2111,15 +2111,15 @@ export function PregnancyCalendar() {
           <View style={{ flexDirection: 'row', gap: 14, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: isDark ? colors.border : '#E8DEC6' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ST_GREEN, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'DMSans_600SemiBold' }}>Done</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>Done</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ST_CORAL, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'DMSans_600SemiBold' }}>Soon</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>Soon</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.surface, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'DMSans_600SemiBold' }}>Upcoming</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>Upcoming</Text>
             </View>
           </View>
         </View>
@@ -2145,7 +2145,7 @@ export function PregnancyCalendar() {
               {isDone ? (
                 <Check size={16} color={isDark ? colors.text : ST_INK} strokeWidth={3} />
               ) : (
-                <Text style={{ fontFamily: 'Fraunces_800ExtraBold', fontSize: 11, color: isDark ? colors.text : ST_INK }}>
+                <Text style={{ fontFamily: font.displayBold, fontSize: 11, color: isDark ? colors.text : ST_INK }}>
                   W{appt.week}
                 </Text>
               )}
@@ -2192,7 +2192,7 @@ export function PregnancyCalendar() {
             })}
           >
             <Plus size={16} color="#FFF" strokeWidth={3} />
-            <Text style={{ color: '#FFF', fontFamily: 'DMSans_700Bold', fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+            <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
               Appointment
             </Text>
           </Pressable>
@@ -2214,7 +2214,7 @@ export function PregnancyCalendar() {
             })}
           >
             <Camera size={16} color={ST_INK} strokeWidth={2.5} />
-            <Text style={{ color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+            <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
               Upload exam
             </Text>
           </Pressable>
@@ -2394,19 +2394,19 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   segBtn: { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 10 },
-  segLabel: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
+  segLabel: { fontSize: 12, fontFamily: font.bodyMedium, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
 
   scroll: { padding: 16 },
 
   // Month grid
   monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   navBtn: { padding: 8 },
-  monthLabel: { fontSize: 18, fontFamily: 'Fraunces_800ExtraBold' },
+  monthLabel: { fontSize: 18, fontFamily: font.displayBold },
   weekdayRow: { flexDirection: 'row', marginBottom: 8 },
-  weekdayLabel: { flex: 1, textAlign: 'center', fontSize: 11, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
+  weekdayLabel: { flex: 1, textAlign: 'center', fontSize: 11, fontFamily: font.bodyMedium, fontWeight: '700' },
   dayGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   dayCell: { width: '14.28%', aspectRatio: 1, padding: 4, alignItems: 'center' },
-  dayNum: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
+  dayNum: { fontSize: 14, fontFamily: font.bodyMedium, fontWeight: '700' },
   dotRow: { flexDirection: 'row', gap: 2, marginTop: 2 },
   dot: { width: 4, height: 4, borderRadius: 2 },
 
@@ -2423,8 +2423,8 @@ const styles = StyleSheet.create({
   },
   highlightIconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   highlightContent: { flex: 1 },
-  highlightTitle: { fontSize: 13, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
-  highlightDetail: { fontSize: 11, fontFamily: 'DMSans_500Medium', marginTop: 1 },
+  highlightTitle: { fontSize: 13, fontFamily: font.bodyMedium, fontWeight: '700' },
+  highlightDetail: { fontSize: 11, fontFamily: font.bodyMedium, marginTop: 1 },
   highlightDots: { flexDirection: 'row', gap: 4, alignItems: 'center' },
   highlightDot: { width: 5, height: 5, borderRadius: 3 },
 
@@ -2432,14 +2432,14 @@ const styles = StyleSheet.create({
   dayPanel: { borderRadius: 20, padding: 16, marginTop: 12 },
   dayPanelHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   dayPanelDateRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  dayPanelDate: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
-  dayPanelCount: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
-  emptyDay: { fontSize: 13, fontFamily: 'DMSans_500Medium', textAlign: 'center', paddingVertical: 8 },
+  dayPanelDate: { fontSize: 14, fontFamily: font.bodyMedium, fontWeight: '700' },
+  dayPanelCount: { fontSize: 12, fontFamily: font.bodyMedium },
+  emptyDay: { fontSize: 13, fontFamily: font.bodyMedium, textAlign: 'center', paddingVertical: 8 },
   listDivider: { height: 1, marginVertical: 8 },
 
   // Section toggle (pending / logged headers)
   sectionToggleRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 6 },
-  sectionToggleLabel: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '700', flex: 1 },
+  sectionToggleLabel: { fontSize: 12, fontFamily: font.bodyMedium, fontWeight: '700', flex: 1 },
 
   // Type group rows (Kids-style: Icon | Label | Count | Chevron)
   typeGroupHeader: {
@@ -2451,8 +2451,8 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 2,
   },
-  typeGroupLabel: { flex: 1, fontSize: 13, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
-  typeGroupCount: { fontSize: 11, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
+  typeGroupLabel: { flex: 1, fontSize: 13, fontFamily: font.bodyMedium, fontWeight: '700' },
+  typeGroupCount: { fontSize: 11, fontFamily: font.bodyMedium, fontWeight: '600' },
 
   // Routine items
   routineItem: {
@@ -2464,11 +2464,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 6,
   },
-  routineItemIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  routineItemIcon: { width: 36, height: 36, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
   routineItemContent: { flex: 1 },
-  routineItemName: { fontSize: 13, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
-  routineItemSub: { fontSize: 11, fontFamily: 'DMSans_500Medium', marginTop: 1 },
-  routineItemTime: { fontSize: 11, fontFamily: 'DMSans_500Medium' },
+  routineItemName: { fontSize: 13, fontFamily: font.bodyMedium, fontWeight: '600' },
+  routineItemSub: { fontSize: 11, fontFamily: font.bodyMedium, marginTop: 1 },
+  routineItemTime: { fontSize: 11, fontFamily: font.bodyMedium },
 
   // Logged sub-items (inside type group)
   loggedItem: {
@@ -2482,25 +2482,25 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   loggedItemContent: { flex: 1 },
-  loggedItemValue: { fontSize: 12, fontFamily: 'DMSans_500Medium', color: 'rgba(255,255,255,0.65)' },
-  loggedItemTime: { fontSize: 11, fontFamily: 'DMSans_500Medium' },
+  loggedItemValue: { fontSize: 12, fontFamily: font.bodyMedium },
+  loggedItemTime: { fontSize: 11, fontFamily: font.bodyMedium },
 
   // Week strip
   weekStrip: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   weekDayBtn: { flex: 1, alignItems: 'center', paddingVertical: 10, marginHorizontal: 2 },
-  weekDayName: { fontSize: 10, fontFamily: 'DMSans_500Medium', fontWeight: '700', marginBottom: 2 },
-  weekDayNum: { fontSize: 16, fontFamily: 'Fraunces_800ExtraBold' },
+  weekDayName: { fontSize: 10, fontFamily: font.bodyMedium, fontWeight: '700', marginBottom: 2 },
+  weekDayNum: { fontSize: 16, fontFamily: font.displayBold },
   weekDotIndicator: { width: 4, height: 4, borderRadius: 2, marginTop: 3 },
 
   // Journey
   journeyRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, padding: 12, marginBottom: 8, gap: 12 },
   journeyWeekBadge: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  journeyWeekNum: { fontSize: 14, fontFamily: 'Fraunces_800ExtraBold' },
+  journeyWeekNum: { fontSize: 14, fontFamily: font.displayBold },
   journeyContent: { flex: 1 },
-  journeySize: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
-  journeyFact: { fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 1 },
+  journeySize: { fontSize: 14, fontFamily: font.bodyMedium, fontWeight: '600' },
+  journeyFact: { fontSize: 12, fontFamily: font.bodyMedium, marginTop: 1 },
   currentBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  currentBadgeText: { fontSize: 10, fontFamily: 'DMSans_500Medium', fontWeight: '700', color: '#fff' },
+  currentBadgeText: { fontSize: 10, fontFamily: font.bodyMedium, fontWeight: '700', color: '#fff' },
 
   // Appointments
   apptRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
@@ -2509,12 +2509,12 @@ const styles = StyleSheet.create({
   apptLine: { width: 2, flex: 1, marginTop: 2 },
   apptCard: { flex: 1, borderRadius: 16, padding: 12, marginBottom: 8 },
   apptCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  apptName: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
-  apptWeek: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
-  apptPrep: { fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 4 },
-  apptDone: { fontSize: 12, fontFamily: 'DMSans_500Medium', marginTop: 4 },
+  apptName: { fontSize: 14, fontFamily: font.bodyMedium, fontWeight: '600' },
+  apptWeek: { fontSize: 12, fontFamily: font.bodyMedium },
+  apptPrep: { fontSize: 12, fontFamily: font.bodyMedium, marginTop: 4 },
+  apptDone: { fontSize: 12, fontFamily: font.bodyMedium, marginTop: 4 },
   addApptBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 999, marginTop: 16 },
-  addApptBtnText: { fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '700', color: '#fff' },
+  addApptBtnText: { fontSize: 15, fontFamily: font.bodyMedium, fontWeight: '700', color: '#fff' },
 
   // Modals
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
@@ -2535,7 +2535,7 @@ const styles = StyleSheet.create({
   fabSheetHandle: { alignItems: 'center', paddingVertical: 8 },
   fabSheetHandleBar: { width: 40, height: 4, borderRadius: 2 },
   fabSheetHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-  fabSheetTitle: { fontSize: 18, fontFamily: 'Fraunces_800ExtraBold' },
+  fabSheetTitle: { fontSize: 18, fontFamily: font.displayBold },
   fabSheetClose: { padding: 6 },
   fabSheetGrid: {
     flexDirection: 'row',
@@ -2551,7 +2551,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fabSheetIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  fabSheetLabel: { fontSize: 11, fontFamily: 'DMSans_500Medium', fontWeight: '700', textAlign: 'center' },
+  fabSheetLabel: { fontSize: 11, fontFamily: font.bodyMedium, fontWeight: '700', textAlign: 'center' },
 
   // Manage Routines button inside sheet
   manageRoutinesBtn: {
@@ -2563,12 +2563,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
   },
-  manageRoutinesBtnText: { flex: 1, fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
+  manageRoutinesBtnText: { flex: 1, fontSize: 14, fontFamily: font.bodyMedium, fontWeight: '700' },
 
   // Routine Manager
   routineManagerSheet: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
     maxHeight: '92%',
     paddingTop: 8,
   },
@@ -2578,64 +2578,63 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
-  routineManagerTitle: { flex: 1, fontSize: 18, fontFamily: 'Fraunces_800ExtraBold' },
+  routineManagerTitle: { flex: 1, fontSize: 18, fontFamily: font.displayBold },
   routineManagerScroll: { paddingHorizontal: 16, paddingTop: 12 },
   routineRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     padding: 12,
-    borderRadius: 16,
+    borderRadius: radius.md,
     borderWidth: 1,
     marginBottom: 8,
   },
-  routineIconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  routineIconWrap: { width: 40, height: 40, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
   routineInfo: { flex: 1 },
-  routineName: { fontSize: 14, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
-  routineDetail: { fontSize: 11, fontFamily: 'DMSans_500Medium', marginTop: 2 },
-  routineDeleteBtn: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  emptyText: { fontSize: 13, fontFamily: 'DMSans_500Medium', textAlign: 'center', paddingVertical: 12 },
+  routineName: { fontSize: 14, fontFamily: font.bodyMedium, fontWeight: '700' },
+  routineDetail: { fontSize: 11, fontFamily: font.bodyMedium, marginTop: 2 },
+  routineDeleteBtn: { width: 32, height: 32, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+  emptyText: { fontSize: 13, fontFamily: font.bodyMedium, textAlign: 'center', paddingVertical: 12 },
 
   // Add routine form
   addRoutineForm: {
-    borderRadius: 20,
+    borderRadius: radius.md,
     borderWidth: 1,
     padding: 16,
     marginTop: 8,
     marginBottom: 16,
     gap: 10,
   },
-  addRoutineTitle: { fontSize: 14, fontFamily: 'Fraunces_800ExtraBold' },
-  addRoutineLabel: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '700', marginTop: 4 },
+  addRoutineTitle: { fontSize: 14, fontFamily: font.displayBold },
+  addRoutineLabel: { fontSize: 12, fontFamily: font.bodyMedium, fontWeight: '700', marginTop: 4 },
   routineInput: {
     height: 48,
-    borderRadius: 12,
+    borderRadius: radius.sm,
     borderWidth: 1,
     paddingHorizontal: 14,
     fontSize: 14,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
   },
   typePill: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 999,
+    borderRadius: radius.full,
     borderWidth: 1,
   },
-  typePillText: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
+  typePillText: { fontSize: 12, fontFamily: font.bodyMedium, fontWeight: '600' },
   daysRow: { flexDirection: 'row', gap: 6 },
   dayPill: {
     width: 34,
     height: 34,
-    borderRadius: 17,
+    borderRadius: radius.full,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayPillText: { fontSize: 12, fontFamily: 'DMSans_500Medium', fontWeight: '700' },
-  saveRoutineBtn: { paddingVertical: 14, borderRadius: 999, alignItems: 'center', marginTop: 4 },
-  saveRoutineBtnText: { fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '700', color: '#fff' },
+  dayPillText: { fontSize: 12, fontFamily: font.bodyMedium, fontWeight: '700' },
+  saveRoutineBtn: { paddingVertical: 14, borderRadius: radius.full, alignItems: 'center', marginTop: 4 },
+  saveRoutineBtnText: { fontSize: 15, fontFamily: font.bodyMedium, fontWeight: '700', color: '#fff' },
 
   // Log Detail (paper aesthetic — matches add-log forms)
   detailBody: { paddingTop: 4, paddingBottom: 16 },
@@ -2643,11 +2642,11 @@ const styles = StyleSheet.create({
     borderRadius: 24, borderWidth: 1.5, padding: 24,
     alignItems: 'center', gap: 6, marginTop: 16, marginBottom: 12,
   },
-  detailMetricBig: { fontSize: 56, fontFamily: 'Fraunces_800ExtraBold', letterSpacing: -2 },
-  detailMetricText: { fontSize: 22, fontFamily: 'Fraunces_800ExtraBold', textAlign: 'center' },
-  detailMetricUnit: { fontSize: 20, fontFamily: 'DMSans_500Medium', fontWeight: '600' },
+  detailMetricBig: { fontSize: 56, fontFamily: font.displayBold, letterSpacing: -2 },
+  detailMetricText: { fontSize: 22, fontFamily: font.displayBold, textAlign: 'center' },
+  detailMetricUnit: { fontSize: 20, fontFamily: font.bodyMedium, fontWeight: '600' },
   detailMetricLabel: {
-    fontSize: 11, fontFamily: 'DMSans_700Bold', fontWeight: '700',
+    fontSize: 11, fontFamily: font.bodyBold, fontWeight: '700',
     letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 4,
   },
   detailDateRow: {
@@ -2656,15 +2655,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 9,
     alignSelf: 'flex-start', marginBottom: 14,
   },
-  detailDateText: { fontSize: 13, fontFamily: 'DMSans_700Bold' },
+  detailDateText: { fontSize: 13, fontFamily: font.bodyBold },
   detailPillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   detailPill: {
     paddingHorizontal: 12, paddingVertical: 6,
     borderRadius: 999, borderWidth: 1.5,
   },
-  detailPillText: { fontSize: 12, fontFamily: 'DMSans_700Bold' },
+  detailPillText: { fontSize: 12, fontFamily: font.bodyBold },
   detailNotesBox: { borderRadius: 18, borderWidth: 1.5, padding: 14, marginBottom: 14 },
-  detailNotesText: { fontSize: 14, fontFamily: 'DMSans_500Medium', lineHeight: 20 },
+  detailNotesText: { fontSize: 14, fontFamily: font.bodyMedium, lineHeight: 20 },
   detailActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
   detailEditBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
@@ -2676,7 +2675,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', gap: 8,
     paddingVertical: 16, borderRadius: 999, borderWidth: 1.5,
   },
-  detailActionText: { fontSize: 15, fontFamily: 'DMSans_700Bold', fontWeight: '700', color: '#fff' },
+  detailActionText: { fontSize: 15, fontFamily: font.bodyBold, fontWeight: '700', color: '#fff' },
 
   // Timeline (Cards mode)
   modeToggle: {
@@ -2694,7 +2693,7 @@ const styles = StyleSheet.create({
   },
   modeToggleLabel: {
     fontSize: 12,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     fontWeight: '700',
   },
   timelineHeader: {
@@ -2713,7 +2712,7 @@ const styles = StyleSheet.create({
   },
   timelineTime: {
     fontSize: 12,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     fontWeight: '600',
   },
   emptyCard: {
@@ -2744,7 +2743,7 @@ const styles = StyleSheet.create({
   },
   dayTimelineSub: {
     fontSize: 11,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
   },
   dayZoomRow: {
     flexDirection: 'row',
@@ -2767,6 +2766,6 @@ const styles = StyleSheet.create({
   dayHourLabel: {
     fontSize: 10,
     fontWeight: '600',
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
   },
 })
