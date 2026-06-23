@@ -65,7 +65,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers, font } from '../../constants/theme'
+import { useTheme, brand, stickers, font, getModeColor } from '../../constants/theme'
 import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
@@ -674,9 +674,11 @@ export function KidsCalendar() {
   // a "by <name>" line (only for entries logged by other caregivers, not
   // the viewer themselves).
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setCurrentUserId(session?.user.id ?? null)
-    })
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setCurrentUserId(session?.user.id ?? null)
+      })
+      .catch(() => { /* transient network failure — id stays null, retried on next mount */ })
   }, [])
 
   useEffect(() => {
@@ -755,7 +757,14 @@ export function KidsCalendar() {
 
   async function handleDeleteLog(logId: string) {
     const log = selectedLog
-    const { error } = await supabase.from('child_logs').delete().eq('id', logId)
+    let error: { message: string } | null = null
+    try {
+      ;({ error } = await supabase.from('child_logs').delete().eq('id', logId))
+    } catch (e: any) {
+      // Transport-level failure (e.g. "Network request failed") rejects rather
+      // than returning { error } — surface it instead of crashing to the dev toast.
+      error = { message: e?.message ?? 'Network error. Please try again.' }
+    }
     if (error) {
       // Don't run the optimistic cleanup below — that would hide an entry the
       // DB still holds, so it reappears on the next fetch (a ghost delete).
@@ -802,7 +811,12 @@ export function KidsCalendar() {
     if (!unlogTarget) return
     setUnlogging(true)
     const target = unlogTarget
-    const { error } = await supabase.from('child_logs').delete().eq('id', target.id)
+    let error: { message: string } | null = null
+    try {
+      ;({ error } = await supabase.from('child_logs').delete().eq('id', target.id))
+    } catch (e: any) {
+      error = { message: e?.message ?? 'Network error. Please try again.' }
+    }
     if (error) {
       Alert.alert('Could not remove', error.message)
       setUnlogging(false)
@@ -1213,8 +1227,11 @@ export function KidsCalendar() {
     if (!id) return
     setRoutineDeleting(true)
     try {
-      await supabase.from('child_routines').delete().eq('id', id)
+      const { error } = await supabase.from('child_routines').delete().eq('id', id)
+      if (error) throw error
       await fetchRoutines()
+    } catch (e: any) {
+      Alert.alert('Could not delete', e?.message ?? 'Please check your connection and try again.')
     } finally {
       setRoutineDeleting(false)
       setConfirmDeleteRoutineId(null)
@@ -1345,8 +1362,13 @@ export function KidsCalendar() {
                   text: 'Delete',
                   style: 'destructive',
                   onPress: async () => {
-                    await supabase.from('child_routines').delete().eq('id', routine.id)
-                    fetchRoutines()
+                    try {
+                      const { error } = await supabase.from('child_routines').delete().eq('id', routine.id)
+                      if (error) throw error
+                      await fetchRoutines()
+                    } catch (e: any) {
+                      Alert.alert('Could not delete', e?.message ?? 'Please check your connection and try again.')
+                    }
                   },
                 },
               ]
@@ -1358,8 +1380,13 @@ export function KidsCalendar() {
   }
 
   async function toggleRoutine(id: string, active: boolean) {
-    await supabase.from('child_routines').update({ active: !active }).eq('id', id)
-    fetchRoutines()
+    try {
+      const { error } = await supabase.from('child_routines').update({ active: !active }).eq('id', id)
+      if (error) throw error
+      await fetchRoutines()
+    } catch (e: any) {
+      Alert.alert('Could not update', e?.message ?? 'Please check your connection and try again.')
+    }
   }
 
   // ── Derived data ────────────────────────────────────────────────────────
@@ -2069,7 +2096,9 @@ export function KidsCalendar() {
           const ST_PAPER = colors.surface
           const ST_CREAM = colors.surfaceRaised
           const ST_SHEET = isDark ? colors.bg : '#FAF6E8'
-          const ST_PURPLE = isDark ? '#A07FDC' : '#7048B8'
+          // Mode-colored accent (powder blue for Kids), matching how the
+          // Pregnancy routine manager uses getModeColor('preg', …) for lavender.
+          const ST_PURPLE = getModeColor('kids', isDark)
           const closeManager = () => {
             setShowRoutineManager(false)
             setRoutineEditing(null)
@@ -2488,7 +2517,9 @@ export function KidsCalendar() {
           const ST_INK = '#141313'
           const ST_PAPER = colors.surface
           const ST_CREAM = colors.surfaceRaised
-          const ST_PURPLE = isDark ? '#A07FDC' : '#7048B8'
+          // Mode-colored accent (powder blue for Kids), matching how the
+          // Pregnancy routine manager uses getModeColor('preg', …) for lavender.
+          const ST_PURPLE = getModeColor('kids', isDark)
           return (
             <Pressable
               style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', paddingHorizontal: 20 }}
@@ -2941,19 +2972,19 @@ export function KidsCalendar() {
                       const mealTime = fp.time ? fmtTime(fp.time) : ''
                       const cals = fp.estimatedCals ? Number(fp.estimatedCals) : null
                       const qualityMap: Record<string, { label: string; color: string }> = {
-                        ate_well: { label: '😊 Ate well', color: '#A2FF86' },
-                        ate_little: { label: '😐 Ate a little', color: '#F4FD50' },
-                        did_not_eat: { label: '😔 Did not eat', color: '#FF6B6B' },
+                        ate_well: { label: '😊 Ate well', color: stickers.green },
+                        ate_little: { label: '😐 Ate a little', color: stickers.yellow },
+                        did_not_eat: { label: '😔 Did not eat', color: stickers.coral },
                       }
                       const quality = fp.quality ? qualityMap[fp.quality] : null
                       return (
                         <>
                           {/* Calorie hero */}
                           {cals !== null && (
-                            <View style={{ backgroundColor: '#FF6B3515', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: '#FF6B3530' }}>
+                            <View style={{ backgroundColor: stickers.coral + '22', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: stickers.coral + '40' }}>
                               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4 }}>
-                                <Text style={{ color: '#FF6B35', fontSize: 64, fontWeight: '800', lineHeight: 68, letterSpacing: -2, fontFamily: font.display }}>{cals}</Text>
-                                <Text style={{ color: '#FF6B35', fontSize: 20, fontWeight: '700', marginBottom: 10 }}>kcal</Text>
+                                <Text style={{ color: stickers.coralInk, fontSize: 64, fontWeight: '800', lineHeight: 68, letterSpacing: -2, fontFamily: font.display }}>{cals}</Text>
+                                <Text style={{ color: stickers.coralInk, fontSize: 20, fontWeight: '700', marginBottom: 10 }}>kcal</Text>
                               </View>
                               <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>Estimated calories</Text>
                             </View>
@@ -2969,8 +3000,8 @@ export function KidsCalendar() {
                                 </View>
                               )}
                               {mealName !== '' && (
-                                <View style={{ backgroundColor: '#FF6B3520', borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
-                                  <Text style={{ color: '#FF6B35', fontSize: 13, fontWeight: '700' }}>{mealName}</Text>
+                                <View style={{ backgroundColor: stickers.coral + '22', borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
+                                  <Text style={{ color: stickers.coralInk, fontSize: 13, fontWeight: '700' }}>{mealName}</Text>
                                 </View>
                               )}
                               {quality !== null && (
@@ -2991,10 +3022,10 @@ export function KidsCalendar() {
 
                           {/* New food badge */}
                           {fp.isNewFood && (
-                            <View style={{ backgroundColor: '#B983FF15', borderRadius: 18, padding: 14, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#B983FF30' }}>
-                              <Sparkles size={18} color="#B983FF" />
+                            <View style={{ backgroundColor: stickers.lilac + '22', borderRadius: 18, padding: 14, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: stickers.lilac + '40' }}>
+                              <Sparkles size={18} color={stickers.lilacInk} />
                               <View style={{ flex: 1 }}>
-                                <Text style={{ color: '#B983FF', fontSize: 13, fontWeight: '700' }}>New food introduced!</Text>
+                                <Text style={{ color: stickers.lilacInk, fontSize: 13, fontWeight: '700' }}>New food introduced!</Text>
                                 {fp.newFoodName && <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{fp.newFoodName}</Text>}
                               </View>
                             </View>
@@ -3002,10 +3033,10 @@ export function KidsCalendar() {
 
                           {/* Reaction alert */}
                           {fp.hasReaction && (
-                            <View style={{ backgroundColor: '#FF6B6B15', borderRadius: 18, padding: 14, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#FF6B6B30' }}>
-                              <AlertCircle size={18} color="#FF6B6B" />
+                            <View style={{ backgroundColor: stickers.coral + '22', borderRadius: 18, padding: 14, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: stickers.coral + '40' }}>
+                              <AlertCircle size={18} color={stickers.coral} />
                               <View style={{ flex: 1 }}>
-                                <Text style={{ color: '#FF6B6B', fontSize: 13, fontWeight: '700' }}>Reaction noted</Text>
+                                <Text style={{ color: stickers.coral, fontSize: 13, fontWeight: '700' }}>Reaction noted</Text>
                                 {fp.reactionFood && <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{fp.reactionFood}</Text>}
                               </View>
                             </View>
@@ -3060,14 +3091,14 @@ export function KidsCalendar() {
                     {selectedLog.type === 'sleep' && (() => {
                       let sp: Record<string, any> = {}
                       try { sp = JSON.parse(selectedLog.value ?? '{}') } catch {}
-                      const sleepColor = '#B983FF'
+                      const sleepColor = stickers.lilac
                       // Duration is stored as "10h 10m", "45m", "2h" — display it directly
                       const durStr = sp.duration ? String(sp.duration) : null
                       const qualityMap: Record<string, { emoji: string; color: string }> = {
-                        great:    { emoji: '😴', color: '#A2FF86' },
+                        great:    { emoji: '😴', color: stickers.green },
                         good:     { emoji: '😊', color: '#4D96FF' },
-                        restless: { emoji: '😤', color: '#F4FD50' },
-                        poor:     { emoji: '😞', color: '#FF6B35' },
+                        restless: { emoji: '😤', color: stickers.yellow },
+                        poor:     { emoji: '😞', color: stickers.coral },
                       }
                       const q = sp.quality ? qualityMap[sp.quality.toLowerCase()] ?? null : null
                       return (
@@ -3102,7 +3133,7 @@ export function KidsCalendar() {
                     {selectedLog.type === 'activity' && (() => {
                       let ap: Record<string, any> = {}
                       try { ap = JSON.parse(selectedLog.value ?? '{}') } catch {}
-                      const actColor = '#A2FF86'
+                      const actColor = stickers.green
                       const emojiMap: Record<string, string> = {
                         class: '📚', sport: '⚽', swim: '🏊', dance: '💃',
                         music: '🎵', art: '🎨', playground: '🛝', walk: '🚶',
@@ -3182,11 +3213,11 @@ export function KidsCalendar() {
                     {selectedLog.type === 'mood' && (() => {
                       const moodVal = selectedLog.value ?? ''
                       const moodMeta: Record<string, { label: string; color: string }> = {
-                        happy:     { label: 'Happy',     color: '#A2FF86' },
+                        happy:     { label: 'Happy',     color: stickers.green },
                         calm:      { label: 'Calm',      color: '#4D96FF' },
-                        fussy:     { label: 'Fussy',     color: '#F4FD50' },
-                        cranky:    { label: 'Cranky',    color: '#FF6B35' },
-                        energetic: { label: 'Energetic', color: '#B983FF' },
+                        fussy:     { label: 'Fussy',     color: stickers.yellow },
+                        cranky:    { label: 'Cranky',    color: stickers.coral },
+                        energetic: { label: 'Energetic', color: stickers.lilac },
                       }
                       const m = moodMeta[moodVal] ?? { label: moodVal || 'Mood', color: brand.accent }
                       return (
@@ -3453,12 +3484,12 @@ export function KidsCalendar() {
                     </View>
                     {totalCals > 0 && (
                       <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
-                        <Text style={{ color: '#FF6B35', fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{totalCals}</Text>
+                        <Text style={{ color: stickers.coral, fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{totalCals}</Text>
                         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>kcal today</Text>
                       </View>
                     )}
                     <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
-                      <Text style={{ color: '#A2FF86', fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{selectedDayRoutines.length > 0 ? selectedDayRoutines.length : loggedToday.length}</Text>
+                      <Text style={{ color: stickers.green, fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{selectedDayRoutines.length > 0 ? selectedDayRoutines.length : loggedToday.length}</Text>
                       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>Routines</Text>
                     </View>
                   </View>

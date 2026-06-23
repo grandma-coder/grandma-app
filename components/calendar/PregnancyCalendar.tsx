@@ -539,8 +539,11 @@ function RoutineManager({
     if (!id) return
     setDeleting(true)
     try {
-      await supabase.from('pregnancy_routines').delete().eq('id', id)
+      const { error } = await supabase.from('pregnancy_routines').delete().eq('id', id)
+      if (error) throw error
       onDeleted()
+    } catch (e: unknown) {
+      Alert.alert('Could not delete', e instanceof Error ? e.message : 'Please check your connection and try again.')
     } finally {
       setDeleting(false)
       setConfirmDeleteId(null)
@@ -1538,7 +1541,9 @@ export function PregnancyCalendar() {
 
   const [userId, setUserId] = useState<string | undefined>(undefined)
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data: { session } }) => setUserId(session?.user.id))
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => setUserId(session?.user.id))
+      .catch(() => { /* transient network failure — retried on next mount */ })
   }, [])
 
   // Auto-center the appointment S-curve on the next-up milestone whenever
@@ -1637,7 +1642,12 @@ export function PregnancyCalendar() {
   }
 
   async function handleDeleteLog(log: PregnancyCalendarLog) {
-    const { error } = await supabase.from('pregnancy_logs').delete().eq('id', log.id)
+    let error: { message: string } | null = null
+    try {
+      ;({ error } = await supabase.from('pregnancy_logs').delete().eq('id', log.id))
+    } catch (e: any) {
+      error = { message: e?.message ?? 'Network error. Please try again.' }
+    }
     if (error) {
       Alert.alert('Could not delete', error.message)
       return
