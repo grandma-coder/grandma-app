@@ -88,7 +88,8 @@ export const birthTypes: BirthType[] = [
       'Risk of infection if water isn\'t properly maintained',
       'May need to exit pool for complications',
     ],
-    whatToExpect: 'You\'ll enter the birth pool when labor is well established (usually 5+ cm dilated). The water temperature is kept around 97-100°F. You may deliver in or out of the water.',
+    // CLINICAL-REVIEW: pending sign-off — NICE NG235/RCOG: pool must not exceed 37.5°C (99.5°F).
+    whatToExpect: 'You\'ll enter the birth pool when labor is well established (usually 5+ cm dilated). The water temperature is kept at body temperature, not above 99.5°F (37.5°C). You may deliver in or out of the water.',
   },
 ]
 
