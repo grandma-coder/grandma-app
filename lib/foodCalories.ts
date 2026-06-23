@@ -3,6 +3,10 @@
  *
  * Approximate calories per typical serving for common kid foods.
  * Used for live estimation as caregivers type what the child ate.
+ *
+ * Source: calorie densities from USDA FoodData Central (https://fdc.nal.usda.gov/);
+ * typical servings approximate AAP toddler guidance. Estimates only, not a
+ * feeding prescription.
  */
 
 interface FoodEntry {
