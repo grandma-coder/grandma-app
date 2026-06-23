@@ -28,7 +28,7 @@ const PREP_DETAIL: Record<string, PrepItem> = {
     icon: '💊',
     title: 'Take your prenatal vitamins',
     summary: 'Folic acid, iron, and DHA every day',
-    detail: 'Prenatal vitamins fill nutritional gaps that diet alone may miss. Look for at least 400mcg of folic acid (ideally 600mcg during pregnancy), 27mg of iron, 200mg of DHA, and calcium. Take with food if they make you nauseous. If your current prenatal causes constipation, ask your doctor about a gentle alternative. Consistency matters more than brand.',
+    detail: 'Prenatal vitamins fill nutritional gaps that diet alone may miss. Look for at least 400mcg of folic acid (ideally 600mcg during pregnancy), 27mg of iron, 200mg of DHA, and calcium. If you\'ve had a previous pregnancy affected by a neural tube defect, your provider may prescribe a much higher dose (around 4,000mcg/day) — ask them. Take with food if they make you nauseous. If your current prenatal causes constipation, ask your doctor about a gentle alternative. Consistency matters more than brand.',
   },
   birth_plan: {
     id: 'birth_plan',
@@ -133,7 +133,8 @@ const PREP_DETAIL: Record<string, PrepItem> = {
     icon: '💆',
     title: 'Start perineal massage at week 34',
     summary: 'Reduces risk of tearing during delivery',
-    detail: 'Perineal massage from week 34 onward has evidence to support reduced risk of third- and fourth-degree tears and episiotomy. It takes about 5 minutes, done 3–4 times per week. Use a clean finger and olive oil or coconut oil. Gently stretch the perineum downward and to the sides in a U-shape motion. Ask your midwife or OB to demonstrate proper technique. It may feel uncomfortable at first but becomes easier with practice.',
+    // CLINICAL-REVIEW: pending sign-off — Cochrane CD005123: reduces episiotomy + trauma needing stitches, NOT 3rd/4th-degree tears.
+    detail: 'Perineal massage from week 34 onward has evidence (Cochrane) to reduce the chance of episiotomy and tears needing stitches, especially for first vaginal births. It takes about 5 minutes, done 3–4 times per week. Use a clean finger and olive oil or coconut oil. Gently stretch the perineum downward and to the sides in a U-shape motion. Ask your midwife or OB to demonstrate proper technique. It may feel uncomfortable at first but becomes easier with practice.',
   },
   lactation_support: {
     id: 'lactation_support',
@@ -203,7 +204,7 @@ const WEEK_DETAILS: WeekDetail[] = [
   },
   {
     week: 28, grandmaTip: 'Start counting kicks every day now. Ten movements in two hours is a healthy sign.',
-    developmentPoints: ['Baby can blink, cough, and practice breathing movements', 'Brain is developing billions of neurons', 'Eyes open for the first time this week', 'Baby responds to sound, light, and your touch'],
+    developmentPoints: ['Baby can blink, cough, and practice breathing movements', 'Brain is developing billions of neurons', 'Eyes — which first opened around week 26 — now blink at light', 'Baby responds to sound, light, and your touch'],
     symptoms: ['Leg cramps at night', 'Trouble sleeping', 'Pelvic pressure', 'Heartburn worsening', 'Shortness of breath'],
     prepItems: [PREP_DETAIL.kick_counting, PREP_DETAIL.birth_class, PREP_DETAIL.pediatrician],
   },
