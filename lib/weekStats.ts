@@ -1,6 +1,9 @@
 /**
  * weekStats — per-week clinical length (cm) and weight (g).
- * Matches the weekStats object in pregnancy-weeks.html.
+ * Length is CROWN-HEEL (total) length from week 14 onward, and crown-rump
+ * (CRL) in the embryonic weeks 5–13 where crown-heel is not meaningful.
+ * 50th-centile population estimates, not a given baby's measurement.
+ * Source: Hadlock-derived charts, https://perinatology.com/Reference/Fetal%20development.htm
  */
 
 export interface WeekStat {
@@ -22,14 +25,15 @@ export const weekStats: Record<number, WeekStat> = {
   11: { cm: 4.1, g: 7 },
   12: { cm: 5.4, g: 14 },
   13: { cm: 7.4, g: 23 },
-  14: { cm: 8.7, g: 43 },
-  15: { cm: 10.1, g: 70 },
-  16: { cm: 11.6, g: 100 },
-  17: { cm: 13.0, g: 140 },
-  18: { cm: 14.2, g: 190 },
-  19: { cm: 15.3, g: 240 },
-  20: { cm: 16.4, g: 300 },
-  21: { cm: 26.7, g: 360 },
+  // CLINICAL-REVIEW: pending sign-off — Hadlock/Perinatology.com crown-heel total length (was crown-rump magnitude through wk20).
+  14: { cm: 14.2, g: 43 },
+  15: { cm: 16.4, g: 70 },
+  16: { cm: 18.6, g: 100 },
+  17: { cm: 20.4, g: 140 },
+  18: { cm: 22.2, g: 190 },
+  19: { cm: 24.0, g: 240 },
+  20: { cm: 25.7, g: 300 },
+  21: { cm: 27.4, g: 360 },
   22: { cm: 27.8, g: 430 },
   23: { cm: 28.9, g: 501 },
   24: { cm: 30.0, g: 600 },
