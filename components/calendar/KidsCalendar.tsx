@@ -3050,7 +3050,7 @@ export function KidsCalendar() {
                       let fp: Record<string, any> = {}
                       try { fp = JSON.parse(selectedLog.value ?? '{}') } catch {}
                       const isBreast = fp.feedType === 'breast'
-                      const accentColor = '#FF8AD8'
+                      const accentColor = stickers.pink
                       return (
                         <>
                           <View style={{ backgroundColor: accentColor + '15', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: accentColor + '30' }}>
@@ -3096,7 +3096,7 @@ export function KidsCalendar() {
                       const durStr = sp.duration ? String(sp.duration) : null
                       const qualityMap: Record<string, { emoji: string; color: string }> = {
                         great:    { emoji: '😴', color: stickers.green },
-                        good:     { emoji: '😊', color: '#4D96FF' },
+                        good:     { emoji: '😊', color: stickers.blue },
                         restless: { emoji: '😤', color: stickers.yellow },
                         poor:     { emoji: '😞', color: stickers.coral },
                       }
@@ -3177,7 +3177,7 @@ export function KidsCalendar() {
                     {selectedLog.type === 'diaper' && (() => {
                       let dp: Record<string, any> = {}
                       try { dp = JSON.parse(selectedLog.value ?? '{}') } catch {}
-                      const diaperColor = '#4D96FF'
+                      const diaperColor = stickers.blue
                       const typeMap: Record<string, { emoji: string; label: string }> = {
                         pee:   { emoji: '💧', label: 'Pee' },
                         poop:  { emoji: '💩', label: 'Poop' },
@@ -3214,7 +3214,7 @@ export function KidsCalendar() {
                       const moodVal = selectedLog.value ?? ''
                       const moodMeta: Record<string, { label: string; color: string }> = {
                         happy:     { label: 'Happy',     color: stickers.green },
-                        calm:      { label: 'Calm',      color: '#4D96FF' },
+                        calm:      { label: 'Calm',      color: stickers.blue },
                         fussy:     { label: 'Fussy',     color: stickers.yellow },
                         cranky:    { label: 'Cranky',    color: stickers.coral },
                         energetic: { label: 'Energetic', color: stickers.lilac },
@@ -3507,7 +3507,7 @@ export function KidsCalendar() {
                 })}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={{ color: '#1A1030', fontSize: 16, fontWeight: '800' }}>Awesome!</Text>
+                  <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>Awesome!</Text>
                   <EmojiSticker size={18}>🎉</EmojiSticker>
                 </View>
               </Pressable>

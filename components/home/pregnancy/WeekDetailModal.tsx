@@ -62,9 +62,9 @@ interface HeroPalette {
 // Palettes from pregnancy-weeks.html — keyed to the card's cycling bg.
 // accent/accentSoft pairs mirror the popup's dev-dot and icon-square tints.
 const PALETTES: HeroPalette[] = [
-  { // 0 — deep purple
-    bg: '#2A1F4A', fg: '#FFFEF8', metaFg: '#E9DFFF',
-    accent: '#F5D652', accentSoft: '#FBEA9E',
+  { // 0 — lilac (bg: stickers.lilacSoft, fg/metaFg: stickers.lilacInk)
+    bg: '#E3D8F2', fg: '#141313', metaFg: '#3A2A6E',
+    accent: '#9A7A1F', accentSoft: '#FBEA9E',
   },
   { // 1 — cream
     bg: '#FFFEF8', fg: '#141313', metaFg: '#6B5E56',
@@ -72,7 +72,7 @@ const PALETTES: HeroPalette[] = [
   },
   { // 2 — peach
     bg: '#F5B896', fg: '#141313', metaFg: '#5A3A24',
-    accent: '#B983FF', accentSoft: '#E0D5F3',
+    accent: '#7048B8', accentSoft: '#E0D5F3', // accent: brand.primary (was neon #B983FF)
   },
   { // 3 — coral
     bg: '#EE7B6D', fg: '#FFFEF8', metaFg: '#FFE6E0',

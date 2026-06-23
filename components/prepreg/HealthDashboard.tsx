@@ -24,7 +24,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
       <PaperCard radius={28} padding={20} style={styles.card}>
         <View style={styles.cardHeader}>
           <View style={[styles.iconBox, { backgroundColor: brand.kids + '15' }]}>
-            <Ionicons name="water" size={22} color="#4D96FF" />
+            <Ionicons name="water" size={22} color={stickers.blue} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.cardTitle, { color: tc.text }]}>HYDRATION</Text>
@@ -69,7 +69,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
           onPress={onAddWater}
           style={({ pressed }) => [styles.addWaterBtn, pressed && { transform: [{ scale: 0.95 }] }]}
         >
-          <Ionicons name="add-circle" size={20} color="#4D96FF" />
+          <Ionicons name="add-circle" size={20} color={stickers.blue} />
           <Text style={styles.addWaterText}>Add Glass</Text>
         </Pressable>
       </PaperCard>
@@ -79,7 +79,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
         {/* Sleep Card */}
         <PaperCard radius={28} padding={20} style={styles.metricCard}>
           <View style={[styles.metricIcon, { backgroundColor: brand.pregnancy + '15' }]}>
-            <Ionicons name="moon" size={20} color="#B983FF" />
+            <Ionicons name="moon" size={20} color={stickers.lilac} />
           </View>
           <Text style={[styles.metricValue, { color: tc.text }]}>
             {sleepHours > 0 ? `${sleepHours}` : '--'}
@@ -96,7 +96,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
         {/* Supplements Card */}
         <PaperCard radius={28} padding={20} style={styles.metricCard}>
           <View style={[styles.metricIcon, { backgroundColor: brand.prePregnancy + '15' }]}>
-            <Ionicons name="medical" size={20} color="#FF8AD8" />
+            <Ionicons name="medical" size={20} color={stickers.pink} />
           </View>
           <Text style={[styles.metricValue, { color: tc.text }]}>Folic</Text>
           <Text style={[styles.metricUnit, { color: tc.textTertiary }]}>400mcg</Text>
@@ -106,7 +106,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
         {/* Exercise Card */}
         <PaperCard radius={28} padding={20} style={styles.metricCard}>
           <View style={[styles.metricIcon, { backgroundColor: stickers.green + '15' }]}>
-            <Ionicons name="fitness" size={20} color="#A2FF86" />
+            <Ionicons name="fitness" size={20} color={stickers.green} />
           </View>
           <Text style={[styles.metricValue, { color: tc.text }]}>
             {0}

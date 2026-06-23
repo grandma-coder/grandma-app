@@ -245,7 +245,7 @@ function pickVariantIndex(count: number): number {
 // ─── AffirmationRevealCard ────────────────────────────────────────────────────
 
 export function AffirmationRevealCard() {
-  const { stickers } = useTheme()
+  const { stickers, colors } = useTheme()
   const { t } = useTranslation()
   const variants = buildVariants(stickers)
   const variant = variants[pickVariantIndex(variants.length)]
@@ -470,7 +470,7 @@ export function AffirmationRevealCard() {
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
             />
-            <Text style={[styles.revealBtnText, { color: '#1A1030' }]}>{t('pregnancy_revealToday')}</Text>
+            <Text style={[styles.revealBtnText, { color: colors.textInverse }]}>{t('pregnancy_revealToday')}</Text>
           </Pressable>
         </View>
       ) : (
@@ -499,7 +499,7 @@ export function AffirmationRevealCard() {
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
               />
-              <Text style={[styles.shareBtnText, { color: '#1A1030' }]}>{t('pregnancy_share')}</Text>
+              <Text style={[styles.shareBtnText, { color: colors.textInverse }]}>{t('pregnancy_share')}</Text>
             </Pressable>
           ) : null}
         </Animated.View>

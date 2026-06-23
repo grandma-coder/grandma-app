@@ -57,10 +57,10 @@ interface Palette {
 }
 
 const PALETTES: Palette[] = [
-  { // 0 — deep purple
-    bg: '#2A1F4A', fg: '#FFFEF8', metaFg: '#E9DFFF',
-    dotColor: '#F5D652', dotStroke: '#FFFEF8',
-    rulerLine: 'rgba(255,254,248,0.32)', rulerText: '#FFFEF8',
+  { // 0 — lilac (bg: stickers.lilacSoft, fg/metaFg: stickers.lilacInk)
+    bg: '#E3D8F2', fg: '#141313', metaFg: '#3A2A6E',
+    dotColor: '#F5D652', dotStroke: '#141313',
+    rulerLine: 'rgba(20,19,19,0.28)', rulerText: '#141313',
   },
   { // 1 — cream
     bg: '#FFFEF8', fg: '#141313', metaFg: '#6B5E56',

@@ -236,19 +236,21 @@ function getAgeSleepTarget(ageMonths: number): number {
   return 10.5
 }
 
+// Module-level helpers can't access useTheme(); use the light sticker-palette
+// hex VALUES directly (stickers.green/blue/peach/coral from constants/theme.ts).
 function scoreColor(v: number): string {
-  if (v >= 8.5) return '#A2FF86'
-  if (v >= 7) return '#6AABF7'
+  if (v >= 8.5) return '#BDD48C' // stickers.green
+  if (v >= 7) return '#9DC3E8'   // stickers.blue
   if (v >= 5) return '#FBBF24'
-  if (v >= 3) return '#FF8C42'
-  return '#FF7070'
+  if (v >= 3) return '#F5B896'   // stickers.peach
+  return '#EE7B6D'               // stickers.coral
 }
 
 function rankColor(i: number): string {
-  if (i === 0) return '#FBBF24' // gold
-  if (i === 1) return '#6AABF7' // silver-blue
-  if (i === 2) return '#A2FF86' // green
-  return '#FFFFFF66'            // muted white
+  if (i === 0) return '#FBBF24'  // gold
+  if (i === 1) return '#9DC3E8'  // stickers.blue (silver-blue)
+  if (i === 2) return '#BDD48C'  // stickers.green
+  return '#FFFFFF66'             // muted white
 }
 
 // Downsample a daily series to ≤ maxBuckets by summing each bucket and
@@ -848,15 +850,16 @@ function ScoreInfoModal({
   childName: string
   onClose: () => void
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, stickers } = useTheme()
   const insets = useSafeAreaInsets()
 
+  // Band colors mirror scoreColor() — sticker-palette hex values.
   const SCORE_BANDS = [
-    { range: '8.5 – 10', label: 'Excellent', color: '#A2FF86' },
-    { range: '7.0 – 8.4', label: 'Good',      color: '#6AABF7' },
+    { range: '8.5 – 10', label: 'Excellent', color: stickers.green },
+    { range: '7.0 – 8.4', label: 'Good',      color: stickers.blue },
     { range: '5.0 – 6.9', label: 'Fair',      color: '#FBBF24' },
-    { range: '3.0 – 4.9', label: 'Needs Attention', color: '#FF8C42' },
-    { range: '0 – 2.9',   label: 'Low',       color: '#FF7070' },
+    { range: '3.0 – 4.9', label: 'Needs Attention', color: stickers.peach },
+    { range: '0 – 2.9',   label: 'Low',       color: stickers.coral },
   ]
 
   const PILLAR_EXPLAIN: Record<PillarKey, string> = {

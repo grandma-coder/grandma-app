@@ -5,7 +5,7 @@ import { PaperCard } from '../ui/PaperCard'
 import { CyclePhaseRing } from '../prepreg/CyclePhaseRing'
 import { getCycleInfo, getMonthCycleDots, toDateStr } from '../../lib/cycleLogic'
 import type { CycleInfo } from '../../lib/cycleLogic'
-import { colors as staticColors, brand, stickers, borderRadius, typography, useTheme } from '../../constants/theme'
+import { brand, stickers, borderRadius, typography, useTheme } from '../../constants/theme'
 
 interface CycleTrackerProps {
   selectedDate: string
@@ -33,7 +33,7 @@ const SYMPTOM_OPTIONS = [
   { id: 'cm_eggwhite', label: 'CM: Egg White', icon: 'water', color: stickers.green },
   { id: 'cm_creamy', label: 'CM: Creamy', icon: 'water', color: stickers.yellow },
   { id: 'cm_sticky', label: 'CM: Sticky', icon: 'water', color: stickers.peach },
-  { id: 'cm_dry', label: 'CM: Dry', icon: 'water-outline', color: staticColors.textTertiary },
+  { id: 'cm_dry', label: 'CM: Dry', icon: 'water-outline', color: '#6E6763' }, // colors.textMuted (light)
 ]
 
 export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {

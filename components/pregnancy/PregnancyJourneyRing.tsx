@@ -98,7 +98,7 @@ const LOG_DISPLAY: Record<string, { labelKey: string; color: string }> = {
   mood:        { labelKey: 'preg_ring_log_mood',        color: '#F5D652' }, // mustard
   kick:        { labelKey: 'preg_ring_log_kicks',       color: '#D94A3E' }, // terracotta
   symptom:     { labelKey: 'preg_ring_log_symptom',     color: '#F5B896' }, // peach
-  sleep:       { labelKey: 'preg_ring_log_sleep',       color: '#2A1F4A' }, // deep purple
+  sleep:       { labelKey: 'preg_ring_log_sleep',       color: '#C8B6E8' }, // stickers.lilac
   appointment: { labelKey: 'preg_ring_log_appointment', color: '#F5D652' }, // mustard
   exercise:    { labelKey: 'preg_ring_log_exercise',    color: '#BDD48C' }, // sage
   water:       { labelKey: 'preg_ring_log_water',       color: '#BDD48C' }, // sage
