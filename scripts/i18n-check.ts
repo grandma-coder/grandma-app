@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
 import { en } from '../lib/i18n/en'
 import { ptBR } from '../lib/i18n/pt-BR'
 import { es } from '../lib/i18n/es'
@@ -13,14 +16,29 @@ import { tr } from '../lib/i18n/tr'
 
 const translations = { en, 'pt-BR': ptBR, es, fr, de, it, ja, ko, zh, ar, hi, tr }
 
+/**
+ * Keys declared optional (`key?: string`) in TranslationKeys are allowed to be
+ * absent from a locale — at runtime they fall back to en. Parse keys.ts as text
+ * to collect them, since runtime JS can't see TypeScript optionality.
+ */
+function readOptionalKeys(): Set<string> {
+  const text = readFileSync(join(__dirname, '../lib/i18n/keys.ts'), 'utf8')
+  const optional = new Set<string>()
+  for (const match of text.matchAll(/^\s*([A-Za-z0-9_]+)\?\s*:/gm)) {
+    optional.add(match[1])
+  }
+  return optional
+}
+
 export function checkKeyParity() {
-  const enKeys = Object.keys(en)
+  const optionalKeys = readOptionalKeys()
+  const requiredKeys = Object.keys(en).filter((k) => !optionalKeys.has(k))
   return Object.entries(translations).map(([locale, obj]) => {
     const keys = Object.keys(obj)
     return {
       locale,
-      missing: enKeys.filter((k) => !keys.includes(k)),
-      extra: keys.filter((k) => !enKeys.includes(k)),
+      missing: requiredKeys.filter((k) => !keys.includes(k)),
+      extra: keys.filter((k) => !(k in en)),
     }
   })
 }
