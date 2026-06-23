@@ -6,6 +6,9 @@
  * Source: Hadlock-derived charts, https://perinatology.com/Reference/Fetal%20development.htm
  */
 
+/** Length convention switches from crown-rump (CRL) to crown-heel at this week. Chart code can segment the series here so the wk13→14 step doesn't read as a glitch. */
+export const CROWN_HEEL_STARTS_WEEK = 14
+
 export interface WeekStat {
   cm: number
   g: number | null

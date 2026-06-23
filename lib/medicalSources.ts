@@ -6,9 +6,9 @@
 // MEDICAL_DISCLAIMER wherever clinical values are shown.
 
 export const MEDICAL_DISCLAIMER =
-  'This is general information, not medical advice. Follow your clinician and ' +
-  "your country's official schedule. Values shown are population estimates, " +
-  'not your own measurements.'
+  'This is general information, not medical advice. Values shown are population estimates, not your own measurements.'
+
+export const VACCINE_SCHEDULE_NOTE = "Follow your country's official immunization schedule and your pediatrician."
 
 export const SOURCES = {
   acogPrenatalScreening:

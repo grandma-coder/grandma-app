@@ -60,7 +60,7 @@ import { useBadgeStore } from '../../store/useBadgeStore'
 import { supabase } from '../../lib/supabase'
 import { estimateCalories } from '../../lib/foodCalories'
 import { getVaccineInfo, type VaccineInfo } from '../../lib/vaccineInfo'
-import { MEDICAL_DISCLAIMER } from '../../lib/medicalSources'
+import { MEDICAL_DISCLAIMER, VACCINE_SCHEDULE_NOTE } from '../../lib/medicalSources'
 import type { ChildWithRole } from '../../types'
 import { MoodBubbleCluster } from '../charts/SvgCharts'
 import type { MoodBubbleItem } from '../charts/SvgCharts'
@@ -4092,6 +4092,9 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
                 </Text>
                 <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11, marginTop: 12, textAlign: 'center', lineHeight: 16 }}>
                   {MEDICAL_DISCLAIMER}
+                </Text>
+                <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11, marginTop: 6, textAlign: 'center', lineHeight: 16 }}>
+                  {VACCINE_SCHEDULE_NOTE}
                 </Text>
               </>
             ) : (

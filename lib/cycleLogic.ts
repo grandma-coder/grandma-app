@@ -407,7 +407,7 @@ function probabilityForDay(day: number, ovulationDay: number): number {
   const diff = day - ovulationDay
   // Peak: days ovulation−1 and ovulation
   if (diff === -1 || diff === 0) return 33
-  // High: ovulation+1, ovulation−2
+  // High: ovulation−2, and ovulation+1 (early-luteal estimate — clinician: verify ovulation+1 against Wilcox Table 2; literature suggests ~8–12%)
   if (diff === 1 || diff === -2) return 22
   // Medium: ovulation−3, ovulation+2
   if (diff === -3 || diff === 2) return 12
