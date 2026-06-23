@@ -61,3 +61,6 @@ docs/claude-design/
 .superpowers/
 
 .env.local
+
+# Tolgee CLI build artifacts (generated JSON; do NOT commit)
+tolgee/

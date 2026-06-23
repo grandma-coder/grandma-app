@@ -1,0 +1,8 @@
+{
+  "$schema": "https://docs.tolgee.io/cli-schema.json",
+  "apiUrl": "https://app.tolgee.io",
+  "projectId": "REPLACE_WITH_PROJECT_ID",
+  "format": "JSON_FLAT",
+  "push": { "files": [{ "path": "tolgee/en.json", "language": "en" }] },
+  "pull": { "path": "tolgee/" }
+}

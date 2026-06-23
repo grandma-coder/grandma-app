@@ -32,7 +32,10 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
-    "i18n:check": "npx tsx scripts/i18n-check.ts"
+    "i18n:check": "npx tsx scripts/i18n-check.ts",
+    "i18n:push": "tsx scripts/i18n-export-en.ts && tolgee push --api-key $TOLGEE_API_KEY",
+    "i18n:pull": "tolgee pull --api-key $TOLGEE_API_KEY && tsx scripts/i18n-import.ts && npm run i18n:check",
+    "i18n:sync": "npm run i18n:push && npm run i18n:pull"
   },
   "jest": {
     "preset": "jest-expo",
