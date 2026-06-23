@@ -382,10 +382,11 @@ export function getHydrationLevel(glassesConsumed: number): {
  * Daily conception probability curve for a full cycle (1-indexed days).
  *
  * Returns an array of length `cycleLength` where index 0 = day 1.
- * Values are 0–100. The peak day (ovulation) and the day before peak at ~70.
- * Calibration matches the FAM-based estimates used by the Fertile Window
- * card: peak at the two days before ovulation, sharp drop-off either side,
- * "low" baseline 5–8% during menstruation + early follicular.
+ * Values are 0–100, representing the published day-specific probability of
+ * conception from a single cycle (Wilcox NEJM 1995 / Dunson Hum Reprod 2002):
+ * peak ~33% the day before/of ovulation, sharp drop-off either side, low
+ * baseline during menstruation + early follicular. This is a population
+ * estimate, not a personal prediction.
  */
 export function dailyFertilityCurve(cycleLength: number, lutealPhase = 14): number[] {
   const len = Math.max(21, Math.min(60, Math.round(cycleLength)))
@@ -397,19 +398,21 @@ export function dailyFertilityCurve(cycleLength: number, lutealPhase = 14): numb
   return arr
 }
 
+// CLINICAL-REVIEW: pending sign-off — Wilcox NEJM 1995 / Dunson Hum Reprod 2002.
+// Day-specific conception probabilities; peak ~33% (was 70 — overstated ~2x).
 function probabilityForDay(day: number, ovulationDay: number): number {
   const diff = day - ovulationDay
   // Peak: days ovulation−1 and ovulation
-  if (diff === -1 || diff === 0) return 70
+  if (diff === -1 || diff === 0) return 33
   // High: ovulation+1, ovulation−2
-  if (diff === 1 || diff === -2) return 48
+  if (diff === 1 || diff === -2) return 22
   // Medium: ovulation−3, ovulation+2
-  if (diff === -3 || diff === 2) return 22
+  if (diff === -3 || diff === 2) return 12
   // Low: ovulation−4, ovulation−5
-  if (diff === -4 || diff === -5) return 12
+  if (diff === -4 || diff === -5) return 7
   // Tail: ovulation−6 / ovulation+3 (sperm survival edge / very early luteal)
-  if (diff === -6 || diff === 3) return 8
-  // Baseline outside the window: 1–6% depending on phase
-  if (diff < -6) return 6
-  return 3
+  if (diff === -6 || diff === 3) return 4
+  // Baseline outside the window: 1–2% depending on phase
+  if (diff < -6) return 2
+  return 1
 }
