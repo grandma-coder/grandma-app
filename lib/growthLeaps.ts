@@ -1,5 +1,11 @@
 /**
- * Growth Leaps (Wonder Weeks) — shared data + age helper.
+ * Growth Leaps — based on the "Wonder Weeks" framework (van de Rijt & Plooij).
+ *
+ * IMPORTANT: This is a POPULAR PARENTING THEORY, not validated developmental
+ * science. Its basis is a 1992 study of 15 Dutch infants; a 1998 replication
+ * failed to find the predicted fussiness periods. Treat leap weeks and brain
+ * mechanisms as a framing aid, not fact. Timing varies widely between babies.
+ * Source: https://en.wikipedia.org/wiki/The_Wonder_Weeks
  *
  * 10 mental leaps from week 5 to week 75 post-birth. Each leap has
  * brain-development context, three phases (stormy / peak / emerging),
@@ -32,7 +38,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
   {
     week: 5, name: 'Changing Sensations', desc: 'Baby discovers a richer world of senses',
     ageRange: '4–5 weeks', duration: '1–2 weeks',
-    brainNote: 'The nervous system undergoes a first major reorganization. Your baby\'s brain is suddenly receiving far more detailed signals from the senses — sharper sights, richer sounds, new body feelings. It\'s overwhelming and wonderful at the same time.',
+    brainNote: 'The Wonder Weeks framework describes a first big shift in how your baby takes in the senses around now — sharper sights, richer sounds, new body feelings. Every baby develops on their own timeline; this is a framing aid, not a fixed milestone.',
     color: stickers.lilac,
     phases: [
       { label: 'Stormy', desc: 'More crying, clinginess, disrupted sleep. Baby is overwhelmed by the new flood of sensory information.' },
@@ -62,7 +68,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
   {
     week: 12, name: 'Smooth Transitions', desc: 'Movements and muscle control become more fluid',
     ageRange: '11–12 weeks', duration: '1–2 weeks',
-    brainNote: 'Motor neurons are rapidly myelinating, enabling smoother, more coordinated movements. Your baby transitions from jerky reflexes to intentional, fluid motion — a massive upgrade in physical self-awareness.',
+    brainNote: 'Around this period babies often move from jerky reflexes toward smoother, more intentional motion. Myelination is gradual, not a single switch — timing varies widely from baby to baby.',
     color: stickers.green,
     phases: [
       { label: 'Stormy', desc: 'Sleep disruption, demanding behavior, and increased feeding as energy is redirected to motor development.' },
@@ -115,7 +121,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
       { label: 'Emerging', desc: 'Baby sorts objects by type, points to body parts, and may say first recognizable words.' },
     ],
     signs: ['Picky eating resumes', 'More demanding', 'Clingy with primary caregiver', 'Short naps', 'Points at things of interest', 'Examines objects closely'],
-    skills: ['Groups similar objects', 'Points to body parts', 'Says first words', 'Waves bye-bye', 'Distinguishes people from objects', 'Claps hands together'],
+    skills: ['Groups similar objects', 'Points to body parts', 'First words may begin (CDC: commonly ~12 mo)', 'Waves bye-bye', 'Distinguishes people from objects', 'Claps hands together'],
     activities: ['Sort toys by color or shape together', 'Read picture books and name each image', 'Point to body parts ("where\'s your nose?")', 'Group foods by type at meal time'],
     tip: 'Name everything — "big ball, small ball". Sorting games and books with clear categories accelerate this leap.',
   },
@@ -160,7 +166,7 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
       { label: 'Emerging', desc: 'Fairness concept emerges, empathy appears, and toddler starts negotiating.' },
     ],
     signs: ['Rule-testing behavior', 'Says "no" frequently', 'Emotional intensity', 'Sleep resistance', 'Insists on "my turn"', 'Cries when things are unfair'],
-    skills: ['Understands fairness', 'Shows empathy', 'Sentences of 2–3 words', 'Sorts by color/shape', 'Follows 2-step instructions', 'Helps with simple tasks'],
+    skills: ['Understands fairness', 'Shows empathy', 'Two-word combos may begin (CDC: commonly ~24–30 mo)', 'Sorts by color/shape', 'Follows 2-step instructions', 'Helps with simple tasks'],
     activities: ['Simple board games with turn-taking', 'Explain rules calmly and consistently', 'Read books about emotions and fairness', 'Involve in household chores (sweeping, wiping)'],
     tip: 'Be consistent with rules — toddler is actively mapping which principles apply in which contexts.',
   },
@@ -182,6 +188,15 @@ export const GROWTH_LEAPS: GrowthLeap[] = [
 ]
 
 export type GrowthLeapStatus = 'past' | 'current' | 'future'
+
+/**
+ * Non-diagnostic framing for the deterministic "current leap" logic below.
+ * Surface this wherever the UI says a child IS in a leap — the 1998 Wonder
+ * Weeks replication found no fixed fussy periods, so this is never diagnostic.
+ */
+export const GROWTH_LEAPS_DISCLAIMER =
+  'Growth leaps are a popular parenting theory, not validated science. Every ' +
+  'baby develops differently — use this as a gentle guide, not a diagnosis.'
 
 /** A leap is "current" within ±1 week of its peak (window: week-2 to week+1). */
 export function leapStatusForWeek(weekAge: number, leapWeek: number): GrowthLeapStatus {
