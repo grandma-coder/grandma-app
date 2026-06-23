@@ -60,6 +60,7 @@ import { useBadgeStore } from '../../store/useBadgeStore'
 import { supabase } from '../../lib/supabase'
 import { estimateCalories } from '../../lib/foodCalories'
 import { getVaccineInfo, type VaccineInfo } from '../../lib/vaccineInfo'
+import { MEDICAL_DISCLAIMER } from '../../lib/medicalSources'
 import type { ChildWithRole } from '../../types'
 import { MoodBubbleCluster } from '../charts/SvgCharts'
 import type { MoodBubbleItem } from '../charts/SvgCharts'
@@ -1603,6 +1604,11 @@ export function KidsHome() {
   const growthLeap = getGrowthLeap(child.birthDate)
   const firstName = (profileName || parentName)?.split(' ')[0] || ''
 
+  // Derive the selected date-range bounds once per render (was recomputed
+  // inline several times, creating fresh object refs that defeated React.memo
+  // on DiaperCard and the detail modals).
+  const dateBounds = useMemo(() => getDateRange(dateRange, customRange), [dateRange, customRange])
+
   // Ring progress values
   const sleepProgress = rangeData.sleepTarget > 0 ? Math.min(rangeData.sleepTotal / rangeData.sleepTarget, 1) : 0
   // Nutrition progress adapts to feeding stage
@@ -2041,7 +2047,7 @@ export function KidsHome() {
       </Pressable>
       {rangeData.diaperCount > 0 && (
         <Pressable onPress={() => setDiaperModalVisible(true)} style={{ marginTop: 10 }}>
-          <DiaperCard count={rangeData.diaperCount} pee={rangeData.diaperPee} poop={rangeData.diaperPoop} mixed={rangeData.diaperMixed} diaperByDay={rangeData.diaperByDay} startDate={getDateRange(dateRange, customRange).startDate} endDate={getDateRange(dateRange, customRange).endDate} />
+          <DiaperCard count={rangeData.diaperCount} pee={rangeData.diaperPee} poop={rangeData.diaperPoop} mixed={rangeData.diaperMixed} diaperByDay={rangeData.diaperByDay} startDate={dateBounds.startDate} endDate={dateBounds.endDate} />
         </Pressable>
       )}
 
@@ -2447,7 +2453,7 @@ export function KidsHome() {
 
       {/* ─── Detail Modals ───────────────────────────────────── */}
       {(() => {
-        const { startDate: sd, endDate: ed } = getDateRange(dateRange, customRange)
+        const { startDate: sd, endDate: ed } = dateBounds
         return (
           <>
             <DiaperDetailModal
@@ -4083,6 +4089,9 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
                 )}
                 <Text style={{ color: ink3, fontSize: 11, fontFamily: font.body, fontStyle: 'italic', textAlign: 'center', marginTop: 8 }}>
                   Always check with your pediatrician for advice tailored to your child.
+                </Text>
+                <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11, marginTop: 12, textAlign: 'center', lineHeight: 16 }}>
+                  {MEDICAL_DISCLAIMER}
                 </Text>
               </>
             ) : (
