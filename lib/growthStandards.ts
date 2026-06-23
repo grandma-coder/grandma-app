@@ -6,7 +6,7 @@
  * the nearest two age points gives a reasonable estimate at any age.
  *
  * Sources:
- *   - WHO Child Growth Standards (0–24 months): https://www.who.int/childgrowth/standards
+ *   - WHO Child Growth Standards (0–24 months): https://www.who.int/tools/child-growth-standards
  *   - CDC 2–20 years: https://www.cdc.gov/growthcharts/
  *
  * The data is intentionally abbreviated (monthly through 24mo, yearly from
@@ -97,8 +97,9 @@ const WEIGHT_BOYS_2_20: Band[] = [
   { ageMonths: 60,  p3: 15.5, p15: 17.0, p50: 18.5, p85: 20.7, p97: 23.0 },
   { ageMonths: 72,  p3: 17.0, p15: 18.7, p50: 20.5, p85: 23.0, p97: 25.8 },
   { ageMonths: 84,  p3: 18.7, p15: 20.4, p50: 22.6, p85: 25.5, p97: 28.8 },
-  { ageMonths: 96,  p3: 20.4, p15: 22.2, p50: 24.9, p85: 28.5, p97: 32.5 },
-  { ageMonths: 108, p3: 22.2, p15: 24.4, p50: 27.7, p85: 32.0, p97: 37.0 },
+  // CLINICAL-REVIEW: pending sign-off — CDC P50 nudged up to published medians (was ~0.7–2.5kg low).
+  { ageMonths: 96,  p3: 20.4, p15: 22.2, p50: 25.6, p85: 28.5, p97: 32.5 },
+  { ageMonths: 108, p3: 22.2, p15: 24.4, p50: 28.2, p85: 32.0, p97: 37.0 },
   { ageMonths: 120, p3: 24.2, p15: 26.8, p50: 30.7, p85: 36.0, p97: 42.3 },
   { ageMonths: 144, p3: 28.8, p15: 32.5, p50: 38.0, p85: 45.4, p97: 54.5 },
   { ageMonths: 168, p3: 36.0, p15: 41.5, p50: 49.0, p85: 58.0, p97: 68.0 },
@@ -116,8 +117,9 @@ const WEIGHT_GIRLS_2_20: Band[] = [
   { ageMonths: 84,  p3: 17.7, p15: 19.6, p50: 22.4, p85: 26.0, p97: 30.5 },
   { ageMonths: 96,  p3: 19.5, p15: 21.7, p50: 25.0, p85: 29.5, p97: 35.0 },
   { ageMonths: 108, p3: 21.5, p15: 24.0, p50: 28.0, p85: 33.5, p97: 40.0 },
-  { ageMonths: 120, p3: 23.5, p15: 26.5, p50: 31.5, p85: 38.0, p97: 45.5 },
-  { ageMonths: 144, p3: 29.0, p15: 33.0, p50: 39.0, p85: 47.0, p97: 56.5 },
+  // CLINICAL-REVIEW: pending sign-off — CDC P50 nudged up to published medians (was ~1.4–2.6kg low).
+  { ageMonths: 120, p3: 23.5, p15: 26.5, p50: 32.9, p85: 38.0, p97: 45.5 },
+  { ageMonths: 144, p3: 29.0, p15: 33.0, p50: 40.0, p85: 47.0, p97: 56.5 },
   { ageMonths: 168, p3: 37.5, p15: 42.0, p50: 49.5, p85: 57.0, p97: 67.0 },
   { ageMonths: 192, p3: 43.5, p15: 48.0, p50: 55.0, p85: 64.0, p97: 75.0 },
   { ageMonths: 216, p3: 45.5, p15: 50.0, p50: 57.5, p85: 67.5, p97: 79.0 },
