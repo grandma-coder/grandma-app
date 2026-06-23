@@ -37,6 +37,7 @@ const ICON_GUIDES: Partial<Record<StickerIconName, PrepGuide>> = {
       'Take your prenatal at the same time each day to build a habit.',
       'Pair with food and a glass of water if it upsets your stomach.',
       'Look for at least 400–600 mcg folate, 27 mg iron, 150 mcg iodine, 200 mg DHA.',
+      'If a prior pregnancy had a neural tube defect, ask your provider — they may prescribe ~4,000 mcg folate/day.',
       'Methylfolate is gentler than folic acid for some people.',
     ],
     watch: 'Constipation, dark stools, and mild nausea are common. If iron makes you very nauseous, ask about a split-dose or every-other-day plan.',
