@@ -10,7 +10,7 @@ import {
   Platform,
   UIManager,
 } from 'react-native'
-import { X, ChevronDown, ChevronUp, MessageCircle, ExternalLink, Info, TriangleAlert, Lightbulb, Stethoscope } from 'lucide-react-native'
+import { X, ChevronDown, ChevronUp, MessageCircle, ExternalLink, Info, TriangleAlert, Lightbulb, Stethoscope, BookOpen } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Linking } from 'react-native'
 import { useTheme, font } from '../../constants/theme'
@@ -429,28 +429,54 @@ interface SourcesBlockProps {
 }
 
 function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label }: SourcesBlockProps) {
+  // Collapsed by default — sources are reassurance, not primary content. The
+  // user can tap to expand and check them if they want to.
+  const [open, setOpen] = useState(false)
+
+  const toggle = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    setOpen((prev) => !prev)
+  }
+
   return (
     <View style={[styles.sourcesCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-      <Body size={12} color={inkMuted} style={{ fontFamily: font.bodyBold, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 10 }}>
-        {label}
-      </Body>
-      {sources.map((s, i) => (
-        <Pressable
-          key={i}
-          onPress={() => Linking.openURL(s.url).catch(() => {})}
-          style={({ pressed }) => [styles.sourceRow, { opacity: pressed ? 0.6 : 1 }]}
-        >
-          <View style={{ flex: 1 }}>
-            <Body size={12} color={ink} style={{ fontFamily: font.bodyBold, lineHeight: 17 }}>
-              {s.label}
-            </Body>
-            <Body size={11} color={inkMuted} style={{ lineHeight: 15, marginTop: 2 }}>
-              {s.org}
-            </Body>
-          </View>
-          <ExternalLink size={13} color={inkMuted} strokeWidth={2.2} />
-        </Pressable>
-      ))}
+      <Pressable
+        onPress={toggle}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel={`${label}, ${sources.length} ${sources.length === 1 ? 'source' : 'sources'}`}
+        style={({ pressed }) => [styles.sourcesHeader, { opacity: pressed ? 0.7 : 1 }]}
+      >
+        <BookOpen size={13} color={inkMuted} strokeWidth={2.2} />
+        <Body size={12} color={inkMuted} style={{ flex: 1, fontFamily: font.bodyBold, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+          {`${label} (${sources.length})`}
+        </Body>
+        {open
+          ? <ChevronUp size={14} color={inkMuted} strokeWidth={2.4} />
+          : <ChevronDown size={14} color={inkMuted} strokeWidth={2.4} />}
+      </Pressable>
+
+      {open && (
+        <View style={{ marginTop: 6 }}>
+          {sources.map((s, i) => (
+            <Pressable
+              key={i}
+              onPress={() => Linking.openURL(s.url).catch(() => {})}
+              style={({ pressed }) => [styles.sourceRow, { opacity: pressed ? 0.6 : 1 }]}
+            >
+              <View style={{ flex: 1 }}>
+                <Body size={12} color={ink} style={{ fontFamily: font.bodyBold, lineHeight: 17 }}>
+                  {s.label}
+                </Body>
+                <Body size={11} color={inkMuted} style={{ lineHeight: 15, marginTop: 2 }}>
+                  {s.org}
+                </Body>
+              </View>
+              <ExternalLink size={13} color={inkMuted} strokeWidth={2.2} />
+            </Pressable>
+          ))}
+        </View>
+      )}
     </View>
   )
 }
@@ -586,6 +612,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 14,
     marginTop: 8,
+  },
+  sourcesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   sourceRow: {
     flexDirection: 'row',
