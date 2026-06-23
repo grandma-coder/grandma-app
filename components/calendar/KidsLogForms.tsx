@@ -1005,7 +1005,13 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       })
       if (res.notes) Alert.alert('Grandma noticed', res.notes)
     } catch (e: unknown) {
-      Alert.alert('Scan failed', (e as Error)?.message ?? 'Please try again')
+      // Surface the real reason to the console for debugging; show the parent a
+      // calm, non-technical message (they can always tap ⚠︎ to enter kcal by hand).
+      console.warn('[food-scan] failed:', (e as Error)?.message ?? e)
+      Alert.alert(
+        "Couldn't read that photo",
+        "Grandma couldn't make out the food this time. Try a closer, brighter shot — or tap a food tag to add the calories yourself.",
+      )
     } finally {
       setScanningPlate(false)
     }

@@ -28,7 +28,7 @@ function corsHeadersFor(req: Request): Record<string, string> {
 
 // Fast model for text, vision-capable model for images
 const TEXT_MODEL = 'claude-haiku-4-5-20251001'
-const VISION_MODEL = 'claude-sonnet-4-20250514'
+const VISION_MODEL = 'claude-sonnet-4-5'
 
 interface RequestBody {
   mode: 'text' | 'image'

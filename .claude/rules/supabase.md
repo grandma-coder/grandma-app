@@ -28,7 +28,7 @@ if (error) throw error
 - Called via `supabase.functions.invoke('<name>', { body: { ... } })`
 - Never call Anthropic API directly from the app — always via edge functions
 - ANTHROPIC_API_KEY is a Supabase secret: `supabase secrets set ANTHROPIC_API_KEY=...`
-- Claude model string: `claude-sonnet-4-20250514`
+- Claude model string: `claude-sonnet-4-5` (vision/chat), `claude-haiku-4-5-20251001` (fast text)
 - Always handle CORS and OPTIONS preflight in every edge function
 
 ## Storage

@@ -33,7 +33,7 @@ If a value isn't in `theme.ts`, stop and ask — don't invent one.
 | State | Zustand v5 | Named import: `import { create } from 'zustand'` (NOT default) |
 | Data | TanStack React Query v5 | `useQuery({ queryKey, queryFn })` object syntax, NOT positional |
 | Backend | Supabase | Auth + PostgreSQL + Edge Functions (Deno) + Storage |
-| AI | Claude Sonnet `claude-sonnet-4-20250514` | Via Supabase Edge Functions only, never called directly from app |
+| AI | Claude Sonnet `claude-sonnet-4-5` (vision) / Haiku `claude-haiku-4-5-20251001` (fast text) | Via Supabase Edge Functions only, never called directly from app |
 | Payments | RevenueCat (`react-native-purchases` v9) | Monthly + annual tiers |
 | Animation | react-native-reanimated v4 | Ring spin, sticker hero, transitions |
 | Charts | Custom SVG (`components/charts/`) | `SvgCharts` exports `MoodBubbleCluster`, `MoodStickerStrip`, `VaccineScheduleTree`, line/bar — plus `FullScreenChart`, `GalleryCharts` |

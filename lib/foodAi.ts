@@ -47,7 +47,23 @@ interface ImageArgs {
 
 async function invoke(body: Record<string, unknown>): Promise<AiFoodResult> {
   const { data, error } = await supabase.functions.invoke('food-ai', { body })
-  if (error) throw new Error(error.message ?? 'food-ai invocation failed')
+  if (error) {
+    // supabase.functions.invoke surfaces a generic "non-2xx status code" message
+    // and hides the real reason in the response body. Dig the function's own
+    // `error` field out of the FunctionsHttpError context so the failure is
+    // self-explaining (e.g. "Invalid authorization token", "Claude API error").
+    let detail = error.message ?? 'food-ai invocation failed'
+    try {
+      const ctx = (error as { context?: Response }).context
+      if (ctx && typeof ctx.json === 'function') {
+        const bodyJson = await ctx.json()
+        if (bodyJson?.error) detail = `${bodyJson.error}${ctx.status ? ` (${ctx.status})` : ''}`
+      }
+    } catch {
+      // body wasn't JSON / already consumed — fall back to the generic message
+    }
+    throw new Error(detail)
+  }
   // Edge function always returns { foods, totalCals, notes? }, even on error (foods=[])
   const result = (data ?? {}) as Partial<AiFoodResult>
   return {

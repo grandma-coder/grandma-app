@@ -37,6 +37,6 @@ serve(async (req) => {
 - Always handle CORS preflight (`OPTIONS`)
 - Always wrap in try/catch
 - Use `Deno.env.get('ANTHROPIC_API_KEY')` for secrets (never hardcode)
-- If calling Claude: model is `claude-sonnet-4-20250514`
+- If calling Claude: model is `claude-sonnet-4-5` (vision/chat) or `claude-haiku-4-5-20251001` (fast text)
 
 Then add the deploy command to README.md's Edge Functions section.
