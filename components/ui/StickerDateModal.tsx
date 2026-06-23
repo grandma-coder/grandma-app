@@ -10,7 +10,7 @@
 import { Platform, Modal, Pressable, View, Text, StyleSheet } from 'react-native'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { X } from 'lucide-react-native'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, font } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { Star as StarSticker } from './Stickers'
 
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   starAccent: { position: 'absolute', top: -8, right: 12, opacity: 0.6 },
   handleBar: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 4 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 24, letterSpacing: -0.5, fontFamily: 'Fraunces_600SemiBold' },
+  title: { fontSize: 24, letterSpacing: -0.5, fontFamily: font.display },
   closeBtn: {
     width: 36, height: 36, borderRadius: 18, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center',
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     shadowColor: ST_INK, shadowOpacity: 1, shadowRadius: 0, elevation: 6,
   },
   doneText: {
-    color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 16,
+    color: ST_INK, fontFamily: font.bodyBold, fontSize: 16,
     letterSpacing: 1, textTransform: 'uppercase',
   },
 })

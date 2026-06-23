@@ -26,7 +26,7 @@ import { router, useFocusEffect } from 'expo-router'
 import { ChevronRight, X } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme } from '../../constants/theme'
+import { useTheme, font } from '../../constants/theme'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
   // Routines
   quickLogRow: { gap: 8, paddingBottom: 4, paddingRight: 20 },
   quickChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, borderWidth: 1 },
-  quickChipText: { fontSize: 13, fontFamily: 'DMSans_500Medium' },
+  quickChipText: { fontSize: 13, fontFamily: font.bodyMedium },
 
   // Weight chart
   // Grandma
@@ -573,17 +573,17 @@ const styles = StyleSheet.create({
   },
   birthGuideTitle: {
     fontSize: 14,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
     marginBottom: 2,
   },
   birthGuideSub: {
     fontSize: 12,
-    fontFamily: 'DMSans_400Regular',
+    fontFamily: font.body,
   },
 
   simpleForm: { padding: 24, gap: 20, alignItems: 'center' },
   simpleFormHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  simpleFormTitle: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', textAlign: 'center' },
+  simpleFormTitle: { fontSize: 18, fontFamily: font.display, textAlign: 'center' },
   simpleFormBtn: { paddingHorizontal: 40, paddingVertical: 16, borderRadius: 999 },
-  simpleFormBtnText: { fontSize: 16, fontFamily: 'DMSans_600SemiBold' },
+  simpleFormBtnText: { fontSize: 16, fontFamily: font.bodySemiBold },
 })

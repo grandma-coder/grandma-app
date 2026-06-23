@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, ScrollView, Pressable } from 'react-native'
-import { useTheme, borderRadius } from '../../constants/theme'
+import { useTheme, borderRadius, font } from '../../constants/theme'
 import { TalkMaster } from '../stickers/RewardStickers'
 
 interface ResultCardProps {
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 36,
-    marginBottom: 12, fontFamily: 'Fraunces_600SemiBold' },
+    marginBottom: 12, fontFamily: font.display },
   resultText: {
     fontSize: 15,
     lineHeight: 24,

@@ -4,7 +4,7 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
-import { brand, stickers, borderRadius, shadows, useTheme } from '../../constants/theme'
+import { brand, stickers, borderRadius, shadows, useTheme, font } from '../../constants/theme'
 
 export interface NoteEntry {
   id: string
@@ -292,7 +292,7 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet
     color: colors.text,
     textTransform: 'uppercase',
     letterSpacing: -0.5,
-    marginBottom: 4, fontFamily: 'Fraunces_600SemiBold' },
+    marginBottom: 4, fontFamily: font.display },
   modalSubtitle: {
     fontSize: 14,
     fontWeight: '500',

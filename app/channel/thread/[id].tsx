@@ -24,7 +24,7 @@ import {
   User,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers } from '../../../constants/theme'
+import { useTheme, brand, stickers, font } from '../../../constants/theme'
 import { EmptyState } from '../../../components/ui/EmptyState'
 import {
   fetchThreadReplies,
@@ -235,7 +235,7 @@ const s = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
   headerBtn: { width: 40, alignItems: 'center' },
-  headerTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', fontWeight: '700', letterSpacing: -0.3 },
+  headerTitle: { fontSize: 20, fontFamily: font.display, fontWeight: '700', letterSpacing: -0.3 },
 
   list: { padding: 16, paddingBottom: 20 },
 

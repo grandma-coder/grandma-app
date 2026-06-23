@@ -12,7 +12,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import {
   Plus, Bell, Clock, X, Check, Pencil, Flag, Trash2,
 } from 'lucide-react-native'
-import { useTheme, getModeColor, brand } from '../../../constants/theme'
+import { useTheme, getModeColor, brand, font } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import { Star as StarSticker } from '../../ui/Stickers'
 import { supabase } from '../../../lib/supabase'
@@ -183,7 +183,7 @@ export function PregnancyUserReminders({ userId }: Props) {
           }}>
             <Bell size={13} color="#141313" strokeWidth={2.5} />
           </View>
-          <Text style={{ flex: 1, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', color: colors.text, letterSpacing: -0.3 }}>
+          <Text style={{ flex: 1, fontSize: 16, fontFamily: font.display, color: colors.text, letterSpacing: -0.3 }}>
             {t('preg_reminders_addButton')}
           </Text>
           <View style={{
@@ -230,7 +230,7 @@ export function PregnancyUserReminders({ userId }: Props) {
               <Text style={{
                 fontSize: 12,
                 color: newDate ? ACCENT : colors.textSecondary,
-                fontFamily: 'DMSans_600SemiBold',
+                fontFamily: font.bodySemiBold,
               }}>
                 {newDate ? newDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : t('preg_reminders_setDate')}
               </Text>
@@ -258,7 +258,7 @@ export function PregnancyUserReminders({ userId }: Props) {
                 }}
               >
                 <Bell size={11} color={newTime ? '#C06030' : colors.textSecondary} strokeWidth={2} />
-                <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: newTime ? stickers.peachInk : colors.textSecondary }}>
+                <Text style={{ fontSize: 11, fontFamily: font.bodySemiBold, color: newTime ? stickers.peachInk : colors.textSecondary }}>
                   {newTime
                     ? formatTime12h(`${String(newTime.getHours()).padStart(2, '0')}:${String(newTime.getMinutes()).padStart(2, '0')}`)
                     : t('preg_reminders_setTime')}
@@ -320,7 +320,7 @@ export function PregnancyUserReminders({ userId }: Props) {
                     borderTopColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
                   }}
                 >
-                  <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: ACCENT }}>{t('preg_reminders_done')}</Text>
+                  <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: ACCENT }}>{t('preg_reminders_done')}</Text>
                 </Pressable>
               )}
             </View>
@@ -358,7 +358,7 @@ export function PregnancyUserReminders({ userId }: Props) {
                     borderTopColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
                   }}
                 >
-                  <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 14, color: stickers.peachInk }}>{t('preg_reminders_done')}</Text>
+                  <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: stickers.peachInk }}>{t('preg_reminders_done')}</Text>
                 </Pressable>
               )}
             </View>
@@ -496,7 +496,7 @@ function ReminderRow({
         {editing ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <TextInput
-              style={{ fontSize: 15, fontFamily: 'Fraunces_600SemiBold', color: colors.text, flex: 1, borderBottomWidth: 1, borderBottomColor: ACCENT, paddingVertical: 2 }}
+              style={{ fontSize: 15, fontFamily: font.display, color: colors.text, flex: 1, borderBottomWidth: 1, borderBottomColor: ACCENT, paddingVertical: 2 }}
               value={editText}
               onChangeText={setEditText}
               onSubmitEditing={commitEdit}
@@ -515,7 +515,7 @@ function ReminderRow({
           <Text
             style={{
               fontSize: 15,
-              fontFamily: 'Fraunces_600SemiBold',
+              fontFamily: font.display,
               color: colors.text,
               lineHeight: 21,
             }}
@@ -544,7 +544,7 @@ function ReminderRow({
               alignSelf: 'flex-start',
             }}>
               <Clock size={9} color={dueInk} strokeWidth={2.5} />
-              <Text style={{ fontSize: 11, color: dueInk, fontFamily: 'DMSans_700Bold' }}>{dueDateLabel}</Text>
+              <Text style={{ fontSize: 11, color: dueInk, fontFamily: font.bodyBold }}>{dueDateLabel}</Text>
             </View>
           )
         })()}
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     fontSize: 14,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 14,
@@ -599,6 +599,6 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     fontSize: 13,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
   },
 })

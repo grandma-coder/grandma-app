@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getChannels } from '../../lib/channels'
 import { useChannelsStore } from '../../store/useChannelsStore'
 import { ChannelCard } from '../../components/channels/ChannelCard'
-import { typography, spacing, useTheme } from '../../constants/theme'
+import { typography, spacing, useTheme, font } from '../../constants/theme'
 import type { Channel } from '../../lib/channels'
 
 export default function ChannelBrowser() {
@@ -124,7 +124,7 @@ const createStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleShe
   },
   emptyIcon: {
     fontSize: 48,
-    marginBottom: 12, fontFamily: 'Fraunces_600SemiBold' },
+    marginBottom: 12, fontFamily: font.display },
   emptyTitle: {
     ...typography.title,
     marginBottom: 8,

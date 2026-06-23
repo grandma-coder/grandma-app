@@ -12,7 +12,7 @@ import React, { useState } from 'react'
 import {
   View, Text, Pressable, StyleSheet, Dimensions, ActivityIndicator, Alert,
 } from 'react-native'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, font } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -144,19 +144,19 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
 const styles = StyleSheet.create({
   form: { padding: 24, gap: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  title: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', textAlign: 'center' },
+  title: { fontSize: 20, fontFamily: font.display, textAlign: 'center' },
   input: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     borderRadius: 16, paddingHorizontal: 20, paddingVertical: 14, borderWidth: 1,
   },
-  inputText: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold', flex: 1 },
-  unit: { fontSize: 13, fontFamily: 'DMSans_400Regular' },
+  inputText: { fontSize: 18, fontFamily: font.display, flex: 1 },
+  unit: { fontSize: 13, fontFamily: font.body },
   numpad: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   key: {
     width: (SCREEN_W - 48 - 16) / 3 - 6,
     paddingVertical: 14, borderRadius: 12, alignItems: 'center',
   },
-  keyText: { fontSize: 18, fontFamily: 'Fraunces_600SemiBold' },
+  keyText: { fontSize: 18, fontFamily: font.display },
   saveBtn: { borderRadius: 999, paddingVertical: 16, alignItems: 'center' },
-  saveText: { fontSize: 16, fontFamily: 'DMSans_600SemiBold' },
+  saveText: { fontSize: 16, fontFamily: font.bodySemiBold },
 })

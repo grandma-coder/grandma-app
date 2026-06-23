@@ -44,7 +44,7 @@ import {
   Zap,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, getModeColor } from '../../../constants/theme'
+import { useTheme, brand, getModeColor, font } from '../../../constants/theme'
 import { useModeStore } from '../../../store/useModeStore'
 import { useSavedToast } from '../../../components/ui/SavedToast'
 import { channelSticker } from '../../../lib/channelSticker'
@@ -924,7 +924,7 @@ const s = StyleSheet.create({
   deleteSheet: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 34, alignItems: 'center' },
   deleteHandle: { width: 44, height: 4, borderRadius: 2, marginBottom: 14 },
   deleteIcon: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  deleteTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, textAlign: 'center' },
+  deleteTitle: { fontSize: 22, fontFamily: font.display, letterSpacing: -0.4, textAlign: 'center' },
   deleteBody: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20, marginTop: 8, marginBottom: 20, paddingHorizontal: 8 },
   deleteConfirmBtn: { width: '100%', paddingVertical: 15, alignItems: 'center', justifyContent: 'center' },
   deleteConfirmText: { fontSize: 15, fontWeight: '800', color: '#FFFFFF' },

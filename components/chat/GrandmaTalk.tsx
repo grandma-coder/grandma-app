@@ -45,7 +45,7 @@ import {
   Moon as MoonIcon,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers as stickerPalette } from '../../constants/theme'
+import { useTheme, brand, stickers as stickerPalette, font } from '../../constants/theme'
 import { Burst, Heart, Flower } from '../ui/Stickers'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
@@ -623,7 +623,7 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
         <Pressable onPress={onClose} style={histStyles.headerBtn} hitSlop={8}>
           <ArrowLeft size={22} color={ink} strokeWidth={2} />
         </Pressable>
-        <Text style={{ fontSize: 22, fontFamily: 'Fraunces_600SemiBold', color: ink, letterSpacing: -0.4 }}>
+        <Text style={{ fontSize: 22, fontFamily: font.display, color: ink, letterSpacing: -0.4 }}>
           Past conversations
         </Text>
         <Pressable
@@ -651,10 +651,10 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
       ) : sessions.length === 0 ? (
         <View style={histStyles.empty}>
           <MessageCircle size={48} color={ink3} strokeWidth={1.5} />
-          <Text style={{ fontSize: 22, fontFamily: 'Fraunces_600SemiBold', color: ink, textAlign: 'center', letterSpacing: -0.4 }}>
+          <Text style={{ fontSize: 22, fontFamily: font.display, color: ink, textAlign: 'center', letterSpacing: -0.4 }}>
             No past chats yet
           </Text>
-          <Text style={{ fontSize: 14, fontFamily: 'DMSans_400Regular', color: ink3, textAlign: 'center', lineHeight: 20 }}>
+          <Text style={{ fontSize: 14, fontFamily: font.body, color: ink3, textAlign: 'center', lineHeight: 20 }}>
             Your conversations with Grandma will appear here
           </Text>
           <Pressable
@@ -673,7 +673,7 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
             })}
           >
             <Plus size={16} color={ST_INK} strokeWidth={2.5} />
-            <Text style={{ color: ST_INK, fontFamily: 'DMSans_700Bold', fontSize: 15, letterSpacing: -0.2 }}>
+            <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 15, letterSpacing: -0.2 }}>
               Start a conversation
             </Text>
           </Pressable>
@@ -706,7 +706,7 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
               }}>
                 <Plus size={18} color={ST_INK} strokeWidth={2.5} />
               </View>
-              <Text style={{ fontSize: 15, fontFamily: 'DMSans_700Bold', color: ST_INK, letterSpacing: -0.2 }}>
+              <Text style={{ fontSize: 15, fontFamily: font.bodyBold, color: ST_INK, letterSpacing: -0.2 }}>
                 New conversation
               </Text>
             </Pressable>
@@ -734,11 +734,11 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
                   <Sparkles size={14} color={ST_INK} strokeWidth={2.5} />
                 </View>
                 <View style={histStyles.sessionMeta}>
-                  <Text style={{ fontSize: 14, fontFamily: 'DMSans_600SemiBold', color: ink, lineHeight: 20 }} numberOfLines={2}>
+                  <Text style={{ fontSize: 14, fontFamily: font.bodySemiBold, color: ink, lineHeight: 20 }} numberOfLines={2}>
                     {item.title}
                   </Text>
                   <View style={histStyles.sessionTags}>
-                    <Text style={{ fontSize: 11, fontFamily: 'DMSans_500Medium', color: ink3 }}>
+                    <Text style={{ fontSize: 11, fontFamily: font.bodyMedium, color: ink3 }}>
                       {formatDate(item.createdAt)}
                     </Text>
                     <View style={{
@@ -746,7 +746,7 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
                       backgroundColor: getBehaviorColor(item.behavior) + (isDark ? '30' : 'AA'),
                       borderWidth: 1, borderColor: ST_INK + '30',
                     }}>
-                      <Text style={{ fontSize: 10, fontFamily: 'DMSans_700Bold', color: ST_INK, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                      <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: ST_INK, textTransform: 'uppercase', letterSpacing: 0.6 }}>
                         {getBehaviorLabel(item.behavior)}
                       </Text>
                     </View>
@@ -756,7 +756,7 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
                         backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
                         borderWidth: 1, borderColor: ST_INK + '30',
                       }}>
-                        <Text style={{ fontSize: 10, fontFamily: 'DMSans_700Bold', color: ink, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                        <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: ink, textTransform: 'uppercase', letterSpacing: 0.6 }}>
                           {item.childName}
                         </Text>
                       </View>

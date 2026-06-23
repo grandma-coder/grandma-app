@@ -3,7 +3,7 @@ import { View, Text, Pressable, Alert, StyleSheet, ActivityIndicator } from 'rea
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../lib/supabase'
-import { useTheme } from '../constants/theme'
+import { useTheme, font } from '../constants/theme'
 
 export default function AcceptInvite() {
   const { colors } = useTheme()
@@ -18,7 +18,7 @@ export default function AcceptInvite() {
       justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border,
     },
     emoji: { fontSize: 56, marginBottom: 20 },
-    title: { fontSize: 26, fontWeight: '700', color: colors.text, marginBottom: 8, textAlign: 'center', fontFamily: 'Fraunces_600SemiBold' },
+    title: { fontSize: 26, fontWeight: '700', color: colors.text, marginBottom: 8, textAlign: 'center', fontFamily: font.display },
     subtitle: { fontSize: 15, color: colors.textMuted, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
     permissionsCard: {
       width: '100%', backgroundColor: colors.surface, borderRadius: 16, padding: 20,

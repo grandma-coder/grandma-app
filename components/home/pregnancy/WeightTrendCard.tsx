@@ -13,7 +13,7 @@ import { ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react-nati
 import Svg, {
   Circle, Line, Path, Rect, Text as SvgText, Defs, LinearGradient, Stop,
 } from 'react-native-svg'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, font } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import { PaperCard } from '../../ui/PaperCard'
 import { StickerButton } from '../../ui/StickerButton'
@@ -543,7 +543,7 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
                 <Display size={28} color={colors.text}>
                   {empty ? '—' : derived.current!.toFixed(1)}
                 </Display>
-                <Body size={13} color={colors.textMuted} style={{ fontFamily: 'DMSans_500Medium' }}>kg</Body>
+                <Body size={13} color={colors.textMuted} style={{ fontFamily: font.bodyMedium }}>kg</Body>
               </View>
             </View>
             <View style={[styles.statusPill, { backgroundColor: statusColor + '1A', borderColor: statusColor + '55' }]}>
@@ -611,7 +611,7 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
               {t('preg_weight_targetFooter', { low: band.low, high: band.high, label: band.label })}
             </Body>
             <View style={styles.detailsLink}>
-              <Body size={13} color={stickers.lilac} style={{ fontFamily: 'DMSans_600SemiBold' }}>{t('preg_weight_details')}</Body>
+              <Body size={13} color={stickers.lilac} style={{ fontFamily: font.bodySemiBold }}>{t('preg_weight_details')}</Body>
               <ChevronRight size={14} color={stickers.lilac} strokeWidth={2.5} />
             </View>
           </View>
@@ -653,7 +653,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
   },
-  statusText: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  statusText: { fontSize: 11, fontFamily: font.bodySemiBold },
 
   statStrip: {
     flexDirection: 'row',
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
   },
   statCellInline: { flex: 1, alignItems: 'center', gap: 2 },
   statDivider: { width: 1, height: 24 },
-  statValue: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  statValue: { fontSize: 13, fontFamily: font.bodySemiBold },
 
   emptyChart: {
     marginTop: 16,

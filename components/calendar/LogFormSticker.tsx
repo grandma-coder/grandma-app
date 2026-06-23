@@ -5,7 +5,7 @@
  */
 
 import { View, Text, StyleSheet } from 'react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, font } from '../../constants/theme'
 import { logSticker } from './logStickers'
 
 interface Props {
@@ -29,7 +29,7 @@ export function LogFormSticker({ type, label, tint }: Props) {
         {logSticker(type, 32, isDark)}
       </View>
       <Text
-        style={[styles.label, { color: isDark ? colors.text : '#141313', fontFamily: 'Fraunces_700Bold', letterSpacing: -0.2 }]}
+        style={[styles.label, { color: isDark ? colors.text : '#141313', fontFamily: font.displayBold, letterSpacing: -0.2 }]}
         numberOfLines={2}
       >
         {label}

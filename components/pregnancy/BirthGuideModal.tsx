@@ -10,7 +10,7 @@ import {
 import { X, ChevronRight } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, font } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { Display, MonoCaps, Body } from '../ui/Typography'
 import { BirthDetailModal } from './BirthDetailModal'
@@ -165,7 +165,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                     <View style={styles.typeStickerRow}>
                       {item.sticker(38)}
                     </View>
-                    <Body size={14} color={ink} style={{ fontFamily: 'Fraunces_700Bold', marginTop: 6 }}>
+                    <Body size={14} color={ink} style={{ fontFamily: font.displayBold, marginTop: 6 }}>
                       {item.title}
                     </Body>
                     <Body size={11} color={inkMuted} style={{ marginTop: 2, lineHeight: 15 }}>
@@ -217,7 +217,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                       {item.sticker(28)}
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Body size={14} color={ink} style={{ fontFamily: 'Fraunces_700Bold' }}>
+                      <Body size={14} color={ink} style={{ fontFamily: font.displayBold }}>
                         {item.title}
                       </Body>
                       <Body size={12} color={inkMuted} style={{ marginTop: 2, lineHeight: 16 }}>

@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, font } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import { PaperCard } from '../../ui/PaperCard'
 import {
@@ -133,12 +133,12 @@ const styles = StyleSheet.create({
   itemBody: { flex: 1 },
   itemTitle: {
     fontSize: 14,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
     marginBottom: 2,
   },
   itemSubtitle: {
     fontSize: 12,
-    fontFamily: 'DMSans_400Regular',
+    fontFamily: font.body,
     lineHeight: 16,
   },
 })

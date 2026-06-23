@@ -26,7 +26,7 @@ import { useBehaviorStore } from '../../store/useBehaviorStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { getModeConfig } from '../../lib/modeConfig'
-import { useTheme, brand, getModeColor } from '../../constants/theme'
+import { useTheme, brand, getModeColor, font } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { Burst, Blob, Flower, Squishy, Heart, Star, Drop, StickerPalette } from '../../components/stickers/BrandStickers'
 
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   promptKicker: {
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     fontSize: 11,
     letterSpacing: 2.4,
     textTransform: 'uppercase',
@@ -584,14 +584,14 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   promptLine: {
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: font.display,
     fontSize: 34,
     letterSpacing: -0.6,
     lineHeight: 38,
     textAlign: 'center',
   },
   promptItalic: {
-    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontFamily: font.italic,
     fontStyle: 'italic',
   },
   promptRule: {
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
   },
   promptCaps: {
     marginTop: 12,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     fontSize: 11,
     letterSpacing: 1.8,
     textTransform: 'uppercase',
@@ -633,13 +633,13 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   labelText: {
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
     fontSize: 12,
     letterSpacing: 0.1,
   },
   subtitle: {
     marginTop: 4,
-    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontFamily: font.italic,
     fontStyle: 'italic',
     fontSize: 11,
     textAlign: 'center',

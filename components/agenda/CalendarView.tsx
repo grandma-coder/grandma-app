@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { stickers, borderRadius, shadows, useTheme } from '../../constants/theme'
+import { stickers, borderRadius, shadows, useTheme, font } from '../../constants/theme'
 
 export type CalendarViewMode = 'month' | 'week' | 'day'
 
@@ -445,7 +445,7 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet
     fontSize: 56,
     fontWeight: '900',
     color: stickers.yellow,
-    marginBottom: 4, fontFamily: 'Fraunces_600SemiBold' },
+    marginBottom: 4, fontFamily: font.display },
   dayViewWeekday: {
     fontSize: 16,
     fontWeight: '700',

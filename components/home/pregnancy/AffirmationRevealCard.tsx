@@ -9,7 +9,7 @@ import {
 } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, font } from '../../../constants/theme'
 import { MonoCaps, Body } from '../../ui/Typography'
 import { Heart as HeartSticker, Star as StarSticker } from '../../stickers/BrandStickers'
 import { supabase } from '../../../lib/supabase'
@@ -585,7 +585,7 @@ const styles = StyleSheet.create({
 
   hiddenState: { gap: 14, paddingBottom: 4 },
   hiddenHint: {
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: font.display,
     fontSize: 20,
     lineHeight: 26,
     letterSpacing: -0.3,
@@ -603,14 +603,14 @@ const styles = StyleSheet.create({
   },
   revealBtnText: {
     fontSize: 13,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     letterSpacing: 0.2,
   },
 
   revealedState: { gap: 6, paddingRight: 60 },
   affirmationText: {
     fontSize: 22,
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: font.display,
     lineHeight: 28,
     letterSpacing: -0.4,
   },
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
   },
   shareBtnText: {
     fontSize: 13,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     letterSpacing: 0.2,
   },
 })

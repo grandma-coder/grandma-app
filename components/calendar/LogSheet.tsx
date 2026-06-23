@@ -9,7 +9,7 @@ import { ReactNode } from 'react'
 import { View, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform, Text, ScrollView } from 'react-native'
 import { X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme } from '../../constants/theme'
+import { useTheme, font } from '../../constants/theme'
 import { Display } from '../ui/Typography'
 
 interface LogSheetProps {
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 11,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
   },
   closeBtn: {
     width: 34,

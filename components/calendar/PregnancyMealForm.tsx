@@ -16,7 +16,7 @@ import {
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { Camera, ImagePlus, ScanLine, X } from 'lucide-react-native'
-import { useTheme, brand, stickers as stickerPalette } from '../../constants/theme'
+import { useTheme, brand, stickers as stickerPalette, font } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -335,10 +335,10 @@ function SaveMealButton({
 const styles = StyleSheet.create({
   form: { padding: 24, gap: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  title: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', textAlign: 'center' },
+  title: { fontSize: 20, fontFamily: font.display, textAlign: 'center' },
   pickRow: { flexDirection: 'row', gap: 10 },
   pickBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 16 },
-  pickBtnText: { fontSize: 15, fontFamily: 'DMSans_600SemiBold' },
+  pickBtnText: { fontSize: 15, fontFamily: font.bodySemiBold },
   photoBox: { position: 'relative', borderRadius: 20, overflow: 'hidden' },
   photo: { width: '100%', height: 200, resizeMode: 'cover' },
   photoClear: {
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     position: 'absolute', inset: 0, backgroundColor: 'rgba(20,19,19,0.45)',
     alignItems: 'center', justifyContent: 'center', gap: 8,
   },
-  scanningText: { color: '#FFFEF8', fontSize: 13, fontFamily: 'DMSans_500Medium' },
+  scanningText: { color: '#FFFEF8', fontSize: 13, fontFamily: font.bodyMedium },
   summaryBox: {
     borderRadius: 20,
     borderWidth: 1,
@@ -373,15 +373,15 @@ const styles = StyleSheet.create({
   },
   totalChipText: {
     fontSize: 14,
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: font.display,
     color: '#141313',
     letterSpacing: -0.2,
   },
   foodRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth },
-  foodName: { fontSize: 14, fontFamily: 'DMSans_500Medium', flex: 1 },
-  foodCals: { fontSize: 13, fontFamily: 'DMSans_500Medium', fontVariant: ['tabular-nums'] },
+  foodName: { fontSize: 14, fontFamily: font.bodyMedium, flex: 1 },
+  foodCals: { fontSize: 13, fontFamily: font.bodyMedium, fontVariant: ['tabular-nums'] },
   scanAgainBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 12, borderWidth: 1 },
-  scanAgainText: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
+  scanAgainText: { fontSize: 14, fontFamily: font.bodyMedium },
   saveBtn: { height: 56, borderRadius: 999, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  saveText: { fontSize: 15, fontFamily: 'DMSans_700Bold', letterSpacing: 1, textTransform: 'uppercase' },
+  saveText: { fontSize: 15, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' },
 })

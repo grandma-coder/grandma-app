@@ -19,7 +19,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
-import { useTheme } from '../../constants/theme'
+import { useTheme, font } from '../../constants/theme'
 import { Burst, Blob, Heart, Flower } from '../../components/ui/Stickers'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
 import {
@@ -263,11 +263,11 @@ const styles = StyleSheet.create({
     fontSize: 68,
     fontWeight: '700',
     lineHeight: 64,
-    letterSpacing: -2, fontFamily: 'Fraunces_600SemiBold' },
+    letterSpacing: -2, fontFamily: font.display },
   seesYou: {
     fontSize: 32,
     marginTop: 4,
-    marginBottom: 16, fontFamily: 'Fraunces_600SemiBold' },
+    marginBottom: 16, fontFamily: font.display },
   body: {
     fontSize: 15,
     lineHeight: 22,

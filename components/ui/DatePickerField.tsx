@@ -26,7 +26,7 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker'
 import { X, Calendar } from 'lucide-react-native'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, font } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { Star as StarSticker } from './Stickers'
 
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 11,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   triggerText: {
     flex: 1,
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
     letterSpacing: -0.2,
   },
 
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     letterSpacing: -0.5,
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: font.display,
   },
   closeBtn: {
     width: 36,
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   },
   doneText: {
     color: ST_INK,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     fontSize: 16,
     letterSpacing: 1,
     textTransform: 'uppercase',

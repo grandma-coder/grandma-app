@@ -12,7 +12,7 @@
  */
 
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
-import { stickers } from '../../constants/theme'
+import { stickers, font } from '../../constants/theme'
 import { useTheme } from '../../constants/theme'
 
 const ST_INK = '#141313'
@@ -216,6 +216,6 @@ const styles = StyleSheet.create({
   },
   pillAge: {
     fontSize: 11,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
   },
 })

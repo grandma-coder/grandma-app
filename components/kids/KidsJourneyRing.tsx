@@ -26,7 +26,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X, ChevronRight, Brain, Sparkles, Flame } from 'lucide-react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, font } from '../../constants/theme'
 import { GROWTH_LEAPS, leapStatusForWeek, type GrowthLeap } from '../../lib/growthLeaps'
 
 // ─── Layout constants ────────────────────────────────────────────────────────
@@ -586,7 +586,7 @@ function LeapDetailModal({
                         borderWidth: 1.2, borderColor: isDark ? 'rgba(255,255,255,0.2)' : INK,
                         alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                       }}>
-                        <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 13, color: isDark ? '#FFFEF8' : INK }}>{i + 1}</Text>
+                        <Text style={{ fontFamily: font.displayBold, fontSize: 13, color: isDark ? '#FFFEF8' : INK }}>{i + 1}</Text>
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={[modalStyles.phaseLabel, { color: ink, fontFamily: font.bodySemiBold }]}>
@@ -659,7 +659,7 @@ function Chip({ label, fill, ink, isDark }: { label: string; fill: string; ink: 
       borderWidth: 1.2,
       borderColor: isDark ? 'rgba(255,255,255,0.18)' : INK,
     }}>
-      <Text style={{ fontSize: 11, fontFamily: 'DMSans_700Bold', color: ink, letterSpacing: 0.2 }}>
+      <Text style={{ fontSize: 11, fontFamily: font.bodyBold, color: ink, letterSpacing: 0.2 }}>
         {label}
       </Text>
     </View>
@@ -697,7 +697,7 @@ function SectionCard({
         </View>
         <Text style={{
           fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase',
-          fontFamily: 'DMSans_700Bold', color: ink,
+          fontFamily: font.bodyBold, color: ink,
         }}>
           {title}
         </Text>

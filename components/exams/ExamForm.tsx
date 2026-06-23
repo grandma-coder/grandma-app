@@ -24,7 +24,7 @@ import {
 import * as ImagePicker from 'expo-image-picker'
 import { Camera, ImagePlus, Sparkles, X } from 'lucide-react-native'
 
-import { useTheme, brand, stickers as stickersLight, stickersDark } from '../../constants/theme'
+import { useTheme, brand, stickers as stickersLight, stickersDark, font } from '../../constants/theme'
 import { LogFormSticker } from '../calendar/LogFormSticker'
 import { toDateStr } from '../../lib/cycleLogic'
 import {
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
   aiBadgeText: { fontSize: 12 },
   input: {
     borderWidth: 1.5, paddingHorizontal: 20, height: 56,
-    fontSize: 15, fontFamily: 'DMSans_500Medium', fontWeight: '500',
+    fontSize: 15, fontFamily: font.bodyMedium, fontWeight: '500',
     shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 1,
   },
   inputMultiline: { height: 96, paddingVertical: 14, textAlignVertical: 'top' },
@@ -410,6 +410,6 @@ const styles = StyleSheet.create({
     height: 56, alignItems: 'center', justifyContent: 'center',
     shadowColor: INK, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 2,
   },
-  saveBtnText: { fontSize: 16, fontFamily: 'DMSans_600SemiBold', fontWeight: '700', letterSpacing: 0.2 },
+  saveBtnText: { fontSize: 16, fontFamily: font.bodySemiBold, fontWeight: '700', letterSpacing: 0.2 },
   cancelText: { fontSize: 13, textAlign: 'center', paddingVertical: 6 },
 })

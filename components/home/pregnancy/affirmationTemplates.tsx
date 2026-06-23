@@ -10,6 +10,7 @@
 
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
+import { font } from '../../../constants/theme'
 import Svg, {
   Circle,
   Ellipse,
@@ -169,7 +170,7 @@ const PP01: React.FC<TemplateProps> = ({ phrase, textOnly }) => (
       <Text style={[s.label, { color: textOnly ? '#FFFFFF' : '#141313', top: '18%' }]}>DAILY AFFIRMATION</Text>
     )}
     <View style={[s.fg, s.fgCenter]}>
-      <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 108, lineHeight: 118, color: textOnly ? '#FFFFFF' : '#141313', letterSpacing: -2, textAlign: 'center' }}>
+      <Text style={{ fontFamily: font.displayBold, fontSize: 108, lineHeight: 118, color: textOnly ? '#FFFFFF' : '#141313', letterSpacing: -2, textAlign: 'center' }}>
         {phrase}
       </Text>
     </View>
@@ -348,7 +349,7 @@ const PP07: React.FC<TemplateProps> = ({ phrase, textOnly }) => (
     )}
     <View style={[s.fg, s.fgCenter]}>
       <View style={[textOnly ? s.transparentDisc : s.disc]}>
-        <Text style={{ fontFamily: 'Fraunces_600SemiBold', fontStyle: 'italic', fontSize: 82, lineHeight: 94, color: textOnly ? '#FFFFFF' : '#E58BB4', textAlign: 'center', letterSpacing: -1 }}>
+        <Text style={{ fontFamily: font.display, fontStyle: 'italic', fontSize: 82, lineHeight: 94, color: textOnly ? '#FFFFFF' : '#E58BB4', textAlign: 'center', letterSpacing: -1 }}>
           {phrase}
         </Text>
       </View>
@@ -489,7 +490,7 @@ const PG01: React.FC<TemplateProps> = ({ phrase, textOnly }) => {
       )}
       <View style={[s.fg, s.fgCenter]}>
         {lines.map((l, i) => (
-          <Text key={i} style={{ fontFamily: 'InstrumentSerif_400Regular_Italic', fontSize: 108, lineHeight: 130, color: '#FFFEF8', textAlign: 'center' }}>
+          <Text key={i} style={{ fontFamily: font.italic, fontSize: 108, lineHeight: 130, color: '#FFFEF8', textAlign: 'center' }}>
             {l}
           </Text>
         ))}
@@ -514,7 +515,7 @@ const PG02: React.FC<TemplateProps> = ({ phrase, textOnly }) => (
       </View>
     )}
     <View style={[s.fg, s.fgCenter]}>
-      <Text style={{ fontFamily: 'InstrumentSerif_400Regular_Italic', fontSize: 118, lineHeight: 130, color: textOnly ? '#FFFFFF' : '#141313', textAlign: 'center' }}>
+      <Text style={{ fontFamily: font.italic, fontSize: 118, lineHeight: 130, color: textOnly ? '#FFFFFF' : '#141313', textAlign: 'center' }}>
         {phrase.toLowerCase()}
       </Text>
     </View>
@@ -601,7 +602,7 @@ const PG06: React.FC<TemplateProps> = ({ phrase, textOnly }) => (
       </View>
     )}
     <View style={[s.fg, s.fgLeft]}>
-      <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 98, lineHeight: 108, color: textOnly ? '#FFFFFF' : '#141313', letterSpacing: -2, textAlign: 'left' }}>
+      <Text style={{ fontFamily: font.bodyBold, fontSize: 98, lineHeight: 108, color: textOnly ? '#FFFFFF' : '#141313', letterSpacing: -2, textAlign: 'left' }}>
         {phrase}
       </Text>
     </View>
@@ -629,11 +630,11 @@ const PG07: React.FC<TemplateProps> = ({ phrase, textOnly }) => (
       </View>
     )}
     <View style={[s.fg, s.fgCenter]}>
-      <Text style={{ fontFamily: 'Fraunces_600SemiBold', fontSize: 102, lineHeight: 118, color: textOnly ? '#FFFFFF' : '#141313', letterSpacing: -2, textAlign: 'center' }}>
+      <Text style={{ fontFamily: font.display, fontSize: 102, lineHeight: 118, color: textOnly ? '#FFFFFF' : '#141313', letterSpacing: -2, textAlign: 'center' }}>
         {phrase}
       </Text>
       {!textOnly && (
-        <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: 40, color: textOnly ? '#FFFFFF' : '#141313', marginTop: 40, opacity: 0.7, textAlign: 'center' }}>
+        <Text style={{ fontFamily: font.bodyMedium, fontSize: 40, color: textOnly ? '#FFFFFF' : '#141313', marginTop: 40, opacity: 0.7, textAlign: 'center' }}>
           — xo, Grandma
         </Text>
       )}
@@ -675,7 +676,7 @@ const PG08: React.FC<TemplateProps> = ({ phrase, textOnly }) => (
       </Text>
     )}
     <View style={[s.fg, { paddingTop: '40%' }]}>
-      <Text style={{ fontFamily: 'InstrumentSerif_400Regular_Italic', fontSize: 98, lineHeight: 118, color: '#FFFEF8', textAlign: 'center' }}>
+      <Text style={{ fontFamily: font.italic, fontSize: 98, lineHeight: 118, color: '#FFFEF8', textAlign: 'center' }}>
         {phrase}
       </Text>
     </View>
@@ -713,7 +714,7 @@ const PG09: React.FC<TemplateProps> = ({ phrase, textOnly }) => (
       </View>
     )}
     <View style={[s.fg, s.fgLeft, { paddingLeft: 80, paddingRight: 80 }]}>
-      <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 92, lineHeight: 106, color: textOnly ? '#FFFFFF' : '#141313', letterSpacing: -2, textAlign: 'left' }}>
+      <Text style={{ fontFamily: font.displayBold, fontSize: 92, lineHeight: 106, color: textOnly ? '#FFFFFF' : '#141313', letterSpacing: -2, textAlign: 'left' }}>
         {phrase}
       </Text>
     </View>
@@ -830,7 +831,7 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     textAlign: 'center',
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     fontSize: 30,
     letterSpacing: 6,
     zIndex: 3,
@@ -841,7 +842,7 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     textAlign: 'center',
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     fontSize: 24,
     letterSpacing: 2,
     zIndex: 4,

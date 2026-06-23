@@ -10,7 +10,7 @@ import React from 'react'
 import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { X } from 'lucide-react-native'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, font } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import { PaperCard } from '../../ui/PaperCard'
 import { StickerButton } from '../../ui/StickerButton'
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
   },
-  typeLabel: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  typeLabel: { fontSize: 11, fontFamily: font.bodySemiBold },
 
   description: { paddingHorizontal: 24, marginBottom: 16, lineHeight: 20 },
 

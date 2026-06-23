@@ -7,7 +7,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArrowLeft, Check, Camera, Lock, Globe } from 'lucide-react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, font } from '../../constants/theme'
 import { createChannel } from '../../lib/channelPosts'
 import {
   STICKER_PRESETS,
@@ -414,7 +414,7 @@ const modalStyles = StyleSheet.create({
   card: { width: '100%', maxWidth: 340, padding: 28, alignItems: 'center' },
   clusterWrap: { width: 200, height: 180, alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 6 },
   heroBg: { width: 104, height: 104, borderRadius: 52, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, marginTop: 4, textAlign: 'center' },
+  title: { fontSize: 24, fontFamily: font.display, letterSpacing: -0.4, marginTop: 4, textAlign: 'center' },
   desc: { fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 20, marginTop: 10, marginBottom: 20 },
   cta: { width: '100%', paddingVertical: 14, alignItems: 'center' },
   ctaText: { fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
@@ -448,7 +448,7 @@ function makeStyles(
     },
     headerTitle: {
       fontSize: 18,
-      fontFamily: 'Fraunces_600SemiBold',
+      fontFamily: font.display,
       fontWeight: '700',
       color: colors.text,
       letterSpacing: 0.5,

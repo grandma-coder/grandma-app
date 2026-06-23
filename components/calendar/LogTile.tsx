@@ -11,7 +11,7 @@
 
 import { ReactNode, useEffect, useRef, Children, cloneElement, isValidElement } from 'react'
 import { Animated, Pressable, StyleSheet, View } from 'react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, font } from '../../constants/theme'
 import { Body } from '../ui/Typography'
 import { getTint, type TintKey } from './tints'
 
@@ -101,7 +101,7 @@ export function LogTile({ icon, label, tint = 'activity', onPress, index = 0 }: 
         >
           {icon}
         </View>
-        <Body size={13} color={textInk} style={{ fontFamily: 'Fraunces_700Bold', letterSpacing: -0.2 }} align="center">
+        <Body size={13} color={textInk} style={{ fontFamily: font.displayBold, letterSpacing: -0.2 }} align="center">
           {label}
         </Body>
       </Pressable>

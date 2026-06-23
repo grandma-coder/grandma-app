@@ -6,7 +6,7 @@
  */
 
 import { View, Text, StyleSheet } from 'react-native'
-import { useTheme, stickers, getModeColorSoft } from '../../constants/theme'
+import { useTheme, stickers, getModeColorSoft, font } from '../../constants/theme'
 import { getWeekData } from '../../lib/pregnancyData'
 import { Display, DisplayItalic, MonoCaps } from '../ui/Typography'
 import { Heart } from '../ui/Stickers'
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   weekNumber: {
     fontSize: 72,
     lineHeight: 76,
-    letterSpacing: -2, fontFamily: 'Fraunces_600SemiBold' },
+    letterSpacing: -2, fontFamily: font.display },
   sizeChip: {
     marginTop: 16,
     alignSelf: 'flex-start',

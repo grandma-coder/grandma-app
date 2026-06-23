@@ -18,7 +18,7 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
-import { useTheme, stickers } from '../../constants/theme'
+import { useTheme, stickers, font } from '../../constants/theme'
 import { Squishy, Heart } from '../../components/ui/Stickers'
 import { useSavedToast } from '../../components/ui/SavedToast'
 
@@ -223,12 +223,12 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 40,
     lineHeight: 42,
-    letterSpacing: -1, fontFamily: 'Fraunces_600SemiBold' },
+    letterSpacing: -1, fontFamily: font.display },
   headingItalic: {
     fontSize: 40,
     lineHeight: 42,
     letterSpacing: -0.5,
-    marginBottom: 10, fontFamily: 'Fraunces_600SemiBold' },
+    marginBottom: 10, fontFamily: font.display },
   sub: {
     fontSize: 15,
     marginBottom: 28,

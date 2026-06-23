@@ -18,7 +18,7 @@ import {
 } from 'react-native'
 import { X, Check, Plus, Stethoscope } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, font } from '../../constants/theme'
 import { Display, Body, MonoCaps } from '../ui/Typography'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   },
   statusChipText: {
     fontSize: 11,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 11,
     letterSpacing: 1.4,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
   },
   questionRow: {
     flexDirection: 'row',
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     color: '#FFF',
     fontSize: 14,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     fontSize: 14,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },

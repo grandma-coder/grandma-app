@@ -13,7 +13,7 @@
 import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import Svg, { Path, Circle, Line, Text as SvgText, G } from 'react-native-svg'
-import { useTheme } from '../../constants/theme'
+import { useTheme, font } from '../../constants/theme'
 import {
   type Metric,
   type Sex,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 15,
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: font.display,
     letterSpacing: -0.2,
   },
   pctChip: {
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   },
   pctChipText: {
     fontSize: 12,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     letterSpacing: 0.3,
   },
   legend: {
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 10,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
   },
   empty: {
     fontSize: 12,

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, font } from '../../constants/theme'
 
 export interface TimelineEntry {
   id: string
@@ -168,7 +168,7 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) => StyleSheet
   },
   emptyIcon: {
     fontSize: 36,
-    marginBottom: 4, fontFamily: 'Fraunces_600SemiBold' },
+    marginBottom: 4, fontFamily: font.display },
   emptyTitle: {
     fontSize: 15,
     fontWeight: '600',

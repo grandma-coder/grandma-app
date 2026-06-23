@@ -11,6 +11,7 @@
 import { ReactNode } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { MonoCaps, Display, Body } from './Typography'
+import { font } from '../../constants/theme'
 
 // ─── Banner row ─────────────────────────────────────────────────────────────
 
@@ -118,7 +119,7 @@ export function SheetCategoryRow({ dotColor, label, value, sub }: SheetCategoryR
     <View style={styles.row}>
       <View style={[styles.dot, { backgroundColor: dotColor }]} />
       <View style={{ flex: 1 }}>
-        <Body size={14} style={{ fontFamily: 'DMSans_500Medium' }}>
+        <Body size={14} style={{ fontFamily: font.bodyMedium }}>
           {label}
         </Body>
         {sub ? (
@@ -127,7 +128,7 @@ export function SheetCategoryRow({ dotColor, label, value, sub }: SheetCategoryR
           </Body>
         ) : null}
       </View>
-      <Body size={14} style={{ fontFamily: 'DMSans_600SemiBold' }}>
+      <Body size={14} style={{ fontFamily: font.bodySemiBold }}>
         {value}
       </Body>
     </View>
@@ -153,7 +154,7 @@ const styles = StyleSheet.create({
   },
   bannerBody: { flex: 1 },
   bannerRight: {
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
   },
 
   tile: {

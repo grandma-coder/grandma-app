@@ -48,7 +48,7 @@ import Animated, {
   cancelAnimation,
   type SharedValue,
 } from 'react-native-reanimated'
-import { useTheme } from '../../constants/theme'
+import { useTheme, font } from '../../constants/theme'
 
 const AnimatedPath = Animated.createAnimatedComponent(Path)
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
@@ -313,7 +313,7 @@ export function LiquidFillBottle({
       >
         <Text
           style={{
-            fontFamily: 'Fraunces_600SemiBold',
+            fontFamily: font.display,
             fontSize: 24,
             color: colors.text,
           }}
@@ -537,7 +537,7 @@ export function WeeksProgressBeads({
               fontSize: 9,
               color: i === activeIndex ? colors.text : colors.textMuted,
               fontWeight: i === activeIndex ? '700' : '500',
-              fontFamily: 'Fraunces_600SemiBold',
+              fontFamily: font.display,
             }}
           >
             W{b.w}
@@ -825,7 +825,7 @@ export function PolarClock24h({
         {centerLabel ? (
           <Text
             style={{
-              fontFamily: 'Fraunces_600SemiBold',
+              fontFamily: font.display,
               fontSize: 16,
               color: colors.text,
               lineHeight: 18,

@@ -10,7 +10,7 @@ import Svg, {
   Circle, Rect, Line, Path, G,
   Text as SvgText,
 } from 'react-native-svg'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, font } from '../../constants/theme'
 import { MoodFace } from '../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 
@@ -476,10 +476,10 @@ export function BubbleGrid({ items, onPress }: BubbleGridProps) {
                 borderColor: ink,
               }]}
             >
-              <Text style={[styles.bubbleCount, { color: ink, fontSize: Math.max(16, size / 4), fontFamily: 'Fraunces_600SemiBold' }]}>
+              <Text style={[styles.bubbleCount, { color: ink, fontSize: Math.max(16, size / 4), fontFamily: font.display }]}>
                 {item.value}
               </Text>
-              <Text style={[styles.bubbleLabel, { color: ink, fontSize: Math.max(10, size / 7), fontFamily: 'DMSans_500Medium' }]} numberOfLines={1}>
+              <Text style={[styles.bubbleLabel, { color: ink, fontSize: Math.max(10, size / 7), fontFamily: font.bodyMedium }]} numberOfLines={1}>
                 {item.label}
               </Text>
             </View>
@@ -838,13 +838,13 @@ const bubbleClusterStyles = StyleSheet.create({
     fontWeight: '800',
   },
   bubbleLabel: {
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
     fontSize: 13,
     letterSpacing: 0.2,
     fontWeight: '600',
   },
   bubblePct: {
-    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontFamily: font.italic,
     fontStyle: 'italic',
     fontSize: 12,
     opacity: 0.75,

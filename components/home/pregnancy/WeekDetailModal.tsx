@@ -26,7 +26,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { X, ArrowLeft, ChevronRight } from 'lucide-react-native'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, font } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import { getWeekData } from '../../../lib/pregnancyData'
 import { getWeekStat, formatWeight } from '../../../lib/weekStats'
@@ -416,14 +416,14 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   heroLabel: {
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     fontSize: 10.5,
     letterSpacing: 2.3,
     textTransform: 'uppercase',
     marginBottom: 10,
   },
   heroMega: {
-    fontFamily: 'Fraunces_700Bold',
+    fontFamily: font.displayBold,
     fontSize: 58,
     fontWeight: '700',
     letterSpacing: -2.6,
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
   },
   heroSizeBold: {
-    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontFamily: font.italic,
     fontStyle: 'italic',
   },
   heroSizeDot: { fontSize: 18, opacity: 0.5 },
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   heroStat: {
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
     fontSize: 15,
     opacity: 0.9,
   },
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
   },
   section: { marginBottom: 26 },
   sectionTitle: {
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     fontSize: 10.5,
     letterSpacing: 2.3,
     textTransform: 'uppercase',
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   devText: {
     flex: 1,
-    fontFamily: 'DMSans_400Regular',
+    fontFamily: font.body,
     fontSize: 15,
     lineHeight: 22,
   },
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   pillText: {
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     fontSize: 13,
   },
 
@@ -531,13 +531,13 @@ const styles = StyleSheet.create({
   },
   prepIcon: { fontSize: 24 },
   prepTitle: {
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     fontSize: 15,
     marginBottom: 2,
     lineHeight: 19,
   },
   prepDesc: {
-    fontFamily: 'DMSans_400Regular',
+    fontFamily: font.body,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   prepBackText: {
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
     fontSize: 14,
   },
   prepDetailHeader: {
@@ -573,22 +573,22 @@ const styles = StyleSheet.create({
   },
   prepDetailIcon: { fontSize: 32 },
   prepDetailTitle: {
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: font.display,
     fontSize: 20,
     marginBottom: 2,
   },
   prepDetailSummary: {
-    fontFamily: 'DMSans_400Regular',
+    fontFamily: font.body,
     fontSize: 13,
     lineHeight: 18,
   },
   prepDetailContent: {
-    fontFamily: 'DMSans_400Regular',
+    fontFamily: font.body,
     fontSize: 15,
     lineHeight: 24,
   },
   prepSectionTitle: {
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     fontSize: 10.5,
     letterSpacing: 2.3,
     textTransform: 'uppercase',
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
   },
   prepStepText: {
     flex: 1,
-    fontFamily: 'DMSans_400Regular',
+    fontFamily: font.body,
     fontSize: 15,
     lineHeight: 22,
   },

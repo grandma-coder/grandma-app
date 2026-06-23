@@ -28,6 +28,7 @@ import {
   stickersDark,
   getModeColor,
   getModeColorSoft,
+  font,
 } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
@@ -581,7 +582,7 @@ export function KickCountForm({
               gap: 4,
             }}>
               <Hand size={42} color={ink} strokeWidth={2} />
-              <Text style={{ fontSize: 12, fontFamily: 'DMSans_700Bold', color: ink, letterSpacing: 2 }}>TAP</Text>
+              <Text style={{ fontSize: 12, fontFamily: font.bodyBold, color: ink, letterSpacing: 2 }}>TAP</Text>
             </View>
           </Pressable>
         </View>
@@ -589,7 +590,7 @@ export function KickCountForm({
         {/* Big count — Fraunces */}
         <Text style={{
           fontSize: 56,
-          fontFamily: 'Fraunces_600SemiBold',
+          fontFamily: font.display,
           color: isDark ? colors.text : ink,
           letterSpacing: -1.5,
           lineHeight: 60,
@@ -598,7 +599,7 @@ export function KickCountForm({
           {count}
           <Text style={{
             fontSize: 22,
-            fontFamily: 'Fraunces_600SemiBold',
+            fontFamily: font.display,
             color: isDark ? colors.textMuted : 'rgba(20,19,19,0.55)',
             letterSpacing: -0.4,
           }}>{count === 1 ? ' kick' : ' kicks'}</Text>
@@ -623,7 +624,7 @@ export function KickCountForm({
 
         <Text style={{
           fontSize: 13,
-          fontFamily: 'DMSans_500Medium',
+          fontFamily: font.bodyMedium,
           color: isDark ? colors.textMuted : 'rgba(20,19,19,0.55)',
           textAlign: 'center',
           marginTop: 6,
@@ -1379,9 +1380,9 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
           keyboardType="decimal-pad"
           placeholder="68.5"
           placeholderTextColor={colors.textMuted}
-          style={[styles.weightInput, { color: colors.text, fontFamily: 'Fraunces_600SemiBold' }]}
+          style={[styles.weightInput, { color: colors.text, fontFamily: font.display }]}
         />
-        <Text style={[styles.weightUnit, { color: colors.textMuted, fontFamily: 'DMSans_500Medium' }]}>kg</Text>
+        <Text style={[styles.weightUnit, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>kg</Text>
       </View>
       <SaveButton onPress={save} saving={saving} disabled={weight.trim() === ''} />
     </View>
@@ -1400,7 +1401,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     height: 56,
     fontSize: 15,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     fontWeight: '500',
   },
   inputMultiline: {
@@ -1410,7 +1411,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     minHeight: 80,
     fontSize: 15,
-    fontFamily: 'DMSans_400Regular',
+    fontFamily: font.body,
     textAlignVertical: 'top',
   },
   chipGrid: {
@@ -1458,7 +1459,7 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     fontSize: 15,
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: font.bodyBold,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
@@ -1469,7 +1470,7 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 13,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     fontWeight: '600',
     marginBottom: 8,
     marginTop: 8,
@@ -1489,7 +1490,7 @@ const styles = StyleSheet.create({
   },
   numberBtnText: {
     fontSize: 14,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     fontWeight: '600',
   },
   counterRow: {
@@ -1608,7 +1609,7 @@ const styles = StyleSheet.create({
   },
   toggleLabel: {
     fontSize: 15,
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     fontWeight: '600',
   },
   togglePill: {

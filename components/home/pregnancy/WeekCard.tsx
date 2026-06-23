@@ -15,6 +15,7 @@ import { WeekRuler } from './WeekRuler'
 import { AnimatedFruit } from './AnimatedFruit'
 import { getWeekData } from '../../../lib/pregnancyData'
 import { getWeekStat, formatWeight } from '../../../lib/weekStats'
+import { font } from '../../../constants/theme'
 
 function getTrimester(week: number): 1 | 2 | 3 {
   if (week <= 13) return 1
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   meta: {
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
     fontSize: 11,
     letterSpacing: 1.8,
     textTransform: 'uppercase',
@@ -234,13 +235,13 @@ const styles = StyleSheet.create({
     // Fraunces_500Medium isn't loaded in the bundle (see app/_layout.tsx);
     // fall back to the canonical 600 weight so Android doesn't drop to
     // the system serif.
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: font.display,
     fontSize: 20,
     letterSpacing: -0.3,
     textAlign: 'right',
   },
   sizeNameBold: {
-    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontFamily: font.italic,
     fontStyle: 'italic',
     fontWeight: '400',
   },
@@ -287,20 +288,20 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   statLabel: {
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: font.bodySemiBold,
     fontSize: 9.5,
     letterSpacing: 2,
     textTransform: 'uppercase',
     opacity: 0.7,
   },
   statValue: {
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: font.display,
     fontSize: 32,
     letterSpacing: -1,
     lineHeight: 34,
   },
   statUnit: {
-    fontFamily: 'InstrumentSerif_400Regular_Italic',
+    fontFamily: font.italic,
     fontStyle: 'italic',
     fontSize: 14,
     opacity: 0.75,
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   footerLabel: {
-    fontFamily: 'DMSans_500Medium',
+    fontFamily: font.bodyMedium,
     fontSize: 10,
     letterSpacing: 1.4,
     textTransform: 'uppercase',

@@ -59,6 +59,7 @@ import type { ChildWithRole, CaregiverPermissions } from '../types'
 
 import { queryClient } from '../lib/queryClient'
 import { consumePendingInvite } from '../lib/pendingInvite'
+import { font } from '../constants/theme'
 
 /**
  * Set the default font family on every <Text> and <TextInput> once
@@ -70,12 +71,12 @@ function applyDefaultFontFamily() {
   const TextInput = RNTextInput as any
   Text.defaultProps = Text.defaultProps || {}
   Text.defaultProps.style = [
-    { fontFamily: 'DMSans_400Regular' },
+    { fontFamily: font.body },
     Text.defaultProps.style,
   ]
   TextInput.defaultProps = TextInput.defaultProps || {}
   TextInput.defaultProps.style = [
-    { fontFamily: 'DMSans_400Regular' },
+    { fontFamily: font.body },
     TextInput.defaultProps.style,
   ]
 }

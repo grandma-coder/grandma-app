@@ -19,7 +19,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
-import { useTheme, stickers } from '../../constants/theme'
+import { useTheme, stickers, font } from '../../constants/theme'
 import { Burst } from '../../components/ui/Stickers'
 import { signInWithApple, signInWithGoogle, isAppleSignInAvailable } from '../../lib/auth-providers'
 import { setPendingInvite } from '../../lib/pendingInvite'
@@ -326,12 +326,12 @@ const styles = StyleSheet.create({
     fontSize: 40,
     lineHeight: 42,
     letterSpacing: -1,
-    marginTop: 10, fontFamily: 'Fraunces_600SemiBold' },
+    marginTop: 10, fontFamily: font.display },
   headingItalic: {
     fontSize: 40,
     lineHeight: 42,
     letterSpacing: -0.5,
-    marginBottom: 8, fontFamily: 'Fraunces_600SemiBold' },
+    marginBottom: 8, fontFamily: font.display },
   sub: {
     fontSize: 15,
     marginBottom: 28,

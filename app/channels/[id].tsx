@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getThreads, type Thread } from '../../lib/channels'
 import { ThreadCard } from '../../components/channels/ThreadCard'
-import { typography, spacing, useTheme } from '../../constants/theme'
+import { typography, spacing, useTheme, font } from '../../constants/theme'
 
 export default function ChannelDetail() {
   const { colors } = useTheme()
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     fontSize: 48,
-    marginBottom: 12, fontFamily: 'Fraunces_600SemiBold' },
+    marginBottom: 12, fontFamily: font.display },
   emptyTitle: {
     ...typography.title,
     marginBottom: 8,

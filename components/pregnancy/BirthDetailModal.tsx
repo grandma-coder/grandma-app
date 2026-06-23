@@ -13,7 +13,7 @@ import {
 import { X, ChevronDown, ChevronUp, MessageCircle, ExternalLink, Info, TriangleAlert, Lightbulb, Stethoscope } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Linking } from 'react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, font } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { Display, Body } from '../ui/Typography'
 import {
@@ -231,7 +231,7 @@ export function BirthDetailModal({
               ]}
             >
               <MessageCircle size={16} color={INK} strokeWidth={2.2} />
-              <Body size={14} color={INK} style={{ fontFamily: 'DMSans_700Bold' }}>
+              <Body size={14} color={INK} style={{ fontFamily: font.bodyBold }}>
                 {t('preg_birthDetail_askGrandma')}
               </Body>
             </Pressable>
@@ -283,12 +283,12 @@ function AccordionItem({
             },
           ]}
         >
-          <Body size={11} color={INK} style={{ fontFamily: 'Fraunces_700Bold' }}>
+          <Body size={11} color={INK} style={{ fontFamily: font.displayBold }}>
             {index + 1}
           </Body>
         </View>
         <View style={{ flex: 1 }}>
-          <Body size={14} color={ink} style={{ fontFamily: 'DMSans_700Bold' }}>
+          <Body size={14} color={ink} style={{ fontFamily: font.bodyBold }}>
             {section.title}
           </Body>
         </View>
@@ -343,7 +343,7 @@ function AccordionItem({
                     { borderColor: paperBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#FBF6E8' },
                   ]}
                 >
-                  <Body size={13} color={ink} style={{ fontFamily: 'DMSans_700Bold', marginBottom: 6 }}>
+                  <Body size={13} color={ink} style={{ fontFamily: font.bodyBold, marginBottom: 6 }}>
                     {sub.title}
                   </Body>
                   <Body size={13} color={inkMuted} style={{ lineHeight: 20 }}>
@@ -407,7 +407,7 @@ function CalloutBlock({ callout, ink, inkMuted, paperBorder, isDark }: CalloutBl
       </View>
       <View style={{ flex: 1 }}>
         {callout.title && (
-          <Body size={13} color={ink} style={{ fontFamily: 'DMSans_700Bold', marginBottom: 3 }}>
+          <Body size={13} color={ink} style={{ fontFamily: font.bodyBold, marginBottom: 3 }}>
             {callout.title}
           </Body>
         )}
@@ -431,7 +431,7 @@ interface SourcesBlockProps {
 function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label }: SourcesBlockProps) {
   return (
     <View style={[styles.sourcesCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-      <Body size={12} color={inkMuted} style={{ fontFamily: 'DMSans_700Bold', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 10 }}>
+      <Body size={12} color={inkMuted} style={{ fontFamily: font.bodyBold, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 10 }}>
         {label}
       </Body>
       {sources.map((s, i) => (
@@ -441,7 +441,7 @@ function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label }: Sou
           style={({ pressed }) => [styles.sourceRow, { opacity: pressed ? 0.6 : 1 }]}
         >
           <View style={{ flex: 1 }}>
-            <Body size={12} color={ink} style={{ fontFamily: 'DMSans_700Bold', lineHeight: 17 }}>
+            <Body size={12} color={ink} style={{ fontFamily: font.bodyBold, lineHeight: 17 }}>
               {s.label}
             </Body>
             <Body size={11} color={inkMuted} style={{ lineHeight: 15, marginTop: 2 }}>
