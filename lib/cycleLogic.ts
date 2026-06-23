@@ -10,9 +10,10 @@
  * Fertile window: 5 days before ovulation + ovulation day + 1 day after
  * (sperm survives up to 5 days, egg survives 12-24 hours)
  *
- * Cycle length varies (21-35 days normal, 28 average).
- * Luteal phase is relatively constant (~14 days).
- * So ovulation = cycleLength - 14.
+ * Cycle length varies (ACOG: ~24–38 days typical; 21–35 also widely cited;
+ * 28 average). The luteal phase is often ~14 days but ranges ~11–17 and varies
+ * within the same person, so calendar prediction is an ESTIMATE — BBT, LH
+ * tests and cervical mucus are more accurate. ovulation = cycleLength - luteal.
  */
 
 import { brand, stickers } from '../constants/theme'
@@ -120,7 +121,9 @@ export function getCycleInfo(config: Partial<CycleConfig>, forDate?: string): Cy
   // Ovulation typically happens cycleLength - lutealPhase days after period start
   const ovulationDay = cfg.cycleLength - cfg.lutealPhase
 
-  // Fertile window: 5 days before ovulation through 1 day after
+  // Fertile window: 5 days before ovulation through 1 day after. The clinical
+  // "6-day window" (Wilcox) ends ON ovulation day; we extend one day for a
+  // gentler display buffer — a UI choice, not a claim that day+1 is fertile.
   const fertileStart = Math.max(1, ovulationDay - 5)
   const fertileEnd = ovulationDay + 1
 
@@ -373,9 +376,9 @@ export function getHydrationLevel(glassesConsumed: number): {
   const pct = Math.min(100, Math.round((glassesConsumed / DAILY_WATER_GOAL) * 100))
   if (pct >= 100) return { percentage: pct, label: 'Great!', color: stickers.blue, message: 'You hit your water goal! Keep it up.' }
   if (pct >= 75) return { percentage: pct, label: 'Almost there', color: stickers.blue, message: 'Just a couple more glasses to go.' }
-  if (pct >= 50) return { percentage: pct, label: 'Halfway', color: stickers.yellow, message: 'Keep drinking — hydration helps fertility.' }
+  if (pct >= 50) return { percentage: pct, label: 'Halfway', color: stickers.yellow, message: 'Keep drinking — hydration supports your overall wellbeing.' }
   if (pct >= 25) return { percentage: pct, label: 'Low', color: stickers.coral, message: 'You need more water. Dehydration affects your cycle.' }
-  return { percentage: pct, label: 'Very low', color: brand.phase.menstrual, message: 'Drink water now! Hydration is crucial for conception.' }
+  return { percentage: pct, label: 'Very low', color: brand.phase.menstrual, message: 'Drink water now! Staying hydrated supports your overall wellbeing.' }
 }
 
 /**
