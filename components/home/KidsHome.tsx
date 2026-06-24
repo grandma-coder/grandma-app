@@ -64,6 +64,7 @@ import { MEDICAL_DISCLAIMER, VACCINE_SCHEDULE_NOTE } from '../../lib/medicalSour
 import type { ChildWithRole } from '../../types'
 import { MoodBubbleCluster } from '../charts/SvgCharts'
 import type { MoodBubbleItem } from '../charts/SvgCharts'
+import { useTranslation } from '../../lib/i18n'
 
 const SW = Dimensions.get('window').width
 const SH = Dimensions.get('window').height
@@ -698,6 +699,7 @@ interface HealthHistoryData {
 
 export function KidsHome() {
   const { colors, radius, isDark, font, stickers } = useTheme()
+  const { t } = useTranslation()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
@@ -999,8 +1001,8 @@ export function KidsHome() {
     const today = toDateStr(new Date())
     if (date > today) {
       Alert.alert(
-        'Future date',
-        'You can mark a vaccine as given only on or after the appointment day. If it happened today, update the date first.',
+        t('kids_home_vaccine_future_date_title'),
+        t('kids_home_vaccine_future_date_msg'),
       )
       return
     }
@@ -1501,10 +1503,10 @@ export function KidsHome() {
     const hasVitamins = rangeLogs.some((l) => l.type === 'medicine' && (l.value || '').toString().toLowerCase().includes('vitamin'))
     const hasVaccine = rangeLogs.some((l) => l.type === 'vaccine')
     const hasWeight = rangeLogs.some((l) => l.type === 'growth')
-    healthTasks.push({ label: 'Vitamins', done: hasVitamins })
+    healthTasks.push({ label: t('kids_home_health_task_vitamins'), done: hasVitamins })
     if (c.medications.length > 0) healthTasks.push({ label: c.medications[0], done: rangeLogs.some((l) => l.type === 'medicine' && l.date === today) })
-    healthTasks.push({ label: 'Vaccine check', done: hasVaccine })
-    healthTasks.push({ label: 'Growth log', done: hasWeight })
+    healthTasks.push({ label: t('kids_home_health_task_vaccine_check'), done: hasVaccine })
+    healthTasks.push({ label: t('kids_home_health_task_growth_log'), done: hasWeight })
 
     // ── Memories ──
     const photoLogs = rangeLogs.filter((l) => l.photos && l.photos.length > 0).slice(0, 6)
@@ -1592,9 +1594,9 @@ export function KidsHome() {
         <EmptyState
           icon={<HeartSticker size={36} fill={stickers.pink} />}
           iconBg={stickers.pinkSoft}
-          title="Welcome to grandma.app"
-          message="Add your first child to start tracking sleep, mood, growth, and more."
-          ctaLabel="Add a child"
+          title={t('kids_home_empty_state_title')}
+          message={t('kids_home_empty_state_msg')}
+          ctaLabel={t('kids_home_empty_state_cta')}
           onCtaPress={() => router.push('/onboarding/child-profile' as any)}
         />
       </View>
@@ -1708,7 +1710,7 @@ export function KidsHome() {
         <Pressable style={s.modalOverlay} onPress={() => setOverflowKidsVisible(false)}>
           <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
             <View style={s.modalHeader}>
-              <Text style={[s.modalTitle, { color: colors.text }]}>All Kids</Text>
+              <Text style={[s.modalTitle, { color: colors.text }]}>{t('kids_home_all_kids_title')}</Text>
               <Pressable onPress={() => setOverflowKidsVisible(false)} style={[s.modalClose, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
                 <X size={18} color={colors.textMuted} strokeWidth={2} />
               </Pressable>
@@ -1780,7 +1782,11 @@ export function KidsHome() {
               <Text style={[s.dateRangeText, { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : colors.textMuted }]}>
                 {opt.key === 'custom' && customRange
                   ? `${fmtShortDate(customRange.start)}–${fmtShortDate(customRange.end)}`
-                  : opt.label}
+                  : opt.key === 'today' ? t('common_today')
+                  : opt.key === 'yesterday' ? t('common_yesterday')
+                  : opt.key === '7days' ? t('kids_home_range_7days')
+                  : opt.key === '30days' ? t('kids_home_range_30days')
+                  : t('kids_home_range_custom')}
               </Text>
             </Pressable>
           )
@@ -1820,7 +1826,7 @@ export function KidsHome() {
 
             {/* Header */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ color: colors.text, fontSize: 24, letterSpacing: -0.5, fontFamily: font.display }}>Custom Range</Text>
+              <Text style={{ color: colors.text, fontSize: 24, letterSpacing: -0.5, fontFamily: font.display }}>{t('kids_home_custom_range_title')}</Text>
               <Pressable
                 onPress={() => setCustomPickerVisible(false)}
                 style={({ pressed }) => ({
@@ -1864,7 +1870,7 @@ export function KidsHome() {
                     })}
                   >
                     <Text style={{ fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1.5, color: ST_INK, textTransform: 'uppercase' }}>
-                      Start
+                      {t('kids_home_range_start')}
                     </Text>
                     <Text style={{ fontSize: 18, fontFamily: font.display, color: ST_INK, letterSpacing: -0.3 }}>
                       {fmtShortDate(customDraft.start)}
@@ -1892,7 +1898,7 @@ export function KidsHome() {
                     })}
                   >
                     <Text style={{ fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1.5, color: ST_INK, textTransform: 'uppercase' }}>
-                      End
+                      {t('kids_home_range_end')}
                     </Text>
                     <Text style={{ fontSize: 18, fontFamily: font.display, color: ST_INK, letterSpacing: -0.3 }}>
                       {fmtShortDate(customDraft.end)}
@@ -1943,7 +1949,7 @@ export function KidsHome() {
                 transform: [{ translateY: pressed ? 3 : 0 }],
               })}
             >
-              <Text style={{ color: '#141313', fontFamily: font.bodyBold, fontSize: 16, letterSpacing: 1, textTransform: 'uppercase' }}>Apply Range</Text>
+              <Text style={{ color: '#141313', fontFamily: font.bodyBold, fontSize: 16, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_home_range_apply')}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -2016,9 +2022,9 @@ export function KidsHome() {
         >
           <StarSticker size={20} fill="#F5D652" stroke="#141313" />
         </View>
-        <Text style={[s.setGoalsBtnText, { color: colors.text, fontFamily: font.displayBold }]}>Set Goals</Text>
+        <Text style={[s.setGoalsBtnText, { color: colors.text, fontFamily: font.displayBold }]}>{t('kids_home_set_goals_btn')}</Text>
         <Text style={[s.setGoalsBtnHint, { color: isDark ? colors.textMuted : 'rgba(20,19,19,0.55)', fontFamily: font.bodyMedium }]}>
-          Customize daily targets
+          {t('kids_home_set_goals_hint')}
         </Text>
         <View
           style={{
@@ -2038,7 +2044,7 @@ export function KidsHome() {
           <View style={{ transform: [{ rotate: '-8deg' }] }}>
             <HeartSticker size={28} fill="#EE7B6D" />
           </View>
-          <Text style={[s.sectionTitle, { color: colors.text }]}>Health & Care</Text>
+          <Text style={[s.sectionTitle, { color: colors.text }]}>{t('kids_home_section_health_care')}</Text>
         </View>
       </View>
 
@@ -2064,7 +2070,7 @@ export function KidsHome() {
           <View style={{ transform: [{ rotate: '10deg' }] }}>
             <FlowerSticker size={28} petal="#C8B6E8" center="#F5D652" />
           </View>
-          <Text style={[s.sectionTitle, { color: colors.text }]}>Reminders</Text>
+          <Text style={[s.sectionTitle, { color: colors.text }]}>{t('kids_home_section_reminders')}</Text>
           {reminders.length > 0 ? (
             <View style={{
               paddingHorizontal: 8,
@@ -2085,7 +2091,7 @@ export function KidsHome() {
               style={[s.addReminderBtn, { backgroundColor: 'rgba(20,19,19,0.05)', borderRadius: radius.full }]}
               hitSlop={6}
             >
-              <Text style={[s.addReminderBtnText, { color: colors.textSecondary }]}>View all</Text>
+              <Text style={[s.addReminderBtnText, { color: colors.textSecondary }]}>{t('kids_home_reminders_view_all')}</Text>
             </Pressable>
           ) : null}
           <Pressable
@@ -2093,7 +2099,7 @@ export function KidsHome() {
             style={[s.addReminderBtn, { backgroundColor: brand.kids + '15', borderRadius: radius.full }]}
           >
             <Plus size={13} color={brand.kids} strokeWidth={2.5} />
-            <Text style={[s.addReminderBtnText, { color: brand.kids }]}>Add</Text>
+            <Text style={[s.addReminderBtnText, { color: brand.kids }]}>{t('kids_home_reminders_add_btn')}</Text>
           </Pressable>
         </View>
       </View>
@@ -2119,7 +2125,7 @@ export function KidsHome() {
             <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: stickers.yellow, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
               <Bell size={13} color="#141313" strokeWidth={2.5} />
             </View>
-            <Text style={{ fontSize: 16, fontFamily: font.display, color: colors.text, letterSpacing: -0.3 }}>Add reminder</Text>
+            <Text style={{ fontSize: 16, fontFamily: font.display, color: colors.text, letterSpacing: -0.3 }}>{t('kids_home_reminder_add_header')}</Text>
           </View>
 
           {/* Text input */}
@@ -2133,7 +2139,7 @@ export function KidsHome() {
               paddingHorizontal: 14,
               paddingVertical: 11,
             }]}
-            placeholder="e.g. Give vitamin D drops, call pediatrician..."
+            placeholder={t('kids_home_reminder_placeholder')}
             placeholderTextColor={colors.textMuted}
             value={newReminderText}
             onChangeText={setNewReminderText}
@@ -2165,7 +2171,7 @@ export function KidsHome() {
               }]}>
                 {newReminderDate
                   ? newReminderDate.toLocaleDateString('en', { month: 'short', day: 'numeric' })
-                  : 'Set date'}
+                  : t('kids_home_reminder_set_date')}
               </Text>
               {newReminderDate && (
                 <Pressable onPress={() => { setNewReminderDate(null); setNewReminderTime(null); setShowDatePicker(false); setShowTimePicker(false) }} hitSlop={8}>
@@ -2192,7 +2198,7 @@ export function KidsHome() {
                 <Text style={{ fontSize: 11, fontFamily: font.bodySemiBold, color: newReminderTime ? '#C06030' : colors.textSecondary }}>
                   {newReminderTime
                     ? formatTime12h(`${String(newReminderTime.getHours()).padStart(2, '0')}:${String(newReminderTime.getMinutes()).padStart(2, '0')}`)
-                    : 'Set time'}
+                    : t('kids_home_reminder_set_time')}
                 </Text>
                 {newReminderTime && (
                   <Pressable onPress={() => { setNewReminderTime(null); setShowTimePicker(false) }} hitSlop={8}>
@@ -2207,7 +2213,7 @@ export function KidsHome() {
 
             {/* Save button */}
             <Pressable onPress={addReminder} style={[s.reminderSaveBtn, { backgroundColor: brand.kids, borderRadius: radius.full, borderWidth: 1.5, borderColor: isDark ? brand.kids : '#141313' }]}>
-              <Text style={[s.reminderSaveBtnText, { fontFamily: font.bodyBold }]}>Save</Text>
+              <Text style={[s.reminderSaveBtnText, { fontFamily: font.bodyBold }]}>{t('common_save')}</Text>
             </Pressable>
           </View>
 
@@ -2222,7 +2228,7 @@ export function KidsHome() {
                   borderRadius: radius.full,
                 }]}
               >
-                <Text style={[s.childTagChipText, { color: newReminderChildId === null ? brand.kids : colors.textSecondary, fontFamily: font.bodySemiBold }]}>All kids</Text>
+                <Text style={[s.childTagChipText, { color: newReminderChildId === null ? brand.kids : colors.textSecondary, fontFamily: font.bodySemiBold }]}>{t('kids_home_reminder_child_all')}</Text>
               </Pressable>
               {children.map((c) => (
                 <Pressable
@@ -2255,7 +2261,7 @@ export function KidsHome() {
                 <View style={{ transform: [{ rotate: '-10deg' }] }}>
                   <StarSticker size={18} fill={stickers.blue} stroke="#141313" />
                 </View>
-                <Text style={{ fontFamily: font.display, fontSize: 14, color: colors.text, letterSpacing: -0.2 }}>Pick a date</Text>
+                <Text style={{ fontFamily: font.display, fontSize: 14, color: colors.text, letterSpacing: -0.2 }}>{t('kids_home_picker_pick_date')}</Text>
               </View>
               <DateTimePicker
                 value={newReminderDate ?? new Date()}
@@ -2280,7 +2286,7 @@ export function KidsHome() {
                     borderTopColor: colors.border,
                   }}
                 >
-                  <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: brand.kids }}>Done — confirm date</Text>
+                  <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: brand.kids }}>{t('kids_home_picker_confirm_date')}</Text>
                 </Pressable>
               )}
             </View>
@@ -2302,11 +2308,11 @@ export function KidsHome() {
                   <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: stickers.peach, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
                     <Bell size={10} color="#141313" strokeWidth={2.5} />
                   </View>
-                  <Text style={{ fontFamily: font.display, fontSize: 14, color: colors.text, letterSpacing: -0.2 }}>Set a time</Text>
+                  <Text style={{ fontFamily: font.display, fontSize: 14, color: colors.text, letterSpacing: -0.2 }}>{t('kids_home_picker_set_time_header')}</Text>
                 </View>
                 {newReminderTime && (
                   <Pressable onPress={() => { setNewReminderTime(null) }} hitSlop={8}>
-                    <Text style={{ fontFamily: font.bodySemiBold, fontSize: 11, color: colors.textMuted }}>Clear</Text>
+                    <Text style={{ fontFamily: font.bodySemiBold, fontSize: 11, color: colors.textMuted }}>{t('kids_home_picker_clear_time')}</Text>
                   </Pressable>
                 )}
               </View>
@@ -2333,7 +2339,7 @@ export function KidsHome() {
                     borderTopColor: colors.border,
                   }}
                 >
-                  <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: '#C06030' }}>Done — confirm time</Text>
+                  <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: '#C06030' }}>{t('kids_home_picker_confirm_time')}</Text>
                 </Pressable>
               )}
             </View>
@@ -2351,8 +2357,8 @@ export function KidsHome() {
             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(245,214,82,0.24)', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
               <Bell size={20} color="#EE7B6D" strokeWidth={2} />
             </View>
-            <Text style={[s.remindersEmptyText, { color: colors.text, fontFamily: font.display }]}>No reminders yet</Text>
-            <Text style={[s.remindersEmptyHint, { color: colors.textMuted }]}>Add notes, tasks or things to remember</Text>
+            <Text style={[s.remindersEmptyText, { color: colors.text, fontFamily: font.display }]}>{t('kids_home_reminders_empty_title')}</Text>
+            <Text style={[s.remindersEmptyHint, { color: colors.textMuted }]}>{t('kids_home_reminders_empty_hint')}</Text>
           </View>
         )
         return (
@@ -2410,9 +2416,9 @@ export function KidsHome() {
           <SparkleSticker size={26} fill="#F5D652" stroke="#141313" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={s.grandmaTitle}>Grandma knows best</Text>
+          <Text style={s.grandmaTitle}>{t('kids_home_grandma_cta_title')}</Text>
           <Text style={s.grandmaDesc}>
-            Sleep, feeding, milestones <Text style={s.grandmaDescItalic}>& more</Text>
+            {t('kids_home_grandma_cta_desc1')} <Text style={s.grandmaDescItalic}>{t('kids_home_grandma_cta_desc2')}</Text>
           </Text>
         </View>
         <View style={s.grandmaArrow}>
@@ -2429,9 +2435,9 @@ export function KidsHome() {
           <StarSticker size={26} fill="#F5D652" stroke="#141313" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={s.rewardsTitle}>Your Rewards</Text>
+          <Text style={s.rewardsTitle}>{t('kids_home_rewards_title')}</Text>
           <Text style={s.rewardsDesc}>
-            Points, streaks <Text style={s.rewardsDescItalic}>& badges</Text>
+            {t('kids_home_rewards_desc1')} <Text style={s.rewardsDescItalic}>{t('kids_home_rewards_desc2')}</Text>
           </Text>
         </View>
         <View style={s.rewardsStats}>
@@ -2561,16 +2567,16 @@ export function KidsHome() {
       )}
 
       {/* ─── Log Sheets (open from empty hero tiles) ─────────────────── */}
-      <LogSheet visible={logSheetType === 'sleep'} title="Log Sleep" onClose={() => setLogSheetType(null)}>
+      <LogSheet visible={logSheetType === 'sleep'} title={t('kids_home_log_sleep_title')} onClose={() => setLogSheetType(null)}>
         <SleepForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
       </LogSheet>
-      <LogSheet visible={logSheetType === 'mood'} title="Log Mood" onClose={() => setLogSheetType(null)}>
+      <LogSheet visible={logSheetType === 'mood'} title={t('kids_home_log_mood_title')} onClose={() => setLogSheetType(null)}>
         <KidsMoodForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
       </LogSheet>
-      <LogSheet visible={logSheetType === 'feeding'} title="Log Feeding" onClose={() => setLogSheetType(null)}>
+      <LogSheet visible={logSheetType === 'feeding'} title={t('kids_home_log_feeding_title')} onClose={() => setLogSheetType(null)}>
         <FeedingForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
       </LogSheet>
-      <LogSheet visible={logSheetType === 'activity'} title="Log Activity" onClose={() => setLogSheetType(null)}>
+      <LogSheet visible={logSheetType === 'activity'} title={t('kids_home_log_activity_title')} onClose={() => setLogSheetType(null)}>
         <ActivityForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
       </LogSheet>
     </View>
@@ -2629,6 +2635,7 @@ function HeroTiles({
   onLogActivity?: () => void
 }) {
   const { colors, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const ink = colors.text
   const ink3 = isDark ? colors.textSecondary : '#6E6763'
   const lineColor = isDark ? colors.borderStrong : 'rgba(20,19,19,0.08)'
@@ -2646,7 +2653,7 @@ function HeroTiles({
   const activityValueLabel = activityCount > 0 ? `${activityCount}` : '—'
   const activitySub = activityCount > 0
     ? (activityRangeDays > 0 ? `${activityActiveDays}/${activityRangeDays} active days` : `${activityActiveDays} active days`)
-    : 'Log an activity'
+    : t('kids_home_tile_activity_empty_sub')
   const activityMeta = activityCount > 0
     ? `${activityTypesCount} type${activityTypesCount !== 1 ? 's' : ''}${activityTopLabel ? ` · Top: ${activityTopLabel}` : ''}`
     : ''
@@ -2655,7 +2662,7 @@ function HeroTiles({
   const sleepHours = Math.floor(sleepTotal)
   const sleepMins = Math.round((sleepTotal - sleepHours) * 60)
   const sleepLabel = sleepTotal > 0 ? `${sleepHours}h ${String(sleepMins).padStart(2, '0')}` : '—'
-  const sleepSub = sleepTarget > 0 ? `of ${Math.round(sleepTarget)}h target` : 'No goal set'
+  const sleepSub = sleepTarget > 0 ? `of ${Math.round(sleepTarget)}h target` : t('kids_home_tile_no_goal')
 
   // Mood — each bar reflects its count, colored by mood, dominant bar highlighted
   const moodKeys = ['happy', 'calm', 'energetic', 'fussy', 'cranky'] as const
@@ -2693,7 +2700,7 @@ function HeroTiles({
             { backgroundColor: blueSoft, borderColor: lineColor, flex: 1.3, opacity: pressed ? 0.92 : 1 },
           ]}
         >
-          <Text style={[tileStyles.metaLabel, { color: ink3 }]}>LAST SLEEP</Text>
+          <Text style={[tileStyles.metaLabel, { color: ink3 }]}>{t('kids_home_tile_last_sleep')}</Text>
           <View style={tileStyles.bodyRow}>
             <View style={[tileStyles.iconCircle, { backgroundColor: paper, borderColor: lineColor }]}>
               <MoonSticker size={32} fill="#9DC3E8" stroke={ink} />
@@ -2708,7 +2715,7 @@ function HeroTiles({
                   ) : null}
                 </Text>
               ) : (
-                <Text style={[tileStyles.emptyHero, { color: ink }]}>Tap to log</Text>
+                <Text style={[tileStyles.emptyHero, { color: ink }]}>{t('kids_home_tile_tap_to_log')}</Text>
               )}
               <Text style={[tileStyles.subText, { color: ink3 }]}>{sleepSub}</Text>
             </View>
@@ -2722,7 +2729,7 @@ function HeroTiles({
             { backgroundColor: yellowSoft, borderColor: lineColor, flex: 1, padding: 14, opacity: pressed ? 0.92 : 1 },
           ]}
         >
-          <Text style={[tileStyles.metaLabel, { color: isDark ? colors.text : '#3A3533' }]}>MOOD</Text>
+          <Text style={[tileStyles.metaLabel, { color: isDark ? colors.text : '#3A3533' }]}>{t('kids_home_tile_mood')}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
             {hasMoods && dominantMood ? (
               <MoodFace size={28} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} />
@@ -2736,7 +2743,7 @@ function HeroTiles({
               ]}
               numberOfLines={1}
             >
-              {hasMoods ? moodDisplay : 'How are they?'}
+              {hasMoods ? moodDisplay : t('kids_home_tile_mood_empty')}
             </Text>
           </View>
           {/* Mood bars — colored by each mood; dominant is full opacity */}
@@ -2761,7 +2768,7 @@ function HeroTiles({
             })}
           </View>
           <Text style={[tileStyles.metaSub, { color: ink3 }]}>
-            {hasMoods ? `${totalMoodLogs} log${totalMoodLogs !== 1 ? 's' : ''}` : 'Tap to log'}
+            {hasMoods ? `${totalMoodLogs} log${totalMoodLogs !== 1 ? 's' : ''}` : t('kids_home_tile_tap_to_log')}
           </Text>
         </Pressable>
       </View>
@@ -2777,7 +2784,7 @@ function HeroTiles({
         >
           <View style={tileStyles.headerRow}>
             <Text style={[tileStyles.metaLabel, { color: ink3 }]}>
-              {isLiquid ? 'FEEDINGS' : 'CALORIES'}
+              {isLiquid ? t('kids_home_tile_feedings') : t('kids_home_tile_calories')}
             </Text>
             <View style={[tileStyles.miniSticker, { backgroundColor: paper, borderColor: lineColor }]}>
               <HeartSticker size={18} fill="#EE7B6D" stroke={ink} />
@@ -2791,7 +2798,7 @@ function HeroTiles({
               )}
             </Text>
           ) : (
-            <Text style={[tileStyles.emptyHero, { color: ink, marginTop: 8 }]}>Tap to log</Text>
+            <Text style={[tileStyles.emptyHero, { color: ink, marginTop: 8 }]}>{t('kids_home_tile_tap_to_log')}</Text>
           )}
           <Text style={[tileStyles.subText, { color: ink3 }]}>{calSub}</Text>
           {/* Progress bar */}
@@ -2807,7 +2814,7 @@ function HeroTiles({
             { backgroundColor: greenSoft, borderColor: lineColor, flex: 1.2, opacity: pressed ? 0.92 : 1 },
           ]}
         >
-          <Text style={[tileStyles.metaLabel, { color: ink3 }]}>ACTIVITIES</Text>
+          <Text style={[tileStyles.metaLabel, { color: ink3 }]}>{t('kids_home_tile_activities')}</Text>
           <View style={tileStyles.bodyRow}>
             <ActivityPctRing pct={activityEngagement} size={56} color="#8BB356" trackColor="rgba(139,179,86,0.20)" />
             <View style={{ flex: 1 }}>
@@ -2817,7 +2824,7 @@ function HeroTiles({
                   <Text style={[tileStyles.heroUnit, { color: ink }]}>logs</Text>
                 </Text>
               ) : (
-                <Text style={[tileStyles.emptyHero, { color: ink }]}>Tap to log</Text>
+                <Text style={[tileStyles.emptyHero, { color: ink }]}>{t('kids_home_tile_tap_to_log')}</Text>
               )}
               <Text style={[tileStyles.subText, { color: ink3 }]} numberOfLines={1}>
                 {activitySub}
@@ -3144,6 +3151,7 @@ function MiniRing({ label, progress, color, isToday, hasData }: {
 
 function MoodCard({ moodCounts, dominantMood }: { moodCounts: Record<string, number>; dominantMood: string }) {
   const { colors, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const moods = ['happy', 'calm', 'energetic', 'fussy', 'cranky']
   const maxCount = Math.max(...Object.values(moodCounts), 1)
   const hasMoods = Object.values(moodCounts).some((v) => v > 0)
@@ -3177,16 +3185,16 @@ function MoodCard({ moodCounts, dominantMood }: { moodCounts: Record<string, num
               )
             })}
           </View>
-          <Text style={[s.metricValue, { color: ink }]}>Mostly {dominantLabel}</Text>
-          <Text style={[s.metricSmall, { color: ink3 }]}>Tap for details</Text>
+          <Text style={[s.metricValue, { color: ink }]}>{t('kids_home_mood_mostly', { label: dominantLabel })}</Text>
+          <Text style={[s.metricSmall, { color: ink3 }]}>{t('kids_home_mood_tap_details')}</Text>
         </>
       ) : (
         <>
           <View style={s.metricEmpty}>
             <MoodFace size={28} variant="okay" fill="#F5EDDC" />
           </View>
-          <Text style={[s.metricValue, { color: ink }]}>No moods yet</Text>
-          <Text style={[s.metricSmall, { color: ink3 }]}>Log a mood</Text>
+          <Text style={[s.metricValue, { color: ink }]}>{t('kids_home_mood_empty_title')}</Text>
+          <Text style={[s.metricSmall, { color: ink3 }]}>{t('kids_home_mood_empty_hint')}</Text>
         </>
       )}
     </View>
@@ -3202,6 +3210,7 @@ function NutritionCard({ stage, caloriesTotal, caloriesTarget, feedingCount, fee
   feedingBreast: number; feedingBottle: number; avgMl: number; meals: number
 }) {
   const { colors, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const ringSize = 60
   const ringR = 24
   const ringCircumference = 2 * Math.PI * ringR
@@ -3244,10 +3253,10 @@ function NutritionCard({ stage, caloriesTotal, caloriesTarget, feedingCount, fee
       {isLiquid ? (
         <>
           <Text style={[s.metricValue, { color: coral }]}>
-            {feedingCount > 0 ? `${feedingBreast} breast · ${feedingBottle} bottle` : 'No feeds yet'}
+            {feedingCount > 0 ? `${feedingBreast} breast · ${feedingBottle} bottle` : t('kids_home_nutrition_no_feeds')}
           </Text>
           <Text style={[s.metricSmall, { color: ink3 }]}>
-            {feedingMl > 0 ? `${feedingMl}ml total · ${avgMl}ml avg` : 'Tap for details'}
+            {feedingMl > 0 ? `${feedingMl}ml total · ${avgMl}ml avg` : t('kids_home_nutrition_tap_breakdown')}
           </Text>
         </>
       ) : (
@@ -3258,7 +3267,7 @@ function NutritionCard({ stage, caloriesTotal, caloriesTarget, feedingCount, fee
               : `${meals} meals`}
           </Text>
           <Text style={[s.metricSmall, { color: ink3 }]}>
-            {feedingCount > 0 ? `+ ${feedingCount} bottles (${feedingMl}ml)` : 'Tap for breakdown'}
+            {feedingCount > 0 ? `+ ${feedingCount} bottles (${feedingMl}ml)` : t('kids_home_nutrition_tap_breakdown')}
           </Text>
         </>
       )}
@@ -3274,6 +3283,7 @@ function HealthCard({ reminders, healthHistory, child }: {
   child: ChildWithRole
 }) {
   const { colors, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const activeReminders = reminders.filter(r => !r.done).length
   const lastVaccine = healthHistory.vaccines[0]
   const { weight, height } = parseGrowthValue(healthHistory.growth)
@@ -3300,7 +3310,7 @@ function HealthCard({ reminders, healthHistory, child }: {
       ? (isDark ? '#3A2E00' : '#FFFAE0')
       : (isDark ? '#1A2810' : '#EEF7E4')
   const statusColor = overdueCount > 0 ? brand.error : upcomingCount > 0 ? (isDark ? '#F5D652' : '#6B5800') : (isDark ? '#BDD48C' : '#3A6020')
-  const statusLabel = overdueCount > 0 ? `${overdueCount} overdue` : upcomingCount > 0 ? `${upcomingCount} due soon` : 'Up to date'
+  const statusLabel = overdueCount > 0 ? `${overdueCount} overdue` : upcomingCount > 0 ? `${upcomingCount} due soon` : t('kids_home_vaccine_up_to_date')
 
   return (
     <View style={[s.hcCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
@@ -3314,7 +3324,7 @@ function HealthCard({ reminders, healthHistory, child }: {
         {nextVaccine ? (
           <>
             <Text style={[s.hcEyebrow, { color: ink3 }]}>
-              {overdueCount > 0 ? 'Overdue vaccine' : 'Next vaccine'}
+              {overdueCount > 0 ? t('kids_home_vaccine_overdue') : t('kids_home_vaccine_next')}
             </Text>
             <Text style={[s.hcPrimary, { color: ink }]} numberOfLines={1}>
               {nextVaccine.name}{nextVaccine.doseLabel ? ` · ${nextVaccine.doseLabel}` : ''}
@@ -3325,13 +3335,13 @@ function HealthCard({ reminders, healthHistory, child }: {
           </>
         ) : lastVaccine ? (
           <>
-            <Text style={[s.hcEyebrow, { color: ink3 }]}>Last vaccine</Text>
+            <Text style={[s.hcEyebrow, { color: ink3 }]}>{t('kids_home_vaccine_last')}</Text>
             <Text style={[s.hcPrimary, { color: ink }]} numberOfLines={1}>
               {lastVaccine.value.split(/[,(]/)[0].trim()}
             </Text>
           </>
         ) : (
-          <Text style={[s.hcPrimary, { color: ink3 }]}>No vaccines logged yet</Text>
+          <Text style={[s.hcPrimary, { color: ink3 }]}>{t('kids_home_vaccine_none_logged')}</Text>
         )}
 
         <View style={s.hcDetailRow}>
@@ -3373,6 +3383,7 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
   startDate: string; endDate: string
 }) {
   const { colors, radius, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const total = pee + poop + mixed
   const peeW  = total > 0 ? (pee  / total) * 100 : 0
   const poopW = total > 0 ? (poop / total) * 100 : 0
@@ -3417,7 +3428,7 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
           }}>
             <Baby size={11} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={2.5} />
           </View>
-          <Text style={[s.diaperCardTitle, { color: ink3 }]}>DIAPERS</Text>
+          <Text style={[s.diaperCardTitle, { color: ink3 }]}>{t('kids_home_card_diapers')}</Text>
         </View>
         <ChevronRight size={14} color={ink3} strokeWidth={2} />
       </View>
@@ -3427,9 +3438,9 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
         <Text style={[s.diaperBigCount, { color: ink }]}>{count}</Text>
         <View style={s.diaperChips}>
           {[
-            { label: 'Pee', count: pee, color: DIAPER_COLORS.pee, emoji: '💧' },
-            { label: 'Poop', count: poop, color: DIAPER_COLORS.poop, emoji: '💩' },
-            { label: 'Mixed', count: mixed, color: DIAPER_COLORS.mixed, emoji: '🔄' },
+            { label: t('kids_home_diaper_pee'), count: pee, color: DIAPER_COLORS.pee, emoji: '💧' },
+            { label: t('kids_home_diaper_poop'), count: poop, color: DIAPER_COLORS.poop, emoji: '💩' },
+            { label: t('kids_home_diaper_mixed'), count: mixed, color: DIAPER_COLORS.mixed, emoji: '🔄' },
           ].map(({ label, count: c, color, emoji }) => {
             const ChipSticker = stickerForEmoji(emoji)
             return (
@@ -3516,6 +3527,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
   childName?: string; childColor?: string
 }) {
   const { colors, radius, font } = useTheme()
+  const { t } = useTranslation()
   const total = pee + poop + mixed
 
   // Build date buckets (same logic as MoodDetailModal)
@@ -3564,7 +3576,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
   })
   const bucketMax = Math.max(...buckets.map((b) => b.total), 1)
 
-  const rangeLabel = dateRange === 'today' ? 'Today' : dateRange === 'yesterday' ? 'Yesterday' : dateRange === '7days' ? 'Past 7 Days' : dateRange === '30days' ? 'Past 30 Days' : `${startDate} – ${endDate}`
+  const rangeLabel = dateRange === 'today' ? t('common_today') : dateRange === 'yesterday' ? t('common_yesterday') : dateRange === '7days' ? t('kids_home_range_past_7days') : dateRange === '30days' ? t('kids_home_range_past_30days') : `${startDate} – ${endDate}`
   const avgPerDay = (() => {
     const start = new Date(startDate + 'T00:00:00')
     const end   = new Date(endDate   + 'T00:00:00')
@@ -3583,7 +3595,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
           {/* Header */}
           <View style={s.modalHeader}>
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={[s.modalTitle, { color: colors.text }]}>Diaper Tracker</Text>
+              <Text style={[s.modalTitle, { color: colors.text }]}>{t('kids_home_diaper_tracker_title')}</Text>
               {childName && childColor && (
                 <View style={{ backgroundColor: childColor + '25', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: childColor + '60' }}>
                   <Text style={{ fontSize: 11, fontWeight: '600', color: childColor }}>{childName}</Text>
@@ -3601,9 +3613,9 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
           {/* Type sticker cards — pastel fill, ink border, icon-in-circle on top */}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
             {[
-              { label: 'Pee', count: pee, fill: StickerPalette.blueSoft, accent: StickerPalette.blue, Icon: Droplets, rotation: -3 },
-              { label: 'Poop', count: poop, fill: StickerPalette.peachSoft, accent: StickerPalette.peach, Icon: BurstSticker as any, rotation: 2, isSticker: true, stickerFill: StickerPalette.peach },
-              { label: 'Mixed', count: mixed, fill: StickerPalette.yellowSoft, accent: StickerPalette.yellow, Icon: Sparkles, rotation: -2 },
+              { label: t('kids_home_diaper_pee'), count: pee, fill: StickerPalette.blueSoft, accent: StickerPalette.blue, Icon: Droplets, rotation: -3 },
+              { label: t('kids_home_diaper_poop'), count: poop, fill: StickerPalette.peachSoft, accent: StickerPalette.peach, Icon: BurstSticker as any, rotation: 2, isSticker: true, stickerFill: StickerPalette.peach },
+              { label: t('kids_home_diaper_mixed'), count: mixed, fill: StickerPalette.yellowSoft, accent: StickerPalette.yellow, Icon: Sparkles, rotation: -2 },
             ].map(({ label, count: c, fill, accent, Icon, rotation, isSticker, stickerFill }) => (
               <View
                 key={label}
@@ -3673,7 +3685,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
 
           {/* Daily / weekly stacked bar chart — sticker bars */}
           <View style={{ marginTop: 22 }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: font.bodyBold, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>Trend</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: font.bodyBold, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>{t('kids_home_diaper_trend_label')}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 4 }}>
               {buckets.map((b, i) => {
                 const h = b.total > 0 ? Math.max((b.total / bucketMax) * BAR_H, 8) : 6
@@ -3720,7 +3732,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
           {colorEntries.length > 0 && (
             <View style={{ marginTop: 22 }}>
               <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: font.bodyBold, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                Stool Color {poopTotal > 0 ? `· ${poopTotal} logged` : ''}
+                {t('kids_home_diaper_stool_color')} {poopTotal > 0 ? `· ${poopTotal} logged` : ''}
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {colorEntries.map(([color, cnt]) => {
@@ -3770,6 +3782,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
   childName?: string; childColor?: string
 }) {
   const { colors, radius, font } = useTheme()
+  const { t } = useTranslation()
   const moods = ['happy', 'calm', 'energetic', 'fussy', 'cranky']
   const totalMoods = Object.values(moodCounts).reduce((a, b) => a + b, 0)
 
@@ -3779,7 +3792,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           <View style={s.modalHeader}>
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 0 }}>
-              <Text style={[s.modalTitle, { color: colors.text }]} numberOfLines={1}>Mood Trends</Text>
+              <Text style={[s.modalTitle, { color: colors.text }]} numberOfLines={1}>{t('kids_home_mood_trends_title')}</Text>
               {childName && childColor && (
                 <View style={{ backgroundColor: childColor + '25', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: childColor + '60', flexShrink: 1 }}>
                   <Text style={{ fontSize: 11, fontWeight: '600', color: childColor }} numberOfLines={1}>{childName}</Text>
@@ -3791,7 +3804,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
             </Pressable>
           </View>
           <Text style={[s.modalSubtitle, { color: colors.textMuted }]}>
-            {dateRange === 'today' ? 'Today' : dateRange === 'yesterday' ? 'Yesterday' : dateRange === '7days' ? 'Past 7 Days' : dateRange === '30days' ? 'Past 30 Days' : `${startDate} – ${endDate}`} — {totalMoods} mood{totalMoods !== 1 ? 's' : ''} logged
+            {dateRange === 'today' ? t('common_today') : dateRange === 'yesterday' ? t('common_yesterday') : dateRange === '7days' ? t('kids_home_range_past_7days') : dateRange === '30days' ? t('kids_home_range_past_30days') : `${startDate} – ${endDate}`} — {totalMoods} mood{totalMoods !== 1 ? 's' : ''} logged
           </Text>
 
           {totalMoods > 0 ? (
@@ -3844,8 +3857,8 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
           ) : (
             <View style={s.modalEmpty}>
               <MoodFace size={44} variant="okay" fill="#F5EDDC" />
-              <Text style={[s.modalEmptyText, { color: colors.textSecondary }]}>No moods logged yet</Text>
-              <Text style={[s.modalEmptyHint, { color: colors.textMuted }]}>Log moods to see trends over time</Text>
+              <Text style={[s.modalEmptyText, { color: colors.textSecondary }]}>{t('kids_home_mood_modal_empty_title')}</Text>
+              <Text style={[s.modalEmptyHint, { color: colors.textMuted }]}>{t('kids_home_mood_modal_empty_hint')}</Text>
             </View>
           )}
         </View>
@@ -3961,6 +3974,7 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
   colors: ReturnType<typeof useTheme>['colors']
   radius: ReturnType<typeof useTheme>['radius']
 }) {
+  const { t } = useTranslation()
   const entries = Object.entries(breakdown)
     .filter(([, count]) => count > 0)
     .sort(([, a], [, b]) => b - a)
@@ -3970,13 +3984,13 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', paddingHorizontal: 20 }} onPress={onClose}>
         <Pressable onPress={(e) => e.stopPropagation()} style={{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 20, gap: 12 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ color: colors.text, fontSize: 17, fontWeight: '800', letterSpacing: -0.3 }}>Activity Breakdown</Text>
+            <Text style={{ color: colors.text, fontSize: 17, fontWeight: '800', letterSpacing: -0.3 }}>{t('kids_home_activity_breakdown_title')}</Text>
             <Pressable onPress={onClose} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' }}>
               <X size={14} color={colors.textMuted} strokeWidth={2.5} />
             </Pressable>
           </View>
           {entries.length === 0 ? (
-            <Text style={{ color: colors.textMuted, fontSize: 14 }}>No activities logged in this period</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 14 }}>{t('kids_home_activity_empty')}</Text>
           ) : entries.map(([type, count]) => {
             const meta = ACTIVITY_TYPE_META[type] ?? { label: type, color: colors.primary }
             const pct = total > 0 ? Math.round((count / total) * 100) : 0
@@ -3995,7 +4009,7 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
             )
           })}
           <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4 }}>
-            {total.toLocaleString()} total logged actions
+            {total.toLocaleString()} {t('kids_home_activity_total_suffix')}
           </Text>
         </Pressable>
       </Pressable>
@@ -4010,6 +4024,7 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
   accent: string
 }) {
   const { colors, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const ink = colors.text
   const ink3 = colors.textMuted
   const paper = colors.surface
@@ -4063,7 +4078,7 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
               <>
                 <View>
                   <Text style={{ color: ink3, fontSize: 11, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 }}>
-                    What it protects against
+                    {t('kids_home_vaccine_info_protects')}
                   </Text>
                   <Text style={{ color: ink, fontSize: 15, fontFamily: font.bodyMedium, lineHeight: 22 }}>
                     {info.protects}
@@ -4071,7 +4086,7 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
                 </View>
                 <View>
                   <Text style={{ color: ink3, fontSize: 11, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 }}>
-                    Why it matters
+                    {t('kids_home_vaccine_info_why')}
                   </Text>
                   <Text style={{ color: ink, fontSize: 14, fontFamily: font.body, lineHeight: 22 }}>
                     {info.why}
@@ -4080,7 +4095,7 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
                 {info.sideEffects && (
                   <View style={{ backgroundColor: paper, borderWidth: 1, borderColor: paperBorder, borderRadius: 18, padding: 14, gap: 4 }}>
                     <Text style={{ color: ink3, fontSize: 11, fontFamily: font.bodySemiBold, textTransform: 'uppercase', letterSpacing: 1.4 }}>
-                      Common side effects
+                      {t('kids_home_vaccine_info_side_effects')}
                     </Text>
                     <Text style={{ color: ink, fontSize: 13, fontFamily: font.body, lineHeight: 20 }}>
                       {info.sideEffects}
@@ -4088,7 +4103,7 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
                   </View>
                 )}
                 <Text style={{ color: ink3, fontSize: 11, fontFamily: font.body, fontStyle: 'italic', textAlign: 'center', marginTop: 8 }}>
-                  Always check with your pediatrician for advice tailored to your child.
+                  {t('kids_home_vaccine_info_disclaimer')}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11, marginTop: 12, textAlign: 'center', lineHeight: 16 }}>
                   {MEDICAL_DISCLAIMER}
@@ -4099,7 +4114,7 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
               </>
             ) : (
               <Text style={{ color: ink3, fontSize: 14, fontFamily: font.body, lineHeight: 22 }}>
-                We don't have detailed info for this vaccine yet. Please ask your pediatrician about its purpose and timing.
+                {t('kids_home_vaccine_no_info')}
               </Text>
             )}
           </ScrollView>
@@ -5694,6 +5709,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
   childName?: string; childColor?: string
 }) {
   const { colors, radius, font } = useTheme()
+  const { t } = useTranslation()
   const [expandedType, setExpandedType] = useState<string | null>(null)
 
   // Reset expansion when the modal closes AND whenever the displayed child
@@ -5791,9 +5807,9 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
             {/* 3-tile analytics — sticker cards */}
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 8 }}>
               {[
-                { Icon: Clock, value: `${activeDays}${rangeDays > 0 ? `/${rangeDays}` : ''}`, label: 'Active Days', fill: StickerPalette.greenSoft, accent: StickerPalette.green, tilt: -2 },
-                { Icon: TrendingUp, value: topMeta ? topMeta.label.split(' ')[0] : '—', label: 'Top', fill: StickerPalette.yellowSoft, accent: StickerPalette.yellow, tilt: 2 },
-                { Icon: Sparkles, value: String(distinctTypes), label: 'Types', fill: StickerPalette.lilacSoft, accent: StickerPalette.lilac, tilt: -1.5 },
+                { Icon: Clock, value: `${activeDays}${rangeDays > 0 ? `/${rangeDays}` : ''}`, label: t('kids_home_activities_modal_active_days'), fill: StickerPalette.greenSoft, accent: StickerPalette.green, tilt: -2 },
+                { Icon: TrendingUp, value: topMeta ? topMeta.label.split(' ')[0] : '—', label: t('kids_home_activities_modal_top'), fill: StickerPalette.yellowSoft, accent: StickerPalette.yellow, tilt: 2 },
+                { Icon: Sparkles, value: String(distinctTypes), label: t('kids_home_activities_modal_types'), fill: StickerPalette.lilacSoft, accent: StickerPalette.lilac, tilt: -1.5 },
               ].map((card, i) => (
                 <View
                   key={i}
@@ -5832,7 +5848,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
             {/* Ranking */}
             {ranked.length > 0 ? (
               <>
-                <Text style={[s.modalSectionTitle, { color: colors.text }]}>Activity Ranking</Text>
+                <Text style={[s.modalSectionTitle, { color: colors.text }]}>{t('kids_home_activities_modal_ranking')}</Text>
                 {ranked.map(([type, count]) => {
                   const meta = ACTIVITY_TYPE_META[type] ?? { label: type, color: PILLAR_COLORS.activity }
                   const typePct = activityCount > 0 ? Math.round((count / activityCount) * 100) : 0
@@ -5864,7 +5880,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
                         <View style={{ marginTop: 10, marginLeft: 18, gap: 8, borderLeftWidth: 1, borderLeftColor: meta.color + '40', paddingLeft: 12 }}>
                           {typeEntries.length === 0 ? (
                             <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium }}>
-                              No entries in this range
+                              {t('kids_home_activities_modal_no_entries')}
                             </Text>
                           ) : typeEntries.map((entry) => {
                             const timeLabel = formatEntryTime(entry.startTime, entry.endTime)
@@ -5896,7 +5912,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
             ) : (
               <View style={{ marginTop: 24, padding: 20, alignItems: 'center' }}>
                 <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: font.bodyMedium, textAlign: 'center' }}>
-                  No activities logged in this period
+                  {t('kids_home_activities_modal_no_entries')}
                 </Text>
               </View>
             )}
@@ -5915,6 +5931,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
   onSaved: () => void
 }) {
   const { colors, radius, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const store = useGoalsStore()
   const current = store.getGoals(childId, birthDate)
   const suggested = getSuggestedGoals(birthDate)
@@ -5963,7 +5980,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
       // Surface the failure instead of silently closing the modal — otherwise
       // the user sees a "saved" UX while local + remote state diverge.
       Alert.alert(
-        'Goals not saved',
+        t('kids_home_goals_not_saved_title'),
         err?.message ?? 'Could not save goals to the server. They are saved on this device and will retry next sync.',
       )
       return
@@ -6064,7 +6081,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
           {/* Header */}
           <View style={s.gsHeader}>
             <View style={{ flex: 1 }}>
-              <Text style={[s.gsTitle, { color: colors.text }]}>Set Goals</Text>
+              <Text style={[s.gsTitle, { color: colors.text }]}>{t('kids_home_goals_set_title')}</Text>
               <Text style={[s.gsSubtitle, { color: colors.textMuted }]}>
                 Daily targets for {childName} ({ageLabel}) · scale with your date range
               </Text>
@@ -6078,7 +6095,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
           <View style={[s.gsAgeBanner, { backgroundColor: StickerPalette.blueSoft, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK }]}>
             <Sparkles size={12} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
             <Text style={[s.gsAgeBannerText, { color: DIAPER_STICKER_INK }]}>
-              Suggested for age {ageLabel} · CDC / WHO guidelines
+              {t('kids_home_goals_suggested_banner', { ageLabel })}
             </Text>
           </View>
 
@@ -6167,7 +6184,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
               ]}
             >
               <Sparkles size={13} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
-              <Text style={[s.gsUseSuggestedText, { color: DIAPER_STICKER_INK }]}>Use Suggested</Text>
+              <Text style={[s.gsUseSuggestedText, { color: DIAPER_STICKER_INK }]}>{t('kids_home_goals_use_suggested')}</Text>
             </Pressable>
             <Pressable
               onPress={handleSave}
@@ -6185,7 +6202,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
                 },
               ]}
             >
-              <Text style={[s.gsSaveBtnText, { color: DIAPER_STICKER_INK }]}>Save Goals</Text>
+              <Text style={[s.gsSaveBtnText, { color: DIAPER_STICKER_INK }]}>{t('kids_home_goals_save')}</Text>
             </Pressable>
           </View>
         </View>
@@ -6203,6 +6220,7 @@ function ReminderRow({
   onFlag?: () => void; allChildren?: ChildWithRole[]; isDragging?: boolean; dragHandleProps?: object
 }) {
   const { isDark, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const due = r.dueDate ? new Date(r.dueDate + 'T00:00:00') : null
   const diffDays = due ? Math.round((due.getTime() - today.getTime()) / 86400000) : null
@@ -6289,7 +6307,7 @@ function ReminderRow({
         onPress={onToggle}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: r.done }}
-        accessibilityLabel={r.done ? 'Mark as not done' : 'Mark as done'}
+        accessibilityLabel={r.done ? t('kids_home_reminder_mark_not_done') : t('kids_home_reminder_mark_done')}
         hitSlop={6}
         style={{
           width: 32, height: 32, borderRadius: 10,

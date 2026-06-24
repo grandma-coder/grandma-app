@@ -112,6 +112,7 @@ import {
   Flower as StickerFlower,
 } from '../ui/Stickers'
 import { BrandedLoader } from '../ui/BrandedLoader'
+import { useTranslation } from '../../lib/i18n'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -524,6 +525,7 @@ function buildGrandmaContext(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function KidsAnalytics() {
+  const { t } = useTranslation()
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
@@ -692,16 +694,16 @@ export function KidsAnalytics() {
 
         {isLoading && (
           <View style={styles.loadingWrap}>
-            <BrandedLoader logoSize={72} motion="blinkOnly" label="Loading analytics…" />
+            <BrandedLoader logoSize={72} motion="blinkOnly" label={t('kids_analytics_loading')} />
           </View>
         )}
 
         {error && !isLoading && (
           <Pressable onPress={() => refetch()} style={[styles.errorCard, { backgroundColor: brand.error + '15', borderRadius: radius.xl }]}>
-            <Text style={[styles.errorText, { color: brand.error }]}>Failed to load data</Text>
+            <Text style={[styles.errorText, { color: brand.error }]}>{t('kids_analytics_error_load')}</Text>
             <View style={styles.row}>
               <RefreshCw size={14} color={brand.error} />
-              <Text style={[styles.errorRetry, { color: brand.error }]}>Tap to retry</Text>
+              <Text style={[styles.errorRetry, { color: brand.error }]}>{t('kids_analytics_tap_retry')}</Text>
             </View>
           </Pressable>
         )}
@@ -729,7 +731,7 @@ export function KidsAnalytics() {
               return (
                 <View style={styles.pillarSection}>
                   <Text style={[styles.pillarSectionTitle, { color: colors.text }]}>
-                    THRIVING BREAKDOWN
+                    {t('kids_analytics_thriving_breakdown')}
                   </Text>
                   {PILLAR_ORDER.map((key) => (
                     <PillarRow
@@ -750,9 +752,9 @@ export function KidsAnalytics() {
         {analytics && analytics.totalLogs === 0 && !isLoading && (
           <View style={[styles.emptyAll, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
             <FileQuestion size={32} color={colors.textMuted} />
-            <Text style={[styles.emptyAllTitle, { color: colors.text }]}>No data yet</Text>
+            <Text style={[styles.emptyAllTitle, { color: colors.text }]}>{t('kids_analytics_no_data_title')}</Text>
             <Text style={[styles.emptyAllSub, { color: colors.textMuted }]}>
-              Start logging meals, sleep, mood, and activities from the Calendar tab.
+              {t('kids_analytics_no_data_hint')}
             </Text>
           </View>
         )}
@@ -761,40 +763,40 @@ export function KidsAnalytics() {
       {/* ── Full-screen chart modals ── */}
       {analytics && (
         <>
-          <FullScreenChart visible={fullScreen === 'eat_quality'} title="Weekly Eat Quality" onClose={() => setFullScreen(null)}>
+          <FullScreenChart visible={fullScreen === 'eat_quality'} title={t('kids_analytics_chart_eat_quality')} onClose={() => setFullScreen(null)}>
             <StackedBarChart good={analytics.nutrition.eatQuality.good} little={analytics.nutrition.eatQuality.little} none={analytics.nutrition.eatQuality.none} labels={analytics.nutrition.weekLabels} width={SCREEN_W - 48} height={220} />
           </FullScreenChart>
-          <FullScreenChart visible={fullScreen === 'meal_freq'} title="Meals per Day" onClose={() => setFullScreen(null)}>
+          <FullScreenChart visible={fullScreen === 'meal_freq'} title={t('kids_analytics_chart_meals_per_day')} onClose={() => setFullScreen(null)}>
             <BarChart data={analytics.nutrition.mealFrequency} labels={analytics.nutrition.weekLabels} color={PILLAR_CONFIG.nutrition.color} width={SCREEN_W - 48} height={220} />
           </FullScreenChart>
-          <FullScreenChart visible={fullScreen === 'top_foods'} title="Most Logged Foods" onClose={() => setFullScreen(null)}>
+          <FullScreenChart visible={fullScreen === 'top_foods'} title={t('kids_analytics_chart_top_foods')} onClose={() => setFullScreen(null)}>
             <BubbleGrid items={analytics.nutrition.topFoods.map((f, i) => ({
               label: f.label, value: f.count,
               color: [PILLAR_CONFIG.nutrition.color, PILLAR_CONFIG.health.color, PILLAR_CONFIG.mood.color, PILLAR_CONFIG.sleep.color, PILLAR_CONFIG.growth.color, PILLAR_CONFIG.activity.color][i % 6],
             }))} />
           </FullScreenChart>
-          <FullScreenChart visible={fullScreen === 'sleep_weekly'} title="Daily Sleep Hours" onClose={() => setFullScreen(null)}>
+          <FullScreenChart visible={fullScreen === 'sleep_weekly'} title={t('kids_analytics_chart_sleep_daily')} onClose={() => setFullScreen(null)}>
             <BarChart data={analytics.sleep.dailyHours} labels={analytics.sleep.weekLabels} color={PILLAR_CONFIG.sleep.color} width={SCREEN_W - 48} height={220} />
           </FullScreenChart>
-          <FullScreenChart visible={fullScreen === 'sleep_quality'} title="Sleep Quality" onClose={() => setFullScreen(null)}>
+          <FullScreenChart visible={fullScreen === 'sleep_quality'} title={t('kids_analytics_chart_sleep_quality')} onClose={() => setFullScreen(null)}>
             <SleepQualityChart counts={analytics.sleep.qualityCounts} />
           </FullScreenChart>
-          <FullScreenChart visible={fullScreen === 'mood_dist'} title="Mood Distribution" onClose={() => setFullScreen(null)}>
+          <FullScreenChart visible={fullScreen === 'mood_dist'} title={t('kids_analytics_chart_mood_dist')} onClose={() => setFullScreen(null)}>
             <MoodDistribution moods={analytics.mood.dominantMoods} />
           </FullScreenChart>
-          <FullScreenChart visible={fullScreen === 'mood_daily'} title="Daily Mood Tracking" onClose={() => setFullScreen(null)}>
+          <FullScreenChart visible={fullScreen === 'mood_daily'} title={t('kids_analytics_chart_mood_daily')} onClose={() => setFullScreen(null)}>
             <MoodDailyChart dailyCounts={analytics.mood.dailyCounts} labels={analytics.mood.weekLabels} width={SCREEN_W - 48} />
           </FullScreenChart>
-          <FullScreenChart visible={fullScreen === 'health_freq'} title="Health Events" onClose={() => setFullScreen(null)}>
+          <FullScreenChart visible={fullScreen === 'health_freq'} title={t('kids_analytics_chart_health_events')} onClose={() => setFullScreen(null)}>
             <BarChart data={analytics.health.weeklyFrequency} labels={analytics.health.weekLabels} color={PILLAR_CONFIG.health.color} width={SCREEN_W - 48} height={220} />
           </FullScreenChart>
           {analytics.growth.weights.length >= 2 && (
-            <FullScreenChart visible={fullScreen === 'weight'} title="Weight (kg)" onClose={() => setFullScreen(null)}>
+            <FullScreenChart visible={fullScreen === 'weight'} title={t('kids_analytics_chart_weight')} onClose={() => setFullScreen(null)}>
               <LineChart data={analytics.growth.weights.map((w) => w.value)} labels={analytics.growth.weights.map((w) => { const d = new Date(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })} color={PILLAR_CONFIG.health.color} width={SCREEN_W - 48} height={220} unit="kg" showAverage />
             </FullScreenChart>
           )}
           {analytics.growth.heights.length >= 2 && (
-            <FullScreenChart visible={fullScreen === 'height'} title="Height (cm)" onClose={() => setFullScreen(null)}>
+            <FullScreenChart visible={fullScreen === 'height'} title={t('kids_analytics_chart_height')} onClose={() => setFullScreen(null)}>
               <LineChart data={analytics.growth.heights.map((h) => h.value)} labels={analytics.growth.heights.map((h) => { const d = new Date(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })} color={PILLAR_CONFIG.growth.color} width={SCREEN_W - 48} height={220} unit="cm" showAverage />
             </FullScreenChart>
           )}
@@ -850,6 +852,7 @@ function ScoreInfoModal({
   childName: string
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius, stickers } = useTheme()
   const insets = useSafeAreaInsets()
 
@@ -880,7 +883,7 @@ function ScoreInfoModal({
       <View style={styles.modalOverlay}>
         <View style={[styles.modalSheet, { backgroundColor: colors.surface, borderRadius: radius.xl, paddingBottom: insets.bottom + 24 }]}>
           <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Thriving Score Guide</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('kids_analytics_score_guide_title')}</Text>
             <Pressable onPress={onClose} hitSlop={8} style={[styles.modalClose, { backgroundColor: colors.surfaceRaised }]}>
               <X size={18} color={colors.textMuted} />
             </Pressable>
@@ -897,13 +900,13 @@ function ScoreInfoModal({
                   {scores.overall.toFixed(1)}
                 </Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.scoreHighlightLabel, { color: colors.text }]}>{childName}'s thriving score</Text>
-                  <Text style={[styles.scoreHighlightSub, { color: colors.textSecondary }]}>Weighted average of 5 pillars</Text>
+                  <Text style={[styles.scoreHighlightLabel, { color: colors.text }]}>{t('kids_analytics_score_child_label', { childName })}</Text>
+                  <Text style={[styles.scoreHighlightSub, { color: colors.textSecondary }]}>{t('kids_analytics_score_weighted_avg')}</Text>
                 </View>
               </View>
             )}
 
-            <Text style={[styles.infoSectionLabel, { color: colors.textSecondary }]}>SCORE SCALE</Text>
+            <Text style={[styles.infoSectionLabel, { color: colors.textSecondary }]}>{t('kids_analytics_score_scale_label')}</Text>
             <View style={{ gap: 8, marginBottom: 20 }}>
               {SCORE_BANDS.map((b) => (
                 <View key={b.label} style={styles.bandRow}>
@@ -914,7 +917,7 @@ function ScoreInfoModal({
               ))}
             </View>
 
-            <Text style={[styles.infoSectionLabel, { color: colors.textSecondary }]}>HOW EACH PILLAR IS SCORED</Text>
+            <Text style={[styles.infoSectionLabel, { color: colors.textSecondary }]}>{t('kids_analytics_pillar_scoring_label')}</Text>
             <View style={{ gap: 10, marginBottom: 20 }}>
               {PILLAR_ORDER.map((key) => {
                 const config = PILLAR_CONFIG[key]
@@ -973,6 +976,7 @@ function TipDetailModal({
   ageMonths: number
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const Icon = tip.icon
@@ -1021,7 +1025,7 @@ function TipDetailModal({
             ]}
           >
             <Sparkles size={16} color={colors.primary} strokeWidth={2} />
-            <Text style={[styles.tipAskBtnText, { color: colors.primary }]}>Ask Grandma about this</Text>
+            <Text style={[styles.tipAskBtnText, { color: colors.primary }]}>{t('kids_analytics_ask_grandma_tip')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -1040,6 +1044,7 @@ function KidsWellnessRingCard({
   scores: WellnessScores
   onPillarPress: (key: PillarKey) => void
 }) {
+  const { t } = useTranslation()
   const { stickers } = useTheme()
 
   // Map pillars → ring segments (clockwise from top). The `id` routes taps
@@ -1056,12 +1061,12 @@ function KidsWellnessRingCard({
   const hasAnyData = PILLAR_ORDER.some((k) => scores[k].hasData)
   const rawOverall = hasAnyData ? scores.overall : 0
   const overall = Number.isFinite(rawOverall) ? rawOverall : 0
-  const caption = overall >= 8.5 ? 'thriving' : overall >= 7 ? 'on track' : overall >= 5 ? 'developing' : 'needs care'
+  const caption = overall >= 8.5 ? t('kids_analytics_caption_thriving') : overall >= 7 ? t('kids_analytics_caption_on_track') : overall >= 5 ? t('kids_analytics_caption_developing') : t('kids_analytics_caption_needs_care')
 
   return (
     <View style={{ gap: 12 }}>
       <BigChartCard
-        label="CHILD WELLNESS"
+        label={t('kids_analytics_child_wellness_label')}
         blobColor={stickers.pinkSoft}
         labelAlign="center"
       >
@@ -1090,6 +1095,7 @@ function WellnessScoreArc({
   onInfoPress: () => void
   childId: string
 }) {
+  const { t } = useTranslation()
   const { colors, radius } = useTheme()
   const [activePillar, setActivePillar] = useState<PillarKey | null>(null)
 
@@ -1196,7 +1202,7 @@ function WellnessScoreArc({
     }
     return score.hasData
       ? explanations[key]
-      : 'No data logged yet — start logging to see progress'
+      : t('kids_analytics_pillar_no_data_hint')
   }
 
   return (
@@ -1319,7 +1325,7 @@ function WellnessScoreArc({
                 {hasAnyData ? overall.toFixed(1) : '—'}
               </Text>
               <Text style={{ fontSize: 10, fontWeight: '600', fontFamily: font.bodySemiBold, color: colors.textSecondary, marginTop: 2 }}>
-                thriving
+                {t('kids_analytics_caption_thriving')}
               </Text>
             </>
           )}
@@ -1351,7 +1357,7 @@ function WellnessScoreArc({
               {' — '}
               {scores[activePillar].hasData
                 ? `${scores[activePillar].value.toFixed(1)}/10`
-                : 'No data'}
+                : t('kids_analytics_no_data_short')}
             </Text>
           </View>
           <Text style={[styles.arcTooltipBody, { color: colors.textSecondary }]}>
@@ -1363,7 +1369,7 @@ function WellnessScoreArc({
       <Pressable onPress={onInfoPress} style={styles.arcInfoHint} hitSlop={12}>
         <Info size={12} color={colors.textMuted} strokeWidth={2} />
         <Text style={[styles.arcInfoText, { color: colors.textMuted }]}>
-          Tap ℹ for score guide
+          {t('kids_analytics_tap_info_hint')}
         </Text>
       </Pressable>
     </View>
@@ -1523,6 +1529,7 @@ function GrandmaInsightCard({
   childName: string
   ageMonths: number
 }) {
+  const { t } = useTranslation()
   const { colors, stickers, font } = useTheme()
   const [detailOpen, setDetailOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -1566,7 +1573,7 @@ function GrandmaInsightCard({
                 { color: colors.textMuted, fontFamily: font.bodySemiBold },
               ]}
             >
-              GRANDMA SAYS
+              {t('kids_analytics_grandma_says_label')}
             </Text>
           </Animated.View>
           <Text
@@ -1614,7 +1621,7 @@ function GrandmaInsightCard({
                 { color: colors.bg, fontFamily: font.bodyMedium },
               ]}
             >
-              Let's discuss →
+              {t('kids_analytics_discuss_btn')}
             </Text>
           </Pressable>
         </Animated.View>
@@ -1653,6 +1660,7 @@ function GrandmaInsightDetailSheet({
   onClose: () => void
   onDiscuss: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius, stickers, font } = useTheme()
   const insets = useSafeAreaInsets()
 
@@ -1694,7 +1702,7 @@ function GrandmaInsightDetailSheet({
                   { color: colors.textSecondary, fontFamily: font.body },
                 ]}
               >
-                Overall {highlights.overallScore.toFixed(1)}/10 this week
+                {t('kids_analytics_insight_overall_week', { score: highlights.overallScore.toFixed(1) })}
               </Text>
             </View>
             <Pressable
@@ -1709,7 +1717,7 @@ function GrandmaInsightDetailSheet({
           {highlights.strength && (
             <HighlightRow
               icon={<StickerBurst size={28} fill={stickers.yellow} points={8} />}
-              label="STRENGTH"
+              label={t('kids_analytics_insight_strength_label')}
               labelColor={colors.textMuted}
               title={PILLAR_CONFIG[highlights.strength.pillar].label}
               titleColor={PILLAR_CONFIG[highlights.strength.pillar].color}
@@ -1724,7 +1732,7 @@ function GrandmaInsightDetailSheet({
           {highlights.concern && (
             <HighlightRow
               icon={<StickerHeart size={28} fill={stickers.pink} />}
-              label="AREA TO WORK ON"
+              label={t('kids_analytics_insight_concern_label')}
               labelColor={colors.textMuted}
               title={PILLAR_CONFIG[highlights.concern.pillar].label}
               titleColor={PILLAR_CONFIG[highlights.concern.pillar].color}
@@ -1743,7 +1751,7 @@ function GrandmaInsightDetailSheet({
                   ? <ArrowUpRight size={24} color={colors.success} strokeWidth={2.2} />
                   : <ArrowDownRight size={24} color={colors.error} strokeWidth={2.2} />
               }
-              label="TREND"
+              label={t('kids_analytics_insight_trend_label')}
               labelColor={colors.textMuted}
               title={`${PILLAR_CONFIG[highlights.trend.pillar].label} ${highlights.trend.direction}`}
               titleColor={highlights.trend.direction === 'improving' ? colors.success : colors.error}
@@ -1763,7 +1771,7 @@ function GrandmaInsightDetailSheet({
                   { color: colors.textMuted, fontFamily: font.bodySemiBold },
                 ]}
               >
-                SUGGESTED NEXT STEPS
+                {t('kids_analytics_insight_next_steps_label')}
               </Text>
               {highlights.actions.map((a, i) => (
                 <View
@@ -1790,7 +1798,7 @@ function GrandmaInsightDetailSheet({
           {!highlights.strength && !highlights.concern && !highlights.trend && (
             <View style={[styles.insightEmpty, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
               <Text style={[styles.insightEmptyText, { color: colors.textSecondary, fontFamily: font.body }]}>
-                Keep logging — more detailed highlights appear once there's enough data in this range.
+                {t('kids_analytics_insight_no_highlights')}
               </Text>
             </View>
           )}
@@ -1805,7 +1813,7 @@ function GrandmaInsightDetailSheet({
           >
             <Sparkles size={16} color={colors.bg} strokeWidth={2} />
             <Text style={[styles.insightDetailCtaText, { color: colors.bg, fontFamily: font.bodySemiBold }]}>
-              Let's discuss →
+              {t('kids_analytics_discuss_btn')}
             </Text>
           </Pressable>
         </Pressable>
@@ -1855,6 +1863,7 @@ function DiscussConfirmSheet({
   onClose: () => void
   onConfirm: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius, stickers, font } = useTheme()
   const insets = useSafeAreaInsets()
 
@@ -1873,7 +1882,7 @@ function DiscussConfirmSheet({
           </View>
 
           <Text style={[styles.confirmTitle, { color: colors.text, fontFamily: font.display }]}>
-            Share with Grandma?
+            {t('kids_analytics_confirm_share_title')}
           </Text>
           <Text style={[styles.confirmBody, { color: colors.textSecondary, fontFamily: font.body }]}>
             We'll send {childName}'s wellness metrics to Grandma so she can walk through them with you.
@@ -1889,7 +1898,7 @@ function DiscussConfirmSheet({
           >
             <Sparkles size={16} color={colors.bg} strokeWidth={2} />
             <Text style={[styles.confirmPrimaryText, { color: colors.bg, fontFamily: font.bodySemiBold }]}>
-              Yes, share & chat
+              {t('kids_analytics_confirm_share_yes')}
             </Text>
           </Pressable>
 
@@ -1902,7 +1911,7 @@ function DiscussConfirmSheet({
             ]}
           >
             <Text style={[styles.confirmSecondaryText, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
-              Not now
+              {t('kids_analytics_confirm_share_no')}
             </Text>
           </Pressable>
         </Pressable>
@@ -1925,6 +1934,7 @@ function HealthTipsSection({
   ageMonths: number
   onTipPress: (tip: TipData) => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius } = useTheme()
 
   function handleAskGrandma() {
@@ -1935,7 +1945,7 @@ function HealthTipsSection({
   return (
     <View style={styles.tipsSection}>
       <View style={styles.tipsSectionHeader}>
-        <Text style={[styles.tipsSectionTitle, { color: colors.text }]}>HEALTH TIPS</Text>
+        <Text style={[styles.tipsSectionTitle, { color: colors.text }]}>{t('kids_analytics_health_tips_label')}</Text>
         <Text style={[styles.tipsSectionSub, { color: colors.textMuted }]}>Personalized for {childName} today</Text>
       </View>
 
@@ -1961,7 +1971,7 @@ function HealthTipsSection({
               <Text style={[styles.tipBody, { color: colors.textSecondary }]} numberOfLines={2}>{tip.body}</Text>
               <View style={styles.tipTapHint}>
                 <ChevronRight size={10} color={tip.color} strokeWidth={2.5} />
-                <Text style={[styles.tipTapText, { color: tip.color }]}>Tap for details</Text>
+                <Text style={[styles.tipTapText, { color: tip.color }]}>{t('kids_analytics_tip_tap_details')}</Text>
               </View>
             </Pressable>
           )
@@ -1977,7 +1987,7 @@ function HealthTipsSection({
         ]}
       >
         <Sparkles size={16} color={colors.primary} strokeWidth={2} />
-        <Text style={[styles.askButtonText, { color: colors.text }]}>Ask Grandma with full context</Text>
+        <Text style={[styles.askButtonText, { color: colors.text }]}>{t('kids_analytics_ask_grandma_full_ctx')}</Text>
       </Pressable>
     </View>
   )
@@ -1988,6 +1998,7 @@ function HealthTipsSection({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
+  const { t } = useTranslation()
   const { colors, stickers, font } = useTheme()
   const [showModal, setShowModal] = useState(false)
   const adherenceRate = 100 - data.skipRate
@@ -2029,7 +2040,7 @@ function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
                   { color: colors.text, fontFamily: font.display },
                 ]}
               >
-                Routine Compliance
+                {t('kids_analytics_routine_compliance_title')}
               </Text>
             </View>
 
@@ -2086,7 +2097,7 @@ function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
               { color: adherenceColor, fontFamily: font.bodySemiBold },
             ]}
           >
-            Tap for details
+            {t('kids_analytics_tip_tap_details')}
           </Text>
           <ChevronRight size={14} color={adherenceColor} strokeWidth={2.5} />
         </View>
@@ -2114,6 +2125,7 @@ function RoutineComplianceModal({
   tint: string
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, stickers, font } = useTheme()
   const insets = useSafeAreaInsets()
   const sheetH = SCREEN_H * 0.78
@@ -2167,7 +2179,7 @@ function RoutineComplianceModal({
                     { color: colors.text, fontFamily: font.display },
                   ]}
                 >
-                  Routine Compliance
+                  {t('kids_analytics_routine_compliance_title')}
                 </Text>
                 <Text
                   style={{
@@ -2224,7 +2236,7 @@ function RoutineComplianceModal({
                   { color: colors.textMuted, fontFamily: font.body },
                 ]}
               >
-                adherence
+                {t('kids_analytics_routine_adherence')}
               </Text>
             </View>
             <View style={styles.routineStatCell}>
@@ -2242,7 +2254,7 @@ function RoutineComplianceModal({
                   { color: colors.textMuted, fontFamily: font.body },
                 ]}
               >
-                total skips
+                {t('kids_analytics_routine_total_skips')}
               </Text>
             </View>
           </View>
@@ -2255,7 +2267,7 @@ function RoutineComplianceModal({
                   { color: colors.textMuted, fontFamily: font.bodySemiBold },
                 ]}
               >
-                SKIPS PER DAY
+                {t('kids_analytics_routine_skips_per_day')}
               </Text>
               <View style={styles.routineBarsRow}>
                 {data.weeklySkips.map((count, i) => {
@@ -2296,7 +2308,7 @@ function RoutineComplianceModal({
                   { color: colors.textMuted, fontFamily: font.bodySemiBold },
                 ]}
               >
-                MOST SKIPPED
+                {t('kids_analytics_routine_most_skipped')}
               </Text>
               <View style={{ gap: 10 }}>
                 {data.mostSkipped.map((item, i) => (
@@ -2338,7 +2350,7 @@ function RoutineComplianceModal({
                 textAlign: 'center',
               }}
             >
-              No skipped routines this week
+              {t('kids_analytics_routine_no_skips')}
             </Text>
           )}
             </Animated.View>
@@ -2359,6 +2371,7 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
   tip?: TipData
   onPress: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, stickers, font } = useTheme()
   const config = PILLAR_CONFIG[pillarKey]
   const safeValue = Number.isFinite(score.value) ? score.value : 0
@@ -2369,8 +2382,8 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
   const body = tip
     ? tip.body
     : score.hasData
-    ? 'Tap to see details.'
-    : 'No data logged yet.'
+    ? t('kids_analytics_pillar_tap_details')
+    : t('kids_analytics_pillar_no_data')
 
   return (
     <Pressable
@@ -2485,7 +2498,7 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
             { color: palette.bar, fontFamily: font.bodySemiBold },
           ]}
         >
-          Tap for details
+          {t('kids_analytics_tip_tap_details')}
         </Text>
         <ChevronRight size={14} color={palette.bar} strokeWidth={2.5} />
       </View>
@@ -2660,6 +2673,7 @@ function ActivityModal({
   childName: string
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
   const ACTIVITY_COLOR = PILLAR_CONFIG.activity.color
@@ -2705,7 +2719,7 @@ function ActivityModal({
                 <Zap size={20} color={ACTIVITY_COLOR} strokeWidth={2} />
               </View>
               <View>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Activity Guide</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>{t('kids_analytics_activity_guide_title')}</Text>
                 <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500', fontFamily: font.bodyMedium }}>
                   {childName} · recommended split
                 </Text>
