@@ -22,6 +22,10 @@
     },
     "preview": {
       "distribution": "internal",
+      "autoIncrement": true,
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+      },
       "ios": {
         "simulator": false,
         "resourceClass": "m-medium"
@@ -39,6 +43,13 @@
   },
   "submit": {
     "production": {
+      "ios": {
+        "appleId": "hello.igorus@gmail.com",
+        "ascAppId": "6771927342",
+        "appleTeamId": "WC35Q7ALQL"
+      }
+    },
+    "preview": {
       "ios": {
         "appleId": "hello.igorus@gmail.com",
         "ascAppId": "6771927342",
