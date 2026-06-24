@@ -97,3 +97,41 @@ lib/i18n/<code>.ts              — Translated locale files (committed)
 3. Create the language in your Tolgee project.
 4. Run `npm run i18n:sync`.
 5. Wire the new locale into `lib/i18n/index.ts` and `useLanguageStore`.
+
+---
+
+## Lint guard
+
+The ESLint rule `i18next/no-literal-string` prevents hardcoded user-facing strings from being merged undetected.
+
+**How it works:**
+- Rule is wired in `eslint.config.js` via `eslint-plugin-i18next`.
+- Currently scoped to `lib/i18n/**/*.ts` — these files contain only key/value data with no JSX, so the rule passes trivially and proves plugin wiring without blocking the ~1,200 not-yet-migrated strings elsewhere.
+- As each cluster is migrated via `/i18n-extract`, widen the `files` glob in `eslint.config.js` to include the new paths.
+
+**Widen the glob incrementally as migration lands:**
+```js
+// eslint.config.js — files array in the i18next rule block
+files: [
+  'lib/i18n/**/*.ts',
+  'app/(tabs)/settings.tsx',   // example — add each migrated file/cluster
+  'components/ui/**/*.tsx',    // example — add after cluster B wave
+]
+```
+
+**Final target glob (end of migration):**
+```js
+files: [
+  'app/**/*.tsx',
+  'components/**/*.tsx',
+]
+// Paired with ignores for: dev-panel, sticker/SVG/chart asset files
+```
+
+**Run lint before committing migrated files:**
+```bash
+npm run lint          # Full project lint (currently scoped — 0 errors)
+npm run lint:i18n     # Broader i18next rule pass over entire codebase
+```
+
+**Important:** The probe test (`scripts/__lint_probe__.tsx`) confirmed the rule fires on literal JSX text (exit code 1, `disallow literal string` error). Variable names that are entirely uppercase (e.g. `const P`) are excluded by the plugin's `VariableDeclarator` heuristic — use mixed-case component names (e.g. `ProbeComponent`) in test fixtures.
