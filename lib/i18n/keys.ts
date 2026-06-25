@@ -1086,6 +1086,21 @@ export interface TranslationKeys {
   kids_logForm_alertCouldNotDelete: string
   kids_logForm_addPhoto: string
   kids_logForm_alertPickChild: string
+  kids_logForm_alertNoFoodDetected: string
+  kids_logForm_alertGrandmaNoticed: string
+  kids_logForm_alertCouldNotReadPhoto: string
+  kids_logForm_alertAllergyWarning: string
+  kids_logForm_alertAllergyWarnings: string
+  kids_logForm_alertLogAnyway: string
+  kids_logForm_alertPhotosPartialUpload: string
+  kids_logForm_alertPhotosFailedAll: string
+  kids_logForm_alertTakePhoto: string
+  kids_logForm_alertFromLibrary: string
+  kids_logForm_kcalEstimated: string
+  kids_logForm_notFoundInDb: string
+  kids_logForm_alternating: string
+  kids_logForm_switchAlert: string
+  kids_logForm_labelNext: string
   kids_logForm_addRoutine: string
   kids_logForm_newRoutine: string
   kids_logForm_routines: string
@@ -1189,6 +1204,7 @@ export interface TranslationKeys {
   kids_calendar_routineDeleteConfirmTitle: string
   kids_calendar_recurringLabel: string
   kids_calendar_moreKids: string
+  kids_calendar_alertCouldNotRemove: string
 
   // ─── Kids Nanny Notes (Wave B2) ─────────────────────────────────────────
   kids_nannyNotes_topicFood: string

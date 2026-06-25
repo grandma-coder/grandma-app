@@ -206,8 +206,8 @@ function formatTime(isoStr: string): string {
   return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
-function formatDayLabel(dateStr: string, todayStr: string): string {
-  if (dateStr === todayStr) return 'Today'
+function formatDayLabel(dateStr: string, todayStr: string, t: (key: TranslationKey) => string): string {
+  if (dateStr === todayStr) return t('common_today')
   const d = new Date(dateStr + 'T12:00:00')
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
 }
@@ -775,7 +775,7 @@ export function KidsCalendar() {
     if (error) {
       // Don't run the optimistic cleanup below — that would hide an entry the
       // DB still holds, so it reappears on the next fetch (a ghost delete).
-      Alert.alert('Could not delete', error.message)
+      Alert.alert(t('kids_calendar_alertCouldNotDelete'), error.message)
       return
     }
     // If it was a skipped-routine log, unmark so the routine becomes pending again
@@ -825,7 +825,7 @@ export function KidsCalendar() {
       error = { message: e?.message ?? 'Network error. Please try again.' }
     }
     if (error) {
-      Alert.alert('Could not remove', error.message)
+      Alert.alert(t('kids_calendar_alertCouldNotRemove'), error.message)
       setUnlogging(false)
       return
     }
@@ -895,7 +895,7 @@ export function KidsCalendar() {
       setSelectedLog(null)
       fetchLogs()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     } finally {
       setEditSaving(false)
     }
@@ -1219,7 +1219,7 @@ export function KidsCalendar() {
       setRoutineForm({ name: '', type: 'activity', time: '09:00', days: [0,1,2,3,4,5,6] })
       fetchRoutines()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     } finally {
       setRoutineSaving(false)
     }
@@ -1238,7 +1238,7 @@ export function KidsCalendar() {
       if (error) throw error
       await fetchRoutines()
     } catch (e: any) {
-      Alert.alert('Could not delete', e?.message ?? 'Please check your connection and try again.')
+      Alert.alert(t('kids_calendar_alertCouldNotDelete'), e?.message ?? 'Please check your connection and try again.')
     } finally {
       setRoutineDeleting(false)
       setConfirmDeleteRoutineId(null)
@@ -1511,7 +1511,7 @@ export function KidsCalendar() {
   function renderTimelineCards() {
     const selLogs = selectedDayLogs.filter((l) => l.type !== 'skipped')
     const selPending = pendingRoutines
-    const dayLabel = formatDayLabel(selectedDate, todayStr)
+    const dayLabel = formatDayLabel(selectedDate, todayStr, t)
     const summary = [
       selPending.length > 0 && `${selPending.length} pending`,
       selLogs.length > 0 && `${selLogs.length} logged`,
@@ -1718,7 +1718,7 @@ export function KidsCalendar() {
               key={`l-${log.id}`}
               icon={logSticker(log.type, 28, isDark)}
               title={logTitle(log)}
-              subtitle={`${formatDayLabel(log.date, todayStr)} · ${formatLogDisplay(log.type, log.value, log.notes) || 'Logged'}`}
+              subtitle={`${formatDayLabel(log.date, todayStr, t)} · ${formatLogDisplay(log.type, log.value, log.notes) || 'Logged'}`}
               tint="health"
               chip={childName ? { label: childName, color: childColor(ci) } : undefined}
               onPress={() => { setSelectedLog(log); setEditing(false) }}
@@ -2898,7 +2898,7 @@ export function KidsCalendar() {
                 <View style={[styles.popupRow, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
                   <Clock size={16} color={colors.textMuted} />
                   <Text style={[styles.popupRowText, { color: colors.text }]}>
-                    {formatDayLabel(selectedLog.date, todayStr)} at {activityTimeDisplay(selectedLog)}
+                    {formatDayLabel(selectedLog.date, todayStr, t)} at {activityTimeDisplay(selectedLog)}
                   </Text>
                 </View>
 
@@ -3468,7 +3468,7 @@ export function KidsCalendar() {
                 {t('kids_calendar_congrats_title')}
               </Text>
               <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', textAlign: 'center', marginBottom: 6 }}>
-                {formatDayLabel(selectedDate, todayStr)}'s activities are all logged ✓
+                {formatDayLabel(selectedDate, todayStr, t)}'s activities are all logged ✓
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 28 }}>
                 {selectedChildId === 'all'

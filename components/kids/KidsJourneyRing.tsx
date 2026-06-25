@@ -305,7 +305,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
                   <Animated.View style={counterRotateStyle}>
                     <Text
                       style={{
-                        fontFamily: 'Fraunces_800ExtraBold',
+                        fontFamily: font.displayExtraBold,
                         fontSize,
                         color: isFuture ? (isDark ? '#FFFEF8' : INK) : isPast ? '#FFFEF8' : '#FFFEF8',
                         letterSpacing: -0.3,

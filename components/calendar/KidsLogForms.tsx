@@ -236,11 +236,11 @@ async function uploadPhotos(childId: string, uris: string[]): Promise<{ urls: st
 
 // ─── Safe camera launcher ─────────────────────────────────────────────────
 
-async function launchCameraSafe(): Promise<string | null> {
+async function launchCameraSafe(t: (key: TranslationKey) => string): Promise<string | null> {
   try {
     const perm = await ImagePicker.requestCameraPermissionsAsync()
     if (!perm.granted) {
-      Alert.alert('Permission needed', 'Camera access is required')
+      Alert.alert(t('kids_logForm_alertPermNeeded'), t('kids_logForm_alertCameraAccess'))
       return null
     }
     const result = await ImagePicker.launchCameraAsync({ quality: 0.7 })
@@ -248,7 +248,7 @@ async function launchCameraSafe(): Promise<string | null> {
       return stabiliseUri(result.assets[0].uri)
     }
   } catch {
-    Alert.alert('Camera unavailable', 'Please use the gallery to pick a photo instead.')
+    Alert.alert(t('kids_logForm_alertCameraUnavail'), t('kids_logForm_alertCameraUnavailMsg'))
   }
   return null
 }
@@ -485,12 +485,12 @@ function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function formatDateLabel(dateStr: string): string {
+function formatDateLabel(dateStr: string, t: (key: TranslationKey) => string): string {
   const today = toDateStr(new Date())
-  if (dateStr === today) return 'Today'
+  if (dateStr === today) return t('common_today')
   const yesterday = new Date()
   yesterday.setDate(yesterday.getDate() - 1)
-  if (dateStr === toDateStr(yesterday)) return 'Yesterday'
+  if (dateStr === toDateStr(yesterday)) return t('common_yesterday')
   const d = new Date(dateStr + 'T12:00:00')
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
@@ -503,6 +503,7 @@ function DateChip({
   onChange: (dateStr: string) => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const [showPicker, setShowPicker] = useState(false)
   const [tempDate, setTempDate] = useState(value)
 
@@ -525,7 +526,7 @@ function DateChip({
       >
         <CalendarDays size={14} color={inkText} strokeWidth={2} />
         <Text style={[styles.dateChipText, { color: inkText }]}>
-          {formatDateLabel(value)}
+          {formatDateLabel(value, t)}
         </Text>
       </Pressable>
       {showPicker && (
@@ -548,7 +549,7 @@ function DateChip({
           />
           {Platform.OS === 'ios' && (
             <Pressable onPress={confirmDate} style={[styles.datePickerDone, { borderColor: (isDark ? colors.border : INK) }]}>
-              <Text style={[styles.datePickerDoneText, { color: colors.primary }]}>Done</Text>
+              <Text style={[styles.datePickerDoneText, { color: colors.primary }]}>{t('common_done')}</Text>
             </Pressable>
           )}
         </View>
@@ -580,6 +581,7 @@ function TimeChip({
   label: string
 }) {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const [showPicker, setShowPicker] = useState(false)
   // Local temp value so iOS spinner doesn't fight with parent state
   const [tempTime, setTempTime] = useState(value)
@@ -633,7 +635,7 @@ function TimeChip({
           />
           {Platform.OS === 'ios' && (
             <Pressable onPress={confirmTime} style={[styles.datePickerDone, { borderColor: (isDark ? colors.border : INK) }]}>
-              <Text style={[styles.datePickerDoneText, { color: colors.primary }]}>Done</Text>
+              <Text style={[styles.datePickerDoneText, { color: colors.primary }]}>{t('common_done')}</Text>
             </Pressable>
           )}
         </View>
@@ -922,12 +924,12 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
         setPhotos((prev) => [...prev, ...stable].slice(0, 4))
       }
     } catch (e: any) {
-      Alert.alert('Error', 'Could not open photo library')
+      Alert.alert(t('kids_logForm_alertError'), t('kids_logForm_alertCouldNotOpenLibrary'))
     }
   }
 
   async function takePhoto() {
-    const uri = await launchCameraSafe()
+    const uri = await launchCameraSafe(t)
     if (uri) setPhotos((prev) => [...prev, uri].slice(0, 4))
   }
 
@@ -972,7 +974,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
     try {
       if (source === 'camera') {
         const perm = await ImagePicker.requestCameraPermissionsAsync()
-        if (!perm.granted) { Alert.alert('Permission needed', 'Camera access is required'); return }
+        if (!perm.granted) { Alert.alert(t('kids_logForm_alertPermNeeded'), t('kids_logForm_alertCameraAccess')); return }
       }
       const launcher = source === 'camera'
         ? ImagePicker.launchCameraAsync
@@ -998,7 +1000,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       })
 
       if (res.foods.length === 0) {
-        Alert.alert('No food detected', res.notes ?? 'Try another angle or closer shot.')
+        Alert.alert(t('kids_logForm_alertNoFoodDetected'), res.notes ?? 'Try another angle or closer shot.')
         return
       }
 
@@ -1012,13 +1014,13 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
           .map(aiItemToTag)
         return [...prev, ...added]
       })
-      if (res.notes) Alert.alert('Grandma noticed', res.notes)
+      if (res.notes) Alert.alert(t('kids_logForm_alertGrandmaNoticed'), res.notes)
     } catch (e: unknown) {
       // Surface the real reason to the console for debugging; show the parent a
       // calm, non-technical message (they can always tap ⚠︎ to enter kcal by hand).
       console.warn('[food-scan] failed:', (e as Error)?.message ?? e)
       Alert.alert(
-        "Couldn't read that photo",
+        t('kids_logForm_alertCouldNotReadPhoto'),
         "Grandma couldn't make out the food this time. Try a closer, brighter shot — or tap a food tag to add the calories yourself.",
       )
     } finally {
@@ -1062,11 +1064,11 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
     if (allergens.length > 0) {
       const confirmed = await new Promise<boolean>((resolve) => {
         Alert.alert(
-          allergens.length === 1 ? 'Allergy warning' : 'Allergy warnings',
+          allergens.length === 1 ? t('kids_logForm_alertAllergyWarning') : t('kids_logForm_alertAllergyWarnings'),
           `This food appears to contain ${allergens.join(', ')}, which is listed as an allergy. Are you sure you want to log it?`,
           [
-            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Log anyway', style: 'destructive', onPress: () => resolve(true) },
+            { text: t('kids_logForm_cancel'), style: 'cancel', onPress: () => resolve(false) },
+            { text: t('kids_logForm_alertLogAnyway'), style: 'destructive', onPress: () => resolve(true) },
           ],
         )
       })
@@ -1078,7 +1080,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       const upload = toUpload.length ? await uploadPhotos(childId, toUpload) : { urls: [], failed: 0 }
       if (upload.failed > 0) {
         Alert.alert(
-          'Some photos didn\'t upload',
+          t('kids_logForm_alertPhotosPartialUpload'),
           `${upload.failed} of ${toUpload.length} photos failed to upload. Saving the rest — you can edit and re-add the missing ones later.`,
         )
       }
@@ -1171,7 +1173,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       }
       onSaved()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('kids_logForm_alertError'), e.message)
     } finally {
       setSaving(false)
     }
@@ -1184,7 +1186,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
           <ChildSelector selected={childId} onSelect={setChildId} />
           <View style={styles.dateTimeRow}>
             <DateChip value={logDate} onChange={setLogDate} />
-            <TimeChip value={startTime} onChange={setStartTime} label="Time" />
+            <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
           </View>
         </View>
 
@@ -1277,8 +1279,8 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               onPress={() =>
                 Alert.alert(t('kids_logForm_alertScanPlate'), t('kids_logForm_alertScanPlate'), [
                   { text: t('kids_logForm_cancel'), style: 'cancel' },
-                  { text: 'Take photo', onPress: () => scanPlate('camera') },
-                  { text: 'From library', onPress: () => scanPlate('library') },
+                  { text: t('kids_logForm_alertTakePhoto'), onPress: () => scanPlate('camera') },
+                  { text: t('kids_logForm_alertFromLibrary'), onPress: () => scanPlate('library') },
                 ])
               }
               disabled={scanningPlate}
@@ -1362,7 +1364,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   <View style={styles.calorieHeader}>
                     <Utensils size={14} color={stickerPalette.green} strokeWidth={2} />
                     <Text style={[styles.calorieTotalText, { color: stickerPalette.green }]}>
-                      ~{totalEstimatedCals} kcal estimated
+                      {t('kids_logForm_kcalEstimated', { count: totalEstimatedCals })}
                     </Text>
                   </View>
                   <View style={styles.calorieMatchList}>
@@ -1389,7 +1391,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     {t('kids_logForm_unknownFood')}
                   </Text>
                   <Text style={[styles.manualCalSubtitle, { color: colors.textSecondary }]}>
-                    "{manualCalIdx !== null ? foodTags[manualCalIdx]?.name : ''}" wasn't found in our database. How many kcal?
+                    "{manualCalIdx !== null ? foodTags[manualCalIdx]?.name : ''}" {t('kids_logForm_notFoundInDb')}
                   </Text>
                   <TextInput
                     value={manualCalInput}
@@ -1418,7 +1420,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                       }}
                       style={[styles.manualCalBtn, { backgroundColor: ACCENT, borderColor: ACCENT, flex: 1 }]}
                     >
-                      <Text style={[styles.manualCalBtnText, { color: INK }]}>Confirm</Text>
+                      <Text style={[styles.manualCalBtnText, { color: INK }]}>{t('common_confirm')}</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -1534,7 +1536,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   Last session was <Text style={{ fontWeight: '800', color: colors.text }}>
                     {lastSide === 'left' ? t('kids_logForm_left') : lastSide === 'right' ? t('kids_logForm_right') : t('kids_logForm_bothSides')}
                   </Text> — try <Text style={{ fontWeight: '800', color: colors.text }}>
-                    {lastSide === 'left' ? t('kids_logForm_right') : lastSide === 'right' ? t('kids_logForm_left') : 'alternating'}
+                    {lastSide === 'left' ? t('kids_logForm_right') : lastSide === 'right' ? t('kids_logForm_left') : t('kids_logForm_alternating')}
                   </Text> next
                 </Text>
               </View>
@@ -1591,7 +1593,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 {switchAlertShown && (
                   <View style={[styles.switchAlert, { backgroundColor: stickerPalette.yellowSoft, borderColor: stickerPalette.yellow, borderRadius: radius.lg }]}>
                     <Text style={[styles.switchAlertText, { color: colors.text }]}>
-                      {switchTargetMin} min reached — time to switch sides!
+                      {t('kids_logForm_switchAlert', { min: switchTargetMin })}
                     </Text>
                   </View>
                 )}
@@ -1664,7 +1666,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                         <Text style={[styles.sideBtnText, { color: colors.text }]}>{s.label}</Text>
                         {isRecommended && (
                           <View style={[styles.recommendedTag, { backgroundColor: stickerPalette.yellowSoft, borderColor: stickerPalette.yellow, borderWidth: 1 }]}>
-                            <Text style={{ fontSize: 9, fontWeight: '700', color: INK }}>NEXT</Text>
+                            <Text style={{ fontSize: 9, fontWeight: '700', color: INK }}>{t('kids_logForm_labelNext')}</Text>
                           </View>
                         )}
                       </Pressable>
@@ -1866,7 +1868,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
       }
       onSaved()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('kids_logForm_alertError'), e.message)
     } finally {
       setSaving(false)
     }
@@ -1878,16 +1880,16 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
         <ChildSelector selected={childId} onSelect={setChildId} />
         <View style={styles.dateTimeRow}>
           <DateChip value={logDate} onChange={setLogDate} />
-          <TimeChip value={startTime} onChange={setStartTime} label="Start" />
+          <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_start')} />
           {endTime ? (
-            <TimeChip value={endTime} onChange={setEndTime} label="End" />
+            <TimeChip value={endTime} onChange={setEndTime} label={t('kids_logForm_end')} />
           ) : (
             <Pressable
               onPress={() => setEndTime(toTimeStr(new Date()))}
               style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: 999 }]}
             >
               <Plus size={12} color={colors.textMuted} strokeWidth={2} />
-              <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>End</Text>
+              <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>{t('kids_logForm_end')}</Text>
             </Pressable>
           )}
         </View>
@@ -2039,7 +2041,7 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
       await saveChildLog(childId, logType, tagged, notes || undefined, undefined, logDate)
       onSaved()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('kids_logForm_alertError'), e.message)
     } finally {
       setSaving(false)
     }
@@ -2051,7 +2053,7 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
         <ChildSelector selected={childId} onSelect={setChildId} />
         <View style={styles.dateTimeRow}>
           <DateChip value={logDate} onChange={setLogDate} />
-          <TimeChip value={startTime} onChange={setStartTime} label="Time" />
+          <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
         </View>
       </View>
       <FormHeaderSticker kind="health" />
@@ -2176,7 +2178,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
       }
       onSaved()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('kids_logForm_alertError'), e.message)
     } finally {
       setSaving(false)
     }
@@ -2188,7 +2190,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
         <ChildSelector selected={childId} onSelect={setChildId} />
         <View style={styles.dateTimeRow}>
           <DateChip value={logDate} onChange={setLogDate} />
-          <TimeChip value={startTime} onChange={setStartTime} label="Time" />
+          <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
         </View>
       </View>
       <FormHeaderSticker kind="mood" />
@@ -2251,12 +2253,12 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
         setPhotos((prev) => [...prev, ...stable].slice(0, 4))
       }
     } catch (e: any) {
-      Alert.alert('Error', 'Could not open photo library')
+      Alert.alert(t('kids_logForm_alertError'), t('kids_logForm_alertCouldNotOpenLibrary'))
     }
   }
 
   async function takePhoto() {
-    const uri = await launchCameraSafe()
+    const uri = await launchCameraSafe(t)
     if (uri) setPhotos((prev) => [...prev, uri].slice(0, 4))
   }
 
@@ -2267,7 +2269,7 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
     // and orphan empty-memory rows. Block the save instead of writing one.
     if (photos.length === 0) {
       Alert.alert(
-        'Add a photo',
+        t('kids_logForm_addPhoto'),
         'Memories need at least one photo. Tap the camera or gallery to add one.',
       )
       return
@@ -2279,21 +2281,21 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
       // instead of creating an empty record.
       if (upload.urls.length === 0) {
         Alert.alert(
-          'Photos didn\'t upload',
+          t('kids_logForm_alertPhotosFailedAll'),
           'None of the photos could be uploaded. Check your connection and try again.',
         )
         return
       }
       if (upload.failed > 0) {
         Alert.alert(
-          'Some photos didn\'t upload',
+          t('kids_logForm_alertPhotosPartialUpload'),
           `${upload.failed} of ${photos.length} photos failed. Saving the memory with the ones that worked.`,
         )
       }
       await saveChildLog(childId, 'photo', 'memory', caption || undefined, upload.urls, logDate)
       onSaved()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('kids_logForm_alertError'), e.message)
     } finally {
       setSaving(false)
     }
@@ -2305,7 +2307,7 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
         <ChildSelector selected={childId} onSelect={setChildId} />
         <View style={styles.dateTimeRow}>
           <DateChip value={logDate} onChange={setLogDate} />
-          <TimeChip value={startTime} onChange={setStartTime} label="Time" />
+          <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
         </View>
       </View>
       <FormHeaderSticker kind="memory" />
@@ -2452,7 +2454,7 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
       }
       onSaved()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('kids_logForm_alertError'), e.message)
     } finally {
       setSaving(false)
     }
@@ -2465,16 +2467,16 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
           <ChildSelector selected={childId} onSelect={setChildId} />
           <View style={styles.dateTimeRow}>
             <DateChip value={logDate} onChange={setLogDate} />
-            <TimeChip value={startTime} onChange={setStartTime} label="Start" />
+            <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_start')} />
             {endTime ? (
-              <TimeChip value={endTime} onChange={setEndTime} label="End" />
+              <TimeChip value={endTime} onChange={setEndTime} label={t('kids_logForm_end')} />
             ) : (
               <Pressable
                 onPress={() => setEndTime(toTimeStr(new Date()))}
                 style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: 999 }]}
               >
                 <Plus size={12} color={colors.textMuted} strokeWidth={2} />
-                <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>End</Text>
+                <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>{t('kids_logForm_end')}</Text>
               </Pressable>
             )}
           </View>
@@ -2600,12 +2602,12 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
         setPhotos([stable])
       }
     } catch {
-      Alert.alert('Error', 'Could not open photo library')
+      Alert.alert(t('kids_logForm_alertError'), t('kids_logForm_alertCouldNotOpenLibrary'))
     }
   }
 
   async function takePhoto() {
-    const uri = await launchCameraSafe()
+    const uri = await launchCameraSafe(t)
     if (uri) setPhotos([uri])
   }
 
@@ -2622,7 +2624,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
       const upload = photos.length ? await uploadPhotos(childId, photos) : { urls: [], failed: 0 }
       if (upload.failed > 0) {
         Alert.alert(
-          'Some photos didn\'t upload',
+          t('kids_logForm_alertPhotosPartialUpload'),
           `${upload.failed} of ${photos.length} photos failed. Saving the diaper log anyway.`,
         )
       }
@@ -2635,7 +2637,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
       await saveChildLog(childId, 'diaper', value, notes || undefined, uploadedPhotos, logDate)
       onSaved()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('kids_logForm_alertError'), e.message)
     } finally {
       setSaving(false)
     }
@@ -2648,7 +2650,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
           <ChildSelector selected={childId} onSelect={setChildId} />
           <View style={styles.dateTimeRow}>
             <DateChip value={logDate} onChange={setLogDate} />
-            <TimeChip value={logTime} onChange={setLogTime} label="Time" />
+            <TimeChip value={logTime} onChange={setLogTime} label={t('kids_logForm_time')} />
           </View>
         </View>
 
@@ -2870,7 +2872,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
       await updateChildLog(openLog.id, newValue, orig?.notes ?? null)
       onSaved()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('kids_logForm_alertError'), e.message)
     } finally {
       setSaving(false)
     }
@@ -2890,7 +2892,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Moon size={15} color={ACCENT} strokeWidth={2} />
               <Text style={{ color: ACCENT, fontWeight: '700', fontSize: 14 }}>
-                {openLog.routineName ?? 'Bedtime'} · {formatTimeLabel(openLog.startTime)}
+                {openLog.routineName ?? t('kids_logForm_sleepSession')} · {formatTimeLabel(openLog.startTime)}
               </Text>
             </View>
             <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>
@@ -2901,7 +2903,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
           {/* Wake-up time picker */}
           <View style={styles.topRow}>
             <View style={styles.dateTimeRow}>
-              <TimeChip value={wakeTime} onChange={setWakeTime} label="Wake up" />
+              <TimeChip value={wakeTime} onChange={setWakeTime} label={t('kids_logForm_wakeUp')} />
             </View>
           </View>
 
