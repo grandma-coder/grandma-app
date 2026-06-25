@@ -50,7 +50,7 @@ module.exports = [
     // lib/i18n/**/*.ts — key/value translation data with no JSX, so the rule
     // passes trivially and proves the plugin wiring without blocking the ~1,200
     // not-yet-migrated strings in the rest of the codebase.
-    files: ['lib/i18n/**/*.ts', 'components/home/KidsHome.tsx', 'components/analytics/KidsAnalytics.tsx'],
+    files: ['lib/i18n/**/*.ts', 'components/home/KidsHome.tsx', 'components/analytics/KidsAnalytics.tsx', 'components/calendar/KidsLogForms.tsx', 'components/calendar/KidsCalendar.tsx', 'components/agenda/NannyNotesPanel.tsx', 'components/agenda/FoodDashboard.tsx', 'components/home/NannyUpdatesFeed.tsx', 'components/kids/KidsJourneyRing.tsx'],
     plugins: { i18next },
     rules: {
       'i18next/no-literal-string': [

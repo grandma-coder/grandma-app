@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { PaperCard } from '../ui/PaperCard'
 import { brand, stickers, borderRadius, useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 interface FoodEntry {
   id: string
@@ -20,17 +21,18 @@ interface FoodDashboardProps {
   onManualAdd?: (mealType: string) => void
 }
 
-const MEALS = [
-  { id: 'breakfast', label: 'Breakfast', icon: 'sunny-outline', color: stickers.yellow },
-  { id: 'lunch', label: 'Lunch', icon: 'restaurant-outline', color: stickers.green },
-  { id: 'dinner', label: 'Dinner', icon: 'moon-outline', color: brand.kids },
-  { id: 'snack', label: 'Snack', icon: 'cafe-outline', color: brand.prePregnancy },
-]
-
 export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: FoodDashboardProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null)
+
+  const MEALS = [
+    { id: 'breakfast', label: t('kids_foodDash_mealBreakfast'), icon: 'sunny-outline', color: stickers.yellow },
+    { id: 'lunch', label: t('kids_foodDash_mealLunch'), icon: 'restaurant-outline', color: stickers.green },
+    { id: 'dinner', label: t('kids_foodDash_mealDinner'), icon: 'moon-outline', color: brand.kids },
+    { id: 'snack', label: t('kids_foodDash_mealSnack'), icon: 'cafe-outline', color: brand.prePregnancy },
+  ]
 
   async function handleTakePhoto(mealType: string) {
     const { granted } = await ImagePicker.requestCameraPermissionsAsync()
@@ -91,7 +93,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
       {/* Expanded meal action */}
       {selectedMeal && (
         <PaperCard radius={28} padding={20} style={styles.actionCard}>
-          <Text style={styles.actionTitle}>Log {MEALS.find((m) => m.id === selectedMeal)?.label}</Text>
+          <Text style={styles.actionTitle}>{t('kids_foodDash_logMeal', { meal: MEALS.find((m) => m.id === selectedMeal)?.label ?? '' })}</Text>
           <Text style={styles.actionDesc}>
             Take a photo and AI will analyze the nutritional content, or add details manually.
           </Text>
@@ -102,7 +104,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
               style={[styles.actionBtn, { backgroundColor: stickers.yellow }]}
             >
               <Ionicons name="camera" size={20} color={colors.textInverse} />
-              <Text style={[styles.actionBtnText, { color: colors.textInverse }]}>Photo + AI</Text>
+              <Text style={[styles.actionBtnText, { color: colors.textInverse }]}>{t('kids_foodDash_photoAI')}</Text>
             </Pressable>
 
             <Pressable
@@ -110,7 +112,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
               style={styles.actionBtn}
             >
               <Ionicons name="images-outline" size={20} color={colors.text} />
-              <Text style={styles.actionBtnText}>Gallery</Text>
+              <Text style={styles.actionBtnText}>{t('kids_foodDash_gallery')}</Text>
             </Pressable>
 
             <Pressable
@@ -118,7 +120,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
               style={styles.actionBtn}
             >
               <Ionicons name="create-outline" size={20} color={colors.text} />
-              <Text style={styles.actionBtnText}>Manual</Text>
+              <Text style={styles.actionBtnText}>{t('kids_foodDash_manual')}</Text>
             </Pressable>
           </View>
         </PaperCard>
@@ -127,7 +129,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
       {/* Logged entries */}
       {entries.length > 0 && (
         <View style={styles.entriesSection}>
-          <Text style={styles.entriesLabel}>TODAY'S MEALS</Text>
+          <Text style={styles.entriesLabel}>{t('kids_foodDash_todaysMeals')}</Text>
           {entries.map((entry) => {
             const meal = MEALS.find((m) => m.id === entry.mealType)
             return (
@@ -162,7 +164,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
       {entries.length === 0 && !selectedMeal && (
         <View style={styles.emptyHint}>
           <Ionicons name="nutrition-outline" size={32} color={colors.textMuted} />
-          <Text style={styles.emptyTitle}>No meals logged today</Text>
+          <Text style={styles.emptyTitle}>{t('kids_foodDash_noMealsToday')}</Text>
           <Text style={styles.emptyDesc}>
             Tap a meal above to log food. Take a photo and Guru Grandma will analyze the protein, carbs, and nutrients.
           </Text>

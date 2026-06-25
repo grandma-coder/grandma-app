@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { PaperCard } from '../ui/PaperCard'
 import { RoleNanny, RoleFamily } from '../stickers/RewardStickers'
 import { useTheme, borderRadius } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 interface NannyUpdate {
   id: string
@@ -18,20 +19,21 @@ interface NannyUpdatesFeedProps {
 
 export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => makeStyles(colors), [colors])
 
   if (updates.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Nanny Updates</Text>
+          <Text style={styles.title}>{t('kids_nannyFeed_title')}</Text>
         </View>
         <PaperCard radius={28} padding={20}>
           <View style={styles.empty}>
             <View style={styles.emptyIcon}><RoleFamily size={48} /></View>
-            <Text style={styles.emptyText}>No nanny updates yet</Text>
+            <Text style={styles.emptyText}>{t('kids_nannyFeed_emptyText')}</Text>
             <Text style={styles.emptySubtext}>
-              Invite a caregiver to start seeing their notes here
+              {t('kids_nannyFeed_emptySubtext')}
             </Text>
           </View>
         </PaperCard>
@@ -42,8 +44,8 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Nanny Updates</Text>
-        <Text style={styles.viewHistory}>View History</Text>
+        <Text style={styles.title}>{t('kids_nannyFeed_title')}</Text>
+        <Text style={styles.viewHistory}>{t('kids_nannyFeed_viewHistory')}</Text>
       </View>
 
       {updates.map((update) => (

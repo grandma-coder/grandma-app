@@ -28,6 +28,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X, ChevronRight, Brain, Sparkles, Flame } from 'lucide-react-native'
 import { useTheme, font } from '../../constants/theme'
 import { GROWTH_LEAPS, leapStatusForWeek, type GrowthLeap } from '../../lib/growthLeaps'
+import { useTranslation } from '../../lib/i18n'
 
 // ─── Layout constants ────────────────────────────────────────────────────────
 const SVG_SIZE = 320
@@ -68,6 +69,7 @@ function buildDotConfigs(leaps: GrowthLeap[], weekAge: number): DotConfig[] {
 
 export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Props) {
   const { font, colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   const dots = useMemo(() => buildDotConfigs(leaps, weekAge), [leaps, weekAge])
@@ -244,7 +246,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
   const paperBorder = isDark ? colors.border : INK
 
   const statusLabel =
-    selectedState === 'current' ? 'Now' : selectedState === 'past' ? 'Done' : 'Upcoming'
+    selectedState === 'current' ? t('kids_journeyRing_statusNow') : selectedState === 'past' ? t('kids_journeyRing_statusDone') : t('kids_journeyRing_statusUpcoming')
   const statusColor =
     selectedState === 'current' ? '#EE7B6D' : selectedState === 'past' ? '#8BB356' : col
   const statusFill =
@@ -374,7 +376,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
           <Text
             style={[styles.metaLabel, { color: col, fontFamily: font.bodySemiBold }]}
           >
-            GROWTH LEAP
+            {t('kids_journeyRing_growthLeap')}
           </Text>
           <View
             style={[
@@ -410,7 +412,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
               {selectedLeap.desc}
             </Text>
             <Text style={[styles.descCta, { color: ink, fontFamily: font.bodySemiBold }]}>
-              Tap for full leap guide
+              {t('kids_journeyRing_tapForGuide')}
             </Text>
           </View>
           <View style={{
@@ -427,7 +429,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
           <Text
             style={[styles.sectionLabel, { color: inkFaint, fontFamily: font.bodySemiBold }]}
           >
-            ALL LEAPS
+            {t('kids_journeyRing_allLeaps')}
           </Text>
           <View style={styles.stripRow}>
             {leaps.map((l, i) => {
@@ -489,6 +491,7 @@ function LeapDetailModal({
   statusColor: string
 }) {
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const ink = isDark ? colors.text : INK
   const inkMuted = colors.textMuted
@@ -548,7 +551,7 @@ function LeapDetailModal({
             {/* Brain note */}
             <SectionCard
               icon={<Brain size={14} color={ink} strokeWidth={2} />}
-              title="What's happening"
+              title={t('kids_journeyRing_whatsHappening')}
               isDark={isDark}
               accent={leap.color}
             >
@@ -560,7 +563,7 @@ function LeapDetailModal({
             {/* Phases */}
             <SectionCard
               icon={<Flame size={14} color={ink} strokeWidth={2} />}
-              title="Three phases"
+              title={t('kids_journeyRing_threePhases')}
               isDark={isDark}
               accent={leap.color}
             >
@@ -604,7 +607,7 @@ function LeapDetailModal({
 
             {/* Signs */}
             <BulletSection
-              title="Signs you may notice"
+              title={t('kids_journeyRing_signsYouMayNotice')}
               items={leap.signs}
               dot="#EE7B6D"
               isDark={isDark}
@@ -613,7 +616,7 @@ function LeapDetailModal({
 
             {/* Skills */}
             <BulletSection
-              title="New skills emerging"
+              title={t('kids_journeyRing_newSkillsEmerging')}
               items={leap.skills}
               dot="#BDD48C"
               isDark={isDark}
@@ -622,7 +625,7 @@ function LeapDetailModal({
 
             {/* Activities */}
             <BulletSection
-              title="Try these activities"
+              title={t('kids_journeyRing_tryTheseActivities')}
               items={leap.activities}
               dot={leap.color}
               isDark={isDark}

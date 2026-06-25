@@ -5,6 +5,7 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { brand, stickers, borderRadius, shadows, useTheme, font } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 export interface NoteEntry {
   id: string
@@ -20,13 +21,13 @@ interface NotesPanelProps {
   onAddNote?: (content: string, topic: string) => void
 }
 
-const TOPICS = [
-  { id: 'food', label: 'Food', icon: 'restaurant-outline', color: stickers.green },
-  { id: 'vaccine', label: 'Vaccine', icon: 'medkit-outline', color: brand.prePregnancy },
-  { id: 'activity', label: 'Activity', icon: 'body-outline', color: brand.kids },
-  { id: 'health', label: 'Health', icon: 'heart-outline', color: stickers.coral },
-  { id: 'reminder', label: 'Reminder', icon: 'alarm-outline', color: stickers.yellow },
-  { id: 'general', label: 'General', icon: 'document-text-outline', color: brand.pregnancy },
+const TOPIC_DEFS = [
+  { id: 'food', labelKey: 'kids_nannyNotes_topicFood' as const, icon: 'restaurant-outline', color: stickers.green },
+  { id: 'vaccine', labelKey: 'kids_nannyNotes_topicVaccine' as const, icon: 'medkit-outline', color: brand.prePregnancy },
+  { id: 'activity', labelKey: 'kids_nannyNotes_topicActivity' as const, icon: 'body-outline', color: brand.kids },
+  { id: 'health', labelKey: 'kids_nannyNotes_topicHealth' as const, icon: 'heart-outline', color: stickers.coral },
+  { id: 'reminder', labelKey: 'kids_nannyNotes_topicReminder' as const, icon: 'alarm-outline', color: stickers.yellow },
+  { id: 'general', labelKey: 'kids_nannyNotes_topicGeneral' as const, icon: 'document-text-outline', color: brand.pregnancy },
 ]
 
 function timeAgo(dateStr: string): string {
@@ -40,10 +41,13 @@ function timeAgo(dateStr: string): string {
 
 export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const [showCompose, setShowCompose] = useState(false)
   const [selectedTopic, setSelectedTopic] = useState('general')
   const [noteText, setNoteText] = useState('')
+
+  const TOPICS = TOPIC_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
 
   function handleSubmit() {
     if (!noteText.trim()) return
@@ -63,14 +67,14 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
         style={({ pressed }) => [styles.addButton, pressed && { transform: [{ scale: 0.97 }] }]}
       >
         <Ionicons name="add-circle-outline" size={20} color={stickers.yellow} />
-        <Text style={styles.addButtonText}>Add Note</Text>
+        <Text style={styles.addButtonText}>{t('kids_nannyNotes_addNote')}</Text>
       </Pressable>
 
       {/* Notes list */}
       {notes.length === 0 ? (
         <View style={styles.empty}>
           <Ionicons name="document-text-outline" size={40} color={colors.textMuted} />
-          <Text style={styles.emptyTitle}>No notes yet</Text>
+          <Text style={styles.emptyTitle}>{t('kids_nannyNotes_emptyTitle')}</Text>
           <Text style={styles.emptyDesc}>
             Add notes about food, vaccines, activities, health, or reminders. All caregivers can see and contribute.
           </Text>
@@ -105,13 +109,13 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
             {/* Handle bar */}
             <View style={styles.modalHandle} />
 
-            <Text style={styles.modalTitle}>New Note</Text>
+            <Text style={styles.modalTitle}>{t('kids_nannyNotes_newNote')}</Text>
             <Text style={styles.modalSubtitle}>
-              Select a topic and write your note
+              {t('kids_nannyNotes_subtitle')}
             </Text>
 
             {/* Topic selector */}
-            <Text style={styles.modalLabel}>TOPIC</Text>
+            <Text style={styles.modalLabel}>{t('kids_nannyNotes_topicLabel')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -142,11 +146,11 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
             </ScrollView>
 
             {/* Note text area */}
-            <Text style={styles.modalLabel}>NOTE</Text>
+            <Text style={styles.modalLabel}>{t('kids_nannyNotes_noteLabel')}</Text>
             <TextInput
               style={styles.textArea}
               selectionColor={brand.kids}
-              placeholder="Write your note here..."
+              placeholder={t('kids_nannyNotes_placeholder')}
               placeholderTextColor={colors.textMuted}
               value={noteText}
               onChangeText={setNoteText}
@@ -160,14 +164,14 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
                 onPress={() => setShowCompose(false)}
                 style={styles.cancelButton}
               >
-                <Text style={styles.cancelText}>Cancel</Text>
+                <Text style={styles.cancelText}>{t('kids_logForm_cancel')}</Text>
               </Pressable>
               <Pressable
                 onPress={handleSubmit}
                 style={[styles.submitButton, !noteText.trim() && { opacity: 0.5 }]}
                 disabled={!noteText.trim()}
               >
-                <Text style={styles.submitText}>Add Note</Text>
+                <Text style={styles.submitText}>{t('kids_nannyNotes_addNote')}</Text>
                 <Ionicons name="send" size={16} color={colors.textInverse} />
               </Pressable>
             </View>

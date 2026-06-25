@@ -66,6 +66,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers, font, getModeColor } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
+import type { TranslationKeys } from '../../lib/i18n/keys'
+type TranslationKey = keyof TranslationKeys
 import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
@@ -140,24 +143,24 @@ function EmojiSticker({ size = 20, children, style }: { size?: number; children:
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-const LOG_META: Record<string, { label: string; icon: typeof Utensils; color: string }> = {
-  feeding: { label: 'Feeding', icon: Utensils, color: brand.kids },
-  food: { label: 'Food', icon: Utensils, color: brand.kids },
-  sleep: { label: 'Sleep', icon: Moon, color: brand.pregnancy },
-  wake_up: { label: 'Wake Up', icon: Sun, color: brand.accent },
-  health: { label: 'Health', icon: Heart, color: brand.error },
-  temperature: { label: 'Temperature', icon: Heart, color: brand.error },
-  medicine: { label: 'Medicine', icon: Heart, color: brand.error },
-  vaccine: { label: 'Vaccine', icon: Heart, color: brand.error },
-  mood: { label: 'Mood', icon: Smile, color: brand.accent },
-  memory: { label: 'Memory', icon: Camera, color: brand.phase.ovulation },
-  photo: { label: 'Photo', icon: Camera, color: brand.phase.ovulation },
-  diaper: { label: 'Diaper', icon: Baby, color: brand.secondary },
-  growth: { label: 'Growth', icon: Heart, color: brand.success },
-  milestone: { label: 'Milestone', icon: Camera, color: brand.accent },
-  activity: { label: 'Activity', icon: Dumbbell, color: brand.phase.ovulation },
-  note: { label: 'Note', icon: Calendar, color: brand.primaryLight },
-  skipped: { label: 'Skipped', icon: MinusCircle, color: '#888888' },
+const LOG_META: Record<string, { label: string; labelKey: TranslationKey; icon: typeof Utensils; color: string }> = {
+  feeding: { label: 'Feeding', labelKey: 'kids_calendar_labelFeeding', icon: Utensils, color: brand.kids },
+  food: { label: 'Food', labelKey: 'kids_calendar_labelFood', icon: Utensils, color: brand.kids },
+  sleep: { label: 'Sleep', labelKey: 'kids_calendar_labelSleep', icon: Moon, color: brand.pregnancy },
+  wake_up: { label: 'Wake Up', labelKey: 'kids_calendar_labelWakeUp', icon: Sun, color: brand.accent },
+  health: { label: 'Health', labelKey: 'kids_calendar_labelHealth', icon: Heart, color: brand.error },
+  temperature: { label: 'Temperature', labelKey: 'kids_calendar_labelTemperature', icon: Heart, color: brand.error },
+  medicine: { label: 'Medicine', labelKey: 'kids_calendar_labelMedicine', icon: Heart, color: brand.error },
+  vaccine: { label: 'Vaccine', labelKey: 'kids_calendar_labelVaccine', icon: Heart, color: brand.error },
+  mood: { label: 'Mood', labelKey: 'kids_calendar_labelMood', icon: Smile, color: brand.accent },
+  memory: { label: 'Memory', labelKey: 'kids_calendar_labelMemory', icon: Camera, color: brand.phase.ovulation },
+  photo: { label: 'Photo', labelKey: 'kids_calendar_labelPhoto', icon: Camera, color: brand.phase.ovulation },
+  diaper: { label: 'Diaper', labelKey: 'kids_calendar_labelDiaper', icon: Baby, color: brand.secondary },
+  growth: { label: 'Growth', labelKey: 'kids_calendar_labelGrowth', icon: Heart, color: brand.success },
+  milestone: { label: 'Milestone', labelKey: 'kids_calendar_labelMilestone', icon: Camera, color: brand.accent },
+  activity: { label: 'Activity', labelKey: 'kids_calendar_labelActivity', icon: Dumbbell, color: brand.phase.ovulation },
+  note: { label: 'Note', labelKey: 'kids_calendar_labelNote', icon: Calendar, color: brand.primaryLight },
+  skipped: { label: 'Skipped', labelKey: 'kids_calendar_labelSkipped', icon: MinusCircle, color: '#888888' },
 }
 
 /** Check if a routine was skipped (persisted as a 'skipped' log) for the given day */
@@ -173,16 +176,16 @@ function isRoutineSkipped(routine: ChildRoutine, dayLogs: ChildLog[] | undefined
   })
 }
 
-const QUICK_LOGS: { id: LogType; label: string; icon: typeof Utensils; color: string }[] = [
-  { id: 'feeding', label: 'Feeding', icon: Utensils, color: brand.kids },
-  { id: 'sleep', label: 'Sleep', icon: Moon, color: brand.pregnancy },
-  { id: 'wake_up', label: 'Wake Up', icon: Sun, color: brand.accent },
-  { id: 'diaper', label: 'Diaper', icon: Baby, color: brand.secondary },
-  { id: 'health', label: 'Health', icon: Heart, color: brand.error },
-  { id: 'activity', label: 'Activity', icon: Dumbbell, color: brand.phase.ovulation },
-  { id: 'mood', label: 'Mood', icon: Smile, color: brand.accent },
-  { id: 'memory', label: 'Memory', icon: Camera, color: brand.phase.ovulation },
-  { id: 'exam', label: 'Exam', icon: FlaskConical, color: brand.phase.ovulation },
+const QUICK_LOG_DEFS: { id: LogType; labelKey: TranslationKey; icon: typeof Utensils; color: string }[] = [
+  { id: 'feeding', labelKey: 'kids_calendar_labelFeeding', icon: Utensils, color: brand.kids },
+  { id: 'sleep', labelKey: 'kids_calendar_labelSleep', icon: Moon, color: brand.pregnancy },
+  { id: 'wake_up', labelKey: 'kids_calendar_labelWakeUp', icon: Sun, color: brand.accent },
+  { id: 'diaper', labelKey: 'kids_calendar_labelDiaper', icon: Baby, color: brand.secondary },
+  { id: 'health', labelKey: 'kids_calendar_labelHealth', icon: Heart, color: brand.error },
+  { id: 'activity', labelKey: 'kids_calendar_labelActivity', icon: Dumbbell, color: brand.phase.ovulation },
+  { id: 'mood', labelKey: 'kids_calendar_labelMood', icon: Smile, color: brand.accent },
+  { id: 'memory', labelKey: 'kids_calendar_labelMemory', icon: Camera, color: brand.phase.ovulation },
+  { id: 'exam', labelKey: 'kids_calendar_labelExam', icon: FlaskConical, color: brand.phase.ovulation },
 ]
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -446,7 +449,10 @@ function LogActivitySheet({
   onManageRoutines: () => void
 }) {
   const { colors, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+
+  const QUICK_LOGS = QUICK_LOG_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
 
   function handleSelect(type: LogType) {
     onClose()
@@ -475,7 +481,7 @@ function LogActivitySheet({
           <View style={[styles.fabSheetHandleBar, { backgroundColor: paperBorder }]} />
         </View>
         <View style={styles.fabSheetTitleWrap}>
-          <Display size={22} color={ink}>Log Activity</Display>
+          <Display size={22} color={ink}>{t('kids_calendar_logActivity')}</Display>
         </View>
         <View style={styles.fabSheetBody}>
           <LogTileGrid>
@@ -519,7 +525,7 @@ function LogActivitySheet({
               <Repeat size={15} color={ink} strokeWidth={2.4} />
             </View>
             <Body size={14} color={ink} style={{ fontFamily: font.bodyBold, flex: 1, letterSpacing: 0.2 }}>
-              Manage Routines
+              {t('kids_calendar_manageRoutines')}
             </Body>
             <ChevronRightSmall size={16} color={ink} />
           </Pressable>
@@ -533,6 +539,7 @@ function LogActivitySheet({
 
 export function KidsCalendar() {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   const children = useChildStore((s) => s.children)
@@ -920,7 +927,7 @@ export function KidsCalendar() {
       d.setDate(d.getDate() + offset)
       const dow = d.getDay()
       const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-      const dayLabel = offset === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      const dayLabel = offset === 1 ? t('kids_calendar_tomorrow') : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 
       // Routines for that day — only show notable ones (activities, not daily meals)
       for (const r of routines) {
@@ -1176,8 +1183,8 @@ export function KidsCalendar() {
     // to the wrong kid.
     if (selectedChildId === 'all' && children.length > 1) {
       Alert.alert(
-        'Pick a child',
-        'Routines are saved per child. Switch from "All Kids" to one of your children first.',
+        t('kids_calendar_alertPickChild'),
+        t('kids_calendar_alertPickChildMsg'),
       )
       return
     }
@@ -1343,23 +1350,23 @@ export function KidsCalendar() {
   function handleRoutineOptions(routine: ChildRoutine) {
     Alert.alert(
       routine.name,
-      'What would you like to do?',
+      t('kids_calendar_routineWhatToDo'),
       [
         {
-          text: 'Skip today',
+          text: t('kids_calendar_routineSkipToday'),
           onPress: () => skipRoutine(routine),
         },
         {
-          text: 'Delete entire routine',
+          text: t('kids_calendar_routineDeleteAll'),
           style: 'destructive',
           onPress: () =>
             Alert.alert(
-              'Delete routine',
+              t('kids_calendar_routineDeleteConfirmTitle'),
               `Remove "${routine.name}" from all future days?`,
               [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common_cancel'), style: 'cancel' },
                 {
-                  text: 'Delete',
+                  text: t('common_delete'),
                   style: 'destructive',
                   onPress: async () => {
                     try {
@@ -1367,14 +1374,14 @@ export function KidsCalendar() {
                       if (error) throw error
                       await fetchRoutines()
                     } catch (e: any) {
-                      Alert.alert('Could not delete', e?.message ?? 'Please check your connection and try again.')
+                      Alert.alert(t('kids_calendar_alertCouldNotDelete'), e?.message ?? 'Please check your connection and try again.')
                     }
                   },
                 },
               ]
             ),
         },
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common_cancel'), style: 'cancel' },
       ]
     )
   }
@@ -1385,7 +1392,7 @@ export function KidsCalendar() {
       if (error) throw error
       await fetchRoutines()
     } catch (e: any) {
-      Alert.alert('Could not update', e?.message ?? 'Please check your connection and try again.')
+      Alert.alert(t('kids_calendar_alertCouldNotUpdate'), e?.message ?? 'Please check your connection and try again.')
     }
   }
 
@@ -1508,7 +1515,7 @@ export function KidsCalendar() {
     const summary = [
       selPending.length > 0 && `${selPending.length} pending`,
       selLogs.length > 0 && `${selLogs.length} logged`,
-    ].filter(Boolean).join(' · ') || 'Nothing planned'
+    ].filter(Boolean).join(' · ') || t('kids_calendar_nothingSummary')
 
     interface Row {
       key: string
@@ -1537,7 +1544,7 @@ export function KidsCalendar() {
         time: r.time ? fmtTime(r.time) : '—',
         sortHours,
         title: r.name,
-        subtitle: 'Tap to log',
+        subtitle: t('kids_calendar_tapToLogRoutine'),
         tint: tintKey,
         icon: logSticker(r.type, 28, isDark),
         chip: selectedChildId === 'all' && childName ? { label: childName, color: childColor(ci) } : undefined,
@@ -1588,10 +1595,10 @@ export function KidsCalendar() {
         {rows.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Body size={14} color={colors.textSecondary} align="center">
-              Nothing planned for this day.
+              {t('kids_calendar_nothingPlanned')}
             </Body>
             <Body size={12} color={colors.textMuted} align="center" style={{ marginTop: 4 }}>
-              Tap + above to log something.
+              {t('kids_calendar_tapToLog')}
             </Body>
           </View>
         ) : (
@@ -1631,7 +1638,7 @@ export function KidsCalendar() {
     if (!activeKid) {
       return (
         <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Body size={14} color={colors.textSecondary} align="center">Add a child to see their journey.</Body>
+          <Body size={14} color={colors.textSecondary} align="center">{t('kids_calendar_addChildToSeeJourney')}</Body>
         </View>
       )
     }
@@ -1661,9 +1668,9 @@ export function KidsCalendar() {
       return (
         <View style={{ gap: 10 }}>
           <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Body size={14} color={colors.textSecondary} align="center">No visits logged yet.</Body>
+            <Body size={14} color={colors.textSecondary} align="center">{t('kids_calendar_noVisitsYet')}</Body>
             <Body size={12} color={colors.textMuted} align="center" style={{ marginTop: 4 }}>
-              Vaccines, medicines, and notes show up here.
+              {t('kids_calendar_visitHint')}
             </Body>
           </View>
           <Pressable
@@ -1671,7 +1678,7 @@ export function KidsCalendar() {
             style={[styles.addVisitBtn, { backgroundColor: brand.kids }]}
           >
             <Plus size={18} color="#fff" strokeWidth={3} />
-            <Text style={styles.addVisitBtnText}>Add visit / medical note</Text>
+            <Text style={styles.addVisitBtnText}>{t('kids_calendar_addVisit')}</Text>
           </Pressable>
         </View>
       )
@@ -1680,7 +1687,7 @@ export function KidsCalendar() {
     return (
       <View style={{ gap: 10 }}>
         <View style={styles.timelineHeader}>
-          <Display size={22} color={colors.text}>Visits</Display>
+          <Display size={22} color={colors.text}>{t('kids_calendar_visits')}</Display>
           <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>{visits.length} logged · {upcomingRoutines.length} scheduled</Body>
         </View>
 
@@ -1692,7 +1699,7 @@ export function KidsCalendar() {
               key={`r-${r.id}`}
               icon={logSticker(r.type, 28, isDark)}
               title={r.name}
-              subtitle={`${r.time ? fmtTime(r.time) + ' · ' : ''}Recurring`}
+              subtitle={`${r.time ? fmtTime(r.time) + ' · ' : ''}${t('kids_calendar_recurringLabel')}`}
               tint="health"
               chip={childName ? { label: childName, color: childColor(ci) } : undefined}
               onPress={() => {
@@ -1724,7 +1731,7 @@ export function KidsCalendar() {
           style={[styles.addVisitBtn, { backgroundColor: brand.kids }]}
         >
           <Plus size={18} color="#fff" strokeWidth={3} />
-          <Text style={styles.addVisitBtnText}>Add visit / medical note</Text>
+          <Text style={styles.addVisitBtnText}>{t('kids_calendar_addVisit')}</Text>
         </Pressable>
       </View>
     )
@@ -1782,7 +1789,7 @@ export function KidsCalendar() {
                     ]}
                   >
                     <Text style={[styles.childSelectorText, { fontFamily: allActive ? font.bodyBold : font.bodySemiBold, color: allActive ? ST_INK : (colors.text) }]}>
-                      All Kids
+                      {t('kids_calendar_allKids')}
                     </Text>
                   </Pressable>
                 )
@@ -1836,7 +1843,7 @@ export function KidsCalendar() {
                   ]}
                 >
                   <Text style={[styles.childSelectorText, { fontFamily: font.bodyBold, color: colors.text }]}>
-                    +{hiddenKidsCount} more
+                    {t('kids_calendar_moreKids', { count: hiddenKidsCount })}
                   </Text>
                 </Pressable>
               )}
@@ -1872,9 +1879,9 @@ export function KidsCalendar() {
         <View style={styles.toggleWrap}>
           <SegmentedTabs
             options={[
-              { key: 'timeline', label: 'Timeline' },
-              { key: 'journey', label: 'Journey' },
-              { key: 'visits', label: 'Visits' },
+              { key: 'timeline', label: t('kids_calendar_tabTimeline') },
+              { key: 'journey', label: t('kids_calendar_tabJourney') },
+              { key: 'visits', label: t('kids_calendar_tabVisits') },
             ]}
             value={view}
             onChange={(k) => setView(k as 'timeline' | 'journey' | 'visits')}
@@ -1940,7 +1947,7 @@ export function KidsCalendar() {
             </View>
             <View style={styles.kidPickerHeader}>
               <Text style={[styles.kidPickerTitle, { color: colors.text, fontFamily: font.displayBold }]}>
-                Pick a kid
+                {t('kids_calendar_pickAKid')}
               </Text>
               <Pressable
                 onPress={() => setKidPickerOpen(false)}
@@ -1983,7 +1990,7 @@ export function KidsCalendar() {
                   ))}
                 </View>
                 <Text style={[styles.kidPickerName, { color: colors.text, fontFamily: font.bodyBold }]}>
-                  All Kids
+                  {t('kids_calendar_allKids')}
                 </Text>
                 <Text style={[styles.kidPickerMeta, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
                   {children.length} kids
@@ -2023,7 +2030,7 @@ export function KidsCalendar() {
                         paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
                         backgroundColor: kc, borderWidth: 1, borderColor: '#141313',
                       }}>
-                        <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: '#141313' }}>SELECTED</Text>
+                        <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: '#141313' }}>{t('kids_calendar_selected')}</Text>
                       </View>
                     )}
                   </Pressable>
@@ -2036,39 +2043,39 @@ export function KidsCalendar() {
 
       {/* ─── Bottom Sheets ────────────────────────────────────────────── */}
 
-      <LogSheet visible={sheetType === 'feeding'} title={editingLog ? 'Edit Entry' : (routinePrefill?.name ?? 'Log Feeding')} onClose={closeSheet}>
+      <LogSheet visible={sheetType === 'feeding'} title={editingLog ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_feeding'))} onClose={closeSheet}>
         <FeedingForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} editLog={editingLog ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'feeding', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'sleep'} title={editingLog ? 'Edit Entry' : (routinePrefill?.name ?? 'Log Sleep')} onClose={closeSheet}>
+      <LogSheet visible={sheetType === 'sleep'} title={editingLog ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_sleep'))} onClose={closeSheet}>
         <SleepForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} editLog={editingLog ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'sleep', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'wake_up'} title={routinePrefill?.name ?? 'Log Wake Up'} onClose={closeSheet}>
+      <LogSheet visible={sheetType === 'wake_up'} title={routinePrefill?.name ?? t('kids_calendar_logSheet_wakeUp')} onClose={closeSheet}>
         <WakeUpForm onSaved={handleSaved} prefill={routinePrefill ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'wake_up', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'health'} title={editingLog ? 'Edit Entry' : (routinePrefill?.name ?? 'Log Health Event')} onClose={closeSheet}>
+      <LogSheet visible={sheetType === 'health'} title={editingLog ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_health'))} onClose={closeSheet}>
         <HealthEventForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} editLog={editingLog ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'health', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'mood'} title={editingLog ? 'Edit Entry' : (routinePrefill?.name ?? 'Log Mood')} onClose={closeSheet}>
+      <LogSheet visible={sheetType === 'mood'} title={editingLog ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_mood'))} onClose={closeSheet}>
         <KidsMoodForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} editLog={editingLog ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'mood', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'activity'} title={editingLog ? 'Edit Entry' : (routinePrefill?.name ?? 'Log Activity')} onClose={closeSheet}>
+      <LogSheet visible={sheetType === 'activity'} title={editingLog ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_activity'))} onClose={closeSheet}>
         <ActivityForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} editLog={editingLog ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'activity', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'memory'} title="Capture Memory" onClose={closeSheet}>
+      <LogSheet visible={sheetType === 'memory'} title={t('kids_calendar_logSheet_memory')} onClose={closeSheet}>
         <MemoryForm onSaved={handleSaved} initialDate={selectedDate} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'diaper'} title={editingLog ? 'Edit Diaper Log' : 'Log Diaper'} onClose={closeSheet}>
+      <LogSheet visible={sheetType === 'diaper'} title={editingLog ? t('kids_calendar_logSheet_editDiaper') : t('kids_calendar_logSheet_diaper')} onClose={closeSheet}>
         <DiaperForm onSaved={handleSaved} initialDate={selectedDate} editLog={editingLog ?? undefined} />
       </LogSheet>
 
-      <LogSheet visible={sheetType === 'exam'} title="Log Exam Result" onClose={closeSheet}>
+      <LogSheet visible={sheetType === 'exam'} title={t('kids_calendar_logSheet_exam')} onClose={closeSheet}>
         <ExamForm
           behavior="kids"
           childId={selectedChildId !== 'all' ? selectedChildId : (activeChild?.id ?? children[0]?.id ?? null)}
@@ -2219,9 +2226,9 @@ export function KidsCalendar() {
 
                     {/* Type chips */}
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4, paddingHorizontal: 2 }}>
-                      {['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health'].map((t) => {
-                        const meta = LOG_META[t]
-                        const active = routineForm.type === t
+                      {['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health'].map((rtype) => {
+                        const meta = LOG_META[rtype]
+                        const active = routineForm.type === rtype
                         // Solid pastel fills (avoid alpha — hard shadow bleeds through translucent bgs on iOS)
                         const activeBgLight = ({
                           feeding: stickers.blueSoft,
@@ -2231,13 +2238,13 @@ export function KidsCalendar() {
                           activity: stickers.greenSoft,
                           mood: stickers.peachSoft,
                           health: stickers.pinkSoft,
-                        } as Record<string, string>)[t] || brand.primaryTint
+                        } as Record<string, string>)[rtype] || brand.primaryTint
                         const activeBg = isDark ? meta.color : activeBgLight
                         const labelColor = active ? (isDark ? '#FFF' : ST_INK) : (isDark ? colors.text : ST_INK)
                         return (
                           <Pressable
-                            key={t}
-                            onPress={() => setRoutineForm((f) => ({ ...f, type: t }))}
+                            key={rtype}
+                            onPress={() => setRoutineForm((f) => ({ ...f, type: rtype }))}
                             style={({ pressed }) => ({
                               paddingHorizontal: 14,
                               paddingVertical: 8,
@@ -2253,7 +2260,7 @@ export function KidsCalendar() {
                             })}
                           >
                             <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? font.bodyBold : font.bodySemiBold }}>
-                              {meta.label}
+                              {t(meta.labelKey)}
                             </Text>
                           </Pressable>
                         )
@@ -2271,7 +2278,7 @@ export function KidsCalendar() {
                       </View>
                       <TextInput
                         value={routineForm.time}
-                        onChangeText={(t) => setRoutineForm((f) => ({ ...f, time: t }))}
+                        onChangeText={(txt) => setRoutineForm((f) => ({ ...f, time: txt }))}
                         placeholder="HH:MM"
                         placeholderTextColor={colors.textMuted}
                         style={{
@@ -2355,7 +2362,7 @@ export function KidsCalendar() {
                   {routines.length > 0 && (
                     <View style={{ marginTop: 20 }}>
                       <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3, marginBottom: 12, paddingHorizontal: 4 }}>
-                        Active Routines ({routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid).length : routines.length})
+                        {t('kids_logForm_activeRoutines', { count: routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid).length : routines.length })}
                       </Text>
 
                       {/* Kid filter pills */}
@@ -2380,7 +2387,7 @@ export function KidsCalendar() {
                                 })}
                               >
                                 <Text style={{ color: ST_INK, fontSize: 13, fontFamily: allActive ? font.bodyBold : font.bodySemiBold }}>
-                                  All Kids
+                                  {t('kids_calendar_allKids')}
                                 </Text>
                               </Pressable>
                             )
@@ -2455,9 +2462,9 @@ export function KidsCalendar() {
                                 {r.name}
                               </Text>
                               <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium }}>
-                                {r.time ? fmtTime(r.time) : 'Anytime'}
+                                {r.time ? fmtTime(r.time) : t('kids_logForm_anytime')}
                                 {' · '}
-                                {r.days_of_week.length === 7 ? 'Daily' : r.days_of_week.map((d) => DAY_NAMES[d].charAt(0)).join(' ')}
+                                {r.days_of_week.length === 7 ? t('kids_logForm_daily') : r.days_of_week.map((d) => DAY_NAMES[d].charAt(0)).join(' ')}
                                 {childName ? ` · ${childName}` : ''}
                               </Text>
                             </View>
@@ -2600,19 +2607,19 @@ export function KidsCalendar() {
 
                   {/* Type chips */}
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4, paddingHorizontal: 2 }}>
-                    {['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health'].map((t) => {
-                      const meta = LOG_META[t]
-                      const active = routineForm.type === t
+                    {['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health'].map((rtype) => {
+                      const meta = LOG_META[rtype]
+                      const active = routineForm.type === rtype
                       const activeBgLight = ({
                         feeding: stickers.blueSoft, food: stickers.blueSoft, sleep: stickers.lilacSoft,
                         diaper: stickers.blueSoft, activity: stickers.greenSoft, mood: stickers.peachSoft, health: stickers.pinkSoft,
-                      } as Record<string, string>)[t] || brand.primaryTint
+                      } as Record<string, string>)[rtype] || brand.primaryTint
                       const activeBg = isDark ? meta.color : activeBgLight
                       const labelColor = active ? (isDark ? '#FFF' : ST_INK) : (isDark ? colors.text : ST_INK)
                       return (
                         <Pressable
-                          key={t}
-                          onPress={() => setRoutineForm((f) => ({ ...f, type: t }))}
+                          key={rtype}
+                          onPress={() => setRoutineForm((f) => ({ ...f, type: rtype }))}
                           style={({ pressed }) => ({
                             paddingHorizontal: 14, paddingVertical: 8,
                             borderRadius: radius.full, borderWidth: 1.5,
@@ -2626,7 +2633,7 @@ export function KidsCalendar() {
                           })}
                         >
                           <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? font.bodyBold : font.bodySemiBold }}>
-                            {meta.label}
+                            {t(meta.labelKey)}
                           </Text>
                         </Pressable>
                       )
@@ -2644,7 +2651,7 @@ export function KidsCalendar() {
                     </View>
                     <TextInput
                       value={routineForm.time}
-                      onChangeText={(t) => setRoutineForm((f) => ({ ...f, time: t }))}
+                      onChangeText={(txt) => setRoutineForm((f) => ({ ...f, time: txt }))}
                       placeholder="HH:MM"
                       placeholderTextColor={colors.textMuted}
                       style={{
@@ -2708,7 +2715,7 @@ export function KidsCalendar() {
                       })}
                     >
                       <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                        Cancel
+                        {t('common_cancel')}
                       </Text>
                     </Pressable>
                     <Pressable
@@ -2788,10 +2795,10 @@ export function KidsCalendar() {
                   </View>
 
                   <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, textAlign: 'center' }}>
-                    Delete Routine?
+                    {t('kids_calendar_deleteRoutineConfirm')}
                   </Text>
                   <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: font.bodyMedium, textAlign: 'center', lineHeight: 20 }}>
-                    This routine will be removed and won't show up anymore. You can always add it back later.
+                    {t('kids_calendar_deleteRoutineConfirmMsg')}
                   </Text>
 
                   {/* Action row */}
@@ -2813,7 +2820,7 @@ export function KidsCalendar() {
                       })}
                     >
                       <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                        Cancel
+                        {t('common_cancel')}
                       </Text>
                     </Pressable>
                     <Pressable
@@ -2835,7 +2842,7 @@ export function KidsCalendar() {
                       {routineDeleting
                         ? <ActivityIndicator color="#FFF" size="small" />
                         : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                            Delete
+                            {t('common_delete')}
                           </Text>
                       }
                     </Pressable>
@@ -2900,7 +2907,7 @@ export function KidsCalendar() {
                   <View style={[styles.popupRow, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
                     <CheckCircle2 size={16} color={brand.success} strokeWidth={2} />
                     <Text style={[styles.popupRowText, { color: colors.textSecondary }]}>
-                      Logged by <Text style={{ color: colors.text, fontWeight: '600' }}>{profileNames[selectedLog.logged_by]}</Text>
+                      {t('kids_calendar_detail_loggedBy')} <Text style={{ color: colors.text, fontWeight: '600' }}>{profileNames[selectedLog.logged_by]}</Text>
                     </Text>
                   </View>
                 )}
@@ -2909,22 +2916,22 @@ export function KidsCalendar() {
                   /* ── Edit Mode ── */
                   <>
                     <View style={[styles.popupSection, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
-                      <Text style={[styles.popupSectionLabel, { color: colors.textMuted }]}>Details</Text>
+                      <Text style={[styles.popupSectionLabel, { color: colors.textMuted }]}>{t('kids_calendar_detail_details')}</Text>
                       <TextInput
                         value={editValue}
                         onChangeText={setEditValue}
-                        placeholder="Details..."
+                        placeholder={t('kids_calendar_detail_detailsPlaceholder')}
                         placeholderTextColor={colors.textMuted}
                         multiline
                         style={[styles.editInput, { color: colors.text, borderColor: colors.border, borderRadius: radius.md }]}
                       />
                     </View>
                     <View style={[styles.popupSection, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
-                      <Text style={[styles.popupSectionLabel, { color: colors.textMuted }]}>Notes</Text>
+                      <Text style={[styles.popupSectionLabel, { color: colors.textMuted }]}>{t('kids_calendar_detail_notes')}</Text>
                       <TextInput
                         value={editNotes}
                         onChangeText={setEditNotes}
-                        placeholder="Notes..."
+                        placeholder={t('kids_calendar_detail_notesPlaceholder')}
                         placeholderTextColor={colors.textMuted}
                         multiline
                         style={[styles.editInput, { color: colors.text, borderColor: colors.border, borderRadius: radius.md }]}
@@ -2936,7 +2943,7 @@ export function KidsCalendar() {
                         onPress={() => setEditing(false)}
                         style={[styles.editCancelBtn, { borderColor: colors.border, borderRadius: radius.lg }]}
                       >
-                        <Text style={[styles.editCancelText, { color: colors.textSecondary }]}>Cancel</Text>
+                        <Text style={[styles.editCancelText, { color: colors.textSecondary }]}>{t('common_cancel')}</Text>
                       </Pressable>
                       <Pressable
                         onPress={saveEdit}
@@ -2951,7 +2958,7 @@ export function KidsCalendar() {
                           ? <ActivityIndicator color="#FFF" size="small" />
                           : <>
                               <Check size={16} color="#FFF" strokeWidth={2.5} />
-                              <Text style={styles.editSaveText}>Save</Text>
+                              <Text style={styles.editSaveText}>{t('common_save')}</Text>
                             </>
                         }
                       </Pressable>
@@ -2986,7 +2993,7 @@ export function KidsCalendar() {
                                 <Text style={{ color: stickers.coralInk, fontSize: 64, fontWeight: '800', lineHeight: 68, letterSpacing: -2, fontFamily: font.display }}>{cals}</Text>
                                 <Text style={{ color: stickers.coralInk, fontSize: 20, fontWeight: '700', marginBottom: 10 }}>kcal</Text>
                               </View>
-                              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>Estimated calories</Text>
+                              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_estimatedCals')}</Text>
                             </View>
                           )}
 
@@ -3015,7 +3022,7 @@ export function KidsCalendar() {
                           {/* What they ate (notes) */}
                           {selectedLog.notes && (
                             <View style={{ backgroundColor: colors.surface, borderRadius: 20, padding: 16, marginBottom: 12 }}>
-                              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' }}>What they ate</Text>
+                              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' }}>{t('kids_calendar_detail_whatTheyAte')}</Text>
                               <Text style={{ color: colors.text, fontSize: 15, lineHeight: 22 }}>{selectedLog.notes}</Text>
                             </View>
                           )}
@@ -3025,7 +3032,7 @@ export function KidsCalendar() {
                             <View style={{ backgroundColor: stickers.lilac + '22', borderRadius: 18, padding: 14, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: stickers.lilac + '40' }}>
                               <Sparkles size={18} color={stickers.lilacInk} />
                               <View style={{ flex: 1 }}>
-                                <Text style={{ color: stickers.lilacInk, fontSize: 13, fontWeight: '700' }}>New food introduced!</Text>
+                                <Text style={{ color: stickers.lilacInk, fontSize: 13, fontWeight: '700' }}>{t('kids_calendar_detail_newFoodIntro')}</Text>
                                 {fp.newFoodName && <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{fp.newFoodName}</Text>}
                               </View>
                             </View>
@@ -3036,7 +3043,7 @@ export function KidsCalendar() {
                             <View style={{ backgroundColor: stickers.coral + '22', borderRadius: 18, padding: 14, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: stickers.coral + '40' }}>
                               <AlertCircle size={18} color={stickers.coral} />
                               <View style={{ flex: 1 }}>
-                                <Text style={{ color: stickers.coral, fontSize: 13, fontWeight: '700' }}>Reaction noted</Text>
+                                <Text style={{ color: stickers.coral, fontSize: 13, fontWeight: '700' }}>{t('kids_calendar_detail_reactionNoted')}</Text>
                                 {fp.reactionFood && <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{fp.reactionFood}</Text>}
                               </View>
                             </View>
@@ -3057,14 +3064,14 @@ export function KidsCalendar() {
                             {isBreast ? (
                               <>
                                 <Text style={{ color: accentColor, fontSize: 48, fontWeight: '800', lineHeight: 52, fontFamily: font.display }}>{fp.duration ? `${fp.duration}` : '—'}</Text>
-                                <Text style={{ color: accentColor, fontSize: 16, fontWeight: '700', marginTop: 2 }}>minutes</Text>
-                                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Breastfeeding</Text>
+                                <Text style={{ color: accentColor, fontSize: 16, fontWeight: '700', marginTop: 2 }}>{t('kids_calendar_detail_minutesUnit')}</Text>
+                                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_breastfeeding')}</Text>
                               </>
                             ) : (
                               <>
                                 <Text style={{ color: accentColor, fontSize: 48, fontWeight: '800', lineHeight: 52, fontFamily: font.display }}>{fp.amount ? `${fp.amount}` : '—'}</Text>
-                                <Text style={{ color: accentColor, fontSize: 16, fontWeight: '700', marginTop: 2 }}>ml</Text>
-                                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Bottle feeding</Text>
+                                <Text style={{ color: accentColor, fontSize: 16, fontWeight: '700', marginTop: 2 }}>{t('kids_calendar_detail_mlUnit')}</Text>
+                                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_bottleFeeding')}</Text>
                               </>
                             )}
                           </View>
@@ -3079,7 +3086,7 @@ export function KidsCalendar() {
                           )}
                           {selectedLog.notes && (
                             <View style={{ backgroundColor: colors.surface, borderRadius: 20, padding: 16, marginBottom: 12 }}>
-                              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' }}>Notes</Text>
+                              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' }}>{t('kids_calendar_detail_notes2')}</Text>
                               <Text style={{ color: colors.text, fontSize: 15, lineHeight: 22 }}>{selectedLog.notes}</Text>
                             </View>
                           )}
@@ -3108,9 +3115,9 @@ export function KidsCalendar() {
                             {durStr ? (
                               <Text style={{ color: sleepColor, fontSize: 56, fontWeight: '800', lineHeight: 64, letterSpacing: -2, marginTop: 6, fontFamily: font.display }}>{durStr}</Text>
                             ) : (
-                              <Text style={{ color: sleepColor, fontSize: 20, fontWeight: '700', marginTop: 8 }}>Sleep logged</Text>
+                              <Text style={{ color: sleepColor, fontSize: 20, fontWeight: '700', marginTop: 8 }}>{t('kids_calendar_detail_sleepLogged')}</Text>
                             )}
-                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Sleep session</Text>
+                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_sleepSession')}</Text>
                           </View>
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                             {sp.startTime && sp.endTime && (
@@ -3154,7 +3161,7 @@ export function KidsCalendar() {
                                 <Text style={{ color: actColor, fontSize: 20, fontWeight: '700', marginTop: ap.name ? 4 : 10 }}>{durUnit}</Text>
                               </>
                             )}
-                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Activity</Text>
+                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_activity')}</Text>
                           </View>
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                             {ap.activityType && (
@@ -3189,7 +3196,7 @@ export function KidsCalendar() {
                           <View style={{ backgroundColor: diaperColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: diaperColor + '30' }}>
                             <EmojiSticker size={64}>{dt?.emoji ?? '🍼'}</EmojiSticker>
                             <Text style={{ color: diaperColor, fontSize: 24, fontWeight: '800', marginTop: 8, fontFamily: font.display }}>{dt?.label ?? 'Diaper'}</Text>
-                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>Diaper change</Text>
+                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_diaperChange')}</Text>
                           </View>
                           {(dp.color || dp.consistency) && (
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
@@ -3224,7 +3231,7 @@ export function KidsCalendar() {
                         <View style={{ backgroundColor: m.color + '12', borderRadius: 24, paddingVertical: 32, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: m.color + '30' }}>
                           <MoodFace size={84} variant={moodFaceVariant(moodVal)} fill={moodFaceFill(moodVal)} />
                           <Text style={{ color: m.color, fontSize: 32, fontWeight: '800', marginTop: 10, letterSpacing: -1, fontFamily: font.display }}>{m.label}</Text>
-                          <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 1, textTransform: 'uppercase' }}>Today's mood</Text>
+                          <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_todaysMood')}</Text>
                         </View>
                       )
                     })()}
@@ -3297,7 +3304,7 @@ export function KidsCalendar() {
                     {/* Notes for non-food/feeding types */}
                     {!['food', 'feeding'].includes(selectedLog.type) && selectedLog.notes && (
                       <View style={{ backgroundColor: colors.surface, borderRadius: 20, padding: 16, marginBottom: 12 }}>
-                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' }}>Notes</Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' }}>{t('kids_calendar_detail_notes')}</Text>
                         <Text style={{ color: colors.text, fontSize: 15, lineHeight: 22 }}>{selectedLog.notes}</Text>
                       </View>
                     )}
@@ -3307,7 +3314,7 @@ export function KidsCalendar() {
                       <>
                         {formatLogDisplay(selectedLog.type, selectedLog.value, null) !== '' && (
                           <View style={[styles.popupSection, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
-                            <Text style={[styles.popupSectionLabel, { color: colors.textMuted }]}>Details</Text>
+                            <Text style={[styles.popupSectionLabel, { color: colors.textMuted }]}>{t('kids_calendar_detail_details')}</Text>
                             <Text style={[styles.popupSectionValue, { color: colors.text }]}>
                               {formatLogDisplay(selectedLog.type, selectedLog.value, null)}
                             </Text>
@@ -3318,7 +3325,7 @@ export function KidsCalendar() {
 
                     {hasPhotos && (
                       <View style={styles.popupPhotos}>
-                        <Text style={[styles.popupSectionLabel, { color: colors.textMuted, marginBottom: 8, paddingHorizontal: 16 }]}>Photos</Text>
+                        <Text style={[styles.popupSectionLabel, { color: colors.textMuted, marginBottom: 8, paddingHorizontal: 16 }]}>{t('kids_calendar_detail_photos')}</Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.popupPhotoScroll}>
                           {selectedLog.photos.map((uri, i) => (
                             <Image key={i} source={{ uri }} style={[styles.popupPhoto, { borderRadius: radius.lg }]} />
@@ -3330,7 +3337,7 @@ export function KidsCalendar() {
                     {!formatLogDisplay(selectedLog.type, selectedLog.value, null) && !selectedLog.notes && !hasPhotos && (
                       <View style={[styles.popupSection, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
                         <Text style={[styles.popupSectionValue, { color: colors.textMuted, fontStyle: 'italic' }]}>
-                          No additional details recorded
+                          {t('kids_calendar_detail_nothing')}
                         </Text>
                       </View>
                     )}
@@ -3351,7 +3358,7 @@ export function KidsCalendar() {
                         ]}
                       >
                         <Pencil size={16} color="#FFFEF8" strokeWidth={2} />
-                        <Text style={[styles.popupEditText, { color: '#FFFEF8' }]}>Edit</Text>
+                        <Text style={[styles.popupEditText, { color: '#FFFEF8' }]}>{t('kids_calendar_detail_edit')}</Text>
                       </Pressable>
                       <Pressable
                         onPress={() => {
@@ -3372,7 +3379,7 @@ export function KidsCalendar() {
                         ]}
                       >
                         <Trash2 size={16} color={brand.error} />
-                        <Text style={[styles.popupDeleteText, { color: brand.error }]}>Delete</Text>
+                        <Text style={[styles.popupDeleteText, { color: brand.error }]}>{t('kids_calendar_detail_delete')}</Text>
                       </Pressable>
                     </View>
                   </>
@@ -3409,14 +3416,14 @@ export function KidsCalendar() {
                     </View>
                   </View>
                   <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center' }}>
-                    Remove this logged activity? This cannot be undone.
+                    {t('kids_calendar_unlogConfirm')}
                   </Text>
                   <View style={{ flexDirection: 'row', gap: 10 }}>
                     <Pressable
                       onPress={() => setUnlogTarget(null)}
                       style={{ flex: 1, height: 52, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
                     >
-                      <Text style={{ color: colors.textSecondary, fontSize: 15, fontWeight: '700' }}>Cancel</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 15, fontWeight: '700' }}>{t('common_cancel')}</Text>
                     </Pressable>
                     <Pressable
                       onPress={handleUnlog}
@@ -3429,7 +3436,7 @@ export function KidsCalendar() {
                     >
                       {unlogging
                         ? <ActivityIndicator color="#FFF" size="small" />
-                        : <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Trash2 size={15} color="#FFF" strokeWidth={2.5} /><Text style={{ color: '#FFF', fontSize: 15, fontWeight: '800' }}>Unlog</Text></View>}
+                        : <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Trash2 size={15} color="#FFF" strokeWidth={2.5} /><Text style={{ color: '#FFF', fontSize: 15, fontWeight: '800' }}>{t('kids_calendar_unlogBtn')}</Text></View>}
                     </Pressable>
                   </View>
                 </>
@@ -3458,7 +3465,7 @@ export function KidsCalendar() {
               </View>
 
               <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8, textAlign: 'center', fontFamily: font.display }}>
-                Amazing job!
+                {t('kids_calendar_congrats_title')}
               </Text>
               <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', textAlign: 'center', marginBottom: 6 }}>
                 {formatDayLabel(selectedDate, todayStr)}'s activities are all logged ✓
@@ -3480,17 +3487,17 @@ export function KidsCalendar() {
                   <View style={{ flexDirection: 'row', gap: 12, marginBottom: 28, width: '100%' }}>
                     <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
                       <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{loggedToday.length}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>Activities</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>{t('kids_calendar_congrats_activities')}</Text>
                     </View>
                     {totalCals > 0 && (
                       <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
                         <Text style={{ color: stickers.coral, fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{totalCals}</Text>
-                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>kcal today</Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>{t('kids_calendar_congrats_kcal')}</Text>
                       </View>
                     )}
                     <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
                       <Text style={{ color: stickers.green, fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{selectedDayRoutines.length > 0 ? selectedDayRoutines.length : loggedToday.length}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>Routines</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>{t('kids_calendar_congrats_routines')}</Text>
                     </View>
                   </View>
                 )
@@ -3507,7 +3514,7 @@ export function KidsCalendar() {
                 })}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>Awesome!</Text>
+                  <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>{t('kids_calendar_congrats_btn')}</Text>
                   <EmojiSticker size={18}>🎉</EmojiSticker>
                 </View>
               </Pressable>

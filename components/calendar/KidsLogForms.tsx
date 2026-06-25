@@ -48,6 +48,9 @@ import {
   X,
 } from 'lucide-react-native'
 import { useTheme, brand, stickers as stickerPalette, font } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
+import type { TranslationKeys } from '../../lib/i18n/keys'
+type TranslationKey = keyof TranslationKeys
 import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Moon as MoonSticker, Flower, Drop, Star } from '../stickers/BrandStickers'
 import { Smiley, Sleepy, Sad } from '../ui/Stickers'
@@ -74,16 +77,17 @@ const INK = '#141313'
 type FormKind = 'feeding' | 'sleep' | 'health' | 'mood' | 'memory' | 'activity' | 'diaper' | 'wakeup'
 
 function FormHeaderSticker({ kind }: { kind: FormKind }) {
+  const { t } = useTranslation()
   // Sticker + pastel chip color per form
   const map: Record<FormKind, { node: ReactElement; bg: string; label: string }> = {
-    feeding: { node: <Drop size={28} fill={stickerPalette.peach} />,  bg: stickerPalette.peachSoft, label: 'Feeding' },
-    sleep:   { node: <MoonSticker size={28} fill={stickerPalette.lilac} />,   bg: stickerPalette.blueSoft,  label: 'Sleep' },
-    health:  { node: <HeartSticker size={28} fill={stickerPalette.pink} />,   bg: stickerPalette.pinkSoft,  label: 'Health' },
-    mood:    { node: <Flower size={28} petal={stickerPalette.lilac} center={stickerPalette.yellow} />,  bg: stickerPalette.lilacSoft, label: 'Mood' },
-    memory:  { node: <HeartSticker size={28} fill={stickerPalette.coral} />,  bg: stickerPalette.peachSoft, label: 'Memory' },
-    activity:{ node: <Star size={28} fill={stickerPalette.yellow} />,   bg: stickerPalette.yellowSoft,label: 'Activity' },
-    diaper:  { node: <Drop size={28} fill={stickerPalette.blue} />,     bg: stickerPalette.blueSoft,  label: 'Diaper' },
-    wakeup:  { node: <Star size={28} fill={stickerPalette.yellow} />,   bg: stickerPalette.yellowSoft,label: 'Wake up' },
+    feeding: { node: <Drop size={28} fill={stickerPalette.peach} />,  bg: stickerPalette.peachSoft, label: t('kids_logForm_labelFeeding') },
+    sleep:   { node: <MoonSticker size={28} fill={stickerPalette.lilac} />,   bg: stickerPalette.blueSoft,  label: t('kids_logForm_labelSleep') },
+    health:  { node: <HeartSticker size={28} fill={stickerPalette.pink} />,   bg: stickerPalette.pinkSoft,  label: t('kids_logForm_labelHealth') },
+    mood:    { node: <Flower size={28} petal={stickerPalette.lilac} center={stickerPalette.yellow} />,  bg: stickerPalette.lilacSoft, label: t('kids_logForm_labelMood') },
+    memory:  { node: <HeartSticker size={28} fill={stickerPalette.coral} />,  bg: stickerPalette.peachSoft, label: t('kids_logForm_labelMemory') },
+    activity:{ node: <Star size={28} fill={stickerPalette.yellow} />,   bg: stickerPalette.yellowSoft,label: t('kids_logForm_labelActivity') },
+    diaper:  { node: <Drop size={28} fill={stickerPalette.blue} />,     bg: stickerPalette.blueSoft,  label: t('kids_logForm_labelDiaper') },
+    wakeup:  { node: <Star size={28} fill={stickerPalette.yellow} />,   bg: stickerPalette.yellowSoft,label: t('kids_logForm_labelWakeUp') },
   }
   const m = map[kind]
   return (
@@ -343,12 +347,13 @@ function RoutineToggle({
   locked?: boolean
 }) {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const accentText = isDark ? colors.text : INK
   if (locked) {
     return (
       <View style={[routineStyles.toggleRow, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '66', borderRadius: radius.lg }]}>
         <Repeat size={16} color={ACCENT} strokeWidth={2} />
-        <Text style={[routineStyles.toggleText, { color: accentText }]}>Already a routine</Text>
+        <Text style={[routineStyles.toggleText, { color: accentText }]}>{t('kids_logForm_alreadyRoutine')}</Text>
         <Check size={16} color={ACCENT} strokeWidth={2.5} />
       </View>
     )
@@ -368,7 +373,7 @@ function RoutineToggle({
       >
         <Repeat size={16} color={enabled ? ACCENT : colors.textMuted} strokeWidth={2} />
         <Text style={[routineStyles.toggleText, { color: enabled ? accentText : colors.textSecondary }]}>
-          Save as routine
+          {t('kids_logForm_saveAsRoutine')}
         </Text>
         <View
           style={[
@@ -446,6 +451,7 @@ function ChildSelector({
 }) {
   const children = useChildStore((s) => s.children)
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   if (children.length <= 1) return null
 
@@ -455,7 +461,7 @@ function ChildSelector({
     <View style={styles.childSelectorWrap}>
       {needsSelection && (
         <Text style={[styles.childSelectorPrompt, { color: colors.warning }]}>
-          Select a child to continue
+          {t('kids_logForm_selectChild')}
         </Text>
       )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childRow}>
@@ -671,25 +677,28 @@ type FeedingType = 'breast' | 'bottle' | 'solids'
 type MealMoment = 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'night_snack'
 type EatQuality = 'ate_well' | 'ate_little' | 'did_not_eat'
 
-const MEAL_MOMENTS: { id: MealMoment; label: string }[] = [
-  { id: 'breakfast', label: 'Breakfast' },
-  { id: 'morning_snack', label: 'AM Snack' },
-  { id: 'lunch', label: 'Lunch' },
-  { id: 'afternoon_snack', label: 'PM Snack' },
-  { id: 'dinner', label: 'Dinner' },
-  { id: 'night_snack', label: 'Night' },
+const MEAL_MOMENT_DEFS: { id: MealMoment; labelKey: TranslationKey }[] = [
+  { id: 'breakfast', labelKey: 'kids_logForm_mealBreakfast' },
+  { id: 'morning_snack', labelKey: 'kids_logForm_mealAmSnack' },
+  { id: 'lunch', labelKey: 'kids_logForm_mealLunch' },
+  { id: 'afternoon_snack', labelKey: 'kids_logForm_mealPmSnack' },
+  { id: 'dinner', labelKey: 'kids_logForm_mealDinner' },
+  { id: 'night_snack', labelKey: 'kids_logForm_mealNight' },
 ]
 
-const EAT_QUALITIES: { id: EatQuality; label: string; sticker: 'smiley' | 'sleepy' | 'sad' }[] = [
-  { id: 'ate_well', label: 'Ate well', sticker: 'smiley' },
-  { id: 'ate_little', label: 'Ate a little', sticker: 'sleepy' },
-  { id: 'did_not_eat', label: 'Did not eat', sticker: 'sad' },
+const EAT_QUALITY_DEFS: { id: EatQuality; labelKey: TranslationKey; sticker: 'smiley' | 'sleepy' | 'sad' }[] = [
+  { id: 'ate_well', labelKey: 'kids_logForm_ateWell', sticker: 'smiley' },
+  { id: 'ate_little', labelKey: 'kids_logForm_ateLittle', sticker: 'sleepy' },
+  { id: 'did_not_eat', labelKey: 'kids_logForm_didNotEat', sticker: 'sad' },
 ]
 
 export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
+  const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
+  const MEAL_MOMENTS = MEAL_MOMENT_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
+  const EAT_QUALITIES = EAT_QUALITY_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
 
   const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
@@ -1266,8 +1275,8 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             {/* Scan plate — Claude Vision identifies every food + estimates kcal */}
             <Pressable
               onPress={() =>
-                Alert.alert('Scan plate', "Let Grandma identify what's on the plate and estimate calories.", [
-                  { text: 'Cancel', style: 'cancel' },
+                Alert.alert(t('kids_logForm_alertScanPlate'), t('kids_logForm_alertScanPlate'), [
+                  { text: t('kids_logForm_cancel'), style: 'cancel' },
                   { text: 'Take photo', onPress: () => scanPlate('camera') },
                   { text: 'From library', onPress: () => scanPlate('library') },
                 ])
@@ -1283,7 +1292,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 ? <ActivityIndicator size="small" color={ACCENT} />
                 : <ScanLine size={18} color={ACCENT} strokeWidth={2.2} />}
               <Text style={[styles.scanPlateText, { color: INK }]}>
-                {scanningPlate ? 'Reading the plate…' : 'Scan plate — auto-detect foods & calories'}
+                {scanningPlate ? t('kids_logForm_readingPlate') : t('kids_logForm_scanPlate')}
               </Text>
               <Sparkles size={14} color={ACCENT} strokeWidth={2} />
             </Pressable>
@@ -1322,7 +1331,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               <TextInput
                 value={foodInput}
                 onChangeText={setFoodInput}
-                placeholder={foodTags.length === 0 ? 'Add a food (e.g. banana) and press ↵' : 'Add another food…'}
+                placeholder={foodTags.length === 0 ? t('kids_logForm_placeholderFood') : t('kids_logForm_placeholderAddFood')}
                 placeholderTextColor={colors.textMuted}
                 returnKeyType="done"
                 blurOnSubmit={false}
@@ -1377,7 +1386,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 <Pressable style={styles.popupBackdrop} onPress={() => setManualCalIdx(null)} />
                 <View style={[styles.manualCalPopup, { backgroundColor: colors.surface, borderRadius: radius.xl, borderColor: (isDark ? colors.border : INK) }]}>
                   <Text style={[styles.manualCalTitle, { color: colors.text }]}>
-                    Unknown food — add kcal manually
+                    {t('kids_logForm_unknownFood')}
                   </Text>
                   <Text style={[styles.manualCalSubtitle, { color: colors.textSecondary }]}>
                     "{manualCalIdx !== null ? foodTags[manualCalIdx]?.name : ''}" wasn't found in our database. How many kcal?
@@ -1396,7 +1405,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                       onPress={() => setManualCalIdx(null)}
                       style={[styles.manualCalBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), flex: 1 }]}
                     >
-                      <Text style={[styles.manualCalBtnText, { color: colors.textSecondary }]}>Skip</Text>
+                      <Text style={[styles.manualCalBtnText, { color: colors.textSecondary }]}>{t('kids_logForm_skip')}</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => {
@@ -1458,7 +1467,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               >
                 <Baby size={14} color={isNewFood ? stickerPalette.blue : colors.textMuted} strokeWidth={2} />
                 <Text style={[styles.flagText, { color: isNewFood ? stickerPalette.blue : colors.textMuted }]}>
-                  New food
+                  {t('kids_logForm_newFood')}
                 </Text>
               </Pressable>
               <Pressable
@@ -1471,7 +1480,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               >
                 <AlertTriangle size={14} color={hasReaction ? colors.error : colors.textMuted} strokeWidth={2} />
                 <Text style={[styles.flagText, { color: hasReaction ? colors.error : colors.textMuted }]}>
-                  Reaction
+                  {t('kids_logForm_reaction')}
                 </Text>
               </Pressable>
             </View>
@@ -1479,11 +1488,11 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             {/* New food expanded */}
             {isNewFood && (
               <View style={[styles.expandedFlag, { backgroundColor: brand.secondary + '08', borderColor: brand.secondary + '25', borderRadius: radius.lg }]}>
-                <Text style={[styles.expandedFlagLabel, { color: brand.secondary }]}>What was the new food?</Text>
+                <Text style={[styles.expandedFlagLabel, { color: brand.secondary }]}>{t('kids_logForm_whatNewFood')}</Text>
                 <TextInput
                   value={newFoodName}
                   onChangeText={setNewFoodName}
-                  placeholder="e.g. Kiwi, shrimp..."
+                  placeholder={t('kids_logForm_placeholderNewFood')}
                   placeholderTextColor={colors.textMuted}
                   style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.md }]}
                 />
@@ -1493,18 +1502,18 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             {/* Reaction expanded */}
             {hasReaction && (
               <View style={[styles.expandedFlag, { backgroundColor: brand.error + '08', borderColor: brand.error + '25', borderRadius: radius.lg }]}>
-                <Text style={[styles.expandedFlagLabel, { color: brand.error }]}>Reaction details</Text>
+                <Text style={[styles.expandedFlagLabel, { color: brand.error }]}>{t('kids_logForm_reactionDetails')}</Text>
                 <TextInput
                   value={reactionFood}
                   onChangeText={setReactionFood}
-                  placeholder="Which food caused it?"
+                  placeholder={t('kids_logForm_placeholderAllergyFood')}
                   placeholderTextColor={colors.textMuted}
                   style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.md }]}
                 />
                 <TextInput
                   value={reactionDesc}
                   onChangeText={setReactionDesc}
-                  placeholder="Describe the reaction (rash, vomit, swelling...)"
+                  placeholder={t('kids_logForm_placeholderAllergyReaction')}
                   placeholderTextColor={colors.textMuted}
                   multiline
                   style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.md, minHeight: 60 }]}
@@ -1523,9 +1532,9 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               <View style={[styles.lastSideBanner, { backgroundColor: stickerPalette.yellowSoft, borderColor: stickerPalette.yellow, borderRadius: radius.lg }]}>
                 <Text style={[styles.lastSideLabel, { color: colors.text }]}>
                   Last session was <Text style={{ fontWeight: '800', color: colors.text }}>
-                    {lastSide === 'left' ? 'Left' : lastSide === 'right' ? 'Right' : 'Both'}
+                    {lastSide === 'left' ? t('kids_logForm_left') : lastSide === 'right' ? t('kids_logForm_right') : t('kids_logForm_bothSides')}
                   </Text> — try <Text style={{ fontWeight: '800', color: colors.text }}>
-                    {lastSide === 'left' ? 'Right' : lastSide === 'right' ? 'Left' : 'alternating'}
+                    {lastSide === 'left' ? t('kids_logForm_right') : lastSide === 'right' ? t('kids_logForm_left') : 'alternating'}
                   </Text> next
                 </Text>
               </View>
@@ -1551,7 +1560,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     </View>
                   </View>
                   <Text style={[styles.timerSideLabel, { color: ACCENT }]}>
-                    {timerSide === 'left' ? 'Left side' : 'Right side'}
+                    {timerSide === 'left' ? t('kids_logForm_leftSide') : t('kids_logForm_rightSide')}
                   </Text>
                 </View>
 
@@ -1598,7 +1607,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     ]}
                   >
                     <Repeat size={18} color={ACCENT} strokeWidth={2} />
-                    <Text style={[styles.timerSwitchText, { color: ACCENT }]}>Switch side</Text>
+                    <Text style={[styles.timerSwitchText, { color: ACCENT }]}>{t('kids_logForm_switchSide')}</Text>
                   </Pressable>
                   <Pressable
                     onPress={stopTimer}
@@ -1609,18 +1618,18 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     ]}
                   >
                     <Check size={18} color="#FFFEF8" strokeWidth={2.5} />
-                    <Text style={[styles.timerStopText, { color: '#FFFEF8' }]}>Done</Text>
+                    <Text style={[styles.timerStopText, { color: '#FFFEF8' }]}>{t('common_done')}</Text>
                   </Pressable>
                 </View>
               </View>
             ) : (
               /* ── START MODE — pick side and go ── */
               <>
-                <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Tap a side to start live timer</Text>
+                <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('kids_logForm_tapToStart')}</Text>
                 <View style={styles.sideRow}>
                   {([
-                    { id: 'left' as const, label: 'Left' },
-                    { id: 'right' as const, label: 'Right' },
+                    { id: 'left' as const, label: t('kids_logForm_left') },
+                    { id: 'right' as const, label: t('kids_logForm_right') },
                   ]).map((s) => {
                     const isRecommended = lastSide && (
                       (lastSide === 'left' && s.id === 'right') ||
@@ -1666,7 +1675,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 {/* Switch target setting */}
                 <View style={[styles.switchTargetRow, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
                   <Clock size={14} color={colors.textMuted} strokeWidth={2} />
-                  <Text style={[styles.switchTargetLabel, { color: colors.textSecondary }]}>Alert to switch at</Text>
+                  <Text style={[styles.switchTargetLabel, { color: colors.textSecondary }]}>{t('kids_logForm_alertToSwitch')}</Text>
                   {[10, 15, 20].map((min) => {
                     const active = switchTargetMin === min
                     return (
@@ -1693,16 +1702,16 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 {/* Or log manually */}
                 <View style={styles.manualDivider}>
                   <View style={[styles.manualDividerLine, { backgroundColor: colors.border }]} />
-                  <Text style={[styles.manualDividerText, { color: colors.textMuted }]}>or log manually</Text>
+                  <Text style={[styles.manualDividerText, { color: colors.textMuted }]}>{t('kids_logForm_orLogManually')}</Text>
                   <View style={[styles.manualDividerLine, { backgroundColor: colors.border }]} />
                 </View>
 
                 {/* Manual side selection */}
                 <View style={styles.sideRow}>
                   {([
-                    { id: 'left' as const, label: 'Left' },
-                    { id: 'right' as const, label: 'Right' },
-                    { id: 'both' as const, label: 'Both' },
+                    { id: 'left' as const, label: t('kids_logForm_left') },
+                    { id: 'right' as const, label: t('kids_logForm_right') },
+                    { id: 'both' as const, label: t('kids_logForm_bothSides') },
                   ]).map((s) => {
                     const active = breastSide === s.id
                     return (
@@ -1727,7 +1736,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 <TextInput
                   value={duration}
                   onChangeText={setDuration}
-                  placeholder="Duration (minutes)"
+                  placeholder={t('kids_logForm_placeholderDuration')}
                   placeholderTextColor={colors.textMuted}
                   keyboardType="number-pad"
                   style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
@@ -1741,7 +1750,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             <TextInput
               value={amount}
               onChangeText={setAmount}
-              placeholder="Amount (ml)"
+              placeholder={t('kids_logForm_placeholderAmount')}
               placeholderTextColor={colors.textMuted}
               keyboardType="number-pad"
               style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
@@ -1759,6 +1768,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 // ─── 2. SLEEP FORM ─────────────────────────────────────────────────────────
 
 export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
+  const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -1816,7 +1826,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
 
   const autoDuration = useMemo(() => calcDuration(startTime, endTime, true), [startTime, endTime])
 
-  const qualities = ['Great', 'Good', 'Restless', 'Poor']
+  const qualities = [t('kids_logForm_sleepQualityGreat'), t('kids_logForm_sleepQualityGood'), t('kids_logForm_sleepQualityRestless'), t('kids_logForm_sleepQualityPoor')]
 
   async function save() {
     if (!childId) return
@@ -1886,7 +1896,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
       {autoDuration !== '' && (
         <View style={[styles.iconBanner, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '40', borderWidth: 1 }]}>
           <Moon size={20} color={ACCENT} strokeWidth={2} />
-          <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>Sleep session</Text>
+          <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('kids_logForm_sleepSession')}</Text>
           <Text style={[styles.autoDuration, { color: INK, fontFamily: font.displayBold }]}>{autoDuration}</Text>
         </View>
       )}
@@ -1911,7 +1921,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
       <TextInput
         value={notes}
         onChangeText={setNotes}
-        placeholder="Notes (optional)"
+        placeholder={t('kids_logForm_placeholderNotes')}
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
       />
@@ -1926,6 +1936,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
 const HEALTH_EVENTS = ['Temperature', 'Vaccine', 'Medicine', 'Doctor visit', 'Injury', 'Other']
 
 export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
+  const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -2065,7 +2076,7 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
       <TextInput
         value={value}
         onChangeText={setValue}
-        placeholder={eventType === 'Temperature' ? 'Temperature (e.g. 37.5°C)' : 'Details'}
+        placeholder={eventType === 'Temperature' ? t('kids_logForm_placeholderTemp') : t('kids_logForm_placeholderDetails')}
         placeholderTextColor={colors.textMuted}
         keyboardType={eventType === 'Temperature' ? 'decimal-pad' : 'default'}
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
@@ -2073,7 +2084,7 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
       <TextInput
         value={notes}
         onChangeText={setNotes}
-        placeholder="Notes (optional)"
+        placeholder={t('kids_logForm_placeholderNotes')}
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
       />
@@ -2086,18 +2097,20 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
 
 // Brand mood stickers with tinted fills per variant — hand-drawn faces from
 // the sticker-collage design system replace the generic lucide icons.
-const MOODS: { id: 'happy' | 'calm' | 'fussy' | 'cranky' | 'energetic'; label: string; fill: string }[] = [
-  { id: 'happy',     label: 'Happy',     fill: '#FBEA9E' }, // yellow soft
-  { id: 'calm',      label: 'Calm',      fill: '#CFE0F0' }, // blue soft
-  { id: 'fussy',     label: 'Fussy',     fill: '#F9D6C0' }, // peach soft
-  { id: 'cranky',    label: 'Cranky',    fill: '#F9D8E2' }, // pink soft
-  { id: 'energetic', label: 'Energetic', fill: '#F5D652' }, // yellow bright
+const MOOD_DEFS: { id: 'happy' | 'calm' | 'fussy' | 'cranky' | 'energetic'; labelKey: TranslationKey; fill: string }[] = [
+  { id: 'happy',     labelKey: 'kids_logForm_moodHappy',     fill: '#FBEA9E' }, // yellow soft
+  { id: 'calm',      labelKey: 'kids_logForm_moodCalm',      fill: '#CFE0F0' }, // blue soft
+  { id: 'fussy',     labelKey: 'kids_logForm_moodFussy',     fill: '#F9D6C0' }, // peach soft
+  { id: 'cranky',    labelKey: 'kids_logForm_moodCranky',    fill: '#F9D8E2' }, // pink soft
+  { id: 'energetic', labelKey: 'kids_logForm_moodEnergetic', fill: '#F5D652' }, // yellow bright
 ]
 
 export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
+  const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
+  const MOODS = MOOD_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
 
   const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
@@ -2200,7 +2213,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
       <TextInput
         value={notes}
         onChangeText={setNotes}
-        placeholder="What happened?"
+        placeholder={t('kids_logForm_placeholderWhatHappened')}
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
       />
@@ -2213,6 +2226,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
 // ─── 5. MEMORY FORM ────────────────────────────────────────────────────────
 
 export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; initialDate?: string }) {
+  const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -2322,7 +2336,7 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
       <TextInput
         value={caption}
         onChangeText={setCaption}
-        placeholder="Caption this moment..."
+        placeholder={t('kids_logForm_placeholderCaption')}
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
       />
@@ -2333,25 +2347,27 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
 
 // ─── 6. ACTIVITY FORM ─────────────────────────────────────────────────────
 
-const ACTIVITY_TYPES = [
-  { id: 'class', label: 'Class' },
-  { id: 'school', label: 'School' },
-  { id: 'study', label: 'Study' },
-  { id: 'reading', label: 'Reading' },
-  { id: 'sport', label: 'Sport' },
-  { id: 'swim', label: 'Swimming' },
-  { id: 'dance', label: 'Dance' },
-  { id: 'music', label: 'Music' },
-  { id: 'art', label: 'Art' },
-  { id: 'playground', label: 'Playground' },
-  { id: 'walk', label: 'Walk' },
-  { id: 'therapy', label: 'Therapy' },
-  { id: 'playdate', label: 'Playdate' },
+const ACTIVITY_TYPE_DEFS: { id: string; labelKey: TranslationKey }[] = [
+  { id: 'class', labelKey: 'kids_logForm_activityClass' },
+  { id: 'school', labelKey: 'kids_logForm_activitySchool' },
+  { id: 'study', labelKey: 'kids_logForm_activityStudy' },
+  { id: 'reading', labelKey: 'kids_logForm_activityReading' },
+  { id: 'sport', labelKey: 'kids_logForm_activitySport' },
+  { id: 'swim', labelKey: 'kids_logForm_activitySwimming' },
+  { id: 'dance', labelKey: 'kids_logForm_activityDance' },
+  { id: 'music', labelKey: 'kids_logForm_activityMusic' },
+  { id: 'art', labelKey: 'kids_logForm_activityArt' },
+  { id: 'playground', labelKey: 'kids_logForm_activityPlayground' },
+  { id: 'walk', labelKey: 'kids_logForm_activityWalk' },
+  { id: 'therapy', labelKey: 'kids_logForm_activityTherapy' },
+  { id: 'playdate', labelKey: 'kids_logForm_activityPlaydate' },
 ]
 
 export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
+  const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
+  const ACTIVITY_TYPES = ACTIVITY_TYPE_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
 
   const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
@@ -2467,7 +2483,7 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
         {autoDuration !== '' && (
           <View style={[styles.iconBanner, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '40', borderWidth: 1 }]}>
             <Dumbbell size={20} color={ACCENT} strokeWidth={2} />
-            <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>Duration</Text>
+            <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('kids_logForm_duration')}</Text>
             <Text style={[styles.autoDuration, { color: INK, fontFamily: font.displayBold }]}>{autoDuration}</Text>
           </View>
         )}
@@ -2495,14 +2511,14 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
         <TextInput
           value={name}
           onChangeText={setName}
-          placeholder="Activity name (e.g. Soccer practice)"
+          placeholder={t('kids_logForm_placeholderActivityName')}
           placeholderTextColor={colors.textMuted}
           style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
         />
         <TextInput
           value={notes}
           onChangeText={setNotes}
-          placeholder="Notes (optional)"
+          placeholder={t('kids_logForm_placeholderNotes')}
           placeholderTextColor={colors.textMuted}
           style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
         />
@@ -2519,31 +2535,35 @@ type DiaperType = 'pee' | 'poop' | 'mixed'
 type DiaperColor = 'yellow' | 'green' | 'brown' | 'black' | 'red' | 'orange'
 type DiaperConsistency = 'liquid' | 'soft' | 'normal' | 'hard'
 
-const DIAPER_TYPES: { id: DiaperType; label: string; emoji: string }[] = [
-  { id: 'pee', label: 'Pee', emoji: '💧' },
-  { id: 'poop', label: 'Poop', emoji: '💩' },
-  { id: 'mixed', label: 'Both', emoji: '🔄' },
+const DIAPER_TYPE_DEFS: { id: DiaperType; labelKey: TranslationKey; emoji: string }[] = [
+  { id: 'pee', labelKey: 'kids_logForm_diaperPee', emoji: '💧' },
+  { id: 'poop', labelKey: 'kids_logForm_diaperPoop', emoji: '💩' },
+  { id: 'mixed', labelKey: 'kids_logForm_diaperBoth', emoji: '🔄' },
 ]
 
-const DIAPER_COLORS: { id: DiaperColor; label: string; hex: string }[] = [
-  { id: 'yellow', label: 'Yellow', hex: '#F4D03F' },
-  { id: 'green', label: 'Green', hex: '#58D68D' },
-  { id: 'brown', label: 'Brown', hex: '#A04000' },
-  { id: 'black', label: 'Black', hex: '#2C2C2C' },
-  { id: 'orange', label: 'Orange', hex: '#F39C12' },
-  { id: 'red', label: 'Red', hex: '#E74C3C' },
+const DIAPER_COLOR_DEFS: { id: DiaperColor; labelKey: TranslationKey; hex: string }[] = [
+  { id: 'yellow', labelKey: 'kids_logForm_diaperColorYellow', hex: '#F4D03F' },
+  { id: 'green', labelKey: 'kids_logForm_diaperColorGreen', hex: '#58D68D' },
+  { id: 'brown', labelKey: 'kids_logForm_diaperColorBrown', hex: '#A04000' },
+  { id: 'black', labelKey: 'kids_logForm_diaperColorBlack', hex: '#2C2C2C' },
+  { id: 'orange', labelKey: 'kids_logForm_diaperColorOrange', hex: '#F39C12' },
+  { id: 'red', labelKey: 'kids_logForm_diaperColorRed', hex: '#E74C3C' },
 ]
 
-const DIAPER_CONSISTENCIES: { id: DiaperConsistency; label: string }[] = [
-  { id: 'liquid', label: 'Liquid' },
-  { id: 'soft', label: 'Soft' },
-  { id: 'normal', label: 'Normal' },
-  { id: 'hard', label: 'Hard' },
+const DIAPER_CONSISTENCY_DEFS: { id: DiaperConsistency; labelKey: TranslationKey }[] = [
+  { id: 'liquid', labelKey: 'kids_logForm_diaperConsistLiquid' },
+  { id: 'soft', labelKey: 'kids_logForm_diaperConsistSoft' },
+  { id: 'normal', labelKey: 'kids_logForm_diaperConsistNormal' },
+  { id: 'hard', labelKey: 'kids_logForm_diaperConsistHard' },
 ]
 
 export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => void; initialDate?: string; editLog?: EditLog }) {
+  const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
   const children = useChildStore((s) => s.children)
+  const DIAPER_TYPES = DIAPER_TYPE_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
+  const DIAPER_COLORS = DIAPER_COLOR_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
+  const DIAPER_CONSISTENCIES = DIAPER_CONSISTENCY_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
 
   const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
@@ -2659,7 +2679,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
         {/* Poop details */}
         {showPooDetails && (
           <>
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Color</Text>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('kids_logForm_color')}</Text>
             <View style={[styles.chipGrid, { gap: 8 }]}>
               {DIAPER_COLORS.map((c) => {
                 const active = color === c.id
@@ -2681,7 +2701,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
               })}
             </View>
 
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Consistency</Text>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('kids_logForm_consistency')}</Text>
             <View style={styles.chipGrid}>
               {DIAPER_CONSISTENCIES.map((c) => {
                 const active = consistency === c.id
@@ -2732,7 +2752,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
         <TextInput
           value={notes}
           onChangeText={setNotes}
-          placeholder="Notes (optional)"
+          placeholder={t('kids_logForm_placeholderNotes')}
           placeholderTextColor={colors.textMuted}
           style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
         />
@@ -2752,6 +2772,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
   prefill?: RoutinePrefill
   onSkip?: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius } = useTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -2888,7 +2909,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
           {sleepDuration ? (
             <View style={{ backgroundColor: ACCENT + '12', borderRadius: 14, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: ACCENT + '25' }}>
               <Text style={{ color: ACCENT, fontSize: 36, letterSpacing: -1, lineHeight: 40, fontFamily: font.display }}>{sleepDuration}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>total sleep</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_logForm_totalSleep')}</Text>
             </View>
           ) : null}
 
@@ -2898,10 +2919,10 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
         <View style={{ paddingVertical: 24, alignItems: 'center', gap: 10 }}>
           <Moon size={32} color={colors.textMuted} strokeWidth={1.5} />
           <Text style={{ color: colors.textSecondary, fontSize: 15, fontWeight: '600', textAlign: 'center' }}>
-            No open bedtime found{'\n'}in the last 24 hours
+            {t('kids_logForm_noBedtimeFound')}
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 18 }}>
-            Log bedtime first, then use Wake Up{'\n'}to complete the sleep session.
+            {t('kids_logForm_logBedtimeFirst')}
           </Text>
         </View>
       )}
@@ -2913,6 +2934,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
 
 function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void; saving: boolean; disabled?: boolean; onSkip?: () => void }) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   return (
     <View style={{ gap: 10, marginTop: 4 }}>
       {onSkip && (
@@ -2931,7 +2953,7 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <MinusCircle size={16} color={colors.textMuted} strokeWidth={2} />
-            <Text style={[styles.saveBtnGhostText, { color: colors.textMuted }]}>Skip this time</Text>
+            <Text style={[styles.saveBtnGhostText, { color: colors.textMuted }]}>{t('kids_logForm_skipThisTime')}</Text>
           </View>
         </Pressable>
       )}
@@ -2957,7 +2979,7 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
           <Text style={[
             styles.saveBtnPrimaryText,
             { color: disabled ? (isDark ? colors.textMuted : 'rgba(20,19,19,0.4)') : '#FFFEF8' },
-          ]}>Save</Text>
+          ]}>{t('common_save')}</Text>
         )}
       </Pressable>
     </View>
