@@ -45,6 +45,7 @@ import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
 import { useBehaviorStore, behaviorFromDbType } from '../store/useBehaviorStore'
+import { useCaregiverStore } from '../store/useCaregiverStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
 import { initRevenueCat } from '../lib/revenue'
 import { runNotificationEngine } from '../lib/notificationEngine'
@@ -87,7 +88,8 @@ export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [hasChildren, setHasChildren] = useState(false)
-  const [userRole, setUserRole] = useState<string>('parent')
+  const setAccountRole = useCaregiverStore((s) => s.setAccountRole)
+  const clearCaregiver = useCaregiverStore((s) => s.clear)
   // True when EVERY data query for the current session either timed out or
   // failed. In that state we keep the user where they are instead of
   // shoving them into onboarding — their data may exist in the DB, we
@@ -274,7 +276,7 @@ export default function RootLayout() {
         if (__DEV__) console.log('[auth] profile loaded:', profile)
         else console.log('[auth] profile loaded')
       }
-      if (profile?.user_role) setUserRole(profile.user_role)
+      if (profile?.user_role) setAccountRole(profile.user_role)
       // Active mode is resolved from useModeStore (persisted locally) +
       // the behaviors table below. We don't read it from profiles anymore
       // (see profile-query comment above).
@@ -418,7 +420,7 @@ export default function RootLayout() {
           setRecoveryMode(false)
           inFlightUid = null
           setHasChildren(false)
-          setUserRole('parent')
+          clearCaregiver()
           setLoadFailed(false)
           setLoading(false)
           return

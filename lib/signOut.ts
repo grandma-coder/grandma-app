@@ -5,6 +5,7 @@ import { queryClient } from './queryClient'
 import { useModeStore } from '../store/useModeStore'
 import { useBehaviorStore } from '../store/useBehaviorStore'
 import { useJourneyStore } from '../store/useJourneyStore'
+import { useCaregiverStore } from '../store/useCaregiverStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
 import { useBadgeStore } from '../store/useBadgeStore'
 import { useGoalsStore } from '../store/useGoalsStore'
@@ -92,6 +93,7 @@ export async function signOut(scope: Scope = 'local'): Promise<void> {
     useModeStore,
     useBehaviorStore,
     useJourneyStore,
+    useCaregiverStore,
     usePregnancyStore,
     useBadgeStore,
     useGoalsStore,
