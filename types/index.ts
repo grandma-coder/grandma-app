@@ -70,7 +70,21 @@ export interface CaregiverPermissions {
   view: boolean
   log_activity: boolean
   chat: boolean
+  edit_child?: boolean
+  emergency?: boolean
+  // Meta keys stored in the same JSONB by the care-circle UI (not capabilities).
+  _paused?: boolean
+  _display_name?: string
+  _photo_url?: string
 }
+
+/** Capability flags the owner can grant/withhold (excludes meta keys). */
+export type CaregiverCapability =
+  | 'view'
+  | 'log_activity'
+  | 'chat'
+  | 'edit_child'
+  | 'emergency'
 
 export interface ChildCaregiver {
   id: string
