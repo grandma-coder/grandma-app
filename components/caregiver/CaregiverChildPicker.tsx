@@ -6,6 +6,7 @@
  */
 
 import { ScrollView, Pressable, Text, StyleSheet } from 'react-native'
+import { router } from 'expo-router'
 import { useChildStore } from '../../store/useChildStore'
 import { useTheme, radius, font } from '../../constants/theme'
 import type { ChildWithRole } from '../../types'
@@ -15,6 +16,14 @@ export function CaregiverChildPicker() {
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
+
+  // Switching to a caregiver child re-scopes the home tab to CaregiverHome.
+  // Route to home so the caregiver lands on their scoped surface rather than a
+  // stale owner-only tab (vault/library) they may have been focused on. (F1)
+  const switchTo = (c: ChildWithRole) => {
+    setActiveChild(c)
+    if (c.caregiverRole !== 'parent') router.replace('/(tabs)')
+  }
 
   // Only caregiver links (not the user's own children) belong in this picker.
   const caregiverChildren = children.filter((c) => c.caregiverRole !== 'parent')
@@ -31,7 +40,7 @@ export function CaregiverChildPicker() {
         return (
           <Pressable
             key={c.id}
-            onPress={() => setActiveChild(c)}
+            onPress={() => switchTo(c)}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
             accessibilityLabel={`Switch to ${c.name}`}

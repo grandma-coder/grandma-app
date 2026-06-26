@@ -73,7 +73,11 @@ export function CaregiverHome() {
 
         {/* Child identity header — name + role badge. Non-PHI. */}
         <PaperCard radius={28} padding={20} style={styles.headerCard}>
-          <View style={styles.headerRow}>
+          <View
+            style={styles.headerRow}
+            accessibilityRole="header"
+            accessibilityLabel={`${activeChild.name} — ${isFamily ? 'Family caregiver' : 'Nanny'}`}
+          >
             <View style={styles.avatar}>
               {isFamily ? <RoleFamily size={36} /> : <RoleNanny size={36} />}
             </View>
