@@ -20,21 +20,23 @@ import {
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, MonoCaps } from '../../components/ui/Typography'
 import { BadgeIcon } from '../../components/stickers/BadgeIcon'
-
-const SECTIONS: { key: BadgeCategory; label: string; color: string }[] = [
-  { key: 'streak',    label: 'Streaks',    color: brand.accent },
-  { key: 'daily',     label: 'Daily Rewards', color: brand.primaryLight },
-  { key: 'nutrition', label: 'Nutrition',  color: stickers.green },
-  { key: 'sleep',     label: 'Sleep',      color: stickers.lilac },
-  { key: 'mood',      label: 'Mood',       color: stickers.pink },
-  { key: 'health',    label: 'Health',     color: stickers.blue },
-  { key: 'growth',    label: 'Growth',     color: brand.accent },
-  { key: 'community', label: 'Community',  color: brand.primary },
-  { key: 'milestone', label: 'Milestones', color: stickers.coral },
-]
+import { useTranslation } from '../../lib/i18n'
 
 export default function BadgeWalletScreen() {
   const { colors, font } = useTheme()
+  const { t } = useTranslation()
+
+  const SECTIONS: { key: BadgeCategory; label: string; color: string }[] = [
+    { key: 'streak',    label: t('badgeWallet_sectionStreaks'),    color: brand.accent },
+    { key: 'daily',     label: t('badgeWallet_sectionDaily'),      color: brand.primaryLight },
+    { key: 'nutrition', label: t('badgeWallet_sectionNutrition'),  color: stickers.green },
+    { key: 'sleep',     label: t('badgeWallet_sectionSleep'),      color: stickers.lilac },
+    { key: 'mood',      label: t('badgeWallet_sectionMood'),       color: stickers.pink },
+    { key: 'health',    label: t('badgeWallet_sectionHealth'),     color: stickers.blue },
+    { key: 'growth',    label: t('badgeWallet_sectionGrowth'),     color: brand.accent },
+    { key: 'community', label: t('badgeWallet_sectionCommunity'),  color: brand.primary },
+    { key: 'milestone', label: t('badgeWallet_sectionMilestones'), color: stickers.coral },
+  ]
   const insets = useSafeAreaInsets()
   const earnedBadges = useBadgeStore((s) => s.earnedBadges)
   const totalPoints = useBadgeStore((s) => s.totalPoints)
@@ -54,7 +56,7 @@ export default function BadgeWalletScreen() {
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="Badge Wallet" />
+        <ScreenHeader title={t('badgeWallet_title')} />
       </View>
       <ScrollView
         contentContainerStyle={[
@@ -67,17 +69,17 @@ export default function BadgeWalletScreen() {
         <View style={[styles.summary, { backgroundColor: paper, borderColor: paperBorder }]}>
           <View style={styles.summaryItem}>
             <Display size={28} color={ink}>{earnedCount}</Display>
-            <MonoCaps color={ink3}>Earned</MonoCaps>
+            <MonoCaps color={ink3}>{t('badgeWallet_earned')}</MonoCaps>
           </View>
           <View style={[styles.summaryDivider, { backgroundColor: paperBorder }]} />
           <View style={styles.summaryItem}>
             <Display size={28} color={ink3}>{totalCount - earnedCount}</Display>
-            <MonoCaps color={ink3}>Locked</MonoCaps>
+            <MonoCaps color={ink3}>{t('badgeWallet_locked')}</MonoCaps>
           </View>
           <View style={[styles.summaryDivider, { backgroundColor: paperBorder }]} />
           <View style={styles.summaryItem}>
             <Display size={28} color={ink}>{totalPoints}</Display>
-            <MonoCaps color={ink3}>Points</MonoCaps>
+            <MonoCaps color={ink3}>{t('badgeWallet_points')}</MonoCaps>
           </View>
         </View>
 

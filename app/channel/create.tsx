@@ -8,6 +8,7 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArrowLeft, Check, Camera, Lock, Globe } from 'lucide-react-native'
 import { useTheme, font } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { createChannel } from '../../lib/channelPosts'
 import {
   STICKER_PRESETS,
@@ -39,6 +40,7 @@ type IconChoice =
 export default function CreateChannel() {
   const insets = useSafeAreaInsets()
   const { colors, radius, spacing, isDark } = useTheme()
+  const { t } = useTranslation()
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -69,11 +71,11 @@ export default function CreateChannel() {
   async function handleCreate() {
     const trimmedName = name.trim()
     if (!trimmedName) {
-      Alert.alert('Required', 'Give your channel a name')
+      Alert.alert(t('channelCreate_nameRequired'))
       return
     }
     if (!category) {
-      Alert.alert('Required', 'Pick a category')
+      Alert.alert(t('channelCreate_categoryRequired'))
       return
     }
     const finalCategory = category === 'Other' ? (customCategory.trim() || 'other') : category
@@ -109,7 +111,7 @@ export default function CreateChannel() {
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
             <ArrowLeft size={22} color={colors.text} />
           </Pressable>
-          <Text style={styles.headerTitle}>New Channel</Text>
+          <Text style={styles.headerTitle}>{t('channelCreate_header')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -178,10 +180,10 @@ export default function CreateChannel() {
           </View>
 
           {/* Name */}
-          <Text style={styles.label}>CHANNEL NAME *</Text>
+          <Text style={styles.label}>{t('channelCreate_labelName')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g. Sleep Training Tips"
+            placeholder={t('channelCreate_namePlaceholder')}
             placeholderTextColor={colors.textMuted}
             value={name}
             onChangeText={(t) => setName(t.slice(0, 50))}
@@ -191,10 +193,10 @@ export default function CreateChannel() {
           <Text style={styles.charCount}>{name.length}/50</Text>
 
           {/* Description */}
-          <Text style={styles.label}>DESCRIPTION</Text>
+          <Text style={styles.label}>{t('channelCreate_labelDescription')}</Text>
           <TextInput
             style={[styles.input, styles.inputMulti]}
-            placeholder="What is this channel about?"
+            placeholder={t('channelCreate_descriptionPlaceholder')}
             placeholderTextColor={colors.textMuted}
             value={description}
             onChangeText={(t) => setDescription(t.slice(0, 200))}
@@ -204,31 +206,31 @@ export default function CreateChannel() {
           <Text style={styles.charCount}>{description.length}/200</Text>
 
           {/* Privacy toggle */}
-          <Text style={styles.label}>CHANNEL TYPE</Text>
+          <Text style={styles.label}>{t('channelCreate_labelType')}</Text>
           <View style={styles.chipRow}>
             <Pressable
               onPress={() => setIsPrivate(false)}
               style={[styles.chip, !isPrivate && styles.chipSelected]}
             >
               <Globe size={14} color={!isPrivate ? colors.primary : colors.textSecondary} style={{ marginRight: 4 }} />
-              <Text style={[styles.chipText, !isPrivate && styles.chipTextSelected]}>Public</Text>
+              <Text style={[styles.chipText, !isPrivate && styles.chipTextSelected]}>{t('channelCreate_typePublic')}</Text>
             </Pressable>
             <Pressable
               onPress={() => setIsPrivate(true)}
               style={[styles.chip, isPrivate && styles.chipSelected]}
             >
               <Lock size={14} color={isPrivate ? colors.primary : colors.textSecondary} style={{ marginRight: 4 }} />
-              <Text style={[styles.chipText, isPrivate && styles.chipTextSelected]}>Private</Text>
+              <Text style={[styles.chipText, isPrivate && styles.chipTextSelected]}>{t('channelCreate_typePrivate')}</Text>
             </Pressable>
           </View>
           {isPrivate && (
             <Text style={[styles.charCount, { textAlign: 'left', marginTop: 6 }]}>
-              Members must request to join. You'll approve or deny each request.
+              {t('channelCreate_privateHint')}
             </Text>
           )}
 
           {/* Category */}
-          <Text style={styles.label}>CATEGORY *</Text>
+          <Text style={styles.label}>{t('channelCreate_labelCategory')}</Text>
           <View style={styles.chipRow}>
             {CATEGORIES.map((c) => {
               const selected = category === c
@@ -255,11 +257,11 @@ export default function CreateChannel() {
           {/* Custom category input when "Other" selected */}
           {category === 'Other' && (
             <View style={{ marginTop: 12 }}>
-              <Text style={styles.label}>YOUR CATEGORY</Text>
+              <Text style={styles.label}>{t('channelCreate_labelYourCategory')}</Text>
               <TextInput
                 value={customCategory}
                 onChangeText={setCustomCategory}
-                placeholder='e.g. "Mental Health", "Activities"'
+                placeholder={t('channelCreate_categoryPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 style={[
                   styles.input,
@@ -282,7 +284,7 @@ export default function CreateChannel() {
             ]}
           >
             <Text style={styles.createBtnText}>
-              {loading ? 'Creating...' : 'Create Channel'}
+              {loading ? t('channelCreate_creating') : t('channelCreate_create')}
             </Text>
           </Pressable>
         </View>
@@ -313,6 +315,7 @@ function ChannelCreatedModal({
   onGo: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
 
   // Hero = Heart, satellites = Star / Leaf / Moon (distinct colors)
   const heroAnim = useRef(new Animated.Value(0)).current
@@ -391,17 +394,16 @@ function ChannelCreatedModal({
             })}
           </View>
 
-          <Text style={[modalStyles.title, { color: colors.text }]}>Channel Created!</Text>
+          <Text style={[modalStyles.title, { color: colors.text }]}>{t('channelCreate_successTitle')}</Text>
           <Text style={[modalStyles.desc, { color: colors.textSecondary }]}>
-            Your channel{' '}
             <Text style={{ fontWeight: '800', color: colors.text }}>#{channelName}</Text>
-            {' '}is live.{'\n'}Invite friends and start the conversation.
+            {' '}{t('channelCreate_successMsg')}
           </Text>
           <Pressable
             onPress={onGo}
             style={[modalStyles.cta, { backgroundColor: CREAM, borderRadius: radius.full }]}
           >
-            <Text style={[modalStyles.ctaText, { color: INK }]}>Go to Channel</Text>
+            <Text style={[modalStyles.ctaText, { color: INK }]}>{t('channelCreate_goToChannel')}</Text>
           </Pressable>
         </View>
       </View>

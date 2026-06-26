@@ -8,10 +8,12 @@ import { getChannels } from '../../lib/channels'
 import { useChannelsStore } from '../../store/useChannelsStore'
 import { ChannelCard } from '../../components/channels/ChannelCard'
 import { typography, spacing, useTheme, font } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import type { Channel } from '../../lib/channels'
 
 export default function ChannelBrowser() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => createStyles(colors), [colors])
   const insets = useSafeAreaInsets()
   const { channels, loading, setChannels, setLoading } = useChannelsStore()
@@ -39,20 +41,20 @@ export default function ChannelBrowser() {
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </Pressable>
-          <Text style={styles.title}>Channels</Text>
+          <Text style={styles.title}>{t('channelBrowser_title')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
         <Text style={styles.subtitle}>
-          Join discussions with other parents, nannies, and future parents.
+          {t('channelBrowser_subtitle')}
         </Text>
 
         {channels.length === 0 && !loading ? (
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>💬</Text>
-            <Text style={styles.emptyTitle}>No channels yet</Text>
+            <Text style={styles.emptyTitle}>{t('channelBrowser_emptyTitle')}</Text>
             <Text style={styles.emptySubtitle}>
-              Be the first — start a channel for birth stories, breastfeeding, recipes, or a local meetup.
+              {t('channelBrowser_emptySubtitle')}
             </Text>
             <Pressable
               onPress={() => router.push('/channel/create')}
@@ -60,7 +62,7 @@ export default function ChannelBrowser() {
               style={styles.emptyCta}
             >
               <Ionicons name="add" size={18} color={colors.textInverse} />
-              <Text style={styles.emptyCtaText}>Create a Channel</Text>
+              <Text style={styles.emptyCtaText}>{t('channelBrowser_createCta')}</Text>
             </Pressable>
           </View>
         ) : (

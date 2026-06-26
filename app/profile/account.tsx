@@ -12,6 +12,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { signOut } from '../../lib/signOut'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -23,6 +24,7 @@ export default function AccountScreen() {
   const { colors, font, stickers, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
+  const { t } = useTranslation()
 
   const paper = colors.surface
   const paperBorder = colors.border
@@ -63,10 +65,10 @@ export default function AccountScreen() {
   }
 
   async function handleSignOutAll() {
-    Alert.alert('Sign Out Everywhere', 'This will sign you out of all devices.', [
+    Alert.alert(t('account_signOutEverywhereTitle'), t('account_signOutEverywhereMsg'), [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Sign Out All',
+        text: t('account_signOutAll'),
         style: 'destructive',
         onPress: async () => {
           await signOut('global')
@@ -77,15 +79,15 @@ export default function AccountScreen() {
 
   async function handleDeleteAccount() {
     Alert.alert(
-      'Delete Account',
-      'This will permanently delete your account, all children data, care circle, memories, and health records. This cannot be undone.',
+      t('account_deleteTitle'),
+      t('account_deleteMsg'),
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'I understand, delete',
+          text: t('account_deleteConfirmBtn'),
           style: 'destructive',
           onPress: () => {
-            Alert.alert('Contact Support', 'For security, please email support@grandma.app with your account email to request deletion.')
+            Alert.alert(t('account_contactSupport'), t('account_contactSupportMsg'))
           },
         },
       ]
@@ -110,21 +112,21 @@ export default function AccountScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Big Fraunces title */}
         <View style={styles.titleBlock}>
-          <Display size={32} color={colors.text}>Account & Security</Display>
+          <Display size={32} color={colors.text}>{t('account_title')}</Display>
           <DisplayItalic size={18} color={stickers.coral} style={{ marginTop: 6 }}>
-            your sign-in, your call
+            {t('account_subtitle')}
           </DisplayItalic>
         </View>
 
         {/* Email */}
-        <SectionLabel sticker={<Heart size={20} fill={stickers.pink} />}>Email</SectionLabel>
+        <SectionLabel sticker={<Heart size={20} fill={stickers.pink} />}>{t('account_sectionEmail')}</SectionLabel>
         <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
           <View style={[styles.inputRow, { borderBottomColor: paperBorder }]}>
             <Mail size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={email}
               onChangeText={setEmail}
-              placeholder="Email address"
+              placeholder={t('account_emailPlaceholder')}
               placeholderTextColor={colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -146,20 +148,20 @@ export default function AccountScreen() {
           >
             <Sparkle size={20} fill={stickers.yellow} />
             <Text style={[styles.actionPillText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-              {saving ? 'Saving…' : 'Update Email'}
+              {saving ? t('account_saving') : t('account_updateEmail')}
             </Text>
           </Pressable>
         </View>
 
         {/* Password */}
-        <SectionLabel sticker={<Star size={20} fill={stickers.yellow} />}>Password</SectionLabel>
+        <SectionLabel sticker={<Star size={20} fill={stickers.yellow} />}>{t('account_sectionPassword')}</SectionLabel>
         <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
           <View style={[styles.inputRow, { borderBottomColor: paperBorder }]}>
             <Lock size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={newPassword}
               onChangeText={setNewPassword}
-              placeholder="New password"
+              placeholder={t('account_newPasswordPlaceholder')}
               placeholderTextColor={colors.textMuted}
               secureTextEntry={!showPassword}
               style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
@@ -168,7 +170,7 @@ export default function AccountScreen() {
               {showPassword ? <EyeOff size={18} color={colors.textMuted} /> : <Eye size={18} color={colors.textMuted} />}
             </Pressable>
           </View>
-          <Body size={12} color={colors.textMuted}>Minimum 6 characters</Body>
+          <Body size={12} color={colors.textMuted}>{t('account_minChars')}</Body>
           <Pressable
             onPress={handleChangePassword}
             disabled={saving || newPassword.length < 6}
@@ -184,18 +186,18 @@ export default function AccountScreen() {
           >
             <Sparkle size={20} fill={stickers.yellow} />
             <Text style={[styles.actionPillText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-              {saving ? 'Saving…' : 'Change Password'}
+              {saving ? t('account_saving') : t('account_changePassword')}
             </Text>
           </Pressable>
         </View>
 
         {/* Sessions */}
-        <SectionLabel sticker={<Moon size={20} fill={stickers.lilac} />}>Sessions</SectionLabel>
+        <SectionLabel sticker={<Moon size={20} fill={stickers.lilac} />}>{t('account_sectionSessions')}</SectionLabel>
         <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
           <Pressable onPress={handleSignOutAll} style={styles.row}>
             <View style={styles.rowLeft}>
               <Moon size={32} fill={stickers.lilac} />
-              <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>Sign Out All Devices</Text>
+              <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('account_signOutAllDevices')}</Text>
             </View>
             <ChevronRight size={18} color={colors.textMuted} />
           </Pressable>
@@ -203,7 +205,7 @@ export default function AccountScreen() {
 
         {/* Danger zone */}
         <SectionLabel sticker={<Cross size={20} fill={stickers.coral} />} color={dangerLabel}>
-          Danger Zone
+          {t('account_sectionDanger')}
         </SectionLabel>
         <Pressable
           onPress={handleDeleteAccount}
@@ -217,10 +219,10 @@ export default function AccountScreen() {
           ]}
         >
           <Cross size={28} fill={stickers.coral} />
-          <Text style={[styles.dangerTextBtn, { color: colors.text, fontFamily: font.bodySemiBold }]}>Delete Account</Text>
+          <Text style={[styles.dangerTextBtn, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('account_deleteAccount')}</Text>
         </Pressable>
         <Text style={[styles.dangerHint, { color: colors.textMuted, fontFamily: font.body }]}>
-          This permanently deletes your account, all children profiles, care circle members, memories, and health records.
+          {t('account_deleteHint')}
         </Text>
       </ScrollView>
     </View>

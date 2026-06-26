@@ -43,6 +43,7 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
@@ -105,6 +106,7 @@ function planTypeLabel(t: InsurancePlanType): string {
 export default function EmergencyInsuranceScreen() {
   const { colors, font, stickers, isDark, radius } = useTheme()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const toast = useSavedToast()
   const paper = colors.surface
   const paperBorder = colors.border
@@ -220,10 +222,10 @@ export default function EmergencyInsuranceScreen() {
         <ScreenHeader />
         <View style={styles.titleBlock}>
           <Text style={[styles.bigTitle, { color: colors.text, fontFamily: font.display }]}>
-            Emergency & Insurance
+            {t('emergencyInsurance_title')}
           </Text>
           <Text style={[styles.bigSubtitle, { color: coralInk, fontFamily: font.italic }]}>
-            keep them close, dear
+            {t('emergencyInsurance_subtitle')}
           </Text>
         </View>
       </View>
@@ -241,13 +243,13 @@ export default function EmergencyInsuranceScreen() {
           <View style={styles.sectionHeader}>
             <View style={styles.sectionLabelRow}>
               <HeartSticker size={16} fill={stickers.coral} />
-              <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>EMERGENCY CONTACTS</Text>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('emergencyInsurance_sectionContacts')}</Text>
             </View>
             <Pressable onPress={openAddContact} hitSlop={8}>
               <View style={[styles.addPill, { backgroundColor: stickers.peachSoft }]}>
                 <SparkleSticker size={14} fill={coralInk} stroke={coralInk} />
                 <Plus size={14} color={coralInk} strokeWidth={3} />
-                <Text style={[styles.addPillText, { color: coralInk, fontFamily: font.bodySemiBold }]}>Add</Text>
+                <Text style={[styles.addPillText, { color: coralInk, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_add')}</Text>
               </View>
             </Pressable>
           </View>
@@ -261,7 +263,7 @@ export default function EmergencyInsuranceScreen() {
                 <CrossSticker size={140} fill={stickers.coral} />
               </View>
               <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display }]}>
-                No emergency contacts yet
+                {t('emergencyInsurance_emptyContacts')}
               </Text>
               <Body size={14} align="center" color={colors.textMuted}>
                 Add people to call in case of an emergency. Grandma wants you safe.
@@ -315,13 +317,13 @@ export default function EmergencyInsuranceScreen() {
           <View style={[styles.sectionHeader, { marginTop: 28 }]}>
             <View style={styles.sectionLabelRow}>
               <StarSticker size={16} fill={stickers.peach} />
-              <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>INSURANCE PLANS</Text>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('emergencyInsurance_sectionPlans')}</Text>
             </View>
             <Pressable onPress={openAddPlan} hitSlop={8}>
               <View style={[styles.addPill, { backgroundColor: stickers.peachSoft }]}>
                 <SparkleSticker size={14} fill={peachInk} stroke={peachInk} />
                 <Plus size={14} color={peachInk} strokeWidth={3} />
-                <Text style={[styles.addPillText, { color: peachInk, fontFamily: font.bodySemiBold }]}>Add</Text>
+                <Text style={[styles.addPillText, { color: peachInk, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_add')}</Text>
               </View>
             </Pressable>
           </View>
@@ -335,7 +337,7 @@ export default function EmergencyInsuranceScreen() {
                 <Squishy w={140} h={94} fill={stickers.peach} />
               </View>
               <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display }]}>
-                No insurance plans yet
+                {t('emergencyInsurance_emptyPlans')}
               </Text>
               <Body size={14} align="center" color={colors.textMuted}>
                 Keep your health, dental, and vision plans handy in one place.
@@ -469,6 +471,7 @@ function ContactFormModal({
   }) => Promise<void>
 }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const paper = colors.surface
   const paperBorder = colors.border
@@ -500,8 +503,8 @@ function ContactFormModal({
   }, [contact])
 
   async function handleSave() {
-    if (!name.trim()) return Alert.alert('Name required')
-    if (!phone.trim()) return Alert.alert('Phone required')
+    if (!name.trim()) return Alert.alert(t('emergencyInsurance_nameRequired'))
+    if (!phone.trim()) return Alert.alert(t('emergencyInsurance_phoneRequired'))
     setSaving(true)
     try {
       await onSave({
@@ -540,7 +543,7 @@ function ContactFormModal({
           </Pressable>
           <View style={styles.modalTitleCenter}>
             <Text style={[styles.modalBigTitle, { color: colors.text, fontFamily: font.display }]}>
-              {isEdit ? 'Edit Contact' : 'Add Contact'}
+              {isEdit ? t('emergencyInsurance_editContact') : t('emergencyInsurance_addContact')}
             </Text>
             <Text style={[styles.modalItalic, { color: stickers.coralInk, fontFamily: font.italic }]}>
               someone to call
@@ -554,20 +557,20 @@ function ContactFormModal({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <MonoCaps color={colors.textMuted}>Name</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldName')}</MonoCaps>
           <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <User size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="Contact name"
+              placeholder={t('emergencyInsurance_contactNamePlaceholder')}
               placeholderTextColor={colors.textMuted}
               style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
               autoCapitalize="words"
             />
           </View>
 
-          <MonoCaps color={colors.textMuted}>Relationship</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldRelationship')}</MonoCaps>
           <Pressable
             onPress={() => setShowRelPicker(!showRelPicker)}
             style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}
@@ -597,26 +600,26 @@ function ContactFormModal({
             </View>
           )}
 
-          <MonoCaps color={colors.textMuted}>Phone</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldPhone')}</MonoCaps>
           <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Phone size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={phone}
               onChangeText={setPhone}
-              placeholder="Phone number"
+              placeholder={t('emergencyInsurance_phonePlaceholder')}
               placeholderTextColor={colors.textMuted}
               keyboardType="phone-pad"
               style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
             />
           </View>
 
-          <MonoCaps color={colors.textMuted}>Email (optional)</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldEmailOptional')}</MonoCaps>
           <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Mail size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={email}
               onChangeText={setEmail}
-              placeholder="Email address"
+              placeholder={t('emergencyInsurance_emailPlaceholder')}
               placeholderTextColor={colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -634,7 +637,7 @@ function ContactFormModal({
               strokeWidth={2}
               fill={isPrimary ? (stickers.yellowInk) : 'transparent'}
             />
-            <Text style={[styles.toggleLabel, { color: colors.text, fontFamily: font.bodyMedium }]}>Primary contact</Text>
+            <Text style={[styles.toggleLabel, { color: colors.text, fontFamily: font.bodyMedium }]}>{t('emergencyInsurance_primaryContact')}</Text>
             <View
               style={[
                 styles.toggleDot,
@@ -647,12 +650,12 @@ function ContactFormModal({
             </View>
           </Pressable>
 
-          <MonoCaps color={colors.textMuted}>Notes (optional)</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldNotesOptional')}</MonoCaps>
           <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder, height: undefined, minHeight: 96, alignItems: 'flex-start', paddingTop: 16, paddingBottom: 16, borderRadius: 28 }]}>
             <TextInput
               value={notes}
               onChangeText={setNotes}
-              placeholder="Any notes…"
+              placeholder={t('emergencyInsurance_notesPlaceholder')}
               placeholderTextColor={colors.textMuted}
               multiline
               style={[styles.inputText, { color: colors.text, textAlignVertical: 'top', fontFamily: font.body }]}
@@ -662,7 +665,7 @@ function ContactFormModal({
 
         <View style={[styles.modalBottom, { paddingBottom: insets.bottom + 16 }]}>
           <PillButton
-            label={saving ? 'Saving…' : (isEdit ? 'Save Changes' : 'Add Contact')}
+            label={saving ? t('emergencyInsurance_saving') : (isEdit ? t('emergencyInsurance_saveChanges') : t('emergencyInsurance_addContactBtn'))}
             variant="ink"
             onPress={handleSave}
             disabled={saving}
@@ -699,6 +702,7 @@ function PlanFormModal({
 }) {
   const { colors, font, stickers, isDark } = useTheme()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const toast = useSavedToast()
   const paper = colors.surface
   const paperBorder = colors.border
@@ -747,7 +751,7 @@ function PlanFormModal({
       const data = await pickAndScanInsuranceCard(useCamera)
       if (data) {
         applyScannedData(data)
-        toast.show({ title: 'Card Scanned', message: 'Fields have been filled in. Please review and adjust if needed.' })
+        toast.show({ title: t('emergencyInsurance_cardScanned'), message: 'Fields have been filled in. Please review and adjust if needed.' })
       }
     } catch (e: any) {
       Alert.alert('Scan failed', e.message)
@@ -756,7 +760,7 @@ function PlanFormModal({
   }
 
   async function handleSave() {
-    if (!providerName.trim()) return Alert.alert('Provider required')
+    if (!providerName.trim()) return Alert.alert(t('emergencyInsurance_providerRequired'))
     setSaving(true)
     try {
       await onSave({
@@ -797,7 +801,7 @@ function PlanFormModal({
           </Pressable>
           <View style={styles.modalTitleCenter}>
             <Text style={[styles.modalBigTitle, { color: colors.text, fontFamily: font.display }]}>
-              {isEdit ? 'Edit Plan' : 'Add Insurance Plan'}
+              {isEdit ? t('emergencyInsurance_editPlan') : t('emergencyInsurance_addPlan')}
             </Text>
             <Text style={[styles.modalItalic, { color: stickers.coralInk, fontFamily: font.italic }]}>
               keep your card on hand
@@ -820,10 +824,10 @@ function PlanFormModal({
               <CreditCard size={20} color={coral} strokeWidth={2} />
               <View style={styles.scanBannerText}>
                 <Text style={[styles.scanBannerTitle, { color: colors.text, fontFamily: font.display }]}>
-                  Scan your card
+                  {t('emergencyInsurance_scanBannerTitle')}
                 </Text>
                 <Text style={[styles.scanBannerSubtitle, { color: colors.textSecondary, fontFamily: font.body }]}>
-                  Take a photo or upload and auto-fill all fields
+                  {t('emergencyInsurance_scanBannerDesc')}
                 </Text>
               </View>
             </View>
@@ -839,7 +843,7 @@ function PlanFormModal({
                 ]}
               >
                 <Camera size={16} color="#FFFEF8" strokeWidth={2.5} />
-                <Text style={[styles.scanBtnText, { color: colors.surface, fontFamily: font.bodySemiBold }]}>Camera</Text>
+                <Text style={[styles.scanBtnText, { color: colors.surface, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_scanCamera')}</Text>
               </Pressable>
               <Pressable
                 onPress={() => handleScanCard(false)}
@@ -852,20 +856,20 @@ function PlanFormModal({
                 ]}
               >
                 <ImageIcon size={16} color={colors.text} strokeWidth={2.5} />
-                <Text style={[styles.scanBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Gallery</Text>
+                <Text style={[styles.scanBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_scanGallery')}</Text>
               </Pressable>
             </View>
             {scanning && (
               <View style={styles.scanningRow}>
                 <ActivityIndicator size="small" color={accent} />
                 <Text style={[styles.scanningText, { color: colors.textSecondary, fontFamily: font.body }]}>
-                  Reading your card…
+                  {t('emergencyInsurance_scanReading')}
                 </Text>
               </View>
             )}
           </View>
 
-          <MonoCaps color={colors.textMuted}>Type</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldType')}</MonoCaps>
           <View style={styles.chipRow}>
             {PLAN_TYPES.map((t) => {
               const active = planType === t.id
@@ -897,38 +901,38 @@ function PlanFormModal({
             })}
           </View>
 
-          <MonoCaps color={colors.textMuted}>Provider</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldProvider')}</MonoCaps>
           <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Building2 size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={providerName}
               onChangeText={setProviderName}
-              placeholder="e.g. Blue Cross Blue Shield"
+              placeholder={t('emergencyInsurance_providerPlaceholder')}
               placeholderTextColor={colors.textMuted}
               style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
               autoCapitalize="words"
             />
           </View>
 
-          <MonoCaps color={colors.textMuted}>Plan name (optional)</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldPlanNameOptional')}</MonoCaps>
           <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <FileText size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={planName}
               onChangeText={setPlanName}
-              placeholder="e.g. PPO Gold Family"
+              placeholder={t('emergencyInsurance_planNamePlaceholder')}
               placeholderTextColor={colors.textMuted}
               style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
             />
           </View>
 
-          <MonoCaps color={colors.textMuted}>Policy number</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldPolicyNumber')}</MonoCaps>
           <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <CreditCard size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={policyNumber}
               onChangeText={setPolicyNumber}
-              placeholder="Policy number"
+              placeholder={t('emergencyInsurance_policyPlaceholder')}
               placeholderTextColor={colors.textMuted}
               style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
             />
@@ -936,24 +940,24 @@ function PlanFormModal({
 
           <View style={styles.twoCol}>
             <View style={styles.twoColItem}>
-              <MonoCaps color={colors.textMuted}>Group #</MonoCaps>
+              <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldGroupNumber')}</MonoCaps>
               <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
                 <TextInput
                   value={groupNumber}
                   onChangeText={setGroupNumber}
-                  placeholder="Group #"
+                  placeholder={t('emergencyInsurance_groupPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
                 />
               </View>
             </View>
             <View style={styles.twoColItem}>
-              <MonoCaps color={colors.textMuted}>Member ID</MonoCaps>
+              <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldMemberId')}</MonoCaps>
               <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
                 <TextInput
                   value={memberId}
                   onChangeText={setMemberId}
-                  placeholder="Member ID"
+                  placeholder={t('emergencyInsurance_memberIdPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
                 />
@@ -961,25 +965,25 @@ function PlanFormModal({
             </View>
           </View>
 
-          <MonoCaps color={colors.textMuted}>Insurance phone</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldInsurancePhone')}</MonoCaps>
           <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Phone size={18} color={colors.textMuted} strokeWidth={2} />
             <TextInput
               value={phone}
               onChangeText={setPhone}
-              placeholder="Customer service number"
+              placeholder={t('emergencyInsurance_insPhonePlaceholder')}
               placeholderTextColor={colors.textMuted}
               keyboardType="phone-pad"
               style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
             />
           </View>
 
-          <MonoCaps color={colors.textMuted}>Notes (optional)</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldNotesOptional')}</MonoCaps>
           <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder, height: undefined, minHeight: 96, alignItems: 'flex-start', paddingTop: 16, paddingBottom: 16, borderRadius: 28 }]}>
             <TextInput
               value={notes}
               onChangeText={setNotes}
-              placeholder="Coverage details, co-pays, etc."
+              placeholder={t('emergencyInsurance_coveragePlaceholder')}
               placeholderTextColor={colors.textMuted}
               multiline
               style={[styles.inputText, { color: colors.text, textAlignVertical: 'top', fontFamily: font.body }]}
@@ -989,7 +993,7 @@ function PlanFormModal({
 
         <View style={[styles.modalBottom, { paddingBottom: insets.bottom + 16 }]}>
           <PillButton
-            label={saving ? 'Saving…' : (isEdit ? 'Save Changes' : 'Add Plan')}
+            label={saving ? t('emergencyInsurance_saving') : (isEdit ? t('emergencyInsurance_saveChanges') : t('emergencyInsurance_addPlanBtn'))}
             variant="ink"
             onPress={handleSave}
             disabled={saving}

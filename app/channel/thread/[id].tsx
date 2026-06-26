@@ -34,9 +34,11 @@ import {
 } from '../../../lib/channelPosts'
 import { supabase } from '../../../lib/supabase'
 import { BrandedLoader } from '../../../components/ui/BrandedLoader'
+import { useTranslation } from '../../../lib/i18n'
 
 export default function ThreadView() {
   const { colors, radius } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
 
@@ -125,7 +127,7 @@ export default function ThreadView() {
         <Pressable onPress={() => router.back()} style={s.headerBtn}>
           <ArrowLeft size={24} color={colors.text} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: colors.text }]}>Thread</Text>
+        <Text style={[s.headerTitle, { color: colors.text }]}>{t('channelThread_header')}</Text>
         <View style={s.headerBtn} />
       </View>
 
@@ -159,7 +161,7 @@ export default function ThreadView() {
                   <Image source={{ uri: parentMsg.photos[0] }} style={[s.photo, { borderRadius: radius.lg }]} />
                 )}
                 <Text style={[s.replyCountText, { color: colors.textMuted }]}>
-                  {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
+                  {replies.length === 1 ? t('channelThread_replyCountOne', { count: replies.length }) : t('channelThread_replyCountMany', { count: replies.length })}
                 </Text>
               </View>
             ) : null
@@ -189,8 +191,8 @@ export default function ThreadView() {
             <EmptyState
               icon={<MessageCircle size={36} color={stickers.lilac} strokeWidth={1.5} />}
               iconBg={stickers.lilacSoft}
-              title="No replies yet"
-              message="Be the first to reply."
+              title={t('channelThread_emptyTitle')}
+              message={t('channelThread_emptySubtitle')}
             />
           }
         />
@@ -200,7 +202,7 @@ export default function ThreadView() {
           <TextInput
             value={text}
             onChangeText={setText}
-            placeholder="Reply..."
+            placeholder={t('channelThread_replyPlaceholder')}
             placeholderTextColor={colors.textMuted}
             style={[s.input, { color: colors.text, backgroundColor: colors.surface, borderRadius: radius.full }]}
             returnKeyType="send"

@@ -74,11 +74,13 @@ import {
 import { supabase } from '../../lib/supabase'
 import { checkPhotoSafety } from '../../lib/photoSafety'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
+import { useTranslation } from '../../lib/i18n'
 
 // ─── Main Component ───────────────────────────────────────────────────────
 
 export default function ChannelChat() {
   const { colors, radius, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const mode = useModeStore((s) => s.mode)
   const accent = getModeColor(mode, isDark)
   const insets = useSafeAreaInsets()
@@ -679,9 +681,9 @@ export default function ChannelChat() {
         <EmptyState
           icon={<Star size={36} color={stickers.coral} strokeWidth={1.5} />}
           iconBg={stickers.coralInk + '22'}
-          title="Couldn't load this channel"
-          message="Check your connection and try again."
-          ctaLabel="Try again"
+          title={t('channelScreen_errorTitle')}
+          message={t('channelScreen_errorSubtitle')}
+          ctaLabel={t('channelScreen_tryAgain')}
           onCtaPress={load}
         />
       </View>
@@ -723,7 +725,7 @@ export default function ChannelChat() {
             style={[styles.headerTitle, { color: colors.text, fontFamily: font.display }]}
             numberOfLines={1}
           >
-            {channel?.name ?? 'Channel'}
+            {channel?.name ?? t('channelScreen_nameFallback')}
           </Text>
           <Text style={[styles.memberCount, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
             {channel?.memberCount ?? 0}
@@ -764,14 +766,14 @@ export default function ChannelChat() {
             ]}
           >
             {isMember && isOwner
-              ? 'Host'
+              ? t('channelScreen_host')
               : isMember
-              ? 'Leave'
+              ? t('channelScreen_leave')
               : channel?.channelType === 'private' && myRequest?.status === 'pending'
-              ? 'Requested'
+              ? t('channelScreen_requested')
               : channel?.channelType === 'private'
-              ? 'Request'
-              : 'Join'}
+              ? t('channelScreen_request')
+              : t('channelScreen_join')}
           </Text>
         </Pressable>
         </View>
@@ -799,11 +801,11 @@ export default function ChannelChat() {
                 <Text style={[styles.rateBarCount, { color: colors.textMuted }]}>({channel.ratingCount})</Text>
               </>
             ) : (
-              <Text style={[styles.rateBarPrompt, { color: colors.textMuted }]}>No ratings yet</Text>
+              <Text style={[styles.rateBarPrompt, { color: colors.textMuted }]}>{t('channelScreen_noRatingsYet')}</Text>
             )}
           </View>
           <Text style={[styles.rateBarAction, { color: accent, fontFamily: font.bodyBold }]}>
-            {myRating > 0 ? 'Edit Rating' : 'Rate Channel'}
+            {myRating > 0 ? t('channelScreen_editRating') : t('channelScreen_rateChannel')}
           </Text>
         </Pressable>
       )}
@@ -861,7 +863,7 @@ export default function ChannelChat() {
                 <EmptyState
                   icon={EmptyIcon ? <EmptyIcon size={40} fill={s!.fill} /> : undefined}
                   iconBg={s?.tint ?? stickers.lilacSoft}
-                  title={isMember ? 'No messages yet' : 'Be the first to say hi'}
+                  title={isMember ? t('channelScreen_emptyTitle') : t('channelScreen_emptySubtitle')}
                   message={
                     isMember
                       ? 'Start the conversation — your story helps someone else feel less alone.'
@@ -880,8 +882,8 @@ export default function ChannelChat() {
                 onReaction={() => handleReaction(item.id)}
                 onLongPress={() => {
                   Alert.alert('Message', '', [
-                    { text: 'Reply in Thread', onPress: () => router.push(`/channel/thread/${item.id}` as any) },
-                    { text: 'Reply', onPress: () => { setReplyTo(item); inputRef.current?.focus() } },
+                    { text: t('channelScreen_replyInThread'), onPress: () => router.push(`/channel/thread/${item.id}` as any) },
+                    { text: t('channelScreen_replyingTo'), onPress: () => { setReplyTo(item); inputRef.current?.focus() } },
                     ...(item.author_id === currentUserId ? [
                       { text: 'Delete', style: 'destructive' as const, onPress: () => handleDeleteMessage(item.id, item.author_id) },
                     ] : []),
@@ -963,7 +965,7 @@ export default function ChannelChat() {
               style={[styles.replyBarText, { color: colors.textSecondary }]}
               numberOfLines={1}
             >
-              Replying to{' '}
+              {t('channelScreen_replyingTo')}{' '}
               <Text style={{ color: colors.text, fontFamily: font.bodyBold }}>
                 {replyTo.author_name ?? 'someone'}
               </Text>
@@ -993,7 +995,7 @@ export default function ChannelChat() {
               ref={inputRef}
               value={text}
               onChangeText={handleTextChange}
-              placeholder="Message..."
+              placeholder={t('channelScreen_messagePlaceholder')}
               placeholderTextColor={colors.textMuted}
               multiline
               maxLength={2000}
@@ -1044,13 +1046,13 @@ export default function ChannelChat() {
             ]}
           >
             <Text style={[styles.joinPromptText, { color: colors.textSecondary, fontFamily: font.body }]}>
-              Join this channel to send messages
+              {t('channelScreen_joinPromptText')}
             </Text>
             <Pressable
               onPress={handleJoinLeave}
               style={[styles.joinPromptBtn, { backgroundColor: accent, borderRadius: radius.full }]}
             >
-              <Text style={[styles.joinPromptBtnText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>Join Channel</Text>
+              <Text style={[styles.joinPromptBtnText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelScreen_joinPromptBtn')}</Text>
             </Pressable>
           </View>
         )}
@@ -1075,7 +1077,7 @@ export default function ChannelChat() {
               How was #{channel?.name}?
             </Text>
             <Text style={[styles.ratingSubtitle, { color: colors.textMuted, fontFamily: font.body }]}>
-              Help others discover great channels
+              {t('channelScreen_ratingModalTitle')}
             </Text>
 
             {/* Star selector */}
@@ -1085,7 +1087,7 @@ export default function ChannelChat() {
             <TextInput
               value={myReview}
               onChangeText={setMyReview}
-              placeholder="Write a review (optional)..."
+              placeholder={t('channelScreen_reviewPlaceholder')}
               placeholderTextColor={colors.textMuted}
               multiline
               style={[styles.ratingInput, { color: colors.text, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}
@@ -1097,7 +1099,7 @@ export default function ChannelChat() {
                 onPress={() => setShowRating(false)}
                 style={[styles.ratingCancelBtn, { borderColor: colors.border, borderRadius: radius.lg }]}
               >
-                <Text style={[styles.ratingCancelText, { color: colors.textSecondary }]}>Cancel</Text>
+                <Text style={[styles.ratingCancelText, { color: colors.textSecondary }]}>{t('channelScreen_ratingCancel')}</Text>
               </Pressable>
               <Pressable
                 onPress={handleSubmitRating}
@@ -1107,7 +1109,7 @@ export default function ChannelChat() {
                 {savingRating ? (
                   <ActivityIndicator color={colors.textInverse} size="small" />
                 ) : (
-                  <Text style={[styles.ratingSubmitText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>Submit</Text>
+                  <Text style={[styles.ratingSubmitText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelScreen_ratingSubmit')}</Text>
                 )}
               </Pressable>
             </View>
@@ -1188,6 +1190,7 @@ function ShareChannelSheet({
   onShare: () => void
 }) {
   const { colors, radius, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const mode = useModeStore((s) => s.mode)
   const accent = getModeColor(mode, isDark)
 
@@ -1199,7 +1202,7 @@ function ShareChannelSheet({
           onPress={(e) => e.stopPropagation()}
         >
           <View style={[styles.shareHandle, { backgroundColor: colors.textMuted + '55' }]} />
-          <Text style={[styles.shareTitle, { color: colors.text, fontFamily: font.display }]}>Share Channel</Text>
+          <Text style={[styles.shareTitle, { color: colors.text, fontFamily: font.display }]}>{t('channelScreen_shareTitle')}</Text>
 
           <Pressable
             onPress={onCopy}
@@ -1210,7 +1213,7 @@ function ShareChannelSheet({
             ]}
           >
             <Copy size={18} color={colors.text} strokeWidth={2} />
-            <Text style={[styles.shareActionText, { color: colors.text, fontFamily: font.bodyBold }]}>Copy Link</Text>
+            <Text style={[styles.shareActionText, { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_copyLink')}</Text>
           </Pressable>
 
           <Pressable
@@ -1222,11 +1225,11 @@ function ShareChannelSheet({
             ]}
           >
             <Share2 size={18} color={colors.textInverse} strokeWidth={2.5} />
-            <Text style={[styles.shareActionTextFilled, { color: colors.textInverse, fontFamily: font.bodyBold }]}>Share…</Text>
+            <Text style={[styles.shareActionTextFilled, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelScreen_shareAction')}</Text>
           </Pressable>
 
           <Pressable onPress={onClose} style={styles.shareCancel}>
-            <Text style={[styles.shareCancelText, { color: colors.textMuted }]}>Cancel</Text>
+            <Text style={[styles.shareCancelText, { color: colors.textMuted }]}>{t('channelScreen_ratingCancel')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -1250,6 +1253,7 @@ function LeaveChannelSheet({
   onConfirm: () => void
 }) {
   const { colors, radius, font } = useTheme()
+  const { t } = useTranslation()
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
@@ -1259,7 +1263,7 @@ function LeaveChannelSheet({
           onPress={(e) => e.stopPropagation()}
         >
           <View style={[styles.shareHandle, { backgroundColor: colors.textMuted + '55' }]} />
-          <Text style={[styles.shareTitle, { color: colors.text, fontFamily: font.display }]}>Leave channel?</Text>
+          <Text style={[styles.shareTitle, { color: colors.text, fontFamily: font.display }]}>{t('channelScreen_leaveTitle')}</Text>
           <Text style={[styles.leaveBody, { color: colors.textSecondary, fontFamily: font.body }]}>
             You'll stop receiving updates from{' '}
             <Text style={{ fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
@@ -1279,12 +1283,12 @@ function LeaveChannelSheet({
             {leaving ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.leaveConfirmText}>Leave Channel</Text>
+              <Text style={styles.leaveConfirmText}>{t('channelScreen_leaveBtn')}</Text>
             )}
           </Pressable>
 
           <Pressable onPress={onCancel} style={styles.shareCancel}>
-            <Text style={[styles.shareCancelText, { color: colors.textMuted }]}>Stay</Text>
+            <Text style={[styles.shareCancelText, { color: colors.textMuted }]}>{t('channelScreen_stayBtn')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -1339,6 +1343,7 @@ function MessageBubbleBase({
   onThreadPress,
 }: MessageBubbleProps) {
   const { colors, radius, isDark, font } = useTheme()
+  const { t } = useTranslation()
 
   // Per-author sticker identity — deterministic from author id/name, so each
   // person reads as a consistent sticker instead of a generic gray avatar.
@@ -1376,7 +1381,7 @@ function MessageBubbleBase({
         {/* Author + timestamp row */}
         <View style={styles.bubbleHeader}>
           <Text style={[styles.authorName, { color: colors.text, fontFamily: font.bodyBold }]}>
-            {message.author_name ?? 'Community Member'}
+            {message.author_name ?? t('channelScreen_memberFallback')}
           </Text>
           <Text style={[styles.timestamp, { color: colors.textMuted, fontFamily: font.body }]}>
             {formatTime(message.created_at)}
@@ -1387,7 +1392,7 @@ function MessageBubbleBase({
         {message.is_pinned && (
           <View style={[styles.pinnedTag, { backgroundColor: brand.accent + '15' }]}>
             <Pin size={10} color={brand.accent} strokeWidth={2} />
-            <Text style={[styles.pinnedTagText, { color: brand.accent }]}>Pinned</Text>
+            <Text style={[styles.pinnedTagText, { color: brand.accent }]}>{t('channelScreen_pinned')}</Text>
           </View>
         )}
 
@@ -1423,7 +1428,7 @@ function MessageBubbleBase({
             <Pressable onPress={onThreadPress} style={styles.replyLink}>
               <MessageCircle size={14} color={colors.primary} strokeWidth={2} />
               <Text style={[styles.replyLinkText, { color: colors.primary }]}>
-                {message.reply_count} {message.reply_count === 1 ? 'reply' : 'replies'} — View thread
+                {message.reply_count === 1 ? t('channelScreen_replyCountOne', { count: message.reply_count }) : t('channelScreen_replyCountMany', { count: message.reply_count })} — {t('channelScreen_viewThread')}
               </Text>
             </Pressable>
           )}
@@ -1433,7 +1438,7 @@ function MessageBubbleBase({
             <Pressable onPress={onThreadPress} style={styles.replyLink}>
               <MessageCircle size={12} color={colors.textMuted} strokeWidth={1.5} />
               <Text style={[styles.replyLinkText, { color: colors.textMuted, fontSize: 11 }]}>
-                Reply in thread
+                {t('channelScreen_replyInThread')}
               </Text>
             </Pressable>
           )}
@@ -1461,6 +1466,7 @@ const MessageBubble = memo(MessageBubbleBase, (a, b) => {
 
 function MessageContent({ content, photos }: { content: string; photos?: string[] }) {
   const { colors, radius, font } = useTheme()
+  const { t } = useTranslation()
 
   // Check for [garage:ID] share tag
   const garageMatch = content.match(/\[garage:([a-f0-9-]+)\]/)
@@ -1496,7 +1502,7 @@ function MessageContent({ content, photos }: { content: string; photos?: string[
           )}
           <View style={styles.shareCardBody}>
             <Text style={[styles.shareCardLabel, { color: colors.primary }]}>
-              Shared from Garage
+              {t('channelScreen_sharedFromGarage')}
             </Text>
             {quotedCaption && (
               <Text style={[styles.shareCardCaption, { color: colors.text }]} numberOfLines={2}>
@@ -1509,7 +1515,7 @@ function MessageContent({ content, photos }: { content: string; photos?: string[
               </Text>
             )}
             <Text style={[styles.shareCardCta, { color: colors.primary }]}>
-              Tap to view →
+              {t('channelScreen_tapToView')}
             </Text>
           </View>
         </Pressable>

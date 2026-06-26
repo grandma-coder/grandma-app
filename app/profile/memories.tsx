@@ -42,6 +42,7 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { SignedImage, PHOTO_BUCKETS } from '../../lib/photoSigning'
@@ -69,6 +70,7 @@ interface MemoryPost {
 export default function MemoriesScreen() {
   const { colors, font, stickers, isDark, radius } = useTheme()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const children = useChildStore((s) => s.children)
   const paper = colors.surface
   const paperBorder = colors.border
@@ -187,7 +189,7 @@ export default function MemoriesScreen() {
 
   // ─── Photo picker ───────────────────────────────────────────────
   async function pickPhotos() {
-    if (children.length === 0) return Alert.alert('No children', 'Add a child first.')
+    if (children.length === 0) return Alert.alert(t('memories_noChildren'), t('memories_noChildrenMsg'))
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') return Alert.alert('Permission needed')
 
@@ -205,7 +207,7 @@ export default function MemoriesScreen() {
   }
 
   async function handleSave() {
-    if (!selectedChild) return Alert.alert('Select a child')
+    if (!selectedChild) return Alert.alert(t('memories_selectChild'))
     if (pendingPhotos.length === 0) return
     setUploading(true)
     try {
@@ -247,7 +249,7 @@ export default function MemoriesScreen() {
   async function deletePhoto(post: MemoryPost, photoIdx: number) {
     const isOnlyPhoto = post.photos.length <= 1
     Alert.alert(
-      isOnlyPhoto ? 'Delete Memory' : 'Delete Photo',
+      isOnlyPhoto ? t('memories_deleteMemory') : t('memories_deletePhoto'),
       isOnlyPhoto ? 'This memory and its photo will be permanently removed.' : 'This photo will be removed from the memory.',
       [
         { text: 'Cancel', style: 'cancel' },
@@ -305,7 +307,7 @@ export default function MemoriesScreen() {
       {/* Header */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
         <ScreenHeader
-          title="Memories"
+          title={t('memories_headerTitle')}
           right={
             <Pressable onPress={pickPhotos} hitSlop={10}>
               <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
@@ -322,7 +324,7 @@ export default function MemoriesScreen() {
         <TextInput
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search by caption, child, or date…"
+          placeholder={t('memories_searchPlaceholder')}
           placeholderTextColor={colors.textMuted}
           style={[styles.searchInput, { color: colors.text, fontFamily: font.body }]}
         />
@@ -343,7 +345,7 @@ export default function MemoriesScreen() {
               borderColor: !filterChild ? (stickers.lilacInk) : paperBorder,
             }]}
           >
-            <Text style={[styles.chipText, { color: !filterChild ? (stickers.lilacInk) : colors.text, fontFamily: font.bodySemiBold }]}>All Kids</Text>
+            <Text style={[styles.chipText, { color: !filterChild ? (stickers.lilacInk) : colors.text, fontFamily: font.bodySemiBold }]}>{t('memories_filterAllKids')}</Text>
           </Pressable>
           {children.map((c) => (
             <Pressable
@@ -366,7 +368,7 @@ export default function MemoriesScreen() {
           <Pressable
             onPress={() => {
               const options = [
-                { text: 'All Time', onPress: () => setFilterMonth(null) },
+                { text: t('memories_filterAllTime'), onPress: () => setFilterMonth(null) },
                 ...availableMonths.map((ym) => ({
                   text: formatMonth(ym),
                   onPress: () => setFilterMonth(ym),
@@ -382,13 +384,13 @@ export default function MemoriesScreen() {
           >
             <Calendar size={14} color={filterMonth ? (stickers.yellowInk) : colors.textMuted} strokeWidth={2} />
             <Text style={[styles.monthDropdownText, { color: filterMonth ? (stickers.yellowInk) : colors.text, fontFamily: font.bodySemiBold }]}>
-              {filterMonth ? formatMonth(filterMonth) : 'All Time'}
+              {filterMonth ? formatMonth(filterMonth) : t('memories_filterAllTime')}
             </Text>
             <ChevronRight size={14} color={colors.textMuted} style={{ transform: [{ rotate: '90deg' }] }} />
           </Pressable>
         )}
         <Text style={[styles.countText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-          {filtered.length} {filtered.length === 1 ? 'memory' : 'memories'} · {totalPhotos} photos
+          {filtered.length === 1 ? t('memories_countOne', { count: filtered.length }) : t('memories_countMany', { count: filtered.length })} · {t('memories_photos', { count: totalPhotos })}
         </Text>
       </View>
 
@@ -397,12 +399,12 @@ export default function MemoriesScreen() {
         {!loading && filtered.length === 0 && (
           <View style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder }]}>
             <HeartSticker size={64} fill={stickers.pink} />
-            <Display size={20} align="center" color={colors.text}>No memories yet</Display>
+            <Display size={20} align="center" color={colors.text}>{t('memories_emptyTitle')}</Display>
             <Body size={14} align="center" color={colors.textSecondary}>
-              Capture special moments with your children.
+              {t('memories_emptySubtitle')}
             </Body>
             <PillButton
-              label="Add First Memory"
+              label={t('memories_addFirst')}
               variant="ink"
               onPress={pickPhotos}
               leading={<Camera size={16} color={colors.bg} strokeWidth={2} />}
@@ -486,7 +488,7 @@ export default function MemoriesScreen() {
                   <TextInput
                     value={editCaptionText}
                     onChangeText={setEditCaptionText}
-                    placeholder="Add a caption..."
+                    placeholder={t('memories_editCaptionPlaceholder')}
                     placeholderTextColor="rgba(255,255,255,0.5)"
                     style={styles.editInput}
                     autoFocus
@@ -535,7 +537,7 @@ export default function MemoriesScreen() {
                 <Ionicons name="close" size={20} color={colors.text} />
               </View>
             </Pressable>
-            <Display size={20} color={colors.text}>New Memory</Display>
+            <Display size={20} color={colors.text}>{t('memories_sheetTitle')}</Display>
             <View style={{ width: 38 }} />
           </View>
 
@@ -551,21 +553,21 @@ export default function MemoriesScreen() {
               ))}
               <Pressable onPress={pickPhotos} style={[styles.previewAdd, { borderColor: paperBorder }]}>
                 <Plus size={24} color={colors.textMuted} />
-                <Text style={[styles.previewAddText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>Add</Text>
+                <Text style={[styles.previewAddText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('memories_addBtn')}</Text>
               </Pressable>
             </ScrollView>
 
-            <MonoCaps color={colors.textMuted}>Caption</MonoCaps>
+            <MonoCaps color={colors.textMuted}>{t('memories_labelCaption')}</MonoCaps>
             <TextInput
               value={caption}
               onChangeText={setCaption}
-              placeholder="What's happening in this moment?"
+              placeholder={t('memories_captionPlaceholder')}
               placeholderTextColor={colors.textMuted}
               multiline
               style={[styles.captionInput, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
             />
 
-            <MonoCaps color={colors.textMuted}>Date</MonoCaps>
+            <MonoCaps color={colors.textMuted}>{t('memories_labelDate')}</MonoCaps>
             <Pressable
               onPress={() => setShowDatePicker(!showDatePicker)}
               style={[styles.dateBtn, { backgroundColor: paper, borderColor: paperBorder }]}
@@ -590,7 +592,7 @@ export default function MemoriesScreen() {
               />
             )}
 
-            <MonoCaps color={colors.textMuted}>Which child?</MonoCaps>
+            <MonoCaps color={colors.textMuted}>{t('memories_labelWhichChild')}</MonoCaps>
             <View style={styles.childChips}>
               {children.map((c, idx) => (
                 <ChildPill
@@ -604,7 +606,7 @@ export default function MemoriesScreen() {
             </View>
 
             <PillButton
-              label={uploading ? 'Uploading…' : 'Save Memory'}
+              label={uploading ? t('memories_uploading') : t('memories_saveMemory')}
               variant="ink"
               onPress={handleSave}
               disabled={uploading || !selectedChild || pendingPhotos.length === 0}
@@ -617,7 +619,7 @@ export default function MemoriesScreen() {
 
       <PaperAlert
         visible={pendingDelete !== null}
-        title="Delete this memory?"
+        title={t('memories_deleteTitle')}
         message={pendingDelete ? `This removes the entry and all ${pendingDelete.photos.length} photo${pendingDelete.photos.length > 1 ? 's' : ''}.` : ''}
         buttons={[
           { label: 'Cancel', variant: 'secondary' },

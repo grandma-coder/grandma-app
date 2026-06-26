@@ -12,6 +12,7 @@ import {
 import { ChevronRight } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { useChildStore } from '../../store/useChildStore'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -41,6 +42,7 @@ const DEFAULT_SETTINGS: PrivacySettings = {
 export default function PrivacyScreen() {
   const { colors, font, stickers, radius, spacing, isDark } = useTheme()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const children = useChildStore((s) => s.children)
   const toast = useSavedToast()
 
@@ -100,12 +102,12 @@ export default function PrivacyScreen() {
     if (!session) return
 
     Alert.alert(
-      'Export Your Data',
-      'This will compile all your data and share it as a summary.',
+      t('privacy_exportTitle'),
+      t('privacy_exportMsg'),
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Export Now',
+          text: t('privacy_exportNow'),
           onPress: async () => {
             try {
               // Gather data summary
@@ -143,15 +145,15 @@ export default function PrivacyScreen() {
 
   async function handleClearLogs() {
     const childIds = children.map((c) => c.id)
-    if (childIds.length === 0) return Alert.alert('No Data', 'No children to clear logs for.')
+    if (childIds.length === 0) return Alert.alert(t('privacy_noData'), 'No children to clear logs for.')
 
     Alert.alert(
-      'Clear Activity Logs',
+      t('privacy_clearLogsTitle'),
       `Delete all feeding, sleep, diaper, and mood logs for ${children.map((c) => c.name).join(', ')}?\n\nHealth records and memories will NOT be deleted.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Clear Logs',
+          text: t('privacy_clearLogsBtn'),
           style: 'destructive',
           onPress: async () => {
             setClearingLogs(true)
@@ -176,12 +178,12 @@ export default function PrivacyScreen() {
     const childIds = children.map((c) => c.id)
 
     Alert.alert(
-      'Clear Chat History',
+      t('privacy_clearChatTitle'),
       'Delete all conversations with Grandma AI? This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Clear Chats',
+          text: t('privacy_clearChatBtn'),
           style: 'destructive',
           onPress: async () => {
             setClearingChat(true)
@@ -201,15 +203,15 @@ export default function PrivacyScreen() {
 
   async function handleClearMemories() {
     const childIds = children.map((c) => c.id)
-    if (childIds.length === 0) return Alert.alert('No Data', 'No children to clear memories for.')
+    if (childIds.length === 0) return Alert.alert(t('privacy_noData'), 'No children to clear memories for.')
 
     Alert.alert(
-      'Clear All Memories',
+      t('privacy_clearMemoriesTitle'),
       'Delete ALL photos and memories? This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete All Memories',
+          text: t('privacy_clearMemoriesBtn'),
           style: 'destructive',
           onPress: async () => {
             setClearingMemories(true)
@@ -232,15 +234,15 @@ export default function PrivacyScreen() {
 
   async function handleClearHealthRecords() {
     const childIds = children.map((c) => c.id)
-    if (childIds.length === 0) return Alert.alert('No Data', 'No children to clear records for.')
+    if (childIds.length === 0) return Alert.alert(t('privacy_noData'), 'No children to clear records for.')
 
     Alert.alert(
-      'Clear Health Records',
+      t('privacy_clearHealthTitle'),
       'Delete all vaccines, medications, temperature, growth, and milestone records? This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete Health Records',
+          text: t('privacy_clearHealthBtn'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -268,67 +270,67 @@ export default function PrivacyScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Big Fraunces title */}
         <View style={styles.titleBlock}>
-          <Display size={34} color={colors.text}>Data & Privacy</Display>
+          <Display size={34} color={colors.text}>{t('privacy_title')}</Display>
           <DisplayItalic size={18} color={stickers.coral} style={{ marginTop: 6 }}>
-            only what you choose to share
+            {t('privacy_subtitle')}
           </DisplayItalic>
         </View>
 
         {/* Data Sharing */}
         <View style={{ marginTop: 8 }}>
-          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>Data Sharing</MonoCaps>
+          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionDataSharing')}</MonoCaps>
         </View>
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
-          <ToggleRow stickerKind="heart" label="Share with Care Circle" desc="Allow caregivers to see activity logs"
+          <ToggleRow stickerKind="heart" label={t('privacy_toggleShareCareCircle')} desc={t('privacy_toggleShareCareCircleDesc')}
             value={settings.share_with_caregivers} onToggle={(v) => updateSetting('share_with_caregivers', v)} />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ToggleRow stickerKind="crossPink" label="Share Health Data" desc="Allow caregivers to see health records"
+          <ToggleRow stickerKind="crossPink" label={t('privacy_toggleShareHealth')} desc={t('privacy_toggleShareHealthDesc')}
             value={settings.share_health_data} onToggle={(v) => updateSetting('share_health_data', v)} />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ToggleRow stickerKind="sparkle" label="Share Photos" desc="Allow caregivers to see memories"
+          <ToggleRow stickerKind="sparkle" label={t('privacy_toggleSharePhotos')} desc={t('privacy_toggleSharePhotosDesc')}
             value={settings.share_photos} onToggle={(v) => updateSetting('share_photos', v)} />
         </View>
 
         {/* AI & Analytics */}
         <View style={{ marginTop: 18 }}>
-          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>AI & Analytics</MonoCaps>
+          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionAI')}</MonoCaps>
         </View>
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
-          <ToggleRow stickerKind="eye" label="AI Data Usage" desc="Allow Grandma AI to use your data for personalized advice"
+          <ToggleRow stickerKind="eye" label={t('privacy_toggleAI')} desc={t('privacy_toggleAIDesc')}
             value={settings.ai_data_usage} onToggle={(v) => updateSetting('ai_data_usage', v)} />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ToggleRow stickerKind="star" label="Analytics" desc="Help improve the app with anonymous usage data"
+          <ToggleRow stickerKind="star" label={t('privacy_toggleAnalytics')} desc={t('privacy_toggleAnalyticsDesc')}
             value={settings.analytics} onToggle={(v) => updateSetting('analytics', v)} />
         </View>
 
         {/* Your Data */}
         <View style={{ marginTop: 18 }}>
-          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>Your Data</MonoCaps>
+          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionYourData')}</MonoCaps>
         </View>
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
-          <ActionRow stickerKind="leaf" label="Export All Data" desc="Download a summary of everything" onPress={handleExportData} />
+          <ActionRow stickerKind="leaf" label={t('privacy_exportData')} desc={t('privacy_exportDataDesc')} onPress={handleExportData} />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ActionRow stickerKind="crossCoral" label="Clear Activity Logs" desc="Delete feeding, sleep, mood logs" onPress={handleClearLogs} loading={clearingLogs} danger />
+          <ActionRow stickerKind="crossCoral" label={t('privacy_clearLogs')} desc={t('privacy_clearLogsDesc')} onPress={handleClearLogs} loading={clearingLogs} danger />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ActionRow stickerKind="crossCoral" label="Clear Chat History" desc="Delete all Grandma AI conversations" onPress={handleClearChat} loading={clearingChat} danger />
+          <ActionRow stickerKind="crossCoral" label={t('privacy_clearChat')} desc={t('privacy_clearChatDesc')} onPress={handleClearChat} loading={clearingChat} danger />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ActionRow stickerKind="crossCoral" label="Clear All Memories" desc="Delete all photos and memories" onPress={handleClearMemories} loading={clearingMemories} danger />
+          <ActionRow stickerKind="crossCoral" label={t('privacy_clearMemories')} desc={t('privacy_clearMemoriesDesc')} onPress={handleClearMemories} loading={clearingMemories} danger />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ActionRow stickerKind="crossCoral" label="Clear Health Records" desc="Delete vaccines, meds, growth, milestones" onPress={handleClearHealthRecords} danger />
+          <ActionRow stickerKind="crossCoral" label={t('privacy_clearHealth')} desc={t('privacy_clearHealthDesc')} onPress={handleClearHealthRecords} danger />
         </View>
 
         {/* Legal */}
         <View style={{ marginTop: 18 }}>
-          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>Legal</MonoCaps>
+          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionLegal')}</MonoCaps>
         </View>
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
-          <ActionRow stickerKind="star" label="Privacy Policy" desc="How we handle your data" onPress={() => Alert.alert('Privacy Policy', 'Available at grandma.app/privacy')} />
+          <ActionRow stickerKind="star" label={t('privacy_privacyPolicy')} desc={t('privacy_privacyPolicyDesc')} onPress={() => Alert.alert(t('privacy_privacyPolicy'), 'Available at grandma.app/privacy')} />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
-          <ActionRow stickerKind="sparkle" label="Terms of Service" desc="Usage terms and conditions" onPress={() => Alert.alert('Terms of Service', 'Available at grandma.app/terms')} />
+          <ActionRow stickerKind="sparkle" label={t('privacy_termsOfService')} desc={t('privacy_termsOfServiceDesc')} onPress={() => Alert.alert(t('privacy_termsOfService'), 'Available at grandma.app/terms')} />
         </View>
 
         <Text style={[styles.footer, { color: colors.textMuted, fontFamily: font.body }]}>
-          Your data is encrypted at rest and in transit. We never sell your personal data to third parties.
+          {t('privacy_footer')}
         </Text>
       </ScrollView>
     </View>

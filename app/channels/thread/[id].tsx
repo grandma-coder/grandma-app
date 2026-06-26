@@ -8,9 +8,11 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getReplies, postReply, type Reply } from '../../../lib/channels'
 import { brand, typography, spacing, borderRadius, useTheme } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 
 export default function ThreadDetail() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => createStyles(colors), [colors])
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -47,7 +49,7 @@ export default function ThreadDetail() {
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </Pressable>
-          <Text style={styles.title}>Thread</Text>
+          <Text style={styles.title}>{t('channelThreadDetail_title')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -71,7 +73,7 @@ export default function ThreadDetail() {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyText}>No replies yet. Start the conversation!</Text>
+              <Text style={styles.emptyText}>{t('channelThreadDetail_emptyText')}</Text>
             </View>
           }
         />
@@ -80,7 +82,7 @@ export default function ThreadDetail() {
           <TextInput
             style={styles.input}
             selectionColor={brand.kids}
-            placeholder="Write a reply..."
+            placeholder={t('channelThreadDetail_replyPlaceholder')}
             placeholderTextColor={colors.textMuted}
             value={input}
             onChangeText={setInput}

@@ -249,6 +249,8 @@ export interface TranslationKeys {
   cycle_nudge_label: string
   cycle_nudge_from: string
   cycle_nudge_read_more: string
+  cycle_nudge_reflect_from?: string
+  cycle_nudge_log_it?: string
   // Daily-rotation extras — optional so non-English locales fall back to en
   // at runtime until translated (see i18n wave plan).
   cycle_nudge_menstruation_iron_headline?: string
@@ -265,6 +267,30 @@ export interface TranslationKeys {
   cycle_nudge_luteal_sleep_body?: string
   cycle_nudge_luteal_move_headline?: string
   cycle_nudge_luteal_move_body?: string
+  cycle_nudge_fertility_follicular_headline?: string
+  cycle_nudge_fertility_follicular_body?: string
+  cycle_nudge_fertility_luteal_headline?: string
+  cycle_nudge_fertility_luteal_body?: string
+  cycle_nudge_fertility_menstruation_headline?: string
+  cycle_nudge_fertility_menstruation_body?: string
+  cycle_nudge_reflect_mood_headline?: string
+  cycle_nudge_reflect_mood_body?: string
+  cycle_nudge_reflect_symptom_headline?: string
+  cycle_nudge_reflect_symptom_body?: string
+  cycle_nudge_reflect_energy_headline?: string
+  cycle_nudge_reflect_energy_body?: string
+  cycle_nudge_nutrition_luteal_headline?: string
+  cycle_nudge_nutrition_luteal_body?: string
+  cycle_nudge_nutrition_ovulation_headline?: string
+  cycle_nudge_nutrition_ovulation_body?: string
+  cycle_nudge_edu_menstruation_headline?: string
+  cycle_nudge_edu_menstruation_body?: string
+  cycle_nudge_edu_follicular_headline?: string
+  cycle_nudge_edu_follicular_body?: string
+  cycle_nudge_edu_ovulation_headline?: string
+  cycle_nudge_edu_ovulation_body?: string
+  cycle_nudge_edu_luteal_headline?: string
+  cycle_nudge_edu_luteal_body?: string
   cycle_pillar_fertility: string
   cycle_pillar_nutrition_prep: string
   cycle_pillar_emotional_readiness: string
@@ -1508,4 +1534,483 @@ export interface TranslationKeys {
   cyclePillars_title: string
   cyclePillars_subtitle: string
   cyclePillars_back: string
+
+  // ─── Auth / Onboarding / Paywall / Tabs (Wave B5) ────────────────────────
+
+  // Auth — welcome screen
+  auth_welcome_intro: string
+  auth_welcome_tagline: string
+  auth_welcome_body: string
+  auth_signInError: string
+
+  // Auth — sign-in screen
+  auth_welcome_back: string
+  auth_welcome_waiting: string
+  auth_orSignInEmail: string
+  auth_emailLabel: string
+  auth_passwordLabel: string
+  auth_signingIn: string
+  auth_signInArrow: string
+  auth_newHere: string
+  auth_createAccount: string
+  auth_missingInfo: string
+  auth_missingEmailPassword: string
+  auth_invalidEmail: string
+  auth_invalidEmailMsg: string
+  auth_signInFailed: string
+
+  // Auth — sign-up screen
+  auth_signUp_heading1: string
+  auth_signUp_heading2: string
+  auth_signUp_heading3: string
+  auth_signUp_subtitle: string
+  auth_emailPlaceholder: string
+  auth_passwordPlaceholder: string
+  auth_creating: string
+  auth_continue: string
+  auth_missingEmailPasswordSignUp: string
+  auth_passwordTooShort: string
+  auth_passwordTooShortMsg: string
+  auth_signUpFailed: string
+  auth_welcomeAboard: string
+  auth_confirmEmail: string
+
+  // Auth — forgot password screen
+  auth_forgot_heading: string
+  auth_forgot_heading2: string
+  auth_forgot_sent: string
+  auth_forgot_prompt: string
+  auth_sending: string
+  auth_sendResetLink: string
+  auth_backToSignIn: string
+  auth_missingEmailOnly: string
+  auth_couldntSendReset: string
+
+  // Auth — reset password screen
+  auth_reset_heading: string
+  auth_reset_heading2: string
+  auth_reset_subtitle: string
+  auth_newPasswordLabel: string
+  auth_confirmPasswordLabel: string
+  auth_updating: string
+  auth_updatePassword: string
+  auth_passwordTooShortN: string
+  auth_passwordsNoMatch: string
+  auth_passwordsNoMatchMsg: string
+  auth_couldntUpdatePassword: string
+  auth_passwordUpdated: string
+  auth_passwordUpdatedMsg: string
+
+  // Onboarding — journey screen
+  onboardingJourney_trying: string
+  onboardingJourney_cycleSubtitle: string
+  onboardingJourney_pregnant: string
+  onboardingJourney_pregnantSubtitle: string
+  onboardingJourney_parenting: string
+  onboardingJourney_parentingSubtitle: string
+  onboardingJourney_allEnrolled1: string
+  onboardingJourney_allEnrolled2: string
+  onboardingJourney_allEnrolledBody: string
+  onboardingJourney_backToProfile: string
+  onboardingJourney_addTitle: string
+  onboardingJourney_addHeading1: string
+  onboardingJourney_addHeading2: string
+  onboardingJourney_heading1: string
+  onboardingJourney_heading2: string
+  onboardingJourney_addSubtitle: string
+  onboardingJourney_subtitle: string
+  onboardingJourney_activeBadge: string
+  onboardingJourney_addCta: string
+
+  // Onboarding — transition screen
+  onboardingTransition_pregnancy_heading: string
+  onboardingTransition_pregnancy_subtext: string
+  onboardingTransition_kids_heading: string
+  onboardingTransition_kids_subtext: string
+  onboardingTransition_cycle_heading: string
+  onboardingTransition_cycle_subtext: string
+  onboardingTransition_cta: string
+  onboardingTransition_skip: string
+
+  // Paywall — tier copy
+  paywall_tierSolo: string
+  paywall_tierSoloSeats: string
+  paywall_featureSoloCaregiver: string
+  paywall_featureUnlimitedScansDetail: string
+  paywall_featureUnlimitedChat: string
+  paywall_featureVaccineReminders: string
+  paywall_featurePriorityResponses: string
+  paywall_soloHighlight: string
+  paywall_tierFamily: string
+  paywall_tierFamilySeats: string
+  paywall_featureFamilyAccounts: string
+  paywall_featureFamilyScans: string
+  paywall_featureSharedChat: string
+  paywall_featureSyncedVaccines: string
+  paywall_featurePriorityEarly: string
+  paywall_familyHighlight: string
+  paywall_unlockTitle: string
+  paywall_heroTagline: string
+  paywall_bestValue: string
+  paywall_annual: string
+  paywall_restorePurchases: string
+  paywall_unavailableTitle: string
+  paywall_unavailableItalic: string
+  paywall_unavailableMsg: string
+  paywall_welcomePremiumTitle: string
+  paywall_welcomePremiumItalic: string
+  paywall_welcomePremiumMsg: string
+  paywall_errorTitle: string
+  paywall_restoredTitle: string
+  paywall_restoredItalic: string
+  paywall_restoredMsg: string
+  paywall_noPurchasesTitle: string
+  paywall_noPurchasesItalic: string
+  paywall_noPurchasesMsg: string
+  paywall_selectPlan: string
+
+  // Home tab — empty state (no mode enrolled)
+  tabsHome_journeyStarts1: string
+  tabsHome_journeyStarts2: string
+  tabsHome_journeyBody: string
+  tabsHome_chooseJourney: string
+
+  // Library tab
+  library_subtitleCycle: string
+  library_subtitlePreg: string
+  library_subtitleKids: string
+  library_title: string
+  library_emptySubtitle: string
+  library_knowledgePillars: string
+  library_communityChannels: string
+  library_comingSoon: string
+  library_channelDescCycle: string
+  library_channelDescPreg: string
+  library_channelDescKids: string
+  library_askPlaceholder: string
+  library_pickChildWarning: string
+  library_noSaveWarning: string
+  library_sendA11y: string
+  library_titleHeader: string
+  library_titleAccent: string
+
+  // ─── B6: Profile — Account & Security ─────────────────────────────────────
+  account_title: string
+  account_subtitle: string
+  account_sectionEmail: string
+  account_sectionPassword: string
+  account_sectionSessions: string
+  account_sectionDanger: string
+  account_emailPlaceholder: string
+  account_newPasswordPlaceholder: string
+  account_minChars: string
+  account_saving: string
+  account_updateEmail: string
+  account_changePassword: string
+  account_signOutAllDevices: string
+  account_deleteAccount: string
+  account_deleteHint: string
+  account_signOutEverywhereTitle: string
+  account_signOutEverywhereMsg: string
+  account_signOutAll: string
+  account_deleteTitle: string
+  account_deleteMsg: string
+  account_deleteConfirmBtn: string
+  account_contactSupport: string
+  account_contactSupportMsg: string
+
+  // ─── B6: Profile — Personal ───────────────────────────────────────────────
+  personal_headerTitle: string
+  personal_nameFallback: string
+  personal_avatarHint: string
+  personal_sectionAbout: string
+  personal_sectionHealth: string
+  personal_fieldName: string
+  personal_fieldLocation: string
+  personal_fieldLanguage: string
+  personal_fieldHealthNotes: string
+  personal_fieldAllergies: string
+  personal_locationPlaceholder: string
+  personal_allergyPlaceholder: string
+  personal_languageModalTitle: string
+  personal_languageSearchPlaceholder: string
+  personal_saving: string
+  personal_saveChanges: string
+
+  // ─── B6: Profile — Emergency & Insurance ──────────────────────────────────
+  emergencyInsurance_title: string
+  emergencyInsurance_subtitle: string
+  emergencyInsurance_sectionContacts: string
+  emergencyInsurance_sectionPlans: string
+  emergencyInsurance_add: string
+  emergencyInsurance_emptyContacts: string
+  emergencyInsurance_emptyPlans: string
+  emergencyInsurance_editContact: string
+  emergencyInsurance_addContact: string
+  emergencyInsurance_editPlan: string
+  emergencyInsurance_addPlan: string
+  emergencyInsurance_fieldName: string
+  emergencyInsurance_fieldRelationship: string
+  emergencyInsurance_fieldPhone: string
+  emergencyInsurance_fieldEmailOptional: string
+  emergencyInsurance_fieldNotesOptional: string
+  emergencyInsurance_fieldType: string
+  emergencyInsurance_fieldProvider: string
+  emergencyInsurance_fieldPlanNameOptional: string
+  emergencyInsurance_fieldPolicyNumber: string
+  emergencyInsurance_fieldGroupNumber: string
+  emergencyInsurance_fieldMemberId: string
+  emergencyInsurance_fieldInsurancePhone: string
+  emergencyInsurance_contactNamePlaceholder: string
+  emergencyInsurance_phonePlaceholder: string
+  emergencyInsurance_emailPlaceholder: string
+  emergencyInsurance_notesPlaceholder: string
+  emergencyInsurance_providerPlaceholder: string
+  emergencyInsurance_planNamePlaceholder: string
+  emergencyInsurance_policyPlaceholder: string
+  emergencyInsurance_groupPlaceholder: string
+  emergencyInsurance_memberIdPlaceholder: string
+  emergencyInsurance_insPhonePlaceholder: string
+  emergencyInsurance_coveragePlaceholder: string
+  emergencyInsurance_primaryContact: string
+  emergencyInsurance_scanBannerTitle: string
+  emergencyInsurance_scanBannerDesc: string
+  emergencyInsurance_scanCamera: string
+  emergencyInsurance_scanGallery: string
+  emergencyInsurance_scanReading: string
+  emergencyInsurance_saving: string
+  emergencyInsurance_saveChanges: string
+  emergencyInsurance_addContactBtn: string
+  emergencyInsurance_addPlanBtn: string
+  emergencyInsurance_removeContactTitle: string
+  emergencyInsurance_removePlanTitle: string
+  emergencyInsurance_nameRequired: string
+  emergencyInsurance_phoneRequired: string
+  emergencyInsurance_providerRequired: string
+  emergencyInsurance_cardScanned: string
+
+  // ─── B6: Profile — Memories ───────────────────────────────────────────────
+  memories_headerTitle: string
+  memories_searchPlaceholder: string
+  memories_filterAllKids: string
+  memories_filterAllTime: string
+  memories_countOne: string
+  memories_countMany: string
+  memories_photos: string
+  memories_emptyTitle: string
+  memories_emptySubtitle: string
+  memories_addFirst: string
+  memories_sheetTitle: string
+  memories_labelCaption: string
+  memories_labelDate: string
+  memories_labelWhichChild: string
+  memories_captionPlaceholder: string
+  memories_addBtn: string
+  memories_uploading: string
+  memories_saveMemory: string
+  memories_editCaptionPlaceholder: string
+  memories_deleteTitle: string
+  memories_noChildren: string
+  memories_noChildrenMsg: string
+  memories_selectChild: string
+  memories_deleteMemory: string
+  memories_deletePhoto: string
+
+  // ─── B6: Profile — Data & Privacy ─────────────────────────────────────────
+  privacy_title: string
+  privacy_subtitle: string
+  privacy_sectionDataSharing: string
+  privacy_sectionAI: string
+  privacy_sectionYourData: string
+  privacy_sectionLegal: string
+  privacy_toggleShareCareCircle: string
+  privacy_toggleShareCareCircleDesc: string
+  privacy_toggleShareHealth: string
+  privacy_toggleShareHealthDesc: string
+  privacy_toggleSharePhotos: string
+  privacy_toggleSharePhotosDesc: string
+  privacy_toggleAI: string
+  privacy_toggleAIDesc: string
+  privacy_toggleAnalytics: string
+  privacy_toggleAnalyticsDesc: string
+  privacy_exportData: string
+  privacy_exportDataDesc: string
+  privacy_clearLogs: string
+  privacy_clearLogsDesc: string
+  privacy_clearChat: string
+  privacy_clearChatDesc: string
+  privacy_clearMemories: string
+  privacy_clearMemoriesDesc: string
+  privacy_clearHealth: string
+  privacy_clearHealthDesc: string
+  privacy_privacyPolicy: string
+  privacy_privacyPolicyDesc: string
+  privacy_termsOfService: string
+  privacy_termsOfServiceDesc: string
+  privacy_footer: string
+  privacy_exportTitle: string
+  privacy_exportMsg: string
+  privacy_exportNow: string
+  privacy_clearLogsTitle: string
+  privacy_clearChatTitle: string
+  privacy_clearMemoriesTitle: string
+  privacy_clearHealthTitle: string
+  privacy_clearLogsBtn: string
+  privacy_clearChatBtn: string
+  privacy_clearMemoriesBtn: string
+  privacy_clearHealthBtn: string
+  privacy_noData: string
+
+  // ─── B6: Profile — Badge Wallet ───────────────────────────────────────────
+  badgeWallet_title: string
+  badgeWallet_earned: string
+  badgeWallet_locked: string
+  badgeWallet_points: string
+  badgeWallet_sectionStreaks: string
+  badgeWallet_sectionDaily: string
+  badgeWallet_sectionNutrition: string
+  badgeWallet_sectionSleep: string
+  badgeWallet_sectionMood: string
+  badgeWallet_sectionHealth: string
+  badgeWallet_sectionGrowth: string
+  badgeWallet_sectionCommunity: string
+  badgeWallet_sectionMilestones: string
+
+  // ─── B6: Community — channel/[id] ─────────────────────────────────────────
+  channelScreen_nameFallback: string
+  channelScreen_host: string
+  channelScreen_leave: string
+  channelScreen_requested: string
+  channelScreen_request: string
+  channelScreen_join: string
+  channelScreen_noRatingsYet: string
+  channelScreen_rateChannel: string
+  channelScreen_editRating: string
+  channelScreen_messagePlaceholder: string
+  channelScreen_joinPromptText: string
+  channelScreen_joinPromptBtn: string
+  channelScreen_replyingTo: string
+  channelScreen_replyInThread: string
+  channelScreen_replyCountOne: string
+  channelScreen_replyCountMany: string
+  channelScreen_viewThread: string
+  channelScreen_emptyTitle: string
+  channelScreen_emptySubtitle: string
+  channelScreen_ratingModalTitle: string
+  channelScreen_reviewPlaceholder: string
+  channelScreen_ratingCancel: string
+  channelScreen_ratingSubmit: string
+  channelScreen_shareTitle: string
+  channelScreen_copyLink: string
+  channelScreen_shareAction: string
+  channelScreen_leaveTitle: string
+  channelScreen_leaveBtn: string
+  channelScreen_stayBtn: string
+  channelScreen_errorTitle: string
+  channelScreen_errorSubtitle: string
+  channelScreen_sharedFromGarage: string
+  channelScreen_tapToView: string
+  channelScreen_memberFallback: string
+  channelScreen_pinned: string
+  channelScreen_noMembersTitle: string
+  channelScreen_noMembersMsg: string
+  channelScreen_transferTitle: string
+  channelScreen_transferBtn: string
+  channelScreen_joinTitle: string
+  channelScreen_requestTitle: string
+  channelScreen_requestPending: string
+  channelScreen_requestSent: string
+  channelScreen_deleteChannelTitle: string
+  channelScreen_deleteMsgTitle: string
+  channelScreen_copiedTitle: string
+  channelScreen_copiedMsg: string
+  channelScreen_privateShareTitle: string
+  channelScreen_privateShareMsg: string
+  channelScreen_joinFailedMsg: string
+  channelScreen_leaveFailedMsg: string
+  channelScreen_ratingThanksTitle: string
+  channelScreen_ratingThanksMsg: string
+  channelScreen_errorLoadTitle: string
+  channelScreen_errorLoadSubtitle: string
+  channelScreen_tryAgain: string
+
+  // ─── B6: Community — channel/create ───────────────────────────────────────
+  channelCreate_header: string
+  channelCreate_labelName: string
+  channelCreate_labelDescription: string
+  channelCreate_labelType: string
+  channelCreate_labelCategory: string
+  channelCreate_labelYourCategory: string
+  channelCreate_namePlaceholder: string
+  channelCreate_descriptionPlaceholder: string
+  channelCreate_categoryPlaceholder: string
+  channelCreate_typePublic: string
+  channelCreate_typePrivate: string
+  channelCreate_privateHint: string
+  channelCreate_creating: string
+  channelCreate_create: string
+  channelCreate_successTitle: string
+  channelCreate_successMsg: string
+  channelCreate_goToChannel: string
+  channelCreate_nameRequired: string
+  channelCreate_categoryRequired: string
+
+  // ─── B6: Community — channel/info/[id] ────────────────────────────────────
+  channelInfo_header: string
+  channelInfo_statMembers: string
+  channelInfo_statRating: string
+  channelInfo_statMedia: string
+  channelInfo_sectionCreatedBy: string
+  channelInfo_sectionMembers: string
+  channelInfo_sectionMedia: string
+  channelInfo_sectionAdmin: string
+  channelInfo_ownerFallback: string
+  channelInfo_memberFallback: string
+  channelInfo_editInfo: string
+  channelInfo_transferOwnership: string
+  channelInfo_manageMessages: string
+  channelInfo_deleteChannel: string
+  channelInfo_leaveChannel: string
+  channelInfo_pendingRequests: string
+  channelInfo_shareChannel: string
+  channelInfo_deleteTitle: string
+  channelInfo_deleteForever: string
+  channelInfo_keepChannel: string
+  channelInfo_namePlaceholder: string
+  channelInfo_descriptionPlaceholder: string
+  channelInfo_editCancel: string
+  channelInfo_editSave: string
+  channelInfo_youAreHost: string
+  channelInfo_noMembersTitle: string
+  channelInfo_approved: string
+  channelInfo_denyRequest: string
+  channelInfo_privateShareTitle: string
+  channelInfo_privateShareMsg: string
+
+  // ─── B6: Community — channel/thread/[id] ──────────────────────────────────
+  channelThread_header: string
+  channelThread_memberFallback: string
+  channelThread_replyCountOne: string
+  channelThread_replyCountMany: string
+  channelThread_emptyTitle: string
+  channelThread_emptySubtitle: string
+  channelThread_replyPlaceholder: string
+
+  // ─── B6: Community — channels/index ───────────────────────────────────────
+  channelBrowser_title: string
+  channelBrowser_subtitle: string
+  channelBrowser_emptyTitle: string
+  channelBrowser_emptySubtitle: string
+  channelBrowser_createCta: string
+
+  // ─── B6: Community — channels/[id] ────────────────────────────────────────
+  channelDetail_title: string
+  channelDetail_emptyTitle: string
+  channelDetail_emptySubtitle: string
+
+  // ─── B6: Community — channels/thread/[id] ─────────────────────────────────
+  channelThreadDetail_title: string
+  channelThreadDetail_memberFallback: string
+  channelThreadDetail_emptyText: string
+  channelThreadDetail_replyPlaceholder: string
 }

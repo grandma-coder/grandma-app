@@ -65,12 +65,14 @@ import {
 } from '../../../lib/channelPosts'
 import { supabase } from '../../../lib/supabase'
 import { BrandedLoader } from '../../../components/ui/BrandedLoader'
+import { useTranslation } from '../../../lib/i18n'
 
 const SCREEN_W = Dimensions.get('window').width
 const MEDIA_THUMB = (SCREEN_W - 48 - 8) / 4 // 4 columns
 
 export default function ChannelInfoScreen() {
   const { colors, radius, isDark, font, stickers } = useTheme()
+  const { t } = useTranslation()
   const mode = useModeStore((s) => s.mode)
   const accent = getModeColor(mode, isDark)
   const insets = useSafeAreaInsets()
@@ -414,7 +416,7 @@ export default function ChannelInfoScreen() {
         <Pressable onPress={() => router.back()} hitSlop={8} style={({ pressed }) => [s.headerBtn, pressed && { opacity: 0.7 }]}>
           <ArrowLeft size={24} color={colors.text} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: colors.text, fontFamily: font.display }]}>Channel Info</Text>
+        <Text style={[s.headerTitle, { color: colors.text, fontFamily: font.display }]}>{t('channelInfo_header')}</Text>
         <View style={s.headerBtn} />
       </View>
 
@@ -437,27 +439,27 @@ export default function ChannelInfoScreen() {
                 value={editName}
                 onChangeText={setEditName}
                 style={[s.editInput, { color: colors.text, borderColor: colors.border, borderRadius: radius.lg }]}
-                placeholder="Channel name"
+                placeholder={t('channelInfo_namePlaceholder')}
                 placeholderTextColor={colors.textMuted}
               />
               <TextInput
                 value={editDesc}
                 onChangeText={setEditDesc}
                 style={[s.editTextArea, { color: colors.text, borderColor: colors.border, borderRadius: radius.lg }]}
-                placeholder="Description"
+                placeholder={t('channelInfo_descriptionPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 multiline
               />
               <View style={s.editActions}>
                 <Pressable onPress={() => setEditing(false)} style={({ pressed }) => [s.editCancelBtn, { borderColor: colors.border, borderRadius: radius.full }, pressed && { opacity: 0.7 }]}>
                   <X size={16} color={colors.textSecondary} />
-                  <Text style={[s.editCancelText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>Cancel</Text>
+                  <Text style={[s.editCancelText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{t('channelInfo_editCancel')}</Text>
                 </Pressable>
                 <Pressable onPress={handleSaveEdit} disabled={saving} style={({ pressed }) => [s.editSaveBtn, { backgroundColor: accent, borderRadius: radius.full }, pressed && { opacity: 0.85 }]}>
                   {saving ? <ActivityIndicator color={colors.textInverse} size="small" /> : (
                     <>
                       <Check size={16} color={colors.textInverse} />
-                      <Text style={[s.editSaveText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>Save</Text>
+                      <Text style={[s.editSaveText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelInfo_editSave')}</Text>
                     </>
                   )}
                 </Pressable>
@@ -486,19 +488,19 @@ export default function ChannelInfoScreen() {
           <View style={s.stat}>
             <Users size={18} color={colors.primary} strokeWidth={2} />
             <Text style={[s.statNumber, { color: colors.text, fontFamily: font.display }]}>{channel.memberCount}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Members</Text>
+            <Text style={[s.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_statMembers')}</Text>
           </View>
           <View style={[s.statDivider, { backgroundColor: colors.borderLight }]} />
           <View style={s.stat}>
             <Star size={18} color={stickers.yellow} strokeWidth={2} fill={channel.avgRating > 0 ? stickers.yellow : 'none'} />
             <Text style={[s.statNumber, { color: colors.text, fontFamily: font.display }]}>{channel.avgRating > 0 ? channel.avgRating.toFixed(1) : '—'}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Rating</Text>
+            <Text style={[s.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_statRating')}</Text>
           </View>
           <View style={[s.statDivider, { backgroundColor: colors.borderLight }]} />
           <View style={s.stat}>
             <ImageIcon size={18} color={colors.primary} strokeWidth={2} />
             <Text style={[s.statNumber, { color: colors.text, fontFamily: font.display }]}>{sharedMedia.length}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Media</Text>
+            <Text style={[s.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_statMedia')}</Text>
           </View>
         </View>
 
@@ -515,7 +517,7 @@ export default function ChannelInfoScreen() {
             >
               <Share2 size={18} color={colors.text} strokeWidth={2} />
               <View style={{ flex: 1 }}>
-                <Text style={[s.shareBtnText, { color: colors.text, fontFamily: font.bodyBold }]}>Share Channel</Text>
+                <Text style={[s.shareBtnText, { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelInfo_shareChannel')}</Text>
                 <Text style={[s.shareBtnSub, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
                   {channel.channelType === 'private'
                     ? 'Invite link — only members can share'
@@ -528,7 +530,7 @@ export default function ChannelInfoScreen() {
 
         {/* Owner / Creator */}
         <View style={s.section}>
-          <Text style={[s.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>CREATED BY</Text>
+          <Text style={[s.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_sectionCreatedBy')}</Text>
           <View style={[s.ownerCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
             {/* Owner's sticker identity with a gold crown badge marking the host. */}
             {(() => {
@@ -545,7 +547,7 @@ export default function ChannelInfoScreen() {
             })()}
             <View style={{ flex: 1 }}>
               <Text style={[s.ownerName, { color: colors.text, fontFamily: font.bodyBold }]}>
-                {ownerName ?? 'Channel Creator'}
+                {ownerName ?? t('channelInfo_ownerFallback')}
               </Text>
               <Text style={[s.ownerMeta, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
                 Created {new Date(channel.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
@@ -562,7 +564,7 @@ export default function ChannelInfoScreen() {
         {/* Members */}
         <View style={s.section}>
           <Text style={[s.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-            MEMBERS ({members.length})
+            {t('channelInfo_sectionMembers')} ({members.length})
           </Text>
           {members.slice(0, 10).map((m) => {
             const ms = channelSticker(m.user_id, isDark)
@@ -573,7 +575,7 @@ export default function ChannelInfoScreen() {
                   <MemberSticker size={16} fill={ms.fill} />
                 </View>
                 <Text style={[s.memberName, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                  {m.name ?? 'Community Member'}
+                  {m.name ?? t('channelInfo_memberFallback')}
                 </Text>
                 {m.user_id === channel.createdBy && (
                   <Crown size={14} color={brand.accent} strokeWidth={2} fill={brand.accent} />
@@ -591,7 +593,7 @@ export default function ChannelInfoScreen() {
         {/* Shared Media */}
         {sharedMedia.length > 0 && (
           <View style={s.section}>
-            <Text style={[s.sectionTitle, { color: colors.textMuted }]}>SHARED MEDIA</Text>
+            <Text style={[s.sectionTitle, { color: colors.textMuted }]}>{t('channelInfo_sectionMedia')}</Text>
             <View style={s.mediaGrid}>
               {sharedMedia.map((uri, i) => (
                 <Image key={i} source={{ uri }} style={[s.mediaThumb, { borderRadius: radius.sm }]} />
@@ -604,7 +606,7 @@ export default function ChannelInfoScreen() {
         {isOwner && (
           <View style={s.section}>
             <Text style={[s.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-              <Shield size={12} color={colors.textMuted} strokeWidth={2} /> ADMIN
+              <Shield size={12} color={colors.textMuted} strokeWidth={2} /> {t('channelInfo_sectionAdmin')}
             </Text>
 
             {/* Channel Metrics Dashboard */}
@@ -655,7 +657,7 @@ export default function ChannelInfoScreen() {
               style={[s.adminBtn, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
             >
               <Edit3 size={18} color={colors.primary} strokeWidth={2} />
-              <Text style={[s.adminBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Edit Channel Info</Text>
+              <Text style={[s.adminBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('channelInfo_editInfo')}</Text>
             </Pressable>
 
             <Pressable
@@ -663,7 +665,7 @@ export default function ChannelInfoScreen() {
               style={[s.adminBtn, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
             >
               <ArrowRightLeft size={18} color={colors.primary} strokeWidth={2} />
-              <Text style={[s.adminBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Transfer Ownership</Text>
+              <Text style={[s.adminBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('channelInfo_transferOwnership')}</Text>
             </Pressable>
 
             {/* Pending join requests (private channels) */}
@@ -672,7 +674,7 @@ export default function ChannelInfoScreen() {
                 <View style={s.requestsHeader}>
                   <UserPlus size={16} color={colors.primary} strokeWidth={2} />
                   <Text style={[s.requestsTitle, { color: colors.text, fontFamily: font.bodyBold }]}>
-                    Pending Requests ({pendingRequests.length})
+                    {t('channelInfo_pendingRequests')} ({pendingRequests.length})
                   </Text>
                 </View>
                 {pendingRequests.map((req) => {
@@ -684,7 +686,7 @@ export default function ChannelInfoScreen() {
                       <ReqSticker size={16} fill={rs.fill} />
                     </View>
                     <Text style={[s.memberName, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                      {req.user_name ?? 'Community Member'}
+                      {req.user_name ?? t('channelInfo_memberFallback')}
                     </Text>
                     <Pressable
                       onPress={() => handleApproveRequest(req)}
@@ -709,7 +711,7 @@ export default function ChannelInfoScreen() {
               style={[s.adminBtn, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
             >
               <Settings size={18} color={colors.primary} strokeWidth={2} />
-              <Text style={[s.adminBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Manage Messages ({messages.length})</Text>
+              <Text style={[s.adminBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('channelInfo_manageMessages')} ({messages.length})</Text>
             </Pressable>
 
             {showMessages && messages.length > 0 && (
@@ -733,7 +735,7 @@ export default function ChannelInfoScreen() {
               style={[s.adminBtn, { backgroundColor: stickers.coralInk + '14', borderRadius: radius.xl }]}
             >
               <Trash2 size={18} color={stickers.coral} strokeWidth={2} />
-              <Text style={[s.adminBtnText, { color: stickers.coral, fontFamily: font.bodyBold }]}>Delete Channel</Text>
+              <Text style={[s.adminBtnText, { color: stickers.coral, fontFamily: font.bodyBold }]}>{t('channelInfo_deleteChannel')}</Text>
             </Pressable>
           </View>
         )}
@@ -745,7 +747,7 @@ export default function ChannelInfoScreen() {
             style={[s.leaveBtn, { backgroundColor: stickers.coralInk + '14', borderRadius: radius.xl }]}
           >
             <LogOut size={18} color={stickers.coral} strokeWidth={2} />
-            <Text style={[s.leaveBtnText, { color: stickers.coral, fontFamily: font.bodyBold }]}>Leave Channel</Text>
+            <Text style={[s.leaveBtnText, { color: stickers.coral, fontFamily: font.bodyBold }]}>{t('channelInfo_leaveChannel')}</Text>
           </Pressable>
         )}
       </ScrollView>
@@ -778,6 +780,7 @@ function DeleteChannelSheet({
   onConfirm: () => void
 }) {
   const { colors, radius, font, stickers } = useTheme()
+  const { t } = useTranslation()
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
@@ -791,7 +794,7 @@ function DeleteChannelSheet({
           <View style={[s.deleteIcon, { backgroundColor: stickers.coralInk + '1A' }]}>
             <Trash2 size={26} color={stickers.coral} strokeWidth={2} />
           </View>
-          <Text style={[s.deleteTitle, { color: colors.text, fontFamily: font.display }]}>Delete channel?</Text>
+          <Text style={[s.deleteTitle, { color: colors.text, fontFamily: font.display }]}>{t('channelInfo_deleteTitle')}</Text>
           <Text style={[s.deleteBody, { color: colors.textSecondary, fontFamily: font.body }]}>
             This permanently deletes{' '}
             <Text style={{ fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
@@ -811,12 +814,12 @@ function DeleteChannelSheet({
             {deleting ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={[s.deleteConfirmText, { fontFamily: font.bodyBold }]}>Delete Forever</Text>
+              <Text style={[s.deleteConfirmText, { fontFamily: font.bodyBold }]}>{t('channelInfo_deleteForever')}</Text>
             )}
           </Pressable>
 
           <Pressable onPress={onCancel} style={s.deleteCancel}>
-            <Text style={[s.deleteCancelText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Keep Channel</Text>
+            <Text style={[s.deleteCancelText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_keepChannel')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>

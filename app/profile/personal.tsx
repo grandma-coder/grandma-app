@@ -26,6 +26,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import { useTheme, getModeColor } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -221,6 +222,7 @@ export default function PersonalProfile() {
   const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
+  const { t } = useTranslation()
 
   const [name, setName] = useState('')
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
@@ -329,7 +331,7 @@ export default function PersonalProfile() {
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="My Profile" />
+        <ScreenHeader title={t('personal_headerTitle')} />
       </View>
 
       <KeyboardAvoidingView
@@ -349,7 +351,7 @@ export default function PersonalProfile() {
             onChange={handleAvatarChange}
           />
           <Display size={28} align="center" color={colors.text}>
-            {name || 'Your name'}
+            {name || t('personal_nameFallback')}
           </Display>
           <Body
             size={13}
@@ -357,21 +359,21 @@ export default function PersonalProfile() {
             color={colors.textMuted}
             style={{ marginTop: 4, marginBottom: 8 }}
           >
-            Tap the avatar to change photo or pick an icon
+            {t('personal_avatarHint')}
           </Body>
 
           <View style={styles.divider}>
             <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
-            <MonoCaps color={colors.textMuted}>About you</MonoCaps>
+            <MonoCaps color={colors.textMuted}>{t('personal_sectionAbout')}</MonoCaps>
             <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
           </View>
 
           {/* Name */}
           <PaperField
-            label="Name"
+            label={t('personal_fieldName')}
             value={name}
             onChangeText={setName}
-            placeholder="Your name"
+            placeholder={t('personal_nameFallback')}
           />
 
           {/* Location */}
@@ -382,7 +384,7 @@ export default function PersonalProfile() {
 
           <View style={styles.divider}>
             <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
-            <MonoCaps color={colors.textMuted}>Health</MonoCaps>
+            <MonoCaps color={colors.textMuted}>{t('personal_sectionHealth')}</MonoCaps>
             <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
           </View>
 
@@ -399,7 +401,7 @@ export default function PersonalProfile() {
           <AllergyField value={allergies} onChange={setAllergies} />
 
           <PillButton
-            label={saving ? 'Saving…' : 'Save Changes'}
+            label={saving ? t('personal_saving') : t('personal_saveChanges')}
             variant="ink"
             onPress={handleSave}
             disabled={saving}
@@ -475,6 +477,7 @@ function LocationField({
   onChange: (v: string) => void
 }) {
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const paper = colors.surface
   const border = colors.border
   const [query, setQuery] = useState(value)
@@ -522,7 +525,7 @@ function LocationField({
 
   return (
     <View style={[styles.field, { zIndex: 10 }]}>
-      <MonoCaps color={colors.textMuted}>Location</MonoCaps>
+      <MonoCaps color={colors.textMuted}>{t('personal_fieldLocation')}</MonoCaps>
       <View
         style={[
           styles.inputRow,
@@ -533,7 +536,7 @@ function LocationField({
         <TextInput
           value={query}
           onChangeText={search}
-          placeholder="Search city or country…"
+          placeholder={t('personal_locationPlaceholder')}
           placeholderTextColor={colors.textMuted}
           style={[styles.inputInner, { color: colors.text, fontFamily: font.body }]}
           onFocus={() => { if (results.length > 0) setShowResults(true) }}
@@ -599,6 +602,7 @@ function LanguageField({
   onChange: (v: string) => void
 }) {
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const paper = colors.surface
   const border = colors.border
   const insets = useSafeAreaInsets()
@@ -617,7 +621,7 @@ function LanguageField({
 
   return (
     <View style={styles.field}>
-      <MonoCaps color={colors.textMuted}>Language</MonoCaps>
+      <MonoCaps color={colors.textMuted}>{t('personal_fieldLanguage')}</MonoCaps>
       <Pressable
         onPress={() => setModalVisible(true)}
         style={[
@@ -644,7 +648,7 @@ function LanguageField({
         <View style={[styles.modalRoot, { backgroundColor: colors.bg }]}>
           <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
             <Display size={20} color={colors.text}>
-              Select Language
+              {t('personal_languageModalTitle')}
             </Display>
             <Pressable
               onPress={() => {
@@ -666,7 +670,7 @@ function LanguageField({
             <TextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Search language…"
+              placeholder={t('personal_languageSearchPlaceholder')}
               placeholderTextColor={colors.textMuted}
               style={[
                 styles.inputInner,
@@ -732,6 +736,7 @@ function AllergyField({
   onChange: (v: string[]) => void
 }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const paper = colors.surface
   const border = colors.border
   const chipBg = stickers.coral + (isDark ? '24' : '22')
@@ -768,7 +773,7 @@ function AllergyField({
 
   return (
     <View style={styles.field}>
-      <MonoCaps color={colors.textMuted}>Allergies</MonoCaps>
+      <MonoCaps color={colors.textMuted}>{t('personal_fieldAllergies')}</MonoCaps>
 
       {value.length > 0 && (
         <View style={styles.chipWrap}>
@@ -801,7 +806,7 @@ function AllergyField({
             setQuery(t)
             setShowSuggestions(t.length >= 1)
           }}
-          placeholder="Type to search allergies…"
+          placeholder={t('personal_allergyPlaceholder')}
           placeholderTextColor={colors.textMuted}
           style={[styles.inputInner, { color: colors.text, fontFamily: font.body }]}
           onSubmitEditing={handleSubmit}

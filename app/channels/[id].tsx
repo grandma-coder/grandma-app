@@ -6,9 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getThreads, type Thread } from '../../lib/channels'
 import { ThreadCard } from '../../components/channels/ThreadCard'
 import { typography, spacing, useTheme, font } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 export default function ChannelDetail() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const [threads, setThreads] = useState<Thread[]>([])
@@ -33,16 +35,16 @@ export default function ChannelDetail() {
           >
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </Pressable>
-          <Text style={styles.title}>Channel</Text>
+          <Text style={styles.title}>{t('channelDetail_title')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
         {threads.length === 0 && !loading ? (
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>🧵</Text>
-            <Text style={styles.emptyTitle}>No threads yet</Text>
+            <Text style={styles.emptyTitle}>{t('channelDetail_emptyTitle')}</Text>
             <Text style={styles.emptySubtitle}>
-              Be the first to start a discussion in this channel.
+              {t('channelDetail_emptySubtitle')}
             </Text>
           </View>
         ) : (
