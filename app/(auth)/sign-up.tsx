@@ -21,10 +21,12 @@ import { supabase } from '../../lib/supabase'
 import { useTheme, stickers, font } from '../../constants/theme'
 import { Squishy, Heart } from '../../components/ui/Stickers'
 import { useSavedToast } from '../../components/ui/SavedToast'
+import { useTranslation } from '../../lib/i18n'
 
 export default function SignUp() {
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const toast = useSavedToast()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -33,27 +35,27 @@ export default function SignUp() {
   async function signUp() {
     const trimmedEmail = email.trim()
     if (!trimmedEmail || !password) {
-      Alert.alert('Missing info', 'Please enter an email and password.')
+      Alert.alert(t('auth_missingInfo'), t('auth_missingEmailPasswordSignUp'))
       return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      Alert.alert('Invalid email', 'Please enter a valid email address.')
+      Alert.alert(t('auth_invalidEmail'), t('auth_invalidEmailMsg'))
       return
     }
     if (password.length < 6) {
-      Alert.alert('Password too short', 'Use at least 6 characters.')
+      Alert.alert(t('auth_passwordTooShort'), t('auth_passwordTooShortMsg'))
       return
     }
     setLoading(true)
     try {
       const { error } = await supabase.auth.signUp({ email: trimmedEmail, password })
       if (error) {
-        Alert.alert('Sign-up failed', error.message)
+        Alert.alert(t('auth_signUpFailed'), error.message)
         return
       }
       toast.show({
-        title: 'Welcome aboard!',
-        message: 'Check your email to confirm your account, then sign in.',
+        title: t('auth_welcomeAboard'),
+        message: t('auth_confirmEmail'),
         autoDismiss: 3200,
       })
       // Wait for the toast to finish before swapping screens (which would
@@ -61,7 +63,7 @@ export default function SignUp() {
       setTimeout(() => router.replace('/(auth)/sign-in'), 3200)
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Network error'
-      Alert.alert('Sign-up failed', msg)
+      Alert.alert(t('auth_signUpFailed'), msg)
     } finally {
       setLoading(false)
     }
@@ -105,22 +107,22 @@ export default function SignUp() {
 
           {/* Heading */}
           <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
-            What should
+            {t('auth_signUp_heading1')}
           </Text>
           <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
-            grandma
+            {t('auth_signUp_heading2')}
           </Text>
           <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>
-            call you?
+            {t('auth_signUp_heading3')}
           </Text>
           <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
-            Create an account to start your journey.
+            {t('auth_signUp_subtitle')}
           </Text>
 
           {/* Paper card inputs */}
           <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
-              EMAIL
+              {t('auth_emailLabel')}
             </Text>
             <TextInput
               value={email}
@@ -129,14 +131,14 @@ export default function SignUp() {
               autoCapitalize="none"
               style={[styles.inputText, { fontFamily: font.body, color: ink }]}
               selectionColor={ink}
-              placeholder="your@email.com"
+              placeholder={t('auth_emailPlaceholder')}
               placeholderTextColor={ink4}
             />
           </View>
 
           <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
-              PASSWORD
+              {t('auth_passwordLabel')}
             </Text>
             <TextInput
               value={password}
@@ -144,7 +146,7 @@ export default function SignUp() {
               secureTextEntry
               style={[styles.inputText, { fontFamily: font.body, color: ink }]}
               selectionColor={ink}
-              placeholder="min 6 characters"
+              placeholder={t('auth_passwordPlaceholder')}
               placeholderTextColor={ink4}
             />
           </View>
@@ -163,7 +165,7 @@ export default function SignUp() {
             ]}
           >
             <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
-              {loading ? 'Creating…' : 'Continue →'}
+              {loading ? t('auth_creating') : t('auth_continue')}
             </Text>
           </Pressable>
 

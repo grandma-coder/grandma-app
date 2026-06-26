@@ -24,6 +24,7 @@ import { PaperCard } from '../../components/ui/PaperCard'
 import { GrandmaBall } from '../../components/home/GrandmaBall'
 import { useTheme, getModeColor } from '../../constants/theme'
 import type { PillarId } from '../../types'
+import { useTranslation } from '../../lib/i18n'
 
 interface ChatMessage {
   id: string
@@ -34,6 +35,7 @@ interface ChatMessage {
 export default function Library() {
   const insets = useSafeAreaInsets()
   const { colors, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const child = useChildStore((s) => s.activeChild)
   const mode = useModeStore((s) => s.mode)
   const modeConfig = getModeConfig(mode)
@@ -50,10 +52,10 @@ export default function Library() {
   const accent = getModeColor(mode, isDark)
   const subtitleCopy =
     mode === 'pre-pregnancy'
-      ? 'Your conception guide'
+      ? t('library_subtitleCycle')
       : mode === 'pregnancy'
-        ? 'Your pregnancy companion'
-        : 'Your parenting wisdom guide'
+        ? t('library_subtitlePreg')
+        : t('library_subtitleKids')
 
   useEffect(() => {
     if (!child) return
@@ -147,15 +149,15 @@ export default function Library() {
       >
         <GrandmaBall onPress={() => {}} />
         <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display }]}>
-          Guru Grandma
+          {t('library_title')}
         </Text>
         <Text style={[styles.emptySubtitle, { color: colors.textMuted, fontFamily: font.body }]}>
-          I'm not your doctor, dear — but I can share wisdom on pre-pregnancy, pregnancy, feeding, vaccines, emergencies, and so much more.
+          {t('library_emptySubtitle')}
         </Text>
 
         {/* Knowledge Pillars — mode-specific */}
         <Text style={[styles.pillarsLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-          KNOWLEDGE PILLARS
+          {t('library_knowledgePillars')}
         </Text>
         <View style={styles.pillarsGrid}>
           {modePillars.map((pillar) => (
@@ -184,19 +186,19 @@ export default function Library() {
 
         {/* Channels placeholder */}
         <Text style={[styles.pillarsLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-          COMMUNITY CHANNELS
+          {t('library_communityChannels')}
         </Text>
         <PaperCard radius={28} padding={20}>
           <View style={styles.channelPlaceholder}>
             <Text style={[styles.channelTitle, { color: colors.text, fontFamily: font.display }]}>
-              Coming Soon
+              {t('library_comingSoon')}
             </Text>
             <Text style={[styles.channelSubtitle, { color: colors.textMuted, fontFamily: font.body }]}>
               {mode === 'pre-pregnancy'
-                ? 'Join channels for TTC journeys, cycle tips, fertility support, and local meetups.'
+                ? t('library_channelDescCycle')
                 : mode === 'pregnancy'
-                  ? 'Join channels for birth stories, bump updates, prenatal tips, and local meetups.'
-                  : 'Join channels for parenting wins, feeding support, recipes, and local meetups.'}
+                  ? t('library_channelDescPreg')
+                  : t('library_channelDescKids')}
             </Text>
           </View>
         </PaperCard>
@@ -215,8 +217,8 @@ export default function Library() {
           <View style={styles.headerRow}>
             <View>
               <Text style={[styles.title, { color: colors.text, fontFamily: font.display }]}>
-                Guru{'\n'}
-                <Text style={{ color: accent, fontStyle: 'italic' }}>Grandma</Text>
+                {t('library_titleHeader')}{'\n'}
+                <Text style={{ color: accent, fontStyle: 'italic' }}>{t('library_titleAccent')}</Text>
               </Text>
               <Text style={[styles.headerSubtitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
                 {subtitleCopy}
@@ -238,8 +240,8 @@ export default function Library() {
           <View style={{ marginHorizontal: 16, marginTop: 8, padding: 12, borderRadius: 12, backgroundColor: colors.surfaceRaised }}>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.body }}>
               {mode === 'kids'
-                ? 'Pick a child to save chat history. This conversation will end when you leave the screen.'
-                : 'This conversation won’t be saved yet — it will end when you leave the screen.'}
+                ? t('library_pickChildWarning')
+                : t('library_noSaveWarning')}
             </Text>
           </View>
         ) : null}
@@ -271,7 +273,7 @@ export default function Library() {
               },
             ]}
             selectionColor={accent}
-            placeholder="Ask Grandma..."
+            placeholder={t('library_askPlaceholder')}
             placeholderTextColor={colors.textFaint}
             value={input}
             onChangeText={setInput}
@@ -288,7 +290,7 @@ export default function Library() {
               (!input.trim() || loading) && { opacity: 0.4 },
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Send message to Grandma"
+            accessibilityLabel={t('library_sendA11y')}
           >
             {loading ? (
               <ActivityIndicator size="small" color={colors.textInverse} />

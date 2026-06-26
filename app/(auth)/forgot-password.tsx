@@ -21,10 +21,12 @@ import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useTheme, stickers } from '../../constants/theme'
 import { Heart } from '../../components/ui/Stickers'
+import { useTranslation } from '../../lib/i18n'
 
 export default function ForgotPassword() {
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
@@ -32,11 +34,11 @@ export default function ForgotPassword() {
   async function handleReset() {
     const trimmed = email.trim()
     if (!trimmed) {
-      Alert.alert('Missing info', 'Please enter your email.')
+      Alert.alert(t('auth_missingInfo'), t('auth_missingEmailOnly'))
       return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      Alert.alert('Invalid email', 'Please enter a valid email address.')
+      Alert.alert(t('auth_invalidEmail'), t('auth_invalidEmailMsg'))
       return
     }
     setLoading(true)
@@ -45,13 +47,13 @@ export default function ForgotPassword() {
         redirectTo: 'grandma-app://auth/reset',
       })
       if (error) {
-        Alert.alert("Couldn't send reset email", error.message)
+        Alert.alert(t('auth_couldntSendReset'), error.message)
         return
       }
       setSent(true)
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Network error'
-      Alert.alert("Couldn't send reset email", msg)
+      Alert.alert(t('auth_couldntSendReset'), msg)
     } finally {
       setLoading(false)
     }
@@ -88,19 +90,17 @@ export default function ForgotPassword() {
             </View>
           </Pressable>
 
-          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>Forgot</Text>
-          <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>password?</Text>
+          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>{t('auth_forgot_heading')}</Text>
+          <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>{t('auth_forgot_heading2')}</Text>
           <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
-            {sent
-              ? 'Check your inbox — we sent a reset link.'
-              : "Enter your email and we'll send a reset link."}
+            {sent ? t('auth_forgot_sent') : t('auth_forgot_prompt')}
           </Text>
 
           {!sent && (
             <>
               <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
                 <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
-                  EMAIL
+                  {t('auth_emailLabel')}
                 </Text>
                 <TextInput
                   value={email}
@@ -132,7 +132,7 @@ export default function ForgotPassword() {
                 ]}
               >
                 <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
-                  {loading ? 'Sending…' : 'Send reset link →'}
+                  {loading ? t('auth_sending') : t('auth_sendResetLink')}
                 </Text>
               </Pressable>
             </>
@@ -152,7 +152,7 @@ export default function ForgotPassword() {
               ]}
             >
               <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
-                Back to sign in
+                {t('auth_backToSignIn')}
               </Text>
             </Pressable>
           )}

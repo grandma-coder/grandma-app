@@ -89,6 +89,17 @@ module.exports = [
       'components/calendar/CycleCalendar.tsx',
       'components/calendar/CycleLogForms.tsx',
       'app/onboarding/cycle/index.tsx',
+      // B5 — Auth, onboarding shell, paywall, tabs
+      'app/(auth)/welcome.tsx',
+      'app/(auth)/sign-in.tsx',
+      'app/(auth)/sign-up.tsx',
+      'app/(auth)/forgot-password.tsx',
+      'app/(auth)/reset-password.tsx',
+      'app/onboarding/journey.tsx',
+      'app/onboarding/transition.tsx',
+      'app/paywall.tsx',
+      'app/(tabs)/index.tsx',
+      'app/(tabs)/library.tsx',
     ],
     plugins: { i18next },
     rules: {

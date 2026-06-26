@@ -16,11 +16,13 @@ import { KidsHome } from '../../components/home/KidsHome'
 import { Display, DisplayItalic, Body } from '../../components/ui/Typography'
 import { PillButton } from '../../components/ui/PillButton'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
+import { useTranslation } from '../../lib/i18n'
 
 export default function Home() {
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   const bg = colors.bg
   const ink = colors.text
@@ -55,16 +57,16 @@ export default function Home() {
               motion="default"
             />
             <Display size={28} align="center" color={ink} style={{ marginTop: 18 }}>
-              Your journey starts
+              {t('tabsHome_journeyStarts1')}
             </Display>
             <DisplayItalic size={28} align="center" color={ink}>
-              here, dear.
+              {t('tabsHome_journeyStarts2')}
             </DisplayItalic>
             <Body align="center" color={ink3} style={styles.emptyBody}>
-              Choose your path — whether you are trying to conceive, expecting, or raising little ones. Grandma is here for it all.
+              {t('tabsHome_journeyBody')}
             </Body>
             <PillButton
-              label="Choose your journey →"
+              label={t('tabsHome_chooseJourney')}
               onPress={() => router.push('/onboarding/journey')}
               variant="ink"
               style={{ marginTop: 20, alignSelf: 'stretch' }}

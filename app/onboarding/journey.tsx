@@ -20,6 +20,7 @@ import { Flower, Heart, Star } from '../../components/ui/Stickers'
 import { Display, DisplayItalic, Body } from '../../components/ui/Typography'
 import { PillButton } from '../../components/ui/PillButton'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { useTranslation } from '../../lib/i18n'
 
 interface JourneyOption {
   id: Behavior
@@ -28,30 +29,6 @@ interface JourneyOption {
   sticker: (color: string) => React.ReactNode
   modeKey: 'pre' | 'preg' | 'kids'
 }
-
-const JOURNEYS: JourneyOption[] = [
-  {
-    id: 'pre-pregnancy',
-    title: 'Trying',
-    subtitle: 'Cycle & fertility',
-    sticker: (color) => <Flower size={44} petal={color} center={stickers.yellow} />,
-    modeKey: 'pre',
-  },
-  {
-    id: 'pregnancy',
-    title: 'Pregnant',
-    subtitle: 'Week by week',
-    sticker: (color) => <Heart size={42} fill={color} />,
-    modeKey: 'preg',
-  },
-  {
-    id: 'kids',
-    title: 'Parenting',
-    subtitle: 'Babies & toddlers',
-    sticker: (color) => <Star size={44} fill={color} />,
-    modeKey: 'kids',
-  },
-]
 
 const FIRST_ROUTE: Record<Behavior, string> = {
   'pre-pregnancy': '/onboarding/cycle',
@@ -62,10 +39,35 @@ const FIRST_ROUTE: Record<Behavior, string> = {
 export default function JourneyScreen() {
   const insets = useSafeAreaInsets()
   const { colors, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const params = useLocalSearchParams<{ addMode?: string; preselect?: string }>()
 
   const isAddMode = params.addMode === 'true'
   const preselect = params.preselect as Behavior | undefined
+
+  const JOURNEYS: JourneyOption[] = [
+    {
+      id: 'pre-pregnancy',
+      title: t('onboardingJourney_trying'),
+      subtitle: t('onboardingJourney_cycleSubtitle'),
+      sticker: (color) => <Flower size={44} petal={color} center={stickers.yellow} />,
+      modeKey: 'pre',
+    },
+    {
+      id: 'pregnancy',
+      title: t('onboardingJourney_pregnant'),
+      subtitle: t('onboardingJourney_pregnantSubtitle'),
+      sticker: (color) => <Heart size={42} fill={color} />,
+      modeKey: 'preg',
+    },
+    {
+      id: 'kids',
+      title: t('onboardingJourney_parenting'),
+      subtitle: t('onboardingJourney_parentingSubtitle'),
+      sticker: (color) => <Star size={44} fill={color} />,
+      modeKey: 'kids',
+    },
+  ]
 
   const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
   const enroll = useBehaviorStore((s) => s.enroll)
@@ -152,16 +154,16 @@ export default function JourneyScreen() {
             <Heart size={52} fill={stickers.coral} />
           </View>
           <Display align="center" size={28} color={ink}>
-            You have all three journeys
+            {t('onboardingJourney_allEnrolled1')}
           </Display>
           <DisplayItalic align="center" size={28} color={ink}>
-            active, dear.
+            {t('onboardingJourney_allEnrolled2')}
           </DisplayItalic>
           <Body align="center" color={ink3} style={{ marginTop: 12, maxWidth: 300 }}>
-            You are amazing. All your data is being tracked across every journey.
+            {t('onboardingJourney_allEnrolledBody')}
           </Body>
           <PillButton
-            label="Back to Profile"
+            label={t('onboardingJourney_backToProfile')}
             variant="ink"
             onPress={() => router.back()}
             style={{ marginTop: 24, alignSelf: 'stretch' }}
@@ -182,22 +184,20 @@ export default function JourneyScreen() {
       >
         <ScreenHeader
           hideBack={!isAddMode}
-          title={isAddMode ? 'Add Journey' : '1 / 10'}
+          title={isAddMode ? t('onboardingJourney_addTitle') : '1 / 10'}
           style={{ marginBottom: 24 }}
         />
 
         {/* Heading */}
         <Display size={40} color={ink}>
-          {isAddMode ? 'Add a' : 'Which journey'}
+          {isAddMode ? t('onboardingJourney_addHeading1') : t('onboardingJourney_heading1')}
         </Display>
         <DisplayItalic size={40} color={ink} style={{ marginBottom: 10 }}>
-          {isAddMode ? 'journey, dear.' : 'are you on?'}
+          {isAddMode ? t('onboardingJourney_addHeading2') : t('onboardingJourney_heading2')}
         </DisplayItalic>
 
         <Body size={15} color={ink3} style={styles.subtitle}>
-          {isAddMode
-            ? 'Your existing data stays exactly as it is.'
-            : 'Pick the one that fits today. You can switch anytime.'}
+          {isAddMode ? t('onboardingJourney_addSubtitle') : t('onboardingJourney_subtitle')}
         </Body>
 
         {/* Journey cards */}
@@ -245,7 +245,7 @@ export default function JourneyScreen() {
                 {isDimmed ? (
                   <View style={[styles.activeBadge, { backgroundColor: accent }]}>
                     <Text style={[styles.activeBadgeText, { fontFamily: font.bodyMedium, color: bg }]}>
-                      Active
+                      {t('onboardingJourney_activeBadge')}
                     </Text>
                   </View>
                 ) : (
@@ -272,7 +272,7 @@ export default function JourneyScreen() {
           ]}
         >
           <PillButton
-            label={isAddMode ? 'Add Journey →' : 'Continue →'}
+            label={isAddMode ? t('onboardingJourney_addCta') : t('auth_continue')}
             variant="ink"
             onPress={handleContinue}
           />

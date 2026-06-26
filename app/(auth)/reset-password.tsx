@@ -24,42 +24,44 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useTheme, stickers } from '../../constants/theme'
 import { Heart } from '../../components/ui/Stickers'
+import { useTranslation } from '../../lib/i18n'
 
 const MIN_PASSWORD_LENGTH = 8
 
 export default function ResetPassword() {
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleUpdate() {
     if (password.length < MIN_PASSWORD_LENGTH) {
-      Alert.alert('Password too short', `Use at least ${MIN_PASSWORD_LENGTH} characters.`)
+      Alert.alert(t('auth_passwordTooShort'), t('auth_passwordTooShortN', { n: MIN_PASSWORD_LENGTH }))
       return
     }
     if (password !== confirm) {
-      Alert.alert('Passwords don’t match', 'Please re-enter the same password.')
+      Alert.alert(t('auth_passwordsNoMatch'), t('auth_passwordsNoMatchMsg'))
       return
     }
     setLoading(true)
     try {
       const { error } = await supabase.auth.updateUser({ password })
       if (error) {
-        Alert.alert("Couldn't update password", error.message)
+        Alert.alert(t('auth_couldntUpdatePassword'), error.message)
         return
       }
       // Sign out so the user logs in fresh with the new password. The root
       // auth listener clears recoveryMode on SIGNED_OUT and the route guard
       // sends them to welcome; we nudge to sign-in for a clear next step.
       await supabase.auth.signOut()
-      Alert.alert('Password updated', 'Please sign in with your new password.', [
+      Alert.alert(t('auth_passwordUpdated'), t('auth_passwordUpdatedMsg'), [
         { text: 'OK', onPress: () => router.replace('/(auth)/sign-in') },
       ])
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Network error'
-      Alert.alert("Couldn't update password", msg)
+      Alert.alert(t('auth_couldntUpdatePassword'), msg)
     } finally {
       setLoading(false)
     }
@@ -90,15 +92,15 @@ export default function ResetPassword() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>New</Text>
-          <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>password</Text>
+          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>{t('auth_reset_heading')}</Text>
+          <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>{t('auth_reset_heading2')}</Text>
           <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
-            Choose a new password for your account.
+            {t('auth_reset_subtitle')}
           </Text>
 
           <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
-              NEW PASSWORD
+              {t('auth_newPasswordLabel')}
             </Text>
             <TextInput
               value={password}
@@ -116,7 +118,7 @@ export default function ResetPassword() {
 
           <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
-              CONFIRM PASSWORD
+              {t('auth_confirmPasswordLabel')}
             </Text>
             <TextInput
               value={confirm}
@@ -148,7 +150,7 @@ export default function ResetPassword() {
             ]}
           >
             <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
-              {loading ? 'Updating…' : 'Update password →'}
+              {loading ? t('auth_updating') : t('auth_updatePassword')}
             </Text>
           </Pressable>
         </ScrollView>

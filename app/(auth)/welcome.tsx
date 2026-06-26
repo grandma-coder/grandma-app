@@ -28,10 +28,12 @@ import {
   isAppleSignInAvailable,
 } from '../../lib/auth-providers'
 import { setPendingInvite } from '../../lib/pendingInvite'
+import { useTranslation } from '../../lib/i18n'
 
 export default function Welcome() {
   const insets = useSafeAreaInsets()
   const { colors, font, stickers } = useTheme()
+  const { t } = useTranslation()
 
   // A caregiver invite link opened while signed out lands here as
   // ?invite=<token> (see app/accept-invite.tsx). Stash it so the root layout
@@ -67,7 +69,7 @@ export default function Welcome() {
       await signInWithApple()
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string }
-      if (err.code !== 'ERR_REQUEST_CANCELED') Alert.alert('Sign-In Error', err.message ?? 'Please try again.')
+      if (err.code !== 'ERR_REQUEST_CANCELED') Alert.alert(t('auth_signInError'), err.message ?? t('error_tryAgain'))
     } finally {
       setLoading(null)
     }
@@ -79,7 +81,7 @@ export default function Welcome() {
       await signInWithGoogle()
     } catch (e: unknown) {
       const err = e as { message?: string }
-      if (err.message !== 'Google sign-in was cancelled or failed') Alert.alert('Sign-In Error', err.message ?? 'Please try again.')
+      if (err.message !== 'Google sign-in was cancelled or failed') Alert.alert(t('auth_signInError'), err.message ?? t('error_tryAgain'))
     } finally {
       setLoading(null)
     }
@@ -131,7 +133,7 @@ export default function Welcome() {
 
         {/* Italic welcome line */}
         <Text style={[styles.welcomeLine, { fontFamily: font.italic, color: ink3 }]}>
-          welcome to
+          {t('auth_welcome_intro')}
         </Text>
 
         {/* Main wordmark */}
@@ -141,12 +143,12 @@ export default function Welcome() {
 
         {/* Italic tagline */}
         <Text style={[styles.seesYou, { fontFamily: font.italic, color: stickers.coral }]}>
-          sees you.
+          {t('auth_welcome_tagline')}
         </Text>
 
         {/* Body */}
         <Text style={[styles.body, { fontFamily: font.body, color: ink2 }]}>
-          Your wise companion through trying, pregnancy, and the first years.
+          {t('auth_welcome_body')}
         </Text>
       </Animated.View>
 
@@ -172,7 +174,7 @@ export default function Welcome() {
               <>
                 <Ionicons name="logo-apple" size={18} color={bg} />
                 <Text style={[styles.authBtnText, { fontFamily: font.bodyMedium, color: bg }]}>
-                  Continue with Apple
+                  {t('auth_continueWithApple')}
                 </Text>
               </>
             )}
@@ -198,19 +200,19 @@ export default function Welcome() {
             <>
               <Ionicons name="logo-google" size={18} color={ink} />
               <Text style={[styles.authBtnText, { fontFamily: font.bodyMedium, color: ink }]}>
-                Continue with Google
+                {t('auth_continueWithGoogle')}
               </Text>
             </>
           )}
         </Pressable>
 
         <Text style={[styles.signInLink, { fontFamily: font.body, color: ink3 }]}>
-          Have an account?{' '}
+          {t('auth_hasAccount')}{' '}
           <Text
             onPress={() => router.push('/(auth)/sign-in')}
             style={{ color: ink, fontFamily: font.bodySemiBold }}
           >
-            Sign in
+            {t('auth_signIn')}
           </Text>
         </Text>
       </Animated.View>

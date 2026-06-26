@@ -15,40 +15,42 @@ import { useTheme, stickers, getModeColor } from '../../constants/theme'
 import { useOnboardingStore } from '../../store/useOnboardingStore'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
+import { useTranslation } from '../../lib/i18n'
 
 const SCREEN_W = Dimensions.get('window').width
 const AUTO_ADVANCE_MS = 8000
 
-const BEHAVIOR_CONTENT: Record<Behavior, {
-  sticker: React.ReactNode
-  heading: string
-  subtext: string
-  route: string
-}> = {
-  pregnancy: {
-    sticker: <Heart size={96} fill={stickers.pink} />,
-    heading: "Now, let's talk about\nyour little one on the way",
-    subtext: 'Just a few things to help Grandma support you through your pregnancy.',
-    route: '/onboarding/pregnancy',
-  },
-  kids: {
-    sticker: <Star size={96} fill={stickers.blue} />,
-    heading: "Now, let's meet\nyour little ones",
-    subtext: 'Tell me about your children so I can help you take the best care of them.',
-    route: '/onboarding/kids',
-  },
-  'pre-pregnancy': {
-    sticker: <Moon size={96} fill={stickers.lilac} />,
-    heading: "Now, let's understand\nyour cycle",
-    subtext: 'A little about your cycle so I can help you understand your body.',
-    route: '/onboarding/cycle',
-  },
-}
-
 export default function TransitionScreen() {
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const { next } = useLocalSearchParams<{ next: string }>()
+
+  const BEHAVIOR_CONTENT: Record<Behavior, {
+    sticker: React.ReactNode
+    heading: string
+    subtext: string
+    route: string
+  }> = {
+    pregnancy: {
+      sticker: <Heart size={96} fill={stickers.pink} />,
+      heading: t('onboardingTransition_pregnancy_heading'),
+      subtext: t('onboardingTransition_pregnancy_subtext'),
+      route: '/onboarding/pregnancy',
+    },
+    kids: {
+      sticker: <Star size={96} fill={stickers.blue} />,
+      heading: t('onboardingTransition_kids_heading'),
+      subtext: t('onboardingTransition_kids_subtext'),
+      route: '/onboarding/kids',
+    },
+    'pre-pregnancy': {
+      sticker: <Moon size={96} fill={stickers.lilac} />,
+      heading: t('onboardingTransition_cycle_heading'),
+      subtext: t('onboardingTransition_cycle_subtext'),
+      route: '/onboarding/cycle',
+    },
+}
 
   const skipCurrentFlow = useOnboardingStore((s) => s.skipCurrentFlow)
   const queue = useOnboardingStore((s) => s.queue)
@@ -175,13 +177,13 @@ export default function TransitionScreen() {
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
         {/* CTA */}
         <View style={styles.ctaWrap}>
-          <PillButton label="Let's go, dear" variant="ink" onPress={handleContinue} />
+          <PillButton label={t('onboardingTransition_cta')} variant="ink" onPress={handleContinue} />
         </View>
 
         {/* Skip */}
         <Pressable onPress={handleSkip} style={styles.skipBtn}>
           <Text style={[styles.skipText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-            Skip for now
+            {t('onboardingTransition_skip')}
           </Text>
         </Pressable>
 

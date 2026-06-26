@@ -25,6 +25,7 @@ import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { PaperAlert, PaperAlertButton } from '../components/ui/PaperAlert'
 import { Heart, Star, Sparkle, Cross, Sun, Flower } from '../components/ui/Stickers'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTranslation } from '../lib/i18n'
 
 // Fallback prices if RevenueCat hasn't loaded yet
 const FALLBACK_PRICE: Record<PaywallTier, Record<BillingPeriod, string>> = {
@@ -34,36 +35,11 @@ const FALLBACK_PRICE: Record<PaywallTier, Record<BillingPeriod, string>> = {
 
 type FeatureSticker = 'heart' | 'cross' | 'sparkle' | 'star' | 'sun'
 
-const TIER_COPY: Record<PaywallTier, {
+interface TierCopyEntry {
   title: string
   seats: string
   features: Array<{ sticker: FeatureSticker; text: string }>
   highlight: string
-}> = {
-  premium_solo: {
-    title: 'Solo',
-    seats: 'You + 1 caregiver',
-    features: [
-      { sticker: 'heart', text: 'You + 1 caregiver (partner or nanny)' },
-      { sticker: 'cross', text: 'Unlimited medicine & food scans' },
-      { sticker: 'sparkle', text: 'Unlimited Grandma conversations' },
-      { sticker: 'star', text: 'Vaccine reminders' },
-      { sticker: 'sun', text: 'Priority responses' },
-    ],
-    highlight: 'Best for single parents or first-time setup',
-  },
-  premium_family: {
-    title: 'Family',
-    seats: 'You + up to 4 caregivers',
-    features: [
-      { sticker: 'heart', text: 'Up to 5 accounts with full access' },
-      { sticker: 'cross', text: 'Unlimited scans for every caregiver' },
-      { sticker: 'sparkle', text: 'Shared Grandma conversations' },
-      { sticker: 'star', text: 'Synced vaccine reminders' },
-      { sticker: 'sun', text: 'Priority responses & early features' },
-    ],
-    highlight: 'Co-parent, grandparents, and nannies — all on one plan',
-  },
 }
 
 function FeatureStickerIcon({ kind, size = 32 }: { kind: FeatureSticker; size?: number }) {
@@ -85,6 +61,7 @@ function FeatureStickerIcon({ kind, size = 32 }: { kind: FeatureSticker; size?: 
 
 export default function Paywall() {
   const { colors, font, brand, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{ tier?: string }>()
   const paper = colors.surface
@@ -109,6 +86,33 @@ export default function Paywall() {
     buttons?: PaperAlertButton[]
   } | null>(null)
 
+  const TIER_COPY: Record<PaywallTier, TierCopyEntry> = {
+    premium_solo: {
+      title: t('paywall_tierSolo'),
+      seats: t('paywall_tierSoloSeats'),
+      features: [
+        { sticker: 'heart', text: t('paywall_featureSoloCaregiver') },
+        { sticker: 'cross', text: t('paywall_featureUnlimitedScansDetail') },
+        { sticker: 'sparkle', text: t('paywall_featureUnlimitedChat') },
+        { sticker: 'star', text: t('paywall_featureVaccineReminders') },
+        { sticker: 'sun', text: t('paywall_featurePriorityResponses') },
+      ],
+      highlight: t('paywall_soloHighlight'),
+    },
+    premium_family: {
+      title: t('paywall_tierFamily'),
+      seats: t('paywall_tierFamilySeats'),
+      features: [
+        { sticker: 'heart', text: t('paywall_featureFamilyAccounts') },
+        { sticker: 'cross', text: t('paywall_featureFamilyScans') },
+        { sticker: 'sparkle', text: t('paywall_featureSharedChat') },
+        { sticker: 'star', text: t('paywall_featureSyncedVaccines') },
+        { sticker: 'sun', text: t('paywall_featurePriorityEarly') },
+      ],
+      highlight: t('paywall_familyHighlight'),
+    },
+  }
+
   useEffect(() => {
     getTieredPackages()
       .then(setTieredPackages)
@@ -132,7 +136,7 @@ export default function Paywall() {
 
   const ctaLabel = useMemo(() => {
     if (purchasing) return '…'
-    if (selectedPeriod === null) return 'Select a plan'
+    if (selectedPeriod === null) return t('paywall_selectPlan')
     const price = priceFor(selectedTier, selectedPeriod)
     const suffix = selectedPeriod === 'annual' ? '/year' : '/month'
     return `Start free trial · ${price}${suffix}`
@@ -147,9 +151,9 @@ export default function Paywall() {
     )
     if (!match) {
       setAlert({
-        title: 'Unavailable',
-        italic: 'one moment, dear',
-        message: 'This plan is not available yet. Please try again shortly.',
+        title: t('paywall_unavailableTitle'),
+        italic: t('paywall_unavailableItalic'),
+        message: t('paywall_unavailableMsg'),
       })
       return
     }
@@ -166,14 +170,14 @@ export default function Paywall() {
             .eq('id', user.id)
         }
         setAlert({
-          title: 'Welcome to Premium',
-          italic: 'grandma sees you, dear',
-          message: 'You now have full access.',
+          title: t('paywall_welcomePremiumTitle'),
+          italic: t('paywall_welcomePremiumItalic'),
+          message: t('paywall_welcomePremiumMsg'),
           buttons: [{ label: 'OK', variant: 'primary', onPress: () => router.back() }],
         })
       }
     } catch (e: any) {
-      if (!e.userCancelled) setAlert({ title: 'Something went wrong', message: e.message })
+      if (!e.userCancelled) setAlert({ title: t('paywall_errorTitle'), message: e.message })
     } finally {
       setPurchasing(false)
     }
@@ -193,20 +197,20 @@ export default function Paywall() {
             .eq('id', user.id)
         }
         setAlert({
-          title: 'Restored',
-          italic: 'welcome back, dear',
-          message: 'Your premium access is back.',
+          title: t('paywall_restoredTitle'),
+          italic: t('paywall_restoredItalic'),
+          message: t('paywall_restoredMsg'),
           buttons: [{ label: 'OK', variant: 'primary', onPress: () => router.back() }],
         })
       } else {
         setAlert({
-          title: 'No purchases found',
-          italic: 'nothing to restore yet',
-          message: "We couldn't find an active subscription on this account.",
+          title: t('paywall_noPurchasesTitle'),
+          italic: t('paywall_noPurchasesItalic'),
+          message: t('paywall_noPurchasesMsg'),
         })
       }
     } catch (e: any) {
-      setAlert({ title: 'Something went wrong', message: e.message })
+      setAlert({ title: t('paywall_errorTitle'), message: e.message })
     } finally {
       setPurchasing(false)
     }
@@ -259,7 +263,7 @@ export default function Paywall() {
             color={ink}
             style={{ marginTop: 18, fontFamily: font.display, letterSpacing: -0.5, lineHeight: 42 }}
           >
-            Unlock Grandma Premium
+            {t('paywall_unlockTitle')}
           </Display>
           <Body
             size={18}
@@ -267,7 +271,7 @@ export default function Paywall() {
             color={coral}
             style={{ marginTop: 8, fontFamily: font.italic, fontStyle: 'italic' }}
           >
-            more love, more eyes, more you
+            {t('paywall_heroTagline')}
           </Body>
           <Body
             size={12}
@@ -376,7 +380,7 @@ export default function Paywall() {
                             letterSpacing: 1.5,
                           }}
                         >
-                          BEST VALUE
+                          {t('paywall_bestValue')}
                         </Body>
                       </View>
                       <View
@@ -395,7 +399,7 @@ export default function Paywall() {
                     color={isSelected ? ink : colors.textSecondary}
                     style={{ fontFamily: font.bodyMedium, marginBottom: 6, letterSpacing: 0.4 }}
                   >
-                    {isAnnual ? 'Annual' : 'Monthly'}
+                    {isAnnual ? t('paywall_annual') : t('paywall_monthly')}
                   </Body>
                   <Display
                     size={38}
@@ -430,7 +434,7 @@ export default function Paywall() {
 
         <Pressable onPress={handleRestore} disabled={purchasing} style={styles.restoreButton} hitSlop={8}>
           <Body size={14} color={colors.text} style={{ fontFamily: font.bodyMedium, textDecorationLine: 'underline' }}>
-            Restore purchases
+            {t('paywall_restorePurchases')}
           </Body>
         </Pressable>
 

@@ -24,10 +24,12 @@ import { Burst } from '../../components/ui/Stickers'
 import { signInWithApple, signInWithGoogle, isAppleSignInAvailable } from '../../lib/auth-providers'
 import { setPendingInvite } from '../../lib/pendingInvite'
 import { Ionicons } from '@expo/vector-icons'
+import { useTranslation } from '../../lib/i18n'
 
 export default function SignIn() {
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -48,11 +50,11 @@ export default function SignIn() {
   async function signIn() {
     const trimmedEmail = email.trim()
     if (!trimmedEmail || !password) {
-      Alert.alert('Missing info', 'Please enter your email and password.')
+      Alert.alert(t('auth_missingInfo'), t('auth_missingEmailPassword'))
       return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      Alert.alert('Invalid email', 'Please enter a valid email address.')
+      Alert.alert(t('auth_invalidEmail'), t('auth_invalidEmailMsg'))
       return
     }
     setLoading(true)
@@ -61,10 +63,10 @@ export default function SignIn() {
         email: trimmedEmail,
         password,
       })
-      if (error) Alert.alert('Sign-in failed', error.message)
+      if (error) Alert.alert(t('auth_signInFailed'), error.message)
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Network error'
-      Alert.alert('Sign-in failed', msg)
+      Alert.alert(t('auth_signInFailed'), msg)
     } finally {
       setLoading(false)
     }
@@ -75,7 +77,7 @@ export default function SignIn() {
       setOauthLoading('apple')
       await signInWithApple()
     } catch (e: any) {
-      if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert('Sign-In Error', e.message)
+      if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert(t('auth_signInError'), e.message)
     } finally {
       setOauthLoading(null)
     }
@@ -86,7 +88,7 @@ export default function SignIn() {
       setOauthLoading('google')
       await signInWithGoogle()
     } catch (e: any) {
-      if (e.message !== 'Google sign-in was cancelled or failed') Alert.alert('Sign-In Error', e.message)
+      if (e.message !== 'Google sign-in was cancelled or failed') Alert.alert(t('auth_signInError'), e.message)
     } finally {
       setOauthLoading(null)
     }
@@ -128,13 +130,13 @@ export default function SignIn() {
 
           {/* Heading */}
           <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
-            Welcome
+            {t('auth_welcome')}
           </Text>
           <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>
-            back, dear.
+            {t('auth_welcome_back')}
           </Text>
           <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
-            Grandma's been waiting.
+            {t('auth_welcome_waiting')}
           </Text>
 
           {/* Social auth */}
@@ -149,7 +151,7 @@ export default function SignIn() {
             >
               <Ionicons name="logo-apple" size={18} color={bg} />
               <Text style={[styles.socialBtnText, { fontFamily: font.bodyMedium, color: bg }]}>
-                Continue with Apple
+                {t('auth_continueWithApple')}
               </Text>
             </Pressable>
           )}
@@ -168,7 +170,7 @@ export default function SignIn() {
           >
             <Ionicons name="logo-google" size={18} color={ink} />
             <Text style={[styles.socialBtnText, { fontFamily: font.bodyMedium, color: ink }]}>
-              Continue with Google
+              {t('auth_continueWithGoogle')}
             </Text>
           </Pressable>
 
@@ -176,14 +178,14 @@ export default function SignIn() {
           <View style={styles.divider}>
             <View style={[styles.dividerLine, { backgroundColor: paperBorder }]} />
             <Text style={[styles.dividerText, { fontFamily: font.body, color: ink4 }]}>
-              or sign in with email
+              {t('auth_orSignInEmail')}
             </Text>
             <View style={[styles.dividerLine, { backgroundColor: paperBorder }]} />
           </View>
 
           {/* Paper card inputs */}
           <InputField
-            label="EMAIL"
+            label={t('auth_emailLabel')}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -195,7 +197,7 @@ export default function SignIn() {
             font={font}
           />
           <InputField
-            label="PASSWORD"
+            label={t('auth_passwordLabel')}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -212,7 +214,7 @@ export default function SignIn() {
             hitSlop={8}
           >
             <Text style={[styles.forgot, { fontFamily: font.body, color: ink3 }]}>
-              Forgot password?
+              {t('auth_forgotPassword')}
             </Text>
           </Pressable>
 
@@ -230,16 +232,16 @@ export default function SignIn() {
             ]}
           >
             <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
-              {loading ? 'Signing in…' : 'Sign in →'}
+              {loading ? t('auth_signingIn') : t('auth_signInArrow')}
             </Text>
           </Pressable>
 
           {/* Switch */}
           <Pressable onPress={() => router.push('/(auth)/sign-up')}>
             <Text style={[styles.switchLink, { fontFamily: font.body, color: ink3 }]}>
-              New here?{' '}
+              {t('auth_newHere')}{' '}
               <Text style={{ fontFamily: font.bodySemiBold, color: ink }}>
-                Create account
+                {t('auth_createAccount')}
               </Text>
             </Text>
           </Pressable>
