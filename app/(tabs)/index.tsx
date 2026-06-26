@@ -9,24 +9,49 @@ import { ScrollView, View, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useModeStore } from '../../store/useModeStore'
+import { useChildStore } from '../../store/useChildStore'
+import { useCaregiverStore } from '../../store/useCaregiverStore'
 import { useTheme, stickers } from '../../constants/theme'
 import { CycleHome } from '../../components/home/CycleHome'
 import { PregnancyHome } from '../../components/home/PregnancyHome'
 import { KidsHome } from '../../components/home/KidsHome'
+import { CaregiverHome } from '../../components/caregiver/CaregiverHome'
 import { Display, DisplayItalic, Body } from '../../components/ui/Typography'
 import { PillButton } from '../../components/ui/PillButton'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
+import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { useTranslation } from '../../lib/i18n'
 
 export default function Home() {
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
+  const activeChild = useChildStore((s) => s.activeChild)
+  const caregiverHydrated = useCaregiverStore((s) => s.hydrated)
   const { colors } = useTheme()
   const { t } = useTranslation()
 
   const bg = colors.bg
   const ink = colors.text
   const ink3 = colors.textMuted
+
+  // Caregiver surface: when the active child is one the user is a caregiver for
+  // (not their own), render the scoped caregiver home instead of the owner
+  // dashboard. Gate on hydration so the persona never flashes on cold start.
+  const isCaregiverContext = !!activeChild && activeChild.caregiverRole !== 'parent'
+  if (isCaregiverContext) {
+    if (!caregiverHydrated) {
+      return (
+        <View style={[styles.root, styles.loaderRoot, { backgroundColor: bg }]}>
+          <BrandedLoader label="Loading" />
+        </View>
+      )
+    }
+    return (
+      <View style={[styles.root, { backgroundColor: bg }]}>
+        <CaregiverHome />
+      </View>
+    )
+  }
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
@@ -81,6 +106,7 @@ export default function Home() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  loaderRoot: { alignItems: 'center', justifyContent: 'center' },
   scroll: { paddingHorizontal: 20 },
 
   emptyWrap: {
