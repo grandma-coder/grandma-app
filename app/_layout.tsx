@@ -234,11 +234,12 @@ export default function RootLayout() {
         ),
         withTimeout(
           'child_caregivers query',
-          supabase
-            .from('child_caregivers')
-            .select('role, permissions, children(*)')
-            .eq('user_id', uid)
-            .eq('status', 'accepted'),
+          // Use the SECURITY DEFINER RPC instead of embedding children(*):
+          // it masks sensitive PHI columns (blood_type/conditions/medications/
+          // allergies/pediatrician) for caregivers who lack emergency/edit_child,
+          // and already filters to accepted, non-locked, non-paused links scoped
+          // to auth.uid(). Returns flat rows (role/permissions + child columns).
+          supabase.rpc('get_caregiver_children'),
         ),
         withTimeout(
           'behaviors query',
@@ -320,33 +321,30 @@ export default function RootLayout() {
       }
 
       if (links && links.length > 0) {
-        const mapped: ChildWithRole[] = links
-          .filter((l: any) => l.children)
-          .map((l: any) => {
-            const c = l.children
-            return {
-              id: c.id,
-              parentId: c.parent_id,
-              name: c.name,
-              birthDate: c.birth_date ?? '',
-              weightKg: c.weight_kg ?? 0,
-              heightCm: c.height_cm ?? 0,
-              sex: c.sex ?? '',
-              bloodType: c.blood_type ?? '',
-              allergies: c.allergies ?? [],
-              medications: c.medications ?? [],
-              conditions: c.conditions ?? [],
-              dietaryRestrictions: c.dietary_restrictions ?? [],
-              preferredFoods: c.preferred_foods ?? [],
-              dislikedFoods: c.disliked_foods ?? [],
-              pediatrician: c.pediatrician ?? null,
-              notes: c.notes ?? '',
-              countryCode: c.country_code ?? 'US',
-              photoUrl: c.photo_url ?? null,
-              caregiverRole: l.role,
-              permissions: l.permissions ?? DEFAULT_PERMISSIONS,
-            }
-          })
+        // get_caregiver_children returns flat rows: role/permissions plus the
+        // child columns (with PHI masked server-side per the caregiver's grant).
+        const mapped: ChildWithRole[] = links.map((c: any) => ({
+          id: c.id,
+          parentId: c.parent_id,
+          name: c.name,
+          birthDate: c.birth_date ?? '',
+          weightKg: c.weight_kg ?? 0,
+          heightCm: c.height_cm ?? 0,
+          sex: c.sex ?? '',
+          bloodType: c.blood_type ?? '',
+          allergies: c.allergies ?? [],
+          medications: c.medications ?? [],
+          conditions: c.conditions ?? [],
+          dietaryRestrictions: c.dietary_restrictions ?? [],
+          preferredFoods: c.preferred_foods ?? [],
+          dislikedFoods: c.disliked_foods ?? [],
+          pediatrician: c.pediatrician ?? null,
+          notes: c.notes ?? '',
+          countryCode: c.country_code ?? 'US',
+          photoUrl: c.photo_url ?? null,
+          caregiverRole: c.role,
+          permissions: c.permissions ?? DEFAULT_PERMISSIONS,
+        }))
         setChildren(mapped)
         setHasChildren(true)
       } else {
