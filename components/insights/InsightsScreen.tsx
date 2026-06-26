@@ -44,6 +44,7 @@ import type { BirthFocusCard } from '../../lib/pregnancyInsights'
 import { getUpcomingAppointment } from '../../lib/pregnancyAppointments'
 import { getFeaturedReadForWeek, getReadsByCategory } from '../../lib/pregnancyReads'
 import type { PregnancyRead } from '../../lib/pregnancyReads'
+import { useTranslation } from '../../lib/i18n'
 
 // ─── AI Insight Type Config ───────────────────────────────────────────────
 
@@ -602,6 +603,7 @@ const WARNING_SIGNS = [
 
 function PregnancyInsightsContent() {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
   const dueDate = usePregnancyStore((s) => s.dueDate)
@@ -720,7 +722,7 @@ function PregnancyInsightsContent() {
           <Text style={[ci.featuredBadge, { color: STICKER_INK }]}>FEATURED THIS WEEK</Text>
           <Text style={[ci.featuredTitle, { color: STICKER_INK }]}>{featuredRead.title}</Text>
           <Text style={[ci.featuredSummary, { color: STICKER_INK + 'C8' }]}>{featuredRead.teaser}</Text>
-          <Text style={[ci.featuredMins, { color: STICKER_INK + 'A0' }]}>{featuredRead.readMinutes} min read</Text>
+          <Text style={[ci.featuredMins, { color: STICKER_INK + 'A0' }]}>{t('insights_reads_minRead', { n: featuredRead.readMinutes })}</Text>
         </View>
       )}
       {allReads.map((read) => (
@@ -734,7 +736,7 @@ function PregnancyInsightsContent() {
           onToggle={toggleCard}
         >
           <Text style={[ci.bodyText, { color: colors.textSecondary }]}>{read.teaser}</Text>
-          <Text style={[ci.readMins, { color: colors.textMuted }]}>{read.readMinutes} min read</Text>
+          <Text style={[ci.readMins, { color: colors.textMuted }]}>{t('insights_reads_minRead', { n: read.readMinutes })}</Text>
         </CollapsibleCard>
       ))}
     </>
@@ -760,13 +762,13 @@ function PregnancyInsightsContent() {
         </Pressable>
       </View>
       <View style={ci.tabBar}>
-        {(['today', 'birth_guide', 'reads'] as PregnancyTab[]).map((t) => {
-          const active = pTab === t
-          const label = t === 'today' ? 'Today' : t === 'birth_guide' ? 'Birth Guide' : 'Reads'
+        {(['today', 'birth_guide', 'reads'] as PregnancyTab[]).map((pTabKey) => {
+          const active = pTab === pTabKey
+          const label = pTabKey === 'today' ? t('insights_tabToday') : pTabKey === 'birth_guide' ? 'Birth Guide' : t('insights_tabReads')
           return (
             <Pressable
-              key={t}
-              onPress={() => setPTab(t)}
+              key={pTabKey}
+              onPress={() => setPTab(pTabKey)}
               style={({ pressed }) => [
                 ci.tabPill,
                 {
@@ -802,7 +804,7 @@ function PregnancyInsightsContent() {
         ]}
       >
         <TalkMaster size={28} />
-        <Text style={[ci.askBarText, { color: STICKER_INK }]}>Ask Grandma anything</Text>
+        <Text style={[ci.askBarText, { color: STICKER_INK }]}>{t('insights_askGrandma')}</Text>
         <ChevronRight size={18} color={STICKER_INK} strokeWidth={2.5} />
       </Pressable>
     </View>
@@ -859,6 +861,7 @@ const ci = StyleSheet.create({
 
 export function InsightsScreen() {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
   const queryClient = useQueryClient()
@@ -1077,17 +1080,17 @@ export function InsightsScreen() {
             <ArrowLeft size={20} color={colors.text} strokeWidth={2.5} />
           </Pressable>
         </View>
-        <Text style={[s.heading, { color: colors.text }]}>Insights</Text>
+        <Text style={[s.heading, { color: colors.text }]}>{t('insights_screenTitle')}</Text>
         <Text style={[s.subtitle, { color: colors.textSecondary }]}>
-          Your daily companion for {childName}'s journey
+          {t('insights_subtitle', { name: childName })}
         </Text>
 
         {/* Tab Row — sticker pills */}
         <View style={s.tabRow}>
-          {(['today', 'reads', 'history'] as Tab[]).map((t) => {
-            const active = tab === t
-            const label = t === 'today' ? 'Today' : t === 'reads' ? 'Reads' : 'History'
-            const Icon = t === 'today' ? Sun : t === 'reads' ? BookOpen : Clock
+          {(['today', 'reads', 'history'] as Tab[]).map((tabKey) => {
+            const active = tab === tabKey
+            const label = tabKey === 'today' ? t('insights_tabToday') : tabKey === 'reads' ? t('insights_tabReads') : t('insights_tabHistory')
+            const Icon = tabKey === 'today' ? Sun : tabKey === 'reads' ? BookOpen : Clock
             // getModeColor accepts the full mode string for all three journeys
             // — pass it straight through. The old 'pre' | 'kids' mapping gave
             // pregnancy users the kids accent.
@@ -1095,8 +1098,8 @@ export function InsightsScreen() {
             const modeAccentSoft = getModeColorSoft(mode, isDark)
             return (
               <Pressable
-                key={t}
-                onPress={() => setTab(t)}
+                key={tabKey}
+                onPress={() => setTab(tabKey)}
                 style={({ pressed }) => [
                   s.tabPill,
                   {
@@ -1111,7 +1114,7 @@ export function InsightsScreen() {
                 <Text style={[s.tabText, { color: active ? STICKER_INK : colors.textMuted }]}>
                   {label}
                 </Text>
-                {t === 'today' && insights.length > 0 && (
+                {tabKey === 'today' && insights.length > 0 && (
                   <View style={[s.tabBadge, { backgroundColor: active ? modeAccent : colors.surfaceRaised, borderColor: active ? STICKER_INK : colors.border }]}>
                     <Text style={[s.tabBadgeText, { color: active ? STICKER_INK : colors.textMuted }]}>
                       {insights.length}
@@ -1142,7 +1145,7 @@ export function InsightsScreen() {
               <View style={[s.tipBox, { backgroundColor: colors.surface, borderColor: STICKER_INK + '18' }]}>
                 <View style={s.tipBoxHeader}>
                   <Sparkles size={12} color={colors.accent} strokeWidth={2.5} />
-                  <Text style={[s.tipBoxLabel, { color: colors.accent }]}>Today's tip</Text>
+                  <Text style={[s.tipBoxLabel, { color: colors.accent }]}>{t('insights_todaysTip')}</Text>
                   {child?.birthDate && (
                     <View style={[s.agePill, { backgroundColor: stickerPalette.yellowSoft }]}>
                       <Text style={[s.agePillText, { color: STICKER_INK }]}>
@@ -1162,7 +1165,7 @@ export function InsightsScreen() {
                   <View style={[s.weekIconWrap, { backgroundColor: stickerPalette.blueSoft }]}>
                     <BarChart3 size={15} color={STICKER_INK} strokeWidth={2.5} />
                   </View>
-                  <Text style={[s.weekTitle, { color: colors.text }]}>This Week</Text>
+                  <Text style={[s.weekTitle, { color: colors.text }]}>{t('insights_thisWeek')}</Text>
                   {metrics.logStreak > 0 && (
                     <View style={[s.streakBadge, { backgroundColor: stickerPalette.peachSoft }]}>
                       <Flame size={11} color={stickerPalette.peachInk} strokeWidth={2.5} />
@@ -1213,8 +1216,8 @@ export function InsightsScreen() {
                   <GrandmaLogo size={42} mode="auto" motion="sparkle" animate />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[s.generatingTitle, { color: STICKER_INK }]}>Grandma is thinking…</Text>
-                  <Text style={[s.generatingSubtext, { color: colors.textMuted }]}>Analyzing your recent data</Text>
+                  <Text style={[s.generatingTitle, { color: STICKER_INK }]}>{t('insights_grandmaThinking')}</Text>
+                  <Text style={[s.generatingSubtext, { color: colors.textMuted }]}>{t('insights_analyzingData')}</Text>
                 </View>
               </View>
             )}
@@ -1226,7 +1229,7 @@ export function InsightsScreen() {
                 <Text style={[s.errorText, { color: brand.error }]}>{error}</Text>
                 <Pressable onPress={handleGenerate} hitSlop={8} style={s.errorRetryBtn}>
                   <RefreshCw size={13} color={brand.error} strokeWidth={2.5} />
-                  <Text style={s.errorRetryText}>Retry</Text>
+                  <Text style={s.errorRetryText}>{t('insights_retry')}</Text>
                 </Pressable>
               </View>
             )}
@@ -1241,14 +1244,14 @@ export function InsightsScreen() {
             {!isLoading && !generating && insights.length === 0 && (
               <View style={[s.noInsightsCard, { backgroundColor: colors.surface }]}>
                 <Sparkles size={26} color={colors.textMuted} strokeWidth={1.5} />
-                <Text style={[s.noInsightsTitle, { color: colors.text }]}>No AI insights yet</Text>
+                <Text style={[s.noInsightsTitle, { color: colors.text }]}>{t('insights_noAiTitle')}</Text>
                 <Text style={[s.noInsightsBody, { color: colors.textMuted }]}>
-                  Log a few days of data and generate your first personalized insights.
+                  {t('insights_noAiBody')}
                 </Text>
                 <Pressable onPress={handleGenerate} style={({ pressed }) => [{ transform: [{ translateY: pressed ? 2 : 0 }] }]}>
                   <View style={[s.generateBtn, { backgroundColor: stickerPalette.yellow }]}>
                     <Sparkles size={15} color={STICKER_INK} strokeWidth={2.5} />
-                    <Text style={s.generateBtnText}>Generate insights</Text>
+                    <Text style={s.generateBtnText}>{t('insights_generateBtn')}</Text>
                   </View>
                 </Pressable>
               </View>
@@ -1259,7 +1262,7 @@ export function InsightsScreen() {
                 <View style={s.sectionHeader}>
                   <View style={[s.sectionLabelPill, { backgroundColor: colors.accentSoft }]}>
                     <Sparkles size={12} color={colors.accent} strokeWidth={2.5} />
-                    <Text style={[s.sectionLabel, { color: colors.accent }]}>Grandma's Insights</Text>
+                    <Text style={[s.sectionLabel, { color: colors.accent }]}>{t('insights_grandmasInsights')}</Text>
                   </View>
                   <View style={[s.sectionLine, { backgroundColor: STICKER_INK + '15' }]} />
                   <Pressable onPress={handleGenerate} hitSlop={8} style={[s.regenBtn, { backgroundColor: colors.surface }]}>
@@ -1308,7 +1311,7 @@ export function InsightsScreen() {
             >
               <View style={[s.grandmaCta, { backgroundColor: colors.accent }]}>
                 <MessageCircle size={18} color={STICKER_INK} strokeWidth={2.5} />
-                <Text style={s.grandmaCtaText}>Ask Grandma anything</Text>
+                <Text style={s.grandmaCtaText}>{t('insights_askGrandma')}</Text>
                 <ChevronRight size={18} color={STICKER_INK} strokeWidth={2.5} />
               </View>
             </Pressable>
@@ -1336,7 +1339,7 @@ export function InsightsScreen() {
                   },
                 ]}
               >
-                <Text style={[s.categoryPillText, { color: articleCategory === 'all' ? STICKER_INK : colors.textSecondary }]}>All</Text>
+                <Text style={[s.categoryPillText, { color: articleCategory === 'all' ? STICKER_INK : colors.textSecondary }]}>{t('insights_reads_all')}</Text>
               </Pressable>
               {(Object.keys(CATEGORY_META) as ArticleCategory[]).map((cat) => {
                 const meta = CATEGORY_META[cat]
@@ -1391,7 +1394,7 @@ export function InsightsScreen() {
             {!isLoadingHistory && archivedInsights.length === 0 && (
               <View style={[s.historyEmpty, { backgroundColor: colors.surface }]}>
                 <Clock size={26} color={colors.textMuted} strokeWidth={1.5} />
-                <Text style={[s.historyEmptyTitle, { color: colors.text }]}>No past insights</Text>
+                <Text style={[s.historyEmptyTitle, { color: colors.text }]}>{t('insights_history_noHistory')}</Text>
                 <Text style={[s.historyEmptyBody, { color: colors.textMuted }]}>
                   Dismissed and expired insights will appear here.
                 </Text>
@@ -1447,6 +1450,7 @@ export function InsightsScreen() {
 
 function ArticleCard({ article, onTap }: { article: Article; onTap: () => void }) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const meta = CATEGORY_META[article.category]
   const Icon = meta.icon
 
@@ -1465,7 +1469,7 @@ function ArticleCard({ article, onTap }: { article: Article; onTap: () => void }
               <Icon size={10} color={STICKER_INK} strokeWidth={2.5} />
               <Text style={[s.articleCatText, { color: STICKER_INK }]}>{meta.label}</Text>
             </View>
-            <Text style={[s.articleReadTime, { color: colors.textMuted }]}>{article.readMinutes} min read</Text>
+            <Text style={[s.articleReadTime, { color: colors.textMuted }]}>{t('insights_reads_minRead', { n: article.readMinutes })}</Text>
           </View>
           <Text style={[s.articleTitle, { color: colors.text }]}>{article.title}</Text>
           <Text style={[s.articleSummary, { color: colors.textSecondary }]} numberOfLines={2}>{article.summary}</Text>
@@ -1487,6 +1491,7 @@ function ArticleDetailModal({
   onAskGrandma: () => void
 }) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const meta = CATEGORY_META[article.category]
   const Icon = meta.icon
@@ -1524,7 +1529,7 @@ function ArticleDetailModal({
               <View style={[s.articleCatBadge, { backgroundColor: meta.color + '28' }]}>
                 <Text style={[s.articleCatText, { color: STICKER_INK }]}>{meta.label}</Text>
               </View>
-              <Text style={[s.articleReadTime, { color: colors.textMuted }]}>{article.readMinutes} min read</Text>
+              <Text style={[s.articleReadTime, { color: colors.textMuted }]}>{t('insights_reads_minRead', { n: article.readMinutes })}</Text>
             </View>
             <Text style={[s.modalTitle, { color: colors.text }]}>{article.title}</Text>
             <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 320 }}>
@@ -1536,7 +1541,7 @@ function ArticleDetailModal({
             <Pressable onPress={onAskGrandma} style={({ pressed }) => [{ transform: [{ translateY: pressed ? 2 : 0 }] }]}>
               <View style={[s.askBtn, { backgroundColor: colors.accent }]}>
                 <MessageCircle size={18} color={STICKER_INK} strokeWidth={2.5} />
-                <Text style={s.askBtnText}>Ask Grandma about this</Text>
+                <Text style={s.askBtnText}>{t('insights_askGrandma')}</Text>
               </View>
             </Pressable>
           </View>
@@ -1660,6 +1665,7 @@ function InsightDetailModal({
   onRestore: () => void
 }) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const config = TYPE_CONFIG[insight.type as InsightType] ?? TYPE_CONFIG.nudge
   const Icon = config.icon
@@ -1730,7 +1736,7 @@ function InsightDetailModal({
               <Pressable onPress={onAskGrandma} style={({ pressed }) => [{ flex: 1, transform: [{ translateY: pressed ? 2 : 0 }] }]}>
                 <View style={[s.askBtn, { backgroundColor: colors.accent }]}>
                   <MessageCircle size={18} color={STICKER_INK} strokeWidth={2.5} />
-                  <Text style={s.askBtnText}>Ask Grandma</Text>
+                  <Text style={s.askBtnText}>{t('insights_askGrandma')}</Text>
                 </View>
               </Pressable>
               {isArchived ? (

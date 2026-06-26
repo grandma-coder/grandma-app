@@ -25,6 +25,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { Camera, ImagePlus, Sparkles, X } from 'lucide-react-native'
 
 import { useTheme, brand, stickers as stickersLight, stickersDark, font } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { LogFormSticker } from '../calendar/LogFormSticker'
 import { toDateStr } from '../../lib/cycleLogic'
 import {
@@ -52,6 +53,7 @@ const INK = '#141313'
 
 export function ExamForm({ behavior, childId, date, onSaved }: Props) {
   const { colors, radius, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const inkBorder = isDark ? colors.border : INK
   const paper = isDark ? colors.surface : '#FFFEF8'
@@ -81,13 +83,13 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
       if (source === 'library') {
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
         if (perm.status !== 'granted') {
-          Alert.alert('Permission needed', 'Allow photo access to attach exam images.')
+          Alert.alert(t('examForm_permNeeded'), t('examForm_allowPhoto'))
           return
         }
       } else {
         const perm = await ImagePicker.requestCameraPermissionsAsync()
         if (perm.status !== 'granted') {
-          Alert.alert('Permission needed', 'Allow camera access to scan an exam.')
+          Alert.alert(t('examForm_permNeeded'), t('examForm_allowCamera'))
           return
         }
       }
@@ -143,7 +145,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
       }
     } catch (e) {
       setUploading(false)
-      Alert.alert('Upload failed', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(t('examForm_uploadFailed'), e instanceof Error ? e.message : 'Unknown error')
     }
   }, [photos.length, uploading, date])
 
@@ -155,7 +157,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
 
   async function handleSave() {
     if (!title.trim()) {
-      Alert.alert('Missing title', 'Add a test name before saving.')
+      Alert.alert(t('examForm_missingTitle'), t('examForm_missingTitleMsg'))
       return
     }
     setSaving(true)
@@ -174,7 +176,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
       invalidate()
       onSaved()
     } catch (e) {
-      Alert.alert('Save failed', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(t('examForm_saveFailed'), e instanceof Error ? e.message : 'Unknown error')
     } finally {
       setSaving(false)
     }
@@ -189,7 +191,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
     <View style={styles.form}>
       <LogFormSticker
         type="exam_result"
-        label={extracting ? 'Reading the paperwork…' : 'Snap or upload a test result'}
+        label={extracting ? t('examForm_reading') : t('examForm_snapOrUpload')}
         tint={s.lilacSoft}
       />
 
@@ -227,7 +229,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
           >
             <Camera size={18} color={inkText} strokeWidth={2} />
             <Text style={[styles.photoAddLabel, { color: inkText, fontFamily: font.bodySemiBold }]}>
-              Scan
+              {t('examForm_scan')}
             </Text>
           </Pressable>
 
@@ -245,7 +247,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
           >
             <ImagePlus size={18} color={inkText} strokeWidth={2} />
             <Text style={[styles.photoAddLabel, { color: inkText, fontFamily: font.bodySemiBold }]}>
-              Upload
+              {t('examForm_upload')}
             </Text>
           </Pressable>
         </ScrollView>
@@ -254,7 +256,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
           <View style={styles.loadingRow}>
             <ActivityIndicator color={brand.primary} size="small" />
             <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-              {uploading ? 'Uploading photos…' : 'Extracting results with AI…'}
+              {uploading ? t('examForm_uploading') : t('examForm_extracting')}
             </Text>
           </View>
         )}
@@ -264,7 +266,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
         <View style={[styles.aiBadge, { backgroundColor: brand.primary + '15', borderColor: brand.primary + '40' }]}>
           <Sparkles size={14} color={brand.primary} strokeWidth={2} />
           <Text style={[styles.aiBadgeText, { color: brand.primary, fontFamily: font.bodySemiBold }]}>
-            AI prefilled from your photo — review below
+            {t('examForm_aiPrefilled')}
           </Text>
         </View>
       )}
@@ -272,35 +274,35 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
       <TextInput
         value={title}
         onChangeText={setTitle}
-        placeholder="Test name (e.g. Blood work, Glucose)"
+        placeholder={t('examForm_titlePlaceholder')}
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
       />
       <TextInput
         value={result}
         onChangeText={setResult}
-        placeholder="Result (e.g. Normal, 120/80)"
+        placeholder={t('examForm_resultPlaceholder')}
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
       />
       <TextInput
         value={provider}
         onChangeText={setProvider}
-        placeholder="Doctor / clinic (optional)"
+        placeholder={t('examForm_providerPlaceholder')}
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
       />
       <TextInput
         value={examDate}
         onChangeText={setExamDate}
-        placeholder="YYYY-MM-DD"
+        placeholder={t('examForm_datePlaceholder')}
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
       />
       <TextInput
         value={notes}
         onChangeText={setNotes}
-        placeholder="Notes (optional)"
+        placeholder={t('examForm_notesPlaceholder')}
         placeholderTextColor={colors.textMuted}
         multiline
         style={[
@@ -312,7 +314,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
 
       {referenceRange && (
         <View style={[styles.metaRow, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
-          <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Reference range</Text>
+          <Text style={[styles.metaLabel, { color: colors.textMuted }]}>{t('examForm_referenceRange')}</Text>
           <Text style={[styles.metaValue, { color: colors.text }]}>{referenceRange}</Text>
         </View>
       )}
@@ -320,13 +322,13 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
       {flagged.length > 0 && (
         <View style={[styles.flaggedBox, { backgroundColor: brand.error + '12', borderColor: brand.error + '30' }]}>
           <Text style={[styles.flaggedTitle, { color: brand.error, fontFamily: font.bodySemiBold }]}>
-            Flagged findings
+            {t('examForm_flaggedTitle')}
           </Text>
           {flagged.map((f, i) => (
             <Text key={i} style={[styles.flaggedItem, { color: colors.text }]}>• {f}</Text>
           ))}
           <Text style={[styles.flaggedNote, { color: colors.textMuted }]}>
-            Discuss these with your doctor — this is not a diagnosis.
+            {t('examForm_flaggedNote')}
           </Text>
         </View>
       )}
@@ -352,13 +354,13 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
           <ActivityIndicator color={!title.trim() ? inkText : '#FFFEF8'} />
         ) : (
           <Text style={[styles.saveBtnText, { color: !title.trim() ? (isDark ? colors.textMuted : 'rgba(20,19,19,0.4)') : '#FFFEF8' }]}>
-            Save exam
+            {t('examForm_saveExam')}
           </Text>
         )}
       </Pressable>
 
       <Pressable onPress={onSaved} hitSlop={8}>
-        <Text style={[styles.cancelText, { color: colors.textMuted }]}>Cancel</Text>
+        <Text style={[styles.cancelText, { color: colors.textMuted }]}>{t('examForm_cancel')}</Text>
       </Pressable>
     </View>
   )

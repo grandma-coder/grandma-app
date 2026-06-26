@@ -31,6 +31,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { useChannelsStore } from '../../store/useChannelsStore'
 import { channelSticker } from '../../lib/channelSticker'
 import { Star as StarSticker } from '../ui/Stickers'
+import { useTranslation } from '../../lib/i18n'
 
 // ─── Member count copy ──────────────────────────────────────────────────────
 // Soften low/zero counts so seeded + brand-new channels don't read as empty.
@@ -54,6 +55,7 @@ export function ChannelsScreen() {
   const { colors, radius, font, stickers, isDark } = useTheme()
   const mode = useModeStore((s) => s.mode)
   const accent = getModeColor(mode, isDark)
+  const { t } = useTranslation()
 
   const [channels, setChannels] = useState<Channel[]>([])
   const [myIds, setMyIds] = useState<string[]>([])
@@ -127,10 +129,10 @@ export function ChannelsScreen() {
       {/* Header — editorial serif, matches The Village */}
       <View style={styles.header}>
         <Text style={[styles.heading, { color: colors.text, fontFamily: font.display }]}>
-          Find your{'\n'}community.
+          {t('channelsDiscover_heading')}
         </Text>
         <Text style={[styles.subheading, { color: colors.textMuted, fontFamily: font.body }]}>
-          Channels for where you are right now.
+          {t('channelsDiscover_subheading')}
         </Text>
       </View>
 
@@ -145,7 +147,7 @@ export function ChannelsScreen() {
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Search channels..."
+          placeholder={t('channelsDiscover_searchPlaceholder')}
           placeholderTextColor={colors.textMuted}
           style={[styles.searchInput, { color: colors.text }]}
         />
@@ -154,11 +156,11 @@ export function ChannelsScreen() {
       {/* Search results */}
       {searchResults ? (
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>RESULTS</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelsDiscover_results')}</Text>
           {searchResults.length === 0 ? (
             <EmptyState
-              title="No channels found"
-              body="Try another search, or start a channel of your own."
+              title={t('channelsDiscover_noChannels')}
+              body={t('channelsDiscover_noChannelsBody')}
             />
           ) : (
             searchResults.map((c) => (
@@ -171,7 +173,7 @@ export function ChannelsScreen() {
           {/* Suggested */}
           {suggested.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>SUGGESTED FOR YOU</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelsDiscover_suggestedForYou')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
                 {suggested.map((c) => (
                   <ChannelCardCompact key={c.id} channel={c} joined={myIds.includes(c.id)} accent={accent} />
@@ -184,7 +186,7 @@ export function ChannelsScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <TrendingUp size={16} color={accent} strokeWidth={2.4} />
-              <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0, fontFamily: font.bodySemiBold }]}>TRENDING</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0, fontFamily: font.bodySemiBold }]}>{t('channelsDiscover_trending')}</Text>
             </View>
             {trending.map((c) => (
               <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} unread={unreadCounts[c.id]} accent={accent} />
@@ -196,7 +198,7 @@ export function ChannelsScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <StarSticker size={16} fill={stickers.yellow} />
-                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0, fontFamily: font.bodySemiBold }]}>FAVORITES</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0, fontFamily: font.bodySemiBold }]}>{t('channelsDiscover_favorites')}</Text>
               </View>
               {favoriteChannels.map((c) => (
                 <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} unread={unreadCounts[c.id]} accent={accent} />
@@ -208,7 +210,7 @@ export function ChannelsScreen() {
           {myChannels.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0, fontFamily: font.bodySemiBold }]}>MY CHANNELS</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0, fontFamily: font.bodySemiBold }]}>{t('channelsDiscover_myChannels')}</Text>
               </View>
               {myChannels.map((c) => (
                 <ChannelCard key={c.id} channel={c} joined unread={unreadCounts[c.id]} accent={accent} />
@@ -240,6 +242,7 @@ const BANNER_W = Dimensions.get('window').width - 40 // padding 20 each side
 
 function BannerCarousel({ channels, myIds, accent }: { channels: Channel[]; myIds: string[]; accent: string }) {
   const { colors, radius, isDark, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const scrollRef = useRef<ScrollView>(null)
   const indexRef = useRef(0)
 
@@ -280,7 +283,7 @@ function BannerCarousel({ channels, myIds, accent }: { channels: Channel[]; myId
                   {c.name}
                 </Text>
                 <Text style={[styles.bannerDesc, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>
-                  {c.description ?? 'Join the conversation'}
+                  {c.description ?? t('channelsDiscover_joinConversation')}
                 </Text>
                 <View style={styles.bannerMeta}>
                   <Text style={[styles.bannerMembers, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
@@ -298,7 +301,7 @@ function BannerCarousel({ channels, myIds, accent }: { channels: Channel[]; myId
               </View>
               {!joined && (
                 <View style={[styles.bannerJoin, { backgroundColor: accent, borderRadius: radius.full }]}>
-                  <Text style={[styles.bannerJoinText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>Join</Text>
+                  <Text style={[styles.bannerJoinText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinBtn')}</Text>
                 </View>
               )}
             </Pressable>
@@ -350,6 +353,7 @@ function EmptyState({ title, body }: { title: string; body: string }) {
 
 function ChannelCard({ channel, joined, unread, accent }: { channel: Channel; joined: boolean; unread?: number; accent: string }) {
   const { colors, radius, isDark, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
   const StickerIcon = sticker.Component
 
@@ -370,7 +374,7 @@ function ChannelCard({ channel, joined, unread, accent }: { channel: Channel; jo
           {channel.name}
         </Text>
         <Text style={[styles.cardDesc, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={1}>
-          {channel.description ?? 'Join the conversation'}
+          {channel.description ?? t('channelsDiscover_joinConversation')}
         </Text>
       </View>
       <View style={styles.cardRight}>
@@ -389,7 +393,7 @@ function ChannelCard({ channel, joined, unread, accent }: { channel: Channel; jo
         <StarRating rating={channel.avgRating} count={channel.ratingCount} />
         {joined && (
           <View style={[styles.joinedBadge, { backgroundColor: stickers.greenSoft, borderRadius: radius.full }]}>
-            <Text style={[styles.joinedText, { color: stickers.greenInk, fontFamily: font.bodyBold }]}>Joined</Text>
+            <Text style={[styles.joinedText, { color: stickers.greenInk, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinedBadge')}</Text>
           </View>
         )}
       </View>
@@ -401,6 +405,7 @@ function ChannelCard({ channel, joined, unread, accent }: { channel: Channel; jo
 
 function ChannelCardCompact({ channel, joined, accent }: { channel: Channel; joined: boolean; accent: string }) {
   const { colors, radius, isDark, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
   const StickerIcon = sticker.Component
 
@@ -424,11 +429,11 @@ function ChannelCardCompact({ channel, joined, accent }: { channel: Channel; joi
       </Text>
       {joined ? (
         <View style={[styles.joinedBadge, { backgroundColor: stickers.greenSoft, borderRadius: radius.full, marginTop: 4 }]}>
-          <Text style={[styles.joinedText, { color: stickers.greenInk, fontFamily: font.bodyBold }]}>Joined</Text>
+          <Text style={[styles.joinedText, { color: stickers.greenInk, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinedBadge')}</Text>
         </View>
       ) : (
         <View style={[styles.joinBtn, { backgroundColor: accent, borderRadius: radius.full }]}>
-          <Text style={[styles.joinBtnText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>Join</Text>
+          <Text style={[styles.joinBtnText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinBtn')}</Text>
         </View>
       )}
     </Pressable>

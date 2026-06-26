@@ -26,6 +26,7 @@ import { MessageCircle, Send, Bookmark, User, MoreHorizontal, Play } from 'lucid
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, getModeColor } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
+import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
@@ -51,6 +52,7 @@ export default function PostDetail() {
   const toast = useSavedToast()
   const { id } = useLocalSearchParams<{ id: string }>()
   const ink = isDark ? colors.text : '#141313'
+  const { t } = useTranslation()
 
   const [post, setPost] = useState<GaragePost | null>(null)
   const [comments, setComments] = useState<GarageComment[]>([])
@@ -121,15 +123,15 @@ export default function PostDetail() {
   function handleShare() {
     if (!post) return
     const postUrl = `grandma://garage/${post.id}`
-    const caption = post.caption?.split('\n')[0] ?? 'Check out this post'
+    const shareCaption = post.caption?.split('\n')[0] ?? t('garage_detail_checkOutPost')
 
-    Alert.alert('Share', '', [
+    Alert.alert(t('garage_detail_shareTitle'), '', [
       {
-        text: 'Share to Channel',
-        onPress: () => router.push({ pathname: '/garage/share', params: { postId: post.id, caption } } as any),
+        text: t('garage_detail_shareToChannel'),
+        onPress: () => router.push({ pathname: '/garage/share', params: { postId: post.id, caption: shareCaption } } as any),
       },
       {
-        text: 'Copy Link',
+        text: t('garage_detail_copyLink'),
         onPress: () => {
           import('expo-clipboard').then(({ setStringAsync }) => {
             setStringAsync(postUrl)
@@ -138,9 +140,9 @@ export default function PostDetail() {
         },
       },
       {
-        text: 'Share External...',
+        text: t('garage_detail_shareExternal'),
         onPress: () => {
-          Share.share({ message: `${caption}\n\n${postUrl}` })
+          Share.share({ message: `${shareCaption}\n\n${postUrl}` })
         },
       },
       { text: 'Cancel', style: 'cancel' },
@@ -201,7 +203,7 @@ export default function PostDetail() {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <Text style={[styles.errorText, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
-          Post not found
+          {t('garage_detail_postNotFound')}
         </Text>
       </View>
     )
@@ -230,7 +232,7 @@ export default function PostDetail() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.authorName, { color: colors.text, fontFamily: font.display }]}>
-                {post.author_name ?? 'Community Member'}
+                {post.author_name ?? t('garage_detail_communityMember')}
               </Text>
               {post.category && (
                 <Text style={[styles.categoryText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
@@ -292,7 +294,7 @@ export default function PostDetail() {
               border={colors.border}
               radiusFull={radius.full}
               onPress={handleLike}
-              accessibilityLabel={post.user_liked ? 'Unlike' : 'Like'}
+              accessibilityLabel={post.user_liked ? t('garage_detail_unlike') : t('garage_detail_like')}
             >
               <Animated.View style={{ transform: [{ scale: likeScale }] }}>
                 <HeartSticker size={22} fill={post.user_liked ? stickers.coral : stickers.pink} />
@@ -304,7 +306,7 @@ export default function PostDetail() {
               border={colors.border}
               radiusFull={radius.full}
               onPress={() => {}}
-              accessibilityLabel="Comments"
+              accessibilityLabel={t('garage_detail_commentsA11y')}
             >
               <MessageCircle size={20} color={stickers.blueInk} strokeWidth={2.4} />
             </ActionChip>
@@ -314,7 +316,7 @@ export default function PostDetail() {
               border={colors.border}
               radiusFull={radius.full}
               onPress={handleShare}
-              accessibilityLabel="Share"
+              accessibilityLabel={t('garage_detail_shareA11y')}
             >
               <Send size={19} color={stickers.yellowInk} strokeWidth={2.4} />
             </ActionChip>
@@ -325,7 +327,7 @@ export default function PostDetail() {
             border={colors.border}
             radiusFull={radius.full}
             onPress={handleSave}
-            accessibilityLabel={post.user_saved ? 'Saved' : 'Save'}
+            accessibilityLabel={post.user_saved ? t('garage_detail_saved') : t('garage_detail_save')}
           >
             <Bookmark
               size={20}
@@ -339,7 +341,7 @@ export default function PostDetail() {
         {/* Like count */}
         {post.like_count > 0 && (
           <Text style={[styles.likeCount, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-            {post.like_count.toLocaleString()} {post.like_count === 1 ? 'like' : 'likes'}
+            {post.like_count === 1 ? t('garage_detail_likeCount', { count: post.like_count }) : t('garage_detail_likesCount', { count: post.like_count.toLocaleString() })}
           </Text>
         )}
 
@@ -364,7 +366,7 @@ export default function PostDetail() {
         {/* Comments divider */}
         <View style={[styles.commentsDivider, { borderTopColor: colors.border }]}>
           <Text style={[styles.commentsHeader, { color: colors.text, fontFamily: font.display }]}>
-            Comments{comments.length > 0 ? ` (${comments.length})` : ''}
+            {comments.length > 0 ? t('garage_detail_comments', { count: comments.length }) : 'Comments'}
           </Text>
         </View>
 
@@ -372,7 +374,7 @@ export default function PostDetail() {
         {comments.length === 0 ? (
           <View style={styles.noComments}>
             <Text style={[styles.noCommentsText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-              No comments yet. Start the conversation!
+              {t('garage_detail_noComments')}
             </Text>
           </View>
         ) : (
@@ -384,7 +386,7 @@ export default function PostDetail() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.commentContent, { color: colors.text, fontFamily: font.body }]}>
                   <Text style={[styles.commentAuthor, { fontFamily: font.bodySemiBold }]}>
-                    {comment.author_name ?? 'Member'}{' '}
+                    {comment.author_name ?? t('garage_detail_member')}{' '}
                   </Text>
                   <CommentText text={comment.content} />
                 </Text>
@@ -438,7 +440,7 @@ export default function PostDetail() {
           <TextInput
             value={commentText}
             onChangeText={handleCommentTextChange}
-            placeholder="Add a comment… use @ to tag"
+            placeholder={t('garage_detail_commentPlaceholder')}
             placeholderTextColor={colors.textMuted}
             style={[styles.commentInput, { color: colors.text, fontFamily: font.body }]}
             returnKeyType="send"
@@ -449,7 +451,7 @@ export default function PostDetail() {
           onPress={handleComment}
           disabled={!canSend || sending}
           accessibilityRole="button"
-          accessibilityLabel="Post comment"
+          accessibilityLabel={t('garage_detail_postCommentA11y')}
           style={({ pressed }) => [
             styles.sendBtn,
             {

@@ -60,6 +60,7 @@ import {
 import { useLeaderboard } from '../lib/leaderboard'
 import { syncBadgesFromSupabase } from '../lib/badgeSync'
 import { supabase } from '../lib/supabase'
+import { useTranslation } from '../lib/i18n'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -84,6 +85,20 @@ const CATEGORY_CONFIG: {
   { key: 'daily',     label: 'Daily',      color: 'yellow', soft: 'yellowSoft', Sticker: QuestRibbon },
 ]
 
+// Map category key → i18n translation key for category labels.
+const CAT_LABEL_KEY: Record<BadgeCategory, any> = {
+  streak:    'dailyRewards_catStreaks',
+  nutrition: 'dailyRewards_catNutrition',
+  sleep:     'dailyRewards_catSleep',
+  mood:      'dailyRewards_catMood',
+  health:    'dailyRewards_catHealth',
+  growth:    'dailyRewards_catGrowth',
+  community: 'dailyRewards_catCommunity',
+  milestone: 'dailyRewards_catMilestones',
+  daily:     'dailyRewards_catDaily',
+  pregnancy: 'dailyRewards_catHealth',
+}
+
 // Mode-specific daily quest copy. Pregnancy quest is week-aware so the
 // copy escalates with the trimester (water early → kicks mid → birth prep
 // late). Returns a single string given the live mode + (optional) week.
@@ -101,15 +116,15 @@ function questCopyForMode(mode: string, week: number | null): string {
 }
 
 // Points breakdown shown in the info modal — mapped to sticker palette.
-const POINTS_ROWS: { label: string; pts: string; color: keyof typeof stickerPalette }[] = [
-  { label: 'Garage post',           pts: '+5',     color: 'green' },
-  { label: 'Channel message',       pts: '+3',     color: 'blue' },
-  { label: 'Reaction received',     pts: '+1',     color: 'pink' },
-  { label: 'Comment received',      pts: '+2',     color: 'lilac' },
-  { label: 'Channel joined',        pts: '+2',     color: 'lilac' },
-  { label: 'Child log entry',       pts: '+1',     color: 'yellow' },
-  { label: 'Streak day (max 60)',   pts: '+3',     color: 'coral' },
-  { label: 'Daily check-in',        pts: '+10-50', color: 'peach' },
+const POINTS_ROWS: { rowKey: string; pts: string; color: keyof typeof stickerPalette }[] = [
+  { rowKey: 'dailyRewards_rowGaragePost',       pts: '+5',     color: 'green' },
+  { rowKey: 'dailyRewards_rowChannelMsg',        pts: '+3',     color: 'blue' },
+  { rowKey: 'dailyRewards_rowReactionReceived',  pts: '+1',     color: 'pink' },
+  { rowKey: 'dailyRewards_rowCommentReceived',   pts: '+2',     color: 'lilac' },
+  { rowKey: 'dailyRewards_rowChannelJoined',     pts: '+2',     color: 'lilac' },
+  { rowKey: 'dailyRewards_rowChildLog',          pts: '+1',     color: 'yellow' },
+  { rowKey: 'dailyRewards_rowStreakDay',          pts: '+3',     color: 'coral' },
+  { rowKey: 'dailyRewards_rowDailyCheckin',      pts: '+10-50', color: 'peach' },
 ]
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -136,6 +151,7 @@ export default function DailyRewardsScreen() {
   const lastCheckInDate = useBadgeStore((s) => s.lastCheckInDate)
   const earnedBadges = useBadgeStore((s) => s.earnedBadges)
 
+  const { t } = useTranslation()
   const { data: leaderboard } = useLeaderboard(10)
   const [myUserId, setMyUserId] = useState<string | null>(null)
 
@@ -237,7 +253,7 @@ export default function DailyRewardsScreen() {
             </DisplayItalic>
           </View>
           <Body size={14} color={ink3} align="center" style={{ marginTop: 2 }}>
-            Grandma is proud of you, dear.
+            {t('dailyRewards_grandmaProud')}
           </Body>
 
           {/* Dashed streak circle */}
@@ -298,14 +314,14 @@ export default function DailyRewardsScreen() {
             <>
               <Check size={18} color={ink} strokeWidth={2.5} />
               <Text style={[styles.claimBtnText, { color: ink, fontFamily: font.bodySemiBold }]}>
-                Checked in today
+                {t('dailyRewards_checkedIn')}
               </Text>
             </>
           ) : (
             <>
               <Sparkle size={22} fill={stickers.yellow} />
               <Text style={[styles.claimBtnText, { color: ink, fontFamily: font.bodySemiBold }]}>
-                Claim daily reward
+                {t('dailyRewards_claimReward')}
               </Text>
             </>
           )}
@@ -322,7 +338,7 @@ export default function DailyRewardsScreen() {
             </View>
             <Body size={14} color={ink3} style={{ marginTop: 4 }}>
               {DAILY_REWARDS.find((r) => r.day === ((rewardResult.streak - 1) % 7) + 1)?.label ??
-                'Great job!'}
+                t('dailyRewards_greatJob')}
             </Body>
             {rewardResult.newBadges.length > 0 && (
               <View style={styles.revealBadges}>
@@ -352,9 +368,9 @@ export default function DailyRewardsScreen() {
         {/* ─── Weekly grid ─── */}
         <PaperCard padding={16} radius={24}>
           <View style={styles.weekHeader}>
-            <MonoCaps size={11} color={ink3}>This week</MonoCaps>
+            <MonoCaps size={11} color={ink3}>{t('dailyRewards_thisWeek')}</MonoCaps>
             <Body size={12} color={ink3}>
-              {doneThisWeek} / 7 complete
+              {t('dailyRewards_weekProgress', { n: doneThisWeek })}
             </Body>
           </View>
           <View style={styles.weekGrid}>
@@ -410,7 +426,7 @@ export default function DailyRewardsScreen() {
           <View style={styles.questFlower} pointerEvents="none">
             <Flower size={120} petal={accent} center={stickers.yellow} />
           </View>
-          <MonoCaps size={11} color={ink3}>Today's quest</MonoCaps>
+          <MonoCaps size={11} color={ink3}>{t('dailyRewards_todaysQuest')}</MonoCaps>
           <Display size={22} color={ink} style={{ marginTop: 4, maxWidth: 220, lineHeight: 26 }}>
             {questCopy}
           </Display>
@@ -437,7 +453,7 @@ export default function DailyRewardsScreen() {
               <StarSticker size={18} fill={stickers.yellow} />
             </View>
             <Text style={[styles.badgeHeaderTitle, { color: ink, fontFamily: font.display }]}>
-              Badge Collection
+              {t('dailyRewards_badgeCollection')}
             </Text>
             <Text style={[styles.badgeHeaderCount, { color: ink3, fontFamily: font.bodyMedium }]}>
               {earnedCount}/{totalBadges}
@@ -497,7 +513,7 @@ export default function DailyRewardsScreen() {
             ]}
           >
             <Text style={[styles.viewAllText, { color: ink, fontFamily: font.bodyMedium }]}>
-              View all badges
+              {t('dailyRewards_viewAllBadges')}
             </Text>
             <ChevronRight size={16} color={ink3} />
           </Pressable>
@@ -506,7 +522,7 @@ export default function DailyRewardsScreen() {
         {/* ─── Categories ─── */}
         <View style={styles.categoriesSection}>
           <MonoCaps size={11} color={ink3} style={{ marginLeft: 4 }}>
-            Categories
+            {t('dailyRewards_categories')}
           </MonoCaps>
           <View style={styles.categoriesGrid}>
             {CATEGORY_CONFIG.map((cat) => {
@@ -539,7 +555,7 @@ export default function DailyRewardsScreen() {
                       <Text
                         style={[styles.categoryLabel, { color: ink, fontFamily: font.bodySemiBold }]}
                       >
-                        {cat.label}
+                        {t(CAT_LABEL_KEY[cat.key])}
                       </Text>
                       <Text
                         style={[styles.categoryCount, { color: ink3, fontFamily: font.body }]}
@@ -579,16 +595,15 @@ export default function DailyRewardsScreen() {
           </View>
           <View style={styles.leaderText}>
             <Text style={[styles.leaderTitle, { color: ink, fontFamily: font.display }]}>
-              Community Leaderboard
+              {t('dailyRewards_communityLeaderboard')}
             </Text>
             <Text style={[styles.leaderSub, { color: ink3, fontFamily: font.body }]}>
               {leaderboard && myUserId
-                ? `You're #${
-                    leaderboard.find((e) => e.user_id === myUserId)?.rank ?? '—'
-                  } with ${
-                    leaderboard.find((e) => e.user_id === myUserId)?.total_points ?? 0
-                  } pts`
-                : 'Compete with moms, caregivers & partners'}
+                ? t('dailyRewards_rankDesc', {
+                    rank: String(leaderboard.find((e) => e.user_id === myUserId)?.rank ?? '—'),
+                    n: String(leaderboard.find((e) => e.user_id === myUserId)?.total_points ?? 0),
+                  })
+                : t('dailyRewards_competeDesc')}
             </Text>
           </View>
           <ChevronRight size={20} color={ink3} />
@@ -605,7 +620,7 @@ export default function DailyRewardsScreen() {
         >
           <Info size={14} color={ink3} strokeWidth={2} />
           <Text style={[styles.howBtnText, { color: ink3, fontFamily: font.bodyMedium }]}>
-            How points work
+            {t('dailyRewards_howPointsWork')}
           </Text>
         </Pressable>
       </ScrollView>
@@ -624,7 +639,7 @@ export default function DailyRewardsScreen() {
           >
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: ink, fontFamily: font.display }]}>
-                How points work
+                {t('dailyRewards_howPointsWork')}
               </Text>
               <Pressable
                 onPress={() => setShowPointsInfo(false)}
@@ -635,14 +650,14 @@ export default function DailyRewardsScreen() {
               </Pressable>
             </View>
             <Text style={[styles.modalSubtitle, { color: ink, fontFamily: font.italic }]}>
-              Earn points across the app — they roll up into your leaderboard rank.
+              {t('dailyRewards_howPointsBody')}
             </Text>
             <View style={{ gap: 8, marginTop: 12 }}>
               {POINTS_ROWS.map((item) => {
                 const dotColor = stickers[item.color]
                 return (
                   <View
-                    key={item.label}
+                    key={item.rowKey}
                     style={[styles.modalRow, { backgroundColor: paperRaised, borderColor: line }]}
                   >
                     <View
@@ -656,7 +671,7 @@ export default function DailyRewardsScreen() {
                       ]}
                     />
                     <Text style={[styles.modalLabel, { color: ink, fontFamily: font.bodySemiBold }]}>
-                      {item.label}
+                      {t(item.rowKey as any)}
                     </Text>
                     <Text style={[styles.modalPts, { color: ink, fontFamily: font.display }]}>
                       {item.pts}
@@ -707,7 +722,7 @@ export default function DailyRewardsScreen() {
                           {cat.label}
                         </Text>
                         <Text style={[styles.catModalCount, { color: ink3, fontFamily: font.body }]}>
-                          {earnedList.length}/{catBadges.length} earned
+                          {t('dailyRewards_earnedOf', { n: String(earnedList.length), total: String(catBadges.length) })}
                         </Text>
                       </View>
                       <Pressable
@@ -736,7 +751,7 @@ export default function DailyRewardsScreen() {
                       {earnedList.length > 0 && (
                         <View style={styles.catSection}>
                           <MonoCaps size={10} color={color} style={{ marginBottom: 6 }}>
-                            Achieved
+                            {t('dailyRewards_achieved')}
                           </MonoCaps>
                           {earnedList.map((def) => {
                             const earned = earnedBadges.find((e) => e.badgeId === def.id)
@@ -762,7 +777,7 @@ export default function DailyRewardsScreen() {
                       {lockedList.length > 0 && (
                         <View style={styles.catSection}>
                           <MonoCaps size={10} color={ink3} style={{ marginBottom: 6 }}>
-                            To unlock
+                            {t('dailyRewards_toUnlock')}
                           </MonoCaps>
                           {lockedList.map((def) => (
                             <BadgeRow

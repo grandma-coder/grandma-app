@@ -24,15 +24,18 @@ import ResultCard from '../components/ui/ResultCard'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { spacing, borderRadius, useTheme } from '../constants/theme'
 import { PartialStickers } from '../components/stickers/PartialStickers'
+import { useTranslation } from '../lib/i18n'
 
 const FREE_SCAN_LIMIT = 3
 
-const SCAN_TYPES = [
-  { id: 'medicine', Sticker: PartialStickers.ScanTypeMedicine, label: 'Medicine' },
-  { id: 'food',     Sticker: PartialStickers.ScanTypeFood,     label: 'Food' },
-  { id: 'nutrition',Sticker: PartialStickers.ScanTypeNutrition,label: 'Nutrition' },
-  { id: 'general',  Sticker: PartialStickers.ScanTypeGeneral,  label: 'General' },
-]
+function getScanTypes(t: (key: any) => string) {
+  return [
+    { id: 'medicine', Sticker: PartialStickers.ScanTypeMedicine, label: t('scan_typeMedicine') },
+    { id: 'food',     Sticker: PartialStickers.ScanTypeFood,     label: t('scan_typeFood') },
+    { id: 'nutrition',Sticker: PartialStickers.ScanTypeNutrition,label: t('scan_typeNutrition') },
+    { id: 'general',  Sticker: PartialStickers.ScanTypeGeneral,  label: t('scan_typeGeneral') },
+  ]
+}
 
 export default function Scan() {
   const insets = useSafeAreaInsets()
@@ -160,6 +163,8 @@ export default function Scan() {
       fontWeight: '600',
     },
   }), [colors])
+  const { t } = useTranslation()
+  const scanTypes = getScanTypes(t)
   const child = useChildStore((s) => s.activeChild)
   const mode = useModeStore((s) => s.mode)
   const pregnancyDueDate = usePregnancyStore((s) => s.dueDate)
@@ -203,7 +208,7 @@ export default function Scan() {
 
     const { granted } = await permissionFn()
     if (!granted) {
-      Alert.alert('Permission needed', `Please allow ${useCamera ? 'camera' : 'photo library'} access.`)
+      Alert.alert(t('scan_permissionNeeded'), t('scan_permissionMsg', { type: useCamera ? 'camera' : 'photo library' }))
       return
     }
 
@@ -289,7 +294,7 @@ export default function Scan() {
         router.push('/paywall')
         return
       }
-      Alert.alert('Scan failed', e.message)
+      Alert.alert(t('scan_failed'), e.message)
     } finally {
       setLoading(false)
     }
@@ -303,13 +308,13 @@ export default function Scan() {
           <Pressable onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </Pressable>
-          <Text style={styles.title}>Scan</Text>
+          <Text style={styles.title}>{t('scan_screenTitle')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
         {/* Scan type selector */}
         <View style={styles.typesRow}>
-          {SCAN_TYPES.map((type) => (
+          {scanTypes.map((type) => (
             <Pressable
               key={type.id}
               onPress={() => setScanType(type.id)}
@@ -339,13 +344,13 @@ export default function Scan() {
             <View style={styles.placeholder}>
               <Ionicons name="scan-outline" size={64} color={colors.textMuted} />
               <Text style={styles.placeholderText}>
-                Take a photo or pick from library
+                {t('scan_placeholderText')}
               </Text>
             </View>
           )}
           {loading && (
             <View style={styles.loadingOverlay}>
-              <BrandedLoader logoSize={72} sublabel="Grandma is looking..." />
+              <BrandedLoader logoSize={72} sublabel={t('scan_grandmaLooking')} />
             </View>
           )}
         </View>
@@ -358,7 +363,7 @@ export default function Scan() {
             disabled={loading}
           >
             <Ionicons name="camera" size={22} color={colors.textInverse} />
-            <Text style={styles.actionText}>Camera</Text>
+            <Text style={styles.actionText}>{t('scan_cameraBtn')}</Text>
           </Pressable>
           <Pressable
             style={({ pressed }) => [
@@ -370,7 +375,7 @@ export default function Scan() {
             disabled={loading}
           >
             <Ionicons name="images" size={22} color={colors.text} />
-            <Text style={styles.actionTextSecondary}>Library</Text>
+            <Text style={styles.actionTextSecondary}>{t('scan_libraryBtn')}</Text>
           </Pressable>
         </View>
 

@@ -38,6 +38,7 @@ import {
   Hash,
 } from 'lucide-react-native'
 import { useTheme } from '../constants/theme'
+import { useTranslation } from '../lib/i18n'
 import { supabase } from '../lib/supabase'
 import { AvatarView, isIconAvatar } from '../components/ui/AvatarPicker'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
@@ -394,6 +395,7 @@ function AnimatedStarIcon({ size, fill }: { size: number; fill: string }) {
 export default function LeaderboardScreen() {
   const { colors, radius, stickers, font, isDark } = useTheme()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
 
   const paper = colors.surface
   const paperBorder = colors.border
@@ -485,6 +487,7 @@ export default function LeaderboardScreen() {
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key
           const count = tabCounts[tab.key]
+          const tabLabel = tab.key === 'all' ? t('leaderboard_tabAll') : tab.key === 'moms' ? t('leaderboard_tabMoms') : tab.key === 'caregivers' ? t('leaderboard_tabCaregivers') : t('leaderboard_tabPartners')
           return (
             <Pressable
               key={tab.key}
@@ -507,7 +510,7 @@ export default function LeaderboardScreen() {
                   },
                 ]}
               >
-                {tab.label}
+                {tabLabel}
               </Text>
               <Text
                 style={[
@@ -619,6 +622,7 @@ function Podium({
   onPress: (e: LeaderEntry) => void
 }) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const paper = colors.surface
   const paperBorder = colors.border
   const ink = colors.text
@@ -673,7 +677,7 @@ function Podium({
               style={[styles.podiumName, { color: ink, fontFamily: font.bodySemiBold }]}
               numberOfLines={1}
             >
-              {isMe ? 'You' : entry.name.split(' ')[0]}
+              {isMe ? t('leaderboard_you') : entry.name.split(' ')[0]}
             </Text>
 
             <View style={styles.podiumPtsRow}>
@@ -681,7 +685,7 @@ function Podium({
                 {entry.total_points}
               </Text>
               <Text style={[styles.podiumPtsLabel, { color: colors.textMuted, fontFamily: font.body }]}>
-                pts
+                {t('leaderboard_pts')}
               </Text>
             </View>
           </Pressable>
@@ -701,6 +705,7 @@ function LeaderRow({
   onPress: () => void
 }) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const paper = colors.surface
   const paperBorder = colors.border
   const ink = colors.text
@@ -742,7 +747,7 @@ function LeaderRow({
           style={[styles.rowName, { color: ink, fontFamily: font.bodySemiBold }]}
           numberOfLines={1}
         >
-          {isMe ? `${entry.name} (You)` : entry.name}
+          {isMe ? t('leaderboard_youSuffix', { name: entry.name }) : entry.name}
         </Text>
         <View style={styles.rowStats}>
           {entry.child_logs > 0 && (
@@ -765,7 +770,7 @@ function LeaderRow({
           {entry.total_points}
         </Text>
         <Text style={[styles.rowPtsLabel, { color: colors.textMuted, fontFamily: font.body }]}>
-          pts
+          {t('leaderboard_pts')}
         </Text>
       </View>
     </Pressable>
@@ -788,6 +793,7 @@ function StatChip({ icon, value }: { icon: React.ReactNode; value: number }) {
 
 function SoloCheer() {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const paper = colors.surface
   const paperBorder = colors.border
   const ink = colors.text
@@ -812,10 +818,10 @@ function SoloCheer() {
       </View>
 
       <Display size={20} align="center" color={ink}>
-        Alone at the top
+        {t('leaderboard_aloneTop')}
       </Display>
       <Text style={[styles.soloItalic, { color: colors.textSecondary, fontFamily: font.italic }]}>
-        Invite caregivers and post in channels — friendly competition makes the climb sweeter.
+        {t('leaderboard_aloneTopBody')}
       </Text>
     </View>
   )
@@ -825,6 +831,7 @@ function SoloCheer() {
 
 function YouCard({ entry, onPress }: { entry: LeaderEntry; onPress: () => void }) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = colors.text
 
   return (
@@ -845,12 +852,12 @@ function YouCard({ entry, onPress }: { entry: LeaderEntry; onPress: () => void }
       </View>
 
       <View style={{ flex: 1, gap: 4 }}>
-        <MonoCaps color={colors.textMuted}>Your spot</MonoCaps>
+        <MonoCaps color={colors.textMuted}>{t('leaderboard_yourSpot')}</MonoCaps>
         <Text style={[styles.youName, { color: ink, fontFamily: font.display }]}>
-          {entry.name.split(' ')[0]}, you're #{entry.rank}
+          {t('leaderboard_rankHero', { name: entry.name.split(' ')[0], rank: entry.rank })}
         </Text>
         <Text style={[styles.youSub, { color: colors.textSecondary, fontFamily: font.italic }]}>
-          {entry.total_points} points this season
+          {t('leaderboard_pointsSeason', { n: entry.total_points })}
         </Text>
       </View>
     </Pressable>
@@ -861,16 +868,17 @@ function YouCard({ entry, onPress }: { entry: LeaderEntry; onPress: () => void }
 
 function EmptyState() {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   return (
     <View style={styles.emptyWrap}>
       <View style={styles.emptyStickerWrap}>
         <MoonSticker size={96} fill={stickers.lilac} />
       </View>
       <Display size={22} align="center" color={colors.text}>
-        Just you here, champ
+        {t('leaderboard_justYou')}
       </Display>
       <Text style={[styles.emptyItalic, { color: colors.textSecondary, fontFamily: font.italic }]}>
-        Invite caregivers and post in channels to climb the board.
+        {t('leaderboard_justYouBody')}
       </Text>
     </View>
   )
@@ -880,6 +888,7 @@ function EmptyState() {
 
 function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => void }) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = colors.text
   const paperBorder = colors.border
 
@@ -890,9 +899,9 @@ function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => v
     stickers.blue
 
   const roleLabel =
-    entry.caregiver_role === 'nanny' ? 'Caregiver' :
-    entry.caregiver_role === 'family' ? 'Family Member' :
-    'Parent'
+    entry.caregiver_role === 'nanny' ? t('leaderboard_roleCaregiver') :
+    entry.caregiver_role === 'family' ? t('leaderboard_roleFamilyMember') :
+    t('leaderboard_roleParent')
 
   return (
     <>
@@ -951,31 +960,31 @@ function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => v
           {entry.total_points}
         </Text>
         <Text style={[styles.profilePointsLabel, { color: colors.textSecondary, fontFamily: font.body }]}>
-          points
+          {t('leaderboard_statPoints')}
         </Text>
       </View>
 
       <View style={styles.profileStatsGrid}>
         <ProfileStat
-          label="Child Logs"
+          label={t('leaderboard_statChildLogs')}
           value={entry.child_logs}
           sticker={<FlowerSticker size={28} petal={stickers.peach} />}
           tint={isDark ? stickers.peachSoft : stickers.peachSoft}
         />
         <ProfileStat
-          label="Posts"
+          label={t('leaderboard_statPosts')}
           value={entry.garage_posts + entry.channel_posts}
           sticker={<BurstSticker size={28} fill={stickers.blue} points={8} />}
           tint={isDark ? stickers.blueSoft : stickers.blueSoft}
         />
         <ProfileStat
-          label="Reactions"
+          label={t('leaderboard_statReactions')}
           value={entry.garage_likes + entry.channel_reactions}
           sticker={<HeartSticker size={28} fill={stickers.coral} />}
           tint={isDark ? stickers.pinkSoft : stickers.pinkSoft}
         />
         <ProfileStat
-          label="Channels"
+          label={t('leaderboard_statChannels')}
           value={entry.channels_joined}
           sticker={<StarSticker size={28} fill={stickers.lilac} />}
           tint={isDark ? stickers.lilacSoft : stickers.lilacSoft}

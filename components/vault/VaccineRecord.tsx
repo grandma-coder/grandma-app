@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 export interface VaccineEntry {
   id: string
@@ -22,15 +23,16 @@ function formatDate(dateStr: string): string {
 
 export function VaccineRecord({ vaccines }: VaccineRecordProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   if (vaccines.length === 0) {
     return (
       <PaperCard radius={28} padding={20} style={styles.container}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Vaccine Records</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('vault_vaccineRecords')}</Text>
         </View>
         <View style={styles.empty}>
           <Ionicons name="medical-outline" size={28} color={colors.textMuted} />
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>No vaccines recorded yet</Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('vault_noVaccinesYet')}</Text>
         </View>
       </PaperCard>
     )
@@ -39,8 +41,8 @@ export function VaccineRecord({ vaccines }: VaccineRecordProps) {
   return (
     <PaperCard radius={28} padding={20} style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Vaccine Records</Text>
-        <Text style={[styles.count, { color: colors.textMuted }]}>{vaccines.length} recorded</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('vault_vaccineRecords')}</Text>
+        <Text style={[styles.count, { color: colors.textMuted }]}>{t('vault_vaccineRecorded', { count: vaccines.length })}</Text>
       </View>
 
       {vaccines.map((v) => (
@@ -54,19 +56,19 @@ export function VaccineRecord({ vaccines }: VaccineRecordProps) {
           </View>
           <View style={styles.rowContent}>
             <Text style={[styles.vaccineName, { color: colors.text }]}>
-              {v.vaccineName} — Dose {v.doseNumber}
+              {t('vault_vaccineDose', { name: v.vaccineName, n: v.doseNumber })}
             </Text>
             {v.administeredDate ? (
               <Text style={[styles.dateText, { color: colors.textMuted }]}>
-                Given: {formatDate(v.administeredDate)}
+                {t('vault_vaccineGiven', { date: formatDate(v.administeredDate) })}
                 {v.provider ? ` · ${v.provider}` : ''}
               </Text>
             ) : v.nextDueDate ? (
               <Text style={[styles.dueText, { color: colors.warning }]}>
-                Due: {formatDate(v.nextDueDate)}
+                {t('vault_vaccineDue', { date: formatDate(v.nextDueDate) })}
               </Text>
             ) : (
-              <Text style={[styles.dateText, { color: colors.textMuted }]}>Not yet scheduled</Text>
+              <Text style={[styles.dateText, { color: colors.textMuted }]}>{t('vault_vaccineNotScheduled')}</Text>
             )}
           </View>
         </View>

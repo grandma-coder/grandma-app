@@ -2,6 +2,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useTheme, borderRadius } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 interface DocumentUploadProps {
   onCamera?: () => void
@@ -10,29 +11,30 @@ interface DocumentUploadProps {
 
 export function DocumentUpload({ onCamera, onFilePick }: DocumentUploadProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   return (
     <PaperCard radius={28} padding={20} style={styles.container}>
       <View style={[styles.iconCircle, { backgroundColor: colors.primaryTint }]}>
         <Ionicons name="cloud-upload-outline" size={32} color={colors.accent} />
       </View>
-      <Text style={[styles.title, { color: colors.text }]}>Secure New Document</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{t('vault_secureNewDoc')}</Text>
       <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-        Drop any medical file here or use your camera to scan physical records.
+        {t('vault_secureNewDocBody')}
       </Text>
 
       <View style={styles.buttonRow}>
         <Pressable onPress={onCamera} style={[styles.button, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
           <Ionicons name="camera-outline" size={20} color={colors.text} />
-          <Text style={[styles.buttonText, { color: colors.text }]}>Scan</Text>
+          <Text style={[styles.buttonText, { color: colors.text }]}>{t('vault_scanBtn')}</Text>
         </Pressable>
         <Pressable onPress={onFilePick} style={[styles.button, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
           <Ionicons name="folder-outline" size={20} color={colors.text} />
-          <Text style={[styles.buttonText, { color: colors.text }]}>Upload</Text>
+          <Text style={[styles.buttonText, { color: colors.text }]}>{t('vault_uploadBtn')}</Text>
         </Pressable>
       </View>
 
       <Pressable onPress={onFilePick} style={[styles.addRecordBtn, { backgroundColor: colors.accent }]}>
-        <Text style={[styles.addRecordText, { color: colors.textInverse }]}>Add Record</Text>
+        <Text style={[styles.addRecordText, { color: colors.textInverse }]}>{t('vault_addRecord')}</Text>
       </Pressable>
     </PaperCard>
   )

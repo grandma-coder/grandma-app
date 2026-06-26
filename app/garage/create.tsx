@@ -40,6 +40,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, getModeColor } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
+import { useTranslation } from '../../lib/i18n'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { PaperAlert, type PaperAlertButton } from '../../components/ui/PaperAlert'
 import { createGaragePost } from '../../lib/garagePosts'
@@ -78,6 +79,7 @@ export default function CreatePostScreen() {
   const accent = getModeColor(mode, isDark)
   const insets = useSafeAreaInsets()
   const ink = isDark ? colors.text : '#141313'
+  const { t } = useTranslation()
 
   const [step, setStep] = useState(1)
 
@@ -115,7 +117,7 @@ export default function CreatePostScreen() {
       return
     }
     setAlert({
-      title: 'Photo Safety Guidelines',
+      title: t('garage_create_safetyTitle'),
       message:
         "To protect children's privacy and safety:\n\n" +
         "• Do NOT share photos showing children's faces\n" +
@@ -124,9 +126,9 @@ export default function CreatePostScreen() {
         '• Product and item photos are always welcome\n\n' +
         'Violations will result in content removal and possible account suspension.',
       buttons: [
-        { label: 'I Decline', variant: 'secondary' },
+        { label: t('garage_create_safetyDecline'), variant: 'secondary' },
         {
-          label: 'I Agree',
+          label: t('garage_create_safetyAgree'),
           variant: 'primary',
           onPress: () => {
             void AsyncStorage.setItem(SAFETY_AGREED_KEY, 'true')
@@ -174,7 +176,7 @@ export default function CreatePostScreen() {
           setMedia((prev) => [...prev, ...newItems].slice(0, 10))
         }
       } catch {
-        setAlert({ title: 'Error', message: 'Could not load photo. Try a different one.' })
+        setAlert({ title: t('garage_create_uploadError'), message: t('garage_create_errorLoadPhoto') })
       }
     }
   }
@@ -187,7 +189,7 @@ export default function CreatePostScreen() {
     try {
       const perm = await ImagePicker.requestCameraPermissionsAsync()
       if (!perm.granted) {
-        setAlert({ title: 'Camera permission needed', message: 'Enable camera access in Settings to take a photo.' })
+        setAlert({ title: t('garage_create_errorCamera'), message: 'Enable camera access in Settings to take a photo.' })
         return
       }
       const result = await ImagePicker.launchCameraAsync({})
@@ -197,7 +199,7 @@ export default function CreatePostScreen() {
         )
       }
     } catch {
-      setAlert({ title: 'Error', message: 'Could not capture photo.' })
+      setAlert({ title: t('garage_create_uploadError'), message: t('garage_create_errorCapturePhoto') })
     }
   }
 
@@ -231,12 +233,12 @@ export default function CreatePostScreen() {
 
   async function handlePublish() {
     if (media.length === 0) {
-      setAlert({ title: 'No Photos', message: 'Please add at least one photo before publishing.' })
+      setAlert({ title: t('garage_create_noPhotosTitle'), message: t('garage_create_noPhotosMsg') })
       return
     }
     setPosting(true)
     setUploadProgress(0)
-    setUploadStatus('Preparing…')
+    setUploadStatus(t('garage_create_preparing'))
     progressAnim.setValue(0)
 
     try {
@@ -257,7 +259,7 @@ export default function CreatePostScreen() {
         },
       })
 
-      setUploadStatus('Published!')
+      setUploadStatus(t('garage_create_published'))
       Animated.timing(progressAnim, {
         toValue: 1,
         duration: 200,
@@ -268,7 +270,7 @@ export default function CreatePostScreen() {
         router.back()
       }, 600)
     } catch (e: any) {
-      setAlert({ title: 'Upload Error', message: e.message })
+      setAlert({ title: t('garage_create_uploadError'), message: e.message })
       setPosting(false)
     }
   }
@@ -283,7 +285,7 @@ export default function CreatePostScreen() {
           <ArrowLeft size={24} color={colors.text} />
         </Pressable>
         <Text style={[s.headerTitle, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-          {step === 5 ? 'Preview' : `Step ${step} of ${TOTAL_STEPS}`}
+          {step === 5 ? t('garage_create_preview') : t('garage_create_stepN', { step, total: TOTAL_STEPS })}
         </Text>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <X size={22} color={colors.textMuted} />
@@ -355,7 +357,7 @@ export default function CreatePostScreen() {
             ]}
           >
             <Text style={[s.nextBtnText, { color: ink, fontFamily: font.bodyBold }]}>
-              {step === 4 ? 'Preview' : 'Next'}
+              {step === 4 ? t('garage_create_preview') : t('garage_create_next')}
             </Text>
           </Pressable>
         ) : (
@@ -373,7 +375,7 @@ export default function CreatePostScreen() {
             ) : (
               <View style={s.publishRow}>
                 <Send size={18} color={ink} strokeWidth={2.4} />
-                <Text style={[s.nextBtnText, { color: ink, fontFamily: font.bodyBold }]}>Publish</Text>
+                <Text style={[s.nextBtnText, { color: ink, fontFamily: font.bodyBold }]}>{t('garage_create_publish')}</Text>
               </View>
             )}
           </Pressable>
@@ -439,12 +441,13 @@ function Step1Media({
   const accent = getModeColor(mode, isDark)
   const ink = isDark ? colors.text : '#141313'
   const thumbSize = (SCREEN_W - 48 - 16) / 3
+  const { t } = useTranslation()
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>Add Photos & Videos</Text>
+      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>{t('garage_create_step1Title')}</Text>
       <Text style={[s.stepHint, { color: colors.textSecondary, fontFamily: font.body }]}>
-        Add up to 10 photos or videos. The first one will be the cover.
+        {t('garage_create_step1Hint')}
       </Text>
 
       {/* Media grid */}
@@ -459,7 +462,7 @@ function Step1Media({
             )}
             {i === 0 && (
               <View style={[s.coverBadge, { backgroundColor: accent, borderRadius: radius.sm }]}>
-                <Text style={[s.coverBadgeText, { color: ink, fontFamily: font.bodyBold }]}>Cover</Text>
+                <Text style={[s.coverBadgeText, { color: ink, fontFamily: font.bodyBold }]}>{t('garage_create_coverBadge')}</Text>
               </View>
             )}
             <Pressable onPress={() => onRemove(i)} style={[s.removeMediaBtn, { backgroundColor: brand.error }]}>
@@ -477,8 +480,8 @@ function Step1Media({
             style={[s.addMediaBtn, { backgroundColor: stickers.blueSoft, borderColor: colors.border, borderRadius: radius.lg }]}
           >
             <ImageIcon size={24} color={stickers.blueInk} strokeWidth={2.2} />
-            <Text style={[s.addMediaText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Gallery</Text>
-            <Text style={[s.addMediaSub, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>Photos & Videos</Text>
+            <Text style={[s.addMediaText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('garage_create_gallery')}</Text>
+            <Text style={[s.addMediaSub, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('garage_create_galleryPhotosVideos')}</Text>
           </Pressable>
           <Pressable
             onPress={onTakePhoto}
@@ -486,13 +489,13 @@ function Step1Media({
           >
             <Camera size={24} color={stickers.yellowInk} strokeWidth={2.2} />
             <Text style={[s.addMediaText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Camera</Text>
-            <Text style={[s.addMediaSub, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>Take a photo</Text>
+            <Text style={[s.addMediaSub, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('garage_create_cameraTakePhoto')}</Text>
           </Pressable>
         </View>
       )}
 
       <Text style={[s.mediaCount, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-        {media.length}/10 added
+        {t('garage_create_mediaCount', { n: media.length })}
       </Text>
     </View>
   )
@@ -511,13 +514,14 @@ function Step2TitleCaption({
   onCaptionChange: (c: string) => void
 }) {
   const { colors, radius, font } = useTheme()
+  const { t } = useTranslation()
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>What are you sharing?</Text>
+      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>{t('garage_create_step2Title')}</Text>
 
       {/* Title */}
-      <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold }]}>TITLE</Text>
+      <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('garage_create_fieldTitle')}</Text>
       <TextInput
         value={title}
         onChangeText={onTitleChange}
@@ -529,12 +533,12 @@ function Step2TitleCaption({
         }]}
       />
       <Text style={[s.fieldTip, { color: colors.textMuted, fontFamily: font.italic }]}>
-        Tip: Include brand, item type, and condition for best results
+        {t('garage_create_fieldTitleTip')}
       </Text>
 
       {/* Caption */}
       <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold, marginTop: 20 }]}>
-        CAPTION (optional)
+        {t('garage_create_fieldCaption')}
       </Text>
       <TextInput
         value={caption}
@@ -565,12 +569,13 @@ function Step3Category({
 }) {
   const { colors, radius, stickers, font, isDark } = useTheme()
   const ink = isDark ? colors.text : '#141313'
+  const { t } = useTranslation()
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>Choose a Category</Text>
+      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>{t('garage_create_step3Title')}</Text>
       <Text style={[s.stepHint, { color: colors.textSecondary, fontFamily: font.body }]}>
-        This helps others find your post in the feed.
+        {t('garage_create_step3Hint')}
       </Text>
 
       <View style={s.categoryGrid}>
@@ -596,7 +601,7 @@ function Step3Category({
       {/* Custom category input */}
       {category === 'Other' && (
         <View style={{ marginTop: 16 }}>
-          <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold }]}>YOUR CATEGORY</Text>
+          <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('garage_create_fieldYourCategory')}</Text>
           <TextInput
             value={customCategory}
             onChangeText={onCustomCategoryChange}
@@ -630,19 +635,20 @@ function Step4Details({
 }) {
   const { colors, radius, stickers, font, isDark } = useTheme()
   const ink = isDark ? colors.text : '#141313'
+  const { t } = useTranslation()
 
   const ageGroup = AGE_GROUPS.find((g) => g.label === selectedAge)
   const availableSizes = ageGroup?.sizes ?? []
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>Item Details</Text>
+      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>{t('garage_create_step4Title')}</Text>
       <Text style={[s.stepHint, { color: colors.textSecondary, fontFamily: font.body }]}>
         All fields are optional but help others find your item.
       </Text>
 
       {/* Condition */}
-      <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold }]}>CONDITION</Text>
+      <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('garage_create_fieldCondition')}</Text>
       <View style={s.chipRow}>
         {CONDITIONS.map((c) => {
           const isActive = condition === c
@@ -664,7 +670,7 @@ function Step4Details({
 
       {/* Age range — pick first */}
       <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold, marginTop: 24 }]}>
-        AGE RANGE
+        {t('garage_create_fieldAgeRange')}
       </Text>
       <Text style={[s.fieldTip, { color: colors.textMuted, fontFamily: font.italic, marginBottom: 8 }]}>
         Select age first — matching sizes will appear below
@@ -693,7 +699,7 @@ function Step4Details({
       {selectedAge && availableSizes.length > 0 && (
         <>
           <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold, marginTop: 24 }]}>
-            SIZE — {selectedAge}
+            {t('garage_create_fieldSize', { age: selectedAge ?? '' })}
           </Text>
           <View style={s.chipRow}>
             {availableSizes.map((sz) => {

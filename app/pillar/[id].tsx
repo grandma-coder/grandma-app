@@ -21,11 +21,13 @@ import { PillButton } from '../../components/ui/PillButton'
 import { ScribbleUnderline } from '../../components/ui/ScribbleUnderline'
 import { getPillarSticker } from '../../lib/pillarStickerMap'
 import { usePillarTipBuckets } from '../../lib/pillarAdaptive'
+import { useTranslation } from '../../lib/i18n'
 
 export default function PillarDetail() {
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
 
   const pillar = (
@@ -38,7 +40,7 @@ export default function PillarDetail() {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <Text style={{ fontSize: 16, color: colors.text, fontFamily: font.body }}>
-          Pillar not found
+          {t('pillarDetail_notFound')}
         </Text>
       </View>
     )
@@ -106,7 +108,7 @@ export default function PillarDetail() {
             <View style={styles.sectionHeading}>
               <ScribbleUnderline color={stickers.coral} strokeWidth={2.5}>
                 <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>
-                  For you right now
+                  {t('pillarDetail_forYouNow')}
                 </Text>
               </ScribbleUnderline>
             </View>
@@ -136,7 +138,7 @@ export default function PillarDetail() {
         <View style={[styles.sectionHeading, { marginTop: forYou.length > 0 ? 24 : 8 }]}>
           <ScribbleUnderline color={stickers.coral} strokeWidth={2.5}>
             <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>
-              {forYou.length > 0 ? 'All tips' : 'Tips'}
+              {forYou.length > 0 ? t('pillarDetail_allTips') : t('pillarDetail_tips')}
             </Text>
           </ScribbleUnderline>
         </View>
@@ -154,7 +156,7 @@ export default function PillarDetail() {
         <View style={[styles.sectionHeading, { marginTop: 24 }]}>
           <ScribbleUnderline color={stickers.coral} strokeWidth={2.5}>
             <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>
-              Ask Guru Grandma
+              {t('pillarDetail_askGrandma')}
             </Text>
           </ScribbleUnderline>
         </View>

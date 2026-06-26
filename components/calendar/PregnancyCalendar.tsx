@@ -113,6 +113,7 @@ import {
   ContractionTimerLogForm,
 } from './PregnancyLogForms'
 import { PregnancyMealForm } from './PregnancyMealForm'
+import { useTranslation } from '../../lib/i18n'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -465,6 +466,7 @@ function RoutineManager({
   onDeleted: () => void
 }) {
   const { colors, isDark, font, radius, stickers } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   // Sticker palette (pregnancy = lavender accent)
@@ -488,7 +490,7 @@ function RoutineManager({
 
   async function handleSave() {
     if (!form.name.trim()) {
-      Alert.alert('Name required', 'Please enter a routine name.')
+      Alert.alert(t('pregCal_alertNameRequired'), t('pregCal_alertNameRequiredMsg'))
       return
     }
     setSaving(true)
@@ -518,7 +520,7 @@ function RoutineManager({
       setEditingRoutine(null)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Failed to save')
+      Alert.alert(t('pregCal_alertSaveError'), e instanceof Error ? e.message : 'Failed to save')
     } finally {
       setSaving(false)
     }
@@ -543,7 +545,7 @@ function RoutineManager({
       if (error) throw error
       onDeleted()
     } catch (e: unknown) {
-      Alert.alert('Could not delete', e instanceof Error ? e.message : 'Please check your connection and try again.')
+      Alert.alert(t('pregCal_alertDeleteError'), e instanceof Error ? e.message : 'Please check your connection and try again.')
     } finally {
       setDeleting(false)
       setConfirmDeleteId(null)
@@ -1099,6 +1101,7 @@ function LogDetailPopup({
   onDeleted: () => void
 }) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const s = isDark ? stickersDark : stickersLight
   const meta = LOG_META[log.log_type] ?? { label: log.log_type, icon: Calendar, color: brand.pregnancy }
@@ -1171,7 +1174,7 @@ function LogDetailPopup({
     setConfirmingDelete(false)
     const { error } = await supabase.from('pregnancy_logs').delete().eq('id', log.id)
     if (error) {
-      Alert.alert('Could not delete', error.message)
+      Alert.alert(t('pregCal_alertDeleteError'), error.message)
       return
     }
     await invalidatePregnancyLogQueries()
@@ -1285,6 +1288,7 @@ function DayDetailPanel({
   onOpenRoutine: (type: LogFormType) => void
 }) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   const [pendingCollapsed, setPendingCollapsed] = useState(false)
   const [loggedCollapsed, setLoggedCollapsed] = useState(false)
@@ -1477,8 +1481,8 @@ function DayDetailPanel({
                       onPress={() => onOpenLog(log)}
                       onLongPress={() => {
                         Alert.alert(
-                          'Delete log?',
-                          `Remove this ${meta.label} entry?`,
+                          t('pregCal_alertDeleteLogTitle'),
+                          t('pregCal_alertDeleteLog', { label: meta.label }),
                           [
                             { text: 'Cancel', style: 'cancel' },
                             { text: 'Delete', style: 'destructive', onPress: () => onDeleteLog(log) },
@@ -1519,6 +1523,7 @@ function DayDetailPanel({
 
 export function PregnancyCalendar() {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
@@ -1649,7 +1654,7 @@ export function PregnancyCalendar() {
       error = { message: e?.message ?? 'Network error. Please try again.' }
     }
     if (error) {
-      Alert.alert('Could not delete', error.message)
+      Alert.alert(t('pregCal_alertDeleteError'), error.message)
       return
     }
     await invalidatePregnancyLogQueries()

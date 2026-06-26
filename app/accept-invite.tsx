@@ -4,9 +4,11 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../lib/supabase'
 import { useTheme, font } from '../constants/theme'
+import { useTranslation } from '../lib/i18n'
 
 export default function AcceptInvite() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1, backgroundColor: colors.bg,
@@ -51,8 +53,8 @@ export default function AcceptInvite() {
       const { data: { session } } = await supabase.auth.getSession()
       if (cancelled) return
       if (!session) {
-        const t = token ? `?invite=${encodeURIComponent(token)}` : ''
-        router.replace(`/(auth)/welcome${t}` as Parameters<typeof router.replace>[0])
+        const qs = token ? `?invite=${encodeURIComponent(token)}` : ''
+        router.replace(`/(auth)/welcome${qs}` as Parameters<typeof router.replace>[0])
         return
       }
       setCheckingAuth(false)
@@ -62,7 +64,7 @@ export default function AcceptInvite() {
 
   async function handleAccept() {
     if (!token) {
-      Alert.alert('Error', 'No invite token provided')
+      Alert.alert(t('acceptInvite_errorTitle'), t('acceptInvite_errorNoToken'))
       return
     }
 
@@ -78,7 +80,7 @@ export default function AcceptInvite() {
       setChildName(data.childName)
       setAccepted(true)
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('acceptInvite_errorTitle'), e.message)
     } finally {
       setLoading(false)
     }
@@ -96,12 +98,12 @@ export default function AcceptInvite() {
     return (
       <View style={styles.container}>
         <Text style={styles.emoji}>🎉</Text>
-        <Text style={styles.title}>You're in!</Text>
+        <Text style={styles.title}>{t('acceptInvite_successTitle')}</Text>
         <Text style={styles.subtitle}>
-          You now have access to {childName}'s profile
+          {t('acceptInvite_successBody', { name: childName })}
         </Text>
         <Pressable onPress={() => router.replace('/(tabs)')} style={styles.button}>
-          <Text style={styles.buttonText}>Go to home</Text>
+          <Text style={styles.buttonText}>{t('acceptInvite_goHome')}</Text>
         </Pressable>
       </View>
     )
@@ -114,24 +116,24 @@ export default function AcceptInvite() {
       </Pressable>
 
       <Text style={styles.emoji}>👵</Text>
-      <Text style={styles.title}>You've been invited!</Text>
+      <Text style={styles.title}>{t('acceptInvite_title')}</Text>
       <Text style={styles.subtitle}>
-        A parent has invited you to help care for their child using Grandma
+        {t('acceptInvite_subtitle')}
       </Text>
 
       <View style={styles.permissionsCard}>
-        <Text style={styles.permissionsTitle}>You'll be able to:</Text>
+        <Text style={styles.permissionsTitle}>{t('acceptInvite_permissionsTitle')}</Text>
         <View style={styles.permRow}>
           <Ionicons name="eye-outline" size={18} color={colors.accent} />
-          <Text style={styles.permText}>View child's profile and health info</Text>
+          <Text style={styles.permText}>{t('acceptInvite_permView')}</Text>
         </View>
         <View style={styles.permRow}>
           <Ionicons name="create-outline" size={18} color={colors.accent} />
-          <Text style={styles.permText}>Log feeding, sleep, and activities</Text>
+          <Text style={styles.permText}>{t('acceptInvite_permLog')}</Text>
         </View>
         <View style={styles.permRow}>
           <Ionicons name="chatbubble-outline" size={18} color={colors.accent} />
-          <Text style={styles.permText}>Chat with Grandma for advice</Text>
+          <Text style={styles.permText}>{t('acceptInvite_permChat')}</Text>
         </View>
       </View>
 
@@ -143,12 +145,12 @@ export default function AcceptInvite() {
         {loading ? (
           <ActivityIndicator color={colors.textInverse} />
         ) : (
-          <Text style={styles.buttonText}>Accept invite</Text>
+          <Text style={styles.buttonText}>{t('acceptInvite_acceptBtn')}</Text>
         )}
       </Pressable>
 
       <Pressable onPress={() => router.back()} style={styles.declineButton}>
-        <Text style={styles.declineText}>Decline</Text>
+        <Text style={styles.declineText}>{t('acceptInvite_declineBtn')}</Text>
       </Pressable>
     </View>
   )

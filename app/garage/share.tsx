@@ -23,10 +23,12 @@ import { getChannels, type Channel } from '../../lib/channels'
 import { sendMessage, getMyChannelIds } from '../../lib/channelPosts'
 import { fetchPost, type GaragePost } from '../../lib/garagePosts'
 import { supabase } from '../../lib/supabase'
+import { useTranslation } from '../../lib/i18n'
 
 export default function ShareToChannel() {
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const { postId, caption } = useLocalSearchParams<{ postId: string; caption: string }>()
 
   const [channels, setChannels] = useState<Channel[]>([])
@@ -59,11 +61,11 @@ export default function ShareToChannel() {
   function confirmAndShare(channelId: string, channelName: string) {
     if (!personalMsg.trim()) {
       Alert.alert(
-        'No message',
-        'You haven\'t added a personal message. Share without one?',
+        t('garage_share_noMessageTitle'),
+        t('garage_share_noMessageBody'),
         [
-          { text: 'Add Message', style: 'cancel' },
-          { text: 'Share Anyway', onPress: () => doShare(channelId, channelName) },
+          { text: t('garage_share_addMessage'), style: 'cancel' },
+          { text: t('garage_share_shareAnyway'), onPress: () => doShare(channelId, channelName) },
         ]
       )
     } else {
@@ -94,12 +96,12 @@ export default function ShareToChannel() {
         } catch {}
       }
 
-      Alert.alert('Shared!', `Post shared to #${channelName}`, [
-        { text: 'Go to Channel', onPress: () => router.replace(`/channel/${channelId}` as any) },
-        { text: 'Share More', style: 'cancel' },
+      Alert.alert(t('garage_share_sharedTitle'), t('garage_share_sharedMsg', { channel: channelName }), [
+        { text: t('garage_share_goToChannel'), onPress: () => router.replace(`/channel/${channelId}` as any) },
+        { text: t('garage_share_shareMore'), style: 'cancel' },
       ])
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('garage_share_errorTitle'), e.message)
     } finally {
       setSharing(null)
     }
@@ -115,7 +117,7 @@ export default function ShareToChannel() {
         <Pressable onPress={() => router.back()} style={s.headerBtn}>
           <ArrowLeft size={24} color={colors.text} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: colors.text }]}>Share to Channel</Text>
+        <Text style={[s.headerTitle, { color: colors.text }]}>{t('garage_share_header')}</Text>
         <View style={s.headerBtn} />
       </View>
 
@@ -138,10 +140,10 @@ export default function ShareToChannel() {
                   )}
                   <View style={s.previewText}>
                     <Text style={[s.previewCaption, { color: colors.text }]} numberOfLines={2}>
-                      {post.caption?.split('\n')[0] ?? 'Post'}
+                      {post.caption?.split('\n')[0] ?? t('garage_share_postFallback')}
                     </Text>
                     <Text style={[s.previewAuthor, { color: colors.textMuted }]}>
-                      by {post.author_name ?? 'you'}
+                      {t('garage_share_postBy', { name: post.author_name ?? 'you' })}
                     </Text>
                   </View>
                 </View>
@@ -151,14 +153,14 @@ export default function ShareToChannel() {
               <TextInput
                 value={personalMsg}
                 onChangeText={setPersonalMsg}
-                placeholder="Add a message (optional)..."
+                placeholder={t('garage_share_messagePlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 multiline
                 style={[s.messageInput, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
               />
 
               {joinedChannels.length > 0 && (
-                <Text style={[s.sectionLabel, { color: colors.textMuted }]}>MY CHANNELS</Text>
+                <Text style={[s.sectionLabel, { color: colors.textMuted }]}>{t('garage_share_myChannels')}</Text>
               )}
             </View>
           }
@@ -169,12 +171,12 @@ export default function ShareToChannel() {
             return (
               <>
                 {isFirstOther && otherChannels.length > 0 && (
-                  <Text style={[s.sectionLabel, { color: colors.textMuted }]}>OTHER CHANNELS</Text>
+                  <Text style={[s.sectionLabel, { color: colors.textMuted }]}>{t('garage_share_otherChannels')}</Text>
                 )}
                 <Pressable
                   onPress={() => {
                     if (!isJoined) {
-                      Alert.alert('Join first', 'You need to join this channel before sharing.')
+                      Alert.alert(t('garage_share_joinFirstTitle'), t('garage_share_joinFirstMsg'))
                       return
                     }
                     confirmAndShare(item.id, item.name)
@@ -196,10 +198,10 @@ export default function ShareToChannel() {
                     <ActivityIndicator color={colors.primary} size="small" />
                   ) : isJoined ? (
                     <View style={[s.shareBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}>
-                      <Text style={s.shareBtnText}>Share</Text>
+                      <Text style={s.shareBtnText}>{t('garage_share_shareBtn')}</Text>
                     </View>
                   ) : (
-                    <Text style={[s.notJoined, { color: colors.textMuted }]}>Not joined</Text>
+                    <Text style={[s.notJoined, { color: colors.textMuted }]}>{t('garage_share_notJoined')}</Text>
                   )}
                 </Pressable>
               </>
@@ -207,7 +209,7 @@ export default function ShareToChannel() {
           }}
           ListEmptyComponent={
             <View style={s.center}>
-              <Text style={[s.emptyText, { color: colors.textMuted }]}>No channels found</Text>
+              <Text style={[s.emptyText, { color: colors.textMuted }]}>{t('garage_share_noChannels')}</Text>
             </View>
           }
         />

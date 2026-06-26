@@ -36,6 +36,7 @@ import { Display, Body, MonoCaps } from '../../components/ui/Typography'
 import { logSticker } from '../../components/calendar/logStickers'
 import { childColor } from '../../components/ui/ChildPills'
 import { SegmentedTabs } from '../../components/calendar/SegmentedTabs'
+import { useTranslation } from '../../lib/i18n'
 
 const BEHAVIOR_COLORS: Record<ExamBehavior, string> = {
   'pre-pregnancy': brand.prePregnancy,
@@ -52,6 +53,7 @@ function modeToBehavior(mode: string): ExamBehavior {
 
 export default function ExamsListScreen() {
   const { colors, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
   const activeMode = useModeStore((s) => s.mode)
@@ -122,7 +124,7 @@ export default function ExamsListScreen() {
         >
           <ChevronLeft size={20} color={ink} strokeWidth={2.2} />
         </Pressable>
-        <Display size={28} color={ink}>Exams</Display>
+        <Display size={28} color={ink}>{t('exams_title')}</Display>
         <View style={{ width: 36 }} />
       </View>
 
@@ -130,9 +132,9 @@ export default function ExamsListScreen() {
       <View style={styles.segWrap}>
         <SegmentedTabs
           options={[
-            { key: 'pre-pregnancy', label: 'Pre-preg' },
-            { key: 'pregnancy', label: 'Pregnancy' },
-            { key: 'kids', label: 'Kids' },
+            { key: 'pre-pregnancy', label: t('exams_tabPrePreg') },
+            { key: 'pregnancy', label: t('exams_tabPregnancy') },
+            { key: 'kids', label: t('exams_tabKids') },
           ]}
           value={behaviorFilter}
           onChange={(k) => setBehaviorFilter(k as ExamBehavior)}
@@ -150,7 +152,7 @@ export default function ExamsListScreen() {
             contentContainerStyle={styles.childRow}
           >
             <ChildPill
-              label="All kids"
+              label={t('exams_allKids')}
               active={childFilter === 'all'}
               onPress={() => setChildFilter('all')}
               accent={ink}
@@ -186,24 +188,24 @@ export default function ExamsListScreen() {
         {/* Stats summary card — only when exams exist */}
         {!isLoading && exams.length > 0 && (
           <View style={[styles.statsCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <StatCell value={stats.total} label="Total" ink={ink} inkMuted={inkMuted} font={font} />
+            <StatCell value={stats.total} label={t('exams_statTotal')} ink={ink} inkMuted={inkMuted} font={font} />
             <View style={[styles.statDivider, { backgroundColor: paperBorder }]} />
             <StatCell
               value={stats.flagged}
-              label="Flagged"
+              label={t('exams_statFlagged')}
               accent={stats.flagged > 0 ? brand.error : undefined}
               ink={ink}
               inkMuted={inkMuted}
               font={font}
             />
             <View style={[styles.statDivider, { backgroundColor: paperBorder }]} />
-            <StatCell value={stats.yearCount} label="This year" ink={ink} inkMuted={inkMuted} font={font} />
+            <StatCell value={stats.yearCount} label={t('exams_statThisYear')} ink={ink} inkMuted={inkMuted} font={font} />
           </View>
         )}
 
         {isLoading && (
           <Body size={13} color={inkMuted} align="center" style={{ marginTop: 40 }}>
-            Loading…
+            {t('exams_loading')}
           </Body>
         )}
 
@@ -213,14 +215,13 @@ export default function ExamsListScreen() {
               {logSticker('exam', 56, isDark)}
             </View>
             <Display size={22} color={ink} align="center" style={{ marginTop: 16 }}>
-              No exams yet
+              {t('exams_emptyTitle')}
             </Display>
             <Text style={[styles.emptyTagline, { color: ink, fontFamily: font.italic }]}>
-              Photos &amp; PDFs get auto-read by AI.
+              {t('exams_emptyTagline')}
             </Text>
             <Body size={13} color={inkMuted} align="center" style={{ marginTop: 12 }}>
-              Open the calendar and tap the&nbsp;+ to log a new exam — title,
-              result, photos and reference range get extracted for you.
+              {t('exams_emptyBody')}
             </Body>
             <Pressable
               onPress={() => router.push('/(tabs)/agenda')}
@@ -239,7 +240,7 @@ export default function ExamsListScreen() {
               ]}
             >
               <Text style={[styles.emptyCtaText, { color: '#141313', fontFamily: font.bodySemiBold }]}>
-                Open calendar
+                {t('exams_openCalendar')}
               </Text>
             </Pressable>
           </View>
@@ -408,6 +409,7 @@ function ExamCard({
   font: ReturnType<typeof useTheme>['font']
   onPress: () => void
 }) {
+  const { t } = useTranslation()
   const accent = BEHAVIOR_COLORS[exam.behavior]
   const firstPhotoPath = exam.photos[0]
   const [thumbUrl] = useExamPhotoUrls(firstPhotoPath ? [firstPhotoPath] : [])
@@ -441,7 +443,7 @@ function ExamCard({
           {flaggedCount > 0 && (
             <View style={[styles.flagPill, { backgroundColor: brand.error + '15', borderColor: brand.error + '50' }]}>
               <Text style={[styles.flagPillText, { color: brand.error, fontFamily: font.bodySemiBold }]}>
-                {flaggedCount} flagged
+                {t('exams_flaggedCount', { count: String(flaggedCount) })}
               </Text>
             </View>
           )}
@@ -488,7 +490,9 @@ function ExamCard({
           )}
           {exam.photos.length > 0 && (
             <Text style={[styles.cardPhotos, { color: inkMuted, fontFamily: font.bodyMedium }]}>
-              {exam.photos.length} {exam.photos.length === 1 ? 'photo' : 'photos'}
+              {exam.photos.length === 1
+                ? t('exams_photoCount', { count: String(exam.photos.length) })
+                : t('exams_photosCount', { count: String(exam.photos.length) })}
             </Text>
           )}
         </View>

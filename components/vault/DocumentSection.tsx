@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 export interface DocumentItem {
   id: string
@@ -40,6 +41,7 @@ export function DocumentSection({
   onAddDocument,
 }: DocumentSectionProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
 
   return (
@@ -51,7 +53,7 @@ export function DocumentSection({
         <View style={styles.headerText}>
           <View style={styles.titleRow}>
             <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-            <Text style={[styles.count, { color: colors.textMuted }]}>{documents.length} Files</Text>
+            <Text style={[styles.count, { color: colors.textMuted }]}>{t('vault_filesCount', { count: documents.length })}</Text>
           </View>
           <Text style={[styles.description, { color: colors.textMuted }]} numberOfLines={expanded ? undefined : 1}>
             {description}
@@ -67,7 +69,7 @@ export function DocumentSection({
       {expanded && (
         <View style={[styles.body, { borderTopColor: colors.border }]}>
           {documents.length === 0 ? (
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No documents yet</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('vault_noDocuments2')}</Text>
           ) : (
             documents.map((doc) => (
               <Pressable
@@ -92,7 +94,7 @@ export function DocumentSection({
           {onAddDocument && (
             <Pressable onPress={onAddDocument} style={styles.addBtn}>
               <Ionicons name="add" size={16} color={colors.accent} />
-              <Text style={[styles.addText, { color: colors.accent }]}>Add Document</Text>
+              <Text style={[styles.addText, { color: colors.accent }]}>{t('vault_addDocument')}</Text>
             </Pressable>
           )}
         </View>

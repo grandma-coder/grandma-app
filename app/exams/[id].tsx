@@ -44,6 +44,7 @@ import {
 import { Display, Body, MonoCaps } from '../../components/ui/Typography'
 import { childColor } from '../../components/ui/ChildPills'
 import { PaperAlert } from '../../components/ui/PaperAlert'
+import { useTranslation } from '../../lib/i18n'
 
 const BEHAVIOR_COLORS: Record<ExamBehavior, string> = {
   'pre-pregnancy': brand.prePregnancy,
@@ -56,6 +57,7 @@ const { width: SCREEN_W } = Dimensions.get('window')
 export default function ExamDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
   const invalidate = useInvalidateExams()
@@ -104,7 +106,7 @@ export default function ExamDetailScreen() {
     try {
       await Share.share({ message: lines.join('\n'), title: currentExam.title })
     } catch (e) {
-      Alert.alert('Share failed', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(t('examDetail_shareFailed'), e instanceof Error ? e.message : 'Unknown error')
     }
   }
 
@@ -122,7 +124,7 @@ export default function ExamDetailScreen() {
       invalidate()
       router.back()
     } catch (e) {
-      Alert.alert('Delete failed', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(t('examDetail_deleteFailed'), e instanceof Error ? e.message : 'Unknown error')
     } finally {
       setDeleting(false)
     }
@@ -171,12 +173,12 @@ export default function ExamDetailScreen() {
         {/* Flagged */}
         {flagged.length > 0 && (
           <View style={[styles.flaggedBox, { backgroundColor: brand.error + '12', borderColor: brand.error + '30' }]}>
-            <Text style={[styles.flaggedTitle, { color: brand.error }]}>Flagged findings</Text>
+            <Text style={[styles.flaggedTitle, { color: brand.error }]}>{t('examDetail_flaggedTitle')}</Text>
             {flagged.map((f, i) => (
               <Text key={i} style={[styles.flaggedItem, { color: colors.text }]}>• {f}</Text>
             ))}
             <Text style={[styles.flaggedNote, { color: colors.textMuted }]}>
-              Discuss these with your doctor — this is not a diagnosis.
+              {t('examDetail_flaggedNote')}
             </Text>
           </View>
         )}
@@ -184,7 +186,7 @@ export default function ExamDetailScreen() {
         {/* Notes */}
         {exam.notes && (
           <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <MonoCaps size={10} color={colors.textMuted}>Notes</MonoCaps>
+            <MonoCaps size={10} color={colors.textMuted}>{t('examDetail_notesLabel')}</MonoCaps>
             <Body size={14} color={colors.text} style={{ marginTop: 6, lineHeight: 20 }}>
               {exam.notes}
             </Body>
@@ -196,16 +198,16 @@ export default function ExamDetailScreen() {
           <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.sectionHead}>
               <Sparkles size={14} color={colors.primary} strokeWidth={2} />
-              <MonoCaps size={10} color={colors.primary}>AI extracted</MonoCaps>
+              <MonoCaps size={10} color={colors.primary}>{t('examDetail_aiExtracted')}</MonoCaps>
             </View>
             {exam.extracted.referenceRange && (
-              <ExtractRow label="Reference range" value={exam.extracted.referenceRange} colors={colors} />
+              <ExtractRow label={t('examDetail_referenceRange')} value={exam.extracted.referenceRange} colors={colors} />
             )}
             {exam.extracted.examDate && (
-              <ExtractRow label="Exam date (parsed)" value={exam.extracted.examDate} colors={colors} />
+              <ExtractRow label={t('examDetail_examDateParsed')} value={exam.extracted.examDate} colors={colors} />
             )}
             {exam.extracted.provider && (
-              <ExtractRow label="Provider" value={exam.extracted.provider} colors={colors} />
+              <ExtractRow label={t('examDetail_providerLabel')} value={exam.extracted.provider} colors={colors} />
             )}
           </View>
         )}
@@ -214,7 +216,9 @@ export default function ExamDetailScreen() {
         {exam.photos.length > 0 && (
           <View style={styles.photosSection}>
             <MonoCaps size={10} color={colors.textMuted} style={{ marginBottom: 8, paddingHorizontal: 4 }}>
-              {exam.photos.length} {exam.photos.length === 1 ? 'photo' : 'photos'}
+              {exam.photos.length === 1
+                ? t('exams_photoCount', { count: String(exam.photos.length) })
+                : t('exams_photosCount', { count: String(exam.photos.length) })}
             </MonoCaps>
             <ScrollView
               horizontal
@@ -245,7 +249,7 @@ export default function ExamDetailScreen() {
           ]}
         >
           <Trash2 size={16} color={brand.error} strokeWidth={2} />
-          <Text style={[styles.deleteText, { color: brand.error }]}>Delete exam</Text>
+          <Text style={[styles.deleteText, { color: brand.error }]}>{t('examDetail_deleteBtn')}</Text>
         </Pressable>
       </ScrollView>
 
@@ -284,11 +288,11 @@ export default function ExamDetailScreen() {
 
       <PaperAlert
         visible={pendingDelete !== null}
-        title="Delete this exam?"
-        message="This removes the record and its photos."
+        title={t('examDetail_deleteTitle')}
+        message={t('examDetail_deleteMsg')}
         buttons={[
-          { label: 'Cancel', variant: 'secondary' },
-          { label: 'Delete', variant: 'danger', onPress: confirmDelete },
+          { label: t('common_cancel'), variant: 'secondary' },
+          { label: t('examDetail_deleteBtn'), variant: 'danger', onPress: confirmDelete },
         ]}
         onRequestClose={() => setPendingDelete(null)}
       />

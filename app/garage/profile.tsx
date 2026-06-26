@@ -28,6 +28,7 @@ import { isIconAvatar } from '../../components/ui/AvatarPicker'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { PaperAlert } from '../../components/ui/PaperAlert'
 import { supabase } from '../../lib/supabase'
+import { useTranslation } from '../../lib/i18n'
 import { deletePost, toggleSave, type GaragePost } from '../../lib/garagePosts'
 
 const SCREEN_W = Dimensions.get('window').width
@@ -38,6 +39,7 @@ type Tab = 'posts' | 'saved'
 export default function GarageProfileScreen() {
   const { colors, radius } = useTheme()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
 
   const [tab, setTab] = useState<Tab>('posts')
   const [myPosts, setMyPosts] = useState<GaragePost[]>([])
@@ -132,7 +134,7 @@ export default function GarageProfileScreen() {
     try {
       await deletePost(postId)
     } catch {
-      setErrorMsg("Couldn't delete that post. Please try again.")
+      setErrorMsg(t('garage_profile_errorDeletePost'))
       load() // re-sync — the optimistic removal gets reversed
     }
   }
@@ -141,7 +143,7 @@ export default function GarageProfileScreen() {
     setSavedPosts((prev) => prev.filter((p) => p.id !== postId))
     setSavedCount((c) => c - 1)
     toggleSave(postId).catch(() => {
-      setErrorMsg("Couldn't update your saved items. Please try again.")
+      setErrorMsg(t('garage_profile_errorUnsave'))
       load()
     })
   }
@@ -155,7 +157,7 @@ export default function GarageProfileScreen() {
         <Pressable onPress={() => router.back()} style={s.headerBtn}>
           <ArrowLeft size={24} color={colors.text} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: colors.text }]}>My Village</Text>
+        <Text style={[s.headerTitle, { color: colors.text }]}>{t('garage_profile_myVillage')}</Text>
         <View style={s.headerBtn} />
       </View>
 
@@ -174,11 +176,11 @@ export default function GarageProfileScreen() {
         <View style={s.profileStats}>
           <View style={s.statItem}>
             <Text style={[s.statNumber, { color: colors.text }]}>{postCount}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted }]}>Posts</Text>
+            <Text style={[s.statLabel, { color: colors.textMuted }]}>{t('garage_profile_posts')}</Text>
           </View>
           <View style={s.statItem}>
             <Text style={[s.statNumber, { color: colors.text }]}>{savedCount}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted }]}>Saved</Text>
+            <Text style={[s.statLabel, { color: colors.textMuted }]}>{t('garage_profile_saved')}</Text>
           </View>
         </View>
       </View>
@@ -186,11 +188,11 @@ export default function GarageProfileScreen() {
       {/* Name & info */}
       <View style={s.profileInfo}>
         <Text style={[s.profileName, { color: colors.text }]}>
-          {userName || userEmail?.split('@')[0] || 'My Profile'}
+          {userName || userEmail?.split('@')[0] || t('garage_profile_myProfile')}
         </Text>
         {memberSince && (
           <Text style={[s.profileMeta, { color: colors.textMuted }]}>
-            Member since {memberSince}
+            {t('garage_profile_memberSince', { date: memberSince })}
           </Text>
         )}
       </View>
@@ -230,23 +232,23 @@ export default function GarageProfileScreen() {
           {tab === 'posts' ? (
             <>
               <ShoppingBag size={40} color={colors.textMuted} strokeWidth={1.5} />
-              <Text style={[s.emptyTitle, { color: colors.text }]}>No posts yet</Text>
+              <Text style={[s.emptyTitle, { color: colors.text }]}>{t('garage_profile_emptyPostsTitle')}</Text>
               <Text style={[s.emptyBody, { color: colors.textSecondary }]}>
-                Your shared items will appear here
+                {t('garage_profile_emptyPostsBody')}
               </Text>
               <Pressable
                 onPress={() => router.push('/garage/create' as any)}
                 style={[s.emptyBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}
               >
-                <Text style={s.emptyBtnText}>Create First Post</Text>
+                <Text style={s.emptyBtnText}>{t('garage_profile_createFirst')}</Text>
               </Pressable>
             </>
           ) : (
             <>
               <Bookmark size={40} color={colors.textMuted} strokeWidth={1.5} />
-              <Text style={[s.emptyTitle, { color: colors.text }]}>No saved items</Text>
+              <Text style={[s.emptyTitle, { color: colors.text }]}>{t('garage_profile_emptySavedTitle')}</Text>
               <Text style={[s.emptyBody, { color: colors.textSecondary }]}>
-                Bookmark posts from the feed to save them here
+                {t('garage_profile_emptySavedBody')}
               </Text>
             </>
           )}
@@ -271,18 +273,18 @@ export default function GarageProfileScreen() {
 
       <PaperAlert
         visible={pendingDelete !== null}
-        title="Delete this post?"
-        message="This will permanently remove your post."
+        title={t('garage_profile_deleteTitle')}
+        message={t('garage_profile_deleteMsg')}
         buttons={[
           { label: 'Cancel', variant: 'secondary' },
-          { label: 'Delete', variant: 'danger', onPress: confirmDelete },
+          { label: t('garage_profile_deletePost'), variant: 'danger', onPress: confirmDelete },
         ]}
         onRequestClose={() => setPendingDelete(null)}
       />
 
       <PaperAlert
         visible={errorMsg !== null}
-        title="Something went wrong"
+        title={t('garage_profile_errorTitle')}
         message={errorMsg ?? undefined}
         onRequestClose={() => setErrorMsg(null)}
       />
@@ -304,6 +306,7 @@ function PostThumbnail({
   onDelete: () => void
 }) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const hasMedia = post.media.length > 0
   const coverUrl = hasMedia ? post.media[0].url : null
 
@@ -312,10 +315,10 @@ function PostThumbnail({
       onPress={onPress}
       onLongPress={() => {
         Alert.alert(
-          isOwner ? 'Post Options' : 'Saved Post',
+          isOwner ? t('garage_profile_postOptions') : t('garage_profile_savedPost'),
           post.caption?.slice(0, 80) ?? '',
           [
-            { text: isOwner ? 'Delete' : 'Unsave', style: 'destructive', onPress: onDelete },
+            { text: isOwner ? t('garage_profile_deletePost') : t('garage_profile_unsave'), style: 'destructive', onPress: onDelete },
             { text: 'Cancel', style: 'cancel' },
           ]
         )
