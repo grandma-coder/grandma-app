@@ -152,11 +152,20 @@ export default function InviteCaregiver() {
 
     setLoading(true)
     try {
+      // Send a sensible default permission set for the chosen role so the
+      // caregiver's grant reflects intent rather than the edge function's
+      // generic fallback. The owner can refine per-person later in Care Circle.
+      const permissions =
+        role === 'family'
+          ? { view: true, chat: true }
+          : { view: true, log_activity: true, chat: true } // nanny → contributor
+
       const { data, error } = await supabase.functions.invoke('invite-caregiver', {
         body: {
           childId: child.id,
           email: email.trim().toLowerCase(),
           role,
+          permissions,
         },
       })
 

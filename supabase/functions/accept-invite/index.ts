@@ -26,13 +26,13 @@ serve(async (req) => {
     )
     if (authError || !user) throw new Error('Invalid token')
 
-    const { token } = await req.json()
+    const { token, preview } = await req.json()
     if (!token) throw new Error('Invite token is required')
 
     // Find the invite
     const { data: invite, error: findError } = await supabase
       .from('child_caregivers')
-      .select('id, child_id, email, status, invite_token_expires_at, children(name)')
+      .select('id, child_id, email, status, role, permissions, invite_token_expires_at, children(name)')
       .eq('invite_token', token)
       .single()
 
@@ -60,6 +60,22 @@ serve(async (req) => {
       inviteEmail.endsWith('@pending')
     if (!isPlaceholderEmail && inviteEmail !== user.email?.toLowerCase()) {
       throw new Error('This invite was sent to a different email address')
+    }
+
+    // Preview mode: the accept-invite screen calls this to show the actual
+    // granted capabilities before the user taps Accept. It runs the same
+    // token + email validation above, then returns ONLY the role/permissions
+    // and child name — never PHI or inviter detail — and does NOT mutate the
+    // invite. The authenticated-caller + email-match gate is the trust boundary.
+    if (preview) {
+      return new Response(JSON.stringify({
+        preview: true,
+        role: invite.role,
+        permissions: invite.permissions ?? {},
+        childName: invite.children?.name ?? 'Unknown',
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     // Ensure profile exists

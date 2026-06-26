@@ -43,6 +43,7 @@ export default function AcceptInvite() {
   const [accepted, setAccepted] = useState(false)
   const [childName, setChildName] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
+  const [grantedPerms, setGrantedPerms] = useState<string[] | null>(null)
 
   // Gate on session — the accept-invite edge function requires a JWT.
   // Preserve the token through sign-in via a query param so the user
@@ -58,9 +59,36 @@ export default function AcceptInvite() {
         return
       }
       setCheckingAuth(false)
+
+      // Fetch the actual granted permissions to show on the card (preview mode
+      // runs the same server-side token+email validation, returns no PHI).
+      if (token) {
+        try {
+          const { data } = await supabase.functions.invoke('accept-invite', {
+            body: { token, preview: true },
+          })
+          if (!cancelled && data?.permissions) {
+            const perms = Object.entries(data.permissions)
+              .filter(([k, v]) => !k.startsWith('_') && v === true)
+              .map(([k]) => k)
+            setGrantedPerms(perms)
+          }
+        } catch {
+          // Non-fatal — fall back to the generic capability list on the card.
+        }
+      }
     })()
     return () => { cancelled = true }
   }, [token])
+
+  // Map a capability key to a display row. Order is stable for rendering.
+  const PERM_LABELS: { key: string; icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
+    { key: 'view', icon: 'eye-outline', label: 'View the child’s logs' },
+    { key: 'log_activity', icon: 'create-outline', label: 'Log daily activities' },
+    { key: 'chat', icon: 'chatbubble-outline', label: 'Use Grandma chat' },
+    { key: 'edit_child', icon: 'person-outline', label: 'Edit the child profile' },
+    { key: 'emergency', icon: 'medkit-outline', label: 'View medical information' },
+  ]
 
   async function handleAccept() {
     if (!token) {
@@ -123,18 +151,16 @@ export default function AcceptInvite() {
 
       <View style={styles.permissionsCard}>
         <Text style={styles.permissionsTitle}>{t('acceptInvite_permissionsTitle')}</Text>
-        <View style={styles.permRow}>
-          <Ionicons name="eye-outline" size={18} color={colors.accent} />
-          <Text style={styles.permText}>{t('acceptInvite_permView')}</Text>
-        </View>
-        <View style={styles.permRow}>
-          <Ionicons name="create-outline" size={18} color={colors.accent} />
-          <Text style={styles.permText}>{t('acceptInvite_permLog')}</Text>
-        </View>
-        <View style={styles.permRow}>
-          <Ionicons name="chatbubble-outline" size={18} color={colors.accent} />
-          <Text style={styles.permText}>{t('acceptInvite_permChat')}</Text>
-        </View>
+        {/* Render the rows the owner actually granted. Falls back to the
+            view/log/chat baseline when the preview fetch didn't resolve. */}
+        {PERM_LABELS
+          .filter((p) => (grantedPerms ? grantedPerms.includes(p.key) : ['view', 'log_activity', 'chat'].includes(p.key)))
+          .map((p) => (
+            <View key={p.key} style={styles.permRow}>
+              <Ionicons name={p.icon} size={18} color={colors.accent} />
+              <Text style={styles.permText}>{p.label}</Text>
+            </View>
+          ))}
       </View>
 
       <Pressable
