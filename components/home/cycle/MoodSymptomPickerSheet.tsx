@@ -14,6 +14,7 @@ import { ALL_SYMPTOMS } from '../../../lib/cycleSymptoms'
 import { SymptomSticker } from '../../calendar/symptomStickers'
 import { LogSheet } from '../../calendar/LogSheet'
 import { PillButton } from '../../ui/PillButton'
+import { useTranslation } from '../../../lib/i18n'
 
 interface Props {
   visible: boolean
@@ -23,6 +24,7 @@ interface Props {
 
 export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] }: Props) {
   const { colors, stickers, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const ink = isDark ? colors.text : '#141313'
   const [picked, setPicked] = useState<string[]>(initialSelected)
@@ -64,7 +66,7 @@ export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] 
   }
 
   return (
-    <LogSheet visible={visible} title="Anything today?" onClose={onClose}>
+    <LogSheet visible={visible} title={t('cycleSignals_pickerTitle')} onClose={onClose}>
       <ScrollView style={{ maxHeight: 480 }} contentContainerStyle={styles.body}>
         <View style={styles.grid}>
           {ALL_SYMPTOMS.map((s) => {
@@ -89,7 +91,7 @@ export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] 
           })}
         </View>
         <PillButton
-          label={saving ? 'Saving…' : `Save ${picked.length} symptom${picked.length === 1 ? '' : 's'}`}
+          label={saving ? t('cycleSignals_saving') : t('cycleSignals_saveSymptoms', { count: picked.length })}
           variant="accent"
           accentColor={stickers.pink}
           onPress={save}

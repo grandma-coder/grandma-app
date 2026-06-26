@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useTheme, radius } from '../../constants/theme'
 import { CycleTodayPulse } from '../charts/GalleryCharts'
 import type { CycleInfo } from '../../lib/cycleLogic'
+import { useTranslation } from '../../lib/i18n'
 
 interface CyclePhaseRingProps {
   cycleInfo: CycleInfo
@@ -24,6 +25,7 @@ const DOT_SIZE = 8
 
 export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePhaseRingProps) {
   const { colors, brand, font } = useTheme()
+  const { t } = useTranslation()
   const { cycleDay, daysUntilPeriod, cycleLength } = cycleInfo
   const showData = cycleDay > 0
   const center = RING_SIZE / 2
@@ -95,14 +97,14 @@ export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePh
           {showData ? (
             <>
               <Text style={[styles.periodLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-                PERIOD IN
+                {t('prepreg_phaseRing_periodIn')}
               </Text>
               <View style={styles.countdownRow}>
                 <Text style={[styles.countdownNumber, { color: colors.text, fontFamily: font.display }]}>
                   {daysUntilPeriod}
                 </Text>
                 <Text style={[styles.countdownUnit, { color: colors.textSecondary, fontFamily: font.body }]}>
-                  days
+                  {t('prepreg_phaseRing_days')}
                 </Text>
               </View>
               <Pressable
@@ -117,7 +119,7 @@ export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePh
                 ]}
               >
                 <Text style={[styles.addPeriodText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                  Add Period
+                  {t('prepreg_phaseRing_addPeriod')}
                 </Text>
               </Pressable>
             </>
@@ -125,7 +127,7 @@ export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePh
             <>
               <Ionicons name="flower-outline" size={48} color={brand.prePregnancy} style={{ opacity: 0.6 }} />
               <Text style={[styles.noDataTitle, { color: colors.text, fontFamily: font.display }]}>
-                Start Tracking
+                {t('prepreg_phaseRing_startTracking')}
               </Text>
               <Pressable
                 onPress={onAddPeriod}
@@ -139,7 +141,7 @@ export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePh
                 ]}
               >
                 <Text style={[styles.addPeriodText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                  Add Period
+                  {t('prepreg_phaseRing_addPeriod')}
                 </Text>
               </Pressable>
             </>
@@ -151,19 +153,19 @@ export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePh
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: brand.phase.menstrual }]} />
-          <Text style={[styles.legendText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Period</Text>
+          <Text style={[styles.legendText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('prepreg_phaseRing_period')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: brand.phase.follicular }]} />
-          <Text style={[styles.legendText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Follicular</Text>
+          <Text style={[styles.legendText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('prepreg_phaseRing_follicular')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: brand.phase.ovulation }]} />
-          <Text style={[styles.legendText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Ovulation</Text>
+          <Text style={[styles.legendText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('prepreg_phaseRing_ovulation')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: brand.phase.luteal }]} />
-          <Text style={[styles.legendText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Luteal</Text>
+          <Text style={[styles.legendText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('prepreg_phaseRing_luteal')}</Text>
         </View>
       </View>
 
@@ -176,7 +178,7 @@ export function CyclePhaseRing({ cycleInfo, onEditPeriod, onAddPeriod }: CyclePh
           ]}
         >
           <Text style={[styles.editButtonText, { color: brand.prePregnancy, fontFamily: font.bodySemiBold }]}>
-            Edit period dates
+            {t('prepreg_phaseRing_editPeriodDates')}
           </Text>
         </Pressable>
       )}

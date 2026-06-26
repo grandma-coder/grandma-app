@@ -13,12 +13,14 @@ import { useTheme } from '../constants/theme'
 import { prePregPillars } from '../lib/prePregPillars'
 import { getPillarSticker } from '../lib/pillarStickerMap'
 import { Display, Body } from '../components/ui/Typography'
+import { useTranslation } from '../lib/i18n'
 
 const TINT_BY_INDEX = ['greenSoft', 'lilacSoft', 'peachSoft', 'blueSoft', 'yellowSoft', 'pinkSoft'] as const
 
 export default function CyclePillarsIndex() {
   const insets = useSafeAreaInsets()
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
 
   function tintFor(i: number): string {
@@ -36,14 +38,14 @@ export default function CyclePillarsIndex() {
           onPress={() => router.back()}
           style={[styles.back, { backgroundColor: colors.surface, borderColor: colors.border }]}
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t('cyclePillars_back')}
         >
           <Ionicons name="arrow-back" size={22} color={ink} />
         </Pressable>
 
-        <Display size={32} color={ink}>Cycle pillars</Display>
+        <Display size={32} color={ink}>{t('cyclePillars_title')}</Display>
         <Text style={[styles.subtitle, { color: stickers.coral, fontFamily: font.italic }]}>
-          six places to start your prep
+          {t('cyclePillars_subtitle')}
         </Text>
 
         <View style={styles.grid}>

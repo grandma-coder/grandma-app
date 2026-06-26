@@ -6,38 +6,41 @@ import { CyclePhaseRing } from '../prepreg/CyclePhaseRing'
 import { getCycleInfo, getMonthCycleDots, toDateStr } from '../../lib/cycleLogic'
 import type { CycleInfo } from '../../lib/cycleLogic'
 import { brand, stickers, borderRadius, typography, useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
+import type { TranslationKeys } from '../../lib/i18n/keys'
 
 interface CycleTrackerProps {
   selectedDate: string
   onLogEntry?: (type: string, value?: string, notes?: string) => void
 }
 
-const QUICK_LOGS = [
-  { type: 'period_start', label: 'Period Started', icon: 'water-outline', color: brand.phase.menstrual },
-  { type: 'period_end', label: 'Period Ended', icon: 'water-outline', color: stickers.peach },
-  { type: 'ovulation', label: 'Ovulation Sign', icon: 'flower-outline', color: stickers.green },
-  { type: 'symptom', label: 'Symptom', icon: 'pulse-outline', color: stickers.yellow },
-  { type: 'basal_temp', label: 'Basal Temp', icon: 'thermometer-outline', color: brand.kids },
-  { type: 'intercourse', label: 'Intercourse', icon: 'heart-outline', color: brand.prePregnancy },
+const QUICK_LOGS: { type: string; labelKey: keyof TranslationKeys; icon: string; color: string }[] = [
+  { type: 'period_start', labelKey: 'cycleTracker_log_periodStarted', icon: 'water-outline', color: brand.phase.menstrual },
+  { type: 'period_end', labelKey: 'cycleTracker_log_periodEnded', icon: 'water-outline', color: stickers.peach },
+  { type: 'ovulation', labelKey: 'cycleTracker_log_ovulationSign', icon: 'flower-outline', color: stickers.green },
+  { type: 'symptom', labelKey: 'cycleTracker_log_symptom', icon: 'pulse-outline', color: stickers.yellow },
+  { type: 'basal_temp', labelKey: 'cycleTracker_log_basalTemp', icon: 'thermometer-outline', color: brand.kids },
+  { type: 'intercourse', labelKey: 'cycleTracker_log_intercourse', icon: 'heart-outline', color: brand.prePregnancy },
 ]
 
-const SYMPTOM_OPTIONS = [
-  { id: 'cramps', label: 'Cramps', icon: 'flash-outline', color: brand.phase.menstrual },
-  { id: 'bloating', label: 'Bloating', icon: 'resize-outline', color: stickers.peach },
-  { id: 'headache', label: 'Headache', icon: 'flash-outline', color: stickers.yellow },
-  { id: 'fatigue', label: 'Fatigue', icon: 'bed-outline', color: stickers.blue },
-  { id: 'mood_swings', label: 'Mood Swings', icon: 'happy-outline', color: stickers.lilac },
-  { id: 'breast_tenderness', label: 'Breast Pain', icon: 'body-outline', color: stickers.pink },
-  { id: 'acne', label: 'Acne', icon: 'ellipse-outline', color: stickers.coral },
-  { id: 'nausea', label: 'Nausea', icon: 'water-outline', color: stickers.green },
-  { id: 'cm_eggwhite', label: 'CM: Egg White', icon: 'water', color: stickers.green },
-  { id: 'cm_creamy', label: 'CM: Creamy', icon: 'water', color: stickers.yellow },
-  { id: 'cm_sticky', label: 'CM: Sticky', icon: 'water', color: stickers.peach },
-  { id: 'cm_dry', label: 'CM: Dry', icon: 'water-outline', color: '#6E6763' }, // colors.textMuted (light)
+const SYMPTOM_OPTIONS: { id: string; labelKey: keyof TranslationKeys; icon: string; color: string }[] = [
+  { id: 'cramps', labelKey: 'cycleTracker_symptom_cramps', icon: 'flash-outline', color: brand.phase.menstrual },
+  { id: 'bloating', labelKey: 'cycleTracker_symptom_bloating', icon: 'resize-outline', color: stickers.peach },
+  { id: 'headache', labelKey: 'cycleTracker_symptom_headache', icon: 'flash-outline', color: stickers.yellow },
+  { id: 'fatigue', labelKey: 'cycleTracker_symptom_fatigue', icon: 'bed-outline', color: stickers.blue },
+  { id: 'mood_swings', labelKey: 'cycleTracker_symptom_moodSwings', icon: 'happy-outline', color: stickers.lilac },
+  { id: 'breast_tenderness', labelKey: 'cycleTracker_symptom_breastPain', icon: 'body-outline', color: stickers.pink },
+  { id: 'acne', labelKey: 'cycleTracker_symptom_acne', icon: 'ellipse-outline', color: stickers.coral },
+  { id: 'nausea', labelKey: 'cycleTracker_symptom_nausea', icon: 'water-outline', color: stickers.green },
+  { id: 'cm_eggwhite', labelKey: 'cycleTracker_symptom_cmEggWhite', icon: 'water', color: stickers.green },
+  { id: 'cm_creamy', labelKey: 'cycleTracker_symptom_cmCreamy', icon: 'water', color: stickers.yellow },
+  { id: 'cm_sticky', labelKey: 'cycleTracker_symptom_cmSticky', icon: 'water', color: stickers.peach },
+  { id: 'cm_dry', labelKey: 'cycleTracker_symptom_cmDry', icon: 'water-outline', color: '#6E6763' }, // colors.textMuted (light)
 ]
 
 export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => makeStyles(colors), [colors])
   // Demo: period started 10 days ago — in production from Supabase
   const [lastPeriodStart] = useState(() => {
@@ -59,7 +62,7 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
         <View style={styles.dateInfoHeader}>
           <View style={[styles.datePhaseDot, { backgroundColor: selectedInfo.phaseColor }]} />
           <Text style={styles.dateInfoPhase}>{selectedInfo.phaseLabel}</Text>
-          <Text style={styles.dateInfoDay}>Day {selectedInfo.cycleDay}</Text>
+          <Text style={styles.dateInfoDay}>{t('cycleTracker_day', { day: selectedInfo.cycleDay })}</Text>
         </View>
         <Text style={styles.dateInfoDesc}>{selectedInfo.phaseDescription}</Text>
 
@@ -67,13 +70,13 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
         {selectedInfo.isFertile && (
           <View style={styles.fertileBanner}>
             <Ionicons name="flower" size={16} color={stickers.green} />
-            <Text style={styles.fertileText}>Fertile window — {selectedInfo.conceptionProbability} chance of conception</Text>
+            <Text style={styles.fertileText}>{t('cycleTracker_fertileWindow', { prob: selectedInfo.conceptionProbability })}</Text>
           </View>
         )}
       </PaperCard>
 
       {/* Quick log buttons */}
-      <Text style={styles.sectionLabel}>QUICK LOG</Text>
+      <Text style={styles.sectionLabel}>{t('cycleTracker_quickLog')}</Text>
       <View style={styles.quickGrid}>
         {QUICK_LOGS.map((log) => (
           <Pressable
@@ -87,13 +90,13 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
             <View style={[styles.quickIconBox, { backgroundColor: log.color + '15' }]}>
               <Ionicons name={log.icon as any} size={20} color={log.color} />
             </View>
-            <Text style={styles.quickLabel}>{log.label}</Text>
+            <Text style={styles.quickLabel}>{t(log.labelKey)}</Text>
           </Pressable>
         ))}
       </View>
 
       {/* Symptom tracking */}
-      <Text style={styles.sectionLabel}>SYMPTOMS & CERVICAL MUCUS</Text>
+      <Text style={styles.sectionLabel}>{t('cycleTracker_symptomsLabel')}</Text>
       <View style={styles.symptomGrid}>
         {SYMPTOM_OPTIONS.map((s) => (
           <Pressable
@@ -105,13 +108,13 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
             ]}
           >
             <Ionicons name={s.icon as any} size={14} color={s.color} />
-            <Text style={styles.symptomChipText}>{s.label}</Text>
+            <Text style={styles.symptomChipText}>{t(s.labelKey)}</Text>
           </Pressable>
         ))}
       </View>
 
       {/* Phase tips */}
-      <Text style={styles.sectionLabel}>TODAY'S TIPS</Text>
+      <Text style={styles.sectionLabel}>{t('cycleTracker_todaysTips')}</Text>
       {cycleInfo.dailyTips.map((tip, i) => (
         <View key={i} style={styles.tipRow}>
           <View style={[styles.tipBullet, { backgroundColor: cycleInfo.phaseColor }]} />
@@ -123,10 +126,10 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
       <PaperCard radius={28} padding={20} style={styles.nutritionCard}>
         <View style={styles.nutritionHeader}>
           <Ionicons name="nutrition" size={18} color={stickers.green} />
-          <Text style={styles.nutritionTitle}>NUTRITION FOR {cycleInfo.phaseLabel.toUpperCase()}</Text>
+          <Text style={styles.nutritionTitle}>{t('cycleTracker_nutritionFor', { phase: cycleInfo.phaseLabel.toUpperCase() })}</Text>
         </View>
         {cycleInfo.nutritionTips.map((tip, i) => (
-          <Text key={i} style={styles.nutritionItem}>• {tip}</Text>
+          <Text key={i} style={styles.nutritionItem}>{'•'} {tip}</Text>
         ))}
       </PaperCard>
     </View>

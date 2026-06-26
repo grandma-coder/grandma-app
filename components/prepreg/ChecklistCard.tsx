@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useTheme } from '../../constants/theme'
 import type { ChecklistItem } from '../../lib/prepregnancyData'
+import { useTranslation } from '../../lib/i18n'
 
 interface ChecklistCardProps {
   items: ChecklistItem[]
@@ -12,6 +13,7 @@ interface ChecklistCardProps {
 
 export function ChecklistCard({ items, onToggle }: ChecklistCardProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const [completed, setCompleted] = useState<Set<string>>(new Set())
 
   function toggle(id: string) {
@@ -30,7 +32,7 @@ export function ChecklistCard({ items, onToggle }: ChecklistCardProps) {
   return (
     <PaperCard radius={28} padding={20}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Preparation Checklist</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('prepreg_checklist_title')}</Text>
         <Text style={[styles.counter, { color: colors.accent }]}>{doneCount}/{items.length}</Text>
       </View>
 

@@ -36,6 +36,7 @@ import {
   useMoodStats,
 } from '../../lib/cycleAnalytics'
 import { CycleDetailSheet, type CycleDetailType } from './CycleDetailSheets'
+import { useTranslation } from '../../lib/i18n'
 
 /** Warm phase copy keyed by cycle phase. */
 const PHASE_VOICE: Record<CyclePhase, { word: string; line: string }> = {
@@ -47,6 +48,7 @@ const PHASE_VOICE: Record<CyclePhase, { word: string; line: string }> = {
 
 export function CycleAnalytics() {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const [period, setPeriod] = useState<Period>('month')
   const [detailType, setDetailType] = useState<CycleDetailType | null>(null)
@@ -96,20 +98,20 @@ export function CycleAnalytics() {
   // Warm sub-copy for each chip — turns the number into a little read.
   const regularSub =
     regularity?.percent == null
-      ? 'still finding its rhythm'
+      ? t('cycleAnalytics_regularSub_rhythm')
       : regularity.percent >= 80
-        ? 'clockwork steady'
+        ? t('cycleAnalytics_regularSub_steady')
         : regularity.percent >= 50
-          ? 'mostly regular'
-          : 'a bit unpredictable'
-  const pmsSub = pms?.avgDays == null ? 'no symptoms logged yet' : 'symptom days / cycle'
-  const moodSub = mood?.avgScore == null ? 'log a few moods' : 'avg out of 5'
+          ? t('cycleAnalytics_regularSub_mostly')
+          : t('cycleAnalytics_regularSub_unpredictable')
+  const pmsSub = pms?.avgDays == null ? t('cycleAnalytics_pmsSub_none') : t('cycleAnalytics_pmsSub_symptomDays')
+  const moodSub = mood?.avgScore == null ? t('cycleAnalytics_moodSub_log') : t('cycleAnalytics_moodSub_avg')
   const fertileSub =
     info.daysUntilOvulation > 0
-      ? `opens in ${info.daysUntilOvulation}d`
+      ? t('cycleAnalytics_fertileSub_opensIn', { d: info.daysUntilOvulation })
       : info.isFertile
-        ? 'open right now'
-        : 'just passed'
+        ? t('cycleAnalytics_fertileSub_open')
+        : t('cycleAnalytics_fertileSub_passed')
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -122,7 +124,7 @@ export function CycleAnalytics() {
         {/* ── Hero: oversized phase word + warm line + today ──────────── */}
         <View style={styles.hero}>
           <Text style={[styles.heroKicker, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-            YOUR CYCLE TODAY
+            {t('cycleAnalytics_yourCycleToday')}
           </Text>
           <View style={styles.heroWordRow}>
             <Text
@@ -148,15 +150,15 @@ export function CycleAnalytics() {
         <Pressable
           onPress={() => setDetailType('fertile')}
           accessibilityRole="button"
-          accessibilityLabel="View fertile window detail"
+          accessibilityLabel={t('cycleAnalytics_viewFertileDetail')}
         >
           <View style={[styles.flowCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
             <View style={styles.flowHead}>
               <Text style={[styles.cardKicker, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-                FERTILE FLOW
+                {t('cycleAnalytics_fertileFlow')}
               </Text>
               <Text style={[styles.flowFertile, { color: accent, fontFamily: font.bodySemiBold }]}>
-                {fertileLabel === '—' ? 'no window yet' : fertileLabel}
+                {fertileLabel === '—' ? t('cycleAnalytics_noWindowYet') : fertileLabel}
               </Text>
             </View>
             <PhaseFlowChart
@@ -178,7 +180,7 @@ export function CycleAnalytics() {
             style={styles.medallionWrap}
             onPress={() => setDetailType('cycleLength')}
             accessibilityRole="button"
-            accessibilityLabel="View cycle length detail"
+            accessibilityLabel={t('cycleAnalytics_viewLengthDetail')}
           >
             <View style={[styles.medallion, { backgroundColor: stickers.pinkSoft, borderColor: colors.borderStrong }]}>
               <View pointerEvents="none" style={styles.medallionStar}>
@@ -188,10 +190,10 @@ export function CycleAnalytics() {
                 {avgLabel}
               </Text>
               <Text style={[styles.medallionUnit, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
-                days avg
+                {t('cycleAnalytics_daysAvg')}
               </Text>
               <Text style={[styles.medallionSub, { color: colors.textMuted, fontFamily: font.body }]}>
-                last {history?.cycles.filter((c) => c.lengthDays != null).length ?? 0} cycles
+                {t('cycleAnalytics_lastNCycles', { n: history?.cycles.filter((c) => c.lengthDays != null).length ?? 0 })}
               </Text>
             </View>
           </Pressable>
@@ -322,6 +324,7 @@ function RecentCyclesCard({
   cycles: { startDate: string; endDate: string | null; lengthDays: number | null }[]
 }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const closed = cycles.filter((c) => c.lengthDays !== null).slice(-5).reverse()
   const open = cycles.find((c) => c.lengthDays === null)
 
@@ -346,17 +349,17 @@ function RecentCyclesCard({
       </View>
 
       <Text style={[styles.recentTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-        RECENT CYCLES
+        {t('cycleAnalytics_recentCycles')}
       </Text>
 
       {open && currentDay !== null ? (
         <View style={[styles.recentOpenRow, { backgroundColor: stickers.pinkSoft, borderColor: colors.borderLight }]}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 18, letterSpacing: -0.3 }}>
-              Day {currentDay}
+              {t('cycleAnalytics_dayNumber', { currentDay })}
             </Text>
             <Text style={{ color: colors.textSecondary, fontFamily: font.bodyMedium, fontSize: 12, marginTop: 2 }}>
-              Started {formatRange(open.startDate, null)}
+              {t('cycleAnalytics_startedDate', { date: formatRange(open.startDate, null) })}
             </Text>
           </View>
           <View
@@ -373,7 +376,7 @@ function RecentCyclesCard({
                 theme-flipping token would go invisible in dark. Ink-on-sticker is an
                 allowed fixed-value case (DESIGN_SYSTEM §0). */}
             <Text style={{ color: '#141313', fontFamily: font.bodySemiBold, fontSize: 11, letterSpacing: 0.4 }}>
-              CURRENT
+              {t('cycleAnalytics_current')}
             </Text>
           </View>
         </View>

@@ -23,6 +23,8 @@ import { phaseHint, saveLabel } from '../../lib/cycleLogForms'
 import type { CyclePhase } from '../../lib/cycleLogic'
 import { SymptomSticker } from './symptomStickers'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../ui/Stickers'
+import { useTranslation } from '../../lib/i18n'
+import type { TranslationKeys } from '../../lib/i18n/keys'
 
 // ─── Save helpers ──────────────────────────────────────────────────────────
 async function replaceSingleLog(
@@ -263,7 +265,7 @@ function StickerChip({ sticker, label, selected, accent, onPress }: StickerChipP
         {label}
       </Text>
       {selected ? (
-        <Text style={[styles.chipCheck, { color: '#FFFEF8', fontFamily: font.bodyBold }]}>✓</Text>
+        <Text style={[styles.chipCheck, { color: '#FFFEF8', fontFamily: font.bodyBold }]}>{'✓'}</Text>
       ) : null}
     </Pressable>
   )
@@ -294,16 +296,17 @@ function phaseTitle(phase: CyclePhase): string {
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ─── PeriodStartForm ───────────────────────────────────────────────────────
-const FLOW_OPTIONS: { id: 'light' | 'medium' | 'heavy'; label: string; dropColor: string }[] = [
-  { id: 'light',  label: 'Light',  dropColor: '#F2B2C7' },
-  { id: 'medium', label: 'Medium', dropColor: '#EE7B6D' },
-  { id: 'heavy',  label: 'Heavy',  dropColor: '#D94A3E' },
+const FLOW_OPTIONS: { id: 'light' | 'medium' | 'heavy'; labelKey: keyof TranslationKeys; dropColor: string }[] = [
+  { id: 'light',  labelKey: 'cycleLogForm_flow_light',  dropColor: '#F2B2C7' },
+  { id: 'medium', labelKey: 'cycleLogForm_flow_medium', dropColor: '#EE7B6D' },
+  { id: 'heavy',  labelKey: 'cycleLogForm_flow_heavy',  dropColor: '#D94A3E' },
 ]
 
 export function PeriodStartForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
   const { stickers } = useTheme()
+  const { t } = useTranslation()
   const [flow, setFlow] = useState<'light' | 'medium' | 'heavy' | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -328,7 +331,7 @@ export function PeriodStartForm({
 
   return (
     <LogFormShell
-      title="Period started"
+      title={t('cycleLogForm_periodStarted')}
       subline={formatDate(date)}
       phaseHintText={phaseHint('period_start', phase)}
       phaseAccent={accent}
@@ -339,7 +342,7 @@ export function PeriodStartForm({
       saving={saving}
       onSave={save}
     >
-      <Text style={styles.bodyLabel}>Flow</Text>
+      <Text style={styles.bodyLabel}>{t('cycleLogForm_flow_label')}</Text>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {FLOW_OPTIONS.map((opt) => (
           <Pressable
@@ -355,7 +358,7 @@ export function PeriodStartForm({
           >
             <Drop size={36} fill={flow === opt.id ? '#FFFEF8' : opt.dropColor} />
             <Text style={[styles.tileLabel, { color: flow === opt.id ? '#FFFEF8' : '#141313' }]}>
-              {opt.label}
+              {t(opt.labelKey)}
             </Text>
           </Pressable>
         ))}
@@ -363,7 +366,7 @@ export function PeriodStartForm({
       <TextInput
         value={notes}
         onChangeText={setNotes}
-        placeholder="Notes (optional)"
+        placeholder={t('cycleLogForm_notesPlaceholder')}
         placeholderTextColor="#888"
         style={styles.notesInput}
       />
@@ -376,6 +379,7 @@ export function PeriodEndForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
   const { stickers } = useTheme()
+  const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
   const accent = stickers.coral
@@ -397,7 +401,7 @@ export function PeriodEndForm({
 
   return (
     <LogFormShell
-      title="Period ended"
+      title={t('cycleLogForm_periodEnded')}
       subline={formatDate(date)}
       phaseHintText={phaseHint('period_end', phase)}
       phaseAccent={accent}
@@ -425,6 +429,7 @@ export function SymptomsForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
   const { stickers } = useTheme()
+  const { t } = useTranslation()
   const toggle = useDayLogToggle(date, 'symptom')
   const [showAll, setShowAll] = useState(false)
   const { accent, tint, ink } = phaseColors(phase, stickers)
@@ -447,7 +452,7 @@ export function SymptomsForm({
 
   return (
     <LogFormShell
-      title="Symptoms"
+      title={t('cycleLogForm_symptoms')}
       subline={`${formatDate(date)} · ${phaseTitle(phase)}`}
       phaseHintText={phaseHint('symptoms', phase)}
       phaseAccent={accent}
@@ -486,7 +491,7 @@ export function SymptomsForm({
             <Text style={{ color: accent, fontWeight: '700', fontSize: 12 }}>+</Text>
           </View>
           <Text style={{ color: accent, fontWeight: '600', fontSize: 12 }}>
-            Show more ({hiddenCount})
+            {t('cycleLogForm_showMore', { count: hiddenCount })}
           </Text>
         </Pressable>
       ) : null}
@@ -497,21 +502,22 @@ export function SymptomsForm({
 // ─── MoodForm ──────────────────────────────────────────────────────────────
 const MOOD_OPTIONS: {
   id: string
-  label: string
+  labelKey: keyof TranslationKeys
   Sticker: typeof Sad
   fill: string
 }[] = [
-  { id: 'low',   label: 'Low',   Sticker: Sad,    fill: '#EE7B6D' },
-  { id: 'down',  label: 'Down',  Sticker: Sad,    fill: '#9DC3E8' },
-  { id: 'okay',  label: 'Okay',  Sticker: Sleepy, fill: '#C8B6E8' },
-  { id: 'good',  label: 'Good',  Sticker: Smiley, fill: '#F5D652' },
-  { id: 'great', label: 'Great', Sticker: Smiley, fill: '#BDD48C' },
+  { id: 'low',   labelKey: 'cycleLogForm_mood_low',   Sticker: Sad,    fill: '#EE7B6D' },
+  { id: 'down',  labelKey: 'cycleLogForm_mood_down',  Sticker: Sad,    fill: '#9DC3E8' },
+  { id: 'okay',  labelKey: 'cycleLogForm_mood_okay',  Sticker: Sleepy, fill: '#C8B6E8' },
+  { id: 'good',  labelKey: 'cycleLogForm_mood_good',  Sticker: Smiley, fill: '#F5D652' },
+  { id: 'great', labelKey: 'cycleLogForm_mood_great', Sticker: Smiley, fill: '#BDD48C' },
 ]
 
 export function MoodForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
   const { stickers } = useTheme()
+  const { t } = useTranslation()
   const [value, setValue] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -534,7 +540,7 @@ export function MoodForm({
 
   return (
     <LogFormShell
-      title="How are you?"
+      title={t('cycleLogForm_moodQuestion')}
       subline={`${formatDate(date)} · ${phaseTitle(phase)}`}
       phaseHintText={phaseHint('mood', phase)}
       phaseAccent={accent}
@@ -565,7 +571,7 @@ export function MoodForm({
                 color: active ? '#141313' : '#555',
                 fontWeight: active ? '700' : '600',
               }}>
-                {m.label}
+                {t(m.labelKey)}
               </Text>
             </Pressable>
           )
@@ -574,7 +580,7 @@ export function MoodForm({
       <TextInput
         value={notes}
         onChangeText={setNotes}
-        placeholder="Note (optional)"
+        placeholder={t('cycleLogForm_noteOptional')}
         placeholderTextColor="#888"
         style={styles.notesInput}
       />
@@ -590,6 +596,7 @@ export function BbtForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const [tenths, setTenths] = useState(364)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
@@ -614,8 +621,8 @@ export function BbtForm({
 
   return (
     <LogFormShell
-      title="Basal temp"
-      subline={`${formatDate(date)} · before getting up`}
+      title={t('cycleLogForm_bbtTitle')}
+      subline={`${formatDate(date)} · ${t('cycleLogForm_bbtSubline')}`}
       phaseHintText={phaseHint('bbt', phase)}
       phaseAccent={accent}
       phaseTint={tint}
@@ -650,7 +657,7 @@ export function BbtForm({
         </View>
         <View style={styles.sliderRow}>
           <Pressable onPress={() => setTenths(Math.max(BBT_MIN, tenths - 1))} style={styles.sliderBtn}>
-            <Text style={{ color: accent, fontSize: 20, fontFamily: font.bodyBold }}>−</Text>
+            <Text style={{ color: accent, fontSize: 20, fontFamily: font.bodyBold }}>{'−'}</Text>
           </Pressable>
           <Pressable onPress={() => setTenths(Math.min(BBT_MAX, tenths + 1))} style={styles.sliderBtn}>
             <Text style={{ color: accent, fontSize: 20, fontFamily: font.bodyBold }}>+</Text>
@@ -662,17 +669,18 @@ export function BbtForm({
 }
 
 // ─── LhForm ─────────────────────────────────────────────────────────────────
-const LH_OPTIONS = [
-  { id: 'negative', label: 'Negative' },
-  { id: 'faint',    label: 'Faint line' },
-  { id: 'positive', label: 'Positive' },
-  { id: 'peak',     label: 'Peak / surge' },
+const LH_OPTIONS: { id: string; labelKey: keyof TranslationKeys }[] = [
+  { id: 'negative', labelKey: 'cycleLogForm_lh_negative' },
+  { id: 'faint',    labelKey: 'cycleLogForm_lh_faint' },
+  { id: 'positive', labelKey: 'cycleLogForm_lh_positive' },
+  { id: 'peak',     labelKey: 'cycleLogForm_lh_peak' },
 ]
 
 export function LhForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
   const { stickers } = useTheme()
+  const { t } = useTranslation()
   const [value, setValue] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
@@ -694,7 +702,7 @@ export function LhForm({
 
   return (
     <LogFormShell
-      title="LH test"
+      title={t('cycleLogForm_lhTitle')}
       subline={formatDate(date)}
       phaseHintText={phaseHint('lh', phase)}
       phaseAccent={accent}
@@ -717,7 +725,7 @@ export function LhForm({
                 }}
               />
             }
-            label={opt.label}
+            label={t(opt.labelKey)}
             selected={value === opt.id}
             accent={accent}
             onPress={() => setValue(opt.id)}
@@ -729,18 +737,19 @@ export function LhForm({
 }
 
 // ─── CmForm ─────────────────────────────────────────────────────────────────
-const CM_OPTIONS: { id: string; label: string }[] = [
-  { id: 'dry',      label: 'Dry' },
-  { id: 'sticky',   label: 'Sticky' },
-  { id: 'creamy',   label: 'Creamy' },
-  { id: 'watery',   label: 'Watery' },
-  { id: 'eggwhite', label: 'Eggwhite' },
+const CM_OPTIONS: { id: string; labelKey: keyof TranslationKeys }[] = [
+  { id: 'dry',      labelKey: 'cycleLogForm_cm_dry' },
+  { id: 'sticky',   labelKey: 'cycleLogForm_cm_sticky' },
+  { id: 'creamy',   labelKey: 'cycleLogForm_cm_creamy' },
+  { id: 'watery',   labelKey: 'cycleLogForm_cm_watery' },
+  { id: 'eggwhite', labelKey: 'cycleLogForm_cm_eggwhite' },
 ]
 
 export function CmForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
   const { stickers } = useTheme()
+  const { t } = useTranslation()
   const [value, setValue] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
@@ -762,7 +771,7 @@ export function CmForm({
 
   return (
     <LogFormShell
-      title="Cervical mucus"
+      title={t('cycleLogForm_cmTitle')}
       subline={formatDate(date)}
       phaseHintText={phaseHint('cm', phase)}
       phaseAccent={accent}
@@ -788,7 +797,7 @@ export function CmForm({
           >
             <Drop size={28} fill={value === opt.id ? '#FFFEF8' : accent} />
             <Text style={[styles.tileLabel, { color: value === opt.id ? '#FFFEF8' : '#141313' }]}>
-              {opt.label}
+              {t(opt.labelKey)}
             </Text>
           </Pressable>
         ))}
@@ -802,6 +811,7 @@ export function IntimacyForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
   const { stickers } = useTheme()
+  const { t } = useTranslation()
   const [value, setValue] = useState<'unprotected' | 'protected' | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -824,7 +834,7 @@ export function IntimacyForm({
 
   return (
     <LogFormShell
-      title="Intimacy"
+      title={t('cycleLogForm_intimacyTitle')}
       subline={`${formatDate(date)} · ${phaseTitle(phase)}`}
       phaseHintText={phaseHint('intimacy', phase)}
       phaseAccent={accent}
@@ -845,7 +855,7 @@ export function IntimacyForm({
         >
           <Heart size={40} fill={value === 'unprotected' ? '#FFFEF8' : accent} />
           <Text style={[styles.tileLabel, { color: value === 'unprotected' ? '#FFFEF8' : '#141313', marginTop: 6 }]}>
-            Unprotected
+            {t('cycleLogForm_unprotected')}
           </Text>
         </Pressable>
         <Pressable
@@ -857,14 +867,14 @@ export function IntimacyForm({
         >
           <Heart size={40} fill={value === 'protected' ? '#FFFEF8' : accent} />
           <Text style={[styles.tileLabel, { color: value === 'protected' ? '#FFFEF8' : '#141313', marginTop: 6 }]}>
-            Protected
+            {t('cycleLogForm_protected')}
           </Text>
         </Pressable>
       </View>
       <TextInput
         value={notes}
         onChangeText={setNotes}
-        placeholder="Note (optional)"
+        placeholder={t('cycleLogForm_noteOptional')}
         placeholderTextColor="#888"
         style={styles.notesInput}
       />
@@ -880,6 +890,7 @@ export function OvulationForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
   const { stickers } = useTheme()
+  const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
   const accent = stickers.peach
@@ -901,7 +912,7 @@ export function OvulationForm({
 
   return (
     <LogFormShell
-      title="Ovulation"
+      title={t('cycleLogForm_ovulationTitle')}
       subline={`${formatDate(date)} · ${phaseTitle(phase)}`}
       phaseHintText={phaseHint('ovulation', phase)}
       phaseAccent={accent}
@@ -927,7 +938,7 @@ export function OvulationForm({
           </View>
         </View>
         <Text style={{ marginTop: 12, fontSize: 13, color: '#555' }}>
-          Confirms ovulation for this cycle
+          {t('cycleLogForm_ovulationConfirm')}
         </Text>
       </View>
     </LogFormShell>

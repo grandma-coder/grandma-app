@@ -17,6 +17,8 @@ import {
   ScrollView,
   KeyboardAvoidingView,
 } from 'react-native'
+import { useTranslation } from '../../../lib/i18n'
+import type { TranslationKeys } from '../../../lib/i18n/keys'
 import DatePickerField from '../../../components/ui/DatePickerField'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -285,6 +287,7 @@ function StepLastPeriod({
   onContinue: () => void
   onSkip: () => void
 }) {
+  const { t } = useTranslation()
   const date = useCycleOnboardingStore((s) => s.lastPeriodDate)
   const setDate = useCycleOnboardingStore((s) => s.setLastPeriodDate)
 
@@ -292,7 +295,7 @@ function StepLastPeriod({
     <OnboardingStep
       step={step}
       total={total}
-      question="When did your last period start?"
+      question={t('cycleOnboarding_q_lastPeriod')}
       sticker={<Flower size={56} petal={stickers.pink} center={stickers.yellow} />}
       onContinue={onContinue}
       onSkip={onSkip}
@@ -304,8 +307,8 @@ function StepLastPeriod({
           label=""
           value={date || ''}
           onChange={setDate}
-          placeholder="Tap to select a date"
-          modalTitle="Last period start"
+          placeholder={t('cycleOnboarding_datePlaceholder')}
+          modalTitle={t('cycleOnboarding_modalLastPeriod')}
           maximumDate={new Date()}
           minimumDate={new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)}
         />
@@ -325,6 +328,7 @@ function StepCycleLength({
   total: number
   onContinue: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
@@ -339,7 +343,7 @@ function StepCycleLength({
     <OnboardingStep
       step={step}
       total={total}
-      question="How long is your usual cycle?"
+      question={t('cycleOnboarding_q_cycleLength')}
       sticker={<Moon size={52} fill={stickers.lilac} />}
       onContinue={onContinue}
     >
@@ -348,8 +352,8 @@ function StepCycleLength({
           <View style={[stepStyles.numberInputWrap, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}>
             <TextInput
               value={cycleLength?.toString() ?? ''}
-              onChangeText={(t) => {
-                const n = parseInt(t, 10)
+              onChangeText={(txt) => {
+                const n = parseInt(txt, 10)
                 setCycleLength(isNaN(n) ? null : Math.min(60, Math.max(1, n)))
               }}
               keyboardType="number-pad"
@@ -358,7 +362,7 @@ function StepCycleLength({
               placeholderTextColor={colors.textMuted}
               placeholder="28"
             />
-            <Text style={[stepStyles.unitLabel, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>days</Text>
+            <Text style={[stepStyles.unitLabel, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>{t('cycleOnboarding_days')}</Text>
           </View>
         )}
 
@@ -374,7 +378,7 @@ function StepCycleLength({
           ]}
         >
           <Text style={[stepStyles.chipText, { color: unknown ? mode : colors.textSecondary, fontFamily: font.bodySemiBold }]}>
-            I don't know
+            {t('cycleOnboarding_iDontKnow')}
           </Text>
         </Pressable>
       </View>
@@ -382,11 +386,11 @@ function StepCycleLength({
       {/* TTC toggle */}
       <View style={[stepStyles.ttcCard, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
         <Text style={[stepStyles.ttcLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-          Are you trying to conceive?
+          {t('cycleOnboarding_q_ttc')}
         </Text>
         <View style={stepStyles.toggleRow}>
-          <TogglePill label="Yes" active={ttc} onPress={() => setTTC(true)} />
-          <TogglePill label="No" active={!ttc} onPress={() => setTTC(false)} />
+          <TogglePill label={t('common_yes')} active={ttc} onPress={() => setTTC(true)} />
+          <TogglePill label={t('common_no')} active={!ttc} onPress={() => setTTC(false)} />
         </View>
       </View>
     </OnboardingStep>
@@ -404,6 +408,7 @@ function StepPeriodDuration({
   total: number
   onContinue: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
@@ -416,7 +421,7 @@ function StepPeriodDuration({
     <OnboardingStep
       step={step}
       total={total}
-      question="How long does your period usually last?"
+      question={t('cycleOnboarding_q_periodDuration')}
       sticker={<Drop size={52} fill={stickers.coral} />}
       onContinue={onContinue}
     >
@@ -441,7 +446,7 @@ function StepPeriodDuration({
                 { color: duration === n ? mode : colors.text, fontFamily: font.bodySemiBold },
               ]}
             >
-              {n} days
+              {n} {t('cycleOnboarding_days')}
             </Text>
           </Pressable>
         ))}
@@ -452,11 +457,11 @@ function StepPeriodDuration({
 
 // ─── STEP 4: Conditions ────────────────────────────────────────────────────
 
-const CONDITION_OPTIONS: { id: ConditionChip; label: string }[] = [
-  { id: 'pcos', label: 'PCOS' },
-  { id: 'endometriosis', label: 'Endometriosis' },
-  { id: 'other', label: 'Other' },
-  { id: 'prefer_not_to_say', label: 'Prefer not to say' },
+const CONDITION_OPTIONS: { id: ConditionChip; labelKey: keyof TranslationKeys }[] = [
+  { id: 'pcos', labelKey: 'cycleOnboarding_condition_pcos' },
+  { id: 'endometriosis', labelKey: 'cycleOnboarding_condition_endometriosis' },
+  { id: 'other', labelKey: 'cycleOnboarding_condition_other' },
+  { id: 'prefer_not_to_say', labelKey: 'cycleOnboarding_condition_preferNotToSay' },
 ]
 
 function StepConditions({
@@ -470,6 +475,7 @@ function StepConditions({
   onContinue: () => void
   onSkip: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
@@ -483,7 +489,7 @@ function StepConditions({
     <OnboardingStep
       step={step}
       total={total}
-      question="Any conditions we should know about?"
+      question={t('cycleOnboarding_q_conditions')}
       sticker={<Leaf size={56} fill={stickers.green} />}
       onContinue={onContinue}
       onSkip={onSkip}
@@ -511,7 +517,7 @@ function StepConditions({
                   { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
                 ]}
               >
-                {opt.label}
+                {t(opt.labelKey)}
               </Text>
             </Pressable>
           )
@@ -533,7 +539,7 @@ function StepConditions({
           <TextInput
             value={conditionsOther ?? ''}
             onChangeText={setConditionsOther}
-            placeholder="Tell us about it..."
+            placeholder={t('cycleOnboarding_conditionOtherPlaceholder')}
             placeholderTextColor={colors.textMuted}
             style={[stepStyles.otherInputText, { color: colors.text, fontFamily: font.bodyMedium }]}
             autoCapitalize="sentences"
@@ -555,6 +561,7 @@ function StepTempUnit({
   total: number
   onContinue: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
@@ -565,13 +572,13 @@ function StepTempUnit({
     <OnboardingStep
       step={step}
       total={total}
-      question="Temperature unit preference?"
+      question={t('cycleOnboarding_q_tempUnit')}
       sticker={<Sun size={56} fill={stickers.yellow} />}
       onContinue={onContinue}
     >
       <View style={stepStyles.toggleRow}>
-        <TogglePill label="°C Celsius" active={unit === 'celsius'} onPress={() => setUnit('celsius')} />
-        <TogglePill label="°F Fahrenheit" active={unit === 'fahrenheit'} onPress={() => setUnit('fahrenheit')} />
+        <TogglePill label={t('cycleOnboarding_tempCelsius')} active={unit === 'celsius'} onPress={() => setUnit('celsius')} />
+        <TogglePill label={t('cycleOnboarding_tempFahrenheit')} active={unit === 'fahrenheit'} onPress={() => setUnit('fahrenheit')} />
       </View>
     </OnboardingStep>
   )
@@ -579,10 +586,10 @@ function StepTempUnit({
 
 // ─── TTC EXTRA 1: How Long Trying ─────────────────────────────────────────
 
-const TTC_DURATION_OPTIONS: { id: TryingDuration; label: string }[] = [
-  { id: 'just_starting', label: 'Just starting' },
-  { id: 'few_months', label: 'A few months' },
-  { id: 'over_a_year', label: 'Over a year' },
+const TTC_DURATION_OPTIONS: { id: TryingDuration; labelKey: keyof TranslationKeys }[] = [
+  { id: 'just_starting', labelKey: 'cycleOnboarding_ttc_justStarting' },
+  { id: 'few_months', labelKey: 'cycleOnboarding_ttc_fewMonths' },
+  { id: 'over_a_year', labelKey: 'cycleOnboarding_ttc_overAYear' },
 ]
 
 function StepTTCDuration({
@@ -596,6 +603,7 @@ function StepTTCDuration({
   onContinue: () => void
   onSkip: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
@@ -606,7 +614,7 @@ function StepTTCDuration({
     <OnboardingStep
       step={step}
       total={total}
-      question="How long have you been trying?"
+      question={t('cycleOnboarding_q_ttcDuration')}
       sticker={<Flower size={56} petal={stickers.pink} center={stickers.yellow} />}
       onContinue={onContinue}
       onSkip={onSkip}
@@ -634,7 +642,7 @@ function StepTTCDuration({
                   { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
                 ]}
               >
-                {opt.label}
+                {t(opt.labelKey)}
               </Text>
             </Pressable>
           )
@@ -655,6 +663,7 @@ function StepTTCTemperature({
   total: number
   onContinue: () => void
 }) {
+  const { t } = useTranslation()
   const tracking = useCycleOnboardingStore((s) => s.trackingTemperature)
   const setTracking = useCycleOnboardingStore((s) => s.setTrackingTemperature)
 
@@ -662,13 +671,13 @@ function StepTTCTemperature({
     <OnboardingStep
       step={step}
       total={total}
-      question="Are you tracking your temperature each morning?"
+      question={t('cycleOnboarding_q_trackingTemp')}
       sticker={<Sun size={56} fill={stickers.yellow} />}
       onContinue={onContinue}
     >
       <View style={stepStyles.toggleRow}>
-        <TogglePill label="Yes" active={tracking === true} onPress={() => setTracking(true)} />
-        <TogglePill label="Not yet" active={tracking === false} onPress={() => setTracking(false)} />
+        <TogglePill label={t('common_yes')} active={tracking === true} onPress={() => setTracking(true)} />
+        <TogglePill label={t('cycleOnboarding_notYet')} active={tracking === false} onPress={() => setTracking(false)} />
       </View>
     </OnboardingStep>
   )
@@ -687,6 +696,7 @@ function StepTTCSupplements({
   onContinue: () => void
   onSkip: () => void
 }) {
+  const { t } = useTranslation()
   const { colors, radius, font, isDark } = useTheme()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
@@ -697,7 +707,7 @@ function StepTTCSupplements({
     <OnboardingStep
       step={step}
       total={total}
-      question="Any supplements you're taking?"
+      question={t('cycleOnboarding_q_supplements')}
       sticker={<Leaf size={56} fill={stickers.green} />}
       onContinue={onContinue}
       onSkip={onSkip}
@@ -705,7 +715,7 @@ function StepTTCSupplements({
       <TextInput
         value={supplements ?? ''}
         onChangeText={setSupplements}
-        placeholder="e.g. Folic acid, Vitamin D, CoQ10..."
+        placeholder={t('cycleOnboarding_supplementsPlaceholder')}
         placeholderTextColor={colors.textMuted}
         multiline
         style={[
@@ -726,6 +736,7 @@ function StepTTCSupplements({
 // ─── Completion Screen ─────────────────────────────────────────────────────
 
 function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; saving?: boolean }) {
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const { colors, radius, font, isDark } = useTheme()
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
@@ -747,7 +758,7 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
         </View>
 
         <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.display }]}>
-          You're all set!
+          {t('cycleOnboarding_complete_title')}
         </Text>
 
         <Text
@@ -756,13 +767,12 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
             { color: colors.textSecondary, fontFamily: font.body },
           ]}
         >
-          Grandma's got everything she needs to guide you on this beautiful journey.
-          Your cycle insights are being personalized just for you.
+          {t('cycleOnboarding_complete_message')}
         </Text>
       </View>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16 }]}>
-        <PillButton label="Let's Go" variant="ink" onPress={onFinish} loading={saving} disabled={saving} />
+        <PillButton label={t('cycleOnboarding_complete_btn')} variant="ink" onPress={onFinish} loading={saving} disabled={saving} />
       </View>
     </View>
   )

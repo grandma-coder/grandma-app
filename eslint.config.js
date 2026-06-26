@@ -18,6 +18,7 @@ module.exports = [
       'node_modules/**',
       '.expo/**',
       '.agents/**',
+      '.claude/**',
       'dist/**',
       'web-build/**',
       'babel.config.js',
@@ -50,7 +51,45 @@ module.exports = [
     // lib/i18n/**/*.ts — key/value translation data with no JSX, so the rule
     // passes trivially and proves the plugin wiring without blocking the ~1,200
     // not-yet-migrated strings in the rest of the codebase.
-    files: ['lib/i18n/**/*.ts', 'components/home/KidsHome.tsx', 'components/analytics/KidsAnalytics.tsx', 'components/calendar/KidsLogForms.tsx', 'components/calendar/KidsCalendar.tsx', 'components/agenda/NannyNotesPanel.tsx', 'components/agenda/FoodDashboard.tsx', 'components/home/NannyUpdatesFeed.tsx', 'components/kids/KidsJourneyRing.tsx'],
+    files: [
+      'lib/i18n/**/*.ts',
+      // B1 — Kids home + analytics
+      'components/home/KidsHome.tsx',
+      'components/analytics/KidsAnalytics.tsx',
+      // B2 — Kids calendar / log forms / agenda
+      'components/calendar/KidsLogForms.tsx',
+      'components/calendar/KidsCalendar.tsx',
+      'components/agenda/NannyNotesPanel.tsx',
+      'components/agenda/FoodDashboard.tsx',
+      'components/home/NannyUpdatesFeed.tsx',
+      'components/kids/KidsJourneyRing.tsx',
+      // B3 — Kids profile / care-circle / onboarding screens
+      'app/profile/care-circle.tsx',
+      'app/profile/kids.tsx',
+      'app/onboarding/kids/index.tsx',
+      'app/profile/health-history.tsx',
+      'app/airtag-setup.tsx',
+      'app/child-picker.tsx',
+      'app/invite-caregiver.tsx',
+      'app/manage-caregivers.tsx',
+      // B4 — Pre-pregnancy / cycle cluster
+      'app/cycle-pillars.tsx',
+      'components/prepreg/ChecklistCard.tsx',
+      'components/prepreg/PartnerView.tsx',
+      'components/prepreg/HealthDashboard.tsx',
+      'components/prepreg/DailyInsights.tsx',
+      'components/prepreg/CyclePhaseRing.tsx',
+      'components/agenda/CycleTracker.tsx',
+      'components/agenda/PrePregChecklist.tsx',
+      'components/analytics/CycleAnalytics.tsx',
+      'components/home/cycle/FertilitySignalsCard.tsx',
+      'components/home/cycle/MoodSymptomPickerSheet.tsx',
+      'components/home/cycle/CycleTodayDashboardModal.tsx',
+      'components/home/cycle/CycleJourneyRingFull.tsx',
+      'components/calendar/CycleCalendar.tsx',
+      'components/calendar/CycleLogForms.tsx',
+      'app/onboarding/cycle/index.tsx',
+    ],
     plugins: { i18next },
     rules: {
       'i18next/no-literal-string': [

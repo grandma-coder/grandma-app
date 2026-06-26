@@ -1251,4 +1251,261 @@ export interface TranslationKeys {
   kids_journeyRing_signsYouMayNotice: string
   kids_journeyRing_newSkillsEmerging: string
   kids_journeyRing_tryTheseActivities: string
+
+  // ─── Cycle Log Forms (Wave B4) ────────────────────────────────────────────
+  cycleLogForm_periodStarted: string
+  cycleLogForm_periodEnded: string
+  cycleLogForm_symptoms: string
+  cycleLogForm_moodQuestion: string
+  cycleLogForm_bbtTitle: string
+  cycleLogForm_bbtSubline: string
+  cycleLogForm_lhTitle: string
+  cycleLogForm_cmTitle: string
+  cycleLogForm_intimacyTitle: string
+  cycleLogForm_ovulationTitle: string
+  cycleLogForm_flow_label: string
+  cycleLogForm_notesPlaceholder: string
+  cycleLogForm_noteOptional: string
+  cycleLogForm_showMore: string
+  cycleLogForm_ovulationConfirm: string
+  cycleLogForm_unprotected: string
+  cycleLogForm_protected: string
+  cycleLogForm_flow_light: string
+  cycleLogForm_flow_medium: string
+  cycleLogForm_flow_heavy: string
+  cycleLogForm_lh_negative: string
+  cycleLogForm_lh_faint: string
+  cycleLogForm_lh_positive: string
+  cycleLogForm_lh_peak: string
+  cycleLogForm_cm_dry: string
+  cycleLogForm_cm_sticky: string
+  cycleLogForm_cm_creamy: string
+  cycleLogForm_cm_watery: string
+  cycleLogForm_cm_eggwhite: string
+  cycleLogForm_mood_low: string
+  cycleLogForm_mood_down: string
+  cycleLogForm_mood_okay: string
+  cycleLogForm_mood_good: string
+  cycleLogForm_mood_great: string
+
+  // ─── Cycle Calendar (Wave B4) ─────────────────────────────────────────────
+  cycleCalendar_tabCycle: string
+  cycleCalendar_tabChecklist: string
+  cycleCalendar_tabHealth: string
+  cycleCalendar_tabVisits: string
+  cycleCalendar_logActivity: string
+  cycleCalendar_checklist_title: string
+  cycleCalendar_checklist_body: string
+  cycleCalendar_visits_title: string
+  cycleCalendar_visits_body: string
+  cycleCalendar_checklistLoading: string
+  cycleCalendar_checklistTitle: string
+  cycleCalendar_examsLabs: string
+  cycleCalendar_noExams: string
+  cycleCalendar_logExam: string
+  cycleCalendar_logEntry_temperature: string
+  cycleCalendar_logEntry_temperatureSub: string
+  cycleCalendar_logEntry_symptoms: string
+  cycleCalendar_logEntry_symptomsSub: string
+  cycleCalendar_logEntry_mood: string
+  cycleCalendar_logEntry_moodSub: string
+  cycleCalendar_logEntry_intimacy: string
+  cycleCalendar_logEntry_intimacySub: string
+  cycleCalendar_logEntry_periodStart: string
+  cycleCalendar_logEntry_periodStartSub: string
+  cycleCalendar_logEntry_periodEnd: string
+  cycleCalendar_logEntry_periodEndSub: string
+  cycleCalendar_logEntry_exam: string
+  cycleCalendar_logEntry_examSub: string
+  cycleCalendar_logSheet_periodStart: string
+  cycleCalendar_logSheet_periodEnd: string
+  cycleCalendar_logSheet_symptoms: string
+  cycleCalendar_logSheet_mood: string
+  cycleCalendar_logSheet_temperature: string
+  cycleCalendar_logSheet_intimacy: string
+  cycleCalendar_logSheet_exam: string
+
+  // ─── Pre-Preg Health Dashboard (Wave B4) ─────────────────────────────────
+  prepreg_healthDash_hydration: string
+  prepreg_healthDash_glassesToday: string
+  prepreg_healthDash_addGlass: string
+  prepreg_healthDash_hours: string
+  prepreg_healthDash_sleep: string
+  prepreg_healthDash_folic: string
+  prepreg_healthDash_folicDose: string
+  prepreg_healthDash_prenatal: string
+  prepreg_healthDash_min: string
+  prepreg_healthDash_exercise: string
+  prepreg_healthDash_nutritionTip: string
+
+  // ─── Pre-Preg Daily Insights (Wave B4) ───────────────────────────────────
+  prepreg_dailyInsights_myDailyInsights: string
+  prepreg_dailyInsights_logSymptoms: string
+  prepreg_dailyInsights_phaseTips: string
+  prepreg_dailyInsights_activities: string
+  prepreg_dailyInsights_nutrition: string
+
+  // ─── Pre-Preg Partner View (Wave B4) ──────────────────────────────────────
+  prepreg_partnerView_connected: string
+  prepreg_partnerView_connectedSub: string
+  prepreg_partnerView_invite: string
+  prepreg_partnerView_inviteSub: string
+  prepreg_partnerView_sendInvite: string
+
+  // ─── Pre-Preg Phase Ring (Wave B4) ────────────────────────────────────────
+  prepreg_phaseRing_periodIn: string
+  prepreg_phaseRing_days: string
+  prepreg_phaseRing_addPeriod: string
+  prepreg_phaseRing_startTracking: string
+  prepreg_phaseRing_period: string
+  prepreg_phaseRing_follicular: string
+  prepreg_phaseRing_ovulation: string
+  prepreg_phaseRing_luteal: string
+  prepreg_phaseRing_editPeriodDates: string
+
+  // ─── Pre-Preg Checklist Card (Wave B4) ───────────────────────────────────
+  prepreg_checklist_title: string
+
+  // ─── Cycle Tracker (Wave B4) ──────────────────────────────────────────────
+  cycleTracker_quickLog: string
+  cycleTracker_symptomsLabel: string
+  cycleTracker_todaysTips: string
+  cycleTracker_nutritionFor: string
+  cycleTracker_day: string
+  cycleTracker_fertileWindow: string
+  cycleTracker_log_periodStarted: string
+  cycleTracker_log_periodEnded: string
+  cycleTracker_log_ovulationSign: string
+  cycleTracker_log_symptom: string
+  cycleTracker_log_basalTemp: string
+  cycleTracker_log_intercourse: string
+  cycleTracker_symptom_cramps: string
+  cycleTracker_symptom_bloating: string
+  cycleTracker_symptom_headache: string
+  cycleTracker_symptom_fatigue: string
+  cycleTracker_symptom_moodSwings: string
+  cycleTracker_symptom_breastPain: string
+  cycleTracker_symptom_acne: string
+  cycleTracker_symptom_nausea: string
+  cycleTracker_symptom_cmEggWhite: string
+  cycleTracker_symptom_cmCreamy: string
+  cycleTracker_symptom_cmSticky: string
+  cycleTracker_symptom_cmDry: string
+
+  // ─── Pre-Preg Checklist / PrePregChecklist (Wave B4) ─────────────────────
+  prepreg_checklistProgress_complete: string
+  prepreg_checklistProgress_tasksDone: string
+  prepreg_checklistProgress_empty: string
+
+  // ─── Cycle Analytics (Wave B4) ────────────────────────────────────────────
+  cycleAnalytics_yourCycleToday: string
+  cycleAnalytics_fertileFlow: string
+  cycleAnalytics_noWindowYet: string
+  cycleAnalytics_viewFertileDetail: string
+  cycleAnalytics_viewLengthDetail: string
+  cycleAnalytics_daysAvg: string
+  cycleAnalytics_lastNCycles: string
+  cycleAnalytics_recentCycles: string
+  cycleAnalytics_current: string
+  cycleAnalytics_startedDate: string
+  cycleAnalytics_dayNumber: string
+  cycleAnalytics_regularSub_rhythm: string
+  cycleAnalytics_regularSub_steady: string
+  cycleAnalytics_regularSub_mostly: string
+  cycleAnalytics_regularSub_unpredictable: string
+  cycleAnalytics_pmsSub_none: string
+  cycleAnalytics_pmsSub_symptomDays: string
+  cycleAnalytics_moodSub_log: string
+  cycleAnalytics_moodSub_avg: string
+  cycleAnalytics_fertileSub_opensIn: string
+  cycleAnalytics_fertileSub_open: string
+  cycleAnalytics_fertileSub_passed: string
+
+  // ─── Fertility Signals Card (Wave B4) ─────────────────────────────────────
+  cycleSignals_title: string
+  cycleSignals_startTracking: string
+  cycleSignals_peakToday: string
+  cycleSignals_filledCount: string
+  cycleSignals_logTile: string
+  cycleSignals_logging30s: string
+  cycleSignals_logFirstSignal: string
+
+  // ─── Cycle Today Dashboard Modal (Wave B4) ────────────────────────────────
+  cycleDash_today: string
+  cycleDash_mood: string
+  cycleDash_bbt: string
+  cycleDash_lh: string
+  cycleDash_cm: string
+  cycleDash_intimacy: string
+  cycleDash_period: string
+  cycleDash_symptoms: string
+  cycleDash_notLoggedYet: string
+  cycleDash_tapChipToLog: string
+  cycleDash_howYouFelt: string
+  cycleDash_basalTemp: string
+  cycleDash_notLogged: string
+  cycleDash_ovulationTest: string
+  cycleDash_cervicalMucus: string
+  cycleDash_loggedToday: string
+  cycleDash_flowToday: string
+  cycleDash_noSymptoms: string
+  cycleDash_bbtLast7: string
+  cycleDash_bbtNeedMore: string
+  cycleDash_mood_low: string
+  cycleDash_mood_down: string
+  cycleDash_mood_okay: string
+  cycleDash_mood_good: string
+  cycleDash_mood_great: string
+  cycleDash_cm_dry: string
+  cycleDash_cm_sticky: string
+  cycleDash_cm_creamy: string
+  cycleDash_cm_watery: string
+  cycleDash_cm_eggwhite: string
+  cycleDash_lh_negative: string
+  cycleDash_lh_faint: string
+  cycleDash_lh_positive: string
+  cycleDash_lh_peak: string
+  cycleDash_period_light: string
+  cycleDash_period_medium: string
+  cycleDash_period_heavy: string
+
+  // ─── Mood/Symptom Picker Sheet (Wave B4) ─────────────────────────────────
+  cycleSignals_pickerTitle: string
+  cycleSignals_saving: string
+  cycleSignals_saveSymptoms: string
+
+  // ─── Cycle Onboarding (Wave B4) ───────────────────────────────────────────
+  cycleOnboarding_q_lastPeriod: string
+  cycleOnboarding_datePlaceholder: string
+  cycleOnboarding_modalLastPeriod: string
+  cycleOnboarding_q_cycleLength: string
+  cycleOnboarding_days: string
+  cycleOnboarding_iDontKnow: string
+  cycleOnboarding_q_ttc: string
+  cycleOnboarding_q_periodDuration: string
+  cycleOnboarding_q_conditions: string
+  cycleOnboarding_condition_pcos: string
+  cycleOnboarding_condition_endometriosis: string
+  cycleOnboarding_condition_other: string
+  cycleOnboarding_condition_preferNotToSay: string
+  cycleOnboarding_conditionOtherPlaceholder: string
+  cycleOnboarding_q_tempUnit: string
+  cycleOnboarding_tempCelsius: string
+  cycleOnboarding_tempFahrenheit: string
+  cycleOnboarding_q_ttcDuration: string
+  cycleOnboarding_ttc_justStarting: string
+  cycleOnboarding_ttc_fewMonths: string
+  cycleOnboarding_ttc_overAYear: string
+  cycleOnboarding_q_trackingTemp: string
+  cycleOnboarding_notYet: string
+  cycleOnboarding_q_supplements: string
+  cycleOnboarding_supplementsPlaceholder: string
+  cycleOnboarding_complete_title: string
+  cycleOnboarding_complete_message: string
+  cycleOnboarding_complete_btn: string
+
+  // ─── Cycle Pillars Screen (Wave B4) ──────────────────────────────────────
+  cyclePillars_title: string
+  cyclePillars_subtitle: string
+  cyclePillars_back: string
 }

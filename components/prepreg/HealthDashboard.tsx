@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useAppTheme } from '../ui/ThemeProvider'
 import { brand, stickers, borderRadius, shadows } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { LiquidFillBottle } from '../charts/GalleryCharts'
 import { DAILY_WATER_GOAL, getHydrationLevel } from '../../lib/cycleLogic'
 
@@ -16,6 +17,7 @@ interface HealthDashboardProps {
 
 export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, onLogSleep }: HealthDashboardProps) {
   const { colors: tc } = useAppTheme()
+  const { t } = useTranslation()
   const hydration = getHydrationLevel(waterGlasses)
 
   return (
@@ -27,7 +29,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
             <Ionicons name="water" size={22} color={stickers.blue} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.cardTitle, { color: tc.text }]}>HYDRATION</Text>
+            <Text style={[styles.cardTitle, { color: tc.text }]}>{t('prepreg_healthDash_hydration')}</Text>
             <Text style={[styles.cardSubtitle, { color: tc.textTertiary }]}>{hydration.message}</Text>
           </View>
         </View>
@@ -44,7 +46,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
               {waterGlasses}
               <Text style={[styles.progressGoal, { color: tc.textTertiary }]}>/{DAILY_WATER_GOAL}</Text>
             </Text>
-            <Text style={[styles.progressGoal, { color: tc.textTertiary }]}>glasses today</Text>
+            <Text style={[styles.progressGoal, { color: tc.textTertiary }]}>{t('prepreg_healthDash_glassesToday')}</Text>
             <View style={styles.glassesRow}>
               {Array.from({ length: DAILY_WATER_GOAL }).map((_, i) => (
                 <View
@@ -70,7 +72,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
           style={({ pressed }) => [styles.addWaterBtn, pressed && { transform: [{ scale: 0.95 }] }]}
         >
           <Ionicons name="add-circle" size={20} color={stickers.blue} />
-          <Text style={styles.addWaterText}>Add Glass</Text>
+          <Text style={styles.addWaterText}>{t('prepreg_healthDash_addGlass')}</Text>
         </Pressable>
       </PaperCard>
 
@@ -84,8 +86,8 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
           <Text style={[styles.metricValue, { color: tc.text }]}>
             {sleepHours > 0 ? `${sleepHours}` : '--'}
           </Text>
-          <Text style={[styles.metricUnit, { color: tc.textTertiary }]}>hours</Text>
-          <Text style={[styles.metricLabel, { color: tc.textTertiary }]}>SLEEP</Text>
+          <Text style={[styles.metricUnit, { color: tc.textTertiary }]}>{t('prepreg_healthDash_hours')}</Text>
+          <Text style={[styles.metricLabel, { color: tc.textTertiary }]}>{t('prepreg_healthDash_sleep')}</Text>
           {sleepHours > 0 && sleepHours >= 7 && (
             <View style={[styles.metricBadge, { backgroundColor: stickers.green + '20' }]}>
               <Ionicons name="checkmark" size={10} color={stickers.green} />
@@ -98,9 +100,9 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
           <View style={[styles.metricIcon, { backgroundColor: brand.prePregnancy + '15' }]}>
             <Ionicons name="medical" size={20} color={stickers.pink} />
           </View>
-          <Text style={[styles.metricValue, { color: tc.text }]}>Folic</Text>
-          <Text style={[styles.metricUnit, { color: tc.textTertiary }]}>400mcg</Text>
-          <Text style={[styles.metricLabel, { color: tc.textTertiary }]}>PRENATAL</Text>
+          <Text style={[styles.metricValue, { color: tc.text }]}>{t('prepreg_healthDash_folic')}</Text>
+          <Text style={[styles.metricUnit, { color: tc.textTertiary }]}>{t('prepreg_healthDash_folicDose')}</Text>
+          <Text style={[styles.metricLabel, { color: tc.textTertiary }]}>{t('prepreg_healthDash_prenatal')}</Text>
         </PaperCard>
 
         {/* Exercise Card */}
@@ -111,8 +113,8 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
           <Text style={[styles.metricValue, { color: tc.text }]}>
             {0}
           </Text>
-          <Text style={[styles.metricUnit, { color: tc.textTertiary }]}>min</Text>
-          <Text style={[styles.metricLabel, { color: tc.textTertiary }]}>EXERCISE</Text>
+          <Text style={[styles.metricUnit, { color: tc.textTertiary }]}>{t('prepreg_healthDash_min')}</Text>
+          <Text style={[styles.metricLabel, { color: tc.textTertiary }]}>{t('prepreg_healthDash_exercise')}</Text>
         </PaperCard>
       </View>
 
@@ -120,7 +122,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
       <PaperCard radius={28} padding={20} style={styles.nutritionTip}>
         <View style={styles.nutritionHeader}>
           <Ionicons name="nutrition" size={18} color={stickers.green} />
-          <Text style={styles.nutritionTitle}>NUTRITION TIP</Text>
+          <Text style={styles.nutritionTitle}>{t('prepreg_healthDash_nutritionTip')}</Text>
         </View>
         <Text style={[styles.nutritionText, { color: tc.textSecondary }]}>
           Take your folic acid (400mcg) daily — ideally 1-3 months before conceiving. It prevents neural tube defects and is the single most important supplement for pre-conception.

@@ -14,6 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { getCycleInfo, toDateStr, type CyclePhase, type CycleConfig } from '../../lib/cycleLogic'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
+import { useTranslation } from '../../lib/i18n'
+import type { TranslationKeys } from '../../lib/i18n/keys'
 import { LogSheet } from './LogSheet'
 import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
@@ -41,19 +43,19 @@ type ViewTab = 'cycle' | 'checklist' | 'visits'
 
 interface LogEntry {
   id: LogType
-  label: string
-  subtitle: string
+  labelKey: keyof TranslationKeys
+  subtitleKey: keyof TranslationKeys
   tint: string
 }
 
 const LOG_ENTRIES: LogEntry[] = [
-  { id: 'basal_temp',   label: 'Temperature',  subtitle: 'Daily BBT reading',     tint: 'temperature' },
-  { id: 'symptom',      label: 'Symptoms',     subtitle: 'How you feel today',    tint: 'symptom' },
-  { id: 'mood',         label: 'Mood',         subtitle: "Today's mood check-in", tint: 'mood' },
-  { id: 'intercourse',  label: 'Intimacy',     subtitle: 'Track fertile moments', tint: 'intimacy' },
-  { id: 'period_start', label: 'Period start', subtitle: 'Begin a new cycle',     tint: 'period' },
-  { id: 'period_end',   label: 'Period end',   subtitle: 'Close out your flow',   tint: 'period' },
-  { id: 'exam',         label: 'Exam result',  subtitle: 'Lab or fertility test', tint: 'exam' },
+  { id: 'basal_temp',   labelKey: 'cycleCalendar_logEntry_temperature',  subtitleKey: 'cycleCalendar_logEntry_temperatureSub', tint: 'temperature' },
+  { id: 'symptom',      labelKey: 'cycleCalendar_logEntry_symptoms',     subtitleKey: 'cycleCalendar_logEntry_symptomsSub',    tint: 'symptom' },
+  { id: 'mood',         labelKey: 'cycleCalendar_logEntry_mood',         subtitleKey: 'cycleCalendar_logEntry_moodSub',        tint: 'mood' },
+  { id: 'intercourse',  labelKey: 'cycleCalendar_logEntry_intimacy',     subtitleKey: 'cycleCalendar_logEntry_intimacySub',    tint: 'intimacy' },
+  { id: 'period_start', labelKey: 'cycleCalendar_logEntry_periodStart',  subtitleKey: 'cycleCalendar_logEntry_periodStartSub', tint: 'period' },
+  { id: 'period_end',   labelKey: 'cycleCalendar_logEntry_periodEnd',    subtitleKey: 'cycleCalendar_logEntry_periodEndSub',   tint: 'period' },
+  { id: 'exam',         labelKey: 'cycleCalendar_logEntry_exam',         subtitleKey: 'cycleCalendar_logEntry_examSub',        tint: 'exam' },
 ]
 
 // ─── Log Activity Sheet (opened by header "+") ─────────────────────────────
@@ -68,6 +70,7 @@ function LogActivitySheet({
   onSelect: (type: LogType) => void
 }) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   const paper = isDark ? colors.surface : '#FFFEF8'
@@ -88,7 +91,7 @@ function LogActivitySheet({
           <View style={[styles.handle, { backgroundColor: paperBorder }]} />
         </View>
         <View style={styles.sheetHeader}>
-          <Display size={22} color={ink}>Log Activity</Display>
+          <Display size={22} color={ink}>{t('cycleCalendar_logActivity')}</Display>
           <Pressable onPress={onClose} style={[styles.closeBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
             <X size={18} color={ink} />
           </Pressable>
@@ -98,7 +101,7 @@ function LogActivitySheet({
             {LOG_ENTRIES.map((e) => (
               <LogTile
                 key={e.id}
-                label={e.label}
+                label={t(e.labelKey)}
                 tint={e.tint}
                 icon={logSticker(e.id, 36, isDark)}
                 onPress={() => handleSelect(e.id)}
@@ -115,6 +118,7 @@ function LogActivitySheet({
 
 export function CycleCalendar() {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   const [tab, setTab] = useState<ViewTab>('cycle')
@@ -162,9 +166,9 @@ export function CycleCalendar() {
         <View style={{ marginBottom: 14 }}>
           <SegmentedTabs
             options={[
-              { key: 'cycle', label: 'Cycle' },
-              { key: 'checklist', label: 'Checklist' },
-              { key: 'visits', label: 'Visits' },
+              { key: 'cycle', label: t('cycleCalendar_tabCycle') },
+              { key: 'checklist', label: t('cycleCalendar_tabChecklist') },
+              { key: 'visits', label: t('cycleCalendar_tabVisits') },
             ]}
             value={tab}
             onChange={(k) => setTab(k as ViewTab)}
@@ -202,9 +206,9 @@ export function CycleCalendar() {
           <PaperCard style={{ marginTop: 4 }}>
             <View style={styles.tabEmpty}>
               <MissingStickers.PrepregChecklistEmpty size={88} />
-              <Display size={20} color={isDark ? colors.text : '#141313'}>Fertility checklist</Display>
+              <Display size={20} color={isDark ? colors.text : '#141313'}>{t('cycleCalendar_checklist_title')}</Display>
               <Body size={13} color={isDark ? colors.textMuted : '#6E6763'} align="center" style={{ marginTop: 6 }}>
-                Build your cycle routine: folate, BBT logging, ovulation tests, and stress care. We'll track your progress here.
+                {t('cycleCalendar_checklist_body')}
               </Body>
             </View>
           </PaperCard>
@@ -216,9 +220,9 @@ export function CycleCalendar() {
               <View style={[styles.tabEmptyIcon, { backgroundColor: modeColor + '22' }]}>
                 <CircleIcon size={22} color={modeColor} strokeWidth={2} />
               </View>
-              <Display size={20} color={isDark ? colors.text : '#141313'}>Upcoming visits</Display>
+              <Display size={20} color={isDark ? colors.text : '#141313'}>{t('cycleCalendar_visits_title')}</Display>
               <Body size={13} color={isDark ? colors.textMuted : '#6E6763'} align="center" style={{ marginTop: 6 }}>
-                Doctor appointments, fertility consults, and labs go here. Tap "+" above to add one.
+                {t('cycleCalendar_visits_body')}
               </Body>
             </View>
           </PaperCard>
@@ -227,25 +231,25 @@ export function CycleCalendar() {
 
       {/* ─── Bottom sheets per log type ────────────────────────────────── */}
 
-      <LogSheet visible={sheetType === 'period_start'} title="Log Period Start" onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'period_start'} title={t('cycleCalendar_logSheet_periodStart')} onClose={() => setSheetType(null)}>
         <PeriodStartForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'period_end'} title="Log Period End" onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'period_end'} title={t('cycleCalendar_logSheet_periodEnd')} onClose={() => setSheetType(null)}>
         <PeriodEndForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'symptom'} title="Log Symptoms" onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'symptom'} title={t('cycleCalendar_logSheet_symptoms')} onClose={() => setSheetType(null)}>
         <SymptomsForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'mood'} title="Log Mood" onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'mood'} title={t('cycleCalendar_logSheet_mood')} onClose={() => setSheetType(null)}>
         <MoodForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'basal_temp'} title="Log Temperature" onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'basal_temp'} title={t('cycleCalendar_logSheet_temperature')} onClose={() => setSheetType(null)}>
         <BbtForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'intercourse'} title="Log Intimacy" onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'intercourse'} title={t('cycleCalendar_logSheet_intimacy')} onClose={() => setSheetType(null)}>
         <IntimacyForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'exam'} title="Log Exam Result" onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'exam'} title={t('cycleCalendar_logSheet_exam')} onClose={() => setSheetType(null)}>
         <ExamForm behavior="pre-pregnancy" date={selectedDate} onSaved={() => setSheetType(null)} />
       </LogSheet>
 

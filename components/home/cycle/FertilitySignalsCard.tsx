@@ -23,6 +23,7 @@ import { Drop, Heart, Pill, Sparkle } from '../../ui/Stickers'
 import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
 import { BbtForm, LhForm, CmForm, IntercourseForm } from '../../calendar/CycleLogForms'
+import { useTranslation } from '../../../lib/i18n'
 
 type Tile = 'bbt' | 'lh' | 'cm' | 'intercourse'
 type RecentLog = { date: string; type: string; value: string | null }
@@ -31,6 +32,7 @@ const DAYS_BACK = 7
 
 export function FertilitySignalsCard() {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const ink = isDark ? colors.text : '#141313'
   const [openSheet, setOpenSheet] = useState<Tile | null>(null)
@@ -107,10 +109,10 @@ export function FertilitySignalsCard() {
   const isPeakToday = todayByType.lh === 'peak' || todayByType.cm === 'eggwhite'
 
   const headline = isEmpty
-    ? 'Start tracking'
+    ? t('cycleSignals_startTracking')
     : isPeakToday
-    ? 'Peak today'
-    : `${filledCount} of 4 logged`
+    ? t('cycleSignals_peakToday')
+    : t('cycleSignals_filledCount', { count: filledCount })
 
   const tiles: { key: Tile; label: string; value: string | null }[] = [
     { key: 'bbt',         label: 'BBT', value: todayByType.bbt ? `${todayByType.bbt}°` : null },
@@ -130,10 +132,10 @@ export function FertilitySignalsCard() {
     }
   }
 
-  function tileBg(t: typeof tiles[number]): string {
-    if (t.key === 'lh' && t.value === 'peak') return stickers.coral
-    if (t.key === 'cm' && t.value === 'eggwhite') return stickers.greenSoft
-    if (t.value) return stickers.greenSoft
+  function tileBg(tile: typeof tiles[number]): string {
+    if (tile.key === 'lh' && tile.value === 'peak') return stickers.coral
+    if (tile.key === 'cm' && tile.value === 'eggwhite') return stickers.greenSoft
+    if (tile.value) return stickers.greenSoft
     return colors.surfaceRaised
   }
 
@@ -148,7 +150,7 @@ export function FertilitySignalsCard() {
         <View style={styles.head}>
           <View>
             <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>
-              FERTILITY SIGNALS
+              {t('cycleSignals_title')}
             </Text>
             <Text style={[styles.headline, { color: ink, fontFamily: font.display }]}>
               {headline}
@@ -162,26 +164,26 @@ export function FertilitySignalsCard() {
         </View>
 
         <View style={styles.grid}>
-          {tiles.map((t) => {
-            const filled = t.value != null
-            const peak = (t.key === 'lh' && t.value === 'peak') || (t.key === 'cm' && t.value === 'eggwhite')
+          {tiles.map((tile) => {
+            const filled = tile.value != null
+            const peak = (tile.key === 'lh' && tile.value === 'peak') || (tile.key === 'cm' && tile.value === 'eggwhite')
             return (
               <Pressable
-                key={t.key}
-                onPress={() => setOpenSheet(t.key)}
+                key={tile.key}
+                onPress={() => setOpenSheet(tile.key)}
                 style={[
                   styles.tile,
                   {
-                    backgroundColor: tileBg(t),
+                    backgroundColor: tileBg(tile),
                     borderColor: colors.border,
                   },
                 ]}
               >
                 <View style={{ opacity: filled ? 1 : 0.55, marginBottom: 2 }}>
-                  {renderTileSticker(t.key, peak, !filled)}
+                  {renderTileSticker(tile.key, peak, !filled)}
                 </View>
                 <Text style={[styles.tileKey, { color: peak ? '#fff' : colors.textMuted, fontFamily: font.bodyBold }]}>
-                  {t.label}
+                  {tile.label}
                 </Text>
                 <Text
                   style={[
@@ -193,7 +195,7 @@ export function FertilitySignalsCard() {
                   ]}
                   numberOfLines={1}
                 >
-                  {filled ? (t.value as string) : '+ log'}
+                  {filled ? (tile.value as string) : t('cycleSignals_logTile')}
                 </Text>
               </Pressable>
             )
@@ -230,13 +232,13 @@ export function FertilitySignalsCard() {
         {isEmpty && (
           <View style={styles.empty}>
             <Text style={[styles.emptyTitle, { color: ink, fontFamily: font.display }]}>
-              Logging today takes 30s
+              {t('cycleSignals_logging30s')}
             </Text>
             <Text style={[styles.emptyBody, { color: colors.textMuted, fontFamily: font.body }]}>
               Morning temp + a quick check tells us when your fertile window actually peaks — better than calendar guesses.
             </Text>
             <PillButton
-              label="Log first signal"
+              label={t('cycleSignals_logFirstSignal')}
               variant="accent"
               accentColor={stickers.pink}
               onPress={() => setOpenSheet('bbt')}

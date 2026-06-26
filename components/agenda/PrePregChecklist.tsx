@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { brand, stickers, borderRadius, useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 interface ChecklistItem {
   id: string
@@ -27,6 +28,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const completed = items.filter((i) => i.completed).length
   const total = items.length
@@ -38,9 +40,9 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
       <PaperCard radius={28} padding={20} style={styles.progressCard}>
         <View style={styles.progressHeader}>
           <View>
-            <Text style={styles.progressTitle}>{pct}% COMPLETE</Text>
+            <Text style={styles.progressTitle}>{t('prepreg_checklistProgress_complete', { pct })}</Text>
             <Text style={styles.progressSubtitle}>
-              {completed} of {total} tasks done
+              {t('prepreg_checklistProgress_tasksDone', { done: completed, total })}
             </Text>
           </View>
           <View style={styles.progressCircle}>
@@ -96,7 +98,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
       {items.length === 0 && (
         <View style={styles.emptyState}>
           <Ionicons name="checkbox-outline" size={40} color={colors.textMuted} />
-          <Text style={styles.emptyTitle}>Your checklist is empty</Text>
+          <Text style={styles.emptyTitle}>{t('prepreg_checklistProgress_empty')}</Text>
           <Text style={styles.emptyDesc}>
             Preparation tasks will appear here to guide your journey to conception.
           </Text>

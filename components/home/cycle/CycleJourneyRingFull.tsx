@@ -16,9 +16,9 @@ import { View, Text, ScrollView, Pressable, PanResponder, StyleSheet } from 'rea
 import Svg, { Circle } from 'react-native-svg'
 import Animated, {
   useSharedValue, useAnimatedStyle, useDerivedValue, useAnimatedReaction,
-  runOnJS, withDecay, withTiming, cancelAnimation, Easing,
+  runOnJS, withDecay, withTiming, withSpring, cancelAnimation, Easing,
 } from 'react-native-reanimated'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, motion } from '../../../constants/theme'
 import {
   getCycleInfo, toDateStr,
   type CycleConfig, type CyclePhase,
@@ -59,6 +59,18 @@ function phaseAccent(phase: CyclePhase, stickers: ReturnType<typeof useTheme>['s
     case 'follicular':   return stickers.green
     case 'ovulation':    return stickers.peach
     case 'luteal':       return stickers.lilac
+  }
+}
+
+// Saturated dark variant of each phase hue — high contrast against the soft
+// tints, so the selected day's outline + label read clearly (the mid `accent`
+// is nearly the same lightness as its own `*Soft` tint and washes out).
+function phaseInk(phase: CyclePhase, stickers: ReturnType<typeof useTheme>['stickers']): string {
+  switch (phase) {
+    case 'menstruation': return stickers.coralInk
+    case 'follicular':   return stickers.greenInk
+    case 'ovulation':    return stickers.peachInk
+    case 'luteal':       return stickers.lilacInk
   }
 }
 
@@ -151,6 +163,83 @@ interface Props {
   cycleConfig: CycleConfig
 }
 
+// ─── Week-strip cell ──────────────────────────────────────────────────────
+// One day in the 7-day strip. Selected = soft tint + bold accent outline ring
+// (lighter than a full fill). Press uses the app's standard sticker-press feel
+// (withSpring translateY) so tapping a date matches PillButton / StickerButton.
+interface StripCellProps {
+  weekday: string
+  day: number
+  ink: string
+  tint: string
+  isSelected: boolean
+  isToday: boolean
+  textColor: string
+  fontSemiBold: string
+  fontDisplay: string
+  onPress: () => void
+}
+
+function StripCell({
+  weekday, day, ink, tint, isSelected, isToday, textColor,
+  fontSemiBold, fontDisplay, onPress,
+}: StripCellProps) {
+  const press = useSharedValue(0)
+  // Press uses the app's standard sticker-press feel (withSpring translateY).
+  // The selected outline is static (not animated): the strip recenters on the
+  // selected day each tap, so cells are remounted rather than persisted —
+  // there's no stable cell to animate a ring across, and trying to spring it
+  // mid-remount glitches. The tactile feedback comes from the press spring.
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: press.value * motion.pressTranslateY }],
+  }))
+
+  // Selected = stronger tint + saturated ink outline so it pops; the label uses
+  // ink too. Unselected = soft tint, no border, muted ink weekday.
+  return (
+    <Animated.View
+      style={[
+        styles.stripCellWrap,
+        animatedStyle,
+        { backgroundColor: tint, borderColor: isSelected ? ink : 'transparent' },
+      ]}
+    >
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => { press.value = withSpring(1, motion.press) }}
+        onPressOut={() => { press.value = withSpring(0, motion.press) }}
+        style={styles.stripCellPressable}
+      >
+        <Text
+          numberOfLines={1}
+          style={{
+            color: ink,
+            fontFamily: fontSemiBold,
+            fontSize: 9,
+            letterSpacing: 0.8,
+            textTransform: 'uppercase',
+            opacity: isSelected ? 1 : isToday ? 0.9 : 0.7,
+          }}
+        >
+          {weekday.slice(0, 2)}
+        </Text>
+        <Text
+          numberOfLines={1}
+          style={{
+            color: isSelected ? ink : textColor,
+            fontFamily: fontDisplay,
+            fontSize: 16,
+            lineHeight: 18,
+            marginTop: 2,
+          }}
+        >
+          {day}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  )
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 export function CycleJourneyRingFull({ cycleConfig }: Props) {
   const { colors, stickers, font } = useTheme()
@@ -209,7 +298,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
   // the 6-o'clock anchor where atan2 wraps).
   const startVecRef = useRef({ x: 0, y: 1 })   // finger vector from center at grant
   const lastAngleRef = useRef(0)
-  const lastDeltaRef = useRef(0)               // last frame's signed angular step
+  const velSamplesRef = useRef<number[]>([])   // recent signed angular steps (rolling window)
   const totalMoveRef = useRef(0)
   const initLocRef = useRef({ x: 0, y: 0 })
 
@@ -247,7 +336,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
         if (Math.hypot(vx, vy) < 1) { vx = 0; vy = RING_R }
         startVecRef.current = { x: vx, y: vy }
         lastAngleRef.current = Math.atan2(vy, vx) * (180 / Math.PI)
-        lastDeltaRef.current = 0
+        velSamplesRef.current = []
         totalMoveRef.current = 0
       },
       onPanResponderMove: (_e, g) => {
@@ -259,7 +348,12 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
         const delta = angleDelta(lastAngleRef.current, ang)
         rotationDeg.value += delta
         totalMoveRef.current += Math.abs(delta)
-        lastDeltaRef.current = delta
+        // Keep a short rolling window of the last few frames' steps. The fling
+        // velocity is the average of these — using just the final frame makes
+        // the throw die instantly when the finger eases off before lifting.
+        const samples = velSamplesRef.current
+        samples.push(delta)
+        if (samples.length > 4) samples.shift()
         lastAngleRef.current = ang
       },
       onPanResponderRelease: () => {
@@ -278,11 +372,17 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
           }
           if (best !== null) snapToDay(best + 1)
         } else {
-          // Throw velocity (deg/sec) ≈ last frame's angular step × ~60fps,
-          // clamped so a fast flick can't fling the wheel uncontrollably.
-          const throwVel = Math.max(-600, Math.min(600, lastDeltaRef.current * 60))
+          // Throw velocity (deg/sec) ≈ mean of the last few frames' angular
+          // steps × ~60fps, clamped so a fast flick can't fling the wheel
+          // uncontrollably. Averaging (vs the single final frame) keeps the
+          // momentum representative so the wheel glides instead of stopping short.
+          const samples = velSamplesRef.current
+          const meanStep = samples.length
+            ? samples.reduce((sum, d) => sum + d, 0) / samples.length
+            : 0
+          const throwVel = Math.max(-1200, Math.min(1200, meanStep * 60))
           rotationDeg.value = withDecay(
-            { velocity: throwVel, deceleration: 0.94 },
+            { velocity: throwVel, deceleration: 0.997 },
             (finished) => {
               'worklet'
               if (!finished) return
@@ -447,49 +547,21 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
 
       {/* ── 7-day strip ── */}
       <View style={styles.strip}>
-        {strip.map((s) => {
-          const sAccent = phaseAccent(s.phase, stickers)
-          const sTint = phaseTint(s.phase, stickers)
-          return (
-            <Pressable
-              key={s.date}
-              onPress={() => onStripPress(s.day)}
-              style={[
-                styles.stripCell,
-                {
-                  backgroundColor: s.isSelected ? sAccent : sTint,
-                  borderColor: s.isToday ? sAccent : 'transparent',
-                  borderWidth: s.isToday ? 2 : 0,
-                },
-              ]}
-            >
-              <Text
-                numberOfLines={1}
-                style={{
-                  color: s.isSelected ? '#FFFEF8' : sAccent,
-                  fontFamily: font.bodySemiBold,
-                  fontSize: 9,
-                  letterSpacing: 0.8,
-                  textTransform: 'uppercase',
-                }}
-              >
-                {s.weekday.slice(0, 2)}
-              </Text>
-              <Text
-                numberOfLines={1}
-                style={{
-                  color: s.isSelected ? '#FFFEF8' : colors.text,
-                  fontFamily: font.display,
-                  fontSize: 16,
-                  lineHeight: 18,
-                  marginTop: 2,
-                }}
-              >
-                {s.day}
-              </Text>
-            </Pressable>
-          )
-        })}
+        {strip.map((s) => (
+          <StripCell
+            key={s.date}
+            weekday={s.weekday}
+            day={s.day}
+            ink={phaseInk(s.phase, stickers)}
+            tint={phaseTint(s.phase, stickers)}
+            isSelected={s.isSelected}
+            isToday={s.isToday}
+            textColor={colors.text}
+            fontSemiBold={font.bodySemiBold}
+            fontDisplay={font.display}
+            onPress={() => onStripPress(s.day)}
+          />
+        ))}
       </View>
 
       {/* ── Bottom panel ── */}
@@ -570,12 +642,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 4,
   },
-  stripCell: {
+  stripCellWrap: {
     flex: 1,
     height: 54,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  stripCellPressable: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
   },
 
   panel: { },

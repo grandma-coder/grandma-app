@@ -21,6 +21,7 @@ import { SymptomSticker } from '../../calendar/symptomStickers'
 import { symptomLabel } from '../../../lib/cycleSymptoms'
 import type { SymptomId } from '../../../lib/cycleSymptoms'
 import { supabase } from '../../../lib/supabase'
+import { useTranslation } from '../../../lib/i18n'
 
 interface Props {
   visible: boolean
@@ -32,24 +33,12 @@ interface Props {
 interface Point { date: string; value: number }
 type Row = { type: string; value: string | null }
 
-const MOOD_META: Record<string, { Sticker: typeof Sad; fill: string; label: string }> = {
-  low:   { Sticker: Sad,    fill: '#EE7B6D', label: 'Low' },
-  down:  { Sticker: Sad,    fill: '#9DC3E8', label: 'Down' },
-  okay:  { Sticker: Sleepy, fill: '#C8B6E8', label: 'Okay' },
-  good:  { Sticker: Smiley, fill: '#F5D652', label: 'Good' },
-  great: { Sticker: Smiley, fill: '#BDD48C', label: 'Great' },
-}
-
-const CM_LABEL: Record<string, string> = {
-  dry: 'Dry', sticky: 'Sticky', creamy: 'Creamy', watery: 'Watery', eggwhite: 'Eggwhite',
-}
-
-const LH_LABEL: Record<string, string> = {
-  negative: 'Negative', faint: 'Faint', positive: 'Positive', peak: 'Peak',
-}
-
-const PERIOD_LABEL: Record<string, string> = {
-  light: 'Light', medium: 'Medium', heavy: 'Heavy',
+const MOOD_META: Record<string, { Sticker: typeof Sad; fill: string }> = {
+  low:   { Sticker: Sad,    fill: '#EE7B6D' },
+  down:  { Sticker: Sad,    fill: '#9DC3E8' },
+  okay:  { Sticker: Sleepy, fill: '#C8B6E8' },
+  good:  { Sticker: Smiley, fill: '#F5D652' },
+  great: { Sticker: Smiley, fill: '#BDD48C' },
 }
 
 function phaseLabel(phase: CyclePhase): string {
@@ -113,9 +102,26 @@ function fillDays(history: Point[], days = 7): { values: number[]; labels: strin
 
 export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const [rows, setRows] = useState<Row[]>([])
   const [bbtHist, setBbtHist] = useState<Point[]>([])
   const [loading, setLoading] = useState(true)
+
+  const CM_LABEL: Record<string, string> = {
+    dry: t('cycleDash_cm_dry'), sticky: t('cycleDash_cm_sticky'), creamy: t('cycleDash_cm_creamy'),
+    watery: t('cycleDash_cm_watery'), eggwhite: t('cycleDash_cm_eggwhite'),
+  }
+  const LH_LABEL: Record<string, string> = {
+    negative: t('cycleDash_lh_negative'), faint: t('cycleDash_lh_faint'),
+    positive: t('cycleDash_lh_positive'), peak: t('cycleDash_lh_peak'),
+  }
+  const PERIOD_LABEL: Record<string, string> = {
+    light: t('cycleDash_period_light'), medium: t('cycleDash_period_medium'), heavy: t('cycleDash_period_heavy'),
+  }
+  const MOOD_LABEL: Record<string, string> = {
+    low: t('cycleDash_mood_low'), down: t('cycleDash_mood_down'), okay: t('cycleDash_mood_okay'),
+    good: t('cycleDash_mood_good'), great: t('cycleDash_mood_great'),
+  }
 
   const today = toDateStr(new Date())
 
@@ -152,7 +158,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
   return (
     <LogSheet
       visible={visible}
-      title="Today at a glance"
+      title={t('cycleDash_today')}
       onClose={onClose}
       chip={phaseLabel(phase)}
       chipColor={accent}
@@ -161,7 +167,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         {/* Mood — full-width hero tile */}
         <PaperCard tint={stickers.yellowSoft} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
-            <MonoCaps size={10} color={muted}>MOOD</MonoCaps>
+            <MonoCaps size={10} color={muted}>{t('cycleDash_mood')}</MonoCaps>
           </View>
           <View style={styles.moodRow}>
             {moodMeta ? (
@@ -171,10 +177,10 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
             )}
             <View style={{ flex: 1 }}>
               <Display size={28} color={ink}>
-                {moodMeta?.label ?? 'Not logged yet'}
+                {moodValue ? (MOOD_LABEL[moodValue] ?? moodValue) : t('cycleDash_notLoggedYet')}
               </Display>
               <Body size={12} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
-                {moodMeta ? 'how you felt today' : 'tap a chip to log your mood'}
+                {moodMeta ? t('cycleDash_howYouFelt') : t('cycleDash_tapChipToLog')}
               </Body>
             </View>
           </View>
@@ -185,39 +191,39 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
           <PaperCard tint={stickers.blueSoft} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <Drop size={16} fill={stickers.blue} />
-              <MonoCaps size={10} color={muted}>BBT</MonoCaps>
+              <MonoCaps size={10} color={muted}>{t('cycleDash_bbt')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
               {bbtValue ? `${bbtValue}°` : '—'}
             </Display>
             <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
-              {bbtValue ? 'basal temp' : 'not logged'}
+              {bbtValue ? t('cycleDash_basalTemp') : t('cycleDash_notLogged')}
             </Body>
           </PaperCard>
 
           <PaperCard tint={stickers.yellowSoft} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <Drop size={16} fill={stickers.yellow} />
-              <MonoCaps size={10} color={muted}>LH</MonoCaps>
+              <MonoCaps size={10} color={muted}>{t('cycleDash_lh')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
               {lhValue ? (LH_LABEL[lhValue] ?? lhValue) : '—'}
             </Display>
             <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
-              {lhValue ? 'ovulation test' : 'not logged'}
+              {lhValue ? t('cycleDash_ovulationTest') : t('cycleDash_notLogged')}
             </Body>
           </PaperCard>
 
           <PaperCard tint={stickers.greenSoft} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <Drop size={16} fill={stickers.green} />
-              <MonoCaps size={10} color={muted}>CM</MonoCaps>
+              <MonoCaps size={10} color={muted}>{t('cycleDash_cm')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
               {cmValue ? (CM_LABEL[cmValue] ?? cmValue) : '—'}
             </Display>
             <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
-              {cmValue ? 'cervical mucus' : 'not logged'}
+              {cmValue ? t('cycleDash_cervicalMucus') : t('cycleDash_notLogged')}
             </Body>
           </PaperCard>
         </View>
@@ -227,26 +233,26 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
           <PaperCard tint={stickers.pinkSoft} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <Heart size={16} fill={intimacy ? stickers.pink : stickers.pinkSoft} />
-              <MonoCaps size={10} color={muted}>INTIMACY</MonoCaps>
+              <MonoCaps size={10} color={muted}>{t('cycleDash_intimacy')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
               {intimacy ? '✓' : '—'}
             </Display>
             <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
-              {intimacy ? 'logged today' : 'not logged'}
+              {intimacy ? t('cycleDash_loggedToday') : t('cycleDash_notLogged')}
             </Body>
           </PaperCard>
 
           <PaperCard tint={stickers.peachSoft} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <Drop size={16} fill={periodStart ? stickers.coral : stickers.pinkSoft} />
-              <MonoCaps size={10} color={muted}>PERIOD</MonoCaps>
+              <MonoCaps size={10} color={muted}>{t('cycleDash_period')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
               {periodStart ? (PERIOD_LABEL[periodStart] ?? '✓') : '—'}
             </Display>
             <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
-              {periodStart ? 'flow today' : 'not logged'}
+              {periodStart ? t('cycleDash_flowToday') : t('cycleDash_notLogged')}
             </Body>
           </PaperCard>
         </View>
@@ -254,7 +260,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         {/* Symptoms — full-width chip list */}
         <PaperCard tint={stickers.lilacSoft} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
-            <MonoCaps size={10} color={muted}>SYMPTOMS</MonoCaps>
+            <MonoCaps size={10} color={muted}>{t('cycleDash_symptoms')}</MonoCaps>
           </View>
           {symptoms.length > 0 ? (
             <View style={styles.symptomWrap}>
@@ -272,7 +278,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
             </View>
           ) : (
             <Body size={12} color={muted} style={{ marginTop: 8, fontFamily: font.italic }}>
-              No symptoms logged today.
+              {t('cycleDash_noSymptoms')}
             </Body>
           )}
         </PaperCard>
@@ -281,7 +287,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         <PaperCard tint={colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
             <Drop size={16} fill={stickers.blue} />
-            <MonoCaps size={10} color={muted}>BBT · LAST 7 DAYS</MonoCaps>
+            <MonoCaps size={10} color={muted}>{t('cycleDash_bbtLast7')}</MonoCaps>
           </View>
           {loading ? (
             <View style={{ height: 100, justifyContent: 'center' }}>
@@ -291,7 +297,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
             <Sparkline points={fillDays(bbtHist).values} color={accent} ink={ink} />
           ) : (
             <Body size={12} color={muted} style={{ marginTop: 8, fontFamily: font.italic }}>
-              Log BBT on at least 2 days to see a trend.
+              {t('cycleDash_bbtNeedMore')}
             </Body>
           )}
         </PaperCard>

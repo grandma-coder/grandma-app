@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useTheme, brand, stickers, borderRadius } from '../../constants/theme'
 import type { CycleInfo } from '../../lib/cycleLogic'
+import { useTranslation } from '../../lib/i18n'
 
 interface DailyInsightsProps {
   cycleInfo: CycleInfo
@@ -37,13 +38,14 @@ const PHASE_INSIGHTS: Record<string, { icon: string; iconColor: string; bgColor:
 
 export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyInsightsProps) {
   const { colors: tc } = useTheme()
+  const { t } = useTranslation()
   const insights = PHASE_INSIGHTS[cycleInfo.phase] ?? PHASE_INSIGHTS.follicular
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: tc.text }]}>MY DAILY INSIGHTS</Text>
-        <Text style={[styles.headerSub, { color: tc.textMuted }]}>Today</Text>
+        <Text style={[styles.headerTitle, { color: tc.text }]}>{t('prepreg_dailyInsights_myDailyInsights')}</Text>
+        <Text style={[styles.headerSub, { color: tc.textMuted }]}>{t('common_today')}</Text>
       </View>
 
       {/* Horizontal insight cards */}
@@ -54,7 +56,7 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
       >
         {/* Log symptoms card */}
         <Pressable onPress={onLogSymptoms} style={[styles.logCard, { backgroundColor: tc.surfaceGlass, borderColor: tc.border }]}>
-          <Text style={[styles.logCardTitle, { color: tc.text }]}>Log your{'\n'}symptoms</Text>
+          <Text style={[styles.logCardTitle, { color: tc.text }]}>{t('prepreg_dailyInsights_logSymptoms')}</Text>
           <View style={styles.logCardButton}>
             <Ionicons name="add" size={18} color={tc.text} />
           </View>
@@ -79,7 +81,7 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
       {/* Tips section */}
       <View style={styles.tipsSection}>
         <Text style={[styles.tipsTitle, { color: tc.text }]}>
-          <Ionicons name="sparkles" size={14} color={stickers.yellow} /> PHASE TIPS
+          <Ionicons name="sparkles" size={14} color={stickers.yellow} /> {t('prepreg_dailyInsights_phaseTips')}
         </Text>
         {cycleInfo.dailyTips.slice(0, 3).map((tip, i) => (
           <View key={i} style={styles.tipRow}>
@@ -94,20 +96,20 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
         <PaperCard radius={28} padding={20} style={styles.listCard}>
           <View style={styles.listHeader}>
             <Ionicons name="fitness" size={16} color={stickers.green} />
-            <Text style={[styles.listTitle, { color: tc.textMuted }]}>ACTIVITIES</Text>
+            <Text style={[styles.listTitle, { color: tc.textMuted }]}>{t('prepreg_dailyInsights_activities')}</Text>
           </View>
           {cycleInfo.activities.slice(0, 4).map((act, i) => (
-            <Text key={i} style={[styles.listItem, { color: tc.textSecondary }]}>• {act}</Text>
+            <Text key={i} style={[styles.listItem, { color: tc.textSecondary }]}>{'•'} {act}</Text>
           ))}
         </PaperCard>
 
         <PaperCard radius={28} padding={20} style={styles.listCard}>
           <View style={styles.listHeader}>
             <Ionicons name="nutrition" size={16} color={stickers.coral} />
-            <Text style={[styles.listTitle, { color: tc.textMuted }]}>NUTRITION</Text>
+            <Text style={[styles.listTitle, { color: tc.textMuted }]}>{t('prepreg_dailyInsights_nutrition')}</Text>
           </View>
           {cycleInfo.nutritionTips.slice(0, 3).map((tip, i) => (
-            <Text key={i} style={[styles.listItem, { color: tc.textSecondary }]} numberOfLines={2}>• {tip}</Text>
+            <Text key={i} style={[styles.listItem, { color: tc.textSecondary }]} numberOfLines={2}>{'•'} {tip}</Text>
           ))}
         </PaperCard>
       </View>
