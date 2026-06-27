@@ -2327,4 +2327,90 @@ export interface TranslationKeys {
   pregCal_alertDeleteError: string
   pregCal_alertDeleteLog: string
   pregCal_alertDeleteLogTitle: string
+  // ─── B7a-1: KidsHome residual strings ──────────────────────────────────────
+  kids_home_range_more: string
+  kids_home_mood_label: string
+  kids_home_mood_this_period: string
+  kids_home_sleep_modal_title: string
+  kids_home_sleep_modal_pct_target: string
+  kids_home_feeding_modal_left: string
+  kids_home_feeding_modal_right: string
+  kids_home_feeding_modal_feedings: string
+  kids_home_feeding_modal_avg_ml: string
+  kids_home_feeding_modal_pct_breast: string
+  kids_home_activities_modal_days: string
+  kids_home_activities_modal_per_active_day: string
+  kids_home_goals_subtitle: string
+  kids_home_reminder_done_date: string
+  kids_home_leaps_path_number: string
+  // ─── B7a-1: PregnancyAnalytics residual strings ────────────────────────────
+  preg_analytics_times_prefix: string
+  preg_analytics_overall_last7: string
+  preg_analytics_nutrition_movement_hydration: string
+  preg_analytics_stat_value_pct: string
+  preg_analytics_no_moods: string
+  preg_analytics_no_symptoms: string
+  preg_analytics_511_rule: string
+  preg_analytics_loading_birth: string
+  preg_analytics_birth_readiness_5buckets: string
+  preg_analytics_your_score_last7: string
+  // ─── B7a-1: KidsAnalytics residual strings ─────────────────────────────────
+  kids_analytics_pillar_activity: string
+  kids_analytics_how_score_works: string
+  kids_analytics_most_logged_foods: string
+  kids_analytics_times_prefix: string
+  kids_analytics_breast_sessions: string
+  kids_analytics_bottles: string
+  kids_analytics_personalized_for_today: string
+  kids_analytics_confirm_share_body: string
+  // ─── B7a-1: care-circle residual strings ───────────────────────────────────
+  careCircle_tagline: string
+  careCircle_members_tab: string
+  careCircle_activity_tab: string
+  careCircle_no_caregivers: string
+  careCircle_invite_village: string
+  careCircle_invite_partner_desc: string
+  careCircle_no_activity_title: string
+  careCircle_quiet_day: string
+  careCircle_activity_log_desc: string
+  careCircle_resend_invite: string
+  careCircle_remove: string
+  careCircle_step1_who: string
+  careCircle_step1_tagline: string
+  careCircle_field_name: string
+  careCircle_field_role: string
+  careCircle_step2_which_children: string
+  careCircle_step3_what_can: string
+  careCircle_step4_how_invite: string
+  careCircle_field_email_address: string
+  careCircle_field_phone_number: string
+  careCircle_link_share_desc: string
+  careCircle_field_email: string
+  careCircle_field_permission_level: string
+  // ─── B7a-1: PregnancyCalendar residual strings ─────────────────────────────
+  pregCal_log_something: string
+  pregCal_manage_routines: string
+  pregCal_recurring_desc: string
+  pregCal_new_routine: string
+  pregCal_add_routine: string
+  pregCal_active_routines: string
+  pregCal_edit_routine: string
+  pregCal_update: string
+  pregCal_delete_routine_title: string
+  pregCal_delete_routine_desc: string
+  pregCal_pending_count: string
+  pregCal_tap_to_log: string
+  pregCal_logged_count: string
+  pregCal_date_at_time: string
+  pregCal_no_logs_day: string
+  pregCal_nothing_planned: string
+  pregCal_tap_to_add: string
+  pregCal_pregnancy_path: string
+  pregCal_milestones_40w: string
+  pregCal_trimester: string
+  pregCal_week_label: string
+  pregCal_status_soon: string
+  pregCal_status_upcoming: string
+  pregCal_appointment_btn: string
+  pregCal_upload_exam_btn: string
 }

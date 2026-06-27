@@ -73,6 +73,7 @@ import {
   Smiley as SmileySticker,
   Bear as BearSticker,
 } from '../../components/ui/Stickers'
+import { useTranslation } from '../../lib/i18n'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -422,6 +423,7 @@ const photoStyles = StyleSheet.create({
 
 export default function CareCircleScreen() {
   const { colors, font, stickers, isDark, radius } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
 
@@ -689,10 +691,10 @@ export default function CareCircleScreen() {
         <ScreenHeader />
         <View style={styles.titleBlock}>
           <Text style={[styles.pageTitle, { color: colors.text, fontFamily: font.display }]}>
-            Care Circle
+            {t('careCircle_title')}
           </Text>
           <Text style={[styles.pageItalic, { color: stickers.coral, fontFamily: font.italic }]}>
-            the people who love them with you
+            {t('careCircle_tagline')}
           </Text>
         </View>
       </View>
@@ -724,7 +726,7 @@ export default function CareCircleScreen() {
               },
             ]}
           >
-            Members
+            {t('careCircle_members_tab')}
           </Text>
         </Pressable>
         <Pressable
@@ -743,7 +745,7 @@ export default function CareCircleScreen() {
               },
             ]}
           >
-            Activity
+            {t('careCircle_activity_tab')}
           </Text>
         </Pressable>
       </View>
@@ -763,13 +765,13 @@ export default function CareCircleScreen() {
             >
               <FlowerSticker size={120} petal={stickers.pink} center={stickers.yellow} />
               <Display size={24} align="center" color={colors.text}>
-                No caregivers yet
+                {t('careCircle_no_caregivers')}
               </Display>
               <Text style={{ fontFamily: font.italic, fontSize: 18, color: stickers.coral, textAlign: 'center', marginTop: -6 }}>
-                invite the village
+                {t('careCircle_invite_village')}
               </Text>
               <Body size={14} align="center" color={colors.textSecondary}>
-                Invite a partner, nanny, or family member to share access.
+                {t('careCircle_invite_partner_desc')}
               </Body>
             </View>
           )}
@@ -932,7 +934,7 @@ export default function CareCircleScreen() {
                     style={[styles.resendBtn, { backgroundColor: stickers.lilac + (isDark ? '28' : '38') }]}
                   >
                     <Mail size={14} color={stickers.lilacInk} strokeWidth={2} />
-                    <Text style={[styles.resendText, { color: stickers.lilacInk, fontFamily: font.bodySemiBold }]}>Resend Invite</Text>
+                    <Text style={[styles.resendText, { color: stickers.lilacInk, fontFamily: font.bodySemiBold }]}>{t('careCircle_resend_invite')}</Text>
                   </Pressable>
                 )}
 
@@ -943,7 +945,7 @@ export default function CareCircleScreen() {
                     onPress={() => setEditingMember(m)}
                   >
                     <Pencil size={14} color={colors.text} />
-                    <Text style={[styles.actionText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Edit</Text>
+                    <Text style={[styles.actionText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_edit')}</Text>
                   </Pressable>
                   <Pressable
                     style={[styles.actionBtn, { borderColor: colors.borderStrong }]}
@@ -957,7 +959,7 @@ export default function CareCircleScreen() {
                     onPress={() => removeMember(m)}
                   >
                     <Trash2 size={14} color={stickers.coral} />
-                    <Text style={[styles.actionText, { color: stickers.coral, fontFamily: font.bodySemiBold }]}>Remove</Text>
+                    <Text style={[styles.actionText, { color: stickers.coral, fontFamily: font.bodySemiBold }]}>{t('careCircle_remove')}</Text>
                   </Pressable>
                 </View>
               </View>
@@ -1029,13 +1031,13 @@ export default function CareCircleScreen() {
                 >
                   <FlowerSticker size={120} petal={stickers.lilac} center={stickers.yellow} />
                   <Display size={24} align="center" color={colors.text}>
-                    No activity yet
+                    {t('careCircle_no_activity_title')}
                   </Display>
                   <Text style={{ fontFamily: font.italic, fontSize: 18, color: stickers.coral, textAlign: 'center', marginTop: -6 }}>
-                    a quiet day, dear
+                    {t('careCircle_quiet_day')}
                   </Text>
                   <Body size={14} align="center" color={colors.textSecondary}>
-                    Activities logged by caregivers will appear here.
+                    {t('careCircle_activity_log_desc')}
                   </Body>
                 </View>
               )
@@ -1169,6 +1171,7 @@ function FilterChip({ label, active, onPress, kind = 'kid' }: { label: string; a
 
 function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
   const { colors, font, stickers, isDark, radius } = useTheme()
+  const { t } = useTranslation()
   const allChildren = useChildStore((s) => s.children)
   const toast = useSavedToast()
   const paper = colors.surface
@@ -1324,14 +1327,14 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
             <>
               <View style={{ alignItems: 'center', marginBottom: 8 }}>
                 <Text style={{ fontFamily: font.display, fontSize: 28, color: colors.text, letterSpacing: -0.5 }}>
-                  Who
+                  {t('careCircle_step1_who')}
                 </Text>
                 <Text style={{ fontFamily: font.italic, fontSize: 18, color: stickers.coral, marginTop: 2 }}>
-                  add a caregiver, dear
+                  {t('careCircle_step1_tagline')}
                 </Text>
               </View>
               <PhotoPickerAvatar uri={photoUri} onPick={setPhotoUri} />
-              <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Name</MonoCaps></View>
+              <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_name')}</MonoCaps></View>
               <TextInput
                 value={name}
                 onChangeText={setName}
@@ -1339,7 +1342,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                 placeholderTextColor={colors.textMuted}
                 style={[sheetStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
               />
-              <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Role</MonoCaps></View>
+              <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_role')}</MonoCaps></View>
               <View style={sheetStyles.chipGrid}>
                 {ROLES.map((r) => {
                   const active = role === r.id
@@ -1365,7 +1368,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {step === 2 && (
             <>
               <Text style={[sheetStyles.stepDesc, { color: colors.textSecondary }]}>
-                Which children can {name || 'this person'} access?
+                {t('careCircle_step2_which_children', { name: name || 'this person' })}
               </Text>
               <View style={sheetStyles.chipGrid}>
                 {allChildren.map((c) => {
@@ -1387,7 +1390,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               </View>
               <View style={sheetStyles.btnRow}>
                 <Pressable onPress={() => setStep(1)} style={[sheetStyles.backBtn, { borderColor: paperBorder }]}>
-                  <Text style={[sheetStyles.backBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Back</Text>
+                  <Text style={[sheetStyles.backBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <SheetButton label="Next — Permissions" onPress={() => setStep(3)} disabled={selectedChildren.length === 0} />
@@ -1400,7 +1403,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {step === 3 && (
             <>
               <Text style={[sheetStyles.stepDesc, { color: colors.textSecondary }]}>
-                What can {name || 'this person'} do?
+                {t('careCircle_step3_what_can', { name: name || 'this person' })}
               </Text>
               {PERMISSION_LEVELS.map((p) => {
                 const active = permLevel === p.id
@@ -1420,7 +1423,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               })}
               <View style={sheetStyles.btnRow}>
                 <Pressable onPress={() => setStep(2)} style={[sheetStyles.backBtn, { borderColor: paperBorder }]}>
-                  <Text style={[sheetStyles.backBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Back</Text>
+                  <Text style={[sheetStyles.backBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <SheetButton label="Next — Send Invite" onPress={() => setStep(4)} />
@@ -1433,7 +1436,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {step === 4 && (
             <>
               <Text style={[sheetStyles.stepDesc, { color: colors.textSecondary }]}>
-                How do you want to invite {name || 'them'}? Pick one method below.
+                {t('careCircle_step4_how_invite', { name: name || 'them' })}
               </Text>
 
               {/* Method selector */}
@@ -1459,7 +1462,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               {/* Email field */}
               {sendMethod === 'email' && (
                 <>
-                  <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Email address</MonoCaps></View>
+                  <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_email_address')}</MonoCaps></View>
                   <TextInput
                     value={inviteEmail}
                     onChangeText={setInviteEmail}
@@ -1475,7 +1478,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               {/* SMS fields */}
               {sendMethod === 'sms' && (
                 <>
-                  <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Phone number</MonoCaps></View>
+                  <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_phone_number')}</MonoCaps></View>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <Pressable
                       onPress={() => setShowCountryPicker(!showCountryPicker)}
@@ -1515,13 +1518,13 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               {/* Share link — no extra fields */}
               {sendMethod === 'link' && (
                 <Text style={[sheetStyles.stepDesc, { color: colors.textMuted, fontFamily: font.body }]}>
-                  A share sheet will open so you can send the invite link via any app.
+                  {t('careCircle_link_share_desc')}
                 </Text>
               )}
 
               <View style={sheetStyles.btnRow}>
                 <Pressable onPress={() => setStep(3)} style={[sheetStyles.backBtn, { borderColor: paperBorder }]}>
-                  <Text style={[sheetStyles.backBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Back</Text>
+                  <Text style={[sheetStyles.backBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <SheetButton label={saving ? 'Sending…' : 'Send Invite'} onPress={handleSendInvite} disabled={saving} />
@@ -1576,6 +1579,7 @@ function EditMemberSheet({ member, onClose, onSaved }: {
   onSaved: (updates: { displayName?: string; photoUrl?: string; role?: string; permLevel?: string }) => void
 }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const paper = colors.surface
   const paperBorder = colors.border
   const inkActiveBg = stickers.lilac + (isDark ? '32' : '40')
@@ -1597,7 +1601,7 @@ function EditMemberSheet({ member, onClose, onSaved }: {
         <View style={sheetStyles.form}>
           <PhotoPickerAvatar uri={editPhotoUri} onPick={setEditPhotoUri} />
 
-          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Name</MonoCaps></View>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_name')}</MonoCaps></View>
           <TextInput
             value={editName}
             onChangeText={setEditName}
@@ -1608,12 +1612,12 @@ function EditMemberSheet({ member, onClose, onSaved }: {
 
           {member.email ? (
             <>
-              <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Email</MonoCaps></View>
+              <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_email')}</MonoCaps></View>
               <Text style={[sheetStyles.readOnly, { color: colors.textMuted, fontFamily: font.body }]}>{member.email}</Text>
             </>
           ) : null}
 
-          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Role</MonoCaps></View>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_role')}</MonoCaps></View>
           <View style={sheetStyles.chipGrid}>
             {ROLES.map((r) => {
               const active = editRole === r.id || editRole === ((r as any).dbRole ?? r.id)
@@ -1632,7 +1636,7 @@ function EditMemberSheet({ member, onClose, onSaved }: {
             })}
           </View>
 
-          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Permission level</MonoCaps></View>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_permission_level')}</MonoCaps></View>
           {PERMISSION_LEVELS.map((p) => {
             const active = editPermLevel === p.id
             return (

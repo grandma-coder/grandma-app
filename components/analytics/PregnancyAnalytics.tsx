@@ -211,6 +211,7 @@ interface PregnancyAnalyticsProps {
 
 export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {}) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
@@ -471,7 +472,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                       { backgroundColor: stickers.yellowSoft, borderColor: 'rgba(20,19,19,0.12)' },
                     ]}
                   >
-                    <Text style={[styles.countText, { color: colors.text }]}>×{s.count}</Text>
+                    <Text style={[styles.countText, { color: colors.text }]}>{t('preg_analytics_times_prefix', { count: s.count })}</Text>
                   </View>
                 </View>
               ))}
@@ -484,10 +485,10 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View>
               <Text style={{ fontSize: 20, color: colors.text, fontFamily: font.display, letterSpacing: -0.3 }}>
-                Labor & birth
+                {'Labor & birth'}
               </Text>
               <Text style={{ fontSize: 12, color: colors.textMuted, fontFamily: font.bodyMedium, marginTop: 2 }}>
-                Track contractions and how ready you are
+                {'Track contractions and how ready you are'}
               </Text>
             </View>
           </View>
@@ -685,7 +686,7 @@ function HeroWeekCard({
           {trimesterLabel(trimester).toUpperCase()}
         </Text>
         <Text style={[styles.heroValue, { color: colors.text, fontFamily: font.display }]}>
-          Week {weekNumber}
+          {'Week '}{weekNumber}
         </Text>
         <Text style={[styles.heroSub, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
           {dDaysText}
@@ -697,7 +698,7 @@ function HeroWeekCard({
             {trimester}
           </Text>
           <Text style={[styles.heroBadgeT, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-            TRI
+            {'TRI'}
           </Text>
         </View>
       </View>
@@ -1006,6 +1007,7 @@ function DetailDispatcher(props: DetailProps & { pillarKey: PillarKey; accentCol
 
 function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
 
   if (!wellbeing) {
     return (
@@ -1035,7 +1037,7 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
         <Text style={{ color: colors.text, fontSize: 56, fontFamily: font.display, letterSpacing: -1 }}>
           {wellbeing.overall}%
         </Text>
-        <Body size={13} color={colors.textSecondary}>Overall · last 7 days</Body>
+        <Body size={13} color={colors.textSecondary}>{t('preg_analytics_overall_last7')}</Body>
       </View>
 
       <StatTilesRow
@@ -1073,9 +1075,9 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
       <PaperCard title="How it's computed">
         <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
           Each pillar scores 0–10 from your last 7 days of logs.{' '}
-          <Body size={13} color={colors.text}>Sleep</Body> maps hours against a 9h target.{' '}
-          <Body size={13} color={colors.text}>Mood</Body> counts positive entries.{' '}
-          <Body size={13} color={colors.text}>Nutrition, movement and hydration</Body> each weight
+          <Body size={13} color={colors.text}>{'Sleep'}</Body>{' '}maps hours against a 9h target.{' '}
+          <Body size={13} color={colors.text}>{'Mood'}</Body>{' '}counts positive entries.{' '}
+          <Body size={13} color={colors.text}>{'Nutrition, movement and hydration'}</Body>{' '}each weight
           logs-per-day against healthy pregnancy targets. Overall = average × 10.
         </Body>
       </PaperCard>
@@ -1157,6 +1159,7 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
 
 function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const avg = kickSessions.length > 0
     ? Math.round(kickSessions.reduce((a, b) => a + b.kicks, 0) / kickSessions.length)
     : 0
@@ -1213,7 +1216,7 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
           <View style={{ marginTop: 10 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
               <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyMedium }}>
-                Sessions meeting target
+                {'Sessions meeting target'}
               </Text>
               <Text style={{ color: stickers.pink, fontSize: 13, fontFamily: font.bodySemiBold }}>
                 {meets10in2h} / {kickSessions.length} ({compliancePct}%)
@@ -1235,7 +1238,7 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
                 <View key={b.label}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                     <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyMedium }}>{b.label}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{b.value} · {pct}%</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{t('preg_analytics_stat_value_pct', { value: b.value, pct })}</Text>
                   </View>
                   <View style={{ height: 6, borderRadius: 3, backgroundColor: stickers.pinkSoft, overflow: 'hidden' }}>
                     <View style={{ width: `${pct}%`, height: '100%', backgroundColor: stickers.pink, borderRadius: 3 }} />
@@ -1289,7 +1292,7 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
       {hours.length > 0 ? (
         <PaperCard title="Sleep debt">
           <Text style={{ color: colors.text, fontSize: 24, fontFamily: font.display }}>
-            {debt.toFixed(1)}h
+            {debt.toFixed(1)}{'h'}
           </Text>
           <Body size={13} color={colors.textSecondary}>
             vs an 8-hour target across the last {hours.length} nights you logged.
@@ -1304,6 +1307,7 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
 
 function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const positive = ['happy', 'radiant', 'energetic', 'okay']
   const totals: Record<string, number> = {}
   for (const m of moodTrend) {
@@ -1334,7 +1338,7 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
               .map(([mood, count]): MoodBubbleItem => ({ mood, count }))}
           />
         ) : (
-          <Body size={13} color={colors.textMuted}>No moods logged yet.</Body>
+          <Body size={13} color={colors.textMuted}>{t('preg_analytics_no_moods')}</Body>
         )}
       </PaperCard>
 
@@ -1351,7 +1355,7 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
                     <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyMedium, textTransform: 'capitalize' }}>
                       {mood}
                     </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{n} · {pct}%</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{t('preg_analytics_stat_value_pct', { value: n, pct })}</Text>
                   </View>
                   <View style={{ height: 6, borderRadius: 3, backgroundColor: tint, overflow: 'hidden' }}>
                     <View style={{ width: `${pct}%`, height: '100%', backgroundColor: color, borderRadius: 3 }} />
@@ -1370,6 +1374,7 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
 
 function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const total = symptomFreq.reduce((a, b) => a + b.count, 0)
 
   // Severe symptoms warranting OB call
@@ -1399,7 +1404,7 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
                     <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyMedium, textTransform: 'capitalize' }}>
                       {s.symptom}
                     </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{s.count} · {pct}%</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{t('preg_analytics_stat_value_pct', { value: s.count, pct })}</Text>
                   </View>
                   <View style={{ height: 6, borderRadius: 3, backgroundColor: stickers.yellowSoft, overflow: 'hidden' }}>
                     <View style={{ width: `${pct}%`, height: '100%', backgroundColor: stickers.yellow, borderRadius: 3 }} />
@@ -1409,7 +1414,7 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
             })}
           </View>
         ) : (
-          <Body size={13} color={colors.textMuted}>No symptoms logged yet.</Body>
+          <Body size={13} color={colors.textMuted}>{t('preg_analytics_no_symptoms')}</Body>
         )}
       </PaperCard>
 
@@ -1500,12 +1505,12 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
               {todayGlasses}
             </Text>
             <Text style={{ fontFamily: font.bodyMedium, fontSize: 10, color: colors.textSecondary, marginTop: -2 }}>
-              of {TARGET}
+              {'of '}{TARGET}
             </Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font.display, fontSize: 22, color: colors.text, letterSpacing: -0.4 }}>
-              {todayPct}% of goal
+              {todayPct}{'% of goal'}
             </Text>
             <Text style={{ fontFamily: font.bodyMedium, fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
               {todayRemaining > 0 ? `${todayRemaining} more glass${todayRemaining === 1 ? '' : 'es'} to go.` : 'Goal reached. Keep sipping.'}
@@ -1544,7 +1549,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
         </View>
         {todayGlasses > TARGET ? (
           <Text style={{ marginTop: 10, fontSize: 11, color: colors.textSecondary, fontFamily: font.bodyMedium }}>
-            +{todayGlasses - TARGET} extra · keep going
+            {'+'}{todayGlasses - TARGET}{' extra · keep going'}
           </Text>
         ) : null}
       </PaperCard>
@@ -1564,10 +1569,10 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
             />
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
               <Text style={{ fontSize: 11, color: colors.textSecondary, fontFamily: font.bodyMedium }}>
-                Goal line at {TARGET} glasses
+                {'Goal line at '}{TARGET}{' glasses'}
               </Text>
               <Text style={{ fontSize: 11, color: accent, fontFamily: font.bodySemiBold }}>
-                {hitRate}% hit rate
+                {hitRate}{'% hit rate'}
               </Text>
             </View>
           </>
@@ -1622,7 +1627,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
                     <View style={{ width: `${pct}%`, height: '100%', backgroundColor: accent, borderRadius: 999 }} />
                   </View>
                   <Text style={{ width: 60, textAlign: 'right', fontSize: 13, color: colors.text, fontFamily: font.bodySemiBold }}>
-                    {row.value.toFixed(1)} gl
+                    {row.value.toFixed(1)}{' gl'}
                   </Text>
                 </View>
               )
@@ -1789,7 +1794,7 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
                 <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyMedium }}>{n.label}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>
-                  {n.arr.filter(Boolean).length}/{n.arr.length} days
+                  {n.arr.filter(Boolean).length}/{n.arr.length}{' days'}
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', gap: 4 }}>
@@ -1886,6 +1891,7 @@ function ExerciseDetail({ exerciseHistory, trimester, weekNumber, accentColor, a
 
 function ContractionsDetail({ contractions, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const totalToday = contractions.length > 0 ? contractions[contractions.length - 1].count : 0
   const interval = contractions.length > 0 ? contractions[contractions.length - 1].avgIntervalMin : null
   const sessions = contractions.length
@@ -1911,7 +1917,7 @@ function ContractionsDetail({ contractions, trimester, weekNumber, accentColor, 
                   {c.date}
                 </Text>
                 <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodySemiBold }}>
-                  {c.count}× · {c.avgIntervalMin ? `${Math.round(c.avgIntervalMin)} min apart` : 'no interval'}
+                  {c.count}{'× · '}{c.avgIntervalMin ? `${Math.round(c.avgIntervalMin)} min apart` : 'no interval'}
                 </Text>
               </View>
             ))}
@@ -1925,7 +1931,7 @@ function ContractionsDetail({ contractions, trimester, weekNumber, accentColor, 
 
       <PaperCard title="When to call your provider">
         <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
-          The classic <Body size={13} color={colors.text}>5-1-1 rule</Body>: contractions 5 minutes apart,
+          The classic <Body size={13} color={colors.text}>{t('preg_analytics_511_rule')}</Body>: contractions 5 minutes apart,
           lasting 1 minute, for 1 hour. Earlier than 37 weeks, call sooner — even mild but regular
           contractions may signal preterm labor.
         </Body>
@@ -1936,10 +1942,11 @@ function ContractionsDetail({ contractions, trimester, weekNumber, accentColor, 
 
 function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   if (!birthReady) {
     return (
       <PaperCard>
-        <Body size={13} color={colors.textMuted}>Loading birth-readiness data…</Body>
+        <Body size={13} color={colors.textMuted}>{t('preg_analytics_loading_birth')}</Body>
       </PaperCard>
     )
   }
@@ -1987,7 +1994,7 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
         <Text style={{ color: colors.text, fontSize: 56, fontFamily: font.display, letterSpacing: -1 }}>
           {birthReady.pct}%
         </Text>
-        <Body size={13} color={colors.textSecondary}>Birth readiness · 5 buckets</Body>
+        <Body size={13} color={colors.textSecondary}>{t('preg_analytics_birth_readiness_5buckets')}</Body>
       </View>
 
       <PaperCard title="What's ready">
@@ -2047,6 +2054,7 @@ function ScoreInfoModal({
   trimester: 1 | 2 | 3
 }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   const PILLAR_EXPLAIN: { key: keyof PregnancyWellbeingScore; label: string; body: string; color: string }[] = [
@@ -2093,10 +2101,10 @@ function ScoreInfoModal({
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 24, letterSpacing: -0.4 }}>
-                  Wellbeing score guide
+                  {'Wellbeing score guide'}
                 </Text>
                 <Text style={{ color: stickers.green, fontSize: 13, fontFamily: font.bodyMedium, marginTop: 2 }}>
-                  Week {weekNumber} · {trimesterLabel(trimester).toLowerCase()}
+                  {'Week '}{weekNumber}{' · '}{trimesterLabel(trimester).toLowerCase()}
                 </Text>
               </View>
             </View>
@@ -2127,7 +2135,7 @@ function ScoreInfoModal({
                 <Text style={{ color: colors.text, fontSize: 48, fontFamily: font.display }}>
                   {wellbeing.overall}%
                 </Text>
-                <Body size={13} color={colors.textSecondary}>Your score · last 7 days</Body>
+                <Body size={13} color={colors.textSecondary}>{t('preg_analytics_your_score_last7')}</Body>
               </View>
             )}
 
@@ -2332,7 +2340,7 @@ function WeightByWeekList({
                   letterSpacing: 0.4,
                 }}
               >
-                W{w.week}
+                {'W'}{w.week}
               </Text>
             </View>
             <View style={{ flex: 1, height: 6, borderRadius: 999, backgroundColor: tint, overflow: 'hidden' }}>
@@ -2354,7 +2362,7 @@ function WeightByWeekList({
                 textAlign: 'right',
               }}
             >
-              {w.weight.toFixed(1)} kg
+              {w.weight.toFixed(1)}{' kg'}
             </Text>
           </View>
         )

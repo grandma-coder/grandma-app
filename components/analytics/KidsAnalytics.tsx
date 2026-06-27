@@ -945,7 +945,7 @@ function ScoreInfoModal({
 
             <View style={[styles.ageBanner, { backgroundColor: brand.kids + '10', borderRadius: radius.xl, borderColor: brand.kids + '30' }]}>
               <Text style={[styles.ageBannerTitle, { color: brand.kids }]}>
-                {childName} at {getAgeLabel(ageMonths)}
+                {childName}{' at '}{getAgeLabel(ageMonths)}
               </Text>
               <Text style={[styles.ageBannerBody, { color: colors.textSecondary }]}>
                 {'Sleep target: ' + getAgeSleepTarget(ageMonths) + 'h/day\n' +
@@ -1686,7 +1686,7 @@ function GrandmaInsightDetailSheet({
                   { color: colors.textMuted, fontFamily: font.bodySemiBold },
                 ]}
               >
-                GRANDMA SAYS
+                {t('kids_analytics_grandma_says_label')}
               </Text>
               <Text
                 style={[
@@ -1694,7 +1694,7 @@ function GrandmaInsightDetailSheet({
                   { color: colors.text, fontFamily: font.display },
                 ]}
               >
-                {childName} is {highlights.overallLabel}
+                {childName}{' is '}{highlights.overallLabel}
               </Text>
               <Text
                 style={[
@@ -1885,7 +1885,7 @@ function DiscussConfirmSheet({
             {t('kids_analytics_confirm_share_title')}
           </Text>
           <Text style={[styles.confirmBody, { color: colors.textSecondary, fontFamily: font.body }]}>
-            We'll send {childName}'s wellness metrics to Grandma so she can walk through them with you.
+            {t('kids_analytics_confirm_share_body', { childName })}
           </Text>
 
           <Pressable
@@ -1946,7 +1946,7 @@ function HealthTipsSection({
     <View style={styles.tipsSection}>
       <View style={styles.tipsSectionHeader}>
         <Text style={[styles.tipsSectionTitle, { color: colors.text }]}>{t('kids_analytics_health_tips_label')}</Text>
-        <Text style={[styles.tipsSectionSub, { color: colors.textMuted }]}>Personalized for {childName} today</Text>
+        <Text style={[styles.tipsSectionSub, { color: colors.textMuted }]}>{t('kids_analytics_personalized_for_today', { childName })}</Text>
       </View>
 
       <View style={styles.tipsGrid}>
@@ -2068,12 +2068,12 @@ function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
                   {data.totalSkips}
                 </Text>
                 <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
-                  {' '}skips
+                  {' skips'}
                 </Text>
               </>
             ) : (
               <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
-                —
+                {'—'}
               </Text>
             )}
           </View>
@@ -2332,7 +2332,7 @@ function RoutineComplianceModal({
                           fontSize: 13,
                         }}
                       >
-                        {item.count}×
+                        {item.count}{'×'}
                       </Text>
                     </View>
                   </View>
@@ -2463,7 +2463,7 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
             </>
           ) : (
             <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
-              —
+              {'—'}
             </Text>
           )}
         </View>
@@ -2580,7 +2580,7 @@ function PillarDetailModal({
                       marginTop: 2,
                     }}
                   >
-                    {score.value.toFixed(1)}/10 — {score.label}
+                    {score.value.toFixed(1)}{'/10 — '}{score.label}
                   </Text>
                 )}
               </View>
@@ -2619,6 +2619,7 @@ function PillarDetailModal({
 
 function ActivitySection({ ageMonths, childName }: { ageMonths: number; childName: string }) {
   const { colors, radius } = useTheme()
+  const { t } = useTranslation()
   const [showModal, setShowModal] = useState(false)
   const ACTIVITY_COLOR = PILLAR_CONFIG.activity.color
 
@@ -2648,7 +2649,7 @@ function ActivitySection({ ageMonths, childName }: { ageMonths: number; childNam
           <Zap size={20} color={ACTIVITY_COLOR} strokeWidth={2} />
         </View>
         <View style={styles.pillarInfo}>
-          <Text style={[styles.pillarName, { color: colors.text }]}>Activity</Text>
+          <Text style={[styles.pillarName, { color: colors.text }]}>{t('kids_analytics_pillar_activity')}</Text>
           <Text style={[styles.pillarTakeaway, { color: colors.textMuted }]} numberOfLines={2}>{target}</Text>
           <Text style={[{ fontSize: 11, fontWeight: '500', fontFamily: font.bodyMedium, color: colors.textMuted, marginTop: 2 }]} numberOfLines={2}>{tip}</Text>
         </View>
@@ -2721,7 +2722,7 @@ function ActivityModal({
               <View>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>{t('kids_analytics_activity_guide_title')}</Text>
                 <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500', fontFamily: font.bodyMedium }}>
-                  {childName} · recommended split
+                  {childName}{' · recommended split'}
                 </Text>
               </View>
             </View>
@@ -2755,7 +2756,7 @@ function ActivityModal({
             ))}
 
             <View style={{ backgroundColor: ACTIVITY_COLOR + '10', borderRadius: radius.xl, padding: 16, borderWidth: 1, borderColor: ACTIVITY_COLOR + '25', flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-              <EmojiSticker size={18}>💡</EmojiSticker>
+              <EmojiSticker size={18}>{'💡'}</EmojiSticker>
               <Text style={{ flex: 1, color: ACTIVITY_COLOR, fontSize: 13, fontWeight: '700', fontFamily: font.bodySemiBold }}>
                 {ageMonths < 12
                   ? 'Aim for 20–30 min tummy time daily, spread across sessions.'
@@ -2820,6 +2821,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
   ageMonths: number
 }) {
   const { colors, radius } = useTheme()
+  const { t } = useTranslation()
 
   switch (pillarKey) {
     case 'nutrition': {
@@ -2878,7 +2880,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Explanation — different copy per mode */}
           <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
-            <Text style={[styles.helpCardCaps, { color: colors.text }]}>How this score works</Text>
+            <Text style={[styles.helpCardCaps, { color: colors.text }]}>{t('kids_analytics_how_score_works')}</Text>
             {isMilkPhase ? (
               <>
                 <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
@@ -3031,11 +3033,11 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {isMilkPhase && (totalBreast > 0 || totalBottle > 0) && (
             <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <Text style={[styles.chartTitle, { color: colors.text }]}>Breast vs Bottle</Text>
+              <Text style={[styles.chartTitle, { color: colors.text }]}>{t('kids_home_feeding_modal_breast_vs_bottle')}</Text>
               <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
                 <View style={{ flex: 1, alignItems: 'center', padding: 16, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }}>
                   <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 28, fontFamily: font.display }}>{totalBreast}</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium, marginTop: 4 }}>breast sessions</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium, marginTop: 4 }}>{t('kids_analytics_breast_sessions')}</Text>
                 </View>
                 <View style={{ flex: 1, alignItems: 'center', padding: 16, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }}>
                   <Text style={{ color: brand.secondary, fontSize: 28, fontFamily: font.display }}>{totalBottle}</Text>
@@ -3067,7 +3069,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
           {!isMilkPhase && analytics.nutrition.topFoods.length > 0 && (
             <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <Text style={[styles.chartTitle, { color: colors.text }]}>Most Logged Foods</Text>
+              <Text style={[styles.chartTitle, { color: colors.text }]}>{t('kids_analytics_most_logged_foods')}</Text>
               <View style={{ gap: 0 }}>
                 {analytics.nutrition.topFoods.map((food, i) => (
                   <View
@@ -3084,7 +3086,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                     </View>
                     <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: font.bodySemiBold, flex: 1 }}>{food.label}</Text>
                     <View style={{ backgroundColor: PILLAR_CONFIG.nutrition.color + '20', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 }}>
-                      <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 14, fontWeight: '800', fontFamily: font.display }}>×{food.count}</Text>
+                      <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 14, fontWeight: '800', fontFamily: font.display }}>{t('kids_analytics_times_prefix', { count: food.count })}</Text>
                     </View>
                   </View>
                 ))}
@@ -3118,7 +3120,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Explanation */}
           <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
-            <Text style={[styles.helpCardCaps, { color: colors.text }]}>How this score works</Text>
+            <Text style={[styles.helpCardCaps, { color: colors.text }]}>{t('kids_analytics_how_score_works')}</Text>
             <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
               {`${childName} averaged ${avg.toFixed(1)}h/night across ${daysLogged} logged days. The target for ${getAgeLabel(ageMonths)} is ${target}h including naps. `}
               {deficit > 0.5
@@ -3206,7 +3208,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       return analytics.mood.hasData ? (
         <View style={styles.detailBody}>
           <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
-            <Text style={[styles.helpCardCaps, { color: colors.text }]}>How this score works</Text>
+            <Text style={[styles.helpCardCaps, { color: colors.text }]}>{t('kids_analytics_how_score_works')}</Text>
             <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
               Mood score weights: happy/calm = positive, energetic = neutral-positive, fussy/cranky = negative. More consistent logging improves accuracy.
             </Text>
@@ -3264,7 +3266,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Health score explanation */}
           <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
-            <Text style={[styles.helpCardCaps, { color: colors.text }]}>How this score works</Text>
+            <Text style={[styles.helpCardCaps, { color: colors.text }]}>{t('kids_analytics_how_score_works')}</Text>
             <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
               {`Health score = vaccine completion (60%) + low health incidents (40%). ${doneVaccines}/${totalVaccines} vaccines logged. ${totalEvents === 0 ? 'No health events this week — great!' : `${totalEvents} health event${totalEvents !== 1 ? 's' : ''} logged this week.`}`}
             </Text>
@@ -3304,7 +3306,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {/* Recent events by type */}
           {analytics.health.hasData && analytics.health.recentEvents.length > 0 && (
             <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
-              <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 14 }]}>Recent Events</Text>
+              <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 14 }]}>{t('kids_analytics_health_recent_events')}</Text>
               {Object.entries(eventsByType).map(([type, events]) => (
                 <View key={type} style={{ marginBottom: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
@@ -3341,7 +3343,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
             <View style={[styles.row, { marginBottom: 4 }]}>
               <Syringe size={18} color={PILLAR_CONFIG.health.color} strokeWidth={2} />
-              <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 0 }]}>Vaccine Tracker</Text>
+              <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 0 }]}>{t('kids_analytics_vaccine_tracker_title')}</Text>
             </View>
             {/* Progress bar */}
             <View style={{ height: 8, borderRadius: 999, marginTop: 12, marginBottom: 12, overflow: 'hidden', backgroundColor: brand.success + '22' }}>
@@ -3516,7 +3518,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Explanation */}
           <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
-            <Text style={[styles.helpCardCaps, { color: colors.text }]}>How this score works</Text>
+            <Text style={[styles.helpCardCaps, { color: colors.text }]}>{t('kids_analytics_how_score_works')}</Text>
             <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
               {act.hasData
                 ? `${childName} was active on ${act.activeDays} of ${act.dailySessions.length} days (${act.totalSessions} session${act.totalSessions !== 1 ? 's' : ''}, ${act.uniqueTypes.length} unique type${act.uniqueTypes.length !== 1 ? 's' : ''}).`
@@ -3570,7 +3572,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Age-appropriate guide — RecSplit pattern from the mockup */}
           <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }]}>
-            <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 6 }]}>Recommended Activity Split</Text>
+            <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 6 }]}>{t('kids_analytics_activity_rec_split')}</Text>
             {guideItems.map((item) => (
               <View key={item.label} style={{ paddingVertical: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -3593,7 +3595,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               </View>
             ))}
             <View style={{ backgroundColor: COLOR + '15', borderRadius: radius.md, padding: 12, marginTop: 8, borderWidth: 1, borderColor: COLOR + '30', flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-              <Text style={{ fontSize: 14, lineHeight: 16 }}>📋</Text>
+              <Text style={{ fontSize: 14, lineHeight: 16 }}>{'📋'}</Text>
               <Text style={{ color: COLOR, fontSize: 12, fontFamily: font.bodyMedium, flex: 1, lineHeight: 16 }}>
                 {ageMonths < 12
                   ? 'Aim for 20–30 min tummy time daily, spread across sessions.'

@@ -376,6 +376,7 @@ function QuickLogSheet({
   onManageRoutines: () => void
 }) {
   const { colors, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   const paper = colors.surface
@@ -392,7 +393,7 @@ function QuickLogSheet({
           <View style={[styles.fabSheetHandleBar, { backgroundColor: paperBorder }]} />
         </View>
         <View style={styles.fabSheetHeaderRow}>
-          <Display size={22} color={ink}>Log something</Display>
+          <Display size={22} color={ink}>{t('pregCal_log_something')}</Display>
           <Pressable onPress={onClose} style={[styles.fabSheetClose, { backgroundColor: paper, borderColor: paperBorder }]}>
             <X size={18} color={ink} strokeWidth={2} />
           </Pressable>
@@ -440,7 +441,7 @@ function QuickLogSheet({
               <Calendar size={15} color={ink} strokeWidth={2.4} />
             </View>
             <Body size={14} color={ink} style={{ fontFamily: font.bodyBold, flex: 1, letterSpacing: 0.2 }}>
-              Manage Routines
+              {t('pregCal_manage_routines')}
             </Body>
             <ChevronRight size={16} color={ink} strokeWidth={2.4} />
           </Pressable>
@@ -721,10 +722,10 @@ function RoutineManager({
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 24, letterSpacing: -0.5, fontFamily: font.display }}>
-                  Manage Routines
+                  {t('pregCal_manage_routines')}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: 13, fontFamily: font.bodyMedium }}>
-                  Recurring activities for your pregnancy
+                  {t('pregCal_recurring_desc')}
                 </Text>
               </View>
               <Pressable
@@ -760,7 +761,7 @@ function RoutineManager({
                   }}
                 >
                   <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }}>
-                    New Routine
+                    {t('pregCal_new_routine')}
                   </Text>
                   {formFields}
                   {/* Save sticker button */}
@@ -786,7 +787,7 @@ function RoutineManager({
                     {saving
                       ? <ActivityIndicator color="#FFF" size="small" />
                       : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 15, letterSpacing: 0.8, textTransform: 'uppercase' }}>
-                          Add Routine
+                          {t('pregCal_add_routine')}
                         </Text>
                     }
                   </Pressable>
@@ -797,7 +798,7 @@ function RoutineManager({
               {routines.length > 0 && (
                 <View style={{ marginTop: 20 }}>
                   <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3, marginBottom: 12, paddingHorizontal: 4 }}>
-                    Active Routines ({routines.length})
+                    {t('pregCal_active_routines', { count: routines.length })}
                   </Text>
                   {routines.map((r) => {
                     const meta = LOG_META[r.type] ?? { label: r.type, icon: Calendar, color: colors.textMuted }
@@ -909,7 +910,7 @@ function RoutineManager({
                     <Pencil size={16} color={ST_LAVENDER} strokeWidth={2.4} />
                   </View>
                   <Text style={{ color: ST_INK, fontSize: 20, fontFamily: font.displayBold, letterSpacing: -0.3 }}>
-                    Edit Routine
+                    {t('pregCal_edit_routine')}
                   </Text>
                 </View>
                 <Pressable
@@ -948,7 +949,7 @@ function RoutineManager({
                   })}
                 >
                   <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                    Cancel
+                    {t('common_cancel')}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -970,7 +971,7 @@ function RoutineManager({
                   {saving
                     ? <ActivityIndicator color="#FFF" size="small" />
                     : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                        Update
+                        {t('pregCal_update')}
                       </Text>
                   }
                 </Pressable>
@@ -1011,10 +1012,10 @@ function RoutineManager({
                 <Trash2 size={26} color={ST_RED} strokeWidth={2.2} />
               </View>
               <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, textAlign: 'center' }}>
-                Delete Routine?
+                {t('pregCal_delete_routine_title')}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: font.bodyMedium, textAlign: 'center', lineHeight: 20 }}>
-                This routine will be removed and won't show up anymore. You can always add it back later.
+                {t('pregCal_delete_routine_desc')}
               </Text>
 
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 6, alignSelf: 'stretch' }}>
@@ -1035,7 +1036,7 @@ function RoutineManager({
                   })}
                 >
                   <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                    Cancel
+                    {t('common_cancel')}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -1057,7 +1058,7 @@ function RoutineManager({
                   {deleting
                     ? <ActivityIndicator color="#FFF" size="small" />
                     : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                        Delete
+                        {t('common_delete')}
                       </Text>
                   }
                 </Pressable>
@@ -1207,7 +1208,7 @@ function LogDetailPopup({
       {/* Date pill row — paper chip with timer */}
       <View style={[styles.detailDateRow, { backgroundColor: stickerTint, borderColor: paperBorder }]}>
         <Timer size={13} color={ink} strokeWidth={2} />
-        <Text style={[styles.detailDateText, { color: ink }]}>{dateLabel} at {formatTime(log.created_at)}</Text>
+        <Text style={[styles.detailDateText, { color: ink }]}>{t('pregCal_date_at_time', { date: dateLabel, time: formatTime(log.created_at) })}</Text>
       </View>
 
       {/* Meta pills */}
@@ -1359,7 +1360,7 @@ function DayDetailPanel({
 
       {/* Empty state */}
       {nonEmptyLogs.length === 0 && pendingRoutines.length === 0 && (
-        <Text style={[styles.emptyDay, { color: colors.textMuted }]}>No logs for this day</Text>
+        <Text style={[styles.emptyDay, { color: colors.textMuted }]}>{t('pregCal_no_logs_day')}</Text>
       )}
 
       {/* ── Pending routines — grouped by type ────────────────────────────── */}
@@ -1374,7 +1375,7 @@ function DayDetailPanel({
           >
             <AlertCircle size={13} color={COLOR_ORANGE} strokeWidth={2.5} />
             <Text style={[styles.sectionToggleLabel, { color: COLOR_ORANGE }]}>
-              {pendingRoutines.length} pending
+              {t('pregCal_pending_count', { count: pendingRoutines.length })}
             </Text>
             {pendingCollapsed
               ? <ChevronDown size={14} color={COLOR_ORANGE} strokeWidth={2} />
@@ -1414,7 +1415,7 @@ function DayDetailPanel({
                     <View style={styles.routineItemContent}>
                       <Text style={[styles.routineItemName, { color: colors.textSecondary }]}>{routine.name}</Text>
                       <Text style={[styles.routineItemSub, { color: colors.textMuted }]}>
-                        {routine.time ? `${fmtTime(routine.time)} · ` : ''}Tap to log
+                        {routine.time ? `${fmtTime(routine.time)} · ` : ''}{t('pregCal_tap_to_log')}
                       </Text>
                     </View>
                     {routine.time && (
@@ -1446,7 +1447,7 @@ function DayDetailPanel({
           >
             <Check size={13} color={COLOR_GREEN} strokeWidth={2.5} />
             <Text style={[styles.sectionToggleLabel, { color: COLOR_GREEN }]}>
-              {nonEmptyLogs.length} logged
+              {t('pregCal_logged_count', { count: nonEmptyLogs.length })}
             </Text>
             {loggedCollapsed
               ? <ChevronDown size={14} color={COLOR_GREEN} strokeWidth={2} />
@@ -1889,10 +1890,10 @@ export function PregnancyCalendar() {
         {rows.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Body size={14} color={colors.textSecondary} align="center">
-              Nothing planned for this day.
+              {t('pregCal_nothing_planned')}
             </Body>
             <Body size={12} color={colors.textMuted} align="center" style={{ marginTop: 4 }}>
-              Tap + above to log something.
+              {t('pregCal_tap_to_add')}
             </Body>
           </View>
         ) : (
@@ -2009,10 +2010,10 @@ export function PregnancyCalendar() {
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.4 }}>
-                Pregnancy path
+                {t('pregCal_pregnancy_path')}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodyBold, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4 }}>
-                {STANDARD_APPOINTMENTS.length} milestones · 40 weeks
+                {t('pregCal_milestones_40w', { count: STANDARD_APPOINTMENTS.length })}
               </Text>
             </View>
             <View style={{
@@ -2022,7 +2023,7 @@ export function PregnancyCalendar() {
               paddingHorizontal: 10, paddingVertical: 5,
             }}>
               <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>
-                Trimester {trimester}
+                {t('pregCal_trimester', { n: trimester })}
               </Text>
             </View>
           </View>
@@ -2103,7 +2104,7 @@ export function PregnancyCalendar() {
                         fontFamily: b.status === 'next' ? font.bodyBold : font.bodySemiBold,
                         letterSpacing: 0.4,
                       }}>
-                        W{b.appt.week}
+                        {t('pregCal_week_label', { week: b.appt.week })}
                       </Text>
                     </Pressable>
                   )
@@ -2116,15 +2117,15 @@ export function PregnancyCalendar() {
           <View style={{ flexDirection: 'row', gap: 14, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: isDark ? colors.border : '#E8DEC6' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ST_GREEN, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>Done</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>{t('common_done')}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ST_CORAL, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>Soon</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>{t('pregCal_status_soon')}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.surface, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>Upcoming</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>{t('pregCal_status_upcoming')}</Text>
             </View>
           </View>
         </View>
@@ -2151,7 +2152,7 @@ export function PregnancyCalendar() {
                 <Check size={16} color={isDark ? colors.text : ST_INK} strokeWidth={3} />
               ) : (
                 <Text style={{ fontFamily: font.displayBold, fontSize: 11, color: isDark ? colors.text : ST_INK }}>
-                  W{appt.week}
+                  {t('pregCal_week_label', { week: appt.week })}
                 </Text>
               )}
             </View>
@@ -2198,7 +2199,7 @@ export function PregnancyCalendar() {
           >
             <Plus size={16} color="#FFF" strokeWidth={3} />
             <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-              Appointment
+              {t('pregCal_appointment_btn')}
             </Text>
           </Pressable>
           <Pressable
@@ -2220,7 +2221,7 @@ export function PregnancyCalendar() {
           >
             <Camera size={16} color={ST_INK} strokeWidth={2.5} />
             <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-              Upload exam
+              {t('pregCal_upload_exam_btn')}
             </Text>
           </Pressable>
         </View>
