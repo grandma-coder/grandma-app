@@ -2533,6 +2533,9 @@ export interface TranslationKeys {
   // ─── B7a-3: KidsJourneyRing residual strings ─────────────────────────────
   kids_journeyRing_title: string
   kids_journeyRing_hint: string
+  kids_journeyRing_weekLabel: string
+  kids_journeyRing_leapOf: string
+  kids_journeyRing_leapOfWithAge: string
   // ─── B7a-3: TodayDashboardModal residual strings ──────────────────────────
   pregnancy_todayDash_labelMood: string
   pregnancy_todayDash_labelHydration: string

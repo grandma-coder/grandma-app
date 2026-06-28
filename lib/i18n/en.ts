@@ -2532,6 +2532,9 @@ export const en: TranslationKeys = {
   // ─── B7a-3: KidsJourneyRing residual strings ─────────────────────────────
   kids_journeyRing_title: "{{name}}'s Journey",
   kids_journeyRing_hint: '↺ drag to spin · tap any leap',
+  kids_journeyRing_weekLabel: 'W{{n}}',
+  kids_journeyRing_leapOf: 'LEAP {{n}} OF {{total}}',
+  kids_journeyRing_leapOfWithAge: 'LEAP {{n}} OF {{total}} · {{age}}',
   // ─── B7a-3: TodayDashboardModal residual strings ──────────────────────────
   pregnancy_todayDash_labelMood: 'MOOD',
   pregnancy_todayDash_labelHydration: 'HYDRATION',

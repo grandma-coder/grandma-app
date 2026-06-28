@@ -260,7 +260,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
     <View style={styles.container}>
       <View style={styles.headerWrap}>
         <Text style={[styles.title, { color: ink, fontFamily: font.display }]}>
-          {childName}'s Journey
+          {t('kids_journeyRing_title', { name: childName })}
         </Text>
         <Text style={[styles.subtitle, { color: inkMuted, fontFamily: font.bodyMedium }]}>
           Week {weekAge} · {leaps.length} growth leaps
@@ -311,7 +311,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
                         letterSpacing: -0.3,
                       }}
                     >
-                      W{leap.week}
+                      {t('kids_journeyRing_weekLabel', { n: leap.week })}
                     </Text>
                   </Animated.View>
                 </View>
@@ -343,7 +343,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
               <Text
                 style={[styles.centerLabel, { color: col, fontFamily: font.bodySemiBold }]}
               >
-                LEAP {selectedIndex + 1} OF {N}
+                {t('kids_journeyRing_leapOf', { n: selectedIndex + 1, total: N })}
               </Text>
               <Text
                 style={[styles.centerName, { color: ink, fontFamily: font.display }]}
@@ -362,7 +362,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
       </View>
 
       <Text style={[styles.hint, { color: inkFaint, fontFamily: font.body }]}>
-        ↺ drag to spin · tap any leap
+        {t('kids_journeyRing_hint')}
       </Text>
 
       {/* ── Bottom panel ── */}
@@ -518,7 +518,7 @@ function LeapDetailModal({
           <View style={modalStyles.header}>
             <View style={{ flex: 1, paddingRight: 12 }}>
               <Text style={[modalStyles.eyebrow, { color: leap.color, fontFamily: font.bodySemiBold }]}>
-                LEAP {leapNumber} OF {totalLeaps} · {leap.ageRange}
+                {t('kids_journeyRing_leapOfWithAge', { n: leapNumber, total: totalLeaps, age: leap.ageRange })}
               </Text>
               <Text style={[modalStyles.title, { color: ink, fontFamily: font.display }]} numberOfLines={2}>
                 {leap.name}
