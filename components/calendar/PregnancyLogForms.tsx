@@ -498,6 +498,7 @@ export function KickCountForm({
   onSaved: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [count, setCount] = useState(0)
   const [startTime] = useState(() => Date.now())
@@ -582,7 +583,7 @@ export function KickCountForm({
               gap: 4,
             }}>
               <Hand size={42} color={ink} strokeWidth={2} />
-              <Text style={{ fontSize: 12, fontFamily: font.bodyBold, color: ink, letterSpacing: 2 }}>TAP</Text>
+              <Text style={{ fontSize: 12, fontFamily: font.bodyBold, color: ink, letterSpacing: 2 }}>{t('preg_form_kick_tap')}</Text>
             </View>
           </Pressable>
         </View>
@@ -713,6 +714,7 @@ function formatDate(dateStr: string): string {
 
 export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [hours, setHours] = useState(7)
   const [quality, setQuality] = useState(5)
@@ -737,7 +739,7 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
         label={`Sleep on ${formatDate(date)}`}
         tint={s.lilacSoft}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Hours slept</Text>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_sleep_hoursSlept')}</Text>
       <StepSlider
         min={3}
         max={12}
@@ -746,7 +748,7 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
         color={getModeColor('preg', isDark)}
         unit={hours === 1 ? 'hour' : 'hours'}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Quality (1–10)</Text>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_sleep_qualityRange')}</Text>
       <StepSlider
         min={1}
         max={10}
@@ -765,6 +767,7 @@ const EXERCISE_TYPES = ['Yoga', 'Walk', 'Swim', 'Stretching', 'Pilates', 'Other'
 
 export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [exerciseType, setExerciseType] = useState<string | null>('Walk')
   const [customType, setCustomType] = useState('')
@@ -795,22 +798,22 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
         label={`Movement on ${formatDate(date)}`}
         tint={s.greenSoft}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Type</Text>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_exercise_typeLabel')}</Text>
       <View style={styles.chipRow}>
-        {EXERCISE_TYPES.map((t) => (
+        {EXERCISE_TYPES.map((etype) => (
           <Pressable
-            key={t}
-            onPress={() => setExerciseType(t)}
+            key={etype}
+            onPress={() => setExerciseType(etype)}
             style={[
               styles.chip,
               {
-                backgroundColor: exerciseType === t ? getModeColor('preg', isDark) + '24' : colors.surface,
-                borderColor: exerciseType === t ? getModeColor('preg', isDark) : colors.border,
+                backgroundColor: exerciseType === etype ? getModeColor('preg', isDark) + '24' : colors.surface,
+                borderColor: exerciseType === etype ? getModeColor('preg', isDark) : colors.border,
                 borderRadius: radius.full,
               },
             ]}
           >
-            <Text style={[styles.chipText, { color: exerciseType === t ? getModeColor('preg', isDark) : colors.text }]}>{t}</Text>
+            <Text style={[styles.chipText, { color: exerciseType === etype ? getModeColor('preg', isDark) : colors.text }]}>{etype}</Text>
           </Pressable>
         ))}
       </View>
@@ -832,7 +835,7 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
           ]}
         />
       )}
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Minutes</Text>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_exercise_minutesFieldLabel')}</Text>
       <StepSlider
         min={5}
         max={120}
@@ -852,6 +855,7 @@ const NUTRITION_TAGS = ['Iron', 'Folic acid', 'Protein', 'Calcium', 'DHA', 'Vita
 
 export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [tags, setTags] = useState<string[]>([])
   const [nutritionNotes, setNutritionNotes] = useState('')
@@ -881,7 +885,7 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
         label={`Nourish on ${formatDate(date)}`}
         tint={s.greenSoft}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Nutrients covered today</Text>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_nutrition_coverageLabel')}</Text>
       <View style={styles.chipRow}>
         {NUTRITION_TAGS.map((tag) => {
           const active = tags.includes(tag)
@@ -920,6 +924,7 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
 
 export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [sets, setSets] = useState(3)
   const [saving, setSaving] = useState(false)
@@ -943,7 +948,7 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
         label="Pelvic floor practice"
         tint={s.lilacSoft}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Sets completed</Text>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_kegel_setsCompletedLabel')}</Text>
       <StepSlider
         min={1}
         max={20}
@@ -961,6 +966,7 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
 
 export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [glasses, setGlasses] = useState(1)
   const [saving, setSaving] = useState(false)
@@ -997,7 +1003,7 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
       {/* Counter card */}
       <View style={[styles.waterCard, { backgroundColor: paper, borderColor: paperBorder }]}>
         <Text style={[styles.waterMetaLabel, { color: ink, fontFamily: font.bodySemiBold }]}>
-          GLASSES TODAY
+          {t('preg_form_water_glassesTodayLabel')}
         </Text>
 
         <View style={styles.waterCounterRow}>
@@ -1010,7 +1016,7 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
               pressed && { transform: [{ scale: 0.94 }], opacity: 0.85 },
             ]}
           >
-            <Text style={[styles.waterStepText, { color: ink, fontFamily: font.display }]}>−</Text>
+            <Text style={[styles.waterStepText, { color: ink, fontFamily: font.display }]}>{'−'}</Text>
           </Pressable>
 
           <Text style={[styles.waterValue, { color: ink, fontFamily: font.display }]}>
@@ -1068,6 +1074,7 @@ function Droplet({ filled, fill, stroke, muted }: { filled: boolean; fill: strin
 
 export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [saving, setSaving] = useState(false)
 
@@ -1091,7 +1098,7 @@ export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () =
         tint={s.greenSoft}
       />
       <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign: 'center' }]}>
-        Did you take your prenatal vitamins today?
+        {t('preg_form_vitamins_question')}
       </Text>
       <SaveButton onPress={save} saving={saving} disabled={false} />
     </View>
@@ -1104,6 +1111,7 @@ const NESTING_CATEGORIES = ['Nursery', 'Cleaning', 'Laundry', 'Shopping', 'Organ
 
 export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [nestingTitle, setNestingTitle] = useState('')
   const [nestingCategory, setNestingCategory] = useState<string | null>(null)
@@ -1141,7 +1149,7 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Category</Text>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_nesting_categoryLabel')}</Text>
       <View style={styles.chipRow}>
         {NESTING_CATEGORIES.map((cat) => (
           <Pressable
@@ -1174,7 +1182,7 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
         onPress={() => setDone((d) => !d)}
         style={[styles.toggleRow2, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
       >
-        <Text style={[styles.toggleLabel, { color: colors.text }]}>Already done?</Text>
+        <Text style={[styles.toggleLabel, { color: colors.text }]}>{t('preg_form_nesting_alreadyDone')}</Text>
         <View style={[styles.togglePill, { backgroundColor: done ? getModeColor('preg', isDark) : colors.border }]}>
           <View style={[styles.toggleThumb, { marginLeft: done ? 20 : 2 }]} />
         </View>
@@ -1186,10 +1194,12 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
 
 // ─── Birth Prep Task Form ──────────────────────────────────────────────────
 
+
 const BIRTH_PREP_CATEGORIES = ['Hospital bag', 'Birth plan', 'Classes', 'Postpartum', 'Baby gear', 'Admin', 'Other']
 
 export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [birthPrepTitle, setBirthPrepTitle] = useState('')
   const [birthPrepCategory, setBirthPrepCategory] = useState<string | null>(null)
@@ -1228,7 +1238,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Category</Text>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_nesting_categoryLabel')}</Text>
       <View style={styles.chipRow}>
         {BIRTH_PREP_CATEGORIES.map((cat) => (
           <Pressable
@@ -1257,7 +1267,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
           style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: getModeColor('preg', isDark), borderRadius: radius.lg }]}
         />
       )}
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Due by week</Text>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_birthprep_dueByWeek')}</Text>
       <StepSlider
         min={20}
         max={42}
@@ -1270,7 +1280,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
         onPress={() => setDone((d) => !d)}
         style={[styles.toggleRow2, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
       >
-        <Text style={[styles.toggleLabel, { color: colors.text }]}>Already done?</Text>
+        <Text style={[styles.toggleLabel, { color: colors.text }]}>{t('preg_form_nesting_alreadyDone')}</Text>
         <View style={[styles.togglePill, { backgroundColor: done ? getModeColor('preg', isDark) : colors.border }]}>
           <View style={[styles.toggleThumb, { marginLeft: done ? 20 : 2 }]} />
         </View>
@@ -1284,6 +1294,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
 
 export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [durationSec, setDurationSec] = useState(45)
   const [intervalMin, setIntervalMin] = useState(10)
@@ -1309,7 +1320,7 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
         label={`Contraction on ${formatDate(date)}`}
         tint={s.pinkSoft}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Duration (seconds)</Text>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_contraction_durationLabel')}</Text>
       <StepSlider
         min={10}
         max={180}
@@ -1318,7 +1329,7 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
         color={getModeColor('preg', isDark)}
         unit="sec"
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Interval (minutes apart)</Text>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_contraction_intervalLabel')}</Text>
       <StepSlider
         min={1}
         max={30}
@@ -1343,7 +1354,8 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
 // ─── Weight Log Form ──────────────────────────────────────────────────────
 
 export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [weight, setWeight] = useState('70')
   const [saving, setSaving] = useState(false)
@@ -1372,7 +1384,7 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
         label={`Weight on ${formatDate(date)}`}
         tint={s.peachSoft}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Weight</Text>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_weight_fieldLabel')}</Text>
       <View style={[styles.weightCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
         <TextInput
           value={weight}
@@ -1382,7 +1394,7 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
           placeholderTextColor={colors.textMuted}
           style={[styles.weightInput, { color: colors.text, fontFamily: font.display }]}
         />
-        <Text style={[styles.weightUnit, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>kg</Text>
+        <Text style={[styles.weightUnit, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('preg_form_weight_kgLabel')}</Text>
       </View>
       <SaveButton onPress={save} saving={saving} disabled={weight.trim() === ''} />
     </View>
