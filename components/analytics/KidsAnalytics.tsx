@@ -2891,7 +2891,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                 </Text>
                 {daysLogged < Math.min(5, windowDays) && (
                   <Text style={[styles.detailExplain, { color: brand.accent }]}>
-                    Log every feed to keep this score accurate — newborns feed 6–10× per day.
+                    {t('kids_analytics_log_every_feed_hint')}
                   </Text>
                 )}
               </>
@@ -3210,7 +3210,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
             <Text style={[styles.helpCardCaps, { color: colors.text }]}>{t('kids_analytics_how_score_works')}</Text>
             <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
-              Mood score weights: happy/calm = positive, energetic = neutral-positive, fussy/cranky = negative. More consistent logging improves accuracy.
+              {t('kids_analytics_mood_score_weights_hint')}
             </Text>
           </View>
 
@@ -3377,7 +3377,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       return (
         <View style={styles.detailBody}>
           <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
-            Track {childName}'s weight and height over time. Log measurements after each pediatrician visit for the most accurate growth chart.
+            {t('kids_analytics_growth_track_hint', { name: childName })}
           </Text>
 
           {(() => {
@@ -3469,7 +3469,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, alignItems: 'center', paddingVertical: 20 }]}>
               <TrendingUp size={24} color={colors.textMuted} strokeWidth={1.5} />
               <Text style={[styles.emptyText, { color: colors.textMuted, marginTop: 8 }]}>
-                Add at least 2 measurements to see a growth chart. Log more from Calendar → Growth.
+                {t('kids_analytics_add_measurements_hint')}
               </Text>
             </View>
           )}
@@ -3677,6 +3677,7 @@ function StackedBarChart({ good, little, none, labels, width = 300, height = 200
   good: number[]; little: number[]; none: number[]; labels: string[]; width?: number; height?: number
 }) {
   const { colors, stickers: st } = useTheme()
+  const { t } = useTranslation()
   const leftPad = 40, rightPad = 16, topPad = 28, bottomPad = 8
   const chartW = width - leftPad - rightPad
   const chartH = height - topPad - bottomPad
@@ -3688,7 +3689,7 @@ function StackedBarChart({ good, little, none, labels, width = 300, height = 200
     return (
       <View style={{ height, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center' }]}>
-          Log meals to see eat-quality patterns.
+          {t('kids_analytics_log_meals_eat_quality')}
         </Text>
       </View>
     )
@@ -3816,6 +3817,7 @@ function EatQualityBubbles({
   none: number[]
 }) {
   const { colors, stickers: st } = useTheme()
+  const { t } = useTranslation()
   const totalGood = good.reduce((a, b) => a + b, 0)
   const totalLittle = little.reduce((a, b) => a + b, 0)
   const totalNone = none.reduce((a, b) => a + b, 0)
@@ -3823,7 +3825,7 @@ function EatQualityBubbles({
   if (total === 0) {
     return (
       <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center', paddingVertical: 20 }]}>
-        Log meals to see eat-quality patterns.
+        {t('kids_analytics_log_meals_eat_quality')}
       </Text>
     )
   }
@@ -3935,6 +3937,7 @@ function HighlightBarChart({
   unit?: string
 }) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   if (rawData.length === 0) return null
 
   const realMax = Math.max(...rawData, 0)
@@ -3942,7 +3945,7 @@ function HighlightBarChart({
     return (
       <View style={{ height, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
         <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center' }]}>
-          No entries logged in this window yet.
+          {t('kids_analytics_no_entries_window')}
         </Text>
       </View>
     )
@@ -4009,11 +4012,12 @@ function HighlightBarChart({
 
 function SleepQualityChart({ counts }: { counts: { great: number; good: number; restless: number; poor: number } }) {
   const { colors, radius } = useTheme()
+  const { t } = useTranslation()
   const total = counts.great + counts.good + counts.restless + counts.poor
   if (total === 0) {
     return (
       <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center', paddingVertical: 18 }]}>
-        Log a few sleep sessions to see the quality breakdown.
+        {t('kids_analytics_log_sleep_quality_hint')}
       </Text>
     )
   }
@@ -4049,13 +4053,14 @@ function MoodDistribution({ moods }: { moods: { mood: string; count: number }[] 
 
 function MoodDailyChart({ dailyCounts, labels, width }: { dailyCounts: Record<string, number[]>; labels: string[]; width: number }) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const days = labels.length
   const moods = Object.keys(dailyCounts)
   const totalAcrossWindow = moods.reduce((sum, m) => sum + dailyCounts[m].reduce((a, b) => a + b, 0), 0)
   if (totalAcrossWindow === 0) {
     return (
       <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center', paddingVertical: 24 }]}>
-        No moods logged in this window yet.
+        {t('kids_analytics_no_moods_window')}
       </Text>
     )
   }

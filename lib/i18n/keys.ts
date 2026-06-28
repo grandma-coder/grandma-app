@@ -2456,6 +2456,15 @@ export interface TranslationKeys {
   kids_analytics_bottles: string
   kids_analytics_personalized_for_today: string
   kids_analytics_confirm_share_body: string
+  // ─── B7b: KidsAnalytics chart/detail residual strings ─────────────────────
+  kids_analytics_log_every_feed_hint: string
+  kids_analytics_mood_score_weights_hint: string
+  kids_analytics_growth_track_hint: string
+  kids_analytics_add_measurements_hint: string
+  kids_analytics_log_meals_eat_quality: string
+  kids_analytics_no_entries_window: string
+  kids_analytics_log_sleep_quality_hint: string
+  kids_analytics_no_moods_window: string
   // ─── B7a-1: care-circle residual strings ───────────────────────────────────
   careCircle_tagline: string
   careCircle_members_tab: string

@@ -2223,6 +2223,15 @@ export const zh: TranslationKeys = {
   kids_analytics_bottles: 'bottles',
   kids_analytics_personalized_for_today: 'Personalized for {{childName}} today',
   kids_analytics_confirm_share_body: "We'll send {{childName}}'s wellness metrics to Grandma so she can walk through them with you.",
+  // ─── B7b: KidsAnalytics chart/detail residual strings ─────────────────────
+  kids_analytics_log_every_feed_hint: 'Log every feed to keep this score accurate — newborns feed 6–10× per day.',
+  kids_analytics_mood_score_weights_hint: 'Mood score weights: happy/calm = positive, energetic = neutral-positive, fussy/cranky = negative. More consistent logging improves accuracy.',
+  kids_analytics_growth_track_hint: "Track {{name}}'s weight and height over time. Log measurements after each pediatrician visit for the most accurate growth chart.",
+  kids_analytics_add_measurements_hint: 'Add at least 2 measurements to see a growth chart. Log more from Calendar → Growth.',
+  kids_analytics_log_meals_eat_quality: 'Log meals to see eat-quality patterns.',
+  kids_analytics_no_entries_window: 'No entries logged in this window yet.',
+  kids_analytics_log_sleep_quality_hint: 'Log a few sleep sessions to see the quality breakdown.',
+  kids_analytics_no_moods_window: 'No moods logged in this window yet.',
   // --- B7a-1: care-circle residual strings
   careCircle_tagline: 'the people who love them with you',
   careCircle_members_tab: 'Members',
