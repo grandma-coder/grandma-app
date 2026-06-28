@@ -1688,7 +1688,7 @@ export function KidsCalendar() {
       <View style={{ gap: 10 }}>
         <View style={styles.timelineHeader}>
           <Display size={22} color={colors.text}>{t('kids_calendar_visits')}</Display>
-          <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>{visits.length} logged · {upcomingRoutines.length} scheduled</Body>
+          <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>{t('kids_calendar_visitsStats', { logged: visits.length, scheduled: upcomingRoutines.length })}</Body>
         </View>
 
         {upcomingRoutines.map((r) => {
@@ -1993,7 +1993,7 @@ export function KidsCalendar() {
                   {t('kids_calendar_allKids')}
                 </Text>
                 <Text style={[styles.kidPickerMeta, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-                  {children.length} kids
+                  {t('kids_calendar_nKids', { n: children.length })}
                 </Text>
               </Pressable>
 
@@ -2153,10 +2153,10 @@ export function KidsCalendar() {
                   </View>
                   <View style={styles.popupHeaderText}>
                     <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 24, letterSpacing: -0.5, fontFamily: font.display }}>
-                      Routines
+                      {t('kids_calendar_routines')}
                     </Text>
                     <Text style={{ color: colors.textMuted, fontSize: 13, fontFamily: font.bodyMedium }}>
-                      Recurring activities for your kids
+                      {t('kids_calendar_routinesSubtitle')}
                     </Text>
                   </View>
                   <Pressable
@@ -2195,7 +2195,7 @@ export function KidsCalendar() {
                     }}
                   >
                     <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }}>
-                      New Routine
+                      {t('kids_calendar_newRoutine')}
                     </Text>
                     {/* (form fields below — duplicated in Edit Modal) */}
 
@@ -2351,7 +2351,7 @@ export function KidsCalendar() {
                       {routineSaving
                         ? <ActivityIndicator color="#FFF" size="small" />
                         : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 15, letterSpacing: 0.8, textTransform: 'uppercase' }}>
-                            Add Routine
+                            {t('kids_calendar_addRoutine')}
                           </Text>
                       }
                     </Pressable>
@@ -2560,7 +2560,7 @@ export function KidsCalendar() {
                         <Pencil size={16} color={ST_PURPLE} strokeWidth={2.4} />
                       </View>
                       <Text style={{ color: ST_INK, fontSize: 20, fontFamily: font.displayBold, letterSpacing: -0.3 }}>
-                        Edit Routine
+                        {t('kids_calendar_editRoutine')}
                       </Text>
                     </View>
                     <Pressable
@@ -2737,7 +2737,7 @@ export function KidsCalendar() {
                       {routineSaving
                         ? <ActivityIndicator color="#FFF" size="small" />
                         : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                            Update
+                            {t('common_update')}
                           </Text>
                       }
                     </Pressable>
@@ -2898,7 +2898,7 @@ export function KidsCalendar() {
                 <View style={[styles.popupRow, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
                   <Clock size={16} color={colors.textMuted} />
                   <Text style={[styles.popupRowText, { color: colors.text }]}>
-                    {formatDayLabel(selectedLog.date, todayStr, t)} at {activityTimeDisplay(selectedLog)}
+                    {`${formatDayLabel(selectedLog.date, todayStr, t)} ${t('common_at')} ${activityTimeDisplay(selectedLog)}`}
                   </Text>
                 </View>
 
@@ -2991,7 +2991,7 @@ export function KidsCalendar() {
                             <View style={{ backgroundColor: stickers.coral + '22', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: stickers.coral + '40' }}>
                               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4 }}>
                                 <Text style={{ color: stickers.coralInk, fontSize: 64, fontWeight: '800', lineHeight: 68, letterSpacing: -2, fontFamily: font.display }}>{cals}</Text>
-                                <Text style={{ color: stickers.coralInk, fontSize: 20, fontWeight: '700', marginBottom: 10 }}>kcal</Text>
+                                <Text style={{ color: stickers.coralInk, fontSize: 20, fontWeight: '700', marginBottom: 10 }}>{t('common_kcal')}</Text>
                               </View>
                               <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_estimatedCals')}</Text>
                             </View>
@@ -3111,7 +3111,7 @@ export function KidsCalendar() {
                       return (
                         <>
                           <View style={{ backgroundColor: sleepColor + '15', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: sleepColor + '30' }}>
-                            <EmojiSticker size={52}>🌙</EmojiSticker>
+                            <EmojiSticker size={52}>{'🌙'}</EmojiSticker>
                             {durStr ? (
                               <Text style={{ color: sleepColor, fontSize: 56, fontWeight: '800', lineHeight: 64, letterSpacing: -2, marginTop: 6, fontFamily: font.display }}>{durStr}</Text>
                             ) : (
@@ -3123,7 +3123,7 @@ export function KidsCalendar() {
                             {sp.startTime && sp.endTime && (
                               <View style={{ backgroundColor: colors.surface, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                                 <Clock size={13} color={colors.textMuted} />
-                                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>{fmtTime(sp.startTime)} – {fmtTime(sp.endTime)}</Text>
+                                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>{`${fmtTime(sp.startTime)} – ${fmtTime(sp.endTime)}`}</Text>
                               </View>
                             )}
                             {q && (
@@ -3172,7 +3172,7 @@ export function KidsCalendar() {
                             {ap.startTime && ap.endTime && (
                               <View style={{ backgroundColor: colors.surface, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                                 <Clock size={13} color={colors.textMuted} />
-                                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>{fmtTime(ap.startTime)} – {fmtTime(ap.endTime)}</Text>
+                                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>{`${fmtTime(ap.startTime)} – ${fmtTime(ap.endTime)}`}</Text>
                               </View>
                             )}
                           </View>
@@ -3202,7 +3202,7 @@ export function KidsCalendar() {
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                               {dp.color && (
                                 <View style={{ backgroundColor: colors.surface, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
-                                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>Color: {dp.color.charAt(0).toUpperCase() + dp.color.slice(1)}</Text>
+                                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>{t('kids_calendar_detail_colorLabel', { value: dp.color.charAt(0).toUpperCase() + dp.color.slice(1) })}</Text>
                                 </View>
                               )}
                               {dp.consistency && (
@@ -3461,14 +3461,14 @@ export function KidsCalendar() {
             <View style={{ backgroundColor: colors.surface, borderRadius: 32, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: brand.accent + '40' }}>
               {/* Star burst */}
               <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: brand.accent + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 2, borderColor: brand.accent + '50' }}>
-                <EmojiSticker size={40}>🌟</EmojiSticker>
+                <EmojiSticker size={40}>{'🌟'}</EmojiSticker>
               </View>
 
               <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8, textAlign: 'center', fontFamily: font.display }}>
                 {t('kids_calendar_congrats_title')}
               </Text>
               <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', textAlign: 'center', marginBottom: 6 }}>
-                {formatDayLabel(selectedDate, todayStr, t)}'s activities are all logged ✓
+                {t('kids_calendar_congrats_allLogged', { day: formatDayLabel(selectedDate, todayStr, t) })}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 28 }}>
                 {selectedChildId === 'all'
@@ -3515,7 +3515,7 @@ export function KidsCalendar() {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>{t('kids_calendar_congrats_btn')}</Text>
-                  <EmojiSticker size={18}>🎉</EmojiSticker>
+                  <EmojiSticker size={18}>{'🎉'}</EmojiSticker>
                 </View>
               </Pressable>
             </View>
