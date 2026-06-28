@@ -123,6 +123,7 @@ interface MiniChartProps {
 }
 
 function WeightChart({ points, lowBand, highBand, color, mutedColor, width, height }: MiniChartProps) {
+  const { t } = useTranslation()
   if (points.length < 2) return null
 
   const leftPad = 36
@@ -246,7 +247,7 @@ function WeightChart({ points, lowBand, highBand, color, mutedColor, width, heig
       {/* Current value bubble */}
       <Rect x={lastPoint.x - 22} y={lastPoint.y - 22} width={44} height={16} rx={4} fill={color} opacity={0.95} />
       <SvgText x={lastPoint.x} y={lastPoint.y - 10} fill="#FFFEF8" fontSize={10} fontWeight="800" textAnchor="middle">
-        {lastPoint.v.toFixed(1)}kg
+        {`${lastPoint.v.toFixed(1)}${t('preg_form_weight_kgLabel')}`}
       </SvgText>
 
       {/* X labels */}
@@ -330,7 +331,7 @@ function WeightDetailModal(props: DetailProps) {
         {/* Stat grid — sticker-tinted tiles with ink border */}
         <View style={styles.statGrid}>
           <View style={[styles.statTile, { backgroundColor: stickers.lilacSoft, borderColor: ink }]}>
-            <MonoCaps size={9} color={colors.textMuted}>STARTING</MonoCaps>
+            <MonoCaps size={9} color={colors.textMuted}>{t('preg_weight_labelStarting')}</MonoCaps>
             <Display size={22} color={ink} style={{ marginTop: 4 }}>
               {start !== null ? `${start.toFixed(1)}` : '—'}
             </Display>
@@ -338,7 +339,7 @@ function WeightDetailModal(props: DetailProps) {
           </View>
 
           <View style={[styles.statTile, { backgroundColor: stickers.greenSoft, borderColor: ink }]}>
-            <MonoCaps size={9} color={colors.textMuted}>GAINED</MonoCaps>
+            <MonoCaps size={9} color={colors.textMuted}>{t('preg_weight_labelGained')}</MonoCaps>
             <Display size={22} color={ink} style={{ marginTop: 4 }}>
               {gained !== null ? `${gained >= 0 ? '+' : ''}${gained.toFixed(1)}` : '—'}
             </Display>
@@ -346,7 +347,7 @@ function WeightDetailModal(props: DetailProps) {
           </View>
 
           <View style={[styles.statTile, { backgroundColor: stickers.yellowSoft, borderColor: ink }]}>
-            <MonoCaps size={9} color={colors.textMuted}>PACE</MonoCaps>
+            <MonoCaps size={9} color={colors.textMuted}>{t('preg_weight_labelPace')}</MonoCaps>
             <Display size={22} color={ink} style={{ marginTop: 4 }}>
               {pace !== null ? `${pace >= 0 ? '+' : ''}${pace.toFixed(1)}` : '—'}
             </Display>
@@ -381,18 +382,18 @@ function WeightDetailModal(props: DetailProps) {
 
         {/* IOM target band */}
         <View style={[styles.stickerBlock, { backgroundColor: colors.surface, borderColor: paperBorderStrong }]}>
-          <MonoCaps size={10} color={colors.textMuted}>IOM TARGET · {band.label.toUpperCase()}</MonoCaps>
+          <MonoCaps size={10} color={colors.textMuted}>{t('preg_weight_iomTargetFull', { label: band.label.toUpperCase() })}</MonoCaps>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
-            <Display size={26} color={ink}>{band.low}–{band.high}</Display>
+            <Display size={26} color={ink}>{`${band.low}–${band.high}`}</Display>
             <Body size={12} color={colors.textMuted} style={{ fontFamily: font.italic }}>{t('preg_weight_iomBandLabel')}</Body>
           </View>
           {expectedLow !== null && expectedHigh !== null && (
             <Body size={13} color={colors.textSecondary} style={{ marginTop: 10, lineHeight: 18 }}>
-              By week {weekNumber}, you're expected to gain{' '}
+              {t('preg_weight_byWeekExpect', { week: weekNumber })}{' '}
               <Text style={{ color: ink, fontFamily: font.bodySemiBold }}>
-                {expectedLow.toFixed(1)}–{expectedHigh.toFixed(1)} kg
+                {`${expectedLow.toFixed(1)}–${expectedHigh.toFixed(1)} ${t('preg_form_weight_kgLabel')}`}
               </Text>
-              . Hit a range, not a number — everybody's trajectory differs.
+              {t('preg_weight_hitARange')}
             </Body>
           )}
         </View>
@@ -400,7 +401,7 @@ function WeightDetailModal(props: DetailProps) {
         {/* Recent entries */}
         {recent.length > 0 && (
           <View style={[styles.stickerBlock, { backgroundColor: colors.surface, borderColor: paperBorderStrong }]}>
-            <MonoCaps size={10} color={colors.textMuted} style={{ marginBottom: 6 }}>RECENT ENTRIES</MonoCaps>
+            <MonoCaps size={10} color={colors.textMuted} style={{ marginBottom: 6 }}>{t('preg_weight_recentEntries')}</MonoCaps>
             {recent.map((e, i) => {
               const prev = i < recent.length - 1 ? recent[i + 1] : null
               const delta = prev ? e.weight - prev.weight : 0
@@ -411,7 +412,7 @@ function WeightDetailModal(props: DetailProps) {
                   </Body>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Body size={13} color={ink} style={{ fontFamily: font.bodySemiBold }}>
-                      {e.weight.toFixed(1)} kg
+                      {`${e.weight.toFixed(1)} ${t('preg_form_weight_kgLabel')}`}
                     </Body>
                     {prev && (
                       <Body size={11} color={delta > 0 ? stickers.green : delta < 0 ? stickers.coral : colors.textMuted}>
@@ -538,12 +539,12 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
         <PaperCard radius={24} padding={18} style={styles.card}>
           <View style={styles.headerRow}>
             <View style={{ flex: 1 }}>
-              <MonoCaps size={10} color={colors.textMuted}>WEIGHT TREND · WEEK {weekNumber}</MonoCaps>
+              <MonoCaps size={10} color={colors.textMuted}>{t('preg_weight_trendWeekLabel', { week: weekNumber })}</MonoCaps>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
                 <Display size={28} color={colors.text}>
                   {empty ? '—' : derived.current!.toFixed(1)}
                 </Display>
-                <Body size={13} color={colors.textMuted} style={{ fontFamily: font.bodyMedium }}>kg</Body>
+                <Body size={13} color={colors.textMuted} style={{ fontFamily: font.bodyMedium }}>{t('preg_form_weight_kgLabel')}</Body>
               </View>
             </View>
             <View style={[styles.statusPill, { backgroundColor: statusColor + '1A', borderColor: statusColor + '55' }]}>
@@ -560,14 +561,14 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
           {/* Stat strip */}
           <View style={styles.statStrip}>
             <View style={styles.statCellInline}>
-              <MonoCaps size={9} color={colors.textMuted}>START</MonoCaps>
+              <MonoCaps size={9} color={colors.textMuted}>{t('preg_weight_labelStart')}</MonoCaps>
               <Text style={[styles.statValue, { color: colors.text }]}>
                 {derived.start !== null ? `${derived.start.toFixed(1)} kg` : '—'}
               </Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statCellInline}>
-              <MonoCaps size={9} color={colors.textMuted}>GAINED</MonoCaps>
+              <MonoCaps size={9} color={colors.textMuted}>{t('preg_weight_labelGained')}</MonoCaps>
               <Text style={[
                 styles.statValue,
                 { color: derived.gained === null ? colors.text : derived.gained >= 0 ? stickers.green : stickers.coral },
@@ -577,7 +578,7 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statCellInline}>
-              <MonoCaps size={9} color={colors.textMuted}>PACE</MonoCaps>
+              <MonoCaps size={9} color={colors.textMuted}>{t('preg_weight_labelPace')}</MonoCaps>
               <Text style={[styles.statValue, { color: colors.text }]}>
                 {derived.pace !== null ? `${derived.pace >= 0 ? '+' : ''}${derived.pace.toFixed(1)}/wk` : '—'}
               </Text>
