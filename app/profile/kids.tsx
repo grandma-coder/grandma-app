@@ -26,6 +26,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
@@ -483,6 +484,7 @@ function EditChildSheet({
   onSaved: (updated: ChildWithRole) => void
 }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
 
   const [name, setName] = useState(child.name)
   const [birthDate, setBirthDate] = useState(child.birthDate)
@@ -577,7 +579,7 @@ function EditChildSheet({
           <SectionHeader label="Basic Info" />
           <FormField label="Name *" value={name} onChangeText={setName} placeholder="Child name" />
 
-          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Sex *</MonoCaps></View>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('profKids_labelSex')}</MonoCaps></View>
           <View style={formStyles.optionRow}>
             {SEX_OPTIONS.map((opt) => (
               <Pressable
@@ -596,7 +598,7 @@ function EditChildSheet({
             ))}
           </View>
 
-          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Birth Date *</MonoCaps></View>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('profKids_labelBirthDate')}</MonoCaps></View>
           <Pressable
             onPress={() => {
               setDateDraft(birthDate ? new Date(birthDate) : new Date())
@@ -630,7 +632,7 @@ function EditChildSheet({
             minimumDate={new Date(new Date().getFullYear() - 25, 0, 1)}
           />
 
-          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Blood Type</MonoCaps></View>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('children_bloodType')}</MonoCaps></View>
           <View style={formStyles.optionRow}>
             {BLOOD_TYPES.map((bt) => (
               <Pressable
@@ -649,7 +651,7 @@ function EditChildSheet({
             ))}
           </View>
 
-          <View style={{ marginTop: 8 }}><MonoCaps color={colors.textMuted}>Country (vaccine schedule)</MonoCaps></View>
+          <View style={{ marginTop: 8 }}><MonoCaps color={colors.textMuted}>{t('profKids_labelCountryVaccine')}</MonoCaps></View>
           <View>
             <View
               style={[
@@ -757,6 +759,7 @@ function AddChildSheet({
   onAdded: (child: ChildWithRole) => void
 }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
 
   const [name, setName] = useState('')
   const [birthDate, setBirthDate] = useState<string | null>(null)
@@ -837,7 +840,7 @@ function AddChildSheet({
           <SectionHeader label="Basic Info" />
           <FormField label="Name *" value={name} onChangeText={setName} placeholder="Child's name" />
 
-          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Sex *</MonoCaps></View>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('profKids_labelSex')}</MonoCaps></View>
           <View style={formStyles.optionRow}>
             {SEX_OPTIONS.map((opt) => (
               <Pressable
@@ -856,7 +859,7 @@ function AddChildSheet({
             ))}
           </View>
 
-          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Birth Date *</MonoCaps></View>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('profKids_labelBirthDate')}</MonoCaps></View>
           <Pressable
             onPress={() => {
               setDateDraft(birthDate ? new Date(birthDate) : new Date())
@@ -890,7 +893,7 @@ function AddChildSheet({
             minimumDate={new Date(new Date().getFullYear() - 25, 0, 1)}
           />
 
-          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>Blood Type</MonoCaps></View>
+          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('children_bloodType')}</MonoCaps></View>
           <View style={formStyles.optionRow}>
             {BLOOD_TYPES.map((bt) => (
               <Pressable
