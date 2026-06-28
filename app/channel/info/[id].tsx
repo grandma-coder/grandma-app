@@ -404,7 +404,7 @@ export default function ChannelInfoScreen() {
   if (!channel) {
     return (
       <View style={[s.center, { backgroundColor: colors.bg }]}>
-        <Text style={{ color: colors.textMuted }}>Channel not found</Text>
+        <Text style={{ color: colors.textMuted }}>{t('channelInfo_channelNotFound')}</Text>
       </View>
     )
   }
@@ -476,7 +476,7 @@ export default function ChannelInfoScreen() {
                   <Lock size={12} color={colors.textMuted} strokeWidth={2} />
                 )}
                 <Text style={[s.channelCategory, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-                  {channel.channelType === 'private' ? 'Private' : channel.category} channel
+                  {t('channelInfo_typeChannel', { type: channel.channelType === 'private' ? 'Private' : (channel.category ?? '') })}
                 </Text>
               </View>
             </>
@@ -550,12 +550,12 @@ export default function ChannelInfoScreen() {
                 {ownerName ?? t('channelInfo_ownerFallback')}
               </Text>
               <Text style={[s.ownerMeta, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-                Created {new Date(channel.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                {t('channelInfo_createdDate', { date: new Date(channel.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) })}
               </Text>
             </View>
             {isOwner && (
               <View style={[s.ownerBadge, { backgroundColor: brand.accent + '20', borderRadius: radius.full }]}>
-                <Text style={[s.ownerBadgeText, { color: brand.accent, fontFamily: font.bodySemiBold }]}>You</Text>
+                <Text style={[s.ownerBadgeText, { color: brand.accent, fontFamily: font.bodySemiBold }]}>{t('channelInfo_youBadge')}</Text>
               </View>
             )}
           </View>
@@ -585,7 +585,7 @@ export default function ChannelInfoScreen() {
           })}
           {members.length > 10 && (
             <Text style={[s.showMore, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-              +{members.length - 10} more members
+              {t('channelInfo_moreMembers', { n: members.length - 10 })}
             </Text>
           )}
         </View>
@@ -614,39 +614,39 @@ export default function ChannelInfoScreen() {
               <View style={[s.metricsCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
                 <View style={s.metricsHeader}>
                   <ChartBar size={16} color={colors.primary} strokeWidth={2} />
-                  <Text style={[s.metricsTitle, { color: colors.text, fontFamily: font.bodyBold }]}>Channel Metrics</Text>
+                  <Text style={[s.metricsTitle, { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelInfo_metricsTitle')}</Text>
                 </View>
                 <View style={s.metricsGrid}>
                   <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
                     <Users size={16} color={colors.primary} strokeWidth={2} />
                     <Text style={[s.metricValue, { color: colors.text, fontFamily: font.display }]}>{metrics.totalMembers}</Text>
-                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Members</Text>
+                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMembers')}</Text>
                   </View>
                   <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
                     <MessageSquare size={16} color={colors.secondary} strokeWidth={2} />
                     <Text style={[s.metricValue, { color: colors.text, fontFamily: font.display }]}>{metrics.totalMessages}</Text>
-                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Messages</Text>
+                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMessages')}</Text>
                   </View>
                   <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
                     <ImageIcon size={16} color={colors.primary} strokeWidth={2} />
                     <Text style={[s.metricValue, { color: colors.text, fontFamily: font.display }]}>{metrics.totalMedia}</Text>
-                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Media</Text>
+                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMedia')}</Text>
                   </View>
                   <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
                     <Zap size={16} color={colors.success} strokeWidth={2} />
                     <Text style={[s.metricValue, { color: colors.text, fontFamily: font.display }]}>{metrics.activeToday}</Text>
-                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>Active Today</Text>
+                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricActiveToday')}</Text>
                   </View>
                 </View>
                 <View style={[s.metricsFooter, { borderTopColor: colors.borderLight }]}>
                   <View style={s.metricsFooterItem}>
                     <Text style={[s.metricsFooterValue, { color: colors.primary, fontFamily: font.display }]}>{metrics.messagesToday}</Text>
-                    <Text style={[s.metricsFooterLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>msgs today</Text>
+                    <Text style={[s.metricsFooterLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('channelInfo_msgsToday')}</Text>
                   </View>
                   <View style={[s.metricsFooterDivider, { backgroundColor: colors.borderLight }]} />
                   <View style={s.metricsFooterItem}>
                     <Text style={[s.metricsFooterValue, { color: colors.primary, fontFamily: font.display }]}>{metrics.messagesThisWeek}</Text>
-                    <Text style={[s.metricsFooterLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>this week</Text>
+                    <Text style={[s.metricsFooterLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('channelInfo_thisWeek')}</Text>
                   </View>
                 </View>
               </View>
@@ -796,9 +796,9 @@ function DeleteChannelSheet({
           </View>
           <Text style={[s.deleteTitle, { color: colors.text, fontFamily: font.display }]}>{t('channelInfo_deleteTitle')}</Text>
           <Text style={[s.deleteBody, { color: colors.textSecondary, fontFamily: font.body }]}>
-            This permanently deletes{' '}
+            {t('channelInfo_deleteBodyBefore')}
             <Text style={{ fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
-            {' '}and all its messages. This can't be undone.
+            {t('channelInfo_deleteBodyAfter')}
           </Text>
 
           <Pressable
