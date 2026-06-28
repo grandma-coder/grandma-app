@@ -27,6 +27,11 @@ export interface TranslationKeys {
   common_today: string
   common_yesterday: string
   common_noData: string
+  common_nDays: string
+  common_kcal: string
+  common_couldntLoad: string
+  common_update: string
+  common_at: string
 
   // ─── Tabs ──────────────────────────────────────────────────────────────
   tab_home: string
@@ -479,6 +484,20 @@ export interface TranslationKeys {
   preg_form_kegel_setsLabel: string
   preg_form_nutrition_title: string
   preg_form_nutrition_caloriesLabel: string
+  preg_form_kick_tap: string
+  preg_form_sleep_hoursSlept: string
+  preg_form_sleep_qualityRange: string
+  preg_form_exercise_minutesFieldLabel: string
+  preg_form_nutrition_coverageLabel: string
+  preg_form_kegel_setsCompletedLabel: string
+  preg_form_water_glassesTodayLabel: string
+  preg_form_vitamins_question: string
+  preg_form_nesting_categoryLabel: string
+  preg_form_nesting_alreadyDone: string
+  preg_form_birthprep_dueByWeek: string
+  preg_form_contraction_durationLabel: string
+  preg_form_contraction_intervalLabel: string
+  preg_form_weight_fieldLabel: string
 
   // ─── WeightTrendCard (Wave 3) ─────────────────────────────────────────
   preg_weight_sheetTitle: string
@@ -497,6 +516,15 @@ export interface TranslationKeys {
   preg_weight_chartEmpty: string
   preg_weight_targetFooter: string               // "Target: {{low}}–{{high}} kg total · {{label}}"
   preg_weight_details: string
+  preg_weight_labelStarting: string
+  preg_weight_labelGained: string
+  preg_weight_labelPace: string
+  preg_weight_iomTargetFull: string
+  preg_weight_recentEntries: string
+  preg_weight_trendWeekLabel: string
+  preg_weight_labelStart: string
+  preg_weight_byWeekExpect: string
+  preg_weight_hitARange: string
 
   // ─── PregnancyUserReminders (Wave 3) ──────────────────────────────────
   preg_reminders_addButton: string
@@ -1231,6 +1259,15 @@ export interface TranslationKeys {
   kids_calendar_recurringLabel: string
   kids_calendar_moreKids: string
   kids_calendar_alertCouldNotRemove: string
+  kids_calendar_visitsStats: string
+  kids_calendar_nKids: string
+  kids_calendar_routines: string
+  kids_calendar_routinesSubtitle: string
+  kids_calendar_newRoutine: string
+  kids_calendar_addRoutine: string
+  kids_calendar_editRoutine: string
+  kids_calendar_congrats_allLogged: string
+  kids_calendar_detail_colorLabel: string
 
   // ─── Kids Nanny Notes (Wave B2) ─────────────────────────────────────────
   kids_nannyNotes_topicFood: string
@@ -1446,6 +1483,21 @@ export interface TranslationKeys {
   cycleAnalytics_fertileSub_opensIn: string
   cycleAnalytics_fertileSub_open: string
   cycleAnalytics_fertileSub_passed: string
+  cycleDetail_lastNCycles: string
+  cycleDetail_history: string
+  cycleDetail_regular: string
+  cycleDetail_legend: string
+  cycleDetail_perCycleDeviation: string
+  cycleDetail_cycleN: string
+  cycleDetail_onAvg: string
+  cycleDetail_daysOfSymptomsPerCycle: string
+  cycleDetail_topSymptoms: string
+  cycleDetail_thisCycle: string
+  cycleDetail_windowClosed: string
+  cycleDetail_pastWindows: string
+  cycleDetail_fiveAvg: string
+  cycleDetail_distribution: string
+  cycleDetail_lastNEntries: string
 
   // ─── Fertility Signals Card (Wave B4) ─────────────────────────────────────
   cycleSignals_title: string
@@ -2295,6 +2347,35 @@ export interface TranslationKeys {
   insights_history_noHistory: string
   insights_history_restoreBtn: string
   insights_history_archiveBtn: string
+  insights_askGrandmaAbout: string
+  insights_greetingMorning: string
+  insights_greetingWeek: string
+  insights_quotedText: string
+  insights_callProviderIf: string
+  insights_featuredThisWeek: string
+  insights_quoteAuthor: string
+  insights_readsIntroBase: string
+  insights_readsIntroFiltered: string
+  insights_reads_ageMonths: string
+  insights_reads_ageYears: string
+  insights_noArticlesAge: string
+  insights_historyEmptyBody: string
+  insights_tapForDetails: string
+  insights_archived: string
+  insights_grandmasTip: string
+  insights_modeLabel: string
+  // ─── B7a-2: HealthHistory ─────────────────────────────────────────────────
+  healthHistory_noVaccinesYet: string
+  healthHistory_recommendedSchedule: string
+  healthHistory_noMedicationsLogged: string
+  healthHistory_currentMedications: string
+  healthHistory_weightKg: string
+  healthHistory_heightCm: string
+  healthHistory_noGrowthEntries: string
+  healthHistory_noMilestones: string
+  healthHistory_totalEntries: string
+  healthHistory_noEntries: string
+  healthHistory_fieldChild: string
   // ─── B6: ExamForm ─────────────────────────────────────────────────────────
   examForm_snapOrUpload: string
   examForm_reading: string

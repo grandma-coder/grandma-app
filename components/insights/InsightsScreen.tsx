@@ -505,6 +505,7 @@ function CollapsibleCard({
   children, expandedMap, onToggle,
 }: CollapsibleCardProps) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const isOpen = expandedMap[id] ?? defaultOpen
   const Sticker = stickerForEmoji(emoji)
 
@@ -535,7 +536,7 @@ function CollapsibleCard({
           >
             <TalkMaster size={16} />
             <Text style={[ci.askCtaText, { color: STICKER_INK }]}>
-              Ask Grandma about {title.toLowerCase()}
+              {t('insights_askGrandmaAbout', { topic: title.toLowerCase() })}
             </Text>
           </Pressable>
         </View>
@@ -637,9 +638,9 @@ function PregnancyInsightsContent() {
       <View style={[ci.greetingCard, { backgroundColor: colors.accentSoft }]}>
         <Text style={[ci.greetingDate, { color: colors.textMuted }]}>{today}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={[ci.greetingName, { color: STICKER_INK }]}>Good morning, {parentName}</Text>
+          <Text style={[ci.greetingName, { color: STICKER_INK }]}>{t('insights_greetingMorning', { name: parentName })}</Text>
         </View>
-        <Text style={[ci.greetingWeek, { color: colors.accent }]}>Week {weekNumber} · {weekData.babySize}</Text>
+        <Text style={[ci.greetingWeek, { color: colors.accent }]}>{t('insights_greetingWeek', { n: weekNumber, size: weekData.babySize })}</Text>
       </View>
 
       <CollapsibleCard
@@ -669,7 +670,7 @@ function PregnancyInsightsContent() {
         id="affirmation" emoji="✨" color={brand.prePregnancy} title="Today's affirmation"
         expandedMap={expandedCards} onToggle={toggleCard}
       >
-        <Text style={[ci.affirmationText, { color: colors.text }]}>"{affirmation}"</Text>
+        <Text style={[ci.affirmationText, { color: colors.text }]}>{t('insights_quotedText', { text: affirmation })}</Text>
       </CollapsibleCard>
 
       {upcomingAppt && (
@@ -690,10 +691,10 @@ function PregnancyInsightsContent() {
       <View style={[ci.warningCard, { backgroundColor: stickerPalette.peachSoft }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <NotifyHealthAlert size={22} />
-          <Text style={[ci.warningTitle, { color: STICKER_INK }]}>Call your provider or go to hospital if:</Text>
+          <Text style={[ci.warningTitle, { color: STICKER_INK }]}>{t('insights_callProviderIf')}</Text>
         </View>
         {WARNING_SIGNS.map((sign, i) => (
-          <Text key={i} style={[ci.warningItem, { color: STICKER_INK + 'C8' }]}>• {sign}</Text>
+          <Text key={i} style={[ci.warningItem, { color: STICKER_INK + 'C8' }]}>{'• '}{sign}</Text>
         ))}
       </View>
 
@@ -708,7 +709,7 @@ function PregnancyInsightsContent() {
           onToggle={toggleCard}
         >
           {stage.content.map((line, i) => (
-            <Text key={i} style={[ci.bulletText, { color: colors.textSecondary }]}>• {line}</Text>
+            <Text key={i} style={[ci.bulletText, { color: colors.textSecondary }]}>{'• '}{line}</Text>
           ))}
         </CollapsibleCard>
       ))}
@@ -719,7 +720,7 @@ function PregnancyInsightsContent() {
     <>
       {featuredRead && (
         <View style={[ci.featuredCard, { backgroundColor: stickerPalette.yellowSoft }]}>
-          <Text style={[ci.featuredBadge, { color: STICKER_INK }]}>FEATURED THIS WEEK</Text>
+          <Text style={[ci.featuredBadge, { color: STICKER_INK }]}>{t('insights_featuredThisWeek')}</Text>
           <Text style={[ci.featuredTitle, { color: STICKER_INK }]}>{featuredRead.title}</Text>
           <Text style={[ci.featuredSummary, { color: STICKER_INK + 'C8' }]}>{featuredRead.teaser}</Text>
           <Text style={[ci.featuredMins, { color: STICKER_INK + 'A0' }]}>{t('insights_reads_minRead', { n: featuredRead.readMinutes })}</Text>
@@ -1169,7 +1170,7 @@ export function InsightsScreen() {
                   {metrics.logStreak > 0 && (
                     <View style={[s.streakBadge, { backgroundColor: stickerPalette.peachSoft }]}>
                       <Flame size={11} color={stickerPalette.peachInk} strokeWidth={2.5} />
-                      <Text style={[s.streakText, { color: stickerPalette.peachInk }]}>{metrics.logStreak}d</Text>
+                      <Text style={[s.streakText, { color: stickerPalette.peachInk }]}>{t('common_nDays', { n: metrics.logStreak })}</Text>
                     </View>
                   )}
                 </View>
@@ -1300,8 +1301,8 @@ export function InsightsScreen() {
               <View style={[s.quoteIconWrap, { backgroundColor: stickerPalette.yellow }]}>
                 <MessageSquare size={18} color={STICKER_INK} strokeWidth={2.5} />
               </View>
-              <Text style={[s.quoteText, { color: STICKER_INK }]}>"{quote.text}"</Text>
-              <Text style={[s.quoteAuthor, { color: colors.textMuted }]}>— {quote.author}</Text>
+              <Text style={[s.quoteText, { color: STICKER_INK }]}>{t('insights_quotedText', { text: quote.text })}</Text>
+              <Text style={[s.quoteAuthor, { color: colors.textMuted }]}>{t('insights_quoteAuthor', { author: quote.author })}</Text>
             </View>
 
             {/* Ask Grandma CTA — sticker hero button */}
@@ -1322,7 +1323,12 @@ export function InsightsScreen() {
         {tab === 'reads' && (
           <>
             <Text style={[s.readsIntro, { color: colors.textSecondary }]}>
-              Curated articles for parents{child?.birthDate ? `, filtered for ${ageMonths < 12 ? `${ageMonths}-month-old` : `${Math.floor(ageMonths / 12)}-year-old`} ${childName}` : ''}.
+              {child?.birthDate
+                ? t('insights_readsIntroFiltered', {
+                    age: ageMonths < 12 ? t('insights_reads_ageMonths', { n: ageMonths }) : t('insights_reads_ageYears', { n: Math.floor(ageMonths / 12) }),
+                    name: childName,
+                  })
+                : t('insights_readsIntroBase')}
             </Text>
 
             {/* Category filter — sticker pills */}
@@ -1368,7 +1374,7 @@ export function InsightsScreen() {
               <View style={[s.noArticlesWrap, { backgroundColor: colors.surface }]}>
                 <BookOpen size={24} color={colors.textMuted} strokeWidth={1.5} />
                 <Text style={[s.noArticlesText, { color: colors.textMuted }]}>
-                  No articles match this filter for {childName}'s age. Try "All".
+                  {t('insights_noArticlesAge', { name: childName })}
                 </Text>
               </View>
             )}
@@ -1396,7 +1402,7 @@ export function InsightsScreen() {
                 <Clock size={26} color={colors.textMuted} strokeWidth={1.5} />
                 <Text style={[s.historyEmptyTitle, { color: colors.text }]}>{t('insights_history_noHistory')}</Text>
                 <Text style={[s.historyEmptyBody, { color: colors.textMuted }]}>
-                  Dismissed and expired insights will appear here.
+                  {t('insights_historyEmptyBody')}
                 </Text>
               </View>
             )}
@@ -1563,6 +1569,7 @@ function InsightCard({
   onArchive: () => void
 }) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const Icon = config.icon
   const tilt = index % 2 === 0 ? '-0.6deg' : '0.6deg'
   const paper = colors.surface
@@ -1605,7 +1612,7 @@ function InsightCard({
               <Text style={[s.modeText, { color: STICKER_INK }]}>{insight.behavior}</Text>
             </View>
             <View style={[s.tapHint, { backgroundColor: paper, borderColor: STICKER_INK + '24' }]}>
-              <Text style={[s.tapHintText, { color: STICKER_INK }]}>Tap for details</Text>
+              <Text style={[s.tapHintText, { color: STICKER_INK }]}>{t('insights_tapForDetails')}</Text>
               <ChevronRight size={12} color={STICKER_INK} strokeWidth={2.75} />
             </View>
           </View>
@@ -1708,7 +1715,7 @@ function InsightDetailModal({
               </View>
               {isArchived && (
                 <View style={s.modalMetaPill}>
-                  <Text style={[s.modalMetaPillText, { color: colors.textMuted }]}>Archived</Text>
+                  <Text style={[s.modalMetaPillText, { color: colors.textMuted }]}>{t('insights_archived')}</Text>
                 </View>
               )}
             </View>
@@ -1720,13 +1727,13 @@ function InsightDetailModal({
                 <DetailIcon size={16} color={config.color} strokeWidth={2.75} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[s.tipLabel, { color: STICKER_INK }]}>Grandma's Tip</Text>
+                <Text style={[s.tipLabel, { color: STICKER_INK }]}>{t('insights_grandmasTip')}</Text>
                 <Text style={[s.tipText, { color: STICKER_INK + 'CC' }]}>{config.tip}</Text>
               </View>
             </View>
             <View style={s.modalMeta}>
               <View style={[s.modalMetaPill, { borderColor: STICKER_INK + '24' }]}>
-                <Text style={[s.modalMetaPillText, { color: STICKER_INK }]}>Mode: {insight.behavior}</Text>
+                <Text style={[s.modalMetaPillText, { color: STICKER_INK }]}>{t('insights_modeLabel', { mode: insight.behavior })}</Text>
               </View>
               <Text style={s.modalDateText}>
                 {new Date(insight.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
