@@ -122,7 +122,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         {/* Mood — full-width hero tile */}
         <PaperCard tint={stickers.yellowSoft} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
-            <MonoCaps size={10} color={muted}>MOOD</MonoCaps>
+            <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelMood')}</MonoCaps>
           </View>
           <View style={styles.moodRow}>
             <MoodFace
@@ -145,7 +145,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         <PaperCard tint={stickers.blueSoft} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
             <LogWater size={20} />
-            <MonoCaps size={10} color={muted}>HYDRATION</MonoCaps>
+            <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelHydration')}</MonoCaps>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
             <Display size={32} color={ink}>{waterVal}</Display>
@@ -163,7 +163,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
           <PaperCard tint={stickers.lilacSoft} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <LogSleep size={18} />
-              <MonoCaps size={10} color={muted}>SLEEP</MonoCaps>
+              <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelSleep')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
               {sleepVal !== null ? `${sleepVal.toFixed(1)}h` : '—'}
@@ -186,11 +186,11 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
           <PaperCard tint={stickers.peachSoft} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <LogNutrition size={18} />
-              <MonoCaps size={10} color={muted}>MEALS</MonoCaps>
+              <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelMeals')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>{nutritionVal}/3</Display>
             <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
-              {nutritionTotalCals > 0 ? `~${nutritionTotalCals} kcal` : 'Not logged'}
+              {nutritionTotalCals > 0 ? t('pregnancy_dashboard_kcal', { count: nutritionTotalCals }) : t('pregnancy_dashboard_notLogged')}
             </Body>
             <View style={[styles.tileBar, { backgroundColor: 'rgba(20,19,19,0.08)' }]}>
               <View style={[styles.tileBarFill, {
@@ -206,13 +206,13 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
           <PaperCard tint={stickers.pinkSoft} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <LogExercise size={18} />
-              <MonoCaps size={10} color={muted}>EXERCISE</MonoCaps>
+              <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelExercise')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
               {exerciseLogged ? '✓' : '—'}
             </Display>
             <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
-              {exerciseLogged ? 'Done today' : 'Not logged'}
+              {exerciseLogged ? t('pregnancy_dashboard_doneToday') : t('pregnancy_dashboard_notLogged')}
             </Body>
           </PaperCard>
 
@@ -220,29 +220,29 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
             <PaperCard tint={stickers.greenSoft} radius={20} padding={16} flat style={styles.colTile}>
               <View style={styles.tileHeader}>
                 <LogKicks size={18} />
-                <MonoCaps size={10} color={muted}>KICKS</MonoCaps>
+                <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelKicks')}</MonoCaps>
               </View>
               <Display size={28} color={ink} style={{ marginTop: 4 }}>
                 {kicksVal !== null ? String(kicksVal) : '—'}
               </Display>
               <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
-                {kicksVal !== null ? 'Sessions today' : 'Not logged'}
+                {kicksVal !== null ? t('pregnancy_dashboard_sessionsToday') : t('pregnancy_dashboard_notLogged')}
               </Body>
             </PaperCard>
           ) : (
             <PaperCard tint={stickers.greenSoft} radius={20} padding={16} flat style={styles.colTile}>
               <View style={styles.tileHeader}>
                 <LogWeight size={18} />
-                <MonoCaps size={10} color={muted}>WEIGHT</MonoCaps>
+                <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelWeight')}</MonoCaps>
               </View>
               <Display size={28} color={ink} style={{ marginTop: 4 }}>
                 {weightVal !== null ? `${weightVal.toFixed(1)}` : '—'}
                 {weightVal !== null && (
-                  <Text style={{ fontSize: 14, color: muted, fontFamily: font.italic }}> kg</Text>
+                  <Text style={{ fontSize: 14, color: muted, fontFamily: font.italic }}>{t('pregnancy_todayDash_unitKg')}</Text>
                 )}
               </Display>
               <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
-                {weightVal !== null ? 'Logged today' : 'Not logged'}
+                {weightVal !== null ? t('pregnancy_dashboard_loggedToday') : t('pregnancy_dashboard_notLogged')}
               </Body>
             </PaperCard>
           )}
@@ -252,7 +252,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         <PaperCard tint={colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
             <LogWeight size={18} />
-            <MonoCaps size={10} color={muted}>WEIGHT · LAST 7 DAYS</MonoCaps>
+            <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelWeightLast7')}</MonoCaps>
           </View>
           {loading ? (
             <View style={{ height: 100, justifyContent: 'center' }}>
@@ -262,7 +262,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
             <Sparkline points={fillDays(weightHist).values} color={stickers.lilac} ink={ink} />
           ) : (
             <Body size={12} color={muted} style={{ marginTop: 8, fontFamily: font.italic }}>
-              Log weight on at least 2 days to see a trend.
+              {t('pregnancy_todayDash_weightNeedMore')}
             </Body>
           )}
         </PaperCard>
@@ -271,7 +271,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         <PaperCard tint={colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
             <LogWater size={18} />
-            <MonoCaps size={10} color={muted}>HYDRATION · LAST 7 DAYS</MonoCaps>
+            <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelHydrationLast7')}</MonoCaps>
           </View>
           {loading ? (
             <View style={{ height: 80, justifyContent: 'center' }}>
