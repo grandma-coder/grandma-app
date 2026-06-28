@@ -2363,4 +2363,5 @@ export const hi: TranslationKeys = {
   healthHistory_totalEntries: 'total {{label}} entries',
   healthHistory_noEntries: 'No {{label}} entries yet.',
   healthHistory_fieldChild: 'Child',
+  healthHistory_nMore: '+{{n}} more',
 }

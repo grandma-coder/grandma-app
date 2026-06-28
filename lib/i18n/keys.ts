@@ -2386,6 +2386,8 @@ export interface TranslationKeys {
   healthHistory_totalEntries: string
   healthHistory_noEntries: string
   healthHistory_fieldChild: string
+  healthHistory_nMore: string
+
   // ─── B6: ExamForm ─────────────────────────────────────────────────────────
   examForm_snapOrUpload: string
   examForm_reading: string

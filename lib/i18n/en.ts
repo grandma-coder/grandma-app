@@ -2385,6 +2385,8 @@ export const en: TranslationKeys = {
   healthHistory_totalEntries: 'total {{label}} entries',
   healthHistory_noEntries: 'No {{label}} entries yet.',
   healthHistory_fieldChild: 'Child',
+  healthHistory_nMore: '+{{n}} more',
+
   // ─── B6: ExamForm ─────────────────────────────────────────────────────────
   examForm_snapOrUpload: 'Snap or upload a test result',
   examForm_reading: 'Reading the paperwork…',

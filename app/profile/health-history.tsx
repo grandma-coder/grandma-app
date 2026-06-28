@@ -27,6 +27,7 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -79,6 +80,7 @@ const VACCINE_SCHEDULE = [
 
 export default function HealthHistoryScreen() {
   const { colors, font, stickers, isDark, radius } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
   const paper = colors.surface
@@ -192,19 +194,19 @@ export default function HealthHistoryScreen() {
               ))}
               {vaccines.length > 3 && (
                 <View style={[styles.moreChip, { backgroundColor: stickers.green + (isDark ? '24' : '32'), borderColor: stickers.green + (isDark ? '40' : '60') }]}>
-                  <Text style={[styles.moreChipText, { color: stickers.greenInk, fontFamily: font.bodySemiBold }]}>+{vaccines.length - 3} more</Text>
+                  <Text style={[styles.moreChipText, { color: stickers.greenInk, fontFamily: font.bodySemiBold }]}>{t('healthHistory_nMore', { n: vaccines.length - 3 })}</Text>
                 </View>
               )}
             </View>
           ) : (
             <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <CrossSticker size={28} />
-              <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No vaccines logged yet. Tap + to add.</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>{t('healthHistory_noVaccinesYet')}</Text>
             </View>
           )}
           {/* Next recommended */}
           <View style={[styles.nextVaccine, { backgroundColor: stickers.green + (isDark ? '20' : '30') }]}>
-            <Text style={[styles.nextLabel, { color: stickers.greenInk, fontFamily: font.bodySemiBold }]}>Recommended Schedule</Text>
+            <Text style={[styles.nextLabel, { color: stickers.greenInk, fontFamily: font.bodySemiBold }]}>{t('healthHistory_recommendedSchedule')}</Text>
             <Text style={[styles.nextText, { color: colors.textSecondary, fontFamily: font.body }]}>
               {VACCINE_SCHEDULE.filter((v) => !givenVaccineNames.has(v.name)).slice(0, 2).map((v) => `${v.name} (${v.ages[0]})`).join(', ') || 'All up to date!'}
             </Text>
@@ -228,13 +230,13 @@ export default function HealthHistoryScreen() {
           ) : (
             <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <DropSticker size={28} />
-              <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No medications logged.</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>{t('healthHistory_noMedicationsLogged')}</Text>
             </View>
           )}
           {/* Active meds from child profiles */}
           {children.some((c) => c.medications.length > 0) && (
             <View style={[styles.activeMeds, { backgroundColor: stickers.blue + (isDark ? '20' : '30') }]}>
-              <Text style={[styles.nextLabel, { color: stickers.blueInk, fontFamily: font.bodySemiBold }]}>Current Medications</Text>
+              <Text style={[styles.nextLabel, { color: stickers.blueInk, fontFamily: font.bodySemiBold }]}>{t('healthHistory_currentMedications')}</Text>
               {children.filter((c) => c.medications.length > 0).map((c) => (
                 <Text key={c.id} style={[styles.nextText, { color: colors.textSecondary, fontFamily: font.body }]}>{c.name}: {c.medications.join(', ')}</Text>
               ))}
@@ -261,7 +263,7 @@ export default function HealthHistoryScreen() {
                     {/* Weight bars */}
                     {weights.length > 0 && (
                       <>
-                        <Text style={[styles.chartSubtitle, { color: wColor, fontFamily: font.bodySemiBold }]}>Weight (kg)</Text>
+                        <Text style={[styles.chartSubtitle, { color: wColor, fontFamily: font.bodySemiBold }]}>{t('healthHistory_weightKg')}</Text>
                         <View style={styles.miniChart}>
                           {weights.map((g) => {
                             const num = parseFloat(g.value.replace(/[^0-9.]/g, '')) || 5
@@ -280,7 +282,7 @@ export default function HealthHistoryScreen() {
                     {/* Height bars */}
                     {heights.length > 0 && (
                       <>
-                        <Text style={[styles.chartSubtitle, { color: hColor, fontFamily: font.bodySemiBold }]}>Height (cm)</Text>
+                        <Text style={[styles.chartSubtitle, { color: hColor, fontFamily: font.bodySemiBold }]}>{t('healthHistory_heightCm')}</Text>
                         <View style={styles.miniChart}>
                           {heights.map((g) => {
                             const num = parseFloat(g.value.replace(/[^0-9.]/g, '')) || 50
@@ -308,7 +310,7 @@ export default function HealthHistoryScreen() {
           ) : (
             <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <FlowerSticker size={28} />
-              <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No growth entries. Log weight and height to track progress.</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>{t('healthHistory_noGrowthEntries')}</Text>
             </View>
           )}
         </Pressable>
@@ -324,7 +326,7 @@ export default function HealthHistoryScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.milestoneText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{m.value}</Text>
                     <Text style={[styles.milestoneDate, { color: colors.textMuted, fontFamily: font.body }]}>
-                      {m.childName} · {new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {`${m.childName} · ${new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
                     </Text>
                   </View>
                 </View>
@@ -333,7 +335,7 @@ export default function HealthHistoryScreen() {
           ) : (
             <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <StarSticker size={28} />
-              <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>No milestones yet. Celebrate every first!</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted, fontFamily: font.body }]}>{t('healthHistory_noMilestones')}</Text>
             </View>
           )}
         </Pressable>
@@ -447,6 +449,7 @@ function StatCard({ icon: Icon, color, bg, num, label, onPress }: any) {
 
 function DetailPopup({ section, events, onClose }: { section: string; events: HealthEvent[]; onClose: () => void }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const paper = colors.surface
   const paperBorder = colors.border
@@ -471,7 +474,7 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
         {/* Summary */}
         <View style={[styles.detailSummary, { backgroundColor: cfg.color + (isDark ? '20' : '20'), borderColor: cfg.color + '40', marginHorizontal: 20 }]}>
           <Text style={[styles.detailSummaryNum, { color: cfg.color, fontFamily: font.display }]}>{events.length}</Text>
-          <Text style={[styles.detailSummaryLabel, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>total {cfg.label.toLowerCase()} entries</Text>
+          <Text style={[styles.detailSummaryLabel, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>{t('healthHistory_totalEntries', { label: cfg.label.toLowerCase() })}</Text>
         </View>
 
         <ScrollView
@@ -482,7 +485,7 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
           keyboardShouldPersistTaps="handled"
         >
           {events.length === 0 && (
-            <Text style={[styles.emptyText, { color: colors.textMuted, textAlign: 'center', marginTop: 40, fontFamily: font.body }]}>No {cfg.label.toLowerCase()} entries yet.</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted, textAlign: 'center', marginTop: 40, fontFamily: font.body }]}>{t('healthHistory_noEntries', { label: cfg.label.toLowerCase() })}</Text>
           )}
           {events.map((e) => (
             <View
@@ -518,6 +521,7 @@ const ADD_TYPES = Object.entries(TYPE_CFG).map(([id, cfg]) => ({ id, ...cfg }))
 
 function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const children = useChildStore((s) => s.children)
   const paper = colors.surface
   const paperBorder = colors.border
@@ -596,7 +600,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
     <LogSheet visible={visible} title="Log Health Event" onClose={() => { reset(); onClose() }}>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={formStyles.form}>
-          <MonoCaps color={colors.textMuted}>Type</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldType')}</MonoCaps>
           <View style={formStyles.typeGrid}>
             {ADD_TYPES.map((t) => {
               const active = eventType === t.id
@@ -623,7 +627,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
 
           {children.length > 1 && (
             <>
-              <MonoCaps color={colors.textMuted}>Child</MonoCaps>
+              <MonoCaps color={colors.textMuted}>{t('healthHistory_fieldChild')}</MonoCaps>
               <View style={formStyles.childRow}>
                 {children.map((c, idx) => (
                   <ChildPill
@@ -638,7 +642,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
             </>
           )}
 
-          <MonoCaps color={colors.textMuted}>Date</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('memories_labelDate')}</MonoCaps>
           <Pressable
             onPress={() => setShowDatePicker(!showDatePicker)}
             style={[formStyles.dateBtn, { backgroundColor: paper, borderColor: paperBorder }]}
@@ -660,7 +664,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
 
           {eventType === 'growth' ? (
             <>
-              <MonoCaps color={colors.textMuted}>Weight (kg)</MonoCaps>
+              <MonoCaps color={colors.textMuted}>{t('healthHistory_weightKg')}</MonoCaps>
               <TextInput
                 value={weight}
                 onChangeText={setWeight}
@@ -669,7 +673,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
                 keyboardType="decimal-pad"
                 style={[formStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
               />
-              <MonoCaps color={colors.textMuted}>Height (cm)</MonoCaps>
+              <MonoCaps color={colors.textMuted}>{t('healthHistory_heightCm')}</MonoCaps>
               <TextInput
                 value={height}
                 onChangeText={setHeight}
@@ -681,7 +685,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
             </>
           ) : (
             <>
-              <MonoCaps color={colors.textMuted}>Details</MonoCaps>
+              <MonoCaps color={colors.textMuted}>{t('preg_weight_details')}</MonoCaps>
               <TextInput
                 value={value}
                 onChangeText={setValue}
@@ -692,7 +696,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
             </>
           )}
 
-          <MonoCaps color={colors.textMuted}>Notes (optional)</MonoCaps>
+          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldNotesOptional')}</MonoCaps>
           <TextInput
             value={notes}
             onChangeText={setNotes}
