@@ -1124,7 +1124,7 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
           />
         ) : (
           <Body size={13} color={colors.textMuted}>
-            Log weight at least twice to see a trend line.
+            {t('preg_analytics_noWeightTrend')}
           </Body>
         )}
       </PaperCard>
@@ -1202,7 +1202,7 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
           <MiniBarChart data={kickValues} labels={kickLabels} color={stickers.pink} />
         ) : (
           <Body size={13} color={colors.textMuted}>
-            No kick sessions yet — log one from the home screen during quiet time.
+            {t('preg_analytics_noKickSessions')}
           </Body>
         )}
       </PaperCard>
@@ -1216,7 +1216,7 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
           <View style={{ marginTop: 10 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
               <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyMedium }}>
-                {'Sessions meeting target'}
+                {t('preg_analytics_sessionsHittingTarget')}
               </Text>
               <Text style={{ color: stickers.pink, fontSize: 13, fontFamily: font.bodySemiBold }}>
                 {meets10in2h} / {kickSessions.length} ({compliancePct}%)
@@ -1260,6 +1260,7 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
 
 function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const hours = sleepHistory.map((s) => s.hours)
   const labels = sleepHistory.map((s) => shortDay(s.date))
   const avg = hours.length > 0 ? hours.reduce((a, b) => a + b, 0) / hours.length : 0
@@ -1284,7 +1285,7 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
           <MiniBarChart data={hours} labels={labels} color={stickers.lilac} />
         ) : (
           <Body size={13} color={colors.textMuted}>
-            Log sleep from the pregnancy calendar to track hours each night.
+            {t('preg_analytics_noSleepLogs')}
           </Body>
         )}
       </PaperCard>
@@ -1435,6 +1436,7 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
 
 function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const accent = accentColor ?? stickers.blue
   const tint = accentTint ?? stickers.blueSoft
   const TARGET = 8
@@ -1578,7 +1580,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
           </>
         ) : (
           <Body size={13} color={colors.textMuted}>
-            Log water from your pregnancy calendar to see your hydration each day.
+            {t('preg_analytics_noHydrationLogs')}
           </Body>
         )}
       </PaperCard>
@@ -1650,11 +1652,11 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
               : `Averaging only ${avg.toFixed(1)} glasses — well below the ${TARGET}-glass target. Keep a bottle within reach.`}
           </Body>
           {avg >= TARGET ? (
-            <Pill color={stickers.green} tint={stickers.greenSoft} label="On track" />
+            <Pill color={stickers.green} tint={stickers.greenSoft} label={t('preg_analytics_pill_onTrack')} />
           ) : avg >= TARGET * 0.75 ? (
-            <Pill color={accent} tint={tint} label="Almost there" />
+            <Pill color={accent} tint={tint} label={t('preg_analytics_pill_almostThere')} />
           ) : (
-            <Pill color={stickers.coral} tint={stickers.peachSoft} label="Below target" />
+            <Pill color={stickers.coral} tint={stickers.peachSoft} label={t('preg_analytics_pill_belowTarget')} />
           )}
         </PaperCard>
       ) : null}
@@ -1761,11 +1763,12 @@ function MiniInfoTile({
 
 function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   if (!nutritionMatrix) {
     return (
       <PaperCard>
         <Body size={13} color={colors.textMuted}>
-          Loading your nutrition data…
+          {t('preg_analytics_nutritionLoading')}
         </Body>
       </PaperCard>
     )
@@ -1847,6 +1850,7 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
 
 function ExerciseDetail({ exerciseHistory, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const minutes = exerciseHistory.map((e) => e.minutes).filter((n) => n > 0)
   const labels = exerciseHistory.map((e) => shortDay(e.date))
   const total = minutes.reduce((a, b) => a + b, 0)
@@ -1870,7 +1874,7 @@ function ExerciseDetail({ exerciseHistory, trimester, weekNumber, accentColor, a
           <MiniBarChart data={minutes} labels={labels} color={stickers.coral} />
         ) : (
           <Body size={13} color={colors.textMuted}>
-            Log a walk or prenatal yoga session to start your movement trend.
+            {t('preg_analytics_noExerciseLogs')}
           </Body>
         )}
       </PaperCard>
@@ -1924,7 +1928,7 @@ function ContractionsDetail({ contractions, trimester, weekNumber, accentColor, 
           </View>
         ) : (
           <Body size={13} color={colors.textMuted}>
-            No contractions logged yet — use the timer in your pregnancy calendar when you feel one.
+            {t('preg_analytics_noContractionsYet')}
           </Body>
         )}
       </PaperCard>

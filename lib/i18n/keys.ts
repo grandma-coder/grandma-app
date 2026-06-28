@@ -2506,4 +2506,58 @@ export interface TranslationKeys {
   pregCal_status_upcoming: string
   pregCal_appointment_btn: string
   pregCal_upload_exam_btn: string
+  // ─── B7a-3: PregnancyAnalytics residual strings ───────────────────────────
+  preg_analytics_noWeightTrend: string
+  preg_analytics_noKickSessions: string
+  preg_analytics_sessionsHittingTarget: string
+  preg_analytics_noSleepLogs: string
+  preg_analytics_noHydrationLogs: string
+  preg_analytics_nutritionLoading: string
+  preg_analytics_noExerciseLogs: string
+  preg_analytics_noContractionsYet: string
+  // ─── B7a-3: channel/info/[id].tsx residual strings ────────────────────────
+  channelInfo_channelNotFound: string
+  channelInfo_typeChannel: string
+  channelInfo_createdDate: string
+  channelInfo_youBadge: string
+  channelInfo_moreMembers: string
+  channelInfo_metricsTitle: string
+  channelInfo_metricMembers: string
+  channelInfo_metricMessages: string
+  channelInfo_metricMedia: string
+  channelInfo_metricActiveToday: string
+  channelInfo_msgsToday: string
+  channelInfo_thisWeek: string
+  channelInfo_deleteBodyBefore: string
+  channelInfo_deleteBodyAfter: string
+  // ─── B7a-3: KidsJourneyRing residual strings ─────────────────────────────
+  kids_journeyRing_title: string
+  kids_journeyRing_hint: string
+  // ─── B7a-3: TodayDashboardModal residual strings ──────────────────────────
+  pregnancy_todayDash_labelMood: string
+  pregnancy_todayDash_labelHydration: string
+  pregnancy_todayDash_labelSleep: string
+  pregnancy_todayDash_labelMeals: string
+  pregnancy_todayDash_labelExercise: string
+  pregnancy_todayDash_labelKicks: string
+  pregnancy_todayDash_labelWeight: string
+  pregnancy_todayDash_unitKg: string
+  pregnancy_todayDash_labelWeightLast7: string
+  pregnancy_todayDash_weightNeedMore: string
+  pregnancy_todayDash_labelHydrationLast7: string
+  // ─── B7a-3: KidsLogForms residual strings ────────────────────────────────
+  kids_logForm_removeTag: string
+  kids_logForm_timerLabelL: string
+  kids_logForm_timerLabelR: string
+  // ─── B7a-3: profile/pregnancy.tsx residual strings ────────────────────────
+  profPreg_openBirthPlan: string
+  profPreg_birthPlanSubLabel: string
+  profPreg_manageBirthTeam: string
+  profPreg_careCircle: string
+  profPreg_emergencyCard: string
+  profPreg_manageArrow: string
+  // ─── B7a-3: profile/kids.tsx residual strings ─────────────────────────────
+  profKids_labelSex: string
+  profKids_labelBirthDate: string
+  profKids_labelCountryVaccine: string
 }
