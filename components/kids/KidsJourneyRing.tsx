@@ -263,7 +263,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
           {t('kids_journeyRing_title', { name: childName })}
         </Text>
         <Text style={[styles.subtitle, { color: inkMuted, fontFamily: font.bodyMedium }]}>
-          Week {weekAge} · {leaps.length} growth leaps
+          {t('kids_journeyRing_subtitle', { weekAge, leapCount: leaps.length })}
         </Text>
       </View>
 

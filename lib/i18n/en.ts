@@ -2532,6 +2532,7 @@ export const en: TranslationKeys = {
   // ─── B7a-3: KidsJourneyRing residual strings ─────────────────────────────
   kids_journeyRing_title: "{{name}}'s Journey",
   kids_journeyRing_hint: '↺ drag to spin · tap any leap',
+  kids_journeyRing_subtitle: 'Week {{weekAge}} · {{leapCount}} growth leaps',
   kids_journeyRing_weekLabel: 'W{{n}}',
   kids_journeyRing_leapOf: 'LEAP {{n}} OF {{total}}',
   kids_journeyRing_leapOfWithAge: 'LEAP {{n}} OF {{total}} · {{age}}',
@@ -2551,6 +2552,12 @@ export const en: TranslationKeys = {
   kids_logForm_removeTag: '×',
   kids_logForm_timerLabelL: 'L',
   kids_logForm_timerLabelR: 'R',
+  kids_logForm_calUnit: '{{n}} kcal',
+  kids_logForm_minUnit: '{{n}}m',
+  kids_logForm_lastSidePre: 'Last session was ',
+  kids_logForm_lastSideMid: ' — try ',
+  kids_logForm_lastSidePost: ' next',
+  kids_logForm_separator: ' · ',
   // ─── B7a-3: profile/pregnancy.tsx residual strings ────────────────────────
   profPreg_openBirthPlan: 'Open birth plan',
   profPreg_birthPlanSubLabel: 'Types · plan · checklist',
@@ -2558,8 +2565,16 @@ export const en: TranslationKeys = {
   profPreg_careCircle: 'Care circle',
   profPreg_emergencyCard: 'Emergency card',
   profPreg_manageArrow: 'Manage →',
+  profPreg_pickOneThatFits: 'pick the one that fits',
+  profPreg_taglineExpecting: 'expecting…',
+  profPreg_chipWeek: 'Week {{n}}',
+  profPreg_chipTrimester: 'Trimester {{n}}',
+  profPreg_daysToGo: '{{n}} days to go',
   // ─── B7a-3: profile/kids.tsx residual strings ─────────────────────────────
   profKids_labelSex: 'Sex *',
   profKids_labelBirthDate: 'Birth Date *',
   profKids_labelCountryVaccine: 'Country (vaccine schedule)',
+  profKids_noChildren: 'No children added',
+  profKids_noChildrenSub: 'Add your children to start tracking their health, food preferences, and growth.',
+  profKids_addCustomPrefix: '+ Add ',
 }

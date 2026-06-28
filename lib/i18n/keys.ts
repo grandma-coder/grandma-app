@@ -2533,6 +2533,7 @@ export interface TranslationKeys {
   // ─── B7a-3: KidsJourneyRing residual strings ─────────────────────────────
   kids_journeyRing_title: string
   kids_journeyRing_hint: string
+  kids_journeyRing_subtitle: string
   kids_journeyRing_weekLabel: string
   kids_journeyRing_leapOf: string
   kids_journeyRing_leapOfWithAge: string
@@ -2552,6 +2553,12 @@ export interface TranslationKeys {
   kids_logForm_removeTag: string
   kids_logForm_timerLabelL: string
   kids_logForm_timerLabelR: string
+  kids_logForm_calUnit: string
+  kids_logForm_minUnit: string
+  kids_logForm_lastSidePre: string
+  kids_logForm_lastSideMid: string
+  kids_logForm_lastSidePost: string
+  kids_logForm_separator: string
   // ─── B7a-3: profile/pregnancy.tsx residual strings ────────────────────────
   profPreg_openBirthPlan: string
   profPreg_birthPlanSubLabel: string
@@ -2559,8 +2566,16 @@ export interface TranslationKeys {
   profPreg_careCircle: string
   profPreg_emergencyCard: string
   profPreg_manageArrow: string
+  profPreg_pickOneThatFits: string
+  profPreg_taglineExpecting: string
+  profPreg_chipWeek: string
+  profPreg_chipTrimester: string
+  profPreg_daysToGo: string
   // ─── B7a-3: profile/kids.tsx residual strings ─────────────────────────────
   profKids_labelSex: string
   profKids_labelBirthDate: string
   profKids_labelCountryVaccine: string
+  profKids_noChildren: string
+  profKids_noChildrenSub: string
+  profKids_addCustomPrefix: string
 }

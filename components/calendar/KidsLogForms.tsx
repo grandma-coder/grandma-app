@@ -1375,7 +1375,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                           {m.food.charAt(0).toUpperCase() + m.food.slice(1)}
                         </Text>
                         <Text style={[styles.calorieMatchCals, { color: colors.textMuted }]}>
-                          {m.cals} kcal
+                          {t('kids_logForm_calUnit', { n: m.cals })}
                         </Text>
                       </View>
                     ))}
@@ -1391,7 +1391,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     {t('kids_logForm_unknownFood')}
                   </Text>
                   <Text style={[styles.manualCalSubtitle, { color: colors.textSecondary }]}>
-                    "{manualCalIdx !== null ? foodTags[manualCalIdx]?.name : ''}" {t('kids_logForm_notFoundInDb')}
+                    {'"'}{manualCalIdx !== null ? foodTags[manualCalIdx]?.name : ''}{'"'} {t('kids_logForm_notFoundInDb')}
                   </Text>
                   <TextInput
                     value={manualCalInput}
@@ -1533,11 +1533,11 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             ) : lastSide ? (
               <View style={[styles.lastSideBanner, { backgroundColor: stickerPalette.yellowSoft, borderColor: stickerPalette.yellow, borderRadius: radius.lg }]}>
                 <Text style={[styles.lastSideLabel, { color: colors.text }]}>
-                  Last session was <Text style={{ fontWeight: '800', color: colors.text }}>
+                  {t('kids_logForm_lastSidePre')}<Text style={{ fontWeight: '800', color: colors.text }}>
                     {lastSide === 'left' ? t('kids_logForm_left') : lastSide === 'right' ? t('kids_logForm_right') : t('kids_logForm_bothSides')}
-                  </Text> — try <Text style={{ fontWeight: '800', color: colors.text }}>
+                  </Text>{t('kids_logForm_lastSideMid')}<Text style={{ fontWeight: '800', color: colors.text }}>
                     {lastSide === 'left' ? t('kids_logForm_right') : lastSide === 'right' ? t('kids_logForm_left') : t('kids_logForm_alternating')}
-                  </Text> next
+                  </Text>{t('kids_logForm_lastSidePost')}
                 </Text>
               </View>
             ) : null)}
@@ -1694,7 +1694,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                         ]}
                       >
                         <Text style={[styles.switchTargetChipText, { color: active ? '#FFFEF8' : colors.textMuted }]}>
-                          {min}m
+                          {t('kids_logForm_minUnit', { n: min })}
                         </Text>
                       </Pressable>
                     )
@@ -2892,7 +2892,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Moon size={15} color={ACCENT} strokeWidth={2} />
               <Text style={{ color: ACCENT, fontWeight: '700', fontSize: 14 }}>
-                {openLog.routineName ?? t('kids_logForm_sleepSession')} · {formatTimeLabel(openLog.startTime)}
+                {openLog.routineName ?? t('kids_logForm_sleepSession')}{t('kids_logForm_separator')}{formatTimeLabel(openLog.startTime)}
               </Text>
             </View>
             <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>

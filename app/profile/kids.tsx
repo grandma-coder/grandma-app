@@ -126,6 +126,7 @@ function mapDbChild(c: any): ChildWithRole {
 
 export default function KidsProfileScreen() {
   const { colors, isDark, stickers } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
   const setChildren = useChildStore((s) => s.setChildren)
@@ -187,10 +188,10 @@ export default function KidsProfileScreen() {
           <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
             <FlowerSticker size={64} petal={stickers.pink} center={stickers.yellow} />
             <Display size={20} align="center" color={colors.text}>
-              No children added
+              {t('profKids_noChildren')}
             </Display>
             <Body size={14} align="center" color={colors.textSecondary}>
-              Add your children to start tracking their health, food preferences, and growth.
+              {t('profKids_noChildrenSub')}
             </Body>
           </View>
         )}
@@ -385,6 +386,7 @@ function ChipInput({ label, value, onChange, suggestions, chipColor, placeholder
   placeholder: string
 }) {
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const paper = isDark ? colors.surface : '#FFFEF8'
   const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
   const chipFg = isDark ? chipColor : '#3A3533'
@@ -462,7 +464,7 @@ function ChipInput({ label, value, onChange, suggestions, chipColor, placeholder
               style={({ pressed }) => [formStyles.dropdownItem, filtered.length > 0 && { borderTopWidth: 1, borderTopColor: border }, pressed && { backgroundColor: colors.surfaceRaised }]}
             >
               <Text style={[formStyles.dropdownText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                + Add &quot;{query.trim()}&quot;
+                {t('profKids_addCustomPrefix')}{'"'}{query.trim()}{'"'}
               </Text>
             </Pressable>
           )}

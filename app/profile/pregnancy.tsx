@@ -274,6 +274,7 @@ function modalAccent(label: string, stickers: ReturnType<typeof useTheme>['stick
 
 function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose: () => void; stickers: ReturnType<typeof useTheme>['stickers'] }) {
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = colors.text
   const accent = modalAccent(label, st)
   return (
@@ -284,7 +285,7 @@ function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose:
       <View style={{ flex: 1 }}>
         <Display size={22} color={colors.text}>{label}</Display>
         <Text style={[styles.modalHeaderSub, { color: colors.textMuted, fontFamily: font.italic }]}>
-          pick the one that fits
+          {t('profPreg_pickOneThatFits')}
         </Text>
       </View>
       <Pressable
@@ -953,7 +954,7 @@ export default function PregnancyProfileScreen() {
 
           {/* Tagline */}
           <Text style={[styles.heroTagline, { color: colors.textMuted, fontFamily: font.italic }]}>
-            expecting…
+            {t('profPreg_taglineExpecting')}
           </Text>
 
           {/* Heart with halo */}
@@ -983,12 +984,12 @@ export default function PregnancyProfileScreen() {
             <View style={styles.heroChips}>
               <View style={[styles.heroChip, { backgroundColor: stickers.lilacSoft, borderColor: stickers.lilac }]}>
                 <Text style={[styles.heroChipText, { color: isDark ? stickers.lilac : '#3A2A6E', fontFamily: font.bodySemiBold }]}>
-                  Week {weekNumber}
+                  {t('profPreg_chipWeek', { n: weekNumber })}
                 </Text>
               </View>
               <View style={[styles.heroChip, { backgroundColor: stickers.greenSoft, borderColor: stickers.green }]}>
                 <Text style={[styles.heroChipText, { color: isDark ? stickers.green : '#2F4D1A', fontFamily: font.bodySemiBold }]}>
-                  Trimester {trimester}
+                  {t('profPreg_chipTrimester', { n: trimester })}
                 </Text>
               </View>
             </View>
@@ -998,7 +999,7 @@ export default function PregnancyProfileScreen() {
             <View style={[styles.heroDaysRibbon, { borderColor: stickers.lilac, backgroundColor: colors.surface }]}>
               <Sparkle size={14} fill={stickers.yellow} />
               <Text style={[styles.heroDaysText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                {daysToGo} days to go
+                {t('profPreg_daysToGo', { n: daysToGo })}
               </Text>
               <Sparkle size={14} fill={stickers.yellow} />
             </View>
