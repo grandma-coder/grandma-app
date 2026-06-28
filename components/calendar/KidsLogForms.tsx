@@ -1322,7 +1322,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                         }
                         <Text style={[styles.foodTagText, { color: colors.text }]}>{tag.name}</Text>
                         <Pressable onPress={() => setFoodTags((prev) => prev.filter((_, idx) => idx !== i))} hitSlop={8}>
-                          <Text style={[styles.foodTagRemove, { color: colors.textMuted }]}>×</Text>
+                          <Text style={[styles.foodTagRemove, { color: colors.textMuted }]}>{t('kids_logForm_removeTag')}</Text>
                         </Pressable>
                       </View>
                     )
@@ -1575,14 +1575,14 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 <View style={styles.timerBreakdown}>
                   <View style={[styles.timerBreakdownItem, { backgroundColor: timerSide === 'left' ? ACCENT + '15' : 'transparent', borderRadius: radius.md }]}>
                     <View style={[styles.timerBreakdownDot, { backgroundColor: timerSide === 'left' ? ACCENT : colors.textMuted }]} />
-                    <Text style={[styles.timerBreakdownLabel, { color: timerSide === 'left' ? colors.text : colors.textMuted }]}>L</Text>
+                    <Text style={[styles.timerBreakdownLabel, { color: timerSide === 'left' ? colors.text : colors.textMuted }]}>{t('kids_logForm_timerLabelL')}</Text>
                     <Text style={[styles.timerBreakdownTime, { color: timerSide === 'left' ? ACCENT : colors.textMuted }]}>
                       {formatTimer(leftSeconds)}
                     </Text>
                   </View>
                   <View style={[styles.timerBreakdownItem, { backgroundColor: timerSide === 'right' ? ACCENT + '15' : 'transparent', borderRadius: radius.md }]}>
                     <View style={[styles.timerBreakdownDot, { backgroundColor: timerSide === 'right' ? ACCENT : colors.textMuted }]} />
-                    <Text style={[styles.timerBreakdownLabel, { color: timerSide === 'right' ? colors.text : colors.textMuted }]}>R</Text>
+                    <Text style={[styles.timerBreakdownLabel, { color: timerSide === 'right' ? colors.text : colors.textMuted }]}>{t('kids_logForm_timerLabelR')}</Text>
                     <Text style={[styles.timerBreakdownTime, { color: timerSide === 'right' ? ACCENT : colors.textMuted }]}>
                       {formatTimer(rightSeconds)}
                     </Text>
