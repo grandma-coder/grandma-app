@@ -1498,6 +1498,16 @@ export interface TranslationKeys {
   cycleDetail_fiveAvg: string
   cycleDetail_distribution: string
   cycleDetail_lastNEntries: string
+  cycleDetail_nDaysLeft: string
+  cycleDetail_oneDayLeft: string
+  cycleDetail_titleCycleLength: string
+  cycleDetail_titleRegularity: string
+  cycleDetail_titlePMS: string
+  cycleDetail_titleFertile: string
+  cycleDetail_titleMood: string
+  cycleDetail_statMin: string
+  cycleDetail_statMax: string
+  cycleDetail_statCycles: string
 
   // ─── Fertility Signals Card (Wave B4) ─────────────────────────────────────
   cycleSignals_title: string

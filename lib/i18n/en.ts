@@ -1497,6 +1497,16 @@ export const en: TranslationKeys = {
   cycleDetail_fiveAvg: '/ 5 avg',
   cycleDetail_distribution: 'DISTRIBUTION',
   cycleDetail_lastNEntries: 'LAST {{n}} ENTRIES',
+  cycleDetail_nDaysLeft: '{{n}} days left',
+  cycleDetail_oneDayLeft: '1 day left',
+  cycleDetail_titleCycleLength: 'Cycle Length',
+  cycleDetail_titleRegularity: 'Regularity',
+  cycleDetail_titlePMS: 'PMS Days',
+  cycleDetail_titleFertile: 'Fertile Window',
+  cycleDetail_titleMood: 'Mood',
+  cycleDetail_statMin: 'MIN',
+  cycleDetail_statMax: 'MAX',
+  cycleDetail_statCycles: 'CYCLES',
 
   // ─── Fertility Signals Card (Wave B4) ─────────────────────────────────────
   cycleSignals_title: 'FERTILITY SIGNALS',

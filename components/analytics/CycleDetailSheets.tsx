@@ -12,6 +12,7 @@ import { Body, Display } from '../ui/Typography'
 import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow, useMoodStats, type MoodId } from '../../lib/cycleAnalytics'
 import { Burst, Flower } from '../ui/Stickers'
 import { MiniBarChart } from './shared/MiniCharts'
+import { useTranslation } from '../../lib/i18n'
 
 export type CycleDetailType =
   | 'cycleLength'
@@ -25,16 +26,18 @@ interface Props {
   onClose: () => void
 }
 
-const TITLES: Record<CycleDetailType, string> = {
-  cycleLength: 'Cycle Length',
-  regularity: 'Regularity',
-  pms: 'PMS Days',
-  fertile: 'Fertile Window',
-  mood: 'Mood',
-}
-
 export function CycleDetailSheet({ type, onClose }: Props) {
+  const { t } = useTranslation()
   const visible = type !== null
+
+  const TITLES: Record<CycleDetailType, string> = {
+    cycleLength: t('cycleDetail_titleCycleLength'),
+    regularity: t('cycleDetail_titleRegularity'),
+    pms: t('cycleDetail_titlePMS'),
+    fertile: t('cycleDetail_titleFertile'),
+    mood: t('cycleDetail_titleMood'),
+  }
+
   const title = type ? TITLES[type] : ''
 
   return (
@@ -58,6 +61,7 @@ export function CycleDetailSheet({ type, onClose }: Props) {
 
 function CycleLengthDetail() {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const { data, isLoading, error } = useCycleHistory()
 
   if (isLoading) return <Loading />
@@ -78,25 +82,25 @@ function CycleLengthDetail() {
     <View style={{ gap: 18 }}>
       <View style={detailStyles.heroRow}>
         <Display size={40} color={colors.text}>{data.avg}</Display>
-        <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>days avg</Text>
+        <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleAnalytics_daysAvg')}</Text>
       </View>
 
       <View style={detailStyles.minMaxRow}>
-        <StatChip label="MIN" value={`${data.min}d`} tint={stickers.blueSoft} />
-        <StatChip label="MAX" value={`${data.max}d`} tint={stickers.pinkSoft} />
-        <StatChip label="CYCLES" value={String(values.length)} tint={stickers.yellowSoft} />
+        <StatChip label={t('cycleDetail_statMin')} value={`${data.min}d`} tint={stickers.blueSoft} />
+        <StatChip label={t('cycleDetail_statMax')} value={`${data.max}d`} tint={stickers.pinkSoft} />
+        <StatChip label={t('cycleDetail_statCycles')} value={String(values.length)} tint={stickers.yellowSoft} />
       </View>
 
       <View>
         <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-          LAST {values.length} CYCLES
+          {t('cycleDetail_lastNCycles', { n: values.length })}
         </Text>
         <MiniBarChart data={values} labels={labels} color={stickers.pink} />
       </View>
 
       <View style={{ gap: 8 }}>
         <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-          HISTORY
+          {t('cycleDetail_history')}
         </Text>
         {recentCycles.map((c) => (
           <View
@@ -185,6 +189,7 @@ const detailStyles = StyleSheet.create({
 
 function RegularityDetail() {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const { data, isLoading, error } = useRegularity()
 
   if (isLoading) return <Loading />
@@ -197,12 +202,12 @@ function RegularityDetail() {
     <View style={{ gap: 18 }}>
       <View style={detailStyles.heroRow}>
         <Display size={56} color={colors.text}>{data.percent}%</Display>
-        <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>regular</Text>
+        <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleDetail_regular')}</Text>
       </View>
 
       <View style={{ gap: 6 }}>
         <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-          LEGEND
+          {t('cycleDetail_legend')}
         </Text>
         <View style={regStyles.legendRow}>
           <LegendDot color={stickers.green} text="≤ 2 days" />
@@ -213,7 +218,7 @@ function RegularityDetail() {
 
       <View style={{ gap: 6 }}>
         <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-          PER-CYCLE DEVIATION
+          {t('cycleDetail_perCycleDeviation')}
         </Text>
         {data.deviations.slice(-10).map((d) => {
           const dotColor =
@@ -225,10 +230,10 @@ function RegularityDetail() {
             >
               <View style={regStyles.rowLeft}>
                 <View style={[regStyles.dot, { backgroundColor: dotColor }]} />
-                <Body size={13} color={colors.text}>Cycle {d.cycleIdx}</Body>
+                <Body size={13} color={colors.text}>{t('cycleDetail_cycleN', { n: d.cycleIdx })}</Body>
               </View>
               <Body size={13} color={colors.textSecondary}>
-                {d.lengthDays}d · {d.delta === 0 ? 'on avg' : `±${d.delta}d`}
+                {`${d.lengthDays}d · ${d.delta === 0 ? t('cycleDetail_onAvg') : `±${d.delta}d`}`}
               </Body>
             </View>
           )
@@ -273,6 +278,7 @@ const regStyles = StyleSheet.create({
 
 function PMSDetail() {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const { data, isLoading, error } = usePMSStats()
 
   if (isLoading) return <Loading />
@@ -289,17 +295,17 @@ function PMSDetail() {
         <View style={detailStyles.heroRow}>
           <Display size={40} color={colors.text}>{data.avgDays}</Display>
           <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>
-            days of symptoms / cycle
+            {t('cycleDetail_daysOfSymptomsPerCycle')}
           </Text>
         </View>
       )}
 
       <View style={{ gap: 8 }}>
         <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-          TOP SYMPTOMS
+          {t('cycleDetail_topSymptoms')}
         </Text>
         {data.topSymptoms.length === 0 ? (
-          <Body size={13} color={colors.textMuted}>No symptoms logged yet.</Body>
+          <Body size={13} color={colors.textMuted}>{t('preg_analytics_no_symptoms')}</Body>
         ) : (
           data.topSymptoms.map((s) => {
             const pct = (s.count / maxCount) * 100
@@ -362,6 +368,7 @@ const pmsStyles = StyleSheet.create({
 
 function FertileDetail() {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const { data, isLoading, error } = useFertileWindow()
 
   if (isLoading) return <Loading />
@@ -369,6 +376,11 @@ function FertileDetail() {
   if (!data || !data.current) {
     return <EmptyState copy="Log your last period to see your fertile window predictions." />
   }
+
+  const daysLeft = data.current.daysLeft
+  const daysLeftText = daysLeft === 1
+    ? t('cycleDetail_oneDayLeft')
+    : t('cycleDetail_nDaysLeft', { n: daysLeft })
 
   return (
     <View style={{ gap: 18 }}>
@@ -378,15 +390,13 @@ function FertileDetail() {
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-            THIS CYCLE
+            {t('cycleDetail_thisCycle')}
           </Text>
           <Display size={22} color={colors.text}>
-            {formatShort(data.current.start)} – {formatShort(data.current.end)}
+            {`${formatShort(data.current.start)} – ${formatShort(data.current.end)}`}
           </Display>
           <Body size={13} color={colors.textSecondary}>
-            {data.current.daysLeft > 0
-              ? `${data.current.daysLeft} day${data.current.daysLeft === 1 ? '' : 's'} left`
-              : 'Window closed'}
+            {daysLeft > 0 ? daysLeftText : t('cycleDetail_windowClosed')}
           </Body>
         </View>
       </View>
@@ -394,16 +404,16 @@ function FertileDetail() {
       {data.history.length > 0 && (
         <View style={{ gap: 6 }}>
           <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-            PAST WINDOWS
+            {t('cycleDetail_pastWindows')}
           </Text>
           {data.history.map((w) => (
             <View
               key={w.cycleIdx}
               style={[detailStyles.historyRow, { borderColor: colors.borderLight }]}
             >
-              <Body size={13} color={colors.text}>Cycle {w.cycleIdx}</Body>
+              <Body size={13} color={colors.text}>{t('cycleDetail_cycleN', { n: w.cycleIdx })}</Body>
               <Body size={13} color={colors.textSecondary}>
-                {formatShort(w.start)} – {formatShort(w.end)}
+                {`${formatShort(w.start)} – ${formatShort(w.end)}`}
               </Body>
             </View>
           ))}
@@ -441,6 +451,7 @@ const MOOD_LABELS: Record<MoodId, string> = {
 
 function MoodDetail() {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
   const { data, isLoading, error } = useMoodStats()
 
   if (isLoading) return <Loading />
@@ -455,12 +466,12 @@ function MoodDetail() {
     <View style={{ gap: 18 }}>
       <View style={detailStyles.heroRow}>
         <Display size={40} color={colors.text}>{data.avgScore}</Display>
-        <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>/ 5 avg</Text>
+        <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleDetail_fiveAvg')}</Text>
       </View>
 
       <View style={{ gap: 8 }}>
         <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-          DISTRIBUTION
+          {t('cycleDetail_distribution')}
         </Text>
         {data.distribution.map((row) => {
           const pct = (row.count / maxCount) * 100
@@ -483,7 +494,7 @@ function MoodDetail() {
       {data.recent.length > 0 && (
         <View style={{ gap: 6 }}>
           <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-            LAST {data.recent.length} ENTRIES
+            {t('cycleDetail_lastNEntries', { n: data.recent.length })}
           </Text>
           {data.recent.map((r, i) => (
             <View
@@ -539,11 +550,12 @@ export function EmptyState({ copy }: { copy: string }) {
 }
 
 export function ErrorState() {
+  const { t } = useTranslation()
   const { colors } = useTheme()
   return (
     <View style={styles.center}>
       <Body size={14} color={colors.textMuted} align="center">
-        Couldn't load. Please try again.
+        {t('common_couldntLoad')}
       </Body>
     </View>
   )
