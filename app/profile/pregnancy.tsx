@@ -1138,9 +1138,9 @@ export default function PregnancyProfileScreen() {
             onPress={() => router.push('/birth-plan')}
             style={[styles.linkRow, { borderBottomColor: colors.borderLight }]}
           >
-            <Text style={[styles.infoLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>Open birth plan</Text>
+            <Text style={[styles.infoLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('profPreg_openBirthPlan')}</Text>
             <View style={styles.infoRight}>
-              <Text style={[styles.infoValue, { color: colors.textSecondary, fontFamily: font.body }]}>Types · plan · checklist</Text>
+              <Text style={[styles.infoValue, { color: colors.textSecondary, fontFamily: font.body }]}>{t('profPreg_birthPlanSubLabel')}</Text>
               <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
             </View>
           </Pressable>
@@ -1216,9 +1216,9 @@ export default function PregnancyProfileScreen() {
             onPress={() => router.push('/profile/care-circle')}
             style={[styles.linkRow, { borderBottomColor: colors.borderLight }]}
           >
-            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Manage birth team</Text>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{t('profPreg_manageBirthTeam')}</Text>
             <View style={styles.infoRight}>
-              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>Care circle</Text>
+              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{t('profPreg_careCircle')}</Text>
               <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
             </View>
           </Pressable>
@@ -1313,9 +1313,9 @@ export default function PregnancyProfileScreen() {
             onPress={() => router.push('/profile/emergency-insurance')}
             style={styles.linkRow}
           >
-            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Emergency card</Text>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{t('profPreg_emergencyCard')}</Text>
             <View style={styles.infoRight}>
-              <Text style={[styles.infoValue, { color: brand.pregnancy }]}>Manage →</Text>
+              <Text style={[styles.infoValue, { color: brand.pregnancy }]}>{t('profPreg_manageArrow')}</Text>
               <ChevronRight size={14} color={brand.pregnancy} strokeWidth={2} />
             </View>
           </Pressable>
