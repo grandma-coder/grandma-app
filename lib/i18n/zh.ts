@@ -2223,6 +2223,16 @@ export const zh: TranslationKeys = {
   kids_analytics_bottles: 'bottles',
   kids_analytics_personalized_for_today: 'Personalized for {{childName}} today',
   kids_analytics_confirm_share_body: "We'll send {{childName}}'s wellness metrics to Grandma so she can walk through them with you.",
+  // ─── B7b: airtag-setup.tsx residual strings ───────────────────────────────
+  airtag_title: 'Connect AirTag',
+  airtag_subtitle: "Track your child's location in real time by connecting an Apple AirTag to grandma.app.",
+  airtag_step1_title: 'Attach the AirTag',
+  airtag_step1_text: "Place an AirTag in your child's bag, stroller, or clothing.",
+  airtag_step2_title: 'Pair via Find My',
+  airtag_step2_text: 'Ensure the AirTag is paired with your Apple ID in the Find My app.',
+  airtag_step3_title: 'Enable in grandma.app',
+  airtag_step3_text: "We'll request location permissions to show your child's position on the home screen.",
+  airtag_note: 'Requires iOS 14.5+ and an Apple AirTag. Location data is stored securely and only visible to you.',
   // ─── B7b: invite-caregiver.tsx residual strings ───────────────────────────
   careInvite_title: 'Invite a caregiver',
   careInvite_subtitle: "They'll get access to {{name}}'s profile and your personalized parenting wisdom guide.",

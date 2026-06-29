@@ -2456,6 +2456,16 @@ export interface TranslationKeys {
   kids_analytics_bottles: string
   kids_analytics_personalized_for_today: string
   kids_analytics_confirm_share_body: string
+  // ─── B7b: airtag-setup.tsx residual strings ───────────────────────────────
+  airtag_title: string
+  airtag_subtitle: string
+  airtag_step1_title: string
+  airtag_step1_text: string
+  airtag_step2_title: string
+  airtag_step2_text: string
+  airtag_step3_title: string
+  airtag_step3_text: string
+  airtag_note: string
   // ─── B7b: invite-caregiver.tsx residual strings ───────────────────────────
   careInvite_title: string
   careInvite_subtitle: string

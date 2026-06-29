@@ -6,11 +6,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PaperCard } from '../components/ui/PaperCard'
 import { PillButton } from '../components/ui/PillButton'
 import { typography, spacing, useTheme } from '../constants/theme'
+import { useTranslation } from '../lib/i18n'
 import { MissingStickers } from '../components/stickers/MissingStickers'
 
 export default function AirTagSetup() {
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
@@ -110,9 +112,9 @@ export default function AirTagSetup() {
 
         <View style={styles.hero}>
           <MissingStickers.AirtagHero size={120} />
-          <Text style={styles.title}>Connect AirTag</Text>
+          <Text style={styles.title}>{t('airtag_title')}</Text>
           <Text style={styles.subtitle}>
-            Track your child's location in real time by connecting an Apple AirTag to grandma.app.
+            {t('airtag_subtitle')}
           </Text>
         </View>
 
@@ -121,9 +123,9 @@ export default function AirTagSetup() {
             <View style={styles.stepRow}>
               <MissingStickers.AirtagStepAttach size={48} />
               <View style={styles.stepContent}>
-                <Text style={styles.stepTitle}>Attach the AirTag</Text>
+                <Text style={styles.stepTitle}>{t('airtag_step1_title')}</Text>
                 <Text style={styles.stepText}>
-                  Place an AirTag in your child's bag, stroller, or clothing.
+                  {t('airtag_step1_text')}
                 </Text>
               </View>
             </View>
@@ -133,9 +135,9 @@ export default function AirTagSetup() {
             <View style={styles.stepRow}>
               <MissingStickers.AirtagStepPair size={48} />
               <View style={styles.stepContent}>
-                <Text style={styles.stepTitle}>Pair via Find My</Text>
+                <Text style={styles.stepTitle}>{t('airtag_step2_title')}</Text>
                 <Text style={styles.stepText}>
-                  Ensure the AirTag is paired with your Apple ID in the Find My app.
+                  {t('airtag_step2_text')}
                 </Text>
               </View>
             </View>
@@ -145,9 +147,9 @@ export default function AirTagSetup() {
             <View style={styles.stepRow}>
               <MissingStickers.AirtagStepDone size={48} />
               <View style={styles.stepContent}>
-                <Text style={styles.stepTitle}>Enable in grandma.app</Text>
+                <Text style={styles.stepTitle}>{t('airtag_step3_title')}</Text>
                 <Text style={styles.stepText}>
-                  We'll request location permissions to show your child's position on the home screen.
+                  {t('airtag_step3_text')}
                 </Text>
               </View>
             </View>
@@ -164,7 +166,7 @@ export default function AirTagSetup() {
             }}
           />
           <Text style={styles.note}>
-            Requires iOS 14.5+ and an Apple AirTag. Location data is stored securely and only visible to you.
+            {t('airtag_note')}
           </Text>
         </View>
       </View>
