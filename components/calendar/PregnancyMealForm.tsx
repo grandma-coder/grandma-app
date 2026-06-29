@@ -23,6 +23,7 @@ import { toDateStr } from '../../lib/cycleLogic'
 import { estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
 import { LogFormSticker } from './LogFormSticker'
 import { useSavedToast } from '../ui/SavedToast'
+import { useTranslation } from '../../lib/i18n'
 
 interface Props {
   userId?: string
@@ -51,6 +52,7 @@ async function uploadPlatePhoto(uri: string, userId: string): Promise<string | n
 export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) {
   const { colors, isDark } = useTheme()
   const toast = useSavedToast()
+  const { t } = useTranslation()
   const [photoUri, setPhotoUri] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
   const [foods, setFoods] = useState<AiFoodItem[]>([])
@@ -217,7 +219,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
             {scanning && (
               <View style={styles.scanningOverlay}>
                 <ActivityIndicator color="#FFFEF8" />
-                <Text style={styles.scanningText}>Reading the plate…</Text>
+                <Text style={styles.scanningText}>{t('kids_logForm_readingPlate')}</Text>
               </View>
             )}
           </View>
@@ -228,14 +230,14 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
               style={[styles.pickBtn, { backgroundColor: brand.pregnancy }]}
             >
               <Camera size={18} color={colors.textInverse} strokeWidth={2} />
-              <Text style={[styles.pickBtnText, { color: colors.textInverse }]}>Take photo</Text>
+              <Text style={[styles.pickBtnText, { color: colors.textInverse }]}>{t('kids_logForm_alertTakePhoto')}</Text>
             </Pressable>
             <Pressable
               onPress={() => pick('library')}
               style={[styles.pickBtn, { backgroundColor: colors.surfaceGlass, borderColor: colors.border, borderWidth: 1 }]}
             >
               <ImagePlus size={18} color={colors.text} strokeWidth={2} />
-              <Text style={[styles.pickBtnText, { color: colors.text }]}>Gallery</Text>
+              <Text style={[styles.pickBtnText, { color: colors.text }]}>{t('kids_foodDash_gallery')}</Text>
             </Pressable>
           </View>
         )}
@@ -248,7 +250,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
             <View style={styles.summaryHeader}>
               <View style={[styles.totalChip, { backgroundColor: stickerPalette.yellowSoft }]}>
                 <ScanLine size={12} color="#141313" strokeWidth={2.4} />
-                <Text style={styles.totalChipText}>~{totalCals} kcal</Text>
+                <Text style={styles.totalChipText}>{t('pregMeal_approx_kcal', { count: totalCals })}</Text>
               </View>
             </View>
             {foods.map((f, i) => (
@@ -256,7 +258,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
                 <Text style={[styles.foodName, { color: colors.textSecondary }]} numberOfLines={1}>
                   {f.name.charAt(0).toUpperCase() + f.name.slice(1)}
                 </Text>
-                <Text style={[styles.foodCals, { color: colors.textMuted }]}>{f.cals} kcal</Text>
+                <Text style={[styles.foodCals, { color: colors.textMuted }]}>{t('pregMeal_kcal_count', { count: f.cals })}</Text>
               </View>
             ))}
           </View>
@@ -268,7 +270,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
             style={[styles.scanAgainBtn, { borderColor: colors.border }]}
           >
             <ScanLine size={16} color={colors.text} strokeWidth={2} />
-            <Text style={[styles.scanAgainText, { color: colors.text }]}>Scan again</Text>
+            <Text style={[styles.scanAgainText, { color: colors.text }]}>{t('pregMeal_scan_again')}</Text>
           </Pressable>
         )}
 
@@ -293,6 +295,7 @@ function SaveMealButton({
   isDark: boolean
   colors: ReturnType<typeof useTheme>['colors']
 }) {
+  const { t } = useTranslation()
   const ST_INK = '#141313'
   const ST_LAVENDER = isDark ? colors.primary : brand.pregnancy
   const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
@@ -325,7 +328,7 @@ function SaveMealButton({
             { color: disabled ? (isDark ? colors.textMuted : '#6E6763') : '#FFFEF8' },
           ]}
         >
-          SAVE MEAL
+          {t('pregMeal_save_meal')}
         </Text>
       )}
     </Pressable>

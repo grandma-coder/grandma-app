@@ -2456,6 +2456,11 @@ export interface TranslationKeys {
   kids_analytics_bottles: string
   kids_analytics_personalized_for_today: string
   kids_analytics_confirm_share_body: string
+  // ─── B7b: PregnancyMealForm residual strings ──────────────────────────────
+  pregMeal_scan_again: string
+  pregMeal_save_meal: string
+  pregMeal_kcal_count: string
+  pregMeal_approx_kcal: string
   // ─── B7b: airtag-setup.tsx residual strings ───────────────────────────────
   airtag_title: string
   airtag_subtitle: string

@@ -2223,6 +2223,11 @@ export const es: TranslationKeys = {
   kids_analytics_bottles: 'bottles',
   kids_analytics_personalized_for_today: 'Personalized for {{childName}} today',
   kids_analytics_confirm_share_body: "We'll send {{childName}}'s wellness metrics to Grandma so she can walk through them with you.",
+  // ─── B7b: PregnancyMealForm residual strings ──────────────────────────────
+  pregMeal_scan_again: 'Scan again',
+  pregMeal_save_meal: 'SAVE MEAL',
+  pregMeal_kcal_count: '{{count}} kcal',
+  pregMeal_approx_kcal: '~{{count}} kcal',
   // ─── B7b: airtag-setup.tsx residual strings ───────────────────────────────
   airtag_title: 'Connect AirTag',
   airtag_subtitle: "Track your child's location in real time by connecting an Apple AirTag to grandma.app.",
