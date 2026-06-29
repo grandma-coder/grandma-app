@@ -246,10 +246,10 @@ export default function DailyRewardsScreen() {
 
           <View style={styles.heroTitleRow}>
             <Display size={32} color={ink}>
-              {currentStreak} day
+              {t('dailyRewards_n_day', { n: currentStreak })}
             </Display>
             <DisplayItalic size={32} color={stickers.coral} style={{ marginLeft: 8 }}>
-              streak
+              {t('dailyRewards_streak_label')}
             </DisplayItalic>
           </View>
           <Body size={14} color={ink3} align="center" style={{ marginTop: 2 }}>
@@ -278,21 +278,21 @@ export default function DailyRewardsScreen() {
               <Display size={22} color={ink}>
                 {longestStreak}
               </Display>
-              <MonoCaps size={10} color={ink3}>Longest</MonoCaps>
+              <MonoCaps size={10} color={ink3}>{t('dailyRewards_statLongest')}</MonoCaps>
             </View>
             <View style={[styles.statDivider, { backgroundColor: line }]} />
             <View style={styles.statItem}>
               <Display size={22} color={ink}>
                 {totalCheckIns}
               </Display>
-              <MonoCaps size={10} color={ink3}>Total days</MonoCaps>
+              <MonoCaps size={10} color={ink3}>{t('dailyRewards_statTotalDays')}</MonoCaps>
             </View>
             <View style={[styles.statDivider, { backgroundColor: line }]} />
             <View style={styles.statItem}>
               <Display size={22} color={ink}>
                 {earnedCount}
               </Display>
-              <MonoCaps size={10} color={ink3}>Badges</MonoCaps>
+              <MonoCaps size={10} color={ink3}>{t('dailyRewards_statBadges')}</MonoCaps>
             </View>
           </View>
         </PaperCard>
@@ -333,7 +333,7 @@ export default function DailyRewardsScreen() {
             <View style={styles.revealHeader}>
               <Sparkle size={22} fill={stickers.yellow} />
               <Display size={20} color={ink} style={{ marginLeft: 8 }}>
-                +{rewardResult.points} points
+                {t('dailyRewards_pointsReveal', { n: rewardResult.points })}
               </Display>
             </View>
             <Body size={14} color={ink3} style={{ marginTop: 4 }}>
@@ -433,13 +433,13 @@ export default function DailyRewardsScreen() {
           <View style={styles.questPills}>
             <View style={[styles.questPill, { backgroundColor: paper, borderColor: line }]}>
               <Text style={[styles.questPillText, { color: ink, fontFamily: font.bodyMedium }]}>
-                +{todaysReward.points} pts
+                {t('dailyRewards_quest_points', { n: todaysReward.points })}
               </Text>
             </View>
             {todaysReward.badge && (
               <View style={[styles.questPill, { backgroundColor: paper, borderColor: line }]}>
                 <Text style={[styles.questPillText, { color: ink, fontFamily: font.bodyMedium }]}>
-                  unlock badge
+                  {t('dailyRewards_unlock_badge')}
                 </Text>
               </View>
             )}

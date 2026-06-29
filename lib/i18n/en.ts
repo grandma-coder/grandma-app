@@ -2455,6 +2455,11 @@ export const en: TranslationKeys = {
   kids_analytics_bottles: 'bottles',
   kids_analytics_personalized_for_today: 'Personalized for {{childName}} today',
   kids_analytics_confirm_share_body: "We'll send {{childName}}'s wellness metrics to Grandma so she can walk through them with you.",
+  // ─── B7b: daily-rewards.tsx residual strings ──────────────────────────────
+  dailyRewards_n_day: '{{n}} day',
+  dailyRewards_streak_label: 'streak',
+  dailyRewards_quest_points: '+{{n}} pts',
+  dailyRewards_unlock_badge: 'unlock badge',
   // ─── B7b: PregnancyMealForm residual strings ──────────────────────────────
   pregMeal_scan_again: 'Scan again',
   pregMeal_save_meal: 'SAVE MEAL',

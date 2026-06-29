@@ -2456,6 +2456,11 @@ export interface TranslationKeys {
   kids_analytics_bottles: string
   kids_analytics_personalized_for_today: string
   kids_analytics_confirm_share_body: string
+  // ─── B7b: daily-rewards.tsx residual strings ──────────────────────────────
+  dailyRewards_n_day: string
+  dailyRewards_streak_label: string
+  dailyRewards_quest_points: string
+  dailyRewards_unlock_badge: string
   // ─── B7b: PregnancyMealForm residual strings ──────────────────────────────
   pregMeal_scan_again: string
   pregMeal_save_meal: string
