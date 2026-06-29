@@ -2223,6 +2223,16 @@ export const ar: TranslationKeys = {
   kids_analytics_bottles: 'bottles',
   kids_analytics_personalized_for_today: 'Personalized for {{childName}} today',
   kids_analytics_confirm_share_body: "We'll send {{childName}}'s wellness metrics to Grandma so she can walk through them with you.",
+  // ─── B7b: CycleJourneyRingFull residual strings ───────────────────────────
+  cycle_ring_label_day: 'DAY',
+  cycle_ring_of_n: 'of {{n}}',
+  cycle_ring_drag_hint: '↻ drag to spin · tap any day',
+  cycle_ring_phase_prefix: 'a ',
+  cycle_ring_date_phase: '{{date}} · {{phase}}',
+  cycle_ring_label_fertility: 'FERTILITY',
+  cycle_ring_label_next_period: 'NEXT PERIOD',
+  cycle_ring_unit_d: 'd',
+  cycle_ring_label_this_day: 'THIS DAY',
   // ─── B7b: KidsAnalytics chart/detail residual strings ─────────────────────
   kids_analytics_log_every_feed_hint: 'Log every feed to keep this score accurate — newborns feed 6–10× per day.',
   kids_analytics_mood_score_weights_hint: 'Mood score weights: happy/calm = positive, energetic = neutral-positive, fussy/cranky = negative. More consistent logging improves accuracy.',

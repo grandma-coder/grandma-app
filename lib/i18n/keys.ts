@@ -2456,6 +2456,16 @@ export interface TranslationKeys {
   kids_analytics_bottles: string
   kids_analytics_personalized_for_today: string
   kids_analytics_confirm_share_body: string
+  // ─── B7b: CycleJourneyRingFull residual strings ───────────────────────────
+  cycle_ring_label_day: string
+  cycle_ring_of_n: string
+  cycle_ring_drag_hint: string
+  cycle_ring_phase_prefix: string
+  cycle_ring_date_phase: string
+  cycle_ring_label_fertility: string
+  cycle_ring_label_next_period: string
+  cycle_ring_unit_d: string
+  cycle_ring_label_this_day: string
   // ─── B7b: KidsAnalytics chart/detail residual strings ─────────────────────
   kids_analytics_log_every_feed_hint: string
   kids_analytics_mood_score_weights_hint: string

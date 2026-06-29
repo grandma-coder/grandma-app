@@ -19,6 +19,7 @@ import Animated, {
   runOnJS, withDecay, withTiming, withSpring, cancelAnimation, Easing,
 } from 'react-native-reanimated'
 import { useTheme, motion } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 import {
   getCycleInfo, toDateStr,
   type CycleConfig, type CyclePhase,
@@ -243,6 +244,7 @@ function StripCell({
 // ─── Component ──────────────────────────────────────────────────────────────
 export function CycleJourneyRingFull({ cycleConfig }: Props) {
   const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
 
   const todayStr = toDateStr(new Date())
   const todayInfo = getCycleInfo(cycleConfig, todayStr)
@@ -510,13 +512,13 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
           <View style={StyleSheet.absoluteFill} pointerEvents="none">
             <View style={styles.centerInner}>
               <Text style={[styles.centerLabel, { color: accent, fontFamily: font.bodySemiBold }]}>
-                DAY
+                {t('cycle_ring_label_day')}
               </Text>
               <Text style={[styles.centerNumber, { color: accent, fontFamily: font.display }]}>
                 {selectedDay}
               </Text>
               <Text style={[styles.centerStatus, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
-                of {cycleLength}
+                {t('cycle_ring_of_n', { n: cycleLength })}
               </Text>
             </View>
           </View>
@@ -524,7 +526,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
       </View>
 
       <Text style={[styles.hint, { color: colors.textFaint, fontFamily: font.body }]}>
-        ↻ drag to spin · tap any day
+        {t('cycle_ring_drag_hint')}
       </Text>
 
       {/* ── Legend (inline, single row) ── */}
@@ -573,10 +575,10 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
         <View style={styles.statusRow}>
           <View style={styles.statusBlock}>
             <Text style={[styles.statusTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
-              a <Text style={[styles.statusTitleAccent, { color: accent, fontFamily: font.italic }]}>{titleItalic}</Text>
+              {t('cycle_ring_phase_prefix')}<Text style={[styles.statusTitleAccent, { color: accent, fontFamily: font.italic }]}>{titleItalic}</Text>
             </Text>
             <Text style={[styles.dateLabel, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
-              {formatLongDate(selectedDate)} · {phaseLabel(selPhase)}
+              {t('cycle_ring_date_phase', { date: formatLongDate(selectedDate), phase: phaseLabel(selPhase) })}
             </Text>
           </View>
           <View style={[styles.statusPill, { borderColor: accent + '55', backgroundColor: tint }]}>
@@ -590,7 +592,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
         <View style={styles.statsRow}>
           <View style={[styles.statCell, { borderTopColor: accent + '66' }]}>
             <Text style={[styles.statLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
-              FERTILITY
+              {t('cycle_ring_label_fertility')}
             </Text>
             <Text style={[styles.statValue, { color: colors.text, fontFamily: font.display }]}>
               {fertilityPct}
@@ -599,11 +601,11 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
           </View>
           <View style={[styles.statCell, { borderTopColor: accent + '66' }]}>
             <Text style={[styles.statLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
-              NEXT PERIOD
+              {t('cycle_ring_label_next_period')}
             </Text>
             <Text style={[styles.statValue, { color: colors.text, fontFamily: font.display }]}>
               {selectedInfo.daysUntilPeriod}
-              <Text style={[styles.statUnit, { color: colors.textSecondary, fontFamily: font.italic }]}>d</Text>
+              <Text style={[styles.statUnit, { color: colors.textSecondary, fontFamily: font.italic }]}>{t('cycle_ring_unit_d')}</Text>
             </Text>
           </View>
         </View>
@@ -611,7 +613,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
         {/* This day */}
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
-            THIS DAY
+            {t('cycle_ring_label_this_day')}
           </Text>
           <Text style={[styles.noteText, { color: colors.textSecondary, fontFamily: font.body }]}>
             {thisDayNote(selPhase)}
