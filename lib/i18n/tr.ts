@@ -2223,6 +2223,15 @@ export const tr: TranslationKeys = {
   kids_analytics_bottles: 'bottles',
   kids_analytics_personalized_for_today: 'Personalized for {{childName}} today',
   kids_analytics_confirm_share_body: "We'll send {{childName}}'s wellness metrics to Grandma so she can walk through them with you.",
+  // ─── B7b: invite-caregiver.tsx residual strings ───────────────────────────
+  careInvite_title: 'Invite a caregiver',
+  careInvite_subtitle: "They'll get access to {{name}}'s profile and your personalized parenting wisdom guide.",
+  careInvite_field_email: 'Email Address',
+  careInvite_field_role: 'Relationship Role',
+  careInvite_footer_secured: 'Secured by Parental System V.2',
+  careInvite_sent_title: 'Invite sent!',
+  careInvite_share_with: 'Share this link with {{email}}',
+  careInvite_yourChild: 'your child',
   // ─── B7b: CycleJourneyRingFull residual strings ───────────────────────────
   cycle_ring_label_day: 'DAY',
   cycle_ring_of_n: 'of {{n}}',

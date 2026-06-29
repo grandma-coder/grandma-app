@@ -23,6 +23,7 @@ import * as Clipboard from 'expo-clipboard'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
+import { useTranslation } from '../lib/i18n'
 import { useChildStore } from '../store/useChildStore'
 import { useTheme, radius, spacing } from '../constants/theme'
 import { Display, MonoCaps, Body } from '../components/ui/Typography'
@@ -40,6 +41,7 @@ export default function InviteCaregiver() {
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
   const { colors, font, stickers, brand } = useTheme()
+  const { t } = useTranslation()
 
   const styles = useMemo(() => StyleSheet.create({
     container: {
@@ -218,16 +220,15 @@ export default function InviteCaregiver() {
             <>
               {/* Title */}
               <Display size={40} color={colors.text}>
-                Invite a caregiver
+                {t('careInvite_title')}
               </Display>
               <Body size={15} color={colors.textMuted} style={styles.subtitle}>
-                They'll get access to {child?.name ?? 'your child'}'s profile and
-                your personalized parenting wisdom guide.
+                {t('careInvite_subtitle', { name: child?.name ?? t('careInvite_yourChild') })}
               </Body>
 
               {/* Email input */}
               <View style={styles.field}>
-                <MonoCaps color={colors.textMuted}>Email Address</MonoCaps>
+                <MonoCaps color={colors.textMuted}>{t('careInvite_field_email')}</MonoCaps>
                 <View style={styles.inputRow}>
                   <Ionicons name="mail-outline" size={18} color={colors.textMuted} />
                   <TextInput
@@ -245,7 +246,7 @@ export default function InviteCaregiver() {
 
               {/* Role selection */}
               <View style={styles.field}>
-                <MonoCaps color={colors.textMuted}>Relationship Role</MonoCaps>
+                <MonoCaps color={colors.textMuted}>{t('careInvite_field_role')}</MonoCaps>
                 <View style={styles.roleRow}>
                   {ROLES.map((r) => {
                     const isActive = role === r.id
@@ -289,7 +290,7 @@ export default function InviteCaregiver() {
 
               {/* Footer */}
               <View style={styles.footer}>
-                <MonoCaps color={colors.textFaint}>Secured by Parental System V.2</MonoCaps>
+                <MonoCaps color={colors.textFaint}>{t('careInvite_footer_secured')}</MonoCaps>
               </View>
             </>
           ) : (
@@ -298,10 +299,10 @@ export default function InviteCaregiver() {
                 <Ionicons name="checkmark" size={36} color={stickers.greenInk} />
               </View>
               <Display size={36} align="center" color={colors.text}>
-                Invite sent!
+                {t('careInvite_sent_title')}
               </Display>
               <Body size={15} align="center" color={colors.textMuted}>
-                Share this link with {email}
+                {t('careInvite_share_with', { email })}
               </Body>
 
               <Pressable onPress={copyLink} style={styles.linkCard} accessibilityRole="button" accessibilityLabel="Copy invite link">
@@ -323,7 +324,7 @@ export default function InviteCaregiver() {
                 accessibilityLabel="Done"
               >
                 <Body size={16} color={colors.primary} style={{ fontFamily: font.bodySemiBold }}>
-                  Done
+                  {t('common_done')}
                 </Body>
               </Pressable>
             </View>

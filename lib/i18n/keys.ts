@@ -2456,6 +2456,15 @@ export interface TranslationKeys {
   kids_analytics_bottles: string
   kids_analytics_personalized_for_today: string
   kids_analytics_confirm_share_body: string
+  // ─── B7b: invite-caregiver.tsx residual strings ───────────────────────────
+  careInvite_title: string
+  careInvite_subtitle: string
+  careInvite_field_email: string
+  careInvite_field_role: string
+  careInvite_footer_secured: string
+  careInvite_sent_title: string
+  careInvite_share_with: string
+  careInvite_yourChild: string
   // ─── B7b: CycleJourneyRingFull residual strings ───────────────────────────
   cycle_ring_label_day: string
   cycle_ring_of_n: string
