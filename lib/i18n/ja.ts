@@ -2223,6 +2223,13 @@ export const ja: TranslationKeys = {
   kids_analytics_bottles: 'bottles',
   kids_analytics_personalized_for_today: 'Personalized for {{childName}} today',
   kids_analytics_confirm_share_body: "We'll send {{childName}}'s wellness metrics to Grandma so she can walk through them with you.",
+  // ─── B7b: FertileWindowModal residual strings ─────────────────────────────
+  fertileModal_peak_in: 'PEAK IN',
+  fertileModal_days_suffix: ' days',
+  fertileModal_projected_ovulation: 'projected ovulation',
+  fertileModal_7day_forecast: '7-DAY FORECAST',
+  fertileModal_log_signal_today: 'LOG A SIGNAL TODAY',
+  fertileModal_confidence: 'CONFIDENCE',
   // ─── B7b: daily-rewards.tsx residual strings ──────────────────────────────
   dailyRewards_n_day: '{{n}} day',
   dailyRewards_streak_label: 'streak',

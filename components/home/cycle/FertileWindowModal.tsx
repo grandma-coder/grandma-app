@@ -139,20 +139,20 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
     <LogSheet visible={visible} title="Fertile Window" onClose={onClose}>
       <ScrollView style={{ maxHeight: 600 }} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>PEAK IN</Text>
+          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('fertileModal_peak_in')}</Text>
           <View style={[styles.countdown, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={[styles.big, { color: stickers.coral, fontFamily: font.displayBold }]}>
-              {daysToPeak}<Text style={{ fontSize: 13, color: colors.textMuted, fontFamily: font.body }}> days</Text>
+              {daysToPeak}<Text style={{ fontSize: 13, color: colors.textMuted, fontFamily: font.body }}>{t('fertileModal_days_suffix')}</Text>
             </Text>
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={{ color: ink, fontFamily: font.bodyBold, fontSize: 13 }}>{ovDateLabel}</Text>
-              <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11 }}>projected ovulation</Text>
+              <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11 }}>{t('fertileModal_projected_ovulation')}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>7-DAY FORECAST</Text>
+          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('fertileModal_7day_forecast')}</Text>
           <View style={[styles.forecast, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.pills}>
               {fc.map((f, i) => {
@@ -185,7 +185,7 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>LOG A SIGNAL TODAY</Text>
+          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('fertileModal_log_signal_today')}</Text>
           <View style={styles.qlog}>
             <PillButton label="BBT" variant="paper" onPress={() => setOpenLog('bbt')} style={{ flex: 1 }} />
             <PillButton label="LH"  variant="paper" onPress={() => setOpenLog('lh')}  style={{ flex: 1 }} />
@@ -194,7 +194,7 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>CONFIDENCE</Text>
+          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('fertileModal_confidence')}</Text>
           <View style={[styles.conf, { backgroundColor: stickers.greenSoft, borderColor: colors.border }]}>
             <View style={[styles.confBadge, { borderColor: ink, backgroundColor: colors.surface }]}>
               <Text style={{ color: stickers.coral, fontFamily: font.displayBold, fontSize: 14 }}>{conf.pct}%</Text>
@@ -212,7 +212,7 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
 
         {pastWindows.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>PAST WINDOWS</Text>
+            <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('cycleDetail_pastWindows')}</Text>
             <View style={[styles.history, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               {pastWindows.map((w, i) => (
                 <View

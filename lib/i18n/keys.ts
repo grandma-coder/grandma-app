@@ -2456,6 +2456,13 @@ export interface TranslationKeys {
   kids_analytics_bottles: string
   kids_analytics_personalized_for_today: string
   kids_analytics_confirm_share_body: string
+  // ─── B7b: FertileWindowModal residual strings ─────────────────────────────
+  fertileModal_peak_in: string
+  fertileModal_days_suffix: string
+  fertileModal_projected_ovulation: string
+  fertileModal_7day_forecast: string
+  fertileModal_log_signal_today: string
+  fertileModal_confidence: string
   // ─── B7b: daily-rewards.tsx residual strings ──────────────────────────────
   dailyRewards_n_day: string
   dailyRewards_streak_label: string
