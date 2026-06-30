@@ -17,6 +17,7 @@ import { View, Modal, Pressable, ScrollView, StyleSheet, Image, Platform } from 
 import { Ionicons } from '@expo/vector-icons'
 import { X, Camera, ImagePlus } from 'lucide-react-native'
 import { useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { Display, Body, MonoCaps } from './Typography'
 import { usePhotoUrl, PHOTO_BUCKETS, type PhotoBucket } from '../../lib/photoSigning'
 import {
@@ -178,6 +179,7 @@ export function AvatarPickerModal({
   onRemove,
 }: AvatarPickerModalProps) {
   const { colors, font, stickers } = useTheme()
+  const { t } = useTranslation()
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -190,7 +192,7 @@ export function AvatarPickerModal({
 
           <View style={styles.header}>
             <Display size={22} color={colors.text} style={{ fontFamily: font.display }}>
-              Choose Avatar
+              {t('avatarPicker_title')}
             </Display>
             <Pressable onPress={onClose} hitSlop={8} style={styles.closeBtn}>
               <X size={18} color={colors.textMuted} strokeWidth={2} />
@@ -198,7 +200,7 @@ export function AvatarPickerModal({
           </View>
 
           <Body size={13} color={colors.textMuted} style={{ marginBottom: 18 }}>
-            Pick a photo from your library or choose a fun icon.
+            {t('avatarPicker_subtitle')}
           </Body>
 
           {/* Photo upload row */}
@@ -217,10 +219,10 @@ export function AvatarPickerModal({
             </View>
             <View style={{ flex: 1 }}>
               <Body size={15} color={colors.text} style={{ fontFamily: font.bodySemiBold }}>
-                Upload Photo
+                {t('avatarPicker_upload_title')}
               </Body>
               <Body size={12} color={colors.textMuted}>
-                Choose from your library
+                {t('avatarPicker_upload_subtitle')}
               </Body>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
@@ -241,14 +243,14 @@ export function AvatarPickerModal({
                 <ImagePlus size={18} color={colors.textMuted} strokeWidth={2} />
               </View>
               <Body size={15} color={colors.textMuted}>
-                Remove current
+                {t('avatarPicker_remove')}
               </Body>
             </Pressable>
           )}
 
           {/* Icon grid */}
           <MonoCaps size={11} color={colors.textMuted} style={{ marginTop: 20, marginBottom: 10 }}>
-            Or pick an icon
+            {t('avatarPicker_or_icon')}
           </MonoCaps>
           <ScrollView
             showsVerticalScrollIndicator={false}

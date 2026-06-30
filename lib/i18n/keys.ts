@@ -2456,6 +2456,13 @@ export interface TranslationKeys {
   kids_analytics_bottles: string
   kids_analytics_personalized_for_today: string
   kids_analytics_confirm_share_body: string
+  // ─── B7b: AvatarPicker residual strings ───────────────────────────────────
+  avatarPicker_title: string
+  avatarPicker_subtitle: string
+  avatarPicker_upload_title: string
+  avatarPicker_upload_subtitle: string
+  avatarPicker_remove: string
+  avatarPicker_or_icon: string
   // ─── B7b: GrandmaTalk residual strings ────────────────────────────────────
   grandmaTalk_history_title: string
   grandmaTalk_history_empty_title: string

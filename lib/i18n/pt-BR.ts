@@ -2251,6 +2251,13 @@ export const ptBR: TranslationKeys = {
   kids_analytics_bottles: 'bottles',
   kids_analytics_personalized_for_today: 'Personalized for {{childName}} today',
   kids_analytics_confirm_share_body: "We'll send {{childName}}'s wellness metrics to Grandma so she can walk through them with you.",
+  // ─── B7b: AvatarPicker residual strings ───────────────────────────────────
+  avatarPicker_title: 'Choose Avatar',
+  avatarPicker_subtitle: 'Pick a photo from your library or choose a fun icon.',
+  avatarPicker_upload_title: 'Upload Photo',
+  avatarPicker_upload_subtitle: 'Choose from your library',
+  avatarPicker_remove: 'Remove current',
+  avatarPicker_or_icon: 'Or pick an icon',
   // ─── B7b: GrandmaTalk residual strings ────────────────────────────────────
   grandmaTalk_history_title: 'Past conversations',
   grandmaTalk_history_empty_title: 'No past chats yet',
