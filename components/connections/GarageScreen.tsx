@@ -34,6 +34,7 @@ import {
   type GaragePost,
 } from '../../lib/garagePosts'
 import { supabase } from '../../lib/supabase'
+import { useTranslation } from '../../lib/i18n'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -49,6 +50,7 @@ const FEED_FILTERS = ['For You', 'Clothing', 'Gear', 'Toys', 'Furniture', 'Books
 
 export function GarageScreen() {
   const { colors, radius, stickers, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
   const accent = getModeColor(mode, isDark)
@@ -220,10 +222,10 @@ export function GarageScreen() {
       <View style={styles.headerRow}>
         <View style={{ flex: 1, paddingRight: 12 }}>
           <Text style={[styles.headerTitle, { color: colors.text, fontFamily: font.display }]}>
-            The Village.
+            {t('garage_screen_header_title')}
           </Text>
           <Text style={[styles.headerSubtitle, { color: colors.textMuted, fontFamily: font.body }]}>
-            Swipe to keep what your little one needs.
+            {t('garage_screen_header_subtitle')}
           </Text>
         </View>
         <View style={styles.headerActions}>
@@ -314,7 +316,7 @@ export function GarageScreen() {
                   ]}
                 >
                   <Text style={[styles.stampText, { color: stickers.greenInk, fontFamily: font.display }]}>
-                    KEEP
+                    {t('garage_screen_stamp_keep')}
                   </Text>
                 </Animated.View>
 
@@ -328,7 +330,7 @@ export function GarageScreen() {
                   ]}
                 >
                   <Text style={[styles.stampText, { color: stickers.coralInk, fontFamily: font.display }]}>
-                    PASS
+                    {t('garage_screen_stamp_pass')}
                   </Text>
                 </Animated.View>
 
@@ -587,16 +589,17 @@ function DeckDone({ accent, onRefresh, empty = false }: { accent: string; onRefr
 
 function DeckError({ accent, onRetry }: { accent: string; onRetry: () => void }) {
   const { colors, font, stickers } = useTheme()
+  const { t } = useTranslation()
   return (
     <View style={styles.doneWrap}>
       <View style={styles.doneStickers}>
         <Drop size={42} fill={stickers.blue} />
       </View>
       <Text style={[styles.doneTitle, { color: colors.text, fontFamily: font.display }]}>
-        Couldn’t load the village
+        {t('garage_screen_error_title')}
       </Text>
       <Text style={[styles.doneBody, { color: colors.textMuted, fontFamily: font.body }]}>
-        Something went wrong reaching the network. Check your connection and try again.
+        {t('garage_screen_error_body')}
       </Text>
       <View style={styles.doneBtn}>
         <PillButton variant="accent" accentColor={accent} label="Try again" onPress={onRetry} />

@@ -2223,6 +2223,13 @@ export const hi: TranslationKeys = {
   kids_analytics_bottles: 'bottles',
   kids_analytics_personalized_for_today: 'Personalized for {{childName}} today',
   kids_analytics_confirm_share_body: "We'll send {{childName}}'s wellness metrics to Grandma so she can walk through them with you.",
+  // ─── B7b: GarageScreen residual strings ───────────────────────────────────
+  garage_screen_header_title: 'The Village.',
+  garage_screen_header_subtitle: 'Swipe to keep what your little one needs.',
+  garage_screen_stamp_keep: 'KEEP',
+  garage_screen_stamp_pass: 'PASS',
+  garage_screen_error_title: "Couldn't load the village",
+  garage_screen_error_body: 'Something went wrong reaching the network. Check your connection and try again.',
   // ─── B7b: AvatarPicker residual strings ───────────────────────────────────
   avatarPicker_title: 'Choose Avatar',
   avatarPicker_subtitle: 'Pick a photo from your library or choose a fun icon.',

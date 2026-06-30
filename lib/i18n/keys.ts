@@ -2456,6 +2456,13 @@ export interface TranslationKeys {
   kids_analytics_bottles: string
   kids_analytics_personalized_for_today: string
   kids_analytics_confirm_share_body: string
+  // ─── B7b: GarageScreen residual strings ───────────────────────────────────
+  garage_screen_header_title: string
+  garage_screen_header_subtitle: string
+  garage_screen_stamp_keep: string
+  garage_screen_stamp_pass: string
+  garage_screen_error_title: string
+  garage_screen_error_body: string
   // ─── B7b: AvatarPicker residual strings ───────────────────────────────────
   avatarPicker_title: string
   avatarPicker_subtitle: string
