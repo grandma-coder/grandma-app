@@ -2251,6 +2251,14 @@ export const ptBR: TranslationKeys = {
   kids_analytics_bottles: 'bottles',
   kids_analytics_personalized_for_today: 'Personalized for {{childName}} today',
   kids_analytics_confirm_share_body: "We'll send {{childName}}'s wellness metrics to Grandma so she can walk through them with you.",
+  // ─── B7b: GrandmaTalk residual strings ────────────────────────────────────
+  grandmaTalk_history_title: 'Past conversations',
+  grandmaTalk_history_empty_title: 'No past chats yet',
+  grandmaTalk_history_empty_body: 'Your conversations with Grandma will appear here',
+  grandmaTalk_history_start_convo: 'Start a conversation',
+  grandmaTalk_history_new_convo: 'New conversation',
+  grandmaTalk_header_grandma: 'grandma ',
+  grandmaTalk_header_talk: 'talk',
   // ─── B7b: FertileWindowModal residual strings ─────────────────────────────
   fertileModal_peak_in: 'PEAK IN',
   fertileModal_days_suffix: ' days',

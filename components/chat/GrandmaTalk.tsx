@@ -56,6 +56,7 @@ import { sendGrandmaMessage, type ChatMessage } from '../../lib/grandmaChat'
 import { weekForDate } from '../../lib/pregnancyWeeks'
 import { toDateStr } from '../../lib/cycleLogic'
 import { ChildPills, formatChildAge } from '../ui/ChildPills'
+import { useTranslation } from '../../lib/i18n'
 
 // ─── Lightweight Markdown Renderer ────────────────────────────────────────
 
@@ -600,6 +601,7 @@ interface HistoryPanelProps {
 
 function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const sessions = useGrandmaHistoryStore((s) => s.sessions)
   const deleteSession = useGrandmaHistoryStore((s) => s.deleteSession)
@@ -624,7 +626,7 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
           <ArrowLeft size={22} color={ink} strokeWidth={2} />
         </Pressable>
         <Text style={{ fontSize: 22, fontFamily: font.display, color: ink, letterSpacing: -0.4 }}>
-          Past conversations
+          {t('grandmaTalk_history_title')}
         </Text>
         <Pressable
           onPress={onNewChat}
@@ -652,10 +654,10 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
         <View style={histStyles.empty}>
           <MessageCircle size={48} color={ink3} strokeWidth={1.5} />
           <Text style={{ fontSize: 22, fontFamily: font.display, color: ink, textAlign: 'center', letterSpacing: -0.4 }}>
-            No past chats yet
+            {t('grandmaTalk_history_empty_title')}
           </Text>
           <Text style={{ fontSize: 14, fontFamily: font.body, color: ink3, textAlign: 'center', lineHeight: 20 }}>
-            Your conversations with Grandma will appear here
+            {t('grandmaTalk_history_empty_body')}
           </Text>
           <Pressable
             onPress={onNewChat}
@@ -674,7 +676,7 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
           >
             <Plus size={16} color={ST_INK} strokeWidth={2.5} />
             <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 15, letterSpacing: -0.2 }}>
-              Start a conversation
+              {t('grandmaTalk_history_start_convo')}
             </Text>
           </Pressable>
         </View>
@@ -707,7 +709,7 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
                 <Plus size={18} color={ST_INK} strokeWidth={2.5} />
               </View>
               <Text style={{ fontSize: 15, fontFamily: font.bodyBold, color: ST_INK, letterSpacing: -0.2 }}>
-                New conversation
+                {t('grandmaTalk_history_new_convo')}
               </Text>
             </Pressable>
           }
@@ -854,6 +856,7 @@ const histStyles = StyleSheet.create({
 
 export function GrandmaTalk() {
   const { colors, radius, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
   const allBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
@@ -1134,8 +1137,8 @@ export function GrandmaTalk() {
         </Pressable>
         <View style={styles.headerTitleBlock}>
           <Text style={[styles.headerTitle, { color: colors.text, fontFamily: font.display }]}>
-            grandma{' '}
-            <Text style={[styles.headerTitleItalic, { fontFamily: font.italic }]}>talk</Text>
+            {t('grandmaTalk_header_grandma')}
+            <Text style={[styles.headerTitleItalic, { fontFamily: font.italic }]}>{t('grandmaTalk_header_talk')}</Text>
           </Text>
         </View>
         <Pressable

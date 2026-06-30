@@ -2456,6 +2456,14 @@ export interface TranslationKeys {
   kids_analytics_bottles: string
   kids_analytics_personalized_for_today: string
   kids_analytics_confirm_share_body: string
+  // ─── B7b: GrandmaTalk residual strings ────────────────────────────────────
+  grandmaTalk_history_title: string
+  grandmaTalk_history_empty_title: string
+  grandmaTalk_history_empty_body: string
+  grandmaTalk_history_start_convo: string
+  grandmaTalk_history_new_convo: string
+  grandmaTalk_header_grandma: string
+  grandmaTalk_header_talk: string
   // ─── B7b: FertileWindowModal residual strings ─────────────────────────────
   fertileModal_peak_in: string
   fertileModal_days_suffix: string
