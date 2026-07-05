@@ -1969,6 +1969,7 @@ export interface TranslationKeys {
   channelScreen_emptyTitle: string
   channelScreen_emptySubtitle: string
   channelScreen_ratingModalTitle: string
+  channelScreen_ratingHeading: string             // "How was #{{channel}}?"
   channelScreen_reviewPlaceholder: string
   channelScreen_ratingCancel: string
   channelScreen_ratingSubmit: string
@@ -1976,11 +1977,14 @@ export interface TranslationKeys {
   channelScreen_copyLink: string
   channelScreen_shareAction: string
   channelScreen_leaveTitle: string
+  channelScreen_leaveBodyPrefix: string           // "You'll stop receiving updates from "
+  channelScreen_leaveBodySuffix: string           // ". You can rejoin any time."
   channelScreen_leaveBtn: string
   channelScreen_stayBtn: string
   channelScreen_errorTitle: string
   channelScreen_errorSubtitle: string
   channelScreen_sharedFromGarage: string
+  channelScreen_byAuthor: string                  // "by {{author}}"
   channelScreen_tapToView: string
   channelScreen_memberFallback: string
   channelScreen_pinned: string

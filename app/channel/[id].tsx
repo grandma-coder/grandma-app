@@ -1074,7 +1074,7 @@ export default function ChannelChat() {
             })()}
 
             <Text style={[styles.ratingTitle, { color: colors.text, fontFamily: font.display }]}>
-              How was #{channel?.name}?
+              {t('channelScreen_ratingHeading', { channel: channel?.name ?? '' })}
             </Text>
             <Text style={[styles.ratingSubtitle, { color: colors.textMuted, fontFamily: font.body }]}>
               {t('channelScreen_ratingModalTitle')}
@@ -1265,9 +1265,9 @@ function LeaveChannelSheet({
           <View style={[styles.shareHandle, { backgroundColor: colors.textMuted + '55' }]} />
           <Text style={[styles.shareTitle, { color: colors.text, fontFamily: font.display }]}>{t('channelScreen_leaveTitle')}</Text>
           <Text style={[styles.leaveBody, { color: colors.textSecondary, fontFamily: font.body }]}>
-            You'll stop receiving updates from{' '}
+            {t('channelScreen_leaveBodyPrefix')}
             <Text style={{ fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
-            . You can rejoin any time.
+            {t('channelScreen_leaveBodySuffix')}
           </Text>
 
           <Pressable
@@ -1428,7 +1428,7 @@ function MessageBubbleBase({
             <Pressable onPress={onThreadPress} style={styles.replyLink}>
               <MessageCircle size={14} color={colors.primary} strokeWidth={2} />
               <Text style={[styles.replyLinkText, { color: colors.primary }]}>
-                {message.reply_count === 1 ? t('channelScreen_replyCountOne', { count: message.reply_count }) : t('channelScreen_replyCountMany', { count: message.reply_count })} — {t('channelScreen_viewThread')}
+                {`${message.reply_count === 1 ? t('channelScreen_replyCountOne', { count: message.reply_count }) : t('channelScreen_replyCountMany', { count: message.reply_count })} — ${t('channelScreen_viewThread')}`}
               </Text>
             </Pressable>
           )}
@@ -1511,7 +1511,7 @@ function MessageContent({ content, photos }: { content: string; photos?: string[
             )}
             {sharedAuthor && (
               <Text style={[styles.shareCardAuthor, { color: colors.textMuted }]}>
-                by {sharedAuthor}
+                {t('channelScreen_byAuthor', { author: sharedAuthor })}
               </Text>
             )}
             <Text style={[styles.shareCardCta, { color: colors.primary }]}>
