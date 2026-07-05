@@ -329,7 +329,7 @@ function PostThumbnail({
         <Image source={{ uri: coverUrl }} style={s.thumbImage} />
       ) : (
         <View style={[s.thumbPlaceholder, { backgroundColor: colors.surfaceRaised }]}>
-          <Text style={{ fontSize: 24 }}>📦</Text>
+          <Text style={{ fontSize: 24 }}>{t('garage_profile_thumbPlaceholderIcon')}</Text>
         </View>
       )}
       {/* Multi-media indicator */}

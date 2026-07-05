@@ -2180,6 +2180,8 @@ export interface TranslationKeys {
   garage_profile_errorTitle: string
   garage_profile_errorDeletePost: string
   garage_profile_errorUnsave: string
+  // ─── B7c: garage/profile.tsx residual strings ──────────────────────────────
+  garage_profile_thumbPlaceholderIcon: string
   // ─── B6: Garage — share ───────────────────────────────────────────────────
   garage_share_header: string
   garage_share_noMessageTitle: string

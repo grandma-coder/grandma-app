@@ -2179,6 +2179,7 @@ export const en: TranslationKeys = {
   garage_profile_errorTitle: 'Something went wrong',
   garage_profile_errorDeletePost: "Couldn't delete that post. Please try again.",
   garage_profile_errorUnsave: "Couldn't update your saved items. Please try again.",
+  garage_profile_thumbPlaceholderIcon: '📦',
   // ─── B6: Garage — share ───────────────────────────────────────────────────
   garage_share_header: 'Share to Channel',
   garage_share_noMessageTitle: 'No message',
