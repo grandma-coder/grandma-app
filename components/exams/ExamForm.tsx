@@ -325,7 +325,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
             {t('examForm_flaggedTitle')}
           </Text>
           {flagged.map((f, i) => (
-            <Text key={i} style={[styles.flaggedItem, { color: colors.text }]}>• {f}</Text>
+            <Text key={i} style={[styles.flaggedItem, { color: colors.text }]}>{t('common_bullet')} {f}</Text>
           ))}
           <Text style={[styles.flaggedNote, { color: colors.textMuted }]}>
             {t('examForm_flaggedNote')}

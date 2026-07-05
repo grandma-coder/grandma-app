@@ -2427,6 +2427,7 @@ export const tr: TranslationKeys = {
   common_update: 'Update',
   common_at: 'at',
   common_dotSeparator: '·',
+  common_bullet: '•',
   common_chevronPrev: '‹',
   common_chevronNext: '›',
   cycleDetail_lastNCycles: 'LAST {{n}} CYCLES',

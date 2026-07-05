@@ -33,6 +33,7 @@ export interface TranslationKeys {
   common_update: string
   common_at: string
   common_dotSeparator: string
+  common_bullet: string
   common_chevronPrev: string
   common_chevronNext: string
 
