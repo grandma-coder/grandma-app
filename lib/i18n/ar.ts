@@ -190,6 +190,9 @@ export const ar: TranslationKeys = {
   auth_continueWithGoogle: 'المتابعة مع Google',
   auth_noAccount: 'ليس لديكِ حساب؟',
   auth_hasAccount: 'لديكِ حساب بالفعل؟',
+  auth_termsPrefix: "By continuing, you agree to Grandma's",
+  auth_termsOfSerenity: 'Terms of Serenity',
+  auth_termsAnd: 'and',
   auth_welcome: 'مرحباً',
   auth_welcomeSubtitle: 'رفيقتك في الأمومة',
 

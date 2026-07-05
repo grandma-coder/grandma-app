@@ -190,6 +190,9 @@ export const tr: TranslationKeys = {
   auth_continueWithGoogle: 'Google ile Devam Et',
   auth_noAccount: 'Hesabınız yok mu?',
   auth_hasAccount: 'Zaten hesabınız var mı?',
+  auth_termsPrefix: "By continuing, you agree to Grandma's",
+  auth_termsOfSerenity: 'Terms of Serenity',
+  auth_termsAnd: 'and',
   auth_welcome: 'Hoş Geldiniz',
   auth_welcomeSubtitle: 'Ebeveynlik arkadaşınız',
 

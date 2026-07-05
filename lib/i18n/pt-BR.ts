@@ -209,6 +209,9 @@ export const ptBR: TranslationKeys = {
   auth_continueWithGoogle: 'Continuar com Google',
   auth_noAccount: 'Não tem uma conta?',
   auth_hasAccount: 'Já tem uma conta?',
+  auth_termsPrefix: "By continuing, you agree to Grandma's",
+  auth_termsOfSerenity: 'Terms of Serenity',
+  auth_termsAnd: 'and',
   auth_welcome: 'Bem-vinda',
   auth_welcomeSubtitle: 'Sua companheira de maternidade',
 

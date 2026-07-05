@@ -190,6 +190,9 @@ export const zh: TranslationKeys = {
   auth_continueWithGoogle: '使用 Google 继续',
   auth_noAccount: '没有账户？',
   auth_hasAccount: '已有账户？',
+  auth_termsPrefix: "By continuing, you agree to Grandma's",
+  auth_termsOfSerenity: 'Terms of Serenity',
+  auth_termsAnd: 'and',
   auth_welcome: '欢迎',
   auth_welcomeSubtitle: '你的育儿伙伴',
 

@@ -190,6 +190,9 @@ export const ja: TranslationKeys = {
   auth_continueWithGoogle: 'Googleで続ける',
   auth_noAccount: 'アカウントをお持ちでない？',
   auth_hasAccount: 'アカウントをお持ちの方',
+  auth_termsPrefix: "By continuing, you agree to Grandma's",
+  auth_termsOfSerenity: 'Terms of Serenity',
+  auth_termsAnd: 'and',
   auth_welcome: 'ようこそ',
   auth_welcomeSubtitle: 'あなたの子育てパートナー',
 

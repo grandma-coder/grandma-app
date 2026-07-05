@@ -214,6 +214,9 @@ export const en: TranslationKeys = {
   auth_continueWithGoogle: 'Continue with Google',
   auth_noAccount: "Don't have an account?",
   auth_hasAccount: 'Already have an account?',
+  auth_termsPrefix: "By continuing, you agree to Grandma's",
+  auth_termsOfSerenity: 'Terms of Serenity',
+  auth_termsAnd: 'and',
   auth_welcome: 'Welcome',
   auth_welcomeSubtitle: 'Your parenting companion',
 

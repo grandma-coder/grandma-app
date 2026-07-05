@@ -172,17 +172,17 @@ export default function SignUp() {
           {/* Switch */}
           <Pressable onPress={() => router.push('/(auth)/sign-in')}>
             <Text style={[styles.switchLink, { fontFamily: font.body, color: ink3 }]}>
-              Already have an account?{' '}
-              <Text style={{ fontFamily: font.bodySemiBold, color: ink }}>Sign in</Text>
+              {t('auth_hasAccount')}{' '}
+              <Text style={{ fontFamily: font.bodySemiBold, color: ink }}>{t('auth_signIn')}</Text>
             </Text>
           </Pressable>
 
           {/* Terms */}
           <Text style={[styles.terms, { fontFamily: font.body, color: ink4 }]}>
-            By continuing, you agree to Grandma's{' '}
-            <Text style={{ textDecorationLine: 'underline' }}>Terms of Serenity</Text>
-            {' '}and{' '}
-            <Text style={{ textDecorationLine: 'underline' }}>Privacy Policy</Text>.
+            {t('auth_termsPrefix')}{' '}
+            <Text style={{ textDecorationLine: 'underline' }}>{t('auth_termsOfSerenity')}</Text>
+            {' '}{t('auth_termsAnd')}{' '}
+            <Text style={{ textDecorationLine: 'underline' }}>{t('privacy_privacyPolicy')}</Text>.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -190,6 +190,9 @@ export const hi: TranslationKeys = {
   auth_continueWithGoogle: 'Google से जारी रखें',
   auth_noAccount: 'खाता नहीं है?',
   auth_hasAccount: 'पहले से खाता है?',
+  auth_termsPrefix: "By continuing, you agree to Grandma's",
+  auth_termsOfSerenity: 'Terms of Serenity',
+  auth_termsAnd: 'and',
   auth_welcome: 'स्वागत है',
   auth_welcomeSubtitle: 'आपका पालन-पोषण साथी',
 

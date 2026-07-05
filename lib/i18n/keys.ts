@@ -217,6 +217,9 @@ export interface TranslationKeys {
   auth_continueWithGoogle: string
   auth_noAccount: string
   auth_hasAccount: string
+  auth_termsPrefix: string                        // "By continuing, you agree to Grandma's "
+  auth_termsOfSerenity: string
+  auth_termsAnd: string
   auth_welcome: string
   auth_welcomeSubtitle: string
 

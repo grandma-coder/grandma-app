@@ -190,6 +190,9 @@ export const ko: TranslationKeys = {
   auth_continueWithGoogle: 'Google로 계속',
   auth_noAccount: '계정이 없으신가요?',
   auth_hasAccount: '이미 계정이 있으신가요?',
+  auth_termsPrefix: "By continuing, you agree to Grandma's",
+  auth_termsOfSerenity: 'Terms of Serenity',
+  auth_termsAnd: 'and',
   auth_welcome: '환영합니다',
   auth_welcomeSubtitle: '당신의 육아 동반자',
 

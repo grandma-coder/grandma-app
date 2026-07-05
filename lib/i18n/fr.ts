@@ -190,6 +190,9 @@ export const fr: TranslationKeys = {
   auth_continueWithGoogle: 'Continuer avec Google',
   auth_noAccount: "Vous n'avez pas de compte ?",
   auth_hasAccount: 'Vous avez déjà un compte ?',
+  auth_termsPrefix: "By continuing, you agree to Grandma's",
+  auth_termsOfSerenity: 'Terms of Serenity',
+  auth_termsAnd: 'and',
   auth_welcome: 'Bienvenue',
   auth_welcomeSubtitle: 'Votre compagne de parentalité',
 
