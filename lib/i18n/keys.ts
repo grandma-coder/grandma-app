@@ -2698,4 +2698,11 @@ export interface TranslationKeys {
   devMode_sub: string
   devMode_panel: string
   devMode_exit: string
+  // ─── B7b: GrowthPercentileChart.tsx residual strings ──────────────────────
+  growthChart_noReferenceData: string
+  growthChart_pctChipLabel: string                // "{{name}} · P{{pct}}" (name optional)
+  growthChart_legendTypical: string
+  growthChart_measurementOne: string              // "{{count}} measurement · {{unit}}"
+  growthChart_measurementMany: string             // "{{count}} measurements · {{unit}}"
+  growthChart_disclaimer: string
 }

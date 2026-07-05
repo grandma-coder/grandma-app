@@ -14,6 +14,7 @@ import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import Svg, { Path, Circle, Line, Text as SvgText, G } from 'react-native-svg'
 import { useTheme, font } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import {
   type Metric,
   type Sex,
@@ -58,6 +59,7 @@ export function GrowthPercentileChart({
   width,
 }: Props) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
 
   // Window: 6 months of context on either side of the child's current age,
   // clamped to the table range.
@@ -98,7 +100,7 @@ export function GrowthPercentileChart({
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
         <Text style={[styles.empty, { color: colors.textMuted }]}>
-          No reference data for this age range yet.
+          {t('growthChart_noReferenceData')}
         </Text>
       </View>
     )
@@ -159,7 +161,7 @@ export function GrowthPercentileChart({
         {latestPct !== null ? (
           <View style={[styles.pctChip, { borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)' }]}>
             <Text style={[styles.pctChipText, { color: colors.text }]}>
-              {childName ? `${childName} · ` : ''}P{latestPct}
+              {t('growthChart_pctChipLabel', { name: childName ? `${childName} · ` : '', pct: latestPct })}
             </Text>
           </View>
         ) : null}
@@ -243,15 +245,17 @@ export function GrowthPercentileChart({
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendSwatch, { backgroundColor: BAND_FILL_P15_P85 }]} />
-          <Text style={[styles.legendText, { color: colors.textMuted }]}>P15–P85 (typical)</Text>
+          <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('growthChart_legendTypical')}</Text>
         </View>
         <Text style={[styles.legendText, { color: colors.textMuted }]}>
-          {sortedPoints.length} {sortedPoints.length === 1 ? 'measurement' : 'measurements'} · {valueUnit}
+          {sortedPoints.length === 1
+            ? t('growthChart_measurementOne', { count: sortedPoints.length, unit: valueUnit })
+            : t('growthChart_measurementMany', { count: sortedPoints.length, unit: valueUnit })}
         </Text>
       </View>
 
       <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
-        WHO (0–24mo) + CDC (2y+) standards. For decision support — not a clinical diagnosis.
+        {t('growthChart_disclaimer')}
       </Text>
     </View>
   )

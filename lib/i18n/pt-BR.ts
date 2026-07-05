@@ -2578,4 +2578,11 @@ export const ptBR: TranslationKeys = {
   devMode_sub: "changes won't be saved",
   devMode_panel: 'PANEL',
   devMode_exit: 'EXIT',
+  // ─── B7b: GrowthPercentileChart.tsx residual strings ──────────────────────
+  growthChart_noReferenceData: 'No reference data for this age range yet.',
+  growthChart_pctChipLabel: '{{name}}P{{pct}}',
+  growthChart_legendTypical: 'P15–P85 (typical)',
+  growthChart_measurementOne: '{{count}} measurement · {{unit}}',
+  growthChart_measurementMany: '{{count}} measurements · {{unit}}',
+  growthChart_disclaimer: 'WHO (0–24mo) + CDC (2y+) standards. For decision support — not a clinical diagnosis.',
 }
