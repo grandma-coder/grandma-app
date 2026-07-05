@@ -2663,4 +2663,10 @@ export interface TranslationKeys {
   // ─── B7b: WeekCard.tsx residual strings ───────────────────────────────────
   preg_weekCard_tapForDetails: string
   preg_weekCard_unitCm: string
+  // ─── B7b: SymptomLogger.tsx residual strings ──────────────────────────────
+  agendaSymptom_tapToLog: string
+  agendaSymptom_howSevere: string                // "How severe is your {{symptom}}?"
+  agendaSymptom_loggedToday: string
+  agendaSymptom_emptyTitle: string
+  agendaSymptom_emptyDesc: string
 }

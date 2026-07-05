@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { stickers, borderRadius, typography, useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 interface SymptomEntry {
   id: string
@@ -37,6 +38,7 @@ const SEVERITY_OPTIONS: { id: 'mild' | 'moderate' | 'strong'; label: string; col
 ]
 
 export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLoggerProps) {
+  const { t } = useTranslation()
   const { colors } = useTheme()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const [selectedSymptom, setSelectedSymptom] = useState<string | null>(null)
@@ -51,7 +53,7 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
   return (
     <View style={styles.container}>
       {/* Symptom grid */}
-      <Text style={styles.sectionLabel}>TAP TO LOG</Text>
+      <Text style={styles.sectionLabel}>{t('agendaSymptom_tapToLog')}</Text>
       <View style={styles.grid}>
         {SYMPTOMS.map((s) => {
           const isLogged = todayEntries.some((e) => e.symptom === s.id)
@@ -83,7 +85,7 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
       {selectedSymptom && (
         <PaperCard radius={28} padding={20} style={styles.severityCard}>
           <Text style={styles.severityTitle}>
-            How severe is your {SYMPTOMS.find((s) => s.id === selectedSymptom)?.label?.toLowerCase()}?
+            {t('agendaSymptom_howSevere', { symptom: SYMPTOMS.find((s) => s.id === selectedSymptom)?.label?.toLowerCase() ?? '' })}
           </Text>
           <View style={styles.severityRow}>
             {SEVERITY_OPTIONS.map((sev) => (
@@ -102,7 +104,7 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
       {/* Today's logged symptoms */}
       {todayEntries.length > 0 && (
         <View>
-          <Text style={styles.sectionLabel}>LOGGED TODAY</Text>
+          <Text style={styles.sectionLabel}>{t('agendaSymptom_loggedToday')}</Text>
           <View style={styles.loggedRow}>
             {todayEntries.map((entry) => {
               const symptomInfo = SYMPTOMS.find((s) => s.id === entry.symptom)
@@ -127,9 +129,9 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
       {todayEntries.length === 0 && !selectedSymptom && (
         <View style={styles.emptyState}>
           <Ionicons name="pulse-outline" size={40} color={colors.textMuted} />
-          <Text style={styles.emptyTitle}>No symptoms logged</Text>
+          <Text style={styles.emptyTitle}>{t('agendaSymptom_emptyTitle')}</Text>
           <Text style={styles.emptyDesc}>
-            Tap a symptom above to log how you're feeling today. Track patterns across your pregnancy.
+            {t('agendaSymptom_emptyDesc')}
           </Text>
         </View>
       )}

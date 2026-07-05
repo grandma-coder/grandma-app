@@ -2515,4 +2515,10 @@ export const it: TranslationKeys = {
   // ─── B7b: WeekCard.tsx residual strings ───────────────────────────────────
   preg_weekCard_tapForDetails: 'TAP FOR DETAILS ›',
   preg_weekCard_unitCm: 'cm',
+  // ─── B7b: SymptomLogger.tsx residual strings ──────────────────────────────
+  agendaSymptom_tapToLog: 'Tap to log',
+  agendaSymptom_howSevere: 'How severe is your {{symptom}}?',
+  agendaSymptom_loggedToday: 'Logged today',
+  agendaSymptom_emptyTitle: 'No symptoms logged',
+  agendaSymptom_emptyDesc: "Tap a symptom above to log how you're feeling today. Track patterns across your pregnancy.",
 }
