@@ -41,7 +41,7 @@ export default function ChannelDetail() {
 
         {threads.length === 0 && !loading ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🧵</Text>
+            <Text style={styles.emptyIcon}>{t('channelDetail_emptyIcon')}</Text>
             <Text style={styles.emptyTitle}>{t('channelDetail_emptyTitle')}</Text>
             <Text style={styles.emptySubtitle}>
               {t('channelDetail_emptySubtitle')}

@@ -2109,6 +2109,7 @@ export const en: TranslationKeys = {
   channelDetail_title: 'Channel',
   channelDetail_emptyTitle: 'No threads yet',
   channelDetail_emptySubtitle: 'Be the first to start a discussion in this channel.',
+  channelDetail_emptyIcon: '🧵',
 
   // ─── B6: Community — channels/thread/[id] ─────────────────────────────────
   channelThreadDetail_title: 'Thread',

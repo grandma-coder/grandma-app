@@ -1926,6 +1926,7 @@ export const ja: TranslationKeys = {
   channelDetail_title: 'Channel',
   channelDetail_emptyTitle: 'No threads yet',
   channelDetail_emptySubtitle: 'Be the first to start a discussion in this channel.',
+  channelDetail_emptyIcon: '🧵',
   channelThreadDetail_title: 'Thread',
   channelThreadDetail_memberFallback: 'Member',
   channelThreadDetail_emptyText: 'No replies yet. Start the conversation!',

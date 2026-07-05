@@ -2110,6 +2110,7 @@ export interface TranslationKeys {
   channelDetail_title: string
   channelDetail_emptyTitle: string
   channelDetail_emptySubtitle: string
+  channelDetail_emptyIcon: string
 
   // ─── B6: Community — channels/thread/[id] ─────────────────────────────────
   channelThreadDetail_title: string
