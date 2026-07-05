@@ -2317,6 +2317,9 @@ export interface TranslationKeys {
   // ─── B7c: accept-invite.tsx residual strings ───────────────────────────────
   acceptInvite_successEmoji: string
   acceptInvite_headerEmoji: string
+  // ─── B7c: child-picker.tsx residual strings ────────────────────────────────
+  childPicker_title: string
+  childPicker_avatarIcon: string
   // ─── B6: Exams list ───────────────────────────────────────────────────────
   exams_title: string
   exams_tabPrePreg: string

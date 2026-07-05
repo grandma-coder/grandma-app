@@ -5,9 +5,11 @@ import { Ionicons } from '@expo/vector-icons'
 import { useChildStore } from '../store/useChildStore'
 import type { ChildWithRole } from '../types'
 import { useTheme } from '../constants/theme'
+import { useTranslation } from '../lib/i18n'
 
 export default function ChildPicker() {
   const { colors, stickers } = useTheme()
+  const { t } = useTranslation()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
@@ -53,7 +55,7 @@ export default function ChildPicker() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Switch child</Text>
+        <Text style={styles.title}>{t('childPicker_title')}</Text>
         <Pressable onPress={() => router.back()} style={styles.closeButton}>
           <Ionicons name="close" size={24} color={colors.textMuted} />
         </Pressable>
@@ -71,7 +73,7 @@ export default function ChildPicker() {
               style={[styles.card, isActive && styles.cardActive]}
             >
               <View style={styles.avatar}>
-                <Text style={{ fontSize: 24 }}>👶</Text>
+                <Text style={{ fontSize: 24 }}>{t('childPicker_avatarIcon')}</Text>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.childName}>{item.name}</Text>

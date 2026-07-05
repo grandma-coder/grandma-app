@@ -2123,6 +2123,8 @@ export const ar: TranslationKeys = {
   acceptInvite_declineBtn: 'Decline',
   acceptInvite_successEmoji: '🎉',
   acceptInvite_headerEmoji: '👵',
+  childPicker_title: 'Switch child',
+  childPicker_avatarIcon: '👶',
   exams_title: 'Exams',
   exams_tabPrePreg: 'Pre-preg',
   exams_tabPregnancy: 'Pregnancy',

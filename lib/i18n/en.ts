@@ -2315,6 +2315,8 @@ export const en: TranslationKeys = {
   acceptInvite_declineBtn: 'Decline',
   acceptInvite_successEmoji: '🎉',
   acceptInvite_headerEmoji: '👵',
+  childPicker_title: 'Switch child',
+  childPicker_avatarIcon: '👶',
   // ─── B6: Exams list ───────────────────────────────────────────────────────
   exams_title: 'Exams',
   exams_tabPrePreg: 'Pre-preg',
