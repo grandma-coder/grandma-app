@@ -4,6 +4,7 @@ import type { ComponentType } from 'react'
 import { PaperCard } from '../ui/PaperCard'
 import { LogExercise, LogSleep } from '../stickers/RewardStickers'
 import { useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 type StickerFn = ComponentType<{ size?: number; fill?: string; stroke?: string }>
 
@@ -22,12 +23,13 @@ const MOMENTS: Array<{ Sticker: StickerFn; title: string; description: string }>
 
 export function MomentsOfCare() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => makeStyles(colors), [colors])
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Moments of Care</Text>
-      <Text style={styles.sectionSubtitle}>Nurturing you while you nurture life</Text>
+      <Text style={styles.sectionTitle}>{t('home_momentsOfCare')}</Text>
+      <Text style={styles.sectionSubtitle}>{t('home_momentsOfCareSubtitle')}</Text>
 
       {MOMENTS.map((moment, i) => (
         <Pressable

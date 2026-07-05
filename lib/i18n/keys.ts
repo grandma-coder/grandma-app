@@ -75,6 +75,8 @@ export interface TranslationKeys {
   home_dailyPulseEmptyTitle: string
   home_dailyPulseEmptyBody: string
   home_grandmaSays: string
+  home_momentsOfCare: string
+  home_momentsOfCareSubtitle: string
 
   // ─── Calendar / Agenda ─────────────────────────────────────────────────
   agenda_title: string

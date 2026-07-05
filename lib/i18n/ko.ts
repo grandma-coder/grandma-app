@@ -56,6 +56,8 @@ export const ko: TranslationKeys = {
   home_dailyPulseEmptyTitle: 'Nothing logged yet, dear.',
   home_dailyPulseEmptyBody: 'Add a symptom, mood, or weight when you have a minute.',
   home_grandmaSays: 'Grandma says',
+  home_momentsOfCare: 'Moments of Care',
+  home_momentsOfCareSubtitle: 'Nurturing you while you nurture life',
 
   agenda_title: '캘린더',
   agenda_noEvents: '오늘 일정이 없습니다',
