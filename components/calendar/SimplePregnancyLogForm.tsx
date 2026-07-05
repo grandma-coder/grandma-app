@@ -16,6 +16,7 @@ import { useTheme, brand, font } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
 import { toDateStr } from '../../lib/cycleLogic'
+import { useTranslation } from '../../lib/i18n'
 import {
   LogWeight, LogWater, LogSleep, LogExercise,
 } from '../stickers/RewardStickers'
@@ -47,6 +48,7 @@ const CONFIGS: Record<SimpleLogType, {
 
 export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const [value, setValue] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -134,7 +136,7 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
       >
         {saving
           ? <ActivityIndicator color={colors.textInverse} />
-          : <Text style={[styles.saveText, { color: colors.textInverse }]}>Save</Text>
+          : <Text style={[styles.saveText, { color: colors.textInverse }]}>{t('common_save')}</Text>
         }
       </Pressable>
     </View>
