@@ -49,6 +49,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated'
 import { useTheme, font } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 const AnimatedPath = Animated.createAnimatedComponent(Path)
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
@@ -411,6 +412,7 @@ export function WeeksProgressBeads({
   height = 84,
 }: WeeksProgressBeadsProps) {
   const { colors, stickers } = useTheme()
+  const { t } = useTranslation()
   const accent = color ?? colors.primary
 
   const beads = [
@@ -540,7 +542,7 @@ export function WeeksProgressBeads({
               fontFamily: font.display,
             }}
           >
-            W{b.w}
+            {t('pregCal_week_label', { week: b.w })}
           </Text>
         ))}
       </View>
@@ -566,6 +568,7 @@ export function PulseBubblesLive({
   size = 140,
 }: PulseBubblesLiveProps) {
   const { stickers } = useTheme()
+  const { t } = useTranslation()
   const coral = color ?? stickers.coral
 
   const ripple1 = useSharedValue(0)
@@ -672,7 +675,7 @@ export function PulseBubblesLive({
           heartStyle,
         ]}
       >
-        <Text style={{ color: '#fff', fontSize: 18 }}>♥</Text>
+        <Text style={{ color: '#fff', fontSize: 18 }}>{t('galleryCharts_heartGlyph')}</Text>
       </Animated.View>
     </View>
   )

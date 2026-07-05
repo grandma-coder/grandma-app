@@ -1516,6 +1516,8 @@ export interface TranslationKeys {
   caregiverLogSheet_backChevron: string         // "‹ {{back}}"
   // ─── B7c: channels/ChannelCard.tsx residual strings ────────────────────────
   channelCard_memberCount: string               // "{{count}} members"
+  // ─── B7c: charts/GalleryCharts.tsx residual strings ────────────────────────
+  galleryCharts_heartGlyph: string
 
   // ─── Cycle Analytics (Wave B4) ────────────────────────────────────────────
   cycleAnalytics_yourCycleToday: string
