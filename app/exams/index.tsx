@@ -464,7 +464,7 @@ function ExamCard({
           </Text>
           {provider && (
             <>
-              <Text style={[styles.cardDot, { color: inkMuted }]}>·</Text>
+              <Text style={[styles.cardDot, { color: inkMuted }]}>{t('common_dotSeparator')}</Text>
               <Text
                 style={[styles.cardMeta, { color: inkMuted, fontFamily: font.bodyMedium }]}
                 numberOfLines={1}

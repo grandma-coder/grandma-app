@@ -32,6 +32,7 @@ export interface TranslationKeys {
   common_couldntLoad: string
   common_update: string
   common_at: string
+  common_dotSeparator: string
 
   // ─── Tabs ──────────────────────────────────────────────────────────────
   tab_home: string

@@ -2437,6 +2437,7 @@ export const ptBR: TranslationKeys = {
   common_couldntLoad: "Couldn't load. Please try again.",
   common_update: 'Update',
   common_at: 'at',
+  common_dotSeparator: '·',
   cycleDetail_lastNCycles: 'LAST {{n}} CYCLES',
   cycleDetail_history: 'HISTORY',
   cycleDetail_regular: 'regular',

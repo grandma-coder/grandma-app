@@ -29,6 +29,7 @@ export const en: TranslationKeys = {
   common_couldntLoad: "Couldn't load. Please try again.",
   common_update: 'Update',
   common_at: 'at',
+  common_dotSeparator: '·',
 
   // Tabs
   tab_home: 'Home',
