@@ -405,6 +405,10 @@ export interface TranslationKeys {
   // ─── B7b: FoodPhotoEntry.tsx residual strings ─────────────────────────────
   foodPhotoEntry_title: string
   foodPhotoEntry_ratingLabel: string
+  // ─── B7b: (tabs)/_layout.tsx residual strings ─────────────────────────────
+  tabFan_kicker: string
+  tabFan_whereTo: string                          // "where to, "
+  tabFan_pickCorner: string
 
   // ─── ContractionTimer (Wave 2) ────────────────────────────────────────
   preg_contractions_title: string

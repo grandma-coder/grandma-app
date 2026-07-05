@@ -407,6 +407,10 @@ export const en: TranslationKeys = {
   // ─── B7b: FoodPhotoEntry.tsx residual strings ─────────────────────────────
   foodPhotoEntry_title: 'Log a Meal',
   foodPhotoEntry_ratingLabel: "How'd they like it?",
+  // ─── B7b: (tabs)/_layout.tsx residual strings ─────────────────────────────
+  tabFan_kicker: '· menu ·',
+  tabFan_whereTo: 'where to, ',
+  tabFan_pickCorner: 'pick a corner',
   // ContractionTimer (Wave 2)
   preg_contractions_title: 'CONTRACTION TIMER',
   preg_contractions_subtitle: 'Track timing and duration between contractions',

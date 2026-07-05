@@ -230,13 +230,13 @@ function CenterTabButton() {
           pointerEvents="none"
           style={[styles.prompt, { top: insets.top + 88, opacity: overlayAnim }]}
         >
-          <Text style={[styles.promptKicker, { color: ink3Color }]}>· menu ·</Text>
+          <Text style={[styles.promptKicker, { color: ink3Color }]}>{t('tabFan_kicker')}</Text>
           <Text style={[styles.promptLine, { color: inkColor }]}>
-            where to,{' '}
-            <Text style={[styles.promptItalic, { color: accentColor }]}>{userName}?</Text>
+            {t('tabFan_whereTo')}
+            <Text style={[styles.promptItalic, { color: accentColor }]}>{`${userName}?`}</Text>
           </Text>
           <View style={[styles.promptRule, { backgroundColor: ink3Color }]} />
-          <Text style={[styles.promptCaps, { color: ink3Color }]}>pick a corner</Text>
+          <Text style={[styles.promptCaps, { color: ink3Color }]}>{t('tabFan_pickCorner')}</Text>
         </Animated.View>
 
         {/* Fan items */}
