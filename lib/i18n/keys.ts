@@ -2713,4 +2713,10 @@ export interface TranslationKeys {
   activityTimeline_emptyIcon: string
   activityTimeline_emptyTitle: string
   activityTimeline_emptyText: string
+  // ─── B7b: emergency-insurance.tsx residual strings ────────────────────────
+  emergencyInsurance_emptyContactsHint: string
+  emergencyInsurance_primaryBadge: string
+  emergencyInsurance_emptyPlansHint: string
+  emergencyInsurance_someoneToCall: string
+  emergencyInsurance_keepCardOnHand: string
 }

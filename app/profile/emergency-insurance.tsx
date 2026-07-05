@@ -266,7 +266,7 @@ export default function EmergencyInsuranceScreen() {
                 {t('emergencyInsurance_emptyContacts')}
               </Text>
               <Body size={14} align="center" color={colors.textMuted}>
-                Add people to call in case of an emergency. Grandma wants you safe.
+                {t('emergencyInsurance_emptyContactsHint')}
               </Body>
             </Pressable>
           ) : (
@@ -294,7 +294,7 @@ export default function EmergencyInsuranceScreen() {
                       {contact.isPrimary && (
                         <View style={[styles.primaryBadge, { backgroundColor: stickers.yellow + (isDark ? '32' : '50') }]}>
                           <Star size={10} color={stickers.yellowInk} strokeWidth={2.5} fill={stickers.yellowInk} />
-                          <Text style={[styles.primaryText, { color: stickers.yellowInk, fontFamily: font.bodySemiBold }]}>Primary</Text>
+                          <Text style={[styles.primaryText, { color: stickers.yellowInk, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_primaryBadge')}</Text>
                         </View>
                       )}
                     </View>
@@ -340,7 +340,7 @@ export default function EmergencyInsuranceScreen() {
                 {t('emergencyInsurance_emptyPlans')}
               </Text>
               <Body size={14} align="center" color={colors.textMuted}>
-                Keep your health, dental, and vision plans handy in one place.
+                {t('emergencyInsurance_emptyPlansHint')}
               </Body>
             </Pressable>
           ) : (
@@ -546,7 +546,7 @@ function ContactFormModal({
               {isEdit ? t('emergencyInsurance_editContact') : t('emergencyInsurance_addContact')}
             </Text>
             <Text style={[styles.modalItalic, { color: stickers.coralInk, fontFamily: font.italic }]}>
-              someone to call
+              {t('emergencyInsurance_someoneToCall')}
             </Text>
           </View>
           <View style={styles.modalHeaderBtn} />
@@ -804,7 +804,7 @@ function PlanFormModal({
               {isEdit ? t('emergencyInsurance_editPlan') : t('emergencyInsurance_addPlan')}
             </Text>
             <Text style={[styles.modalItalic, { color: stickers.coralInk, fontFamily: font.italic }]}>
-              keep your card on hand
+              {t('emergencyInsurance_keepCardOnHand')}
             </Text>
           </View>
           <View style={styles.modalHeaderBtn} />

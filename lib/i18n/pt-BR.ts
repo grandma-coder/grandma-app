@@ -2593,4 +2593,10 @@ export const ptBR: TranslationKeys = {
   activityTimeline_emptyIcon: '📋',
   activityTimeline_emptyTitle: 'No activity today',
   activityTimeline_emptyText: 'Activities logged by you or your caregivers will appear here.',
+  // ─── B7b: emergency-insurance.tsx residual strings ────────────────────────
+  emergencyInsurance_emptyContactsHint: 'Add people to call in case of an emergency. Grandma wants you safe.',
+  emergencyInsurance_primaryBadge: 'Primary',
+  emergencyInsurance_emptyPlansHint: 'Keep your health, dental, and vision plans handy in one place.',
+  emergencyInsurance_someoneToCall: 'someone to call',
+  emergencyInsurance_keepCardOnHand: 'keep your card on hand',
 }
