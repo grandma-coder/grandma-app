@@ -31,7 +31,7 @@ import {
 import * as Haptics from 'expo-haptics'
 import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../ui/diffuse/DiffuseKit'
-import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader } from '../ui/diffuse/DiffusePrimitives'
+import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader, DiffuseMetricTile } from '../ui/diffuse/DiffusePrimitives'
 import { EmptyState } from '../ui/EmptyState'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -2023,12 +2023,12 @@ export function KidsHome() {
       {/* ─── Set Goals Button ────────────────────────────────────── */}
       {diffuse ? (
         <Pressable onPress={() => setGoalsModalVisible(true)} style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}>
-          <DiffuseFieldSurface mode="kids" isDark={isDark} intensity={0.4} radius={radius.lg} style={s.setGoalsBtn}>
-            <View style={{ opacity: 0.8 }}>
+          <DiffuseFieldSurface mode="kids" isDark={isDark} intensity={0.55} radius={radius.lg} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 15, paddingHorizontal: 18 }}>
+            <View style={{ opacity: 0.85 }}>
               <StarSticker size={20} fill={stickers.yellow} stroke={dt.colors.ink} />
             </View>
-            <Text style={[s.setGoalsBtnText, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>{t('kids_home_set_goals_btn')}</Text>
-            <Text style={[s.setGoalsBtnHint, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1, fontSize: 10 }]}>
+            <Text style={{ fontSize: 17, fontFamily: diffuseFont.display, color: dt.colors.ink, letterSpacing: -0.2 }}>{t('kids_home_set_goals_btn')}</Text>
+            <Text style={{ flex: 1, textAlign: 'right', fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1, fontSize: 9.5, color: dt.colors.ink3 }}>
               {t('kids_home_set_goals_hint')}
             </Text>
             <ChevronRight size={16} color={dt.colors.ink3} strokeWidth={1.6} />
@@ -2336,16 +2336,16 @@ export function KidsHome() {
               borderRadius: 20,
               overflow: 'hidden',
               marginTop: 6,
-              borderWidth: 1.5,
-              borderColor: isDark ? colors.border : 'rgba(20,19,19,0.1)',
-              backgroundColor: colors.surface,
+              borderWidth: 1,
+              borderColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.1)'),
+              backgroundColor: diffuse ? dt.colors.surface : colors.surface,
             }}>
               {/* Calendar header label */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 }}>
-                <View style={{ transform: [{ rotate: '-10deg' }] }}>
-                  <StarSticker size={18} fill={stickers.blue} stroke="#141313" />
+                <View style={{ transform: [{ rotate: '-10deg' }], opacity: diffuse ? 0.85 : 1 }}>
+                  <StarSticker size={diffuse ? 16 : 18} fill={stickers.blue} stroke={diffuse ? dt.colors.ink : '#141313'} />
                 </View>
-                <Text style={{ fontFamily: font.display, fontSize: 14, color: colors.text, letterSpacing: -0.2 }}>{t('kids_home_picker_pick_date')}</Text>
+                <Text style={{ fontFamily: diffuse ? diffuseFont.display : font.display, fontSize: diffuse ? 16 : 14, color: diffuse ? dt.colors.ink : colors.text, letterSpacing: -0.2 }}>{t('kids_home_picker_pick_date')}</Text>
               </View>
               <DateTimePicker
                 value={newReminderDate ?? new Date()}
@@ -2353,7 +2353,7 @@ export function KidsHome() {
                 display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 minimumDate={new Date()}
                 themeVariant={isDark ? 'dark' : 'light'}
-                accentColor={brand.kids}
+                accentColor={diffuse ? getDiffuseAccent('kids', isDark) : brand.kids}
                 onChange={(e: DateTimePickerEvent, date?: Date) => {
                   if (Platform.OS !== 'ios') setShowDatePicker(false)
                   if (date) setNewReminderDate(date)
@@ -2363,14 +2363,15 @@ export function KidsHome() {
                 <Pressable
                   onPress={() => setShowDatePicker(false)}
                   style={{
-                    alignItems: 'center',
-                    paddingVertical: 12,
-                    backgroundColor: isDark ? colors.surface : stickers.blue + '18',
+                    flexDirection: 'row', alignItems: 'center', justifyContent: diffuse ? 'space-between' : 'center', gap: 8,
+                    paddingVertical: 14, paddingHorizontal: diffuse ? 16 : 0,
+                    backgroundColor: diffuse ? 'transparent' : (isDark ? colors.surface : stickers.blue + '18'),
                     borderTopWidth: 1,
-                    borderTopColor: colors.border,
+                    borderTopColor: diffuse ? dt.colors.line2 : colors.border,
                   }}
                 >
-                  <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: brand.kids }}>{t('kids_home_picker_confirm_date')}</Text>
+                  <Text style={{ fontFamily: diffuse ? diffuseFont.monoBold : font.bodyBold, fontSize: diffuse ? 12 : 14, letterSpacing: diffuse ? 2 : 0, textTransform: diffuse ? 'uppercase' : 'none', color: diffuse ? dt.colors.ink : brand.kids }}>{t('kids_home_picker_confirm_date')}</Text>
+                  {diffuse ? <Text style={{ fontFamily: diffuseFont.body, fontSize: 16, color: getDiffuseAccent('kids', isDark) }}>→</Text> : null}
                 </Pressable>
               )}
             </View>
@@ -2382,21 +2383,27 @@ export function KidsHome() {
               borderRadius: 20,
               overflow: 'hidden',
               marginTop: 6,
-              borderWidth: 1.5,
-              borderColor: isDark ? colors.border : 'rgba(20,19,19,0.1)',
-              backgroundColor: colors.surface,
+              borderWidth: 1,
+              borderColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.1)'),
+              backgroundColor: diffuse ? dt.colors.surface : colors.surface,
             }}>
               {/* Header */}
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: stickers.peach, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
-                    <Bell size={10} color="#141313" strokeWidth={2.5} />
-                  </View>
-                  <Text style={{ fontFamily: font.display, fontSize: 14, color: colors.text, letterSpacing: -0.2 }}>{t('kids_home_picker_set_time_header')}</Text>
+                  {diffuse ? (
+                    <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderColor: dt.colors.line2, alignItems: 'center', justifyContent: 'center' }}>
+                      <Bell size={10} color={dt.colors.ink3} strokeWidth={1.8} />
+                    </View>
+                  ) : (
+                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: stickers.peach, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
+                      <Bell size={10} color="#141313" strokeWidth={2.5} />
+                    </View>
+                  )}
+                  <Text style={{ fontFamily: diffuse ? diffuseFont.display : font.display, fontSize: diffuse ? 16 : 14, color: diffuse ? dt.colors.ink : colors.text, letterSpacing: -0.2 }}>{t('kids_home_picker_set_time_header')}</Text>
                 </View>
                 {newReminderTime && (
                   <Pressable onPress={() => { setNewReminderTime(null) }} hitSlop={8}>
-                    <Text style={{ fontFamily: font.bodySemiBold, fontSize: 11, color: colors.textMuted }}>{t('kids_home_picker_clear_time')}</Text>
+                    <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, fontSize: diffuse ? 10 : 11, letterSpacing: diffuse ? 1.2 : 0, textTransform: diffuse ? 'uppercase' : 'none', color: diffuse ? dt.colors.ink3 : colors.textMuted }}>{t('kids_home_picker_clear_time')}</Text>
                   </Pressable>
                 )}
               </View>
@@ -2405,7 +2412,7 @@ export function KidsHome() {
                 mode="time"
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 themeVariant={isDark ? 'dark' : 'light'}
-                accentColor={brand.kids}
+                accentColor={diffuse ? getDiffuseAccent('kids', isDark) : brand.kids}
                 style={{ height: 140 }}
                 onChange={(e: DateTimePickerEvent, date?: Date) => {
                   if (Platform.OS !== 'ios') setShowTimePicker(false)
@@ -2416,14 +2423,15 @@ export function KidsHome() {
                 <Pressable
                   onPress={() => setShowTimePicker(false)}
                   style={{
-                    alignItems: 'center',
-                    paddingVertical: 12,
-                    backgroundColor: isDark ? colors.surface : stickers.peach + '18',
+                    flexDirection: 'row', alignItems: 'center', justifyContent: diffuse ? 'space-between' : 'center', gap: 8,
+                    paddingVertical: 14, paddingHorizontal: diffuse ? 16 : 0,
+                    backgroundColor: diffuse ? 'transparent' : (isDark ? colors.surface : stickers.peach + '18'),
                     borderTopWidth: 1,
-                    borderTopColor: colors.border,
+                    borderTopColor: diffuse ? dt.colors.line2 : colors.border,
                   }}
                 >
-                  <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: '#C06030' }}>{t('kids_home_picker_confirm_time')}</Text>
+                  <Text style={{ fontFamily: diffuse ? diffuseFont.monoBold : font.bodyBold, fontSize: diffuse ? 12 : 14, letterSpacing: diffuse ? 2 : 0, textTransform: diffuse ? 'uppercase' : 'none', color: diffuse ? dt.colors.ink : '#C06030' }}>{t('kids_home_picker_confirm_time')}</Text>
+                  {diffuse ? <Text style={{ fontFamily: diffuseFont.body, fontSize: 16, color: getDiffuseAccent('kids', isDark) }}>→</Text> : null}
                 </Pressable>
               )}
             </View>
@@ -6650,6 +6658,20 @@ function ReminderRow({
             </View>
           )}
           {dueDateLabel && (() => {
+            if (diffuse) {
+              const dInk = isOverdue ? dt.colors.error : dt.colors.ink3
+              return (
+                <View style={{
+                  flexDirection: 'row', alignItems: 'center', gap: 5,
+                  backgroundColor: 'transparent',
+                  borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4,
+                  borderWidth: 1, borderColor: isOverdue ? dt.colors.error + '55' : dt.colors.line2,
+                }}>
+                  <Clock size={9} color={dInk} strokeWidth={2} />
+                  <Text style={{ color: dInk, fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>{dueDateLabel}</Text>
+                </View>
+              )
+            }
             const dueBg = isOverdue
               ? (isDark ? brand.error + '22' : '#F5B896')
               : isDueToday
@@ -6821,6 +6843,8 @@ function RemindersModal({
   allChildren?: ChildWithRole[]
 }) {
   const { radius, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const [tab, setTab] = useState<'active' | 'archived'>('active')
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null)
@@ -6870,29 +6894,42 @@ function RemindersModal({
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={[s.reminderModalOverlay]}>
-      <View style={[s.reminderModal, { backgroundColor: isDark ? colors.bg : '#FFFEF8' }]}>
+      <View style={[s.reminderModal, { backgroundColor: diffuse ? dt.colors.bg : (isDark ? colors.bg : '#FFFEF8') }]}>
         {/* Drag handle */}
         <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 4 }}>
-          <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
+          <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: diffuse ? dt.colors.line2 : colors.border }} />
         </View>
 
         {/* Header */}
         <View style={[s.reminderModalHeader, { borderBottomColor: 'transparent' }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            {/* Bell sticker accent */}
-            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#F5D652', borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
-              <Bell size={16} color="#141313" strokeWidth={2} />
-            </View>
-            <Text style={[s.reminderModalTitle, { color: colors.text }]}>{t('kids_home_section_reminders')}</Text>
+            {/* Bell */}
+            {diffuse ? (
+              <View style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: dt.colors.line2, alignItems: 'center', justifyContent: 'center' }}>
+                <Bell size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+              </View>
+            ) : (
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#F5D652', borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
+                <Bell size={16} color="#141313" strokeWidth={2} />
+              </View>
+            )}
+            <Text style={[s.reminderModalTitle, { color: diffuse ? dt.colors.ink : colors.text }, diffuse && { fontFamily: diffuseFont.display }]}>{t('kids_home_section_reminders')}</Text>
           </View>
           <Pressable onPress={onClose} hitSlop={12}>
-            <View style={{ width: 34, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border }}>
-              <X size={15} color={colors.textMuted} strokeWidth={2.5} />
+            <View style={{ width: 34, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: diffuse ? 'transparent' : colors.surfaceRaised, borderWidth: 1, borderColor: diffuse ? dt.colors.hairline : colors.border }}>
+              <X size={15} color={diffuse ? dt.colors.ink : colors.textMuted} strokeWidth={2.5} />
             </View>
           </Pressable>
         </View>
 
-        {/* Metric tiles — three sticker-colored cards */}
+        {/* Metric tiles */}
+        {diffuse ? (
+          <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 4, marginBottom: 4 }}>
+            <DiffuseMetricTile value={active.length} label={t('kids_home_reminders_modal_tab_active')} />
+            <DiffuseMetricTile value={thisWeek} label={t('kids_home_reminders_modal_done_week')} />
+            <DiffuseMetricTile value={`${completionRate}%`} label={t('kids_home_reminders_modal_completion')} />
+          </View>
+        ) : (
         <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 4, marginBottom: 4 }}>
           {/* Active */}
           <View style={{ flex: 1, backgroundColor: '#F5B896', borderRadius: 16, borderWidth: 1.5, borderColor: '#141313', paddingVertical: 12, alignItems: 'center', gap: 2 }}>
@@ -6910,6 +6947,7 @@ function RemindersModal({
             <Text style={{ fontSize: 9, fontFamily: font.bodySemiBold, color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>{t('kids_home_reminders_modal_completion')}</Text>
           </View>
         </View>
+        )}
 
         {/* Kid filter pills — sticker-on-paper style */}
         {childrenWithReminders.length > 0 && (
@@ -6976,13 +7014,13 @@ function RemindersModal({
                     paddingVertical: 8,
                     paddingHorizontal: 14,
                     borderRadius: 999,
-                    borderWidth: 1.5,
-                    backgroundColor: isActive ? kidColor : (colors.surface),
-                    borderColor: isDark ? (isActive ? kidColor : colors.border) : '#141313',
+                    borderWidth: diffuse ? 1 : 1.5,
+                    backgroundColor: diffuse ? (isActive ? dt.colors.surface : 'transparent') : (isActive ? kidColor : (colors.surface)),
+                    borderColor: diffuse ? (isActive ? dt.colors.hairline : dt.colors.line) : (isDark ? (isActive ? kidColor : colors.border) : '#141313'),
                   }}
                 >
-                  <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: kidColor, borderWidth: 1, borderColor: '#141313' }} />
-                  <Text style={{ fontSize: 13, fontFamily: font.bodyBold, letterSpacing: 0.2, color: isDark ? (isActive ? '#141313' : colors.text) : '#141313' }}>{c.name}</Text>
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: kidColor, borderWidth: diffuse ? 0 : 1, borderColor: '#141313' }} />
+                  <Text style={{ fontSize: 13, fontFamily: diffuse ? (isActive ? diffuseFont.bodySemiBold : diffuseFont.body) : font.bodyBold, letterSpacing: 0.2, color: diffuse ? (isActive ? dt.colors.ink : dt.colors.ink2) : (isDark ? (isActive ? '#141313' : colors.text) : '#141313') }}>{c.name}</Text>
                 </Pressable>
               )
             })}
@@ -6993,10 +7031,10 @@ function RemindersModal({
         <View style={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4 }}>
           <View style={{
             flexDirection: 'row',
-            backgroundColor: colors.surface,
+            backgroundColor: diffuse ? 'transparent' : colors.surface,
             borderRadius: 999,
-            borderWidth: 1.5,
-            borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
+            borderWidth: 1,
+            borderColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
             padding: 4,
             gap: 4,
           }}>
@@ -7012,14 +7050,17 @@ function RemindersModal({
                     justifyContent: 'center',
                     paddingVertical: 10,
                     borderRadius: 999,
-                    backgroundColor: isOn ? '#141313' : 'transparent',
+                    backgroundColor: diffuse ? (isOn ? dt.colors.surface : 'transparent') : (isOn ? '#141313' : 'transparent'),
+                    borderWidth: diffuse && isOn ? 1 : 0,
+                    borderColor: diffuse ? dt.colors.hairline : 'transparent',
                   }}
                 >
                   <Text style={{
-                    fontSize: 14,
-                    fontFamily: isOn ? 'Fraunces_600SemiBold' : 'DMSans_600SemiBold',
-                    color: isOn ? '#FFFEF8' : (isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'),
-                    letterSpacing: -0.1,
+                    fontSize: diffuse ? 11 : 14,
+                    fontFamily: diffuse ? (isOn ? diffuseFont.monoBold : diffuseFont.mono) : (isOn ? 'Fraunces_600SemiBold' : 'DMSans_600SemiBold'),
+                    color: diffuse ? (isOn ? dt.colors.ink : dt.colors.ink3) : (isOn ? '#FFFEF8' : (isDark ? colors.textMuted : 'rgba(20,19,19,0.55)')),
+                    letterSpacing: diffuse ? 1.2 : -0.1,
+                    textTransform: diffuse ? 'uppercase' : 'none',
                   }}>
                     {tabKey === 'active' ? t('kids_home_reminders_modal_tab_active_count', { count: active.length }) : t('kids_home_reminders_modal_tab_archived_count', { count: archived.length })}
                   </Text>
