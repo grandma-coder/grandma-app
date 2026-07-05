@@ -65,7 +65,15 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers, font, getModeColor } from '../../constants/theme'
+import { useTheme, brand, stickers, font, getModeColor, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeField } from '../../constants/theme'
+import { useIsDiffuse, SoftBloom, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
+import {
+  DiffuseSheet,
+  DiffuseBloomIcon,
+  DiffuseListRow,
+  DiffuseEmptyState,
+  DiffuseMetricTile,
+} from '../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 type TranslationKey = keyof TranslationKeys
@@ -161,6 +169,41 @@ const LOG_META: Record<string, { label: string; labelKey: TranslationKey; icon: 
   activity: { label: 'Activity', labelKey: 'kids_calendar_labelActivity', icon: Dumbbell, color: brand.phase.ovulation },
   note: { label: 'Note', labelKey: 'kids_calendar_labelNote', icon: Calendar, color: brand.primaryLight },
   skipped: { label: 'Skipped', labelKey: 'kids_calendar_labelSkipped', icon: MinusCircle, color: '#888888' },
+}
+
+// ─── Diffuse (v4) icon system ──────────────────────────────────────────────
+// Thin Lucide line glyph over a soft feathered bloom (DiffuseBloomIcon). Each
+// log type maps to a glyph + a sticker bloom hue. Replaces the pastel sticker
+// tiles in the Diffuse variant only.
+const DIFFUSE_LOG_GLYPH: Record<string, typeof Utensils> = {
+  feeding: Utensils, food: Utensils, sleep: Moon, wake_up: Sun,
+  health: Heart, temperature: Thermometer, medicine: Pill, vaccine: Syringe,
+  mood: Smile, memory: Camera, photo: Camera, diaper: Baby,
+  growth: Heart, milestone: Sparkles, activity: Dumbbell,
+  note: FileText, exam: FlaskConical, skipped: MinusCircle,
+}
+
+/** Diffuse bloom hue per log type (from the sticker palette). */
+function diffuseLogHue(type: string): string {
+  const map: Record<string, string> = {
+    feeding: stickers.blue, food: stickers.blue, sleep: stickers.lilac,
+    wake_up: stickers.yellow, health: stickers.pink, temperature: stickers.pink,
+    medicine: stickers.pink, vaccine: stickers.pink, mood: stickers.peach,
+    memory: stickers.lilac, photo: stickers.lilac, diaper: stickers.blue,
+    growth: stickers.green, milestone: stickers.lilac, activity: stickers.green,
+    note: stickers.peach, exam: stickers.green, skipped: stickers.charcoal,
+  }
+  return map[type] ?? stickers.blue
+}
+
+/** A Diffuse bloom-icon for a log/routine type — the shared icon treatment. */
+function DiffuseLogIcon({ type, size = 34, inkColor }: { type: string; size?: number; inkColor: string }) {
+  const Glyph = DIFFUSE_LOG_GLYPH[type] ?? Circle
+  return (
+    <DiffuseBloomIcon color={diffuseLogHue(type)} size={size}>
+      <Glyph size={size * 0.5} color={inkColor} strokeWidth={1.6} />
+    </DiffuseBloomIcon>
+  )
 }
 
 /** Check if a routine was skipped (persisted as a 'skipped' log) for the given day */
@@ -437,6 +480,45 @@ const KIDS_TINT_BY_TYPE: Record<LogType, string> = {
   diaper: 'diaper',
 }
 
+// ─── Diffuse style helpers (color-dependent → factory fns) ─────────────────
+const diffuseSheetStyles = {
+  tileGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 } as const,
+  tile: {
+    width: '30%' as const,
+    flexGrow: 1,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  tileLabel: (color: string) => ({
+    fontFamily: diffuseFont.mono,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase' as const,
+    color,
+    textAlign: 'center' as const,
+  }),
+  manageRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 12,
+    paddingTop: 18,
+    marginTop: 18,
+    borderTopWidth: 1,
+  },
+  manageLabel: (color: string) => ({
+    flex: 1,
+    fontFamily: diffuseFont.monoBold,
+    fontSize: 12,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase' as const,
+    color,
+  }),
+}
+
 function LogActivitySheet({
   open,
   onClose,
@@ -449,6 +531,8 @@ function LogActivitySheet({
   onManageRoutines: () => void
 }) {
   const { colors, isDark, font } = useTheme()
+  const dt = useDiffuseTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
@@ -457,6 +541,43 @@ function LogActivitySheet({
   function handleSelect(type: LogType) {
     onClose()
     onSelect(type)
+  }
+
+  // ── Diffuse variant: bottom-sheet shell + hairline log-type tiles ──────────
+  if (diffuse) {
+    return (
+      <DiffuseSheet visible={open} onClose={onClose} title={t('kids_calendar_logActivity')}>
+        <View style={diffuseSheetStyles.tileGrid}>
+          {QUICK_LOGS.map((log) => (
+            <Pressable
+              key={log.id}
+              onPress={() => handleSelect(log.id)}
+              style={({ pressed }) => [
+                diffuseSheetStyles.tile,
+                { borderColor: dt.colors.line, backgroundColor: dt.colors.surface, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <DiffuseLogIcon type={log.id} size={38} inkColor={dt.colors.ink3} />
+              <Text style={diffuseSheetStyles.tileLabel(dt.colors.ink2)}>{log.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <Pressable
+          onPress={() => { onClose(); onManageRoutines() }}
+          style={({ pressed }) => [
+            diffuseSheetStyles.manageRow,
+            { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 },
+          ]}
+        >
+          <DiffuseBloomIcon color={stickers.lilac} size={30}>
+            <Repeat size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+          </DiffuseBloomIcon>
+          <Text style={diffuseSheetStyles.manageLabel(dt.colors.ink)}>{t('kids_calendar_manageRoutines')}</Text>
+          <DiffuseArrow color={dt.colors.ink3} size={16} />
+        </Pressable>
+      </DiffuseSheet>
+    )
   }
 
   const paper = colors.surface
@@ -535,10 +656,505 @@ function LogActivitySheet({
   )
 }
 
+// ─── Diffuse week strip ─────────────────────────────────────────────────────
+// The Diffuse counterpart to AgendaWeekStrip: a hairline day row. Each day is a
+// thin hairline circle; selected = accent ring + soft radial bloom behind;
+// logged days get small accent-ish dots beneath. Mon-first, matches the .dotcal
+// reference (row form). Kept inline so KidsCalendar owns its Diffuse timeline.
+const DIFFUSE_DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+
+function DiffuseWeekStrip({
+  selectedDate,
+  onSelectDate,
+  dotsByDate,
+}: {
+  selectedDate: string
+  onSelectDate: (date: string) => void
+  dotsByDate?: Record<string, string[]>
+}) {
+  const { colors, isDark } = useDiffuseTheme()
+  const acc = getDiffuseAccent('kids', isDark)
+  const todayStr = toDateStr(new Date())
+
+  const center = new Date(selectedDate + 'T00:00:00')
+  const dow = center.getDay()
+  const offsetToMon = dow === 0 ? -6 : 1 - dow
+  const days: { date: Date; dateStr: string }[] = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(center)
+    d.setDate(center.getDate() + offsetToMon + i)
+    days.push({ date: d, dateStr: toDateStr(d) })
+  }
+  const monthLabel = days[0].date.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()
+
+  const stepWeek = (delta: number) => {
+    const next = new Date(selectedDate + 'T00:00:00')
+    next.setDate(next.getDate() + delta)
+    onSelectDate(toDateStr(next))
+  }
+
+  return (
+    <View style={diffuseStripStyles.container}>
+      <View style={diffuseStripStyles.captionRow}>
+        <Text style={[diffuseStripStyles.month, { color: colors.ink3 }]}>{monthLabel}</Text>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          <Pressable onPress={() => stepWeek(-7)} hitSlop={8} style={[diffuseStripStyles.navBtn, { borderColor: colors.line2 }]}>
+            <ChevronLeft size={14} color={colors.ink3} strokeWidth={1.8} />
+          </Pressable>
+          <Pressable onPress={() => stepWeek(7)} hitSlop={8} style={[diffuseStripStyles.navBtn, { borderColor: colors.line2 }]}>
+            <ChevronRight size={14} color={colors.ink3} strokeWidth={1.8} />
+          </Pressable>
+        </View>
+      </View>
+      <View style={diffuseStripStyles.grid}>
+        {days.map(({ date, dateStr }) => {
+          const isSelected = dateStr === selectedDate
+          const isToday = dateStr === todayStr && !isSelected
+          const dots = dotsByDate?.[dateStr] ?? []
+          return (
+            <Pressable key={dateStr} onPress={() => onSelectDate(dateStr)} style={diffuseStripStyles.cell}>
+              <Text style={[diffuseStripStyles.dow, { color: colors.ink3, fontFamily: isSelected ? diffuseFont.monoBold : diffuseFont.mono }]}>
+                {DIFFUSE_DAY_INITIALS[date.getDay()]}
+              </Text>
+              <View style={diffuseStripStyles.bubbleWrap}>
+                {isSelected ? (
+                  <View pointerEvents="none" style={diffuseStripStyles.bloom}>
+                    <SoftBloom color={acc} opacity={0.55} spread={0.4} />
+                  </View>
+                ) : null}
+                <View
+                  style={[
+                    diffuseStripStyles.bubble,
+                    { borderColor: isSelected ? acc : isToday ? colors.hairline : colors.line },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      fontFamily: isSelected ? diffuseFont.bodySemiBold : diffuseFont.body,
+                      fontSize: 13,
+                      color: isSelected ? colors.ink : colors.ink2,
+                    }}
+                  >
+                    {date.getDate()}
+                  </Text>
+                </View>
+              </View>
+              <View style={diffuseStripStyles.dotRow}>
+                {dots.slice(0, 3).map((_, i) => (
+                  <View key={i} style={[diffuseStripStyles.dot, { backgroundColor: acc }]} />
+                ))}
+              </View>
+            </Pressable>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
+const diffuseStripStyles = StyleSheet.create({
+  container: { paddingHorizontal: 4, paddingTop: 4, paddingBottom: 2 },
+  captionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingHorizontal: 4 },
+  month: { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' },
+  navBtn: { width: 26, height: 26, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  grid: { flexDirection: 'row', justifyContent: 'space-between' },
+  cell: { flex: 1, alignItems: 'center', gap: 5 },
+  dow: { fontSize: 9, letterSpacing: 1, textTransform: 'uppercase' },
+  bubbleWrap: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  bloom: { position: 'absolute', width: '150%', height: '150%' },
+  bubble: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  dotRow: { flexDirection: 'row', gap: 3, height: 5, alignItems: 'center' },
+  dot: { width: 4, height: 4, borderRadius: 2 },
+})
+
+const diffuseVisitStyles = StyleSheet.create({
+  addRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    borderTopWidth: 1,
+    paddingTop: 18,
+    marginTop: 8,
+  },
+})
+
+// ─── Diffuse Routine Manager ────────────────────────────────────────────────
+// The Diffuse counterpart to the sticker-on-paper routine manager: a DiffuseSheet
+// with a hairline form (name input, mono type chips, time, day toggles), a
+// containerless save action, and a hairline list of existing routines with
+// inline edit/delete. Same handlers/state as the legacy manager — this only
+// re-skins. Rendered only when the flag is on.
+
+const ROUTINE_TYPES = ['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health']
+
+interface DiffuseRoutineManagerProps {
+  visible: boolean
+  onClose: () => void
+  routines: ChildRoutine[]
+  children: { id: string; name: string }[]
+  routineForm: { name: string; type: string; time: string; days: number[] }
+  setRoutineForm: React.Dispatch<React.SetStateAction<{ name: string; type: string; time: string; days: number[] }>>
+  routineEditing: ChildRoutine | null
+  setRoutineEditing: (r: ChildRoutine | null) => void
+  routineSaving: boolean
+  onSave: () => void
+  onDelete: (id: string) => void
+  routineFilterKid: string | null
+  setRoutineFilterKid: (id: string | null) => void
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string
+}
+
+function DiffuseRoutineManager({
+  visible, onClose, routines, children, routineForm, setRoutineForm,
+  routineEditing, setRoutineEditing, routineSaving, onSave, onDelete,
+  routineFilterKid, setRoutineFilterKid, t,
+}: DiffuseRoutineManagerProps) {
+  const { colors } = useDiffuseTheme()
+  const listed = routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid) : routines
+
+  const input = (value: string, onChange: (v: string) => void, placeholder: string, keyboardType?: 'numbers-and-punctuation') => (
+    <View style={[dm.inputWrap, { borderColor: colors.line2, backgroundColor: colors.surface }]}>
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        placeholderTextColor={colors.ink4}
+        underlineColorAndroid="transparent"
+        keyboardType={keyboardType}
+        style={{ color: colors.ink, fontFamily: diffuseFont.body, fontSize: 15, paddingVertical: 0 }}
+      />
+    </View>
+  )
+
+  const formBody = (
+    <View style={{ gap: 12 }}>
+      {input(routineForm.name, (v) => setRoutineForm((f) => ({ ...f, name: v })), 'Routine name (e.g. Morning bottle)')}
+      {/* Type chips — mono hairline */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+        {ROUTINE_TYPES.map((rtype) => {
+          const active = routineForm.type === rtype
+          const meta = LOG_META[rtype]
+          return (
+            <Pressable
+              key={rtype}
+              onPress={() => setRoutineForm((f) => ({ ...f, type: rtype }))}
+              style={({ pressed }) => [
+                dm.typeChip,
+                { borderColor: active ? colors.hairline : colors.line, backgroundColor: active ? colors.surface : 'transparent', opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Text style={{ fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: active ? colors.ink : colors.ink3 }}>
+                {t(meta.labelKey)}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </ScrollView>
+      {/* Time */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <DiffuseBloomIcon color={stickers.yellow} size={30}><Clock size={15} color={colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>
+        <View style={{ flex: 1 }}>
+          {input(routineForm.time, (v) => setRoutineForm((f) => ({ ...f, time: v })), 'HH:MM', 'numbers-and-punctuation')}
+        </View>
+      </View>
+      {/* Days — hairline circles */}
+      <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'space-between' }}>
+        {DAY_NAMES.map((name, i) => {
+          const active = routineForm.days.includes(i)
+          return (
+            <Pressable
+              key={i}
+              onPress={() => setRoutineForm((f) => ({ ...f, days: active ? f.days.filter((d) => d !== i) : [...f.days, i].sort() }))}
+              style={({ pressed }) => [
+                dm.dayChip,
+                { borderColor: active ? colors.hairline : colors.line, backgroundColor: active ? colors.surface : 'transparent', opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Text style={{ fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 12, color: active ? colors.ink : colors.ink3 }}>
+                {name.charAt(0)}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
+      {/* Save / update — containerless action row */}
+      <View style={{ flexDirection: 'row', gap: 14, marginTop: 6 }}>
+        {routineEditing ? (
+          <Pressable onPress={() => setRoutineEditing(null)} style={({ pressed }) => [dm.actionRow, { borderTopColor: colors.line2, opacity: pressed ? 0.6 : 1, flex: 1 }]}>
+            <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink3 }}>{t('common_cancel')}</Text>
+          </Pressable>
+        ) : null}
+        <Pressable
+          onPress={onSave}
+          disabled={!routineForm.name.trim() || routineSaving}
+          style={({ pressed }) => [dm.actionRow, { borderTopColor: colors.hairline, opacity: (!routineForm.name.trim() || routineSaving) ? 0.4 : (pressed ? 0.6 : 1), flex: 1.4 }]}
+        >
+          {routineSaving ? (
+            <ActivityIndicator color={colors.ink} size="small" />
+          ) : (
+            <>
+              <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink }}>
+                {routineEditing ? t('common_update') : t('kids_calendar_addRoutine')}
+              </Text>
+              <DiffuseArrow color={colors.ink3} size={16} />
+            </>
+          )}
+        </Pressable>
+      </View>
+    </View>
+  )
+
+  return (
+    <DiffuseSheet visible={visible} onClose={onClose} title={t('kids_calendar_routines')}>
+      {/* Form (new or edit) */}
+      <View style={{ marginBottom: 8 }}>
+        <Text style={{ fontFamily: diffuseFont.display, fontSize: 19, color: colors.ink, letterSpacing: -0.3, marginBottom: 12 }}>
+          {routineEditing ? t('kids_calendar_editRoutine') : t('kids_calendar_newRoutine')}
+        </Text>
+        {formBody}
+      </View>
+
+      {/* Existing routines */}
+      {listed.length > 0 && (
+        <View style={{ marginTop: 24 }}>
+          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink3, marginBottom: 8 }}>
+            {t('kids_logForm_activeRoutines', { count: listed.length })}
+          </Text>
+          {/* Kid filter chips */}
+          {children.length > 1 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
+              <Pressable
+                onPress={() => setRoutineFilterKid(null)}
+                style={({ pressed }) => [dm.typeChip, { borderColor: routineFilterKid === null ? colors.hairline : colors.line, backgroundColor: routineFilterKid === null ? colors.surface : 'transparent', opacity: pressed ? 0.7 : 1 }]}
+              >
+                <Text style={{ fontFamily: routineFilterKid === null ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: routineFilterKid === null ? colors.ink : colors.ink3 }}>
+                  {t('kids_calendar_allKids')}
+                </Text>
+              </Pressable>
+              {children.map((child) => {
+                const active = routineFilterKid === child.id
+                return (
+                  <Pressable
+                    key={child.id}
+                    onPress={() => setRoutineFilterKid(active ? null : child.id)}
+                    style={({ pressed }) => [dm.typeChip, { borderColor: active ? colors.hairline : colors.line, backgroundColor: active ? colors.surface : 'transparent', opacity: pressed ? 0.7 : 1 }]}
+                  >
+                    <Text style={{ fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: active ? colors.ink : colors.ink3 }}>
+                      {child.name}
+                    </Text>
+                  </Pressable>
+                )
+              })}
+            </ScrollView>
+          )}
+          {listed.map((r, idx) => {
+            const childName = children.find((c) => c.id === r.child_id)?.name
+            const sub = `${r.time ? fmtTime(r.time) : t('kids_logForm_anytime')} · ${r.days_of_week.length === 7 ? t('kids_logForm_daily') : r.days_of_week.map((d) => DAY_NAMES[d].charAt(0)).join(' ')}${childName ? ` · ${childName}` : ''}`
+            return (
+              <DiffuseListRow
+                key={r.id}
+                title={r.name}
+                sub={sub}
+                icon={<DiffuseLogIcon type={r.type} size={34} inkColor={colors.ink3} />}
+                last={idx === listed.length - 1}
+                trailing={
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                    <Pressable
+                      onPress={() => { setRoutineEditing(r); setRoutineForm({ name: r.name, type: r.type, time: r.time ?? '09:00', days: r.days_of_week }) }}
+                      hitSlop={8}
+                    >
+                      <Pencil size={15} color={colors.ink3} strokeWidth={1.6} />
+                    </Pressable>
+                    <Pressable onPress={() => onDelete(r.id)} hitSlop={8}>
+                      <Trash2 size={15} color={colors.error} strokeWidth={1.6} />
+                    </Pressable>
+                  </View>
+                }
+              />
+            )
+          })}
+        </View>
+      )}
+    </DiffuseSheet>
+  )
+}
+
+const dm = StyleSheet.create({
+  inputWrap: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, height: 52, justifyContent: 'center' },
+  typeChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1 },
+  dayChip: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  actionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderTopWidth: 1, paddingTop: 16 },
+})
+
+// ─── Diffuse Log Detail Sheet ───────────────────────────────────────────────
+// The Diffuse counterpart to the rich sticker detail popup: a DiffuseSheet with
+// a bloom-icon hero, a serif hero value + mono meta chips (derived from the same
+// formatLogDisplay helper), notes, photos, and an inline edit mode. Containerless
+// edit/delete actions on hairlines. Same handlers as the legacy popup.
+
+/** Pull a single serif "hero" value + unit out of a log's value JSON, per type. */
+function diffuseHero(log: ChildLog): { value: string; unit?: string } | null {
+  let p: Record<string, any> = {}
+  try { p = JSON.parse(log.value ?? '{}') } catch { return null }
+  switch (log.type) {
+    case 'food':
+      return p.estimatedCals ? { value: String(p.estimatedCals), unit: 'kcal' } : null
+    case 'feeding':
+      if (p.feedType === 'breast') return p.duration ? { value: String(p.duration), unit: 'min' } : null
+      return p.amount ? { value: String(p.amount), unit: 'ml' } : null
+    case 'sleep':
+      return p.duration ? { value: String(p.duration) } : null
+    case 'activity':
+      return p.name ? { value: String(p.name) } : (p.activityType ? { value: String(p.activityType) } : null)
+    default:
+      return null
+  }
+}
+
+interface DiffuseLogDetailSheetProps {
+  log: ChildLog | null
+  onClose: () => void
+  childName?: string
+  loggedByName?: string
+  todayStr: string
+  editing: boolean
+  setEditing: (v: boolean) => void
+  editValue: string
+  setEditValue: (v: string) => void
+  editNotes: string
+  setEditNotes: (v: string) => void
+  editSaving: boolean
+  onSaveEdit: () => void
+  onEdit: (log: ChildLog) => void
+  onDelete: (log: ChildLog) => void
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string
+}
+
+function DiffuseLogDetailSheet({
+  log, onClose, childName, loggedByName, todayStr,
+  editing, setEditing, editValue, setEditValue, editNotes, setEditNotes,
+  editSaving, onSaveEdit, onEdit, onDelete, t,
+}: DiffuseLogDetailSheetProps) {
+  const { colors } = useDiffuseTheme()
+  if (!log) return <DiffuseSheet visible={false} onClose={onClose} title="">{null}</DiffuseSheet>
+
+  const hero = diffuseHero(log)
+  const summary = formatLogDisplay(log.type, log.value, log.notes)
+  const hasPhotos = log.photos && log.photos.length > 0
+
+  return (
+    <DiffuseSheet visible={!!log} onClose={onClose} title={logTitle(log)} chip={childName}>
+      {/* Meta line */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <Clock size={14} color={colors.ink3} strokeWidth={1.6} />
+        <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: colors.ink3 }}>
+          {`${formatDayLabel(log.date, todayStr, t)} · ${activityTimeDisplay(log)}`}
+        </Text>
+      </View>
+
+      {editing ? (
+        <View style={{ gap: 12 }}>
+          <View>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink3, marginBottom: 6 }}>{t('kids_calendar_detail_details')}</Text>
+            <View style={[dm.inputWrap, { borderColor: colors.line2, backgroundColor: colors.surface, height: 'auto', paddingVertical: 12 }]}>
+              <TextInput value={editValue} onChangeText={setEditValue} placeholder={t('kids_calendar_detail_detailsPlaceholder')} placeholderTextColor={colors.ink4} multiline style={{ color: colors.ink, fontFamily: diffuseFont.body, fontSize: 15, minHeight: 40 }} />
+            </View>
+          </View>
+          <View>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink3, marginBottom: 6 }}>{t('kids_calendar_detail_notes')}</Text>
+            <View style={[dm.inputWrap, { borderColor: colors.line2, backgroundColor: colors.surface, height: 'auto', paddingVertical: 12 }]}>
+              <TextInput value={editNotes} onChangeText={setEditNotes} placeholder={t('kids_calendar_detail_notesPlaceholder')} placeholderTextColor={colors.ink4} multiline style={{ color: colors.ink, fontFamily: diffuseFont.body, fontSize: 15, minHeight: 40 }} />
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 14, marginTop: 6 }}>
+            <Pressable onPress={() => setEditing(false)} style={({ pressed }) => [dm.actionRow, { borderTopColor: colors.line2, opacity: pressed ? 0.6 : 1, flex: 1 }]}>
+              <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink3 }}>{t('common_cancel')}</Text>
+            </Pressable>
+            <Pressable onPress={onSaveEdit} disabled={editSaving} style={({ pressed }) => [dm.actionRow, { borderTopColor: colors.hairline, opacity: editSaving ? 0.5 : (pressed ? 0.6 : 1), flex: 1 }]}>
+              {editSaving ? <ActivityIndicator color={colors.ink} size="small" /> : (
+                <>
+                  <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink }}>{t('common_save')}</Text>
+                  <DiffuseArrow color={colors.ink3} size={16} />
+                </>
+              )}
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <>
+          {/* Hero */}
+          <View style={{ alignItems: 'center', paddingVertical: 8, marginBottom: 16 }}>
+            <DiffuseLogIcon type={log.type} size={64} inkColor={colors.ink3} />
+            {hero ? (
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: 44, letterSpacing: -1, color: colors.ink, marginTop: 8 }}>
+                {hero.value}
+                {hero.unit ? <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, color: colors.ink2 }}>{' ' + hero.unit}</Text> : null}
+              </Text>
+            ) : null}
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink3, marginTop: hero ? 6 : 10 }}>
+              {(LOG_META[log.type]?.label ?? log.type)}
+            </Text>
+          </View>
+
+          {/* Summary (if not already the hero) */}
+          {summary && !hero ? (
+            <Text style={{ fontFamily: diffuseFont.body, fontSize: 15, lineHeight: 22, color: colors.ink2, textAlign: 'center', marginBottom: 16 }}>{summary}</Text>
+          ) : null}
+
+          {/* Notes */}
+          {log.notes ? (
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink3, marginBottom: 6 }}>{t('kids_calendar_detail_notes')}</Text>
+              <Text style={{ fontFamily: diffuseFont.body, fontSize: 15, lineHeight: 22, color: colors.ink }}>{log.notes}</Text>
+            </View>
+          ) : null}
+
+          {/* Logged by */}
+          {loggedByName ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <CheckCircle2 size={14} color={colors.success} strokeWidth={1.8} />
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', color: colors.ink3 }}>
+                {t('kids_calendar_detail_loggedBy')} {loggedByName}
+              </Text>
+            </View>
+          ) : null}
+
+          {/* Photos */}
+          {hasPhotos ? (
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink3, marginBottom: 8 }}>{t('kids_calendar_detail_photos')}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+                {log.photos.map((uri, i) => (
+                  <Image key={i} source={{ uri }} style={{ width: 180, height: 180, borderRadius: 20 }} />
+                ))}
+              </ScrollView>
+            </View>
+          ) : null}
+
+          {/* Actions */}
+          <View style={{ flexDirection: 'row', gap: 14, marginTop: 6 }}>
+            <Pressable onPress={() => onEdit(log)} style={({ pressed }) => [dm.actionRow, { borderTopColor: colors.hairline, opacity: pressed ? 0.6 : 1, flex: 1 }]}>
+              <Pencil size={14} color={colors.ink} strokeWidth={1.8} />
+              <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink }}>{t('kids_calendar_detail_edit')}</Text>
+            </Pressable>
+            <Pressable onPress={() => onDelete(log)} style={({ pressed }) => [dm.actionRow, { borderTopColor: colors.line2, opacity: pressed ? 0.6 : 1, flex: 1 }]}>
+              <Trash2 size={14} color={colors.error} strokeWidth={1.8} />
+              <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: colors.error }}>{t('kids_calendar_detail_delete')}</Text>
+            </Pressable>
+          </View>
+        </>
+      )}
+    </DiffuseSheet>
+  )
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────
 
 export function KidsCalendar() {
   const { colors, radius, isDark } = useTheme()
+  const dt = useDiffuseTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
@@ -1585,6 +2201,56 @@ export function KidsCalendar() {
 
     rows.sort((a, b) => a.sortHours - b.sortHours)
 
+    // ── Diffuse variant: serif day header + hairline rows (bloom icons) ──────
+    if (diffuse) {
+      return (
+        <>
+          <View style={styles.timelineHeader}>
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 26, letterSpacing: -0.5, color: dt.colors.ink }}>{dayLabel}</Text>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 4 }}>{summary}</Text>
+          </View>
+
+          {rows.length === 0 ? (
+            <DiffuseEmptyState
+              icon={<DiffuseBloomIcon color={stickers.blue} size={48}><Calendar size={22} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+              title={t('kids_calendar_nothingPlanned')}
+              message={t('kids_calendar_tapToLog')}
+            />
+          ) : (
+            <View>
+              {rows.map((r, idx) => {
+                // The pending routine's type is on the routine; logged rows carry
+                // the log type via icon already — derive the glyph type from the key.
+                const rowType = r.key.startsWith('r-')
+                  ? (selPending.find((p) => `r-${p.id}` === r.key)?.type ?? 'activity')
+                  : (selLogs.find((l) => `l-${l.id}` === r.key)?.type ?? 'activity')
+                return (
+                  <DiffuseListRow
+                    key={r.key}
+                    title={r.title}
+                    sub={[r.time !== '—' ? r.time : null, r.subtitle].filter(Boolean).join(' · ')}
+                    icon={<DiffuseLogIcon type={rowType} size={34} inkColor={dt.colors.ink3} />}
+                    onPress={r.onPress}
+                    last={idx === rows.length - 1}
+                    trailing={
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        {r.chip ? (
+                          <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2 }}>
+                            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 0.8, textTransform: 'uppercase', color: dt.colors.ink3 }}>{r.chip.label}</Text>
+                          </View>
+                        ) : null}
+                        {r.logged ? <Check size={14} color={dt.colors.success} strokeWidth={2} /> : <DiffuseArrow color={dt.colors.ink3} size={15} />}
+                      </View>
+                    }
+                  />
+                )
+              })}
+            </View>
+          )}
+        </>
+      )
+    }
+
     return (
       <>
         <View style={styles.timelineHeader}>
@@ -1636,6 +2302,14 @@ export function KidsCalendar() {
       ? children.find((c) => c.id === selectedChildId)
       : (activeChild ?? children[0])
     if (!activeKid) {
+      if (diffuse) {
+        return (
+          <DiffuseEmptyState
+            icon={<DiffuseBloomIcon color={stickers.green} size={48}><Baby size={22} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            title={t('kids_calendar_addChildToSeeJourney')}
+          />
+        )
+      }
       return (
         <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Body size={14} color={colors.textSecondary} align="center">{t('kids_calendar_addChildToSeeJourney')}</Body>
@@ -1663,6 +2337,91 @@ export function KidsCalendar() {
       .sort((a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at))
 
     const upcomingRoutines = routines.filter((r) => visitTypes.has(r.type))
+
+    // ── Diffuse variant ──────────────────────────────────────────────────────
+    if (diffuse) {
+      const addVisitBtn = (
+        <Pressable
+          onPress={() => { setRoutinePrefill(null); setSheetType('health') }}
+          style={({ pressed }) => [diffuseVisitStyles.addRow, { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink }}>
+            {t('kids_calendar_addVisit')}
+          </Text>
+          <DiffuseArrow color={dt.colors.ink3} size={16} />
+        </Pressable>
+      )
+
+      if (visits.length === 0 && upcomingRoutines.length === 0) {
+        return (
+          <View>
+            <DiffuseEmptyState
+              icon={<DiffuseBloomIcon color={stickers.pink} size={48}><Heart size={22} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+              title={t('kids_calendar_noVisitsYet')}
+              message={t('kids_calendar_visitHint')}
+            />
+            {addVisitBtn}
+          </View>
+        )
+      }
+
+      const allRows: { key: string; title: string; sub: string; type: string; chip?: string; onPress: () => void }[] = []
+      for (const r of upcomingRoutines) {
+        const childName = children.find((c) => c.id === r.child_id)?.name ?? ''
+        allRows.push({
+          key: `r-${r.id}`,
+          title: r.name,
+          sub: `${r.time ? fmtTime(r.time) + ' · ' : ''}${t('kids_calendar_recurringLabel')}`,
+          type: r.type,
+          chip: childName || undefined,
+          onPress: () => {
+            setRoutinePrefill({ routineId: r.id, childId: r.child_id, time: r.time ?? undefined, value: r.value ?? undefined, name: r.name })
+            setSheetType((ROUTINE_SHEET_MAP[r.type] ?? 'health') as LogType)
+          },
+        })
+      }
+      for (const log of visits) {
+        const childName = children.find((c) => c.id === log.child_id)?.name ?? ''
+        allRows.push({
+          key: `l-${log.id}`,
+          title: logTitle(log),
+          sub: `${formatDayLabel(log.date, todayStr, t)} · ${formatLogDisplay(log.type, log.value, log.notes) || 'Logged'}`,
+          type: log.type,
+          chip: childName || undefined,
+          onPress: () => { setSelectedLog(log); setEditing(false) },
+        })
+      }
+
+      return (
+        <View>
+          <View style={styles.timelineHeader}>
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 26, letterSpacing: -0.5, color: dt.colors.ink }}>{t('kids_calendar_visits')}</Text>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 4 }}>{t('kids_calendar_visitsStats', { logged: visits.length, scheduled: upcomingRoutines.length })}</Text>
+          </View>
+          {allRows.map((r, idx) => (
+            <DiffuseListRow
+              key={r.key}
+              title={r.title}
+              sub={r.sub}
+              icon={<DiffuseLogIcon type={r.type} size={34} inkColor={dt.colors.ink3} />}
+              onPress={r.onPress}
+              last={idx === allRows.length - 1}
+              trailing={
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  {r.chip ? (
+                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2 }}>
+                      <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 0.8, textTransform: 'uppercase', color: dt.colors.ink3 }}>{r.chip}</Text>
+                    </View>
+                  ) : null}
+                  <DiffuseArrow color={dt.colors.ink3} size={15} />
+                </View>
+              }
+            />
+          ))}
+          {addVisitBtn}
+        </View>
+      )
+    }
 
     if (visits.length === 0 && upcomingRoutines.length === 0) {
       return (
@@ -1750,8 +2509,8 @@ export function KidsCalendar() {
     : children.filter((c) => c.id === selectedChildId)
   const hiddenKidsCount = children.length - visibleKids.length
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.10)'
-  const fadeBg = isDark ? colors.bg : '#F0E5D2'
-  const fadeTransparent = (isDark ? colors.bg : '#F0E5D2') + '00'
+  const fadeBg = diffuse ? dt.colors.bg : (isDark ? colors.bg : '#F0E5D2')
+  const fadeTransparent = fadeBg + '00'
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -1769,6 +2528,28 @@ export function KidsCalendar() {
                 const ST_INK = '#141313'
                 const ST_LILAC = '#C8B6E8'
                 const allActive = selectedChildId === 'all'
+                // ── Diffuse: hairline mono pill (active = hairline border + surface) ──
+                if (diffuse) {
+                  return (
+                    <Pressable
+                      onPress={() => setSelectedChildId('all')}
+                      style={({ pressed }) => [
+                        styles.childSelectorChip,
+                        {
+                          backgroundColor: allActive ? dt.colors.surface : 'transparent',
+                          borderColor: allActive ? dt.colors.hairline : dt.colors.line,
+                          borderWidth: 1,
+                          borderRadius: radius.full,
+                          opacity: pressed ? 0.7 : 1,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.childSelectorText, { fontFamily: allActive ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: allActive ? dt.colors.ink : dt.colors.ink3 }]}>
+                        {t('kids_calendar_allKids')}
+                      </Text>
+                    </Pressable>
+                  )
+                }
                 return (
                   <Pressable
                     onPress={() => setSelectedChildId('all')}
@@ -1799,6 +2580,33 @@ export function KidsCalendar() {
                 const i = children.findIndex((ch) => ch.id === c.id)
                 const active = selectedChildId === c.id
                 const kidColor = childColor(i)
+                // ── Diffuse: hairline pill; child dot stays as its color bloom-tone ──
+                if (diffuse) {
+                  return (
+                    <Pressable
+                      key={c.id}
+                      onPress={() => {
+                        setSelectedChildId(c.id)
+                        setActiveChild(c)
+                      }}
+                      style={({ pressed }) => [
+                        styles.childSelectorChip,
+                        {
+                          backgroundColor: active ? dt.colors.surface : 'transparent',
+                          borderColor: active ? dt.colors.hairline : dt.colors.line,
+                          borderWidth: 1,
+                          borderRadius: radius.full,
+                          opacity: pressed ? 0.7 : 1,
+                        },
+                      ]}
+                    >
+                      <View style={[styles.childDot, { backgroundColor: kidColor }]} />
+                      <Text style={[styles.childSelectorText, { fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: active ? dt.colors.ink : dt.colors.ink3 }]}>
+                        {c.name}
+                      </Text>
+                    </Pressable>
+                  )
+                }
                 return (
                   <Pressable
                     key={c.id}
@@ -1832,17 +2640,25 @@ export function KidsCalendar() {
               {hiddenKidsCount > 0 && (
                 <Pressable
                   onPress={() => setKidPickerOpen(true)}
-                  style={[
+                  style={({ pressed }) => [
                     styles.childSelectorChip,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: paperBorder,
-                      borderWidth: 1,
-                      borderRadius: radius.full,
-                    },
+                    diffuse
+                      ? {
+                          backgroundColor: 'transparent',
+                          borderColor: dt.colors.line,
+                          borderWidth: 1,
+                          borderRadius: radius.full,
+                          opacity: pressed ? 0.7 : 1,
+                        }
+                      : {
+                          backgroundColor: colors.surface,
+                          borderColor: paperBorder,
+                          borderWidth: 1,
+                          borderRadius: radius.full,
+                        },
                   ]}
                 >
-                  <Text style={[styles.childSelectorText, { fontFamily: font.bodyBold, color: colors.text }]}>
+                  <Text style={[styles.childSelectorText, diffuse ? { fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: dt.colors.ink3 } : { fontFamily: font.bodyBold, color: colors.text }]}>
                     {t('kids_calendar_moreKids', { count: hiddenKidsCount })}
                   </Text>
                 </Pressable>
@@ -1860,6 +2676,19 @@ export function KidsCalendar() {
           </View>
 
           {/* Add-log "+" — inline with child pills per mock */}
+          {diffuse ? (
+            <Pressable
+              onPress={() => setLogSheetOpen(true)}
+              hitSlop={8}
+              style={({ pressed }) => [
+                styles.addLogBtnDiffuse,
+                { borderColor: dt.colors.hairline, opacity: pressed ? 0.6 : 1 },
+              ]}
+            >
+              <SoftBloom color={getDiffuseAccent('kids', isDark)} opacity={isDark ? 0.4 : 0.5} spread={0.5} />
+              <Plus size={18} color={dt.colors.ink} strokeWidth={1.8} />
+            </Pressable>
+          ) : (
           <Pressable
             onPress={() => setLogSheetOpen(true)}
             style={({ pressed }) => [
@@ -1873,6 +2702,7 @@ export function KidsCalendar() {
           >
             <Plus size={18} color="#FFFEF8" strokeWidth={2.5} />
           </Pressable>
+          )}
         </View>
 
         {/* 2. View Toggle */}
@@ -1905,12 +2735,20 @@ export function KidsCalendar() {
         >
         {view === 'timeline' ? (
           <>
-            <AgendaWeekStrip
-              selectedDate={selectedDate}
-              onSelectDate={handleDayPress}
-              dotsByDate={dotsByDate}
-              modeColor={brand.kids}
-            />
+            {diffuse ? (
+              <DiffuseWeekStrip
+                selectedDate={selectedDate}
+                onSelectDate={handleDayPress}
+                dotsByDate={dotsByDate}
+              />
+            ) : (
+              <AgendaWeekStrip
+                selectedDate={selectedDate}
+                onSelectDate={handleDayPress}
+                dotsByDate={dotsByDate}
+                modeColor={brand.kids}
+              />
+            )}
             <View style={{ height: 12 }} />
             {renderTimelineCards()}
           </>
@@ -1929,6 +2767,31 @@ export function KidsCalendar() {
       />
 
       {/* ─── Kid Picker Sheet (opened by "+N more" pill) ────────────────── */}
+      {diffuse && (
+        <DiffuseSheet visible={kidPickerOpen} onClose={() => setKidPickerOpen(false)} title={t('kids_calendar_pickAKid')}>
+          <DiffuseListRow
+            title={t('kids_calendar_allKids')}
+            sub={t('kids_calendar_nKids', { n: children.length })}
+            onPress={() => { setSelectedChildId('all'); setKidPickerOpen(false) }}
+            icon={<DiffuseBloomIcon color={stickers.lilac} size={34}><Baby size={17} color={dt.colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>}
+            trailing={selectedChildId === 'all' ? <Check size={16} color={dt.colors.success} strokeWidth={2} /> : <DiffuseArrow color={dt.colors.ink3} size={15} />}
+          />
+          {children.map((c, i) => {
+            const active = selectedChildId === c.id
+            return (
+              <DiffuseListRow
+                key={c.id}
+                title={c.name}
+                onPress={() => { setSelectedChildId(c.id); setActiveChild(c); setKidPickerOpen(false) }}
+                icon={<DiffuseBloomIcon color={childColor(i)} size={34}><Baby size={17} color={dt.colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>}
+                last={i === children.length - 1}
+                trailing={active ? <Check size={16} color={dt.colors.success} strokeWidth={2} /> : <DiffuseArrow color={dt.colors.ink3} size={15} />}
+              />
+            )
+          })}
+        </DiffuseSheet>
+      )}
+      {!diffuse && (
       <Modal visible={kidPickerOpen} transparent animationType="slide" onRequestClose={() => setKidPickerOpen(false)}>
         <Pressable style={styles.kidPickerOverlay} onPress={() => setKidPickerOpen(false)}>
           <Pressable
@@ -2040,6 +2903,7 @@ export function KidsCalendar() {
           </Pressable>
         </Pressable>
       </Modal>
+      )}
 
       {/* ─── Bottom Sheets ────────────────────────────────────────────── */}
 
@@ -2084,7 +2948,36 @@ export function KidsCalendar() {
         />
       </LogSheet>
 
+      {/* ─── Routine Manager (Diffuse) ─────────────────────────────── */}
+      {diffuse && (
+        <DiffuseRoutineManager
+          visible={showRoutineManager || !!routineEditing}
+          onClose={() => {
+            setShowRoutineManager(false)
+            setRoutineEditing(null)
+            setRoutineFilterKid(null)
+            setRoutineForm({ name: '', type: 'activity', time: '09:00', days: [0,1,2,3,4,5,6] })
+          }}
+          routines={routines}
+          children={children}
+          routineForm={routineForm}
+          setRoutineForm={setRoutineForm}
+          routineEditing={routineEditing}
+          setRoutineEditing={(r) => {
+            setRoutineEditing(r)
+            if (!r) setRoutineForm({ name: '', type: 'activity', time: '09:00', days: [0,1,2,3,4,5,6] })
+          }}
+          routineSaving={routineSaving}
+          onSave={saveRoutine}
+          onDelete={deleteRoutine}
+          routineFilterKid={routineFilterKid}
+          setRoutineFilterKid={setRoutineFilterKid}
+          t={t}
+        />
+      )}
+
       {/* ─── Routine Manager (sticker-on-paper) ─────────────────────── */}
+      {!diffuse && (
       <Modal
         visible={showRoutineManager}
         animationType="slide"
@@ -2512,8 +3405,10 @@ export function KidsCalendar() {
           )
         })()}
       </Modal>
+      )}
 
       {/* ─── Edit Routine Modal (sticker popup) ─────────────────────── */}
+      {!diffuse && (
       <Modal
         visible={!!routineEditing}
         animationType="fade"
@@ -2748,8 +3643,42 @@ export function KidsCalendar() {
           )
         })()}
       </Modal>
+      )}
+
+      {/* ─── Delete Routine Confirm (Diffuse) ─────────────────────── */}
+      {diffuse && (
+        <DiffuseSheet visible={!!confirmDeleteRoutineId} onClose={() => !routineDeleting && setConfirmDeleteRoutineId(null)} title={t('kids_calendar_deleteRoutineConfirm')} scroll={false}>
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 20, color: dt.colors.ink3, marginBottom: 20 }}>
+            {t('kids_calendar_deleteRoutineConfirmMsg')}
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 14 }}>
+            <Pressable
+              onPress={() => setConfirmDeleteRoutineId(null)}
+              disabled={routineDeleting}
+              style={({ pressed }) => [dm.actionRow, { borderTopColor: dt.colors.line2, opacity: routineDeleting ? 0.5 : (pressed ? 0.6 : 1), flex: 1 }]}
+            >
+              <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{t('common_cancel')}</Text>
+            </Pressable>
+            <Pressable
+              onPress={performRoutineDelete}
+              disabled={routineDeleting}
+              style={({ pressed }) => [dm.actionRow, { borderTopColor: dt.colors.error, opacity: routineDeleting ? 0.6 : (pressed ? 0.6 : 1), flex: 1 }]}
+            >
+              {routineDeleting ? (
+                <ActivityIndicator color={dt.colors.error} size="small" />
+              ) : (
+                <>
+                  <Trash2 size={14} color={dt.colors.error} strokeWidth={1.8} />
+                  <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.error }}>{t('common_delete')}</Text>
+                </>
+              )}
+            </Pressable>
+          </View>
+        </DiffuseSheet>
+      )}
 
       {/* ─── Delete Routine Confirm (sticker popup) ─────────────────── */}
+      {!diffuse && (
       <Modal
         visible={!!confirmDeleteRoutineId}
         animationType="fade"
@@ -2853,8 +3782,32 @@ export function KidsCalendar() {
           )
         })()}
       </Modal>
+      )}
+
+      {/* ─── Log Detail Sheet (Diffuse) ───────────────────────────────── */}
+      {diffuse && (
+        <DiffuseLogDetailSheet
+          log={selectedLog}
+          onClose={() => { setSelectedLog(null); setEditing(false) }}
+          childName={selectedLog ? children.find((c) => c.id === selectedLog.child_id)?.name : undefined}
+          loggedByName={selectedLog?.logged_by && selectedLog.logged_by !== currentUserId ? profileNames[selectedLog.logged_by] : undefined}
+          todayStr={todayStr}
+          editing={editing}
+          setEditing={setEditing}
+          editValue={editValue}
+          setEditValue={setEditValue}
+          editNotes={editNotes}
+          setEditNotes={setEditNotes}
+          editSaving={editSaving}
+          onSaveEdit={saveEdit}
+          onEdit={(log) => openEdit(log)}
+          onDelete={(log) => setUnlogTarget(log)}
+          t={t}
+        />
+      )}
 
       {/* ─── Log Detail Popup with Edit ───────────────────────────────── */}
+      {!diffuse && (
       <Modal
         visible={!!selectedLog}
         animationType="slide"
@@ -3389,8 +4342,45 @@ export function KidsCalendar() {
           )
         })()}
       </Modal>
+      )}
+
+      {/* ── Unlog Confirmation (Diffuse) ── */}
+      {diffuse && (
+        <DiffuseSheet visible={!!unlogTarget} onClose={() => setUnlogTarget(null)} title={t('kids_calendar_unlogBtn')} scroll={false}>
+          {unlogTarget && (() => {
+            const detail = formatLogDisplay(unlogTarget.type, unlogTarget.value, unlogTarget.notes)
+            return (
+              <>
+                <DiffuseListRow
+                  title={logTitle(unlogTarget)}
+                  sub={[detail || null, activityTimeDisplay(unlogTarget)].filter(Boolean).join(' · ')}
+                  icon={<DiffuseLogIcon type={unlogTarget.type} size={34} inkColor={dt.colors.ink3} />}
+                  last
+                />
+                <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 20, color: dt.colors.ink3, textAlign: 'center', marginVertical: 16 }}>
+                  {t('kids_calendar_unlogConfirm')}
+                </Text>
+                <View style={{ flexDirection: 'row', gap: 14 }}>
+                  <Pressable onPress={() => setUnlogTarget(null)} style={({ pressed }) => [dm.actionRow, { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1, flex: 1 }]}>
+                    <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{t('common_cancel')}</Text>
+                  </Pressable>
+                  <Pressable onPress={handleUnlog} disabled={unlogging} style={({ pressed }) => [dm.actionRow, { borderTopColor: dt.colors.error, opacity: unlogging ? 0.6 : (pressed ? 0.6 : 1), flex: 1 }]}>
+                    {unlogging ? <ActivityIndicator color={dt.colors.error} size="small" /> : (
+                      <>
+                        <Trash2 size={14} color={dt.colors.error} strokeWidth={1.8} />
+                        <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.error }}>{t('kids_calendar_unlogBtn')}</Text>
+                      </>
+                    )}
+                  </Pressable>
+                </View>
+              </>
+            )
+          })()}
+        </DiffuseSheet>
+      )}
 
       {/* ── Unlog Confirmation Modal ── */}
+      {!diffuse && (
       <Modal visible={!!unlogTarget} animationType="fade" transparent onRequestClose={() => setUnlogTarget(null)}>
         <Pressable
           style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}
@@ -3445,8 +4435,53 @@ export function KidsCalendar() {
           </Pressable>
         </Pressable>
       </Modal>
+      )}
+
+      {/* ── Day Complete Congrats (Diffuse) ── */}
+      {diffuse && (
+        <Modal visible={showDayCongrats} animationType="fade" transparent onRequestClose={() => setShowDayCongrats(false)}>
+          <Pressable
+            style={{ flex: 1, backgroundColor: 'rgba(20,19,19,0.55)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}
+            onPress={() => setShowDayCongrats(false)}
+          >
+            <Pressable onPress={(e) => e.stopPropagation()} style={{ width: '100%' }}>
+              <View style={{ backgroundColor: dt.colors.bg, borderRadius: 28, borderWidth: 1, borderColor: dt.colors.line, padding: 28, alignItems: 'center', overflow: 'hidden' }}>
+                <SoftBloom color={getDiffuseAccent('kids', isDark)} cx="50%" cy="8%" opacity={isDark ? 0.3 : 0.4} spread={0.5} />
+                <DiffuseBloomIcon color={stickers.yellow} size={64}>
+                  <Sparkles size={30} color={dt.colors.ink3} strokeWidth={1.5} />
+                </DiffuseBloomIcon>
+                <Text style={{ fontFamily: diffuseFont.display, fontSize: 30, letterSpacing: -0.6, color: dt.colors.ink, marginTop: 12, textAlign: 'center' }}>
+                  {t('kids_calendar_congrats_title')}
+                </Text>
+                <Text style={{ fontFamily: diffuseFont.body, fontSize: 15, lineHeight: 22, color: dt.colors.ink2, textAlign: 'center', marginTop: 6 }}>
+                  {t('kids_calendar_congrats_allLogged', { day: formatDayLabel(selectedDate, todayStr, t) })}
+                </Text>
+                {(() => {
+                  const loggedToday = selectedDayLogs.filter((l) => l.type !== 'skipped')
+                  const foodLogs = loggedToday.filter((l) => l.type === 'food')
+                  const totalCals = foodLogs.reduce((sum, l) => {
+                    try { const v = JSON.parse(l.value ?? '{}'); return sum + (Number(v.estimatedCals) || 0) } catch { return sum }
+                  }, 0)
+                  return (
+                    <View style={{ flexDirection: 'row', gap: 10, marginTop: 22, marginBottom: 22, width: '100%' }}>
+                      <DiffuseMetricTile value={loggedToday.length} label={t('kids_calendar_congrats_activities')} />
+                      {totalCals > 0 ? <DiffuseMetricTile value={totalCals} label={t('kids_calendar_congrats_kcal')} /> : null}
+                      <DiffuseMetricTile value={selectedDayRoutines.length > 0 ? selectedDayRoutines.length : loggedToday.length} label={t('kids_calendar_congrats_routines')} />
+                    </View>
+                  )
+                })()}
+                <Pressable onPress={() => setShowDayCongrats(false)} style={({ pressed }) => [dm.actionRow, { borderTopColor: dt.colors.hairline, opacity: pressed ? 0.6 : 1, alignSelf: 'stretch' }]}>
+                  <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink }}>{t('kids_calendar_congrats_btn')}</Text>
+                  <DiffuseArrow color={dt.colors.ink3} size={16} />
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
 
       {/* ── Day Complete Congrats Modal ── */}
+      {!diffuse && (
       <Modal
         visible={showDayCongrats}
         animationType="fade"
@@ -3522,6 +4557,7 @@ export function KidsCalendar() {
           </Pressable>
         </Pressable>
       </Modal>
+      )}
     </View>
   )
 }
@@ -3662,6 +4698,7 @@ const styles = StyleSheet.create({
   fabBtn: { position: 'absolute', right: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 6, zIndex: 10 },
   childRowWrap: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   addLogBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 3 },
+  addLogBtnDiffuse: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   toggleWrap: { marginBottom: 14 },
   fabSheetTitleWrap: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 },
   fabSheetBody: { paddingHorizontal: 20, gap: 14 },
