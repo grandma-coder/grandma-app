@@ -13,7 +13,9 @@ import {
   Platform,
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { useModeStore } from '../../../store/useModeStore'
 import { PillButton } from '../../ui/PillButton'
 import { useTranslation } from '../../../lib/i18n'
 
@@ -39,6 +41,9 @@ function formatPretty(d: Date): string {
 
 export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onApply }: Props) {
   const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const { t } = useTranslation()
 
   const defaultTo = new Date()
@@ -76,6 +81,89 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
   }
 
   const today = new Date()
+
+  if (diffuse) {
+    const dCol = dt.colors
+    const acc = getDiffuseAccent(mode, dt.isDark)
+    return (
+      <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+        <Pressable style={styles.overlay} onPress={onClose}>
+          <Pressable
+            style={[
+              styles.sheet,
+              { backgroundColor: dCol.bg, borderColor: dCol.line2 },
+            ]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.handle}>
+              <View style={[styles.handleBar, { backgroundColor: dCol.line2 }]} />
+            </View>
+
+            <Text style={[styles.title, { color: dCol.ink, fontFamily: diffuseFont.display, letterSpacing: -0.4 }]}>
+              {t('kids_home_custom_range_title')}
+            </Text>
+
+            <View style={styles.rowGroup}>
+              <DateRow
+                label="From"
+                value={from}
+                active={picking === 'from'}
+                onPress={() => handlePick('from')}
+                diffuse
+                accent={acc}
+              />
+              {picking === 'from' && (
+                <DateTimePicker
+                  value={from}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                  maximumDate={today}
+                  themeVariant={dt.isDark ? 'dark' : 'light'}
+                  accentColor={acc}
+                  onChange={(_e, d) => handleChange('from', d)}
+                />
+              )}
+              <DateRow
+                label="To"
+                value={to}
+                active={picking === 'to'}
+                onPress={() => handlePick('to')}
+                diffuse
+                accent={acc}
+              />
+              {picking === 'to' && (
+                <DateTimePicker
+                  value={to}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                  minimumDate={from}
+                  maximumDate={today}
+                  themeVariant={dt.isDark ? 'dark' : 'light'}
+                  accentColor={acc}
+                  onChange={(_e, d) => handleChange('to', d)}
+                />
+              )}
+            </View>
+
+            {/* Footer — containerless mono actions */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 16 }}>
+              <Pressable onPress={onClose} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
+                <Text style={{ fontSize: 11, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>Cancel</Text>
+              </Pressable>
+              <View style={{ flex: 1 }} />
+              <Pressable
+                onPress={() => onApply(toISO(from), toISO(to))}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: pressed ? 0.6 : 1 })}
+              >
+                <Text style={{ fontSize: 12, fontFamily: diffuseFont.monoBold, color: dCol.ink, letterSpacing: 2, textTransform: 'uppercase' }}>Apply Range</Text>
+                <Text style={{ fontFamily: diffuseFont.body, fontSize: 16, color: acc }}>→</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    )
+  }
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -160,13 +248,56 @@ function DateRow({
   value,
   active,
   onPress,
+  diffuse = false,
+  accent,
 }: {
   label: string
   value: Date
   active: boolean
   onPress: () => void
+  diffuse?: boolean
+  accent?: string
 }) {
   const { colors, font } = useTheme()
+  const dt = useDiffuseTheme()
+  if (diffuse) {
+    const dCol = dt.colors
+    return (
+      <Pressable
+        onPress={onPress}
+        style={[
+          styles.dateRow,
+          {
+            backgroundColor: active ? dCol.surface : 'transparent',
+            borderColor: active ? dCol.hairline : dCol.line,
+          },
+        ]}
+      >
+        <Text
+          style={{
+            color: dCol.ink3,
+            fontFamily: diffuseFont.mono,
+            fontSize: 10,
+            letterSpacing: 1.5,
+            textTransform: 'uppercase',
+          }}
+        >
+          {label}
+        </Text>
+        <Text
+          style={{
+            color: dCol.ink,
+            fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
+            fontSize: 16,
+            letterSpacing: 0.5,
+            marginTop: 4,
+          }}
+        >
+          {formatPretty(value)}
+        </Text>
+      </Pressable>
+    )
+  }
   return (
     <Pressable
       onPress={onPress}

@@ -27,10 +27,11 @@ import {
   Brain, Rocket, Check, Sparkles, Activity, X, TrendingUp,
   Zap, Droplets, Clock, Settings, Minus, Milk, Hand,
   Bell, Trash2, Syringe, Pill, Pencil, GripVertical, Flag, Trophy, Flame, Star,
+  Footprints, Calendar, Waves, Eye, Dumbbell, Target, Lightbulb, PartyPopper, Layers,
 } from 'lucide-react-native'
 import * as Haptics from 'expo-haptics'
 import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
-import { useIsDiffuse, DiffuseFieldSurface, SoftBloom, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, DiffuseFieldSurface, SoftBloom, DiffuseArrow, DiffuseGrain } from '../ui/diffuse/DiffuseKit'
 import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader, DiffuseMetricTile, DiffuseBloomIcon, DiffuseDotCalendar, DiffuseLeapGraph, DiffuseSheet, DiffuseListRow, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
 import { EmptyState } from '../ui/EmptyState'
 import { useChildStore } from '../../store/useChildStore'
@@ -6928,6 +6929,8 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
   onSaved: () => void
 }) {
   const { colors, radius, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const store = useGoalsStore()
   const current = store.getGoals(childId, birthDate)
@@ -7066,6 +7069,114 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
   metrics.push(
     { key: 'activity', label: 'Activities', unit: 'logs/day', color: PILLAR_COLORS.activity, icon: Zap, value: activity, setValue: setActivity, suggested: suggested.activity, desc: 'Total daily activities', step: 1, reason: activityReason() },
   )
+
+  if (diffuse) {
+    const dCol = dt.colors
+    const acc = getDiffuseAccent('kids', dt.isDark)
+    return (
+      <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+        <View style={s.modalOverlay}>
+          <View style={[s.gsSheet, { backgroundColor: dCol.bg, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2 }]}>
+
+            {/* Drag handle */}
+            <View style={[s.gsDragHandle, { backgroundColor: dCol.line2 }]} />
+
+            {/* Header — serif title + sans subtitle + hairline close */}
+            <View style={s.gsHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 26, fontFamily: diffuseFont.display, color: dCol.ink, letterSpacing: -0.5, lineHeight: 30 }}>{t('kids_home_goals_set_title')}</Text>
+                <Text style={{ fontSize: 13, fontFamily: diffuseFont.body, color: dCol.ink3, marginTop: 4 }}>
+                  {t('kids_home_goals_subtitle', { childName, ageLabel })}
+                </Text>
+              </View>
+              <Pressable onPress={onClose} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: dCol.hairline, alignItems: 'center', justifyContent: 'center' }}>
+                <X size={18} color={dCol.ink} strokeWidth={2} />
+              </Pressable>
+            </View>
+
+            {/* Suggested banner — hairline mono row */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 14, alignSelf: 'flex-start', marginTop: 14 }}>
+              <Sparkles size={12} color={dCol.ink3} strokeWidth={1.8} />
+              <Text style={{ fontSize: 10, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 1, textTransform: 'uppercase' }}>
+                {t('kids_home_goals_suggested_banner', { ageLabel })}
+              </Text>
+            </View>
+
+            {/* Goal rows — clean hairline cards */}
+            <ScrollView
+              style={{ maxHeight: Math.max(300, Math.min(SH * 0.5, 500)), marginTop: 16 }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ gap: 10 }}
+            >
+              {metrics.map((m) => {
+                const Icon = m.icon
+                return (
+                  <View
+                    key={m.key}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 14,
+                      backgroundColor: dCol.surface, borderRadius: 20,
+                      borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line,
+                      paddingVertical: 12, paddingHorizontal: 14,
+                    }}
+                  >
+                    <DiffuseBloomIcon color={acc} size={40} intensity={0.45}>
+                      <Icon size={20} color={dCol.ink3} strokeWidth={1.5} />
+                    </DiffuseBloomIcon>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, fontFamily: diffuseFont.display, color: dCol.ink, letterSpacing: -0.2 }}>{m.label}</Text>
+                      <Text style={{ fontSize: 11.5, fontFamily: diffuseFont.body, color: dCol.ink3, marginTop: 1 }}>{m.desc}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      <Pressable
+                        onPress={() => m.setValue(String(Math.max(0, (Number(m.value) || 0) - m.step)))}
+                        style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: dCol.line2, alignItems: 'center', justifyContent: 'center' }}
+                        hitSlop={6}
+                      >
+                        <Minus size={14} color={dCol.ink} strokeWidth={1.8} />
+                      </Pressable>
+                      <View style={{ alignItems: 'center', minWidth: 48 }}>
+                        <Text style={{ fontSize: 24, fontFamily: diffuseFont.display, color: dCol.ink, letterSpacing: -0.5 }}>{m.value || '0'}</Text>
+                        <Text style={{ fontSize: 8.5, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 1 }}>
+                          {m.unit.split('/')[0]}
+                        </Text>
+                      </View>
+                      <Pressable
+                        onPress={() => m.setValue(String((Number(m.value) || 0) + m.step))}
+                        style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: dCol.line2, alignItems: 'center', justifyContent: 'center' }}
+                        hitSlop={6}
+                      >
+                        <Plus size={14} color={dCol.ink} strokeWidth={1.8} />
+                      </Pressable>
+                    </View>
+                  </View>
+                )
+              })}
+            </ScrollView>
+
+            {/* Footer — containerless mono actions */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 18, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 16 }}>
+              <Pressable
+                onPress={handleReset}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 7, opacity: pressed ? 0.6 : 1 })}
+              >
+                <Sparkles size={13} color={dCol.ink3} strokeWidth={1.8} />
+                <Text style={{ fontSize: 11, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>{t('kids_home_goals_use_suggested')}</Text>
+              </Pressable>
+              <View style={{ flex: 1 }} />
+              <Pressable
+                onPress={handleSave}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: pressed ? 0.6 : 1 })}
+              >
+                <Text style={{ fontSize: 12, fontFamily: diffuseFont.monoBold, color: dCol.ink, letterSpacing: 2, textTransform: 'uppercase' }}>{t('kids_home_goals_save')}</Text>
+                <Text style={{ fontFamily: diffuseFont.body, fontSize: 16, color: acc }}>→</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    )
+  }
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -8036,6 +8147,8 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
   leapColor: string
 }) {
   const { colors, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const [selectedLeapIdx, setSelectedLeapIdx] = useState<number | null>(null)
   const gl = GROWTH_LEAPS[leap.index]
@@ -8064,6 +8177,100 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
   const heroBadgeInk = isDone ? '#4A6F1D' : isActive ? '#6B5500' : '#1F4C7A'
 
   const heroEmoji = isDone ? '🎉' : LEAP_EMOJI[leap.index] ?? '✨'
+
+  if (diffuse) {
+    const dCol = dt.colors
+    const acc = getDiffuseAccent('kids', dt.isDark)
+    // Hero bloom is green when done (success), else the mode accent.
+    const heroBloom = isDone ? stickers.green : acc
+    const HeroGlyph = isDone ? PartyPopper : Layers
+    return (
+      <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
+        <View style={{ flex: 1, backgroundColor: dCol.bg }}>
+          {/* Header — hairline X + serif title + mono sub */}
+          <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: dCol.line2 }}>
+            <Pressable onPress={onClose} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: dCol.hairline, alignItems: 'center', justifyContent: 'center' }}>
+              <X size={18} color={dCol.ink} strokeWidth={2} />
+            </Pressable>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 20, fontFamily: diffuseFont.display, color: dCol.ink, letterSpacing: -0.3 }}>{t('kids_home_leaps_detail_title')}</Text>
+              <Text style={{ fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', color: dCol.ink3, marginTop: 3 }}>{childName}{' · Week '}{leap.weekAge}</Text>
+            </View>
+          </View>
+
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 56 }}>
+            {/* Hero — clean paper + one soft bloom, small low-opacity glyph */}
+            <View style={{ margin: 16 }}>
+              <View style={{ backgroundColor: dCol.surface, borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2, padding: 18, gap: 6, position: 'relative', overflow: 'hidden' }}>
+                <SoftBloom color={heroBloom} cx="84%" cy="14%" opacity={dt.isDark ? 0.3 : 0.42} spread={0.55} />
+                <DiffuseGrain radius={24} opacity={0.05} />
+                <View style={{ position: 'absolute', right: 14, top: 16 }} pointerEvents="none">
+                  <DiffuseBloomIcon color={heroBloom} size={40} intensity={0.42}>
+                    <HeroGlyph size={22} color={dCol.ink3} strokeWidth={1.5} />
+                  </DiffuseBloomIcon>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontSize: 10, fontFamily: diffuseFont.mono, color: dCol.ink3, textTransform: 'uppercase', letterSpacing: 1.6 }}>
+                    {isDone ? 'All complete' : `Leap #${leap.index + 1}`}
+                  </Text>
+                  <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2 }}>
+                    <Text style={{ fontSize: 9.5, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 1, textTransform: 'uppercase' }}>
+                      {heroBadgeText}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={{ fontSize: 24, fontFamily: diffuseFont.display, color: dCol.ink, letterSpacing: -0.5, lineHeight: 28, maxWidth: '80%' }}>
+                  {isDone ? `Way to go, ${childName}!` : gl.name}
+                </Text>
+                <Text style={{ fontSize: 13, fontFamily: diffuseFont.body, color: dCol.ink2, lineHeight: 18, maxWidth: '88%' }}>
+                  {isDone
+                    ? `${childName} has completed all ${GROWTH_LEAPS.length} Wonder Weeks.`
+                    : `${leap.completedCount} of ${GROWTH_LEAPS.length} leaps done · Tap any node to learn more.`}
+                </Text>
+              </View>
+            </View>
+
+            {/* 10-Leap Path row — bloom glyph + serif title + mono intensity dots */}
+            <View style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <DiffuseBloomIcon color={acc} size={30} intensity={0.45}>
+                <Footprints size={17} color={dCol.ink3} strokeWidth={1.5} />
+              </DiffuseBloomIcon>
+              <Text style={{ fontSize: 16, fontFamily: diffuseFont.display, color: dCol.ink, letterSpacing: -0.2 }}>{t('kids_home_leaps_path_title')}</Text>
+              <View style={{ flex: 1 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Text style={{ fontSize: 9, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_home_leaps_intensity_label')}</Text>
+                <View style={{ flexDirection: 'row', gap: 2.5 }}>
+                  {[1,2,3,4,5].map((n) => (
+                    <View key={n} style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: dCol.ink4 }} />
+                  ))}
+                </View>
+              </View>
+            </View>
+            <LeapTimelinePath
+              leaps={GROWTH_LEAPS}
+              completedCount={leap.completedCount}
+              activeIndex={isActive ? leap.index : -1}
+              isAllDone={isDone}
+              onSelect={(i) => setSelectedLeapIdx(i)}
+              tokens={{ paper, ink, ink2, ink3, line, yellowSoft, pinkSoft, blueSoft, greenSoft, lilacSoft, isDark, surface: colors.surface }}
+            />
+          </ScrollView>
+        </View>
+
+        {/* Leap focus sheet — opens when a node is tapped */}
+        {selectedLeapIdx !== null && (
+          <LeapFocusSheet
+            leapIdx={selectedLeapIdx}
+            currentLeap={leap}
+            isCurrentActive={isActive}
+            currentPhaseIndex={phaseIndex}
+            childName={childName}
+            onClose={() => setSelectedLeapIdx(null)}
+          />
+        )}
+      </Modal>
+    )
+  }
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
@@ -8153,7 +8360,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
 
 // ─── Leap Timeline Path (vertical S-curve with bead nodes) ───────────────────
 
-function DifficultyDots({ difficulty, muted }: { difficulty: number; muted: string }) {
+function DifficultyDots({ difficulty, muted, activeColor = '#EE7B6D' }: { difficulty: number; muted: string; activeColor?: string }) {
   return (
     <View style={{ flexDirection: 'row', gap: 2, alignItems: 'center' }}>
       {[1, 2, 3, 4, 5].map((n) => (
@@ -8163,9 +8370,9 @@ function DifficultyDots({ difficulty, muted }: { difficulty: number; muted: stri
             width: 5,
             height: 5,
             borderRadius: 2.5,
-            backgroundColor: n <= difficulty ? '#EE7B6D' : 'transparent',
+            backgroundColor: n <= difficulty ? activeColor : 'transparent',
             borderWidth: 1,
-            borderColor: n <= difficulty ? '#EE7B6D' : muted,
+            borderColor: n <= difficulty ? activeColor : muted,
           }}
         />
       ))}
@@ -8202,6 +8409,8 @@ function LeapTimelinePath({
   }
 }) {
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { paper, ink, ink3, line, yellowSoft, blueSoft, greenSoft, isDark, surface } = tokens
 
   const NODE_GAP = 108
@@ -8246,6 +8455,59 @@ function LeapTimelinePath({
     : completedCount - 1
   const doneSlice = lastDoneIdx >= 0 ? nodes.slice(0, lastDoneIdx + 1) : []
   const donePath = buildPath(doneSlice)
+
+  if (diffuse) {
+    const dCol = dt.colors
+    const acc = getDiffuseAccent('kids', dt.isDark)
+    return (
+      <View style={{ marginHorizontal: 16 }}>
+        {nodes.map((n) => {
+          // node ring: done = filled ink, current = accent ring, upcoming = faint hollow
+          const ringBorder = n.done ? dCol.ink : n.active ? acc : dCol.line2
+          const ringFill = n.done ? dCol.ink : 'transparent'
+          const statusChip = n.done ? 'DONE' : n.active ? 'NOW' : `WK ${n.g.week}`
+          return (
+            <View key={n.i} style={{ flexDirection: 'row', gap: 14 }}>
+              {/* rail: hairline connector + node ring */}
+              <View style={{ width: 26, alignItems: 'center' }}>
+                {n.i > 0 ? <View style={{ width: StyleSheet.hairlineWidth, flex: 0, height: 14, backgroundColor: dCol.line2 }} /> : <View style={{ height: 14 }} />}
+                <View style={{ width: 15, height: 15, borderRadius: 999, borderWidth: 1.5, borderColor: ringBorder, backgroundColor: ringFill, alignItems: 'center', justifyContent: 'center' }}>
+                  {n.done ? <Check size={8} color={dCol.bg} strokeWidth={3} /> : null}
+                </View>
+                <View style={{ width: StyleSheet.hairlineWidth, flex: 1, backgroundColor: dCol.line2 }} />
+              </View>
+              {/* clean paper card */}
+              <Pressable
+                onPress={() => onSelect(n.i)}
+                style={({ pressed }) => ({ flex: 1, marginBottom: 12, opacity: pressed ? 0.7 : (!n.done && !n.active ? 0.88 : 1) })}
+              >
+                <View style={{ backgroundColor: dCol.surface, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line, padding: 13, gap: 4 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={{ fontSize: 9.5, fontFamily: diffuseFont.mono, color: dCol.ink3, textTransform: 'uppercase', letterSpacing: 1.2 }}>
+                      {t('kids_home_leaps_path_number', { n: n.i + 1 })}
+                    </Text>
+                    <DifficultyDots difficulty={n.g.difficulty} muted={dCol.line2} activeColor={acc} />
+                    <View style={{ flex: 1 }} />
+                    <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2 }}>
+                      <Text style={{ fontSize: 9, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                        {statusChip}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 15, fontFamily: diffuseFont.display, color: dCol.ink, letterSpacing: -0.2 }}>
+                    {n.g.name}
+                  </Text>
+                  <Text style={{ fontSize: 11.5, fontFamily: diffuseFont.body, color: dCol.ink3, lineHeight: 16 }} numberOfLines={2}>
+                    {n.g.desc}
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+          )
+        })}
+      </View>
+    )
+  }
 
   return (
     <View style={{ marginHorizontal: 16, position: 'relative', height: VB_H }}>
@@ -8337,6 +8599,8 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
   onClose: () => void
 }) {
   const { colors, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const g = GROWTH_LEAPS[leapIdx]
   if (!g) return null
@@ -8365,6 +8629,140 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
   const badgeInk = isThisDone ? '#4A6F1D' : isThisActive ? '#6B5500' : '#1F4C7A'
 
   const heroEmoji = LEAP_EMOJI[leapIdx] ?? '✨'
+
+  if (diffuse) {
+    const dCol = dt.colors
+    const acc = getDiffuseAccent('kids', dt.isDark)
+    const heroBloom = isThisDone ? stickers.green : acc
+    return (
+      <DiffuseSheet
+        visible
+        title={g.name}
+        onClose={onClose}
+        chip={badgeText}
+      >
+        {/* Hero — clean paper + one soft bloom */}
+        <View style={{ backgroundColor: dCol.surface, borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2, padding: 18, gap: 8, position: 'relative', overflow: 'hidden' }}>
+          <SoftBloom color={heroBloom} cx="86%" cy="14%" opacity={dt.isDark ? 0.3 : 0.42} spread={0.55} />
+          <DiffuseGrain radius={24} opacity={0.05} />
+          <Text style={{ fontSize: 9.5, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 1.4, textTransform: 'uppercase' }}>
+            {t('kids_home_leaps_path_number', { n: leapIdx + 1 })}
+          </Text>
+          <Text style={{ fontSize: 22, fontFamily: diffuseFont.display, color: dCol.ink, letterSpacing: -0.4, lineHeight: 26, maxWidth: '86%' }}>
+            {g.desc}
+          </Text>
+          <Text style={{ fontSize: 13, fontFamily: diffuseFont.body, color: dCol.ink2, lineHeight: 20, marginTop: 2, maxWidth: '94%' }}>
+            {g.brainNote}
+          </Text>
+        </View>
+
+        {/* Age & Duration — hairline metric tiles */}
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+          <DiffuseMetricTile
+            value={g.ageRange}
+            label={t('kids_home_leaps_sheet_typical_age')}
+            icon={<DiffuseBloomIcon color={acc} size={28} intensity={0.42}><Calendar size={14} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+          />
+          <DiffuseMetricTile
+            value={g.duration}
+            label={t('kids_home_leaps_sheet_duration')}
+            icon={<DiffuseBloomIcon color={acc} size={28} intensity={0.42}><Clock size={14} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+          />
+        </View>
+
+        {/* Phases */}
+        <View style={{ marginTop: 24 }}>
+          <DiffuseSectionHeader
+            title={t('kids_home_leaps_sheet_phases_title')}
+            icon={<DiffuseBloomIcon color={acc}><Waves size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+          />
+          {g.phases.map((phase, pi) => {
+            const done = phaseDone[pi]
+            const current = phaseCurrent[pi]
+            const dotColor = current ? acc : done ? dCol.ink : dCol.line2
+            return (
+              <DiffuseListRow
+                key={pi}
+                title={`${phase.label}${current ? '  · happening now' : ''}`}
+                sub={phase.desc}
+                dotColor={dotColor}
+                last={pi === g.phases.length - 1}
+              />
+            )
+          })}
+        </View>
+
+        {/* Signs — hairline chips */}
+        <View style={{ marginTop: 24 }}>
+          <DiffuseSectionHeader
+            title={isThisActive ? `Signs ${childName} may show` : 'Signs to watch for'}
+            icon={<DiffuseBloomIcon color={acc}><Eye size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+          />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
+            {g.signs.map((sign, i) => (
+              <View key={i} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2 }}>
+                <Text style={{ fontSize: 12, fontFamily: diffuseFont.body, color: dCol.ink2 }}>{sign}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Skills — hairline bullet list */}
+        <View style={{ marginTop: 24 }}>
+          <DiffuseSectionHeader
+            title={isThisDone ? 'Skills gained' : isThisActive ? 'Skills emerging now' : 'Skills that will emerge'}
+            icon={<DiffuseBloomIcon color={acc}><Dumbbell size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+          />
+          <View style={{ gap: 12 }}>
+            {g.skills.map((skill, i) => (
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+                <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: dCol.ink4, marginTop: 7 }} />
+                <Text style={{ fontSize: 13, fontFamily: diffuseFont.body, color: dCol.ink2, flex: 1, lineHeight: 19 }}>{skill}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Activities — numbered hairline rows */}
+        <View style={{ marginTop: 24 }}>
+          <DiffuseSectionHeader
+            title={t('kids_home_leaps_activities_title')}
+            icon={<DiffuseBloomIcon color={acc}><Target size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+          />
+          {g.activities.map((act, i) => (
+            <View key={i} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 12, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, borderTopColor: dCol.line }}>
+              <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 11, fontFamily: diffuseFont.mono, color: dCol.ink3 }}>{i + 1}</Text>
+              </View>
+              <Text style={{ fontSize: 13, fontFamily: diffuseFont.body, color: dCol.ink2, flex: 1, lineHeight: 20 }}>{act}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Tip — hairline row with bloom glyph */}
+        <View style={{ marginTop: 24, flexDirection: 'row', gap: 12, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2, borderRadius: 20, padding: 14, overflow: 'hidden' }}>
+          <SoftBloom color={acc} cx="90%" cy="30%" opacity={dt.isDark ? 0.24 : 0.34} spread={0.5} />
+          <DiffuseBloomIcon color={acc} size={34} intensity={0.5}>
+            <Lightbulb size={18} color={dCol.ink3} strokeWidth={1.5} />
+          </DiffuseBloomIcon>
+          <Text style={{ fontSize: 13, fontFamily: diffuseFont.body, color: dCol.ink, flex: 1, lineHeight: 19 }}>{g.tip}</Text>
+        </View>
+
+        {/* Done celebration */}
+        {isThisDone ? (
+          <View style={{ marginTop: 14, flexDirection: 'row', gap: 12, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2, borderRadius: 20, padding: 14, overflow: 'hidden' }}>
+            <SoftBloom color={stickers.green} cx="90%" cy="30%" opacity={dt.isDark ? 0.26 : 0.4} spread={0.5} />
+            <DiffuseBloomIcon color={stickers.green} size={34} intensity={0.5}>
+              <PartyPopper size={18} color={dCol.ink3} strokeWidth={1.5} />
+            </DiffuseBloomIcon>
+            <Text style={{ fontSize: 13, fontFamily: diffuseFont.display, color: dCol.ink, flex: 1, letterSpacing: -0.2 }}>
+              {t('kids_home_leaps_completed', { childName })}
+            </Text>
+          </View>
+        ) : null}
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <Modal visible animationType="slide" transparent={false} onRequestClose={onClose}>
