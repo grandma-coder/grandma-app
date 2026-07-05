@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../constants/theme'
 import type { Thread } from '../../lib/channels'
+import { useTranslation } from '../../lib/i18n'
 
 interface ThreadCardProps {
   thread: Thread
@@ -20,6 +21,7 @@ function timeAgo(dateStr: string): string {
 
 export function ThreadCard({ thread, onPress }: ThreadCardProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => createStyles(colors), [colors])
   return (
     <Pressable
@@ -29,15 +31,19 @@ export function ThreadCard({ thread, onPress }: ThreadCardProps) {
       {thread.isPinned && (
         <View style={styles.pinnedBadge}>
           <Ionicons name="pin" size={10} color={colors.accent} />
-          <Text style={styles.pinnedText}>Pinned</Text>
+          <Text style={styles.pinnedText}>{t('channelScreen_pinned')}</Text>
         </View>
       )}
       <Text style={styles.title} numberOfLines={2}>{thread.title}</Text>
       <Text style={styles.content} numberOfLines={2}>{thread.content}</Text>
       <View style={styles.metaRow}>
         <Ionicons name="chatbubble-outline" size={12} color={colors.textMuted} />
-        <Text style={styles.metaText}>{thread.replyCount} replies</Text>
-        <Text style={styles.metaDot}>·</Text>
+        <Text style={styles.metaText}>
+          {thread.replyCount === 1
+            ? t('channelScreen_replyCountOne', { count: thread.replyCount })
+            : t('channelScreen_replyCountMany', { count: thread.replyCount })}
+        </Text>
+        <Text style={styles.metaDot}>{t('common_dotSeparator')}</Text>
         <Text style={styles.metaText}>{timeAgo(thread.createdAt)}</Text>
       </View>
     </Pressable>
