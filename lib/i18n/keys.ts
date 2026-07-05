@@ -1483,6 +1483,11 @@ export interface TranslationKeys {
   cycleAnalytics_fertileSub_opensIn: string
   cycleAnalytics_fertileSub_open: string
   cycleAnalytics_fertileSub_passed: string
+  // ─── B7b: CycleAnalytics residual strings ─────────────────────────────────
+  cycleAnalytics_day_voiceline: string
+  cycleAnalytics_seed_hint: string
+  cycleAnalytics_cycle_n: string
+  cycleAnalytics_log_cycles_hint: string
   cycleDetail_lastNCycles: string
   cycleDetail_history: string
   cycleDetail_regular: string
@@ -2655,4 +2660,7 @@ export interface TranslationKeys {
   profKids_noChildren: string
   profKids_noChildrenSub: string
   profKids_addCustomPrefix: string
+  // ─── B7b: WeekCard.tsx residual strings ───────────────────────────────────
+  preg_weekCard_tapForDetails: string
+  preg_weekCard_unitCm: string
 }

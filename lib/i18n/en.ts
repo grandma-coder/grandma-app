@@ -1482,6 +1482,11 @@ export const en: TranslationKeys = {
   cycleAnalytics_fertileSub_opensIn: 'opens in {{d}}d',
   cycleAnalytics_fertileSub_open: 'open right now',
   cycleAnalytics_fertileSub_passed: 'just passed',
+  // ─── B7b: CycleAnalytics residual strings ─────────────────────────────────
+  cycleAnalytics_day_voiceline: 'Day {{day}} · {{line}}',
+  cycleAnalytics_seed_hint: 'Showing a sample cycle. Log a couple of period starts and this becomes all yours.',
+  cycleAnalytics_cycle_n: 'C{{n}}',
+  cycleAnalytics_log_cycles_hint: 'Log a couple of period starts and your closed cycles will appear here.',
   cycleDetail_lastNCycles: 'LAST {{n}} CYCLES',
   cycleDetail_history: 'HISTORY',
   cycleDetail_regular: 'regular',
@@ -2654,4 +2659,7 @@ export const en: TranslationKeys = {
   profKids_noChildren: 'No children added',
   profKids_noChildrenSub: 'Add your children to start tracking their health, food preferences, and growth.',
   profKids_addCustomPrefix: '+ Add ',
+  // ─── B7b: WeekCard.tsx residual strings ───────────────────────────────────
+  preg_weekCard_tapForDetails: 'TAP FOR DETAILS ›',
+  preg_weekCard_unitCm: 'cm',
 }

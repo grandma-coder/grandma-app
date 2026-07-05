@@ -12,10 +12,11 @@
 
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { WeekRuler } from './WeekRuler'
-import { AnimatedFruit } from './AnimatedFruit'
+import { BabyIllustration } from './babyIllustrations'
 import { getWeekData } from '../../../lib/pregnancyData'
 import { getWeekStat, formatWeight } from '../../../lib/weekStats'
 import { font } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 
 function getTrimester(week: number): 1 | 2 | 3 {
   if (week <= 13) return 1
@@ -40,8 +41,8 @@ function parseCm(len: string): number {
 
 /** Illustration size — proportional to cm, sqrt scaled, capped by the stage column. */
 function illustrationSize(cm: number, stageSize: number): number {
-  const min = 44
-  const max = Math.min(190, stageSize)
+  const min = 36
+  const max = Math.min(110, stageSize)
   if (cm <= 0) return min
   const t = Math.min(1, Math.sqrt(cm / 51))
   return min + (max - min) * t
@@ -100,6 +101,7 @@ interface WeekCardProps {
 }
 
 export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
+  const { t } = useTranslation()
   const data = getWeekData(week)
   const stat = getWeekStat(week)
   const pal = paletteForWeek(week)
@@ -128,7 +130,7 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
       {/* Top row: meta (left) + sizename (right) */}
       <View style={styles.topRow}>
         <Text style={[styles.meta, { color: pal.metaFg }]}>
-          WEEK · {TRI_NAMES[tri - 1]} TRIMESTER
+          {t('preg_weekDetail_heroLabel', { week: weekStr, trimester: TRI_NAMES[tri - 1] })}
         </Text>
         <Text style={[styles.sizeName, { color: pal.fg }]} numberOfLines={1}>
           {article}{' '}
@@ -143,20 +145,20 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
         <View style={styles.leftCol}>
           <Text style={[styles.mega, { color: pal.fg }]}>{weekStr}</Text>
           <View style={styles.stage}>
-            <AnimatedFruit week={week} size={illSize} />
+            <BabyIllustration week={week} size={illSize} />
           </View>
         </View>
 
         <View style={styles.rightCol}>
           <View style={[styles.statCell, { borderTopColor: statBorder }]}>
-            <Text style={[styles.statLabel, { color: pal.fg }]}>LENGTH</Text>
+            <Text style={[styles.statLabel, { color: pal.fg }]}>{t('preg_ring_length')}</Text>
             <Text style={[styles.statValue, { color: pal.fg }]}>
               {cm}
-              <Text style={[styles.statUnit, { color: pal.fg }]}>cm</Text>
+              <Text style={[styles.statUnit, { color: pal.fg }]}>{t('preg_weekCard_unitCm')}</Text>
             </Text>
           </View>
           <View style={[styles.statCell, { borderTopColor: statBorder }]}>
-            <Text style={[styles.statLabel, { color: pal.fg }]}>WEIGHT</Text>
+            <Text style={[styles.statLabel, { color: pal.fg }]}>{t('preg_ring_weight')}</Text>
             <Text style={[styles.statValue, { color: pal.fg }]}>
               {formatWeightValue(stat.g)}
               <Text style={[styles.statUnit, { color: pal.fg }]}>
@@ -173,7 +175,7 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
             {daysLabel.toUpperCase()}
           </Text>
           <Text style={[styles.footerLabel, { color: pal.metaFg }]}>
-            TAP FOR DETAILS ›
+            {t('preg_weekCard_tapForDetails')}
           </Text>
         </View>
       )}
@@ -206,10 +208,10 @@ void formatWeight
 const styles = StyleSheet.create({
   card: {
     borderRadius: 28,
-    paddingHorizontal: 22,
-    paddingTop: 20,
-    paddingBottom: 18,
-    minHeight: 440,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 14,
+    minHeight: 236,
     overflow: 'hidden',
     shadowColor: '#141313',
     shadowOffset: { width: 0, height: 8 },
@@ -249,8 +251,8 @@ const styles = StyleSheet.create({
   middleGrid: {
     flex: 1,
     flexDirection: 'row',
-    gap: 20,
-    marginTop: 4,
+    gap: 16,
+    marginTop: 2,
   },
   leftCol: {
     flex: 1,
@@ -258,19 +260,19 @@ const styles = StyleSheet.create({
   rightCol: {
     flex: 1.05,
     justifyContent: 'center',
-    gap: 18,
+    gap: 12,
     paddingRight: 4,
   },
 
   mega: {
     // Matches HTML .mega: Fraunces 800 extra-bold, with subtle emboss shadow
     fontFamily: 'Fraunces_800ExtraBold',
-    fontSize: 82,
+    fontSize: 56,
     fontWeight: '800',
-    letterSpacing: -4.5,
-    lineHeight: 96,
-    marginLeft: -3,
-    paddingTop: 8,
+    letterSpacing: -3,
+    lineHeight: 62,
+    marginLeft: -2,
+    paddingTop: 2,
     textShadowColor: 'rgba(0,0,0,0.12)',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 0,
@@ -279,31 +281,31 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 120,
+    minHeight: 72,
   },
 
   statCell: {
     borderTopWidth: 1.5,
-    paddingTop: 10,
-    gap: 3,
+    paddingTop: 7,
+    gap: 2,
   },
   statLabel: {
     fontFamily: font.bodySemiBold,
-    fontSize: 9.5,
+    fontSize: 9,
     letterSpacing: 2,
     textTransform: 'uppercase',
     opacity: 0.7,
   },
   statValue: {
     fontFamily: font.display,
-    fontSize: 32,
-    letterSpacing: -1,
-    lineHeight: 34,
+    fontSize: 24,
+    letterSpacing: -0.8,
+    lineHeight: 26,
   },
   statUnit: {
     fontFamily: font.italic,
     fontStyle: 'italic',
-    fontSize: 14,
+    fontSize: 12,
     opacity: 0.75,
     fontWeight: '400',
   },
@@ -312,8 +314,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 4,
+    marginTop: 8,
+    marginBottom: 2,
   },
   footerLabel: {
     fontFamily: font.bodyMedium,
