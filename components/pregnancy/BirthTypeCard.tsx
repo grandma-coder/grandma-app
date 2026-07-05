@@ -3,6 +3,7 @@ import { useTheme, radius, spacing } from '../../constants/theme'
 import { Leaf, Cross, Heart, Drop } from '../ui/Stickers'
 import { MissingStickers } from '../stickers/MissingStickers'
 import type { BirthType, BirthStickerKind } from '../../lib/birthData'
+import { useTranslation } from '../../lib/i18n'
 
 interface BirthTypeCardProps {
   birthType: BirthType
@@ -23,6 +24,7 @@ function StickerIcon({ kind, size = 44 }: { kind: BirthStickerKind; size?: numbe
 
 export function BirthTypeCard({ birthType, onPress }: BirthTypeCardProps) {
   const { colors, font } = useTheme()
+  const { t } = useTranslation()
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.85 }]}>
@@ -47,7 +49,7 @@ export function BirthTypeCard({ birthType, onPress }: BirthTypeCardProps) {
           {birthType.description}
         </Text>
         <Text style={[styles.learnMore, { color: colors.primary, fontFamily: font.bodySemiBold }]}>
-          Learn more  →
+          {t('common_learnMore')}
         </Text>
       </View>
     </Pressable>

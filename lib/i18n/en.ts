@@ -37,6 +37,7 @@ export const en: TranslationKeys = {
   common_chevronPrev: '‹',
   common_chevronNext: '›',
   common_arrowRight: '→',
+  common_learnMore: 'Learn more →',
 
   // Tabs
   tab_home: 'Home',

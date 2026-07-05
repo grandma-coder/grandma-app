@@ -40,6 +40,7 @@ export interface TranslationKeys {
   common_chevronPrev: string
   common_chevronNext: string
   common_arrowRight: string
+  common_learnMore: string
 
   // ─── Tabs ──────────────────────────────────────────────────────────────
   tab_home: string
