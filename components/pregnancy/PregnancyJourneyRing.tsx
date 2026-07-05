@@ -584,7 +584,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
               </Text>
             </Text>
             <Text style={[styles.dateLabel, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
-              {dateLabel} · {triLabel}
+              {dateLabel} {t('common_dotSeparator')} {triLabel}
             </Text>
           </View>
           <View style={[styles.statusPill, { borderColor: col + '55', backgroundColor: col + '1A' }]}>
@@ -603,7 +603,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
             <Text style={[styles.statValue, { color: colors.text, fontFamily: font.display }]}>
               {stat.cm}
               <Text style={[styles.statUnit, { color: colors.textSecondary, fontFamily: font.italic }]}>
-                cm
+                {t('preg_weekCard_unitCm')}
               </Text>
             </Text>
           </View>
