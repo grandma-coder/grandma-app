@@ -125,7 +125,7 @@ export default function AcceptInvite() {
   if (accepted) {
     return (
       <View style={styles.container}>
-        <Text style={styles.emoji}>🎉</Text>
+        <Text style={styles.emoji}>{t('acceptInvite_successEmoji')}</Text>
         <Text style={styles.title}>{t('acceptInvite_successTitle')}</Text>
         <Text style={styles.subtitle}>
           {t('acceptInvite_successBody', { name: childName })}
@@ -143,7 +143,7 @@ export default function AcceptInvite() {
         <Ionicons name="arrow-back" size={24} color={colors.text} />
       </Pressable>
 
-      <Text style={styles.emoji}>👵</Text>
+      <Text style={styles.emoji}>{t('acceptInvite_headerEmoji')}</Text>
       <Text style={styles.title}>{t('acceptInvite_title')}</Text>
       <Text style={styles.subtitle}>
         {t('acceptInvite_subtitle')}

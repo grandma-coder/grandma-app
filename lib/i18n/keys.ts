@@ -2311,6 +2311,9 @@ export interface TranslationKeys {
   acceptInvite_permChat: string
   acceptInvite_acceptBtn: string
   acceptInvite_declineBtn: string
+  // ─── B7c: accept-invite.tsx residual strings ───────────────────────────────
+  acceptInvite_successEmoji: string
+  acceptInvite_headerEmoji: string
   // ─── B6: Exams list ───────────────────────────────────────────────────────
   exams_title: string
   exams_tabPrePreg: string

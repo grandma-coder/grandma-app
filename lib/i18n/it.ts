@@ -2118,6 +2118,8 @@ export const it: TranslationKeys = {
   acceptInvite_permChat: 'Chat with Grandma for advice',
   acceptInvite_acceptBtn: 'Accept invite',
   acceptInvite_declineBtn: 'Decline',
+  acceptInvite_successEmoji: '🎉',
+  acceptInvite_headerEmoji: '👵',
   exams_title: 'Exams',
   exams_tabPrePreg: 'Pre-preg',
   exams_tabPregnancy: 'Pregnancy',
