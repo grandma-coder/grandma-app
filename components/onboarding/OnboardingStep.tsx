@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../constants/theme'
 import { Display, DisplayItalic } from '../ui/Typography'
 import { PillButton } from '../ui/PillButton'
+import { useTranslation } from '../../lib/i18n'
 
 /**
  * OnboardingNavContext — lets parent provide back/close handlers
@@ -69,6 +70,7 @@ export function OnboardingStep({
 }: OnboardingStepProps) {
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const nav = useContext(OnboardingNavContext)
 
   const backHandler = onBack ?? nav.onBack
@@ -102,7 +104,7 @@ export function OnboardingStep({
           {onSkip ? (
             <Pressable onPress={onSkip} hitSlop={8}>
               <Text style={[styles.skipHeaderText, { fontFamily: font.body, color: ink3 }]}>
-                Skip
+                {t('common_skip')}
               </Text>
             </Pressable>
           ) : closeHandler ? (
