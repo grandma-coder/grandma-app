@@ -326,6 +326,7 @@ export const ptBR: TranslationKeys = {
   pregnancy_dailyAffirmation: 'DAILY AFFIRMATION',
   pregnancy_affirmationAwaits: 'Your daily wisdom awaits...',
   pregnancy_revealToday: "Reveal today's  →",
+  pregnancy_shareAffirmation: 'Share affirmation',
   pregnancy_comeBackTomorrow: 'Come back tomorrow for a new affirmation',
   pregnancy_share: 'Share ↗',
   pregnancy_appt_thisWeek: 'This week',

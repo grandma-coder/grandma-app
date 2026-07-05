@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import {
   Modal,
   View,
@@ -26,65 +26,10 @@ import {
   AffirmationMode,
 } from './affirmationTemplates'
 import { useSavedToast } from '../../ui/SavedToast'
-import { useTheme, brand } from '../../../constants/theme'
+import { useTheme } from '../../../constants/theme'
 import { PillButton } from '../../ui/PillButton'
 import { StickerButton } from '../../ui/StickerButton'
-import { Heart, Sparkle, Star, Burst, Flower } from '../../ui/Stickers'
-
-// ─── FloatSticker ──────────────────────────────────────────────────────────
-// Wraps any sticker child in a looping float + wobble animation.
-// `delay` offsets the phase so multiple stickers don't sync up.
-
-interface FloatStickerProps {
-  children: React.ReactNode
-  delay?: number
-  floatY?: number
-  rotateDeg?: number
-  duration?: number
-  style?: import('react-native').ViewStyle
-}
-
-function FloatSticker({
-  children,
-  delay = 0,
-  floatY = 5,
-  rotateDeg = 8,
-  duration = 2600,
-  style,
-}: FloatStickerProps) {
-  const y = useRef(new Animated.Value(0)).current
-  const r = useRef(new Animated.Value(0)).current
-
-  useEffect(() => {
-    const floatAnim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(y, { toValue: -floatY, duration: duration / 2, delay, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-        Animated.timing(y, { toValue: floatY, duration: duration / 2, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-      ])
-    )
-    const wobbleAnim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(r, { toValue: 1, duration: (duration * 0.7) / 2, delay, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-        Animated.timing(r, { toValue: -1, duration: (duration * 0.7) / 2, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-        Animated.timing(r, { toValue: 0, duration: duration * 0.3, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-      ])
-    )
-    floatAnim.start()
-    wobbleAnim.start()
-    return () => { floatAnim.stop(); wobbleAnim.stop() }
-  }, [])
-
-  const rotate = r.interpolate({ inputRange: [-1, 1], outputRange: [`${-rotateDeg}deg`, `${rotateDeg}deg`] })
-
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={[style, { transform: [{ translateY: y }, { rotate }] }]}
-    >
-      {children}
-    </Animated.View>
-  )
-}
+import { useTranslation } from '../../../lib/i18n'
 
 interface Props {
   visible: boolean
@@ -107,6 +52,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
   const shotRefs = useRef<Record<string, ViewShot | null>>({})
   const toast = useSavedToast()
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
 
   const templates = useMemo(() => templatesForMode(mode), [mode])
 
@@ -145,7 +91,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
     <Modal visible={visible} presentationStyle="pageSheet" animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={[styles.container, { backgroundColor: paperBg }]} edges={['top']}>
 
-        {/* Header — sparkle accent top-right of title */}
+        {/* Header */}
         <View style={[styles.header, { borderBottomColor: borderCol }]}>
           <PillButton
             label="Close"
@@ -156,12 +102,8 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
           />
           <View style={styles.headerCenter}>
             <Text style={[styles.headerTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
-              Share affirmation
+              {t('pregnancy_shareAffirmation')}
             </Text>
-            {/* tiny sparkle floating top-right of title */}
-            <FloatSticker style={styles.headerSparkle} delay={0} floatY={3} rotateDeg={15} duration={2200}>
-              <Sparkle size={18} fill={stickers.yellow} stroke="#141313" />
-            </FloatSticker>
           </View>
           <PillButton
             label="Share"
@@ -177,7 +119,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
           {styleMode === 'text' ? 'Tap to copy · Hold to copy' : 'Tap to save · Hold to copy'}
         </Text>
 
-        {/* Sticker toggle — heart floats between the two buttons */}
+        {/* Background / text-only toggle */}
         <View style={styles.toggleWrap}>
           <StickerButton
             label="With background"
@@ -186,16 +128,10 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
             colorDark="#C4A828"
             active={styleMode === 'bg'}
             onPress={() => setStyleMode('bg')}
-            height={56}
+            height={52}
             fontSize={14}
             style={styles.toggleBtn}
           />
-
-          {/* floating heart sticker between buttons */}
-          <FloatSticker style={styles.toggleHeart} delay={400} floatY={6} rotateDeg={12} duration={2800}>
-            <Heart size={28} fill={stickers.pink} stroke="#141313" />
-          </FloatSticker>
-
           <StickerButton
             label="Text only"
             color={stickers.lilac}
@@ -203,29 +139,10 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
             colorDark="#8B74C5"
             active={styleMode === 'text'}
             onPress={() => setStyleMode('text')}
-            height={56}
+            height={52}
             fontSize={14}
             style={styles.toggleBtn}
           />
-        </View>
-
-        {/* Decorative sticker row under toggle — each floats at a different rate */}
-        <View style={styles.stickerRow} pointerEvents="none">
-          <FloatSticker delay={0}    floatY={4} rotateDeg={10} duration={2400} style={{ transform: [{ rotate: '-14deg' }] }}>
-            <Star size={22} fill={stickers.yellow} stroke="#141313" />
-          </FloatSticker>
-          <FloatSticker delay={300}  floatY={5} rotateDeg={8}  duration={2900} style={{ transform: [{ rotate: '8deg' }], marginLeft: 6 }}>
-            <Burst size={20} fill={stickers.pink} stroke="#141313" points={10} wobble={0.18} />
-          </FloatSticker>
-          <FloatSticker delay={700}  floatY={3} rotateDeg={12} duration={3100} style={{ transform: [{ rotate: '-6deg' }], marginLeft: 8 }}>
-            <Flower size={22} petal={stickers.lilac} center={stickers.yellow} stroke="#141313" />
-          </FloatSticker>
-          <FloatSticker delay={1100} floatY={6} rotateDeg={14} duration={2600} style={{ transform: [{ rotate: '18deg' }], marginLeft: 6 }}>
-            <Sparkle size={18} fill={stickers.green} stroke="#141313" />
-          </FloatSticker>
-          <FloatSticker delay={500}  floatY={4} rotateDeg={9}  duration={3300} style={{ transform: [{ rotate: '-10deg' }], marginLeft: 6 }}>
-            <Heart size={18} fill={stickers.peach} stroke="#141313" />
-          </FloatSticker>
         </View>
 
         {/* Tile grid */}
@@ -373,7 +290,6 @@ function TemplateTile({
   // Text-only templates export as transparent PNGs for dark story overlays —
   // always preview on dark so the white text is legible regardless of app theme.
   const tileBg = styleMode === 'text' ? '#1A1713' : cardBg
-  const nameColor = styleMode === 'text' ? 'rgba(245,237,220,0.6)' : colors.textSecondary
 
   return (
     <Pressable
@@ -407,13 +323,6 @@ function TemplateTile({
       >
         <Component phrase={phrase} textOnly={styleMode === 'text'} />
       </ViewShot>
-
-      {/* Name label */}
-      <View style={styles.nameChip} pointerEvents="none">
-        <Text style={[styles.nameChipText, { color: nameColor, fontFamily: font.bodySemiBold }]}>
-          {meta.name}
-        </Text>
-      </View>
 
       {/* Checkmark on save */}
       <Animated.View
@@ -456,41 +365,22 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     textAlign: 'center',
   },
-  headerSparkle: {
-    position: 'absolute',
-    top: -10,
-    right: -4,
-    transform: [{ rotate: '20deg' }],
-  },
   instructions: {
     textAlign: 'center',
     fontSize: 13,
     marginTop: 14,
-    marginBottom: 10,
+    marginBottom: 12,
     letterSpacing: 0.2,
   },
   toggleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     marginHorizontal: 16,
-    marginBottom: 6,
+    marginBottom: 14,
   },
   toggleBtn: {
     flex: 1,
-  },
-  toggleHeart: {
-    width: 36,
-    alignItems: 'center',
-    marginTop: -20,
-    transform: [{ rotate: '10deg' }],
-    zIndex: 10,
-  },
-  stickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 10,
-    height: 28,
   },
   grid: {
     flexDirection: 'row',
@@ -512,20 +402,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  nameChip: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    right: 8,
-    alignItems: 'center',
-    zIndex: 5,
-  },
-  nameChipText: {
-    fontSize: 10,
-    letterSpacing: 0.4,
-    textShadowColor: 'rgba(20,19,19,0.15)',
-    textShadowRadius: 3,
-  },
   checkOverlay: {
     position: 'absolute',
     top: 0,

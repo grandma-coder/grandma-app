@@ -395,6 +395,7 @@ export interface TranslationKeys {
   pregnancy_dailyAffirmation: string
   pregnancy_affirmationAwaits: string
   pregnancy_revealToday: string
+  pregnancy_shareAffirmation: string
   pregnancy_comeBackTomorrow: string
   pregnancy_share: string
 
