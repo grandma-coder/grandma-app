@@ -58,6 +58,7 @@ export const ko: TranslationKeys = {
   home_grandmaSays: 'Grandma says',
   home_momentsOfCare: 'Moments of Care',
   home_momentsOfCareSubtitle: 'Nurturing you while you nurture life',
+  home_pillarsGridTitle: 'Pillars',
 
   agenda_title: '캘린더',
   agenda_noEvents: '오늘 일정이 없습니다',

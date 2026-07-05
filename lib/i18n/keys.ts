@@ -78,6 +78,7 @@ export interface TranslationKeys {
   home_grandmaSays: string
   home_momentsOfCare: string
   home_momentsOfCareSubtitle: string
+  home_pillarsGridTitle: string
 
   // ─── Calendar / Agenda ─────────────────────────────────────────────────
   agenda_title: string

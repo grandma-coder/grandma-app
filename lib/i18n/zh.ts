@@ -58,6 +58,7 @@ export const zh: TranslationKeys = {
   home_grandmaSays: 'Grandma says',
   home_momentsOfCare: 'Moments of Care',
   home_momentsOfCareSubtitle: 'Nurturing you while you nurture life',
+  home_pillarsGridTitle: 'Pillars',
 
   agenda_title: '日历',
   agenda_noEvents: '今天没有事件',

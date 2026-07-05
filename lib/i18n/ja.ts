@@ -58,6 +58,7 @@ export const ja: TranslationKeys = {
   home_grandmaSays: 'Grandma says',
   home_momentsOfCare: 'Moments of Care',
   home_momentsOfCareSubtitle: 'Nurturing you while you nurture life',
+  home_pillarsGridTitle: 'Pillars',
 
   agenda_title: 'カレンダー',
   agenda_noEvents: '今日の予定はありません',

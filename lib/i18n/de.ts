@@ -58,6 +58,7 @@ export const de: TranslationKeys = {
   home_grandmaSays: 'Grandma says',
   home_momentsOfCare: 'Moments of Care',
   home_momentsOfCareSubtitle: 'Nurturing you while you nurture life',
+  home_pillarsGridTitle: 'Pillars',
 
   agenda_title: 'Kalender',
   agenda_noEvents: 'Keine Ereignisse heute',

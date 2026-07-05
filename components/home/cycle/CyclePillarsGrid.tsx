@@ -10,6 +10,7 @@ import { Display, Body } from '../../ui/Typography'
 import { Leaf, Flower, Moon, Heart } from '../../ui/Stickers'
 import { ChevronRight } from 'lucide-react-native'
 import { prePregPillars } from '../../../lib/prePregPillars'
+import { useTranslation } from '../../../lib/i18n'
 
 interface PillarTile {
   id: string              // routes to /pillar/[id]
@@ -40,6 +41,7 @@ if (__DEV__) {
 
 export function CyclePillarsGrid() {
   const { colors, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = colors.text
 
   function tintBg(tint: PillarTile['tint']): string {
@@ -63,10 +65,10 @@ export function CyclePillarsGrid() {
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <Display size={24} color={ink}>Pillars</Display>
+        <Display size={24} color={ink}>{t('home_pillarsGridTitle')}</Display>
         <Pressable onPress={() => router.push('/cycle-pillars' as any)} hitSlop={8}>
           <View style={styles.seeAllRow}>
-            <Body size={12} color={colors.textMuted}>See all</Body>
+            <Body size={12} color={colors.textMuted}>{t('common_seeAll')}</Body>
             <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
           </View>
         </Pressable>
