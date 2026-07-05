@@ -3,12 +3,14 @@
  * tappable → /pillar/[id].
  */
 
-import { View, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getModeField } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { Display, Body } from '../../ui/Typography'
 import { Leaf, Flower, Moon, Heart } from '../../ui/Stickers'
-import { ChevronRight } from 'lucide-react-native'
+import { Sprout, Flower2, Moon as MoonLine, Heart as HeartLine, ChevronRight } from 'lucide-react-native'
 import { prePregPillars } from '../../../lib/prePregPillars'
 import { useTranslation } from '../../../lib/i18n'
 
@@ -39,8 +41,22 @@ if (__DEV__) {
   }
 }
 
+// Bloom hue per tile tint (cycle field: coral→rose→lilac→peach).
+function diffuseTint(tint: PillarTile['tint'], field: [string, string, string, string]): string {
+  const [coral, rose, lilac, peach] = field
+  switch (tint) {
+    case 'green':  return peach
+    case 'lilac':  return lilac
+    case 'blue':   return rose
+    case 'peach':  return coral
+  }
+}
+
 export function CyclePillarsGrid() {
   const { colors, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const field = getModeField('pre-pregnancy', dt.isDark)
   const { t } = useTranslation()
   const ink = colors.text
 
@@ -62,34 +78,71 @@ export function CyclePillarsGrid() {
     }
   }
 
+  function renderLineIcon(s: PillarTile['sticker']) {
+    const c = dt.colors.ink3
+    switch (s) {
+      case 'leaf':   return <Sprout size={18} color={c} strokeWidth={1.6} />
+      case 'flower': return <Flower2 size={18} color={c} strokeWidth={1.6} />
+      case 'moon':   return <MoonLine size={18} color={c} strokeWidth={1.6} />
+      case 'heart':  return <HeartLine size={18} color={c} strokeWidth={1.6} />
+    }
+  }
+
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <Display size={24} color={ink}>{t('home_pillarsGridTitle')}</Display>
+        {diffuse ? (
+          <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, color: dt.colors.ink, letterSpacing: -0.3 }}>{t('home_pillarsGridTitle')}</Text>
+        ) : (
+          <Display size={24} color={ink}>{t('home_pillarsGridTitle')}</Display>
+        )}
         <Pressable onPress={() => router.push('/cycle-pillars' as any)} hitSlop={8}>
           <View style={styles.seeAllRow}>
-            <Body size={12} color={colors.textMuted}>{t('common_seeAll')}</Body>
-            <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
+            {diffuse ? (
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+                {t('common_seeAll')}
+              </Text>
+            ) : (
+              <Body size={12} color={colors.textMuted}>{t('common_seeAll')}</Body>
+            )}
+            <ChevronRight size={14} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
           </View>
         </Pressable>
       </View>
       <View style={styles.grid}>
-        {TILES.map((t) => (
+        {TILES.map((tile) => (
           <Pressable
-            key={t.id}
-            onPress={() => router.push(`/pillar/${t.id}` as any)}
+            key={tile.id}
+            onPress={() => router.push(`/pillar/${tile.id}` as any)}
             style={({ pressed }) => [
               styles.card,
-              { backgroundColor: tintBg(t.tint), borderColor: colors.border },
+              diffuse
+                ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+                : { backgroundColor: tintBg(tile.tint), borderColor: colors.border },
               pressed && { transform: [{ scale: 0.97 }], opacity: 0.95 },
             ]}
           >
-            <View style={[styles.stickerChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              {renderSticker(t.sticker)}
-            </View>
+            {diffuse ? (
+              <DiffuseBloomIcon color={diffuseTint(tile.tint, field)} size={40} intensity={0.5}>
+                {renderLineIcon(tile.sticker)}
+              </DiffuseBloomIcon>
+            ) : (
+              <View style={[styles.stickerChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                {renderSticker(tile.sticker)}
+              </View>
+            )}
             <View style={styles.textCol}>
-              <Display size={18} color={ink}>{t.title}</Display>
-              <Body size={12} color={colors.textMuted}>{t.subtitle}</Body>
+              {diffuse ? (
+                <>
+                  <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: dt.colors.ink, letterSpacing: -0.2 }}>{tile.title}</Text>
+                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1.2, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 3 }}>{tile.subtitle}</Text>
+                </>
+              ) : (
+                <>
+                  <Display size={18} color={ink}>{tile.title}</Display>
+                  <Body size={12} color={colors.textMuted}>{tile.subtitle}</Body>
+                </>
+              )}
             </View>
           </Pressable>
         ))}

@@ -13,18 +13,32 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { View, Text, ScrollView, Pressable, PanResponder, StyleSheet } from 'react-native'
-import Svg, { Circle } from 'react-native-svg'
+import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import Animated, {
   useSharedValue, useAnimatedStyle, useDerivedValue, useAnimatedReaction,
   runOnJS, withDecay, withTiming, withSpring, cancelAnimation, Easing,
 } from 'react-native-reanimated'
-import { useTheme, motion } from '../../../constants/theme'
+import { useTheme, motion, useDiffuseTheme, getModeField, getDiffuseAccent, diffuseFont } from '../../../constants/theme'
+import { useIsDiffuse, SoftBloom } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
 import {
   getCycleInfo, toDateStr,
   type CycleConfig, type CyclePhase,
 } from '../../../lib/cycleLogic'
 import { DaySticker, TodayAura } from './dayStickers'
+
+// ─── Diffuse phase palette ────────────────────────────────────────────────
+// Under Diffuse the phase hues come from the cycle field (coral→rose→lilac→
+// peach) rather than the sticker palette, so the ring reads as a soft bloom.
+function diffusePhaseColor(phase: CyclePhase, field: [string, string, string, string]): string {
+  const [coral, rose, lilac, peach] = field
+  switch (phase) {
+    case 'menstruation': return coral
+    case 'follicular':   return peach
+    case 'ovulation':    return rose
+    case 'luteal':       return lilac
+  }
+}
 
 // ─── Layout ─────────────────────────────────────────────────────────────────
 const SVG_SIZE = 260
@@ -179,11 +193,18 @@ interface StripCellProps {
   fontSemiBold: string
   fontDisplay: string
   onPress: () => void
+  diffuse?: boolean
+  diffuseLine?: string
+  diffuseAccent?: string
+  diffuseInk?: string
+  diffuseInk3?: string
+  diffuseMono?: string
 }
 
 function StripCell({
   weekday, day, ink, tint, isSelected, isToday, textColor,
   fontSemiBold, fontDisplay, onPress,
+  diffuse, diffuseLine, diffuseAccent, diffuseInk, diffuseInk3, diffuseMono,
 }: StripCellProps) {
   const press = useSharedValue(0)
   // Press uses the app's standard sticker-press feel (withSpring translateY).
@@ -197,12 +218,20 @@ function StripCell({
 
   // Selected = stronger tint + saturated ink outline so it pops; the label uses
   // ink too. Unselected = soft tint, no border, muted ink weekday.
+  // Diffuse: hairline cell, transparent fill, accent ring when selected, mono
+  // weekday + serif day (matches the dot-calendar language).
   return (
     <Animated.View
       style={[
         styles.stripCellWrap,
         animatedStyle,
-        { backgroundColor: tint, borderColor: isSelected ? ink : 'transparent' },
+        diffuse
+          ? {
+              backgroundColor: 'transparent',
+              borderColor: isSelected ? diffuseAccent! : diffuseLine!,
+              borderWidth: 1,
+            }
+          : { backgroundColor: tint, borderColor: isSelected ? ink : 'transparent' },
       ]}
     >
       <Pressable
@@ -214,9 +243,9 @@ function StripCell({
         <Text
           numberOfLines={1}
           style={{
-            color: ink,
-            fontFamily: fontSemiBold,
-            fontSize: 9,
+            color: diffuse ? diffuseInk3! : ink,
+            fontFamily: diffuse ? diffuseMono! : fontSemiBold,
+            fontSize: diffuse ? 8 : 9,
             letterSpacing: 0.8,
             textTransform: 'uppercase',
             opacity: isSelected ? 1 : isToday ? 0.9 : 0.7,
@@ -227,8 +256,8 @@ function StripCell({
         <Text
           numberOfLines={1}
           style={{
-            color: isSelected ? ink : textColor,
-            fontFamily: fontDisplay,
+            color: diffuse ? (isSelected ? diffuseInk! : diffuseInk3!) : (isSelected ? ink : textColor),
+            fontFamily: diffuse ? diffuseFont.display : fontDisplay,
             fontSize: 16,
             lineHeight: 18,
             marginTop: 2,
@@ -244,6 +273,10 @@ function StripCell({
 // ─── Component ──────────────────────────────────────────────────────────────
 export function CycleJourneyRingFull({ cycleConfig }: Props) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const field = getModeField('pre-pregnancy', dt.isDark)
+  const diffuseAccent = getDiffuseAccent('pre-pregnancy', dt.isDark)
   const { t } = useTranslation()
 
   const todayStr = toDateStr(new Date())
@@ -411,8 +444,8 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
   // ── Derived display ──────────────────────────────────────────────────────
   const selectedInfo = getCycleInfo(cycleConfig, selectedDate)
   const selPhase = selectedInfo.phase as CyclePhase
-  const accent = phaseAccent(selPhase, stickers)
-  const tint = phaseTint(selPhase, stickers)
+  const accent = diffuse ? diffusePhaseColor(selPhase, field) : phaseAccent(selPhase, stickers)
+  const tint = diffuse ? dt.colors.surface : phaseTint(selPhase, stickers)
   const isToday = selectedDay === cycleDayToday
   const isPast = selectedDay < cycleDayToday
 
@@ -453,11 +486,42 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
     <View style={styles.container}>
       {/* ── Ring ── */}
       <View style={styles.ringWrap}>
+        {diffuse ? (
+          // Soft feathered bloom behind the whole wheel (v4 ring aura).
+          <View pointerEvents="none" style={styles.ringBloom}>
+            <SoftBloom color={diffuseAccent} opacity={dt.isDark ? 0.34 : 0.42} spread={0.45} />
+          </View>
+        ) : null}
         <View {...panResponder.panHandlers} style={styles.ringStage}>
           {/* Animated dot layer */}
           <Animated.View style={[StyleSheet.absoluteFill, dotsAnimatedStyle]}>
             {dots.map((d) => {
-              const accentBg = phaseAccent(d.phase, stickers)
+              const accentBg = diffuse ? diffusePhaseColor(d.phase, field) : phaseAccent(d.phase, stickers)
+              if (diffuse) {
+                // Hairline dot per day; period (menstruation) days get a filled
+                // accent dot, the current day a stronger accent ring. Matches the
+                // dot-calendar / ring vocabulary — no sticker fill.
+                const isPeriod = d.phase === 'menstruation'
+                const dotSize = 9
+                return (
+                  <View
+                    key={d.day}
+                    style={{
+                      position: 'absolute',
+                      left: d.bx - dotSize / 2,
+                      top: d.by - dotSize / 2,
+                      width: dotSize,
+                      height: dotSize,
+                      borderRadius: dotSize / 2,
+                      borderWidth: 1,
+                      borderColor: d.state === 'today' ? diffuseAccent : dt.colors.line2,
+                      backgroundColor: isPeriod ? accentBg : (d.state === 'today' ? diffuseAccent : 'transparent'),
+                      opacity: d.state === 'future' ? 0.6 : 1,
+                    }}
+                    pointerEvents="none"
+                  />
+                )
+              }
               return (
                 <View
                   key={d.day}
@@ -499,46 +563,95 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
 
           {/* Static layer: orbit + anchor frame */}
           <Svg width={SVG_SIZE} height={SVG_SIZE} style={StyleSheet.absoluteFill}>
+            {diffuse ? (
+              <Defs>
+                <LinearGradient id="cycleRingArc" x1="0" y1="0" x2="1" y2="1">
+                  <Stop offset="0" stopColor={field[0]} />
+                  <Stop offset="0.5" stopColor={field[1]} />
+                  <Stop offset="1" stopColor={field[2]} />
+                </LinearGradient>
+              </Defs>
+            ) : null}
             <Circle
               cx={CX} cy={CY} r={RING_R}
               fill="none"
-              stroke={colors.border}
-              strokeWidth={1.5}
+              stroke={diffuse ? dt.colors.line : colors.border}
+              strokeWidth={diffuse ? 1 : 1.5}
             />
+            {diffuse ? (
+              // Progress arc = fraction of cycle elapsed (today), gradient-tinted.
+              <Circle
+                cx={CX} cy={CY} r={RING_R}
+                fill="none"
+                stroke="url(#cycleRingArc)"
+                strokeWidth={3}
+                strokeLinecap="round"
+                strokeDasharray={`${(2 * Math.PI * RING_R) * (Math.min(cycleDayToday, cycleLength) / cycleLength)} ${2 * Math.PI * RING_R}`}
+                transform={`rotate(-90 ${CX} ${CY})`}
+              />
+            ) : null}
             <Circle cx={CX} cy={CY + RING_R} r={14} fill="none" stroke={accent} strokeWidth={1.5} />
           </Svg>
 
           {/* Center overlay */}
           <View style={StyleSheet.absoluteFill} pointerEvents="none">
             <View style={styles.centerInner}>
-              <Text style={[styles.centerLabel, { color: accent, fontFamily: font.bodySemiBold }]}>
-                {t('cycle_ring_label_day')}
-              </Text>
-              <Text style={[styles.centerNumber, { color: accent, fontFamily: font.display }]}>
-                {selectedDay}
-              </Text>
-              <Text style={[styles.centerStatus, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
-                {t('cycle_ring_of_n', { n: cycleLength })}
-              </Text>
+              {diffuse ? (
+                <>
+                  <Text style={[styles.centerLabelD, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+                    {t('cycle_ring_label_day')}
+                  </Text>
+                  <Text style={[styles.centerNumberD, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+                    {selectedDay}
+                  </Text>
+                  <Text style={[styles.centerStatusD, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+                    {t('cycle_ring_of_n', { n: cycleLength })}
+                  </Text>
+                  <Text style={[styles.centerPhaseD, { color: dt.colors.ink2, fontFamily: diffuseFont.display }]}>
+                    {phaseLabel(selPhase)}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={[styles.centerLabel, { color: accent, fontFamily: font.bodySemiBold }]}>
+                    {t('cycle_ring_label_day')}
+                  </Text>
+                  <Text style={[styles.centerNumber, { color: accent, fontFamily: font.display }]}>
+                    {selectedDay}
+                  </Text>
+                  <Text style={[styles.centerStatus, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
+                    {t('cycle_ring_of_n', { n: cycleLength })}
+                  </Text>
+                </>
+              )}
             </View>
           </View>
         </View>
       </View>
 
-      <Text style={[styles.hint, { color: colors.textFaint, fontFamily: font.body }]}>
+      <Text style={[styles.hint, { color: diffuse ? dt.colors.ink3 : colors.textFaint, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 1.4 : 0, textTransform: diffuse ? 'uppercase' : 'none', fontSize: diffuse ? 8.5 : 10 }]}>
         {t('cycle_ring_drag_hint')}
       </Text>
 
       {/* ── Legend (inline, single row) ── */}
       <View style={styles.legendRowInline}>
         {LEGEND.map((item) => {
-          const bg = phaseAccent(item.phase, stickers)
+          const bg = diffuse ? diffusePhaseColor(item.phase, field) : phaseAccent(item.phase, stickers)
           return (
             <View key={item.phase} style={styles.legendInlineItem}>
-              <DaySticker phase={item.phase} size={18} bg={bg} />
+              {diffuse ? (
+                <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: bg }} />
+              ) : (
+                <DaySticker phase={item.phase} size={18} bg={bg} />
+              )}
               <Text
                 numberOfLines={1}
-                style={[styles.legendInlineText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}
+                style={[
+                  styles.legendInlineText,
+                  diffuse
+                    ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1 }
+                    : { color: colors.textMuted, fontFamily: font.bodySemiBold },
+                ]}
               >
                 {item.label}
               </Text>
@@ -562,6 +675,12 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
             fontSemiBold={font.bodySemiBold}
             fontDisplay={font.display}
             onPress={() => onStripPress(s.day)}
+            diffuse={diffuse}
+            diffuseLine={dt.colors.line}
+            diffuseAccent={diffuseAccent}
+            diffuseInk={dt.colors.ink}
+            diffuseInk3={dt.colors.ink3}
+            diffuseMono={diffuseFont.mono}
           />
         ))}
       </View>
@@ -574,48 +693,56 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
       >
         <View style={styles.statusRow}>
           <View style={styles.statusBlock}>
-            <Text style={[styles.statusTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
-              {t('cycle_ring_phase_prefix')}<Text style={[styles.statusTitleAccent, { color: accent, fontFamily: font.italic }]}>{titleItalic}</Text>
+            <Text style={[styles.statusTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: font.display }]} numberOfLines={1}>
+              {t('cycle_ring_phase_prefix')}<Text style={[styles.statusTitleAccent, { color: diffuse ? dt.colors.ink : accent, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>{titleItalic}</Text>
             </Text>
-            <Text style={[styles.dateLabel, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
+            <Text style={[styles.dateLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
               {t('cycle_ring_date_phase', { date: formatLongDate(selectedDate), phase: phaseLabel(selPhase) })}
             </Text>
           </View>
-          <View style={[styles.statusPill, { borderColor: accent + '55', backgroundColor: tint }]}>
-            <Text style={[styles.statusPillText, { color: accent, fontFamily: font.bodySemiBold }]}>
-              {statusLabel}
-            </Text>
-          </View>
+          {diffuse ? (
+            <View style={[styles.statusPillD, { borderColor: dt.colors.hairline }]}>
+              <Text style={[styles.statusPillTextD, { color: dt.colors.ink, fontFamily: diffuseFont.mono }]}>
+                {statusLabel}
+              </Text>
+            </View>
+          ) : (
+            <View style={[styles.statusPill, { borderColor: accent + '55', backgroundColor: tint }]}>
+              <Text style={[styles.statusPillText, { color: accent, fontFamily: font.bodySemiBold }]}>
+                {statusLabel}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Fertility cell */}
         <View style={styles.statsRow}>
-          <View style={[styles.statCell, { borderTopColor: accent + '66' }]}>
-            <Text style={[styles.statLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
+          <View style={[styles.statCell, { borderTopColor: diffuse ? dt.colors.line2 : accent + '66' }]}>
+            <Text style={[styles.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
               {t('cycle_ring_label_fertility')}
             </Text>
-            <Text style={[styles.statValue, { color: colors.text, fontFamily: font.display }]}>
+            <Text style={[styles.statValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: font.display }]}>
               {fertilityPct}
-              <Text style={[styles.statUnit, { color: colors.textSecondary, fontFamily: font.italic }]}>%</Text>
+              <Text style={[styles.statUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontStyle: 'normal' } : { color: colors.textSecondary, fontFamily: font.italic }]}>%</Text>
             </Text>
           </View>
-          <View style={[styles.statCell, { borderTopColor: accent + '66' }]}>
-            <Text style={[styles.statLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
+          <View style={[styles.statCell, { borderTopColor: diffuse ? dt.colors.line2 : accent + '66' }]}>
+            <Text style={[styles.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
               {t('cycle_ring_label_next_period')}
             </Text>
-            <Text style={[styles.statValue, { color: colors.text, fontFamily: font.display }]}>
+            <Text style={[styles.statValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: font.display }]}>
               {selectedInfo.daysUntilPeriod}
-              <Text style={[styles.statUnit, { color: colors.textSecondary, fontFamily: font.italic }]}>{t('cycle_ring_unit_d')}</Text>
+              <Text style={[styles.statUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontStyle: 'normal' } : { color: colors.textSecondary, fontFamily: font.italic }]}>{t('cycle_ring_unit_d')}</Text>
             </Text>
           </View>
         </View>
 
         {/* This day */}
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
+          <Text style={[styles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
             {t('cycle_ring_label_this_day')}
           </Text>
-          <Text style={[styles.noteText, { color: colors.textSecondary, fontFamily: font.body }]}>
+          <Text style={[styles.noteText, diffuse ? { color: dt.colors.ink2, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>
             {thisDayNote(selPhase)}
           </Text>
         </View>
@@ -629,6 +756,13 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
 const styles = StyleSheet.create({
   container: { width: '100%' },
   ringWrap: { alignItems: 'center', position: 'relative' },
+  ringBloom: {
+    position: 'absolute',
+    width: SVG_SIZE * 0.92,
+    height: SVG_SIZE * 0.92,
+    top: SVG_SIZE * 0.04,
+    alignSelf: 'center',
+  },
   ringStage: { width: SVG_SIZE, height: SVG_SIZE, position: 'relative' },
   hint: { fontSize: 10, textAlign: 'center', marginTop: 2 },
 
@@ -636,6 +770,11 @@ const styles = StyleSheet.create({
   centerLabel: { fontSize: 10, letterSpacing: 1.5, marginBottom: 2 },
   centerNumber: { fontSize: 46, lineHeight: 50 },
   centerStatus: { fontSize: 9, letterSpacing: 1.2, marginTop: 2, textTransform: 'uppercase' },
+  // Diffuse center: mono eyebrow · serif number · mono of-n · serif phase
+  centerLabelD: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 2 },
+  centerNumberD: { fontSize: 48, lineHeight: 52, letterSpacing: -1 },
+  centerStatusD: { fontSize: 8.5, letterSpacing: 1.6, marginTop: 1, textTransform: 'uppercase' },
+  centerPhaseD: { fontSize: 15, letterSpacing: -0.2, marginTop: 4 },
 
   strip: {
     flexDirection: 'row',
@@ -667,6 +806,8 @@ const styles = StyleSheet.create({
   dateLabel: { fontSize: 12, letterSpacing: 0.2 },
   statusPill: { paddingHorizontal: 11, paddingVertical: 4, borderRadius: 99, borderWidth: 1 },
   statusPillText: { fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase' },
+  statusPillD: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
+  statusPillTextD: { fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase' },
 
   statsRow: { flexDirection: 'row', gap: 24 },
   statCell: { flex: 1, borderTopWidth: 1.5, paddingTop: 8, gap: 2 },

@@ -9,9 +9,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
+import { Heart as HeartLine } from 'lucide-react-native'
 import { Heart } from '../../ui/Stickers'
 import { PaperCard } from '../../ui/PaperCard'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useIsDiffuse, DiffuseArrow } from '../../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 import { supabase } from '../../../lib/supabase'
 import { getCycleInfo, toDateStr, type CycleConfig } from '../../../lib/cycleLogic'
@@ -31,16 +34,16 @@ const PILLAR_LABEL_KEY: Record<string, string> = {
   'health-checkups': 'cycle_pillar_health_checkups',
 }
 
-function renderHeadline(s: string, baseColor: string, accentColor: string, font: ReturnType<typeof useTheme>['font']) {
+function renderHeadline(s: string, baseColor: string, accentColor: string, displayFont: string, italicFont: string) {
   const m = s.match(/^(.*?)\*(.+?)\*(.*)$/)
   if (!m) {
-    return <Text style={{ fontFamily: font.display, fontSize: 22, color: baseColor, lineHeight: 26 }}>{s}</Text>
+    return <Text style={{ fontFamily: displayFont, fontSize: 22, color: baseColor, lineHeight: 26 }}>{s}</Text>
   }
   const [, pre, accent, post] = m
   return (
-    <Text style={{ fontFamily: font.display, fontSize: 22, color: baseColor, lineHeight: 26 }}>
+    <Text style={{ fontFamily: displayFont, fontSize: 22, color: baseColor, lineHeight: 26 }}>
       {pre}
-      <Text style={{ fontFamily: font.italic, color: accentColor }}>{accent}</Text>
+      <Text style={{ fontFamily: italicFont, color: accentColor }}>{accent}</Text>
       {post}
     </Text>
   )
@@ -49,9 +52,12 @@ function renderHeadline(s: string, baseColor: string, accentColor: string, font:
 
 export function DailyNudgeCard({ cycleConfig }: Props) {
   const { colors, stickers, brand, font, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
   const accent = isDark ? '#EFA2C2' : brand.prePregnancy
+  const diffuseAccent = getDiffuseAccent('pre-pregnancy', dt.isDark)
 
   const [userId, setUserId] = useState<string | undefined>()
   useEffect(() => {
@@ -112,7 +118,65 @@ export function DailyNudgeCard({ cycleConfig }: Props) {
   const nudge = pickCycleNudge(ctx)
 
   function handlePress() {
-    if (nudge.pillarId) router.push(`/pillar/${nudge.pillarId}` as any)
+    // Reflection nudges deep-link to logging; others open their pillar read.
+    if (nudge.logShortcut) {
+      router.push('/(tabs)/agenda' as any)
+    } else if (nudge.pillarId) {
+      router.push(`/pillar/${nudge.pillarId}` as any)
+    }
+  }
+
+  const fromLabel = nudge.logShortcut
+    ? t('cycle_nudge_reflect_from' as any)
+    : nudge.pillarId
+      ? `${t('cycle_nudge_from' as any)}${PILLAR_LABEL_KEY[nudge.pillarId] ? ` · ${t(PILLAR_LABEL_KEY[nudge.pillarId] as any)}` : ''}`
+      : null
+  const ctaLabel = nudge.logShortcut
+    ? t('cycle_nudge_log_it' as any)
+    : nudge.pillarId
+      ? t('cycle_nudge_read_more' as any)
+      : null
+
+  if (diffuse) {
+    // v4 `.nudge`: mono eyebrow · serif+italic headline · sans body ·
+    // containerless action on a hairline. Bloom-icon in place of sticker chip.
+    return (
+      <Pressable onPress={handlePress} accessibilityRole="button" accessibilityLabel={t('cycle_nudge_label' as any)}>
+        <PaperCard radius={radius.lg} padding={18} style={styles.card}>
+          <View style={styles.headerRow}>
+            <Text style={[styles.label, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 }]}>
+              {t('cycle_nudge_label' as any)}
+            </Text>
+            <DiffuseBloomIcon color={diffuseAccent} size={30} intensity={0.45}>
+              <HeartLine size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+            </DiffuseBloomIcon>
+          </View>
+
+          <View style={styles.body}>
+            {renderHeadline(t(nudge.headlineKey as any), dt.colors.ink, dt.colors.ink, diffuseFont.display, diffuseFont.italic)}
+            <Text style={[styles.text, { color: dt.colors.ink2, fontFamily: diffuseFont.body }]} numberOfLines={4}>
+              {t(nudge.bodyKey as any)}
+            </Text>
+          </View>
+
+          {ctaLabel ? (
+            <View style={[styles.footerD, { borderTopColor: dt.colors.line2 }]}>
+              {fromLabel ? (
+                <Text style={[styles.fromD, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]} numberOfLines={1}>
+                  {fromLabel}
+                </Text>
+              ) : <View />}
+              <View style={styles.ctaRowD}>
+                <Text style={[styles.ctaD, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold }]}>
+                  {ctaLabel}
+                </Text>
+                <DiffuseArrow color={diffuseAccent} size={16} />
+              </View>
+            </View>
+          ) : null}
+        </PaperCard>
+      </Pressable>
+    )
   }
 
   return (
@@ -128,13 +192,22 @@ export function DailyNudgeCard({ cycleConfig }: Props) {
         </View>
 
         <View style={styles.body}>
-          {renderHeadline(t(nudge.headlineKey as any), ink, accent, font)}
+          {renderHeadline(t(nudge.headlineKey as any), ink, accent, font.display, font.italic)}
           <Text style={[styles.text, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={4}>
             {t(nudge.bodyKey as any)}
           </Text>
         </View>
 
-        {nudge.pillarId && (
+        {nudge.logShortcut ? (
+          <View style={[styles.footer, { borderTopColor: colors.border }]}>
+            <Text style={[styles.from, { color: colors.textMuted, fontFamily: font.bodyBold }]}>
+              {t('cycle_nudge_reflect_from' as any)}
+            </Text>
+            <Text style={[styles.cta, { color: accent, fontFamily: font.bodyBold }]}>
+              {t('cycle_nudge_log_it' as any)}
+            </Text>
+          </View>
+        ) : nudge.pillarId ? (
           <View style={[styles.footer, { borderTopColor: colors.border }]}>
             <Text style={[styles.from, { color: colors.textMuted, fontFamily: font.bodyBold }]}>
               {t('cycle_nudge_from' as any)}{PILLAR_LABEL_KEY[nudge.pillarId] ? ` · ${t(PILLAR_LABEL_KEY[nudge.pillarId] as any)}` : ''}
@@ -143,7 +216,7 @@ export function DailyNudgeCard({ cycleConfig }: Props) {
               {t('cycle_nudge_read_more' as any)}
             </Text>
           </View>
-        )}
+        ) : null}
       </PaperCard>
     </Pressable>
   )
@@ -165,4 +238,12 @@ const styles = StyleSheet.create({
   },
   from: { fontSize: 10, letterSpacing: 1.3, textTransform: 'uppercase' },
   cta: { fontSize: 11, letterSpacing: 0.3 },
+  // Diffuse containerless action row
+  footerD: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: 14, paddingTop: 14, borderTopWidth: 1, gap: 10,
+  },
+  fromD: { fontSize: 9.5, letterSpacing: 1.4, textTransform: 'uppercase', flexShrink: 1 },
+  ctaRowD: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  ctaD: { fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase' },
 })

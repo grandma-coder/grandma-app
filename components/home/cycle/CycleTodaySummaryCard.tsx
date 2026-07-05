@@ -9,9 +9,11 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { ChevronRight } from 'lucide-react-native'
+import { ChevronRight, Smile as SmileLine, Sprout, Droplet, Thermometer, Heart as HeartLine } from 'lucide-react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr, type CyclePhase } from '../../../lib/cycleLogic'
 import { seedCycleData } from '../../../lib/devSeed'
@@ -47,6 +49,9 @@ const LH_LABEL: Record<string, string> = {
 
 export function CycleTodaySummaryCard({ phase }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const diffuseAccent = getDiffuseAccent('pre-pregnancy', dt.isDark)
   const { t } = useTranslation()
   const qc = useQueryClient()
   const ink = isDark ? colors.text : '#141313'
@@ -176,44 +181,79 @@ export function CycleTodaySummaryCard({ phase }: Props) {
 
   const phaseAccent = phaseColor(phase, stickers)
 
+  // Diffuse: the 3 primary signals as v4 `.srow` rows (bloom line-icon + read
+  // label + mono value). The full 7-chip set stays in the current path.
+  const diffuseRows: { key: string; Icon: typeof SmileLine; color: string; label: string; value: string }[] = [
+    { key: 'mood', Icon: SmileLine, color: stickers.yellow, label: t('cycleDash_mood' as any), value: moodMeta?.label ?? '—' },
+    { key: 'symptoms', Icon: Sprout, color: stickers.green, label: t('cycleDash_symptoms' as any), value: symptoms.length > 0 ? String(symptoms.length) : '—' },
+    { key: 'bbt', Icon: Thermometer, color: stickers.blue, label: t('cycleDash_bbt' as any), value: bbtValue ? `${bbtValue}°` : '—' },
+    { key: 'lh', Icon: Droplet, color: stickers.peach, label: t('cycleDash_lh' as any), value: lhValue ? (LH_LABEL[lhValue] ?? lhValue) : '—' },
+    { key: 'cm', Icon: Droplet, color: stickers.lilac, label: t('cycleDash_cm' as any), value: cmValue ? (CM_LABEL[cmValue] ?? cmValue) : '—' },
+    { key: 'intimacy', Icon: HeartLine, color: stickers.pink, label: t('cycleDash_intimacy' as any), value: intimacy ? '✓' : '—' },
+  ]
+
   return (
     <View style={styles.wrap}>
       <Pressable
         onPress={() => setOpen(true)}
         style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1 }]}
       >
-        <PaperCard tint={paper} radius={24} padding={18}>
+        <PaperCard tint={diffuse ? undefined : paper} radius={24} padding={18}>
           <View style={styles.headerRow}>
             <View style={{ flex: 1 }}>
-              <Display size={22} color={ink}>{t('cycleDash_today')}</Display>
-              <Body size={12} color={colors.textMuted} style={{ marginTop: 2, fontFamily: font.italic }}>
+              <Display size={22} color={diffuse ? dt.colors.ink : ink}>{t('cycleDash_today')}</Display>
+              <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.mono : font.italic, ...(diffuse ? { letterSpacing: 1, textTransform: 'uppercase' as const, fontSize: 10 } : null) }}>
                 {summaryHint}
               </Body>
             </View>
-            <ChevronRight size={20} color={colors.textMuted} strokeWidth={2} />
+            <ChevronRight size={20} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
           </View>
 
-          <View style={styles.chipsRow}>
-            {chips.map((c) => (
-              <View key={c.key} style={styles.chip}>
-                <View style={styles.chipIcon}>{c.icon}</View>
-                <Text
-                  numberOfLines={1}
-                  style={[styles.chipLabel, { color: ink, fontFamily: font.bodySemiBold }]}
+          {diffuse ? (
+            <View style={styles.srows}>
+              {diffuseRows.map((r, i) => (
+                <View
+                  key={r.key}
+                  style={[
+                    styles.srow,
+                    { borderBottomColor: dt.colors.line, borderBottomWidth: i === diffuseRows.length - 1 ? 0 : StyleSheet.hairlineWidth },
+                  ]}
                 >
-                  {c.label}
-                </Text>
-              </View>
-            ))}
-          </View>
+                  <DiffuseBloomIcon color={r.color} size={30} intensity={0.42}>
+                    <r.Icon size={15} color={dt.colors.ink3} strokeWidth={1.6} />
+                  </DiffuseBloomIcon>
+                  <Text style={[styles.srowLabel, { color: dt.colors.ink, fontFamily: diffuseFont.body }]} numberOfLines={1}>
+                    {r.label}
+                  </Text>
+                  <Text style={[styles.srowValue, { color: r.value === '—' ? dt.colors.ink4 : dt.colors.ink, fontFamily: diffuseFont.monoBold }]} numberOfLines={1}>
+                    {r.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.chipsRow}>
+              {chips.map((c) => (
+                <View key={c.key} style={styles.chip}>
+                  <View style={styles.chipIcon}>{c.icon}</View>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.chipLabel, { color: ink, fontFamily: font.bodySemiBold }]}
+                  >
+                    {c.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
 
-          <View style={[styles.progressTrack, { backgroundColor: isDark ? colors.border : 'rgba(20,19,19,0.06)' }]}>
+          <View style={[styles.progressTrack, { backgroundColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.06)') }]}>
             <View
               style={[
                 styles.progressFill,
                 {
                   width: `${(completed / totalTrackable) * 100}%`,
-                  backgroundColor: completed === totalTrackable ? stickers.green : phaseAccent,
+                  backgroundColor: diffuse ? (completed === totalTrackable ? dt.colors.ink3 : diffuseAccent) : (completed === totalTrackable ? stickers.green : phaseAccent),
                 },
               ]}
             />
@@ -257,4 +297,9 @@ const styles = StyleSheet.create({
   chipLabel: { fontSize: 12, maxWidth: 70 },
   progressTrack: { height: 4, borderRadius: 2, marginTop: 14, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 2 },
+  // Diffuse summary rows (`.srow`)
+  srows: { marginTop: 4 },
+  srow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
+  srowLabel: { flex: 1, fontSize: 14 },
+  srowValue: { fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' },
 })

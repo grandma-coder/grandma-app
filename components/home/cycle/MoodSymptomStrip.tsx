@@ -22,6 +22,8 @@ import { MoodSymptomPickerSheet } from './MoodSymptomPickerSheet'
 import { LogSheet } from '../../calendar/LogSheet'
 import { PaperCard } from '../../ui/PaperCard'
 import { Sad, Smiley, Sleepy } from '../../ui/Stickers'
+import { useDiffuseTheme, diffuseFont } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
 
 type MoodId = '1' | '2' | '3' | '4' | '5'
@@ -40,6 +42,8 @@ interface Props {
 
 export function MoodSymptomStrip({ phase }: Props) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const qc = useQueryClient()
   const ink = isDark ? colors.text : '#141313'
@@ -136,7 +140,7 @@ export function MoodSymptomStrip({ phase }: Props) {
     <View style={{ paddingHorizontal: 20, marginTop: 12 }}>
       <PaperCard radius={radius.lg} padding={16}>
         <View style={styles.header}>
-          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
+          <Text style={[styles.heading, { fontFamily: diffuse ? diffuseFont.display : font.display, color: diffuse ? dt.colors.ink : ink }]}>
             {t('cycleMoodStrip_heading')}
           </Text>
           <Pressable
@@ -144,17 +148,23 @@ export function MoodSymptomStrip({ phase }: Props) {
             hitSlop={6}
             style={[
               styles.face,
-              {
-                backgroundColor: hasMood ? stickers.yellow : colors.surfaceRaised,
-                borderColor: hasMood ? ink : colors.border,
-                borderStyle: hasMood ? 'solid' : 'dashed',
-              },
+              diffuse
+                ? {
+                    backgroundColor: 'transparent',
+                    borderColor: hasMood ? dt.colors.hairline : dt.colors.line2,
+                    borderStyle: 'solid',
+                  }
+                : {
+                    backgroundColor: hasMood ? stickers.yellow : colors.surfaceRaised,
+                    borderColor: hasMood ? ink : colors.border,
+                    borderStyle: hasMood ? 'solid' : 'dashed',
+                  },
             ]}
           >
             {hasMood ? (
               <MoodFace id={moodId!} size={18} stickerSet={stickers} />
             ) : (
-              <Text style={{ fontSize: 15, color: colors.textMuted, fontFamily: font.bodyBold, marginTop: -1 }}>
+              <Text style={{ fontSize: 15, color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.bodyBold, marginTop: -1 }}>
                 +
               </Text>
             )}
@@ -164,6 +174,26 @@ export function MoodSymptomStrip({ phase }: Props) {
         <View style={styles.chips}>
           {chipSlots.map((id) => {
             const on = todaySymptoms.includes(id)
+            if (diffuse) {
+              // Hairline mono chip (`.chip` / `.chip.on`) — no filled sticker pill.
+              return (
+                <Pressable
+                  key={id}
+                  onPress={() => toggleChip(id)}
+                  style={[
+                    styles.chipD,
+                    {
+                      borderColor: on ? dt.colors.hairline : dt.colors.line,
+                      backgroundColor: on ? dt.colors.surface : 'transparent',
+                    },
+                  ]}
+                >
+                  <Text style={{ fontSize: 11, letterSpacing: 0.4, textTransform: 'uppercase', fontFamily: on ? diffuseFont.monoBold : diffuseFont.mono, color: on ? dt.colors.ink : dt.colors.ink3 }}>
+                    {symptomLabel(id)}
+                  </Text>
+                </Pressable>
+              )
+            }
             return (
               <Pressable
                 key={id}
@@ -185,14 +215,22 @@ export function MoodSymptomStrip({ phase }: Props) {
           })}
           <Pressable
             onPress={() => setPickerOpen(true)}
-            style={[styles.moreChip, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
+            style={[
+              diffuse ? styles.chipD : styles.moreChip,
+              diffuse
+                ? { borderColor: dt.colors.line, backgroundColor: 'transparent' }
+                : { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+            ]}
             hitSlop={6}
           >
-            <Text style={{ fontSize: 11, color: colors.textMuted, fontFamily: font.bodyBold }}>{t('cycleMoodStrip_more')}</Text>
+            <Text style={diffuse
+              ? { fontSize: 11, letterSpacing: 0.4, textTransform: 'uppercase', color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+              : { fontSize: 11, color: colors.textMuted, fontFamily: font.bodyBold }}
+            >{t('cycleMoodStrip_more')}</Text>
           </Pressable>
         </View>
 
-        <Text style={[styles.hint, { color: colors.textMuted, fontFamily: font.italic }]}>
+        <Text style={[styles.hint, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textMuted, fontFamily: font.italic }]}>
           {t('cycleMoodStrip_hint')}
         </Text>
       </PaperCard>
@@ -212,7 +250,9 @@ export function MoodSymptomStrip({ phase }: Props) {
                 onPress={() => setMood(id)}
                 style={[
                   styles.moodOpt,
-                  { backgroundColor: active ? stickers.yellow : colors.surfaceRaised, borderColor: active ? ink : colors.border },
+                  diffuse
+                    ? { backgroundColor: 'transparent', borderColor: active ? dt.colors.hairline : dt.colors.line2 }
+                    : { backgroundColor: active ? stickers.yellow : colors.surfaceRaised, borderColor: active ? ink : colors.border },
                 ]}
               >
                 <MoodFace id={id} size={32} stickerSet={stickers} />
@@ -238,6 +278,10 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingVertical: 7, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1,
+  },
+  chipD: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 10, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1,
   },
   moreChip: {
     paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1,
