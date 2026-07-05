@@ -26,7 +26,9 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X, ChevronRight, Brain, Sparkles, Flame } from 'lucide-react-native'
-import { useTheme, font } from '../../constants/theme'
+import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
+import { DiffuseSheet, DiffuseListRow, DiffuseSectionHeader, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { GROWTH_LEAPS, leapStatusForWeek, type GrowthLeap } from '../../lib/growthLeaps'
 import { useTranslation } from '../../lib/i18n'
 
@@ -69,6 +71,8 @@ function buildDotConfigs(leaps: GrowthLeap[], weekAge: number): DotConfig[] {
 
 export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Props) {
   const { font, colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
@@ -238,12 +242,16 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
   const selectedLeap = leaps[selectedIndex] ?? leaps[0]
   const selectedState = leapStatusForWeek(weekAge, selectedLeap.week)
   const col = selectedLeap.color
-  const ink = isDark ? colors.text : INK
-  const inkMuted = colors.textMuted
-  const inkFaint = colors.textFaint
-  const orbitStroke = colors.border
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : INK
+  // Under Diffuse the leap hue only survives as a soft bloom; ink/hairlines
+  // carry structure. The mode accent (kids field) replaces the per-leap color
+  // on strokes so the ring reads as one calm system, not 10 candy dots.
+  const diffuseAccent = getDiffuseAccent('kids', isDark)
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : INK)
+  const inkMuted = diffuse ? dt.colors.ink3 : colors.textMuted
+  const inkFaint = diffuse ? dt.colors.ink3 : colors.textFaint
+  const orbitStroke = diffuse ? dt.colors.line : colors.border
+  const paper = diffuse ? dt.colors.surface : (isDark ? colors.surface : '#FFFEF8')
+  const paperBorder = diffuse ? dt.colors.hairline : (isDark ? colors.border : INK)
 
   const statusLabel =
     selectedState === 'current' ? t('kids_journeyRing_statusNow') : selectedState === 'past' ? t('kids_journeyRing_statusDone') : t('kids_journeyRing_statusUpcoming')
@@ -259,10 +267,10 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
   return (
     <View style={styles.container}>
       <View style={styles.headerWrap}>
-        <Text style={[styles.title, { color: ink, fontFamily: font.display }]}>
+        <Text style={[styles.title, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }, diffuse && { letterSpacing: -0.4 }]}>
           {t('kids_journeyRing_title', { name: childName })}
         </Text>
-        <Text style={[styles.subtitle, { color: inkMuted, fontFamily: font.bodyMedium }]}>
+        <Text style={[styles.subtitle, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }, diffuse && { letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 }]}>
           {t('kids_journeyRing_subtitle', { weekAge, leapCount: leaps.length })}
         </Text>
       </View>
@@ -278,6 +286,63 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
               const isPast = d.state === 'past'
               const isFuture = d.state === 'future'
               const fontSize = d.size >= 52 ? 16 : d.size >= 42 ? 14 : 12
+
+              if (diffuse) {
+                // Hairline ring node: done = filled ink, current = open accent
+                // ring (soft bloom behind), upcoming = faint hollow. The W##
+                // label sits below the node in mono, counter-rotated upright.
+                const nodeSize = isCurrent ? 20 : isPast ? 16 : 13
+                const nodeFill = isPast ? dt.colors.ink : dt.colors.bg
+                const nodeBorder = isCurrent ? diffuseAccent : isPast ? dt.colors.ink : dt.colors.line2
+                return (
+                  <View
+                    key={d.index}
+                    style={{
+                      position: 'absolute',
+                      left: d.bx - d.size / 2,
+                      top: d.by - d.size / 2,
+                      width: d.size,
+                      height: d.size,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {isCurrent ? (
+                      <View pointerEvents="none" style={{ position: 'absolute', width: d.size * 1.4, height: d.size * 1.4 }}>
+                        <SoftBloom color={diffuseAccent} opacity={isDark ? 0.4 : 0.5} spread={0.45} />
+                      </View>
+                    ) : null}
+                    <Animated.View style={counterRotateStyle}>
+                      <View style={{ alignItems: 'center' }}>
+                        <View
+                          style={{
+                            width: nodeSize,
+                            height: nodeSize,
+                            borderRadius: nodeSize / 2,
+                            backgroundColor: nodeFill,
+                            borderWidth: 1.5,
+                            borderColor: nodeBorder,
+                            opacity: isFuture ? 0.85 : 1,
+                          }}
+                        />
+                        <Text
+                          style={{
+                            fontFamily: diffuseFont.mono,
+                            fontSize: 9,
+                            letterSpacing: 0.5,
+                            textTransform: 'uppercase',
+                            color: isFuture ? dt.colors.ink4 : dt.colors.ink3,
+                            marginTop: 4,
+                          }}
+                        >
+                          {t('kids_journeyRing_weekLabel', { n: leap.week })}
+                        </Text>
+                      </View>
+                    </Animated.View>
+                  </View>
+                )
+              }
+
               return (
                 <View
                   key={d.index}
@@ -327,32 +392,57 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
               r={RING_R}
               fill="none"
               stroke={orbitStroke}
-              strokeWidth={1.5}
+              strokeWidth={diffuse ? 1 : 1.5}
             />
-            <Polygon
-              points={`${CX},${CY + RING_R - 6} ${CX - 9},${CY + RING_R + 9} ${CX + 9},${CY + RING_R + 9}`}
-              fill={col}
-              stroke={isDark ? 'rgba(255,255,255,0.18)' : INK}
-              strokeWidth={1.5}
-            />
+            {diffuse ? (
+              // Hairline accent chevron marking the 6 o'clock anchor (no fill).
+              <Polygon
+                points={`${CX},${CY + RING_R - 6} ${CX - 8},${CY + RING_R + 8} ${CX + 8},${CY + RING_R + 8}`}
+                fill="none"
+                stroke={diffuseAccent}
+                strokeWidth={1.5}
+                strokeLinejoin="round"
+              />
+            ) : (
+              <Polygon
+                points={`${CX},${CY + RING_R - 6} ${CX - 9},${CY + RING_R + 9} ${CX + 9},${CY + RING_R + 9}`}
+                fill={col}
+                stroke={isDark ? 'rgba(255,255,255,0.18)' : INK}
+                strokeWidth={1.5}
+              />
+            )}
           </Svg>
 
           {/* Center overlay */}
           <View style={StyleSheet.absoluteFill} pointerEvents="none">
             <View style={styles.centerInner}>
               <Text
-                style={[styles.centerLabel, { color: col, fontFamily: font.bodySemiBold }]}
+                style={[
+                  styles.centerLabel,
+                  diffuse
+                    ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 }
+                    : { color: col, fontFamily: font.bodySemiBold },
+                ]}
               >
                 {t('kids_journeyRing_leapOf', { n: selectedIndex + 1, total: N })}
               </Text>
               <Text
-                style={[styles.centerName, { color: ink, fontFamily: font.display }]}
+                style={[
+                  styles.centerName,
+                  { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display },
+                  diffuse && { letterSpacing: -0.4 },
+                ]}
                 numberOfLines={2}
               >
                 {selectedLeap.name}
               </Text>
               <Text
-                style={[styles.centerWeek, { color: inkMuted, fontFamily: font.italic }]}
+                style={[
+                  styles.centerWeek,
+                  diffuse
+                    ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.8, textTransform: 'uppercase', fontSize: 10, fontStyle: 'normal' }
+                    : { color: inkMuted, fontFamily: font.italic },
+                ]}
               >
                 {weekRangeLabel}
               </Text>
@@ -361,7 +451,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
         </View>
       </View>
 
-      <Text style={[styles.hint, { color: inkFaint, fontFamily: font.body }]}>
+      <Text style={[styles.hint, { color: inkFaint, fontFamily: diffuse ? diffuseFont.mono : font.body }, diffuse && { letterSpacing: 1, textTransform: 'uppercase' }]}>
         {t('kids_journeyRing_hint')}
       </Text>
 
@@ -374,20 +464,29 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
         {/* Status pill */}
         <View style={styles.metaRow}>
           <Text
-            style={[styles.metaLabel, { color: col, fontFamily: font.bodySemiBold }]}
+            style={[
+              styles.metaLabel,
+              diffuse
+                ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.8 }
+                : { color: col, fontFamily: font.bodySemiBold },
+            ]}
           >
             {t('kids_journeyRing_growthLeap')}
           </Text>
           <View
             style={[
               styles.statusPill,
-              { borderColor: isDark ? statusColor + '70' : INK, backgroundColor: isDark ? statusColor + '22' : statusFill },
+              diffuse
+                ? { borderColor: selectedState === 'current' ? diffuseAccent : dt.colors.line2, backgroundColor: 'transparent' }
+                : { borderColor: isDark ? statusColor + '70' : INK, backgroundColor: isDark ? statusColor + '22' : statusFill },
             ]}
           >
             <Text
               style={[
                 styles.statusPillText,
-                { color: isDark ? statusColor : INK, fontFamily: font.bodySemiBold },
+                diffuse
+                  ? { color: selectedState === 'current' ? diffuseAccent : dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1 }
+                  : { color: isDark ? statusColor : INK, fontFamily: font.bodySemiBold },
               ]}
             >
               {statusLabel}
@@ -400,31 +499,91 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
           onPress={() => setDetailOpen(true)}
           style={({ pressed }) => [
             styles.descCard,
-            {
-              backgroundColor: isDark ? col + '14' : col + '22',
-              borderColor: isDark ? col + '38' : INK,
-              opacity: pressed ? 0.92 : 1,
-            },
+            diffuse
+              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderWidth: 1, opacity: pressed ? 0.9 : 1 }
+              : {
+                  backgroundColor: isDark ? col + '14' : col + '22',
+                  borderColor: isDark ? col + '38' : INK,
+                  opacity: pressed ? 0.92 : 1,
+                },
           ]}
         >
+          {diffuse ? <SoftBloom color={col} cx="88%" cy="20%" opacity={isDark ? 0.16 : 0.22} spread={0.5} /> : null}
           <View style={{ flex: 1, gap: 4 }}>
-            <Text style={[styles.descText, { color: ink, fontFamily: font.body }]} numberOfLines={2}>
+            <Text style={[styles.descText, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.body }]} numberOfLines={2}>
               {selectedLeap.desc}
             </Text>
-            <Text style={[styles.descCta, { color: ink, fontFamily: font.bodySemiBold }]}>
+            <Text
+              style={[
+                styles.descCta,
+                diffuse
+                  ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, opacity: 1 }
+                  : { color: ink, fontFamily: font.bodySemiBold },
+              ]}
+            >
               {t('kids_journeyRing_tapForGuide')}
             </Text>
           </View>
-          <View style={{
-            width: 28, height: 28, borderRadius: 14,
-            backgroundColor: paper, borderWidth: 1.2, borderColor: paperBorder,
-            alignItems: 'center', justifyContent: 'center',
-          }}>
-            <ChevronRight size={14} color={ink} strokeWidth={2.2} />
-          </View>
+          {diffuse ? (
+            <DiffuseBloomIcon color={diffuseAccent} size={30}>
+              <ChevronRight size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+            </DiffuseBloomIcon>
+          ) : (
+            <View style={{
+              width: 28, height: 28, borderRadius: 14,
+              backgroundColor: paper, borderWidth: 1.2, borderColor: paperBorder,
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <ChevronRight size={14} color={ink} strokeWidth={2.2} />
+            </View>
+          )}
         </Pressable>
 
-        {/* Mini progress strip — 10 leap dots */}
+        {/* All leaps — Diffuse: hairline rows; current: mini dot strip */}
+        {diffuse ? (
+          <View style={{ marginTop: 4 }}>
+            <Text
+              style={[styles.sectionLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.8, marginBottom: 4 }]}
+            >
+              {t('kids_journeyRing_allLeaps')}
+            </Text>
+            {leaps.map((l, i) => {
+              const state = leapStatusForWeek(weekAge, l.week)
+              const isSel = i === selectedIndex
+              const isPast = state === 'past'
+              const isCurr = state === 'current'
+              const rowStatus = isCurr ? t('kids_journeyRing_statusNow') : isPast ? t('kids_journeyRing_statusDone') : t('kids_journeyRing_statusUpcoming')
+              // Ring node: done = filled ink, current = open accent ring,
+              // upcoming = faint hollow. Selected row gets an accent ring too.
+              const nodeBorder = isCurr ? diffuseAccent : isPast ? dt.colors.ink : dt.colors.line2
+              const nodeFill = isPast ? dt.colors.ink : dt.colors.bg
+              const node = (
+                <View
+                  style={{
+                    width: 13,
+                    height: 13,
+                    borderRadius: 7,
+                    backgroundColor: nodeFill,
+                    borderWidth: 1.5,
+                    borderColor: isSel ? diffuseAccent : nodeBorder,
+                  }}
+                />
+              )
+              return (
+                <DiffuseListRow
+                  key={l.week}
+                  title={l.name}
+                  sub={t('kids_journeyRing_weekLabel', { n: l.week })}
+                  icon={node}
+                  value={rowStatus}
+                  valueColor={isCurr ? diffuseAccent : dt.colors.ink3}
+                  onPress={() => snapToIndex(i)}
+                  last={i === leaps.length - 1}
+                />
+              )
+            })}
+          </View>
+        ) : (
         <View style={styles.section}>
           <Text
             style={[styles.sectionLabel, { color: inkFaint, fontFamily: font.bodySemiBold }]}
@@ -459,6 +618,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
             })}
           </View>
         </View>
+        )}
       </ScrollView>
 
       {/* ── Detail modal ── */}
@@ -491,12 +651,94 @@ function LeapDetailModal({
   statusColor: string
 }) {
   const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const ink = isDark ? colors.text : INK
   const inkMuted = colors.textMuted
   const paper = isDark ? colors.surface : '#FFFEF8'
   const paperBorder = isDark ? colors.border : INK
+
+  if (diffuse) {
+    const acc = getDiffuseAccent('kids', isDark)
+    return (
+      <DiffuseSheet
+        visible={visible}
+        onClose={onClose}
+        title={leap.name}
+        chip={t('kids_journeyRing_leapOfWithAge', { n: leapNumber, total: totalLeaps, age: leap.ageRange })}
+      >
+        {/* Status / duration / peak — mono chips (hairline, no filled block) */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+          <DiffuseChip label={statusLabel} accent={acc} highlighted />
+          <DiffuseChip label={`Lasts ${leap.duration}`} accent={acc} />
+          <DiffuseChip label={`Peak: week ${leap.week}`} accent={acc} />
+        </View>
+
+        {/* Brain note */}
+        <DiffuseSection eyebrow={t('kids_journeyRing_whatsHappening')} icon={<Brain size={16} color={dt.colors.ink3} strokeWidth={1.6} />} accent={leap.color}>
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 22, color: dt.colors.ink }}>
+            {leap.brainNote}
+          </Text>
+        </DiffuseSection>
+
+        {/* Phases — hairline rows with mono index (no filled colored block) */}
+        <DiffuseSection eyebrow={t('kids_journeyRing_threePhases')} icon={<Flame size={16} color={dt.colors.ink3} strokeWidth={1.6} />} accent={leap.color}>
+          <View>
+            {leap.phases.map((p, i) => (
+              <View
+                key={p.label}
+                style={{
+                  flexDirection: 'row',
+                  gap: 12,
+                  alignItems: 'flex-start',
+                  paddingVertical: 12,
+                  borderBottomWidth: i === leap.phases.length - 1 ? 0 : StyleSheet.hairlineWidth,
+                  borderBottomColor: dt.colors.line,
+                }}
+              >
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1, color: dt.colors.ink3, marginTop: 1, minWidth: 16 }}>{i + 1}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: diffuseFont.display, fontSize: 17, letterSpacing: -0.2, color: dt.colors.ink }}>{p.label}</Text>
+                  <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, lineHeight: 20, color: dt.colors.ink3, marginTop: 3 }}>{p.desc}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </DiffuseSection>
+
+        {/* Signs */}
+        <DiffuseBulletList eyebrow={t('kids_journeyRing_signsYouMayNotice')} items={leap.signs} />
+        {/* Skills */}
+        <DiffuseBulletList eyebrow={t('kids_journeyRing_newSkillsEmerging')} items={leap.skills} />
+        {/* Activities */}
+        <DiffuseBulletList eyebrow={t('kids_journeyRing_tryTheseActivities')} items={leap.activities} />
+
+        {/* Tip — hairline card with a soft bloom + bloom-icon */}
+        <View style={{
+          flexDirection: 'row',
+          gap: 12,
+          alignItems: 'flex-start',
+          padding: 14,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: dt.colors.line,
+          backgroundColor: dt.colors.surface,
+          overflow: 'hidden',
+          marginTop: 4,
+        }}>
+          <SoftBloom color={dt.stickers.yellow} cx="12%" cy="24%" opacity={isDark ? 0.16 : 0.24} spread={0.5} />
+          <DiffuseBloomIcon color={dt.stickers.yellow} size={30}>
+            <Sparkles size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+          </DiffuseBloomIcon>
+          <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 22, color: dt.colors.ink }}>
+            {leap.tip}
+          </Text>
+        </View>
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -665,6 +907,68 @@ function Chip({ label, fill, ink, isDark }: { label: string; fill: string; ink: 
       <Text style={{ fontSize: 11, fontFamily: font.bodyBold, color: ink, letterSpacing: 0.2 }}>
         {label}
       </Text>
+    </View>
+  )
+}
+
+// ─── Diffuse detail-modal helpers ────────────────────────────────────────────
+
+/** Hairline mono chip. Highlighted = accent border + accent text. */
+function DiffuseChip({ label, accent, highlighted }: { label: string; accent: string; highlighted?: boolean }) {
+  const { colors } = useDiffuseTheme()
+  return (
+    <View style={{
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: highlighted ? accent : colors.line2,
+    }}>
+      <Text style={{ fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', color: highlighted ? accent : colors.ink3 }}>
+        {label}
+      </Text>
+    </View>
+  )
+}
+
+/** A detail section: bloom-icon + mono eyebrow rule, then children. No card. */
+function DiffuseSection({ eyebrow, icon, accent, children }: { eyebrow: string; icon: React.ReactNode; accent: string; children: React.ReactNode }) {
+  const { colors } = useDiffuseTheme()
+  return (
+    <View style={{ marginBottom: 4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line, marginBottom: 10 }}>
+        <DiffuseBloomIcon color={accent} size={28}>{icon}</DiffuseBloomIcon>
+        <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10.5, letterSpacing: 1.6, textTransform: 'uppercase', color: colors.ink3 }}>{eyebrow}</Text>
+      </View>
+      {children}
+    </View>
+  )
+}
+
+/** A mono-eyebrow section whose body is hairline bullet rows. */
+function DiffuseBulletList({ eyebrow, items }: { eyebrow: string; items: string[] }) {
+  const { colors } = useDiffuseTheme()
+  return (
+    <View style={{ marginBottom: 4 }}>
+      <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10.5, letterSpacing: 1.6, textTransform: 'uppercase', color: colors.ink3, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line, marginBottom: 4 }}>
+        {eyebrow}
+      </Text>
+      {items.map((item, i) => (
+        <View
+          key={i}
+          style={{
+            flexDirection: 'row',
+            gap: 12,
+            alignItems: 'flex-start',
+            paddingVertical: 10,
+            borderBottomWidth: i === items.length - 1 ? 0 : StyleSheet.hairlineWidth,
+            borderBottomColor: colors.line,
+          }}
+        >
+          <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.ink3, marginTop: 7 }} />
+          <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 21, color: colors.ink }}>{item}</Text>
+        </View>
+      ))}
     </View>
   )
 }

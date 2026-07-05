@@ -13,7 +13,8 @@
 import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import Svg, { Path, Circle, Line, Text as SvgText, G } from 'react-native-svg'
-import { useTheme, font } from '../../constants/theme'
+import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import {
   type Metric,
@@ -59,7 +60,14 @@ export function GrowthPercentileChart({
   width,
 }: Props) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
+
+  // Under Diffuse the whole chart is recolored to muted mode tokens: the P50
+  // line + the child's dots carry the accent; all other bands, grid, and axis
+  // labels fall to hairlines / ink-3. No sticker fills.
+  const dAccent = getDiffuseAccent('kids', isDark)
 
   // Window: 6 months of context on either side of the child's current age,
   // clamped to the table range.
@@ -97,9 +105,14 @@ export function GrowthPercentileChart({
   // produce ages outside the table.
   if (bands.length < 2 || !yRange || window.toMonths <= window.fromMonths) {
     return (
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-        <Text style={[styles.empty, { color: colors.textMuted }]}>
+      <View style={[
+        styles.card,
+        diffuse
+          ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderWidth: 1 }
+          : { backgroundColor: colors.surface, borderColor: colors.border },
+      ]}>
+        <Text style={[styles.title, { color: diffuse ? dt.colors.ink : colors.text }, diffuse && { fontFamily: diffuseFont.display, fontSize: 17 }]}>{title}</Text>
+        <Text style={[styles.empty, { color: diffuse ? dt.colors.ink3 : colors.textMuted }, diffuse && { fontFamily: diffuseFont.body, fontStyle: 'normal' }]}>
           {t('growthChart_noReferenceData')}
         </Text>
       </View>
@@ -154,13 +167,27 @@ export function GrowthPercentileChart({
     yTicks.push(yRange.min + ((yRange.max - yRange.min) * i) / 3)
   }
 
+  // Diffuse chart palette — muted mode tokens over the sticker fills.
+  const bandLine = diffuse ? dt.colors.ink3 : BAND_LINE
+  const bandP3P15 = diffuse ? dAccent : BAND_FILL_P3_P15
+  const bandP15P85 = diffuse ? dAccent : BAND_FILL_P15_P85
+  const bandP85P97 = diffuse ? dAccent : BAND_FILL_P85_P97
+  const axisLabelColor = diffuse ? dt.colors.ink3 : (isDark ? colors.textMuted : '#6E6763')
+  const pointFill = diffuse ? dAccent : POINT_FILL
+  const pointStroke = diffuse ? dt.colors.bg : POINT_STROKE
+
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View style={[
+      styles.card,
+      diffuse
+        ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderWidth: 1 }
+        : { backgroundColor: colors.surface, borderColor: colors.border },
+    ]}>
       <View style={styles.titleRow}>
-        <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+        <Text style={[styles.title, { color: diffuse ? dt.colors.ink : colors.text }, diffuse && { fontFamily: diffuseFont.display, fontSize: 17, letterSpacing: -0.3 }]}>{title}</Text>
         {latestPct !== null ? (
-          <View style={[styles.pctChip, { borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)' }]}>
-            <Text style={[styles.pctChipText, { color: colors.text }]}>
+          <View style={[styles.pctChip, { borderColor: diffuse ? dt.colors.line2 : (isDark ? colors.border : 'rgba(20,19,19,0.12)') }]}>
+            <Text style={[styles.pctChipText, { color: diffuse ? dt.colors.ink3 : colors.text }, diffuse && { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }]}>
               {t('growthChart_pctChipLabel', { name: childName ? `${childName} · ` : '', pct: latestPct })}
             </Text>
           </View>
@@ -168,19 +195,19 @@ export function GrowthPercentileChart({
       </View>
 
       <Svg width={width} height={totalH}>
-        {/* Filled band regions */}
-        <Path d={buildArea('p3', 'p15')} fill={BAND_FILL_P3_P15} opacity={0.7} />
-        <Path d={buildArea('p15', 'p85')} fill={BAND_FILL_P15_P85} />
-        <Path d={buildArea('p85', 'p97')} fill={BAND_FILL_P85_P97} />
+        {/* Filled band regions — Diffuse: very low-opacity accent wash */}
+        <Path d={buildArea('p3', 'p15')} fill={bandP3P15} opacity={diffuse ? (isDark ? 0.05 : 0.06) : 0.7} />
+        <Path d={buildArea('p15', 'p85')} fill={bandP15P85} opacity={diffuse ? (isDark ? 0.1 : 0.1) : 1} />
+        <Path d={buildArea('p85', 'p97')} fill={bandP85P97} opacity={diffuse ? (isDark ? 0.05 : 0.06) : 1} />
 
-        {/* Percentile lines */}
+        {/* Percentile lines — Diffuse: hairline ink-3, P50 = accent */}
         {(['p3', 'p15', 'p50', 'p85', 'p97'] as const).map((k) => (
           <Path
             key={k}
             d={buildPath(k)}
-            stroke={BAND_LINE}
-            strokeWidth={k === 'p50' ? 1.5 : 0.6}
-            strokeOpacity={k === 'p50' ? 0.4 : 0.18}
+            stroke={diffuse ? (k === 'p50' ? dAccent : bandLine) : BAND_LINE}
+            strokeWidth={k === 'p50' ? 1.5 : diffuse ? 0.75 : 0.6}
+            strokeOpacity={diffuse ? (k === 'p50' ? 0.9 : 0.22) : (k === 'p50' ? 0.4 : 0.18)}
             fill="none"
           />
         ))}
@@ -193,14 +220,15 @@ export function GrowthPercentileChart({
               x2={xFor(m)}
               y1={padTop + chartH}
               y2={padTop + chartH + 4}
-              stroke={BAND_LINE}
-              strokeOpacity={0.4}
+              stroke={bandLine}
+              strokeOpacity={diffuse ? 0.3 : 0.4}
             />
             <SvgText
               x={xFor(m)}
               y={padTop + chartH + 18}
-              fontSize={10}
-              fill={isDark ? colors.textMuted : '#6E6763'}
+              fontSize={diffuse ? 9 : 10}
+              fontFamily={diffuse ? diffuseFont.mono : undefined}
+              fill={axisLabelColor}
               textAnchor="middle"
             >
               {labelTick(m)}
@@ -214,8 +242,9 @@ export function GrowthPercentileChart({
             key={`y-${i}`}
             x={padLeft - 4}
             y={yFor(v) + 3}
-            fontSize={10}
-            fill={isDark ? colors.textMuted : '#6E6763'}
+            fontSize={diffuse ? 9 : 10}
+            fontFamily={diffuse ? diffuseFont.mono : undefined}
+            fill={axisLabelColor}
             textAnchor="end"
           >
             {v.toFixed(metric === 'weight' && v < 10 ? 1 : 0)}
@@ -233,9 +262,9 @@ export function GrowthPercentileChart({
               key={`pt-${i}-${p.date}`}
               cx={xFor(p.ageMonths)}
               cy={yClamped}
-              r={5}
-              fill={POINT_FILL}
-              stroke={POINT_STROKE}
+              r={diffuse ? 4 : 5}
+              fill={pointFill}
+              stroke={pointStroke}
               strokeWidth={2}
             />
           )
@@ -244,17 +273,17 @@ export function GrowthPercentileChart({
 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendSwatch, { backgroundColor: BAND_FILL_P15_P85 }]} />
-          <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('growthChart_legendTypical')}</Text>
+          <View style={[styles.legendSwatch, { backgroundColor: diffuse ? dAccent : BAND_FILL_P15_P85, opacity: diffuse ? 0.35 : 1 }]} />
+          <Text style={[styles.legendText, { color: diffuse ? dt.colors.ink3 : colors.textMuted }, diffuse && { fontFamily: diffuseFont.mono, letterSpacing: 0.8, textTransform: 'uppercase', fontSize: 9 }]}>{t('growthChart_legendTypical')}</Text>
         </View>
-        <Text style={[styles.legendText, { color: colors.textMuted }]}>
+        <Text style={[styles.legendText, { color: diffuse ? dt.colors.ink3 : colors.textMuted }, diffuse && { fontFamily: diffuseFont.mono, letterSpacing: 0.8, textTransform: 'uppercase', fontSize: 9 }]}>
           {sortedPoints.length === 1
             ? t('growthChart_measurementOne', { count: sortedPoints.length, unit: valueUnit })
             : t('growthChart_measurementMany', { count: sortedPoints.length, unit: valueUnit })}
         </Text>
       </View>
 
-      <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
+      <Text style={[styles.disclaimer, { color: diffuse ? dt.colors.ink3 : colors.textMuted }, diffuse && { fontFamily: diffuseFont.body, fontStyle: 'normal' }]}>
         {t('growthChart_disclaimer')}
       </Text>
     </View>
