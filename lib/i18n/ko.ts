@@ -303,6 +303,9 @@ export const ko: TranslationKeys = {
   pregnancy_appt_whatToExpect: 'WHAT TO EXPECT',
   pregnancy_appt_scheduleInAgenda: 'Schedule in agenda',
   pregnancy_appt_askGrandma: 'Ask Grandma',
+  pregnancy_appt_weekTiming: 'Week {{week}} · {{timing}}',
+  pregnancy_appt_prep: 'PREP',
+  pregnancy_appt_questionsToAsk: 'QUESTIONS TO ASK',
   // ContractionTimer (Wave 2)
   preg_contractions_title: 'CONTRACTION TIMER',
   preg_contractions_subtitle: 'Track timing and duration between contractions',

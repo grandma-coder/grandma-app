@@ -77,7 +77,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
                 {appointment.name}
               </Display>
               <Body size={13} color={colors.textMuted} style={{ marginTop: 4 }}>
-                Week {appointment.week} · {timingLabel}
+                {t('pregnancy_appt_weekTiming', { week: appointment.week, timing: timingLabel })}
               </Body>
             </View>
 
@@ -89,7 +89,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
             <PaperCard tint={stickers.yellowSoft} radius={16} padding={14} flat style={styles.card}>
               <View style={styles.cardHeader}>
                 <TipRead size={20} />
-                <MonoCaps size={10} color={colors.textMuted}>PREP</MonoCaps>
+                <MonoCaps size={10} color={colors.textMuted}>{t('pregnancy_appt_prep')}</MonoCaps>
               </View>
               <Body size={13} color={colors.text} style={{ lineHeight: 19 }}>
                 {appointment.prepNote}
@@ -111,7 +111,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
             <PaperCard tint={stickers.greenSoft} radius={16} padding={14} flat style={styles.card}>
               <View style={styles.cardHeader}>
                 <NotifyInsight size={20} />
-                <MonoCaps size={10} color={colors.textMuted}>QUESTIONS TO ASK</MonoCaps>
+                <MonoCaps size={10} color={colors.textMuted}>{t('pregnancy_appt_questionsToAsk')}</MonoCaps>
               </View>
               {appointment.questions.map((q, i) => (
                 <View key={i} style={styles.questionRow}>
