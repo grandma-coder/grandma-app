@@ -21,7 +21,7 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useDiffuseTheme, getModeField, getDiffuseAccent, diffuseFont } from '../../../constants/theme'
 import { useModeStore } from '../../../store/useModeStore'
-import { DiffuseGrain, DiffuseArrow } from './DiffuseKit'
+import { DiffuseGrain, DiffuseArrow, SoftBloom } from './DiffuseKit'
 
 // ─── Shared role-type styles ────────────────────────────────────────────────
 
@@ -175,15 +175,9 @@ export function DiffuseStatCard({
         style,
       ]}
     >
-      {/* soft corner bloom (herotile spec: radial wash from the top-right) */}
-      <View
-        pointerEvents="none"
-        style={{ position: 'absolute', top: -56, right: -40, width: 150, height: 150, borderRadius: 75, backgroundColor: c1, opacity: isDark ? 0.30 : 0.42 }}
-      />
-      <View
-        pointerEvents="none"
-        style={{ position: 'absolute', top: 10, right: 6, width: 90, height: 90, borderRadius: 45, backgroundColor: c2, opacity: isDark ? 0.22 : 0.30 }}
-      />
+      {/* soft feathered corner bloom (herotile spec: radial wash top-right) */}
+      <SoftBloom color={c1} cx="82%" cy="12%" opacity={isDark ? 0.34 : 0.5} spread={0.55} />
+      <SoftBloom color={c2} cx="62%" cy="40%" opacity={isDark ? 0.22 : 0.32} spread={0.5} />
       <DiffuseGrain radius={dp.statCard.borderRadius} opacity={0.05} />
 
       <View style={dp.statHeaderRow}>
@@ -607,37 +601,17 @@ interface BloomIconProps {
   intensity?: number         // bloom opacity (default 0.5)
 }
 
-export function DiffuseBloomIcon({ children, color, size = 34, intensity = 0.5 }: BloomIconProps) {
+export function DiffuseBloomIcon({ children, color, size = 34, intensity = 0.55 }: BloomIconProps) {
   const { isDark } = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
   const bloom = color ?? getDiffuseAccent(mode, isDark)
+  // The bloom box is larger than the glyph so the feathered edge extends past it.
+  const box = size * 1.5
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      {/* soft radial bloom behind the glyph */}
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: bloom,
-          opacity: isDark ? intensity * 0.7 : intensity,
-          // feathered edge — approximates radial-gradient fade in RN
-          transform: [{ scale: 0.82 }],
-        }}
-      />
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          width: size * 0.6,
-          height: size * 0.6,
-          borderRadius: size,
-          backgroundColor: bloom,
-          opacity: isDark ? intensity : intensity * 1.3,
-        }}
-      />
+      <View pointerEvents="none" style={{ position: 'absolute', width: box, height: box, left: (size - box) / 2, top: (size - box) / 2 }}>
+        <SoftBloom color={bloom} opacity={isDark ? intensity * 0.8 : intensity} spread={0.5} />
+      </View>
       <View style={{ zIndex: 1 }}>{children}</View>
     </View>
   )
@@ -719,7 +693,9 @@ export function DiffuseDotCalendar({ value, onChange, month, minimumDate, period
               style={dp.calCellWrap}
             >
               {selected ? (
-                <View pointerEvents="none" style={[dp.calBloom, { backgroundColor: acc, opacity: 0.5 }]} />
+                <View pointerEvents="none" style={dp.calBloom}>
+                  <SoftBloom color={acc} opacity={0.55} spread={0.4} />
+                </View>
               ) : null}
               <View
                 style={[

@@ -9,9 +9,9 @@
  * Everything here is token-driven (constants/theme.ts → useDiffuseTheme).
  */
 
-import { ReactNode } from 'react'
+import { ReactNode, useMemo } from 'react'
 import { View, Text, StyleSheet, ViewStyle, StyleProp, TextStyle, TextProps, Platform } from 'react-native'
-import Svg, { Defs, Filter, FeTurbulence, Rect } from 'react-native-svg'
+import Svg, { Defs, Filter, FeTurbulence, Rect, RadialGradient, Stop } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useThemeStore } from '../../../store/useThemeStore'
 import {
@@ -65,6 +65,39 @@ export function DiffuseGrain({ opacity, radius = 0 }: GrainProps) {
   )
 }
 
+// ─── SoftBloom ──────────────────────────────────────────────────────────────
+// A single feathered radial bloom via SVG RadialGradient — fades to transparent
+// at the edge (the real diffuse glow; a plain RN View renders a hard disc). Fills
+// its parent; position/size the parent. cx/cy move the hotspot for corner blooms.
+
+let bloomSeq = 0
+interface SoftBloomProps {
+  color: string
+  opacity?: number
+  cx?: string
+  cy?: string
+  spread?: number
+  style?: StyleProp<ViewStyle>
+}
+
+export function SoftBloom({ color, opacity = 0.5, cx = '50%', cy = '50%', spread = 0.6, style }: SoftBloomProps) {
+  const id = useMemo(() => `sb${bloomSeq++}`, [])
+  return (
+    <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, style]}>
+      <Svg width="100%" height="100%">
+        <Defs>
+          <RadialGradient id={id} cx={cx} cy={cy} r="60%">
+            <Stop offset="0" stopColor={color} stopOpacity={opacity} />
+            <Stop offset={String(spread)} stopColor={color} stopOpacity={opacity * 0.4} />
+            <Stop offset="1" stopColor={color} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill={`url(#${id})`} />
+      </Svg>
+    </View>
+  )
+}
+
 // ─── Gradient-field surface ────────────────────────────────────────────────
 // The soft, low-saturation generative field behind Diffuse surfaces. Uses the
 // active mode's 4 field stops, blurred by low opacity + a paper wash so it
@@ -95,22 +128,14 @@ export function DiffuseFieldSurface({
   const { colors } = useDiffuseTheme()
   const [g1, , g3] = getModeField(mode, isDark)
 
-  // v4 "soft wash" (ALERT · SOFT WASH in the reference): the card is clean
-  // PAPER; a SINGLE gentle color pool bleeds from the RIGHT EDGE behind the
-  // content — never a full-card gradient (that read as grey). Subtle.
-  const washOpacity = (isDark ? 0.24 : 0.34) * (intensity / 0.5)
+  // v4 "soft wash": clean PAPER + a single feathered color pool bleeding from
+  // the right edge (SVG radial, fades to transparent — no hard disc, no grey veil).
+  const washOpacity = (isDark ? 0.26 : 0.4) * (intensity / 0.5)
 
   return (
     <View style={[{ borderRadius: radius, overflow: 'hidden', backgroundColor: colors.surface }, style]}>
-      {/* one soft edge pool from the right — the only color on the card */}
-      <View
-        pointerEvents="none"
-        style={{ position: 'absolute', top: '-35%', right: '-14%', width: '58%', height: '170%', borderRadius: 999, backgroundColor: g1, opacity: washOpacity }}
-      />
-      <View
-        pointerEvents="none"
-        style={{ position: 'absolute', bottom: '-40%', right: '14%', width: '34%', height: '150%', borderRadius: 999, backgroundColor: g3, opacity: washOpacity * 0.7 }}
-      />
+      <SoftBloom color={g1} cx="88%" cy="30%" opacity={washOpacity} spread={0.5} />
+      <SoftBloom color={g3} cx="72%" cy="88%" opacity={washOpacity * 0.7} spread={0.5} />
       {grain ? <DiffuseGrain radius={radius} opacity={0.04} /> : null}
       {children}
     </View>
