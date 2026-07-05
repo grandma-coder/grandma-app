@@ -25,10 +25,19 @@ export interface LanguageOption {
   rtl?: boolean
 }
 
+// Languages the app is FULLY translated into — the only ones offered in the
+// picker and used by device auto-detect. The AppLanguage type + engine still
+// support all 12 (locale files remain in lib/i18n/), so re-enabling any of the
+// nine below is just moving it back into this array once Tolgee has filled it.
 export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' },
   { code: 'pt-BR', name: 'Portuguese (Brazil)', nativeName: 'Português (Brasil)', flag: '🇧🇷' },
   { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
+]
+
+// Wired in the engine but not yet fully translated — hidden from the picker.
+// Promote an entry into SUPPORTED_LANGUAGES when its locale file is complete.
+export const UPCOMING_LANGUAGES: LanguageOption[] = [
   { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
   { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪' },
   { code: 'it', name: 'Italian', nativeName: 'Italiano', flag: '🇮🇹' },
@@ -81,7 +90,13 @@ export const useLanguageStore = create<LanguageStore>()(
       partialize: (state) => ({ language: state.language }),
       // See useBehaviorStore for the rationale — must flip hydrated
       // even when there's nothing persisted to rehydrate from.
-      onRehydrateStorage: () => () => {
+      onRehydrateStorage: () => (state) => {
+        // A user who picked a language that's since been removed from the
+        // picker (one of the not-yet-translated nine) should fall back to
+        // English rather than stay stuck on a half-translated locale.
+        if (state && !SUPPORTED_LANGUAGES.some((l) => l.code === state.language)) {
+          state.language = 'en'
+        }
         useLanguageStore.setState({ hydrated: true })
       },
     }
