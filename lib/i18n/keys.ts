@@ -62,6 +62,7 @@ export interface TranslationKeys {
 
   // ─── Home Screen ───────────────────────────────────────────────────────
   home_greeting: string
+  home_hi: string
   home_goodMorning: string
   home_goodAfternoon: string
   home_goodEvening: string

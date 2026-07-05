@@ -10,6 +10,7 @@ import { View, StyleSheet } from 'react-native'
 import { Display, DisplayItalic, MonoCaps } from '../ui/Typography'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
 import { useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 interface HomeGreetingProps {
   name?: string | null
@@ -29,6 +30,7 @@ export function HomeGreeting({
   logoSize = 44,
 }: HomeGreetingProps) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
   const displayName = name?.trim().split(/\s+/)[0] || 'dear'
 
@@ -46,7 +48,7 @@ export function HomeGreeting({
       ) : null}
       <View style={{ flex: 1 }}>
         <View style={styles.row}>
-          <Display size={size} color={ink}>Hi,</Display>
+          <Display size={size} color={ink}>{t('home_hi')}</Display>
           <DisplayItalic size={size} color={ink} style={{ marginLeft: 8 }}>
             {displayName}
           </DisplayItalic>

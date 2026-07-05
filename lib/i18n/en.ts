@@ -59,6 +59,7 @@ export const en: TranslationKeys = {
 
   // Home Screen
   home_greeting: 'Hello, dear',
+  home_hi: 'Hi,',
   home_goodMorning: 'Good morning',
   home_goodAfternoon: 'Good afternoon',
   home_goodEvening: 'Good evening',

@@ -43,6 +43,7 @@ export const ja: TranslationKeys = {
   mode_cycleTracking: '生理周期',
 
   home_greeting: 'こんにちは',
+  home_hi: 'Hi,',
   home_goodMorning: 'おはようございます',
   home_goodAfternoon: 'こんにちは',
   home_goodEvening: 'こんばんは',

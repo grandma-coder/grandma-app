@@ -43,6 +43,7 @@ export const es: TranslationKeys = {
   mode_cycleTracking: 'Seguimiento del Ciclo',
 
   home_greeting: 'Hola, querida',
+  home_hi: 'Hi,',
   home_goodMorning: 'Buenos días',
   home_goodAfternoon: 'Buenas tardes',
   home_goodEvening: 'Buenas noches',

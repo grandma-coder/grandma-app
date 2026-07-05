@@ -43,6 +43,7 @@ export const tr: TranslationKeys = {
   mode_cycleTracking: 'Döngü Takibi',
 
   home_greeting: 'Merhaba canım',
+  home_hi: 'Hi,',
   home_goodMorning: 'Günaydın',
   home_goodAfternoon: 'İyi günler',
   home_goodEvening: 'İyi akşamlar',

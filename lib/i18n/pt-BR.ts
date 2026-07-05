@@ -48,6 +48,7 @@ export const ptBR: TranslationKeys = {
 
   // Home Screen
   home_greeting: 'Olá, querida',
+  home_hi: 'Hi,',
   home_goodMorning: 'Bom dia',
   home_goodAfternoon: 'Boa tarde',
   home_goodEvening: 'Boa noite',

@@ -43,6 +43,7 @@ export const ko: TranslationKeys = {
   mode_cycleTracking: '생리 주기',
 
   home_greeting: '안녕하세요',
+  home_hi: 'Hi,',
   home_goodMorning: '좋은 아침이에요',
   home_goodAfternoon: '좋은 오후에요',
   home_goodEvening: '좋은 저녁이에요',

@@ -43,6 +43,7 @@ export const hi: TranslationKeys = {
   mode_cycleTracking: 'मासिक चक्र',
 
   home_greeting: 'नमस्ते, प्रिय',
+  home_hi: 'Hi,',
   home_goodMorning: 'सुप्रभात',
   home_goodAfternoon: 'शुभ दोपहर',
   home_goodEvening: 'शुभ संध्या',

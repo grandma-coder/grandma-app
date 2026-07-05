@@ -43,6 +43,7 @@ export const ar: TranslationKeys = {
   mode_cycleTracking: 'تتبع الدورة',
 
   home_greeting: 'مرحباً عزيزتي',
+  home_hi: 'Hi,',
   home_goodMorning: 'صباح الخير',
   home_goodAfternoon: 'مساء الخير',
   home_goodEvening: 'مساء الخير',

@@ -43,6 +43,7 @@ export const zh: TranslationKeys = {
   mode_cycleTracking: '经期追踪',
 
   home_greeting: '你好，亲爱的',
+  home_hi: 'Hi,',
   home_goodMorning: '早上好',
   home_goodAfternoon: '下午好',
   home_goodEvening: '晚上好',
