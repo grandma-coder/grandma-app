@@ -4,7 +4,8 @@
  */
 
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 
 export type Period = 'week' | 'month' | '3mo' | 'year' | 'custom'
 
@@ -27,6 +28,8 @@ interface Props {
 
 export function PeriodSelector({ value, onChange, customLabel, showCustom = true }: Props) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const options = showCustom ? OPTIONS : OPTIONS.filter((o) => o.key !== 'custom')
   return (
     <ScrollView
@@ -37,6 +40,23 @@ export function PeriodSelector({ value, onChange, customLabel, showCustom = true
       {options.map((o) => {
         const active = value === o.key
         const label = o.key === 'custom' && active && customLabel ? customLabel : o.label
+        if (diffuse) {
+          // v4 .seg: hairline mono pill; active = surface fill + ink hairline + mono-bold.
+          return (
+            <Pressable
+              key={o.key}
+              onPress={() => onChange(o.key)}
+              style={({ pressed }) => [
+                styles.pill,
+                { borderColor: active ? dt.colors.hairline : dt.colors.line, backgroundColor: active ? dt.colors.surface : 'transparent', opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Text style={{ fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', color: active ? dt.colors.ink : dt.colors.ink3 }}>
+                {label}
+              </Text>
+            </Pressable>
+          )
+        }
         return (
           <Pressable
             key={o.key}

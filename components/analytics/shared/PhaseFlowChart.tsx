@@ -11,7 +11,8 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native'
 import Svg, {
   Path, Line, Circle, Rect, Defs, LinearGradient, Stop, G,
 } from 'react-native-svg'
-import { useTheme, radius } from '../../../constants/theme'
+import { useTheme, radius, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
 
 interface Props {
@@ -34,12 +35,21 @@ export function PhaseFlowChart({
   curve, fertileStart, fertileEnd, ovulationDay, cycleDay, color, height = 150,
 }: Props) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  // Neutrals resolved per variant (the accent `color` is passed by the caller).
+  const inkC = diffuse ? dt.colors.ink : colors.text
+  const baselineC = diffuse ? dt.colors.line : colors.border
+  const surfaceC = diffuse ? dt.colors.bg : colors.surface
+  const mutedC = diffuse ? dt.colors.ink3 : colors.textMuted
+  const bodyFont = diffuse ? diffuseFont.body : font.body
+  const monoFont = diffuse ? diffuseFont.mono : font.bodySemiBold
 
   if (curve.length < 2) {
     return (
-      <View style={[styles.empty, { height, borderColor: colors.borderLight }]}>
-        <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 12 }}>
+      <View style={[styles.empty, { height, borderColor: diffuse ? dt.colors.line2 : colors.borderLight }]}>
+        <Text style={{ color: mutedC, fontFamily: bodyFont, fontSize: 12 }}>
           {t('phaseFlowChart_emptyHint')}
         </Text>
       </View>
@@ -132,13 +142,13 @@ export function PhaseFlowChart({
           x2={W - padX}
           y1={padTop + innerH}
           y2={padTop + innerH}
-          stroke={colors.border}
+          stroke={baselineC}
           strokeWidth={1}
         />
 
         {/* Curve area + line */}
         <Path d={area} fill={`url(#${gradId})`} />
-        <Path d={smooth} stroke={color} strokeWidth={3} strokeLinecap="round" fill="none" />
+        <Path d={smooth} stroke={color} strokeWidth={diffuse ? 2 : 3} strokeLinecap="round" fill="none" />
 
         {/* "You are here" marker */}
         <G>
@@ -147,11 +157,11 @@ export function PhaseFlowChart({
             y1={todayY}
             x2={todayX}
             y2={padTop + innerH}
-            stroke={colors.text}
+            stroke={inkC}
             strokeWidth={1}
             opacity={0.35}
           />
-          <Circle cx={todayX} cy={todayY} r={6} fill={colors.text} stroke={colors.surface} strokeWidth={2} />
+          <Circle cx={todayX} cy={todayY} r={6} fill={inkC} stroke={surfaceC} strokeWidth={2} />
         </G>
       </Svg>
 
@@ -160,21 +170,23 @@ export function PhaseFlowChart({
         pointerEvents="none"
         style={[
           styles.todayPill,
-          { left: pillX, top: pillY, backgroundColor: colors.text, width: pillW, height: pillH },
+          diffuse
+            ? { left: pillX, top: pillY, backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline, width: pillW, height: pillH }
+            : { left: pillX, top: pillY, backgroundColor: colors.text, width: pillW, height: pillH },
         ]}
       >
-        <Text style={{ color: colors.bg, fontFamily: font.bodySemiBold, fontSize: 10, letterSpacing: 0.2 }}>
+        <Text style={{ color: diffuse ? dt.colors.ink : colors.bg, fontFamily: monoFont, fontSize: diffuse ? 9 : 10, letterSpacing: diffuse ? 0.8 : 0.2, textTransform: diffuse ? 'uppercase' : 'none' }}>
           {t('cycleTracker_day', { day: cycleDay })}
         </Text>
       </View>
 
       {/* Axis hints */}
       <View style={[styles.axisRow, { width: W, alignSelf: 'center' }]}>
-        <Text style={[styles.axis, { color: colors.textMuted, fontFamily: font.body }]}>{t('prepreg_period')}</Text>
-        <Text style={[styles.axis, { color: color === colors.text ? colors.textMuted : color, fontFamily: font.bodySemiBold }]}>
+        <Text style={[styles.axis, diffuse ? { color: mutedC, fontFamily: diffuseFont.mono, letterSpacing: 0.8, textTransform: 'uppercase', fontSize: 9 } : { color: colors.textMuted, fontFamily: font.body }]}>{t('prepreg_period')}</Text>
+        <Text style={[styles.axis, diffuse ? { color: color, fontFamily: diffuseFont.mono, textAlign: 'center', letterSpacing: 0.8, textTransform: 'uppercase', fontSize: 9 } : { color: color === colors.text ? colors.textMuted : color, fontFamily: font.bodySemiBold }]}>
           {t('phaseFlowChart_fertileOvulation')}
         </Text>
-        <Text style={[styles.axis, { color: colors.textMuted, fontFamily: font.body, textAlign: 'right' }]}>
+        <Text style={[styles.axis, diffuse ? { color: mutedC, fontFamily: diffuseFont.mono, textAlign: 'right', letterSpacing: 0.8, textTransform: 'uppercase', fontSize: 9 } : { color: colors.textMuted, fontFamily: font.body, textAlign: 'right' }]}>
           {t('phaseFlowChart_nextPeriod')}
         </Text>
       </View>

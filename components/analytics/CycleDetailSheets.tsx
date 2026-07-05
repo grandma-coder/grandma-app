@@ -6,7 +6,8 @@
  */
 
 import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { LogSheet } from '../calendar/LogSheet'
 import { Body, Display } from '../ui/Typography'
 import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow, useMoodStats, type MoodId } from '../../lib/cycleAnalytics'
@@ -61,6 +62,8 @@ export function CycleDetailSheet({ type, onClose }: Props) {
 
 function CycleLengthDetail() {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const { data, isLoading, error } = useCycleHistory()
 
@@ -81,8 +84,8 @@ function CycleLengthDetail() {
   return (
     <View style={{ gap: 18 }}>
       <View style={detailStyles.heroRow}>
-        <Display size={40} color={colors.text}>{data.avg}</Display>
-        <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleAnalytics_daysAvg')}</Text>
+        <Display size={40} color={diffuse ? dt.colors.ink : colors.text}>{data.avg}</Display>
+        <Text style={[detailStyles.heroUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleAnalytics_daysAvg')}</Text>
       </View>
 
       <View style={detailStyles.minMaxRow}>
@@ -92,25 +95,25 @@ function CycleLengthDetail() {
       </View>
 
       <View>
-        <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {t('cycleDetail_lastNCycles', { n: values.length })}
         </Text>
-        <MiniBarChart data={values} labels={labels} color={stickers.pink} />
+        <MiniBarChart data={values} labels={labels} color={diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink} />
       </View>
 
       <View style={{ gap: 8 }}>
-        <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {t('cycleDetail_history')}
         </Text>
         {recentCycles.map((c) => (
           <View
             key={c.startDate}
-            style={[detailStyles.historyRow, { borderColor: colors.borderLight }]}
+            style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}
           >
-            <Body size={13} color={colors.text}>
+            <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>
               {formatRange(c.startDate, c.endDate)}
             </Body>
-            <Body size={13} color={colors.textSecondary}>
+            <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>
               {c.lengthDays ? `${c.lengthDays}d` : '—'}
             </Body>
           </View>
@@ -124,10 +127,12 @@ function CycleLengthDetail() {
 
 function StatChip({ label, value, tint }: { label: string; value: string; tint: string }) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
-    <View style={[detailStyles.statChip, { backgroundColor: tint, borderColor: colors.border }]}>
-      <Text style={[detailStyles.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{label}</Text>
-      <Text style={[detailStyles.statValue, { color: colors.text, fontFamily: font.display }]}>{value}</Text>
+    <View style={[detailStyles.statChip, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line } : { backgroundColor: tint, borderColor: colors.border }]}>
+      <Text style={[detailStyles.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{label}</Text>
+      <Text style={[detailStyles.statValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{value}</Text>
     </View>
   )
 }
@@ -189,6 +194,8 @@ const detailStyles = StyleSheet.create({
 
 function RegularityDetail() {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const { data, isLoading, error } = useRegularity()
 
@@ -201,12 +208,12 @@ function RegularityDetail() {
   return (
     <View style={{ gap: 18 }}>
       <View style={detailStyles.heroRow}>
-        <Display size={56} color={colors.text}>{data.percent}%</Display>
-        <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleDetail_regular')}</Text>
+        <Display size={56} color={diffuse ? dt.colors.ink : colors.text}>{data.percent}%</Display>
+        <Text style={[detailStyles.heroUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleDetail_regular')}</Text>
       </View>
 
       <View style={{ gap: 6 }}>
-        <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {t('cycleDetail_legend')}
         </Text>
         <View style={regStyles.legendRow}>
@@ -217,7 +224,7 @@ function RegularityDetail() {
       </View>
 
       <View style={{ gap: 6 }}>
-        <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {t('cycleDetail_perCycleDeviation')}
         </Text>
         {data.deviations.slice(-10).map((d) => {
@@ -226,13 +233,13 @@ function RegularityDetail() {
           return (
             <View
               key={d.cycleIdx}
-              style={[detailStyles.historyRow, { borderColor: colors.borderLight }]}
+              style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}
             >
               <View style={regStyles.rowLeft}>
                 <View style={[regStyles.dot, { backgroundColor: dotColor }]} />
-                <Body size={13} color={colors.text}>{t('cycleDetail_cycleN', { n: d.cycleIdx })}</Body>
+                <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{t('cycleDetail_cycleN', { n: d.cycleIdx })}</Body>
               </View>
-              <Body size={13} color={colors.textSecondary}>
+              <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>
                 {`${d.lengthDays}d · ${d.delta === 0 ? t('cycleDetail_onAvg') : `±${d.delta}d`}`}
               </Body>
             </View>
@@ -245,10 +252,12 @@ function RegularityDetail() {
 
 function LegendDot({ color, text }: { color: string; text: string }) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
     <View style={regStyles.legendItem}>
       <View style={[regStyles.dot, { backgroundColor: color }]} />
-      <Text style={{ fontSize: 12, color: colors.textMuted, fontFamily: font.body }}>{text}</Text>
+      <Text style={{ fontSize: diffuse ? 10 : 12, color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.6 : 0, textTransform: diffuse ? 'uppercase' : 'none' }}>{text}</Text>
     </View>
   )
 }
@@ -278,6 +287,8 @@ const regStyles = StyleSheet.create({
 
 function PMSDetail() {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const { data, isLoading, error } = usePMSStats()
 
@@ -293,15 +304,15 @@ function PMSDetail() {
     <View style={{ gap: 18 }}>
       {data.avgDays !== null && (
         <View style={detailStyles.heroRow}>
-          <Display size={40} color={colors.text}>{data.avgDays}</Display>
-          <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>
+          <Display size={40} color={diffuse ? dt.colors.ink : colors.text}>{data.avgDays}</Display>
+          <Text style={[detailStyles.heroUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: font.body }]}>
             {t('cycleDetail_daysOfSymptomsPerCycle')}
           </Text>
         </View>
       )}
 
       <View style={{ gap: 8 }}>
-        <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {t('cycleDetail_topSymptoms')}
         </Text>
         {data.topSymptoms.length === 0 ? (
@@ -312,14 +323,14 @@ function PMSDetail() {
             return (
               <View key={s.name} style={pmsStyles.symptomRow}>
                 <View style={pmsStyles.symptomLeft}>
-                  <View style={[pmsStyles.chip, { backgroundColor: stickers.peachSoft, borderColor: colors.border }]}>
+                  <View style={[pmsStyles.chip, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 } : { backgroundColor: stickers.peachSoft, borderColor: colors.border }]}>
                     <Burst size={20} fill={stickers.peach} points={8} wobble={0.2} />
                   </View>
-                  <Body size={14} color={colors.text}>{s.name}</Body>
+                  <Body size={14} color={diffuse ? dt.colors.ink : colors.text}>{s.name}</Body>
                 </View>
                 <View style={pmsStyles.symptomRight}>
-                  <View style={[pmsStyles.bar, { width: `${pct}%`, backgroundColor: stickers.peachSoft }]} />
-                  <Body size={13} color={colors.textSecondary}>{s.count}</Body>
+                  <View style={[pmsStyles.bar, { width: `${pct}%`, backgroundColor: diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.peachSoft }]} />
+                  <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>{s.count}</Body>
                 </View>
               </View>
             )
@@ -368,6 +379,8 @@ const pmsStyles = StyleSheet.create({
 
 function FertileDetail() {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const { data, isLoading, error } = useFertileWindow()
 
@@ -384,18 +397,18 @@ function FertileDetail() {
 
   return (
     <View style={{ gap: 18 }}>
-      <View style={[fertStyles.currentCard, { backgroundColor: stickers.pinkSoft, borderColor: colors.border }]}>
-        <View style={[fertStyles.currentChip, { backgroundColor: colors.surface }]}>
+      <View style={[fertStyles.currentCard, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line } : { backgroundColor: stickers.pinkSoft, borderColor: colors.border }]}>
+        <View style={[fertStyles.currentChip, diffuse ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 } : { backgroundColor: colors.surface }]}>
           <Flower size={40} petal={stickers.pink} center={stickers.yellow} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
-          <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
             {t('cycleDetail_thisCycle')}
           </Text>
-          <Display size={22} color={colors.text}>
+          <Display size={22} color={diffuse ? dt.colors.ink : colors.text}>
             {`${formatShort(data.current.start)} – ${formatShort(data.current.end)}`}
           </Display>
-          <Body size={13} color={colors.textSecondary}>
+          <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>
             {daysLeft > 0 ? daysLeftText : t('cycleDetail_windowClosed')}
           </Body>
         </View>
@@ -403,16 +416,16 @@ function FertileDetail() {
 
       {data.history.length > 0 && (
         <View style={{ gap: 6 }}>
-          <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
             {t('cycleDetail_pastWindows')}
           </Text>
           {data.history.map((w) => (
             <View
               key={w.cycleIdx}
-              style={[detailStyles.historyRow, { borderColor: colors.borderLight }]}
+              style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}
             >
-              <Body size={13} color={colors.text}>{t('cycleDetail_cycleN', { n: w.cycleIdx })}</Body>
-              <Body size={13} color={colors.textSecondary}>
+              <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{t('cycleDetail_cycleN', { n: w.cycleIdx })}</Body>
+              <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>
                 {`${formatShort(w.start)} – ${formatShort(w.end)}`}
               </Body>
             </View>
@@ -451,6 +464,8 @@ const MOOD_LABELS: Record<MoodId, string> = {
 
 function MoodDetail() {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const { data, isLoading, error } = useMoodStats()
 
@@ -465,25 +480,25 @@ function MoodDetail() {
   return (
     <View style={{ gap: 18 }}>
       <View style={detailStyles.heroRow}>
-        <Display size={40} color={colors.text}>{data.avgScore}</Display>
-        <Text style={[detailStyles.heroUnit, { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleDetail_fiveAvg')}</Text>
+        <Display size={40} color={diffuse ? dt.colors.ink : colors.text}>{data.avgScore}</Display>
+        <Text style={[detailStyles.heroUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleDetail_fiveAvg')}</Text>
       </View>
 
       <View style={{ gap: 8 }}>
-        <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {t('cycleDetail_distribution')}
         </Text>
         {data.distribution.map((row) => {
           const pct = (row.count / maxCount) * 100
           return (
             <View key={row.mood} style={moodStyles.row}>
-              <Body size={13} color={colors.text} style={{ width: 80 }}>
+              <Body size={13} color={diffuse ? dt.colors.ink : colors.text} style={{ width: 80 }}>
                 {MOOD_LABELS[row.mood]}
               </Body>
               <View style={moodStyles.barTrack}>
-                <View style={[moodStyles.barFill, { width: `${pct}%`, backgroundColor: stickers.pink }]} />
+                <View style={[moodStyles.barFill, { width: `${pct}%`, backgroundColor: diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink }]} />
               </View>
-              <Body size={13} color={colors.textSecondary} style={{ width: 30, textAlign: 'right' }}>
+              <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary} style={{ width: 30, textAlign: 'right' }}>
                 {row.count}
               </Body>
             </View>
@@ -493,16 +508,16 @@ function MoodDetail() {
 
       {data.recent.length > 0 && (
         <View style={{ gap: 6 }}>
-          <Text style={[detailStyles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
             {t('cycleDetail_lastNEntries', { n: data.recent.length })}
           </Text>
           {data.recent.map((r, i) => (
             <View
               key={`${r.date}-${i}`}
-              style={[detailStyles.historyRow, { borderColor: colors.borderLight }]}
+              style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}
             >
-              <Body size={13} color={colors.text}>{formatShort(r.date)}</Body>
-              <Body size={13} color={colors.textSecondary}>{MOOD_LABELS[r.mood]}</Body>
+              <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{formatShort(r.date)}</Body>
+              <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>{MOOD_LABELS[r.mood]}</Body>
             </View>
           ))}
         </View>

@@ -16,7 +16,8 @@ import { useState, useMemo } from 'react'
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { useTheme, radius, shadows } from '../../constants/theme'
+import { useTheme, radius, shadows, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { AnalyticsHeader } from './shared/AnalyticsHeader'
 import { PeriodSelector, type Period } from './shared/PeriodSelector'
 import { PhaseFlowChart } from './shared/PhaseFlowChart'
@@ -48,6 +49,8 @@ const PHASE_VOICE: Record<CyclePhase, { word: string; line: string }> = {
 
 export function CycleAnalytics() {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const [period, setPeriod] = useState<Period>('month')
@@ -86,7 +89,10 @@ export function CycleAnalytics() {
     ovulation: stickers.pink,
     luteal: stickers.lilac,
   }
-  const accent = PHASE_ACCENT[info.phase]
+  // Under diffuse the whole screen shares the one cycle accent (calm, not per-phase hues).
+  const accent = diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : PHASE_ACCENT[info.phase]
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
 
   const avgLabel = history?.avg != null ? String(history.avg) : '—'
   const regularLabel =
@@ -114,7 +120,7 @@ export function CycleAnalytics() {
         : t('cycleAnalytics_fertileSub_passed')
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
@@ -123,24 +129,24 @@ export function CycleAnalytics() {
 
         {/* ── Hero: oversized phase word + warm line + today ──────────── */}
         <View style={styles.hero}>
-          <Text style={[styles.heroKicker, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          <Text style={[styles.heroKicker, diffuse ? { color: muted, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
             {t('cycleAnalytics_yourCycleToday')}
           </Text>
           <View style={styles.heroWordRow}>
             <Text
-              style={[styles.heroWord, { color: colors.text, fontFamily: font.display }]}
+              style={[styles.heroWord, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}
               adjustsFontSizeToFit
               numberOfLines={1}
               minimumFontScale={0.7}
             >
               {voice.word}
             </Text>
-            <View pointerEvents="none" style={styles.heroSticker}>
+            <View pointerEvents="none" style={[styles.heroSticker, diffuse ? { transform: [{ rotate: '0deg' }], opacity: 0.9 } : null]}>
               <PhaseSticker phase={info.phase} stickers={stickers} />
             </View>
           </View>
-          <Text style={[styles.heroLine, { color: colors.textSecondary, fontFamily: font.italic }]}>
-            Day {info.cycleDay} · {voice.line}
+          <Text style={[styles.heroLine, diffuse ? { color: dt.colors.ink2, fontFamily: diffuseFont.italic } : { color: colors.textSecondary, fontFamily: font.italic }]}>
+            {t('cycleAnalytics_day_voiceline', { day: info.cycleDay, line: voice.line })}
           </Text>
         </View>
 
@@ -152,12 +158,12 @@ export function CycleAnalytics() {
           accessibilityRole="button"
           accessibilityLabel={t('cycleAnalytics_viewFertileDetail')}
         >
-          <View style={[styles.flowCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
+          <View style={[styles.flowCard, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, shadowOpacity: 0, elevation: 0 } : { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
             <View style={styles.flowHead}>
-              <Text style={[styles.cardKicker, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+              <Text style={[styles.cardKicker, diffuse ? { color: muted, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
                 {t('cycleAnalytics_fertileFlow')}
               </Text>
-              <Text style={[styles.flowFertile, { color: accent, fontFamily: font.bodySemiBold }]}>
+              <Text style={[styles.flowFertile, diffuse ? { color: ink, fontFamily: diffuseFont.monoBold, letterSpacing: 0.4, textTransform: 'uppercase', fontSize: 12 } : { color: accent, fontFamily: font.bodySemiBold }]}>
                 {fertileLabel === '—' ? t('cycleAnalytics_noWindowYet') : fertileLabel}
               </Text>
             </View>
@@ -182,17 +188,17 @@ export function CycleAnalytics() {
             accessibilityRole="button"
             accessibilityLabel={t('cycleAnalytics_viewLengthDetail')}
           >
-            <View style={[styles.medallion, { backgroundColor: stickers.pinkSoft, borderColor: colors.borderStrong }]}>
-              <View pointerEvents="none" style={styles.medallionStar}>
-                <Star size={26} fill={stickers.pink} stroke={colors.text} />
+            <View style={[styles.medallion, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line2, ...({ shadowOpacity: 0, elevation: 0 }) } : { backgroundColor: stickers.pinkSoft, borderColor: colors.borderStrong }]}>
+              <View pointerEvents="none" style={[styles.medallionStar, diffuse ? { opacity: 0.85 } : null]}>
+                <Star size={26} fill={stickers.pink} stroke={diffuse ? dt.colors.ink : colors.text} />
               </View>
-              <Text style={[styles.medallionNum, { color: colors.text, fontFamily: font.display }]}>
+              <Text style={[styles.medallionNum, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
                 {avgLabel}
               </Text>
-              <Text style={[styles.medallionUnit, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
+              <Text style={[styles.medallionUnit, diffuse ? { color: muted, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
                 {t('cycleAnalytics_daysAvg')}
               </Text>
-              <Text style={[styles.medallionSub, { color: colors.textMuted, fontFamily: font.body }]}>
+              <Text style={[styles.medallionSub, diffuse ? { color: muted, fontFamily: diffuseFont.mono, fontSize: 8.5, letterSpacing: 0.6, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: font.body }]}>
                 {t('cycleAnalytics_lastNCycles', { n: history?.cycles.filter((c) => c.lengthDays != null).length ?? 0 })}
               </Text>
             </View>
@@ -244,8 +250,8 @@ export function CycleAnalytics() {
         <RecentCyclesCard cycles={history?.cycles ?? []} />
 
         {!hasData && (
-          <Text style={[styles.seedHint, { color: colors.textMuted, fontFamily: font.body }]}>
-            Showing a sample cycle. Log a couple of period starts and this becomes all yours.
+          <Text style={[styles.seedHint, diffuse ? { color: muted, fontFamily: diffuseFont.body } : { color: colors.textMuted, fontFamily: font.body }]}>
+            {t('cycleAnalytics_seed_hint')}
           </Text>
         )}
       </ScrollView>
@@ -268,32 +274,36 @@ function TiltChip({
   wide?: boolean
 }) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
         wide && styles.chipWide,
-        {
-          backgroundColor: tint,
-          borderColor: colors.border,
-          transform: [{ rotate: `${tilt}deg` }],
-          opacity: pressed ? 0.88 : 1,
-        },
+        diffuse
+          ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, opacity: pressed ? 0.88 : 1, ...({ shadowOpacity: 0, elevation: 0 }) }
+          : {
+              backgroundColor: tint,
+              borderColor: colors.border,
+              transform: [{ rotate: `${tilt}deg` }],
+              opacity: pressed ? 0.88 : 1,
+            },
       ]}
     >
-      <View style={[styles.chipChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={[styles.chipChip, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
         {sticker}
       </View>
       <View style={{ flex: 1 }}>
         <Text
-          style={[styles.chipValue, { color: colors.text, fontFamily: font.display }]}
+          style={[styles.chipValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}
           numberOfLines={1}
         >
           {value}
         </Text>
         <Text
-          style={[styles.chipSub, { color: colors.textMuted, fontFamily: font.body }]}
+          style={[styles.chipSub, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.4, textTransform: 'uppercase', fontSize: 9.5 } : { color: colors.textMuted, fontFamily: font.body }]}
           numberOfLines={2}
         >
           {sub}
@@ -324,6 +334,10 @@ function RecentCyclesCard({
   cycles: { startDate: string; endDate: string | null; lengthDays: number | null }[]
 }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const rcInk = diffuse ? dt.colors.ink : colors.text
+  const rcMuted = diffuse ? dt.colors.ink3 : colors.textMuted
   const { t } = useTranslation()
   const closed = cycles.filter((c) => c.lengthDays !== null).slice(-5).reverse()
   const open = cycles.find((c) => c.lengthDays === null)
@@ -343,27 +357,32 @@ function RecentCyclesCard({
     : null
 
   return (
-    <View style={[styles.recentCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-      <View pointerEvents="none" style={styles.recentBlob}>
-        <Drop size={48} fill={stickers.pinkSoft} stroke={colors.text} />
-      </View>
+    <View style={[styles.recentCard, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      {diffuse ? null : (
+        <View pointerEvents="none" style={styles.recentBlob}>
+          <Drop size={48} fill={stickers.pinkSoft} stroke={colors.text} />
+        </View>
+      )}
 
-      <Text style={[styles.recentTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+      <Text style={[styles.recentTitle, diffuse ? { color: rcMuted, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
         {t('cycleAnalytics_recentCycles')}
       </Text>
 
       {open && currentDay !== null ? (
-        <View style={[styles.recentOpenRow, { backgroundColor: stickers.pinkSoft, borderColor: colors.borderLight }]}>
+        <View style={[styles.recentOpenRow, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 } : { backgroundColor: stickers.pinkSoft, borderColor: colors.borderLight }]}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 18, letterSpacing: -0.3 }}>
+            <Text style={{ color: rcInk, fontFamily: diffuse ? diffuseFont.display : font.display, fontSize: 18, letterSpacing: -0.3 }}>
               {t('cycleAnalytics_dayNumber', { currentDay })}
             </Text>
-            <Text style={{ color: colors.textSecondary, fontFamily: font.bodyMedium, fontSize: 12, marginTop: 2 }}>
+            <Text style={{ color: rcMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, fontSize: diffuse ? 10 : 12, marginTop: 2, letterSpacing: diffuse ? 0.8 : 0, textTransform: diffuse ? 'uppercase' : 'none' }}>
               {t('cycleAnalytics_startedDate', { date: formatRange(open.startDate, null) })}
             </Text>
           </View>
           <View
-            style={{
+            style={diffuse ? {
+              paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999,
+              backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline,
+            } : {
               paddingHorizontal: 10,
               paddingVertical: 5,
               borderRadius: 999,
@@ -375,7 +394,9 @@ function RecentCyclesCard({
             {/* Fixed dark ink: stickers.pink is a light pink in BOTH themes, so a
                 theme-flipping token would go invisible in dark. Ink-on-sticker is an
                 allowed fixed-value case (DESIGN_SYSTEM §0). */}
-            <Text style={{ color: '#141313', fontFamily: font.bodySemiBold, fontSize: 11, letterSpacing: 0.4 }}>
+            <Text style={diffuse
+              ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }
+              : { color: '#141313', fontFamily: font.bodySemiBold, fontSize: 11, letterSpacing: 0.4 }}>
               {t('cycleAnalytics_current')}
             </Text>
           </View>
@@ -387,7 +408,11 @@ function RecentCyclesCard({
           {closed.map((c, i) => (
             <View key={c.startDate + i} style={styles.recentRow}>
               <View
-                style={{
+                style={diffuse ? {
+                  width: 30, height: 30, borderRadius: 999,
+                  backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2,
+                  alignItems: 'center', justifyContent: 'center',
+                } : {
                   width: 30,
                   height: 30,
                   borderRadius: 999,
@@ -399,22 +424,22 @@ function RecentCyclesCard({
                   transform: [{ rotate: i % 2 === 0 ? '-4deg' : '4deg' }],
                 }}
               >
-                <Text style={{ color: colors.text, fontFamily: font.bodySemiBold, fontSize: 11 }}>
-                  C{closed.length - i}
+                <Text style={{ color: rcInk, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, fontSize: diffuse ? 10 : 11 }}>
+                  {t('cycleAnalytics_cycle_n', { n: closed.length - i })}
                 </Text>
               </View>
-              <Text style={{ flex: 1, color: colors.textSecondary, fontFamily: font.bodyMedium, fontSize: 13 }}>
+              <Text style={{ flex: 1, color: rcMuted, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium, fontSize: 13 }}>
                 {formatRange(c.startDate, c.endDate)}
               </Text>
-              <Text style={{ color: colors.text, fontFamily: font.bodySemiBold, fontSize: 13 }}>
-                {c.lengthDays}d
+              <Text style={{ color: rcInk, fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold, fontSize: 13 }}>
+                {c.lengthDays}{t('cycle_ring_unit_d')}
               </Text>
             </View>
           ))}
         </View>
       ) : (
-        <Text style={{ marginTop: 8, color: colors.textMuted, fontFamily: font.bodyMedium, fontSize: 13, lineHeight: 19 }}>
-          Log a couple of period starts and your closed cycles will appear here.
+        <Text style={{ marginTop: 8, color: rcMuted, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium, fontSize: 13, lineHeight: 19 }}>
+          {t('cycleAnalytics_log_cycles_hint')}
         </Text>
       )}
     </View>
