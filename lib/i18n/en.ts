@@ -38,6 +38,7 @@ export const en: TranslationKeys = {
   common_chevronNext: '›',
   common_arrowRight: '→',
   common_learnMore: 'Learn more →',
+  common_typewriterCursor: '|',
 
   // Tabs
   tab_home: 'Home',

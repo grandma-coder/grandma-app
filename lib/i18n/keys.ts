@@ -41,6 +41,7 @@ export interface TranslationKeys {
   common_chevronNext: string
   common_arrowRight: string
   common_learnMore: string
+  common_typewriterCursor: string
 
   // ─── Tabs ──────────────────────────────────────────────────────────────
   tab_home: string

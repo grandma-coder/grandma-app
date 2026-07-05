@@ -2459,6 +2459,7 @@ export const ar: TranslationKeys = {
   common_chevronNext: '›',
   common_arrowRight: '→',
   common_learnMore: 'Learn more →',
+  common_typewriterCursor: '|',
   cycleDetail_lastNCycles: 'LAST {{n}} CYCLES',
   cycleDetail_history: 'HISTORY',
   cycleDetail_regular: 'regular',

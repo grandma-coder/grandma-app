@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Animated, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from '../../constants/theme'
 import { GrandmaLogo, type GrandmaLogoMotion } from './GrandmaLogo'
+import { useTranslation } from '../../lib/i18n'
 
 interface Props {
   label?: string
@@ -61,6 +62,7 @@ export function BrandedLoader({
 
 function TypewriterLabel({ label }: { label: string }) {
   const { colors, font } = useTheme()
+  const { t } = useTranslation()
   const [typed, setTyped] = useState('')
 
   useEffect(() => {
@@ -112,7 +114,7 @@ function TypewriterLabel({ label }: { label: string }) {
       <Animated.Text
         style={[styles.cursor, { color: colors.text, fontFamily: font.display, opacity: cursor }]}
       >
-        |
+        {t('common_typewriterCursor')}
       </Animated.Text>
     </View>
   )
