@@ -51,7 +51,7 @@ export default function ChannelBrowser() {
 
         {channels.length === 0 && !loading ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>💬</Text>
+            <Text style={styles.emptyIcon}>{t('channelBrowser_emptyIcon')}</Text>
             <Text style={styles.emptyTitle}>{t('channelBrowser_emptyTitle')}</Text>
             <Text style={styles.emptySubtitle}>
               {t('channelBrowser_emptySubtitle')}

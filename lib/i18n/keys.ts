@@ -2105,6 +2105,7 @@ export interface TranslationKeys {
   channelBrowser_emptyTitle: string
   channelBrowser_emptySubtitle: string
   channelBrowser_createCta: string
+  channelBrowser_emptyIcon: string
 
   // ─── B6: Community — channels/[id] ────────────────────────────────────────
   channelDetail_title: string

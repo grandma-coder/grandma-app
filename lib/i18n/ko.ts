@@ -1923,6 +1923,7 @@ export const ko: TranslationKeys = {
   channelBrowser_emptyTitle: 'No channels yet',
   channelBrowser_emptySubtitle: 'Be the first \u2014 start a channel for birth stories, breastfeeding, recipes, or a local meetup.',
   channelBrowser_createCta: 'Create a Channel',
+  channelBrowser_emptyIcon: '💬',
   channelDetail_title: 'Channel',
   channelDetail_emptyTitle: 'No threads yet',
   channelDetail_emptySubtitle: 'Be the first to start a discussion in this channel.',

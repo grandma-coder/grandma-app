@@ -2104,6 +2104,7 @@ export const en: TranslationKeys = {
   channelBrowser_emptyTitle: 'No channels yet',
   channelBrowser_emptySubtitle: 'Be the first — start a channel for birth stories, breastfeeding, recipes, or a local meetup.',
   channelBrowser_createCta: 'Create a Channel',
+  channelBrowser_emptyIcon: '💬',
 
   // ─── B6: Community — channels/[id] ────────────────────────────────────────
   channelDetail_title: 'Channel',
