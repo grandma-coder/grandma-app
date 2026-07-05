@@ -59,9 +59,9 @@ export default function ThreadDetail() {
             <View style={styles.replyBubble}>
               <View style={styles.replyHeader}>
                 <View style={styles.replyAvatar}>
-                  <Text style={{ fontSize: 12 }}>👤</Text>
+                  <Text style={{ fontSize: 12 }}>{t('channelThreadDetail_avatarIcon')}</Text>
                 </View>
-                <Text style={styles.replyAuthor}>Member</Text>
+                <Text style={styles.replyAuthor}>{t('channelThreadDetail_memberFallback')}</Text>
                 <Text style={styles.replyTime}>
                   {new Date(item.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                 </Text>

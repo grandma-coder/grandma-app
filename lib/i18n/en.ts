@@ -2117,6 +2117,7 @@ export const en: TranslationKeys = {
   channelThreadDetail_memberFallback: 'Member',
   channelThreadDetail_emptyText: 'No replies yet. Start the conversation!',
   channelThreadDetail_replyPlaceholder: 'Write a reply...',
+  channelThreadDetail_avatarIcon: '👤',
 
   // ─── B6: Garage — create ──────────────────────────────────────────────────
   garage_create_safetyTitle: 'Photo Safety Guidelines',

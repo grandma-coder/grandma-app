@@ -2118,6 +2118,7 @@ export interface TranslationKeys {
   channelThreadDetail_memberFallback: string
   channelThreadDetail_emptyText: string
   channelThreadDetail_replyPlaceholder: string
+  channelThreadDetail_avatarIcon: string
 
   // ─── B6: Garage — create ──────────────────────────────────────────────────
   garage_create_safetyTitle: string
