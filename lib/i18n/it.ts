@@ -306,6 +306,11 @@ export const it: TranslationKeys = {
   pregnancy_appt_weekTiming: 'Week {{week}} · {{timing}}',
   pregnancy_appt_prep: 'PREP',
   pregnancy_appt_questionsToAsk: 'QUESTIONS TO ASK',
+  // ─── B7b: DevelopmentInsight.tsx residual strings ─────────────────────────
+  devInsight_label: 'Development Insight',
+  devInsight_titleLine1: 'Finding Their',
+  devInsight_titleLine2: 'Voice',
+  devInsight_recordLullaby: 'Record a lullaby',
   // ContractionTimer (Wave 2)
   preg_contractions_title: 'CONTRACTION TIMER',
   preg_contractions_subtitle: 'Track timing and duration between contractions',

@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme, brand, stickers, borderRadius, shadows, font } from '../../constants/theme'
 import { getWeekData } from '../../lib/pregnancyData'
+import { useTranslation } from '../../lib/i18n'
 
 interface DevelopmentInsightProps {
   weekNumber: number
@@ -10,6 +11,7 @@ interface DevelopmentInsightProps {
 
 export function DevelopmentInsight({ weekNumber }: DevelopmentInsightProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const data = getWeekData(weekNumber)
 
   return (
@@ -27,12 +29,12 @@ export function DevelopmentInsight({ weekNumber }: DevelopmentInsightProps) {
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.label}>Development Insight</Text>
+          <Text style={styles.label}>{t('devInsight_label')}</Text>
           <Ionicons name="chatbubble-outline" size={24} color="rgba(0,0,0,0.5)" />
         </View>
 
         {/* Title */}
-        <Text style={styles.title}>Finding Their{'\n'}Voice</Text>
+        <Text style={styles.title}>{t('devInsight_titleLine1')}{'\n'}{t('devInsight_titleLine2')}</Text>
 
         {/* Body */}
         <Text style={styles.body}>{data.developmentFact}</Text>
@@ -40,7 +42,7 @@ export function DevelopmentInsight({ weekNumber }: DevelopmentInsightProps) {
         {/* Record lullaby button */}
         <Pressable style={({ pressed }) => [styles.actionButton, pressed && { shadowOffset: { width: 0, height: 2 }, transform: [{ translateY: 2 }] }]}>
           <Ionicons name="mic-outline" size={22} color={brand.prePregnancy} />
-          <Text style={[styles.actionText, { color: colors.surface }]}>Record a lullaby</Text>
+          <Text style={[styles.actionText, { color: colors.surface }]}>{t('devInsight_recordLullaby')}</Text>
         </Pressable>
       </View>
     </LinearGradient>

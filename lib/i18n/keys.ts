@@ -390,6 +390,11 @@ export interface TranslationKeys {
   pregnancy_appt_weekTiming: string                // "Week {{week}} · {{timing}}"
   pregnancy_appt_prep: string
   pregnancy_appt_questionsToAsk: string
+  // ─── B7b: DevelopmentInsight.tsx residual strings ─────────────────────────
+  devInsight_label: string
+  devInsight_titleLine1: string
+  devInsight_titleLine2: string
+  devInsight_recordLullaby: string
 
   // ─── ContractionTimer (Wave 2) ────────────────────────────────────────
   preg_contractions_title: string
