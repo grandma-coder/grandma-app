@@ -1361,6 +1361,7 @@ export const ar: TranslationKeys = {
   prepreg_checklistProgress_tasksDone: '{{done}} of {{total}} tasks done',
   prepreg_checklistProgress_empty: 'Your checklist is empty',
   prepreg_checklistProgress_emptyDesc: 'Preparation tasks will appear here to guide your journey to conception.',
+  miniCharts_notEnoughData: 'Not enough data yet.',
 
   // ─── Cycle Analytics (Wave B4) ────────────────────────────────────────────
   cycleAnalytics_yourCycleToday: 'YOUR CYCLE TODAY',

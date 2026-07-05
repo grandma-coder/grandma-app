@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native'
 import Svg, { Path, Circle, Line, Rect } from 'react-native-svg'
 import { useTheme } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 
 const DEFAULT_CHART_W = Dimensions.get('window').width - 76
 
@@ -391,6 +392,7 @@ export function MiniLineChart({
 
 function EmptyChart({ height }: { height: number }) {
   const { colors, font } = useTheme()
+  const { t } = useTranslation()
   return (
     <View style={[styles.empty, { height, borderColor: colors.borderLight }]}>
       <Text
@@ -400,7 +402,7 @@ function EmptyChart({ height }: { height: number }) {
           fontSize: 12,
         }}
       >
-        Not enough data yet.
+        {t('miniCharts_notEnoughData')}
       </Text>
     </View>
   )
