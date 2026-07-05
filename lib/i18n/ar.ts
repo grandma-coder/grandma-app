@@ -2533,4 +2533,8 @@ export const ar: TranslationKeys = {
   kidsOnboard_partnerHint: "They'll be able to log activities and see updates too.",
   kidsOnboard_completionTitle: 'Welcome to the family!',
   kidsOnboard_completionMessage: "Grandma can't wait to help you track every beautiful moment. Here's who we'll be watching over:",
+  // ─── B7b: manage-caregivers.tsx residual strings ──────────────────────────
+  manageCaregivers_subtitle: 'People who can help care for {{name}}',
+  manageCaregivers_upgradeForSeats: 'Upgrade to {{tier}} for more seats',
+  manageCaregivers_readOnly: 'read-only',
 }

@@ -2681,4 +2681,8 @@ export interface TranslationKeys {
   kidsOnboard_partnerHint: string
   kidsOnboard_completionTitle: string
   kidsOnboard_completionMessage: string
+  // ─── B7b: manage-caregivers.tsx residual strings ──────────────────────────
+  manageCaregivers_subtitle: string               // "People who can help care for {{name}}"
+  manageCaregivers_upgradeForSeats: string        // "Upgrade to {{tier}} for more seats"
+  manageCaregivers_readOnly: string
 }

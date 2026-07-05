@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useTheme } from '../constants/theme'
+import { useTranslation } from '../lib/i18n'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { PaperAlert } from '../components/ui/PaperAlert'
@@ -22,6 +23,7 @@ interface CaregiverRow {
 
 export default function ManageCaregivers() {
   const { colors, stickers } = useTheme()
+  const { t } = useTranslation()
 
   const STATUS_COLORS: Record<string, string> = {
     pending: stickers.peachSoft,
@@ -133,12 +135,12 @@ export default function ManageCaregivers() {
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </Pressable>
-        <Text style={styles.title}>Caregivers</Text>
+        <Text style={styles.title}>{t('leaderboard_tabCaregivers')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <Text style={styles.subtitle}>
-        People who can help care for {child?.name ?? 'your child'}
+        {t('manageCaregivers_subtitle', { name: child?.name ?? t('careInvite_yourChild') })}
       </Text>
 
       <View style={styles.seatCounter}>
@@ -156,7 +158,7 @@ export default function ManageCaregivers() {
           style={[styles.inviteButton, { backgroundColor: colors.accent }]}
         >
           <Ionicons name="arrow-up-circle-outline" size={20} color={colors.textInverse} />
-          <Text style={styles.inviteText}>Upgrade to {nextTierLabel} for more seats</Text>
+          <Text style={styles.inviteText}>{t('manageCaregivers_upgradeForSeats', { tier: nextTierLabel ?? '' })}</Text>
         </Pressable>
       ) : (
         <Pressable
@@ -164,7 +166,7 @@ export default function ManageCaregivers() {
           style={styles.inviteButton}
         >
           <Ionicons name="person-add-outline" size={20} color={colors.textInverse} />
-          <Text style={styles.inviteText}>Invite a caregiver</Text>
+          <Text style={styles.inviteText}>{t('careInvite_title')}</Text>
         </Pressable>
       )}
 
@@ -202,7 +204,7 @@ export default function ManageCaregivers() {
                     </View>
                     {item.is_locked && (
                       <View style={[styles.statusBadge, { backgroundColor: stickers.peachSoft }]}>
-                        <Text style={[styles.statusText, { color: colors.warning }]}>read-only</Text>
+                        <Text style={[styles.statusText, { color: colors.warning }]}>{t('manageCaregivers_readOnly')}</Text>
                       </View>
                     )}
                   </View>
