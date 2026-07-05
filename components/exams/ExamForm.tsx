@@ -24,7 +24,9 @@ import {
 import * as ImagePicker from 'expo-image-picker'
 import { Camera, ImagePlus, Sparkles, X } from 'lucide-react-native'
 
-import { useTheme, brand, stickers as stickersLight, stickersDark, font } from '../../constants/theme'
+import { useTheme, brand, stickers as stickersLight, stickersDark, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
 import { LogFormSticker } from '../calendar/LogFormSticker'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -53,11 +55,14 @@ const INK = '#141313'
 
 export function ExamForm({ behavior, childId, date, onSaved }: Props) {
   const { colors, radius, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
-  const inkBorder = isDark ? colors.border : INK
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const inkText = isDark ? colors.text : INK
+  const inkBorder = diffuse ? dt.colors.line2 : (isDark ? colors.border : INK)
+  const paper = diffuse ? dt.colors.surface : (isDark ? colors.surface : '#FFFEF8')
+  const inkText = diffuse ? dt.colors.ink : (isDark ? colors.text : INK)
+  const placeholderColor = diffuse ? dt.colors.ink4 : colors.textMuted
   const invalidate = useInvalidateExams()
 
   const [title, setTitle] = useState('')
@@ -187,6 +192,20 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
   const flagged = extracted?.flagged ?? []
   const referenceRange = extracted?.referenceRange ?? null
 
+  // Diffuse bare-underlined field (the v4 .field: transparent, hairline bottom
+  // rule, sans text — no pill, no shadow).
+  const diffuseInput = {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    borderBottomWidth: 1.5,
+    borderRadius: 0,
+    paddingHorizontal: 2,
+    paddingVertical: 12,
+    height: 52,
+    fontSize: 17,
+    fontFamily: diffuseFont.body,
+  } as const
+
   return (
     <View style={styles.form}>
       <LogFormSticker
@@ -206,7 +225,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
             // Prefer the local URI (instant) until the signed URL resolves.
             const displayUri = p.localUri || signedUrls[i] || undefined
             return (
-              <View key={p.storagePath} style={[styles.photoWrap, { borderColor: colors.border }]}>
+              <View key={p.storagePath} style={[styles.photoWrap, { borderColor: diffuse ? dt.colors.line : colors.border }]}>
                 {displayUri && <Image source={{ uri: displayUri }} style={styles.photoImg} />}
                 <Pressable onPress={() => removePhoto(i)} style={styles.photoRemove}>
                   <X size={12} color="#fff" strokeWidth={2.5} />
@@ -221,14 +240,14 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
             style={[
               styles.photoAddBtn,
               {
-                backgroundColor: paper,
-                borderColor: inkBorder,
+                backgroundColor: diffuse ? 'transparent' : paper,
+                borderColor: diffuse ? dt.colors.line2 : inkBorder,
                 opacity: uploading ? 0.5 : 1,
               },
             ]}
           >
-            <Camera size={18} color={inkText} strokeWidth={2} />
-            <Text style={[styles.photoAddLabel, { color: inkText, fontFamily: font.bodySemiBold }]}>
+            <Camera size={18} color={diffuse ? dt.colors.ink3 : inkText} strokeWidth={diffuse ? 1.6 : 2} />
+            <Text style={[styles.photoAddLabel, { color: diffuse ? dt.colors.ink3 : inkText, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}>
               {t('examForm_scan')}
             </Text>
           </Pressable>
@@ -239,14 +258,14 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
             style={[
               styles.photoAddBtn,
               {
-                backgroundColor: paper,
-                borderColor: inkBorder,
+                backgroundColor: diffuse ? 'transparent' : paper,
+                borderColor: diffuse ? dt.colors.line2 : inkBorder,
                 opacity: uploading ? 0.5 : 1,
               },
             ]}
           >
-            <ImagePlus size={18} color={inkText} strokeWidth={2} />
-            <Text style={[styles.photoAddLabel, { color: inkText, fontFamily: font.bodySemiBold }]}>
+            <ImagePlus size={18} color={diffuse ? dt.colors.ink3 : inkText} strokeWidth={diffuse ? 1.6 : 2} />
+            <Text style={[styles.photoAddLabel, { color: diffuse ? dt.colors.ink3 : inkText, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}>
               {t('examForm_upload')}
             </Text>
           </Pressable>
@@ -254,8 +273,8 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
 
         {(uploading || extracting) && (
           <View style={styles.loadingRow}>
-            <ActivityIndicator color={brand.primary} size="small" />
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+            <ActivityIndicator color={diffuse ? getDiffuseAccent(behavior, dt.isDark) : brand.primary} size="small" />
+            <Text style={[styles.loadingText, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>
               {uploading ? t('examForm_uploading') : t('examForm_extracting')}
             </Text>
           </View>
@@ -263,105 +282,155 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
       </View>
 
       {extracted && (
-        <View style={[styles.aiBadge, { backgroundColor: brand.primary + '15', borderColor: brand.primary + '40' }]}>
-          <Sparkles size={14} color={brand.primary} strokeWidth={2} />
-          <Text style={[styles.aiBadgeText, { color: brand.primary, fontFamily: font.bodySemiBold }]}>
-            {t('examForm_aiPrefilled')}
-          </Text>
-        </View>
+        diffuse ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
+            <DiffuseBloomIcon color={getDiffuseAccent(behavior, dt.isDark)} size={24} intensity={0.4}><Sparkles size={13} color={dt.colors.ink3} strokeWidth={1.4} /></DiffuseBloomIcon>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+              {t('examForm_aiPrefilled')}
+            </Text>
+          </View>
+        ) : (
+          <View style={[styles.aiBadge, { backgroundColor: brand.primary + '15', borderColor: brand.primary + '40' }]}>
+            <Sparkles size={14} color={brand.primary} strokeWidth={2} />
+            <Text style={[styles.aiBadgeText, { color: brand.primary, fontFamily: font.bodySemiBold }]}>
+              {t('examForm_aiPrefilled')}
+            </Text>
+          </View>
+        )
       )}
 
       <TextInput
         value={title}
         onChangeText={setTitle}
         placeholder={t('examForm_titlePlaceholder')}
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
+        placeholderTextColor={placeholderColor}
+        style={diffuse ? [diffuseInput, { color: inkText, borderBottomColor: inkBorder }] : [styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
       />
       <TextInput
         value={result}
         onChangeText={setResult}
         placeholder={t('examForm_resultPlaceholder')}
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
+        placeholderTextColor={placeholderColor}
+        style={diffuse ? [diffuseInput, { color: inkText, borderBottomColor: inkBorder }] : [styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
       />
       <TextInput
         value={provider}
         onChangeText={setProvider}
         placeholder={t('examForm_providerPlaceholder')}
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
+        placeholderTextColor={placeholderColor}
+        style={diffuse ? [diffuseInput, { color: inkText, borderBottomColor: inkBorder }] : [styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
       />
       <TextInput
         value={examDate}
         onChangeText={setExamDate}
         placeholder={t('examForm_datePlaceholder')}
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
+        placeholderTextColor={placeholderColor}
+        style={diffuse ? [diffuseInput, { color: inkText, borderBottomColor: inkBorder }] : [styles.input, { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: radius.full }]}
       />
       <TextInput
         value={notes}
         onChangeText={setNotes}
         placeholder={t('examForm_notesPlaceholder')}
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={placeholderColor}
         multiline
-        style={[
-          styles.input,
-          styles.inputMultiline,
-          { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: 22 },
-        ]}
+        style={diffuse
+          ? [diffuseInput, { color: inkText, borderBottomColor: inkBorder, height: 96, paddingVertical: 10, textAlignVertical: 'top' }]
+          : [
+              styles.input,
+              styles.inputMultiline,
+              { color: inkText, backgroundColor: paper, borderColor: inkBorder, borderRadius: 22 },
+            ]}
       />
 
       {referenceRange && (
-        <View style={[styles.metaRow, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
-          <Text style={[styles.metaLabel, { color: colors.textMuted }]}>{t('examForm_referenceRange')}</Text>
-          <Text style={[styles.metaValue, { color: colors.text }]}>{referenceRange}</Text>
-        </View>
+        diffuse ? (
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: dt.colors.line, paddingVertical: 12 }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: dt.colors.ink3 }}>{t('examForm_referenceRange')}</Text>
+            <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, color: dt.colors.ink }}>{referenceRange}</Text>
+          </View>
+        ) : (
+          <View style={[styles.metaRow, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
+            <Text style={[styles.metaLabel, { color: colors.textMuted }]}>{t('examForm_referenceRange')}</Text>
+            <Text style={[styles.metaValue, { color: colors.text }]}>{referenceRange}</Text>
+          </View>
+        )
       )}
 
       {flagged.length > 0 && (
-        <View style={[styles.flaggedBox, { backgroundColor: brand.error + '12', borderColor: brand.error + '30' }]}>
-          <Text style={[styles.flaggedTitle, { color: brand.error, fontFamily: font.bodySemiBold }]}>
+        <View style={[styles.flaggedBox, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.error, borderRadius: 18 } : { backgroundColor: brand.error + '12', borderColor: brand.error + '30' }]}>
+          <Text style={[styles.flaggedTitle, { color: diffuse ? dt.colors.error : brand.error, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}>
             {t('examForm_flaggedTitle')}
           </Text>
           {flagged.map((f, i) => (
-            <Text key={i} style={[styles.flaggedItem, { color: colors.text }]}>{t('common_bullet')} {f}</Text>
+            <Text key={i} style={[styles.flaggedItem, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : undefined }]}>{t('common_bullet')} {f}</Text>
           ))}
-          <Text style={[styles.flaggedNote, { color: colors.textMuted }]}>
+          <Text style={[styles.flaggedNote, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : undefined }]}>
             {t('examForm_flaggedNote')}
           </Text>
         </View>
       )}
 
-      <Pressable
-        onPress={handleSave}
-        disabled={saving || !title.trim() || uploading || extracting}
-        style={({ pressed }) => {
-          const isDisabled = saving || !title.trim() || uploading || extracting
-          return [
-            styles.saveBtn,
-            {
-              backgroundColor: isDisabled ? paper : (isDark ? colors.text : INK),
-              borderColor: isDisabled ? inkBorder : (isDark ? colors.text : INK),
-              borderWidth: 1.5,
-              borderRadius: radius.full,
-            },
-            pressed && !isDisabled && { transform: [{ scale: 0.98 }], opacity: 0.9 },
-          ]
-        }}
-      >
-        {saving ? (
-          <ActivityIndicator color={!title.trim() ? inkText : '#FFFEF8'} />
-        ) : (
-          <Text style={[styles.saveBtnText, { color: !title.trim() ? (isDark ? colors.textMuted : 'rgba(20,19,19,0.4)') : '#FFFEF8' }]}>
-            {t('examForm_saveExam')}
-          </Text>
-        )}
-      </Pressable>
+      {diffuse ? (
+        <>
+          <Pressable
+            onPress={handleSave}
+            disabled={saving || !title.trim() || uploading || extracting}
+            style={({ pressed }) => {
+              const isDisabled = saving || !title.trim() || uploading || extracting
+              return [
+                { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: dt.colors.line2, paddingTop: 18, marginTop: 4, opacity: (pressed && !isDisabled) ? 0.6 : 1 },
+              ]
+            }}
+          >
+            {saving ? (
+              <ActivityIndicator color={dt.colors.ink} />
+            ) : (
+              <>
+                <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: !title.trim() ? dt.colors.ink4 : dt.colors.ink }}>
+                  {t('examForm_saveExam')}
+                </Text>
+                <Text style={{ fontFamily: diffuseFont.body, fontSize: 18, color: !title.trim() ? dt.colors.ink4 : dt.colors.ink3 }}>→</Text>
+              </>
+            )}
+          </Pressable>
 
-      <Pressable onPress={onSaved} hitSlop={8}>
-        <Text style={[styles.cancelText, { color: colors.textMuted }]}>{t('examForm_cancel')}</Text>
-      </Pressable>
+          <Pressable onPress={onSaved} hitSlop={8} style={{ paddingVertical: 14, alignItems: 'center' }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{t('examForm_cancel')}</Text>
+          </Pressable>
+        </>
+      ) : (
+        <>
+          <Pressable
+            onPress={handleSave}
+            disabled={saving || !title.trim() || uploading || extracting}
+            style={({ pressed }) => {
+              const isDisabled = saving || !title.trim() || uploading || extracting
+              return [
+                styles.saveBtn,
+                {
+                  backgroundColor: isDisabled ? paper : (isDark ? colors.text : INK),
+                  borderColor: isDisabled ? inkBorder : (isDark ? colors.text : INK),
+                  borderWidth: 1.5,
+                  borderRadius: radius.full,
+                },
+                pressed && !isDisabled && { transform: [{ scale: 0.98 }], opacity: 0.9 },
+              ]
+            }}
+          >
+            {saving ? (
+              <ActivityIndicator color={!title.trim() ? inkText : '#FFFEF8'} />
+            ) : (
+              <Text style={[styles.saveBtnText, { color: !title.trim() ? (isDark ? colors.textMuted : 'rgba(20,19,19,0.4)') : '#FFFEF8' }]}>
+                {t('examForm_saveExam')}
+              </Text>
+            )}
+          </Pressable>
+
+          <Pressable onPress={onSaved} hitSlop={8}>
+            <Text style={[styles.cancelText, { color: colors.textMuted }]}>{t('examForm_cancel')}</Text>
+          </Pressable>
+        </>
+      )}
     </View>
   )
 }

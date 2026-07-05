@@ -29,7 +29,9 @@ import {
   X,
 } from 'lucide-react-native'
 
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { useChildStore } from '../../store/useChildStore'
 import {
   type Exam,
@@ -57,6 +59,8 @@ const { width: SCREEN_W } = Dimensions.get('window')
 export default function ExamDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
@@ -70,13 +74,13 @@ export default function ExamDetailScreen() {
 
   if (isLoading || !exam) {
     return (
-      <View style={[styles.root, styles.centered, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator color={colors.primary} />
+      <View style={[styles.root, styles.centered, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
+        <ActivityIndicator color={diffuse ? getDiffuseAccent('kids', dt.isDark) : colors.primary} />
       </View>
     )
   }
 
-  const accent = BEHAVIOR_COLORS[exam.behavior]
+  const accent = diffuse ? getDiffuseAccent(exam.behavior, dt.isDark) : BEHAVIOR_COLORS[exam.behavior]
   const child = exam.childId ? children.find((c) => c.id === exam.childId) : undefined
   const childIdx = child ? children.findIndex((c) => c.id === child.id) : -1
 
@@ -133,17 +137,21 @@ export default function ExamDetailScreen() {
   const flagged = exam.extracted?.flagged ?? []
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 12 }]}>
         <Pressable onPress={() => router.back()} hitSlop={10} style={styles.iconBtn}>
-          <ChevronLeft size={24} color={colors.text} strokeWidth={2} />
+          <ChevronLeft size={24} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
         </Pressable>
         <View style={styles.headerTitle}>
-          <MonoCaps size={10} color={accent}>{examBehaviorLabel(exam.behavior)}</MonoCaps>
+          {diffuse ? (
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{examBehaviorLabel(exam.behavior)}</Text>
+          ) : (
+            <MonoCaps size={10} color={accent}>{examBehaviorLabel(exam.behavior)}</MonoCaps>
+          )}
         </View>
         <Pressable onPress={() => handleShare(exam)} hitSlop={10} style={styles.iconBtn}>
-          <Share2 size={20} color={colors.text} strokeWidth={2} />
+          <Share2 size={20} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
         </Pressable>
       </View>
 
@@ -153,31 +161,42 @@ export default function ExamDetailScreen() {
       >
         {/* Hero */}
         <View style={styles.hero}>
-          <Display size={28} color={colors.text}>{exam.title}</Display>
+          {diffuse ? (
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 28, color: dt.colors.ink, letterSpacing: -0.5 }}>{exam.title}</Text>
+          ) : (
+            <Display size={28} color={colors.text}>{exam.title}</Display>
+          )}
           {exam.result && (
-            <Text style={[styles.heroResult, { color: accent }]}>{exam.result}</Text>
+            <Text style={[styles.heroResult, { color: diffuse ? dt.colors.ink : accent, fontFamily: diffuse ? diffuseFont.italic : undefined, fontWeight: diffuse ? '400' : '700' }]}>{exam.result}</Text>
           )}
           <View style={styles.metaChipRow}>
-            <MetaChip icon={<CalendarIcon size={12} color={colors.textSecondary} strokeWidth={2} />} label={formatExamDate(exam.examDate)} colors={colors} />
+            <MetaChip icon={<CalendarIcon size={12} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={diffuse ? 1.5 : 2} />} label={formatExamDate(exam.examDate)} colors={colors} diffuse={diffuse} />
             {exam.provider && (
-              <MetaChip icon={<User size={12} color={colors.textSecondary} strokeWidth={2} />} label={exam.provider} colors={colors} />
+              <MetaChip icon={<User size={12} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={diffuse ? 1.5 : 2} />} label={exam.provider} colors={colors} diffuse={diffuse} />
             )}
             {child && childIdx >= 0 && (
-              <View style={[styles.chip, { backgroundColor: childColor(childIdx) + '18', borderColor: childColor(childIdx) + '40' }]}>
-                <Text style={[styles.chipText, { color: childColor(childIdx) }]}>{child.name}</Text>
-              </View>
+              diffuse ? (
+                <View style={[styles.chip, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}>
+                  <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: childColor(childIdx), marginRight: 6 }} />
+                  <Text style={[styles.chipText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>{child.name}</Text>
+                </View>
+              ) : (
+                <View style={[styles.chip, { backgroundColor: childColor(childIdx) + '18', borderColor: childColor(childIdx) + '40' }]}>
+                  <Text style={[styles.chipText, { color: childColor(childIdx) }]}>{child.name}</Text>
+                </View>
+              )
             )}
           </View>
         </View>
 
         {/* Flagged */}
         {flagged.length > 0 && (
-          <View style={[styles.flaggedBox, { backgroundColor: brand.error + '12', borderColor: brand.error + '30' }]}>
-            <Text style={[styles.flaggedTitle, { color: brand.error }]}>{t('examDetail_flaggedTitle')}</Text>
+          <View style={[styles.flaggedBox, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.error, borderRadius: 20 } : { backgroundColor: brand.error + '12', borderColor: brand.error + '30' }]}>
+            <Text style={[styles.flaggedTitle, { color: diffuse ? dt.colors.error : brand.error, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{t('examDetail_flaggedTitle')}</Text>
             {flagged.map((f, i) => (
-              <Text key={i} style={[styles.flaggedItem, { color: colors.text }]}>{t('examDetail_flaggedBullet', { item: f })}</Text>
+              <Text key={i} style={[styles.flaggedItem, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : undefined }]}>{t('examDetail_flaggedBullet', { item: f })}</Text>
             ))}
-            <Text style={[styles.flaggedNote, { color: colors.textMuted }]}>
+            <Text style={[styles.flaggedNote, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : undefined }]}>
               {t('examDetail_flaggedNote')}
             </Text>
           </View>
@@ -185,29 +204,45 @@ export default function ExamDetailScreen() {
 
         {/* Notes */}
         {exam.notes && (
-          <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <MonoCaps size={10} color={colors.textMuted}>{t('examDetail_notesLabel')}</MonoCaps>
-            <Body size={14} color={colors.text} style={{ marginTop: 6, lineHeight: 20 }}>
-              {exam.notes}
-            </Body>
+          <View style={[styles.section, diffuse ? { backgroundColor: 'transparent', borderColor: 'transparent', borderTopWidth: 1, borderTopColor: dt.colors.line, borderRadius: 0, paddingHorizontal: 0 } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            {diffuse ? (
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{t('examDetail_notesLabel')}</Text>
+            ) : (
+              <MonoCaps size={10} color={colors.textMuted}>{t('examDetail_notesLabel')}</MonoCaps>
+            )}
+            {diffuse ? (
+              <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 20, color: dt.colors.ink, marginTop: 6 }}>{exam.notes}</Text>
+            ) : (
+              <Body size={14} color={colors.text} style={{ marginTop: 6, lineHeight: 20 }}>
+                {exam.notes}
+              </Body>
+            )}
           </View>
         )}
 
         {/* AI Extracted metadata */}
         {exam.extracted && (
-          <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={[styles.section, diffuse ? { backgroundColor: 'transparent', borderColor: 'transparent', borderTopWidth: 1, borderTopColor: dt.colors.line, borderRadius: 0, paddingHorizontal: 0 } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.sectionHead}>
-              <Sparkles size={14} color={colors.primary} strokeWidth={2} />
-              <MonoCaps size={10} color={colors.primary}>{t('examDetail_aiExtracted')}</MonoCaps>
+              {diffuse ? (
+                <DiffuseBloomIcon color={getDiffuseAccent(exam.behavior, dt.isDark)} size={24} intensity={0.4}><Sparkles size={13} color={dt.colors.ink3} strokeWidth={1.4} /></DiffuseBloomIcon>
+              ) : (
+                <Sparkles size={14} color={colors.primary} strokeWidth={2} />
+              )}
+              {diffuse ? (
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{t('examDetail_aiExtracted')}</Text>
+              ) : (
+                <MonoCaps size={10} color={colors.primary}>{t('examDetail_aiExtracted')}</MonoCaps>
+              )}
             </View>
             {exam.extracted.referenceRange && (
-              <ExtractRow label={t('examDetail_referenceRange')} value={exam.extracted.referenceRange} colors={colors} />
+              <ExtractRow label={t('examDetail_referenceRange')} value={exam.extracted.referenceRange} colors={colors} diffuse={diffuse} />
             )}
             {exam.extracted.examDate && (
-              <ExtractRow label={t('examDetail_examDateParsed')} value={exam.extracted.examDate} colors={colors} />
+              <ExtractRow label={t('examDetail_examDateParsed')} value={exam.extracted.examDate} colors={colors} diffuse={diffuse} />
             )}
             {exam.extracted.provider && (
-              <ExtractRow label={t('examDetail_providerLabel')} value={exam.extracted.provider} colors={colors} />
+              <ExtractRow label={t('examDetail_providerLabel')} value={exam.extracted.provider} colors={colors} diffuse={diffuse} />
             )}
           </View>
         )}
@@ -215,11 +250,19 @@ export default function ExamDetailScreen() {
         {/* Photos */}
         {exam.photos.length > 0 && (
           <View style={styles.photosSection}>
-            <MonoCaps size={10} color={colors.textMuted} style={{ marginBottom: 8, paddingHorizontal: 4 }}>
-              {exam.photos.length === 1
-                ? t('exams_photoCount', { count: String(exam.photos.length) })
-                : t('exams_photosCount', { count: String(exam.photos.length) })}
-            </MonoCaps>
+            {diffuse ? (
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3, marginBottom: 8, paddingHorizontal: 4 }}>
+                {exam.photos.length === 1
+                  ? t('exams_photoCount', { count: String(exam.photos.length) })
+                  : t('exams_photosCount', { count: String(exam.photos.length) })}
+              </Text>
+            ) : (
+              <MonoCaps size={10} color={colors.textMuted} style={{ marginBottom: 8, paddingHorizontal: 4 }}>
+                {exam.photos.length === 1
+                  ? t('exams_photoCount', { count: String(exam.photos.length) })
+                  : t('exams_photosCount', { count: String(exam.photos.length) })}
+              </MonoCaps>
+            )}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -229,7 +272,7 @@ export default function ExamDetailScreen() {
                 const url = signedUrls[i]
                 return (
                   <Pressable key={path} onPress={() => url && setViewerIndex(i)}>
-                    <View style={[styles.photo, { backgroundColor: colors.surface }]}>
+                    <View style={[styles.photo, { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surface, borderWidth: diffuse ? 1 : 0, borderColor: diffuse ? dt.colors.line : 'transparent' }]}>
                       {url && <Image source={{ uri: url }} style={styles.photo} />}
                     </View>
                   </Pressable>
@@ -240,17 +283,30 @@ export default function ExamDetailScreen() {
         )}
 
         {/* Delete */}
-        <Pressable
-          onPress={() => handleDelete(exam)}
-          disabled={deleting}
-          style={({ pressed }) => [
-            styles.deleteBtn,
-            { borderColor: brand.error + '40', opacity: pressed ? 0.7 : 1 },
-          ]}
-        >
-          <Trash2 size={16} color={brand.error} strokeWidth={2} />
-          <Text style={[styles.deleteText, { color: brand.error }]}>{t('examDetail_deleteBtn')}</Text>
-        </Pressable>
+        {diffuse ? (
+          <Pressable
+            onPress={() => handleDelete(exam)}
+            disabled={deleting}
+            style={({ pressed }) => [
+              { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderTopWidth: 1, borderTopColor: dt.colors.line2, marginTop: 12, opacity: pressed ? 0.6 : 1 },
+            ]}
+          >
+            <Trash2 size={15} color={dt.colors.error} strokeWidth={1.6} />
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.error }}>{t('examDetail_deleteBtn')}</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={() => handleDelete(exam)}
+            disabled={deleting}
+            style={({ pressed }) => [
+              styles.deleteBtn,
+              { borderColor: brand.error + '40', opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            <Trash2 size={16} color={brand.error} strokeWidth={2} />
+            <Text style={[styles.deleteText, { color: brand.error }]}>{t('examDetail_deleteBtn')}</Text>
+          </Pressable>
+        )}
       </ScrollView>
 
       {/* Full-screen photo viewer */}
@@ -306,11 +362,22 @@ function MetaChip({
   icon,
   label,
   colors,
+  diffuse,
 }: {
   icon: React.ReactNode
   label: string
   colors: ReturnType<typeof useTheme>['colors']
+  diffuse?: boolean
 }) {
+  const dt = useDiffuseTheme()
+  if (diffuse) {
+    return (
+      <View style={[styles.chip, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}>
+        {icon}
+        <Text style={[styles.chipText, { color: dt.colors.ink3, marginLeft: 4, fontFamily: diffuseFont.mono }]}>{label}</Text>
+      </View>
+    )
+  }
   return (
     <View style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       {icon}
@@ -323,11 +390,22 @@ function ExtractRow({
   label,
   value,
   colors,
+  diffuse,
 }: {
   label: string
   value: string
   colors: ReturnType<typeof useTheme>['colors']
+  diffuse?: boolean
 }) {
+  const dt = useDiffuseTheme()
+  if (diffuse) {
+    return (
+      <View style={styles.extractRow}>
+        <Text style={[styles.extractLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>{label}</Text>
+        <Text style={[styles.extractValue, { color: dt.colors.ink, fontFamily: diffuseFont.body }]}>{value}</Text>
+      </View>
+    )
+  }
   return (
     <View style={styles.extractRow}>
       <Text style={[styles.extractLabel, { color: colors.textMuted }]}>{label}</Text>

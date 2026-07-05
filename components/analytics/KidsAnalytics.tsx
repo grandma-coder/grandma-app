@@ -72,7 +72,18 @@ import {
   X,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, font } from '../../constants/theme'
+import { useTheme, brand, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
+import {
+  DiffuseBloomIcon,
+  DiffuseSectionHeader,
+  DiffuseSegmentPill,
+  DiffuseMetricTile,
+  DiffuseListRow,
+  DiffuseSheet,
+  DiffuseEmptyState,
+  DiffuseCircularMetric,
+} from '../ui/diffuse/DiffusePrimitives'
 import { toDateStr } from '../../lib/cycleLogic'
 import { useChildStore } from '../../store/useChildStore'
 import { LineChart, BarChart, BubbleGrid, MoodBubbleCluster } from '../charts/SvgCharts'
@@ -527,6 +538,8 @@ function buildGrandmaContext(
 export function KidsAnalytics() {
   const { t } = useTranslation()
   const { colors, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
@@ -633,64 +646,141 @@ export function KidsAnalytics() {
     runWellnessNotifications(analytics.scores, selectedChild.id, selectedChild.name).catch(() => {})
   }, [analytics?.scores, selectedChild])
 
+  // ── Diffuse period options for the hairline segment pill ──
+  const diffusePeriodOptions: { key: Period; label: string }[] = [
+    { key: 'week', label: '7 Days' },
+    { key: 'month', label: '30 Days' },
+    { key: '3mo', label: '3 Mo' },
+    { key: 'year', label: '1 Yr' },
+    { key: 'custom', label: customLabel ? customLabel : 'Custom' },
+  ]
+
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={diffuse ? getDiffuseAccent('kids', dt.isDark) : colors.primary} colors={[diffuse ? getDiffuseAccent('kids', dt.isDark) : colors.primary]} />}
       >
         {/* ── HEADER (2026 redesign) ── */}
-        <View style={styles.headerEditorial}>
-          <View style={{ flex: 1 }}>
-            <AnalyticsTitle
-              primary={`${childName}'s patterns`}
-              italic="so far."
+        {diffuse ? (
+          <View style={{ marginBottom: 4 }}>
+            <DiffuseSectionHeader
+              eyebrow={getAgeLabel(ageMonths)}
+              title={`${childName}'s patterns`}
+              right={(
+                <Pressable
+                  onPress={() => setShowScoreInfo(true)}
+                  hitSlop={10}
+                  style={({ pressed }) => [
+                    styles.infoBtnNew,
+                    { backgroundColor: 'transparent', borderColor: dt.colors.hairline },
+                    pressed && { opacity: 0.6 },
+                  ]}
+                >
+                  <Info size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                </Pressable>
+              )}
             />
-            <Text
-              style={[
-                styles.headerSub,
-                { color: colors.textSecondary, fontFamily: font.body },
-              ]}
-            >
-              {getAgeLabel(ageMonths)}
-            </Text>
           </View>
-          <View style={styles.headerActions}>
-            <Pressable
-              onPress={() => setShowScoreInfo(true)}
-              hitSlop={10}
-              style={({ pressed }) => [
-                styles.infoBtnNew,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <Info size={16} color={colors.text} strokeWidth={2} />
-            </Pressable>
+        ) : (
+          <View style={styles.headerEditorial}>
+            <View style={{ flex: 1 }}>
+              <AnalyticsTitle
+                primary={`${childName}'s patterns`}
+                italic="so far."
+              />
+              <Text
+                style={[
+                  styles.headerSub,
+                  { color: colors.textSecondary, fontFamily: font.body },
+                ]}
+              >
+                {getAgeLabel(ageMonths)}
+              </Text>
+            </View>
+            <View style={styles.headerActions}>
+              <Pressable
+                onPress={() => setShowScoreInfo(true)}
+                hitSlop={10}
+                style={({ pressed }) => [
+                  styles.infoBtnNew,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Info size={16} color={colors.text} strokeWidth={2} />
+              </Pressable>
+            </View>
           </View>
-        </View>
+        )}
 
-        <PeriodSelector
-          value={period}
-          onChange={handlePeriodChange}
-          customLabel={customLabel}
-        />
+        {diffuse ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+            <DiffuseSegmentPill
+              options={diffusePeriodOptions}
+              value={period}
+              onChange={handlePeriodChange}
+            />
+          </ScrollView>
+        ) : (
+          <PeriodSelector
+            value={period}
+            onChange={handlePeriodChange}
+            customLabel={customLabel}
+          />
+        )}
 
         {/* ── 1. CHILD SELECTOR ── */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childRow}>
-          {children.map((c, idx) => (
-            <ChildChip
-              key={c.id}
-              label={c.name}
-              age={formatChildAge(c.birthDate)}
-              active={selectedChildId === c.id}
-              color={CHILD_COLORS[idx % CHILD_COLORS.length]}
-              onPress={() => { setSelectedChildId(c.id); setActiveChild(c) }}
-            />
-          ))}
-        </ScrollView>
+        {diffuse ? (
+          children.length > 1 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+              {children.map((c, idx) => {
+                const on = selectedChildId === c.id
+                const kidColor = CHILD_COLORS[idx % CHILD_COLORS.length]
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => { setSelectedChildId(c.id); setActiveChild(c) }}
+                    style={({ pressed }) => [
+                      {
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                        paddingVertical: 10,
+                        paddingHorizontal: 16,
+                        borderRadius: 999,
+                        borderWidth: 1,
+                        borderColor: on ? dt.colors.hairline : dt.colors.line,
+                        backgroundColor: on ? dt.colors.surface : 'transparent',
+                        opacity: pressed ? 0.7 : 1,
+                      },
+                    ]}
+                  >
+                    <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: kidColor }} />
+                    <Text style={{ fontFamily: on ? diffuseFont.bodySemiBold : diffuseFont.body, fontSize: 13, color: on ? dt.colors.ink : dt.colors.ink3 }}>
+                      {c.name}
+                    </Text>
+                  </Pressable>
+                )
+              })}
+            </ScrollView>
+          ) : null
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childRow}>
+            {children.map((c, idx) => (
+              <ChildChip
+                key={c.id}
+                label={c.name}
+                age={formatChildAge(c.birthDate)}
+                active={selectedChildId === c.id}
+                color={CHILD_COLORS[idx % CHILD_COLORS.length]}
+                onPress={() => { setSelectedChildId(c.id); setActiveChild(c) }}
+              />
+            ))}
+          </ScrollView>
+        )}
 
         {isLoading && (
           <View style={styles.loadingWrap}>
@@ -699,11 +789,11 @@ export function KidsAnalytics() {
         )}
 
         {error && !isLoading && (
-          <Pressable onPress={() => refetch()} style={[styles.errorCard, { backgroundColor: brand.error + '15', borderRadius: radius.xl }]}>
-            <Text style={[styles.errorText, { color: brand.error }]}>{t('kids_analytics_error_load')}</Text>
+          <Pressable onPress={() => refetch()} style={[styles.errorCard, { backgroundColor: diffuse ? 'transparent' : brand.error + '15', borderRadius: radius.xl, borderWidth: diffuse ? 1 : 0, borderColor: diffuse ? dt.colors.line : 'transparent' }]}>
+            <Text style={[styles.errorText, { color: diffuse ? dt.colors.error : brand.error, fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold }]}>{t('kids_analytics_error_load')}</Text>
             <View style={styles.row}>
-              <RefreshCw size={14} color={brand.error} />
-              <Text style={[styles.errorRetry, { color: brand.error }]}>{t('kids_analytics_tap_retry')}</Text>
+              <RefreshCw size={14} color={diffuse ? dt.colors.error : brand.error} strokeWidth={diffuse ? 1.6 : 2} />
+              <Text style={[styles.errorRetry, { color: diffuse ? dt.colors.error : brand.error, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{t('kids_analytics_tap_retry')}</Text>
             </View>
           </Pressable>
         )}
@@ -730,7 +820,7 @@ export function KidsAnalytics() {
               const tipMap = tipByPillar(tips)
               return (
                 <View style={styles.pillarSection}>
-                  <Text style={[styles.pillarSectionTitle, { color: colors.text }]}>
+                  <Text style={[styles.pillarSectionTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
                     {t('kids_analytics_thriving_breakdown')}
                   </Text>
                   {PILLAR_ORDER.map((key) => (
@@ -750,13 +840,21 @@ export function KidsAnalytics() {
         )}
 
         {analytics && analytics.totalLogs === 0 && !isLoading && (
-          <View style={[styles.emptyAll, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-            <FileQuestion size={32} color={colors.textMuted} />
-            <Text style={[styles.emptyAllTitle, { color: colors.text }]}>{t('kids_analytics_no_data_title')}</Text>
-            <Text style={[styles.emptyAllSub, { color: colors.textMuted }]}>
-              {t('kids_analytics_no_data_hint')}
-            </Text>
-          </View>
+          diffuse ? (
+            <DiffuseEmptyState
+              icon={<FileQuestion size={26} color={dt.colors.ink3} strokeWidth={1.4} />}
+              title={t('kids_analytics_no_data_title')}
+              message={t('kids_analytics_no_data_hint')}
+            />
+          ) : (
+            <View style={[styles.emptyAll, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+              <FileQuestion size={32} color={colors.textMuted} />
+              <Text style={[styles.emptyAllTitle, { color: colors.text }]}>{t('kids_analytics_no_data_title')}</Text>
+              <Text style={[styles.emptyAllSub, { color: colors.textMuted }]}>
+                {t('kids_analytics_no_data_hint')}
+              </Text>
+            </View>
+          )
         )}
       </ScrollView>
 
@@ -854,6 +952,8 @@ function ScoreInfoModal({
 }) {
   const { t } = useTranslation()
   const { colors, radius, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
 
   // Band colors mirror scoreColor() — sticker-palette hex values.
@@ -876,6 +976,58 @@ function ScoreInfoModal({
 
   const WEIGHTS: Record<PillarKey, string> = {
     nutrition: '27%', sleep: '22%', mood: '18%', health: '13%', growth: '9%', activity: '11%',
+  }
+
+  if (diffuse) {
+    return (
+      <DiffuseSheet visible={visible} title={t('kids_analytics_score_guide_title')} onClose={onClose}>
+        {scores && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, borderTopWidth: 1, borderTopColor: dt.colors.line, paddingVertical: 16 }}>
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 44, color: dt.colors.ink, letterSpacing: -1 }}>{scores.overall.toFixed(1)}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: diffuseFont.body, fontSize: 15, color: dt.colors.ink }}>{t('kids_analytics_score_child_label', { childName })}</Text>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 3 }}>{t('kids_analytics_score_weighted_avg')}</Text>
+            </View>
+          </View>
+        )}
+
+        <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 8, marginBottom: 6 }}>{t('kids_analytics_score_scale_label')}</Text>
+        {SCORE_BANDS.map((b) => (
+          <DiffuseListRow key={b.label} title={b.label} dotColor={b.color} value={b.range} valueColor={dt.colors.ink3} />
+        ))}
+
+        <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 18, marginBottom: 6 }}>{t('kids_analytics_pillar_scoring_label')}</Text>
+        {PILLAR_ORDER.map((key) => {
+          const config = PILLAR_CONFIG[key]
+          const Icon = config.icon
+          const score = scores?.[key]
+          return (
+            <View key={key} style={{ borderTopWidth: 1, borderTopColor: dt.colors.line, paddingVertical: 14 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <DiffuseBloomIcon color={config.color} size={26} intensity={0.4}><Icon size={15} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>
+                <Text style={{ flex: 1, fontFamily: diffuseFont.display, fontSize: 17, color: dt.colors.ink }}>{config.label}</Text>
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1, color: dt.colors.ink3 }}>{WEIGHTS[key]}</Text>
+                {score?.hasData && (
+                  <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, color: dt.colors.ink }}>{score.value.toFixed(1)}</Text>
+                )}
+              </View>
+              <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, lineHeight: 19, color: dt.colors.ink2 }}>{PILLAR_EXPLAIN[key]}</Text>
+            </View>
+          )
+        })}
+
+        <View style={{ borderTopWidth: 1, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }}>
+          <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: dt.colors.ink, marginBottom: 6 }}>{childName}{' at '}{getAgeLabel(ageMonths)}</Text>
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, lineHeight: 20, color: dt.colors.ink2 }}>
+            {'Sleep target: ' + getAgeSleepTarget(ageMonths) + 'h/day\n' +
+              (ageMonths < 6 ? 'Nutrition: breast/formula only (8–12 feeds/day)' :
+                ageMonths < 12 ? 'Nutrition: introducing solids alongside milk' :
+                  ageMonths < 24 ? 'Nutrition: 3 meals + snacks, ~1000 cal/day' :
+                    'Nutrition: 3 meals + 2 snacks/day')}
+          </Text>
+        </View>
+      </DiffuseSheet>
+    )
   }
 
   return (
@@ -978,6 +1130,8 @@ function TipDetailModal({
 }) {
   const { t } = useTranslation()
   const { colors, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const Icon = tip.icon
 
@@ -992,6 +1146,26 @@ function TipDetailModal({
     // wired up. Use a tiny marker param so consumers know to look.
     AsyncStorage.setItem('grandma-insight-context', ctx).catch(() => {})
     setTimeout(() => router.push({ pathname: '/grandma-talk', params: { hasInsightContext: '1' } } as any), 150)
+  }
+
+  if (diffuse) {
+    const accent = getDiffuseAccent('kids', dt.isDark)
+    return (
+      <DiffuseSheet visible title={tip.title} onClose={onClose} scroll={false}>
+        <View style={{ alignItems: 'center', paddingBottom: 12 }}>
+          <DiffuseBloomIcon color={tip.color} size={48} intensity={0.5}><Icon size={24} color={dt.colors.ink3} strokeWidth={1.4} /></DiffuseBloomIcon>
+        </View>
+        <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, lineHeight: 24, color: dt.colors.ink, marginBottom: 12 }}>{tip.body}</Text>
+        <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 21, color: dt.colors.ink2, marginBottom: 20 }}>{tip.detail}</Text>
+        <Pressable
+          onPress={handleAskGrandma}
+          style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: dt.colors.line2, paddingTop: 16, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink }}>{t('kids_analytics_ask_grandma_tip')}</Text>
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 18, color: dt.colors.ink3 }}>→</Text>
+        </Pressable>
+      </DiffuseSheet>
+    )
   }
 
   return (
@@ -1046,6 +1220,8 @@ function KidsWellnessRingCard({
 }) {
   const { t } = useTranslation()
   const { stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
 
   // Map pillars → ring segments (clockwise from top). The `id` routes taps
   // back to the matching pillar detail modal via onPillarPress.
@@ -1062,6 +1238,44 @@ function KidsWellnessRingCard({
   const rawOverall = hasAnyData ? scores.overall : 0
   const overall = Number.isFinite(rawOverall) ? rawOverall : 0
   const caption = overall >= 8.5 ? t('kids_analytics_caption_thriving') : overall >= 7 ? t('kids_analytics_caption_on_track') : overall >= 5 ? t('kids_analytics_caption_developing') : t('kids_analytics_caption_needs_care')
+
+  if (diffuse) {
+    const accent = getDiffuseAccent('kids', dt.isDark)
+    // Per-pillar dot rows around the ring: a hairline containerless list.
+    return (
+      <View style={{ gap: 18, marginTop: 4 }}>
+        <View style={{ alignItems: 'center', paddingVertical: 8, overflow: 'hidden', borderRadius: 28 }}>
+          <SoftBloom color={accent} cx="50%" cy="30%" opacity={dt.isDark ? 0.3 : 0.4} spread={0.5} />
+          <DiffuseCircularMetric
+            progress={overall / 10}
+            value={hasAnyData ? overall.toFixed(1) : '—'}
+            unit="/ 10"
+            label={caption.toUpperCase()}
+            size={200}
+            color={accent}
+            strokeWidth={5}
+          />
+        </View>
+        <View>
+          {PILLAR_ORDER.map((key, i) => {
+            const seg = segments.find((s) => s.id === key)
+            const sc = scores[key]
+            return (
+              <DiffuseListRow
+                key={key}
+                title={PILLAR_CONFIG[key].label}
+                dotColor={seg?.color}
+                value={sc.hasData ? sc.value.toFixed(1) : '—'}
+                valueColor={sc.hasData ? dt.colors.ink : dt.colors.ink3}
+                onPress={() => onPillarPress(key)}
+                last={i === PILLAR_ORDER.length - 1}
+              />
+            )
+          })}
+        </View>
+      </View>
+    )
+  }
 
   return (
     <View style={{ gap: 12 }}>
@@ -1531,6 +1745,8 @@ function GrandmaInsightCard({
 }) {
   const { t } = useTranslation()
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const [detailOpen, setDetailOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -1547,6 +1763,71 @@ function GrandmaInsightCard({
       AsyncStorage.setItem('grandma-insight-context', ctx).catch(() => {})
       router.push({ pathname: '/grandma-talk', params: { hasInsightContext: '1' } } as any)
     }, 150)
+  }
+
+  if (diffuse) {
+    const accent = getDiffuseAccent('kids', dt.isDark)
+    return (
+      <>
+        <Pressable
+          onPress={() => setDetailOpen(true)}
+          style={({ pressed }) => [
+            {
+              borderRadius: 26,
+              padding: 20,
+              backgroundColor: dt.colors.surface,
+              overflow: 'hidden',
+              opacity: pressed ? 0.94 : 1,
+            },
+          ]}
+        >
+          <SoftBloom color={accent} cx="86%" cy="14%" opacity={dt.isDark ? 0.26 : 0.36} spread={0.55} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+              {t('kids_analytics_grandma_says_label')}
+            </Text>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+              {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </Text>
+          </View>
+          <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, lineHeight: 28, color: dt.colors.ink, letterSpacing: -0.3 }}>
+            {highlights.message}
+          </Text>
+          <Pressable
+            onPress={(e) => { e.stopPropagation?.(); handleDiscussPress() }}
+            hitSlop={8}
+            style={({ pressed }) => [
+              { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: dt.colors.line2, paddingTop: 16, marginTop: 18, opacity: pressed ? 0.6 : 1 },
+            ]}
+          >
+            <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink }}>
+              {t('kids_analytics_discuss_btn')}
+            </Text>
+            <Text style={{ fontFamily: diffuseFont.body, fontSize: 18, color: dt.colors.ink3 }}>→</Text>
+          </Pressable>
+        </Pressable>
+
+        {detailOpen && (
+          <GrandmaInsightDetailSheet
+            highlights={highlights}
+            childName={childName}
+            onClose={() => setDetailOpen(false)}
+            onDiscuss={() => {
+              setDetailOpen(false)
+              setTimeout(() => setConfirmOpen(true), 150)
+            }}
+          />
+        )}
+
+        {confirmOpen && (
+          <DiscussConfirmSheet
+            childName={childName}
+            onClose={() => setConfirmOpen(false)}
+            onConfirm={handleConfirmYes}
+          />
+        )}
+      </>
+    )
   }
 
   return (
@@ -1662,7 +1943,54 @@ function GrandmaInsightDetailSheet({
 }) {
   const { t } = useTranslation()
   const { colors, radius, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
+
+  if (diffuse) {
+    const accent = getDiffuseAccent('kids', dt.isDark)
+    const rows: { label: string; title: string; titleColor: string; body: string }[] = []
+    if (highlights.strength) rows.push({ label: t('kids_analytics_insight_strength_label'), title: PILLAR_CONFIG[highlights.strength.pillar].label, titleColor: dt.colors.ink, body: highlights.strength.reason })
+    if (highlights.concern) rows.push({ label: t('kids_analytics_insight_concern_label'), title: PILLAR_CONFIG[highlights.concern.pillar].label, titleColor: dt.colors.ink, body: highlights.concern.reason })
+    if (highlights.trend) rows.push({ label: t('kids_analytics_insight_trend_label'), title: `${PILLAR_CONFIG[highlights.trend.pillar].label} ${highlights.trend.direction}`, titleColor: highlights.trend.direction === 'improving' ? dt.colors.success : dt.colors.error, body: `${highlights.trend.delta}% week-over-week change.` })
+    return (
+      <DiffuseSheet
+        visible
+        title={`${childName} is ${highlights.overallLabel}`}
+        chip={`${highlights.overallScore.toFixed(1)}/10`}
+        onClose={onClose}
+      >
+        {rows.map((r, i) => (
+          <View key={i} style={{ borderTopWidth: 1, borderTopColor: dt.colors.line, paddingVertical: 14 }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3, marginBottom: 4 }}>{r.label}</Text>
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: r.titleColor, marginBottom: 4 }}>{r.title}</Text>
+            <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 20, color: dt.colors.ink2 }}>{r.body}</Text>
+          </View>
+        ))}
+        {highlights.actions.length > 0 && (
+          <View style={{ borderTopWidth: 1, borderTopColor: dt.colors.line, paddingTop: 14, marginTop: 4 }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3, marginBottom: 10 }}>{t('kids_analytics_insight_next_steps_label')}</Text>
+            {highlights.actions.map((a, i) => (
+              <View key={i} style={{ flexDirection: 'row', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
+                <DiffuseBloomIcon color={accent} size={26} intensity={0.4}><Lightbulb size={15} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>
+                <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 20, color: dt.colors.ink }}>{a}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+        {rows.length === 0 && (
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, color: dt.colors.ink3, textAlign: 'center', paddingVertical: 20 }}>{t('kids_analytics_insight_no_highlights')}</Text>
+        )}
+        <Pressable
+          onPress={onDiscuss}
+          style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: dt.colors.line2, paddingTop: 18, marginTop: 8, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink }}>{t('kids_analytics_discuss_btn')}</Text>
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 18, color: dt.colors.ink3 }}>→</Text>
+        </Pressable>
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
@@ -1865,7 +2193,33 @@ function DiscussConfirmSheet({
 }) {
   const { t } = useTranslation()
   const { colors, radius, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
+
+  if (diffuse) {
+    const accent = getDiffuseAccent('kids', dt.isDark)
+    return (
+      <DiffuseSheet visible title={t('kids_analytics_confirm_share_title')} onClose={onClose} scroll={false}>
+        <View style={{ alignItems: 'center', paddingTop: 4, paddingBottom: 8 }}>
+          <DiffuseBloomIcon color={accent} size={48} intensity={0.5}><Sparkles size={24} color={dt.colors.ink3} strokeWidth={1.4} /></DiffuseBloomIcon>
+        </View>
+        <Text style={{ fontFamily: diffuseFont.body, fontSize: 15, lineHeight: 22, color: dt.colors.ink2, textAlign: 'center', marginBottom: 20 }}>
+          {t('kids_analytics_confirm_share_body', { childName })}
+        </Text>
+        <Pressable
+          onPress={onConfirm}
+          style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: dt.colors.line2, paddingTop: 16, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink }}>{t('kids_analytics_confirm_share_yes')}</Text>
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 18, color: dt.colors.ink3 }}>→</Text>
+        </Pressable>
+        <Pressable onPress={onClose} style={({ pressed }) => [{ paddingVertical: 16, alignItems: 'center', opacity: pressed ? 0.6 : 1 }]}>
+          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{t('kids_analytics_confirm_share_no')}</Text>
+        </Pressable>
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
@@ -2000,6 +2354,8 @@ function HealthTipsSection({
 function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
   const { t } = useTranslation()
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const [showModal, setShowModal] = useState(false)
   const adherenceRate = 100 - data.skipRate
   // Three tiers: ≥70 healthy (green), 40–69 watch (coral), <40 alarm
@@ -2011,6 +2367,58 @@ function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
     adherenceRate >= 40 ? stickers.coral :
     brand.error
   const tint = adherenceRate >= 70 ? stickers.greenSoft : stickers.peachSoft
+
+  if (diffuse) {
+    const diffuseAdherenceColor = adherenceRate >= 70 ? dt.colors.success : adherenceRate >= 40 ? getDiffuseAccent('kids', dt.isDark) : dt.colors.error
+    return (
+      <View>
+        <Pressable
+          onPress={() => setShowModal(true)}
+          style={({ pressed }) => [
+            { paddingVertical: 16, borderTopWidth: 1, borderTopColor: dt.colors.line, opacity: pressed ? 0.65 : 1 },
+          ]}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <DiffuseBloomIcon color={stickers.coral} size={30} intensity={0.45}>
+              <SkipForward size={16} color={dt.colors.ink3} strokeWidth={1.5} />
+            </DiffuseBloomIcon>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: dt.colors.ink }}>{t('kids_analytics_routine_compliance_title')}</Text>
+              <View style={{ height: 2, borderRadius: 999, backgroundColor: dt.colors.line, marginTop: 8, overflow: 'hidden' }}>
+                <View style={{ width: `${adherenceRate}%`, height: 2, borderRadius: 999, backgroundColor: dt.colors.ink3 }} />
+              </View>
+            </View>
+            {data.hasData ? (
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: 26, color: dt.colors.ink }}>
+                {data.totalSkips}
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, color: dt.colors.ink3 }}>{' skips'}</Text>
+              </Text>
+            ) : (
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 13, color: dt.colors.ink3 }}>{'—'}</Text>
+            )}
+          </View>
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, lineHeight: 19, color: dt.colors.ink2, marginTop: 10 }}>
+            {data.hasData
+              ? `${adherenceRate}% adherence this week — ${data.totalSkips} total skip${data.totalSkips === 1 ? '' : 's'}.`
+              : 'No routines tracked yet — add skips in the calendar.'}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: diffuseAdherenceColor }}>{t('kids_analytics_tip_tap_details')}</Text>
+            <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, color: diffuseAdherenceColor }}>→</Text>
+          </View>
+        </Pressable>
+
+        <RoutineComplianceModal
+          visible={showModal}
+          data={data}
+          adherenceRate={adherenceRate}
+          adherenceColor={diffuseAdherenceColor}
+          tint={tint}
+          onClose={() => setShowModal(false)}
+        />
+      </View>
+    )
+  }
 
   return (
     <View style={{ marginTop: 2 }}>
@@ -2127,8 +2535,57 @@ function RoutineComplianceModal({
 }) {
   const { t } = useTranslation()
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const sheetH = SCREEN_H * 0.78
+
+  if (diffuse) {
+    const maxSkip = Math.max(...(data.weeklySkips.length ? data.weeklySkips : [1]), 1)
+    return (
+      <DiffuseSheet
+        visible={visible}
+        title={t('kids_analytics_routine_compliance_title')}
+        chip={data.hasData ? `${adherenceRate}%` : undefined}
+        onClose={onClose}
+      >
+        <View style={{ flexDirection: 'row', gap: 10, borderTopWidth: 1, borderTopColor: dt.colors.line, paddingTop: 16 }}>
+          <DiffuseMetricTile value={`${adherenceRate}%`} label={t('kids_analytics_routine_adherence')} />
+          <DiffuseMetricTile value={data.totalSkips} label={t('kids_analytics_routine_total_skips')} />
+        </View>
+
+        {data.hasData && (
+          <View style={{ marginTop: 20 }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3, marginBottom: 12 }}>{t('kids_analytics_routine_skips_per_day')}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 60, gap: 6 }}>
+              {data.weeklySkips.map((count, i) => {
+                const barH = count > 0 ? Math.max((count / maxSkip) * 48, 6) : 3
+                return (
+                  <View key={i} style={{ flex: 1, alignItems: 'center' }}>
+                    <View style={{ width: '70%', height: barH, backgroundColor: count > 0 ? dt.colors.ink3 : dt.colors.line, borderRadius: 3 }} />
+                    <Text style={{ fontFamily: diffuseFont.mono, fontSize: 8.5, color: dt.colors.ink3, marginTop: 6 }}>{data.weekLabels[i]}</Text>
+                  </View>
+                )
+              })}
+            </View>
+          </View>
+        )}
+
+        {data.mostSkipped.length > 0 && (
+          <View style={{ marginTop: 20 }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3, marginBottom: 4 }}>{t('kids_analytics_routine_most_skipped')}</Text>
+            {data.mostSkipped.map((item, i) => (
+              <DiffuseListRow key={i} title={item.name} value={`${item.count}×`} last={i === data.mostSkipped.length - 1} />
+            ))}
+          </View>
+        )}
+
+        {!data.hasData && (
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, color: dt.colors.ink3, textAlign: 'center', paddingVertical: 20 }}>{t('kids_analytics_routine_no_skips')}</Text>
+        )}
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -2373,6 +2830,8 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
 }) {
   const { t } = useTranslation()
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const config = PILLAR_CONFIG[pillarKey]
   const safeValue = Number.isFinite(score.value) ? score.value : 0
   const pct = score.hasData ? Math.max(0, Math.min(100, (safeValue / 10) * 100)) : 0
@@ -2384,6 +2843,50 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
     : score.hasData
     ? t('kids_analytics_pillar_tap_details')
     : t('kids_analytics_pillar_no_data')
+
+  if (diffuse) {
+    const Icon = config.icon
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          { paddingVertical: 16, borderTopWidth: 1, borderTopColor: dt.colors.line, opacity: pressed ? 0.65 : 1 },
+        ]}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <DiffuseBloomIcon color={palette.chip} size={30} intensity={0.45}>
+            <Icon size={17} color={dt.colors.ink3} strokeWidth={1.5} />
+          </DiffuseBloomIcon>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: dt.colors.ink }}>{config.label}</Text>
+              {score.hasData && score.trend !== 0 && (
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.5, color: score.trend > 0 ? dt.colors.success : dt.colors.error }}>
+                  {score.trend > 0 ? '↑' : '↓'}{Math.abs(score.trend)}%
+                </Text>
+              )}
+            </View>
+            {/* thin hairline progress */}
+            <View style={{ height: 2, borderRadius: 999, backgroundColor: dt.colors.line, marginTop: 8, overflow: 'hidden' }}>
+              <View style={{ width: `${pct}%`, height: 2, borderRadius: 999, backgroundColor: dt.colors.ink3 }} />
+            </View>
+          </View>
+          {score.hasData && Number.isFinite(score.value) ? (
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 26, color: dt.colors.ink }}>
+              {score.value.toFixed(1)}
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, color: dt.colors.ink3 }}>{' /10'}</Text>
+            </Text>
+          ) : (
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 13, color: dt.colors.ink3 }}>{'—'}</Text>
+          )}
+        </View>
+        {tip && (
+          <Text style={{ fontFamily: diffuseFont.bodySemiBold, fontSize: 13, color: dt.colors.ink, marginTop: 10 }} numberOfLines={1}>{tip.title}</Text>
+        )}
+        <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, lineHeight: 19, color: dt.colors.ink2, marginTop: tip ? 3 : 10 }} numberOfLines={3}>{body}</Text>
+      </Pressable>
+    )
+  }
 
   return (
     <Pressable
@@ -2523,6 +3026,8 @@ function PillarDetailModal({
   onFullScreen: (id: string) => void
 }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   if (!pillarKey) return null
   const config = PILLAR_CONFIG[pillarKey]
@@ -2530,6 +3035,26 @@ function PillarDetailModal({
   const palette = pillarPalette(pillarKey, stickers)
 
   const sheetH = SCREEN_H * 0.87
+
+  if (diffuse) {
+    return (
+      <DiffuseSheet
+        visible={visible}
+        title={config.label}
+        chip={score.hasData ? `${score.value.toFixed(1)}/10` : undefined}
+        onClose={onClose}
+      >
+        <PillarDetail
+          pillarKey={pillarKey}
+          analytics={analytics}
+          chartW={chartW}
+          onFullScreen={onFullScreen}
+          childName={childName}
+          ageMonths={ageMonths}
+        />
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -2822,6 +3347,20 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 }) {
   const { colors, radius } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+
+  // Diffuse "explanation" block — hairline top rule, mono eyebrow, sans body.
+  // Under the flag-off path we keep the paper card so behavior is unchanged.
+  const explainCardStyle = diffuse
+    ? { borderTopWidth: 1, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4, gap: 8 } as const
+    : { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border } as const
+  const cardStyle = diffuse
+    ? { borderTopWidth: 1, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 } as const
+    : { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border } as const
+  const helpCapsColor = diffuse ? dt.colors.ink3 : colors.text
+  const explainColor = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const chartTitleColor = diffuse ? dt.colors.ink : colors.text
 
   switch (pillarKey) {
     case 'nutrition': {
@@ -2879,14 +3418,14 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           </View>
 
           {/* Explanation — different copy per mode */}
-          <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
-            <Text style={[styles.helpCardCaps, { color: colors.text }]}>{t('kids_analytics_how_score_works')}</Text>
+          <View style={[explainCardStyle]}>
+            <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
             {isMilkPhase ? (
               <>
-                <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+                <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                   {`At ${getAgeLabel(ageMonths)}, ${childName} is on milk feeds only. Score reflects feed frequency vs the age target of ${nutr.feedTarget} feeds/day, and how consistently you're logging.`}
                 </Text>
-                <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+                <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                   {`${totalBreast} breast session${totalBreast !== 1 ? 's' : ''} · ${totalBottle} bottle${totalBottle !== 1 ? 's' : ''}${totalBottleMl > 0 ? ` (${Math.round(totalBottleMl)}ml total)` : ''} logged across ${daysLogged} of ${windowDays} days.`}
                 </Text>
                 {daysLogged < Math.min(5, windowDays) && (
@@ -2897,10 +3436,10 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               </>
             ) : isMixedPhase ? (
               <>
-                <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+                <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                   {`At ${getAgeLabel(ageMonths)}, ${childName} is transitioning to solids. Score = milk feed frequency (60%) + solid-food variety (40%).`}
                 </Text>
-                <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+                <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                   {`${totalBreast + totalBottle} milk feed${totalBreast + totalBottle !== 1 ? 's' : ''}, ${variety} unique solid food${variety !== 1 ? 's' : ''} tried this window.`}
                 </Text>
                 {variety < 3 && (
@@ -2911,7 +3450,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               </>
             ) : (
               <>
-                <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+                <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                   {`${pctGood}% of ${totalMeals} meals this week were eaten well. ${pctLittle > 0 ? `${pctLittle}% were eaten partially. ` : ''}${pctNone > 0 ? `${pctNone}% were refused. ` : ''}${daysLogged < windowDays ? `Only ${daysLogged} of ${windowDays} days logged — consistent logging improves accuracy.` : 'Great logging consistency!'}`}
                 </Text>
                 {variety < 5 && (
@@ -3032,8 +3571,8 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
 
           {isMilkPhase && (totalBreast > 0 || totalBottle > 0) && (
-            <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <Text style={[styles.chartTitle, { color: colors.text }]}>{t('kids_home_feeding_modal_breast_vs_bottle')}</Text>
+            <View style={[styles.card, diffuse ? cardStyle : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+              <Text style={[styles.chartTitle, { color: chartTitleColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('kids_home_feeding_modal_breast_vs_bottle')}</Text>
               <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
                 <View style={{ flex: 1, alignItems: 'center', padding: 16, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }}>
                   <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 28, fontFamily: font.display }}>{totalBreast}</Text>
@@ -3068,8 +3607,8 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             </ChartCard>
           )}
           {!isMilkPhase && analytics.nutrition.topFoods.length > 0 && (
-            <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <Text style={[styles.chartTitle, { color: colors.text }]}>{t('kids_analytics_most_logged_foods')}</Text>
+            <View style={[styles.card, diffuse ? cardStyle : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+              <Text style={[styles.chartTitle, { color: chartTitleColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('kids_analytics_most_logged_foods')}</Text>
               <View style={{ gap: 0 }}>
                 {analytics.nutrition.topFoods.map((food, i) => (
                   <View
@@ -3119,9 +3658,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           </View>
 
           {/* Explanation */}
-          <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
-            <Text style={[styles.helpCardCaps, { color: colors.text }]}>{t('kids_analytics_how_score_works')}</Text>
-            <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+          <View style={[explainCardStyle]}>
+            <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
+            <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
               {`${childName} averaged ${avg.toFixed(1)}h/night across ${daysLogged} logged days. The target for ${getAgeLabel(ageMonths)} is ${target}h including naps. `}
               {deficit > 0.5
                 ? `That's a ${deficit.toFixed(1)}h nightly deficit — consistent early bedtimes and a wind-down routine can help close this gap.`
@@ -3207,9 +3746,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       const moodScore = analytics.scores.mood
       return analytics.mood.hasData ? (
         <View style={styles.detailBody}>
-          <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
-            <Text style={[styles.helpCardCaps, { color: colors.text }]}>{t('kids_analytics_how_score_works')}</Text>
-            <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+          <View style={[explainCardStyle]}>
+            <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
+            <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
               {t('kids_analytics_mood_score_weights_hint')}
             </Text>
           </View>
@@ -3265,9 +3804,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           </View>
 
           {/* Health score explanation */}
-          <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
-            <Text style={[styles.helpCardCaps, { color: colors.text }]}>{t('kids_analytics_how_score_works')}</Text>
-            <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+          <View style={[explainCardStyle]}>
+            <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
+            <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
               {`Health score = vaccine completion (60%) + low health incidents (40%). ${doneVaccines}/${totalVaccines} vaccines logged. ${totalEvents === 0 ? 'No health events this week — great!' : `${totalEvents} health event${totalEvents !== 1 ? 's' : ''} logged this week.`}`}
             </Text>
           </View>
@@ -3305,8 +3844,8 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Recent events by type */}
           {analytics.health.hasData && analytics.health.recentEvents.length > 0 && (
-            <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
-              <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 14 }]}>{t('kids_analytics_health_recent_events')}</Text>
+            <View style={[styles.card, diffuse ? cardStyle : { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
+              <Text style={[styles.chartTitle, { color: chartTitleColor, marginBottom: 14, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('kids_analytics_health_recent_events')}</Text>
               {Object.entries(eventsByType).map(([type, events]) => (
                 <View key={type} style={{ marginBottom: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
@@ -3340,10 +3879,10 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
 
           {/* Vaccine tracker */}
-          <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
+          <View style={[styles.card, diffuse ? cardStyle : { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
             <View style={[styles.row, { marginBottom: 4 }]}>
               <Syringe size={18} color={PILLAR_CONFIG.health.color} strokeWidth={2} />
-              <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 0 }]}>{t('kids_analytics_vaccine_tracker_title')}</Text>
+              <Text style={[styles.chartTitle, { color: chartTitleColor, marginBottom: 0, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('kids_analytics_vaccine_tracker_title')}</Text>
             </View>
             {/* Progress bar */}
             <View style={{ height: 8, borderRadius: 999, marginTop: 12, marginBottom: 12, overflow: 'hidden', backgroundColor: brand.success + '22' }}>
@@ -3376,7 +3915,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       if (!analytics.growth.hasData) return <EmptyDetail pillar="growth" />
       return (
         <View style={styles.detailBody}>
-          <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+          <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
             {t('kids_analytics_growth_track_hint', { name: childName })}
           </Text>
 
@@ -3466,9 +4005,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
 
           {analytics.growth.weights.length < 2 && analytics.growth.heights.length < 2 && (
-            <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, alignItems: 'center', paddingVertical: 20 }]}>
-              <TrendingUp size={24} color={colors.textMuted} strokeWidth={1.5} />
-              <Text style={[styles.emptyText, { color: colors.textMuted, marginTop: 8 }]}>
+            <View style={[styles.card, diffuse ? { ...cardStyle, alignItems: 'center', paddingVertical: 20 } : { backgroundColor: colors.surface, borderRadius: radius.xl, alignItems: 'center', paddingVertical: 20 }]}>
+              <TrendingUp size={24} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={1.5} />
+              <Text style={[styles.emptyText, { color: diffuse ? dt.colors.ink3 : colors.textMuted, marginTop: 8, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>
                 {t('kids_analytics_add_measurements_hint')}
               </Text>
             </View>
@@ -3517,9 +4056,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           </View>
 
           {/* Explanation */}
-          <View style={[{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border }]}>
-            <Text style={[styles.helpCardCaps, { color: colors.text }]}>{t('kids_analytics_how_score_works')}</Text>
-            <Text style={[styles.detailExplain, { color: colors.textSecondary }]}>
+          <View style={[explainCardStyle]}>
+            <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
+            <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
               {act.hasData
                 ? `${childName} was active on ${act.activeDays} of ${act.dailySessions.length} days (${act.totalSessions} session${act.totalSessions !== 1 ? 's' : ''}, ${act.uniqueTypes.length} unique type${act.uniqueTypes.length !== 1 ? 's' : ''}).`
                 : `No activity logs found. Log sessions from Calendar → Activity to track ${childName}'s movement.`}
@@ -3571,8 +4110,8 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
 
           {/* Age-appropriate guide — RecSplit pattern from the mockup */}
-          <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }]}>
-            <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 6 }]}>{t('kids_analytics_activity_rec_split')}</Text>
+          <View style={[styles.card, diffuse ? { ...cardStyle, padding: 0 } : { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }]}>
+            <Text style={[styles.chartTitle, { color: chartTitleColor, marginBottom: 6, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('kids_analytics_activity_rec_split')}</Text>
             {guideItems.map((item) => (
               <View key={item.label} style={{ paddingVertical: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -3625,6 +4164,19 @@ function ChildChip({ label, age, active, color, onPress }: { label: string; age:
 
 function ChartCard({ title, children, onExpand }: { title: string; children: React.ReactNode; onExpand: () => void }) {
   const { colors, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  if (diffuse) {
+    return (
+      <View style={{ borderTopWidth: 1, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }}>
+        <Pressable onPress={onExpand} style={styles.chartHeader}>
+          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{title}</Text>
+          <ChevronRight size={16} color={dt.colors.ink3} strokeWidth={1.5} />
+        </Pressable>
+        <View style={styles.chartBody}>{children}</View>
+      </View>
+    )
+  }
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }]}>
       <Pressable onPress={onExpand} style={styles.chartHeader}>
@@ -3638,6 +4190,10 @@ function ChartCard({ title, children, onExpand }: { title: string; children: Rea
 
 function StatPill({ label, value, color }: { label: string; value: string; color: string }) {
   const { colors, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  if (diffuse) {
+    return <DiffuseMetricTile value={value} label={label} />
+  }
   return (
     <View style={[styles.statPill, {
       backgroundColor: colors.surface,
@@ -3653,6 +4209,8 @@ function StatPill({ label, value, color }: { label: string; value: string; color
 
 function EmptyDetail({ pillar }: { pillar: PillarKey }) {
   const { colors, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const config = PILLAR_CONFIG[pillar]
   const Icon = config.icon
   const messages: Record<PillarKey, string> = {
@@ -3662,6 +4220,15 @@ function EmptyDetail({ pillar }: { pillar: PillarKey }) {
     health: 'No health events logged. Record temperatures, vaccines, and doctor visits here.',
     growth: 'No growth data yet. Log weight and height measurements to track development.',
     activity: 'No activities logged yet this week. Log sessions from the calendar to track movement.',
+  }
+  if (diffuse) {
+    return (
+      <DiffuseEmptyState
+        icon={<Icon size={24} color={dt.colors.ink3} strokeWidth={1.4} />}
+        title={config.label}
+        message={messages[pillar]}
+      />
+    )
   }
   return (
     <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
@@ -3780,6 +4347,11 @@ function Donut({ size = 100, pct, color, label, bgRing }: {
   label: string
   bgRing: string
 }) {
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const labelColor = diffuse ? dt.colors.ink3 : '#6E6763'
+  const numColor = diffuse ? dt.colors.ink : color
+  const numFont = diffuse ? diffuseFont.display : font.display
   const stroke = 10
   const r = size / 2 - stroke / 2 - 1
   const cf = 2 * Math.PI * r
@@ -3798,12 +4370,12 @@ function Donut({ size = 100, pct, color, label, bgRing }: {
           />
         </Svg>
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 20, fontFamily: font.display, color, letterSpacing: -0.5 }}>
+          <Text style={{ fontSize: 20, fontFamily: numFont, color: numColor, letterSpacing: -0.5 }}>
             {pct}%
           </Text>
         </View>
       </View>
-      <Text style={{ fontSize: 12, color: '#6E6763', fontFamily: font.bodyMedium }}>{label}</Text>
+      <Text style={{ fontSize: 12, color: labelColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }}>{label}</Text>
     </View>
   )
 }
@@ -3818,13 +4390,15 @@ function EatQualityBubbles({
 }) {
   const { colors, stickers: st } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const totalGood = good.reduce((a, b) => a + b, 0)
   const totalLittle = little.reduce((a, b) => a + b, 0)
   const totalNone = none.reduce((a, b) => a + b, 0)
   const total = totalGood + totalLittle + totalNone
   if (total === 0) {
     return (
-      <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center', paddingVertical: 20 }]}>
+      <Text style={[styles.detailExplain, { color: diffuse ? dt.colors.ink3 : colors.textMuted, textAlign: 'center', paddingVertical: 20, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
         {t('kids_analytics_log_meals_eat_quality')}
       </Text>
     )
@@ -3843,7 +4417,7 @@ function EatQualityBubbles({
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: 24, paddingVertical: 12 }}>
       {items.map((item) => (
-        <Donut key={item.label} size={100} pct={item.pct} color={item.color} label={item.label} bgRing={colors.surfaceRaised} />
+        <Donut key={item.label} size={100} pct={item.pct} color={item.color} label={item.label} bgRing={diffuse ? dt.colors.line : colors.surfaceRaised} />
       ))}
     </View>
   )
@@ -3860,7 +4434,14 @@ function MealsLineChart({
   width: number
 }) {
   const { colors } = useTheme()
-  const color = PILLAR_CONFIG.nutrition.color
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const color = diffuse ? getDiffuseAccent('kids', dt.isDark) : PILLAR_CONFIG.nutrition.color
+  const axisColor = diffuse ? dt.colors.ink3 : colors.textMuted
+  const nodeFill = diffuse ? dt.colors.surface : colors.surfaceRaised
+  const nodeStroke = diffuse ? dt.colors.line2 : colors.borderStrong
+  const numFont = diffuse ? diffuseFont.mono : font.display
+  const labelFont = diffuse ? diffuseFont.mono : font.body
 
   // Bin to ≤ 14 points to keep wide windows legible
   const { data, labels } = binSeries(rawData, rawLabels, 14)
@@ -3897,13 +4478,13 @@ function MealsLineChart({
         {/* Each point: bg-deep circle with line stroke + value text inside */}
         {pts.map((p, i) => (
           <G key={i}>
-            <Circle cx={p.x} cy={p.y} r={11} fill={colors.surfaceRaised} stroke={colors.borderStrong} strokeWidth={1} />
+            <Circle cx={p.x} cy={p.y} r={11} fill={nodeFill} stroke={nodeStroke} strokeWidth={1} />
             <SvgText
               x={p.x} y={p.y + 3}
               textAnchor="middle"
               fontSize={10}
-              fontFamily={font.display}
-              fill={p.v > 0 ? color : colors.textMuted}
+              fontFamily={numFont}
+              fill={p.v > 0 ? color : axisColor}
             >
               {p.v}
             </SvgText>
@@ -3912,8 +4493,8 @@ function MealsLineChart({
               x={p.x} y={svgH + 14}
               textAnchor="middle"
               fontSize={10}
-              fontFamily={font.body}
-              fill={colors.textMuted}
+              fontFamily={labelFont}
+              fill={axisColor}
             >
               {labels[i]}
             </SvgText>
@@ -3938,13 +4519,21 @@ function HighlightBarChart({
 }) {
   const { colors } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const barColor = diffuse ? getDiffuseAccent('kids', dt.isDark) : color
+  const axisColor = diffuse ? dt.colors.ink3 : colors.textMuted
+  const emptyBar = diffuse ? dt.colors.line : colors.surfaceRaised
+  const numFont = diffuse ? diffuseFont.mono : font.display
+  const labelFont = diffuse ? diffuseFont.mono : font.body
+  const labelFontActive = diffuse ? diffuseFont.monoBold : font.bodySemiBold
   if (rawData.length === 0) return null
 
   const realMax = Math.max(...rawData, 0)
   if (realMax === 0) {
     return (
       <View style={{ height, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-        <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center' }]}>
+        <Text style={[styles.detailExplain, { color: axisColor, textAlign: 'center', fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {t('kids_analytics_no_entries_window')}
         </Text>
       </View>
@@ -3958,16 +4547,16 @@ function HighlightBarChart({
   const yMid = Math.round(maxV / 2)
 
   const fmt = (v: number) => (v % 1 === 0 ? `${v}` : v.toFixed(1))
-  const dimmed = `${color}66` // 40% over paper, mockup-equivalent of color-mix
+  const dimmed = diffuse ? `${barColor}55` : `${color}66` // 40% over paper, mockup-equivalent of color-mix
 
   return (
     <View style={{ width: '100%', paddingVertical: 4 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', height, paddingLeft: 22, gap: 4, position: 'relative' }}>
         {/* Y axis labels — left edge, 3 only, no grid lines */}
         <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, justifyContent: 'space-between', paddingVertical: 2 }}>
-          <Text style={{ fontSize: 10, color: colors.textMuted, fontFamily: font.body }}>{fmt(yTop)}</Text>
-          <Text style={{ fontSize: 10, color: colors.textMuted, fontFamily: font.body }}>{fmt(yMid)}</Text>
-          <Text style={{ fontSize: 10, color: colors.textMuted, fontFamily: font.body }}>0</Text>
+          <Text style={{ fontSize: 10, color: axisColor, fontFamily: labelFont }}>{fmt(yTop)}</Text>
+          <Text style={{ fontSize: 10, color: axisColor, fontFamily: labelFont }}>{fmt(yMid)}</Text>
+          <Text style={{ fontSize: 10, color: axisColor, fontFamily: labelFont }}>0</Text>
         </View>
         {data.map((v, i) => {
           const pct = Math.max((v / maxV) * 100, v > 0 ? 2 : 0)
@@ -3977,8 +4566,8 @@ function HighlightBarChart({
               {/* Highlighted label tooltip */}
               {isMax && (
                 <View style={{ position: 'absolute', top: -2, left: 0, right: 0, alignItems: 'center' }}>
-                  <View style={{ backgroundColor: color + '22', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 }}>
-                    <Text style={{ fontSize: 10, fontFamily: font.display, color }}>
+                  <View style={{ backgroundColor: barColor + '22', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 }}>
+                    <Text style={{ fontSize: 10, fontFamily: numFont, color: diffuse ? dt.colors.ink : color }}>
                       {fmt(v)}{unit}
                     </Text>
                   </View>
@@ -3988,7 +4577,7 @@ function HighlightBarChart({
                 height: `${pct}%`,
                 marginHorizontal: 2,
                 borderRadius: 6,
-                backgroundColor: v === 0 ? colors.surfaceRaised : (isMax ? color : dimmed),
+                backgroundColor: v === 0 ? emptyBar : (isMax ? barColor : dimmed),
               }} />
             </View>
           )
@@ -3999,8 +4588,8 @@ function HighlightBarChart({
         {labels.map((l, i) => (
           <Text key={i} style={{
             flex: 1, textAlign: 'center', fontSize: 10,
-            color: i === maxIdx && data[i] > 0 ? color : colors.textMuted,
-            fontFamily: i === maxIdx && data[i] > 0 ? font.bodySemiBold : font.body,
+            color: i === maxIdx && data[i] > 0 ? (diffuse ? dt.colors.ink : color) : axisColor,
+            fontFamily: i === maxIdx && data[i] > 0 ? labelFontActive : labelFont,
           }}>
             {l}
           </Text>
@@ -4013,10 +4602,14 @@ function HighlightBarChart({
 function SleepQualityChart({ counts }: { counts: { great: number; good: number; restless: number; poor: number } }) {
   const { colors, radius } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const labelColor = diffuse ? dt.colors.ink : colors.text
+  const mutedColor = diffuse ? dt.colors.ink3 : colors.textMuted
   const total = counts.great + counts.good + counts.restless + counts.poor
   if (total === 0) {
     return (
-      <Text style={[styles.detailExplain, { color: colors.textMuted, textAlign: 'center', paddingVertical: 18 }]}>
+      <Text style={[styles.detailExplain, { color: mutedColor, textAlign: 'center', paddingVertical: 18, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
         {t('kids_analytics_log_sleep_quality_hint')}
       </Text>
     )
@@ -4035,11 +4628,11 @@ function SleepQualityChart({ counts }: { counts: { great: number; good: number; 
         return (
           <View key={i} style={styles.qualityRow}>
             <EmojiSticker size={24}>{item.emoji}</EmojiSticker>
-            <Text style={[styles.qualityLabel, { color: colors.text }]}>{item.label}</Text>
+            <Text style={[styles.qualityLabel, { color: labelColor, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>{item.label}</Text>
             <View style={[styles.qualityBarBg, { backgroundColor: item.color + '1A', borderRadius: radius.full, height: 12 }]}>
               <View style={[styles.qualityBarFill, { width: `${pct}%`, backgroundColor: item.color, borderRadius: radius.full }]} />
             </View>
-            <Text style={[styles.qualityPct, { color: item.color }]}>{pct}%</Text>
+            <Text style={[styles.qualityPct, { color: diffuse ? dt.colors.ink : item.color, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{pct}%</Text>
           </View>
         )
       })}

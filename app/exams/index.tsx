@@ -21,7 +21,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { ChevronLeft } from 'lucide-react-native'
 
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon, DiffuseSegmentPill, DiffuseMetricTile, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
+import { FileText } from 'lucide-react-native'
 import { useChildStore } from '../../store/useChildStore'
 import { useModeStore } from '../../store/useModeStore'
 import {
@@ -53,6 +56,8 @@ function modeToBehavior(mode: string): ExamBehavior {
 
 export default function ExamsListScreen() {
   const { colors, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
@@ -91,56 +96,80 @@ export default function ExamsListScreen() {
     return { total: exams.length, flagged, yearCount }
   }, [exams])
 
-  // Cream-paper palette (mirrors WeekCard / LogSheet)
-  const ink = isDark ? colors.text : '#141313'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const inkMuted = isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'
-  const inkFaint = isDark ? colors.textFaint : 'rgba(20,19,19,0.35)'
+  // Cream-paper palette (mirrors WeekCard / LogSheet).
+  // Under Diffuse these resolve to the diffuse ink/paper tokens so the shared
+  // subcomponents (cards, pills, stats) pick up the new language automatically.
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
+  const paper = diffuse ? dt.colors.surface : (isDark ? colors.surface : '#FFFEF8')
+  const paperBorder = diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.08)')
+  const inkMuted = diffuse ? dt.colors.ink3 : (isDark ? colors.textMuted : 'rgba(20,19,19,0.55)')
+  const inkFaint = diffuse ? dt.colors.ink3 : (isDark ? colors.textFaint : 'rgba(20,19,19,0.35)')
 
   const showChildRow = children.length > 1 && behaviorFilter === 'kids'
-  const behaviorAccent = BEHAVIOR_COLORS[behaviorFilter]
+  const behaviorAccent = diffuse ? getDiffuseAccent(behaviorFilter, dt.isDark) : BEHAVIOR_COLORS[behaviorFilter]
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      {/* Header — sticker-style back chip */}
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
+      {/* Header — sticker-style back chip (hairline circle under Diffuse) */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 12 }]}>
         <Pressable
           onPress={() => router.back()}
           hitSlop={10}
           style={({ pressed }) => [
             styles.backChip,
-            {
-              backgroundColor: paper,
-              borderColor: isDark ? colors.border : '#141313',
-              shadowColor: '#141313',
-              shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-              shadowOpacity: 1,
-              shadowRadius: 0,
-              elevation: 4,
-              transform: [{ translateY: pressed ? 2 : 0 }],
-            },
+            diffuse
+              ? {
+                  backgroundColor: 'transparent',
+                  borderColor: dt.colors.hairline,
+                  opacity: pressed ? 0.6 : 1,
+                }
+              : {
+                  backgroundColor: paper,
+                  borderColor: isDark ? colors.border : '#141313',
+                  shadowColor: '#141313',
+                  shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                  shadowOpacity: 1,
+                  shadowRadius: 0,
+                  elevation: 4,
+                  transform: [{ translateY: pressed ? 2 : 0 }],
+                },
           ]}
         >
-          <ChevronLeft size={20} color={ink} strokeWidth={2.2} />
+          <ChevronLeft size={20} color={ink} strokeWidth={diffuse ? 1.6 : 2.2} />
         </Pressable>
-        <Display size={28} color={ink}>{t('exams_title')}</Display>
+        {diffuse ? (
+          <Text style={{ fontFamily: diffuseFont.display, fontSize: 28, color: dt.colors.ink, letterSpacing: -0.5 }}>{t('exams_title')}</Text>
+        ) : (
+          <Display size={28} color={ink}>{t('exams_title')}</Display>
+        )}
         <View style={{ width: 36 }} />
       </View>
 
-      {/* Behavior segmented tabs — active pill picks up the behavior color */}
+      {/* Behavior segmented tabs — hairline mono pills under Diffuse */}
       <View style={styles.segWrap}>
-        <SegmentedTabs
-          options={[
-            { key: 'pre-pregnancy', label: t('exams_tabPrePreg') },
-            { key: 'pregnancy', label: t('exams_tabPregnancy') },
-            { key: 'kids', label: t('exams_tabKids') },
-          ]}
-          value={behaviorFilter}
-          onChange={(k) => setBehaviorFilter(k as ExamBehavior)}
-          activeBg={behaviorAccent}
-          activeFg="#141313"
-        />
+        {diffuse ? (
+          <DiffuseSegmentPill
+            options={[
+              { key: 'pre-pregnancy', label: t('exams_tabPrePreg') },
+              { key: 'pregnancy', label: t('exams_tabPregnancy') },
+              { key: 'kids', label: t('exams_tabKids') },
+            ]}
+            value={behaviorFilter}
+            onChange={(k) => setBehaviorFilter(k as ExamBehavior)}
+          />
+        ) : (
+          <SegmentedTabs
+            options={[
+              { key: 'pre-pregnancy', label: t('exams_tabPrePreg') },
+              { key: 'pregnancy', label: t('exams_tabPregnancy') },
+              { key: 'kids', label: t('exams_tabKids') },
+            ]}
+            value={behaviorFilter}
+            onChange={(k) => setBehaviorFilter(k as ExamBehavior)}
+            activeBg={behaviorAccent}
+            activeFg="#141313"
+          />
+        )}
       </View>
 
       {/* Child filter — only shown when relevant */}
@@ -162,6 +191,8 @@ export default function ExamsListScreen() {
               paperBorder={paperBorder}
               inkMuted={inkMuted}
               font={font}
+              diffuse={diffuse}
+              hairline={dt.colors.hairline}
             />
             {children.map((c, i) => (
               <ChildPill
@@ -175,6 +206,8 @@ export default function ExamsListScreen() {
                 paperBorder={paperBorder}
                 inkMuted={inkMuted}
                 font={font}
+                diffuse={diffuse}
+                hairline={dt.colors.hairline}
               />
             ))}
           </ScrollView>
@@ -187,20 +220,28 @@ export default function ExamsListScreen() {
       >
         {/* Stats summary card — only when exams exist */}
         {!isLoading && exams.length > 0 && (
-          <View style={[styles.statsCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <StatCell value={stats.total} label={t('exams_statTotal')} ink={ink} inkMuted={inkMuted} font={font} />
-            <View style={[styles.statDivider, { backgroundColor: paperBorder }]} />
-            <StatCell
-              value={stats.flagged}
-              label={t('exams_statFlagged')}
-              accent={stats.flagged > 0 ? brand.error : undefined}
-              ink={ink}
-              inkMuted={inkMuted}
-              font={font}
-            />
-            <View style={[styles.statDivider, { backgroundColor: paperBorder }]} />
-            <StatCell value={stats.yearCount} label={t('exams_statThisYear')} ink={ink} inkMuted={inkMuted} font={font} />
-          </View>
+          diffuse ? (
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 18 }}>
+              <DiffuseMetricTile value={stats.total} label={t('exams_statTotal')} />
+              <DiffuseMetricTile value={stats.flagged} label={t('exams_statFlagged')} highlighted={stats.flagged > 0} />
+              <DiffuseMetricTile value={stats.yearCount} label={t('exams_statThisYear')} />
+            </View>
+          ) : (
+            <View style={[styles.statsCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <StatCell value={stats.total} label={t('exams_statTotal')} ink={ink} inkMuted={inkMuted} font={font} />
+              <View style={[styles.statDivider, { backgroundColor: paperBorder }]} />
+              <StatCell
+                value={stats.flagged}
+                label={t('exams_statFlagged')}
+                accent={stats.flagged > 0 ? brand.error : undefined}
+                ink={ink}
+                inkMuted={inkMuted}
+                font={font}
+              />
+              <View style={[styles.statDivider, { backgroundColor: paperBorder }]} />
+              <StatCell value={stats.yearCount} label={t('exams_statThisYear')} ink={ink} inkMuted={inkMuted} font={font} />
+            </View>
+          )
         )}
 
         {isLoading && (
@@ -209,7 +250,18 @@ export default function ExamsListScreen() {
           </Body>
         )}
 
-        {!isLoading && exams.length === 0 && (
+        {!isLoading && exams.length === 0 && diffuse && (
+          <DiffuseEmptyState
+            icon={<FileText size={26} color={dt.colors.ink3} strokeWidth={1.4} />}
+            title={t('exams_emptyTitle')}
+            message={t('exams_emptyBody')}
+            ctaLabel={t('exams_openCalendar')}
+            onCta={() => router.push('/(tabs)/agenda')}
+            style={{ marginTop: 24 }}
+          />
+        )}
+
+        {!isLoading && exams.length === 0 && !diffuse && (
           <View style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder }]}>
             <View style={[styles.emptyStickerWrap, { backgroundColor: '#F3ECD9', borderColor: paperBorder }]}>
               {logSticker('exam', 56, isDark)}
@@ -264,6 +316,7 @@ export default function ExamsListScreen() {
                   paper={paper}
                   paperBorder={paperBorder}
                   font={font}
+                  diffuse={diffuse}
                   onPress={() => router.push({ pathname: '/exams/[id]', params: { id: exam.id } })}
                 />
               ))}
@@ -296,6 +349,8 @@ function ChildPill({
   paperBorder,
   inkMuted,
   font,
+  diffuse,
+  hairline,
 }: {
   label: string
   active: boolean
@@ -303,13 +358,43 @@ function ChildPill({
   accent: string
   /** "All kids" pill — uses ink fill for active state */
   isAll?: boolean
+  diffuse?: boolean
+  hairline?: string
 } & PillBase) {
   // Active-children pills are filled in their pastel accent (legible because
   // pastels are light); "All" is filled in solid ink with cream text — mirrors
   // SegmentedTabs and the empty-state CTA for design-system consistency.
+  // Under Diffuse, selection = hairline outline + surface + mono-bold (no fill).
   const activeBg = isAll ? ink : accent
   const activeFg = isAll ? paper : ink
   const activeBorder = isAll ? ink : 'rgba(20,19,19,0.18)'
+
+  if (diffuse) {
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.childPill,
+          {
+            backgroundColor: active ? paper : 'transparent',
+            borderColor: active ? (hairline ?? ink) : paperBorder,
+            opacity: pressed ? 0.7 : 1,
+          },
+        ]}
+      >
+        {!isAll && <View style={[styles.childPillDot, { backgroundColor: accent, borderColor: paperBorder }]} />}
+        <Text
+          style={[
+            styles.childPillText,
+            { color: active ? ink : inkMuted, fontFamily: active ? diffuseFont.bodySemiBold : diffuseFont.body },
+          ]}
+          numberOfLines={1}
+        >
+          {label}
+        </Text>
+      </Pressable>
+    )
+  }
 
   return (
     <Pressable
@@ -396,6 +481,7 @@ function ExamCard({
   paper,
   paperBorder,
   font,
+  diffuse,
   onPress,
 }: {
   exam: Exam
@@ -407,14 +493,57 @@ function ExamCard({
   paper: string
   paperBorder: string
   font: ReturnType<typeof useTheme>['font']
+  diffuse?: boolean
   onPress: () => void
 }) {
   const { t } = useTranslation()
-  const accent = BEHAVIOR_COLORS[exam.behavior]
+  const dt = useDiffuseTheme()
+  const accent = diffuse ? getDiffuseAccent(exam.behavior, dt.isDark) : BEHAVIOR_COLORS[exam.behavior]
   const firstPhotoPath = exam.photos[0]
   const [thumbUrl] = useExamPhotoUrls(firstPhotoPath ? [firstPhotoPath] : [])
   const flaggedCount = exam.extracted?.flagged?.length ?? 0
   const provider = exam.provider ?? exam.extracted?.provider
+
+  if (diffuse) {
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, borderTopWidth: 1, borderTopColor: dt.colors.line, opacity: pressed ? 0.65 : 1 }]}
+      >
+        {thumbUrl ? (
+          <Image source={{ uri: thumbUrl }} style={{ width: 46, height: 46, borderRadius: 12 }} />
+        ) : (
+          <DiffuseBloomIcon color={accent} size={40} intensity={0.45}>
+            <FileText size={19} color={dt.colors.ink3} strokeWidth={1.5} />
+          </DiffuseBloomIcon>
+        )}
+        <View style={{ flex: 1, gap: 3 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={{ flex: 1, fontFamily: diffuseFont.display, fontSize: 17, color: dt.colors.ink, letterSpacing: -0.2 }} numberOfLines={1}>{exam.title}</Text>
+            {flaggedCount > 0 && (
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.5, color: dt.colors.error }}>
+                {t('exams_flaggedCount', { count: String(flaggedCount) })}
+              </Text>
+            )}
+          </View>
+          {exam.result && (
+            <Text style={{ fontFamily: diffuseFont.italic, fontSize: 13, color: dt.colors.ink2 }} numberOfLines={1}>{exam.result}</Text>
+          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', color: dt.colors.ink3 }}>{formatExamDate(exam.examDate)}</Text>
+            {provider && (
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', color: dt.colors.ink3 }} numberOfLines={1}>{`· ${provider}`}</Text>
+            )}
+            {exam.photos.length > 0 && (
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+                {`· ${exam.photos.length}`}
+              </Text>
+            )}
+          </View>
+        </View>
+      </Pressable>
+    )
+  }
 
   return (
     <Pressable
