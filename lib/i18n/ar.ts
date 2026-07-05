@@ -655,6 +655,7 @@ export const ar: TranslationKeys = {
   prepreg_follicular: 'الطور الجريبي',
   prepreg_basal: 'درجة الحرارة القاعدية',
   prepreg_hormoneRhythm: 'Hormone Rhythm',
+  prepreg_lessonsCount: '{{count}} lessons',
   prepreg_symptoms: 'الأعراض',
 
   kids_sleepCircle: 'النوم',

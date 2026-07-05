@@ -2,6 +2,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { PaperCard } from '../ui/PaperCard'
 import { useTheme } from '../../constants/theme'
 import type { LearningModule as LearningModuleType } from '../../lib/prepregnancyData'
+import { useTranslation } from '../../lib/i18n'
 
 interface LearningModuleProps {
   module: LearningModuleType
@@ -10,6 +11,7 @@ interface LearningModuleProps {
 
 export function LearningModule({ module, onPress }: LearningModuleProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.85 }]}>
       <PaperCard radius={28} padding={20} style={styles.container}>
@@ -20,7 +22,7 @@ export function LearningModule({ module, onPress }: LearningModuleProps) {
           <View style={styles.content}>
             <Text style={[styles.title, { color: colors.text }]}>{module.title}</Text>
             <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>{module.description}</Text>
-            <Text style={[styles.lessons, { color: colors.accent }]}>{module.lessons} lessons</Text>
+            <Text style={[styles.lessons, { color: colors.accent }]}>{t('prepreg_lessonsCount', { count: module.lessons })}</Text>
           </View>
         </View>
       </PaperCard>

@@ -774,6 +774,7 @@ export const en: TranslationKeys = {
   prepreg_follicular: 'Follicular',
   prepreg_basal: 'Basal Temperature',
   prepreg_hormoneRhythm: 'Hormone Rhythm',
+  prepreg_lessonsCount: '{{count}} lessons',
   prepreg_symptoms: 'Symptoms',
 
   // Kids

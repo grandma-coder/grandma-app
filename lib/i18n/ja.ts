@@ -655,6 +655,7 @@ export const ja: TranslationKeys = {
   prepreg_follicular: '卵胞期',
   prepreg_basal: '基礎体温',
   prepreg_hormoneRhythm: 'Hormone Rhythm',
+  prepreg_lessonsCount: '{{count}} lessons',
   prepreg_symptoms: '症状',
 
   kids_sleepCircle: '睡眠',

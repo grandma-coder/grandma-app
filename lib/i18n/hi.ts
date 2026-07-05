@@ -655,6 +655,7 @@ export const hi: TranslationKeys = {
   prepreg_follicular: 'फोलिकुलर',
   prepreg_basal: 'बेसल तापमान',
   prepreg_hormoneRhythm: 'Hormone Rhythm',
+  prepreg_lessonsCount: '{{count}} lessons',
   prepreg_symptoms: 'लक्षण',
 
   kids_sleepCircle: 'नींद',

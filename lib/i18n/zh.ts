@@ -655,6 +655,7 @@ export const zh: TranslationKeys = {
   prepreg_follicular: '卵泡期',
   prepreg_basal: '基础体温',
   prepreg_hormoneRhythm: 'Hormone Rhythm',
+  prepreg_lessonsCount: '{{count}} lessons',
   prepreg_symptoms: '症状',
 
   kids_sleepCircle: '睡眠',

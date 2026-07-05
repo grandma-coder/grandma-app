@@ -655,6 +655,7 @@ export const de: TranslationKeys = {
   prepreg_follicular: 'Follikelphase',
   prepreg_basal: 'Basaltemperatur',
   prepreg_hormoneRhythm: 'Hormone Rhythm',
+  prepreg_lessonsCount: '{{count}} lessons',
   prepreg_symptoms: 'Symptome',
 
   kids_sleepCircle: 'Schlaf',

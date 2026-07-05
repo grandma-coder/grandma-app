@@ -777,6 +777,7 @@ export interface TranslationKeys {
   prepreg_follicular: string
   prepreg_basal: string
   prepreg_hormoneRhythm: string
+  prepreg_lessonsCount: string
   prepreg_symptoms: string
 
   // ─── Kids-specific ─────────────────────────────────────────────────────

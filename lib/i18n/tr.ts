@@ -655,6 +655,7 @@ export const tr: TranslationKeys = {
   prepreg_follicular: 'Foliküler',
   prepreg_basal: 'Bazal Sıcaklık',
   prepreg_hormoneRhythm: 'Hormone Rhythm',
+  prepreg_lessonsCount: '{{count}} lessons',
   prepreg_symptoms: 'Belirtiler',
 
   kids_sleepCircle: 'Uyku',
