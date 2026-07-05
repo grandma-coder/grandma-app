@@ -102,6 +102,8 @@ export const ja: TranslationKeys = {
   settings_deleteAccount: 'アカウント削除',
   settings_deleteConfirm: 'アカウントとすべてのデータが完全に削除されます。元に戻すことはできません。',
   settings_deleteContact: 'アカウントを削除するにはsupport@grandma.appにお問い合わせください。',
+  settings_signOutTitle: 'Sign Out?',
+  settings_signOutEverywhereHint: 'this signs you out everywhere',
 
   children_title: 'お子さま',
   children_addChild: 'お子さまを追加',

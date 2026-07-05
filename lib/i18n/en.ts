@@ -116,6 +116,8 @@ export const en: TranslationKeys = {
   settings_deleteAccount: 'Delete Account',
   settings_deleteConfirm: 'This will permanently delete your account and all data. This cannot be undone.',
   settings_deleteContact: 'Please contact support@grandma.app to delete your account.',
+  settings_signOutTitle: 'Sign Out?',
+  settings_signOutEverywhereHint: 'this signs you out everywhere',
 
   // Children
   children_title: 'Children',

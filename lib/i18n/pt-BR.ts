@@ -111,6 +111,8 @@ export const ptBR: TranslationKeys = {
   settings_deleteAccount: 'Excluir Conta',
   settings_deleteConfirm: 'Isso irá excluir permanentemente sua conta e todos os dados. Esta ação não pode ser desfeita.',
   settings_deleteContact: 'Entre em contato com support@grandma.app para excluir sua conta.',
+  settings_signOutTitle: 'Sign Out?',
+  settings_signOutEverywhereHint: 'this signs you out everywhere',
 
   // Children
   children_title: 'Filhos',

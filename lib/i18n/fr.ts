@@ -102,6 +102,8 @@ export const fr: TranslationKeys = {
   settings_deleteAccount: 'Supprimer le Compte',
   settings_deleteConfirm: 'Cela supprimera définitivement votre compte et toutes vos données. Cette action est irréversible.',
   settings_deleteContact: 'Contactez support@grandma.app pour supprimer votre compte.',
+  settings_signOutTitle: 'Sign Out?',
+  settings_signOutEverywhereHint: 'this signs you out everywhere',
 
   children_title: 'Enfants',
   children_addChild: 'Ajouter un Enfant',

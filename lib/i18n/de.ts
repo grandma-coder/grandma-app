@@ -102,6 +102,8 @@ export const de: TranslationKeys = {
   settings_deleteAccount: 'Konto löschen',
   settings_deleteConfirm: 'Dies löscht dauerhaft dein Konto und alle Daten. Dies kann nicht rückgängig gemacht werden.',
   settings_deleteContact: 'Kontaktiere support@grandma.app um dein Konto zu löschen.',
+  settings_signOutTitle: 'Sign Out?',
+  settings_signOutEverywhereHint: 'this signs you out everywhere',
 
   children_title: 'Kinder',
   children_addChild: 'Kind hinzufügen',

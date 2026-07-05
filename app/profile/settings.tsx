@@ -237,7 +237,7 @@ export default function SettingsScreen() {
         >
           <LogOut size={16} color={ink} strokeWidth={2.2} />
           <Text style={[styles.actionPillText, { color: ink, fontFamily: font.bodySemiBold }]}>
-            Sign Out
+            {t('profile_signOut')}
           </Text>
         </Pressable>
 
@@ -289,10 +289,10 @@ export default function SettingsScreen() {
             onPress={(e) => e.stopPropagation()}
           >
             <Display size={28} color={ink} style={{ marginBottom: 6, textAlign: 'center' }}>
-              Sign Out?
+              {t('settings_signOutTitle')}
             </Display>
             <DisplayItalic size={16} color={stickers.coral} style={{ textAlign: 'center', marginBottom: 18 }}>
-              this signs you out everywhere
+              {t('settings_signOutEverywhereHint')}
             </DisplayItalic>
 
             <Pressable
@@ -308,7 +308,7 @@ export default function SettingsScreen() {
               ]}
             >
               <Text style={[styles.modalBtnText, { color: ink, fontFamily: font.bodySemiBold }]}>
-                Sign Out
+                {t('profile_signOut')}
               </Text>
             </Pressable>
 
@@ -326,7 +326,7 @@ export default function SettingsScreen() {
               ]}
             >
               <Text style={[styles.modalBtnText, { color: stickers.coral, fontFamily: font.bodySemiBold }]}>
-                Sign Out All Devices
+                {t('account_signOutAllDevices')}
               </Text>
             </Pressable>
 
@@ -344,7 +344,7 @@ export default function SettingsScreen() {
               ]}
             >
               <Text style={[styles.modalBtnText, { color: inkMuted, fontFamily: font.bodyMedium }]}>
-                Cancel
+                {t('common_cancel')}
               </Text>
             </Pressable>
           </Pressable>

@@ -102,6 +102,8 @@ export const zh: TranslationKeys = {
   settings_deleteAccount: '删除账户',
   settings_deleteConfirm: '这将永久删除您的账户和所有数据。此操作无法撤销。',
   settings_deleteContact: '请联系 support@grandma.app 删除您的账户。',
+  settings_signOutTitle: 'Sign Out?',
+  settings_signOutEverywhereHint: 'this signs you out everywhere',
 
   children_title: '孩子',
   children_addChild: '添加孩子',

@@ -102,6 +102,8 @@ export const ko: TranslationKeys = {
   settings_deleteAccount: '계정 삭제',
   settings_deleteConfirm: '계정과 모든 데이터가 영구적으로 삭제됩니다. 되돌릴 수 없습니다.',
   settings_deleteContact: '계정 삭제는 support@grandma.app으로 문의하세요.',
+  settings_signOutTitle: 'Sign Out?',
+  settings_signOutEverywhereHint: 'this signs you out everywhere',
 
   children_title: '아이들',
   children_addChild: '아이 추가',

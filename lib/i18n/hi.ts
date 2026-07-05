@@ -102,6 +102,8 @@ export const hi: TranslationKeys = {
   settings_deleteAccount: 'खाता हटाएं',
   settings_deleteConfirm: 'यह आपका खाता और सभी डेटा स्थायी रूप से हटा देगा। इसे पूर्ववत नहीं किया जा सकता।',
   settings_deleteContact: 'अपना खाता हटाने के लिए support@grandma.app से संपर्क करें।',
+  settings_signOutTitle: 'Sign Out?',
+  settings_signOutEverywhereHint: 'this signs you out everywhere',
 
   children_title: 'बच्चे',
   children_addChild: 'बच्चा जोड़ें',

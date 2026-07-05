@@ -102,6 +102,8 @@ export const tr: TranslationKeys = {
   settings_deleteAccount: 'Hesabı Sil',
   settings_deleteConfirm: 'Bu, hesabınızı ve tüm verileri kalıcı olarak silecektir. Bu geri alınamaz.',
   settings_deleteContact: 'Hesabınızı silmek için support@grandma.app ile iletişime geçin.',
+  settings_signOutTitle: 'Sign Out?',
+  settings_signOutEverywhereHint: 'this signs you out everywhere',
 
   children_title: 'Çocuklar',
   children_addChild: 'Çocuk Ekle',

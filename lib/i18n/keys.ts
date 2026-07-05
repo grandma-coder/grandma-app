@@ -119,6 +119,8 @@ export interface TranslationKeys {
   settings_deleteAccount: string
   settings_deleteConfirm: string
   settings_deleteContact: string
+  settings_signOutTitle: string
+  settings_signOutEverywhereHint: string
 
   // ─── Children ──────────────────────────────────────────────────────────
   children_title: string
