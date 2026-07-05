@@ -654,6 +654,7 @@ export const ja: TranslationKeys = {
   prepreg_luteal: '黄体期',
   prepreg_follicular: '卵胞期',
   prepreg_basal: '基礎体温',
+  prepreg_hormoneRhythm: 'Hormone Rhythm',
   prepreg_symptoms: '症状',
 
   kids_sleepCircle: '睡眠',

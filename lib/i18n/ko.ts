@@ -654,6 +654,7 @@ export const ko: TranslationKeys = {
   prepreg_luteal: '황체기',
   prepreg_follicular: '난포기',
   prepreg_basal: '기초 체온',
+  prepreg_hormoneRhythm: 'Hormone Rhythm',
   prepreg_symptoms: '증상',
 
   kids_sleepCircle: '수면',

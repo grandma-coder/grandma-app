@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useTheme, radius, spacing } from '../../constants/theme'
 import { HormoneWave } from '../charts/GalleryCharts'
 import type { CycleInfo } from '../../lib/cycleLogic'
+import { useTranslation } from '../../lib/i18n'
 
 interface HormoneChartProps {
   cycleInfo: CycleInfo
@@ -16,6 +17,7 @@ interface HormoneChartProps {
 
 export function HormoneChart({ cycleInfo }: HormoneChartProps) {
   const { colors, brand, font } = useTheme()
+  const { t } = useTranslation()
   const progress = cycleInfo.cycleProgress
 
   // Phases to render in order, paired with their token colors.
@@ -39,7 +41,7 @@ export function HormoneChart({ cycleInfo }: HormoneChartProps) {
       <View style={styles.header}>
         <Ionicons name="pulse" size={16} color={brand.phase.luteal} />
         <Text style={[styles.title, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-          Hormone Rhythm
+          {t('prepreg_hormoneRhythm')}
         </Text>
       </View>
 

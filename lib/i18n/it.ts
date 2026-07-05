@@ -654,6 +654,7 @@ export const it: TranslationKeys = {
   prepreg_luteal: 'Luteale',
   prepreg_follicular: 'Follicolare',
   prepreg_basal: 'Temperatura Basale',
+  prepreg_hormoneRhythm: 'Hormone Rhythm',
   prepreg_symptoms: 'Sintomi',
 
   kids_sleepCircle: 'Sonno',

@@ -676,6 +676,7 @@ export const ptBR: TranslationKeys = {
   prepreg_luteal: 'Lútea',
   prepreg_follicular: 'Folicular',
   prepreg_basal: 'Temperatura Basal',
+  prepreg_hormoneRhythm: 'Hormone Rhythm',
   prepreg_symptoms: 'Sintomas',
 
   // Kids
