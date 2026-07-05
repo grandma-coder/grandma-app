@@ -29,7 +29,9 @@ import {
   Bell, Trash2, Syringe, Pill, Pencil, GripVertical, Flag, Trophy, Flame, Star,
 } from 'lucide-react-native'
 import * as Haptics from 'expo-haptics'
-import { useTheme, brand, stickers, font } from '../../constants/theme'
+import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse, DiffuseFieldSurface } from '../ui/diffuse/DiffuseKit'
+import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader } from '../ui/diffuse/DiffusePrimitives'
 import { EmptyState } from '../ui/EmptyState'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -699,6 +701,8 @@ interface HealthHistoryData {
 
 export function KidsHome() {
   const { colors, radius, isDark, font, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -1675,7 +1679,14 @@ export function KidsHome() {
             const ST_INK = '#141313'
             return (
               <Pressable key={c.id} onPress={() => setActiveChild(c)}
-                style={({ pressed }) => [s.childPill, {
+                style={({ pressed }) => [s.childPill, diffuse ? {
+                  // Diffuse — hairline pill + kid-color dot; active = --d-hairline
+                  backgroundColor: active ? dt.colors.surface : 'transparent',
+                  borderRadius: radius.full,
+                  borderWidth: 1,
+                  borderColor: active ? dt.colors.hairline : dt.colors.line,
+                  opacity: pressed ? 0.7 : 1,
+                } : {
                   backgroundColor: active ? kidColor : kidColor + '2E',
                   borderRadius: radius.full,
                   borderWidth: active ? 1.5 : 1,
@@ -1688,8 +1699,13 @@ export function KidsHome() {
                   transform: [{ translateY: active && pressed ? 2 : 0 }],
                 }]}
               >
-                <Text style={[s.pillName, { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : kidColor }]}>{c.name}</Text>
-                <Text style={[s.pillAge, { color: active ? 'rgba(20,19,19,0.7)' : kidColor + 'AA' }]}>{formatAge(c.birthDate)}</Text>
+                {diffuse ? <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: kidColor }} /> : null}
+                <Text style={[s.pillName, diffuse
+                  ? { fontFamily: active ? diffuseFont.bodySemiBold : diffuseFont.body, color: active ? dt.colors.ink : dt.colors.ink2 }
+                  : { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : kidColor }]}>{c.name}</Text>
+                <Text style={[s.pillAge, diffuse
+                  ? { fontFamily: diffuseFont.mono, color: dt.colors.ink3, fontSize: 9.5, letterSpacing: 0.5 }
+                  : { color: active ? 'rgba(20,19,19,0.7)' : kidColor + 'AA' }]}>{formatAge(c.birthDate)}</Text>
               </Pressable>
             )
           })}
@@ -1766,7 +1782,14 @@ export function KidsHome() {
                   setDateRange(opt.key)
                 }
               }}
-              style={({ pressed }) => [s.dateRangePill, {
+              style={({ pressed }) => [s.dateRangePill, diffuse ? {
+                // Diffuse — hairline mono pill; active = --d-hairline outline
+                backgroundColor: active ? dt.colors.surface : 'transparent',
+                borderColor: active ? dt.colors.hairline : dt.colors.line,
+                borderWidth: 1,
+                borderRadius: radius.full,
+                opacity: pressed ? 0.7 : 1,
+              } : {
                 backgroundColor: active ? ST_YELLOW : 'transparent',
                 borderColor: active ? ST_INK : colors.border,
                 borderWidth: active ? 1.5 : 1,
@@ -1779,7 +1802,11 @@ export function KidsHome() {
                 transform: [{ translateY: active && pressed ? 2 : 0 }],
               }]}
             >
-              <Text style={[s.dateRangeText, { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : colors.textMuted }]}>
+              <Text style={[s.dateRangeText, diffuse ? {
+                fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
+                color: active ? dt.colors.ink : dt.colors.ink3,
+                textTransform: 'uppercase', letterSpacing: 1.4, fontSize: 11,
+              } : { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : colors.textMuted }]}>
                 {opt.key === 'custom' && customRange
                   ? `${fmtShortDate(customRange.start)}–${fmtShortDate(customRange.end)}`
                   : opt.key === 'today' ? t('common_today')
@@ -1993,7 +2020,21 @@ export function KidsHome() {
 
       {/* (Ring legend / stats strip removed — hero tiles + detail modals cover this) */}
 
-      {/* ─── Set Goals Button — sticker-on-paper ─────────────────── */}
+      {/* ─── Set Goals Button ────────────────────────────────────── */}
+      {diffuse ? (
+        <Pressable onPress={() => setGoalsModalVisible(true)} style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}>
+          <DiffuseFieldSurface mode="kids" isDark={isDark} intensity={0.4} radius={radius.lg} style={s.setGoalsBtn}>
+            <View style={{ opacity: 0.8 }}>
+              <StarSticker size={20} fill={stickers.yellow} stroke={dt.colors.ink} />
+            </View>
+            <Text style={[s.setGoalsBtnText, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>{t('kids_home_set_goals_btn')}</Text>
+            <Text style={[s.setGoalsBtnHint, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1, fontSize: 10 }]}>
+              {t('kids_home_set_goals_hint')}
+            </Text>
+            <ChevronRight size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+          </DiffuseFieldSurface>
+        </Pressable>
+      ) : (
       <Pressable
         onPress={() => setGoalsModalVisible(true)}
         style={({ pressed }) => [
@@ -2037,14 +2078,17 @@ export function KidsHome() {
           <ChevronRight size={13} color={colors.text} strokeWidth={2.4} />
         </View>
       </Pressable>
+      )}
 
       {/* ─── Health + Diaper (Mood + Calories live in hero tiles now) ─── */}
       <View style={s.sectionHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ transform: [{ rotate: '-8deg' }] }}>
-            <HeartSticker size={28} fill="#EE7B6D" />
+          <View style={{ transform: [{ rotate: '-8deg' }], opacity: diffuse ? 0.85 : 1 }}>
+            <HeartSticker size={diffuse ? 22 : 28} fill={diffuse ? stickers.coral : '#EE7B6D'} />
           </View>
-          <Text style={[s.sectionTitle, { color: colors.text }]}>{t('kids_home_section_health_care')}</Text>
+          <Text style={[s.sectionTitle, diffuse
+            ? { color: dt.colors.ink, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
+            : { color: colors.text }]}>{t('kids_home_section_health_care')}</Text>
         </View>
       </View>
 
@@ -2067,10 +2111,12 @@ export function KidsHome() {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}
           hitSlop={6}
         >
-          <View style={{ transform: [{ rotate: '10deg' }] }}>
-            <FlowerSticker size={28} petal="#C8B6E8" center="#F5D652" />
+          <View style={{ transform: [{ rotate: '10deg' }], opacity: diffuse ? 0.85 : 1 }}>
+            <FlowerSticker size={diffuse ? 22 : 28} petal={diffuse ? stickers.lilac : '#C8B6E8'} center={diffuse ? stickers.yellow : '#F5D652'} />
           </View>
-          <Text style={[s.sectionTitle, { color: colors.text }]}>{t('kids_home_section_reminders')}</Text>
+          <Text style={[s.sectionTitle, diffuse
+            ? { color: dt.colors.ink, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
+            : { color: colors.text }]}>{t('kids_home_section_reminders')}</Text>
           {reminders.length > 0 ? (
             <View style={{
               paddingHorizontal: 8,
@@ -2587,30 +2633,7 @@ export function KidsHome() {
 
 // ─── Hero Tiles (v1 redesign): LAST SLEEP / MOOD / CALORIES / LEAP ─────────
 
-function HeroTiles({
-  sleepTotal,
-  sleepTarget,
-  dominantMood,
-  moodCounts,
-  caloriesTotal,
-  caloriesTarget,
-  feedingCount,
-  feedingTarget,
-  stage,
-  activityCount,
-  activityActiveDays,
-  activityRangeDays,
-  activityTopLabel,
-  activityTypesCount,
-  onPressSleep,
-  onPressMood,
-  onPressCalories,
-  onPressActivity,
-  onLogSleep,
-  onLogMood,
-  onLogFeeding,
-  onLogActivity,
-}: {
+interface HeroTilesProps {
   sleepTotal: number
   sleepTarget: number
   dominantMood: string
@@ -2633,7 +2656,132 @@ function HeroTiles({
   onLogMood?: () => void
   onLogFeeding?: () => void
   onLogActivity?: () => void
-}) {
+}
+
+function HeroTiles(props: HeroTilesProps) {
+  const diffuse = useIsDiffuse()
+  return diffuse ? <DiffuseHeroTiles {...props} /> : <CurrentHeroTiles {...props} />
+}
+
+// ─── Diffuse hero tiles — soft stat cards, hairline, role type, sticker icons ─
+function DiffuseHeroTiles({
+  sleepTotal, sleepTarget, dominantMood, moodCounts,
+  caloriesTotal, caloriesTarget, feedingCount, feedingTarget, stage,
+  activityCount, activityActiveDays, activityRangeDays, activityTopLabel, activityTypesCount,
+  onPressSleep, onPressMood, onPressCalories, onPressActivity,
+  onLogSleep, onLogMood, onLogFeeding, onLogActivity,
+}: HeroTilesProps) {
+  const { colors } = useDiffuseTheme()
+  const { t } = useTranslation()
+
+  // Sleep
+  const sleepHours = Math.floor(sleepTotal)
+  const sleepMins = Math.round((sleepTotal - sleepHours) * 60)
+  const hasSleep = sleepTotal > 0
+  const sleepValue = hasSleep ? `${sleepHours}${sleepMins > 0 ? `·${String(sleepMins).padStart(2, '0')}` : ''}` : undefined
+  const sleepSub = sleepTarget > 0 ? `of ${Math.round(sleepTarget)}h target` : t('kids_home_tile_no_goal')
+
+  // Mood
+  const moodKeys = ['happy', 'calm', 'energetic', 'fussy', 'cranky'] as const
+  const totalMoodLogs = moodKeys.reduce((s, m) => s + (moodCounts[m] || 0), 0)
+  const hasMoods = totalMoodLogs > 0
+  const moodDisplay = hasMoods && dominantMood ? (MOOD_LABELS[dominantMood] ?? 'Content') : undefined
+  const moodSub = hasMoods ? `${totalMoodLogs} log${totalMoodLogs !== 1 ? 's' : ''}` : t('kids_home_tile_tap_to_log')
+
+  // Calories / feedings
+  const isLiquid = stage === 'liquid' || stage === 'mixed'
+  const hasFeed = isLiquid ? feedingCount > 0 : caloriesTotal > 0
+  const calValue = hasFeed ? (isLiquid ? `${feedingCount}` : caloriesTotal.toLocaleString()) : undefined
+  const calTarget = isLiquid ? feedingTarget : caloriesTarget
+  const calPct = calTarget > 0 ? Math.min((isLiquid ? feedingCount : caloriesTotal) / calTarget, 1) : 0
+  const calSub = calTarget > 0 ? `of ${calTarget.toLocaleString()} target` : (isLiquid ? 'Tap for details' : 'Set a target')
+
+  // Activity
+  const activityEngagement = activityRangeDays > 0 ? Math.min(activityActiveDays / activityRangeDays, 1) : 0
+  const hasActivity = activityCount > 0
+  const activitySub = hasActivity
+    ? (activityRangeDays > 0 ? `${activityActiveDays}/${activityRangeDays} active` : `${activityActiveDays} active`)
+    : t('kids_home_tile_activity_empty_sub')
+
+  return (
+    <View style={{ gap: 10 }}>
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <DiffuseStatCard
+          flex={1.3}
+          label={t('kids_home_tile_last_sleep')}
+          value={sleepValue}
+          unit={hasSleep ? 'h' : undefined}
+          sub={sleepSub}
+          accent={stickers.blue}
+          accent2={stickers.lilac}
+          icon={<Moon size={18} color={colors.ink3} strokeWidth={1.6} />}
+          onPress={!hasSleep && onLogSleep ? onLogSleep : onPressSleep}
+        />
+        <DiffuseStatCard
+          flex={1}
+          label={t('kids_home_tile_mood')}
+          value={moodDisplay}
+          sub={moodSub}
+          accent={stickers.yellow}
+          accent2={stickers.peach}
+          icon={hasMoods && dominantMood ? <MoodFace size={22} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} /> : <Smile size={18} color={colors.ink3} strokeWidth={1.6} />}
+          emptyLabel={t('kids_home_tile_mood_empty')}
+          onPress={!hasMoods && onLogMood ? onLogMood : onPressMood}
+        />
+      </View>
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <DiffuseStatCard
+          flex={1}
+          label={isLiquid ? t('kids_home_tile_feedings') : t('kids_home_tile_calories')}
+          value={calValue}
+          unit={!isLiquid && hasFeed ? 'kcal' : undefined}
+          sub={calSub}
+          accent={stickers.peach}
+          accent2={stickers.coral}
+          icon={<Flame size={18} color={colors.ink3} strokeWidth={1.6} />}
+          progress={calPct}
+          onPress={!hasFeed && onLogFeeding ? onLogFeeding : onPressCalories}
+        />
+        <DiffuseStatCard
+          flex={1.2}
+          label={t('kids_home_tile_activities')}
+          value={hasActivity ? `${activityCount}` : undefined}
+          unit={hasActivity ? 'logs' : undefined}
+          sub={activitySub}
+          accent={stickers.green}
+          accent2={stickers.blue}
+          icon={<Zap size={18} color={colors.ink3} strokeWidth={1.6} />}
+          onPress={!hasActivity && onLogActivity ? onLogActivity : onPressActivity}
+        />
+      </View>
+    </View>
+  )
+}
+
+function CurrentHeroTiles({
+  sleepTotal,
+  sleepTarget,
+  dominantMood,
+  moodCounts,
+  caloriesTotal,
+  caloriesTarget,
+  feedingCount,
+  feedingTarget,
+  stage,
+  activityCount,
+  activityActiveDays,
+  activityRangeDays,
+  activityTopLabel,
+  activityTypesCount,
+  onPressSleep,
+  onPressMood,
+  onPressCalories,
+  onPressActivity,
+  onLogSleep,
+  onLogMood,
+  onLogFeeding,
+  onLogActivity,
+}: HeroTilesProps) {
   const { colors, isDark, font } = useTheme()
   const { t } = useTranslation()
   const ink = colors.text
