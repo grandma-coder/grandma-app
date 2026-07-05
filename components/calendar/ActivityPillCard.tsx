@@ -18,6 +18,7 @@ import { ChevronRight, Check } from 'lucide-react-native'
 import { useTheme } from '../../constants/theme'
 import { Body } from '../ui/Typography'
 import { getTint, type TintKey } from './tints'
+import { useTranslation } from '../../lib/i18n'
 
 interface ActivityPillCardProps {
   icon: ReactNode
@@ -52,6 +53,7 @@ export function ActivityPillCard({
   loggedBy,
 }: ActivityPillCardProps) {
   const { colors, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const { fill, ink } = getTint(tint, isDark)
   const textInk = isDark ? colors.text : '#141313'
   const textMuted = isDark ? colors.textMuted : '#6E6763'
@@ -105,7 +107,7 @@ export function ActivityPillCard({
         ) : null}
         {loggedBy ? (
           <Body size={11} color={textMuted} style={{ marginTop: 2, fontStyle: 'italic' }}>
-            by {loggedBy}
+            {t('garage_share_postBy', { name: loggedBy })}
           </Body>
         ) : null}
       </View>
