@@ -138,7 +138,7 @@ export default function Welcome() {
 
         {/* Main wordmark */}
         <Text style={[styles.wordmark, { fontFamily: font.display, color: ink }]}>
-          grandma
+          {t('auth_signUp_heading2')}
         </Text>
 
         {/* Italic tagline */}
