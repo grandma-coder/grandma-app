@@ -20,6 +20,7 @@ import { X, Check, Plus, Stethoscope } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, font } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
+import { useTranslatedContent } from '../../lib/useTranslatedContent'
 import { Display, Body, MonoCaps } from '../ui/Typography'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 
@@ -49,6 +50,21 @@ export function AppointmentDetailModal({
   const { colors, isDark } = useTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+
+  // Long-form appointment prose is translated at runtime + cached (Phase C).
+  // Stable id-based keys so cache survives content edits (hash guards staleness).
+  const { text: description } = useTranslatedContent(
+    `appt_${appointment?.id ?? 'none'}_description`,
+    appointment?.description ?? '',
+  )
+  const { text: prepNote } = useTranslatedContent(
+    `appt_${appointment?.id ?? 'none'}_prepNote`,
+    appointment?.prepNote ?? '',
+  )
+  const { text: whatToExpect } = useTranslatedContent(
+    `appt_${appointment?.id ?? 'none'}_whatToExpect`,
+    appointment?.whatToExpect ?? '',
+  )
 
   const visible = appointment !== null
 
@@ -182,19 +198,19 @@ export function AppointmentDetailModal({
               {/* ─── Body sections ───────────────────────────────────── */}
               <Section title="About" muted={muted}>
                 <Body size={14} color={inkText}>
-                  {appointment.description}
+                  {description}
                 </Body>
               </Section>
 
               <Section title="How to prep" muted={muted}>
                 <Body size={14} color={inkText}>
-                  {appointment.prepNote}
+                  {prepNote}
                 </Body>
               </Section>
 
               <Section title="What to expect" muted={muted}>
                 <Body size={14} color={inkText}>
-                  {appointment.whatToExpect}
+                  {whatToExpect}
                 </Body>
               </Section>
 
