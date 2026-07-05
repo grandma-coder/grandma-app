@@ -235,7 +235,7 @@ export function FertilitySignalsCard() {
               {t('cycleSignals_logging30s')}
             </Text>
             <Text style={[styles.emptyBody, { color: colors.textMuted, fontFamily: font.body }]}>
-              Morning temp + a quick check tells us when your fertile window actually peaks — better than calendar guesses.
+              {t('cycleSignals_emptyBody')}
             </Text>
             <PillButton
               label={t('cycleSignals_logFirstSignal')}

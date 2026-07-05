@@ -1597,6 +1597,7 @@ export interface TranslationKeys {
   cycleSignals_filledCount: string
   cycleSignals_logTile: string
   cycleSignals_logging30s: string
+  cycleSignals_emptyBody: string
   cycleSignals_logFirstSignal: string
 
   // ─── Cycle Today Dashboard Modal (Wave B4) ────────────────────────────────

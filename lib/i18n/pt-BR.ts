@@ -1445,6 +1445,7 @@ export const ptBR: TranslationKeys = {
   cycleSignals_filledCount: '{{count}} of 4 logged',
   cycleSignals_logTile: '+ log',
   cycleSignals_logging30s: 'Logging today takes 30s',
+  cycleSignals_emptyBody: 'Morning temp + a quick check tells us when your fertile window actually peaks — better than calendar guesses.',
   cycleSignals_logFirstSignal: 'Log first signal',
 
   // ─── Cycle Today Dashboard Modal (Wave B4) ────────────────────────────────
