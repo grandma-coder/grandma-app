@@ -13,13 +13,13 @@
  * `useIsDiffuse()` branch. They do not gate themselves.
  */
 
-import { ReactNode } from 'react'
+import { ReactNode, useState, useMemo } from 'react'
 import { View, Text, Pressable, Modal, ScrollView, StyleSheet, ViewStyle, StyleProp, KeyboardAvoidingView, Platform } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
-import { X } from 'lucide-react-native'
+import { X, ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useDiffuseTheme, getModeField, diffuseFont } from '../../../constants/theme'
+import { useDiffuseTheme, getModeField, getDiffuseAccent, diffuseFont } from '../../../constants/theme'
 import { useModeStore } from '../../../store/useModeStore'
 import { DiffuseGrain, DiffuseArrow } from './DiffuseKit'
 
@@ -175,17 +175,20 @@ export function DiffuseStatCard({
         style,
       ]}
     >
-      {/* soft field bloom (corner-to-corner) + grain — borderless tile */}
-      <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { opacity: isDark ? 0.40 : 0.55 }]}>
-        <LinearGradient colors={[c1, c2]} start={{ x: 0.15, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFillObject} />
-      </View>
-      {/* gentle paper veil so ink stays legible over the bloom */}
-      <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.surface, opacity: isDark ? 0.30 : 0.28 }]} />
-      <DiffuseGrain radius={dp.statCard.borderRadius} opacity={0.06} />
+      {/* soft corner bloom (herotile spec: radial wash from the top-right) */}
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', top: -56, right: -40, width: 150, height: 150, borderRadius: 75, backgroundColor: c1, opacity: isDark ? 0.30 : 0.42 }}
+      />
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', top: 10, right: 6, width: 90, height: 90, borderRadius: 45, backgroundColor: c2, opacity: isDark ? 0.22 : 0.30 }}
+      />
+      <DiffuseGrain radius={dp.statCard.borderRadius} opacity={0.05} />
 
       <View style={dp.statHeaderRow}>
         <Text style={[roleType.eyebrow, { color: colors.ink3 }]} numberOfLines={1}>{label}</Text>
-        {icon ? <View style={dp.statGlyph}>{icon}</View> : null}
+        {icon ? <DiffuseBloomIcon color={c1} size={30} intensity={0.45}>{icon}</DiffuseBloomIcon> : null}
       </View>
 
       <View style={dp.statBodyRow}>
@@ -576,4 +579,173 @@ const dp = StyleSheet.create({
     paddingTop: 16,
     marginTop: 4,
   },
+  // dot calendar
+  calHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  calNav: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  calDowRow: { flexDirection: 'row', marginBottom: 6 },
+  calDow: { flex: 1, textAlign: 'center', fontFamily: diffuseFont.mono, fontSize: 8.5, letterSpacing: 0.5, textTransform: 'uppercase' },
+  calGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  calCellWrap: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', padding: 3 },
+  calCell: { width: '100%', aspectRatio: 1, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  calBloom: { position: 'absolute', width: '128%', height: '128%', borderRadius: 999 },
+  calPeriodDot: { position: 'absolute', bottom: 6, width: 4, height: 4, borderRadius: 2 },
 })
+
+// ─── DiffuseBloomIcon ───────────────────────────────────────────────────────
+// The signature v4 treatment: a thin Lucide line glyph (currentColor) sitting
+// over a soft radial color bloom. Used in hero tiles, summary rows, banners,
+// list rows. `color` tints the bloom (defaults to mode accent); the glyph is
+// passed as children and inherits `glyphColor` (ink-3 by default, per spec:
+// icons read quieter than their label).
+//
+//   <DiffuseBloomIcon color={stickers.blue}><Moon size={18} color={ink3}/></DiffuseBloomIcon>
+
+interface BloomIconProps {
+  children: ReactNode        // a Lucide line icon
+  color?: string             // bloom hue (defaults to mode accent)
+  size?: number              // bloom box (default 34)
+  intensity?: number         // bloom opacity (default 0.5)
+}
+
+export function DiffuseBloomIcon({ children, color, size = 34, intensity = 0.5 }: BloomIconProps) {
+  const { isDark } = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const bloom = color ?? getDiffuseAccent(mode, isDark)
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      {/* soft radial bloom behind the glyph */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: bloom,
+          opacity: isDark ? intensity * 0.7 : intensity,
+          // feathered edge — approximates radial-gradient fade in RN
+          transform: [{ scale: 0.82 }],
+        }}
+      />
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          width: size * 0.6,
+          height: size * 0.6,
+          borderRadius: size,
+          backgroundColor: bloom,
+          opacity: isDark ? intensity : intensity * 1.3,
+        }}
+      />
+      <View style={{ zIndex: 1 }}>{children}</View>
+    </View>
+  )
+}
+
+// ─── DiffuseDotCalendar ─────────────────────────────────────────────────────
+// The v4 `.dotcal`: a hairline dot grid. Every day is a thin hairline circle;
+// selected = accent ring + soft radial bloom behind; period/range days get a
+// small accent dot beneath the number; leading/trailing days are muted.
+// Fully custom (not the native picker). Mon-first, matches the reference.
+
+interface DotCalendarProps {
+  value: Date                        // selected day
+  onChange: (d: Date) => void
+  month?: Date                       // month to show (defaults to value's month)
+  minimumDate?: Date
+  periodDays?: number[]              // day-of-month numbers to mark with an accent dot
+  accent?: string
+}
+
+const DOW = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
+
+export function DiffuseDotCalendar({ value, onChange, month, minimumDate, periodDays, accent }: DotCalendarProps) {
+  const { colors, isDark } = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const acc = accent ?? getDiffuseAccent(mode, isDark)
+  const [viewMonth, setViewMonth] = useState<Date>(() => month ?? new Date(value.getFullYear(), value.getMonth(), 1))
+
+  const { cells, monthLabel } = useMemo(() => {
+    const y = viewMonth.getFullYear()
+    const m = viewMonth.getMonth()
+    const first = new Date(y, m, 1)
+    // Mon-first offset
+    const startDow = (first.getDay() + 6) % 7
+    const daysInMonth = new Date(y, m + 1, 0).getDate()
+    const daysInPrev = new Date(y, m, 0).getDate()
+    const out: { day: number; inMonth: boolean; date: Date }[] = []
+    for (let i = startDow - 1; i >= 0; i--) out.push({ day: daysInPrev - i, inMonth: false, date: new Date(y, m - 1, daysInPrev - i) })
+    for (let d = 1; d <= daysInMonth; d++) out.push({ day: d, inMonth: true, date: new Date(y, m, d) })
+    let next = 1
+    while (out.length % 7 !== 0 || out.length < 42) { out.push({ day: next, inMonth: false, date: new Date(y, m + 1, next) }); next++; if (out.length >= 42) break }
+    return { cells: out, monthLabel: viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }
+  }, [viewMonth])
+
+  const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  const isBefore = (a: Date, b: Date) => a.setHours(0, 0, 0, 0) < new Date(b).setHours(0, 0, 0, 0)
+
+  return (
+    <View>
+      {/* month header */}
+      <View style={dp.calHeader}>
+        <Text style={[roleType.serif, { fontSize: 20, color: colors.ink }]}>{monthLabel}</Text>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          <Pressable onPress={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))} hitSlop={8} style={[dp.calNav, { borderColor: colors.line2 }]}>
+            <ChevronLeft size={16} color={colors.ink3} strokeWidth={1.8} />
+          </Pressable>
+          <Pressable onPress={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1))} hitSlop={8} style={[dp.calNav, { borderColor: colors.line2 }]}>
+            <ChevronRight size={16} color={colors.ink3} strokeWidth={1.8} />
+          </Pressable>
+        </View>
+      </View>
+      {/* day-of-week row */}
+      <View style={dp.calDowRow}>
+        {DOW.map((d) => (
+          <Text key={d} style={[dp.calDow, { color: colors.ink3 }]}>{d}</Text>
+        ))}
+      </View>
+      {/* grid */}
+      <View style={dp.calGrid}>
+        {cells.map((c, i) => {
+          const selected = c.inMonth && sameDay(c.date, value)
+          const disabled = minimumDate ? isBefore(new Date(c.date), minimumDate) : false
+          const isPeriod = c.inMonth && periodDays?.includes(c.day)
+          return (
+            <Pressable
+              key={i}
+              disabled={!c.inMonth || disabled}
+              onPress={() => onChange(c.date)}
+              style={dp.calCellWrap}
+            >
+              {selected ? (
+                <View pointerEvents="none" style={[dp.calBloom, { backgroundColor: acc, opacity: 0.5 }]} />
+              ) : null}
+              <View
+                style={[
+                  dp.calCell,
+                  {
+                    borderColor: selected ? acc : (c.inMonth && !isPeriod ? colors.line : 'transparent'),
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontFamily: selected ? diffuseFont.bodySemiBold : diffuseFont.body,
+                    fontSize: 13,
+                    color: !c.inMonth || disabled ? colors.ink4 : selected ? colors.ink : colors.ink2,
+                  }}
+                >
+                  {c.day}
+                </Text>
+              </View>
+              {isPeriod && !selected ? <View style={[dp.calPeriodDot, { backgroundColor: acc }]} /> : null}
+            </Pressable>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
+

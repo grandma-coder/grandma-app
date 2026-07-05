@@ -31,7 +31,7 @@ import {
 import * as Haptics from 'expo-haptics'
 import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../ui/diffuse/DiffuseKit'
-import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader, DiffuseMetricTile } from '../ui/diffuse/DiffusePrimitives'
+import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader, DiffuseMetricTile, DiffuseBloomIcon, DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
 import { EmptyState } from '../ui/EmptyState'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -2347,18 +2347,29 @@ export function KidsHome() {
                 </View>
                 <Text style={{ fontFamily: diffuse ? diffuseFont.display : font.display, fontSize: diffuse ? 16 : 14, color: diffuse ? dt.colors.ink : colors.text, letterSpacing: -0.2 }}>{t('kids_home_picker_pick_date')}</Text>
               </View>
+              {diffuse ? (
+                <View style={{ paddingHorizontal: 14, paddingVertical: 8 }}>
+                  <DiffuseDotCalendar
+                    value={newReminderDate ?? new Date()}
+                    onChange={(d) => setNewReminderDate(d)}
+                    minimumDate={new Date()}
+                    accent={getDiffuseAccent('kids', isDark)}
+                  />
+                </View>
+              ) : (
               <DateTimePicker
                 value={newReminderDate ?? new Date()}
                 mode="date"
                 display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 minimumDate={new Date()}
                 themeVariant={isDark ? 'dark' : 'light'}
-                accentColor={diffuse ? getDiffuseAccent('kids', isDark) : brand.kids}
+                accentColor={brand.kids}
                 onChange={(e: DateTimePickerEvent, date?: Date) => {
                   if (Platform.OS !== 'ios') setShowDatePicker(false)
                   if (date) setNewReminderDate(date)
                 }}
               />
+              )}
               {Platform.OS === 'ios' && (
                 <Pressable
                   onPress={() => setShowDatePicker(false)}
@@ -3567,11 +3578,17 @@ function HealthCard({ reminders, healthHistory, child }: {
   return (
     <View style={[s.hcCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
       {/* Icon */}
-      <View style={[s.hcIconWrap, diffuse
-        ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
-        : { backgroundColor: isDark ? '#1A2810' : '#EEF7E4' }]}>
-        <CrossSticker size={diffuse ? 24 : 30} fill={green + (diffuse ? '99' : 'BB')} stroke={green} />
+      {diffuse ? (
+        <View style={s.hcIconWrap}>
+          <DiffuseBloomIcon color={stickers.green} size={40} intensity={0.5}>
+            <CrossSticker size={22} fill={green + '99'} stroke={green} />
+          </DiffuseBloomIcon>
+        </View>
+      ) : (
+      <View style={[s.hcIconWrap, { backgroundColor: isDark ? '#1A2810' : '#EEF7E4' }]}>
+        <CrossSticker size={30} fill={green + 'BB'} stroke={green} />
       </View>
+      )}
 
       {/* Content */}
       <View style={{ flex: 1, gap: 4 }}>
