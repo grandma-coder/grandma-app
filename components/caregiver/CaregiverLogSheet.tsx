@@ -32,6 +32,7 @@ import {
   HealthEventForm,
 } from '../calendar/KidsLogForms'
 import type { ChildWithRole } from '../../types'
+import { useTranslation } from '../../lib/i18n'
 
 type LogType =
   | 'feeding'
@@ -67,11 +68,12 @@ interface Props {
 export function CaregiverLogSheet({ child, onClose }: Props) {
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const [selected, setSelected] = useState<LogType | null>(null)
 
   // Only the types this caregiver may log. Withheld types are hidden.
-  const allowed = LOG_TYPES.filter((t) => hasCapability(child, t.capability))
+  const allowed = LOG_TYPES.filter((lt) => hasCapability(child, lt.capability))
 
   // Defensive: opened without any logging capability at all.
   if (allowed.length === 0) {
@@ -99,29 +101,29 @@ export function CaregiverLogSheet({ child, onClose }: Props) {
 
           {selected === null ? (
             <>
-              <Text style={styles.title}>Log for {child.name}</Text>
+              <Text style={styles.title}>{t('caregiverLogSheet_title', { name: child.name })}</Text>
               <ScrollView contentContainerStyle={styles.grid}>
-                {allowed.map((t) => (
+                {allowed.map((lt) => (
                   <Pressable
-                    key={t.key}
-                    onPress={() => setSelected(t.key)}
+                    key={lt.key}
+                    onPress={() => setSelected(lt.key)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Log ${t.label}`}
+                    accessibilityLabel={`Log ${lt.label}`}
                     style={styles.tile}
                   >
-                    <Text style={styles.tileEmoji}>{t.emoji}</Text>
-                    <Text style={styles.tileLabel}>{t.label}</Text>
+                    <Text style={styles.tileEmoji}>{lt.emoji}</Text>
+                    <Text style={styles.tileLabel}>{lt.label}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
               <Pressable onPress={onClose} style={styles.cancel}>
-                <Text style={styles.cancelText}>Close</Text>
+                <Text style={styles.cancelText}>{t('common_close')}</Text>
               </Pressable>
             </>
           ) : (
             <ScrollView contentContainerStyle={styles.formWrap}>
               <Pressable onPress={() => setSelected(null)} style={styles.back}>
-                <Text style={styles.backText}>‹ Back</Text>
+                <Text style={styles.backText}>{t('caregiverLogSheet_backChevron', { back: t('common_back') })}</Text>
               </Pressable>
               {selected === 'feeding' && <FeedingForm onSaved={handleSaved} />}
               {selected === 'sleep' && <SleepForm onSaved={handleSaved} />}

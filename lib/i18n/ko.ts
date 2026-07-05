@@ -1364,6 +1364,8 @@ export const ko: TranslationKeys = {
   miniCharts_notEnoughData: 'Not enough data yet.',
   agendaHeader_title: 'Agenda.',
   caregiverHome_emptyTitle: 'No children yet',
+  caregiverLogSheet_title: 'Log for {{name}}',
+  caregiverLogSheet_backChevron: '‹ {{back}}',
 
   // ─── Cycle Analytics (Wave B4) ────────────────────────────────────────────
   cycleAnalytics_yourCycleToday: 'YOUR CYCLE TODAY',
