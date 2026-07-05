@@ -2674,4 +2674,11 @@ export interface TranslationKeys {
   agendaSymptom_loggedToday: string
   agendaSymptom_emptyTitle: string
   agendaSymptom_emptyDesc: string
+  // ─── B7b: onboarding/kids/index.tsx residual strings ──────────────────────
+  kidsOnboard_tunedForAges: string
+  kidsOnboard_noCountriesFound: string
+  kidsOnboard_photoHint: string
+  kidsOnboard_partnerHint: string
+  kidsOnboard_completionTitle: string
+  kidsOnboard_completionMessage: string
 }

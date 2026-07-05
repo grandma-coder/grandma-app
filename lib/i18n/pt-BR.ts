@@ -2554,4 +2554,11 @@ export const ptBR: TranslationKeys = {
   agendaSymptom_loggedToday: 'Logged today',
   agendaSymptom_emptyTitle: 'No symptoms logged',
   agendaSymptom_emptyDesc: "Tap a symptom above to log how you're feeling today. Track patterns across your pregnancy.",
+  // ─── B7b: onboarding/kids/index.tsx residual strings ──────────────────────
+  kidsOnboard_tunedForAges: "Grandma's tuned for ages 0–5, but you can still continue.",
+  kidsOnboard_noCountriesFound: 'No countries found',
+  kidsOnboard_photoHint: 'Tap to choose photo or icon',
+  kidsOnboard_partnerHint: "They'll be able to log activities and see updates too.",
+  kidsOnboard_completionTitle: 'Welcome to the family!',
+  kidsOnboard_completionMessage: "Grandma can't wait to help you track every beautiful moment. Here's who we'll be watching over:",
 }

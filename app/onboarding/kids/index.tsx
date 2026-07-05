@@ -29,6 +29,7 @@ import { PillButton } from '../../../components/ui/PillButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
 import { useTheme, brand, stickers, getModeColor, getModeColorSoft } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 import { AvatarView, AvatarPickerModal, isIconAvatar } from '../../../components/ui/AvatarPicker'
 import {
   useKidsOnboardingStore,
@@ -641,6 +642,7 @@ function StepChildDob({
   onContinue: () => void
 }) {
   const { colors, radius, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -681,7 +683,7 @@ function StepChildDob({
         {tooOld && (
           <View style={[stepStyles.ageBadge, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 8 }]}>
             <Text style={[stepStyles.ageBadgeText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-              Grandma's tuned for ages 0–5, but you can still continue.
+              {t('kidsOnboard_tunedForAges')}
             </Text>
           </View>
         )}
@@ -741,6 +743,7 @@ function StepChildCountry({
   onContinue: () => void
 }) {
   const { colors, radius, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -825,7 +828,7 @@ function StepChildCountry({
             })}
             {filteredOptions.length === 0 && (
               <Text style={{ color: colors.textMuted, padding: 16, width: '100%' }}>
-                No countries found
+                {t('kidsOnboard_noCountriesFound')}
               </Text>
             )}
           </View>
@@ -851,6 +854,7 @@ function StepChildPhoto({
   onSkip: () => void
 }) {
   const { colors, radius, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -906,7 +910,7 @@ function StepChildPhoto({
             >
               <Camera size={36} color={colors.text} strokeWidth={1.8} />
               <Text style={[stepStyles.photoHint, { color: colors.text, fontFamily: font.bodyMedium }]}>
-                Tap to choose photo or icon
+                {t('kidsOnboard_photoHint')}
               </Text>
             </View>
           )}
@@ -1081,6 +1085,7 @@ function StepPartner({
   onSkip: () => void
 }) {
   const { colors, radius, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const partner = useKidsOnboardingStore((s) => s.partnerName)
@@ -1114,7 +1119,7 @@ function StepPartner({
         ]}
       />
       <Text style={[stepStyles.hint, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-        They'll be able to log activities and see updates too.
+        {t('kidsOnboard_partnerHint')}
       </Text>
     </OnboardingStep>
   )
@@ -1220,6 +1225,7 @@ function CompletionScreen({
 }) {
   const insets = useSafeAreaInsets()
   const { colors, radius, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const modeSoft = getModeColorSoft('kids', isDark)
 
   return (
@@ -1245,7 +1251,7 @@ function CompletionScreen({
         </View>
 
         <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.displayBold }]}>
-          Welcome to the family!
+          {t('kidsOnboard_completionTitle')}
         </Text>
 
         <Text
@@ -1254,8 +1260,7 @@ function CompletionScreen({
             { color: colors.textSecondary, fontFamily: font.body },
           ]}
         >
-          Grandma can't wait to help you track every beautiful moment.
-          Here's who we'll be watching over:
+          {t('kidsOnboard_completionMessage')}
         </Text>
 
         {/* Child cards */}
