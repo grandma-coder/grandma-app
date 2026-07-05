@@ -322,6 +322,9 @@ export interface TranslationKeys {
   pregnancy_week: string
   pregnancy_dueDate: string
   pregnancy_babySize: string
+  pregnancy_babyIsSizeOf: string
+  pregnancy_babySizeOf: string
+  pregnancy_babySizeOfPrefix: string
   pregnancy_symptoms: string
   pregnancy_kicks: string
   pregnancy_contractions: string

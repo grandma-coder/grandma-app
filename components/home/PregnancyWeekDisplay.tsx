@@ -8,9 +8,10 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { useTheme, stickers, getModeColorSoft, font } from '../../constants/theme'
 import { getWeekData } from '../../lib/pregnancyData'
-import { Display, DisplayItalic, MonoCaps } from '../ui/Typography'
+import { DisplayItalic, MonoCaps } from '../ui/Typography'
 import { Heart } from '../ui/Stickers'
 import { WeeksProgressBeads } from '../charts/GalleryCharts'
+import { useTranslation } from '../../lib/i18n'
 
 interface PregnancyWeekDisplayProps {
   weekNumber: number
@@ -24,6 +25,7 @@ function getTrimesterLabel(week: number): string {
 
 export function PregnancyWeekDisplay({ weekNumber }: PregnancyWeekDisplayProps) {
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const data = getWeekData(weekNumber)
   const soft = getModeColorSoft('pregnancy', isDark)
   const ink = isDark ? colors.text : '#141313'
@@ -37,7 +39,7 @@ export function PregnancyWeekDisplay({ weekNumber }: PregnancyWeekDisplayProps) 
         <Heart size={56} fill={isDark ? stickers.lilac : '#C8B6E8'} />
       </View>
 
-      <MonoCaps>Week</MonoCaps>
+      <MonoCaps>{t('pregnancy_week')}</MonoCaps>
 
       <View style={styles.weekRow}>
         <Text style={[styles.weekNumber, { fontFamily: font.display, color: ink }]}>
@@ -51,9 +53,9 @@ export function PregnancyWeekDisplay({ weekNumber }: PregnancyWeekDisplayProps) 
 
       {/* Size chip */}
       <View style={[styles.sizeChip, { backgroundColor: paper, borderColor: paperBorder }]}>
-        <MonoCaps>Baby size of</MonoCaps>
+        <MonoCaps>{t('pregnancy_babySizeOf')}</MonoCaps>
         <Text style={[styles.sizeValue, { fontFamily: font.display, color: ink }]}>
-          a {data.babySize}
+          {t('pregnancy_babySizeOfPrefix')} {data.babySize}
         </Text>
       </View>
 

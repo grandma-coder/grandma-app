@@ -9,6 +9,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { useTheme } from '../../constants/theme'
 import { getWeekData } from '../../lib/pregnancyData'
 import { MonoCaps } from '../ui/Typography'
+import { useTranslation } from '../../lib/i18n'
 
 interface BabySizeCardProps {
   weekNumber: number
@@ -17,6 +18,7 @@ interface BabySizeCardProps {
 
 export function BabySizeCard({ weekNumber }: BabySizeCardProps) {
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const data = getWeekData(weekNumber)
 
   const paper = isDark ? colors.surface : '#FFFEF8'
@@ -26,7 +28,7 @@ export function BabySizeCard({ weekNumber }: BabySizeCardProps) {
   return (
     <View style={styles.wrap}>
       <View style={[styles.chip, { backgroundColor: paper, borderColor: paperBorder }]}>
-        <MonoCaps>Baby is the size of</MonoCaps>
+        <MonoCaps>{t('pregnancy_babyIsSizeOf')}</MonoCaps>
         <Text style={[styles.value, { fontFamily: font.display, color: ink }]}>
           {data.babySize}
         </Text>
