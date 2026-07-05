@@ -1331,6 +1331,7 @@ export const hi: TranslationKeys = {
   prepreg_partnerView_invite: 'Invite Your Partner',
   prepreg_partnerView_inviteSub: 'Learn together and share the preparation journey',
   prepreg_partnerView_sendInvite: 'Send Invite',
+  prepreg_partnerView_emoji: '💑',
 
   // ─── Pre-Preg Phase Ring (Wave B4) ────────────────────────────────────────
   prepreg_phaseRing_periodIn: 'PERIOD IN',

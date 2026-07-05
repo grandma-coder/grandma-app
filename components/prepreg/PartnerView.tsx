@@ -33,7 +33,7 @@ export function PartnerView({ partnerConnected = false, onInvite }: PartnerViewP
     <PaperCard radius={28} padding={20}>
       <View style={styles.row}>
         <View style={[styles.iconCircle, { backgroundColor: colors.primaryTint }]}>
-          <Text style={{ fontSize: 22 }}>💑</Text>
+          <Text style={{ fontSize: 22 }}>{t('prepreg_partnerView_emoji')}</Text>
         </View>
         <View style={styles.content}>
           <Text style={[styles.title, { color: colors.text }]}>{t('prepreg_partnerView_invite')}</Text>

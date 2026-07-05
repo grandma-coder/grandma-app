@@ -1480,6 +1480,7 @@ export interface TranslationKeys {
   prepreg_partnerView_invite: string
   prepreg_partnerView_inviteSub: string
   prepreg_partnerView_sendInvite: string
+  prepreg_partnerView_emoji: string
 
   // ─── Pre-Preg Phase Ring (Wave B4) ────────────────────────────────────────
   prepreg_phaseRing_periodIn: string
