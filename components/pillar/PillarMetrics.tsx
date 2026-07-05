@@ -8,7 +8,8 @@
 
 import { useEffect, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { useTheme, getModeColor } from '../../constants/theme'
+import { useTheme, getModeColor, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import type { PillarId } from '../../types'
 import { useChildStore } from '../../store/useChildStore'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
@@ -31,8 +32,10 @@ interface PillarMetricsProps {
 export default function PillarMetrics({ pillarId }: PillarMetricsProps) {
   const mode = useModeStore((s) => s.mode)
   const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const accent = getModeColor(mode, isDark)
+  const accent = diffuse ? dt.colors.ink : getModeColor(mode, isDark)
   const stats = useStatsForPillar(pillarId)
 
   if (stats.length === 0) return null
@@ -54,7 +57,7 @@ export default function PillarMetrics({ pillarId }: PillarMetricsProps) {
           <Text
             style={[
               styles.value,
-              { color: accent, fontFamily: font.display },
+              { color: accent, fontFamily: diffuse ? diffuseFont.display : font.display },
             ]}
           >
             {s.value}
@@ -62,7 +65,7 @@ export default function PillarMetrics({ pillarId }: PillarMetricsProps) {
           <Text
             style={[
               styles.label,
-              { color: colors.textMuted, fontFamily: font.body },
+              { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body },
             ]}
           >
             {s.label}

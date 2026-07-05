@@ -10,7 +10,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { Pillar } from '../../types'
 import { pillars } from '../../lib/pillars'
 import { prePregPillars } from '../../lib/prePregPillars'
@@ -22,19 +23,39 @@ import { ScribbleUnderline } from '../../components/ui/ScribbleUnderline'
 import { getPillarSticker } from '../../lib/pillarStickerMap'
 import { usePillarTipBuckets } from '../../lib/pillarAdaptive'
 import { useTranslation } from '../../lib/i18n'
+import { useTranslatedContent } from '../../lib/useTranslatedContent'
+
+// Tips have no stable id — slugify the label (unique per pillar) for a
+// stable translation-cache key that survives tip-list reordering/filtering.
+function slugifyLabel(label: string): string {
+  return label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+}
 
 export default function PillarDetail() {
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const ink = isDark ? colors.text : '#141313'
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
+  // Diffuse: serif=Cormorant, italic accent, body=Hanken; calm ink-3 accents.
+  const dFont = diffuse ? diffuseFont : null
+  const accentCoral = diffuse ? dt.colors.ink3 : stickers.coral
 
   const pillar = (
     pillars.find((p) => p.id === id)
       ?? prePregPillars.find((p) => p.id === id)
       ?? pregnancyPillars.find((p) => p.id === id)
   ) as Pillar | undefined
+
+  // Long-form pillar intro is translated at runtime + cached (Phase C). Called
+  // unconditionally (Rules of Hooks) even though `pillar` may be undefined —
+  // useTranslatedContent no-ops gracefully on an empty source string.
+  const { text: intro } = useTranslatedContent(
+    pillar ? `pillar_${pillar.id}_intro` : '',
+    pillar?.intro ?? '',
+  )
 
   if (!pillar) {
     return (
@@ -67,7 +88,7 @@ export default function PillarDetail() {
       >
         <Pressable
           onPress={() => router.back()}
-          style={[styles.back, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[styles.back, { backgroundColor: diffuse ? 'transparent' : colors.surface, borderColor: diffuse ? dt.colors.hairline : colors.border }]}
           accessibilityRole="button"
           accessibilityLabel="Back"
         >
@@ -78,15 +99,15 @@ export default function PillarDetail() {
           <View
             style={[
               styles.stickerHero,
-              { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full },
+              { backgroundColor: diffuse ? 'transparent' : colors.surface, borderColor: diffuse ? dt.colors.line2 : colors.border, borderRadius: radius.full, borderWidth: diffuse ? 1 : 1.5 },
             ]}
           >
             {Sticker ? <Sticker size={88} /> : <Text style={{ fontSize: 56 }}>{pillar.icon}</Text>}
           </View>
         </View>
 
-        <Text style={[styles.name, { color: ink, fontFamily: font.display }]}>{pillar.name}</Text>
-        <Text style={[styles.subtitle, { color: stickers.coral, fontFamily: font.italic }]}>
+        <Text style={[styles.name, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{pillar.name}</Text>
+        <Text style={[styles.subtitle, { color: diffuse ? dt.colors.ink3 : stickers.coral, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
           {pillar.description}
         </Text>
 
@@ -99,15 +120,15 @@ export default function PillarDetail() {
               { color: colors.textSecondary, fontFamily: font.body },
             ]}
           >
-            {pillar.intro}
+            {intro}
           </Text>
         )}
 
         {forYou.length > 0 && (
           <>
             <View style={styles.sectionHeading}>
-              <ScribbleUnderline color={stickers.coral} strokeWidth={2.5}>
-                <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>
+              <ScribbleUnderline color={diffuse ? 'transparent' : stickers.coral} strokeWidth={2.5}>
+                <Text style={[styles.sectionTitle, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
                   {t('pillarDetail_forYouNow')}
                 </Text>
               </ScribbleUnderline>
@@ -130,14 +151,15 @@ export default function PillarDetail() {
                 index={index + 1}
                 isLast={index === forYou.length - 1}
                 accent={stickers.coral}
+                translationKey={`pillar_${pillar.id}_tip_${slugifyLabel(tip.label)}`}
               />
             ))}
           </>
         )}
 
         <View style={[styles.sectionHeading, { marginTop: forYou.length > 0 ? 24 : 8 }]}>
-          <ScribbleUnderline color={stickers.coral} strokeWidth={2.5}>
-            <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>
+          <ScribbleUnderline color={diffuse ? 'transparent' : stickers.coral} strokeWidth={2.5}>
+            <Text style={[styles.sectionTitle, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
               {forYou.length > 0 ? t('pillarDetail_allTips') : t('pillarDetail_tips')}
             </Text>
           </ScribbleUnderline>
@@ -150,12 +172,13 @@ export default function PillarDetail() {
             index={index + 1}
             isLast={index === general.length - 1}
             accent={stickers.coral}
+            translationKey={`pillar_${pillar.id}_tip_${slugifyLabel(tip.label)}`}
           />
         ))}
 
         <View style={[styles.sectionHeading, { marginTop: 24 }]}>
-          <ScribbleUnderline color={stickers.coral} strokeWidth={2.5}>
-            <Text style={[styles.sectionTitle, { color: ink, fontFamily: font.display }]}>
+          <ScribbleUnderline color={diffuse ? 'transparent' : stickers.coral} strokeWidth={2.5}>
+            <Text style={[styles.sectionTitle, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
               {t('pillarDetail_askGrandma')}
             </Text>
           </ScribbleUnderline>

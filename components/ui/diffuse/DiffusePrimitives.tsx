@@ -630,15 +630,18 @@ interface DotCalendarProps {
   minimumDate?: Date
   periodDays?: number[]              // day-of-month numbers to mark with an accent dot
   accent?: string
+  onMonthChange?: (firstOfMonth: Date) => void  // fired when the ‹ › nav changes month (additive; optional)
 }
 
 const DOW = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
 
-export function DiffuseDotCalendar({ value, onChange, month, minimumDate, periodDays, accent }: DotCalendarProps) {
+export function DiffuseDotCalendar({ value, onChange, month, minimumDate, periodDays, accent, onMonthChange }: DotCalendarProps) {
   const { colors, isDark } = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
   const acc = accent ?? getDiffuseAccent(mode, isDark)
   const [viewMonth, setViewMonth] = useState<Date>(() => month ?? new Date(value.getFullYear(), value.getMonth(), 1))
+
+  const goToMonth = (d: Date) => { setViewMonth(d); onMonthChange?.(d) }
 
   const { cells, monthLabel } = useMemo(() => {
     const y = viewMonth.getFullYear()
@@ -665,10 +668,10 @@ export function DiffuseDotCalendar({ value, onChange, month, minimumDate, period
       <View style={dp.calHeader}>
         <Text style={[roleType.serif, { fontSize: 20, color: colors.ink }]}>{monthLabel}</Text>
         <View style={{ flexDirection: 'row', gap: 6 }}>
-          <Pressable onPress={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))} hitSlop={8} style={[dp.calNav, { borderColor: colors.line2 }]}>
+          <Pressable onPress={() => goToMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))} hitSlop={8} style={[dp.calNav, { borderColor: colors.line2 }]}>
             <ChevronLeft size={16} color={colors.ink3} strokeWidth={1.8} />
           </Pressable>
-          <Pressable onPress={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1))} hitSlop={8} style={[dp.calNav, { borderColor: colors.line2 }]}>
+          <Pressable onPress={() => goToMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1))} hitSlop={8} style={[dp.calNav, { borderColor: colors.line2 }]}>
             <ChevronRight size={16} color={colors.ink3} strokeWidth={1.8} />
           </Pressable>
         </View>

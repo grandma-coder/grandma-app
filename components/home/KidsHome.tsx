@@ -30,8 +30,8 @@ import {
 } from 'lucide-react-native'
 import * as Haptics from 'expo-haptics'
 import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
-import { useIsDiffuse, DiffuseFieldSurface } from '../ui/diffuse/DiffuseKit'
-import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader, DiffuseMetricTile, DiffuseBloomIcon, DiffuseDotCalendar, DiffuseLeapGraph } from '../ui/diffuse/DiffusePrimitives'
+import { useIsDiffuse, DiffuseFieldSurface, SoftBloom, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
+import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader, DiffuseMetricTile, DiffuseBloomIcon, DiffuseDotCalendar, DiffuseLeapGraph, DiffuseSheet, DiffuseListRow, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
 import { EmptyState } from '../ui/EmptyState'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -3833,6 +3833,8 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
   childName?: string; childColor?: string
 }) {
   const { colors, radius, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const total = pee + poop + mixed
 
@@ -3894,6 +3896,100 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
   const poopTotal = poop + mixed
 
   const BAR_H = 100
+
+  if (diffuse) {
+    const acc = getDiffuseAccent('kids', dt.isDark)
+    const dCol = dt.colors
+    const segs = [
+      { key: 'pee', label: t('kids_home_diaper_pee'), count: pee, hue: dCol.ink2 },
+      { key: 'poop', label: t('kids_home_diaper_poop'), count: poop, hue: dCol.ink3 },
+      { key: 'mixed', label: t('kids_home_diaper_mixed'), count: mixed, hue: acc },
+    ]
+    const dBucketMax = Math.max(...buckets.map((b) => b.total), 1)
+    return (
+      <DiffuseSheet
+        visible={visible}
+        title={t('kids_home_diaper_tracker_title')}
+        onClose={onClose}
+        chip={childName || undefined}
+      >
+        <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dCol.ink3, marginBottom: 16 }}>
+          {rangeLabel}{'  ·  '}{count}{' '}{count !== 1 ? 'diapers' : 'diaper'}{'  ·  avg '}{avgPerDay}{'/day'}
+        </Text>
+
+        {/* Type metric tiles — hairline, serif number */}
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {segs.map((seg) => (
+            <DiffuseMetricTile
+              key={seg.key}
+              value={String(seg.count)}
+              label={`${seg.label} · ${total > 0 ? Math.round((seg.count / total) * 100) : 0}%`}
+            />
+          ))}
+        </View>
+
+        {/* Thin hairline proportion bar */}
+        {total > 0 ? (
+          <View style={{ height: 3, borderRadius: 999, marginTop: 16, overflow: 'hidden', flexDirection: 'row', backgroundColor: dCol.line }}>
+            {pee > 0 ? <View style={{ width: `${(pee / total) * 100}%` as any, backgroundColor: dCol.ink2 }} /> : null}
+            {poop > 0 ? <View style={{ width: `${(poop / total) * 100}%` as any, backgroundColor: dCol.ink3 }} /> : null}
+            {mixed > 0 ? <View style={{ width: `${(mixed / total) * 100}%` as any, backgroundColor: acc }} /> : null}
+          </View>
+        ) : null}
+
+        {/* Trend — thin hairline stacked proportion bars */}
+        <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3, marginTop: 26, marginBottom: 12 }}>
+          {t('kids_home_diaper_trend_label')}
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+          {buckets.map((b, i) => {
+            const h = b.total > 0 ? Math.max((b.total / dBucketMax) * BAR_H, 6) : 4
+            const peeH = b.total > 0 ? Math.round((b.pee / b.total) * h) : 0
+            const poopH = b.total > 0 ? Math.round((b.poop / b.total) * h) : 0
+            const mixedH = Math.max(h - peeH - poopH, 0)
+            return (
+              <View key={i} style={{ flex: 1, alignItems: 'center' }}>
+                <View style={{ height: BAR_H, justifyContent: 'flex-end', width: 5 }}>
+                  <View style={{ height: h, width: 5, borderRadius: 999, overflow: 'hidden', backgroundColor: b.total > 0 ? 'transparent' : dCol.line }}>
+                    {b.total > 0 ? (
+                      <>
+                        {mixedH > 0 ? <View style={{ height: mixedH, backgroundColor: acc }} /> : null}
+                        {poopH > 0 ? <View style={{ height: poopH, backgroundColor: dCol.ink3 }} /> : null}
+                        {peeH > 0 ? <View style={{ height: peeH, backgroundColor: dCol.ink2 }} /> : null}
+                      </>
+                    ) : null}
+                  </View>
+                </View>
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 8.5, letterSpacing: 0.5, textTransform: 'uppercase', color: dCol.ink3, textAlign: 'center', marginTop: 8 }}>{b.label}</Text>
+              </View>
+            )
+          })}
+        </View>
+
+        {/* Stool color — hairline mono chips */}
+        {colorEntries.length > 0 ? (
+          <View style={{ marginTop: 26 }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3, marginBottom: 12 }}>
+              {t('kids_home_diaper_stool_color')}{poopTotal > 0 ? ` · ${poopTotal} logged` : ''}
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {colorEntries.map(([color, cnt]) => {
+                const meta = DIAPER_COLOR_META[color] ?? { label: color.charAt(0).toUpperCase() + color.slice(1), swatch: '#888' }
+                return (
+                  <View key={color} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 999, borderWidth: 1, borderColor: dCol.line2, paddingHorizontal: 12, paddingVertical: 6 }}>
+                    <View style={{ width: 9, height: 9, borderRadius: 999, backgroundColor: meta.swatch, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2 }} />
+                    <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, color: dCol.ink }}>{meta.label}</Text>
+                    <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, color: dCol.ink3 }}>{cnt}</Text>
+                  </View>
+                )
+              })}
+            </View>
+          </View>
+        ) : null}
+      </DiffuseSheet>
+    )
+  }
+
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={s.modalOverlay}>
@@ -4088,9 +4184,72 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
   childName?: string; childColor?: string
 }) {
   const { colors, radius, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const moods = ['happy', 'calm', 'energetic', 'fussy', 'cranky']
   const totalMoods = Object.values(moodCounts).reduce((a, b) => a + b, 0)
+
+  if (diffuse) {
+    const dCol = dt.colors
+    const acc = getDiffuseAccent('kids', dt.isDark)
+    const rangeLabel = dateRange === 'today' ? t('common_today') : dateRange === 'yesterday' ? t('common_yesterday') : dateRange === '7days' ? t('kids_home_range_past_7days') : dateRange === '30days' ? t('kids_home_range_past_30days') : `${startDate} – ${endDate}`
+    const present = moods.filter((m) => (moodCounts[m] || 0) > 0)
+    const maxCount = Math.max(...present.map((m) => moodCounts[m] || 0), 1)
+    return (
+      <DiffuseSheet
+        visible={visible}
+        title={t('kids_home_mood_trends_title')}
+        onClose={onClose}
+        chip={childName || undefined}
+      >
+        <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dCol.ink3, marginBottom: 16 }}>
+          {rangeLabel}{'  ·  '}{totalMoods}{' '}{totalMoods !== 1 ? 'moods' : 'mood'}{' logged'}
+        </Text>
+
+        {totalMoods > 0 ? (
+          <>
+            {/* Hairline mood proportion rows */}
+            <View style={{ gap: 14 }}>
+              {present.map((m) => {
+                const cnt = moodCounts[m] || 0
+                const ratio = cnt / maxCount
+                const on = m === dominantMood
+                return (
+                  <View key={m} style={{ gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <MoodFace size={18} variant={moodFaceVariant(m)} fill={moodFaceFill(m)} />
+                      <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 15, color: dCol.ink }}>{MOOD_LABELS[m]}</Text>
+                      <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 13, color: on ? dCol.ink : dCol.ink3 }}>{cnt}</Text>
+                    </View>
+                    <View style={{ height: 3, borderRadius: 999, backgroundColor: dCol.line, overflow: 'hidden' }}>
+                      <View style={{ width: `${Math.max(ratio, 0.02) * 100}%`, height: 3, borderRadius: 999, backgroundColor: on ? acc : dCol.ink3 }} />
+                    </View>
+                  </View>
+                )
+              })}
+            </View>
+
+            {/* Dominant summary — containerless, serif accent */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 18, marginTop: 22 }}>
+              <MoodFace size={26} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} />
+              <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 14, color: dCol.ink2 }}>
+                {'Mostly '}
+                <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: dCol.ink }}>{MOOD_LABELS[dominantMood] || '—'}</Text>
+                {' this period'}
+              </Text>
+            </View>
+          </>
+        ) : (
+          <DiffuseEmptyState
+            icon={<MoodFace size={40} variant="okay" fill={moodFaceFill('calm')} />}
+            title={t('kids_home_mood_modal_empty_title')}
+            message={t('kids_home_mood_modal_empty_hint')}
+          />
+        )}
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -4281,9 +4440,50 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
   radius: ReturnType<typeof useTheme>['radius']
 }) {
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const entries = Object.entries(breakdown)
     .filter(([, count]) => count > 0)
     .sort(([, a], [, b]) => b - a)
+
+  if (diffuse) {
+    const dCol = dt.colors
+    const acc = getDiffuseAccent('kids', dt.isDark)
+    return (
+      <DiffuseSheet
+        visible={visible}
+        title={t('kids_home_activity_breakdown_title')}
+        onClose={onClose}
+        chip={total > 0 ? `${total.toLocaleString()} ${t('kids_home_activity_total_suffix')}` : undefined}
+      >
+        {entries.length === 0 ? (
+          <DiffuseEmptyState
+            icon={<DiffuseBloomIcon color={acc}><Activity size={20} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            title={t('kids_home_activity_empty')}
+          />
+        ) : (
+          <View style={{ gap: 16 }}>
+            {entries.map(([type, count]) => {
+              const meta = ACTIVITY_TYPE_META[type] ?? { label: type, color: acc }
+              const pct = total > 0 ? Math.round((count / total) * 100) : 0
+              return (
+                <View key={type} style={{ gap: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 15, color: dCol.ink }}>{meta.label}</Text>
+                    <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 13, color: dCol.ink }}>{count.toLocaleString()}</Text>
+                    <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, color: dCol.ink3, minWidth: 38, textAlign: 'right' }}>{pct}%</Text>
+                  </View>
+                  <View style={{ height: 3, borderRadius: 999, backgroundColor: dCol.line, overflow: 'hidden' }}>
+                    <View style={{ width: `${Math.max(pct, 1)}%`, height: 3, borderRadius: 999, backgroundColor: dCol.ink3 }} />
+                  </View>
+                </View>
+              )
+            })}
+          </View>
+        )}
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
@@ -4330,11 +4530,56 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
   accent: string
 }) {
   const { colors, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const ink = colors.text
   const ink3 = colors.textMuted
   const paper = colors.surface
   const paperBorder = colors.border
+
+  if (diffuse) {
+    const dCol = dt.colors
+    const acc = getDiffuseAccent('kids', dt.isDark)
+    return (
+      <DiffuseSheet
+        visible={visible}
+        title={vaccineName}
+        onClose={onClose}
+        chip={doseLabel || undefined}
+      >
+        <View style={{ alignItems: 'flex-start', marginBottom: 18 }}>
+          <DiffuseBloomIcon color={acc} size={44} intensity={0.5}>
+            <Syringe size={24} color={dCol.ink2} strokeWidth={1.5} />
+          </DiffuseBloomIcon>
+        </View>
+        {info ? (
+          <View style={{ gap: 18 }}>
+            <View>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3, marginBottom: 7 }}>{t('kids_home_vaccine_info_protects')}</Text>
+              <Text style={{ fontFamily: diffuseFont.body, fontSize: 15, lineHeight: 23, color: dCol.ink }}>{info.protects}</Text>
+            </View>
+            <View>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3, marginBottom: 7 }}>{t('kids_home_vaccine_info_why')}</Text>
+              <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 22, color: dCol.ink2 }}>{info.why}</Text>
+            </View>
+            {info.sideEffects ? (
+              <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 16 }}>
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3, marginBottom: 7 }}>{t('kids_home_vaccine_info_side_effects')}</Text>
+                <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, lineHeight: 21, color: dCol.ink2 }}>{info.sideEffects}</Text>
+              </View>
+            ) : null}
+            <Text style={{ fontFamily: diffuseFont.italic, fontSize: 12, color: dCol.ink3, textAlign: 'center', marginTop: 4 }}>{t('kids_home_vaccine_info_disclaimer')}</Text>
+            <Text style={{ fontFamily: diffuseFont.body, fontSize: 11, lineHeight: 16, color: dCol.ink3, textAlign: 'center' }}>{MEDICAL_DISCLAIMER}</Text>
+            <Text style={{ fontFamily: diffuseFont.body, fontSize: 11, lineHeight: 16, color: dCol.ink3, textAlign: 'center' }}>{VACCINE_SCHEDULE_NOTE}</Text>
+          </View>
+        ) : (
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 22, color: dCol.ink3 }}>{t('kids_home_vaccine_no_info')}</Text>
+        )}
+      </DiffuseSheet>
+    )
+  }
+
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <Pressable style={s.modalOverlay} onPress={onClose}>
@@ -4438,6 +4683,8 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
   onMarkVaccineGiven: (name: string, date: string, key: string) => Promise<void>
 }) {
   const { colors, isDark, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const milestones = useMemo(
     () => buildVaccineScheduleTree(child.birthDate ?? '', healthHistory.vaccines, child.countryCode ?? 'US'),
@@ -4494,10 +4741,183 @@ function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, onSetVac
   }
 
   if (milestones.length === 0) {
+    if (diffuse) {
+      return (
+        <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, color: dt.colors.ink3, marginBottom: 8 }}>
+          {t('kids_home_vaccine_schedule_empty')}
+        </Text>
+      )
+    }
     return (
       <Text style={{ color: ink3, fontSize: 13, marginBottom: 8 }}>
         {t('kids_home_vaccine_schedule_empty')}
       </Text>
+    )
+  }
+
+  if (diffuse) {
+    const dCol = dt.colors
+    const acc = getDiffuseAccent('kids', dt.isDark)
+    // Node states: done = filled ink ring; partial/upcoming = hollow accent ring; future = faint hollow.
+    return (
+      <View>
+        {milestones.map((milestone, idx) => {
+          const isExpanded = expandedMilestones.has(milestone.key)
+          const isLast = idx === milestones.length - 1
+          const isDoneMilestone = milestone.milestoneStatus === 'done'
+          const isPartialMilestone = milestone.milestoneStatus === 'partial'
+          const doneCount = milestone.vaccines.filter((v) => v.status === 'done').length
+          const totalCount = milestone.vaccines.length
+          const badgeText = isDoneMilestone
+            ? `${doneCount}/${totalCount} done`
+            : isPartialMilestone
+            ? `${doneCount}/${totalCount} · due soon`
+            : `${totalCount} ahead`
+          // milestone node ring
+          const nodeFill = isDoneMilestone ? dCol.ink : dCol.bg
+          const nodeStroke = isDoneMilestone ? dCol.ink : isPartialMilestone ? acc : dCol.line2
+
+          return (
+            <View key={milestone.key} style={{ position: 'relative' }}>
+              {/* connector line */}
+              {!isLast ? (
+                <View pointerEvents="none" style={{ position: 'absolute', left: 12, top: 24, bottom: 0, width: StyleSheet.hairlineWidth, backgroundColor: dCol.line2 }} />
+              ) : null}
+              {/* milestone row */}
+              <Pressable
+                onPress={() => toggleMilestone(milestone.key)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 }}
+              >
+                {/* ring node */}
+                <View style={{ width: 25, alignItems: 'center' }}>
+                  <View style={{ width: 15, height: 15, borderRadius: 999, borderWidth: 1.5, borderColor: nodeStroke, backgroundColor: nodeFill, alignItems: 'center', justifyContent: 'center' }}>
+                    {isDoneMilestone ? <Check size={9} color={dCol.bg} strokeWidth={3} /> : null}
+                  </View>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: dCol.ink, letterSpacing: -0.3 }}>{milestone.label}</Text>
+                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1, textTransform: 'uppercase', color: isDoneMilestone ? dCol.ink2 : dCol.ink3, marginTop: 4 }}>{badgeText}</Text>
+                </View>
+                <Text style={{ fontFamily: diffuseFont.body, fontSize: 18, color: dCol.ink3, width: 20, textAlign: 'center' }}>{isExpanded ? '−' : '+'}</Text>
+              </Pressable>
+
+              {/* expanded vaccine list */}
+              {isExpanded ? (
+                <View style={{ marginLeft: 12, paddingLeft: 24, borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: dCol.line2, paddingBottom: isLast ? 0 : 6 }}>
+                  {milestone.vaccines.map((vax) => {
+                    const apptDate = scheduledVaccines[vax.scheduleKey] ?? null
+                    const isPickerOpen = expandedKey === vax.scheduleKey
+                    const fullName = vax.name + (vax.doseLabel ? ` · ${vax.doseLabel}` : '')
+                    // vaccine dot ring
+                    const dotFill = vax.status === 'done' ? dCol.ink : dCol.bg
+                    const dotStroke = vax.status === 'done' ? dCol.ink
+                      : vax.status === 'overdue' ? dCol.error
+                      : vax.status === 'upcoming' ? acc
+                      : dCol.line2
+                    return (
+                      <View key={vax.scheduleKey}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }}>
+                          <Pressable
+                            onPress={() => setInfoVaccine({
+                              name: vax.name,
+                              doseLabel: vax.doseLabel,
+                              info: getVaccineInfo(vax.name),
+                              accent: acc,
+                            })}
+                            style={({ pressed }) => ({ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.6 : 1 })}
+                          >
+                            <View style={{ width: 12, height: 12, borderRadius: 999, borderWidth: 1.5, borderColor: dotStroke, backgroundColor: dotFill, flexShrink: 0 }} />
+                            <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 14, color: dCol.ink }}>{fullName}</Text>
+                          </Pressable>
+                          {vax.status === 'done' ? (
+                            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.5, color: dCol.ink3 }}>{vax.givenDate ? formatHealthDate(vax.givenDate) : ''}</Text>
+                          ) : vax.status === 'upcoming' || vax.status === 'overdue' ? (
+                            apptDate ? (
+                              <View style={{ gap: 6, alignItems: 'flex-end' }}>
+                                <Pressable onPress={() => { setExpandedKey(isPickerOpen ? null : vax.scheduleKey); setPickerDate(new Date(apptDate + 'T12:00:00')) }}>
+                                  <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 0.5, color: dCol.ink }}>{formatHealthDate(apptDate)}</Text>
+                                </Pressable>
+                                <Pressable
+                                  onPress={() => onMarkVaccineGiven(vax.name + (vax.doseLabel ? ` - ${vax.doseLabel}` : ''), apptDate, vax.scheduleKey)}
+                                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 5, opacity: pressed ? 0.6 : 1 })}
+                                >
+                                  <Check size={11} color={dCol.success} strokeWidth={2.5} />
+                                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1, textTransform: 'uppercase', color: dCol.success }}>{t('kids_home_vaccine_mark_given')}</Text>
+                                </Pressable>
+                              </View>
+                            ) : (
+                              <Pressable
+                                onPress={() => { setExpandedKey(isPickerOpen ? null : vax.scheduleKey); setPickerDate(new Date()) }}
+                                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 5, opacity: pressed ? 0.6 : 1 })}
+                              >
+                                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink2 }}>{t('kids_home_vaccine_set_date')}</Text>
+                                <DiffuseArrow color={dCol.ink3} size={14} />
+                              </Pressable>
+                            )
+                          ) : (
+                            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 0.5, color: dCol.ink3 }}>{vax.dueAge}</Text>
+                          )}
+                        </View>
+
+                        {/* inline date picker — hairline card */}
+                        {isPickerOpen ? (
+                          <View style={{ marginTop: 4, marginBottom: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2, borderRadius: 20, padding: 12, backgroundColor: dCol.surface }}>
+                            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dCol.ink3, paddingHorizontal: 4, paddingBottom: 4 }}>{t('kids_home_picker_pick_date')}</Text>
+                            <DateTimePicker
+                              value={pickerDate}
+                              mode="date"
+                              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                              minimumDate={new Date()}
+                              themeVariant={dt.isDark ? 'dark' : 'light'}
+                              accentColor={acc}
+                              textColor={dCol.ink}
+                              onChange={(e: DateTimePickerEvent, d?: Date) => {
+                                if (Platform.OS === 'android') setExpandedKey(null)
+                                if (e.type === 'set' && d) {
+                                  if (datePickerWroteRef.current === vax.scheduleKey) return
+                                  datePickerWroteRef.current = vax.scheduleKey
+                                  setPickerDate(d)
+                                  const y = d.getFullYear()
+                                  const mo = String(d.getMonth() + 1).padStart(2, '0')
+                                  const day = String(d.getDate()).padStart(2, '0')
+                                  onSetVaccineDate(vax.scheduleKey, `${y}-${mo}-${day}`)
+                                  if (Platform.OS === 'android') setExpandedKey(null)
+                                  setTimeout(() => { datePickerWroteRef.current = null }, 0)
+                                }
+                                if (e.type === 'dismissed') {
+                                  datePickerWroteRef.current = null
+                                  setExpandedKey(null)
+                                }
+                              }}
+                            />
+                            {Platform.OS === 'ios' ? (
+                              <Pressable
+                                onPress={() => setExpandedKey(null)}
+                                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 14, marginTop: 6, opacity: pressed ? 0.6 : 1 })}
+                              >
+                                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dCol.ink }}>{t('common_done')}</Text>
+                                <DiffuseArrow color={dCol.ink3} size={16} />
+                              </Pressable>
+                            ) : null}
+                          </View>
+                        ) : null}
+                      </View>
+                    )
+                  })}
+                </View>
+              ) : null}
+            </View>
+          )
+        })}
+        <VaccineInfoModal
+          visible={infoVaccine !== null}
+          onClose={() => setInfoVaccine(null)}
+          vaccineName={infoVaccine?.name ?? ''}
+          doseLabel={infoVaccine?.doseLabel ?? ''}
+          info={infoVaccine?.info ?? null}
+          accent={infoVaccine?.accent ?? acc}
+        />
+      </View>
     )
   }
 
@@ -4813,6 +5233,8 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
   childColor?: string
 }) {
   const { colors, isDark, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const ST_INK = '#141313'
   const ST_BLUE = isDark ? '#A5C9F0' : '#9DC3E8'
@@ -4831,6 +5253,73 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
     'No data':{ tag: 'Add a log', tagBg: '#E8E4DC', blurb: 'No sleep entries yet for this range. Logging even one sleep helps the rings fill in.' },
   }
   const q = qualityCopy[sleepQuality] ?? qualityCopy['No data']
+
+  if (diffuse) {
+    const dCol = dt.colors
+    const acc = getDiffuseAccent('kids', dt.isDark)
+    return (
+      <DiffuseSheet
+        visible={visible}
+        title={t('kids_home_sleep_modal_title')}
+        onClose={onClose}
+        chip={childName || undefined}
+      >
+        {/* Hero total — serif number over the accent bloom */}
+        <View style={{ marginBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_sleep_modal_total_range')}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
+                <Text style={{ fontFamily: diffuseFont.display, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>{sleepTotal > 0 ? sleepTotal.toFixed(1) : '—'}</Text>
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_sleep_modal_hours_unit')}</Text>
+              </View>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.8, color: dCol.ink3, marginTop: 6 }}>
+                {q.tag.toUpperCase()}{'  ·  '}{t('kids_home_sleep_modal_pct_target', { pct, target: sleepTarget.toFixed(0) })}
+              </Text>
+            </View>
+            <DiffuseBloomIcon color={acc} size={44} intensity={0.5}>
+              <Moon size={24} color={dCol.ink2} strokeWidth={1.5} />
+            </DiffuseBloomIcon>
+          </View>
+        </View>
+
+        {/* Daily bars — thin, mode/muted tokens */}
+        <View style={{ marginTop: 22 }}>
+          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3, marginBottom: 4 }}>{t('kids_home_sleep_modal_past7')}</Text>
+          {dateRange !== '7days' && dateRange !== 'today' && dateRange !== 'yesterday' ? (
+            <Text style={{ fontFamily: diffuseFont.italic, fontSize: 12, color: dCol.ink3, marginBottom: 8 }}>{t('kids_home_sleep_modal_chart_note')}</Text>
+          ) : null}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 116, gap: 6, marginTop: 8 }}>
+            {dailySleep.map((hrs, i) => {
+              const ratio = Math.max(hrs / maxHrs, 0.02)
+              const hitTarget = dailySleepTarget > 0 && hrs >= dailySleepTarget
+              const barColor = hrs === 0 ? dCol.line : (hitTarget ? acc : dCol.ink3)
+              return (
+                <View key={i} style={{ flex: 1, alignItems: 'center', gap: 5 }}>
+                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9, color: dCol.ink2, height: 12 }}>{hrs > 0 ? hrs.toFixed(1) : ''}</Text>
+                  <View style={{ width: 5, height: Math.max(ratio * 80, 4), backgroundColor: barColor, borderRadius: 999 }} />
+                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 8.5, letterSpacing: 0.5, textTransform: 'uppercase', color: dCol.ink3 }}>{(dayLabels[i] ?? '').slice(0, 3)}</Text>
+                </View>
+              )
+            })}
+          </View>
+          {dailySleepTarget > 0 ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 }}>
+              <View style={{ width: 12, height: 3, backgroundColor: dCol.ink3, borderRadius: 999 }} />
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 0.5, color: dCol.ink3 }}>{t('kids_home_sleep_below_target', { target: dailySleepTarget })}</Text>
+            </View>
+          ) : null}
+        </View>
+
+        {/* Quality read */}
+        <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 18, marginTop: 24 }}>
+          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3, marginBottom: 8 }}>{t('kids_home_sleep_modal_quality_read', { sleepQuality })}</Text>
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 22, color: dCol.ink }}>{q.blurb}</Text>
+        </View>
+      </DiffuseSheet>
+    )
+  }
+
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <Pressable style={s.modalOverlay} onPress={onClose}>
@@ -4931,6 +5420,8 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
   activityCount: number; activityBreakdown: Record<string, number>; feedingCount: number; caloriesTotal: number; feedingMl: number; stage: FeedingStage
 }) {
   const { colors, radius, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const { weight, height } = parseGrowthValue(healthHistory.growth)
   const [activityBreakdownVisible, setActivityBreakdownVisible] = useState(false)
@@ -4940,6 +5431,201 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
   const ink = colors.text
   const ink3 = isDark ? colors.textMuted : 'rgba(20,19,19,0.5)'
   const stickerInk = isDark ? 'rgba(255,255,255,0.18)' : '#141313'
+
+  if (diffuse) {
+    const dCol = dt.colors
+    const acc = getDiffuseAccent('kids', dt.isDark)
+    const showGrowthCharts = (child.sex === 'male' || child.sex === 'female') && healthHistory.growth.length > 0 && !!child.birthDate
+    const nutritionValue = stage === 'liquid' ? feedingCount.toLocaleString()
+      : stage === 'mixed' ? feedingCount.toLocaleString()
+      : (caloriesTotal > 0 ? caloriesTotal.toLocaleString() : '—')
+    const nutritionLabel = stage === 'liquid' ? t('kids_home_health_feedings_label')
+      : stage === 'mixed' ? t('kids_home_health_feeds_label')
+      : t('kids_home_health_calories_label')
+    return (
+      <>
+        <DiffuseSheet
+          visible={visible}
+          title={t('kids_home_health_overview_title')}
+          onClose={onClose}
+          chip={childColor ? child.name : undefined}
+        >
+          {/* Sleep summary — hairline row */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2, borderRadius: 22, padding: 16, overflow: 'hidden' }}>
+            <SoftBloom color={acc} cx="88%" cy="30%" opacity={dt.isDark ? 0.28 : 0.4} spread={0.5} />
+            <DiffuseBloomIcon color={acc} size={40} intensity={0.5}>
+              <Moon size={22} color={dCol.ink2} strokeWidth={1.5} />
+            </DiffuseBloomIcon>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1.4, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_health_sleep_quality_label')}</Text>
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, color: dCol.ink, letterSpacing: -0.3, marginTop: 2 }}>{sleepQuality}</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, color: dCol.ink, letterSpacing: -0.4 }}>{sleepTotal.toFixed(1)}{'h'}</Text>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 0.5, color: dCol.ink3 }}>{'of '}{sleepTarget.toFixed(0)}{'h'}</Text>
+            </View>
+          </View>
+
+          {/* Growth percentile charts — shared chart component (kept) */}
+          {showGrowthCharts ? (() => {
+            const sex = child.sex as 'male' | 'female'
+            const weightPts: { ageMonths: number; value: number; date: string }[] = []
+            const heightPts: { ageMonths: number; value: number; date: string }[] = []
+            const birth = new Date(child.birthDate! + 'T00:00:00')
+            for (const g of healthHistory.growth) {
+              if (!g.date) continue
+              const measured = new Date(g.date + 'T00:00:00')
+              if (isNaN(measured.getTime())) continue
+              const ageMonths = (measured.getFullYear() - birth.getFullYear()) * 12 + (measured.getMonth() - birth.getMonth()) + (measured.getDate() - birth.getDate()) / 30
+              const wMatch = (g.value || '').match(/([0-9]+(?:[.,][0-9]+)?)\s*(kg|lbs?|lb)/i)
+              const hMatch = (g.value || '').match(/([0-9]+(?:[.,][0-9]+)?)\s*(cm|in|inches?|inch)/i)
+              if (wMatch) {
+                const n = parseFloat(wMatch[1].replace(',', '.'))
+                const unit = wMatch[2].toLowerCase()
+                const kg = unit === 'kg' ? n : n * 0.45359237
+                if (Number.isFinite(kg) && kg > 0) weightPts.push({ ageMonths, value: kg, date: g.date })
+              }
+              if (hMatch) {
+                const n = parseFloat(hMatch[1].replace(',', '.'))
+                const unit = hMatch[2].toLowerCase()
+                const cm = unit === 'cm' ? n : n * 2.54
+                if (Number.isFinite(cm) && cm > 0) heightPts.push({ ageMonths, value: cm, date: g.date })
+              }
+            }
+            const ageMonths = (new Date().getFullYear() - birth.getFullYear()) * 12 + (new Date().getMonth() - birth.getMonth())
+            const chartWidth = SW - 64
+            return (
+              <View style={{ gap: 12, marginTop: 16 }}>
+                {weightPts.length > 0 ? <GrowthPercentileChart title="Weight-for-age" metric="weight" sex={sex} childAgeMonths={ageMonths} childName={child.name} points={weightPts} width={chartWidth} /> : null}
+                {heightPts.length > 0 ? <GrowthPercentileChart title="Height-for-age" metric="height" sex={sex} childAgeMonths={ageMonths} childName={child.name} points={heightPts} width={chartWidth} /> : null}
+              </View>
+            )
+          })() : null}
+
+          {/* Latest growth */}
+          {(weight || height) ? (
+            <View style={{ marginTop: 24 }}>
+              <DiffuseSectionHeader
+                title={t('kids_home_health_latest_growth')}
+                icon={<DiffuseBloomIcon color={acc}><TrendingUp size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                right={<Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 0.5, color: dCol.ink3 }}>{healthHistory.growth[0]?.date ? formatHealthDate(healthHistory.growth[0].date) : ''}</Text>}
+              />
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                {weight ? <DiffuseMetricTile value={weight} label={t('kids_home_health_weight_label')} /> : null}
+                {height ? <DiffuseMetricTile value={height} label={t('kids_home_health_height_label')} /> : null}
+              </View>
+            </View>
+          ) : null}
+
+          {/* Activity overview */}
+          <View style={{ marginTop: 24 }}>
+            <DiffuseSectionHeader
+              title={t('kids_home_health_activity_overview')}
+              icon={<DiffuseBloomIcon color={acc}><Zap size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            />
+            <DiffuseListRow
+              title={t('kids_home_health_activities_label')}
+              value={activityCount.toLocaleString()}
+              icon={<Activity size={16} color={dCol.ink3} strokeWidth={1.5} />}
+              onPress={() => setActivityBreakdownVisible(true)}
+              showArrow
+            />
+            <DiffuseListRow
+              title={nutritionLabel}
+              value={nutritionValue}
+              icon={stage === 'liquid' || stage === 'mixed'
+                ? <Droplets size={16} color={dCol.ink3} strokeWidth={1.5} />
+                : <Utensils size={16} color={dCol.ink3} strokeWidth={1.5} />}
+              last={!((stage === 'liquid' || stage === 'mixed') && feedingMl > 0)}
+            />
+            {(stage === 'liquid' || stage === 'mixed') && feedingMl > 0 ? (
+              <DiffuseListRow
+                title={t('kids_home_health_total_volume')}
+                value={`${feedingMl.toLocaleString()}ml`}
+                icon={<Droplets size={16} color={dCol.ink3} strokeWidth={1.5} />}
+                last
+              />
+            ) : null}
+          </View>
+
+          {/* Allergies */}
+          <View style={{ marginTop: 24 }}>
+            <DiffuseSectionHeader
+              title={t('kids_home_health_allergies')}
+              icon={<DiffuseBloomIcon color={acc}><Heart size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {child.allergies.map((a, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderColor: dCol.line2, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 }}>
+                  <AlertCircle size={11} color={dCol.ink3} strokeWidth={1.8} />
+                  <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, color: dCol.ink }}>{a}</Text>
+                </View>
+              ))}
+              <Pressable
+                onPress={() => { onClose(); router.push('/profile/kids') }}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: dCol.line2, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12, opacity: pressed ? 0.6 : 1 })}
+              >
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>
+                  {child.allergies.length === 0 ? '+ Add allergy' : '+ Add'}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Medications */}
+          {child.medications.length > 0 ? (
+            <View style={{ marginTop: 24 }}>
+              <DiffuseSectionHeader
+                title={t('kids_home_health_medications')}
+                icon={<DiffuseBloomIcon color={acc}><Pill size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+              />
+              {child.medications.map((m, i) => (
+                <DiffuseListRow
+                  key={i}
+                  title={m}
+                  value={t('kids_home_health_medication_active')}
+                  icon={<Pill size={16} color={dCol.ink3} strokeWidth={1.5} />}
+                  last={i === child.medications.length - 1}
+                />
+              ))}
+            </View>
+          ) : null}
+
+          {/* Vaccine schedule */}
+          <View style={{ marginTop: 24 }}>
+            <DiffuseSectionHeader
+              title={t('kids_home_health_vaccine_schedule')}
+              icon={<DiffuseBloomIcon color={acc}><Syringe size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            />
+            <VaccineScheduleTree
+              child={child}
+              healthHistory={healthHistory}
+              scheduledVaccines={scheduledVaccines}
+              onSetVaccineDate={onSetVaccineDate}
+              onMarkVaccineGiven={onMarkVaccineGiven}
+            />
+          </View>
+
+          {/* View full history — containerless action */}
+          <Pressable
+            onPress={() => { onClose(); router.push('/profile/health-history' as any) }}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 18, marginTop: 26, opacity: pressed ? 0.6 : 1 })}
+          >
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dCol.ink }}>{t('kids_home_health_view_history')}</Text>
+            <DiffuseArrow color={dCol.ink3} size={16} />
+          </Pressable>
+        </DiffuseSheet>
+        <ActivityBreakdownModal
+          visible={activityBreakdownVisible}
+          onClose={() => setActivityBreakdownVisible(false)}
+          breakdown={activityBreakdown}
+          total={activityCount}
+          colors={colors}
+          radius={radius}
+        />
+      </>
+    )
+  }
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
