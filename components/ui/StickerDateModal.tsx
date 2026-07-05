@@ -14,6 +14,7 @@ import { useTheme, brand, font, useDiffuseTheme, diffuseFont, getDiffuseAccent }
 import { useModeStore } from '../../store/useModeStore'
 import { Star as StarSticker } from './Stickers'
 import { useIsDiffuse, DiffuseArrow } from './diffuse/DiffuseKit'
+import { useTranslation } from '../../lib/i18n'
 
 const ST_INK = '#141313'
 const ST_PAPER = '#FFFEF8'
@@ -56,6 +57,7 @@ function CurrentDateModal({
   accentColor,
 }: Props) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const mode = useModeStore((s) => s.mode)
   const accent = accentColor
     ? { fill: accentColor, soft: accentColor }
@@ -138,7 +140,7 @@ function CurrentDateModal({
                 },
               ]}
             >
-              <Text style={styles.doneText}>Save</Text>
+              <Text style={styles.doneText}>{t('common_save')}</Text>
             </Pressable>
           )}
         </Pressable>
@@ -161,6 +163,7 @@ function DiffuseDateModal({
   accentColor,
 }: Props) {
   const { colors, isDark } = useDiffuseTheme()
+  const { t } = useTranslation()
   const mode = useModeStore((s) => s.mode)
   const accent = accentColor ?? getDiffuseAccent(mode, isDark)
 
@@ -209,7 +212,7 @@ function DiffuseDateModal({
 
           {Platform.OS === 'ios' && (
             <Pressable onPress={onSave} style={({ pressed }) => [dStyles.saveRow, { borderTopColor: colors.line2, opacity: pressed ? 0.6 : 1 }]}>
-              <Text style={[dStyles.saveLabel, { color: colors.ink }]}>Save</Text>
+              <Text style={[dStyles.saveLabel, { color: colors.ink }]}>{t('common_save')}</Text>
               <DiffuseArrow color={accent} size={20} />
             </Pressable>
           )}
