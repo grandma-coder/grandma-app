@@ -28,6 +28,7 @@ import Animated, {
 import { X, ArrowLeft, ChevronRight } from 'lucide-react-native'
 import { useTheme, font } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
+import { useTranslatedContent } from '../../../lib/useTranslatedContent'
 import { getWeekData } from '../../../lib/pregnancyData'
 import { getWeekStat, formatWeight } from '../../../lib/weekStats'
 import { getWeekContent, PrepItemDef } from '../../../lib/weekContent'
@@ -89,6 +90,69 @@ function paletteForWeek(week: number): HeroPalette {
 
 // ─── Prep Detail sub-sheet ────────────────────────────────────────────────────
 
+// ─── Main-sheet row helpers (each wraps one hook call — see AccordionItem
+// pattern in BirthDetailModal.tsx for why this can't live inline in a .map) ──
+
+function DevPointRow({
+  week,
+  index,
+  point,
+  dotColor,
+  textColor,
+}: { week: number; index: number; point: string; dotColor: string; textColor: string }) {
+  const { text } = useTranslatedContent(`week_${week}_dev${index}`, point)
+  return (
+    <View style={styles.devRow}>
+      <View style={[styles.devDot, { backgroundColor: dotColor }]} />
+      <Text style={[styles.devText, { color: textColor }]}>{text}</Text>
+    </View>
+  )
+}
+
+function PrepListRow({
+  week,
+  item,
+  cardBg,
+  cardBorder,
+  iconBg,
+  titleColor,
+  descColor,
+  chevronColor,
+  onPress,
+}: {
+  week: number
+  item: PrepItemDef
+  cardBg: string
+  cardBorder: string
+  iconBg: string
+  titleColor: string
+  descColor: string
+  chevronColor: string
+  onPress: () => void
+}) {
+  const { text: desc } = useTranslatedContent(`week_${week}_prep_${item.i}_summary`, item.d)
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.t}. Tap to read more.`}
+      style={({ pressed }) => [
+        styles.prepCard,
+        { backgroundColor: cardBg, borderColor: cardBorder, opacity: pressed ? 0.7 : 1 },
+      ]}
+    >
+      <View style={[styles.prepIconBox, { backgroundColor: iconBg }]}>
+        <StickerIcon name={item.i} size={34} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.prepTitle, { color: titleColor }]}>{item.t}</Text>
+        <Text style={[styles.prepDesc, { color: descColor }]}>{desc}</Text>
+      </View>
+      <ChevronRight size={18} color={chevronColor} strokeWidth={2} />
+    </Pressable>
+  )
+}
+
 function PrepDetailSheet({
   item,
   week,
@@ -102,6 +166,13 @@ function PrepDetailSheet({
   const ink = colors.text
   const ink2 = colors.textSecondary
   const ink3 = colors.textMuted
+
+  // Long-form week/prep prose is translated at runtime + cached (Phase C).
+  // Stable id-based keys so cache survives content edits (hash guards staleness).
+  const prepKey = `week_${week}_prep_${item.i}`
+  const { text: prepSummary } = useTranslatedContent(`${prepKey}_summary`, item.d)
+  const { text: prepWhy } = useTranslatedContent(`${prepKey}_why`, guide.why)
+  const { text: prepWatch } = useTranslatedContent(`${prepKey}_watch`, guide.watch ?? '')
 
   return (
     <View style={[styles.prepDetailRoot, { backgroundColor: colors.surface }]}>
@@ -128,33 +199,46 @@ function PrepDetailSheet({
           <View style={{ flex: 1 }}>
             <Text style={[styles.prepDetailTitle, { color: ink }]}>{item.t}</Text>
             <Text style={[styles.prepDetailSummary, { color: ink3 }]}>
-              {item.d}
+              {prepSummary}
             </Text>
           </View>
         </View>
 
         <Text style={[styles.prepSectionTitle, { color: ink3 }]}>{t('preg_weekDetail_prep_whyNow')}</Text>
         <Text style={[styles.prepDetailContent, { color: ink2 }]}>
-          {guide.why}
+          {prepWhy}
         </Text>
 
         <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }]}>{t('preg_weekDetail_prep_howToDoIt')}</Text>
         {guide.how.map((step, i) => (
-          <View key={i} style={styles.prepStepRow}>
-            <View style={[styles.prepStepDot, { backgroundColor: accent }]} />
-            <Text style={[styles.prepStepText, { color: ink2 }]}>{step}</Text>
-          </View>
+          <PrepStepRow key={i} prepKey={prepKey} index={i} step={step} accent={accent} textColor={ink2} />
         ))}
 
         {guide.watch ? (
           <>
             <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }]}>{t('preg_weekDetail_prep_watchFor')}</Text>
             <View style={[styles.prepWatchBox, { backgroundColor: accentSoft, borderColor: accent + '40' }]}>
-              <Text style={[styles.prepDetailContent, { color: ink2 }]}>{guide.watch}</Text>
+              <Text style={[styles.prepDetailContent, { color: ink2 }]}>{prepWatch}</Text>
             </View>
           </>
         ) : null}
       </ScrollView>
+    </View>
+  )
+}
+
+function PrepStepRow({
+  prepKey,
+  index,
+  step,
+  accent,
+  textColor,
+}: { prepKey: string; index: number; step: string; accent: string; textColor: string }) {
+  const { text } = useTranslatedContent(`${prepKey}_how${index}`, step)
+  return (
+    <View style={styles.prepStepRow}>
+      <View style={[styles.prepStepDot, { backgroundColor: accent }]} />
+      <Text style={[styles.prepStepText, { color: textColor }]}>{text}</Text>
     </View>
   )
 }
@@ -291,10 +375,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                 <View style={styles.section}>
                   <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>{t('preg_weekDetail_babyDevelopment')}</Text>
                   {content.dev.map((point, i) => (
-                    <View key={i} style={styles.devRow}>
-                      <View style={[styles.devDot, { backgroundColor: pal.accent }]} />
-                      <Text style={[styles.devText, { color: bodyInk2 }]}>{point}</Text>
-                    </View>
+                    <DevPointRow key={i} week={week} index={i} point={point} dotColor={pal.accent} textColor={bodyInk2} />
                   ))}
                 </View>
 
@@ -318,29 +399,18 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                   <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>{t('preg_weekDetail_whatToPrepare')}</Text>
                     {content.prep.map((item, i) => (
-                      <Pressable
+                      <PrepListRow
                         key={`${item.i}-${i}`}
+                        week={week}
+                        item={item}
+                        cardBg={prepCardBg}
+                        cardBorder={prepCardBorder}
+                        iconBg={pal.accentSoft}
+                        titleColor={bodyInk}
+                        descColor={bodyInk3}
+                        chevronColor={bodyInk3}
                         onPress={() => setSelectedPrep(item)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${item.t}. Tap to read more.`}
-                        style={({ pressed }) => [
-                          styles.prepCard,
-                          {
-                            backgroundColor: prepCardBg,
-                            borderColor: prepCardBorder,
-                            opacity: pressed ? 0.7 : 1,
-                          },
-                        ]}
-                      >
-                        <View style={[styles.prepIconBox, { backgroundColor: pal.accentSoft }]}>
-                          <StickerIcon name={item.i} size={34} />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={[styles.prepTitle, { color: bodyInk }]}>{item.t}</Text>
-                          <Text style={[styles.prepDesc, { color: bodyInk3 }]}>{item.d}</Text>
-                        </View>
-                        <ChevronRight size={18} color={bodyInk3} strokeWidth={2} />
-                      </Pressable>
+                      />
                     ))}
                   </View>
                 )}
