@@ -51,6 +51,9 @@ export const zh: TranslationKeys = {
   home_recentActivity: '最近活动',
   home_noChildren: '还没有添加孩子',
   home_addChild: '添加孩子',
+  home_dailyPulse: 'Daily Pulse',
+  home_dailyPulseEmptyTitle: 'Nothing logged yet, dear.',
+  home_dailyPulseEmptyBody: 'Add a symptom, mood, or weight when you have a minute.',
 
   agenda_title: '日历',
   agenda_noEvents: '今天没有事件',

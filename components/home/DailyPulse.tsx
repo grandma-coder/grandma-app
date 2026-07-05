@@ -6,6 +6,7 @@ import { View, StyleSheet } from 'react-native'
 import { useTheme, stickers } from '../../constants/theme'
 import { Burst } from '../ui/Stickers'
 import { MonoCaps, Body, DisplayItalic } from '../ui/Typography'
+import { useTranslation } from '../../lib/i18n'
 
 interface DailyPulseProps {
   weight?: number | null
@@ -15,6 +16,7 @@ interface DailyPulseProps {
 
 export function DailyPulse(_: DailyPulseProps) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const paper = isDark ? colors.surface : '#FFFEF8'
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
   const ink3 = isDark ? colors.textMuted : '#6E6763'
@@ -22,16 +24,16 @@ export function DailyPulse(_: DailyPulseProps) {
   return (
     <View style={styles.wrap}>
       <View style={styles.header}>
-        <MonoCaps>Daily Pulse</MonoCaps>
+        <MonoCaps>{t('home_dailyPulse')}</MonoCaps>
       </View>
 
       <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
         <Burst size={44} fill={isDark ? stickers.yellow : '#F5D652'} />
         <DisplayItalic size={18} color={ink3} style={{ marginTop: 10 }}>
-          Nothing logged yet, dear.
+          {t('home_dailyPulseEmptyTitle')}
         </DisplayItalic>
         <Body size={13} color={ink3} align="center" style={{ marginTop: 4, maxWidth: 240 }}>
-          Add a symptom, mood, or weight when you have a minute.
+          {t('home_dailyPulseEmptyBody')}
         </Body>
       </View>
     </View>

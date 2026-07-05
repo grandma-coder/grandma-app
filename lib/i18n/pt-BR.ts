@@ -56,6 +56,9 @@ export const ptBR: TranslationKeys = {
   home_recentActivity: 'Atividade Recente',
   home_noChildren: 'Nenhum filho adicionado ainda',
   home_addChild: 'Adicionar Filho',
+  home_dailyPulse: 'Daily Pulse',
+  home_dailyPulseEmptyTitle: 'Nothing logged yet, dear.',
+  home_dailyPulseEmptyBody: 'Add a symptom, mood, or weight when you have a minute.',
 
   // Calendar / Agenda
   agenda_title: 'Calendário',

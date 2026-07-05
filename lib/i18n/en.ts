@@ -65,6 +65,9 @@ export const en: TranslationKeys = {
   home_recentActivity: 'Recent Activity',
   home_noChildren: 'No children added yet',
   home_addChild: 'Add Child',
+  home_dailyPulse: 'Daily Pulse',
+  home_dailyPulseEmptyTitle: 'Nothing logged yet, dear.',
+  home_dailyPulseEmptyBody: 'Add a symptom, mood, or weight when you have a minute.',
 
   // Calendar / Agenda
   agenda_title: 'Calendar',

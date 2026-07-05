@@ -51,6 +51,9 @@ export const hi: TranslationKeys = {
   home_recentActivity: 'हाल की गतिविधि',
   home_noChildren: 'अभी तक कोई बच्चा नहीं जोड़ा',
   home_addChild: 'बच्चा जोड़ें',
+  home_dailyPulse: 'Daily Pulse',
+  home_dailyPulseEmptyTitle: 'Nothing logged yet, dear.',
+  home_dailyPulseEmptyBody: 'Add a symptom, mood, or weight when you have a minute.',
 
   agenda_title: 'कैलेंडर',
   agenda_noEvents: 'आज कोई कार्यक्रम नहीं',

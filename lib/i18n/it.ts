@@ -51,6 +51,9 @@ export const it: TranslationKeys = {
   home_recentActivity: 'Attività Recente',
   home_noChildren: 'Nessun bambino aggiunto',
   home_addChild: 'Aggiungi Bambino',
+  home_dailyPulse: 'Daily Pulse',
+  home_dailyPulseEmptyTitle: 'Nothing logged yet, dear.',
+  home_dailyPulseEmptyBody: 'Add a symptom, mood, or weight when you have a minute.',
 
   agenda_title: 'Calendario',
   agenda_noEvents: 'Nessun evento oggi',

@@ -51,6 +51,9 @@ export const ko: TranslationKeys = {
   home_recentActivity: '최근 활동',
   home_noChildren: '등록된 아이가 없습니다',
   home_addChild: '아이 추가',
+  home_dailyPulse: 'Daily Pulse',
+  home_dailyPulseEmptyTitle: 'Nothing logged yet, dear.',
+  home_dailyPulseEmptyBody: 'Add a symptom, mood, or weight when you have a minute.',
 
   agenda_title: '캘린더',
   agenda_noEvents: '오늘 일정이 없습니다',

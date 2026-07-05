@@ -68,6 +68,9 @@ export interface TranslationKeys {
   home_recentActivity: string
   home_noChildren: string
   home_addChild: string
+  home_dailyPulse: string
+  home_dailyPulseEmptyTitle: string
+  home_dailyPulseEmptyBody: string
 
   // ─── Calendar / Agenda ─────────────────────────────────────────────────
   agenda_title: string

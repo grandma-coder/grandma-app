@@ -51,6 +51,9 @@ export const tr: TranslationKeys = {
   home_recentActivity: 'Son Aktivite',
   home_noChildren: 'Henüz çocuk eklenmedi',
   home_addChild: 'Çocuk Ekle',
+  home_dailyPulse: 'Daily Pulse',
+  home_dailyPulseEmptyTitle: 'Nothing logged yet, dear.',
+  home_dailyPulseEmptyBody: 'Add a symptom, mood, or weight when you have a minute.',
 
   agenda_title: 'Takvim',
   agenda_noEvents: 'Bugün etkinlik yok',

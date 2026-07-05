@@ -51,6 +51,9 @@ export const ar: TranslationKeys = {
   home_recentActivity: 'النشاط الأخير',
   home_noChildren: 'لم تتم إضافة أطفال بعد',
   home_addChild: 'إضافة طفل',
+  home_dailyPulse: 'Daily Pulse',
+  home_dailyPulseEmptyTitle: 'Nothing logged yet, dear.',
+  home_dailyPulseEmptyBody: 'Add a symptom, mood, or weight when you have a minute.',
 
   agenda_title: 'التقويم',
   agenda_noEvents: 'لا توجد أحداث اليوم',
