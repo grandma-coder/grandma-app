@@ -70,7 +70,7 @@ module.exports = [
           mode: 'jsx-text-only',
           'should-validate-template': true,
           words: {
-            exclude: ['^[\\s\\d.,:#%/+\\-()]*$'],
+            exclude: ['^[\\s\\d.,:#%/+\\-()→←↑↓·•—–]*$'],
           },
           callees: {
             exclude: ['t', 'useTranslatedContent'],
