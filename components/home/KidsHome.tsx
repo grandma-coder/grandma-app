@@ -2022,17 +2022,24 @@ export function KidsHome() {
 
       {/* ─── Set Goals Button ────────────────────────────────────── */}
       {diffuse ? (
-        <Pressable onPress={() => setGoalsModalVisible(true)} style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}>
-          <DiffuseFieldSurface mode="kids" isDark={isDark} intensity={0.5} radius={radius.lg} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 15, paddingHorizontal: 16, borderWidth: 1, borderColor: dt.colors.line }}>
-            <DiffuseBloomIcon color={stickers.yellow} size={34}>
-              <Star size={18} color={dt.colors.ink3} strokeWidth={1.6} />
-            </DiffuseBloomIcon>
-            <Text style={{ fontSize: 17, fontFamily: diffuseFont.display, color: dt.colors.ink, letterSpacing: -0.2 }}>{t('kids_home_set_goals_btn')}</Text>
-            <Text style={{ flex: 1, textAlign: 'right', fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1, fontSize: 9.5, color: dt.colors.ink3 }}>
-              {t('kids_home_set_goals_hint')}
-            </Text>
-            <ChevronRight size={16} color={dt.colors.ink3} strokeWidth={1.6} />
-          </DiffuseFieldSurface>
+        /* containerless hairline row — no card, no wash (bias-to-less) */
+        <Pressable
+          onPress={() => setGoalsModalVisible(true)}
+          style={({ pressed }) => [{
+            flexDirection: 'row', alignItems: 'center', gap: 12,
+            paddingVertical: 16, paddingHorizontal: 2,
+            borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth,
+            borderColor: dt.colors.line2, opacity: pressed ? 0.6 : 1,
+          }]}
+        >
+          <DiffuseBloomIcon color={stickers.yellow} size={30}>
+            <Star size={17} color={dt.colors.ink3} strokeWidth={1.6} />
+          </DiffuseBloomIcon>
+          <Text style={{ fontSize: 17, fontFamily: diffuseFont.display, color: dt.colors.ink, letterSpacing: -0.2 }}>{t('kids_home_set_goals_btn')}</Text>
+          <Text style={{ flex: 1, textAlign: 'right', fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.4, fontSize: 9.5, color: dt.colors.ink3 }}>
+            {t('kids_home_set_goals_hint')}
+          </Text>
+          <ChevronRight size={16} color={dt.colors.ink3} strokeWidth={1.6} />
         </Pressable>
       ) : (
       <Pressable

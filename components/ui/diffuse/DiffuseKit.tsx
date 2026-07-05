@@ -126,17 +126,17 @@ export function DiffuseFieldSurface({
   children,
 }: FieldSurfaceProps) {
   const { colors } = useDiffuseTheme()
-  const [g1, , g3] = getModeField(mode, isDark)
+  const [g1] = getModeField(mode, isDark)
 
-  // v4 "soft wash": clean PAPER + a single feathered color pool bleeding from
-  // the right edge (SVG radial, fades to transparent — no hard disc, no grey veil).
-  const washOpacity = (isDark ? 0.26 : 0.4) * (intensity / 0.5)
+  // v4 "soft wash": clean PAPER + ONE subtle feathered pool bleeding from the
+  // right edge (SVG radial, fades to transparent). Restraint — the reference
+  // banner is almost entirely paper with a whisper of color trailing off-right.
+  const washOpacity = (isDark ? 0.18 : 0.26) * (intensity / 0.5)
 
   return (
     <View style={[{ borderRadius: radius, overflow: 'hidden', backgroundColor: colors.surface }, style]}>
-      <SoftBloom color={g1} cx="88%" cy="30%" opacity={washOpacity} spread={0.5} />
-      <SoftBloom color={g3} cx="72%" cy="88%" opacity={washOpacity * 0.7} spread={0.5} />
-      {grain ? <DiffuseGrain radius={radius} opacity={0.04} /> : null}
+      <SoftBloom color={g1} cx="92%" cy="45%" opacity={washOpacity} spread={0.45} />
+      {grain ? <DiffuseGrain radius={radius} opacity={0.03} /> : null}
       {children}
     </View>
   )
