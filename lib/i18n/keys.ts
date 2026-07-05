@@ -395,6 +395,11 @@ export interface TranslationKeys {
   devInsight_titleLine1: string
   devInsight_titleLine2: string
   devInsight_recordLullaby: string
+  // ─── B7b: CycleDayDetail.tsx residual strings ─────────────────────────────
+  cycleDayDetail_phaseDay: string                 // "{{phase}} · Day {{day}}"
+  cycleDayDetail_loggedThisDay: string
+  cycleDayDetail_emptyDay: string
+  cycleDayDetail_addLog: string
 
   // ─── ContractionTimer (Wave 2) ────────────────────────────────────────
   preg_contractions_title: string

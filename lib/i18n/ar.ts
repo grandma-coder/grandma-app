@@ -311,6 +311,11 @@ export const ar: TranslationKeys = {
   devInsight_titleLine1: 'Finding Their',
   devInsight_titleLine2: 'Voice',
   devInsight_recordLullaby: 'Record a lullaby',
+  // ─── B7b: CycleDayDetail.tsx residual strings ─────────────────────────────
+  cycleDayDetail_phaseDay: '{{phase}} · Day {{day}}',
+  cycleDayDetail_loggedThisDay: 'Logged this day',
+  cycleDayDetail_emptyDay: 'Nothing logged for this day yet.',
+  cycleDayDetail_addLog: '+ Log activity',
   // ContractionTimer (Wave 2)
   preg_contractions_title: 'CONTRACTION TIMER',
   preg_contractions_subtitle: 'Track timing and duration between contractions',

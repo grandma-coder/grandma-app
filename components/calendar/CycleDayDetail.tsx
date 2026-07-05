@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 
@@ -65,6 +66,7 @@ function formatLongDate(d: string): string {
 
 export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
 
   const [userId, setUserId] = useState<string | undefined>()
@@ -118,7 +120,7 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
             {formatLongDate(date)}
           </Text>
           <Text style={[styles.subline, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-            {info.phaseLabel} · Day {info.cycleDay}
+            {t('cycleDayDetail_phaseDay', { phase: info.phaseLabel, day: info.cycleDay })}
           </Text>
         </View>
         {info.conceptionProbability !== 'none' ? (
@@ -131,7 +133,7 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
       </View>
 
       <Text style={[styles.sectionLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
-        Logged this day
+        {t('cycleDayDetail_loggedThisDay')}
       </Text>
       {grouped.length > 0 ? (
         <View style={styles.logList}>
@@ -152,7 +154,7 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
         </View>
       ) : (
         <Text style={[styles.empty, { color: colors.textFaint, fontFamily: font.body }]}>
-          Nothing logged for this day yet.
+          {t('cycleDayDetail_emptyDay')}
         </Text>
       )}
 
@@ -161,7 +163,7 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
         style={[styles.addBtn, { backgroundColor: accent, borderColor: '#141313' }]}
       >
         <Text style={[styles.addBtnText, { color: '#FFFEF8', fontFamily: font.bodySemiBold }]}>
-          + Log activity
+          {t('cycleDayDetail_addLog')}
         </Text>
       </Pressable>
     </View>
