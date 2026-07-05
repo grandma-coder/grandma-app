@@ -15,6 +15,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { useTheme } from '../../../constants/theme'
 import { PillButton } from '../../ui/PillButton'
+import { useTranslation } from '../../../lib/i18n'
 
 interface Props {
   visible: boolean
@@ -38,6 +39,7 @@ function formatPretty(d: Date): string {
 
 export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onApply }: Props) {
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
 
   const defaultTo = new Date()
   const defaultFrom = new Date()
@@ -92,7 +94,7 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
           <Text
             style={[styles.title, { color: colors.text, fontFamily: font.display }]}
           >
-            Custom range
+            {t('kids_home_custom_range_title')}
           </Text>
 
           <View style={styles.rowGroup}>
