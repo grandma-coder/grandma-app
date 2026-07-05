@@ -2709,4 +2709,8 @@ export interface TranslationKeys {
   phaseFlowChart_emptyHint: string
   phaseFlowChart_fertileOvulation: string
   phaseFlowChart_nextPeriod: string
+  // ─── B7b: ActivityTimeline.tsx residual strings ───────────────────────────
+  activityTimeline_emptyIcon: string
+  activityTimeline_emptyTitle: string
+  activityTimeline_emptyText: string
 }

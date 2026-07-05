@@ -2589,4 +2589,8 @@ export const ptBR: TranslationKeys = {
   phaseFlowChart_emptyHint: 'Log a period start to map your fertile window.',
   phaseFlowChart_fertileOvulation: 'Fertile · ovulation',
   phaseFlowChart_nextPeriod: 'Next period',
+  // ─── B7b: ActivityTimeline.tsx residual strings ───────────────────────────
+  activityTimeline_emptyIcon: '📋',
+  activityTimeline_emptyTitle: 'No activity today',
+  activityTimeline_emptyText: 'Activities logged by you or your caregivers will appear here.',
 }

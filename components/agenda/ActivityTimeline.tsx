@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { useTheme, font } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 export interface TimelineEntry {
   id: string
@@ -39,12 +40,13 @@ function formatTime(dateStr: string): string {
 
 export function ActivityTimeline({ entries, loading }: ActivityTimelineProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => makeStyles(colors), [colors])
 
   if (loading) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyText}>Loading...</Text>
+        <Text style={styles.emptyText}>{t('common_loading')}</Text>
       </View>
     )
   }
@@ -52,10 +54,10 @@ export function ActivityTimeline({ entries, loading }: ActivityTimelineProps) {
   if (entries.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyIcon}>📋</Text>
-        <Text style={styles.emptyTitle}>No activity today</Text>
+        <Text style={styles.emptyIcon}>{t('activityTimeline_emptyIcon')}</Text>
+        <Text style={styles.emptyTitle}>{t('activityTimeline_emptyTitle')}</Text>
         <Text style={styles.emptyText}>
-          Activities logged by you or your caregivers will appear here.
+          {t('activityTimeline_emptyText')}
         </Text>
       </View>
     )
@@ -86,7 +88,7 @@ export function ActivityTimeline({ entries, loading }: ActivityTimelineProps) {
               {entry.value ? <Text style={styles.value}>{entry.value}</Text> : null}
               {entry.notes ? <Text style={styles.notes}>{entry.notes}</Text> : null}
               {entry.loggedBy && (
-                <Text style={styles.loggedBy}>by {entry.loggedBy}</Text>
+                <Text style={styles.loggedBy}>{t('garage_share_postBy', { name: entry.loggedBy })}</Text>
               )}
             </View>
           </View>
