@@ -19,6 +19,7 @@ import {
 import { X, Check, Plus, Stethoscope } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, font } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { Display, Body, MonoCaps } from '../ui/Typography'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 
@@ -46,6 +47,7 @@ export function AppointmentDetailModal({
   onAddToLogs,
 }: Props) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   const visible = appointment !== null
@@ -156,7 +158,7 @@ export function AppointmentDetailModal({
                 </View>
                 <View style={styles.heroText}>
                   <MonoCaps size={11} color={muted}>
-                    Week {appointment.week} · {appointment.type.replace('_', ' ')}
+                    {t('pregnancy_appt_weekTiming', { week: appointment.week, timing: appointment.type.replace('_', ' ') })}
                   </MonoCaps>
                   <Display size={24} color={inkText} style={{ marginTop: 4 }}>
                     {appointment.name}
@@ -243,7 +245,7 @@ export function AppointmentDetailModal({
                     ]}
                   >
                     <Check size={16} color="#FFF" strokeWidth={3} />
-                    <Text style={styles.primaryBtnText}>Mark as done</Text>
+                    <Text style={styles.primaryBtnText}>{t('kids_home_reminder_mark_done')}</Text>
                   </Pressable>
                 )}
                 {onAddToLogs && (
@@ -265,7 +267,7 @@ export function AppointmentDetailModal({
                   >
                     <Plus size={16} color={inkText} strokeWidth={2.5} />
                     <Text style={[styles.secondaryBtnText, { color: inkText }]}>
-                      Add details
+                      {t('calAppt_addDetails')}
                     </Text>
                   </Pressable>
                 )}

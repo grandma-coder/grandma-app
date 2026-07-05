@@ -400,6 +400,8 @@ export interface TranslationKeys {
   cycleDayDetail_loggedThisDay: string
   cycleDayDetail_emptyDay: string
   cycleDayDetail_addLog: string
+  // ─── B7b: calendar/AppointmentDetailModal.tsx residual strings ────────────
+  calAppt_addDetails: string
 
   // ─── ContractionTimer (Wave 2) ────────────────────────────────────────
   preg_contractions_title: string

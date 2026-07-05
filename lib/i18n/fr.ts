@@ -316,6 +316,8 @@ export const fr: TranslationKeys = {
   cycleDayDetail_loggedThisDay: 'Logged this day',
   cycleDayDetail_emptyDay: 'Nothing logged for this day yet.',
   cycleDayDetail_addLog: '+ Log activity',
+  // ─── B7b: calendar/AppointmentDetailModal.tsx residual strings ────────────
+  calAppt_addDetails: 'Add details',
   // ContractionTimer (Wave 2)
   preg_contractions_title: 'CONTRACTION TIMER',
   preg_contractions_subtitle: 'Track timing and duration between contractions',
