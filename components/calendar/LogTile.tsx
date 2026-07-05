@@ -10,8 +10,9 @@
  */
 
 import { ReactNode, useEffect, useRef, Children, cloneElement, isValidElement } from 'react'
-import { Animated, Pressable, StyleSheet, View } from 'react-native'
-import { useTheme, font } from '../../constants/theme'
+import { Animated, Pressable, StyleSheet, View, Text } from 'react-native'
+import { useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { Body } from '../ui/Typography'
 import { getTint, type TintKey } from './tints'
 
@@ -28,6 +29,8 @@ const ENTRY_STAGGER_MS = 45
 
 export function LogTile({ icon, label, tint = 'activity', onPress, index = 0 }: LogTileProps) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { fill, ink } = getTint(tint, isDark)
   const textInk = isDark ? colors.text : '#141313'
 
@@ -78,32 +81,42 @@ export function LogTile({ icon, label, tint = 'activity', onPress, index = 0 }: 
         onPressOut={handlePressOut}
         style={[
           styles.tile,
-          {
-            backgroundColor: fill,
-            borderWidth: isDark ? 0 : 1.5,
-            borderColor: tileBorder,
-            shadowColor: '#141313',
-            shadowOpacity: isDark ? 0 : 0.06,
-            shadowRadius: 6,
-            shadowOffset: { width: 0, height: 2 },
-          },
+          diffuse
+            ? { backgroundColor: dt.colors.surface, borderWidth: 1, borderColor: dt.colors.line }
+            : {
+                backgroundColor: fill,
+                borderWidth: isDark ? 0 : 1.5,
+                borderColor: tileBorder,
+                shadowColor: '#141313',
+                shadowOpacity: isDark ? 0 : 0.06,
+                shadowRadius: 6,
+                shadowOffset: { width: 0, height: 2 },
+              },
         ]}
       >
         <View
           style={[
             styles.iconWrap,
-            {
-              backgroundColor: isDark ? ink + '33' : '#FFFEF8',
-              borderWidth: isDark ? 0 : 1.5,
-              borderColor: iconBorder,
-            },
+            diffuse
+              ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
+              : {
+                  backgroundColor: isDark ? ink + '33' : '#FFFEF8',
+                  borderWidth: isDark ? 0 : 1.5,
+                  borderColor: iconBorder,
+                },
           ]}
         >
           {icon}
         </View>
-        <Body size={13} color={textInk} style={{ fontFamily: font.displayBold, letterSpacing: -0.2 }} align="center">
-          {label}
-        </Body>
+        {diffuse ? (
+          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase', color: dt.colors.ink2, textAlign: 'center' }} numberOfLines={1}>
+            {label}
+          </Text>
+        ) : (
+          <Body size={13} color={textInk} style={{ fontFamily: font.displayBold, letterSpacing: -0.2 }} align="center">
+            {label}
+          </Body>
+        )}
       </Pressable>
     </Animated.View>
   )

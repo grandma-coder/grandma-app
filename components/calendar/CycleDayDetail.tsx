@@ -12,7 +12,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
@@ -66,6 +67,9 @@ function formatLongDate(d: string): string {
 
 export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const diffuseAccent = getDiffuseAccent('pre-pregnancy', dt.isDark)
   const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
 
@@ -113,38 +117,46 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
   }, [rows])
 
   return (
-    <View style={[styles.wrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View style={[styles.wrap, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={styles.headRow}>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: ink, fontFamily: font.display }]}>
+          <Text style={[styles.title, { color: diffuse ? dt.colors.ink : ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
             {formatLongDate(date)}
           </Text>
-          <Text style={[styles.subline, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+          <Text style={[styles.subline, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
             {t('cycleDayDetail_phaseDay', { phase: info.phaseLabel, day: info.cycleDay })}
           </Text>
         </View>
         {info.conceptionProbability !== 'none' ? (
-          <View style={[styles.fertPill, { backgroundColor: accent + '22', borderColor: accent }]}>
-            <Text style={[styles.fertPillText, { color: accent, fontFamily: font.bodySemiBold }]}>
-              {info.conceptionProbability.toUpperCase()}
-            </Text>
-          </View>
+          diffuse ? (
+            <View style={[styles.fertPillD, { borderColor: dt.colors.hairline }]}>
+              <Text style={[styles.fertPillText, { color: dt.colors.ink, fontFamily: diffuseFont.mono }]}>
+                {info.conceptionProbability.toUpperCase()}
+              </Text>
+            </View>
+          ) : (
+            <View style={[styles.fertPill, { backgroundColor: accent + '22', borderColor: accent }]}>
+              <Text style={[styles.fertPillText, { color: accent, fontFamily: font.bodySemiBold }]}>
+                {info.conceptionProbability.toUpperCase()}
+              </Text>
+            </View>
+          )
         ) : null}
       </View>
 
-      <Text style={[styles.sectionLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
+      <Text style={[styles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
         {t('cycleDayDetail_loggedThisDay')}
       </Text>
       {grouped.length > 0 ? (
         <View style={styles.logList}>
           {grouped.map((g) => (
-            <View key={g.type} style={styles.logRow}>
+            <View key={g.type} style={[styles.logRow, diffuse ? { borderBottomColor: dt.colors.line, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: 8 } : null]}>
               <View style={[styles.logDot, { backgroundColor: g.color }]} />
-              <Text style={[styles.logLabel, { color: ink, fontFamily: font.bodySemiBold }]}>
+              <Text style={[styles.logLabel, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: ink, fontFamily: font.bodySemiBold }]}>
                 {g.label}
               </Text>
               <Text
-                style={[styles.logValue, { color: colors.textSecondary, fontFamily: font.body }]}
+                style={[styles.logValue, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 12, textAlign: 'right', textTransform: 'uppercase', letterSpacing: 0.4 } : { color: colors.textSecondary, fontFamily: font.body }]}
                 numberOfLines={1}
               >
                 {g.summary}
@@ -153,19 +165,28 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
           ))}
         </View>
       ) : (
-        <Text style={[styles.empty, { color: colors.textFaint, fontFamily: font.body }]}>
+        <Text style={[styles.empty, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textFaint, fontFamily: font.body }]}>
           {t('cycleDayDetail_emptyDay')}
         </Text>
       )}
 
-      <Pressable
-        onPress={onAddLog}
-        style={[styles.addBtn, { backgroundColor: accent, borderColor: '#141313' }]}
-      >
-        <Text style={[styles.addBtnText, { color: '#FFFEF8', fontFamily: font.bodySemiBold }]}>
-          {t('cycleDayDetail_addLog')}
-        </Text>
-      </Pressable>
+      {diffuse ? (
+        <Pressable onPress={onAddLog} style={[styles.addBtnD, { borderTopColor: dt.colors.line2 }]}>
+          <Text style={[styles.addBtnTextD, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold }]}>
+            {t('cycleDayDetail_addLog')}
+          </Text>
+          <DiffuseArrow color={diffuseAccent} size={16} />
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={onAddLog}
+          style={[styles.addBtn, { backgroundColor: accent, borderColor: '#141313' }]}
+        >
+          <Text style={[styles.addBtnText, { color: '#FFFEF8', fontFamily: font.bodySemiBold }]}>
+            {t('cycleDayDetail_addLog')}
+          </Text>
+        </Pressable>
+      )}
     </View>
   )
 }
@@ -182,6 +203,10 @@ const styles = StyleSheet.create({
   subline: { fontSize: 12, marginTop: 2 },
   fertPill: {
     paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 999, borderWidth: 1,
+  },
+  fertPillD: {
+    paddingHorizontal: 14, paddingVertical: 6,
     borderRadius: 999, borderWidth: 1,
   },
   fertPillText: { fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase' },
@@ -202,4 +227,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 2, height: 2 }, elevation: 2,
   },
   addBtnText: { fontSize: 15, letterSpacing: 0.2 },
+  // Diffuse containerless action
+  addBtnD: {
+    marginTop: 4,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  addBtnTextD: { fontSize: 12, letterSpacing: 2, textTransform: 'uppercase' },
 })

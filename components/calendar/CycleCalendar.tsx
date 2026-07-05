@@ -11,9 +11,14 @@ import { useState, useMemo } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, Modal } from 'react-native'
 import { X, Check, Circle as CircleIcon } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { router } from 'expo-router'
+import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { getCycleInfo, toDateStr, type CyclePhase, type CycleConfig } from '../../lib/cycleLogic'
-import { useCycleHistory } from '../../lib/cycleAnalytics'
+import { useCycleHistory, useCycleChecklist, useToggleChecklistItem } from '../../lib/cycleAnalytics'
+import { useExams } from '../../lib/examData'
+import { PrePregChecklist } from '../agenda/PrePregChecklist'
+import { PillButton } from '../ui/PillButton'
 import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 import { LogSheet } from './LogSheet'
@@ -39,7 +44,7 @@ import { ExamForm } from '../exams/ExamForm'
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 type LogType = 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp' | 'intercourse' | 'exam'
-type ViewTab = 'cycle' | 'checklist' | 'visits'
+type ViewTab = 'cycle' | 'checklist' | 'health'
 
 interface LogEntry {
   id: LogType
@@ -70,13 +75,15 @@ function LogActivitySheet({
   onSelect: (type: LogType) => void
 }) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   const paper = isDark ? colors.surface : '#FFFEF8'
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const bg = isDark ? colors.bg : '#F3ECD9'
-  const ink = isDark ? colors.text : '#141313'
+  const bg = diffuse ? dt.colors.bg : (isDark ? colors.bg : '#F3ECD9')
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
 
   function handleSelect(type: LogType) {
     onClose()
@@ -86,13 +93,17 @@ function LogActivitySheet({
   return (
     <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.sheetBackdrop} onPress={onClose} />
-      <View style={[styles.sheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.sheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }, diffuse ? { borderTopWidth: 1, borderColor: dt.colors.line } : null]}>
         <View style={styles.handleWrap}>
-          <View style={[styles.handle, { backgroundColor: paperBorder }]} />
+          <View style={[styles.handle, { backgroundColor: diffuse ? dt.colors.line2 : paperBorder }]} />
         </View>
         <View style={styles.sheetHeader}>
-          <Display size={22} color={ink}>{t('cycleCalendar_logActivity')}</Display>
-          <Pressable onPress={onClose} style={[styles.closeBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+          {diffuse ? (
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, color: dt.colors.ink, letterSpacing: -0.3 }}>{t('cycleCalendar_logActivity')}</Text>
+          ) : (
+            <Display size={22} color={ink}>{t('cycleCalendar_logActivity')}</Display>
+          )}
+          <Pressable onPress={onClose} style={[styles.closeBtn, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.hairline } : { backgroundColor: paper, borderColor: paperBorder }]}>
             <X size={18} color={ink} />
           </Pressable>
         </View>
@@ -118,8 +129,13 @@ function LogActivitySheet({
 
 export function CycleCalendar() {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+  // Ink/muted resolved per variant so shared Display/Body typography matches.
+  const dInk = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
+  const dMuted = diffuse ? dt.colors.ink3 : (isDark ? colors.textMuted : '#6E6763')
 
   const [tab, setTab] = useState<ViewTab>('cycle')
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
@@ -146,14 +162,21 @@ export function CycleCalendar() {
   }, [history])
 
   const selectedInfo = getCycleInfo(cycleConfig, selectedDate)
-  const modeColor = brand.prePregnancy
+  const modeColor = diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : brand.prePregnancy
+
+  // Checklist (intent-aware: TTC vs cycle-health) + completion state
+  const { data: checklist } = useCycleChecklist()
+  const toggleChecklistItem = useToggleChecklistItem()
+
+  // Health tab: pre-pregnancy exam / lab results
+  const { data: exams = [] } = useExams({ behavior: 'pre-pregnancy' })
 
   function handleSaved() {
     setSheetType(null)
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -168,7 +191,7 @@ export function CycleCalendar() {
             options={[
               { key: 'cycle', label: t('cycleCalendar_tabCycle') },
               { key: 'checklist', label: t('cycleCalendar_tabChecklist') },
-              { key: 'visits', label: t('cycleCalendar_tabVisits') },
+              { key: 'health', label: t('cycleCalendar_tabHealth') },
             ]}
             value={tab}
             onChange={(k) => setTab(k as ViewTab)}
@@ -203,29 +226,109 @@ export function CycleCalendar() {
         )}
 
         {tab === 'checklist' && (
-          <PaperCard style={{ marginTop: 4 }}>
-            <View style={styles.tabEmpty}>
-              <MissingStickers.PrepregChecklistEmpty size={88} />
-              <Display size={20} color={isDark ? colors.text : '#141313'}>{t('cycleCalendar_checklist_title')}</Display>
-              <Body size={13} color={isDark ? colors.textMuted : '#6E6763'} align="center" style={{ marginTop: 6 }}>
+          checklist && checklist.items.length > 0 ? (
+            <>
+              <Display
+                size={20}
+                color={dInk}
+                style={{ marginBottom: 4 }}
+              >
+                {checklist.title}
+              </Display>
+              <Body
+                size={13}
+                color={dMuted}
+                style={{ marginBottom: 14 }}
+              >
                 {t('cycleCalendar_checklist_body')}
               </Body>
-            </View>
-          </PaperCard>
+              <PrePregChecklist
+                items={checklist.items}
+                onToggle={(itemId) => {
+                  const current = checklist.items.find((i) => i.id === itemId)
+                  toggleChecklistItem.mutate({
+                    itemId,
+                    completed: !(current?.completed ?? false),
+                  })
+                }}
+              />
+            </>
+          ) : (
+            <PaperCard style={{ marginTop: 4 }}>
+              <View style={styles.tabEmpty}>
+                <MissingStickers.PrepregChecklistEmpty size={88} />
+                <Display size={20} color={dInk}>{t('cycleCalendar_checklist_title')}</Display>
+                <Body size={13} color={dMuted} align="center" style={{ marginTop: 6 }}>
+                  {t('cycleCalendar_checklist_body')}
+                </Body>
+              </View>
+            </PaperCard>
+          )
         )}
 
-        {tab === 'visits' && (
-          <PaperCard style={{ marginTop: 4 }}>
-            <View style={styles.tabEmpty}>
-              <View style={[styles.tabEmptyIcon, { backgroundColor: modeColor + '22' }]}>
-                <CircleIcon size={22} color={modeColor} strokeWidth={2} />
-              </View>
-              <Display size={20} color={isDark ? colors.text : '#141313'}>{t('cycleCalendar_visits_title')}</Display>
-              <Body size={13} color={isDark ? colors.textMuted : '#6E6763'} align="center" style={{ marginTop: 6 }}>
-                {t('cycleCalendar_visits_body')}
-              </Body>
-            </View>
-          </PaperCard>
+        {tab === 'health' && (
+          <>
+            <Display size={20} color={dInk} style={{ marginBottom: 4 }}>
+              {t('cycleCalendar_examsLabs')}
+            </Display>
+            <Body size={13} color={dMuted} style={{ marginBottom: 12 }}>
+              {t('cycleCalendar_visits_body')}
+            </Body>
+
+            {exams.length > 0 ? (
+              <>
+                {exams.map((ex) => (
+                  <Pressable key={ex.id} onPress={() => router.push(`/exams/${ex.id}`)}>
+                    <PaperCard radius={20} padding={16} style={{ marginBottom: 8 }}>
+                      <View style={styles.examRow}>
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={[styles.examTitle, { color: isDark ? colors.text : '#141313' }]}
+                            numberOfLines={1}
+                          >
+                            {ex.title}
+                          </Text>
+                          {ex.result ? (
+                            <Text style={[styles.examResult, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : undefined }]} numberOfLines={1}>
+                              {ex.result}
+                            </Text>
+                          ) : null}
+                        </View>
+                        <Text style={[styles.examDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>
+                          {new Date(ex.examDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </Text>
+                      </View>
+                    </PaperCard>
+                  </Pressable>
+                ))}
+                <PillButton
+                  label={t('cycleCalendar_logExam')}
+                  variant="paper"
+                  onPress={() => setSheetType('exam')}
+                  style={{ marginTop: 4 }}
+                />
+              </>
+            ) : (
+              <PaperCard style={{ marginTop: 4 }}>
+                <View style={styles.tabEmpty}>
+                  <View style={[styles.tabEmptyIcon, diffuse ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 } : { backgroundColor: modeColor + '22' }]}>
+                    <CircleIcon size={22} color={diffuse ? dt.colors.ink3 : modeColor} strokeWidth={diffuse ? 1.6 : 2} />
+                  </View>
+                  <Display size={20} color={dInk}>{t('cycleCalendar_noExams')}</Display>
+                  <Body size={13} color={dMuted} align="center" style={{ marginTop: 6 }}>
+                    {t('cycleCalendar_visits_body')}
+                  </Body>
+                  <PillButton
+                    label={t('cycleCalendar_logExam')}
+                    variant="accent"
+                    accentColor={modeColor}
+                    onPress={() => setSheetType('exam')}
+                    style={{ marginTop: 14 }}
+                  />
+                </View>
+              </PaperCard>
+            )}
+          </>
         )}
       </ScrollView>
 
@@ -283,6 +386,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
+
+  // Health tab — exam rows
+  examRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  examTitle: { fontSize: 14, fontWeight: '700' },
+  examResult: { fontSize: 12, marginTop: 2 },
+  examDate: { fontSize: 12, fontWeight: '600' },
 
   // Sheet
   sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,8,6,0.55)' },

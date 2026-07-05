@@ -10,7 +10,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import { DaySticker } from '../home/cycle/dayStickers'
@@ -68,6 +70,8 @@ export function CycleMonthGrid({
   cycleConfig, selectedDate, visibleMonth, onSelectDate, onPrevMonth, onNextMonth,
 }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
 
@@ -129,6 +133,41 @@ export function CycleMonthGrid({
 
   const monthLabel = new Date(visibleMonth.year, visibleMonth.month, 1)
     .toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+
+  // Days-of-month in menstruation phase → accent period dots on the dot grid.
+  const periodDays = useMemo(() => {
+    const out: number[] = []
+    const daysInMonth = new Date(visibleMonth.year, visibleMonth.month + 1, 0).getDate()
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = toDateStr(new Date(visibleMonth.year, visibleMonth.month, d))
+      if ((getCycleInfo(cycleConfig, dateStr).phase as CyclePhase) === 'menstruation') out.push(d)
+    }
+    return out
+  }, [cycleConfig, visibleMonth.year, visibleMonth.month])
+
+  if (diffuse) {
+    // v4 `.dotcal`: hairline dot grid, period days get an accent dot, selected
+    // day = accent ring + soft bloom. Its own month nav drives the parent's
+    // visibleMonth so log-fetch + day-detail stay in sync.
+    const selDate = new Date(selectedDate + 'T00:00:00')
+    const monthDate = new Date(visibleMonth.year, visibleMonth.month, 1)
+    return (
+      <View style={[styles.wrap, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }]}>
+        <DiffuseDotCalendar
+          value={selDate}
+          month={monthDate}
+          periodDays={periodDays}
+          accent={getDiffuseAccent('pre-pregnancy', dt.isDark)}
+          onMonthChange={(d) => {
+            // Keep the parent's visibleMonth (→ log fetch + period-day derivation) in sync.
+            if (d < monthDate) onPrevMonth()
+            else if (d > monthDate) onNextMonth()
+          }}
+          onChange={(d) => onSelectDate(toDateStr(d))}
+        />
+      </View>
+    )
+  }
 
   return (
     <View style={[styles.wrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
