@@ -2033,6 +2033,7 @@ export const fr: TranslationKeys = {
   garage_detail_member: 'Member',
   garage_detail_justNow: 'Just now',
   garage_detail_checkOutPost: 'Check out this post',
+  garage_detail_mentionHandle: '@{{handle}}',
   leaderboard_tabAll: 'All',
   leaderboard_tabMoms: 'Moms',
   leaderboard_tabCaregivers: 'Caregivers',

@@ -2223,6 +2223,8 @@ export interface TranslationKeys {
   garage_detail_member: string
   garage_detail_justNow: string
   garage_detail_checkOutPost: string
+  // ─── B7c: garage/[id].tsx residual strings ─────────────────────────────────
+  garage_detail_mentionHandle: string           // "@{{handle}}"
   // ─── B6: Leaderboard ──────────────────────────────────────────────────────
   leaderboard_tabAll: string
   leaderboard_tabMoms: string

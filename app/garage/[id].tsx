@@ -415,7 +415,7 @@ export default function PostDetail() {
                 {user.name}
               </Text>
               <Text style={[styles.mentionHandle, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-                @{user.name.toLowerCase().replace(/\s+/g, '')}
+                {t('garage_detail_mentionHandle', { handle: user.name.toLowerCase().replace(/\s+/g, '') })}
               </Text>
             </Pressable>
           ))}
