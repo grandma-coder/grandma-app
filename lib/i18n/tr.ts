@@ -83,6 +83,9 @@ export const tr: TranslationKeys = {
 
   profile_title: 'Profil',
   profile_myProfile: 'Profilim',
+  profile_myJourneyHeader: 'My Journey',
+  profile_myJourneyActive: 'active',
+  profile_myJourneyAdd: '+ add',
   profile_behaviorProfile: 'Davranış Profili',
   profile_careCircle: 'Bakım Çevresi',
   profile_emergencyInsurance: 'Acil Durum ve Sigorta',

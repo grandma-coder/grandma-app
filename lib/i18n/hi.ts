@@ -83,6 +83,9 @@ export const hi: TranslationKeys = {
 
   profile_title: 'प्रोफ़ाइल',
   profile_myProfile: 'मेरी प्रोफ़ाइल',
+  profile_myJourneyHeader: 'My Journey',
+  profile_myJourneyActive: 'active',
+  profile_myJourneyAdd: '+ add',
   profile_behaviorProfile: 'व्यवहार प्रोफ़ाइल',
   profile_careCircle: 'देखभाल मंडल',
   profile_emergencyInsurance: 'आपातकाल और बीमा',

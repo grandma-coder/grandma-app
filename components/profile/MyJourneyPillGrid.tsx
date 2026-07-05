@@ -5,6 +5,7 @@ import { useTheme, brand, getModeColor } from '../../constants/theme'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
 import { ModeTrying, ModePregnant, ModeParent } from '../stickers/RewardStickers'
+import { useTranslation } from '../../lib/i18n'
 
 const ICON_BY_BEHAVIOR = {
   'pre-pregnancy': ModeTrying,
@@ -26,6 +27,7 @@ const PILL_ORDER: Array<{ behavior: Behavior; label: string }> = [
  */
 export function MyJourneyPillGrid() {
   const { colors, radius, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const currentBehavior = useBehaviorStore((s) => s.currentBehavior)
   const enrolled = useBehaviorStore((s) => s.enrolledBehaviors)
   const switchTo = useBehaviorStore((s) => s.switchTo)
@@ -81,7 +83,7 @@ export function MyJourneyPillGrid() {
           },
         ]}
       >
-        <Text style={[styles.header, { color: colors.textMuted }]}>MY JOURNEY</Text>
+        <Text style={[styles.header, { color: colors.textMuted }]}>{t('profile_myJourneyHeader')}</Text>
         <View style={styles.grid}>
           {pills.map(({ behavior, label }) => {
             const isActive = behavior === currentBehavior
@@ -113,9 +115,9 @@ export function MyJourneyPillGrid() {
                   {label}
                 </Text>
                 {isActive ? (
-                  <Text style={[styles.activeHint, { color: colors.text }]}>active</Text>
+                  <Text style={[styles.activeHint, { color: colors.text }]}>{t('profile_myJourneyActive')}</Text>
                 ) : !isEnrolled ? (
-                  <Text style={[styles.activeHint, { color: colors.textMuted }]}>+ add</Text>
+                  <Text style={[styles.activeHint, { color: colors.textMuted }]}>{t('profile_myJourneyAdd')}</Text>
                 ) : null}
               </Pressable>
             )

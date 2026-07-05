@@ -83,6 +83,9 @@ export const ko: TranslationKeys = {
 
   profile_title: '프로필',
   profile_myProfile: '내 프로필',
+  profile_myJourneyHeader: 'My Journey',
+  profile_myJourneyActive: 'active',
+  profile_myJourneyAdd: '+ add',
   profile_behaviorProfile: '행동 프로필',
   profile_careCircle: '케어 서클',
   profile_emergencyInsurance: '응급 및 보험',

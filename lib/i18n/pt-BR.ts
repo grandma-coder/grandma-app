@@ -91,6 +91,9 @@ export const ptBR: TranslationKeys = {
   // Profile & Settings
   profile_title: 'Perfil',
   profile_myProfile: 'Meu Perfil',
+  profile_myJourneyHeader: 'My Journey',
+  profile_myJourneyActive: 'active',
+  profile_myJourneyAdd: '+ add',
   profile_behaviorProfile: 'Perfil de Comportamento',
   profile_careCircle: 'Círculo de Cuidados',
   profile_emergencyInsurance: 'Emergência e Plano de Saúde',

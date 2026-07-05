@@ -83,6 +83,9 @@ export const zh: TranslationKeys = {
 
   profile_title: '个人',
   profile_myProfile: '我的资料',
+  profile_myJourneyHeader: 'My Journey',
+  profile_myJourneyActive: 'active',
+  profile_myJourneyAdd: '+ add',
   profile_behaviorProfile: '行为档案',
   profile_careCircle: '关爱圈',
   profile_emergencyInsurance: '紧急联系和保险',

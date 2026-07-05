@@ -83,6 +83,9 @@ export const ja: TranslationKeys = {
 
   profile_title: 'プロフィール',
   profile_myProfile: 'マイプロフィール',
+  profile_myJourneyHeader: 'My Journey',
+  profile_myJourneyActive: 'active',
+  profile_myJourneyAdd: '+ add',
   profile_behaviorProfile: '行動プロフィール',
   profile_careCircle: 'ケアサークル',
   profile_emergencyInsurance: '緊急連絡・保険',

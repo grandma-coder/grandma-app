@@ -83,6 +83,9 @@ export const fr: TranslationKeys = {
 
   profile_title: 'Profil',
   profile_myProfile: 'Mon Profil',
+  profile_myJourneyHeader: 'My Journey',
+  profile_myJourneyActive: 'active',
+  profile_myJourneyAdd: '+ add',
   profile_behaviorProfile: 'Profil de Comportement',
   profile_careCircle: 'Cercle de Soins',
   profile_emergencyInsurance: 'Urgence et Assurance',

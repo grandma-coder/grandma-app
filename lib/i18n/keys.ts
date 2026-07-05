@@ -108,6 +108,9 @@ export interface TranslationKeys {
   // ─── Profile & Settings ────────────────────────────────────────────────
   profile_title: string
   profile_myProfile: string
+  profile_myJourneyHeader: string
+  profile_myJourneyActive: string
+  profile_myJourneyAdd: string
   profile_behaviorProfile: string
   profile_careCircle: string
   profile_emergencyInsurance: string

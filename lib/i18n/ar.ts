@@ -83,6 +83,9 @@ export const ar: TranslationKeys = {
 
   profile_title: 'الملف الشخصي',
   profile_myProfile: 'ملفي الشخصي',
+  profile_myJourneyHeader: 'My Journey',
+  profile_myJourneyActive: 'active',
+  profile_myJourneyAdd: '+ add',
   profile_behaviorProfile: 'ملف السلوك',
   profile_careCircle: 'دائرة الرعاية',
   profile_emergencyInsurance: 'الطوارئ والتأمين',

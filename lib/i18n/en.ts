@@ -105,6 +105,9 @@ export const en: TranslationKeys = {
   // Profile & Settings
   profile_title: 'Profile',
   profile_myProfile: 'My Profile',
+  profile_myJourneyHeader: 'My Journey',
+  profile_myJourneyActive: 'active',
+  profile_myJourneyAdd: '+ add',
   profile_behaviorProfile: 'Behavior Profile',
   profile_careCircle: 'Care Circle',
   profile_emergencyInsurance: 'Emergency & Insurance',
