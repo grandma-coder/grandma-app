@@ -402,6 +402,9 @@ export interface TranslationKeys {
   cycleDayDetail_addLog: string
   // ─── B7b: calendar/AppointmentDetailModal.tsx residual strings ────────────
   calAppt_addDetails: string
+  // ─── B7b: FoodPhotoEntry.tsx residual strings ─────────────────────────────
+  foodPhotoEntry_title: string
+  foodPhotoEntry_ratingLabel: string
 
   // ─── ContractionTimer (Wave 2) ────────────────────────────────────────
   preg_contractions_title: string

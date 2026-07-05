@@ -3,6 +3,7 @@ import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { borderRadius, useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 interface FoodPhotoEntryProps {
   onTakePhoto: () => void
@@ -25,11 +26,12 @@ export function FoodPhotoEntry({
   onRate,
 }: FoodPhotoEntryProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => makeStyles(colors), [colors])
 
   return (
     <PaperCard radius={28} padding={20} style={styles.container}>
-      <Text style={styles.title}>Log a Meal</Text>
+      <Text style={styles.title}>{t('foodPhotoEntry_title')}</Text>
       <Text style={styles.mealType}>{mealType.toUpperCase()}</Text>
 
       {photoUri ? (
@@ -39,11 +41,11 @@ export function FoodPhotoEntry({
           <View style={styles.buttonRow}>
             <Pressable onPress={onTakePhoto} style={styles.photoButton}>
               <Ionicons name="camera-outline" size={24} color={colors.accent} />
-              <Text style={styles.photoButtonText}>Camera</Text>
+              <Text style={styles.photoButtonText}>{t('scan_cameraBtn')}</Text>
             </Pressable>
             <Pressable onPress={onPickPhoto} style={styles.photoButton}>
               <Ionicons name="images-outline" size={24} color={colors.accent} />
-              <Text style={styles.photoButtonText}>Gallery</Text>
+              <Text style={styles.photoButtonText}>{t('kids_foodDash_gallery')}</Text>
             </Pressable>
           </View>
         </View>
@@ -51,7 +53,7 @@ export function FoodPhotoEntry({
 
       {/* Star rating */}
       <View style={styles.ratingRow}>
-        <Text style={styles.ratingLabel}>How'd they like it?</Text>
+        <Text style={styles.ratingLabel}>{t('foodPhotoEntry_ratingLabel')}</Text>
         <View style={styles.stars}>
           {STARS.map((s) => (
             <Pressable key={s} onPress={() => onRate?.(s)}>
