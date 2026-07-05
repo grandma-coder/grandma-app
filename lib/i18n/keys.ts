@@ -1509,6 +1509,8 @@ export interface TranslationKeys {
   miniCharts_notEnoughData: string
   // ─── B7c: calendar/AgendaHeader.tsx residual strings ────────────────────────
   agendaHeader_title: string
+  // ─── B7c: caregiver/CaregiverHome.tsx residual strings ──────────────────────
+  caregiverHome_emptyTitle: string
 
   // ─── Cycle Analytics (Wave B4) ────────────────────────────────────────────
   cycleAnalytics_yourCycleToday: string

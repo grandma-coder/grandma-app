@@ -23,10 +23,12 @@ import { RoleNanny, RoleFamily } from '../stickers/RewardStickers'
 import { NannyUpdatesFeed } from '../home/NannyUpdatesFeed'
 import { CaregiverChildPicker } from './CaregiverChildPicker'
 import { CaregiverLogSheet } from './CaregiverLogSheet'
+import { useTranslation } from '../../lib/i18n'
 
 export function CaregiverHome() {
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const activeChild = useChildStore((s) => s.activeChild)
   const styles = useMemo(() => makeStyles(colors), [colors])
   const [logOpen, setLogOpen] = useState(false)
@@ -45,7 +47,7 @@ export function CaregiverHome() {
         <PaperCard radius={28} padding={24}>
           <View style={styles.emptyWrap}>
             <RoleFamily size={56} />
-            <Text style={styles.emptyTitle}>No children yet</Text>
+            <Text style={styles.emptyTitle}>{t('caregiverHome_emptyTitle')}</Text>
             <Text style={styles.emptyText}>
               You're not linked to a child yet. Ask the parent to add you to their
               care circle, or check that your invite was accepted.
