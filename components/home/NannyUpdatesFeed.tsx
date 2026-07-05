@@ -57,7 +57,7 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
             <Text style={styles.nannyName}>{update.name}</Text>
             <Text style={styles.timeAgo}>{update.timeAgo}</Text>
           </View>
-          <Text style={styles.updateContent}>"{update.content}"</Text>
+          <Text style={styles.updateContent}>{t('common_straightQuote')}{update.content}{t('common_straightQuote')}</Text>
           <View style={styles.tags}>
             {update.tags.map((tag, i) => (
               <View key={i} style={styles.tag}>

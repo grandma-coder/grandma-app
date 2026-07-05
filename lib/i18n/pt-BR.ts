@@ -2468,6 +2468,7 @@ export const ptBR: TranslationKeys = {
   common_bullet: '•',
   common_openQuote: '“',
   common_closeQuote: '”',
+  common_straightQuote: '"',
   common_chevronPrev: '‹',
   common_chevronNext: '›',
   cycleDetail_lastNCycles: 'LAST {{n}} CYCLES',

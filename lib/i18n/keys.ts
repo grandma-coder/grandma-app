@@ -36,6 +36,7 @@ export interface TranslationKeys {
   common_bullet: string
   common_openQuote: string
   common_closeQuote: string
+  common_straightQuote: string
   common_chevronPrev: string
   common_chevronNext: string
 
