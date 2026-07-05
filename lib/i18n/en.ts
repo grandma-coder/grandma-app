@@ -1504,6 +1504,7 @@ export const en: TranslationKeys = {
   caregiverHome_emptyTitle: 'No children yet',
   caregiverLogSheet_title: 'Log for {{name}}',
   caregiverLogSheet_backChevron: '‹ {{back}}',
+  channelCard_memberCount: '{{count}} members',
 
   // ─── Cycle Analytics (Wave B4) ────────────────────────────────────────────
   cycleAnalytics_yourCycleToday: 'YOUR CYCLE TODAY',

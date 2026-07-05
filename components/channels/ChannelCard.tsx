@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useTheme } from '../../constants/theme'
 import type { Channel } from '../../lib/channels'
+import { useTranslation } from '../../lib/i18n'
 
 interface ChannelCardProps {
   channel: Channel
@@ -12,6 +13,7 @@ interface ChannelCardProps {
 
 export function ChannelCard({ channel, onPress }: ChannelCardProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => createStyles(colors), [colors])
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.85 }]}>
@@ -27,8 +29,8 @@ export function ChannelCard({ channel, onPress }: ChannelCardProps) {
             )}
             <View style={styles.metaRow}>
               <Ionicons name="people-outline" size={12} color={colors.textMuted} />
-              <Text style={styles.metaText}>{channel.memberCount} members</Text>
-              <Text style={styles.metaDot}>·</Text>
+              <Text style={styles.metaText}>{t('channelCard_memberCount', { count: channel.memberCount })}</Text>
+              <Text style={styles.metaDot}>{t('common_dotSeparator')}</Text>
               <Text style={styles.metaText}>{channel.category}</Text>
             </View>
           </View>

@@ -1514,6 +1514,8 @@ export interface TranslationKeys {
   // ─── B7c: caregiver/CaregiverLogSheet.tsx residual strings ─────────────────
   caregiverLogSheet_title: string               // "Log for {{name}}"
   caregiverLogSheet_backChevron: string         // "‹ {{back}}"
+  // ─── B7c: channels/ChannelCard.tsx residual strings ────────────────────────
+  channelCard_memberCount: string               // "{{count}} members"
 
   // ─── Cycle Analytics (Wave B4) ────────────────────────────────────────────
   cycleAnalytics_yourCycleToday: string
