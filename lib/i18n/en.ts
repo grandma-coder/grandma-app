@@ -1317,6 +1317,7 @@ export const en: TranslationKeys = {
   kids_nannyNotes_topicLabel: 'TOPIC',
   kids_nannyNotes_noteLabel: 'NOTE',
   kids_nannyNotes_placeholder: 'Write your note here...',
+  kids_nannyNotes_authorRole: '{{author}} · {{role}}',
 
   // ─── Kids Food Dashboard (Wave B2) ──────────────────────────────────────
   kids_foodDash_mealBreakfast: 'Breakfast',

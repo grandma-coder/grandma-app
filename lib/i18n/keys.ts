@@ -1320,6 +1320,8 @@ export interface TranslationKeys {
   kids_nannyNotes_topicLabel: string
   kids_nannyNotes_noteLabel: string
   kids_nannyNotes_placeholder: string
+  // ─── B7c: agenda/NannyNotesPanel.tsx residual strings ──────────────────────
+  kids_nannyNotes_authorRole: string             // "{{author}} · {{role}}"
 
   // ─── Kids Food Dashboard (Wave B2) ──────────────────────────────────────
   kids_foodDash_mealBreakfast: string

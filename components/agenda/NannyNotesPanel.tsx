@@ -95,7 +95,7 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
               <Text style={styles.noteContent}>{note.content}</Text>
               {/* Author */}
               <Text style={styles.noteAuthor}>
-                {note.authorName} · {note.authorRole}
+                {t('kids_nannyNotes_authorRole', { author: note.authorName, role: note.authorRole })}
               </Text>
             </PaperCard>
           )

@@ -1216,6 +1216,7 @@ export const ptBR: TranslationKeys = {
   kids_nannyNotes_topicLabel: 'TOPIC',
   kids_nannyNotes_noteLabel: 'NOTE',
   kids_nannyNotes_placeholder: 'Write your note here...',
+  kids_nannyNotes_authorRole: '{{author}} · {{role}}',
   kids_foodDash_mealBreakfast: 'Breakfast',
   kids_foodDash_mealLunch: 'Lunch',
   kids_foodDash_mealDinner: 'Dinner',
