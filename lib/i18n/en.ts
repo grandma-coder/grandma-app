@@ -2691,4 +2691,10 @@ export const en: TranslationKeys = {
   manageCaregivers_subtitle: 'People who can help care for {{name}}',
   manageCaregivers_upgradeForSeats: 'Upgrade to {{tier}} for more seats',
   manageCaregivers_readOnly: 'read-only',
+  // ─── B7b: DevModeBanner.tsx residual strings ──────────────────────────────
+  devMode_dot: '●',
+  devMode_label: 'DEV MODE',
+  devMode_sub: "changes won't be saved",
+  devMode_panel: 'PANEL',
+  devMode_exit: 'EXIT',
 }

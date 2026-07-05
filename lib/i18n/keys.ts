@@ -2692,4 +2692,10 @@ export interface TranslationKeys {
   manageCaregivers_subtitle: string               // "People who can help care for {{name}}"
   manageCaregivers_upgradeForSeats: string        // "Upgrade to {{tier}} for more seats"
   manageCaregivers_readOnly: string
+  // ─── B7b: DevModeBanner.tsx residual strings ──────────────────────────────
+  devMode_dot: string
+  devMode_label: string
+  devMode_sub: string
+  devMode_panel: string
+  devMode_exit: string
 }

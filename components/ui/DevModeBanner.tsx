@@ -10,12 +10,14 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router, usePathname } from 'expo-router'
 import { useDevStore } from '../../store/useDevStore'
+import { useTranslation } from '../../lib/i18n'
 
 export function DevModeBanner() {
   const active = useDevStore((s) => s.active)
   const exit = useDevStore((s) => s.exit)
   const insets = useSafeAreaInsets()
   const pathname = usePathname()
+  const { t } = useTranslation()
 
   if (!active) return null
 
@@ -37,16 +39,16 @@ export function DevModeBanner() {
       pointerEvents="box-none"
     >
       <View style={styles.pill}>
-        <Text style={styles.dot}>●</Text>
-        <Text style={styles.label}>DEV MODE</Text>
-        <Text style={styles.sub}>changes won't be saved</Text>
+        <Text style={styles.dot}>{t('devMode_dot')}</Text>
+        <Text style={styles.label}>{t('devMode_label')}</Text>
+        <Text style={styles.sub}>{t('devMode_sub')}</Text>
         {!onPanel && (
           <Pressable onPress={handlePanel} hitSlop={8} style={styles.panelBtn}>
-            <Text style={styles.panelText}>PANEL</Text>
+            <Text style={styles.panelText}>{t('devMode_panel')}</Text>
           </Pressable>
         )}
         <Pressable onPress={handleExit} hitSlop={8} style={styles.exitBtn}>
-          <Text style={styles.exitText}>EXIT</Text>
+          <Text style={styles.exitText}>{t('devMode_exit')}</Text>
         </Pressable>
       </View>
     </View>
