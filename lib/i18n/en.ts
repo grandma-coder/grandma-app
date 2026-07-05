@@ -467,6 +467,7 @@ export const en: TranslationKeys = {
   preg_appts_type_specialist: 'Specialist',
   preg_appts_type_other: 'Other',
   preg_appts_doctorName: 'Dr. {{name}}',
+  calendarView_noActivitiesDay: 'No activities for this day',
 
   // PregnancyLogForms — Mood + Symptoms (Wave 2)
   preg_form_mood_question: 'How are you feeling today?',

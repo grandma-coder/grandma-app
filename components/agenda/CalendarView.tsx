@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { stickers, borderRadius, shadows, useTheme, font } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 
 export type CalendarViewMode = 'month' | 'week' | 'day'
 
@@ -52,6 +53,7 @@ export function CalendarView({
   onViewModeChange,
 }: CalendarViewProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const [viewDate, setViewDate] = useState(() => {
     const d = selectedDate ? new Date(selectedDate) : new Date()
@@ -236,7 +238,7 @@ export function CalendarView({
             ))}
           </View>
         ) : (
-          <Text style={styles.dayViewEmpty}>No activities for this day</Text>
+          <Text style={styles.dayViewEmpty}>{t('calendarView_noActivitiesDay')}</Text>
         )}
       </View>
     )
