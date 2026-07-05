@@ -95,7 +95,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
         <PaperCard radius={28} padding={20} style={styles.actionCard}>
           <Text style={styles.actionTitle}>{t('kids_foodDash_logMeal', { meal: MEALS.find((m) => m.id === selectedMeal)?.label ?? '' })}</Text>
           <Text style={styles.actionDesc}>
-            Take a photo and AI will analyze the nutritional content, or add details manually.
+            {t('kids_foodDash_actionDesc')}
           </Text>
 
           <View style={styles.actionButtons}>
@@ -166,7 +166,7 @@ export function FoodDashboard({ entries = [], onAnalyzePhoto, onManualAdd }: Foo
           <Ionicons name="nutrition-outline" size={32} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>{t('kids_foodDash_noMealsToday')}</Text>
           <Text style={styles.emptyDesc}>
-            Tap a meal above to log food. Take a photo and Guru Grandma will analyze the protein, carbs, and nutrients.
+            {t('kids_foodDash_emptyDesc')}
           </Text>
         </View>
       )}

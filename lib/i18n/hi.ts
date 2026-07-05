@@ -1198,6 +1198,8 @@ export const hi: TranslationKeys = {
   kids_foodDash_gallery: 'Gallery',
   kids_foodDash_manual: 'Manual',
   kids_foodDash_logMeal: 'Log {{meal}}',
+  kids_foodDash_actionDesc: 'Take a photo and AI will analyze the nutritional content, or add details manually.',
+  kids_foodDash_emptyDesc: 'Tap a meal above to log food. Take a photo and Guru Grandma will analyze the protein, carbs, and nutrients.',
   kids_nannyFeed_title: 'Nanny Updates',
   kids_nannyFeed_viewHistory: 'View History',
   kids_nannyFeed_emptyText: 'No nanny updates yet',

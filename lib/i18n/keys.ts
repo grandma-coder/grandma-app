@@ -1332,6 +1332,9 @@ export interface TranslationKeys {
   kids_foodDash_gallery: string
   kids_foodDash_manual: string
   kids_foodDash_logMeal: string
+  // ─── B7c: agenda/FoodDashboard.tsx residual strings ────────────────────────
+  kids_foodDash_actionDesc: string
+  kids_foodDash_emptyDesc: string
 
   // ─── Kids Nanny Feed (Wave B2) ───────────────────────────────────────────
   kids_nannyFeed_title: string
