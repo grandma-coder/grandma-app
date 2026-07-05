@@ -672,6 +672,7 @@ export interface TranslationKeys {
   preg_onboard_step_conditions: string
   preg_onboard_step_partner: string
   preg_onboard_partnerNamePlaceholder: string
+  preg_onboard_partnerHint: string
   preg_onboard_careProviderPlaceholder: string
   preg_onboard_conditionsPlaceholder: string
   preg_onboard_birth_hospital: string
@@ -690,6 +691,8 @@ export interface TranslationKeys {
   preg_onboard_completionBody: string
   preg_onboard_completionBadge: string               // "Currently at week {{week}} — {{days}} days to go!"
   preg_onboard_completionCta: string
+  preg_onboard_completionCountdownLabel: string
+  preg_onboard_completionCurrentlyWeek: string       // "Currently at week {{week}}"
   preg_onboard_errorTitle: string
   preg_onboard_errorBehavior: string                 // "Saving your pregnancy info failed: {{message}}. Please try again."
   preg_onboard_errorDueDate: string                  // "Saving your due date failed: {{message}}. Please try again."

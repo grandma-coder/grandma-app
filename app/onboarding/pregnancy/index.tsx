@@ -398,7 +398,7 @@ function StepDueDate({
             ]}
           >
             <Text style={[stepStyles.weekBadgeText, { color: mode }]}>
-              You're at week {calcWeekNumber(dueDate)} — {daysUntil(dueDate)} days to go!
+              {t('preg_onboard_completionBadge', { week: calcWeekNumber(dueDate), days: daysUntil(dueDate) })}
             </Text>
           </View>
         )}
@@ -696,7 +696,7 @@ function StepPartner({
         autoCapitalize="words"
       />
       <Text style={[stepStyles.hint, { color: colors.textMuted }]}>
-        They'll be able to follow along and get updates too.
+        {t('preg_onboard_partnerHint')}
       </Text>
     </OnboardingStep>
   )
@@ -774,7 +774,7 @@ function CompletionScreen({
                 { color: colors.textSecondary, fontFamily: font.body },
               ]}
             >
-              days until you meet your little one
+              {t('preg_onboard_completionCountdownLabel')}
             </Text>
             <Text
               style={[
@@ -782,7 +782,7 @@ function CompletionScreen({
                 { color: colors.textMuted, fontFamily: font.body },
               ]}
             >
-              Currently at week {week}
+              {t('preg_onboard_completionCurrentlyWeek', { week })}
             </Text>
           </View>
         )}
