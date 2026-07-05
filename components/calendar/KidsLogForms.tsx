@@ -5,7 +5,7 @@
  * Persist to Supabase child_logs table.
  */
 
-import { useState, useMemo, useEffect, useRef, useCallback, type ReactElement } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, type ReactElement, type ReactNode, type ComponentProps } from 'react'
 import {
   View,
   Text,
@@ -47,7 +47,8 @@ import {
   ScanLine,
   X,
 } from 'lucide-react-native'
-import { useTheme, brand, stickers as stickerPalette, font } from '../../constants/theme'
+import { useTheme, brand, stickers as stickerPalette, font, useDiffuseTheme, diffuseFont, getModeField, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 type TranslationKey = keyof TranslationKeys
@@ -56,6 +57,7 @@ import { Heart as HeartSticker, Moon as MoonSticker, Flower, Drop, Star } from '
 import { Smiley, Sleepy, Sad } from '../ui/Stickers'
 import { ChildPill, childColor } from '../ui/ChildPills'
 import { useChildStore } from '../../store/useChildStore'
+import { useModeStore } from '../../store/useModeStore'
 import { supabase } from '../../lib/supabase'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodCalories'
@@ -125,6 +127,213 @@ const formHeaderStickerStyles = StyleSheet.create({
     color: INK,
   },
 })
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DIFFUSE (v3) form controls — flag-gated helpers
+// ═══════════════════════════════════════════════════════════════════════════
+// Reusable Diffuse building blocks used across every form's Diffuse branch.
+// Token-driven (useDiffuseTheme / diffuseFont / getModeField). Hairlines over
+// boxes, containerless actions, mono labels + serif titles. Sticker icons pass
+// straight through — they stay the icon system, placed over hairline circles
+// instead of filled tiles. These render only inside `useIsDiffuse()` branches.
+
+const df = StyleSheet.create({
+  form: { gap: 20, paddingBottom: 8 },
+  topRow: { gap: 12 },
+  dateTimeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  // hairline mono pill (date / time / child / small selection)
+  pill: {
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6,
+    paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1,
+  },
+  pillLabel: { fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1.4, textTransform: 'uppercase' },
+  pillValue: { fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 0.6 },
+  // section eyebrow (mono caps)
+  eyebrow: { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' },
+  // header row: sticker over hairline circle + serif title
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: -2, marginBottom: 2 },
+  headerIcon: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontFamily: diffuseFont.display, fontSize: 24, letterSpacing: -0.5 },
+  // hairline mono chip (multi/single select)
+  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 16,
+    borderRadius: 999, borderWidth: 1,
+  },
+  chipText: { fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' },
+  chipTextOn: { fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' },
+  // bare underlined field
+  fieldWrap: { gap: 6 },
+  fieldLabel: { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' },
+  field: {
+    backgroundColor: 'transparent', borderBottomWidth: 1.5, paddingHorizontal: 2, paddingVertical: 8,
+    fontFamily: diffuseFont.body, fontSize: 16,
+  },
+  // segmented (hairline mono pills, single-select, evenly spaced)
+  segRow: { flexDirection: 'row', gap: 8 },
+  segPill: { flex: 1, alignItems: 'center', paddingVertical: 11, borderRadius: 999, borderWidth: 1 },
+  // mood face over hairline circle
+  moodRow: { flexDirection: 'row', gap: 8 },
+  moodBtn: { flex: 1, alignItems: 'center', gap: 6 },
+  moodCircle: { width: 62, height: 62, borderRadius: 31, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  moodLabel: { fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', textAlign: 'center' },
+  // eat-quality: sticker over hairline circle + mono label
+  qualityRow: { flexDirection: 'row', gap: 8 },
+  qualityBtn: { flex: 1, alignItems: 'center', gap: 8, paddingVertical: 4 },
+  qualityCircle: { width: 56, height: 56, borderRadius: 28, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  qualityLabel: { fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 0.8, textTransform: 'uppercase', textAlign: 'center' },
+  // hairline info banner (duration / sleep session)
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 4, borderTopWidth: 1, borderBottomWidth: 1 },
+  bannerLabel: { flex: 1, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' },
+  bannerValue: { fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.5 },
+  // switch-style routine row
+  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14, borderTopWidth: 1, borderBottomWidth: 1 },
+  switchLabel: { flex: 1, fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase' },
+  switchTrack: { width: 46, height: 26, borderRadius: 999, borderWidth: 1.5, justifyContent: 'center', padding: 3 },
+  switchKnob: { width: 17, height: 17, borderRadius: 9, borderWidth: 1.5 },
+  daysRow: { flexDirection: 'row', gap: 6, justifyContent: 'space-between', marginTop: 12 },
+  dayChip: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  dayText: { fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 0.5 },
+  // containerless save CTA (mono caps + arrow on a top hairline rule)
+  saveCta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 18, paddingHorizontal: 2, borderTopWidth: 1 },
+  saveCtaLabel: { fontFamily: diffuseFont.monoBold, fontSize: 13, letterSpacing: 2.4, textTransform: 'uppercase' },
+  txtlink: { paddingVertical: 14, alignItems: 'center' },
+  txtlinkText: { fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase' },
+  // photo thumb + hairline add tiles
+  photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  photoThumb: { width: 72, height: 72, borderRadius: 20 },
+  photoDelete: { position: 'absolute', top: -6, right: -6, borderRadius: 999, width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
+  photoButtons: { flexDirection: 'row', gap: 8 },
+  photoTile: { width: 72, height: 72, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
+  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
+  dividerText: { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' },
+})
+
+/** Diffuse header — sticker over a hairline circle + serif title. */
+function DiffuseFormHeader({ kind }: { kind: FormKind }) {
+  const { t } = useTranslation()
+  const { colors, stickers: dStickers } = useDiffuseTheme()
+  const map: Record<FormKind, { node: ReactElement; label: string }> = {
+    feeding: { node: <Drop size={22} fill={dStickers.peach} />, label: t('kids_logForm_labelFeeding') },
+    sleep:   { node: <MoonSticker size={22} fill={dStickers.lilac} />, label: t('kids_logForm_labelSleep') },
+    health:  { node: <HeartSticker size={22} fill={dStickers.pink} />, label: t('kids_logForm_labelHealth') },
+    mood:    { node: <Flower size={22} petal={dStickers.lilac} center={dStickers.yellow} />, label: t('kids_logForm_labelMood') },
+    memory:  { node: <HeartSticker size={22} fill={dStickers.coral} />, label: t('kids_logForm_labelMemory') },
+    activity:{ node: <Star size={22} fill={dStickers.yellow} />, label: t('kids_logForm_labelActivity') },
+    diaper:  { node: <Drop size={22} fill={dStickers.blue} />, label: t('kids_logForm_labelDiaper') },
+    wakeup:  { node: <Star size={22} fill={dStickers.yellow} />, label: t('kids_logForm_labelWakeUp') },
+  }
+  const m = map[kind]
+  return (
+    <View style={df.headerRow}>
+      <View style={[df.headerIcon, { borderColor: colors.line2 }]}>{m.node}</View>
+      <Text style={[df.headerTitle, { color: colors.ink }]}>{m.label}</Text>
+    </View>
+  )
+}
+
+/** Diffuse hairline mono chip (single/multi-select). Active = hairline border
+ *  + ink + soft color bloom of the chip's hue. */
+function DiffuseChip({
+  label,
+  active,
+  onPress,
+  leading,
+  hue,
+}: {
+  label: string
+  active: boolean
+  onPress: () => void
+  leading?: ReactNode
+  hue?: string
+}) {
+  const { colors } = useDiffuseTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        df.chip,
+        {
+          borderColor: active ? colors.hairline : colors.line,
+          backgroundColor: active ? (hue ? hue + '22' : colors.surface) : 'transparent',
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
+    >
+      {leading}
+      <Text style={[active ? df.chipTextOn : df.chipText, { color: active ? colors.ink : colors.ink3 }]}>{label}</Text>
+    </Pressable>
+  )
+}
+
+/** Diffuse bare underlined field with a mono uppercase label above. */
+function DiffuseField({
+  label,
+  ...inputProps
+}: { label?: string } & ComponentProps<typeof TextInput>) {
+  const { colors } = useDiffuseTheme()
+  return (
+    <View style={df.fieldWrap}>
+      {label ? <Text style={[df.fieldLabel, { color: colors.ink3 }]}>{label}</Text> : null}
+      <TextInput
+        placeholderTextColor={colors.ink4}
+        {...inputProps}
+        style={[df.field, { color: colors.ink, borderBottomColor: colors.line2 }, inputProps.style]}
+      />
+    </View>
+  )
+}
+
+/** Diffuse switch — hairline track + knob. On = hairline border + ink knob. */
+function DiffuseSwitch({ on, accent }: { on: boolean; accent: string }) {
+  const { colors } = useDiffuseTheme()
+  return (
+    <View style={[df.switchTrack, { borderColor: on ? colors.hairline : colors.line2, alignItems: on ? 'flex-end' : 'flex-start' }]}>
+      <View style={[df.switchKnob, { borderColor: on ? colors.ink : colors.line2, backgroundColor: on ? accent + '55' : 'transparent' }]} />
+    </View>
+  )
+}
+
+/** Diffuse photo row — thumbnails (hairline framed) + hairline camera / gallery
+ *  add tiles. Sticker/lucide glyphs stay; the filled tiles become hairline. */
+function DiffusePhotoRow({
+  photos,
+  onRemove,
+  onCamera,
+  onGallery,
+  max = 4,
+}: {
+  photos: string[]
+  onRemove: (i: number) => void
+  onCamera: () => void
+  onGallery: () => void
+  max?: number
+}) {
+  const { colors } = useDiffuseTheme()
+  return (
+    <View style={df.photoRow}>
+      {photos.map((uri, i) => (
+        <View key={i} style={{ position: 'relative' }}>
+          <Image source={{ uri }} style={[df.photoThumb, { borderWidth: 1, borderColor: colors.line2 }]} />
+          <Pressable onPress={() => onRemove(i)} style={[df.photoDelete, { backgroundColor: colors.ink }]} hitSlop={4}>
+            <X size={13} color={colors.bg} strokeWidth={3} />
+          </Pressable>
+        </View>
+      ))}
+      {photos.length < max && (
+        <View style={df.photoButtons}>
+          <Pressable onPress={onCamera} style={[df.photoTile, { borderColor: colors.line2 }]}>
+            <Camera size={22} color={colors.ink3} strokeWidth={2} />
+          </Pressable>
+          <Pressable onPress={onGallery} style={[df.photoTile, { borderColor: colors.line, borderStyle: 'dashed' }]}>
+            <Plus size={20} color={colors.ink3} strokeWidth={2} />
+          </Pressable>
+        </View>
+      )}
+    </View>
+  )
+}
 
 // ─── Routine Prefill type ─────────────────────────────────────────────────
 
@@ -346,9 +555,15 @@ function RoutineToggle({
   onDaysChange: (d: number[]) => void
   locked?: boolean
 }) {
+  const diffuse = useIsDiffuse()
   const { colors, radius, isDark } = useTheme()
   const { t } = useTranslation()
   const accentText = isDark ? colors.text : INK
+
+  if (diffuse) {
+    return <DiffuseRoutineToggle enabled={enabled} onToggle={onToggle} days={days} onDaysChange={onDaysChange} locked={locked} />
+  }
+
   if (locked) {
     return (
       <View style={[routineStyles.toggleRow, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '66', borderRadius: radius.lg }]}>
@@ -440,6 +655,66 @@ const routineStyles = StyleSheet.create({
   dayText: { fontSize: 12, fontFamily: font.bodySemiBold },
 })
 
+// ─── Diffuse Routine Toggle ────────────────────────────────────────────────
+
+function DiffuseRoutineToggle({
+  enabled,
+  onToggle,
+  days,
+  onDaysChange,
+  locked,
+}: {
+  enabled: boolean
+  onToggle: (v: boolean) => void
+  days: number[]
+  onDaysChange: (d: number[]) => void
+  locked?: boolean
+}) {
+  const { colors, isDark } = useDiffuseTheme()
+  const { t } = useTranslation()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getDiffuseAccent(mode, isDark)
+
+  if (locked) {
+    return (
+      <View style={[df.switchRow, { borderColor: colors.line }]}>
+        <Repeat size={15} color={colors.ink3} strokeWidth={2} />
+        <Text style={[df.switchLabel, { color: colors.ink2 }]}>{t('kids_logForm_alreadyRoutine')}</Text>
+        <Check size={16} color={colors.ink} strokeWidth={2.5} />
+      </View>
+    )
+  }
+  return (
+    <View>
+      <Pressable onPress={() => onToggle(!enabled)} style={[df.switchRow, { borderColor: colors.line }]}>
+        <Repeat size={15} color={enabled ? colors.ink : colors.ink3} strokeWidth={2} />
+        <Text style={[df.switchLabel, { color: enabled ? colors.ink : colors.ink3 }]}>
+          {t('kids_logForm_saveAsRoutine')}
+        </Text>
+        <DiffuseSwitch on={enabled} accent={accent} />
+      </Pressable>
+      {enabled && (
+        <View style={df.daysRow}>
+          {DAY_LABELS.map((label, i) => {
+            const active = days.includes(i)
+            return (
+              <Pressable
+                key={i}
+                onPress={() => onDaysChange(active ? days.filter((d) => d !== i) : [...days, i].sort())}
+                style={[df.dayChip, { borderColor: active ? colors.hairline : colors.line, backgroundColor: active ? accent + '22' : 'transparent' }]}
+              >
+                <Text style={[df.dayText, { color: active ? colors.ink : colors.ink3, fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono }]}>
+                  {label}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      )}
+    </View>
+  )
+}
+
 // ─── Child Selector (shared) ───────────────────────────────────────────────
 
 function ChildSelector({
@@ -449,13 +724,30 @@ function ChildSelector({
   selected: string | null
   onSelect: (id: string) => void
 }) {
+  const diffuse = useIsDiffuse()
   const children = useChildStore((s) => s.children)
   const { colors } = useTheme()
+  const dTheme = useDiffuseTheme()
   const { t } = useTranslation()
 
   if (children.length <= 1) return null
 
   const needsSelection = !selected
+
+  if (diffuse) {
+    return (
+      <View style={df.fieldWrap}>
+        <Text style={[df.eyebrow, { color: needsSelection ? dTheme.colors.warning : dTheme.colors.ink3 }]}>
+          {t('kids_logForm_selectChild')}
+        </Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 6 }}>
+          {children.map((c) => (
+            <DiffuseChip key={c.id} label={c.name} active={selected === c.id} onPress={() => onSelect(c.id)} />
+          ))}
+        </ScrollView>
+      </View>
+    )
+  }
 
   return (
     <View style={styles.childSelectorWrap}>
@@ -502,7 +794,9 @@ function DateChip({
   value: string
   onChange: (dateStr: string) => void
 }) {
+  const diffuse = useIsDiffuse()
   const { colors, radius, isDark } = useTheme()
+  const dTheme = useDiffuseTheme()
   const { t } = useTranslation()
   const [showPicker, setShowPicker] = useState(false)
   const [tempDate, setTempDate] = useState(value)
@@ -517,26 +811,32 @@ function DateChip({
     setShowPicker(false)
   }
 
-  const inkText = isDark ? colors.text : INK
+  const inkText = diffuse ? dTheme.colors.ink : (isDark ? colors.text : INK)
+  const pickerBg = diffuse ? dTheme.colors.surface : colors.surface
+  const pickerBorder = diffuse ? dTheme.colors.line2 : (isDark ? colors.border : INK)
   return (
     <View>
       <Pressable
         onPress={openPicker}
-        style={[styles.dateChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.full }]}
+        style={diffuse
+          ? [df.pill, { borderColor: dTheme.colors.line, backgroundColor: 'transparent' }]
+          : [styles.dateChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.full }]}
       >
         <CalendarDays size={14} color={inkText} strokeWidth={2} />
-        <Text style={[styles.dateChipText, { color: inkText }]}>
+        <Text style={diffuse ? [df.pillValue, { color: inkText }] : [styles.dateChipText, { color: inkText }]}>
           {formatDateLabel(value, t)}
         </Text>
       </Pressable>
       {showPicker && (
-        <View style={[styles.datePickerWrap, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
+        <View style={diffuse
+          ? [styles.datePickerWrap, { backgroundColor: pickerBg, borderColor: pickerBorder, borderRadius: 20 }]
+          : [styles.datePickerWrap, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
           <DateTimePicker
             value={new Date((showPicker ? tempDate : value) + 'T12:00:00')}
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             maximumDate={new Date()}
-            themeVariant={isDark ? 'dark' : 'light'}
+            themeVariant={(diffuse ? dTheme.isDark : isDark) ? 'dark' : 'light'}
             onChange={(e, d) => {
               if (Platform.OS === 'android') {
                 setShowPicker(false)
@@ -548,8 +848,10 @@ function DateChip({
             }}
           />
           {Platform.OS === 'ios' && (
-            <Pressable onPress={confirmDate} style={[styles.datePickerDone, { borderColor: (isDark ? colors.border : INK) }]}>
-              <Text style={[styles.datePickerDoneText, { color: colors.primary }]}>{t('common_done')}</Text>
+            <Pressable onPress={confirmDate} style={[styles.datePickerDone, { borderColor: pickerBorder }]}>
+              <Text style={diffuse
+                ? [df.pillValue, { color: dTheme.colors.ink, letterSpacing: 2, textTransform: 'uppercase' }]
+                : [styles.datePickerDoneText, { color: colors.primary }]}>{t('common_done')}</Text>
             </Pressable>
           )}
         </View>
@@ -580,7 +882,9 @@ function TimeChip({
   onChange: (timeStr: string) => void
   label: string
 }) {
+  const diffuse = useIsDiffuse()
   const { colors, radius, isDark } = useTheme()
+  const dTheme = useDiffuseTheme()
   const { t } = useTranslation()
   const [showPicker, setShowPicker] = useState(false)
   // Local temp value so iOS spinner doesn't fight with parent state
@@ -603,24 +907,30 @@ function TimeChip({
     return d
   }, [showPicker ? tempTime : value])
 
-  const inkText = isDark ? colors.text : INK
+  const inkText = diffuse ? dTheme.colors.ink : (isDark ? colors.text : INK)
+  const pickerBg = diffuse ? dTheme.colors.surface : colors.surface
+  const pickerBorder = diffuse ? dTheme.colors.line2 : (isDark ? colors.border : INK)
   return (
     <View>
       <Pressable
         onPress={openPicker}
-        style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.full }]}
+        style={diffuse
+          ? [df.pill, { borderColor: dTheme.colors.line, backgroundColor: 'transparent' }]
+          : [styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.full }]}
       >
-        <Clock size={12} color={inkText} strokeWidth={2} />
-        <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>{label}</Text>
-        <Text style={[styles.timeChipValue, { color: inkText }]}>{formatTimeLabel(value)}</Text>
+        <Clock size={12} color={diffuse ? dTheme.colors.ink3 : inkText} strokeWidth={2} />
+        <Text style={diffuse ? [df.pillLabel, { color: dTheme.colors.ink3 }] : [styles.timeChipLabel, { color: colors.textMuted }]}>{label}</Text>
+        <Text style={diffuse ? [df.pillValue, { color: inkText }] : [styles.timeChipValue, { color: inkText }]}>{formatTimeLabel(value)}</Text>
       </Pressable>
       {showPicker && (
-        <View style={[styles.datePickerWrap, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
+        <View style={diffuse
+          ? [styles.datePickerWrap, { backgroundColor: pickerBg, borderColor: pickerBorder, borderRadius: 20 }]
+          : [styles.datePickerWrap, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
           <DateTimePicker
             value={dateVal}
             mode="time"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            themeVariant={isDark ? 'dark' : 'light'}
+            themeVariant={(diffuse ? dTheme.isDark : isDark) ? 'dark' : 'light'}
             minuteInterval={5}
             onChange={(e, d) => {
               if (Platform.OS === 'android') {
@@ -634,8 +944,10 @@ function TimeChip({
             }}
           />
           {Platform.OS === 'ios' && (
-            <Pressable onPress={confirmTime} style={[styles.datePickerDone, { borderColor: (isDark ? colors.border : INK) }]}>
-              <Text style={[styles.datePickerDoneText, { color: colors.primary }]}>{t('common_done')}</Text>
+            <Pressable onPress={confirmTime} style={[styles.datePickerDone, { borderColor: pickerBorder }]}>
+              <Text style={diffuse
+                ? [df.pillValue, { color: dTheme.colors.ink, letterSpacing: 2, textTransform: 'uppercase' }]
+                : [styles.datePickerDoneText, { color: colors.primary }]}>{t('common_done')}</Text>
             </Pressable>
           )}
         </View>
@@ -695,8 +1007,10 @@ const EAT_QUALITY_DEFS: { id: EatQuality; labelKey: TranslationKey; sticker: 'sm
 ]
 
 export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
+  const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
   const MEAL_MOMENTS = MEAL_MOMENT_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
@@ -1177,6 +1491,415 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
     } finally {
       setSaving(false)
     }
+  }
+
+  if (diffuse) {
+    const dc = dTheme.colors
+    return (
+      <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
+        <View style={df.form}>
+          <View style={df.topRow}>
+            <ChildSelector selected={childId} onSelect={setChildId} />
+            <View style={df.dateTimeRow}>
+              <DateChip value={logDate} onChange={setLogDate} />
+              <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
+            </View>
+          </View>
+
+          <DiffuseFormHeader kind="feeding" />
+
+          {/* Feed type — hairline mono segmented pills */}
+          <View style={df.segRow}>
+            {(['breast', 'bottle', 'solids'] as FeedingType[]).map((ft) => {
+              const on = feedType === ft
+              return (
+                <Pressable
+                  key={ft}
+                  onPress={() => setFeedType(ft)}
+                  style={[df.segPill, { borderColor: on ? dc.hairline : dc.line, backgroundColor: on ? dc.surface : 'transparent' }]}
+                >
+                  <Text style={[on ? df.chipTextOn : df.chipText, { color: on ? dc.ink : dc.ink3 }]}>
+                    {ft.charAt(0).toUpperCase() + ft.slice(1)}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+
+          {feedType === 'solids' ? (
+            <>
+              {/* Meal moment */}
+              <View style={df.chipGrid}>
+                {MEAL_MOMENTS.map((m) => (
+                  <DiffuseChip key={m.id} label={m.label} active={meal === m.id} onPress={() => setMeal(m.id)} />
+                ))}
+              </View>
+
+              {/* Photo area */}
+              <DiffusePhotoRow
+                photos={photos}
+                onRemove={(i) => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+                onCamera={takePhoto}
+                onGallery={pickPhoto}
+              />
+
+              {/* Scan plate — containerless mono action on a hairline rule */}
+              <Pressable
+                onPress={() =>
+                  Alert.alert(t('kids_logForm_alertScanPlate'), t('kids_logForm_alertScanPlate'), [
+                    { text: t('kids_logForm_cancel'), style: 'cancel' },
+                    { text: t('kids_logForm_alertTakePhoto'), onPress: () => scanPlate('camera') },
+                    { text: t('kids_logForm_alertFromLibrary'), onPress: () => scanPlate('library') },
+                  ])
+                }
+                disabled={scanningPlate}
+                style={({ pressed }) => [df.saveCta, { borderTopColor: dc.line2, opacity: pressed ? 0.6 : 1 }]}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  {scanningPlate ? <ActivityIndicator size="small" color={dc.ink} /> : <ScanLine size={16} color={dc.ink} strokeWidth={2.2} />}
+                  <Text style={[df.saveCtaLabel, { color: dc.ink }]}>
+                    {scanningPlate ? t('kids_logForm_readingPlate') : t('kids_logForm_scanPlate')}
+                  </Text>
+                </View>
+                <Sparkles size={14} color={dc.ink3} strokeWidth={2} />
+              </Pressable>
+
+              {/* Food tag input + live calorie estimate */}
+              <View style={{ gap: 10 }}>
+                {foodTags.length > 0 && (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {foodTags.map((tag, i) => {
+                      const loading = aiLoadingIdx.has(i)
+                      const known = tag.match !== null || tag.manualCals !== null
+                      const bColor = loading ? dc.ink3 : known ? dc.success : dc.error
+                      return (
+                        <View key={`${tag.name}-${i}`} style={[df.chip, { borderColor: bColor, backgroundColor: 'transparent' }]}>
+                          {loading
+                            ? <ActivityIndicator size="small" color={dc.ink3} />
+                            : known
+                              ? <Check size={12} color={dc.success} strokeWidth={3} />
+                              : (
+                                <Pressable onPress={() => { setManualCalIdx(i); setManualCalInput('') }} hitSlop={8}>
+                                  <AlertTriangle size={12} color={dc.error} strokeWidth={2.5} />
+                                </Pressable>
+                              )}
+                          <Text style={[df.chipText, { color: dc.ink }]}>{tag.name}</Text>
+                          <Pressable onPress={() => setFoodTags((prev) => prev.filter((_, idx) => idx !== i))} hitSlop={8}>
+                            <X size={12} color={dc.ink3} strokeWidth={2.5} />
+                          </Pressable>
+                        </View>
+                      )
+                    })}
+                  </View>
+                )}
+                <DiffuseField
+                  value={foodInput}
+                  onChangeText={setFoodInput}
+                  placeholder={foodTags.length === 0 ? t('kids_logForm_placeholderFood') : t('kids_logForm_placeholderAddFood')}
+                  returnKeyType="done"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => {
+                    const trimmed = foodInput.trim()
+                    if (!trimmed) return
+                    const lower = trimmed.toLowerCase()
+                    const match = matchSingleTag(trimmed)
+                    setFoodTags((prev) => {
+                      if (prev.some((tg) => tg.name.trim().toLowerCase() === lower)) {
+                        setFoodInput('')
+                        return prev
+                      }
+                      const idx = prev.length
+                      if (!match) enrichTagWithAi(idx, trimmed)
+                      return [...prev, { name: trimmed, match, manualCals: null }]
+                    })
+                    setFoodInput('')
+                  }}
+                />
+                {calorieMatches.length > 0 && (
+                  <View style={{ paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: dc.line, gap: 6 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Utensils size={13} color={dc.ink3} strokeWidth={2} />
+                      <Text style={[df.eyebrow, { color: dc.ink2 }]}>
+                        {t('kids_logForm_kcalEstimated', { count: totalEstimatedCals })}
+                      </Text>
+                    </View>
+                    <View style={{ gap: 4 }}>
+                      {calorieMatches.map((m, i) => (
+                        <View key={`${m.food}-${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: categoryColor(m.category) }} />
+                          <Text style={{ flex: 1, color: dc.ink, fontFamily: diffuseFont.body, fontSize: 13 }}>
+                            {m.food.charAt(0).toUpperCase() + m.food.slice(1)}
+                          </Text>
+                          <Text style={{ color: dc.ink3, fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 0.5 }}>
+                            {t('kids_logForm_calUnit', { n: m.cals })}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {/* Manual kcal popup */}
+                <Modal visible={manualCalIdx !== null} transparent animationType="fade" onRequestClose={() => setManualCalIdx(null)}>
+                  <Pressable style={[styles.popupBackdrop, { backgroundColor: 'rgba(20,19,19,0.6)' }]} onPress={() => setManualCalIdx(null)} />
+                  <View style={[styles.manualCalPopup, { backgroundColor: dc.surface, borderRadius: 20, borderColor: dc.line2 }]}>
+                    <Text style={{ color: dc.ink, fontFamily: diffuseFont.display, fontSize: 20, letterSpacing: -0.3, marginBottom: 4 }}>
+                      {t('kids_logForm_unknownFood')}
+                    </Text>
+                    <Text style={{ color: dc.ink3, fontFamily: diffuseFont.body, fontSize: 13, lineHeight: 18 }}>
+                      {'"'}{manualCalIdx !== null ? foodTags[manualCalIdx]?.name : ''}{'"'} {t('kids_logForm_notFoundInDb')}
+                    </Text>
+                    <View style={{ marginTop: 12 }}>
+                      <DiffuseField value={manualCalInput} onChangeText={setManualCalInput} placeholder="e.g. 120" keyboardType="number-pad" autoFocus />
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 20, marginTop: 18, justifyContent: 'flex-end' }}>
+                      <Pressable onPress={() => setManualCalIdx(null)}>
+                        <Text style={[df.txtlinkText, { color: dc.ink3 }]}>{t('kids_logForm_skip')}</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => {
+                          const n = parseInt(manualCalInput, 10)
+                          if (!isNaN(n) && n > 0 && manualCalIdx !== null) {
+                            setFoodTags((prev) => prev.map((tg, i) => i === manualCalIdx ? { ...tg, manualCals: n } : tg))
+                          }
+                          setManualCalIdx(null)
+                          setManualCalInput('')
+                        }}
+                      >
+                        <Text style={[df.txtlinkText, { color: dc.ink }]}>{t('common_confirm')}</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </Modal>
+              </View>
+
+              {/* Eat quality — sticker over hairline circle */}
+              <View style={df.qualityRow}>
+                {EAT_QUALITIES.map((q) => {
+                  const active = quality === q.id
+                  const StickerNode =
+                    q.sticker === 'smiley' ? <Smiley size={28} /> :
+                    q.sticker === 'sleepy' ? <Sleepy size={28} /> :
+                    <Sad size={28} />
+                  return (
+                    <Pressable key={q.id} onPress={() => setQuality(q.id)} style={df.qualityBtn}>
+                      <View style={[df.qualityCircle, { borderColor: active ? dc.hairline : dc.line2, backgroundColor: active ? dc.surface : 'transparent' }]}>
+                        {StickerNode}
+                      </View>
+                      <Text style={[df.qualityLabel, { color: active ? dc.ink : dc.ink3 }]}>{q.label}</Text>
+                    </Pressable>
+                  )
+                })}
+              </View>
+
+              {/* Flags */}
+              <View style={df.chipGrid}>
+                <DiffuseChip
+                  label={t('kids_logForm_newFood')}
+                  active={isNewFood}
+                  onPress={() => setIsNewFood(!isNewFood)}
+                  hue={dTheme.stickers.blue}
+                  leading={<Baby size={14} color={isNewFood ? dc.ink : dc.ink3} strokeWidth={2} />}
+                />
+                <DiffuseChip
+                  label={t('kids_logForm_reaction')}
+                  active={hasReaction}
+                  onPress={() => setHasReaction(!hasReaction)}
+                  hue={dc.error}
+                  leading={<AlertTriangle size={14} color={hasReaction ? dc.error : dc.ink3} strokeWidth={2} />}
+                />
+              </View>
+
+              {/* New food expanded */}
+              {isNewFood && (
+                <DiffuseField label={t('kids_logForm_whatNewFood')} value={newFoodName} onChangeText={setNewFoodName} placeholder={t('kids_logForm_placeholderNewFood')} />
+              )}
+
+              {/* Reaction expanded */}
+              {hasReaction && (
+                <View style={{ gap: 14 }}>
+                  <DiffuseField label={t('kids_logForm_reactionDetails')} value={reactionFood} onChangeText={setReactionFood} placeholder={t('kids_logForm_placeholderAllergyFood')} />
+                  <DiffuseField value={reactionDesc} onChangeText={setReactionDesc} placeholder={t('kids_logForm_placeholderAllergyReaction')} multiline />
+                </View>
+              )}
+            </>
+          ) : feedType === 'breast' ? (
+            <>
+              {/* Last side reminder */}
+              {!timerActive && (lastSideLoading ? (
+                <ActivityIndicator size="small" color={dc.ink3} style={{ alignSelf: 'flex-start' }} />
+              ) : lastSide ? (
+                <View style={{ paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: dc.line }}>
+                  <Text style={{ color: dc.ink2, fontFamily: diffuseFont.body, fontSize: 13, lineHeight: 20 }}>
+                    {t('kids_logForm_lastSidePre')}
+                    <Text style={{ fontFamily: diffuseFont.bodyBold, color: dc.ink }}>
+                      {lastSide === 'left' ? t('kids_logForm_left') : lastSide === 'right' ? t('kids_logForm_right') : t('kids_logForm_bothSides')}
+                    </Text>
+                    {t('kids_logForm_lastSideMid')}
+                    <Text style={{ fontFamily: diffuseFont.bodyBold, color: dc.ink }}>
+                      {lastSide === 'left' ? t('kids_logForm_right') : lastSide === 'right' ? t('kids_logForm_left') : t('kids_logForm_alternating')}
+                    </Text>
+                    {t('kids_logForm_lastSidePost')}
+                  </Text>
+                </View>
+              ) : null)}
+
+              {timerActive ? (
+                /* LIVE TIMER MODE */
+                <View style={{ alignItems: 'center', gap: 16, paddingVertical: 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={styles.breastIcon}>
+                      <View style={[styles.breastShape, styles.breastShapeL, {
+                        backgroundColor: timerSide === 'left' ? dc.ink + '18' : 'transparent',
+                        borderColor: timerSide === 'left' ? dc.hairline : dc.line2,
+                      }]}>
+                        {timerSide === 'left' && <View style={[styles.breastNipple, { backgroundColor: dc.ink }]} />}
+                      </View>
+                      <View style={[styles.breastShape, styles.breastShapeR, {
+                        backgroundColor: timerSide === 'right' ? dc.ink + '18' : 'transparent',
+                        borderColor: timerSide === 'right' ? dc.hairline : dc.line2,
+                      }]}>
+                        {timerSide === 'right' && <View style={[styles.breastNipple, { backgroundColor: dc.ink }]} />}
+                      </View>
+                    </View>
+                    <Text style={{ color: dc.ink, fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase' }}>
+                      {timerSide === 'left' ? t('kids_logForm_leftSide') : t('kids_logForm_rightSide')}
+                    </Text>
+                  </View>
+
+                  <Text style={{ color: dc.ink, fontSize: 56, letterSpacing: 1, fontVariant: ['tabular-nums'], fontFamily: diffuseFont.display }}>
+                    {formatTimer(timerSeconds)}
+                  </Text>
+
+                  <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+                    {(['left', 'right'] as const).map((side) => {
+                      const secs = side === 'left' ? leftSeconds : rightSeconds
+                      const on = timerSide === side
+                      return (
+                        <View key={side} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderWidth: 1, borderRadius: 999, borderColor: on ? dc.hairline : dc.line }}>
+                          <Text style={{ color: on ? dc.ink : dc.ink3, fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 1 }}>{side === 'left' ? t('kids_logForm_timerLabelL') : t('kids_logForm_timerLabelR')}</Text>
+                          <Text style={{ color: on ? dc.ink : dc.ink3, fontFamily: diffuseFont.mono, fontSize: 13, fontVariant: ['tabular-nums'] }}>{formatTimer(secs)}</Text>
+                        </View>
+                      )
+                    })}
+                  </View>
+
+                  {switchAlertShown && (
+                    <View style={{ width: '100%', paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: dc.line, alignItems: 'center' }}>
+                      <Text style={{ color: dc.ink2, fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 0.8, textAlign: 'center' }}>
+                        {t('kids_logForm_switchAlert', { min: switchTargetMin })}
+                      </Text>
+                    </View>
+                  )}
+
+                  <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
+                    <Pressable onPress={switchSide} style={({ pressed }) => [{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderWidth: 1, borderRadius: 999, borderColor: dc.line2, opacity: pressed ? 0.7 : 1 }]}>
+                      <Repeat size={16} color={dc.ink} strokeWidth={2} />
+                      <Text style={{ color: dc.ink, fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase' }}>{t('kids_logForm_switchSide')}</Text>
+                    </Pressable>
+                    <Pressable onPress={stopTimer} style={({ pressed }) => [{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderWidth: 1, borderRadius: 999, borderColor: dc.hairline, opacity: pressed ? 0.7 : 1 }]}>
+                      <Check size={16} color={dc.ink} strokeWidth={2.5} />
+                      <Text style={{ color: dc.ink, fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase' }}>{t('common_done')}</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                /* START MODE */
+                <>
+                  <Text style={[df.eyebrow, { color: dc.ink3 }]}>{t('kids_logForm_tapToStart')}</Text>
+                  <View style={df.segRow}>
+                    {([
+                      { id: 'left' as const, label: t('kids_logForm_left') },
+                      { id: 'right' as const, label: t('kids_logForm_right') },
+                    ]).map((s) => {
+                      const isRecommended = lastSide && (
+                        (lastSide === 'left' && s.id === 'right') ||
+                        (lastSide === 'right' && s.id === 'left')
+                      )
+                      return (
+                        <Pressable
+                          key={s.id}
+                          onPress={() => startTimer(s.id)}
+                          style={({ pressed }) => [{ flex: 1, alignItems: 'center', gap: 8, paddingVertical: 16, borderWidth: 1, borderRadius: 20, borderColor: isRecommended ? dc.hairline : dc.line, opacity: pressed ? 0.7 : 1 }]}
+                        >
+                          <View style={styles.breastIcon}>
+                            <View style={[styles.breastShape, styles.breastShapeL, { backgroundColor: s.id === 'left' ? dc.ink + '14' : 'transparent', borderColor: s.id === 'left' ? dc.hairline : dc.line2 }]}>
+                              {s.id === 'left' && <View style={[styles.breastNipple, { backgroundColor: dc.ink }]} />}
+                            </View>
+                            <View style={[styles.breastShape, styles.breastShapeR, { backgroundColor: s.id === 'right' ? dc.ink + '14' : 'transparent', borderColor: s.id === 'right' ? dc.hairline : dc.line2 }]}>
+                              {s.id === 'right' && <View style={[styles.breastNipple, { backgroundColor: dc.ink }]} />}
+                            </View>
+                          </View>
+                          <Text style={{ color: dc.ink, fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' }}>{s.label}</Text>
+                          {isRecommended && (
+                            <Text style={{ color: dc.ink3, fontFamily: diffuseFont.mono, fontSize: 8, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_logForm_labelNext')}</Text>
+                          )}
+                        </Pressable>
+                      )
+                    })}
+                  </View>
+
+                  {/* Switch target */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: dc.line }}>
+                    <Clock size={14} color={dc.ink3} strokeWidth={2} />
+                    <Text style={{ flex: 1, color: dc.ink3, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_logForm_alertToSwitch')}</Text>
+                    {[10, 15, 20].map((min) => {
+                      const active = switchTargetMin === min
+                      return (
+                        <Pressable
+                          key={min}
+                          onPress={() => setSwitchTargetMin(min)}
+                          style={{ paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderRadius: 999, borderColor: active ? dc.hairline : dc.line, backgroundColor: active ? dc.surface : 'transparent' }}
+                        >
+                          <Text style={{ color: active ? dc.ink : dc.ink3, fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 11 }}>
+                            {t('kids_logForm_minUnit', { n: min })}
+                          </Text>
+                        </Pressable>
+                      )
+                    })}
+                  </View>
+
+                  {/* Divider */}
+                  <View style={df.divider}>
+                    <View style={[df.dividerLine, { backgroundColor: dc.line }]} />
+                    <Text style={[df.dividerText, { color: dc.ink3 }]}>{t('kids_logForm_orLogManually')}</Text>
+                    <View style={[df.dividerLine, { backgroundColor: dc.line }]} />
+                  </View>
+
+                  {/* Manual side selection */}
+                  <View style={df.segRow}>
+                    {([
+                      { id: 'left' as const, label: t('kids_logForm_left') },
+                      { id: 'right' as const, label: t('kids_logForm_right') },
+                      { id: 'both' as const, label: t('kids_logForm_bothSides') },
+                    ]).map((s) => {
+                      const active = breastSide === s.id
+                      return (
+                        <Pressable
+                          key={s.id}
+                          onPress={() => setBreastSide(s.id)}
+                          style={[df.segPill, { borderColor: active ? dc.hairline : dc.line, backgroundColor: active ? dc.surface : 'transparent' }]}
+                        >
+                          <Text style={[active ? df.chipTextOn : df.chipText, { color: active ? dc.ink : dc.ink3 }]}>{s.label}</Text>
+                        </Pressable>
+                      )
+                    })}
+                  </View>
+
+                  <DiffuseField value={duration} onChangeText={setDuration} placeholder={t('kids_logForm_placeholderDuration')} keyboardType="number-pad" />
+                </>
+              )}
+            </>
+          ) : (
+            /* Bottle */
+            <DiffuseField value={amount} onChangeText={setAmount} placeholder={t('kids_logForm_placeholderAmount')} keyboardType="number-pad" />
+          )}
+
+          <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
+          <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={prefill?.routineId ? onSkip : undefined} />
+        </View>
+      </ScrollView>
+    )
   }
 
   return (
@@ -1770,8 +2493,10 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 // ─── 2. SLEEP FORM ─────────────────────────────────────────────────────────
 
 export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
+  const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
@@ -1874,6 +2599,44 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
     }
   }
 
+  if (diffuse) {
+    return (
+      <View style={df.form}>
+        <View style={df.topRow}>
+          <ChildSelector selected={childId} onSelect={setChildId} />
+          <View style={df.dateTimeRow}>
+            <DateChip value={logDate} onChange={setLogDate} />
+            <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_start')} />
+            {endTime ? (
+              <TimeChip value={endTime} onChange={setEndTime} label={t('kids_logForm_end')} />
+            ) : (
+              <Pressable onPress={() => setEndTime(toTimeStr(new Date()))} style={[df.pill, { borderColor: dTheme.colors.line }]}>
+                <Plus size={12} color={dTheme.colors.ink3} strokeWidth={2} />
+                <Text style={[df.pillLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_end')}</Text>
+              </Pressable>
+            )}
+          </View>
+        </View>
+        <DiffuseFormHeader kind="sleep" />
+        {autoDuration !== '' && (
+          <View style={[df.banner, { borderColor: dTheme.colors.line }]}>
+            <Moon size={18} color={dTheme.colors.ink3} strokeWidth={2} />
+            <Text style={[df.bannerLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_sleepSession')}</Text>
+            <Text style={[df.bannerValue, { color: dTheme.colors.ink }]}>{autoDuration}</Text>
+          </View>
+        )}
+        <View style={df.chipGrid}>
+          {qualities.map((q) => (
+            <DiffuseChip key={q} label={q} active={quality === q} onPress={() => setQuality(q)} />
+          ))}
+        </View>
+        <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
+        <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
+        <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={prefill?.routineId ? onSkip : undefined} />
+      </View>
+    )
+  }
+
   return (
     <View style={styles.form}>
       <View style={styles.topRow}>
@@ -1938,8 +2701,10 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
 const HEALTH_EVENTS = ['Temperature', 'Vaccine', 'Medicine', 'Doctor visit', 'Injury', 'Other']
 
 export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
+  const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
@@ -2047,6 +2812,34 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
     }
   }
 
+  if (diffuse) {
+    return (
+      <View style={df.form}>
+        <View style={df.topRow}>
+          <ChildSelector selected={childId} onSelect={setChildId} />
+          <View style={df.dateTimeRow}>
+            <DateChip value={logDate} onChange={setLogDate} />
+            <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
+          </View>
+        </View>
+        <DiffuseFormHeader kind="health" />
+        <View style={df.chipGrid}>
+          {HEALTH_EVENTS.map((e) => (
+            <DiffuseChip key={e} label={e} active={eventType === e} onPress={() => setEventType(e)} />
+          ))}
+        </View>
+        <DiffuseField
+          value={value}
+          onChangeText={setValue}
+          placeholder={eventType === 'Temperature' ? t('kids_logForm_placeholderTemp') : t('kids_logForm_placeholderDetails')}
+          keyboardType={eventType === 'Temperature' ? 'decimal-pad' : 'default'}
+        />
+        <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
+        <SaveButton onPress={save} saving={saving} disabled={!childId || !eventType} onSkip={prefill?.routineId ? onSkip : undefined} />
+      </View>
+    )
+  }
+
   return (
     <View style={styles.form}>
       <View style={styles.topRow}>
@@ -2108,8 +2901,10 @@ const MOOD_DEFS: { id: 'happy' | 'calm' | 'fussy' | 'cranky' | 'energetic'; labe
 ]
 
 export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
+  const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
   const MOODS = MOOD_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
@@ -2184,6 +2979,37 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
     }
   }
 
+  if (diffuse) {
+    return (
+      <View style={df.form}>
+        <View style={df.topRow}>
+          <ChildSelector selected={childId} onSelect={setChildId} />
+          <View style={df.dateTimeRow}>
+            <DateChip value={logDate} onChange={setLogDate} />
+            <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
+          </View>
+        </View>
+        <DiffuseFormHeader kind="mood" />
+        <View style={df.moodRow}>
+          {MOODS.map((m) => {
+            const active = mood === m.id
+            return (
+              <Pressable key={m.id} onPress={() => setMood(m.id)} style={df.moodBtn}>
+                <View style={[df.moodCircle, { borderColor: active ? dTheme.colors.hairline : dTheme.colors.line2, backgroundColor: active ? m.fill + '22' : 'transparent' }]}>
+                  <MoodFace variant={m.id} fill={m.fill} size={40} />
+                </View>
+                <Text style={[df.moodLabel, { color: active ? dTheme.colors.ink : dTheme.colors.ink3 }]}>{m.label}</Text>
+              </Pressable>
+            )
+          })}
+        </View>
+        <DiffuseField label={t('kids_logForm_placeholderWhatHappened')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderWhatHappened')} />
+        <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
+        <SaveButton onPress={save} saving={saving} disabled={!childId || !mood} onSkip={prefill?.routineId ? onSkip : undefined} />
+      </View>
+    )
+  }
+
   return (
     <View style={styles.form}>
       <View style={styles.topRow}>
@@ -2228,8 +3054,10 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
 // ─── 5. MEMORY FORM ────────────────────────────────────────────────────────
 
 export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; initialDate?: string }) {
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
+  const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
@@ -2301,6 +3129,29 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
     }
   }
 
+  if (diffuse) {
+    return (
+      <View style={df.form}>
+        <View style={df.topRow}>
+          <ChildSelector selected={childId} onSelect={setChildId} />
+          <View style={df.dateTimeRow}>
+            <DateChip value={logDate} onChange={setLogDate} />
+            <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
+          </View>
+        </View>
+        <DiffuseFormHeader kind="memory" />
+        <DiffusePhotoRow
+          photos={photos}
+          onRemove={(i) => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+          onCamera={takePhoto}
+          onGallery={pickPhoto}
+        />
+        <DiffuseField label={t('kids_logForm_placeholderCaption')} value={caption} onChangeText={setCaption} placeholder={t('kids_logForm_placeholderCaption')} />
+        <SaveButton onPress={save} saving={saving} disabled={!childId} />
+      </View>
+    )
+  }
+
   return (
     <View style={styles.form}>
       <View style={styles.topRow}>
@@ -2366,8 +3217,10 @@ const ACTIVITY_TYPE_DEFS: { id: string; labelKey: TranslationKey }[] = [
 ]
 
 export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
+  const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const ACTIVITY_TYPES = ACTIVITY_TYPE_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
 
@@ -2458,6 +3311,47 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
     } finally {
       setSaving(false)
     }
+  }
+
+  if (diffuse) {
+    return (
+      <ScrollView style={{ maxHeight: 500 }} showsVerticalScrollIndicator={false}>
+        <View style={df.form}>
+          <View style={df.topRow}>
+            <ChildSelector selected={childId} onSelect={setChildId} />
+            <View style={df.dateTimeRow}>
+              <DateChip value={logDate} onChange={setLogDate} />
+              <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_start')} />
+              {endTime ? (
+                <TimeChip value={endTime} onChange={setEndTime} label={t('kids_logForm_end')} />
+              ) : (
+                <Pressable onPress={() => setEndTime(toTimeStr(new Date()))} style={[df.pill, { borderColor: dTheme.colors.line }]}>
+                  <Plus size={12} color={dTheme.colors.ink3} strokeWidth={2} />
+                  <Text style={[df.pillLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_end')}</Text>
+                </Pressable>
+              )}
+            </View>
+          </View>
+          <DiffuseFormHeader kind="activity" />
+          {autoDuration !== '' && (
+            <View style={[df.banner, { borderColor: dTheme.colors.line }]}>
+              <Dumbbell size={18} color={dTheme.colors.ink3} strokeWidth={2} />
+              <Text style={[df.bannerLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_duration')}</Text>
+              <Text style={[df.bannerValue, { color: dTheme.colors.ink }]}>{autoDuration}</Text>
+            </View>
+          )}
+          <View style={df.chipGrid}>
+            {ACTIVITY_TYPES.map((a) => (
+              <DiffuseChip key={a.id} label={a.label} active={activityType === a.id} onPress={() => setActivityType(a.id)} />
+            ))}
+          </View>
+          <DiffuseField label={t('kids_logForm_placeholderActivityName')} value={name} onChangeText={setName} placeholder={t('kids_logForm_placeholderActivityName')} />
+          <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
+          <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
+          <SaveButton onPress={save} saving={saving} disabled={!childId || !activityType} onSkip={prefill?.routineId ? onSkip : undefined} />
+        </View>
+      </ScrollView>
+    )
   }
 
   return (
@@ -2560,8 +3454,10 @@ const DIAPER_CONSISTENCY_DEFS: { id: DiaperConsistency; labelKey: TranslationKey
 ]
 
 export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => void; initialDate?: string; editLog?: EditLog }) {
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
+  const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const DIAPER_TYPES = DIAPER_TYPE_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
   const DIAPER_COLORS = DIAPER_COLOR_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
@@ -2641,6 +3537,75 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
     } finally {
       setSaving(false)
     }
+  }
+
+  if (diffuse) {
+    return (
+      <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
+        <View style={df.form}>
+          <View style={df.topRow}>
+            <ChildSelector selected={childId} onSelect={setChildId} />
+            <View style={df.dateTimeRow}>
+              <DateChip value={logDate} onChange={setLogDate} />
+              <TimeChip value={logTime} onChange={setLogTime} label={t('kids_logForm_time')} />
+            </View>
+          </View>
+
+          <DiffuseFormHeader kind="diaper" />
+
+          {/* Diaper type */}
+          <View style={df.chipGrid}>
+            {DIAPER_TYPES.map((dt) => (
+              <DiffuseChip
+                key={dt.id}
+                label={dt.label}
+                active={diaperType === dt.id}
+                onPress={() => setDiaperType(dt.id)}
+                leading={<Text style={{ fontSize: 14 }}>{dt.emoji}</Text>}
+              />
+            ))}
+          </View>
+
+          {/* Poop details */}
+          {showPooDetails && (
+            <>
+              <Text style={[df.eyebrow, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_color')}</Text>
+              <View style={df.chipGrid}>
+                {DIAPER_COLORS.map((c) => (
+                  <DiffuseChip
+                    key={c.id}
+                    label={c.label}
+                    active={color === c.id}
+                    onPress={() => setColor(c.id)}
+                    hue={c.hex}
+                    leading={<View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.hex }} />}
+                  />
+                ))}
+              </View>
+
+              <Text style={[df.eyebrow, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_consistency')}</Text>
+              <View style={df.chipGrid}>
+                {DIAPER_CONSISTENCIES.map((c) => (
+                  <DiffuseChip key={c.id} label={c.label} active={consistency === c.id} onPress={() => setConsistency(c.id)} />
+                ))}
+              </View>
+            </>
+          )}
+
+          {/* Optional photo */}
+          <DiffusePhotoRow
+            photos={photos}
+            onRemove={(i) => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+            onCamera={takePhoto}
+            onGallery={pickPhoto}
+            max={1}
+          />
+
+          <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
+          <SaveButton onPress={save} saving={saving} disabled={!childId || !diaperType} />
+        </View>
+      </ScrollView>
+    )
   }
 
   return (
@@ -2774,8 +3739,10 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
   prefill?: RoutinePrefill
   onSkip?: () => void
 }) {
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const { colors, radius } = useTheme()
+  const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
 
@@ -2878,6 +3845,63 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
     }
   }
 
+  if (diffuse) {
+    return (
+      <View style={df.form}>
+        <ChildSelector selected={childId} onSelect={setChildId} />
+        <DiffuseFormHeader kind="wakeup" />
+
+        {loading ? (
+          <ActivityIndicator color={dTheme.colors.ink3} style={{ marginVertical: 24 }} />
+        ) : openLog ? (
+          <>
+            {/* Bedtime summary — hairline row */}
+            <View style={{ gap: 6, paddingVertical: 14, borderTopWidth: 1, borderBottomWidth: 1, borderColor: dTheme.colors.line }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Moon size={15} color={dTheme.colors.ink3} strokeWidth={2} />
+                <Text style={{ color: dTheme.colors.ink, fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                  {openLog.routineName ?? t('kids_logForm_sleepSession')}{t('kids_logForm_separator')}{formatTimeLabel(openLog.startTime)}
+                </Text>
+              </View>
+              <Text style={{ color: dTheme.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.8 }}>
+                {bedtimeAgo()}
+              </Text>
+            </View>
+
+            {/* Wake-up time picker */}
+            <View style={df.topRow}>
+              <View style={df.dateTimeRow}>
+                <TimeChip value={wakeTime} onChange={setWakeTime} label={t('kids_logForm_wakeUp')} />
+              </View>
+            </View>
+
+            {/* Duration preview — serif hero number over hairline rule */}
+            {sleepDuration ? (
+              <View style={{ paddingVertical: 18, alignItems: 'center', borderTopWidth: 1, borderColor: dTheme.colors.line }}>
+                <Text style={{ color: dTheme.colors.ink, fontSize: 44, letterSpacing: -1, lineHeight: 48, fontFamily: diffuseFont.display }}>{sleepDuration}</Text>
+                <Text style={{ color: dTheme.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 10, marginTop: 6, letterSpacing: 1.5, textTransform: 'uppercase' }}>{t('kids_logForm_totalSleep')}</Text>
+              </View>
+            ) : null}
+
+            <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={onSkip} />
+          </>
+        ) : (
+          <View style={{ paddingVertical: 28, alignItems: 'center', gap: 12 }}>
+            <View style={[df.headerIcon, { width: 64, height: 64, borderRadius: 32, borderColor: dTheme.colors.line2 }]}>
+              <Moon size={28} color={dTheme.colors.ink3} strokeWidth={1.5} />
+            </View>
+            <Text style={{ color: dTheme.colors.ink, fontFamily: diffuseFont.display, fontSize: 20, textAlign: 'center', letterSpacing: -0.3 }}>
+              {t('kids_logForm_noBedtimeFound')}
+            </Text>
+            <Text style={{ color: dTheme.colors.ink3, fontFamily: diffuseFont.body, fontSize: 14, textAlign: 'center', lineHeight: 20, maxWidth: 280 }}>
+              {t('kids_logForm_logBedtimeFirst')}
+            </Text>
+          </View>
+        )}
+      </View>
+    )
+  }
+
   return (
     <View style={styles.form}>
       <ChildSelector selected={childId} onSelect={setChildId} />
@@ -2934,9 +3958,41 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
 
 // ─── Save Button ───────────────────────────────────────────────────────────
 
+/** Diffuse save CTA — containerless mono-caps label + arrow on a top hairline
+ *  rule (the .solid vocabulary). Skip = quiet mono text link above. */
+function DiffuseSaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void; saving: boolean; disabled?: boolean; onSkip?: () => void }) {
+  const { colors } = useDiffuseTheme()
+  const { t } = useTranslation()
+  return (
+    <View style={{ marginTop: 4 }}>
+      {onSkip && (
+        <Pressable onPress={onSkip} disabled={saving} style={({ pressed }) => [df.txtlink, { opacity: saving ? 0.4 : pressed ? 0.6 : 1 }]}>
+          <Text style={[df.txtlinkText, { color: colors.ink3 }]}>{t('kids_logForm_skipThisTime')}</Text>
+        </Pressable>
+      )}
+      <Pressable
+        onPress={onPress}
+        disabled={saving || disabled}
+        style={({ pressed }) => [df.saveCta, { borderTopColor: disabled ? colors.line : colors.line2, opacity: pressed && !disabled ? 0.6 : 1 }]}
+      >
+        <Text style={[df.saveCtaLabel, { color: disabled ? colors.ink4 : colors.ink }]}>{t('common_save')}</Text>
+        {saving
+          ? <ActivityIndicator size="small" color={colors.ink} />
+          : <DiffuseArrow color={disabled ? colors.ink4 : colors.ink} size={20} />}
+      </Pressable>
+    </View>
+  )
+}
+
 function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void; saving: boolean; disabled?: boolean; onSkip?: () => void }) {
+  const diffuse = useIsDiffuse()
   const { colors, isDark } = useTheme()
   const { t } = useTranslation()
+
+  if (diffuse) {
+    return <DiffuseSaveButton onPress={onPress} saving={saving} disabled={disabled} onSkip={onSkip} />
+  }
+
   return (
     <View style={{ gap: 10, marginTop: 4 }}>
       {onSkip && (

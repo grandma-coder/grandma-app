@@ -2118,13 +2118,16 @@ export function KidsHome() {
             ? { color: dt.colors.ink, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
             : { color: colors.text }]}>{t('kids_home_section_reminders')}</Text>
           {reminders.length > 0 ? (
-            <View style={{
-              paddingHorizontal: 8,
-              paddingVertical: 2,
-              borderRadius: 999,
+            <View style={diffuse ? {
+              paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
+              borderWidth: 1, borderColor: dt.colors.line2,
+            } : {
+              paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
               backgroundColor: brand.kids + '18',
             }}>
-              <Text style={{ fontSize: 11, fontFamily: font.bodyBold, color: brand.kids, letterSpacing: 0.3 }}>
+              <Text style={diffuse
+                ? { fontSize: 10, fontFamily: diffuseFont.monoBold, color: dt.colors.ink3, letterSpacing: 0.5 }
+                : { fontSize: 11, fontFamily: font.bodyBold, color: brand.kids, letterSpacing: 0.3 }}>
                 {reminders.filter(r => !r.done).length}
               </Text>
             </View>
@@ -2134,18 +2137,26 @@ export function KidsHome() {
           {reminders.length > 0 ? (
             <Pressable
               onPress={() => setRemindersModalVisible(true)}
-              style={[s.addReminderBtn, { backgroundColor: 'rgba(20,19,19,0.05)', borderRadius: radius.full }]}
+              style={[s.addReminderBtn, diffuse
+                ? { borderWidth: 1, borderColor: dt.colors.line, borderRadius: radius.full }
+                : { backgroundColor: 'rgba(20,19,19,0.05)', borderRadius: radius.full }]}
               hitSlop={6}
             >
-              <Text style={[s.addReminderBtnText, { color: colors.textSecondary }]}>{t('kids_home_reminders_view_all')}</Text>
+              <Text style={[s.addReminderBtnText, diffuse
+                ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 10 }
+                : { color: colors.textSecondary }]}>{t('kids_home_reminders_view_all')}</Text>
             </Pressable>
           ) : null}
           <Pressable
             onPress={() => { setShowReminderInput(!showReminderInput); setNewReminderText('') }}
-            style={[s.addReminderBtn, { backgroundColor: brand.kids + '15', borderRadius: radius.full }]}
+            style={[s.addReminderBtn, diffuse
+              ? { borderWidth: 1, borderColor: dt.colors.line, borderRadius: radius.full }
+              : { backgroundColor: brand.kids + '15', borderRadius: radius.full }]}
           >
-            <Plus size={13} color={brand.kids} strokeWidth={2.5} />
-            <Text style={[s.addReminderBtnText, { color: brand.kids }]}>{t('kids_home_reminders_add_btn')}</Text>
+            <Plus size={13} color={diffuse ? dt.colors.ink3 : brand.kids} strokeWidth={diffuse ? 1.8 : 2.5} />
+            <Text style={[s.addReminderBtnText, diffuse
+              ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 10 }
+              : { color: brand.kids }]}>{t('kids_home_reminders_add_btn')}</Text>
           </Pressable>
         </View>
       </View>
@@ -2484,7 +2495,21 @@ export function KidsHome() {
         allChildren={children}
       />
 
-      {/* ─── Ask Grandma (lavender soft + blue burst sticker) ──── */}
+      {/* ─── Ask Grandma ─────────────────────────────────────── */}
+      {diffuse ? (
+        <Pressable onPress={() => router.push('/grandma-talk' as any)} style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}>
+          <DiffuseFieldSurface mode="kids" isDark={isDark} intensity={0.32} radius={radius.lg} style={s.grandmaCard}>
+            <View style={{ opacity: 0.8 }}>
+              <SparkleSticker size={22} fill={stickers.yellow} stroke={dt.colors.ink} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: 19, color: dt.colors.ink, letterSpacing: -0.3 }}>{t('kids_home_grandma_cta_title')}</Text>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 4 }}>{t('kids_home_grandma_cta_desc1')}</Text>
+            </View>
+            <ChevronRight size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+          </DiffuseFieldSurface>
+        </Pressable>
+      ) : (
       <Pressable
         onPress={() => router.push('/grandma-talk' as any)}
         style={({ pressed }) => [s.grandmaCard, { opacity: pressed ? 0.92 : 1 }]}
@@ -2506,8 +2531,38 @@ export function KidsHome() {
           <ChevronRight size={16} color="#141313" strokeWidth={2.5} />
         </View>
       </Pressable>
+      )}
 
-      {/* ─── Rewards Card (paper cream) ──────────────────────── */}
+      {/* ─── Rewards Card ────────────────────────────────────── */}
+      {diffuse ? (
+        <Pressable
+          onPress={() => router.push('/daily-rewards' as any)}
+          style={({ pressed }) => [s.rewardsCard, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderWidth: 1, opacity: pressed ? 0.9 : 1 }]}
+        >
+          <View style={[{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: dt.colors.line2, alignItems: 'center', justifyContent: 'center' }]}>
+            <StarSticker size={20} fill={stickers.yellow} stroke={dt.colors.ink} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 19, color: dt.colors.ink, letterSpacing: -0.3 }}>{t('kids_home_rewards_title')}</Text>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 4 }}>{t('kids_home_rewards_desc1')}</Text>
+          </View>
+          <View style={s.rewardsStats}>
+            <View style={s.rewardsStat}>
+              <FlameSticker size={14} fill={stickers.coral} stroke={dt.colors.ink} />
+              <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 13, color: dt.colors.ink }}>{currentStreak}</Text>
+            </View>
+            <View style={s.rewardsStat}>
+              <StarSticker size={14} fill={stickers.yellow} stroke={dt.colors.ink} />
+              <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 13, color: dt.colors.ink }}>{totalPoints}</Text>
+            </View>
+            <View style={s.rewardsStat}>
+              <Trophy size={13} color={stickers.green} strokeWidth={1.8} />
+              <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 13, color: dt.colors.ink }}>{earnedBadges.length}</Text>
+            </View>
+          </View>
+          <ChevronRight size={14} color={dt.colors.ink3} strokeWidth={1.6} />
+        </Pressable>
+      ) : (
       <Pressable
         onPress={() => router.push('/daily-rewards' as any)}
         style={({ pressed }) => [s.rewardsCard, { opacity: pressed ? 0.92 : 1 }]}
@@ -2537,6 +2592,7 @@ export function KidsHome() {
         </View>
         <ChevronRight size={14} color={colors.textMuted} strokeWidth={2.5} />
       </Pressable>
+      )}
 
       {/* ─── Detail Modals ───────────────────────────────────── */}
       {(() => {
@@ -6415,6 +6471,8 @@ function ReminderRow({
   onFlag?: () => void; allChildren?: ChildWithRole[]; isDragging?: boolean; dragHandleProps?: object
 }) {
   const { isDark, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const due = r.dueDate ? new Date(r.dueDate + 'T00:00:00') : null
@@ -6478,7 +6536,16 @@ function ReminderRow({
   const badgeIconColor = (r.done || r.flagged || isDueToday) ? '#141313' : isOverdue ? '#FFFFFF' : '#141313'
 
   return (
-    <View style={{
+    <View style={diffuse ? {
+      backgroundColor: dt.colors.surface,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: isOverdue ? dt.colors.error + '44' : dt.colors.line,
+      padding: 14,
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 10,
+    } : {
       backgroundColor: cardBg,
       borderRadius: 20,
       borderWidth: 1.5,
@@ -6494,7 +6561,7 @@ function ReminderRow({
     }}>
       {/* Drag handle */}
       <View style={{ paddingTop: 10, opacity: 0.22 }} {...(dragHandleProps ?? {})}>
-        <GripVertical size={13} color={colors.textMuted} strokeWidth={2} />
+        <GripVertical size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
       </View>
 
       {/* Tappable checkbox — clearly indicates "mark as done" */}
@@ -6504,7 +6571,13 @@ function ReminderRow({
         accessibilityState={{ checked: r.done }}
         accessibilityLabel={r.done ? t('kids_home_reminder_mark_not_done') : t('kids_home_reminder_mark_done')}
         hitSlop={6}
-        style={{
+        style={diffuse ? {
+          width: 30, height: 30, borderRadius: 15,
+          backgroundColor: r.done ? dt.colors.ink : 'transparent',
+          borderWidth: 1.5,
+          borderColor: r.done ? dt.colors.ink : dt.colors.line2,
+          alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1,
+        } : {
           width: 32, height: 32, borderRadius: 10,
           backgroundColor: r.done ? badgeBg : 'transparent',
           borderWidth: 2,
@@ -6521,7 +6594,7 @@ function ReminderRow({
           marginTop: 1,
         }}
       >
-        {r.done ? <Check size={16} color={badgeIconColor} strokeWidth={3} /> : null}
+        {r.done ? <Check size={16} color={diffuse ? dt.colors.bg : badgeIconColor} strokeWidth={3} /> : null}
       </Pressable>
 
       {/* Text + tags */}
@@ -6548,8 +6621,10 @@ function ReminderRow({
           <Text
             style={{
               fontSize: 15,
-              fontFamily: r.done ? 'DMSans_400Regular' : 'Fraunces_600SemiBold',
-              color: r.done ? colors.textMuted : (colors.text),
+              fontFamily: diffuse
+                ? (r.done ? diffuseFont.body : diffuseFont.display)
+                : (r.done ? 'DMSans_400Regular' : 'Fraunces_600SemiBold'),
+              color: r.done ? (diffuse ? dt.colors.ink3 : colors.textMuted) : (diffuse ? dt.colors.ink : colors.text),
               textDecorationLine: r.done ? 'line-through' : 'none',
               lineHeight: 21,
             }}
