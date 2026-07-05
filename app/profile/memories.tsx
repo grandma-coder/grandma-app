@@ -390,7 +390,7 @@ export default function MemoriesScreen() {
           </Pressable>
         )}
         <Text style={[styles.countText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-          {filtered.length === 1 ? t('memories_countOne', { count: filtered.length }) : t('memories_countMany', { count: filtered.length })} · {t('memories_photos', { count: totalPhotos })}
+          {`${filtered.length === 1 ? t('memories_countOne', { count: filtered.length }) : t('memories_countMany', { count: filtered.length })} ${t('common_dotSeparator')} ${t('memories_photos', { count: totalPhotos })}`}
         </Text>
       </View>
 
