@@ -18,6 +18,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, useDerivedValue, useAnimatedReaction,
   runOnJS, withDecay, withTiming, withSpring, cancelAnimation, Easing,
 } from 'react-native-reanimated'
+import { Droplet, Sprout, Flower2, Moon as MoonLine } from 'lucide-react-native'
 import { useTheme, motion, useDiffuseTheme, getModeField, getDiffuseAccent, diffuseFont } from '../../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
@@ -37,6 +38,17 @@ function diffusePhaseColor(phase: CyclePhase, field: [string, string, string, st
     case 'follicular':   return peach
     case 'ovulation':    return rose
     case 'luteal':       return lilac
+  }
+}
+
+// Thin Lucide line glyph per phase — the v4 icon treatment for the wheel.
+function DiffusePhaseGlyph({ phase, size, color }: { phase: CyclePhase; size: number; color: string }) {
+  const sw = 1.6
+  switch (phase) {
+    case 'menstruation': return <Droplet size={size} color={color} strokeWidth={sw} />
+    case 'follicular':   return <Sprout size={size} color={color} strokeWidth={sw} />
+    case 'ovulation':    return <Flower2 size={size} color={color} strokeWidth={sw} />
+    case 'luteal':       return <MoonLine size={size} color={color} strokeWidth={sw} />
   }
 }
 
@@ -498,11 +510,32 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
             {dots.map((d) => {
               const accentBg = diffuse ? diffusePhaseColor(d.phase, field) : phaseAccent(d.phase, stickers)
               if (diffuse) {
-                // Hairline dot per day; period (menstruation) days get a filled
-                // accent dot, the current day a stronger accent ring. Matches the
-                // dot-calendar / ring vocabulary — no sticker fill.
-                const isPeriod = d.phase === 'menstruation'
-                const dotSize = 9
+                // Every day is a soft phase-tinted dot so all four phases read
+                // around the ring (matching the legend). The SELECTED day grows
+                // into a bloom node carrying the phase line glyph — the v4
+                // "line glyph over a soft bloom" icon treatment.
+                const selected = d.day === selectedDay
+                const phaseHue = diffusePhaseColor(d.phase, field)
+                if (selected) {
+                  const node = 30
+                  return (
+                    <View
+                      key={d.day}
+                      style={{ position: 'absolute', left: d.bx - node / 2, top: d.by - node / 2, width: node, height: node, alignItems: 'center', justifyContent: 'center' }}
+                      pointerEvents="none"
+                    >
+                      <View pointerEvents="none" style={{ position: 'absolute', width: node * 1.7, height: node * 1.7 }}>
+                        <SoftBloom color={phaseHue} opacity={dt.isDark ? 0.5 : 0.6} spread={0.5} />
+                      </View>
+                      <View style={{ width: node, height: node, borderRadius: node / 2, borderWidth: 1.5, borderColor: diffuseAccent, backgroundColor: dt.colors.bg, alignItems: 'center', justifyContent: 'center' }}>
+                        <DiffusePhaseGlyph phase={d.phase} size={16} color={dt.colors.ink} />
+                      </View>
+                    </View>
+                  )
+                }
+                // Non-selected day: filled phase-tinted dot (past/current full,
+                // future softened). Small hairline ring on the current day.
+                const dotSize = d.state === 'today' ? 11 : 8
                 return (
                   <View
                     key={d.day}
@@ -513,10 +546,10 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                       width: dotSize,
                       height: dotSize,
                       borderRadius: dotSize / 2,
-                      borderWidth: 1,
-                      borderColor: d.state === 'today' ? diffuseAccent : dt.colors.line2,
-                      backgroundColor: isPeriod ? accentBg : (d.state === 'today' ? diffuseAccent : 'transparent'),
-                      opacity: d.state === 'future' ? 0.6 : 1,
+                      borderWidth: d.state === 'today' ? 1.5 : 0,
+                      borderColor: diffuseAccent,
+                      backgroundColor: phaseHue,
+                      opacity: d.state === 'future' ? 0.4 : 0.85,
                     }}
                     pointerEvents="none"
                   />
