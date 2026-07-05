@@ -33,7 +33,7 @@ import { getWeekStat, formatWeight } from '../../../lib/weekStats'
 import { getWeekContent, PrepItemDef } from '../../../lib/weekContent'
 import { getPrepGuide } from '../../../lib/prepGuide'
 import { StickerIcon } from './stickerIcons'
-import { AnimatedFruit } from './AnimatedFruit'
+import { BabyIllustration } from './babyIllustrations'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -118,7 +118,7 @@ function PrepDetailSheet({
           accessibilityLabel="Back to week details"
         >
           <ArrowLeft size={18} color={accent} strokeWidth={2} />
-          <Text style={[styles.prepBackText, { color: accent }]}>Back</Text>
+          <Text style={[styles.prepBackText, { color: accent }]}>{t('common_back')}</Text>
         </Pressable>
 
         <View style={[styles.prepDetailHeader, { backgroundColor: isDark ? colors.surface : 'rgba(20,19,19,0.04)' }]}>
@@ -257,9 +257,9 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                   <X size={18} color="#141313" strokeWidth={2.5} />
                 </Pressable>
 
-                {/* Animated baby-size illustration — proportional to actual size, like the WeekCard */}
+                {/* Static baby-size illustration — proportional to actual size, like the WeekCard */}
                 <View style={styles.heroFruit} pointerEvents="none">
-                  <AnimatedFruit week={week} size={fruitSize} />
+                  <BabyIllustration week={week} size={fruitSize} />
                 </View>
 
                 <Text style={[styles.heroLabel, { color: pal.metaFg }]}>
@@ -273,12 +273,12 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                     {article}{' '}
                     <Text style={styles.heroSizeBold}>{fruitName}</Text>
                   </Text>
-                  <Text style={[styles.heroSizeDot, { color: pal.fg }]}>·</Text>
+                  <Text style={[styles.heroSizeDot, { color: pal.fg }]}>{t('common_dotSeparator')}</Text>
                   <View style={styles.heroStatBox}>
                     <View style={[styles.heroStatTick, { backgroundColor: pal.fg }]} />
                     <Text style={[styles.heroStat, { color: pal.fg }]}>{lengthStr}</Text>
                   </View>
-                  <Text style={[styles.heroSizeDot, { color: pal.fg }]}>·</Text>
+                  <Text style={[styles.heroSizeDot, { color: pal.fg }]}>{t('common_dotSeparator')}</Text>
                   <View style={styles.heroStatBox}>
                     <View style={[styles.heroStatTick, { backgroundColor: pal.fg }]} />
                     <Text style={[styles.heroStat, { color: pal.fg }]}>{weightStr}</Text>
