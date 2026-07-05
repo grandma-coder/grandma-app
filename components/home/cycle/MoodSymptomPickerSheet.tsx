@@ -7,7 +7,8 @@
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { useQueryClient } from '@tanstack/react-query'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr } from '../../../lib/cycleLogic'
 import { ALL_SYMPTOMS } from '../../../lib/cycleSymptoms'
@@ -24,6 +25,8 @@ interface Props {
 
 export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] }: Props) {
   const { colors, stickers, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const qc = useQueryClient()
   const ink = isDark ? colors.text : '#141313'
@@ -77,15 +80,15 @@ export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] 
                 onPress={() => toggle(s.id)}
                 style={[
                   styles.chip,
-                  {
-                    backgroundColor: on ? stickers.pinkSoft : colors.surface,
-                    borderColor: on ? ink : colors.border,
-                    borderWidth: on ? 2 : 1,
-                  },
+                  diffuse
+                    ? { backgroundColor: on ? dt.colors.surface : 'transparent', borderColor: on ? dt.colors.hairline : dt.colors.line, borderWidth: 1 }
+                    : { backgroundColor: on ? stickers.pinkSoft : colors.surface, borderColor: on ? ink : colors.border, borderWidth: on ? 2 : 1 },
                 ]}
               >
                 <SymptomSticker id={s.id} size={16} />
-                <Text style={{ color: ink, fontFamily: font.bodyBold, fontSize: 12 }}>{s.label}</Text>
+                <Text style={diffuse
+                  ? { color: on ? dt.colors.ink : dt.colors.ink3, fontFamily: on ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 11, letterSpacing: 0.4, textTransform: 'uppercase' }
+                  : { color: ink, fontFamily: font.bodyBold, fontSize: 12 }}>{s.label}</Text>
               </Pressable>
             )
           })}
@@ -93,7 +96,7 @@ export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] 
         <PillButton
           label={saving ? t('cycleSignals_saving') : t('cycleSignals_saveSymptoms', { count: picked.length })}
           variant="accent"
-          accentColor={stickers.pink}
+          accentColor={diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink}
           onPress={save}
           disabled={saving}
         />

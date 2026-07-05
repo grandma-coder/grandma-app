@@ -11,7 +11,8 @@
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import Svg, { Path as SvgPath, Circle as SvgCircle } from 'react-native-svg'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { toDateStr, type CyclePhase } from '../../../lib/cycleLogic'
 import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
@@ -102,6 +103,8 @@ function fillDays(history: Point[], days = 7): { values: number[]; labels: strin
 
 export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const [rows, setRows] = useState<Row[]>([])
   const [bbtHist, setBbtHist] = useState<Point[]>([])
@@ -150,10 +153,12 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
     .filter((v): v is string => !!v)
 
   const moodMeta = moodValue ? MOOD_META[moodValue] : null
-  const accent = phaseColor(phase, stickers)
+  const accent = diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : phaseColor(phase, stickers)
 
-  const ink = colors.text
-  const muted = colors.textMuted
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
+  // Under diffuse, tiles are plain paper (no color wash); tint=undefined.
+  const tileTint = (c: string) => (diffuse ? undefined : c)
 
   return (
     <LogSheet
@@ -165,7 +170,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
     >
       <View style={{ gap: 14 }}>
         {/* Mood — full-width hero tile */}
-        <PaperCard tint={stickers.yellowSoft} radius={20} padding={18} flat>
+        <PaperCard tint={tileTint(stickers.yellowSoft)} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
             <MonoCaps size={10} color={muted}>{t('cycleDash_mood')}</MonoCaps>
           </View>
@@ -188,7 +193,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
 
         {/* Fertility signals — 3-col grid: BBT / LH / CM */}
         <View style={styles.twoCol}>
-          <PaperCard tint={stickers.blueSoft} radius={20} padding={16} flat style={styles.colTile}>
+          <PaperCard tint={tileTint(stickers.blueSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <Drop size={16} fill={stickers.blue} />
               <MonoCaps size={10} color={muted}>{t('cycleDash_bbt')}</MonoCaps>
@@ -201,7 +206,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
             </Body>
           </PaperCard>
 
-          <PaperCard tint={stickers.yellowSoft} radius={20} padding={16} flat style={styles.colTile}>
+          <PaperCard tint={tileTint(stickers.yellowSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <Drop size={16} fill={stickers.yellow} />
               <MonoCaps size={10} color={muted}>{t('cycleDash_lh')}</MonoCaps>
@@ -214,7 +219,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
             </Body>
           </PaperCard>
 
-          <PaperCard tint={stickers.greenSoft} radius={20} padding={16} flat style={styles.colTile}>
+          <PaperCard tint={tileTint(stickers.greenSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <Drop size={16} fill={stickers.green} />
               <MonoCaps size={10} color={muted}>{t('cycleDash_cm')}</MonoCaps>
@@ -230,7 +235,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
 
         {/* 2-col grid: Intimacy + Period */}
         <View style={styles.twoCol}>
-          <PaperCard tint={stickers.pinkSoft} radius={20} padding={16} flat style={styles.colTile}>
+          <PaperCard tint={tileTint(stickers.pinkSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <Heart size={16} fill={intimacy ? stickers.pink : stickers.pinkSoft} />
               <MonoCaps size={10} color={muted}>{t('cycleDash_intimacy')}</MonoCaps>
@@ -243,7 +248,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
             </Body>
           </PaperCard>
 
-          <PaperCard tint={stickers.peachSoft} radius={20} padding={16} flat style={styles.colTile}>
+          <PaperCard tint={tileTint(stickers.peachSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
               <Drop size={16} fill={periodStart ? stickers.coral : stickers.pinkSoft} />
               <MonoCaps size={10} color={muted}>{t('cycleDash_period')}</MonoCaps>
@@ -258,7 +263,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         </View>
 
         {/* Symptoms — full-width chip list */}
-        <PaperCard tint={stickers.lilacSoft} radius={20} padding={18} flat>
+        <PaperCard tint={tileTint(stickers.lilacSoft)} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
             <MonoCaps size={10} color={muted}>{t('cycleDash_symptoms')}</MonoCaps>
           </View>
@@ -267,10 +272,12 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
               {symptoms.map((id) => (
                 <View
                   key={id}
-                  style={[styles.symptomChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  style={[styles.symptomChip, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 } : { backgroundColor: colors.surface, borderColor: colors.border }]}
                 >
                   <SymptomSticker id={id as SymptomId} size={16} />
-                  <Text style={{ fontSize: 12, fontFamily: font.bodySemiBold, color: ink }}>
+                  <Text style={diffuse
+                    ? { fontSize: 11, fontFamily: diffuseFont.mono, letterSpacing: 0.4, textTransform: 'uppercase', color: dt.colors.ink2 }
+                    : { fontSize: 12, fontFamily: font.bodySemiBold, color: ink }}>
                     {symptomLabel(id as SymptomId)}
                   </Text>
                 </View>
@@ -284,7 +291,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         </PaperCard>
 
         {/* 7-day BBT sparkline */}
-        <PaperCard tint={colors.surface} radius={20} padding={18} flat>
+        <PaperCard tint={diffuse ? undefined : colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
             <Drop size={16} fill={stickers.blue} />
             <MonoCaps size={10} color={muted}>{t('cycleDash_bbtLast7')}</MonoCaps>
