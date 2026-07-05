@@ -2127,6 +2127,11 @@ export interface TranslationKeys {
   garage_create_published: string
   garage_create_next: string
   garage_create_coverBadge: string
+  garage_create_step4Hint: string
+  garage_create_ageFirstHint: string
+  garage_create_previewTitle: string
+  garage_create_moreMediaOne: string               // "+{{count}} more photo"
+  garage_create_moreMediaMany: string              // "+{{count}} more photos/videos"
   // ─── B6: Garage — profile ─────────────────────────────────────────────────
   garage_profile_myVillage: string
   garage_profile_posts: string

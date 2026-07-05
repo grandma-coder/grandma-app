@@ -488,7 +488,7 @@ function Step1Media({
             style={[s.addMediaBtn, { backgroundColor: stickers.yellowSoft, borderColor: colors.border, borderRadius: radius.lg }]}
           >
             <Camera size={24} color={stickers.yellowInk} strokeWidth={2.2} />
-            <Text style={[s.addMediaText, { color: colors.text, fontFamily: font.bodySemiBold }]}>Camera</Text>
+            <Text style={[s.addMediaText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('scan_cameraBtn')}</Text>
             <Text style={[s.addMediaSub, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('garage_create_cameraTakePhoto')}</Text>
           </Pressable>
         </View>
@@ -644,7 +644,7 @@ function Step4Details({
     <View style={s.stepContainer}>
       <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>{t('garage_create_step4Title')}</Text>
       <Text style={[s.stepHint, { color: colors.textSecondary, fontFamily: font.body }]}>
-        All fields are optional but help others find your item.
+        {t('garage_create_step4Hint')}
       </Text>
 
       {/* Condition */}
@@ -673,7 +673,7 @@ function Step4Details({
         {t('garage_create_fieldAgeRange')}
       </Text>
       <Text style={[s.fieldTip, { color: colors.textMuted, fontFamily: font.italic, marginBottom: 8 }]}>
-        Select age first — matching sizes will appear below
+        {t('garage_create_ageFirstHint')}
       </Text>
       <View style={s.ageGrid}>
         {AGE_GROUPS.map((group) => {
@@ -741,11 +741,12 @@ function Step5Preview({
   age: string | null
 }) {
   const { colors, radius, stickers, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>Preview Your Post</Text>
+      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>{t('garage_create_previewTitle')}</Text>
 
       {/* Cover image */}
       {media.length > 0 && (
@@ -755,7 +756,9 @@ function Step5Preview({
       {/* Media count */}
       {media.length > 1 && (
         <Text style={[s.previewMediaCount, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-          +{media.length - 1} more {media.length - 1 === 1 ? 'photo' : 'photos/videos'}
+          {media.length - 1 === 1
+            ? t('garage_create_moreMediaOne', { count: media.length - 1 })
+            : t('garage_create_moreMediaMany', { count: media.length - 1 })}
         </Text>
       )}
 
