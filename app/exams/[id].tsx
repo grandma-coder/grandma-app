@@ -175,7 +175,7 @@ export default function ExamDetailScreen() {
           <View style={[styles.flaggedBox, { backgroundColor: brand.error + '12', borderColor: brand.error + '30' }]}>
             <Text style={[styles.flaggedTitle, { color: brand.error }]}>{t('examDetail_flaggedTitle')}</Text>
             {flagged.map((f, i) => (
-              <Text key={i} style={[styles.flaggedItem, { color: colors.text }]}>• {f}</Text>
+              <Text key={i} style={[styles.flaggedItem, { color: colors.text }]}>{t('examDetail_flaggedBullet', { item: f })}</Text>
             ))}
             <Text style={[styles.flaggedNote, { color: colors.textMuted }]}>
               {t('examDetail_flaggedNote')}

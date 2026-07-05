@@ -2350,6 +2350,8 @@ export interface TranslationKeys {
   examDetail_deleteBtn: string
   examDetail_deleteTitle: string
   examDetail_deleteMsg: string
+  // ─── B7c: exams/[id].tsx residual strings ──────────────────────────────────
+  examDetail_flaggedBullet: string             // "• {{item}}"
   // ─── B6: Pillar detail ────────────────────────────────────────────────────
   pillarDetail_notFound: string
   pillarDetail_forYouNow: string

@@ -2181,6 +2181,7 @@ export const ptBR: TranslationKeys = {
   examDetail_deleteBtn: 'Delete exam',
   examDetail_deleteTitle: 'Delete this exam?',
   examDetail_deleteMsg: 'This removes the record and its photos.',
+  examDetail_flaggedBullet: '• {{item}}',
   pillarDetail_notFound: 'Pillar not found',
   pillarDetail_forYouNow: 'For you right now',
   pillarDetail_allTips: 'All tips',
