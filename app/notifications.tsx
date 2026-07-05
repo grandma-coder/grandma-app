@@ -54,6 +54,7 @@ import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { Display } from '../components/ui/Typography'
 import { EmptyState } from '../components/ui/EmptyState'
 import { MissingStickers } from '../components/stickers/MissingStickers'
+import { useTranslation } from '../lib/i18n'
 
 // ─── Type → Visual Config ───────────────────────────────────────────────────
 
@@ -317,6 +318,7 @@ function behaviorToMode(b: Behavior): 'pre' | 'preg' | 'kids' {
 
 export default function NotificationsScreen() {
   const { colors, stickers, isDark, font } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
   const accent = getModeColor(mode, isDark)
@@ -398,7 +400,7 @@ export default function NotificationsScreen() {
           </Pressable>
 
           <View style={styles.titleWrap}>
-            <Display size={26}>Notifications</Display>
+            <Display size={26}>{t('notifications_title')}</Display>
             {unreadCount > 0 && (
               <View style={[styles.titleCount, {
                 backgroundColor: stickers.coral,
@@ -415,7 +417,7 @@ export default function NotificationsScreen() {
             <Pressable onPress={handleMarkAllRead} hitSlop={8} style={styles.markAllBtn}>
               <CheckCheck size={16} color={colors.text} strokeWidth={2} />
               <Text style={[styles.markAllText, { color: colors.text, fontFamily: font.bodyMedium }]}>
-                Mark all read
+                {t('notifications_markAllRead')}
               </Text>
             </Pressable>
           ) : (
