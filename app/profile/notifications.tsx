@@ -14,6 +14,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, Body, MonoCaps } from '../../components/ui/Typography'
 import { Sun, Sparkle, Star, Moon, Heart, Flower, Leaf } from '../../components/ui/Stickers'
+import { useTranslation } from '../../lib/i18n'
 
 const STORAGE_KEY = 'grandma:notification_prefs:v1'
 
@@ -59,6 +60,7 @@ function StickerFor({ name, size = 34 }: { name: StickerName; size?: number }) {
 
 export default function NotificationsScreen() {
   const { colors, font, stickers, radius, spacing, isDark } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
   const accent = getModeColor(mode, isDark)
@@ -113,9 +115,9 @@ export default function NotificationsScreen() {
       >
         {/* Big Fraunces title */}
         <View style={styles.titleBlock}>
-          <Display size={34} color={colors.text}>Notifications</Display>
+          <Display size={34} color={colors.text}>{t('notifications_title')}</Display>
           <DisplayItalic size={18} color={stickers.coral} style={{ marginTop: 6 }}>
-            how grandma reaches you
+            {t('notificationsSettings_subtitle')}
           </DisplayItalic>
         </View>
 

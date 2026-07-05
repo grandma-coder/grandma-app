@@ -1993,6 +1993,7 @@ export const fr: TranslationKeys = {
   garage_profile_errorDeletePost: "Couldn't delete that post. Please try again.",
   garage_profile_errorUnsave: "Couldn't update your saved items. Please try again.",
   garage_profile_thumbPlaceholderIcon: '📦',
+  notificationsSettings_subtitle: 'how grandma reaches you',
   garage_share_header: 'Share to Channel',
   garage_share_noMessageTitle: 'No message',
   garage_share_noMessageBody: "You haven't added a personal message. Share without one?",
