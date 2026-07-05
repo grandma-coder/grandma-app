@@ -21,6 +21,7 @@ import { Drop, Heart, Smiley, Sad, Sleepy } from '../../ui/Stickers'
 import { SymptomSticker } from '../../calendar/symptomStickers'
 import { CycleTodayDashboardModal } from './CycleTodayDashboardModal'
 import type { SymptomId } from '../../../lib/cycleSymptoms'
+import { useTranslation } from '../../../lib/i18n'
 
 interface Props {
   phase: CyclePhase
@@ -46,6 +47,7 @@ const LH_LABEL: Record<string, string> = {
 
 export function CycleTodaySummaryCard({ phase }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const ink = isDark ? colors.text : '#141313'
   const paper = isDark ? colors.surface : '#FFFEF8'
@@ -183,7 +185,7 @@ export function CycleTodaySummaryCard({ phase }: Props) {
         <PaperCard tint={paper} radius={24} padding={18}>
           <View style={styles.headerRow}>
             <View style={{ flex: 1 }}>
-              <Display size={22} color={ink}>Today at a glance</Display>
+              <Display size={22} color={ink}>{t('cycleDash_today')}</Display>
               <Body size={12} color={colors.textMuted} style={{ marginTop: 2, fontFamily: font.italic }}>
                 {summaryHint}
               </Body>
