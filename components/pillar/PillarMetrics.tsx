@@ -17,6 +17,7 @@ import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { getCycleInfo, toDateStr, type CycleConfig } from '../../lib/cycleLogic'
 import { usePregnancyTodayLogs } from '../../lib/analyticsData'
 import { supabase } from '../../lib/supabase'
+import { useTranslation } from '../../lib/i18n'
 
 interface Stat {
   label: string
@@ -30,6 +31,7 @@ interface PillarMetricsProps {
 export default function PillarMetrics({ pillarId }: PillarMetricsProps) {
   const mode = useModeStore((s) => s.mode)
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const accent = getModeColor(mode, isDark)
   const stats = useStatsForPillar(pillarId)
 
@@ -46,7 +48,7 @@ export default function PillarMetrics({ pillarId }: PillarMetricsProps) {
                 { color: colors.textFaint, fontFamily: font.body },
               ]}
             >
-              ·
+              {t('common_dotSeparator')}
             </Text>
           )}
           <Text
