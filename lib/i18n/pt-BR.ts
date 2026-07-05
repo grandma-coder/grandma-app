@@ -1699,6 +1699,7 @@ export const ptBR: TranslationKeys = {
   personal_languageSearchPlaceholder: 'Search language\u2026',
   personal_saving: 'Saving\u2026',
   personal_saveChanges: 'Save Changes',
+  personal_addCustomAllergy: '+ Add "{{query}}"',
   emergencyInsurance_title: 'Emergency & Insurance',
   emergencyInsurance_subtitle: 'keep them close, dear',
   emergencyInsurance_sectionContacts: 'EMERGENCY CONTACTS',

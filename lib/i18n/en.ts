@@ -1835,6 +1835,7 @@ export const en: TranslationKeys = {
   personal_languageSearchPlaceholder: 'Search language…',
   personal_saving: 'Saving…',
   personal_saveChanges: 'Save Changes',
+  personal_addCustomAllergy: '+ Add "{{query}}"',
 
   // ─── B6: Profile — Emergency & Insurance ──────────────────────────────────
   emergencyInsurance_title: 'Emergency & Insurance',

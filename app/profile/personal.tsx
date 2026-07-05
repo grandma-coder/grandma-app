@@ -856,7 +856,7 @@ function AllergyField({
                 color={colors.text}
                 style={{ flex: 1, fontFamily: font.bodySemiBold }}
               >
-                + Add &quot;{query.trim()}&quot;
+                {t('personal_addCustomAllergy', { query: query.trim() })}
               </Body>
             </Pressable>
           )}

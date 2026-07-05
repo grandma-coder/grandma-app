@@ -1836,6 +1836,8 @@ export interface TranslationKeys {
   personal_languageSearchPlaceholder: string
   personal_saving: string
   personal_saveChanges: string
+  // ─── B7c: profile/personal.tsx residual strings ────────────────────────────
+  personal_addCustomAllergy: string             // "+ Add \"{{query}}\""
 
   // ─── B6: Profile — Emergency & Insurance ──────────────────────────────────
   emergencyInsurance_title: string
