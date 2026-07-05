@@ -11,7 +11,8 @@
 import { useMemo } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -32,6 +33,9 @@ function getMicroLabel(): string {
 
 export function CycleHome() {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const bg = diffuse ? dt.colors.bg : colors.bg
   const insets = useSafeAreaInsets()
   const parentName = useJourneyStore((s) => s.parentName)
   const { data: profile } = useProfile()
@@ -55,11 +59,11 @@ export function CycleHome() {
   const info = getCycleInfo(cycleConfig, toDateStr(new Date()))
 
   if (historyPending) {
-    return <View style={[styles.root, { backgroundColor: colors.bg }]} />
+    return <View style={[styles.root, { backgroundColor: bg }]} />
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: bg }]}>
       <ScrollView
         contentContainerStyle={[
           styles.scroll,

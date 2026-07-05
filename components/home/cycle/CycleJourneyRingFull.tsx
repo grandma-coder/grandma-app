@@ -18,7 +18,6 @@ import Animated, {
   useSharedValue, useAnimatedStyle, useDerivedValue, useAnimatedReaction,
   runOnJS, withDecay, withTiming, withSpring, cancelAnimation, Easing,
 } from 'react-native-reanimated'
-import { Droplet, Sprout, Flower2, Moon as MoonLine } from 'lucide-react-native'
 import { useTheme, motion, useDiffuseTheme, getModeField, getDiffuseAccent, diffuseFont } from '../../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
@@ -41,16 +40,6 @@ function diffusePhaseColor(phase: CyclePhase, field: [string, string, string, st
   }
 }
 
-// Thin Lucide line glyph per phase — the v4 icon treatment for the wheel.
-function DiffusePhaseGlyph({ phase, size, color }: { phase: CyclePhase; size: number; color: string }) {
-  const sw = 1.6
-  switch (phase) {
-    case 'menstruation': return <Droplet size={size} color={color} strokeWidth={sw} />
-    case 'follicular':   return <Sprout size={size} color={color} strokeWidth={sw} />
-    case 'ovulation':    return <Flower2 size={size} color={color} strokeWidth={sw} />
-    case 'luteal':       return <MoonLine size={size} color={color} strokeWidth={sw} />
-  }
-}
 
 // ─── Layout ─────────────────────────────────────────────────────────────────
 const SVG_SIZE = 260
@@ -499,9 +488,11 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
       {/* ── Ring ── */}
       <View style={styles.ringWrap}>
         {diffuse ? (
-          // Soft feathered bloom behind the whole wheel (v4 ring aura).
+          // Subtle feathered field behind the wheel — kept low so the icons and
+          // hairline ring carry the composition (per the v4 reference, not a
+          // loud pink radial).
           <View pointerEvents="none" style={styles.ringBloom}>
-            <SoftBloom color={diffuseAccent} opacity={dt.isDark ? 0.34 : 0.42} spread={0.45} />
+            <SoftBloom color={diffuseAccent} opacity={dt.isDark ? 0.18 : 0.2} spread={0.5} />
           </View>
         ) : null}
         <View {...panResponder.panHandlers} style={styles.ringStage}>
@@ -510,49 +501,31 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
             {dots.map((d) => {
               const accentBg = diffuse ? diffusePhaseColor(d.phase, field) : phaseAccent(d.phase, stickers)
               if (diffuse) {
-                // Every day is a soft phase-tinted dot so all four phases read
-                // around the ring (matching the legend). The SELECTED day grows
-                // into a bloom node carrying the phase line glyph — the v4
-                // "line glyph over a soft bloom" icon treatment.
-                const selected = d.day === selectedDay
-                const phaseHue = diffusePhaseColor(d.phase, field)
-                if (selected) {
-                  const node = 30
-                  return (
-                    <View
-                      key={d.day}
-                      style={{ position: 'absolute', left: d.bx - node / 2, top: d.by - node / 2, width: node, height: node, alignItems: 'center', justifyContent: 'center' }}
-                      pointerEvents="none"
-                    >
-                      <View pointerEvents="none" style={{ position: 'absolute', width: node * 1.7, height: node * 1.7 }}>
-                        <SoftBloom color={phaseHue} opacity={dt.isDark ? 0.5 : 0.6} spread={0.5} />
-                      </View>
-                      <View style={{ width: node, height: node, borderRadius: node / 2, borderWidth: 1.5, borderColor: diffuseAccent, backgroundColor: dt.colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-                        <DiffusePhaseGlyph phase={d.phase} size={16} color={dt.colors.ink} />
-                      </View>
-                    </View>
-                  )
-                }
-                // Non-selected day: filled phase-tinted dot (past/current full,
-                // future softened). Small hairline ring on the current day.
-                const dotSize = d.state === 'today' ? 11 : 8
+                // v4 reference: every day carries its phase icon (the design-
+                // system DaySticker glyphs — drop / leaf / ovulation-ring /
+                // moon) in the phase hue, on the calm cream field. Days rotate
+                // through a STATIONARY hairline anchor ring at 6 o'clock (drawn
+                // in the static layer below); we don't ring the day itself, so
+                // the selection frame stays put as the wheel spins. Future days
+                // are softened.
+                const glyphSize = 18
                 return (
                   <View
                     key={d.day}
                     style={{
                       position: 'absolute',
-                      left: d.bx - dotSize / 2,
-                      top: d.by - dotSize / 2,
-                      width: dotSize,
-                      height: dotSize,
-                      borderRadius: dotSize / 2,
-                      borderWidth: d.state === 'today' ? 1.5 : 0,
-                      borderColor: diffuseAccent,
-                      backgroundColor: phaseHue,
-                      opacity: d.state === 'future' ? 0.4 : 0.85,
+                      left: d.bx - glyphSize / 2,
+                      top: d.by - glyphSize / 2,
+                      width: glyphSize,
+                      height: glyphSize,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: d.state === 'future' ? 0.5 : 1,
                     }}
                     pointerEvents="none"
-                  />
+                  >
+                    <DaySticker phase={d.phase} size={glyphSize} bg={diffusePhaseColor(d.phase, field)} />
+                  </View>
                 )
               }
               return (
@@ -623,7 +596,15 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                 transform={`rotate(-90 ${CX} ${CY})`}
               />
             ) : null}
-            <Circle cx={CX} cy={CY + RING_R} r={14} fill="none" stroke={accent} strokeWidth={1.5} />
+            {/* Stationary anchor frame at 6 o'clock — days rotate into it. */}
+            <Circle
+              cx={CX}
+              cy={CY + RING_R}
+              r={diffuse ? 16 : 14}
+              fill="none"
+              stroke={diffuse ? dt.colors.hairline : accent}
+              strokeWidth={1.5}
+            />
           </Svg>
 
           {/* Center overlay */}
