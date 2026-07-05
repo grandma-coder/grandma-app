@@ -31,7 +31,7 @@ import {
 import * as Haptics from 'expo-haptics'
 import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../ui/diffuse/DiffuseKit'
-import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader, DiffuseMetricTile, DiffuseBloomIcon, DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
+import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader, DiffuseMetricTile, DiffuseBloomIcon, DiffuseDotCalendar, DiffuseLeapGraph } from '../ui/diffuse/DiffusePrimitives'
 import { EmptyState } from '../ui/EmptyState'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -3661,11 +3661,39 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
   startDate: string; endDate: string
 }) {
   const { colors, radius, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const total = pee + poop + mixed
   const peeW  = total > 0 ? (pee  / total) * 100 : 0
   const poopW = total > 0 ? (poop / total) * 100 : 0
   const mixedW = total > 0 ? (mixed / total) * 100 : 0
+
+  // Diffuse: collapse to ONE clean hairline summary row (serif total + mono
+  // breakdown + thin proportion bar). Tap opens the detail modal (handled by
+  // the caller's Pressable wrapper). Bias-to-less — no filled tiles/stickers.
+  if (diffuse) {
+    return (
+      <View style={{ paddingVertical: 14, paddingHorizontal: 2, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2, gap: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <DiffuseBloomIcon color={stickers.blue} size={30}>
+            <Droplets size={17} color={dt.colors.ink3} strokeWidth={1.6} />
+          </DiffuseBloomIcon>
+          <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, color: dt.colors.ink, letterSpacing: -0.4 }}>{count}</Text>
+          <Text style={{ flex: 1, textAlign: 'right', fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 0.8, textTransform: 'uppercase', color: dt.colors.ink3 }} numberOfLines={1}>
+            {`${t('kids_home_diaper_pee')} ${pee} · ${t('kids_home_diaper_poop')} ${poop} · ${t('kids_home_diaper_mixed')} ${mixed}`}
+          </Text>
+          <ChevronRight size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+        </View>
+        {/* thin proportion bar */}
+        <View style={{ flexDirection: 'row', height: 3, borderRadius: 999, overflow: 'hidden', backgroundColor: dt.colors.line }}>
+          <View style={{ width: `${peeW}%`, backgroundColor: stickers.blue }} />
+          <View style={{ width: `${poopW}%`, backgroundColor: stickers.peach }} />
+          <View style={{ width: `${mixedW}%`, backgroundColor: stickers.yellow }} />
+        </View>
+      </View>
+    )
+  }
 
   // Build last 7 (or range) day bars for mini sparkline
   const start = new Date(startDate + 'T00:00:00')
@@ -7250,7 +7278,17 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
           </View>
         </View>
 
-        {/* 10-dot progress */}
+        {/* Progress — Diffuse: line-path graph; current: 10-dot strip */}
+        {diffuse ? (
+          <View style={{ marginTop: 10 }}>
+            <DiffuseLeapGraph
+              total={GROWTH_LEAPS.length}
+              completedCount={leap.completedCount}
+              currentIndex={leap.index}
+              isActive={isActive}
+            />
+          </View>
+        ) : (
         <View style={s.leapAllDots}>
           {GROWTH_LEAPS.map((_, i) => {
             const done = i < leap.completedCount
@@ -7274,9 +7312,11 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
             )
           })}
         </View>
+        )}
         <Text style={{
-          fontSize: 11, fontFamily: font.bodySemiBold, textAlign: 'center',
-          color: ink3, marginTop: 4,
+          fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, textAlign: 'center',
+          color: ink3, marginTop: diffuse ? 8 : 4,
+          letterSpacing: diffuse ? 1 : 0, textTransform: diffuse ? 'uppercase' : 'none', fontSize: diffuse ? 9.5 : 11,
         }}>
           {isDone ? `All ${GROWTH_LEAPS.length} leaps completed · Wk ${leap.weekAge}` : `${leap.completedCount}/${GROWTH_LEAPS.length} leaps completed · Wk ${leap.week}`}
         </Text>

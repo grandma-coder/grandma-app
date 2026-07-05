@@ -15,7 +15,7 @@
 
 import { ReactNode, useState, useMemo } from 'react'
 import { View, Text, Pressable, Modal, ScrollView, StyleSheet, ViewStyle, StyleProp, KeyboardAvoidingView, Platform } from 'react-native'
-import Svg, { Circle } from 'react-native-svg'
+import Svg, { Circle, Path } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -725,3 +725,70 @@ export function DiffuseDotCalendar({ value, onChange, month, minimumDate, period
 }
 
 
+
+// ─── DiffuseLeapGraph ───────────────────────────────────────────────────────
+// Growth-leaps as a clean line-path graph (in the spirit of the v4 basal-temp
+// coverline reference): a rising line across the N leaps, a soft gradient wash
+// under it, small nodes per leap — done = filled ink, current = open ring,
+// upcoming = faint hollow. Mono caption below. Replaces the sticker-dot strip.
+
+interface LeapGraphProps {
+  total: number
+  completedCount: number
+  currentIndex: number       // 0-based index of the active/next leap
+  isActive: boolean          // current leap is in progress (open ring)
+  accent?: string
+  height?: number
+}
+
+export function DiffuseLeapGraph({ total, completedCount, currentIndex, isActive, accent, height = 88 }: LeapGraphProps) {
+  const { colors, isDark } = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const acc = accent ?? getDiffuseAccent(mode, isDark)
+  const W = 320
+  const padX = 14
+  const padY = 16
+  const innerW = W - padX * 2
+  const innerH = height - padY * 2
+
+  // Rising path: y climbs gently as leaps complete (a growth curve).
+  const pts = Array.from({ length: total }, (_, i) => {
+    const x = padX + (innerW * (total === 1 ? 0 : i / (total - 1)))
+    // progress 0..1 up the curve, with a soft ease
+    const t = total === 1 ? 0 : i / (total - 1)
+    const y = padY + innerH * (1 - Math.pow(t, 0.85))
+    return { x, y }
+  })
+  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+  const areaPath = `${linePath} L${pts[pts.length - 1].x.toFixed(1)},${height - padY} L${pts[0].x.toFixed(1)},${height - padY} Z`
+
+  return (
+    <View style={{ width: '100%', aspectRatio: W / height }}>
+      <Svg width="100%" height="100%" viewBox={`0 0 ${W} ${height}`}>
+        {/* soft wash under the line */}
+        <Path d={areaPath} fill={acc} opacity={isDark ? 0.1 : 0.08} />
+        {/* the line itself */}
+        <Path d={linePath} stroke={colors.ink} strokeWidth={1.5} fill="none" strokeLinejoin="round" strokeLinecap="round" opacity={0.85} />
+        {/* nodes */}
+        {pts.map((p, i) => {
+          const done = i < completedCount
+          const current = i === currentIndex && isActive
+          if (current) {
+            return <Circle key={i} cx={p.x} cy={p.y} r={5} fill={colors.bg} stroke={acc} strokeWidth={2} />
+          }
+          return (
+            <Circle
+              key={i}
+              cx={p.x}
+              cy={p.y}
+              r={done ? 4 : 3}
+              fill={done ? colors.ink : colors.bg}
+              stroke={done ? colors.ink : colors.line2}
+              strokeWidth={1.5}
+            />
+          )
+        })}
+      </Svg>
+    </View>
+  )
+}
