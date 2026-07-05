@@ -100,7 +100,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
           <Ionicons name="checkbox-outline" size={40} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>{t('prepreg_checklistProgress_empty')}</Text>
           <Text style={styles.emptyDesc}>
-            Preparation tasks will appear here to guide your journey to conception.
+            {t('prepreg_checklistProgress_emptyDesc')}
           </Text>
         </View>
       )}

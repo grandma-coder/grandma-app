@@ -1501,6 +1501,8 @@ export interface TranslationKeys {
   prepreg_checklistProgress_complete: string
   prepreg_checklistProgress_tasksDone: string
   prepreg_checklistProgress_empty: string
+  // ─── B7c: agenda/PrePregChecklist.tsx residual strings ─────────────────────
+  prepreg_checklistProgress_emptyDesc: string
 
   // ─── Cycle Analytics (Wave B4) ────────────────────────────────────────────
   cycleAnalytics_yourCycleToday: string
