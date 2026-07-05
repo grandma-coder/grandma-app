@@ -29,7 +29,7 @@ import {
   Bell, Trash2, Syringe, Pill, Pencil, GripVertical, Flag, Trophy, Flame, Star,
 } from 'lucide-react-native'
 import * as Haptics from 'expo-haptics'
-import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../ui/diffuse/DiffuseKit'
 import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader } from '../ui/diffuse/DiffusePrimitives'
 import { EmptyState } from '../ui/EmptyState'
@@ -2151,7 +2151,11 @@ export function KidsHome() {
       </View>
 
       {showReminderInput && (
-        <View style={[s.reminderInputCard, {
+        <View style={[s.reminderInputCard, diffuse ? {
+          backgroundColor: dt.colors.surface,
+          borderRadius: radius.lg,
+          borderColor: dt.colors.line,
+        } : {
           backgroundColor: colors.surface,
           borderRadius: 28,
           borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
@@ -2160,23 +2164,39 @@ export function KidsHome() {
           shadowRadius: 14,
           shadowOffset: { width: 0, height: 4 },
         }]}>
-          {/* Sticker decoration — top-right corner */}
-          <View style={{ position: 'absolute', top: -10, right: 14, transform: [{ rotate: '15deg' }] }} pointerEvents="none">
-            <StarSticker size={36} fill={stickers.yellow} stroke="#141313" />
-          </View>
+          {/* Sticker decoration — top-right corner (softened under Diffuse) */}
+          {!diffuse && (
+            <View style={{ position: 'absolute', top: -10, right: 14, transform: [{ rotate: '15deg' }] }} pointerEvents="none">
+              <StarSticker size={36} fill={stickers.yellow} stroke="#141313" />
+            </View>
+          )}
 
           {/* Header row */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            {/* Yellow bell sticker badge */}
-            <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: stickers.yellow, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
-              <Bell size={13} color="#141313" strokeWidth={2.5} />
-            </View>
-            <Text style={{ fontSize: 16, fontFamily: font.display, color: colors.text, letterSpacing: -0.3 }}>{t('kids_home_reminder_add_header')}</Text>
+            {diffuse ? (
+              <View style={{ opacity: 0.8 }}><Bell size={16} color={dt.colors.ink3} strokeWidth={1.6} /></View>
+            ) : (
+              <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: stickers.yellow, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
+                <Bell size={13} color="#141313" strokeWidth={2.5} />
+              </View>
+            )}
+            <Text style={diffuse
+              ? { fontSize: 18, fontFamily: diffuseFont.display, color: dt.colors.ink, letterSpacing: -0.3 }
+              : { fontSize: 16, fontFamily: font.display, color: colors.text, letterSpacing: -0.3 }}>{t('kids_home_reminder_add_header')}</Text>
           </View>
 
           {/* Text input */}
           <TextInput
-            style={[s.reminderInput, {
+            style={[s.reminderInput, diffuse ? {
+              color: dt.colors.ink,
+              backgroundColor: 'transparent',
+              borderBottomWidth: 1.5,
+              borderBottomColor: dt.colors.line2,
+              paddingHorizontal: 2,
+              paddingVertical: 10,
+              fontFamily: diffuseFont.body,
+              fontSize: 16,
+            } : {
               color: colors.text,
               backgroundColor: isDark ? colors.surfaceRaised : 'rgba(20,19,19,0.04)',
               borderRadius: 16,
@@ -2186,7 +2206,7 @@ export function KidsHome() {
               paddingVertical: 11,
             }]}
             placeholder={t('kids_home_reminder_placeholder')}
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
             value={newReminderText}
             onChangeText={setNewReminderText}
             onSubmitEditing={addReminder}
@@ -2258,9 +2278,16 @@ export function KidsHome() {
             <View style={{ flex: 1 }} />
 
             {/* Save button */}
-            <Pressable onPress={addReminder} style={[s.reminderSaveBtn, { backgroundColor: brand.kids, borderRadius: radius.full, borderWidth: 1.5, borderColor: isDark ? brand.kids : '#141313' }]}>
-              <Text style={[s.reminderSaveBtnText, { fontFamily: font.bodyBold }]}>{t('common_save')}</Text>
-            </Pressable>
+            {diffuse ? (
+              <Pressable onPress={addReminder} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 4, opacity: pressed ? 0.6 : 1 }]}>
+                <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink }}>{t('common_save')}</Text>
+                <Text style={{ fontFamily: diffuseFont.body, fontSize: 16, color: getDiffuseAccent('kids', isDark) }}>→</Text>
+              </Pressable>
+            ) : (
+              <Pressable onPress={addReminder} style={[s.reminderSaveBtn, { backgroundColor: brand.kids, borderRadius: radius.full, borderWidth: 1.5, borderColor: isDark ? brand.kids : '#141313' }]}>
+                <Text style={[s.reminderSaveBtnText, { fontFamily: font.bodyBold }]}>{t('common_save')}</Text>
+              </Pressable>
+            )}
           </View>
 
           {/* Child tag picker */}
@@ -2399,12 +2426,20 @@ export function KidsHome() {
         const preview = active.slice(0, 4)
         const hasMore = active.length > 4
         if (reminders.length === 0) return (
-          <View style={[s.remindersEmpty, { backgroundColor: colors.surface, borderRadius: 20, borderColor: colors.border }]}>
-            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(245,214,82,0.24)', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
-              <Bell size={20} color="#EE7B6D" strokeWidth={2} />
+          <View style={[s.remindersEmpty, diffuse
+            ? { backgroundColor: dt.colors.surface, borderRadius: radius.lg, borderColor: dt.colors.line }
+            : { backgroundColor: colors.surface, borderRadius: 20, borderColor: colors.border }]}>
+            <View style={diffuse
+              ? { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: dt.colors.line2, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }
+              : { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(245,214,82,0.24)', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+              <Bell size={20} color={diffuse ? dt.colors.ink3 : '#EE7B6D'} strokeWidth={diffuse ? 1.6 : 2} />
             </View>
-            <Text style={[s.remindersEmptyText, { color: colors.text, fontFamily: font.display }]}>{t('kids_home_reminders_empty_title')}</Text>
-            <Text style={[s.remindersEmptyHint, { color: colors.textMuted }]}>{t('kids_home_reminders_empty_hint')}</Text>
+            <Text style={[s.remindersEmptyText, diffuse
+              ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
+              : { color: colors.text, fontFamily: font.display }]}>{t('kids_home_reminders_empty_title')}</Text>
+            <Text style={[s.remindersEmptyHint, diffuse
+              ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 9.5 }
+              : { color: colors.textMuted }]}>{t('kids_home_reminders_empty_hint')}</Text>
           </View>
         )
         return (
@@ -3431,6 +3466,8 @@ function HealthCard({ reminders, healthHistory, child }: {
   child: ChildWithRole
 }) {
   const { colors, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const activeReminders = reminders.filter(r => !r.done).length
   const lastVaccine = healthHistory.vaccines[0]
@@ -3446,38 +3483,43 @@ function HealthCard({ reminders, healthHistory, child }: {
   const overdueCount = nextVaccines.filter(v => v.overdue).length
   const nextVaccine = nextVaccines[0]
 
-  const tileBg = colors.surface
-  const tileBorder = colors.border
+  const tileBg = diffuse ? dt.colors.surface : colors.surface
+  const tileBorder = diffuse ? dt.colors.line : colors.border
   const green = '#BDD48C'
-  const ink = colors.text
-  const ink3 = colors.textMuted
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
 
-  const statusBg = overdueCount > 0
+  // Diffuse: hairline status chip (no filled pill); current: soft-tinted pill.
+  const statusBg = diffuse ? 'transparent' : (overdueCount > 0
     ? (isDark ? brand.error + '22' : brand.error + '15')
     : upcomingCount > 0
       ? (isDark ? '#3A2E00' : '#FFFAE0')
-      : (isDark ? '#1A2810' : '#EEF7E4')
-  const statusColor = overdueCount > 0 ? brand.error : upcomingCount > 0 ? (isDark ? '#F5D652' : '#6B5800') : (isDark ? '#BDD48C' : '#3A6020')
+      : (isDark ? '#1A2810' : '#EEF7E4'))
+  const statusColor = diffuse
+    ? (overdueCount > 0 ? dt.colors.error : dt.colors.ink3)
+    : (overdueCount > 0 ? brand.error : upcomingCount > 0 ? (isDark ? '#F5D652' : '#6B5800') : (isDark ? '#BDD48C' : '#3A6020'))
   const statusLabel = overdueCount > 0 ? `${overdueCount} overdue` : upcomingCount > 0 ? `${upcomingCount} due soon` : t('kids_home_vaccine_up_to_date')
 
   return (
     <View style={[s.hcCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
       {/* Icon */}
-      <View style={[s.hcIconWrap, { backgroundColor: isDark ? '#1A2810' : '#EEF7E4' }]}>
-        <CrossSticker size={30} fill={green + 'BB'} stroke={green} />
+      <View style={[s.hcIconWrap, diffuse
+        ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
+        : { backgroundColor: isDark ? '#1A2810' : '#EEF7E4' }]}>
+        <CrossSticker size={diffuse ? 24 : 30} fill={green + (diffuse ? '99' : 'BB')} stroke={green} />
       </View>
 
       {/* Content */}
       <View style={{ flex: 1, gap: 4 }}>
         {nextVaccine ? (
           <>
-            <Text style={[s.hcEyebrow, { color: ink3 }]}>
+            <Text style={[s.hcEyebrow, { color: ink3 }, diffuse && { fontFamily: diffuseFont.mono, letterSpacing: 1.6 }]}>
               {overdueCount > 0 ? t('kids_home_vaccine_overdue') : t('kids_home_vaccine_next')}
             </Text>
-            <Text style={[s.hcPrimary, { color: ink }]} numberOfLines={1}>
+            <Text style={[s.hcPrimary, { color: ink }, diffuse && { fontFamily: diffuseFont.display, letterSpacing: -0.2 }]} numberOfLines={1}>
               {nextVaccine.name}{nextVaccine.doseLabel ? ` · ${nextVaccine.doseLabel}` : ''}
             </Text>
-            <Text style={[s.hcSecondary, { color: overdueCount > 0 ? brand.error : ink3 }]}>
+            <Text style={[s.hcSecondary, { color: overdueCount > 0 ? (diffuse ? dt.colors.error : brand.error) : ink3 }, diffuse && { fontFamily: diffuseFont.body }]}>
               {overdueCount > 0 ? 'Overdue · ' : 'Due: '}{nextVaccine.dueAge}
             </Text>
           </>
@@ -3512,10 +3554,10 @@ function HealthCard({ reminders, healthHistory, child }: {
 
       {/* Status + chevron */}
       <View style={{ alignItems: 'flex-end', gap: 8 }}>
-        <View style={[s.healthStatusPill, { backgroundColor: statusBg }]}>
-          <Text style={[s.healthStatusText, { color: statusColor }]}>{statusLabel}</Text>
+        <View style={[s.healthStatusPill, { backgroundColor: statusBg }, diffuse && { borderWidth: 1, borderColor: overdueCount > 0 ? dt.colors.error + '55' : dt.colors.line2 }]}>
+          <Text style={[s.healthStatusText, { color: statusColor }, diffuse && { fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 9.5 }]}>{statusLabel}</Text>
         </View>
-        <ChevronRight size={14} color={ink3} strokeWidth={2} />
+        <ChevronRight size={14} color={ink3} strokeWidth={diffuse ? 1.6 : 2} />
       </View>
     </View>
   )
@@ -6981,6 +7023,8 @@ function RemindersModal({
 
 function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<typeof getGrowthLeap>>; childName: string }) {
   const { colors, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const [showDetail, setShowDetail] = useState(false)
   const isActive = leap.status === 'active'
   const isDone = leap.status === 'done'
@@ -6988,31 +7032,34 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
   const phaseIndex = isActive ? (leap.phaseIndex ?? 0) : -1
   const currentPhaseName = phaseIndex >= 0 ? (leap.phases[phaseIndex]?.label ?? '') : ''
 
-  const stickerInk = isDark ? 'rgba(255,255,255,0.18)' : '#141313'
-  const ink = colors.text
-  const ink3 = isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'
+  const stickerInk = diffuse ? dt.colors.line2 : (isDark ? 'rgba(255,255,255,0.18)' : '#141313')
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const ink3 = diffuse ? dt.colors.ink3 : (isDark ? colors.textMuted : 'rgba(20,19,19,0.55)')
 
-  // Sticker-green soft for "done", mode-color soft for active, paper otherwise
-  const bg = isDone
+  // Diffuse: hairline paper (no filled green); soft green bloom is carried by
+  // the DiffuseFieldSurface wrapper below. Current: soft-tinted fill.
+  const bg = diffuse ? dt.colors.surface : (isDone
     ? (isDark ? 'rgba(189,212,140,0.16)' : '#EDF5E2')
     : isActive
       ? (isDark ? leapColor + '18' : leapColor + '20')
-      : (colors.surface)
-  const border = isDone
+      : (colors.surface))
+  const border = diffuse ? dt.colors.line : (isDone
     ? (isDark ? 'rgba(189,212,140,0.35)' : 'rgba(20,19,19,0.12)')
     : isActive
       ? (isDark ? leapColor + '40' : 'rgba(20,19,19,0.12)')
-      : (isDark ? colors.border : 'rgba(20,19,19,0.12)')
+      : (isDark ? colors.border : 'rgba(20,19,19,0.12)'))
 
-  // Number badge (sticker style — full sticker color + ink border + white inner)
-  const badgeFill = isDone ? '#BDD48C' : isActive ? leapColor : '#F5D652'
+  // Number badge — sticker fill (current) or hairline (diffuse)
+  const badgeFill = diffuse ? 'transparent' : (isDone ? '#BDD48C' : isActive ? leapColor : '#F5D652')
 
   return (
     <View>
       {/* ── Compact card ── */}
       <Pressable
         onPress={() => setShowDetail(true)}
-        style={[s.leapCard, {
+        style={[s.leapCard, diffuse ? {
+          backgroundColor: bg, borderColor: border, borderWidth: 1,
+        } : {
           backgroundColor: bg, borderColor: border, borderWidth: 1.5,
           shadowColor: '#141313',
           shadowOpacity: isDark ? 0 : 0.05,
@@ -7021,22 +7068,22 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
         }]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          {/* Sticker number badge */}
+          {/* Number badge */}
           <View style={{
             width: 44, height: 44, borderRadius: 22,
             backgroundColor: badgeFill,
-            borderWidth: 1.5, borderColor: stickerInk,
+            borderWidth: diffuse ? 1 : 1.5, borderColor: stickerInk,
             alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
             {isDone
-              ? <Check size={18} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={3} />
-              : <Text style={{ fontSize: 18, fontFamily: font.displayBold, color: isDark ? '#FFFFFF' : '#141313', letterSpacing: -0.4 }}>{leap.index + 1}</Text>
+              ? <Check size={18} color={diffuse ? dt.colors.ink3 : (isDark ? '#FFFFFF' : '#141313')} strokeWidth={diffuse ? 2 : 3} />
+              : <Text style={{ fontSize: 18, fontFamily: diffuse ? diffuseFont.display : font.displayBold, color: diffuse ? dt.colors.ink : (isDark ? '#FFFFFF' : '#141313'), letterSpacing: -0.4 }}>{leap.index + 1}</Text>
             }
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[s.leapTitle, { color: ink }]}>{isDone ? 'All Leaps Complete' : leap.name}</Text>
-            <Text style={[s.leapDesc, { color: ink3 }]}>
+            <Text style={[s.leapTitle, { color: ink }, diffuse && { fontFamily: diffuseFont.display, letterSpacing: -0.2 }]}>{isDone ? 'All Leaps Complete' : leap.name}</Text>
+            <Text style={[s.leapDesc, { color: ink3 }, diffuse && { fontFamily: diffuseFont.body }]}>
               {isDone ? 'Your child has completed all 10 Wonder Weeks' : isActive && currentPhaseName ? `Phase: ${currentPhaseName}` : leap.desc}
             </Text>
           </View>

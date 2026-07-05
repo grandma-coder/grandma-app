@@ -6,10 +6,11 @@
  *       MONO-CAPS    ← ink-3, 10px, uppercase
  */
 
-import { View, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
 import { Display, DisplayItalic, MonoCaps } from '../ui/Typography'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 
 interface HomeGreetingProps {
@@ -30,8 +31,10 @@ export function HomeGreeting({
   logoSize = 44,
 }: HomeGreetingProps) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const ink = isDark ? colors.text : '#141313'
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
   const displayName = name?.trim().split(/\s+/)[0] || 'dear'
 
   return (
@@ -48,12 +51,23 @@ export function HomeGreeting({
       ) : null}
       <View style={{ flex: 1 }}>
         <View style={styles.row}>
-          <Display size={size} color={ink}>{t('home_hi')}</Display>
-          <DisplayItalic size={size} color={ink} style={{ marginLeft: 8 }}>
-            {displayName}
-          </DisplayItalic>
+          {diffuse ? (
+            <>
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: size, color: ink, letterSpacing: -0.4 }}>{t('home_hi')}</Text>
+              <Text style={{ fontFamily: diffuseFont.italic, fontSize: size, color: ink, marginLeft: 8 }}>{displayName}</Text>
+            </>
+          ) : (
+            <>
+              <Display size={size} color={ink}>{t('home_hi')}</Display>
+              <DisplayItalic size={size} color={ink} style={{ marginLeft: 8 }}>{displayName}</DisplayItalic>
+            </>
+          )}
         </View>
-        {microLabel ? <MonoCaps style={{ marginTop: 2 }}>{microLabel}</MonoCaps> : null}
+        {microLabel ? (
+          diffuse
+            ? <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 3 }}>{microLabel}</Text>
+            : <MonoCaps style={{ marginTop: 2 }}>{microLabel}</MonoCaps>
+        ) : null}
       </View>
     </View>
   )
