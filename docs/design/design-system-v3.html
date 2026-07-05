@@ -1,0 +1,1907 @@
+<!-- @dsCard group="v3 — Diffuse" viewport="1440x5600" name="Design System v3" subtitle="Generative gradients define behavior · one delicate type system · full shipped control library" -->
+<!DOCTYPE html>
+<html lang="en" data-theme="diffuse">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>grandma.app — Design System v3 · Diffuse</title>
+<style id="__ds-inlined-css">
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700;1,9..144,800;1,9..144,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+/* ===== inlined from src/tokens.css ===== */
+/* grandma.app — Redesign Tokens
+   Neo-pastel sticker-collage aesthetic on cream.
+   Light is default; dark is a toggle.
+*/
+
+/* ---- v2 "Made by our kid" crafted theme (additive, drop-in) ---- */
+
+/* ---- Fonts ---- */
+
+:root {
+  /* canvas */
+  --bg: #F3ECD9;             /* cream */
+  --bg-deep: #EFE5CC;
+  --paper: #FFFEF8;          /* card paper */
+  --paper-2: #F7F0DF;
+  --ink: #141313;            /* near-black text */
+  --ink-2: #3A3533;
+  --ink-3: #6E6763;
+  --ink-4: #A69E93;
+  --line: rgba(20,19,19,0.08);
+  --line-2: rgba(20,19,19,0.14);
+
+  /* mode colors — softer pastels */
+  --mode-pre: #E58BB4;       /* pre-pregnancy — rose */
+  --mode-pre-soft: #F7CFDD;
+  --mode-preg: #B7A6E8;      /* pregnancy — lavender */
+  --mode-preg-soft: #E0D5F3;
+  --mode-kids: #8BB8E8;      /* kids — powder blue */
+  --mode-kids-soft: #D4E3F3;
+
+  /* sticker palette (always available, used as accents) */
+  --st-yellow: #F5D652;
+  --st-yellow-soft: #FBEA9E;
+  --st-blue: #9DC3E8;
+  --st-blue-soft: #CFE0F0;
+  --st-pink: #F2B2C7;
+  --st-pink-soft: #F9D8E2;
+  --st-green: #BDD48C;
+  --st-green-soft: #DDE7BB;
+  --st-lilac: #C8B6E8;
+  --st-lilac-soft: #E3D8F2;
+  --st-peach: #F5B896;
+  --st-peach-soft: #F9D6C0;
+  --st-coral: #EE7B6D;
+  --st-charcoal: #2A2624;
+
+  /* current active mode default */
+  --accent: var(--mode-preg);
+  --accent-soft: var(--mode-preg-soft);
+
+  /* type */
+  --font-display: 'Fraunces', 'Instrument Serif', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-italic: 'Instrument Serif', 'Fraunces', serif;
+
+  /* radii */
+  --r-sm: 12px;
+  --r-md: 20px;
+  --r-lg: 28px;
+  --r-xl: 36px;
+  --r-xxl: 48px;
+  --r-pill: 999px;
+
+  /* spacing */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* shadows */
+  --sh-card: 0 1px 0 rgba(20,19,19,0.04), 0 8px 24px -12px rgba(20,19,19,0.12);
+  --sh-pop: 0 2px 0 rgba(20,19,19,0.08), 0 18px 36px -16px rgba(20,19,19,0.22);
+}
+
+[data-theme="dark"] {
+  --bg: #1A1713;
+  --bg-deep: #13110E;
+  --paper: #232019;
+  --paper-2: #2C2820;
+  --ink: #F5EDDC;
+  --ink-2: #D6CCB5;
+  --ink-3: #9E9684;
+  --ink-4: #6E6757;
+  --line: rgba(245,237,220,0.08);
+  --line-2: rgba(245,237,220,0.14);
+
+  /* mode colors stay warm but slightly brighter in dark */
+  --mode-pre: #EFA2C2;
+  --mode-pre-soft: #3A2730;
+  --mode-preg: #C4B5EF;
+  --mode-preg-soft: #2D2842;
+  --mode-kids: #A5C9F0;
+  --mode-kids-soft: #1F2A3A;
+
+  --st-yellow: #F0CE4C;
+  --st-yellow-soft: #3A3116;
+  --st-blue: #A5C8EC;
+  --st-blue-soft: #1C2A3A;
+  --st-pink: #F5BBCF;
+  --st-pink-soft: #36222A;
+  --st-green: #C5DA98;
+  --st-green-soft: #283016;
+  --st-lilac: #D0BFEC;
+  --st-lilac-soft: #2A2340;
+  --st-peach: #F7C09D;
+  --st-peach-soft: #3A2618;
+  --st-coral: #F29082;
+  --st-charcoal: #F5EDDC;
+
+  --sh-card: 0 1px 0 rgba(0,0,0,0.4), 0 8px 24px -12px rgba(0,0,0,0.6);
+  --sh-pop: 0 2px 0 rgba(0,0,0,0.5), 0 18px 36px -16px rgba(0,0,0,0.7);
+}
+
+/* ---- Mode classes set accent ---- */
+[data-mode="pre"]  { --accent: var(--mode-pre);  --accent-soft: var(--mode-pre-soft); }
+[data-mode="preg"] { --accent: var(--mode-preg); --accent-soft: var(--mode-preg-soft); }
+[data-mode="kids"] { --accent: var(--mode-kids); --accent-soft: var(--mode-kids-soft); }
+
+/* ---- Base ---- */
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-feature-settings: "ss01", "ss02";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  margin: 0;
+}
+
+* { box-sizing: border-box; }
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+.display-italic {
+  font-family: var(--font-italic);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.0;
+}
+
+.mono-caps {
+  font-family: var(--font-body);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 10px;
+}
+
+/* Scrollbars */
+.scroll-invisible::-webkit-scrollbar { width: 0; height: 0; }
+.scroll-invisible { scrollbar-width: none; }
+
+/* ----- Stickers as SVG-friendly classes ----- */
+.sticker-shadow { filter: drop-shadow(0 2px 0 rgba(20,19,19,0.06)) drop-shadow(0 6px 10px rgba(20,19,19,0.08)); }
+
+/* Hand-drawn underline */
+.scribble-underline {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 10' preserveAspectRatio='none'><path d='M2 6 Q 30 2 60 5 T 118 4' stroke='%23141313' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 8px;
+  padding-bottom: 6px;
+}
+
+
+/* ===== inlined from src/tokens-v2.css ===== */
+/* grandma.app — v2 "Made by our kid" tokens
+   ADDITIVE: a new drop-in theme scope. Apply with <... data-theme="crafted">.
+   Sophisticated, clean structure warmed up with crayon color + handcraft type.
+   Does NOT modify the base :root / dark / mode tokens in tokens.css.
+*/
+
+/* ---- Handcraft + clean type pairing ---- */
+
+/* v2-only raw crayon palette — always available under the crafted scope.
+   Saturated primaries pulled from the Penguin Patch / PLAY / Color Theory refs. */
+[data-theme="crafted"] {
+  /* raw crayon hues */
+  --cr-red:    #E5443B;
+  --cr-orange: #F26A2A;
+  --cr-yellow: #F2C12D;
+  --cr-green:  #2FA85A;
+  --cr-teal:   #1FA38A;
+  --cr-blue:   #2C66D6;
+  --cr-navy:   #1E3FA8;
+  --cr-pink:   #F2649E;
+  --cr-purple: #8A4FD0;
+  --cr-ink:    #20201C;
+
+  /* soft crayon fills (for sticker backgrounds, chips) */
+  --cr-red-soft:    #F8C9C4;
+  --cr-orange-soft: #FBD6BE;
+  --cr-yellow-soft: #FBEDBE;
+  --cr-green-soft:  #C5E6CF;
+  --cr-blue-soft:   #C7D8F5;
+  --cr-pink-soft:   #FBD0E1;
+  --cr-purple-soft: #E0CCF3;
+
+  /* ---- map onto the system token names so v2 is a drop-in theme ---- */
+  /* canvas — warm crayon paper */
+  --bg: #F5EBD8;
+  --bg-deep: #F0E3CB;
+  --paper: #FFFDF6;
+  --paper-2: #FBF3E2;
+  --ink: #20201C;
+  --ink-2: #43403A;
+  --ink-3: #726C63;
+  --ink-4: #A8A095;
+  --line: rgba(32,32,28,0.10);
+  --line-2: rgba(32,32,28,0.18);
+
+  /* mode colors — bold crayon instead of pastels */
+  --mode-pre:  var(--cr-pink);
+  --mode-pre-soft:  var(--cr-pink-soft);
+  --mode-preg: var(--cr-purple);
+  --mode-preg-soft: var(--cr-purple-soft);
+  --mode-kids: var(--cr-blue);
+  --mode-kids-soft: var(--cr-blue-soft);
+
+  /* sticker palette mapped to crayon */
+  --st-yellow: var(--cr-yellow);  --st-yellow-soft: var(--cr-yellow-soft);
+  --st-blue:   var(--cr-blue);    --st-blue-soft:   var(--cr-blue-soft);
+  --st-pink:   var(--cr-pink);    --st-pink-soft:   var(--cr-pink-soft);
+  --st-green:  var(--cr-green);   --st-green-soft:  var(--cr-green-soft);
+  --st-lilac:  var(--cr-purple);  --st-lilac-soft:  var(--cr-purple-soft);
+  --st-peach:  var(--cr-orange);  --st-peach-soft:  var(--cr-orange-soft);
+  --st-coral:  var(--cr-red);
+  --st-charcoal: var(--cr-ink);
+
+  --accent: var(--cr-blue);
+  --accent-soft: var(--cr-blue-soft);
+
+  /* type — clean sans body, handcraft display + marker accent */
+  --font-display: 'Caveat', 'Fraunces', Georgia, serif;
+  --font-marker: 'Caveat', cursive;
+  --font-hand: 'Patrick Hand', 'Caveat', cursive;
+  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-italic: 'Caveat', 'Instrument Serif', serif;
+  /* shared precision face — the connective tissue for data/dates/labels */
+  --font-data: 'Space Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* radii — slightly looser, hand-cut feel */
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 26px;
+  --r-xl: 34px;
+  --r-xxl: 46px;
+  --r-pill: 999px;
+
+  /* hand-drawn irregular border-radius presets (paste into border-radius) */
+  --r-blob-1: 47% 53% 58% 42% / 52% 46% 54% 48%; /* @kind radius */
+  --r-blob-2: 58% 42% 49% 51% / 44% 57% 43% 56%; /* @kind radius */
+
+  /* crayon ink stroke + paper-toothy shadow */
+  --stroke-ink: 2.5px;
+  --sh-card: 0 2px 0 rgba(32,32,28,0.06), 0 10px 26px -14px rgba(32,32,28,0.16);
+  --sh-pop:  0 3px 0 rgba(32,32,28,0.10), 0 20px 38px -16px rgba(32,32,28,0.26);
+  /* sketchy "drawn outline" — pair with a crayon color via currentColor */
+  --sh-sketch: 0 0 0 var(--stroke-ink) var(--cr-ink);
+}
+
+/* ============================================================
+   Life-stage personalities — same system, three handcraft levels.
+   --hand-level: 0 = clean (Central-like) … 1 = full crayon/doodle.
+   App surfaces read --font-display / --hand-level to pick treatment.
+   ============================================================ */
+
+/* PRE / cycle-tracking — calm, clinical-soft, closest to Central.
+   Minimal handcraft: clean serif display, no doodles. Cycle color story. */
+[data-theme="crafted"][data-mode="pre"] {
+  --accent: #C45C7C;          /* dusty rose */
+  --accent-soft: #F0D6DF;
+  --cyc-period: #C45C7C;      /* @kind color */
+  --cyc-fertile: #5BA89A;    /* @kind color */ /* sage */
+  --cyc-ovul:   #E0A24B;     /* @kind color */ /* amber */
+  --cyc-luteal: #8E7CC0;     /* @kind color */ /* muted plum */
+  --bg: #F7F1EC;             /* cooler, calmer paper */
+  --paper: #FFFFFF;
+  /* cycle is data-first: mono carries the display + tracking voice */
+  --font-display: 'Space Mono', ui-monospace, monospace;
+  --font-accent: 'Space Mono', ui-monospace, monospace; /* @kind font */
+  --hand-level: 0; /* @kind other */
+  --r-card: var(--r-lg); /* @kind radius */
+}
+
+/* PREGNANCY — in-between: soft, warm, a hint of handcraft.
+   Clean serif display with hand-lettered accents allowed. */
+[data-theme="crafted"][data-mode="preg"] {
+  --accent: var(--cr-purple);
+  --accent-soft: var(--cr-purple-soft);
+  --bg: #F6EFE2;
+  --paper: #FFFDF8;
+  /* pregnancy: warm serif display, mono for dates/weeks/measurements */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-accent: 'Space Mono', ui-monospace, monospace; /* @kind font */
+  --hand-level: 0.5; /* @kind other */
+  --r-card: var(--r-xl); /* @kind radius */
+}
+
+/* RAISING / KIDS — full handcraft: marker display, hand body accents, doodle faces. */
+[data-theme="crafted"][data-mode="kids"] {
+  --accent: var(--cr-blue);
+  --accent-soft: var(--cr-blue-soft);
+  --bg: #F5EBD8;
+  --paper: #FFFDF6;
+  --font-display: 'Caveat', cursive;
+  --font-accent: 'Patrick Hand', cursive; /* @kind font */
+  --hand-level: 1; /* @kind other */
+  --r-card: var(--r-blob-2); /* @kind radius */
+}
+
+/* ============================================================
+   DARK MODE — crafted theme. Activated with [data-dark] on the
+   same element that carries data-theme="crafted". Shared surfaces
+   first, then per-behavior accents (brightened for dark paper).
+   ============================================================ */
+[data-theme="crafted"][data-dark] {
+  --bg: #1A1713;
+  --bg-deep: #13110E;
+  --paper: #232019;
+  --paper-2: #2C2820;
+  --ink: #F5EDDC;
+  --ink-2: #D6CCB5;
+  --ink-3: #9E9684;
+  --ink-4: #6E6757;
+  --line: rgba(245,237,220,0.10);
+  --line-2: rgba(245,237,220,0.16);
+
+  /* brightened crayon hues so they sing on dark paper */
+  --cr-red: #F0655C;  --cr-orange: #F58A52; --cr-yellow: #F5D45C;
+  --cr-green: #5CC07E; --cr-blue: #6FA0F0;  --cr-pink: #F58AB8;
+  --cr-purple: #B79AE8;
+}
+
+[data-theme="crafted"][data-dark][data-mode="pre"] {
+  --accent: #E08CA6; --accent-soft: #3A2730;
+  --bg: #1A1713; --paper: #232019;
+  --cyc-period: #E08CA6; --cyc-fertile: #7FC4B4; --cyc-ovul: #F0C277; --cyc-luteal: #B0A0D8;
+}
+[data-theme="crafted"][data-dark][data-mode="preg"] {
+  --accent: #B79AE8; --accent-soft: #2A2340;
+  --bg: #1A1713; --paper: #232019;
+}
+[data-theme="crafted"][data-dark][data-mode="kids"] {
+  --accent: #6FA0F0; --accent-soft: #1C2A3A;
+  --bg: #1A1713; --paper: #232019;
+}
+
+
+/* ===== inlined from src/tokens-v3.css ===== */
+/* grandma.app — v3 "Diffuse" tokens
+   ADDITIVE: a new drop-in theme scope. Apply with data-theme="diffuse".
+   Direction: ONE sophisticated, delicate, clean type + icon language for all
+   behaviors. Behaviors are differentiated ONLY by color + shape + blur —
+   soft grainy generative gradient fields. Nothing here overrides v1 or v2. */
+
+
+[data-theme="diffuse"] {
+  /* ---- type: unified, delicate, sophisticated ---- */
+  --d-display: 'Cormorant Garamond', Georgia, serif; /* @kind font */
+  --d-sans:    'Hanken Grotesk', -apple-system, system-ui, sans-serif; /* @kind font */
+  --d-mono:    'Space Mono', ui-monospace, monospace; /* @kind font */
+  --d-font-body: var(--d-sans);
+
+  /* ---- neutral foundation (paper + ink) ---- */
+  --d-paper:    #F4F1E8;   /* warm off-white canvas */
+  --d-paper-2:  #FBFAF5;   /* raised card */
+  --d-ink:      #1A1916;   /* near-black, slightly warm */
+  --d-ink-2:    #4A463E;
+  --d-ink-3:    #807A6E;
+  --d-ink-4:    #B3AC9C;
+  --d-line:     rgba(26,25,22,.12);
+  --d-line-2:   rgba(26,25,22,.20);
+  --d-hairline: rgba(26,25,22,.55);  /* the thin sophisticated rule */
+
+  /* ---- shared neutrals mapped onto the existing token names ---- */
+  --bg: var(--d-paper);
+  --bg-deep: #EDE9DD;
+  --paper: var(--d-paper-2);
+  --paper-2: #F7F4EC;
+  --ink: var(--d-ink);
+  --ink-2: var(--d-ink-2);
+  --ink-3: var(--d-ink-3);
+  --ink-4: var(--d-ink-4);
+  --line: var(--d-line);
+  --line-2: var(--d-line-2);
+  --font-display: var(--d-display);
+  --font-body: var(--d-sans);
+  --font-hand: var(--d-display);
+  --font-mono: var(--d-mono);
+
+  /* ---- shapes: clean, generous, calm ---- */
+  --d-r-sm: 14px;
+  --d-r-md: 20px;
+  --d-r-lg: 28px;
+  --d-r-xl: 40px;
+  --d-blur-soft: 40px;
+  --d-blur-field: 70px;   /* generative-field blob blur */
+  --d-blur-glass: 18px;
+
+  /* shadows — barely-there, premium */
+  --sh-card: 0 1px 2px rgba(26,25,22,.04), 0 8px 30px -18px rgba(26,25,22,.18);
+  --sh-pop:  0 2px 6px rgba(26,25,22,.06), 0 22px 50px -24px rgba(26,25,22,.30);
+
+  /* ---- grain overlay (used by .diffuse-grain / fields) ---- */
+  --d-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); /* @kind other */
+  --d-grain-opacity: 0.22; /* @kind other */
+}
+
+/* =====================================================================
+   BEHAVIOR FIELDS — the ONLY thing that changes per behavior is the
+   generative gradient (color stops) + the blob shape/blur. Type stays
+   identical. Each scope exposes --g1..--g4 (the diffuse light colors)
+   and an --accent pulled from the field for ink/CTA moments.
+   ===================================================================== */
+
+/* CYCLE — coral → rose → lilac, calm warm-cool */
+[data-theme="diffuse"] [data-mode="pre"],
+[data-theme="diffuse"][data-mode="pre"] {
+  --g1: #F0A99A;  --g2: #F0B8C8;  --g3: #C9B7E6;  --g4: #F7DCC0;
+  --accent: #C25872;  --accent-soft: #F6DCE4;
+}
+/* PREGNANCY — peach → blush → plum, warm bloom */
+[data-theme="diffuse"] [data-mode="preg"],
+[data-theme="diffuse"][data-mode="preg"] {
+  --g1: #F8C9A6;  --g2: #F2AEC6;  --g3: #BDA4E2;  --g4: #F8E1B2;
+  --accent: #8F5FC6;  --accent-soft: #E7D8F5;
+}
+/* RAISING — bright multi, playful spectrum */
+[data-theme="diffuse"] [data-mode="kids"],
+[data-theme="diffuse"][data-mode="kids"] {
+  --g1: #F4D888;  --g2: #A2D8B4;  --g3: #A6BCE6;  --g4: #F4B396;
+  --accent: #4C79CE;  --accent-soft: #CBDCF7;
+}
+/* CAREGIVER — calm teal → blue → mint, trustworthy */
+[data-theme="diffuse"] [data-mode="care"],
+[data-theme="diffuse"][data-mode="care"] {
+  --g1: #A6D6DC;  --g2: #B0C0E4;  --g3: #C6E7D9;  --g4: #D4E1F0;
+  --accent: #4A8496;  --accent-soft: #D2EAEE;
+}
+
+/* ---- dark variant: deepen paper, brighten field ---- */
+[data-theme="diffuse"][data-dark] {
+  --bg: #16140F;
+  --bg-deep: #100E0A;
+  --paper: #211E18;
+  --paper-2: #2A261F;
+  --ink: #F4F1E8;
+  --ink-2: #D8D2C4;
+  --ink-3: #A39C8C;
+  --ink-4: #6E685C;
+  /* diffuse ink/paper family — flips with the theme so every
+     engine-drawn stroke (mark, stickers, weeks, icons) goes light */
+  --d-paper:   #211E18;
+  --d-paper-2: #2A261F;
+  --d-ink:     #F4F1E8;
+  --d-ink-2:   #D8D2C4;
+  --d-ink-3:   #A39C8C;
+  --d-ink-4:   #6E685C;
+  --line: rgba(244,241,232,.12);
+  --line-2: rgba(244,241,232,.22);
+  --d-hairline: rgba(244,241,232,.55);
+  --d-grain-opacity: 0.16; /* @kind other */
+  --sh-card: 0 1px 2px rgba(0,0,0,.3), 0 10px 34px -18px rgba(0,0,0,.6);
+  --sh-pop:  0 2px 6px rgba(0,0,0,.4), 0 26px 56px -24px rgba(0,0,0,.7);
+}
+
+
+/* ===== inlined from src/diffuse-controls.css ===== */
+/* grandma.app — Diffuse control language (canonical, v3)
+   ADDITIVE · scope: [data-theme="diffuse"]. The single source of truth for
+   every shipped control: actions, fields, selection, the choice timeline,
+   the dot-grid calendar, avatar blooms, and the answer-graph pickers.
+
+   PRINCIPLES (per CLAUDE.md)
+   · Soft, diffuse, blurred gradients — granular grain, gentle blur, low sat.
+   · No flat black, no solid rounded "container" buttons.
+   · Controls/labels: MONO, uppercase, tracked-out, small. Headings: serif.
+   · Actions: containerless — mono label + arrow, OR soft gradient-glass spray.
+   · Selection: outline-ellipse / ring-node / dot / soft bloom — hairline strokes.
+   · Color: mostly ink; the per-behavior --accent appears on active markers.
+   All neutrals come from tokens-v3.css so every control is dark-mode-ready. */
+
+/* =====================================================================
+   1 · ACTIONS
+   ===================================================================== */
+
+/* base — used only to share box-model; never a filled container on its own */
+[data-theme="diffuse"] .pillbtn {
+  font-family: var(--d-sans); font-weight: 600; font-size: 15px;
+  border: none; cursor: pointer; border-radius: 999px;
+  padding: 16px 22px; display: flex; align-items: center;
+  justify-content: center; gap: 8px;
+}
+
+/* PRIMARY CTA — containerless editorial mono label on a hairline rule */
+[data-theme="diffuse"] .solid {
+  position: relative; color: var(--d-ink); background: none; box-shadow: none;
+  font-family: var(--d-mono); font-weight: 600; font-size: 13px;
+  letter-spacing: .2em; text-transform: uppercase;
+  justify-content: space-between; border-radius: 0;
+  padding: 18px 2px 2px; border-top: 1px solid var(--d-line-2);
+}
+[data-theme="diffuse"] .solid svg { width: 22px; height: 18px; opacity: .85; transition: transform .25s ease; }
+[data-theme="diffuse"] .solid:hover { background: none; }
+[data-theme="diffuse"] .solid:hover svg { transform: translateX(6px); }
+[data-theme="diffuse"] .solid[disabled] { color: var(--d-ink-4); border-color: var(--d-line); cursor: default; }
+
+/* GRADIENT-GLASS pill — soft spray behind text (hero OAuth / accent action) */
+[data-theme="diffuse"] .gradpill {
+  position: relative; overflow: hidden; color: var(--d-ink);
+  background: linear-gradient(135deg,
+    color-mix(in oklab, var(--g1) 60%, transparent),
+    color-mix(in oklab, var(--g2) 48%, transparent),
+    color-mix(in oklab, var(--g3) 56%, transparent));
+  backdrop-filter: blur(18px) saturate(1.6); -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  box-shadow: inset 0 1.5px 1px rgba(255,255,255,.9), inset 0 0 0 1px rgba(255,255,255,.45);
+}
+[data-theme="diffuse"] .gradpill::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 55%;
+  pointer-events: none; background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0));
+}
+
+/* GHOST glass pill — quiet secondary */
+[data-theme="diffuse"] .ghost {
+  position: relative; color: var(--d-ink);
+  background: linear-gradient(150deg, rgba(255,255,255,.46), rgba(255,255,255,.18));
+  backdrop-filter: blur(16px) saturate(1.5); -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  box-shadow: inset 0 1.5px 1px rgba(255,255,255,.85), inset 0 0 0 1px rgba(255,255,255,.45);
+}
+
+/* MONO TEXT LINK — secondary / skip, fully containerless */
+[data-theme="diffuse"] .txtlink {
+  font-family: var(--d-mono); font-weight: 600; font-size: 12px;
+  letter-spacing: .2em; text-transform: uppercase; color: var(--d-ink-3);
+  background: none; border: none; cursor: pointer; padding: 15px;
+  width: 100%; text-align: center; transition: color .2s ease;
+}
+[data-theme="diffuse"] .txtlink:hover { color: var(--d-ink); }
+
+/* OAUTH — containerless mono rows on hairlines (a provider mark sits left).
+   Modifier on .pillbtn: strips any fill/glass to a divided row. */
+[data-theme="diffuse"] .pillbtn.oauth {
+  font-family: var(--d-mono); font-weight: 600; font-size: 12.5px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--d-ink);
+  background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  border: none; border-bottom: 1px solid var(--d-line-2); border-radius: 0;
+  box-shadow: none; justify-content: flex-start; gap: 12px; padding: 16px 2px;
+}
+[data-theme="diffuse"] .pillbtn.oauth::after { display: none; }
+[data-theme="diffuse"] .pillbtn.oauth:hover { opacity: .55; background: none; }
+[data-theme="diffuse"] .pillbtn.oauth svg { width: 16px; height: 16px; flex: none; }
+
+/* =====================================================================
+   2 · FIELDS — bare underlined inputs, mono labels
+   ===================================================================== */
+[data-theme="diffuse"] .field {
+  width: 100%; background: transparent; border: none;
+  border-bottom: 1.5px solid var(--d-line-2); padding: 10px 2px 14px;
+  font-family: var(--d-sans); font-size: 18px; color: var(--d-ink); outline: none;
+}
+[data-theme="diffuse"] .field::placeholder { color: var(--d-ink-4); }
+[data-theme="diffuse"] .field:focus { border-color: var(--d-hairline); }
+[data-theme="diffuse"] .field-lab {
+  font-family: var(--d-mono); font-size: 10px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--d-ink-3); margin-bottom: 4px; display: block;
+}
+[data-theme="diffuse"] .inputcard { padding: 0 2px; background: transparent; border-bottom: 1.5px solid var(--d-line-2); }
+[data-theme="diffuse"] .inputcard .field { border: none; padding: 6px 0 12px; font-size: 17px; }
+[data-theme="diffuse"] .authfield {
+  width: 100%; background: transparent; border: none;
+  border-bottom: 1.5px solid var(--d-line-2); padding: 10px 0 14px;
+  font-family: var(--d-sans); font-size: 17px; color: var(--d-ink); outline: none;
+}
+[data-theme="diffuse"] .authfield::placeholder { color: var(--d-ink-4); }
+[data-theme="diffuse"] .divider {
+  display: flex; align-items: center; gap: 14px; color: var(--d-ink-3);
+  font-family: var(--d-mono); font-size: 10px; letter-spacing: .16em;
+  text-transform: uppercase; margin: 22px 0;
+}
+[data-theme="diffuse"] .divider::before,
+[data-theme="diffuse"] .divider::after { content: ""; flex: 1; height: 1px; background: var(--d-line); }
+
+/* =====================================================================
+   3 · SELECTION — soft mono pills (the "5 days" family)
+   ===================================================================== */
+/* CHIPS (multi-select) */
+[data-theme="diffuse"] .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+[data-theme="diffuse"] .chip {
+  font-family: var(--d-mono); font-size: 12px; font-weight: 500; letter-spacing: .04em;
+  padding: 11px 18px; border-radius: 999px; cursor: pointer; color: var(--d-ink-3);
+  background: color-mix(in oklab, var(--paper) 55%, transparent);
+  border: 1px solid var(--d-line); transition: all .2s ease;
+}
+[data-theme="diffuse"] .chip.on {
+  color: var(--d-ink); font-weight: 700; border-color: var(--d-hairline);
+  background: color-mix(in oklab, var(--paper) 80%, transparent);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.5);
+}
+/* "Other +" reveal field that drops below a chip row */
+[data-theme="diffuse"] .other-input { display: none; margin-top: 14px; }
+[data-theme="diffuse"] .other-input.show { display: block; }
+[data-theme="diffuse"] .other-input input {
+  width: 100%; font-family: var(--d-mono); font-size: 13px; letter-spacing: .03em;
+  color: var(--d-ink); padding: 13px 16px; border-radius: 14px;
+  border: 1px solid var(--d-line-2); background: color-mix(in oklab, var(--paper) 60%, transparent);
+  box-shadow: inset 0 1px 2px rgba(26,25,22,.06); outline: none;
+}
+[data-theme="diffuse"] .other-input input::placeholder { color: var(--d-ink-4); }
+[data-theme="diffuse"] .other-input input:focus { border-color: var(--d-hairline); }
+
+/* SEGMENTED — same soft mono-pill family, single-select */
+[data-theme="diffuse"] .seg { display: flex; justify-content: center; gap: 8px; background: none; border: none; padding: 0; }
+[data-theme="diffuse"] .seg button {
+  position: relative; border: 1px solid var(--d-line);
+  background: color-mix(in oklab, var(--paper) 55%, transparent); cursor: pointer;
+  font-family: var(--d-mono); font-weight: 500; font-size: 12px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--d-ink-3); padding: 11px 22px;
+  border-radius: 999px; transition: all .2s ease;
+}
+[data-theme="diffuse"] .seg button.on {
+  color: var(--d-ink); font-weight: 700; border-color: var(--d-hairline);
+  background: color-mix(in oklab, var(--paper) 80%, transparent);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.5);
+}
+
+/* STEPPER — outline +/- with a large serif value */
+[data-theme="diffuse"] .stepper { display: flex; align-items: center; justify-content: center; gap: 26px; }
+[data-theme="diffuse"] .stepper button {
+  width: 54px; height: 54px; border-radius: 50%; cursor: pointer;
+  font-size: 24px; font-weight: 300; color: var(--d-ink); background: transparent;
+  border: 1px solid var(--d-line-2); display: flex; align-items: center;
+  justify-content: center; line-height: 1;
+}
+[data-theme="diffuse"] .stepper .val { font-family: var(--d-display); font-weight: 300; font-size: 80px; line-height: .85; min-width: 118px; text-align: center; }
+[data-theme="diffuse"] .stepper .val small { display: block; font-family: var(--d-mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--d-ink-3); margin-top: 8px; font-weight: 400; }
+
+/* DATE WHEEL — quiet hairline window over scrolling columns */
+[data-theme="diffuse"] .wheel { display: flex; justify-content: center; gap: 8px; position: relative; padding: 8px 0; }
+[data-theme="diffuse"] .wheel::before { content: ""; position: absolute; left: 14px; right: 14px; top: 50%; transform: translateY(-50%); height: 50px; border-top: 1px solid var(--d-line-2); border-bottom: 1px solid var(--d-line-2); }
+[data-theme="diffuse"] .wcol { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 18px; width: 80px; }
+[data-theme="diffuse"] .wcol span { color: var(--d-ink-4); line-height: 1.1; }
+[data-theme="diffuse"] .wcol .sel { color: var(--d-ink); font-weight: 600; font-size: 21px; }
+[data-theme="diffuse"] .wcol.wide { width: 120px; }
+
+/* =====================================================================
+   4 · CHOICE TIMELINE — connector line + ring/icon nodes,
+   selection = hairline outline ellipse around the label
+   ===================================================================== */
+[data-theme="diffuse"] .choice { display: flex; flex-direction: column; position: relative; }
+[data-theme="diffuse"] .choice::before { content: ""; position: absolute; left: 23px; top: 34px; bottom: 34px; width: 1px; background: var(--d-line-2); z-index: 0; }
+[data-theme="diffuse"] .choicecard { display: flex; align-items: center; gap: 18px; padding: 14px 2px; cursor: pointer; position: relative; z-index: 1; transition: padding-left .2s ease; }
+[data-theme="diffuse"] .choicecard.on { padding-left: 0; }
+[data-theme="diffuse"] .choicecard .ic {
+  width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0; position: relative; background: var(--bg);
+  border: 1.5px solid var(--d-line-2); transition: border-color .2s ease;
+}
+[data-theme="diffuse"] .choicecard.on .ic { border-color: var(--d-ink); }
+[data-theme="diffuse"] .choicecard .ic .gl { position: absolute; inset: 2px; border-radius: 50%; filter: blur(8px); opacity: 0; transition: opacity .2s ease; }
+[data-theme="diffuse"] .choicecard.on .ic .gl { opacity: .85; }
+[data-theme="diffuse"] .choicecard .ic svg { position: relative; width: 22px; height: 22px; z-index: 1; }
+[data-theme="diffuse"] .choicecard .tx b { position: relative; display: inline-block; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+[data-theme="diffuse"] .choicecard.on .tx b::after { content: ""; position: absolute; inset: -7px -15px; border: 1.5px solid var(--d-hairline); border-radius: 50%; }
+[data-theme="diffuse"] .choicecard .tx span { display: block; font-family: var(--d-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--d-ink-3); margin-top: 5px; }
+/* iconless rows get a matching ring node on the connector line */
+[data-theme="diffuse"] .choicecard:not(:has(.ic)) { padding-left: 66px; }
+[data-theme="diffuse"] .choicecard:not(:has(.ic))::before { content: ""; position: absolute; left: 17px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid var(--d-ink-3); background: var(--bg); }
+[data-theme="diffuse"] .choicecard.on:not(:has(.ic))::before { background: var(--d-ink); border-color: var(--d-ink); }
+
+/* =====================================================================
+   5 · CALENDAR — modern dot grid; selection = accent ring + soft bloom,
+   range/period days = a small accent dot beneath the number.
+   Per-behavior tint follows --accent automatically.
+   ===================================================================== */
+[data-theme="diffuse"] .dotcal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+[data-theme="diffuse"] .dotcal .dow { font-family: var(--d-mono); font-size: 8.5px; letter-spacing: .02em; text-transform: uppercase; color: var(--d-ink-3); text-align: center; padding-bottom: 2px; }
+[data-theme="diffuse"] .dotcal .d { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12.5px; color: var(--d-ink-2); border: 1px solid var(--d-line); cursor: pointer; }
+[data-theme="diffuse"] .dotcal .d.muted { border-color: transparent; color: var(--d-ink-4); }
+[data-theme="diffuse"] .dotcal .d.period { position: relative; border-color: transparent; color: var(--d-ink); }
+[data-theme="diffuse"] .dotcal .d.period::before { content: ""; position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
+[data-theme="diffuse"] .dotcal .d.sel { position: relative; border-color: var(--accent); color: var(--d-ink); font-weight: 600; }
+[data-theme="diffuse"] .dotcal .d.sel::before { content: ""; display: block; position: absolute; inset: -38%; border-radius: 50%; background: radial-gradient(circle, var(--accent) 0%, transparent 68%); filter: blur(8px) saturate(.85); opacity: .55; z-index: -1; pointer-events: none; }
+
+/* =====================================================================
+   6 · AVATARS — soft diffuse blooms inside a circular tile, thin glyph,
+   selected = hairline ink ring + slightly brighter bloom.
+   Each tile sets --g (its bloom color) inline.
+   ===================================================================== */
+[data-theme="diffuse"] .avgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; }
+[data-theme="diffuse"] .av { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; background: transparent; }
+[data-theme="diffuse"] .av::before { content: ""; position: absolute; inset: 0; background: var(--g); filter: blur(9px) saturate(.74); -webkit-mask: radial-gradient(closest-side, #000 36%, transparent 82%); mask: radial-gradient(closest-side, #000 36%, transparent 82%); }
+[data-theme="diffuse"] .av svg { width: 25px; height: 25px; position: relative; z-index: 1; opacity: .72; stroke-width: 1.4; }
+[data-theme="diffuse"] .av.on { box-shadow: inset 0 0 0 2px var(--d-hairline); }
+[data-theme="diffuse"] .av.on::before { filter: blur(8px) saturate(.86); }
+[data-theme="diffuse"] .av.on svg { opacity: .9; }
+[data-theme="diffuse"] .av.cam { background: transparent; }
+[data-theme="diffuse"] .av.cam::before { display: none; }
+[data-theme="diffuse"] .av.cam svg { opacity: .55; }
+
+/* =====================================================================
+   7 · ANSWER-GRAPHS — soft gradient blooms arranged as a graph; the answer
+   IS the diagram. Each node sets its bloom color inline (--c). Selection
+   brightens + scales the bloom. By count:
+     · .blobpick / .bopt   — free-floating blooms (N journeys)
+     · .polefield/.poleblob— two-pole binary
+     · .triconst/.trinode  — triangle (3)
+     · .orbit / .orbnode   — orbit ring w/ dot nodes (4)
+     · .bloom  / .bloomlbl  — metaball cluster (multi-select)
+   ===================================================================== */
+/* free blooms */
+[data-theme="diffuse"] .blobpick { position: relative; width: 100%; height: 100%; }
+[data-theme="diffuse"] .bopt { position: absolute; width: 188px; height: 188px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; }
+[data-theme="diffuse"] .bopt::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--c); filter: blur(28px); opacity: .5; transition: opacity .3s ease, transform .3s ease; }
+[data-theme="diffuse"] .bopt.sel::before { opacity: .82; transform: scale(1.06); }
+[data-theme="diffuse"] .bopt .k { position: relative; font-family: var(--d-mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--d-ink-3); }
+[data-theme="diffuse"] .bopt.sel .k { color: var(--d-ink); }
+[data-theme="diffuse"] .bopt .n { position: relative; font-family: var(--d-display); font-style: italic; font-size: 27px; color: var(--d-ink); margin-top: 1px; letter-spacing: -.01em; }
+
+/* two-pole binary */
+[data-theme="diffuse"] .polefield { position: relative; width: 100%; height: 100%; min-height: 340px; }
+[data-theme="diffuse"] .poleline { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+[data-theme="diffuse"] .poleblob { position: absolute; width: 152px; text-align: center; cursor: pointer; z-index: 1; }
+[data-theme="diffuse"] .poleblob::before { content: ""; display: block; width: 120px; height: 120px; margin: 0 auto 14px; border-radius: 50%; background: var(--c); filter: blur(20px); opacity: .4; transition: opacity .3s, transform .3s; }
+[data-theme="diffuse"] .poleblob.on::before { opacity: .9; transform: scale(1.1); }
+[data-theme="diffuse"] .poleblob b { font-size: 17px; font-weight: 600; letter-spacing: -.01em; display: block; transition: color .2s; }
+[data-theme="diffuse"] .poleblob:not(.on) b { color: var(--d-ink-3); }
+[data-theme="diffuse"] .poleblob small { font-family: var(--d-mono); font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--d-ink-3); display: block; margin-top: 5px; }
+
+/* triangle (3) */
+[data-theme="diffuse"] .triconst { position: relative; width: 100%; height: 344px; }
+[data-theme="diffuse"] .constline { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+[data-theme="diffuse"] .trinode { position: absolute; transform: translate(-50%, -50%); width: 132px; text-align: center; cursor: pointer; z-index: 1; }
+[data-theme="diffuse"] .trinode::before { content: ""; display: block; width: 88px; height: 88px; margin: 0 auto 10px; border-radius: 50%; background: var(--c); filter: blur(15px); opacity: .42; transition: opacity .3s, transform .3s; }
+[data-theme="diffuse"] .trinode.on::before { opacity: .92; transform: scale(1.14); }
+[data-theme="diffuse"] .trinode b { font-size: 15.5px; font-weight: 600; line-height: 1.12; display: block; transition: color .2s; }
+[data-theme="diffuse"] .trinode:not(.on) b { color: var(--d-ink-3); }
+[data-theme="diffuse"] .trinode small { font-family: var(--d-mono); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--d-ink-3); display: block; margin-top: 5px; }
+
+/* orbit ring (4) — dot nodes on a ring */
+[data-theme="diffuse"] .orbit { position: relative; width: 100%; height: 360px; }
+[data-theme="diffuse"] .orbsvg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+[data-theme="diffuse"] .orbnode { position: absolute; transform: translate(-50%, -50%); width: 124px; text-align: center; cursor: pointer; }
+[data-theme="diffuse"] .orbnode .od { width: 13px; height: 13px; border-radius: 50%; background: var(--d-line-2); margin: 0 auto 10px; transition: .3s; }
+[data-theme="diffuse"] .orbnode.on .od { background: var(--c2, var(--d-ink)); box-shadow: 0 0 0 6px var(--cg, color-mix(in oklab, var(--accent) 20%, transparent)); transform: scale(1.18); }
+[data-theme="diffuse"] .orbnode b { font-size: 14.5px; font-weight: 600; line-height: 1.14; display: block; transition: color .2s; }
+[data-theme="diffuse"] .orbnode:not(.on) b { color: var(--d-ink-3); }
+[data-theme="diffuse"] .orbnode small { font-family: var(--d-mono); font-size: 8.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--d-ink-3); display: block; margin-top: 4px; }
+
+/* metaball cluster (multi-select) */
+[data-theme="diffuse"] .bloom { position: relative; width: 100%; max-width: 300px; margin: 6px auto 0; }
+[data-theme="diffuse"] .bloomsvg { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(11px) saturate(.82); opacity: .92; }
+[data-theme="diffuse"] .bloomlbl { position: absolute; transform: translate(-50%, -50%); width: 96px; text-align: center; font-family: var(--d-mono); font-size: 9.5px; font-weight: 500; line-height: 1.25; letter-spacing: .07em; text-transform: uppercase; color: var(--d-ink-3); cursor: pointer; z-index: 2; transition: color .2s; }
+[data-theme="diffuse"] .bloomlbl::before { content: ""; display: block; width: 6px; height: 6px; border-radius: 50%; border: 1.2px solid var(--d-ink-3); margin: 0 auto 6px; transition: .2s; }
+[data-theme="diffuse"] .bloomlbl.on { color: var(--d-ink); font-weight: 600; }
+[data-theme="diffuse"] .bloomlbl.on::before { background: var(--d-ink); border-color: var(--d-ink); box-shadow: 0 0 0 4px rgba(255,255,255,.45); }
+
+/* =====================================================================
+   8 · PURE LINE-ART PRIMITIVES (kept) — the strict containerless set for
+   contexts that want hairline-only: outline-ellipse selection + ring node.
+   ===================================================================== */
+[data-theme="diffuse"] .gm-ring { display: inline-flex; align-items: center; justify-content: center; padding: 9px 20px; border-radius: 999px; border: 1px solid var(--d-hairline); background: none; color: var(--d-ink); }
+[data-theme="diffuse"] .gm-node { flex: none; width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid var(--d-hairline); background: var(--bg); box-sizing: border-box; }
+[data-theme="diffuse"] .gm-node.is-on { border-color: var(--accent); background: var(--accent); box-shadow: inset 0 0 0 2.5px var(--bg); }
+
+
+</style>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--d-sans);-webkit-font-smoothing:antialiased}
+  .grain{position:fixed;inset:0;pointer-events:none;z-index:50;opacity:var(--d-grain-opacity);background-image:var(--d-grain);mix-blend-mode:soft-light}
+  .page{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 56px 160px}
+
+  /* generative field engine (renamed .gfield to avoid clashing with the control .field input) */
+  .gfield{position:relative;overflow:hidden;isolation:isolate}
+  .gfield::before{content:"";position:absolute;inset:-20%;z-index:-2;
+    background:
+      radial-gradient(52% 58% at 20% 24%, var(--g1), transparent 74%),
+      radial-gradient(54% 60% at 82% 20%, var(--g2), transparent 74%),
+      radial-gradient(60% 64% at 74% 84%, var(--g3), transparent 74%),
+      radial-gradient(54% 60% at 22% 80%, var(--g4), transparent 74%),
+      var(--bg);
+    filter:blur(46px) saturate(1.14);}
+  .gfield::after{content:"";position:absolute;inset:0;z-index:-1;opacity:.30;background-image:var(--d-grain);mix-blend-mode:soft-light;pointer-events:none}
+
+  /* masthead */
+  .mast{padding:78px 0 30px}
+  .mast .meta{display:flex;gap:54px;font-family:var(--d-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:30px;flex-wrap:wrap}
+  .mast .meta b{display:block;color:var(--ink-2);font-weight:400;margin-top:5px}
+  .mast h1{font-family:var(--d-display);font-weight:400;font-size:clamp(72px,12vw,158px);line-height:.92;letter-spacing:-.01em;margin:0}
+  .mast h1 em{font-style:italic;color:var(--ink-2)}
+  .mast .lede{max-width:560px;font-size:17px;line-height:1.6;color:var(--ink-2);margin:26px 0 0;font-weight:300}
+  .hero-field{margin-top:44px;height:360px;border-radius:var(--d-r-xl);display:flex;align-items:flex-end;padding:34px;box-shadow:var(--sh-card)}
+  .hero-field .tag{font-family:var(--d-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(26,25,22,.66)}
+
+  /* section scaffold */
+  .sec{padding:74px 0 0}
+  .sec-head{display:flex;align-items:baseline;gap:18px;border-top:1px solid var(--d-hairline);padding-top:18px;margin-bottom:34px}
+  .sec-head .n{font-family:var(--d-mono);font-size:12px;letter-spacing:.14em;color:var(--ink-3)}
+  .sec-head h2{font-family:var(--d-display);font-weight:400;font-size:42px;line-height:1;margin:0;letter-spacing:-.01em}
+  .sec-head h2 em{font-style:italic;color:var(--ink-2)}
+  .sub{font-size:15px;line-height:1.6;color:var(--ink-3);max-width:640px;margin:-18px 0 34px;font-weight:300}
+
+  /* type specimens */
+  .type-stack{display:grid;gap:1px;background:var(--d-hairline);border-radius:var(--d-r-md);overflow:hidden;border:1px solid var(--d-hairline)}
+  .type-row{background:var(--bg);padding:28px 30px;display:flex;align-items:baseline;justify-content:space-between;gap:30px;flex-wrap:wrap}
+  .type-row .m{flex:0 0 200px;font-family:var(--d-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-3);line-height:1.6}
+  .type-row .m b{display:block;color:var(--ink);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+  .type-row .demo{flex:1;text-align:right;color:var(--ink)}
+  .scale{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin-top:18px}
+  .scale span{font-family:var(--d-display);font-weight:400;color:var(--ink)}
+
+  /* mechanism cards */
+  .mech{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .mech .m{position:relative;border-radius:var(--d-r-md);overflow:hidden;min-height:188px;padding:22px;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:var(--sh-card)}
+  .mech .m .k{font-family:var(--d-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(26,25,22,.6)}
+  .mech .m h3{font-family:var(--d-display);font-style:italic;font-weight:400;font-size:30px;margin:4px 0 0;color:var(--ink)}
+
+  /* behavior fields grid */
+  .behaviors{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+  .bcard{position:relative;border-radius:var(--d-r-lg);overflow:hidden;min-height:340px;padding:28px;display:flex;flex-direction:column;box-shadow:var(--sh-card)}
+  .bcard .top{display:flex;justify-content:space-between;align-items:flex-start}
+  .bcard .chap{font-family:var(--d-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(26,25,22,.62)}
+  .bcard h3{font-family:var(--d-display);font-weight:400;font-size:54px;line-height:.9;margin:6px 0 0;color:var(--ink)}
+  .bcard .swatches{display:flex;gap:6px}
+  .bcard .swatches i{width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+  .bcard .glass{margin-top:auto;background:rgba(255,255,255,.55);backdrop-filter:blur(var(--d-blur-glass));-webkit-backdrop-filter:blur(var(--d-blur-glass));border:1px solid rgba(255,255,255,.6);border-radius:var(--d-r-md);padding:18px 20px}
+  .bcard .glass .lab{font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(26,25,22,.6)}
+  .bcard .glass .big{font-family:var(--d-display);font-size:34px;line-height:1;color:#1A1916;margin-top:3px}
+  .bcard .glass .row{display:flex;gap:8px;margin-top:14px}
+  .bcard .glass .gchip{font-family:var(--d-sans);font-weight:500;font-size:11px;white-space:nowrap;padding:6px 13px;border-radius:99px;background:rgba(26,25,22,.85);color:#F4F1E8}
+  .bcard .glass .gchip.ghost{background:transparent;color:#1A1916;box-shadow:inset 0 0 0 1px rgba(26,25,22,.3)}
+
+  /* === control gallery scaffold === */
+  .cg{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  .cg.one{grid-template-columns:1fr}
+  .cg.four{grid-template-columns:repeat(4,1fr)}
+  .tile{position:relative;overflow:hidden;isolation:isolate;border-radius:var(--d-r-lg);padding:26px 24px;min-height:120px;display:flex;flex-direction:column;gap:16px;justify-content:center;box-shadow:var(--sh-card)}
+  .tile::before{content:"";position:absolute;inset:-25%;z-index:-2;
+    background:
+      radial-gradient(54% 60% at 22% 22%, var(--g1), transparent 72%),
+      radial-gradient(56% 60% at 82% 18%, var(--g2), transparent 72%),
+      radial-gradient(60% 64% at 78% 86%, var(--g3), transparent 72%),
+      radial-gradient(56% 60% at 18% 82%, var(--g4), transparent 72%),
+      var(--paper-2);
+    filter:blur(40px) saturate(0.95)}
+  .tile::after{content:"";position:absolute;inset:0;z-index:-1;opacity:.26;background-image:var(--d-grain);mix-blend-mode:soft-light}
+  .tile .lab{font-family:var(--d-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(26,25,22,.62)}
+  .tile.plain{background:var(--paper);border:1px solid var(--d-line);box-shadow:var(--sh-card)}
+  .tile.plain::before,.tile.plain::after{display:none}
+  .tile.plain .lab{color:var(--ink-3)}
+  .wkrow{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:2px}
+
+  /* icons: thin, unified, delicate */
+  .lib{display:grid;grid-template-columns:repeat(9,1fr);gap:1px;background:var(--d-hairline);border:1px solid var(--d-hairline);border-radius:var(--d-r-md);overflow:hidden}
+  .lib .cell{background:var(--bg);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:8px}
+  .lib .cell svg{width:26px;height:26px;color:var(--ink)}
+  .lib .cell span{font-family:var(--d-mono);font-size:8.5px;letter-spacing:.04em;color:var(--ink-4)}
+
+  .foot{margin-top:90px;border-top:1px solid var(--d-hairline);padding-top:24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  .foot p{font-family:var(--d-display);font-style:italic;font-size:22px;color:var(--ink-2);margin:0}
+  .foot span{font-family:var(--d-mono);font-size:10.5px;letter-spacing:.1em;color:var(--ink-4);text-transform:uppercase}
+
+  /* daynight + behavior toggles */
+  .controls{position:fixed;top:18px;right:18px;z-index:60;display:flex;gap:8px;background:rgba(244,241,232,.8);backdrop-filter:blur(12px);border:1px solid var(--d-line);border-radius:99px;padding:5px}
+  [data-dark] .controls{background:rgba(33,30,24,.8)}
+  .controls button{font-family:var(--d-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;border:none;background:transparent;color:var(--ink-3);padding:7px 11px;border-radius:99px;cursor:pointer}
+  .controls button.on{background:var(--ink);color:var(--bg)}
+  .controls .sep{width:1px;background:var(--d-line);margin:4px 2px}
+</style>
+<script>/* theme guard: v3 styles are scoped to [data-theme="diffuse"]; re-assert if a tool flips it */
+(function(){var r=document.documentElement;function g(){if(r.getAttribute('data-theme')!=='diffuse'){r.setAttribute('data-theme','diffuse');}}g();new MutationObserver(g).observe(r,{attributes:true,attributeFilter:['data-theme']});})();
+</script>
+</head>
+<body>
+<div class="grain"></div>
+<div class="controls" id="controls"></div>
+
+<div class="page">
+
+  <!-- MASTHEAD -->
+  <header class="mast">
+    <div class="meta">
+      <div>System<b>grandma.app v3</b></div>
+      <div>Codename<b>Diffuse</b></div>
+      <div>Type<b>Cormorant · Hanken · Space Mono</b></div>
+      <div>Date<b>June 2026</b></div>
+    </div>
+    <h1>Light, <em>diffused.</em></h1>
+    <p class="lede">One quiet, delicate type system across the whole family. Each chapter of parenthood is told only through colour, shape and blur — a soft generative gradient that belongs to that moment. Calm where it counts, alive where it helps.</p>
+
+    <div class="hero-field gfield" data-mode="preg" id="heroField">
+      <span class="tag">generative field · pregnancy</span>
+    </div>
+  </header>
+
+  <!-- 01 MECHANISM -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">01</span><h2>One system, <em>four atmospheres.</em></h2></div>
+    <p class="sub">The type, spacing and icons never change. Behaviour lives entirely in the gradient field — its colours, the softness of its blur, the drift of its shapes.</p>
+    <div class="mech">
+      <div class="m gfield" data-mode="pre"><span class="k">defined by</span><h3>Colour</h3></div>
+      <div class="m gfield" data-mode="kids"><span class="k">defined by</span><h3>Shape</h3></div>
+      <div class="m gfield" data-mode="care"><span class="k">defined by</span><h3>Blur</h3></div>
+    </div>
+  </section>
+
+  <!-- 02 TYPE -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">02</span><h2>The <em>type voice.</em></h2></div>
+    <p class="sub">A delicate high-contrast serif for the human moments, a clean grotesque for everything you read, and a quiet mono for data and labels. Shared by every behaviour, light by default.</p>
+    <div class="type-stack">
+      <div class="type-row"><div class="m"><b>Display</b>Cormorant Garamond<br>Light / Italic · titles, hero, feelings</div><div class="demo" style="font-family:var(--d-display);font-weight:300;font-size:52px;line-height:1">a soft <em style="color:var(--ink-2)">day</em></div></div>
+      <div class="type-row"><div class="m"><b>Sans</b>Hanken Grotesk<br>300–600 · UI & all reading copy</div><div class="demo" style="font-family:var(--d-sans);font-weight:300;font-size:22px">Clear where it counts, warm where it helps.</div></div>
+      <div class="type-row"><div class="m"><b>Mono</b>Space Mono<br>Labels, metadata, numbers</div><div class="demo" style="font-family:var(--d-mono);font-size:15px;letter-spacing:.04em">CYCLE DAY 14 · 09:41</div></div>
+    </div>
+    <div class="scale">
+      <span style="font-size:64px;font-weight:300">Aa</span><span style="font-size:46px;font-weight:300">Aa</span><span style="font-size:34px">Aa</span><span style="font-size:26px">Aa</span><span style="font-size:20px;font-family:var(--d-sans)">Aa</span><span style="font-size:15px;font-family:var(--d-mono)">Aa</span>
+    </div>
+  </section>
+
+  <!-- 03 BEHAVIORS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">03</span><h2>The <em>four fields.</em></h2></div>
+    <p class="sub">Each behaviour is a generative gradient drawn from its own palette. Surfaces float on it as soft glass. Same components, same type — only the light changes.</p>
+    <div class="behaviors" id="behaviors"></div>
+  </section>
+
+  <!-- 04 ACTIONS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">04</span><h2>Actions &amp; <em>fields.</em></h2></div>
+    <p class="sub">No flat-black pills. The primary CTA is a containerless mono label on a hairline rule; OAuth are divided mono rows; the accent action is a soft gradient-glass spray. Inputs are bare underlines with mono labels.</p>
+    <div class="cg">
+      <div class="tile" data-mode="pre">
+        <span class="lab">Cycle · primary + skip</span>
+        <button class="pillbtn solid" style="width:100%">Continue<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+        <button class="txtlink">Skip for now</button>
+      </div>
+      <div class="tile" data-mode="preg">
+        <span class="lab">Pregnancy · OAuth rows</span>
+        <button class="pillbtn oauth" style="width:100%"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1c-1.3.1-2.8.9-3.7 2-.8.9-1.5 2.3-1.2 3.7 1.4.1 2.9-.7 3.8-1.8.8-1 1.4-2.4 1.1-3.9zM20 17.4c-.6 1.4-1 2-1.8 3.2-1.1 1.7-2.7 3.8-4.6 3.8-1.7 0-2.2-1.1-4.5-1.1s-2.8 1.1-4.5 1.1c-1.9 0-3.3-1.9-4.5-3.6C-3 17.5 1.6 9 6.5 9c1.6 0 2.9 1.1 3.9 1.1 1 0 2.7-1.2 4.6-1.1 2.3.1 4 1.3 5 3.2-2.6 1.6-2.2 5.4 0 6.2z"/></svg>Continue with Apple</button>
+        <button class="pillbtn oauth" style="width:100%"><svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>Continue with Google</button>
+      </div>
+      <div class="tile" data-mode="kids">
+        <span class="lab">Kids · gradient-glass</span>
+        <button class="pillbtn gradpill" style="width:100%">Save this win</button>
+        <button class="pillbtn ghost" style="width:100%">Maybe later</button>
+      </div>
+      <div class="tile plain">
+        <span class="lab">Underlined fields</span>
+        <div><span class="field-lab">Your name</span><input class="field" placeholder="Maya"></div>
+        <div class="divider">or with email</div>
+        <input class="authfield" placeholder="you@example.com">
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 SELECTION -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">05</span><h2>Selection &amp; <em>steppers.</em></h2></div>
+    <p class="sub">Soft mono pills carry a faint glass fill; selected gains a hairline ring and weight — never a colour block. Open-ended lists end in an “Other +” chip that reveals a typed field. Steppers pair an outline ± with a big serif value.</p>
+    <div class="cg">
+      <div class="tile" data-mode="pre"><span class="lab">Cycle · chips + Other</span>
+        <div class="chips">
+          <span class="chip on">Cramps</span><span class="chip">Headache</span><span class="chip on">Fatigue</span><span class="chip">Bloating</span><span class="chip" id="otherChip">Other +</span>
+        </div>
+        <div class="other-input" id="otherWrap"><input placeholder="Type a symptom…"></div>
+      </div>
+      <div class="tile" data-mode="kids"><span class="lab">Kids · segmented</span>
+        <div class="seg"><button class="on">Girl</button><button>Boy</button><button>Prefer not</button></div>
+      </div>
+      <div class="tile plain"><span class="lab">Cycle length · stepper</span>
+        <div class="stepper"><button>−</button><div class="val">28<small>days</small></div><button>+</button></div>
+      </div>
+      <div class="tile plain"><span class="lab">Pregnancy · date wheel</span>
+        <div class="wheel">
+          <div class="wcol"><span>12</span><span class="sel">13</span><span>14</span></div>
+          <div class="wcol wide"><span>Feb</span><span class="sel">Mar</span><span>Apr</span></div>
+          <div class="wcol"><span>2025</span><span class="sel">2026</span><span>2027</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 CHOICE TIMELINE -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">06</span><h2>The <em>choice timeline.</em></h2></div>
+    <p class="sub">Single-select lists are a vertical connector with ring (or icon) nodes; the chosen row is wrapped in the hairline outline ellipse and its node fills with ink. Open lists add a soft accent bloom behind the active icon.</p>
+    <div class="cg">
+      <div class="tile plain" data-mode="preg"><span class="lab">Icon nodes</span>
+        <div class="choice">
+          <div class="choicecard"><div class="ic"><div class="gl" style="background:var(--g2)"></div><svg viewBox="0 0 24 24" fill="none" stroke="var(--d-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20C6 15 3.5 11.5 3.5 8.5 3.5 6.3 5.2 5 7 5.4 9 5.9 12 8.5 12 8.5 12 8.5 15 5.9 17 5.4 18.8 5 20.5 6.3 20.5 8.5 20.5 11.5 18 15 12 20Z"/></svg></div><div class="tx"><b>First baby</b><span>New to this</span></div></div>
+          <div class="choicecard on"><div class="ic"><div class="gl" style="background:var(--g3)"></div><svg viewBox="0 0 24 24" fill="none" stroke="var(--d-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4.5"/><path d="M5.5 21C5.5 17.5 8.3 15.5 12 15.5 15.7 15.5 18.5 17.5 18.5 21"/></svg></div><div class="tx"><b>Done this before</b><span>Experienced</span></div></div>
+        </div>
+      </div>
+      <div class="tile plain" data-mode="pre"><span class="lab">Ring nodes (iconless)</span>
+        <div class="choice">
+          <div class="choicecard"><div class="tx"><b>Yes, steady</b><span>Regular cycle</span></div></div>
+          <div class="choicecard on"><div class="tx"><b>It varies</b><span>Irregular</span></div></div>
+          <div class="choicecard"><div class="tx"><b>Not sure</b><span>Still learning</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 CALENDAR -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">07</span><h2>The <em>dot calendar.</em></h2></div>
+    <p class="sub">A hairline dot grid. The selected day carries an accent ring with a soft bloom behind it; range / period days get a small accent dot beneath the number. The tint follows the behaviour automatically.</p>
+    <div class="cg">
+      <div class="tile plain" data-mode="pre"><span class="lab">Cycle · period range + selection</span>
+        <div class="wkrow" id="dow-pre"></div><div class="dotcal" id="cal-pre"></div></div>
+      <div class="tile plain" data-mode="kids"><span class="lab">Kids · birthday pick</span>
+        <div class="wkrow" id="dow-kids"></div><div class="dotcal" id="cal-kids"></div></div>
+    </div>
+  </section>
+
+  <!-- 08 AVATARS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">08</span><h2>Avatar <em>blooms.</em></h2></div>
+    <p class="sub">Identity tiles are soft low-saturation blooms feathered to a glassy rim with a thin glyph — selected gains a hairline ink ring and a brighter bloom. The last tile is a containerless camera add.</p>
+    <div class="cg one">
+      <div class="tile plain"><span class="lab">Choose a look</span>
+        <div class="avgrid" id="avgrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 ANSWER-GRAPHS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">09</span><h2>Answer <em>graphs.</em></h2></div>
+    <p class="sub">For the few defining questions, the answer <em>is</em> the diagram — soft gradient blooms arranged by count. Selecting brightens and grows the bloom. The signature is the journey picker; the family also covers binary poles, a triangle of three, an orbit of four, and a multi-select metaball cluster.</p>
+    <div class="cg one">
+      <div class="tile plain" data-mode="preg" style="min-height:300px;background:var(--bg)"><span class="lab">Journey picker · free blooms (N)</span>
+        <div class="blobpick" id="blob" style="height:230px"></div>
+      </div>
+    </div>
+    <div class="cg" style="margin-top:18px">
+      <div class="tile plain" data-mode="pre" style="min-height:360px;background:var(--bg)"><span class="lab">Binary · two poles</span>
+        <div class="polefield">
+          <svg class="poleline" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="74" y1="26" x2="26" y2="78" stroke="rgba(26,25,22,.22)" stroke-width=".4"/></svg>
+          <div class="poleblob on" style="--c:radial-gradient(circle,#F0A99A,#F0B8C8);right:-6px;top:5%"><b>Yes, every day</b><small>Already a habit</small></div>
+          <div class="poleblob" style="--c:radial-gradient(circle,#C9B7E6,#F7DCC0);left:-6px;bottom:5%"><b>Not yet</b><small>Grandma reminds me</small></div>
+        </div>
+      </div>
+      <div class="tile plain" data-mode="kids" style="min-height:360px;background:var(--bg)"><span class="lab">Three · triangle</span>
+        <div class="triconst">
+          <svg class="constline" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 24 L24 74 L76 74 Z" fill="none" stroke="rgba(26,25,22,.2)" stroke-width=".4"/></svg>
+          <div class="trinode on" style="--c:radial-gradient(circle,#F4D888,#F4B396);left:50%;top:26%"><b>Just us two</b><small>One child</small></div>
+          <div class="trinode" style="--c:radial-gradient(circle,#A2D8B4,#A6BCE6);left:25%;top:74%"><b>A full house</b><small>Two or more</small></div>
+          <div class="trinode" style="--c:radial-gradient(circle,#A6BCE6,#BDA4E2);left:75%;top:74%"><b>On the way</b><small>Expecting again</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="cg" style="margin-top:18px">
+      <div class="tile plain" data-mode="preg" style="min-height:380px;background:var(--bg)"><span class="lab">Four · orbit ring</span>
+        <div class="orbit">
+          <svg class="orbsvg" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="33" ry="40" fill="none" stroke="rgba(26,25,22,.2)" stroke-width=".5" stroke-dasharray=".6 2.4"/></svg>
+          <div class="orbnode" style="--c2:#E39A88;--cg:rgba(227,154,136,.24);left:27%;top:22%"><div class="od"></div><b>Just getting<br>started</b></div>
+          <div class="orbnode on" style="--c2:#E79BAD;--cg:rgba(231,155,173,.26);left:73%;top:22%"><div class="od"></div><b>Under<br>6 months</b></div>
+          <div class="orbnode" style="--c2:#C6B4E4;--cg:rgba(198,180,228,.26);left:27%;top:78%"><div class="od"></div><b>6 to<br>12 months</b></div>
+          <div class="orbnode" style="--c2:#C2A4DE;--cg:rgba(194,164,222,.26);left:73%;top:78%"><div class="od"></div><b>Over<br>a year</b></div>
+        </div>
+      </div>
+      <div class="tile plain" data-mode="pre" style="min-height:380px;background:var(--bg)"><span class="lab">Multi-select · metaball cluster</span>
+        <div class="bloom" style="aspect-ratio:320/420">
+          <svg class="bloomsvg" viewBox="0 0 320 420" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <filter id="goo1" x="-25%" y="-25%" width="150%" height="150%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="b"/>
+                <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10"/>
+              </filter>
+              <linearGradient id="grad1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#F6C58E"/><stop offset="0.28" stop-color="#F19BB0"/><stop offset="0.55" stop-color="#E9A6AC"/><stop offset="0.8" stop-color="#B79AD9"/><stop offset="1" stop-color="#AEA0E2"/>
+              </linearGradient>
+              <mask id="m1"><g filter="url(#goo1)" fill="#fff">
+                <circle cx="110" cy="125" r="50"/><circle cx="210" cy="130" r="46"/><circle cx="72" cy="210" r="44"/><circle cx="160" cy="205" r="54"/><circle cx="250" cy="210" r="44"/><circle cx="108" cy="295" r="48"/><circle cx="212" cy="295" r="46"/><circle cx="160" cy="365" r="42"/>
+              </g></mask>
+            </defs>
+            <rect width="320" height="420" fill="url(#grad1)" mask="url(#m1)"/>
+          </svg>
+          <span class="bloomlbl on" style="left:34.4%;top:29.8%">PCOS</span>
+          <span class="bloomlbl" style="left:65.6%;top:31%">Endometriosis</span>
+          <span class="bloomlbl" style="left:22.5%;top:50%">Thyroid</span>
+          <span class="bloomlbl" style="left:50%;top:48.8%">Irregular cycles</span>
+          <span class="bloomlbl" style="left:78.1%;top:50%">Fibroids</span>
+          <span class="bloomlbl on" style="left:33.75%;top:70.2%">Anemia</span>
+          <span class="bloomlbl" style="left:66.25%;top:70.2%">Diabetes</span>
+          <span class="bloomlbl" style="left:50%;top:86.9%">None of these</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 ICONS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">10</span><h2>One <em>icon line.</em></h2></div>
+    <p class="sub">A single thin, rounded stroke — delicate and unified, no per-behaviour variation. They sit in ink over any field. Below the core line, the full app roster — every glyph the screens use — ported into the same delicate stroke.</p>
+    <div class="lib" id="lib"></div>
+    <div id="iconGroups" style="margin-top:28px"></div>
+  </section>
+
+  <style>
+  /* ===== v3 additions · brand / stickers / controls II / badges / charts ===== */
+  .exg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .exg .opt{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:var(--d-r-md);padding:38px 24px 26px;display:flex;flex-direction:column;align-items:center;gap:22px}
+  .opt .tagop{position:absolute;top:14px;left:16px;font-family:var(--d-mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-4)}
+  .sizerow{display:flex;align-items:flex-end;gap:30px;justify-content:center}
+  .sizerow figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:10px}
+  .sizerow figcaption{font-family:var(--d-mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4)}
+  .markrow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+  .markrow .mcell{position:relative;border-radius:var(--d-r-sm);min-height:118px;display:grid;place-items:center;border:1px solid var(--line);background:var(--paper)}
+  .markrow .mcell em{position:absolute;left:12px;top:10px;font-style:normal;font-family:var(--d-mono);font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-4)}
+  .markrow .mcell.dark{background:#16140F;border-color:transparent}
+  .markrow .mcell.dark em{color:rgba(244,241,232,.4)}
+  .appicrow{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start;margin-top:6px}
+  .appicfig{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .appicfig>span{font-family:var(--d-mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4)}
+  .dappic{position:relative;display:grid;place-items:center;box-shadow:var(--sh-card)}
+  .dappic-grain{position:absolute;inset:0;background-image:var(--d-grain);opacity:.3;mix-blend-mode:soft-light;pointer-events:none;border-radius:inherit}
+  .dappic-mark{position:relative;display:grid;place-items:center}
+  .stkgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--d-hairline);border:1px solid var(--d-hairline);border-radius:var(--d-r-md);overflow:hidden}
+  .stkgrid .cell{background:var(--bg);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:10px}
+  .stkgrid .cell span{font-family:var(--d-mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4);text-align:center;line-height:1.3}
+  .stkgrid.w8{grid-template-columns:repeat(8,1fr)}
+  .pilgroup{margin-top:20px}
+  .pilgroup .glab{font-family:var(--d-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px}
+  .stknote{display:flex;flex-direction:column;gap:9px;font-family:var(--d-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+  .stknote b{font-weight:400;color:var(--ink-4);margin-right:8px}
+  .icgroup{margin-top:24px}
+  .icgroup .glab{font-family:var(--d-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin:0 0 12px;display:flex;align-items:baseline;gap:10px}
+  .icgroup .glab i{font-style:normal;color:var(--ink-4);font-size:9px}
+  .icwall{display:grid;grid-template-columns:repeat(12,1fr);gap:1px;background:var(--d-hairline);border:1px solid var(--d-hairline);border-radius:var(--d-r-md);overflow:hidden}
+  .icwall .cell{background:var(--bg);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:6px;color:var(--ink)}
+  .icwall .cell span{font-family:var(--d-mono);font-size:6.5px;letter-spacing:.04em;text-transform:lowercase;color:var(--ink-4);text-align:center;line-height:1.1}
+  .motionrow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px}
+  .motionrow .mcell{position:relative;border-radius:var(--d-r-md);min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;border:1px solid var(--line);background:var(--paper)}
+  .motionrow .mcell em{font-style:normal;font-family:var(--d-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-4)}
+
+  /* controls II — switch / check / slider / progress */
+  [data-theme="diffuse"] .dswitch{position:relative;width:54px;height:30px;border-radius:999px;border:1.5px solid var(--d-line-2);background:transparent;cursor:pointer;padding:0;flex:none;transition:border-color .25s}
+  [data-theme="diffuse"] .dswitch .kn{position:absolute;top:50%;left:4px;transform:translateY(-50%);width:19px;height:19px;border-radius:50%;border:1.5px solid var(--d-line-2);transition:left .25s ease,border-color .25s}
+  [data-theme="diffuse"] .dswitch .kn::before{content:"";position:absolute;inset:1px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--g1),var(--g3));filter:blur(4px) saturate(.85);opacity:0;transition:opacity .25s}
+  [data-theme="diffuse"] .dswitch.on{border-color:var(--d-hairline)}
+  [data-theme="diffuse"] .dswitch.on .kn{left:26px;border-color:var(--d-ink)}
+  [data-theme="diffuse"] .dswitch.on .kn::before{opacity:.85}
+  .ctlrow{display:flex;align-items:center;justify-content:space-between;gap:18px;font-size:15px;color:var(--ink-2)}
+  .ctlrow small{display:block;font-family:var(--d-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4);margin-top:3px}
+  [data-theme="diffuse"] .dcheck{display:flex;align-items:center;gap:14px;cursor:pointer;font-size:15px;color:var(--ink-2)}
+  [data-theme="diffuse"] .dcheck .bx{position:relative;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--d-line-2);flex:none;transition:border-color .2s}
+  [data-theme="diffuse"] .dcheck .bx::before{content:"";position:absolute;inset:2px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--g2),var(--g3));filter:blur(4px) saturate(.85);opacity:0;transition:opacity .2s}
+  [data-theme="diffuse"] .dcheck .bx svg{position:absolute;inset:0;margin:auto;width:13px;height:13px;opacity:0;transition:opacity .2s}
+  [data-theme="diffuse"] .dcheck.on{color:var(--ink)}
+  [data-theme="diffuse"] .dcheck.on .bx{border-color:var(--d-ink)}
+  [data-theme="diffuse"] .dcheck.on .bx::before{opacity:.8}
+  [data-theme="diffuse"] .dcheck.on .bx svg{opacity:1}
+  [data-theme="diffuse"] .dslider{position:relative;height:32px;display:flex;align-items:center}
+  [data-theme="diffuse"] .dslider .tr{position:absolute;left:0;right:0;height:1px;background:var(--line-2)}
+  [data-theme="diffuse"] .dslider .fl{position:absolute;left:0;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--g1),var(--g2),var(--g3));filter:blur(1.5px) saturate(.85);opacity:.8}
+  [data-theme="diffuse"] .dslider .th{position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:1.5px solid var(--d-ink);background:var(--bg)}
+  [data-theme="diffuse"] .dprog{position:relative;height:18px;display:flex;align-items:center}
+  [data-theme="diffuse"] .dprog .tr{position:absolute;left:0;right:0;height:1px;background:var(--line-2)}
+  [data-theme="diffuse"] .dprog .fl{position:absolute;left:0;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--g1),var(--g2),var(--g3));filter:blur(1.5px) saturate(.85);opacity:.8}
+
+  /* badges — mono label + gradient dot, never a filled chip */
+  [data-theme="diffuse"] .dbadge{display:inline-flex;align-items:center;gap:9px;font-family:var(--d-mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2)}
+  [data-theme="diffuse"] .dbadge i{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--g1),var(--g3));filter:blur(1.2px) saturate(.85);flex:none}
+  [data-theme="diffuse"] .dbadge.count b{font-size:14px;letter-spacing:.02em;font-weight:400;color:var(--ink)}
+  [data-theme="diffuse"] .dbadge.muted{color:var(--ink-4)}
+  [data-theme="diffuse"] .dbadge.muted i{background:var(--d-line-2);filter:none}
+  .badgewall{display:flex;flex-wrap:wrap;gap:22px 36px;align-items:center}
+  .chwrap{display:grid;place-items:center;min-height:190px}
+  .sprow{display:grid;grid-template-columns:88px 1fr 46px;align-items:center;gap:14px;padding:9px 0;border-bottom:1px solid var(--line-2)}
+  .sprow:last-child{border-bottom:none}
+  .sprow .sk{font-family:var(--d-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+  .sprow .sv{min-width:0}
+  .sprow .sn{font-family:var(--d-display);font-weight:300;font-size:20px;text-align:right;color:var(--ink)}
+
+  /* ===== v3 · navigation / product cards / banners / voice ===== */
+  /* shared icon bloom node — a soft gradient disc behind an ink glyph */
+  [data-theme="diffuse"] .ibloom{position:relative;display:grid;place-items:center;flex:none;color:var(--d-ink)}
+  [data-theme="diffuse"] .ibloom::before{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 38% 34%,var(--g1),var(--g3) 78%,transparent);filter:blur(6px) saturate(.82);opacity:.5}
+  [data-theme="diffuse"] .ibloom svg{position:relative}
+  [data-theme="diffuse"] .ibloom.ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:1px solid var(--d-line-2)}
+
+  /* 19 — navigation */
+  .navcol{display:flex;flex-direction:column;gap:16px}
+  .navsheet{background:var(--paper);border:1px solid var(--d-line);border-radius:var(--d-r-md);box-shadow:var(--sh-card);overflow:hidden}
+  .dstatus{display:flex;align-items:center;justify-content:space-between;padding:11px 22px 5px;font-family:var(--d-mono);font-size:13px;letter-spacing:.02em;color:var(--ink)}
+  .dstatus .sg{display:flex;align-items:center;gap:7px;color:var(--ink-2)}
+  .dstatus .sg svg{width:16px;height:16px}
+  .dhead{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 22px 18px}
+  .dhead .eyb{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+  .dhead h4{font-family:var(--d-display);font-weight:300;font-size:30px;margin:0;color:var(--ink);line-height:1}
+  .dhead h4 em{font-style:italic}
+  .avbloom{position:relative;border-radius:50%;display:grid;place-items:center;flex:none;font-family:var(--d-display);color:var(--ink);overflow:hidden}
+  .avbloom::before{content:"";position:absolute;inset:0;background:var(--g);filter:blur(5px) saturate(.8);opacity:.62}
+  .avbloom span{position:relative}
+  .avbloom.ring{box-shadow:0 0 0 1px var(--d-ink)}
+  .dtab{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--d-line-2);padding:12px 8px 14px}
+  .dtab .item{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;color:var(--ink-4);cursor:pointer}
+  .dtab .item svg{width:24px;height:24px}
+  .dtab .item span{font-family:var(--d-mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase}
+  .dtab .item.on{color:var(--d-ink)}
+  .dtab .item.on::before{content:"";position:absolute;top:-12px;width:34px;height:20px;border-radius:50%;background:radial-gradient(circle,var(--g1),var(--g3) 80%,transparent);filter:blur(7px) saturate(.82);opacity:.6}
+  .dfabrow{display:flex;align-items:center;gap:16px}
+  .dfab{position:relative;width:60px;height:60px;border-radius:50%;border:1.5px solid var(--d-ink);background:var(--bg);display:grid;place-items:center;flex:none;color:var(--d-ink);cursor:pointer}
+  .dfab::before{content:"";position:absolute;inset:4px;border-radius:50%;background:radial-gradient(circle at 36% 34%,var(--g1),var(--g2),var(--g3));filter:blur(8px) saturate(.85);opacity:.8}
+  .dfab svg{position:relative;width:24px;height:24px}
+  .dtopbar{display:flex;align-items:center;gap:12px;padding:14px 18px}
+  .dtopbar .rnd{width:38px;height:38px;border-radius:50%;border:1px solid var(--d-line-2);display:grid;place-items:center;color:var(--ink-2);flex:none}
+  .dtopbar .rnd svg{width:16px;height:16px}
+  .dtopbar .tt{flex:1;text-align:center;font-family:var(--d-display);font-weight:300;font-size:20px;color:var(--ink)}
+
+  /* 20 — product cards */
+  .lrow{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line-2)}
+  .lrow:last-child{border-bottom:none}
+  .lrow .tx{flex:1}
+  .lrow .tx b{display:block;font-size:15px;font-weight:600;color:var(--ink)}
+  .lrow .tx small{font-family:var(--d-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4)}
+  .lrow .ar{color:var(--ink-4);flex:none}
+  .lrow .ar svg{width:16px;height:16px}
+  .bignum{font-family:var(--d-display);font-weight:300;font-size:52px;line-height:.9;color:var(--ink)}
+  .nudge{position:relative;overflow:hidden;border-radius:var(--d-r-md);padding:22px 22px 24px;border:1px solid var(--d-line-2)}
+  .nudge::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 12% 0%,var(--g1),transparent 60%),radial-gradient(120% 100% at 100% 100%,var(--g3),transparent 62%);filter:blur(14px) saturate(.8);opacity:.34}
+  .nudge>*{position:relative}
+  .nudge h5{font-family:var(--d-display);font-weight:300;font-size:23px;margin:0 0 7px;color:var(--ink)}
+  .nudge p{margin:0;font-size:14px;line-height:1.5;color:var(--ink-2);max-width:44ch}
+  .nudge .act{margin-top:16px;font-family:var(--d-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--d-ink);display:inline-flex;align-items:center;gap:9px}
+  .nudge .act svg{width:20px;height:14px}
+  .weekcard{display:flex;gap:20px;align-items:center}
+  .weekcard .wk{font-family:var(--d-display);font-weight:300;font-size:60px;line-height:.85;color:var(--ink)}
+  .weekcard .wk small{display:block;font-family:var(--d-mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+  .weekcard .wmeta{flex:1}
+  .weekcard .wmeta .sz{font-size:15px;color:var(--ink);margin-bottom:12px}
+  .herotile{position:relative;overflow:hidden;border-radius:var(--d-r-md);border:1px solid var(--d-line-2);padding:18px}
+  .herotile::before{content:"";position:absolute;inset:0;background:radial-gradient(90% 80% at 82% 10%,var(--tint),transparent 66%);filter:blur(10px);opacity:.5}
+  .herotile>*{position:relative}
+  .herotile .hl{font-family:var(--d-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin:12px 0 5px}
+  .herotile .hv{font-size:15px;font-weight:600;color:var(--ink)}
+  .childchip{display:inline-flex;align-items:center;gap:11px;padding:7px 15px 7px 7px;border-radius:999px;border:1px solid var(--d-line-2)}
+  .childchip.on{border-color:var(--d-ink)}
+  .childchip .cn{font-size:14px;font-weight:600;color:var(--ink)}
+  .childchip .ca{font-family:var(--d-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4)}
+  .mstone{display:flex;gap:15px;padding-bottom:18px;position:relative}
+  .mstone::before{content:"";position:absolute;left:11px;top:6px;bottom:-6px;width:1px;background:var(--line-2)}
+  .mstone:last-child::before{display:none}
+  .mstone .nd{width:23px;height:23px;border-radius:50%;border:1.5px solid var(--d-line-2);flex:none;position:relative;z-index:1;background:var(--paper);display:grid;place-items:center}
+  .mstone.done .nd{border-color:var(--d-ink)}
+  .mstone.done .nd::before{content:"";position:absolute;inset:3px;border-radius:50%;background:radial-gradient(circle at 38% 34%,var(--g2),var(--g3));filter:blur(3px) saturate(.85);opacity:.85}
+  .mstone .mt{font-size:15px;font-weight:600;color:var(--ink)}
+  .mstone:not(.done) .mt{color:var(--ink-3);font-weight:500}
+  .mstone .mm{font-family:var(--d-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4);margin-top:3px}
+  .srow{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--line-2)}
+  .srow:last-child{border-bottom:none}
+  .srow .sl{flex:1;font-size:14px;color:var(--ink-2)}
+  .srow .svv{font-family:var(--d-mono);font-size:11px;letter-spacing:.08em;color:var(--ink)}
+  .pcard{position:relative;overflow:hidden;border-radius:var(--d-r-md);border:1px solid var(--d-line-2);padding:16px;display:flex;flex-direction:column;gap:12px}
+  .pcard .pt{font-size:15px;font-weight:600;color:var(--ink)}
+  .pcard .ps{font-family:var(--d-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4);margin-top:2px}
+
+  /* 21 — banners & avatar stack */
+  .dbanner{position:relative;display:flex;align-items:center;gap:14px;padding:16px 4px;border-top:1px solid var(--d-line-2);border-bottom:1px solid var(--d-line-2)}
+  .dbanner .bm{flex:1;font-size:14px;color:var(--ink-2)}
+  .dbanner .bm b{color:var(--ink);font-weight:600}
+  .dbanner .bx{font-family:var(--d-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--d-ink);flex:none}
+  .dbanner.wash{border:none;border-radius:var(--d-r-md);overflow:hidden;padding:18px}
+  .dbanner.wash::before{content:"";position:absolute;inset:0;background:radial-gradient(100% 90% at 0% 0%,var(--g1),transparent 60%),radial-gradient(100% 90% at 100% 100%,var(--g3),transparent 60%);filter:blur(14px) saturate(.8);opacity:.32}
+  .dbanner.wash>*{position:relative}
+  .dtoast{display:inline-flex;align-items:center;gap:11px;padding:13px 20px;border-radius:999px;background:var(--paper);box-shadow:var(--sh-pop);border:1px solid var(--d-line-2);font-size:13px;color:var(--ink)}
+  .dtoast .tk{width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--g1),var(--g3));filter:blur(1px) saturate(.85);flex:none}
+  .avstack{display:flex;align-items:center}
+  .avstack .avbloom{border:2px solid var(--paper);margin-left:-12px}
+  .avstack .avbloom:first-child{margin-left:0}
+  .avstack .more{margin-left:-12px;border:2px solid var(--paper);border-radius:50%;display:grid;place-items:center;background:var(--bg);font-family:var(--d-mono);font-size:11px;letter-spacing:.04em;color:var(--ink-3)}
+
+  /* 22 — voice */
+  .voicecol{display:flex;flex-direction:column;gap:8px}
+  .voicecol .vlab{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+  .voicecol .vlab i{font-style:normal;color:var(--ink-4)}
+  .voicecol .vex{font-family:var(--d-display);font-weight:300;font-size:22px;line-height:1.3;color:var(--ink)}
+  .voicecol .vnote{font-size:13px;line-height:1.5;color:var(--ink-3);max-width:40ch}
+  .voicecol .vex.mono{font-family:var(--d-mono);font-size:15px;letter-spacing:.02em;line-height:1.5}
+  </style>
+
+  <!-- 11 BRAND MARK -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">11</span><h2>The mark, <em>diffused.</em></h2></div>
+    <p class="sub">The heart-eye survives the move — redrawn as one wobbly hairline. A holds the wash inside the heart-iris; B keeps the drawing pure ink and lets one soft bloom glow behind it. The tint follows the journey; ink never tints.</p>
+    <div class="exg">
+      <div class="opt" data-mode="preg"><span class="tagop">A · gradient iris</span><div id="markA"></div><div class="sizerow" id="markSizesA"></div></div>
+      <div class="opt" data-mode="preg"><span class="tagop">B · halo bloom</span><div id="markB"></div><div class="sizerow" id="markSizesB"></div></div>
+    </div>
+    <div class="markrow" id="markModes"></div>
+    <p class="sub" style="margin:30px 0 0">She stays alive in the hero mark — the same watchful motion as always: a slow blink every few seconds, the heart-iris keeping a soft heartbeat. In dense specimen grids and small placements the mark rests still. Motion is <em>blink + beat</em> by default, reducible to blink-only or heartbeat-only, and always yields to <em>reduced-motion</em>.</p>
+  </section>
+
+  <!-- 12 APP ICON -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">12</span><h2>The <em>app icon.</em></h2></div>
+    <p class="sub">A — the journey field itself becomes the tile: grainy diffuse gradient, hairline mark in ink. B — quiet paper tile with the gradient-iris mark, for monochrome shelves and dark.</p>
+    <div class="appicrow" id="appicField"></div>
+    <div class="appicrow" id="appicPaper"></div>
+  </section>
+
+  <!-- 13 STICKERS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">13</span><h2>The <em>sticker hand.</em></h2></div>
+    <p class="sub">One wobbly ink line — the same line as the icons — warmed by a soft gradient wash pooled loosely inside the drawing. The wash is blurred, desaturated and deterministic per sticker; the ink never tints. Treatment A pools the wash inside, B blooms behind.</p>
+    <div class="cg">
+      <div class="tile plain" data-mode="preg"><span class="lab">Anatomy</span>
+        <div style="display:flex;gap:34px;align-items:center;flex-wrap:wrap;justify-content:center" id="stkAnatomy"></div>
+      </div>
+      <div class="tile plain" data-mode="preg"><span class="lab">Treatments · A wash · B bloom</span>
+        <div style="display:flex;gap:44px;justify-content:center;align-items:center" id="stkTreat"></div>
+      </div>
+    </div>
+    <div class="cg one" style="margin-top:18px">
+      <div class="tile plain"><span class="lab">Same sticker · four journeys</span>
+        <div style="display:flex;gap:40px;justify-content:center;flex-wrap:wrap" id="stkModes"></div>
+      </div>
+    </div>
+    <div class="stkgrid" id="stkLib" style="margin-top:18px"></div>
+  </section>
+
+  <!-- 14 PILLAR STICKERS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">14</span><h2>Pillar <em>stickers.</em></h2></div>
+    <p class="sub">The 24 pillar cards, redrawn in the sticker hand. Each pillar’s wash is pulled from its journey field — used at ~32px in pillar grids, ~96px in detail heroes.</p>
+    <div id="pillarGroups"></div>
+  </section>
+
+  <!-- 15 PREGNANCY WEEKS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">15</span><h2>Forty <em>weeks.</em></h2></div>
+    <p class="sub">“Baby is the size of a…” — poppy seed to small pumpkin, every week drawn in the same wobbly line. The doodle grows with the week and the wash deepens by trimester: gold → blush → plum.</p>
+    <div class="stkgrid w8" id="weekGrid"></div>
+    <p class="sub" style="margin-top:2.4rem">Or the soft-crayon register — each food a filled pastel shape with a grainy pencil edge and a friendly little face (dot eyes, a smile, rosy cheeks). Every week reads instantly as its own produce, cheerful on cream and dark alike.</p>
+    <div class="stkgrid w8" id="weekGridColor"></div>
+  </section>
+
+  <!-- 16 SWITCHES & SLIDERS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">16</span><h2>Switches &amp; <em>sliders.</em></h2></div>
+    <p class="sub">The knob is a soft gradient bloom inside a hairline ring — off is empty, on glows and travels. Checks are ring nodes that earn the hand-drawn tick. Ranges are a hairline track with a blurred gradient fill.</p>
+    <div class="cg">
+      <div class="tile plain" data-mode="pre"><span class="lab">Switches</span>
+        <div class="ctlrow"><div>Period reminders<small>Two days before</small></div><button class="dswitch on" type="button"><span class="kn"></span></button></div>
+        <div class="ctlrow"><div>Partner updates<small>Weekly digest</small></div><button class="dswitch" type="button"><span class="kn"></span></button></div>
+        <div class="ctlrow"><div>Grandma’s voice notes<small>Morning only</small></div><button class="dswitch on" type="button"><span class="kn"></span></button></div>
+      </div>
+      <div class="tile plain" data-mode="preg"><span class="lab">Checks</span>
+        <div class="dcheck on"><span class="bx"><svg viewBox="0 0 24 24" fill="none" stroke="var(--d-ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.8"/></svg></span>Prenatal vitamin</div>
+        <div class="dcheck on"><span class="bx"><svg viewBox="0 0 24 24" fill="none" stroke="var(--d-ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.8"/></svg></span>Glass of water × 8</div>
+        <div class="dcheck"><span class="bx"><svg viewBox="0 0 24 24" fill="none" stroke="var(--d-ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.8"/></svg></span>Evening walk</div>
+      </div>
+      <div class="tile plain" data-mode="kids"><span class="lab">Slider · nap length</span>
+        <div class="dslider"><span class="tr"></span><span class="fl" style="width:62%"></span><span class="th" style="left:62%"></span></div>
+        <span style="font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)">1h 50m</span>
+      </div>
+      <div class="tile plain" data-mode="care"><span class="lab">Progress · quiet</span>
+        <div class="dprog"><span class="tr"></span><span class="fl" style="width:38%"></span></div>
+        <span style="font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)">3 of 8 answered</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 17 BADGES -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">17</span><h2>Badges &amp; <em>status.</em></h2></div>
+    <p class="sub">Never a filled chip — a tracked mono label with a small soft gradient dot. The dot carries the journey tint; muted states drop to a hairline dot.</p>
+    <div class="cg one">
+      <div class="tile plain"><span class="lab">The scale</span>
+        <div class="badgewall">
+          <span class="dbadge" data-mode="pre"><i></i>cycle day 14</span>
+          <span class="dbadge" data-mode="preg"><i></i>week 22 · trimester 2</span>
+          <span class="dbadge" data-mode="kids"><i></i>12-day streak</span>
+          <span class="dbadge" data-mode="care"><i></i>care circle · 3</span>
+          <span class="dbadge count" data-mode="preg"><i></i><b>4</b>&nbsp;new</span>
+          <span class="dbadge muted"><i></i>synced</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 18 CHARTS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">18</span><h2>Soft <em>data.</em></h2></div>
+    <p class="sub">Hairline geometry carries the reading; the colour lives in a blurred wash underneath. Ink for the line you follow, gradient for the feeling of it. Every chart re-tints with its field and inverts in dark untouched.</p>
+    <div class="cg">
+      <div class="tile plain" data-mode="pre"><span class="lab">Cycle ring</span><div class="chwrap" id="chRing"></div></div>
+      <div class="tile plain" data-mode="kids"><span class="lab">Weekly habits · bars</span><div class="chwrap" id="chBars"></div></div>
+    </div>
+    <div class="cg" style="margin-top:18px">
+      <div class="tile plain" data-mode="preg"><span class="lab">Trend · symptoms easing</span><div class="chwrap" id="chTrend"></div></div>
+      <div class="tile plain" data-mode="pre"><span class="lab">Mood field · month</span><div class="chwrap" id="chMood"></div></div>
+    </div>
+    <div class="cg one" style="margin-top:18px">
+      <div class="tile plain" data-mode="kids"><span class="lab">Day rhythm · sleep, feeds, play</span><div class="chwrap" id="chTime"></div></div>
+    </div>
+
+    <p class="sub" style="margin-top:2.4rem">The tracking set — the readings this app is actually built on. Same hairline-over-wash language: cycle phases, basal temperature, growth percentiles, composition and streaks. Each re-tints to its journey and inverts in dark.</p>
+    <div class="cg" style="margin-top:1.2rem">
+      <div class="tile plain" data-mode="pre"><span class="lab">Cycle phases · wheel</span><div class="chwrap" id="chPhase"></div></div>
+      <div class="tile plain" data-mode="pre"><span class="lab">Basal temperature · coverline</span><div class="chwrap" id="chBBT"></div></div>
+    </div>
+    <div class="cg" style="margin-top:18px">
+      <div class="tile plain" data-mode="kids"><span class="lab">Growth · percentile bands</span><div class="chwrap" id="chGrowth"></div></div>
+      <div class="tile plain" data-mode="preg"><span class="lab">Weekly focus · ranked</span><div class="chwrap" id="chHbars"></div></div>
+    </div>
+    <div class="cg" style="margin-top:18px">
+      <div class="tile plain" data-mode="kids"><span class="lab">Sleep composition · donut</span><div class="chwrap" id="chDonut"></div></div>
+      <div class="tile plain" data-mode="pre"><span class="lab">Readiness · gauge</span><div class="chwrap" id="chGauge"></div></div>
+    </div>
+    <div class="cg" style="margin-top:18px">
+      <div class="tile plain" data-mode="kids"><span class="lab">Consistency · month streak</span><div class="chwrap" id="chHeat"></div></div>
+      <div class="tile plain" data-mode="preg"><span class="lab">Nutrition mix · stacked weeks</span><div class="chwrap" id="chStack"></div></div>
+    </div>
+    <div class="cg one" style="margin-top:18px">
+      <div class="tile plain" data-mode="pre">
+        <span class="lab">Inline sparklines · stat rows</span>
+        <div class="sparkrows" style="width:100%;display:flex;flex-direction:column;gap:2px;margin-top:6px">
+          <div class="sprow"><span class="sk">resting hr</span><div class="sv" id="spk1"></div><span class="sn">58</span></div>
+          <div class="sprow"><span class="sk">steps</span><div class="sv" id="spk2"></div><span class="sn">7.4k</span></div>
+          <div class="sprow"><span class="sk">sleep hrs</span><div class="sv" id="spk3"></div><span class="sn">7.8</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 19 NAVIGATION -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">19</span><h2>App chrome, <em>diffused.</em></h2></div>
+    <p class="sub">The frame around every screen, moved into the soft language. No filled tab bars or heavy headers — hairline rules, mono labels, and a single gradient bloom marking where you are. The active tab, the FAB and every avatar carry the journey wash; ink carries the reading.</p>
+    <div class="cg">
+      <div class="tile plain" data-mode="preg"><span class="lab">Status bar + app header</span>
+        <div class="navsheet" style="width:100%">
+          <div class="dstatus"><span>9:41</span><span class="sg"><i data-ic="signal" data-sz="15"></i><i data-ic="wifi" data-sz="15"></i><i data-ic="battery" data-sz="17"></i></span></div>
+          <div class="dhead">
+            <div><div class="eyb">Tuesday · Jun 27</div><h4>Week <em>24</em></h4></div>
+            <div class="avbloom ring" style="width:44px;height:44px;font-size:17px;--g:radial-gradient(circle at 38% 34%,#F2AEC6,transparent 72%)"><span>M</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="tile plain" data-mode="kids"><span class="lab">Bottom tab bar</span>
+        <div class="navsheet" style="width:100%;margin-top:auto">
+          <div class="dtab">
+            <div class="item on"><i data-ic="home" data-sz="24"></i><span>Home</span></div>
+            <div class="item"><i data-ic="heart" data-sz="24"></i><span>Track</span></div>
+            <div class="item"><i data-ic="chat" data-sz="24"></i><span>Chat</span></div>
+            <div class="item"><i data-ic="user" data-sz="24"></i><span>You</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cg" style="margin-top:18px">
+      <div class="tile plain" data-mode="pre"><span class="lab">Screen top bar</span>
+        <div class="navsheet" style="width:100%">
+          <div class="dtopbar"><span class="rnd" style="transform:scaleX(-1)"><i data-ic="arrow" data-sz="16"></i></span><span class="tt">Symptoms</span><span class="rnd"><i data-ic="plus" data-sz="16"></i></span></div>
+        </div>
+      </div>
+      <div class="tile plain" data-mode="preg"><span class="lab">Floating action</span>
+        <div class="dfabrow">
+          <button class="dfab" type="button"><i data-ic="plus" data-sz="24"></i></button>
+          <span style="font-family:var(--d-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)">tap to log</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 20 PRODUCT CARDS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">20</span><h2>Cards in <em>product.</em></h2></div>
+    <p class="sub">The composed blocks screens are built from — every one redrawn in the diffuse hand. Icon nodes are soft gradient blooms, numbers are the light serif, meta is mono. Panels carry a loose wash instead of a border fill; the tint follows the journey.</p>
+    <div class="cg">
+      <div class="tile plain" data-mode="pre"><span class="lab">List row</span>
+        <div style="width:100%">
+          <div class="lrow"><span class="ibloom" style="width:38px;height:38px"><i data-ic="star" data-sz="18"></i></span><div class="tx"><b>Milestone logged</b><small>2:14 PM · by Mom</small></div><span class="ar"><i data-ic="arrow" data-sz="16"></i></span></div>
+          <div class="lrow"><span class="ibloom" style="width:38px;height:38px"><i data-ic="drop" data-sz="18"></i></span><div class="tx"><b>Symptoms saved</b><small>1:02 PM · by You</small></div><span class="ar"><i data-ic="arrow" data-sz="16"></i></span></div>
+        </div>
+      </div>
+      <div class="tile plain" data-mode="pre"><span class="lab">Stat tile</span>
+        <div style="width:100%">
+          <span style="font-family:var(--d-mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)">This week</span>
+          <div class="bignum" style="margin:8px 0 12px">24</div>
+          <div class="dprog"><span class="tr"></span><span class="fl" style="width:62%"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="cg one" style="margin-top:18px">
+      <div class="tile plain" data-mode="preg"><span class="lab">Nudge card</span>
+        <div class="nudge" style="width:100%">
+          <h5>A good day to connect</h5>
+          <p>You're in your fertile window. Energy usually peaks now — a gentle walk together goes a long way.</p>
+          <span class="act">Log today <i data-ic="arrow" data-sz="20"></i></span>
+        </div>
+      </div>
+    </div>
+    <div class="cg one" style="margin-top:18px">
+      <div class="tile plain" data-mode="preg"><span class="lab">Week card · pregnancy hero</span>
+        <div class="weekcard" style="width:100%">
+          <div class="wk">24<small>weeks</small></div>
+          <div class="wmeta">
+            <div class="sz">Size of a corn cob · 30cm</div>
+            <div class="dprog"><span class="tr"></span><span class="fl" style="width:60%"></span></div>
+            <div style="font-family:var(--d-mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-top:10px">112 days to go</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cg" style="margin-top:18px">
+      <div class="tile plain" data-mode="kids"><span class="lab">Hero tiles · dashboard</span>
+        <div style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="herotile" style="--tint:#8FB0E0"><span class="ibloom" style="width:40px;height:40px"><i data-ic="moon" data-sz="22"></i></span><div class="hl">Sleep</div><div class="hv">Last nap 1h 20m</div></div>
+          <div class="herotile" style="--tint:#9BCBB0"><span class="ibloom" style="width:40px;height:40px"><i data-ic="drop" data-sz="22"></i></span><div class="hl">Feeding</div><div class="hv">3 meals today</div></div>
+        </div>
+      </div>
+      <div class="tile plain" data-mode="kids"><span class="lab">Child switcher</span>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <span class="childchip on"><span class="avbloom" style="width:34px;height:34px;font-size:13px;--g:radial-gradient(circle at 38% 34%,#F4D888,transparent 72%)"><span>L</span></span><span><span class="cn">Liam</span> <span class="ca">2y</span></span></span>
+          <span class="childchip"><span class="avbloom" style="width:34px;height:34px;font-size:13px;--g:radial-gradient(circle at 38% 34%,#F2AEC6,transparent 72%)"><span>M</span></span><span><span class="cn">Mia</span> <span class="ca">5m</span></span></span>
+        </div>
+      </div>
+    </div>
+    <div class="cg" style="margin-top:18px">
+      <div class="tile plain" data-mode="kids"><span class="lab">Milestone timeline</span>
+        <div style="width:100%">
+          <div class="mstone done"><span class="nd"></span><div><div class="mt">First words</div><div class="mm">Logged 2 weeks ago</div></div></div>
+          <div class="mstone done"><span class="nd"></span><div><div class="mt">Stacks 4 blocks</div><div class="mm">Logged 5 days ago</div></div></div>
+          <div class="mstone"><span class="nd"></span><div><div class="mt">Runs steadily</div><div class="mm">Expected around now</div></div></div>
+        </div>
+      </div>
+      <div class="tile plain" data-mode="pre"><span class="lab">Summary rows · today</span>
+        <div style="width:100%">
+          <div class="srow"><span class="ibloom" style="width:30px;height:30px"><i data-ic="drop" data-sz="15"></i></span><span class="sl">Flow</span><span class="svv">None</span></div>
+          <div class="srow"><span class="ibloom" style="width:30px;height:30px"><i data-ic="sprout" data-sz="15"></i></span><span class="sl">Symptoms</span><span class="svv">2 logged</span></div>
+          <div class="srow"><span class="ibloom" style="width:30px;height:30px"><i data-ic="moon" data-sz="15"></i></span><span class="sl">Sleep</span><span class="svv">7h 20m</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="cg one" style="margin-top:18px">
+      <div class="tile plain"><span class="lab">Pillar cards · shared dashboard tiles</span>
+        <div style="width:100%;display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="pcardRow"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 21 BANNERS & AVATARS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">21</span><h2>Banners &amp; the <em>avatar stack.</em></h2></div>
+    <p class="sub">Alerts never shout in a coloured box. A reminder is a hairline-ruled row with one soft dot; the warmer variant pools a wash behind the words. Toasts float as a quiet capsule. Shared circles read as overlapping identity blooms.</p>
+    <div class="cg">
+      <div class="tile plain" data-mode="preg"><span class="lab">Reminder · hairline</span>
+        <div class="dbanner" style="width:100%"><span class="ibloom" style="width:34px;height:34px"><i data-ic="bell" data-sz="17"></i></span><span class="bm"><b>Gentle reminder</b> — time to log today's entry.</span><span class="bx">Log</span></div>
+      </div>
+      <div class="tile plain" data-mode="pre"><span class="lab">Alert · soft wash</span>
+        <div class="dbanner wash" style="width:100%;display:flex;align-items:center;gap:14px"><span class="ibloom" style="width:34px;height:34px"><i data-ic="heart" data-sz="17"></i></span><span class="bm"><b>Fertile window open</b> — your best days start today.</span><span class="bx">See</span></div>
+      </div>
+    </div>
+    <div class="cg" style="margin-top:18px">
+      <div class="tile plain" data-mode="kids"><span class="lab">Toast</span>
+        <div class="dtoast"><span class="tk"></span>Milestone saved to Liam's timeline</div>
+      </div>
+      <div class="tile plain" data-mode="care"><span class="lab">Avatar stack · care circle</span>
+        <div class="avstack">
+          <span class="avbloom" style="width:46px;height:46px;font-size:18px;--g:radial-gradient(circle at 38% 34%,#F2AEC6,transparent 72%)"><span>A</span></span>
+          <span class="avbloom" style="width:46px;height:46px;font-size:18px;--g:radial-gradient(circle at 38% 34%,#BDA4E2,transparent 72%)"><span>R</span></span>
+          <span class="avbloom" style="width:46px;height:46px;font-size:18px;--g:radial-gradient(circle at 38% 34%,#A6BCE6,transparent 72%)"><span>B</span></span>
+          <span class="more" style="width:46px;height:46px">+2</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 22 VOICE -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">22</span><h2>The <em>voice.</em></h2></div>
+    <p class="sub">Same warmth, three registers — mono and exact for data, the light serif and tender for milestones, warm and playful for raising. The words carry the feeling the gradient sets; never clinical-cold, never saccharine.</p>
+    <div class="cg" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile plain" data-mode="pre">
+        <div class="voicecol">
+          <div class="vlab">Exact <i>· cycle data</i></div>
+          <div class="vex mono">Day 14 — your fertile window is open.</div>
+          <div class="vnote">Precise, factual, never clinical-cold. Numbers do the talking.</div>
+        </div>
+      </div>
+      <div class="tile plain" data-mode="preg">
+        <div class="voicecol">
+          <div class="vlab">Tender <i>· milestones</i></div>
+          <div class="vex">This week, they can hear your voice.</div>
+          <div class="vnote">Soft, present-tense, addressed to you. A moment, not a metric.</div>
+        </div>
+      </div>
+      <div class="tile plain" data-mode="kids">
+        <div class="voicecol">
+          <div class="vlab">Playful <i>· raising</i></div>
+          <div class="vex">Four blocks high — nice tower, engineer!</div>
+          <div class="vnote">Warm, a little cheeky, celebratory. Meets the everyday chaos with a grin.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 23 MEASURE & RADIUS -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">23</span><h2>Measure &amp; <em>radius.</em></h2></div>
+    <p class="sub">One 4px rhythm under every layout, and a soft radius ramp for the glass surfaces — looser as they grow, ending in the hand-cut blob. Shared by every behaviour; only the tint that fills them changes.</p>
+    <div class="cg">
+      <div class="tile plain">
+        <div class="lab">Spacing · 4px base</div>
+        <div style="display:flex;flex-direction:column;gap:11px;margin-top:6px">
+          <div style="display:flex;align-items:center;gap:14px"><span style="width:30px;font-family:var(--d-mono);font-size:11px;color:var(--ink-3)">s-1</span><span style="height:12px;width:4px;border-radius:999px;background:var(--accent)"></span><span style="font-family:var(--d-mono);font-size:11px;color:var(--ink-4)">4</span></div>
+          <div style="display:flex;align-items:center;gap:14px"><span style="width:30px;font-family:var(--d-mono);font-size:11px;color:var(--ink-3)">s-2</span><span style="height:12px;width:8px;border-radius:999px;background:var(--accent)"></span><span style="font-family:var(--d-mono);font-size:11px;color:var(--ink-4)">8</span></div>
+          <div style="display:flex;align-items:center;gap:14px"><span style="width:30px;font-family:var(--d-mono);font-size:11px;color:var(--ink-3)">s-3</span><span style="height:12px;width:12px;border-radius:999px;background:var(--accent)"></span><span style="font-family:var(--d-mono);font-size:11px;color:var(--ink-4)">12</span></div>
+          <div style="display:flex;align-items:center;gap:14px"><span style="width:30px;font-family:var(--d-mono);font-size:11px;color:var(--ink-3)">s-4</span><span style="height:12px;width:16px;border-radius:999px;background:var(--accent)"></span><span style="font-family:var(--d-mono);font-size:11px;color:var(--ink-4)">16</span></div>
+          <div style="display:flex;align-items:center;gap:14px"><span style="width:30px;font-family:var(--d-mono);font-size:11px;color:var(--ink-3)">s-5</span><span style="height:12px;width:20px;border-radius:999px;background:var(--accent)"></span><span style="font-family:var(--d-mono);font-size:11px;color:var(--ink-4)">20</span></div>
+          <div style="display:flex;align-items:center;gap:14px"><span style="width:30px;font-family:var(--d-mono);font-size:11px;color:var(--ink-3)">s-6</span><span style="height:12px;width:24px;border-radius:999px;background:var(--accent)"></span><span style="font-family:var(--d-mono);font-size:11px;color:var(--ink-4)">24</span></div>
+          <div style="display:flex;align-items:center;gap:14px"><span style="width:30px;font-family:var(--d-mono);font-size:11px;color:var(--ink-3)">s-8</span><span style="height:12px;width:32px;border-radius:999px;background:var(--accent)"></span><span style="font-family:var(--d-mono);font-size:11px;color:var(--ink-4)">32</span></div>
+          <div style="display:flex;align-items:center;gap:14px"><span style="width:30px;font-family:var(--d-mono);font-size:11px;color:var(--ink-3)">s-10</span><span style="height:12px;width:40px;border-radius:999px;background:var(--accent)"></span><span style="font-family:var(--d-mono);font-size:11px;color:var(--ink-4)">40</span></div>
+        </div>
+      </div>
+      <div class="tile plain">
+        <div class="lab">Radius · soft glass corners</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px">
+          <div style="text-align:center"><div style="height:54px;border-radius:14px;background:var(--accent-soft);border:1.5px solid var(--accent)"></div><div style="font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:8px">SM</div><div style="font-family:var(--d-mono);font-size:10px;color:var(--ink-4)">14px</div></div>
+          <div style="text-align:center"><div style="height:54px;border-radius:20px;background:var(--accent-soft);border:1.5px solid var(--accent)"></div><div style="font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:8px">MD</div><div style="font-family:var(--d-mono);font-size:10px;color:var(--ink-4)">20px</div></div>
+          <div style="text-align:center"><div style="height:54px;border-radius:28px;background:var(--accent-soft);border:1.5px solid var(--accent)"></div><div style="font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:8px">LG</div><div style="font-family:var(--d-mono);font-size:10px;color:var(--ink-4)">28px</div></div>
+          <div style="text-align:center"><div style="height:54px;border-radius:40px;background:var(--accent-soft);border:1.5px solid var(--accent)"></div><div style="font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:8px">XL</div><div style="font-family:var(--d-mono);font-size:10px;color:var(--ink-4)">40px</div></div>
+          <div style="text-align:center"><div style="height:54px;border-radius:999px;background:var(--accent-soft);border:1.5px solid var(--accent)"></div><div style="font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:8px">Pill</div><div style="font-family:var(--d-mono);font-size:10px;color:var(--ink-4)">999</div></div>
+          <div style="text-align:center"><div style="height:54px;border-radius:58% 42% 49% 51% / 44% 57% 43% 56%;background:var(--accent-soft);border:1.5px solid var(--accent)"></div><div style="font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:8px">Blob</div><div style="font-family:var(--d-mono);font-size:10px;color:var(--ink-4)">hand-cut</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 24 DEPTH & BLOOM -->
+  <section class="sec">
+    <div class="sec-head"><span class="n">24</span><h2>Depth &amp; <em>bloom.</em></h2></div>
+    <p class="sub">No hard drop-shadows — depth is how far a surface lifts off the field. A flush hairline sits in the paper; a card carries the barely-there shadow; a popover lifts on the deeper one; the highest moments float on a soft gradient bloom instead of a shadow.</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:6px">
+      <div style="text-align:center">
+        <div style="height:76px;border-radius:18px;background:var(--paper);border:1px solid var(--d-line)"></div>
+        <div style="font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:12px">Flush</div>
+        <div style="font-family:var(--d-mono);font-size:9.5px;color:var(--ink-4);margin-top:3px">hairline · in-paper</div>
+      </div>
+      <div style="text-align:center">
+        <div style="height:76px;border-radius:18px;background:var(--paper);border:1px solid var(--d-line);box-shadow:var(--sh-card)"></div>
+        <div style="font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:12px">Card</div>
+        <div style="font-family:var(--d-mono);font-size:9.5px;color:var(--ink-4);margin-top:3px">--sh-card</div>
+      </div>
+      <div style="text-align:center">
+        <div style="height:76px;border-radius:18px;background:var(--paper);border:1px solid var(--d-line);box-shadow:var(--sh-pop)"></div>
+        <div style="font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:12px">Pop</div>
+        <div style="font-family:var(--d-mono);font-size:9.5px;color:var(--ink-4);margin-top:3px">--sh-pop</div>
+      </div>
+      <div style="text-align:center">
+        <div style="position:relative">
+          <div style="position:absolute;inset:2px -6px -8px;border-radius:50%;background:radial-gradient(60% 60% at 50% 70%,var(--accent),transparent 70%);filter:blur(18px) saturate(1.05);opacity:.55;z-index:0"></div>
+          <div style="position:relative;z-index:1;height:76px;border-radius:18px;background:var(--paper);border:1px solid var(--d-line)"></div>
+        </div>
+        <div style="font-family:var(--d-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:12px">Bloom</div>
+        <div style="font-family:var(--d-mono);font-size:9.5px;color:var(--ink-4);margin-top:3px">gradient lift</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>the same light, in four colours.</p>
+    <span>grandma.app · design system v3 · diffuse · additive on tokens-v3.css + diffuse-controls.css</span>
+  </footer>
+
+</div>
+
+<script>
+const ST='fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
+const ICONS={
+  heart:`<path d="M12 20C6 15 3.5 11.5 3.5 8.5 3.5 6.3 5.2 5 7 5.4 9 5.9 12 8.5 12 8.5 12 8.5 15 5.9 17 5.4 18.8 5 20.5 6.3 20.5 8.5 20.5 11.5 18 15 12 20Z" ${ST}/>`,
+  moon:`<path d="M16.5 3.5A8.5 8.5 0 1 0 16.5 20.5 7 7 0 0 1 16.5 3.5Z" ${ST}/>`,
+  drop:`<path d="M12 3.5C12 3.5 6 11 6 15A6 6 0 0 0 18 15C18 11 12 3.5 12 3.5Z" ${ST}/>`,
+  sprout:`<path d="M12 21V11M12 11C9 11 7 9 7 6 10.5 6 12 8 12 11M12 11C15 11 17 9 17 7.5 13.5 7.5 12 9.5 12 11" ${ST}/>`,
+  star:`<path d="M12 3.5 14.4 9 20.2 9.4 15.7 13.3 17.2 19 12 15.8 6.8 19 8.3 13.3 3.8 9.4 9.6 9Z" ${ST}/>`,
+  sun:`<circle cx="12" cy="12" r="4.2" ${ST}/><path d="M12 3V5M12 19V21M4.5 4.5 6 6M18 18 19.5 19.5M3 12H5M19 12H21M4.5 19.5 6 18M18 6 19.5 4.5" ${ST}/>`,
+  baby:`<circle cx="12" cy="9" r="4.5" ${ST}/><path d="M10 9.5C10.3 10 10.7 10 11 9.6M13 9.6C13.3 10 13.7 10 14 9.5M10.5 11.5C11.3 12.2 12.7 12.2 13.5 11.5M5.5 21C5.5 17.5 8.3 15.5 12 15.5 15.7 15.5 18.5 17.5 18.5 21" ${ST}/>`,
+  cal:`<rect x="4.5" y="6" width="15" height="14" rx="2.5" ${ST}/><path d="M4.5 10H19.5M9 4V7M15 4V7" ${ST}/>`,
+  bell:`<path d="M12 4.5C9.3 4.5 7.8 6.3 7.8 9.5 7.8 13.5 6.2 14.5 6.2 16H17.8C17.8 14.5 16.2 13.5 16.2 9.5 16.2 6.3 14.7 4.5 12 4.5ZM10.2 19A1.9 1.9 0 0 0 13.8 19" ${ST}/>`,
+  home:`<path d="M4.5 11 12 5 19.5 11M6.5 9.5V19H17.5V9.5M10 19V14.5H14V19" ${ST}/>`,
+  chat:`<path d="M5 7A2.2 2.2 0 0 1 7.2 4.8H16.8A2.2 2.2 0 0 1 19 7V13A2.2 2.2 0 0 1 16.8 15.2H10L6.5 18.5V15.2A2.2 2.2 0 0 1 5 13Z" ${ST}/>`,
+  chart:`<path d="M5 4.5V19.5H19M8.5 16V11M12 16V7.5M15.5 16V13" ${ST}/>`,
+  book:`<path d="M5.5 5H15.5A1.6 1.6 0 0 1 17 6.6V19.5H7.5A2 2 0 0 1 5.5 17.5ZM7.5 5V17.5" ${ST}/>`,
+  cam:`<rect x="3.5" y="7.5" width="17" height="12" rx="2.5" ${ST}/><path d="M9 7.5 10.3 5.3H13.7L15 7.5" ${ST}/><circle cx="12" cy="13.5" r="3.2" ${ST}/>`,
+  check:`<path d="M5 12.5 10 17 19 6.5" ${ST}/>`,
+  plus:`<path d="M12 5.5V18.5M5.5 12H18.5" ${ST}/>`,
+  gear:`<circle cx="12" cy="12" r="2.8" ${ST}/><path d="M12 4V6M12 18V20M20 12H18M6 12H4M17.7 6.3 16.3 7.7M7.7 16.3 6.3 17.7M17.7 17.7 16.3 16.3M7.7 7.7 6.3 6.3" ${ST}/>`,
+  user:`<circle cx="12" cy="8.5" r="4" ${ST}/><path d="M5 20C5 16.5 8 14.5 12 14.5 16 14.5 19 16.5 19 20" ${ST}/>`,
+  arrow:`<path d="M4.5 12H19M13 6 19.5 12 13 18" ${ST}/>`,
+  signal:`<path d="M4 18V15M9 18V12M14 18V8.5M19 18V5" ${ST}/>`,
+  wifi:`<path d="M4 9.5C8.5 5.5 15.5 5.5 20 9.5M6.8 13C9.8 10.5 14.2 10.5 17.2 13M9.6 16.4C11 15.2 13 15.2 14.4 16.4M12 19.2h.01" ${ST}/>`,
+  battery:`<rect x="3" y="8" width="16" height="9" rx="2.2" ${ST}/><path d="M21 11V14" ${ST}/><rect x="5" y="10" width="9" height="5" rx="1" fill="currentColor" stroke="none"/>`,
+};
+
+const FIELDS=[
+  {key:'pre',chap:'Chapter 01 · Trying',name:'Cycle',cols:['#F0A99A','#F0B8C8','#C9B7E6','#F7DCC0'],lab:'Next period',big:'in 8 days',chips:['Log today','Symptoms']},
+  {key:'preg',chap:'Chapter 02 · Expecting',name:'Pregnancy',cols:['#F8C9A6','#F2AEC6','#BDA4E2','#F8E1B2'],lab:'Week 24 · corn cob',big:'112 days to go',chips:['Add note','Kicks']},
+  {key:'kids',chap:'Chapter 03 · Raising',name:'Raising',cols:['#F4D888','#A2D8B4','#A6BCE6','#F4B396'],lab:"Today's win",big:'First steps',chips:['Save win','Milestones']},
+  {key:'care',chap:'Shared · Circle',name:'Caregiver',cols:['#A6D6DC','#B0C0E4','#C6E7D9','#D4E1F0'],lab:'Care circle',big:'3 people',chips:['Invite','Activity']},
+];
+
+document.getElementById('behaviors').innerHTML=FIELDS.map(f=>`
+  <div class="bcard gfield" data-mode="${f.key}">
+    <div class="top">
+      <div><div class="chap">${f.chap}</div><h3>${f.name}</h3></div>
+      <div class="swatches">${f.cols.map(c=>`<i style="background:${c}"></i>`).join('')}</div>
+    </div>
+    <div class="glass">
+      <div class="lab">${f.lab}</div>
+      <div class="big">${f.big}</div>
+      <div class="row"><span class="gchip">${f.chips[0]}</span><span class="gchip ghost">${f.chips[1]}</span></div>
+    </div>
+  </div>`).join('');
+
+document.getElementById('lib').innerHTML=Object.entries(ICONS).map(([n,svg])=>`<div class="cell"><svg viewBox="0 0 24 24">${svg}</svg><span>${n}</span></div>`).join('');
+
+// icon slots for nav / product cards / banners
+document.querySelectorAll('[data-ic]').forEach(el=>{
+  var n=el.getAttribute('data-ic'), sz=el.getAttribute('data-sz')||20;
+  if(ICONS[n]) el.innerHTML=`<svg viewBox="0 0 24 24" style="width:${sz}px;height:${sz}px;display:block">${ICONS[n]}</svg>`;
+});
+
+// dot calendars
+function dows(id){document.getElementById(id).innerHTML=['Mo','Tu','We','Th','Fr','Sa','Su'].map(d=>`<span class="dow" style="font-family:var(--d-mono);font-size:8.5px;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-3);text-align:center">${d}</span>`).join('');}
+function buildCal(id,opts){var el=document.getElementById(id);if(!el)return;var h='';
+  for(var m=29;m<=30;m++)h+=`<div class="d muted">${m}</div>`;
+  for(var d=1;d<=31;d++){var c='d';
+    if(opts.period&&d>=opts.period[0]&&d<=opts.period[1]&&d!==opts.sel)c+=' period';
+    if(d===opts.sel)c+=' sel';
+    h+=`<div class="${c}">${d}</div>`;}
+  for(var t=1;t<=2;t++)h+=`<div class="d muted">${t}</div>`;
+  el.innerHTML=h;}
+dows('dow-pre');dows('dow-kids');
+buildCal('cal-pre',{period:[20,24],sel:23});
+buildCal('cal-kids',{sel:14});
+
+// avatar blooms
+const AVG=['#F0A99A','#F0B8C8','#C9B7E6','#F7DCC0','#A2D8B4','#A6D6DC','#F8C9A6'];
+document.getElementById('avgrid').innerHTML=AVG.map((c,i)=>`<div class="av${i===2?' on':''}" style="--g:radial-gradient(circle at 38% 34%, ${c}, transparent 72%)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="4"/><path d="M5 20C5 16.5 8 14.5 12 14.5 16 14.5 19 16.5 19 20"/></svg></div>`).join('')
+  +`<div class="av cam"><svg viewBox="0 0 24 24" fill="none" stroke="var(--d-ink)" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7.5" width="17" height="12" rx="2.5"/><path d="M9 7.5 10.3 5.3H13.7L15 7.5"/><circle cx="12" cy="13.5" r="3.2"/></svg></div>`;
+
+// journey picker — free blooms
+const JOURNEYS=[
+  {k:'Chapter 01',n:'Trying',c:'#F0A99A',x:'4%',y:'8%'},
+  {k:'Chapter 02',n:'Expecting',c:'#BDA4E2',x:'52%',y:'2%'},
+  {k:'Chapter 03',n:'Raising',c:'#A2D8B4',x:'26%',y:'46%'},
+];
+document.getElementById('blob').innerHTML=JOURNEYS.map((j,i)=>`<div class="bopt${i===1?' sel':''}" style="left:${j.x};top:${j.y};--c:radial-gradient(circle at 42% 38%, ${j.c}, transparent 70%)"><span class="k">${j.k}</span><span class="n">${j.n}</span></div>`).join('');
+document.getElementById('blob').addEventListener('click',e=>{var o=e.target.closest('.bopt');if(!o)return;document.querySelectorAll('#blob .bopt').forEach(b=>b.classList.toggle('sel',b===o));});
+
+// chips Other+ reveal
+document.getElementById('otherChip').addEventListener('click',function(){
+  this.classList.toggle('on');
+  document.getElementById('otherWrap').classList.toggle('show',this.classList.contains('on'));
+});
+document.querySelectorAll('.chip:not(#otherChip), .seg button').forEach(el=>el.addEventListener('click',function(){
+  if(this.parentElement.classList.contains('seg')){this.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on');}
+  else this.classList.toggle('on');
+}));
+document.querySelectorAll('.choicecard').forEach(c=>c.addEventListener('click',function(){
+  this.parentElement.querySelectorAll('.choicecard').forEach(x=>x.classList.remove('on'));this.classList.add('on');
+}));
+// answer-graph single-select (pole / triangle / orbit)
+document.querySelectorAll('.polefield, .triconst, .orbit').forEach(g=>g.addEventListener('click',function(e){
+  var n=e.target.closest('.poleblob, .trinode, .orbnode');if(!n)return;
+  this.querySelectorAll('.poleblob, .trinode, .orbnode').forEach(x=>x.classList.remove('on'));n.classList.add('on');
+}));
+// metaball multi-select
+document.querySelectorAll('.bloomlbl').forEach(b=>b.addEventListener('click',function(){this.classList.toggle('on');}));
+
+// controls: behavior (drives hero) + light/dark
+const root=document.documentElement;
+const C=document.getElementById('controls');
+let mode='preg', dark=false;
+function render(){
+  document.getElementById('heroField').setAttribute('data-mode',mode);
+  document.querySelector('.hero-field .tag').textContent='generative field · '+FIELDS.find(f=>f.key===mode).name.toLowerCase();
+  if(dark)root.setAttribute('data-dark','');else root.removeAttribute('data-dark');
+  C.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
+  C.querySelectorAll('[data-d]').forEach(b=>b.classList.toggle('on',(b.dataset.d==='1')===dark));
+}
+C.innerHTML=FIELDS.map(f=>`<button data-m="${f.key}">${f.name}</button>`).join('')
+  +'<div class="sep"></div>'+`<button data-d="0">Light</button><button data-d="1">Dark</button>`;
+C.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.m)mode=b.dataset.m; if(b.dataset.d)dark=b.dataset.d==='1'; render();});
+render();
+</script>
+<script src="src/doodle-icons.js"></script>
+<script src="src/diffuse-icons.js"></script>
+<script src="src/diffuse-stickers.js"></script>
+<script src="src/diffuse-weeks.js"></script>
+<script src="src/diffuse-weeks-color.js"></script>
+<script src="src/diffuse-brand.js"></script>
+<script src="src/diffuse-charts.js"></script>
+<script>
+(function(){
+  const B=window.DiffuseBrand, S=window.DiffuseStickers, WK=window.DiffuseWeeks, CH=window.DiffuseCharts;
+  const $=id=>document.getElementById(id);
+  const MODES=['pre','preg','kids','care'];
+
+  /* pillar cards — sticker + title + sub, one per journey */
+  (function(){
+    var row=$('pcardRow'); if(!row||!S) return;
+    var pk=[['fertility','Cycle','Day 14 · regular','pre'],['week-by-week','Pregnancy','Week 24 · corn cob','preg'],['milestones','Milestones','3 this month','kids'],['food','First foods','Started at 6m','kids']];
+    row.innerHTML=pk.map(function(p){
+      var st=S.pillar(p[0],{size:46});
+      return '<div class="pcard" data-mode="'+p[3]+'">'+(st||'')+'<div><div class="pt">'+p[1]+'</div><div class="ps">'+p[2]+'</div></div></div>';
+    }).join('');
+  })();
+  const MODE_NAMES={pre:'cycle',preg:'pregnancy',kids:'raising',care:'caregiver'};
+
+  /* 10 — full icon roster */
+  const IC=window.DiffuseIcons;
+  if(IC){
+    $('iconGroups').innerHTML=Object.entries(IC.groups).map(([label,names])=>{
+      const cells=names.filter(n=>IC.paths[n]).map(n=>`<div class="cell">${IC.svg(n,{size:22})}<span>${n.toLowerCase()}</span></div>`).join('');
+      return `<div class="icgroup"><p class="glab">${label} <i>${names.filter(n=>IC.paths[n]).length}</i></p><div class="icwall">${cells}</div></div>`;
+    }).join('');
+  }
+
+  /* 11 — mark */
+  $('markA').innerHTML=B.mark({size:128,kind:'iris',mode:'preg',animate:true});
+  $('markB').innerHTML=B.mark({size:128,kind:'halo',mode:'preg'});
+  const sizes=[[24,'nav'],[40,'header'],[64,'card']];
+  $('markSizesA').innerHTML=sizes.map(s=>`<figure>${B.mark({size:s[0],kind:'iris',mode:'preg'})}<figcaption>${s[0]}px · ${s[1]}</figcaption></figure>`).join('');
+  $('markSizesB').innerHTML=sizes.map(s=>`<figure>${B.mark({size:s[0],kind:'halo',mode:'preg'})}<figcaption>${s[0]}px · ${s[1]}</figcaption></figure>`).join('');
+  $('markModes').innerHTML=MODES.map(m=>`<div class="mcell" data-mode="${m}"><em>${MODE_NAMES[m]}</em>${B.mark({size:60,kind:'iris',mode:m})}</div>`).join('')
+    +`<div class="mcell dark"><em>dark</em>${B.mark({size:60,kind:'halo',mode:'preg',stroke:'#F4F1E8'})}</div>`;
+  const MODES2_DONE=1;
+
+  /* 12 — app icon */
+  $('appicField').innerHTML=MODES.map(m=>`<div class="appicfig">${B.appIcon({mode:m,kind:'field',size:96})}<span>A · ${MODE_NAMES[m]}</span></div>`).join('');
+  const darkPaper='<div class="dappic" style="width:96px;height:96px;border-radius:23px;background:#211E18"><div class="dappic-grain"></div><div class="dappic-mark">'+B.mark({size:60,kind:'halo',mode:'preg',stroke:'#F4F1E8'})+'</div></div>';
+  $('appicPaper').innerHTML=`<div class="appicfig">${B.appIcon({mode:'preg',kind:'paper',size:96})}<span>B · paper</span></div>`
+    +`<div class="appicfig">${darkPaper}<span>B · dark</span></div>`;
+
+  /* 13 — stickers */
+  $('stkAnatomy').innerHTML=S.sticker('heart',{mode:'preg',size:128})
+    +'<div class="stknote"><span><b>01</b>one wobbly stroke · 1.5 ink</span><span><b>02</b>wash · 3 pools · blur · sat .82</span><span><b>03</b>deterministic per sticker</span><span><b>04</b>ink never tints</span></div>';
+  $('stkTreat').innerHTML=`<figure style="margin:0;display:flex;flex-direction:column;align-items:center;gap:10px">${S.sticker('moon',{mode:'preg',size:104,style:'wash'})}<figcaption style="font-family:var(--d-mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4)">A · wash</figcaption></figure>`
+    +`<figure style="margin:0;display:flex;flex-direction:column;align-items:center;gap:10px">${S.sticker('moon',{mode:'preg',size:104,style:'bloom'})}<figcaption style="font-family:var(--d-mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4)">B · bloom</figcaption></figure>`;
+  $('stkModes').innerHTML=MODES.map(m=>`<figure style="margin:0;display:flex;flex-direction:column;align-items:center;gap:10px">${S.sticker('sun',{mode:m,size:84})}<figcaption style="font-family:var(--d-mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4)">${MODE_NAMES[m]}</figcaption></figure>`).join('');
+  const CORE=['heart','star','sun','cloud','rain','moon','flower','sparkle','smiley','sprout','bolt','music','house','gift','paw','rainbow','cherry','bell','check','zzz','umbrella','mug','bow','drop','leaf','bubbles','eye','hug','bump','stroller'];
+  $('stkLib').innerHTML=CORE.filter(n=>S.lib[n]).map((n,i)=>`<div class="cell">${S.sticker(n,{mode:MODES[(n.length+i)%4],size:56})}<span>${n}</span></div>`).join('');
+
+  /* 14 — pillars */
+  const GROUPS=[['pre','cycle · 6'],['preg','pregnancy · 9'],['kids','raising · 9']];
+  $('pillarGroups').innerHTML=GROUPS.map(g=>`<div class="pilgroup"><p class="glab">${g[1]}</p><div class="stkgrid" style="grid-template-columns:repeat(${g[0]==='pre'?6:9},1fr)">${
+    S.pillars.filter(p=>p.mode===g[0]).map(p=>`<div class="cell">${S.pillar(p.key,{size:60})}<span>${p.label}</span></div>`).join('')
+  }</div></div>`).join('');
+
+  /* 15 — weeks */
+  $('weekGrid').innerHTML=WK.list.map(it=>`<div class="cell">${WK.week(it.w,{size:78})}<span>${String(it.w).padStart(2,'0')} · ${it.n}</span></div>`).join('');
+  const WKC=window.DiffuseWeeksColor;
+  $('weekGridColor').innerHTML=WK.list.map(it=>`<div class="cell">${WKC.week(it.w,{size:78})}<span>${String(it.w).padStart(2,'0')} · ${it.n}</span></div>`).join('');
+
+  /* 16 — interactivity */
+  document.querySelectorAll('.dswitch').forEach(b=>b.addEventListener('click',()=>b.classList.toggle('on')));
+  document.querySelectorAll('.dcheck').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('on')));
+
+  /* 18 — charts */
+  CH.ring($('chRing'),{pct:.46,value:'14',label:'cycle day'});
+  CH.bars($('chBars'));
+  CH.trend($('chTrend'),{label:'easing'});
+  CH.mood($('chMood'));
+  CH.timeline($('chTime'));
+  CH.phaseWheel($('chPhase'),{day:13});
+  CH.bbt($('chBBT'));
+  CH.growth($('chGrowth'),{label:'75th'});
+  CH.hbars($('chHbars'));
+  CH.donut($('chDonut'),{value:'11.2',label:'hrs sleep'});
+  CH.gauge($('chGauge'),{pct:.72,value:'72',label:'readiness'});
+  CH.heatmap($('chHeat'));
+  CH.stacked($('chStack'));
+  CH.spark($('spk1'),{pts:[.6,.55,.5,.52,.45,.48,.4,.38],g:2});
+  CH.spark($('spk2'),{pts:[.4,.6,.45,.7,.55,.75,.68,.82],g:1});
+  CH.spark($('spk3'),{pts:[.5,.45,.6,.55,.65,.62,.7,.72],g:3});
+})();
+</script>
+</body>
+</html>

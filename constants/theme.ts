@@ -280,11 +280,30 @@ export const fontWeight = {
 export const font = {
   display: 'Fraunces_600SemiBold',         // serif editorial display
   displayBold: 'Fraunces_700Bold',         // heavier display weight (hero numbers, big titles)
+  displayExtraBold: 'Fraunces_800ExtraBold', // heaviest display weight (jumbo hero numbers) — loaded in app/_layout.tsx
   italic: 'InstrumentSerif_400Regular_Italic', // italic accent
   body: 'DMSans_400Regular',               // UI body
   bodyMedium: 'DMSans_500Medium',          // medium weight UI
   bodySemiBold: 'DMSans_600SemiBold',      // semibold UI labels
   bodyBold: 'DMSans_700Bold',              // bold UI labels (chip text, emphasised pills)
+} as const
+
+// ─── MOTION ────────────────────────────────────────────────────────────────
+// Shared animation tokens so motion feels cohesive across the app instead of
+// every component inventing its own spring. Spring shapes are reanimated
+// `withSpring` configs.
+//
+//   press      — the "sticker pushes down" feel on a tap (buttons, day cells)
+//   entrance   — modal / toast / card pop-in
+//   pressTranslateY / restShadowY / pressShadowY — the displacement the press
+//                animation drives (button moves down, hard shadow collapses)
+export const motion = {
+  press: { damping: 18, stiffness: 320, mass: 0.5 },
+  entrance: { damping: 14, stiffness: 140, mass: 0.8 },
+  pressTranslateY: 2,
+  restShadowY: 3,
+  pressShadowY: 1,
+  breatheDuration: 4000,
 } as const
 
 // ─── useTheme() HOOK ───────────────────────────────────────────────────────
@@ -313,17 +332,22 @@ export function useTheme() {
 
 // ─── MODE COLOR HELPERS ────────────────────────────────────────────────────
 
-export function getModeColor(mode: 'pre' | 'preg' | 'kids' | string, isDark = false): string {
+export function getModeColor(mode: 'pre' | 'preg' | 'kids' | 'care' | string, isDark = false): string {
   if (mode === 'pre' || mode === 'pre-pregnancy') return isDark ? '#EFA2C2' : brand.prePregnancy
   if (mode === 'preg' || mode === 'pregnancy') return isDark ? '#C4B5EF' : brand.pregnancy
   if (mode === 'kids') return isDark ? '#A5C9F0' : brand.kids
+  // Caregiver — scaffold. Uses the Diffuse care accent so a caller passing
+  // 'care' gets a sensible color instead of the pregnancy fallback. No screens
+  // pass 'care' yet; existing callers are unaffected.
+  if (mode === 'care' || mode === 'caregiver') return isDark ? '#6FAEBE' : '#4A8496'
   return isDark ? '#C4B5EF' : brand.pregnancy
 }
 
-export function getModeColorSoft(mode: 'pre' | 'preg' | 'kids' | string, isDark = false): string {
+export function getModeColorSoft(mode: 'pre' | 'preg' | 'kids' | 'care' | string, isDark = false): string {
   if (mode === 'pre' || mode === 'pre-pregnancy') return isDark ? '#3A2730' : brand.prePregnancySoft
   if (mode === 'preg' || mode === 'pregnancy') return isDark ? '#2D2842' : brand.pregnancySoft
   if (mode === 'kids') return isDark ? '#1F2A3A' : brand.kidsSoft
+  if (mode === 'care' || mode === 'caregiver') return isDark ? '#18302F' : '#D2EAEE'
   return isDark ? '#2D2842' : brand.pregnancySoft
 }
 
@@ -448,3 +472,241 @@ export const inputStyles = {
     color: lightTokens.text,
   },
 } as const
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  DIFFUSE (design-system-v3) — ADDITIVE
+// ═══════════════════════════════════════════════════════════════════════════
+//
+//  v3 "Diffuse" is a SECOND, opt-in visual language that lives ALONGSIDE the
+//  current cream-paper / sticker-collage system. Nothing above this line is
+//  mutated. Consumers select it via `useThemeStore().variant === 'diffuse'`.
+//
+//  Direction (see docs/design/design-system-v3.html + HANDOFF.md):
+//    - ONE delicate, sophisticated type language for every behavior.
+//    - Behaviors differ ONLY by color + shape + blur — soft, grainy,
+//      generative gradient FIELDS (g1..g4) with a single per-mode accent.
+//    - Serif = titles + feeling words · Sans = reading · Mono = the data voice
+//      (labels, chips, numbers, units, timestamps) · Serif = the one hero number.
+//    - Stickers/icons stay ACTIVE — they remain the icon system under Diffuse.
+//
+//  Source of truth for the raw values: src/tokens-v3.css in the handoff bundle.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── DIFFUSE FONTS ─────────────────────────────────────────────────────────
+// Three new families, loaded in app/_layout.tsx alongside the existing ones.
+// Space Mono was already loaded (affirmation templates) — reused here as the
+// Diffuse "data" voice. The current families (Fraunces/DM Sans/Instrument
+// Serif) are NOT removed — stickers/icons + the legacy theme still use them.
+
+export const diffuseFont = {
+  // Cormorant Garamond — delicate serif. Light is the default display weight.
+  display: 'CormorantGaramond_300Light',
+  displayRegular: 'CormorantGaramond_400Regular',
+  displayMedium: 'CormorantGaramond_500Medium',
+  italic: 'CormorantGaramond_400Regular_Italic', // accent / feeling words
+  // Hanken Grotesk — reading sans.
+  body: 'HankenGrotesk_400Regular',
+  bodyLight: 'HankenGrotesk_300Light',
+  bodyMedium: 'HankenGrotesk_500Medium',
+  bodySemiBold: 'HankenGrotesk_600SemiBold',
+  bodyBold: 'HankenGrotesk_700Bold',
+  // Space Mono — the dominant DATA voice (already loaded).
+  mono: 'SpaceMono_400Regular',
+  monoBold: 'SpaceMono_700Bold',
+} as const
+
+// TYPE ROLES — assign by MEANING, never by size (the one clear v3 rule).
+//   title    → serif  (screen/section titles + feeling words)
+//   read     → sans   (body copy + selectable row labels)
+//   data     → mono   (every pill, chip, eyebrow, label, number, unit, date)
+//   numHero  → serif  (the single large focal number of a data tile)
+export const diffuseTypeRole = {
+  title: diffuseFont.display,
+  read: diffuseFont.body,
+  data: diffuseFont.mono,
+  numHero: diffuseFont.display,
+} as const
+
+// ─── DIFFUSE NEUTRALS (paper + ink) — resolved per theme ───────────────────
+
+export const diffuseLightTokens = {
+  // Canvas — warm off-white paper
+  bg: '#F4F1E8',            // --d-paper
+  bgDeep: '#EDE9DD',        // --bg-deep
+  surface: '#FBFAF5',       // --d-paper-2 (raised card)
+  surfaceRaised: '#F7F4EC', // --paper-2 (nested)
+
+  // Ink ramp (near-black warm → faint)
+  ink: '#1A1916',           // --d-ink
+  ink2: '#4A463E',          // --d-ink-2
+  ink3: '#807A6E',          // --d-ink-3
+  ink4: '#B3AC9C',          // --d-ink-4
+
+  // Lines — the sophisticated hairline system
+  line: 'rgba(26,25,22,0.12)',     // --d-line
+  line2: 'rgba(26,25,22,0.20)',    // --d-line-2
+  hairline: 'rgba(26,25,22,0.55)', // --d-hairline — signature strong rule
+
+  // ── carried forward — v3 leaves these undefined ──
+  // Semantic status (reused from the current system so Diffuse screens can
+  // still show success/warning/error without inventing values).
+  success: '#2E7D32',
+  successTint: '#E8F5E9',
+  warning: '#E65100',
+  error: '#C62828',
+  // Tab / nav (revisited when the Diffuse nav lands; kept for continuity).
+  tabBg: 'rgba(26,25,22,0.96)',
+  tabBorder: 'rgba(26,25,22,0.06)',
+  tabInactive: 'rgba(244,241,232,0.55)',
+} as const
+
+export const diffuseDarkTokens = {
+  bg: '#16140F',
+  bgDeep: '#100E0A',
+  surface: '#211E18',
+  surfaceRaised: '#2A261F',
+
+  ink: '#F4F1E8',
+  ink2: '#D8D2C4',
+  ink3: '#A39C8C',
+  ink4: '#6E685C',
+
+  line: 'rgba(244,241,232,0.12)',
+  line2: 'rgba(244,241,232,0.22)',
+  hairline: 'rgba(244,241,232,0.55)',
+
+  success: '#6EC96E',
+  successTint: 'rgba(110,201,110,0.15)',
+  warning: '#FFB347',
+  error: '#FF7070',
+  tabBg: 'rgba(22,20,15,0.96)',
+  tabBorder: 'rgba(244,241,232,0.06)',
+  tabInactive: 'rgba(244,241,232,0.45)',
+} as const
+
+export type DiffuseColorTokens = { [K in keyof typeof diffuseLightTokens]: string }
+
+// ─── DIFFUSE SHAPES + BLUR + SHADOWS + GRAIN ───────────────────────────────
+
+export const diffuseRadius = {
+  sm: 14,   // --d-r-sm
+  md: 20,   // --d-r-md
+  lg: 28,   // --d-r-lg
+  xl: 40,   // --d-r-xl
+} as const
+
+// Blur radii — a token category the current system doesn't have. Central to
+// the Diffuse "soft grainy gradient field" look.
+export const diffuseBlur = {
+  soft: 40,   // --d-blur-soft   (surfaces/blooms)
+  field: 70,  // --d-blur-field  (generative-field blob blur)
+  glass: 18,  // --d-blur-glass  (glass sprays)
+} as const
+
+export const diffuseShadows = {
+  // Two tiers only (v3 defines --sh-card and --sh-pop). Re-derived for RN:
+  // RN can't express negative spread, so the second layer is approximated
+  // with a larger radius + tuned opacity.
+  card: { shadowColor: '#1A1916', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.10, shadowRadius: 18, elevation: 3 },
+  pop: { shadowColor: '#1A1916', shadowOffset: { width: 0, height: 18 }, shadowOpacity: 0.22, shadowRadius: 34, elevation: 10 },
+} as const
+
+// Grain overlay — feTurbulence noise laid over gradient fields. The SVG data
+// URI is consumed by a native grain layer (react-native-svg / expo-image);
+// components import the opacity + frequency, not the raw CSS filter.
+export const diffuseGrain = {
+  // Same feTurbulence params as --d-grain (fractalNoise, baseFrequency 0.9,
+  // 2 octaves). Rendered by a <DiffuseGrain> layer in the component phase.
+  baseFrequency: 0.9,
+  numOctaves: 2,
+  opacityLight: 0.22, // --d-grain-opacity
+  opacityDark: 0.16,
+  // Inline SVG data URI, ready for an <Image source={{ uri }}> grain tile.
+  uri:
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E",
+} as const
+
+// ─── DIFFUSE BEHAVIOR FIELDS ───────────────────────────────────────────────
+// The ONLY thing that changes per behavior: a 4-stop generative gradient
+// field (g1..g4) + one accent (+ soft) pulled from the field for CTA/ink
+// moments. Type + icons stay identical across behaviors.
+//
+//   'pre'  — Cycle (pre-pregnancy)
+//   'preg' — Pregnancy
+//   'kids' — Raising
+//   'care' — Caregiver  (SCAFFOLD ONLY — no screens/tabs/store wiring yet)
+
+export interface DiffuseField {
+  g1: string
+  g2: string
+  g3: string
+  g4: string
+  accent: string
+  accentSoft: string
+}
+
+export const diffuseFields: Record<'pre' | 'preg' | 'kids' | 'care', DiffuseField> = {
+  // CYCLE — coral → rose → lilac → peach
+  pre: { g1: '#F0A99A', g2: '#F0B8C8', g3: '#C9B7E6', g4: '#F7DCC0', accent: '#C25872', accentSoft: '#F6DCE4' },
+  // PREGNANCY — peach → blush → plum → gold
+  preg: { g1: '#F8C9A6', g2: '#F2AEC6', g3: '#BDA4E2', g4: '#F8E1B2', accent: '#8F5FC6', accentSoft: '#E7D8F5' },
+  // RAISING — yellow → green → blue → orange
+  kids: { g1: '#F4D888', g2: '#A2D8B4', g3: '#A6BCE6', g4: '#F4B396', accent: '#4C79CE', accentSoft: '#CBDCF7' },
+  // CAREGIVER — teal → blue → mint → sky  (scaffold)
+  care: { g1: '#A6D6DC', g2: '#B0C0E4', g3: '#C6E7D9', g4: '#D4E1F0', accent: '#4A8496', accentSoft: '#D2EAEE' },
+} as const
+
+// ─── DIFFUSE MODE HELPERS ──────────────────────────────────────────────────
+// Maps the app's JourneyMode keys ('pre-pregnancy' | 'pregnancy' | 'kids')
+// and the short v3 keys ('pre'|'preg'|'kids'|'care') onto a field.
+
+function resolveFieldKey(mode: string): 'pre' | 'preg' | 'kids' | 'care' {
+  if (mode === 'pre' || mode === 'pre-pregnancy') return 'pre'
+  if (mode === 'preg' || mode === 'pregnancy') return 'preg'
+  if (mode === 'kids') return 'kids'
+  if (mode === 'care' || mode === 'caregiver') return 'care'
+  return 'preg'
+}
+
+/** The 4 generative-field stops [g1,g2,g3,g4] for a behavior. */
+export function getModeField(mode: string, _isDark = false): [string, string, string, string] {
+  const f = diffuseFields[resolveFieldKey(mode)]
+  return [f.g1, f.g2, f.g3, f.g4]
+}
+
+/** The single per-mode accent under Diffuse (CTA/ink moments). */
+export function getDiffuseAccent(mode: string, _isDark = false): string {
+  return diffuseFields[resolveFieldKey(mode)].accent
+}
+
+/** The per-mode soft accent (tinted backgrounds) under Diffuse. */
+export function getDiffuseAccentSoft(mode: string, _isDark = false): string {
+  return diffuseFields[resolveFieldKey(mode)].accentSoft
+}
+
+// ─── useDiffuseTheme() HOOK ────────────────────────────────────────────────
+// Parallel to useTheme(), returns the resolved Diffuse token set. Screens that
+// opt into Diffuse read from here. Existing screens keep using useTheme().
+
+export function useDiffuseTheme() {
+  const systemScheme = useColorScheme()
+  const storeTheme = useThemeStore((s) => s.theme)
+  const hydrated = useThemeStore((s) => s.hydrated)
+
+  const isDark = hydrated ? storeTheme === 'dark' : systemScheme === 'dark'
+  const colors: DiffuseColorTokens = isDark ? diffuseDarkTokens : diffuseLightTokens
+
+  return {
+    colors,
+    fields: diffuseFields,
+    font: diffuseFont,
+    typeRole: diffuseTypeRole,
+    radius: diffuseRadius,
+    blur: diffuseBlur,
+    shadows: diffuseShadows,
+    grain: diffuseGrain,
+    spacing,            // shared — v3 defines no spacing scale of its own
+    stickers: isDark ? stickersDark : stickers, // icons stay active under Diffuse
+    isDark,
+  }
+}

@@ -8,7 +8,8 @@
 import { ReactNode } from 'react'
 import { View, Text, Pressable, StyleSheet, ViewStyle, StyleProp } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 
 interface FormRowProps {
   label: string
@@ -21,7 +22,12 @@ interface FormRowProps {
   style?: StyleProp<ViewStyle>
 }
 
-export function FormRow({
+export function FormRow(props: FormRowProps) {
+  const diffuse = useIsDiffuse()
+  return diffuse ? <DiffuseFormRow {...props} /> : <CurrentFormRow {...props} />
+}
+
+function CurrentFormRow({
   label,
   value,
   sticker,
@@ -86,6 +92,63 @@ export function FormRow({
   )
 }
 
+// ─── Diffuse — bare row on a bottom hairline; mono-caps label + serif value ─
+// No card fill; the sticker keeps its role but sits in a hairline circle
+// instead of a soft-tinted socket.
+
+function DiffuseFormRow({
+  label,
+  value,
+  sticker,
+  onPress,
+  children,
+  showChevron = true,
+  style,
+}: FormRowProps) {
+  const { colors } = useDiffuseTheme()
+  const Container: any = onPress ? Pressable : View
+
+  return (
+    <Container
+      onPress={onPress}
+      style={({ pressed }: { pressed?: boolean }) => [
+        diffuseStyles.row,
+        { borderBottomColor: colors.line2, opacity: pressed ? 0.6 : 1 },
+        style,
+      ]}
+    >
+      {sticker && (
+        <View style={[diffuseStyles.stickerCircle, { borderColor: colors.line2 }]}>
+          {sticker}
+        </View>
+      )}
+
+      <View style={styles.body}>
+        <Text
+          style={[diffuseStyles.label, { color: colors.ink3 }]}
+          numberOfLines={1}
+        >
+          {label}
+        </Text>
+        {value !== undefined && (
+          <Text
+            style={[diffuseStyles.value, { color: colors.ink }]}
+            numberOfLines={1}
+          >
+            {value}
+          </Text>
+        )}
+      </View>
+
+      {children ? <View style={styles.trailing}>{children}</View> : null}
+
+      {showChevron && onPress && !children ? (
+        <Ionicons name="chevron-forward" size={16} color={colors.ink3} />
+      ) : null}
+    </Container>
+  )
+}
+
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
@@ -116,5 +179,36 @@ const styles = StyleSheet.create({
   },
   trailing: {
     marginLeft: 'auto',
+  },
+})
+
+const diffuseStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    borderBottomWidth: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 2,
+  },
+  stickerCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  label: {
+    fontFamily: diffuseFont.mono,
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  value: {
+    fontFamily: diffuseFont.display,
+    fontSize: 18,
+    letterSpacing: -0.2,
   },
 })

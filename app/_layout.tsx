@@ -41,6 +41,17 @@ import { SpaceMono_400Regular } from '@expo-google-fonts/space-mono/400Regular'
 import { SpaceMono_700Bold } from '@expo-google-fonts/space-mono/700Bold'
 import { UnicaOne_400Regular } from '@expo-google-fonts/unica-one/400Regular'
 import { YesevaOne_400Regular } from '@expo-google-fonts/yeseva-one/400Regular'
+// ─── Diffuse (design-system-v3) fonts — ADDITIVE, opt-in variant ───
+// Space Mono (the Diffuse "data" voice) is already loaded above.
+import { CormorantGaramond_300Light } from '@expo-google-fonts/cormorant-garamond/300Light'
+import { CormorantGaramond_400Regular } from '@expo-google-fonts/cormorant-garamond/400Regular'
+import { CormorantGaramond_500Medium } from '@expo-google-fonts/cormorant-garamond/500Medium'
+import { CormorantGaramond_400Regular_Italic } from '@expo-google-fonts/cormorant-garamond/400Regular_Italic'
+import { HankenGrotesk_300Light } from '@expo-google-fonts/hanken-grotesk/300Light'
+import { HankenGrotesk_400Regular } from '@expo-google-fonts/hanken-grotesk/400Regular'
+import { HankenGrotesk_500Medium } from '@expo-google-fonts/hanken-grotesk/500Medium'
+import { HankenGrotesk_600SemiBold } from '@expo-google-fonts/hanken-grotesk/600SemiBold'
+import { HankenGrotesk_700Bold } from '@expo-google-fonts/hanken-grotesk/700Bold'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
@@ -125,6 +136,16 @@ export default function RootLayout() {
     SpaceMono_700Bold,
     UnicaOne_400Regular,
     YesevaOne_400Regular,
+    // Diffuse (v3) families
+    CormorantGaramond_300Light,
+    CormorantGaramond_400Regular,
+    CormorantGaramond_500Medium,
+    CormorantGaramond_400Regular_Italic,
+    HankenGrotesk_300Light,
+    HankenGrotesk_400Regular,
+    HankenGrotesk_500Medium,
+    HankenGrotesk_600SemiBold,
+    HankenGrotesk_700Bold,
   })
 
   // Apply DM Sans as the default for every Text / TextInput once fonts load.
@@ -540,7 +561,6 @@ export default function RootLayout() {
           <Stack.Screen name="invite-caregiver" options={{ presentation: 'modal' }} />
           <Stack.Screen name="accept-invite" />
           <Stack.Screen name="child-picker" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="airtag-setup" options={{ presentation: 'modal' }} />
           <Stack.Screen name="birth-plan" />
           <Stack.Screen name="insights" />
           <Stack.Screen name="grandma-talk" options={{ presentation: 'modal' }} />

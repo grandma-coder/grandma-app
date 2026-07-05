@@ -9,8 +9,9 @@ import { ReactNode } from 'react'
 import { View, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform, Text, ScrollView } from 'react-native'
 import { X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, font } from '../../constants/theme'
+import { useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { Display } from '../ui/Typography'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 
 interface LogSheetProps {
   visible: boolean
@@ -24,8 +25,13 @@ interface LogSheetProps {
   titleRight?: ReactNode
 }
 
-export function LogSheet({ visible, title, onClose, children, chip, chipColor, titleRight }: LogSheetProps) {
-  const { colors, isDark } = useTheme()
+export function LogSheet(props: LogSheetProps) {
+  const diffuse = useIsDiffuse()
+  return diffuse ? <DiffuseLogSheet {...props} /> : <CurrentLogSheet {...props} />
+}
+
+function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, titleRight }: LogSheetProps) {
+  const { colors } = useTheme()
   const insets = useSafeAreaInsets()
 
   const bg = colors.bg
@@ -66,6 +72,57 @@ export function LogSheet({ visible, title, onClose, children, chip, chipColor, t
             <Pressable onPress={onClose} hitSlop={8}>
               <View style={[styles.closeBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
                 <X size={18} color={ink} />
+              </View>
+            </Pressable>
+          </View>
+
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  )
+}
+
+// ─── Diffuse — softer sheet, serif title, hairline chip + close node ────────
+
+function DiffuseLogSheet({ visible, title, onClose, children, chip, chipColor, titleRight }: LogSheetProps) {
+  const { colors } = useDiffuseTheme()
+  const insets = useSafeAreaInsets()
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <Pressable style={styles.backdrop} onPress={onClose} />
+        <View style={[styles.sheet, { backgroundColor: colors.bg, paddingBottom: insets.bottom + 16 }]}>
+          <View style={styles.handleWrap}>
+            <View style={[styles.handle, { backgroundColor: colors.line2 }]} />
+          </View>
+
+          <View style={styles.header}>
+            <View style={styles.titleRow}>
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, letterSpacing: -0.3, color: colors.ink }}>
+                {title}
+              </Text>
+              {chip ? (
+                <View style={[diffuseStyles.chip, { borderColor: chipColor ?? colors.line2 }]}>
+                  <Text style={[diffuseStyles.chipText, { color: colors.ink3 }]}>{chip}</Text>
+                </View>
+              ) : null}
+              {titleRight}
+            </View>
+            <Pressable onPress={onClose} hitSlop={8}>
+              <View style={[styles.closeBtn, { backgroundColor: 'transparent', borderColor: colors.hairline }]}>
+                <X size={18} color={colors.ink} />
               </View>
             </Pressable>
           </View>
@@ -145,5 +202,20 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
     paddingBottom: 16,
+  },
+})
+
+const diffuseStyles = StyleSheet.create({
+  chip: {
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontFamily: diffuseFont.mono,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
   },
 })

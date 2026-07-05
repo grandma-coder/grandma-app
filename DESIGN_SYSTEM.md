@@ -9,6 +9,8 @@ Both are kept in sync. If they disagree, **`theme.ts` wins** (it's what ships).
 
 > **Design language (Apr 2026 redesign)** — cream-paper / sticker-collage. Light is the default canvas; dark uses warm ink on parchment. Same sticker palette in both. Editorial serif display (Fraunces) + sans body (DM Sans) + italic accent (Instrument Serif).
 
+> **⚠️ A second visual language is being migrated in: v3 "Diffuse" (`docs/design/design-system-v3.html`).** It is **additive and opt-in** — see [§0.5 Diffuse variant](#05-diffuse-variant-design-system-v3). Everything in this document describes the **current** (default) system unless a section is explicitly marked Diffuse. Nothing about the current system changes during the migration.
+
 This document is **enforcement-grade**: it tells you exactly which component to reach for, what props it takes, what dimensions to use, and what to avoid. If you can't find an answer here, **ask** — don't invent values.
 
 ---
@@ -27,6 +29,62 @@ This document is **enforcement-grade**: it tells you exactly which component to 
 - `components/calendar/tints.ts` (a curated tint palette by design)
 
 Every other file — every screen, every component, every layout — must use tokens.
+
+---
+
+## 0.5. Diffuse variant (design-system-v3)
+
+**Status: Phase 1 (foundation) shipped. Additive. Default OFF.** The current cream-paper system above is unchanged and still the default. "Diffuse" (v3) is a **second, opt-in visual language** that lives alongside it. Screens are migrated one at a time; until a screen is migrated it renders in the current system.
+
+**Selecting the variant.** A `variant` field on `useThemeStore` chooses the language:
+
+```ts
+import { useThemeStore } from '@/store/useThemeStore'
+const variant = useThemeStore((s) => s.variant)   // 'current' (default) | 'diffuse'
+```
+
+Toggle it in the **Dev Panel → DESIGN VARIANT** section. It persists across launches. Default is `'current'`.
+
+**Reading Diffuse tokens.** Diffuse has its own resolver hook, parallel to `useTheme()`:
+
+```ts
+import { useDiffuseTheme } from '@/constants/theme'
+const { colors, fields, font, typeRole, radius, blur, shadows, grain, stickers } = useDiffuseTheme()
+```
+
+Do **not** mix — a Diffuse screen reads from `useDiffuseTheme()`; a current screen reads from `useTheme()`. Both resolve light/dark automatically off the same `useThemeStore().theme`.
+
+### What Diffuse is (the direction)
+
+- **ONE delicate type language** for every behavior — behaviors differ **only** by color + shape + blur.
+- **Soft, grainy, generative gradient FIELDS** (`g1..g4`) per behavior, each with a single **accent**. No flat fills, no hard edges.
+- **Type roles, assigned by meaning not size:** serif = titles + feeling words · sans = reading · **mono = the data voice** (labels, chips, numbers, units, dates) · serif = the one hero number.
+- **Containerless actions** (mono label + arrow, or gradient-glass spray), **hairline selection** (rings/dots/ellipses), **dot calendars**. (These are component-phase concerns — not built yet.)
+
+### Diffuse tokens (in `constants/theme.ts`)
+
+| Export | What |
+|---|---|
+| `diffuseLightTokens` / `diffuseDarkTokens` | paper/ink/line semantic scale (`bg`, `surface`, `ink`, `ink2..4`, `line`, `line2`, **`hairline`**) + carried-forward `success/warning/error` + tab tokens |
+| `diffuseFont` | `display` (Cormorant Garamond Light) · `italic` (Cormorant italic) · `body` (Hanken Grotesk) · `mono` (Space Mono) + weights |
+| `diffuseTypeRole` | `title` / `read` / `data` / `numHero` — **assign font by role, never by size** |
+| `diffuseFields` | per-mode 4-stop field `{ g1,g2,g3,g4, accent, accentSoft }` for `pre / preg / kids / care` |
+| `diffuseRadius` | `sm 14 · md 20 · lg 28 · xl 40` (no `full`/pill — Diffuse has no filled pills) |
+| `diffuseBlur` | `soft 40 · field 70 · glass 18` — a token category the current system lacks |
+| `diffuseShadows` | two tiers only: `card`, `pop` (RN-derived from `--sh-card` / `--sh-pop`) |
+| `diffuseGrain` | feTurbulence noise overlay params + data-URI (`opacityLight 0.22 / opacityDark 0.16`) |
+| `getModeField(mode)` | → `[g1,g2,g3,g4]` field stops for a behavior |
+| `getDiffuseAccent(mode)` / `getDiffuseAccentSoft(mode)` | the per-mode accent (+ soft) |
+| `useDiffuseTheme()` | the resolver hook |
+
+### Two decisions baked into Phase 1
+
+1. **Stickers/icons stay ACTIVE under Diffuse.** The v3 direction drops the *sticker-collage surface treatment*, but the **sticker SVG components remain the icon system** — `useDiffuseTheme()` returns `stickers` (light/dark resolved) exactly like `useTheme()` does. Do **not** treat `stickers.*` / `stickersDark.*` as legacy or removed.
+2. **`care` (Caregiver) is SCAFFOLD ONLY.** The 4th behavior exists in the token layer (`diffuseFields.care`, and `getModeColor`/`getModeColorSoft`/`getModeField` accept `'care'`) so the palette is ready — but there are **no** care screens, tabs, routes, or store wiring, and none should be added under this phase.
+
+### Not yet built (later phases)
+
+Diffuse **components** (containerless buttons, hairline selection, dot calendar, gradient-field background, grain layer, mono-data typography primitives) do not exist yet. Phase 1 is **tokens + variant switch + font loading only**. Do not migrate feature/screen components until a later phase adds the Diffuse primitives.
 
 ---
 

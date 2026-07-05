@@ -26,9 +26,10 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker'
 import { X, Calendar } from 'lucide-react-native'
-import { useTheme, brand, font } from '../../constants/theme'
+import { useTheme, brand, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { Star as StarSticker } from './Stickers'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 
 const ST_INK = '#141313'
 const ST_PAPER = '#FFFEF8'
@@ -97,6 +98,8 @@ export default function DatePickerField({
   inline = false,
 }: DatePickerFieldProps) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
   const [open, setOpen] = useState(false)
 
@@ -159,7 +162,28 @@ export default function DatePickerField({
     )
   }
 
-  const trigger = (
+  // Diffuse — bare underlined field: mono value on a bottom hairline, quiet
+  // calendar glyph. No paper fill, no hard shadow. (Modal chrome below is a
+  // transient surface and kept as-is.)
+  const diffuseTrigger = (
+    <Pressable
+      onPress={handleOpen}
+      style={({ pressed }) => [diffuseStyles.trigger, { borderBottomColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 }]}
+    >
+      <Text
+        style={[
+          diffuseStyles.triggerText,
+          { color: value ? dt.colors.ink : dt.colors.ink4 },
+        ]}
+        numberOfLines={1}
+      >
+        {formatPretty(value, placeholder)}
+      </Text>
+      <Calendar size={17} color={dt.colors.ink3} strokeWidth={1.6} />
+    </Pressable>
+  )
+
+  const trigger = diffuse ? diffuseTrigger : (
     <Pressable
       onPress={handleOpen}
       style={({ pressed }) => [
@@ -206,7 +230,9 @@ export default function DatePickerField({
   return (
     <View>
       {label ? (
-        <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
+        diffuse
+          ? <Text style={[diffuseStyles.label, { color: dt.colors.ink3 }]}>{label}</Text>
+          : <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
       ) : null}
       {trigger}
 
@@ -411,5 +437,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 1,
     textTransform: 'uppercase',
+  },
+})
+
+const diffuseStyles = StyleSheet.create({
+  label: {
+    fontFamily: diffuseFont.mono,
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  trigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    borderBottomWidth: 1.5,
+    paddingHorizontal: 2,
+    paddingTop: 10,
+    paddingBottom: 12,
+  },
+  triggerText: {
+    flex: 1,
+    fontFamily: diffuseFont.display,
+    fontSize: 18,
+    letterSpacing: -0.2,
   },
 })

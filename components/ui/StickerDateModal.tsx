@@ -10,9 +10,10 @@
 import { Platform, Modal, Pressable, View, Text, StyleSheet } from 'react-native'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { X } from 'lucide-react-native'
-import { useTheme, brand, font } from '../../constants/theme'
+import { useTheme, brand, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { Star as StarSticker } from './Stickers'
+import { useIsDiffuse, DiffuseArrow } from './diffuse/DiffuseKit'
 
 const ST_INK = '#141313'
 const ST_PAPER = '#FFFEF8'
@@ -38,7 +39,12 @@ function modeAccent(mode: string, isDark: boolean): { fill: string; soft: string
   return { fill: isDark ? '#A5C9F0' : brand.kids, soft: '#CFE0F0' }
 }
 
-export function StickerDateModal({
+export function StickerDateModal(props: Props) {
+  const diffuse = useIsDiffuse()
+  return diffuse ? <DiffuseDateModal {...props} /> : <CurrentDateModal {...props} />
+}
+
+function CurrentDateModal({
   visible,
   title,
   value,
@@ -140,6 +146,107 @@ export function StickerDateModal({
     </Modal>
   )
 }
+
+// ─── Diffuse — paper sheet, hairline chrome, serif title, containerless save ─
+
+function DiffuseDateModal({
+  visible,
+  title,
+  value,
+  onChange,
+  onClose,
+  onSave,
+  minimumDate,
+  maximumDate,
+  accentColor,
+}: Props) {
+  const { colors, isDark } = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = accentColor ?? getDiffuseAccent(mode, isDark)
+
+  function handleChange(event: DateTimePickerEvent, selectedDate?: Date) {
+    if (Platform.OS === 'android') {
+      onClose()
+      if (event.type === 'set' && selectedDate) {
+        onChange(selectedDate)
+        onSave()
+      }
+      return
+    }
+    if (selectedDate) onChange(selectedDate)
+  }
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          style={[dStyles.sheet, { backgroundColor: colors.bg, borderColor: colors.line }]}
+        >
+          <View style={[dStyles.handleBar, { backgroundColor: colors.line2 }]} />
+
+          <View style={styles.headerRow}>
+            <Text style={[dStyles.title, { color: colors.ink }]}>{title}</Text>
+            <Pressable onPress={onClose} hitSlop={8} style={[dStyles.closeBtn, { borderColor: colors.hairline }]}>
+              <X size={16} color={colors.ink} strokeWidth={1.8} />
+            </Pressable>
+          </View>
+
+          <View style={styles.pickerWrap}>
+            <DateTimePicker
+              value={value}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={handleChange}
+              minimumDate={minimumDate}
+              maximumDate={maximumDate}
+              textColor={colors.ink}
+              accentColor={accent}
+              themeVariant={isDark ? 'dark' : 'light'}
+              style={{ width: '100%' }}
+            />
+          </View>
+
+          {Platform.OS === 'ios' && (
+            <Pressable onPress={onSave} style={({ pressed }) => [dStyles.saveRow, { borderTopColor: colors.line2, opacity: pressed ? 0.6 : 1 }]}>
+              <Text style={[dStyles.saveLabel, { color: colors.ink }]}>Save</Text>
+              <DiffuseArrow color={accent} size={20} />
+            </Pressable>
+          )}
+        </Pressable>
+      </Pressable>
+    </Modal>
+  )
+}
+
+const dStyles = StyleSheet.create({
+  sheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    paddingTop: 14,
+    paddingHorizontal: 22,
+    paddingBottom: 40,
+    gap: 16,
+    overflow: 'hidden',
+  },
+  handleBar: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 4 },
+  title: { fontSize: 24, letterSpacing: -0.3, fontFamily: diffuseFont.display },
+  closeBtn: {
+    width: 36, height: 36, borderRadius: 18, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  saveRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderTopWidth: 1, paddingTop: 18, paddingHorizontal: 2, paddingBottom: 2,
+  },
+  saveLabel: {
+    fontFamily: diffuseFont.mono, fontSize: 13, fontWeight: '600',
+    letterSpacing: 2.4, textTransform: 'uppercase',
+  },
+})
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },

@@ -10,7 +10,8 @@ import { ReactNode } from 'react'
 import { View, Text, Pressable, StyleSheet, ViewStyle, StyleProp } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 
 interface ScreenHeaderProps {
   title?: string
@@ -20,16 +21,25 @@ interface ScreenHeaderProps {
   style?: StyleProp<ViewStyle>
 }
 
-export function ScreenHeader({ title, onBack, hideBack, right, style }: ScreenHeaderProps) {
+export function ScreenHeader(props: ScreenHeaderProps) {
+  const diffuse = useIsDiffuse()
+  return diffuse ? <DiffuseScreenHeader {...props} /> : <CurrentScreenHeader {...props} />
+}
+
+function useBackHandler(onBack?: () => void) {
+  return () => {
+    if (onBack) return onBack()
+    if (router.canGoBack()) router.back()
+  }
+}
+
+function CurrentScreenHeader({ title, onBack, hideBack, right, style }: ScreenHeaderProps) {
   const { colors, font } = useTheme()
   const ink = colors.text
   const paper = colors.surface
   const paperBorder = colors.border
 
-  const handleBack = () => {
-    if (onBack) return onBack()
-    if (router.canGoBack()) router.back()
-  }
+  const handleBack = useBackHandler(onBack)
 
   return (
     <View style={[styles.row, style]}>
@@ -46,6 +56,40 @@ export function ScreenHeader({ title, onBack, hideBack, right, style }: ScreenHe
       {title ? (
         <Text
           style={[styles.title, { fontFamily: font.bodyMedium, color: ink }]}
+          numberOfLines={1}
+        >
+          {title}
+        </Text>
+      ) : (
+        <View style={styles.titleSpace} />
+      )}
+
+      <View style={styles.slot}>{right}</View>
+    </View>
+  )
+}
+
+// ─── Diffuse — hairline back node, serif screen title ───────────────────────
+
+function DiffuseScreenHeader({ title, onBack, hideBack, right, style }: ScreenHeaderProps) {
+  const { colors } = useDiffuseTheme()
+  const handleBack = useBackHandler(onBack)
+
+  return (
+    <View style={[styles.row, style]}>
+      {hideBack ? (
+        <View style={styles.slot} />
+      ) : (
+        <Pressable onPress={handleBack} hitSlop={12}>
+          <View style={[styles.backBtn, { backgroundColor: 'transparent', borderColor: colors.hairline }]}>
+            <Ionicons name="chevron-back" size={20} color={colors.ink} />
+          </View>
+        </Pressable>
+      )}
+
+      {title ? (
+        <Text
+          style={[styles.title, { fontFamily: diffuseFont.display, fontSize: 20, letterSpacing: -0.3, color: colors.ink }]}
           numberOfLines={1}
         >
           {title}

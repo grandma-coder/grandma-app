@@ -16,6 +16,7 @@ import { supabase } from '../lib/supabase'
 import { signOut } from '../lib/signOut'
 import { seedCycleData, seedKidsData, seedPregnancyData, seedExamData, seedAllData, wipeAllDemoData, repairBehaviorsFromData, backfillCaregiverLinks } from '../lib/devSeed'
 import { useModeStore } from '../store/useModeStore'
+import { useThemeStore } from '../store/useThemeStore'
 import { useBehaviorStore, type Behavior } from '../store/useBehaviorStore'
 import { useChildStore } from '../store/useChildStore'
 import { useJourneyStore } from '../store/useJourneyStore'
@@ -96,12 +97,6 @@ const PREGNANCY_ONLY: Array<[string, string]> = [
   ['Birth plan', '/birth-plan'],
 ]
 
-// ⚠ DEAD — /airtag-setup file exists but no real screen links to it.
-// Kept here as a parking lot until you decide to delete or rewire.
-const KIDS_ONLY: Array<[string, string]> = [
-  ['AirTag setup  ⚠ dead route, legacy design', '/airtag-setup'],
-]
-
 // Pushing `/(tabs)/*` directly via router.push escapes the tab navigator
 // and renders the screen as a generic stack page (no tab bar, broken
 // header). Use the tab bar instead. We keep just a "go home" jump that
@@ -130,6 +125,8 @@ export default function DevPanel() {
   const queryClient = useQueryClient()
   const mode = useModeStore((s) => s.mode)
   const setMode = useModeStore((s) => s.setModeUnsafe)
+  const variant = useThemeStore((s) => s.variant)
+  const setVariant = useThemeStore((s) => s.setVariant)
   const enrolled = useBehaviorStore((s) => s.enrolledBehaviors)
   const enroll = useBehaviorStore((s) => s.enroll)
   const unenroll = useBehaviorStore((s) => s.unenroll)
@@ -333,6 +330,33 @@ export default function DevPanel() {
           </View>
         </Section>
 
+        {/* Design variant (v3 Diffuse migration toggle) */}
+        <Section title="DESIGN VARIANT">
+          <Body size={11} color={colors.textMuted}>
+            Switch between the current cream-paper system and the v3 "Diffuse" language. Default stays current; screens opt in during migration.
+          </Body>
+          <View style={styles.row}>
+            {(['current', 'diffuse'] as const).map((v) => {
+              const active = variant === v
+              return (
+                <Pressable
+                  key={v}
+                  onPress={() => setVariant(v)}
+                  style={({ pressed }) => [
+                    styles.actionRow,
+                    { flex: 1, borderColor: active ? colors.primary : colors.borderLight, opacity: pressed ? 0.7 : 1 },
+                  ]}
+                >
+                  <Body size={14} color={active ? colors.primary : colors.text} style={{ fontWeight: '600', flex: 1 }}>
+                    {v === 'current' ? 'Current' : 'Diffuse (v3)'}
+                  </Body>
+                  {active && <Ionicons name="checkmark" size={16} color={colors.primary} />}
+                </Pressable>
+              )
+            })}
+          </View>
+        </Section>
+
         {/* Enrollment */}
         <Section title="ENROLLMENT">
           <Body size={11} color={colors.textMuted}>
@@ -425,9 +449,9 @@ export default function DevPanel() {
         <Section title={`TABS · CURRENT MODE: ${mode.toUpperCase()}`}>
           <Body size={11} color={colors.textMuted}>
             Jumps into the tabs navigator. Then use the tab bar to switch between
-            Home / Agenda / Library / Vault / Exchange / Settings — these adapt to the
-            current mode. Pushing /(tabs)/library directly via the dev-panel would
-            render outside the tab bar and break the layout.
+            Home / Agenda / Vault / Settings — these adapt to the current mode.
+            (The center burst opens the Grandma menu; the old Library chat screen
+            was removed in favor of grandma-talk.)
           </Body>
           {MODE_AWARE_TABS.map(([label, route]) => (
             <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
@@ -495,12 +519,6 @@ export default function DevPanel() {
         {/* Mode-specific */}
         <Section title="PREGNANCY-ONLY">
           {PREGNANCY_ONLY.map(([label, route]) => (
-            <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
-          ))}
-        </Section>
-
-        <Section title="KIDS-ONLY">
-          {KIDS_ONLY.map(([label, route]) => (
             <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
           ))}
         </Section>

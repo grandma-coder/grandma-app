@@ -21,6 +21,8 @@ Parenting companion app covering **Pre-Pregnancy → Pregnancy → Kids**. The e
 
 If a value isn't in `theme.ts`, stop and ask — don't invent one.
 
+> **A second visual language — v3 "Diffuse" — is being migrated in (additive, opt-in, default OFF).** See `DESIGN_SYSTEM.md §0.5`. It adds a parallel token set (`diffuseFont`, `diffuseFields`, `diffuseTypeRole`, `useDiffuseTheme()`) selected via `useThemeStore().variant` (`'current'` default | `'diffuse'`), toggled in Dev Panel → DESIGN VARIANT. **Everything above describes the current (default) system and is unchanged.** Two standing decisions during migration: (1) **stickers/icons stay active** under Diffuse — they're the icon system, not legacy; (2) the **`care` (Caregiver) mode is scaffold-only** — tokens exist, but no screens/tabs/routes/store wiring. Don't build Diffuse feature screens or `care` surfaces until a later phase ships the Diffuse component primitives.
+
 ---
 
 ## Tech Stack

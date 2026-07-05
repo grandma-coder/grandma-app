@@ -26,9 +26,10 @@ import { useBehaviorStore } from '../../store/useBehaviorStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { getModeConfig } from '../../lib/modeConfig'
-import { useTheme, brand, getModeColor, font } from '../../constants/theme'
+import { useTheme, brand, getModeColor, font, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { Burst, Blob, Flower, Squishy, Heart, Star, Drop, StickerPalette } from '../../components/stickers/BrandStickers'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 
 // ─── Collage Strip constants ───────────────────────────────────────────────
 const STRIP_HEIGHT = 84
@@ -375,7 +376,12 @@ function useUnreadNotificationCount() {
   return count
 }
 
-function CollageStripTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+function CollageStripTabBar(props: BottomTabBarProps) {
+  const diffuse = useIsDiffuse()
+  return diffuse ? <DiffuseStripTabBar {...props} /> : <CurrentStripTabBar {...props} />
+}
+
+function CurrentStripTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets()
   const { isDark } = useTheme()
   const { t } = useTranslation()
@@ -498,6 +504,145 @@ function CollageStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
     </View>
   )
 }
+
+// ─── Diffuse nav — flat paper bar, top hairline, mono labels, mode-accent ───
+// Clean and quiet: no torn edge, no sticker-tab collage. The sticker icon is
+// kept (per the "stickers stay the icon set" rule) but rendered small and ink,
+// with a mode-accent dot marking the active tab. The center library slot keeps
+// its own CenterTabButton.
+
+function DiffuseStripTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets()
+  const { colors, isDark } = useDiffuseTheme()
+  const { t } = useTranslation()
+  const unreadNotifications = useUnreadNotificationCount()
+  const mode = useModeStore((s) => s.mode)
+  const modeConfig = getModeConfig(mode)
+  const accent = getDiffuseAccent(mode, isDark)
+
+  const vaultIcon: LucideIcon =
+    mode === 'pregnancy' ? FileText
+    : mode === 'kids' ? Shield
+    : BarChart3
+
+  const TAB_CFG: Record<string, TabStickerCfg> = {
+    index:    { icon: Home,      label: modeConfig.tabs.index.label    || t('tab_home'),      color: StickerPalette.yellow },
+    agenda:   { icon: Calendar,  label: modeConfig.tabs.agenda.label   || t('tab_calendar'),  color: StickerPalette.blue },
+    vault:    { icon: vaultIcon, label: modeConfig.tabs.vault.label    || t('tab_analytics'), color: StickerPalette.green },
+    settings: { icon: User,      label: modeConfig.tabs.settings.label || t('tab_profile'),   color: StickerPalette.lilac },
+  }
+
+  const visible = state.routes.filter((r) => {
+    const opts = descriptors[r.key].options as any
+    if (opts.tabBarButton && opts.tabBarItemStyle?.display === 'none') return false
+    if (opts.href === null) return false
+    return true
+  })
+
+  return (
+    <View
+      style={[
+        diffuseNav.wrap,
+        { paddingBottom: insets.bottom, backgroundColor: colors.bg, borderTopColor: colors.line2 },
+      ]}
+    >
+      <View style={diffuseNav.row}>
+        {visible.map((route) => {
+          const isFocused = state.routes[state.index]?.key === route.key
+
+          if (route.name === 'library') {
+            return (
+              <View key={route.key} style={diffuseNav.cell}>
+                <CenterTabButton />
+              </View>
+            )
+          }
+
+          const cfg = TAB_CFG[route.name]
+          if (!cfg) return null
+          const Icon = cfg.icon
+
+          const onPress = () => {
+            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true })
+            if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name as never)
+          }
+
+          return (
+            <Pressable
+              key={route.key}
+              onPress={onPress}
+              style={diffuseNav.cell}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isFocused }}
+              accessibilityLabel={cfg.label}
+            >
+              <View style={diffuseNav.iconWrap}>
+                <Icon size={20} color={isFocused ? colors.ink : colors.ink3} strokeWidth={isFocused ? 2 : 1.5} />
+                {route.name === 'settings' && unreadNotifications > 0 && (
+                  <View style={[diffuseNav.unreadDot, { backgroundColor: accent }]} />
+                )}
+              </View>
+              <Text
+                style={[
+                  diffuseNav.label,
+                  { color: isFocused ? colors.ink : colors.ink3, fontFamily: diffuseFont.mono },
+                ]}
+                numberOfLines={1}
+              >
+                {cfg.label}
+              </Text>
+              {/* active marker — mode-accent dot */}
+              <View style={[diffuseNav.activeDot, { backgroundColor: isFocused ? accent : 'transparent' }]} />
+            </Pressable>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
+const diffuseNav = StyleSheet.create({
+  wrap: {
+    borderTopWidth: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    height: STRIP_HEIGHT,
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  cell: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingTop: 8,
+  },
+  iconWrap: {
+    width: 30,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  label: {
+    fontSize: 8.5,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  unreadDot: {
+    position: 'absolute',
+    top: -1,
+    right: 0,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+  },
+})
 
 // ─── Tab Layout ────────────────────────────────────────────────────────────
 

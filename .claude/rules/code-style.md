@@ -47,6 +47,17 @@ const { colors, brand, stickers, radius, spacing, font, isDark } = useTheme()
 - **Typography**: `font.display` (Fraunces serif) for headings + numbers, `font.body` (DM Sans) for everything else, `font.italic` (Instrument Serif) for accents. Never `font.displayLegacy` / Cabinet Grotesk / Satoshi (all deleted).
 - **Sticker palette**: 7 stickers with `*Soft` (bg tint) and `*Ink` (dark icon) variants. See §1.3 in `DESIGN_SYSTEM.md`.
 
+### Diffuse variant (v3) — additive, opt-in, default OFF
+
+A second visual language ("Diffuse", design-system-v3) is being migrated in **alongside** the cream-paper system. Everything above is the **current default** and is unchanged.
+
+- Selected via `useThemeStore((s) => s.variant)` — `'current'` (default) | `'diffuse'`. Toggle in Dev Panel → DESIGN VARIANT.
+- Diffuse screens read from **`useDiffuseTheme()`** (parallel to `useTheme()`), never a mix. Tokens: `diffuseFont`, `diffuseTypeRole` (title=serif/Cormorant · read=sans/Hanken · **data=mono/Space Mono** · numHero=serif), `diffuseFields` (per-mode `g1..g4` + accent), `diffuseRadius/Blur/Shadows/Grain`, `getModeField()`, `getDiffuseAccent()`.
+- Same rule holds: **never hardcode** — pull from these exports. If a Diffuse value isn't there, ask.
+- **Stickers/icons stay active** under Diffuse (`useDiffuseTheme().stickers`) — they are the icon system, not legacy.
+- **`care` (Caregiver) mode is scaffold-only** — tokens exist; do **not** add care screens/tabs/routes/store wiring, and do not build Diffuse feature components, until a later phase ships the Diffuse primitives.
+- See `DESIGN_SYSTEM.md §0.5` for the full spec.
+
 ### Legacy tokens you must NEVER reach for
 
 | Dead token | Replacement |

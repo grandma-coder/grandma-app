@@ -10,7 +10,8 @@
 
 import { Pressable, Text, View, StyleSheet, ViewStyle, StyleProp } from 'react-native'
 import { ReactNode } from 'react'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 
 interface StickerButtonProps {
   label: string
@@ -34,7 +35,12 @@ interface StickerButtonProps {
 
 const INK = '#141313'
 
-export function StickerButton({
+export function StickerButton(props: StickerButtonProps) {
+  const diffuse = useIsDiffuse()
+  return diffuse ? <DiffuseStickerButton {...props} /> : <CurrentStickerButton {...props} />
+}
+
+function CurrentStickerButton({
   label,
   color,
   colorSoft,
@@ -92,6 +98,81 @@ export function StickerButton({
     </Pressable>
   )
 }
+
+// ─── Diffuse (hairline chip + soft color bloom, sticker icon kept) ──────────
+// The colored fill becomes a soft bloom of the same color behind a hairline
+// mono chip. Active = --d-hairline ring + brighter bloom + mono weight, per
+// the .chip.on / .gm-ring vocabulary. The sticker `icon` stays.
+
+function DiffuseStickerButton({
+  label,
+  color,
+  icon,
+  textColor,
+  onPress,
+  active = true,
+  disabled = false,
+  height = 52,
+  fontSize = 13,
+  style,
+}: StickerButtonProps) {
+  const { colors } = useDiffuseTheme()
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        diffuseStyles.base,
+        {
+          height,
+          backgroundColor: colors.surface,
+          borderColor: active ? colors.hairline : colors.line,
+          opacity: disabled ? 0.45 : pressed ? 0.75 : 1,
+        },
+        style,
+      ]}
+    >
+      {/* soft color bloom */}
+      <View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFillObject,
+          { backgroundColor: color, opacity: active ? 0.28 : 0.12, borderRadius: 999 },
+        ]}
+      />
+      {icon ? <View style={{ marginRight: 8 }}>{icon}</View> : null}
+      <Text
+        style={[
+          diffuseStyles.label,
+          {
+            fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
+            color: textColor ?? (active ? colors.ink : colors.ink3),
+            fontSize,
+          },
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  )
+}
+
+const diffuseStyles = StyleSheet.create({
+  base: {
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+    overflow: 'hidden',
+  },
+  label: {
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+  },
+})
 
 const styles = StyleSheet.create({
   base: {
