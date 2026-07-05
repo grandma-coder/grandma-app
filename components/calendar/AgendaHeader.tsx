@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Display } from '../ui/Typography'
 import { useTheme } from '../../constants/theme'
 import { StickerPalette } from '../stickers/BrandStickers'
+import { useTranslation } from '../../lib/i18n'
 
 const STICKER_INK = '#141313'
 
@@ -21,12 +22,13 @@ interface AgendaHeaderProps {
 
 export function AgendaHeader({ onFilter, onAdd, right }: AgendaHeaderProps) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
   const paper = isDark ? colors.surface : StickerPalette.paper
 
   return (
     <View style={styles.row}>
-      <Display size={28} color={ink}>Agenda.</Display>
+      <Display size={28} color={ink}>{t('agendaHeader_title')}</Display>
 
       <View style={styles.actions}>
         {right}

@@ -1505,6 +1505,8 @@ export interface TranslationKeys {
   prepreg_checklistProgress_emptyDesc: string
   // ─── B7c: analytics/shared/MiniCharts.tsx residual strings ─────────────────
   miniCharts_notEnoughData: string
+  // ─── B7c: calendar/AgendaHeader.tsx residual strings ────────────────────────
+  agendaHeader_title: string
 
   // ─── Cycle Analytics (Wave B4) ────────────────────────────────────────────
   cycleAnalytics_yourCycleToday: string
