@@ -8,6 +8,7 @@
 
 import { View, StyleSheet } from 'react-native'
 import Svg, { Line, Circle, Text as SvgText } from 'react-native-svg'
+import { useTranslation } from '../../../lib/i18n'
 
 interface WeekRulerProps {
   /** Baby length in centimeters (0–51) */
@@ -30,6 +31,7 @@ const MAX_CM = 51
 const TICKS = 6 // 0, ~10, 20, 30, 40, 51
 
 export function WeekRuler({ cm, dotColor, lineColor, textColor, dotStroke }: WeekRulerProps) {
+  const { t } = useTranslation()
   const clamped = Math.max(0, Math.min(MAX_CM, cm))
   const x = X_START + (clamped / MAX_CM) * (X_END - X_START)
   const label = clamped < 1 ? `${clamped.toFixed(2)}cm` : clamped < 10 ? `${clamped.toFixed(1)}cm` : `${Math.round(clamped)}cm`
@@ -80,7 +82,7 @@ export function WeekRuler({ cm, dotColor, lineColor, textColor, dotStroke }: Wee
           textAnchor="middle"
           letterSpacing={1.1}
         >
-          25cm
+          {t('pregnancy_weekRuler_cmValue', { n: 25 })}
         </SvgText>
         <SvgText
           x={X_END}
@@ -91,7 +93,7 @@ export function WeekRuler({ cm, dotColor, lineColor, textColor, dotStroke }: Wee
           textAnchor="end"
           letterSpacing={1.1}
         >
-          51cm
+          {t('pregnancy_weekRuler_cmValue', { n: 51 })}
         </SvgText>
       </Svg>
     </View>
@@ -99,5 +101,5 @@ export function WeekRuler({ cm, dotColor, lineColor, textColor, dotStroke }: Wee
 }
 
 const styles = StyleSheet.create({
-  wrap: { width: '100%', marginTop: 14 },
+  wrap: { width: '100%', marginTop: 8 },
 })
