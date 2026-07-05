@@ -22,6 +22,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useTheme } from '../../../constants/theme'
 import type { CyclePhase } from '../../../lib/cycleLogic'
+import { useTranslation } from '../../../lib/i18n'
 
 const SVG_SIZE = 170
 const CX = SVG_SIZE / 2
@@ -62,6 +63,7 @@ export function CycleJourneyRing({
   cycleDay, cycleLength, phaseLabel, phase, titleItalic, subline, periodLine, hint, onSelectDay,
 }: Props) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
   const coral = stickers.coral
 
@@ -172,7 +174,7 @@ export function CycleJourneyRing({
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
       <View style={styles.left}>
         <Text style={[styles.title, { color: ink, fontFamily: font.display }]}>
-          a <Text style={{ fontFamily: font.italic, color: coral }}>{titleItalic}</Text>
+          {t('cycle_ring_phase_prefix')}<Text style={{ fontFamily: font.italic, color: coral }}>{titleItalic}</Text>
         </Text>
         <Text style={[styles.subline, { color: colors.textMuted, fontFamily: font.body }]}>
           {subline}
@@ -226,10 +228,10 @@ export function CycleJourneyRing({
         </Animated.View>
 
         <View style={styles.center} pointerEvents="none">
-          <Text style={[styles.dayLabel, { color: coral, fontFamily: font.bodyBold }]}>Day</Text>
+          <Text style={[styles.dayLabel, { color: coral, fontFamily: font.bodyBold }]}>{t('cycle_ring_label_day')}</Text>
           <Text style={[styles.dayNum, { color: coral, fontFamily: font.displayBold }]}>{cycleDay}</Text>
           <Text style={[styles.dayOf, { color: colors.textMuted, fontFamily: font.bodyBold }]}>
-            of {cycleLength}
+            {t('cycle_ring_of_n', { n: cycleLength })}
           </Text>
         </View>
       </View>
