@@ -2705,4 +2705,8 @@ export interface TranslationKeys {
   growthChart_measurementOne: string              // "{{count}} measurement · {{unit}}"
   growthChart_measurementMany: string             // "{{count}} measurements · {{unit}}"
   growthChart_disclaimer: string
+  // ─── B7b: PhaseFlowChart.tsx residual strings ─────────────────────────────
+  phaseFlowChart_emptyHint: string
+  phaseFlowChart_fertileOvulation: string
+  phaseFlowChart_nextPeriod: string
 }

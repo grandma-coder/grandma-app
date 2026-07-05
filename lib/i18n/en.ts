@@ -2704,4 +2704,8 @@ export const en: TranslationKeys = {
   growthChart_measurementOne: '{{count}} measurement · {{unit}}',
   growthChart_measurementMany: '{{count}} measurements · {{unit}}',
   growthChart_disclaimer: 'WHO (0–24mo) + CDC (2y+) standards. For decision support — not a clinical diagnosis.',
+  // ─── B7b: PhaseFlowChart.tsx residual strings ─────────────────────────────
+  phaseFlowChart_emptyHint: 'Log a period start to map your fertile window.',
+  phaseFlowChart_fertileOvulation: 'Fertile · ovulation',
+  phaseFlowChart_nextPeriod: 'Next period',
 }

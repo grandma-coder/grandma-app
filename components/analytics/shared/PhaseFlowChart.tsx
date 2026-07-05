@@ -12,6 +12,7 @@ import Svg, {
   Path, Line, Circle, Rect, Defs, LinearGradient, Stop, G,
 } from 'react-native-svg'
 import { useTheme, radius } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 
 interface Props {
   /** Per-day probability values (index 0 = cycle day 1). */
@@ -33,12 +34,13 @@ export function PhaseFlowChart({
   curve, fertileStart, fertileEnd, ovulationDay, cycleDay, color, height = 150,
 }: Props) {
   const { colors, font } = useTheme()
+  const { t } = useTranslation()
 
   if (curve.length < 2) {
     return (
       <View style={[styles.empty, { height, borderColor: colors.borderLight }]}>
         <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 12 }}>
-          Log a period start to map your fertile window.
+          {t('phaseFlowChart_emptyHint')}
         </Text>
       </View>
     )
@@ -162,18 +164,18 @@ export function PhaseFlowChart({
         ]}
       >
         <Text style={{ color: colors.bg, fontFamily: font.bodySemiBold, fontSize: 10, letterSpacing: 0.2 }}>
-          Day {cycleDay}
+          {t('cycleTracker_day', { day: cycleDay })}
         </Text>
       </View>
 
       {/* Axis hints */}
       <View style={[styles.axisRow, { width: W, alignSelf: 'center' }]}>
-        <Text style={[styles.axis, { color: colors.textMuted, fontFamily: font.body }]}>Period</Text>
+        <Text style={[styles.axis, { color: colors.textMuted, fontFamily: font.body }]}>{t('prepreg_period')}</Text>
         <Text style={[styles.axis, { color: color === colors.text ? colors.textMuted : color, fontFamily: font.bodySemiBold }]}>
-          Fertile · ovulation
+          {t('phaseFlowChart_fertileOvulation')}
         </Text>
         <Text style={[styles.axis, { color: colors.textMuted, fontFamily: font.body, textAlign: 'right' }]}>
-          Next period
+          {t('phaseFlowChart_nextPeriod')}
         </Text>
       </View>
     </View>
