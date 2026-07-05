@@ -465,6 +465,8 @@ export interface TranslationKeys {
   preg_appts_type_fertility: string
   preg_appts_type_specialist: string
   preg_appts_type_other: string
+  // ─── B7c: agenda/AppointmentList.tsx residual strings ──────────────────────
+  preg_appts_doctorName: string                 // "Dr. {{name}}"
 
   // ─── PregnancyLogForms — Mood + Symptoms (Wave 2) ─────────────────────
   preg_form_mood_question: string

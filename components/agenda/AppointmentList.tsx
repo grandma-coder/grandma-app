@@ -98,7 +98,7 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
             <Text style={styles.apptTitle}>{appt.title}</Text>
             <Text style={styles.apptDate}>{formatDate(appt.date)}</Text>
             {appt.doctorName && (
-              <Text style={styles.apptDoctor}>Dr. {appt.doctorName}</Text>
+              <Text style={styles.apptDoctor}>{t('preg_appts_doctorName', { name: appt.doctorName })}</Text>
             )}
           </View>
           <View style={[styles.typeBadge, { backgroundColor: typeInfo.color + '2F' }]}>
