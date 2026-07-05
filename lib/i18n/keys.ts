@@ -177,6 +177,8 @@ export interface TranslationKeys {
   badges_dailyReward: string
   badges_claimReward: string
   badges_claimed: string
+  badges_stripAllCount: string                    // "All {{total}} →"
+  badges_stripEmpty: string
 
   // ─── Leaderboard ───────────────────────────────────────────────────────
   leaderboard_title: string

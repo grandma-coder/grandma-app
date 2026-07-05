@@ -154,6 +154,8 @@ export const ko: TranslationKeys = {
   badges_dailyReward: '일일 보상',
   badges_claimReward: '보상 받기',
   badges_claimed: '수령 완료',
+  badges_stripAllCount: 'All {{total}} →',
+  badges_stripEmpty: 'No badges yet',
 
   leaderboard_title: '순위표',
   leaderboard_thisWeek: '이번 주',

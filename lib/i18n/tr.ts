@@ -154,6 +154,8 @@ export const tr: TranslationKeys = {
   badges_dailyReward: 'Günlük Ödül',
   badges_claimReward: 'Ödülü Al',
   badges_claimed: 'Alındı',
+  badges_stripAllCount: 'All {{total}} →',
+  badges_stripEmpty: 'No badges yet',
 
   leaderboard_title: 'Sıralama',
   leaderboard_thisWeek: 'Bu Hafta',

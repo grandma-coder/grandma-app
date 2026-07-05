@@ -154,6 +154,8 @@ export const ar: TranslationKeys = {
   badges_dailyReward: 'المكافأة اليومية',
   badges_claimReward: 'استلام',
   badges_claimed: 'تم الاستلام',
+  badges_stripAllCount: 'All {{total}} →',
+  badges_stripEmpty: 'No badges yet',
 
   leaderboard_title: 'لوحة المتصدرين',
   leaderboard_thisWeek: 'هذا الأسبوع',

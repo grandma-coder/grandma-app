@@ -154,6 +154,8 @@ export const ja: TranslationKeys = {
   badges_dailyReward: 'デイリーリワード',
   badges_claimReward: '受け取る',
   badges_claimed: '受取済み',
+  badges_stripAllCount: 'All {{total}} →',
+  badges_stripEmpty: 'No badges yet',
 
   leaderboard_title: 'ランキング',
   leaderboard_thisWeek: '今週',

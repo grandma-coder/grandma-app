@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, Animated, Easing } from 'react-native'
 import { useTheme } from '../../constants/theme'
 import { BadgeIcon } from '../stickers/BadgeIcon'
+import { useTranslation } from '../../lib/i18n'
 
 export interface BadgeEntry {
   badgeId: string
@@ -20,6 +21,7 @@ interface BadgesStripProps {
  */
 export function BadgesStrip({ badges, total, onSeeAll }: BadgesStripProps) {
   const { colors, radius } = useTheme()
+  const { t } = useTranslation()
 
   return (
     <View
@@ -33,10 +35,10 @@ export function BadgesStrip({ badges, total, onSeeAll }: BadgesStripProps) {
       ]}
     >
       <View style={styles.header}>
-        <Text style={[styles.headerLabel, { color: colors.textMuted }]}>BADGES</Text>
+        <Text style={[styles.headerLabel, { color: colors.textMuted }]}>{t('badges_title')}</Text>
         <Pressable onPress={onSeeAll} hitSlop={8}>
           <Text style={[styles.allLink, { color: colors.textMuted }]}>
-            All {total} →
+            {t('badges_stripAllCount', { total })}
           </Text>
         </Pressable>
       </View>
@@ -50,7 +52,7 @@ export function BadgesStrip({ badges, total, onSeeAll }: BadgesStripProps) {
             ]}
           />
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            No badges yet
+            {t('badges_stripEmpty')}
           </Text>
         </View>
       ) : (

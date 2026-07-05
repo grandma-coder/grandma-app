@@ -154,6 +154,8 @@ export const zh: TranslationKeys = {
   badges_dailyReward: '每日奖励',
   badges_claimReward: '领取',
   badges_claimed: '已领取',
+  badges_stripAllCount: 'All {{total}} →',
+  badges_stripEmpty: 'No badges yet',
 
   leaderboard_title: '排行榜',
   leaderboard_thisWeek: '本周',

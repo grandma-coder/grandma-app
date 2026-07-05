@@ -154,6 +154,8 @@ export const de: TranslationKeys = {
   badges_dailyReward: 'Tagesbelohnung',
   badges_claimReward: 'Einlösen',
   badges_claimed: 'Eingelöst',
+  badges_stripAllCount: 'All {{total}} →',
+  badges_stripEmpty: 'No badges yet',
 
   leaderboard_title: 'Rangliste',
   leaderboard_thisWeek: 'Diese Woche',

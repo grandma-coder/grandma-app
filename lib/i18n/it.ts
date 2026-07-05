@@ -154,6 +154,8 @@ export const it: TranslationKeys = {
   badges_dailyReward: 'Premio Giornaliero',
   badges_claimReward: 'Riscatta',
   badges_claimed: 'Riscattato',
+  badges_stripAllCount: 'All {{total}} →',
+  badges_stripEmpty: 'No badges yet',
 
   leaderboard_title: 'Classifica',
   leaderboard_thisWeek: 'Questa Settimana',

@@ -174,6 +174,8 @@ export const en: TranslationKeys = {
   badges_dailyReward: 'Daily Reward',
   badges_claimReward: 'Claim Reward',
   badges_claimed: 'Claimed',
+  badges_stripAllCount: 'All {{total}} →',
+  badges_stripEmpty: 'No badges yet',
 
   // Leaderboard
   leaderboard_title: 'Leaderboard',

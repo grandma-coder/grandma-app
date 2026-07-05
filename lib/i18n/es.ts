@@ -154,6 +154,8 @@ export const es: TranslationKeys = {
   badges_dailyReward: 'Recompensa Diaria',
   badges_claimReward: 'Reclamar',
   badges_claimed: 'Reclamada',
+  badges_stripAllCount: 'All {{total}} →',
+  badges_stripEmpty: 'No badges yet',
 
   leaderboard_title: 'Clasificación',
   leaderboard_thisWeek: 'Esta Semana',

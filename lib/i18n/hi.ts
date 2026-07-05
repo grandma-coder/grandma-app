@@ -154,6 +154,8 @@ export const hi: TranslationKeys = {
   badges_dailyReward: 'दैनिक पुरस्कार',
   badges_claimReward: 'पुरस्कार लें',
   badges_claimed: 'प्राप्त किया',
+  badges_stripAllCount: 'All {{total}} →',
+  badges_stripEmpty: 'No badges yet',
 
   leaderboard_title: 'लीडरबोर्ड',
   leaderboard_thisWeek: 'इस सप्ताह',

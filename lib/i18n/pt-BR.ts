@@ -169,6 +169,8 @@ export const ptBR: TranslationKeys = {
   badges_dailyReward: 'Recompensa Diária',
   badges_claimReward: 'Resgatar',
   badges_claimed: 'Resgatada',
+  badges_stripAllCount: 'All {{total}} →',
+  badges_stripEmpty: 'No badges yet',
 
   // Leaderboard
   leaderboard_title: 'Ranking',
