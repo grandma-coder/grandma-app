@@ -93,23 +93,25 @@ export function DiffuseFieldSurface({
   children,
 }: FieldSurfaceProps) {
   const { colors } = useDiffuseTheme()
-  const [g1, g2, g3, g4] = getModeField(mode, isDark)
+  const [g1, , g3] = getModeField(mode, isDark)
+
+  // v4 "soft wash" (ALERT · SOFT WASH in the reference): the card is clean
+  // PAPER; a SINGLE gentle color pool bleeds from the RIGHT EDGE behind the
+  // content — never a full-card gradient (that read as grey). Subtle.
+  const washOpacity = (isDark ? 0.24 : 0.34) * (intensity / 0.5)
 
   return (
     <View style={[{ borderRadius: radius, overflow: 'hidden', backgroundColor: colors.surface }, style]}>
-      {/* base gradient field */}
-      <LinearGradient
-        colors={[g1, g2, g3, g4]}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={[StyleSheet.absoluteFillObject, { opacity: intensity * 0.6 }]}
-      />
-      {/* paper wash — pulls saturation down so the field stays soft */}
+      {/* one soft edge pool from the right — the only color on the card */}
       <View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.surface, opacity: 1 - intensity * 0.55 }]}
+        style={{ position: 'absolute', top: '-35%', right: '-14%', width: '58%', height: '170%', borderRadius: 999, backgroundColor: g1, opacity: washOpacity }}
       />
-      {grain ? <DiffuseGrain radius={radius} /> : null}
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', bottom: '-40%', right: '14%', width: '34%', height: '150%', borderRadius: 999, backgroundColor: g3, opacity: washOpacity * 0.7 }}
+      />
+      {grain ? <DiffuseGrain radius={radius} opacity={0.04} /> : null}
       {children}
     </View>
   )

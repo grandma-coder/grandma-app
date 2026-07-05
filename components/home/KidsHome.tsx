@@ -2023,10 +2023,10 @@ export function KidsHome() {
       {/* ─── Set Goals Button ────────────────────────────────────── */}
       {diffuse ? (
         <Pressable onPress={() => setGoalsModalVisible(true)} style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}>
-          <DiffuseFieldSurface mode="kids" isDark={isDark} intensity={0.55} radius={radius.lg} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 15, paddingHorizontal: 18 }}>
-            <View style={{ opacity: 0.85 }}>
-              <StarSticker size={20} fill={stickers.yellow} stroke={dt.colors.ink} />
-            </View>
+          <DiffuseFieldSurface mode="kids" isDark={isDark} intensity={0.5} radius={radius.lg} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 15, paddingHorizontal: 16, borderWidth: 1, borderColor: dt.colors.line }}>
+            <DiffuseBloomIcon color={stickers.yellow} size={34}>
+              <Star size={18} color={dt.colors.ink3} strokeWidth={1.6} />
+            </DiffuseBloomIcon>
             <Text style={{ fontSize: 17, fontFamily: diffuseFont.display, color: dt.colors.ink, letterSpacing: -0.2 }}>{t('kids_home_set_goals_btn')}</Text>
             <Text style={{ flex: 1, textAlign: 'right', fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1, fontSize: 9.5, color: dt.colors.ink3 }}>
               {t('kids_home_set_goals_hint')}
@@ -2517,10 +2517,10 @@ export function KidsHome() {
       {/* ─── Ask Grandma ─────────────────────────────────────── */}
       {diffuse ? (
         <Pressable onPress={() => router.push('/grandma-talk' as any)} style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}>
-          <DiffuseFieldSurface mode="kids" isDark={isDark} intensity={0.32} radius={radius.lg} style={s.grandmaCard}>
-            <View style={{ opacity: 0.8 }}>
-              <SparkleSticker size={22} fill={stickers.yellow} stroke={dt.colors.ink} />
-            </View>
+          <DiffuseFieldSurface mode="kids" isDark={isDark} intensity={0.5} radius={radius.lg} style={[s.grandmaCard, { borderWidth: 1, borderColor: dt.colors.line }]}>
+            <DiffuseBloomIcon color={stickers.lilac} size={34}>
+              <Sparkles size={18} color={dt.colors.ink3} strokeWidth={1.6} />
+            </DiffuseBloomIcon>
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: diffuseFont.display, fontSize: 19, color: dt.colors.ink, letterSpacing: -0.3 }}>{t('kids_home_grandma_cta_title')}</Text>
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 4 }}>{t('kids_home_grandma_cta_desc1')}</Text>
@@ -2558,9 +2558,9 @@ export function KidsHome() {
           onPress={() => router.push('/daily-rewards' as any)}
           style={({ pressed }) => [s.rewardsCard, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderWidth: 1, opacity: pressed ? 0.9 : 1 }]}
         >
-          <View style={[{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: dt.colors.line2, alignItems: 'center', justifyContent: 'center' }]}>
-            <StarSticker size={20} fill={stickers.yellow} stroke={dt.colors.ink} />
-          </View>
+          <DiffuseBloomIcon color={stickers.yellow} size={40}>
+            <Star size={18} color={dt.colors.ink3} strokeWidth={1.6} />
+          </DiffuseBloomIcon>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: diffuseFont.display, fontSize: 19, color: dt.colors.ink, letterSpacing: -0.3 }}>{t('kids_home_rewards_title')}</Text>
             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 4 }}>{t('kids_home_rewards_desc1')}</Text>
