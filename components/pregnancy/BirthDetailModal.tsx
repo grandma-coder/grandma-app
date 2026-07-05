@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Linking } from 'react-native'
 import { useTheme, font } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
+import { useTranslatedContent } from '../../lib/useTranslatedContent'
 import { Display, Body } from '../ui/Typography'
 import {
   Leaf, Cross, Cloud, Drop, ClockFace, Bolt, Key, Pill, Lungs, Heart, Moon,
@@ -186,6 +187,7 @@ export function BirthDetailModal({
             {topic.sections.map((section, index) => (
               <AccordionItem
                 key={index}
+                topicKey={topicKey}
                 section={section}
                 index={index}
                 isOpen={openIndex === index}
@@ -243,6 +245,7 @@ export function BirthDetailModal({
 }
 
 interface AccordionItemProps {
+  topicKey: BirthTopicKey
   section: BirthSection
   index: number
   isOpen: boolean
@@ -255,9 +258,13 @@ interface AccordionItemProps {
 }
 
 function AccordionItem({
-  section, index, isOpen, onToggle, ink, inkMuted, paper, paperBorder, isDark,
+  topicKey, section, index, isOpen, onToggle, ink, inkMuted, paper, paperBorder, isDark,
 }: AccordionItemProps) {
   const numFill = ['#F5D652', '#F2B2C7', '#9DC3E8', '#BDD48C', '#C8B6E8', '#EE7B6D'][index % 6]
+  // Long-form birth-guide prose is translated at runtime + cached (Phase C).
+  // Stable id-based keys so cache survives content edits (hash guards staleness).
+  const { text: sectionTitle } = useTranslatedContent(`birthguide_${topicKey}_${index}_title`, section.title)
+  const { text: sectionContent } = useTranslatedContent(`birthguide_${topicKey}_${index}_content`, section.content)
   return (
     <View style={styles.accordionItem}>
       <Pressable
@@ -289,7 +296,7 @@ function AccordionItem({
         </View>
         <View style={{ flex: 1 }}>
           <Body size={14} color={ink} style={{ fontFamily: font.bodyBold }}>
-            {section.title}
+            {sectionTitle}
           </Body>
         </View>
         <View
@@ -318,7 +325,7 @@ function AccordionItem({
           ]}
         >
           <Body size={13} color={inkMuted} style={{ lineHeight: 20 }}>
-            {section.content}
+            {sectionContent}
           </Body>
           {section.bullets && section.bullets.length > 0 && (
             <View style={styles.bulletList}>
