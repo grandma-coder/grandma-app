@@ -39,6 +39,7 @@ export interface TranslationKeys {
   common_straightQuote: string
   common_chevronPrev: string
   common_chevronNext: string
+  common_arrowRight: string
 
   // ─── Tabs ──────────────────────────────────────────────────────────────
   tab_home: string
@@ -768,6 +769,7 @@ export interface TranslationKeys {
   prepreg_period: string
   prepreg_ovulation: string
   prepreg_fertile: string
+  prepreg_fertileWindowBestDays: string
   prepreg_luteal: string
   prepreg_follicular: string
   prepreg_basal: string

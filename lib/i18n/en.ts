@@ -36,6 +36,7 @@ export const en: TranslationKeys = {
   common_straightQuote: '"',
   common_chevronPrev: '‹',
   common_chevronNext: '›',
+  common_arrowRight: '→',
 
   // Tabs
   tab_home: 'Home',
@@ -765,6 +766,7 @@ export const en: TranslationKeys = {
   prepreg_period: 'Period',
   prepreg_ovulation: 'Ovulation',
   prepreg_fertile: 'Fertile Window',
+  prepreg_fertileWindowBestDays: 'Best days this cycle',
   prepreg_luteal: 'Luteal',
   prepreg_follicular: 'Follicular',
   prepreg_basal: 'Basal Temperature',

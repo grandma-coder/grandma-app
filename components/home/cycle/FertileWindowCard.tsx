@@ -18,6 +18,7 @@ import { useTheme } from '../../../constants/theme'
 import { getCycleInfo, dailyFertilityCurve, type CycleConfig } from '../../../lib/cycleLogic'
 import { PaperCard } from '../../ui/PaperCard'
 import { FertileWindowModal } from './FertileWindowModal'
+import { useTranslation } from '../../../lib/i18n'
 
 interface Props {
   cycleConfig: CycleConfig
@@ -47,6 +48,7 @@ function narrativeFor(pct: number, daysToPeak: number): string {
 
 export function FertileWindowCard({ cycleConfig }: Props) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const [modalOpen, setModalOpen] = useState(false)
   const ink = isDark ? colors.text : '#141313'
 
@@ -97,7 +99,7 @@ export function FertileWindowCard({ cycleConfig }: Props) {
     <View style={{ paddingHorizontal: 20, marginTop: 12 }}>
       <Pressable onPress={() => setModalOpen(true)} accessibilityRole="button">
         <PaperCard radius={radius.lg} padding={14}>
-          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>FERTILE WINDOW</Text>
+          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('prepreg_fertile')}</Text>
 
           <View style={styles.head}>
             <Text style={[styles.pct, { color: stickers.coral, fontFamily: font.displayBold }]}>
@@ -147,10 +149,10 @@ export function FertileWindowCard({ cycleConfig }: Props) {
           {bestDays !== '' && (
             <View style={[styles.best, { borderTopColor: colors.border }]}>
               <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11 }}>
-                Best days this cycle
+                {t('prepreg_fertileWindowBestDays')}
               </Text>
               <Text style={{ color: stickers.coral, fontFamily: font.bodyBold, fontSize: 11 }}>
-                {bestDays} →
+                {bestDays} {t('common_arrowRight')}
               </Text>
             </View>
           )}
