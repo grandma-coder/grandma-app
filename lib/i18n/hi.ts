@@ -1463,6 +1463,9 @@ export const hi: TranslationKeys = {
   cycleSignals_pickerTitle: 'Anything today?',
   cycleSignals_saving: 'Saving…',
   cycleSignals_saveSymptoms: 'Save {{count}} symptoms',
+  cycleMoodStrip_heading: 'Feeling anything today?',
+  cycleMoodStrip_more: 'more',
+  cycleMoodStrip_hint: 'tap to log · adapts to your cycle phase',
 
   // ─── Cycle Onboarding (Wave B4) ───────────────────────────────────────────
   cycleOnboarding_q_lastPeriod: 'When did your last period start?',

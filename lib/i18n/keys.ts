@@ -1644,6 +1644,11 @@ export interface TranslationKeys {
   cycleSignals_saving: string
   cycleSignals_saveSymptoms: string
 
+  // ─── Cycle Mood/Symptom Strip ──────────────────────────────────────────
+  cycleMoodStrip_heading: string
+  cycleMoodStrip_more: string
+  cycleMoodStrip_hint: string
+
   // ─── Cycle Onboarding (Wave B4) ───────────────────────────────────────────
   cycleOnboarding_q_lastPeriod: string
   cycleOnboarding_datePlaceholder: string

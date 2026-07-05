@@ -22,6 +22,7 @@ import { MoodSymptomPickerSheet } from './MoodSymptomPickerSheet'
 import { LogSheet } from '../../calendar/LogSheet'
 import { PaperCard } from '../../ui/PaperCard'
 import { Sad, Smiley, Sleepy } from '../../ui/Stickers'
+import { useTranslation } from '../../../lib/i18n'
 
 type MoodId = '1' | '2' | '3' | '4' | '5'
 
@@ -39,6 +40,7 @@ interface Props {
 
 export function MoodSymptomStrip({ phase }: Props) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const ink = isDark ? colors.text : '#141313'
 
@@ -135,7 +137,7 @@ export function MoodSymptomStrip({ phase }: Props) {
       <PaperCard radius={radius.lg} padding={16}>
         <View style={styles.header}>
           <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
-            Feeling anything today?
+            {t('cycleMoodStrip_heading')}
           </Text>
           <Pressable
             onPress={() => setMoodSheet(true)}
@@ -186,12 +188,12 @@ export function MoodSymptomStrip({ phase }: Props) {
             style={[styles.moreChip, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
             hitSlop={6}
           >
-            <Text style={{ fontSize: 11, color: colors.textMuted, fontFamily: font.bodyBold }}>more</Text>
+            <Text style={{ fontSize: 11, color: colors.textMuted, fontFamily: font.bodyBold }}>{t('cycleMoodStrip_more')}</Text>
           </Pressable>
         </View>
 
         <Text style={[styles.hint, { color: colors.textMuted, fontFamily: font.italic }]}>
-          tap to log · adapts to your cycle phase
+          {t('cycleMoodStrip_hint')}
         </Text>
       </PaperCard>
 
