@@ -54,6 +54,7 @@ export const hi: TranslationKeys = {
   home_dailyPulse: 'Daily Pulse',
   home_dailyPulseEmptyTitle: 'Nothing logged yet, dear.',
   home_dailyPulseEmptyBody: 'Add a symptom, mood, or weight when you have a minute.',
+  home_grandmaSays: 'Grandma says',
 
   agenda_title: 'कैलेंडर',
   agenda_noEvents: 'आज कोई कार्यक्रम नहीं',
@@ -2434,6 +2435,8 @@ export const hi: TranslationKeys = {
   common_at: 'at',
   common_dotSeparator: '·',
   common_bullet: '•',
+  common_openQuote: '“',
+  common_closeQuote: '”',
   common_chevronPrev: '‹',
   common_chevronNext: '›',
   cycleDetail_lastNCycles: 'LAST {{n}} CYCLES',

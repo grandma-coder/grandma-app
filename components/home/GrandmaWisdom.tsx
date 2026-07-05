@@ -9,6 +9,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { useTheme, stickers } from '../../constants/theme'
 import { Heart } from '../ui/Stickers'
 import { MonoCaps } from '../ui/Typography'
+import { useTranslation } from '../../lib/i18n'
 
 const WISDOM_QUOTES = [
   'Tonight the moon is full. Drink some warm ginger tea and let the swelling in your feet settle with the tide.',
@@ -26,6 +27,7 @@ interface GrandmaWisdomProps {
 
 export function GrandmaWisdom({ weekNumber }: GrandmaWisdomProps) {
   const { colors, font, isDark } = useTheme()
+  const { t } = useTranslation()
   const index = (weekNumber ?? new Date().getDay()) % WISDOM_QUOTES.length
   const quote = WISDOM_QUOTES[index]
 
@@ -36,14 +38,14 @@ export function GrandmaWisdom({ weekNumber }: GrandmaWisdomProps) {
     <View style={[styles.card, { backgroundColor: ink }]}>
       <View style={styles.headerRow}>
         <MonoCaps color={isDark ? colors.textMuted : 'rgba(245,237,220,0.55)'}>
-          Grandma says
+          {t('home_grandmaSays')}
         </MonoCaps>
         <View style={styles.stickerWrap}>
           <Heart size={28} fill={stickers.coral} />
         </View>
       </View>
       <Text style={[styles.quote, { fontFamily: font.italic, color: cream }]}>
-        “{quote}”
+        {t('common_openQuote')}{quote}{t('common_closeQuote')}
       </Text>
     </View>
   )

@@ -54,6 +54,7 @@ export const zh: TranslationKeys = {
   home_dailyPulse: 'Daily Pulse',
   home_dailyPulseEmptyTitle: 'Nothing logged yet, dear.',
   home_dailyPulseEmptyBody: 'Add a symptom, mood, or weight when you have a minute.',
+  home_grandmaSays: 'Grandma says',
 
   agenda_title: '日历',
   agenda_noEvents: '今天没有事件',
@@ -2434,6 +2435,8 @@ export const zh: TranslationKeys = {
   common_at: 'at',
   common_dotSeparator: '·',
   common_bullet: '•',
+  common_openQuote: '“',
+  common_closeQuote: '”',
   common_chevronPrev: '‹',
   common_chevronNext: '›',
   cycleDetail_lastNCycles: 'LAST {{n}} CYCLES',

@@ -59,6 +59,7 @@ export const ptBR: TranslationKeys = {
   home_dailyPulse: 'Daily Pulse',
   home_dailyPulseEmptyTitle: 'Nothing logged yet, dear.',
   home_dailyPulseEmptyBody: 'Add a symptom, mood, or weight when you have a minute.',
+  home_grandmaSays: 'Grandma says',
 
   // Calendar / Agenda
   agenda_title: 'Calendário',
@@ -2462,6 +2463,8 @@ export const ptBR: TranslationKeys = {
   common_at: 'at',
   common_dotSeparator: '·',
   common_bullet: '•',
+  common_openQuote: '“',
+  common_closeQuote: '”',
   common_chevronPrev: '‹',
   common_chevronNext: '›',
   cycleDetail_lastNCycles: 'LAST {{n}} CYCLES',

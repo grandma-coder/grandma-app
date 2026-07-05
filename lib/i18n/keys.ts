@@ -34,6 +34,8 @@ export interface TranslationKeys {
   common_at: string
   common_dotSeparator: string
   common_bullet: string
+  common_openQuote: string
+  common_closeQuote: string
   common_chevronPrev: string
   common_chevronNext: string
 
@@ -71,6 +73,7 @@ export interface TranslationKeys {
   home_dailyPulse: string
   home_dailyPulseEmptyTitle: string
   home_dailyPulseEmptyBody: string
+  home_grandmaSays: string
 
   // ─── Calendar / Agenda ─────────────────────────────────────────────────
   agenda_title: string
