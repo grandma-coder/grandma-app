@@ -30,6 +30,7 @@ import { useTheme, brand, font, useDiffuseTheme, diffuseFont } from '../../const
 import { useModeStore } from '../../store/useModeStore'
 import { Star as StarSticker } from './Stickers'
 import { useIsDiffuse } from './diffuse/DiffuseKit'
+import { useTranslation } from '../../lib/i18n'
 
 const ST_INK = '#141313'
 const ST_PAPER = '#FFFEF8'
@@ -98,6 +99,7 @@ export default function DatePickerField({
   inline = false,
 }: DatePickerFieldProps) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
@@ -312,7 +314,7 @@ export default function DatePickerField({
                   },
                 ]}
               >
-                <Text style={styles.doneText}>Done</Text>
+                <Text style={styles.doneText}>{t('common_done')}</Text>
               </Pressable>
             )}
           </Pressable>
