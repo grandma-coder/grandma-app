@@ -33,6 +33,8 @@ export interface TranslationKeys {
   common_update: string
   common_at: string
   common_dotSeparator: string
+  common_chevronPrev: string
+  common_chevronNext: string
 
   // ─── Tabs ──────────────────────────────────────────────────────────────
   tab_home: string

@@ -14,6 +14,7 @@ import { useTheme } from '../../constants/theme'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import { DaySticker } from '../home/cycle/dayStickers'
+import { useTranslation } from '../../lib/i18n'
 
 interface Props {
   cycleConfig: CycleConfig
@@ -67,6 +68,7 @@ export function CycleMonthGrid({
   cycleConfig, selectedDate, visibleMonth, onSelectDate, onPrevMonth, onNextMonth,
 }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
 
   const today = toDateStr(new Date())
@@ -132,13 +134,13 @@ export function CycleMonthGrid({
     <View style={[styles.wrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={styles.header}>
         <Pressable onPress={onPrevMonth} style={styles.navBtn} hitSlop={8}>
-          <Text style={[styles.navText, { color: ink, fontFamily: font.bodyBold }]}>‹</Text>
+          <Text style={[styles.navText, { color: ink, fontFamily: font.bodyBold }]}>{t('common_chevronPrev')}</Text>
         </Pressable>
         <Text style={[styles.monthLabel, { color: ink, fontFamily: font.display }]}>
           {monthLabel}
         </Text>
         <Pressable onPress={onNextMonth} style={styles.navBtn} hitSlop={8}>
-          <Text style={[styles.navText, { color: ink, fontFamily: font.bodyBold }]}>›</Text>
+          <Text style={[styles.navText, { color: ink, fontFamily: font.bodyBold }]}>{t('common_chevronNext')}</Text>
         </Pressable>
       </View>
 

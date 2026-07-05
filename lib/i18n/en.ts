@@ -30,6 +30,8 @@ export const en: TranslationKeys = {
   common_update: 'Update',
   common_at: 'at',
   common_dotSeparator: '·',
+  common_chevronPrev: '‹',
+  common_chevronNext: '›',
 
   // Tabs
   tab_home: 'Home',

@@ -2422,6 +2422,8 @@ export const ko: TranslationKeys = {
   common_update: 'Update',
   common_at: 'at',
   common_dotSeparator: '·',
+  common_chevronPrev: '‹',
+  common_chevronNext: '›',
   cycleDetail_lastNCycles: 'LAST {{n}} CYCLES',
   cycleDetail_history: 'HISTORY',
   cycleDetail_regular: 'regular',
