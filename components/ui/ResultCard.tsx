@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View, ScrollView, Pressable } from 'react-native'
 import { useTheme, borderRadius, font } from '../../constants/theme'
 import { TalkMaster } from '../stickers/RewardStickers'
+import { useTranslation } from '../../lib/i18n'
 
 interface ResultCardProps {
   result: string
@@ -10,6 +11,7 @@ interface ResultCardProps {
 
 export default function ResultCard({ result, scanType, onClose }: ResultCardProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const title = {
     medicine: 'Medicine Analysis',
     food: 'Food Analysis',
@@ -23,7 +25,7 @@ export default function ResultCard({ result, scanType, onClose }: ResultCardProp
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
           <Pressable onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.accent }]}>
-            <Text style={[styles.closeText, { color: colors.textInverse }]}>Done</Text>
+            <Text style={[styles.closeText, { color: colors.textInverse }]}>{t('common_done')}</Text>
           </Pressable>
         </View>
         <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
