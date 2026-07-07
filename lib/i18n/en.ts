@@ -1265,6 +1265,7 @@ export const en: TranslationKeys = {
   kids_calendar_visitHint: 'Vaccines, medicines, and notes show up here.',
   kids_calendar_addVisit: 'Add visit / medical note',
   kids_calendar_visits: 'Visits',
+  kids_calendar_now: 'Now',
   kids_calendar_nothingSummary: 'Nothing planned',
   kids_calendar_logSheet_feeding: 'Log Feeding',
   kids_calendar_logSheet_sleep: 'Log Sleep',

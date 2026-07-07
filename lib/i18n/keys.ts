@@ -1268,6 +1268,7 @@ export interface TranslationKeys {
   kids_calendar_visitHint: string
   kids_calendar_addVisit: string
   kids_calendar_visits: string
+  kids_calendar_now: string
   kids_calendar_nothingSummary: string
   kids_calendar_logSheet_feeding: string
   kids_calendar_logSheet_sleep: string
