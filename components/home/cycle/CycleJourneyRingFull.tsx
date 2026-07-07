@@ -531,32 +531,24 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                     }}
                     pointerEvents="none"
                   >
-                    {/* TODAY marker: a soft ring of tiny sparkles around today's
-                        glyph — findable anywhere on the wheel, gentle not loud. */}
+                    <DaySticker phase={d.phase} size={glyphSize} bg={diffuseGlyphColor(d.phase, dt.isDark)} />
+                    {/* TODAY marker: one small tidy accent dot just under today's
+                        glyph — a clean "you are here", legible anywhere on the
+                        wheel and never crowding neighbouring glyphs. */}
                     {isTodayDot ? (
                       <View
                         pointerEvents="none"
                         style={{
                           position: 'absolute',
-                          // Center the aura box on the glyph — an absolute child
-                          // with no inset pins to top-left, which pushed the
-                          // sparkles off-glyph. Offset by half the overflow.
-                          // A wider halo (+22) sits the sparkles clearly AROUND
-                          // the glyph so they stay legible even when today is
-                          // right beside the anchor ring.
-                          top: -11,
-                          left: -11,
-                          width: glyphSize + 22,
-                          height: glyphSize + 22,
-                          opacity: 0.9,
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          bottom: -8,
+                          left: glyphSize / 2 - 2.5,
+                          width: 5,
+                          height: 5,
+                          borderRadius: 2.5,
+                          backgroundColor: diffuseAccent,
                         }}
-                      >
-                        <TodayAura size={glyphSize + 22} color={diffuseGlyphColor(d.phase, dt.isDark)} count={10} />
-                      </View>
+                      />
                     ) : null}
-                    <DaySticker phase={d.phase} size={glyphSize} bg={diffuseGlyphColor(d.phase, dt.isDark)} />
                   </View>
                 )
               }
