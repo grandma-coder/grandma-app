@@ -531,33 +531,22 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                     }}
                     pointerEvents="none"
                   >
-                    {/* TODAY marker: a quiet hairline ring around today's glyph +
-                        a small pip beneath, so today is identifiable anywhere on
-                        the wheel — a gentle outline, not a loud bloom. */}
+                    {/* TODAY marker: a soft ring of tiny sparkles around today's
+                        glyph — findable anywhere on the wheel, gentle not loud. */}
                     {isTodayDot ? (
-                      <>
-                        <View
-                          pointerEvents="none"
-                          style={{
-                            position: 'absolute',
-                            width: glyphSize + 12,
-                            height: glyphSize + 12,
-                            borderRadius: (glyphSize + 12) / 2,
-                            borderWidth: 1.5,
-                            borderColor: diffuseAccent,
-                          }}
-                        />
-                        <View
-                          style={{
-                            position: 'absolute',
-                            bottom: -7,
-                            width: 4,
-                            height: 4,
-                            borderRadius: 2,
-                            backgroundColor: diffuseAccent,
-                          }}
-                        />
-                      </>
+                      <View
+                        pointerEvents="none"
+                        style={{
+                          position: 'absolute',
+                          width: glyphSize + 14,
+                          height: glyphSize + 14,
+                          opacity: 0.7,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <TodayAura size={glyphSize + 14} color={diffuseGlyphColor(d.phase, dt.isDark)} count={8} />
+                      </View>
                     ) : null}
                     <DaySticker phase={d.phase} size={glyphSize} bg={diffuseGlyphColor(d.phase, dt.isDark)} />
                   </View>
@@ -638,10 +627,10 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
             <Circle
               cx={CX}
               cy={CY + RING_R}
-              r={diffuse ? 16 : 14}
+              r={diffuse ? 17 : 14}
               fill="none"
-              stroke={diffuse ? dt.colors.hairline : accent}
-              strokeWidth={1.5}
+              stroke={diffuse ? dt.colors.line2 : accent}
+              strokeWidth={diffuse ? 1 : 1.5}
             />
           </Svg>
 
