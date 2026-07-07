@@ -496,6 +496,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                 // the selection frame stays put as the wheel spins. Future days
                 // are softened.
                 const glyphSize = 22
+                const isTodayDot = d.state === 'today'
                 return (
                   <View
                     key={d.day}
@@ -511,6 +512,25 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                     }}
                     pointerEvents="none"
                   >
+                    {/* TODAY marker: soft bloom halo + a small ink pip so today's
+                        glyph is identifiable anywhere on the wheel as it spins. */}
+                    {isTodayDot ? (
+                      <>
+                        <View pointerEvents="none" style={{ position: 'absolute', width: glyphSize * 2, height: glyphSize * 2 }}>
+                          <SoftBloom color={diffuseAccent} opacity={dt.isDark ? 0.6 : 0.7} spread={0.45} />
+                        </View>
+                        <View
+                          style={{
+                            position: 'absolute',
+                            bottom: -6,
+                            width: 5,
+                            height: 5,
+                            borderRadius: 2.5,
+                            backgroundColor: diffuseAccent,
+                          }}
+                        />
+                      </>
+                    ) : null}
                     <DaySticker phase={d.phase} size={glyphSize} bg={phaseAccent(d.phase, stickers)} />
                   </View>
                 )
