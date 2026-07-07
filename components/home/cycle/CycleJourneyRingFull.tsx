@@ -41,6 +41,25 @@ function diffusePhaseColor(phase: CyclePhase, field: [string, string, string, st
   }
 }
 
+// Soft, muted glyph fills for the wheel — calmer than the saturated sticker
+// accents (which read loud), warmer than the near-grey field. Hand-tuned to
+// match the reference's gentle sage / coral / lilac / warm-coral tones.
+const DIFFUSE_GLYPH_LIGHT: Record<CyclePhase, string> = {
+  menstruation: '#E89A8E',  // soft coral
+  follicular:   '#A9C77E',  // sage green
+  ovulation:    '#EBA97F',  // warm apricot
+  luteal:       '#B9A6DE',  // gentle lilac
+}
+const DIFFUSE_GLYPH_DARK: Record<CyclePhase, string> = {
+  menstruation: '#C9776B',
+  follicular:   '#8FB06A',
+  ovulation:    '#CE8E68',
+  luteal:       '#9E8CC4',
+}
+function diffuseGlyphColor(phase: CyclePhase, isDark: boolean): string {
+  return (isDark ? DIFFUSE_GLYPH_DARK : DIFFUSE_GLYPH_LIGHT)[phase]
+}
+
 
 // ─── Layout ─────────────────────────────────────────────────────────────────
 const SVG_SIZE = 260
@@ -508,30 +527,39 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                       height: glyphSize,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      opacity: d.state === 'future' ? 0.8 : 1,
+                      opacity: d.state === 'future' ? 0.65 : 1,
                     }}
                     pointerEvents="none"
                   >
-                    {/* TODAY marker: soft bloom halo + a small ink pip so today's
-                        glyph is identifiable anywhere on the wheel as it spins. */}
+                    {/* TODAY marker: a quiet hairline ring around today's glyph +
+                        a small pip beneath, so today is identifiable anywhere on
+                        the wheel — a gentle outline, not a loud bloom. */}
                     {isTodayDot ? (
                       <>
-                        <View pointerEvents="none" style={{ position: 'absolute', width: glyphSize * 2, height: glyphSize * 2 }}>
-                          <SoftBloom color={diffuseAccent} opacity={dt.isDark ? 0.6 : 0.7} spread={0.45} />
-                        </View>
+                        <View
+                          pointerEvents="none"
+                          style={{
+                            position: 'absolute',
+                            width: glyphSize + 12,
+                            height: glyphSize + 12,
+                            borderRadius: (glyphSize + 12) / 2,
+                            borderWidth: 1.5,
+                            borderColor: diffuseAccent,
+                          }}
+                        />
                         <View
                           style={{
                             position: 'absolute',
-                            bottom: -6,
-                            width: 5,
-                            height: 5,
-                            borderRadius: 2.5,
+                            bottom: -7,
+                            width: 4,
+                            height: 4,
+                            borderRadius: 2,
                             backgroundColor: diffuseAccent,
                           }}
                         />
                       </>
                     ) : null}
-                    <DaySticker phase={d.phase} size={glyphSize} bg={phaseAccent(d.phase, stickers)} />
+                    <DaySticker phase={d.phase} size={glyphSize} bg={diffuseGlyphColor(d.phase, dt.isDark)} />
                   </View>
                 )
               }
@@ -625,7 +653,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                   <Text style={[styles.centerLabelD, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
                     {t('cycle_ring_label_day')}
                   </Text>
-                  <Text style={[styles.centerNumberD, { color: phaseAccent(selPhase, stickers), fontFamily: diffuseFont.display }]}>
+                  <Text style={[styles.centerNumberD, { color: diffuseGlyphColor(selPhase, dt.isDark), fontFamily: diffuseFont.display }]}>
                     {selectedDay}
                   </Text>
                   <Text style={[styles.centerStatusD, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
@@ -660,7 +688,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
       {/* ── Legend (inline, single row) ── */}
       <View style={styles.legendRowInline}>
         {LEGEND.map((item) => {
-          const bg = phaseAccent(item.phase, stickers)
+          const bg = diffuse ? diffuseGlyphColor(item.phase, dt.isDark) : phaseAccent(item.phase, stickers)
           return (
             <View key={item.phase} style={styles.legendInlineItem}>
               {diffuse ? (
