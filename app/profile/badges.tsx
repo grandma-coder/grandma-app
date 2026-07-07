@@ -15,6 +15,8 @@ import {
   useBadgeStore,
   BADGE_DEFS,
   getTierColor,
+  badgeName,
+  badgeDesc,
   type BadgeCategory,
 } from '../../store/useBadgeStore'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -127,13 +129,13 @@ export default function BadgeWalletScreen() {
                         style={[styles.badgeName, { color: isEarned ? colors.text : colors.textMuted, fontFamily: font.bodySemiBold }]}
                         numberOfLines={1}
                       >
-                        {def.name}
+                        {badgeName(def.id, t)}
                       </Text>
                       <Text
                         style={[styles.badgeDesc, { color: isEarned ? colors.textSecondary : colors.textMuted, fontFamily: font.body }]}
                         numberOfLines={2}
                       >
-                        {def.description}
+                        {badgeDesc(def.id, t)}
                       </Text>
                       <View style={[styles.tierPill, { backgroundColor: isEarned ? getTierColor(def.tier) + '24' : 'transparent' }]}>
                         <Text style={[styles.tierText, { color: isEarned ? getTierColor(def.tier) : colors.textMuted, fontFamily: font.bodySemiBold }]}>

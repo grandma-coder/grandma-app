@@ -34,6 +34,22 @@ export interface BadgeDef {
 
 export type BadgeCategory = 'streak' | 'nutrition' | 'sleep' | 'mood' | 'health' | 'growth' | 'community' | 'milestone' | 'daily' | 'pregnancy'
 
+/**
+ * Localized badge name / description. Each badge has `badge_<id>_name` and
+ * `badge_<id>_desc` keys in the i18n registry; pass the `t` from useTranslation.
+ * Falls back to the English `name`/`description` in BADGE_DEFS if a key is absent.
+ */
+export function badgeName(id: string, t: (k: any) => string): string {
+  const key = `badge_${id}_name`
+  const val = t(key)
+  return val === key ? (BADGE_DEFS.find((d) => d.id === id)?.name ?? id) : val
+}
+export function badgeDesc(id: string, t: (k: any) => string): string {
+  const key = `badge_${id}_desc`
+  const val = t(key)
+  return val === key ? (BADGE_DEFS.find((d) => d.id === id)?.description ?? '') : val
+}
+
 export const BADGE_DEFS: BadgeDef[] = [
   // ═══ STREAK BADGES ═══
   { id: 'streak_3',   name: 'Getting Started',    description: '3-day logging streak',        icon: '🔥', category: 'streak', color: '#FF9800', tier: 'bronze' },

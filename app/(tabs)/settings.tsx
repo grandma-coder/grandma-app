@@ -25,7 +25,7 @@ import { useTheme, brand, getModeColor } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
 import { useChildStore } from '../../store/useChildStore'
-import { useBadgeStore, BADGE_DEFS } from '../../store/useBadgeStore'
+import { useBadgeStore, BADGE_DEFS, badgeName } from '../../store/useBadgeStore'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { supabase } from '../../lib/supabase'
@@ -143,10 +143,9 @@ export default function ProfileScreen() {
     .sort((a, b) => new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime())
     .slice(0, 5)
     .map((eb) => {
-      const def = BADGE_DEFS.find((d) => d.id === eb.badgeId)
       return {
         badgeId: eb.badgeId,
-        label: def?.name ?? eb.badgeId,
+        label: badgeName(eb.badgeId, t),
       }
     })
 
