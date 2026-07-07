@@ -9,7 +9,8 @@ import { View, ScrollView, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useTheme } from '../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../constants/theme'
+import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { prePregPillars } from '../lib/prePregPillars'
 import { getPillarSticker } from '../lib/pillarStickerMap'
 import { Display, Body } from '../components/ui/Typography'
@@ -20,8 +21,10 @@ const TINT_BY_INDEX = ['greenSoft', 'lilacSoft', 'peachSoft', 'blueSoft', 'yello
 export default function CyclePillarsIndex() {
   const insets = useSafeAreaInsets()
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const ink = isDark ? colors.text : '#141313'
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
 
   function tintFor(i: number): string {
     const key = TINT_BY_INDEX[i % TINT_BY_INDEX.length]
@@ -29,14 +32,14 @@ export default function CyclePillarsIndex() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: diffuse ? dt.colors.bg : colors.bg }}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
         <Pressable
           onPress={() => router.back()}
-          style={[styles.back, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[styles.back, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.hairline } : { backgroundColor: colors.surface, borderColor: colors.border }]}
           accessibilityRole="button"
           accessibilityLabel={t('cyclePillars_back')}
         >
@@ -44,7 +47,7 @@ export default function CyclePillarsIndex() {
         </Pressable>
 
         <Display size={32} color={ink}>{t('cyclePillars_title')}</Display>
-        <Text style={[styles.subtitle, { color: stickers.coral, fontFamily: font.italic }]}>
+        <Text style={[styles.subtitle, diffuse ? { color: dt.colors.ink2, fontFamily: diffuseFont.italic } : { color: stickers.coral, fontFamily: font.italic }]}>
           {t('cyclePillars_subtitle')}
         </Text>
 
@@ -57,15 +60,17 @@ export default function CyclePillarsIndex() {
                 onPress={() => router.push(`/pillar/${p.id}` as any)}
                 style={({ pressed }) => [
                   styles.tile,
-                  { backgroundColor: tintFor(i), borderColor: colors.border, borderRadius: radius.lg },
+                  diffuse
+                    ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: radius.lg }
+                    : { backgroundColor: tintFor(i), borderColor: colors.border, borderRadius: radius.lg },
                   pressed && { transform: [{ scale: 0.97 }], opacity: 0.95 },
                 ]}
               >
-                <View style={[styles.stickerChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <View style={[styles.stickerChip, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
                   {Sticker ? <Sticker size={28} /> : <Text style={{ fontSize: 24 }}>{p.icon}</Text>}
                 </View>
                 <Display size={18} color={ink}>{p.name}</Display>
-                <Body size={12} color={colors.textMuted} numberOfLines={2}>
+                <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} numberOfLines={2}>
                   {p.description}
                 </Body>
               </Pressable>

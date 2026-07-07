@@ -548,18 +548,22 @@ const moodStyles = StyleSheet.create({
 
 function Loading() {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
     <View style={styles.center}>
-      <ActivityIndicator color={colors.primary} />
+      <ActivityIndicator color={diffuse ? dt.colors.ink3 : colors.primary} />
     </View>
   )
 }
 
 export function EmptyState({ copy }: { copy: string }) {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
     <View style={styles.center}>
-      <Body size={14} color={colors.textMuted} align="center">{copy}</Body>
+      <Body size={14} color={diffuse ? dt.colors.ink3 : colors.textMuted} align="center">{copy}</Body>
     </View>
   )
 }
@@ -567,9 +571,11 @@ export function EmptyState({ copy }: { copy: string }) {
 export function ErrorState() {
   const { t } = useTranslation()
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
     <View style={styles.center}>
-      <Body size={14} color={colors.textMuted} align="center">
+      <Body size={14} color={diffuse ? dt.colors.ink3 : colors.textMuted} align="center">
         {t('common_couldntLoad')}
       </Body>
     </View>

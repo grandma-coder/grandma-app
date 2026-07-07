@@ -283,7 +283,7 @@ export function CycleCalendar() {
                       <View style={styles.examRow}>
                         <View style={{ flex: 1 }}>
                           <Text
-                            style={[styles.examTitle, { color: isDark ? colors.text : '#141313' }]}
+                            style={[styles.examTitle, { color: diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313'), fontFamily: diffuse ? diffuseFont.body : undefined }]}
                             numberOfLines={1}
                           >
                             {ex.title}

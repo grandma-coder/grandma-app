@@ -9,7 +9,8 @@
 
 import { ReactNode } from 'react'
 import { Text, TextProps, StyleSheet } from 'react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 
 type TextVariantProps = Omit<TextProps, 'children'> & {
   children: ReactNode
@@ -18,14 +19,23 @@ type TextVariantProps = Omit<TextProps, 'children'> & {
   align?: 'left' | 'center' | 'right'
 }
 
+// These primitives self-branch on the theme variant so every call site renders
+// the correct family without per-call edits: under Diffuse, Cormorant serif /
+// Hanken sans / Space Mono + the diffuse ink ramp; otherwise the current
+// Fraunces / DM Sans + cream tokens. `color`/`style` overrides still win.
+
 export function Display({ children, color, size = 40, align, style, ...rest }: TextVariantProps) {
   const { font, colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const fam = diffuse ? diffuseFont.display : font.display
+  const fallback = diffuse ? dt.colors.ink : colors.text
   return (
     <Text
       {...rest}
       style={[
         styles.display,
-        { fontFamily: font.display, fontSize: size, color: color ?? colors.text, textAlign: align, lineHeight: size * 1.02 },
+        { fontFamily: fam, fontSize: size, color: color ?? fallback, textAlign: align, lineHeight: size * 1.02 },
         style,
       ]}
     >
@@ -36,12 +46,16 @@ export function Display({ children, color, size = 40, align, style, ...rest }: T
 
 export function DisplayItalic({ children, color, size = 40, align, style, ...rest }: TextVariantProps) {
   const { font, colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const fam = diffuse ? diffuseFont.italic : font.italic
+  const fallback = diffuse ? dt.colors.ink : colors.text
   return (
     <Text
       {...rest}
       style={[
         styles.displayItalic,
-        { fontFamily: font.italic, fontSize: size, color: color ?? colors.text, textAlign: align, lineHeight: size * 1.02 },
+        { fontFamily: fam, fontSize: size, color: color ?? fallback, textAlign: align, lineHeight: size * 1.02 },
         style,
       ]}
     >
@@ -52,13 +66,18 @@ export function DisplayItalic({ children, color, size = 40, align, style, ...res
 
 export function MonoCaps({ children, color, size = 10, align, style, ...rest }: TextVariantProps) {
   const { font, colors } = useTheme()
-  const fallback = colors.textFaint
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  // Under Diffuse this is the true mono "data voice" (Space Mono); the current
+  // theme keeps its DM Sans medium (as before).
+  const fam = diffuse ? diffuseFont.mono : font.bodyMedium
+  const fallback = diffuse ? dt.colors.ink3 : colors.textFaint
   return (
     <Text
       {...rest}
       style={[
         styles.monoCaps,
-        { fontFamily: font.bodyMedium, fontSize: size, color: color ?? fallback, textAlign: align },
+        { fontFamily: fam, fontSize: size, color: color ?? fallback, textAlign: align },
         style,
       ]}
     >
@@ -69,10 +88,14 @@ export function MonoCaps({ children, color, size = 10, align, style, ...rest }: 
 
 export function Body({ children, color, size = 15, align, style, ...rest }: TextVariantProps) {
   const { font, colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const fam = diffuse ? diffuseFont.body : font.body
+  const fallback = diffuse ? dt.colors.ink : colors.text
   return (
     <Text
       {...rest}
-      style={[{ fontFamily: font.body, fontSize: size, color: color ?? colors.text, textAlign: align }, style]}
+      style={[{ fontFamily: fam, fontSize: size, color: color ?? fallback, textAlign: align }, style]}
     >
       {children}
     </Text>

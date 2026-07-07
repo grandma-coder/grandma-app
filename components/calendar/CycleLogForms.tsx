@@ -737,11 +737,11 @@ export function BbtForm({
           ))}
         </View>
         <View style={styles.sliderRow}>
-          <Pressable onPress={() => setTenths(Math.max(BBT_MIN, tenths - 1))} style={styles.sliderBtn}>
-            <Text style={{ color: diffuse ? dt.colors.ink : accent, fontSize: 20, fontFamily: font.bodyBold }}>{'−'}</Text>
+          <Pressable onPress={() => setTenths(Math.max(BBT_MIN, tenths - 1))} style={diffuse ? [styles.sliderBtn, styles.sliderBtnD, { borderColor: dt.colors.line2, backgroundColor: 'transparent' }] : styles.sliderBtn}>
+            <Text style={{ color: diffuse ? dt.colors.ink : accent, fontSize: 20, fontFamily: diffuse ? diffuseFont.monoBold : font.bodyBold }}>{'−'}</Text>
           </Pressable>
-          <Pressable onPress={() => setTenths(Math.min(BBT_MAX, tenths + 1))} style={styles.sliderBtn}>
-            <Text style={{ color: diffuse ? dt.colors.ink : accent, fontSize: 20, fontFamily: font.bodyBold }}>+</Text>
+          <Pressable onPress={() => setTenths(Math.min(BBT_MAX, tenths + 1))} style={diffuse ? [styles.sliderBtn, styles.sliderBtnD, { borderColor: dt.colors.line2, backgroundColor: 'transparent' }] : styles.sliderBtn}>
+            <Text style={{ color: diffuse ? dt.colors.ink : accent, fontSize: 20, fontFamily: diffuse ? diffuseFont.monoBold : font.bodyBold }}>+</Text>
           </Pressable>
         </View>
       </View>
@@ -1156,5 +1156,10 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     shadowColor: '#141313', shadowOpacity: 1, shadowRadius: 0,
     shadowOffset: { width: 2, height: 2 },
+  },
+  // Diffuse: hairline circle, no offset shadow (color/border set inline).
+  sliderBtnD: {
+    borderWidth: 1,
+    shadowOpacity: 0, shadowRadius: 0, shadowOffset: { width: 0, height: 0 }, elevation: 0,
   },
 })

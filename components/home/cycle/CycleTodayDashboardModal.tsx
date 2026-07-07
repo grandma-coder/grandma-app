@@ -184,7 +184,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
               <Display size={28} color={ink}>
                 {moodValue ? (MOOD_LABEL[moodValue] ?? moodValue) : t('cycleDash_notLoggedYet')}
               </Display>
-              <Body size={12} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
+              <Body size={12} color={muted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.italic : font.italic }}>
                 {moodMeta ? t('cycleDash_howYouFelt') : t('cycleDash_tapChipToLog')}
               </Body>
             </View>
@@ -201,7 +201,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
               {bbtValue ? `${bbtValue}°` : '—'}
             </Display>
-            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
+            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.italic : font.italic }}>
               {bbtValue ? t('cycleDash_basalTemp') : t('cycleDash_notLogged')}
             </Body>
           </PaperCard>
@@ -214,7 +214,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
               {lhValue ? (LH_LABEL[lhValue] ?? lhValue) : '—'}
             </Display>
-            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
+            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.italic : font.italic }}>
               {lhValue ? t('cycleDash_ovulationTest') : t('cycleDash_notLogged')}
             </Body>
           </PaperCard>
@@ -227,7 +227,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
               {cmValue ? (CM_LABEL[cmValue] ?? cmValue) : '—'}
             </Display>
-            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
+            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.italic : font.italic }}>
               {cmValue ? t('cycleDash_cervicalMucus') : t('cycleDash_notLogged')}
             </Body>
           </PaperCard>
@@ -243,7 +243,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
               {intimacy ? '✓' : '—'}
             </Display>
-            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
+            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.italic : font.italic }}>
               {intimacy ? t('cycleDash_loggedToday') : t('cycleDash_notLogged')}
             </Body>
           </PaperCard>
@@ -256,7 +256,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
               {periodStart ? (PERIOD_LABEL[periodStart] ?? '✓') : '—'}
             </Display>
-            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
+            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.italic : font.italic }}>
               {periodStart ? t('cycleDash_flowToday') : t('cycleDash_notLogged')}
             </Body>
           </PaperCard>
@@ -284,7 +284,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
               ))}
             </View>
           ) : (
-            <Body size={12} color={muted} style={{ marginTop: 8, fontFamily: font.italic }}>
+            <Body size={12} color={muted} style={{ marginTop: 8, fontFamily: diffuse ? diffuseFont.italic : font.italic }}>
               {t('cycleDash_noSymptoms')}
             </Body>
           )}
@@ -303,7 +303,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
           ) : bbtHist.length >= 2 ? (
             <Sparkline points={fillDays(bbtHist).values} color={accent} ink={ink} />
           ) : (
-            <Body size={12} color={muted} style={{ marginTop: 8, fontFamily: font.italic }}>
+            <Body size={12} color={muted} style={{ marginTop: 8, fontFamily: diffuse ? diffuseFont.italic : font.italic }}>
               {t('cycleDash_bbtNeedMore')}
             </Body>
           )}

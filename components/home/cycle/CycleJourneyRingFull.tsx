@@ -707,7 +707,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
       >
         <View style={styles.statusRow}>
           <View style={styles.statusBlock}>
-            <Text style={[styles.statusTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: font.display }]} numberOfLines={1}>
+            <Text style={[styles.statusTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]} numberOfLines={1}>
               {t('cycle_ring_phase_prefix')}<Text style={[styles.statusTitleAccent, { color: diffuse ? dt.colors.ink : accent, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>{titleItalic}</Text>
             </Text>
             <Text style={[styles.dateLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
@@ -735,7 +735,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
             <Text style={[styles.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
               {t('cycle_ring_label_fertility')}
             </Text>
-            <Text style={[styles.statValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: font.display }]}>
+            <Text style={[styles.statValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
               {fertilityPct}
               <Text style={[styles.statUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontStyle: 'normal' } : { color: colors.textSecondary, fontFamily: font.italic }]}>%</Text>
             </Text>
@@ -744,7 +744,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
             <Text style={[styles.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
               {t('cycle_ring_label_next_period')}
             </Text>
-            <Text style={[styles.statValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: font.display }]}>
+            <Text style={[styles.statValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
               {selectedInfo.daysUntilPeriod}
               <Text style={[styles.statUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontStyle: 'normal' } : { color: colors.textSecondary, fontFamily: font.italic }]}>{t('cycle_ring_unit_d')}</Text>
             </Text>
