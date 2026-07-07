@@ -6021,6 +6021,8 @@ function CategoryRankCard({ cat, rank, pctOfTotal, barWidth, visible }: {
   barWidth: number
   visible: boolean
 }) {
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const fill = useSharedValue(0)
 
   useEffect(() => {
@@ -6038,6 +6040,38 @@ function CategoryRankCard({ cat, rank, pctOfTotal, barWidth, visible }: {
 
   const tilt = rank % 2 === 0 ? -0.6 : 0.6
   const note = categoryNote(rank, pctOfTotal)
+
+  if (diffuse) {
+    const dCol = dt.colors
+    return (
+      <View style={{ paddingVertical: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          {/* Rank numeral */}
+          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 0.5, color: dCol.ink3, width: 18 }}>
+            {rank + 1}
+          </Text>
+          {/* Color dot */}
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: cat.color }} />
+          {/* Label */}
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, color: dCol.ink, flex: 1 }} numberOfLines={1}>{cat.label}</Text>
+          {/* Calories + pct */}
+          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, color: dCol.ink2 }}>{cat.cals.toLocaleString()}{' cal'}</Text>
+          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, color: dCol.ink3, width: 40, textAlign: 'right' }}>{pctOfTotal}%</Text>
+        </View>
+        {/* Thin proportion bar */}
+        <View style={{ height: 5, borderRadius: 999, backgroundColor: dCol.line, overflow: 'hidden', marginTop: 8, marginLeft: 28 }}>
+          <Reanimated.View style={[{ height: '100%', borderRadius: 999, backgroundColor: cat.color }, animatedBarStyle]} />
+        </View>
+        {/* Grandma's italic remark */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, marginLeft: 28 }}>
+          <Sparkles size={11} color={dCol.ink3} strokeWidth={1.6} />
+          <Text style={{ fontFamily: diffuseFont.italic, fontSize: 12.5, color: dCol.ink3, flex: 1 }}>
+            {note}
+          </Text>
+        </View>
+      </View>
+    )
+  }
 
   return (
     <View
@@ -6141,6 +6175,8 @@ function BreastfeedingInsights({
   feedingTimes: number[]; feedingDurations: number[]; feedingDays: number
 }) {
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   // Side balance — fold "both" half-and-half into each side for the % bar
   const sideKnown = feedingLeft + feedingRight + feedingBoth
   const leftEffective = feedingLeft + feedingBoth * 0.5
@@ -6183,6 +6219,117 @@ function BreastfeedingInsights({
   }
   if (peakCount >= Math.ceil(feedingBreast * 0.35)) {
     notes.push(`Most feeds land in the ${peakBucket.label.toLowerCase()} — ${peakBucket.range}.`)
+  }
+
+  if (diffuse) {
+    const dCol = dt.colors
+    return (
+      <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 18, marginTop: 24 }}>
+        <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3, marginBottom: 14 }}>
+          {t('kids_home_breastfeeding_insights_title')}
+        </Text>
+
+        {/* ── Side balance ── */}
+        {sideKnown > 0 && (
+          <View style={{ marginBottom: 22 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dCol.ink3 }}>
+                {t('kids_home_breastfeeding_side_balance')}
+              </Text>
+              <Text style={{ fontFamily: diffuseFont.italic, fontSize: 12, color: dCol.ink3 }}>
+                {feedingLeft}{' L · '}{feedingRight}{' R'}{feedingBoth > 0 ? ` · ${feedingBoth} both` : ''}
+              </Text>
+            </View>
+            {/* Thin split bar */}
+            <View style={{ flexDirection: 'row', height: 7, borderRadius: 999, overflow: 'hidden', backgroundColor: dCol.line }}>
+              {leftPct > 0 && <View style={{ width: `${leftPct}%` as any, backgroundColor: stickers.pink }} />}
+              {rightPct > 0 && <View style={{ width: `${rightPct}%` as any, backgroundColor: stickers.blue }} />}
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: stickers.pink, alignSelf: 'center' }} />
+                <Text style={{ fontFamily: diffuseFont.display, fontSize: 20, color: dCol.ink, letterSpacing: -0.3 }}>{leftPct}%</Text>
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_feeding_modal_left')}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_feeding_modal_right')}</Text>
+                <Text style={{ fontFamily: diffuseFont.display, fontSize: 20, color: dCol.ink, letterSpacing: -0.3 }}>{rightPct}%</Text>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: stickers.blue, alignSelf: 'center' }} />
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* ── Time of day ── */}
+        {feedingTimes.length > 0 && (
+          <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 18, marginBottom: 22 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dCol.ink3 }}>
+                {t('kids_home_breastfeeding_time_of_day')}
+              </Text>
+              <Text style={{ fontFamily: diffuseFont.italic, fontSize: 12, color: dCol.ink3 }}>
+                {'peak '}{peakBucket.range.toLowerCase()}
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
+              {TIME_BUCKETS.map((b, i) => {
+                const count = bucketCounts[b.key]
+                const isPeak = b.key === peakBucket.key && count > 0
+                const heightPct = (count / maxBucket) * 100
+                const pctOfTotal = feedingTimes.length > 0 ? Math.round((count / feedingTimes.length) * 100) : 0
+                return (
+                  <View key={b.key} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
+                    <Text style={{ fontFamily: diffuseFont.display, fontSize: 20, color: dCol.ink, letterSpacing: -0.4 }}>
+                      {count}
+                    </Text>
+                    <View style={{ width: '100%', height: 54, justifyContent: 'flex-end', alignItems: 'center' }}>
+                      <BucketBarDiffuse
+                        pct={heightPct}
+                        color={isPeak ? getDiffuseAccent('kids', dt.isDark) : dCol.ink3}
+                        track={dCol.line}
+                        visible={visible}
+                        delay={120 + i * 80}
+                      />
+                    </View>
+                    <Text style={{ fontFamily: diffuseFont.mono, fontSize: 8.5, letterSpacing: 0.5, textTransform: 'uppercase', color: isPeak ? dCol.ink2 : dCol.ink3 }}>
+                      {b.label}
+                    </Text>
+                    <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9, color: dCol.ink3 }}>
+                      {pctOfTotal}%
+                    </Text>
+                  </View>
+                )
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* ── Session stats ── */}
+        {(avgMin > 0 || perDay > 0) && (
+          <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 18, marginBottom: notes.length > 0 ? 20 : 0 }}>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <DiffuseMetricTile value={avgMin > 0 ? `${avgMin} min` : '—'} label={'Avg Session'} />
+              <DiffuseMetricTile value={perDay > 0 ? perDay.toString() : '—'} label={'Feeds / Day'} />
+              <DiffuseMetricTile value={minPerDay > 0 ? `${minPerDay} min` : '—'} label={'Min / Day'} />
+            </View>
+          </View>
+        )}
+
+        {/* ── Smart notes ── */}
+        {notes.length > 0 && (
+          <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 16, gap: 10 }}>
+            {notes.map((n, i) => (
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                <Sparkles size={12} color={dCol.ink3} strokeWidth={1.6} style={{ marginTop: 3 }} />
+                <Text style={{ fontFamily: diffuseFont.italic, fontSize: 13, color: dCol.ink3, flex: 1, lineHeight: 19 }}>
+                  {n}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    )
   }
 
   return (
@@ -6416,6 +6563,23 @@ function BucketBar({ pct, color, visible, delay }: { pct: number; color: string;
   )
 }
 
+// Diffuse variant — thin bar, no border, muted track behind it.
+function BucketBarDiffuse({ pct, color, track, visible, delay }: { pct: number; color: string; track: string; visible: boolean; delay: number }) {
+  const fill = useSharedValue(0)
+  useEffect(() => {
+    if (visible) {
+      fill.value = 0
+      fill.value = withDelay(delay, withTiming(pct, { duration: 700, easing: Easing.out(Easing.cubic) }))
+    } else { fill.value = 0 }
+  }, [visible, pct, delay])
+  const animStyle = useAnimatedStyle(() => ({ height: `${Math.max(fill.value, 4)}%` as any }))
+  return (
+    <View style={{ width: 6, height: '100%', borderRadius: 999, backgroundColor: track, justifyContent: 'flex-end', overflow: 'hidden' }}>
+      <Reanimated.View style={[{ width: '100%', backgroundColor: color, borderRadius: 999, minHeight: 4 }, animStyle]} />
+    </View>
+  )
+}
+
 // ─── Activity Detail Modal ──────────────────────────────────────────────────
 
 function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, categories, stage, feedingCount, feedingBreast, feedingBottle, feedingMl, avgMl, feedingLeft, feedingRight, feedingBoth, feedingTimes, feedingDurations, feedingDays, childName, childColor }: {
@@ -6429,8 +6593,194 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
 }) {
   const { colors, radius, font } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const isLiquid = stage === 'liquid' || stage === 'mixed'
   const pct = caloriesTarget > 0 ? Math.round((caloriesTotal / caloriesTarget) * 100) : 0
+
+  if (diffuse) {
+    const dCol = dt.colors
+    const acc = getDiffuseAccent('kids', dt.isDark)
+    const breastPct = feedingBreast + feedingBottle > 0
+      ? Math.round((feedingBreast / (feedingBreast + feedingBottle)) * 100)
+      : 0
+    const feedingInsight =
+      breastPct === 100 ? 'Exclusively breastfed — keep going, dear.' :
+      breastPct >= 75 ? 'Mostly breast, with some bottle support.' :
+      breastPct >= 25 ? 'Mixed feeding — best of both worlds.' :
+      breastPct > 0 ? 'Mostly bottle, with some breast.' :
+      feedingBottle > 0 ? 'Exclusively bottle-fed.' :
+      ''
+    return (
+      <DiffuseSheet
+        visible={visible}
+        title={stage === 'liquid' ? 'Feeding' : 'Nutrition'}
+        onClose={onClose}
+        chip={childName || undefined}
+      >
+        {/* Feeding summary — always shown when there are feedings */}
+        {(isLiquid || feedingCount > 0) && (
+          <>
+            {/* Hero — feedings total */}
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_feeding_modal_feedings')}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
+                  <Text style={{ fontFamily: diffuseFont.display, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>{feedingCount.toLocaleString()}</Text>
+                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{'total'}</Text>
+                </View>
+                {avgMl > 0 && (
+                  <Text style={{ fontFamily: diffuseFont.italic, fontSize: 13, color: dCol.ink3, marginTop: 6 }}>
+                    {t('kids_home_feeding_modal_avg_ml', { ml: avgMl.toLocaleString() })}
+                  </Text>
+                )}
+              </View>
+              <DiffuseBloomIcon color={acc} size={44} intensity={0.5}>
+                <Droplets size={24} color={dCol.ink2} strokeWidth={1.5} />
+              </DiffuseBloomIcon>
+            </View>
+
+            {/* 3-tile breakdown */}
+            {(feedingBreast + feedingBottle) > 0 ? (
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
+                <DiffuseMetricTile
+                  value={feedingBreast.toLocaleString()}
+                  label={'Breast'}
+                  icon={<DiffuseBloomIcon color={stickers.pink} size={30}><Baby size={16} color={dCol.ink2} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                />
+                <DiffuseMetricTile
+                  value={feedingBottle.toLocaleString()}
+                  label={'Bottle'}
+                  icon={<DiffuseBloomIcon color={stickers.blue} size={30}><Milk size={16} color={dCol.ink2} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                />
+                <DiffuseMetricTile
+                  value={feedingMl > 0 ? `${feedingMl.toLocaleString()}ml` : '—'}
+                  label={'Total Vol'}
+                  icon={<DiffuseBloomIcon color={stickers.peach} size={30}><Droplets size={16} color={dCol.ink2} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                />
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line, borderRadius: 20, padding: 14 }}>
+                <DiffuseBloomIcon color={acc} size={40} intensity={0.5}>
+                  <Baby size={20} color={dCol.ink2} strokeWidth={1.5} />
+                </DiffuseBloomIcon>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: diffuseFont.bodySemiBold, fontSize: 13, color: dCol.ink }}>
+                    {t('kids_home_feeding_modal_no_detail_title')}
+                  </Text>
+                  <Text style={{ fontFamily: diffuseFont.body, fontSize: 11.5, color: dCol.ink3, marginTop: 2, lineHeight: 15 }}>
+                    {t('kids_home_feeding_modal_no_detail_hint')}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Breast vs Bottle proportion bar */}
+            {(feedingBreast + feedingBottle) > 0 && (
+              <View style={{ marginTop: 22 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_feeding_modal_breast_vs_bottle')}</Text>
+                  <Text style={{ fontFamily: diffuseFont.italic, fontSize: 12, color: dCol.ink3 }}>
+                    {t('kids_home_feeding_modal_pct_breast', { pct: breastPct })}
+                  </Text>
+                </View>
+                <View style={{ height: 7, borderRadius: 999, overflow: 'hidden', flexDirection: 'row', backgroundColor: dCol.line }}>
+                  {feedingBreast > 0 && (
+                    <View style={{ width: `${(feedingBreast / (feedingBreast + feedingBottle)) * 100}%` as any, backgroundColor: stickers.pink }} />
+                  )}
+                  {feedingBottle > 0 && (
+                    <View style={{ width: `${(feedingBottle / (feedingBreast + feedingBottle)) * 100}%` as any, backgroundColor: stickers.blue }} />
+                  )}
+                </View>
+              </View>
+            )}
+
+            {/* Insight — Grandma's read */}
+            {feedingCount > 0 && feedingInsight ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 }}>
+                <Sparkles size={13} color={dCol.ink3} strokeWidth={1.6} />
+                <Text style={{ fontFamily: diffuseFont.italic, fontSize: 14, color: dCol.ink3 }}>
+                  {feedingInsight}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Breastfeeding insights (only when there are breast feeds) */}
+            {feedingBreast > 0 && (
+              <BreastfeedingInsights
+                visible={visible}
+                feedingBreast={feedingBreast}
+                feedingLeft={feedingLeft}
+                feedingRight={feedingRight}
+                feedingBoth={feedingBoth}
+                feedingTimes={feedingTimes}
+                feedingDurations={feedingDurations}
+                feedingDays={feedingDays}
+              />
+            )}
+          </>
+        )}
+
+        {/* Calorie summary */}
+        {(stage === 'solids' || (stage === 'mixed' && caloriesTotal > 0)) && (
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginTop: isLiquid ? 24 : 0, borderTopWidth: isLiquid ? StyleSheet.hairlineWidth : 0, borderTopColor: dCol.line2, paddingTop: isLiquid ? 22 : 0 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{stage === 'mixed' ? 'Solids Calories' : 'Calories'}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
+                <Text style={{ fontFamily: diffuseFont.display, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>
+                  {caloriesTotal > 0 ? caloriesTotal.toLocaleString() : '—'}
+                </Text>
+                {caloriesTotal > 0 ? (
+                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{'cal'}</Text>
+                ) : null}
+              </View>
+              {stage === 'solids' && (
+                <Text style={{ fontFamily: diffuseFont.italic, fontSize: 13, color: dCol.ink3, marginTop: 6 }}>
+                  {pct}{'% of '}{caloriesTarget.toLocaleString()}
+                </Text>
+              )}
+            </View>
+            <DiffuseBloomIcon color={acc} size={44} intensity={0.5}>
+              <Utensils size={24} color={dCol.ink2} strokeWidth={1.5} />
+            </DiffuseBloomIcon>
+          </View>
+        )}
+
+        {/* Category breakdown */}
+        {categories.length > 0 && (() => {
+          const ranked = [...categories].sort((a, b) => b.cals - a.cals)
+          const totalCals = ranked.reduce((sum, c) => sum + c.cals, 0)
+          const topCals = ranked[0]?.cals || 1
+          return (
+            <View style={{ marginTop: 24, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 18 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_feeding_modal_breakdown_cat')}</Text>
+                <Text style={{ fontFamily: diffuseFont.italic, fontSize: 12, color: dCol.ink3 }}>
+                  {ranked.length} {ranked.length === 1 ? 'category' : 'categories'}
+                </Text>
+              </View>
+              <View>
+                {ranked.map((cat, i) => {
+                  const pctOfTotal = totalCals > 0 ? Math.round((cat.cals / totalCals) * 100) : 0
+                  const barWidth = topCals > 0 ? Math.max((cat.cals / topCals) * 100, 2) : 0
+                  return (
+                    <CategoryRankCard
+                      key={i}
+                      cat={cat}
+                      rank={i}
+                      pctOfTotal={pctOfTotal}
+                      barWidth={barWidth}
+                      visible={visible}
+                    />
+                  )
+                })}
+              </View>
+            </View>
+          )
+        })()}
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -6719,6 +7069,8 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
   childName?: string; childColor?: string
 }) {
   const { colors, radius, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const [expandedType, setExpandedType] = useState<string | null>(null)
 
@@ -6758,6 +7110,133 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
       return `${hh}:${String(m).padStart(2, '0')} ${ampm}`
     }
     return end ? `${toLabel(start)} – ${toLabel(end)}` : toLabel(start)
+  }
+
+  if (diffuse) {
+    const dCol = dt.colors
+    return (
+      <DiffuseSheet
+        visible={visible}
+        title={t('kids_home_activities_modal_title')}
+        onClose={onClose}
+        chip={childName || undefined}
+      >
+        {/* Hero total — serif number over the accent bloom */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_activities_modal_title')}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: 44, color: dCol.ink, letterSpacing: -1 }}>{activityCount > 0 ? activityCount.toLocaleString() : '—'}</Text>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{'total'}</Text>
+            </View>
+            {activeDays > 0 && rangeDays > 0 ? (
+              <Text style={{ fontFamily: diffuseFont.italic, fontSize: 13, color: dCol.ink3, marginTop: 6 }}>
+                {t('kids_home_activities_modal_days', { active: activeDays, total: rangeDays })}
+              </Text>
+            ) : null}
+          </View>
+          <DiffuseBloomIcon color={stickers.green} size={44}>
+            <Zap size={24} color={dCol.ink2} strokeWidth={1.5} />
+          </DiffuseBloomIcon>
+        </View>
+
+        {/* 3 analytics tiles — hairline */}
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 22 }}>
+          <DiffuseMetricTile
+            value={`${activeDays}${rangeDays > 0 ? `/${rangeDays}` : ''}`}
+            label={t('kids_home_activities_modal_active_days')}
+            icon={<DiffuseBloomIcon color={stickers.green} size={30}><Clock size={15} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+          />
+          <DiffuseMetricTile
+            value={topMeta ? topMeta.label.split(' ')[0] : '—'}
+            label={t('kids_home_activities_modal_top')}
+            icon={<DiffuseBloomIcon color={stickers.yellow} size={30}><TrendingUp size={15} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+          />
+          <DiffuseMetricTile
+            value={String(distinctTypes)}
+            label={t('kids_home_activities_modal_types')}
+            icon={<DiffuseBloomIcon color={stickers.lilac} size={30}><Sparkles size={15} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+          />
+        </View>
+
+        {/* Per active day summary line */}
+        {activityCount > 0 ? (
+          <Text style={{ fontFamily: diffuseFont.italic, fontSize: 13, color: dCol.ink3, marginTop: 14 }}>
+            {t('kids_home_activities_modal_per_active_day', { avg: avgPerActiveDay })}
+            {topMeta ? ` · ${topMeta.label} leads (${topPct}%)` : ''}
+          </Text>
+        ) : null}
+
+        {/* Ranking */}
+        {ranked.length > 0 ? (
+          <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 18, marginTop: 24 }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3, marginBottom: 10 }}>{t('kids_home_activities_modal_ranking')}</Text>
+            {ranked.map(([type, count]) => {
+              const meta = ACTIVITY_TYPE_META[type] ?? { label: type, color: PILLAR_COLORS.activity }
+              const typePct = activityCount > 0 ? Math.round((count / activityCount) * 100) : 0
+              const isOpen = expandedType === type
+              const typeEntries = entries.filter((e) => e.type === type)
+              return (
+                <View key={type} style={{ paddingVertical: 8 }}>
+                  <Pressable onPress={() => setExpandedType(isOpen ? null : type)}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                      <View style={{ width: 7, height: 7, borderRadius: 999, backgroundColor: meta.color }} />
+                      <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 14, color: dCol.ink }}>{meta.label}</Text>
+                      <Text style={{ fontFamily: diffuseFont.mono, fontSize: 13, color: dCol.ink }}>{count.toLocaleString()}</Text>
+                      <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, color: dCol.ink3, minWidth: 38, textAlign: 'right' }}>{typePct}%</Text>
+                      <ChevronRight
+                        size={14}
+                        color={dCol.ink3}
+                        strokeWidth={2}
+                        style={{ transform: [{ rotate: isOpen ? '90deg' : '0deg' }], marginLeft: 2 }}
+                      />
+                    </View>
+                    <View style={{ height: 5, borderRadius: 999, backgroundColor: dCol.line, overflow: 'hidden' }}>
+                      <View style={{ width: `${typePct}%`, height: 5, borderRadius: 999, backgroundColor: meta.color }} />
+                    </View>
+                  </Pressable>
+                  {isOpen ? (
+                    <View style={{ marginTop: 10, marginLeft: 16, gap: 10, borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: dCol.line2, paddingLeft: 14 }}>
+                      {typeEntries.length === 0 ? (
+                        <Text style={{ fontFamily: diffuseFont.italic, fontSize: 12, color: dCol.ink3 }}>
+                          {t('kids_home_activities_modal_no_entries')}
+                        </Text>
+                      ) : typeEntries.map((entry) => {
+                        const timeLabel = formatEntryTime(entry.startTime, entry.endTime)
+                        return (
+                          <View key={entry.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+                            <View style={{ width: 5, height: 5, borderRadius: 999, backgroundColor: meta.color, marginTop: 6 }} />
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontFamily: diffuseFont.bodySemiBold, fontSize: 13, color: dCol.ink }}>
+                                {entry.name || meta.label}
+                              </Text>
+                              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.4, color: dCol.ink3, marginTop: 3 }}>
+                                {formatEntryDate(entry.date)}{timeLabel ? ` · ${timeLabel}` : ''}
+                              </Text>
+                              {entry.notes ? (
+                                <Text style={{ fontFamily: diffuseFont.italic, fontSize: 12, color: dCol.ink3, marginTop: 3 }} numberOfLines={2}>
+                                  {entry.notes}
+                                </Text>
+                              ) : null}
+                            </View>
+                          </View>
+                        )
+                      })}
+                    </View>
+                  ) : null}
+                </View>
+              )
+            })}
+          </View>
+        ) : (
+          <DiffuseEmptyState
+            icon={<DiffuseBloomIcon color={stickers.green} size={48}><Zap size={26} color={dCol.ink2} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            title={t('kids_home_activities_modal_no_entries')}
+            style={{ marginTop: 24 }}
+          />
+        )}
+      </DiffuseSheet>
+    )
   }
 
   return (
