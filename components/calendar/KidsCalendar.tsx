@@ -233,7 +233,7 @@ function DiffuseTimelineNode({ type, active }: { type: string; active?: boolean 
       }}
     >
       <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
-        <SoftBloom color={diffuseLogHue(type)} opacity={active ? 0.9 : 0.62} spread={0.5} />
+        <SoftBloom color={diffuseLogHue(type)} opacity={active ? 0.9 : 0.62} spread={0.42} radius="50%" />
       </View>
       <Glyph size={20} color={colors.ink2} strokeWidth={1.6} style={{ zIndex: 1 }} />
     </View>
@@ -849,7 +849,7 @@ function DiffuseWeekStrip({
               <View style={diffuseStripStyles.bubbleWrap}>
                 {isSelected ? (
                   <View pointerEvents="none" style={diffuseStripStyles.bloom}>
-                    <SoftBloom color={acc} opacity={0.55} spread={0.4} />
+                    <SoftBloom color={acc} opacity={0.55} spread={0.34} radius="50%" />
                   </View>
                 ) : null}
                 <View
@@ -891,7 +891,7 @@ const diffuseStripStyles = StyleSheet.create({
   cell: { flex: 1, alignItems: 'center', gap: 5 },
   dow: { fontSize: 9, letterSpacing: 1, textTransform: 'uppercase' },
   bubbleWrap: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  bloom: { position: 'absolute', width: '150%', height: '150%' },
+  bloom: { position: 'absolute', width: '132%', height: '132%' },
   bubble: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   dotRow: { flexDirection: 'row', gap: 3, height: 5, alignItems: 'center' },
   dot: { width: 4, height: 4, borderRadius: 2 },
@@ -2831,7 +2831,7 @@ export function KidsCalendar() {
                 { borderColor: dt.colors.hairline, opacity: pressed ? 0.6 : 1 },
               ]}
             >
-              <SoftBloom color={getDiffuseAccent('kids', isDark)} opacity={isDark ? 0.4 : 0.5} spread={0.5} />
+              <SoftBloom color={getDiffuseAccent('kids', isDark)} opacity={isDark ? 0.4 : 0.5} spread={0.42} radius="50%" />
               <Plus size={18} color={dt.colors.ink} strokeWidth={1.8} />
             </Pressable>
           ) : (

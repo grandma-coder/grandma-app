@@ -308,8 +308,8 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
                     }}
                   >
                     {isCurrent ? (
-                      <View pointerEvents="none" style={{ position: 'absolute', width: d.size * 1.4, height: d.size * 1.4 }}>
-                        <SoftBloom color={diffuseAccent} opacity={isDark ? 0.4 : 0.5} spread={0.45} />
+                      <View pointerEvents="none" style={{ position: 'absolute', width: d.size * 1.28, height: d.size * 1.28 }}>
+                        <SoftBloom color={diffuseAccent} opacity={isDark ? 0.4 : 0.5} spread={0.4} radius="50%" />
                       </View>
                     ) : null}
                     <Animated.View style={counterRotateStyle}>

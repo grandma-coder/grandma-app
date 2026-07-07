@@ -605,12 +605,13 @@ export function DiffuseBloomIcon({ children, color, size = 34, intensity = 0.55 
   const { isDark } = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
   const bloom = color ?? getDiffuseAccent(mode, isDark)
-  // The bloom box is larger than the glyph so the feathered edge extends past it.
-  const box = size * 1.5
+  // The bloom box extends just past the glyph so the feathered edge hugs the
+  // icon (a tighter halo, not a wash across the whole tile).
+  const box = size * 1.3
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <View pointerEvents="none" style={{ position: 'absolute', width: box, height: box, left: (size - box) / 2, top: (size - box) / 2 }}>
-        <SoftBloom color={bloom} opacity={isDark ? intensity * 0.8 : intensity} spread={0.5} />
+        <SoftBloom color={bloom} opacity={isDark ? intensity * 0.8 : intensity} spread={0.42} radius="50%" />
       </View>
       <View style={{ zIndex: 1 }}>{children}</View>
     </View>
@@ -697,7 +698,7 @@ export function DiffuseDotCalendar({ value, onChange, month, minimumDate, period
             >
               {selected ? (
                 <View pointerEvents="none" style={dp.calBloom}>
-                  <SoftBloom color={acc} opacity={0.55} spread={0.4} />
+                  <SoftBloom color={acc} opacity={0.55} spread={0.34} radius="50%" />
                 </View>
               ) : null}
               <View

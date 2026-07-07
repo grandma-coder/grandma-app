@@ -77,16 +77,22 @@ interface SoftBloomProps {
   cx?: string
   cy?: string
   spread?: number
+  /**
+   * Overall radius of the gradient as a CSS length (default '60%'). Lower it
+   * (e.g. '46%') for icon blooms so the glow hugs the glyph instead of washing
+   * across the whole tile. Card/surface washes keep the default.
+   */
+  radius?: string
   style?: StyleProp<ViewStyle>
 }
 
-export function SoftBloom({ color, opacity = 0.5, cx = '50%', cy = '50%', spread = 0.6, style }: SoftBloomProps) {
+export function SoftBloom({ color, opacity = 0.5, cx = '50%', cy = '50%', spread = 0.6, radius = '60%', style }: SoftBloomProps) {
   const id = useMemo(() => `sb${bloomSeq++}`, [])
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, style]}>
       <Svg width="100%" height="100%">
         <Defs>
-          <RadialGradient id={id} cx={cx} cy={cy} r="60%">
+          <RadialGradient id={id} cx={cx} cy={cy} r={radius}>
             <Stop offset="0" stopColor={color} stopOpacity={opacity} />
             <Stop offset={String(spread)} stopColor={color} stopOpacity={opacity * 0.4} />
             <Stop offset="1" stopColor={color} stopOpacity={0} />
