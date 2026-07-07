@@ -14,7 +14,6 @@ import { Heart } from '../../ui/Stickers'
 import { PaperCard } from '../../ui/PaperCard'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseArrow, SoftBloom } from '../../ui/diffuse/DiffuseKit'
-import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 import { supabase } from '../../../lib/supabase'
 import { getCycleInfo, toDateStr, type CycleConfig } from '../../../lib/cycleLogic'
@@ -138,35 +137,37 @@ export function DailyNudgeCard({ cycleConfig }: Props) {
       : null
 
   if (diffuse) {
-    // v4 soft-wash banner: containerless (no card border, no eyebrow, no
-    // footer). A left-anchored bloom-icon washes into the surface; the copy
-    // reads as one calm block — serif+italic headline over a sans body — with
-    // a single trailing arrow as the only tap affordance.
+    // v4 soft-wash — NO card: no border, no radius, no clip. A free feathered
+    // bloom bleeds off the upper-left into the page (its transparent falloff
+    // extends past the edges, so there's no card silhouette). The copy reads
+    // as one calm block; a single trailing arrow is the only tap affordance.
     return (
       <Pressable
         onPress={handlePress}
         accessibilityRole="button"
         accessibilityLabel={t('cycle_nudge_label' as any)}
-        style={({ pressed }) => [styles.wash, { borderRadius: radius.lg, opacity: pressed ? 0.7 : 1 }]}
+        style={({ pressed }) => [styles.wash, { opacity: pressed ? 0.7 : 1 }]}
       >
-        {/* Soft left-edge wash — the bloom emanates from behind the icon. */}
-        <SoftBloom color={diffuseAccent} cx="8%" cy="42%" opacity={dt.isDark ? 0.24 : 0.32} spread={0.5} />
+        {/* Free bloom — inset negative so the feathered edge bleeds off-card. */}
+        <View pointerEvents="none" style={styles.washBloom}>
+          <SoftBloom color={diffuseAccent} cx="30%" cy="34%" opacity={dt.isDark ? 0.28 : 0.34} spread={0.42} radius="52%" />
+        </View>
 
         <View style={styles.washRow}>
-          <DiffuseBloomIcon color={diffuseAccent} size={34} intensity={0.5}>
-            <HeartLine size={18} color={dt.colors.ink3} strokeWidth={1.6} />
-          </DiffuseBloomIcon>
+          <View style={styles.washIcon}>
+            <HeartLine size={20} color={dt.colors.ink3} strokeWidth={1.6} />
+          </View>
 
           <View style={styles.washBody}>
             {renderHeadline(t(nudge.headlineKey as any), dt.colors.ink, dt.colors.ink3, diffuseFont.display, diffuseFont.italic)}
-            <Text style={[styles.washText, { color: dt.colors.ink2, fontFamily: diffuseFont.body }]} numberOfLines={4}>
+            <Text style={[styles.washText, { color: dt.colors.ink2, fontFamily: diffuseFont.body }]} numberOfLines={5}>
               {t(nudge.bodyKey as any)}
             </Text>
           </View>
 
           {ctaLabel ? (
             <View style={styles.washArrow}>
-              <DiffuseArrow color={diffuseAccent} size={16} />
+              <DiffuseArrow color={diffuseAccent} size={18} />
             </View>
           ) : null}
         </View>
@@ -241,10 +242,14 @@ const styles = StyleSheet.create({
   fromD: { fontSize: 9.5, letterSpacing: 1.4, textTransform: 'uppercase', flexShrink: 1 },
   ctaRowD: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   ctaD: { fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase' },
-  // Diffuse soft-wash banner (containerless — no border, no eyebrow, no footer)
-  wash: { paddingVertical: 18, paddingHorizontal: 6, overflow: 'hidden' },
-  washRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  washBody: { flex: 1, gap: 5 },
-  washText: { fontSize: 14, lineHeight: 20 },
-  washArrow: { paddingLeft: 4, alignSelf: 'center' },
+  // Diffuse soft-wash banner — NO card: no border, no radius, no clip.
+  // The bloom bleeds off the edges into the page (washBloom is negative-inset
+  // and NOT clipped), so there is no card silhouette.
+  wash: { paddingVertical: 20, paddingHorizontal: 4 },
+  washBloom: { position: 'absolute', top: -40, left: -50, right: -20, bottom: -40 },
+  washRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  washIcon: { width: 40, alignItems: 'center', justifyContent: 'center' },
+  washBody: { flex: 1, gap: 6 },
+  washText: { fontSize: 14, lineHeight: 21 },
+  washArrow: { paddingLeft: 6, alignSelf: 'center' },
 })
