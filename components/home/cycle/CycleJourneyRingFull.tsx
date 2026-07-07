@@ -538,6 +538,12 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                         pointerEvents="none"
                         style={{
                           position: 'absolute',
+                          // Center the (glyphSize+14) aura box on the glyph — an
+                          // absolute child with no inset pins to top-left, which
+                          // pushed the sparkles off-glyph. Offset by half the
+                          // 14px overflow so it's centered.
+                          top: -7,
+                          left: -7,
                           width: glyphSize + 14,
                           height: glyphSize + 14,
                           opacity: 0.7,
