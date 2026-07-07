@@ -57,6 +57,23 @@ export interface TranslationKeys {
   menu_dailyRewards: string
   menu_garage: string
   menu_channels: string
+  menu_insights_sub: string
+  menu_dailyRewards_sub: string
+  menu_grandmaTalk_sub: string
+  menu_garage_sub: string
+  menu_channels_sub: string
+  cycleRing_title_menstruation: string
+  cycleRing_title_follicular: string
+  cycleRing_title_ovulation: string
+  cycleRing_title_luteal: string
+  cycleRing_label_menstruation: string
+  cycleRing_label_follicular: string
+  cycleRing_label_ovulation: string
+  cycleRing_label_luteal: string
+  cycleRing_note_menstruation: string
+  cycleRing_note_follicular: string
+  cycleRing_note_ovulation: string
+  cycleRing_note_luteal: string
 
   // ─── Journey Modes ─────────────────────────────────────────────────────
   mode_prePregnancy: string

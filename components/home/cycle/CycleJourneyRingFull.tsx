@@ -21,6 +21,7 @@ import Animated, {
 import { useTheme, motion, useDiffuseTheme, getModeField, getDiffuseAccent, diffuseFont } from '../../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
+import type { TranslationKey } from '../../../lib/i18n'
 import {
   getCycleInfo, toDateStr,
   type CycleConfig, type CyclePhase,
@@ -90,31 +91,18 @@ function phaseInk(phase: CyclePhase, stickers: ReturnType<typeof useTheme>['stic
   }
 }
 
-function phaseTitleItalic(phase: CyclePhase): string {
-  switch (phase) {
-    case 'menstruation': return 'quiet day'
-    case 'follicular':   return 'rising day'
-    case 'ovulation':    return 'peak day'
-    case 'luteal':       return 'soft day'
-  }
+type TFn = (key: TranslationKey) => string
+
+function phaseTitleItalic(phase: CyclePhase, t: TFn): string {
+  return t(`cycleRing_title_${phase}` as TranslationKey)
 }
 
-function phaseLabel(phase: CyclePhase): string {
-  switch (phase) {
-    case 'menstruation': return 'Menstruation'
-    case 'follicular':   return 'Follicular'
-    case 'ovulation':    return 'Ovulation'
-    case 'luteal':       return 'Luteal'
-  }
+function phaseLabel(phase: CyclePhase, t: TFn): string {
+  return t(`cycleRing_label_${phase}` as TranslationKey)
 }
 
-function thisDayNote(phase: CyclePhase): string {
-  switch (phase) {
-    case 'menstruation': return 'Your body is shedding the uterine lining — energy may dip; rest is fuel.'
-    case 'follicular':   return 'Estrogen rises and follicles mature — focus, drive, and stamina trend up.'
-    case 'ovulation':    return 'Peak fertility window — an egg is released and lives ~24 hours.'
-    case 'luteal':       return 'Progesterone takes the lead — slower pace, softer days, prep for the next cycle.'
-  }
+function thisDayNote(phase: CyclePhase, t: TFn): string {
+  return t(`cycleRing_note_${phase}` as TranslationKey)
 }
 
 // ─── Dot geometry ───────────────────────────────────────────────────────────
@@ -451,7 +439,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
   const isPast = selectedDay < cycleDayToday
 
   const statusLabel = isToday ? 'TODAY' : isPast ? 'PAST' : 'UPCOMING'
-  const titleItalic = phaseTitleItalic(selPhase)
+  const titleItalic = phaseTitleItalic(selPhase, t)
   const fertilityPct = useMemo(() => {
     switch (selectedInfo.conceptionProbability) {
       case 'peak':   return 95
@@ -624,7 +612,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                     {t('cycle_ring_of_n', { n: cycleLength })}
                   </Text>
                   <Text style={[styles.centerPhaseD, { color: dt.colors.ink2, fontFamily: diffuseFont.italic }]}>
-                    {phaseLabel(selPhase)}
+                    {phaseLabel(selPhase, t)}
                   </Text>
                 </>
               ) : (
@@ -669,7 +657,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                     : { color: colors.textMuted, fontFamily: font.bodySemiBold },
                 ]}
               >
-                {item.label}
+                {phaseLabel(item.phase, t)}
               </Text>
             </View>
           )
@@ -713,7 +701,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
               {t('cycle_ring_phase_prefix')}<Text style={[styles.statusTitleAccent, { color: diffuse ? dt.colors.ink : accent, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>{titleItalic}</Text>
             </Text>
             <Text style={[styles.dateLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
-              {t('cycle_ring_date_phase', { date: formatLongDate(selectedDate), phase: phaseLabel(selPhase) })}
+              {t('cycle_ring_date_phase', { date: formatLongDate(selectedDate), phase: phaseLabel(selPhase, t) })}
             </Text>
           </View>
           {diffuse ? (
@@ -759,7 +747,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
             {t('cycle_ring_label_this_day')}
           </Text>
           <Text style={[styles.noteText, diffuse ? { color: dt.colors.ink2, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>
-            {thisDayNote(selPhase)}
+            {thisDayNote(selPhase, t)}
           </Text>
         </View>
 

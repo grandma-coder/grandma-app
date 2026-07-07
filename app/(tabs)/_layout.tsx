@@ -49,7 +49,7 @@ type StickerRenderer = (props: { size: number }) => ReactElement
 interface WheelItem {
   id: string
   labelKey: 'menu_grandmaTalk' | 'menu_insights' | 'menu_dailyRewards' | 'menu_garage' | 'menu_channels'
-  subtitle: string
+  subtitleKey: 'menu_insights_sub' | 'menu_dailyRewards_sub' | 'menu_grandmaTalk_sub' | 'menu_garage_sub' | 'menu_channels_sub'
   icon: LucideIcon
   route: string
   rotation: number // degrees of playful tilt
@@ -60,7 +60,7 @@ const WHEEL_ITEMS: WheelItem[] = [
   {
     id: 'insights',
     labelKey: 'menu_insights',
-    subtitle: 'what grandma sees',
+    subtitleKey: 'menu_insights_sub',
     icon: Sparkles,
     route: '/insights',
     rotation: -6,
@@ -69,7 +69,7 @@ const WHEEL_ITEMS: WheelItem[] = [
   {
     id: 'rewards',
     labelKey: 'menu_dailyRewards',
-    subtitle: 'little gifts',
+    subtitleKey: 'menu_dailyRewards_sub',
     icon: Gift,
     route: '/daily-rewards',
     rotation: 4,
@@ -78,7 +78,7 @@ const WHEEL_ITEMS: WheelItem[] = [
   {
     id: 'chat',
     labelKey: 'menu_grandmaTalk',
-    subtitle: 'voice · live',
+    subtitleKey: 'menu_grandmaTalk_sub',
     icon: MessageCircle,
     route: '/grandma-talk',
     rotation: -8,
@@ -87,7 +87,7 @@ const WHEEL_ITEMS: WheelItem[] = [
   {
     id: 'garage',
     labelKey: 'menu_garage',
-    subtitle: 'pass it on',
+    subtitleKey: 'menu_garage_sub',
     icon: ShoppingBag,
     route: '/connections',
     rotation: 6,
@@ -96,7 +96,7 @@ const WHEEL_ITEMS: WheelItem[] = [
   {
     id: 'channels',
     labelKey: 'menu_channels',
-    subtitle: 'find your people',
+    subtitleKey: 'menu_channels_sub',
     icon: Users,
     route: '/connections?tab=channels',
     rotation: -4,
@@ -303,7 +303,7 @@ function CenterTabButton() {
                     </Text>
                   </View>
                   <Text style={[styles.subtitle, { color: ink3Color }]} numberOfLines={1}>
-                    {item.subtitle}
+                    {t(item.subtitleKey)}
                   </Text>
                 </View>
               </Pressable>
