@@ -538,20 +538,22 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                         pointerEvents="none"
                         style={{
                           position: 'absolute',
-                          // Center the (glyphSize+14) aura box on the glyph — an
-                          // absolute child with no inset pins to top-left, which
-                          // pushed the sparkles off-glyph. Offset by half the
-                          // 14px overflow so it's centered.
-                          top: -7,
-                          left: -7,
-                          width: glyphSize + 14,
-                          height: glyphSize + 14,
-                          opacity: 0.7,
+                          // Center the aura box on the glyph — an absolute child
+                          // with no inset pins to top-left, which pushed the
+                          // sparkles off-glyph. Offset by half the overflow.
+                          // A wider halo (+22) sits the sparkles clearly AROUND
+                          // the glyph so they stay legible even when today is
+                          // right beside the anchor ring.
+                          top: -11,
+                          left: -11,
+                          width: glyphSize + 22,
+                          height: glyphSize + 22,
+                          opacity: 0.9,
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}
                       >
-                        <TodayAura size={glyphSize + 14} color={diffuseGlyphColor(d.phase, dt.isDark)} count={8} />
+                        <TodayAura size={glyphSize + 22} color={diffuseGlyphColor(d.phase, dt.isDark)} count={10} />
                       </View>
                     ) : null}
                     <DaySticker phase={d.phase} size={glyphSize} bg={diffuseGlyphColor(d.phase, dt.isDark)} />
