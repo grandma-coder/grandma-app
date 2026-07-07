@@ -13,7 +13,7 @@ import { Heart as HeartLine } from 'lucide-react-native'
 import { Heart } from '../../ui/Stickers'
 import { PaperCard } from '../../ui/PaperCard'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
-import { useIsDiffuse, DiffuseArrow } from '../../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, DiffuseArrow, SoftBloom } from '../../ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 import { supabase } from '../../../lib/supabase'
@@ -138,43 +138,38 @@ export function DailyNudgeCard({ cycleConfig }: Props) {
       : null
 
   if (diffuse) {
-    // v4 `.nudge`: mono eyebrow · serif+italic headline · sans body ·
-    // containerless action on a hairline. Bloom-icon in place of sticker chip.
+    // v4 soft-wash banner: containerless (no card border, no eyebrow, no
+    // footer). A left-anchored bloom-icon washes into the surface; the copy
+    // reads as one calm block — serif+italic headline over a sans body — with
+    // a single trailing arrow as the only tap affordance.
     return (
-      <Pressable onPress={handlePress} accessibilityRole="button" accessibilityLabel={t('cycle_nudge_label' as any)}>
-        <PaperCard radius={radius.lg} padding={18} style={styles.card}>
-          <View style={styles.headerRow}>
-            <Text style={[styles.label, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 }]}>
-              {t('cycle_nudge_label' as any)}
-            </Text>
-            <DiffuseBloomIcon color={diffuseAccent} size={30} intensity={0.45}>
-              <HeartLine size={16} color={dt.colors.ink3} strokeWidth={1.6} />
-            </DiffuseBloomIcon>
-          </View>
+      <Pressable
+        onPress={handlePress}
+        accessibilityRole="button"
+        accessibilityLabel={t('cycle_nudge_label' as any)}
+        style={({ pressed }) => [styles.wash, { borderRadius: radius.lg, opacity: pressed ? 0.7 : 1 }]}
+      >
+        {/* Soft left-edge wash — the bloom emanates from behind the icon. */}
+        <SoftBloom color={diffuseAccent} cx="8%" cy="42%" opacity={dt.isDark ? 0.24 : 0.32} spread={0.5} />
 
-          <View style={styles.body}>
-            {renderHeadline(t(nudge.headlineKey as any), dt.colors.ink, dt.colors.ink, diffuseFont.display, diffuseFont.italic)}
-            <Text style={[styles.text, { color: dt.colors.ink2, fontFamily: diffuseFont.body }]} numberOfLines={4}>
+        <View style={styles.washRow}>
+          <DiffuseBloomIcon color={diffuseAccent} size={34} intensity={0.5}>
+            <HeartLine size={18} color={dt.colors.ink3} strokeWidth={1.6} />
+          </DiffuseBloomIcon>
+
+          <View style={styles.washBody}>
+            {renderHeadline(t(nudge.headlineKey as any), dt.colors.ink, dt.colors.ink3, diffuseFont.display, diffuseFont.italic)}
+            <Text style={[styles.washText, { color: dt.colors.ink2, fontFamily: diffuseFont.body }]} numberOfLines={4}>
               {t(nudge.bodyKey as any)}
             </Text>
           </View>
 
           {ctaLabel ? (
-            <View style={[styles.footerD, { borderTopColor: dt.colors.line2 }]}>
-              {fromLabel ? (
-                <Text style={[styles.fromD, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]} numberOfLines={1}>
-                  {fromLabel}
-                </Text>
-              ) : <View />}
-              <View style={styles.ctaRowD}>
-                <Text style={[styles.ctaD, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold }]}>
-                  {ctaLabel}
-                </Text>
-                <DiffuseArrow color={diffuseAccent} size={16} />
-              </View>
+            <View style={styles.washArrow}>
+              <DiffuseArrow color={diffuseAccent} size={16} />
             </View>
           ) : null}
-        </PaperCard>
+        </View>
       </Pressable>
     )
   }
@@ -246,4 +241,10 @@ const styles = StyleSheet.create({
   fromD: { fontSize: 9.5, letterSpacing: 1.4, textTransform: 'uppercase', flexShrink: 1 },
   ctaRowD: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   ctaD: { fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase' },
+  // Diffuse soft-wash banner (containerless — no border, no eyebrow, no footer)
+  wash: { paddingVertical: 18, paddingHorizontal: 6, overflow: 'hidden' },
+  washRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  washBody: { flex: 1, gap: 5 },
+  washText: { fontSize: 14, lineHeight: 20 },
+  washArrow: { paddingLeft: 4, alignSelf: 'center' },
 })
