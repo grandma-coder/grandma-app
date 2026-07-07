@@ -488,11 +488,10 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
       {/* ── Ring ── */}
       <View style={styles.ringWrap}>
         {diffuse ? (
-          // Subtle feathered field behind the wheel — kept low so the icons and
-          // hairline ring carry the composition (per the v4 reference, not a
-          // loud pink radial).
+          // Barely-there feathered field — the reference is nearly flat cream;
+          // the icons + hairline ring carry the composition, not a pink radial.
           <View pointerEvents="none" style={styles.ringBloom}>
-            <SoftBloom color={diffuseAccent} opacity={dt.isDark ? 0.18 : 0.2} spread={0.5} />
+            <SoftBloom color={diffuseAccent} opacity={dt.isDark ? 0.1 : 0.1} spread={0.55} />
           </View>
         ) : null}
         <View {...panResponder.panHandlers} style={styles.ringStage}>
@@ -508,7 +507,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                 // in the static layer below); we don't ring the day itself, so
                 // the selection frame stays put as the wheel spins. Future days
                 // are softened.
-                const glyphSize = 18
+                const glyphSize = 22
                 return (
                   <View
                     key={d.day}
@@ -520,11 +519,11 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                       height: glyphSize,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      opacity: d.state === 'future' ? 0.5 : 1,
+                      opacity: d.state === 'future' ? 0.8 : 1,
                     }}
                     pointerEvents="none"
                   >
-                    <DaySticker phase={d.phase} size={glyphSize} bg={diffusePhaseColor(d.phase, field)} />
+                    <DaySticker phase={d.phase} size={glyphSize} bg={phaseAccent(d.phase, stickers)} />
                   </View>
                 )
               }
@@ -585,13 +584,16 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
               strokeWidth={diffuse ? 1 : 1.5}
             />
             {diffuse ? (
-              // Progress arc = fraction of cycle elapsed (today), gradient-tinted.
+              // Subtle progress arc = fraction of cycle elapsed (today). Thin +
+              // low opacity so it whispers the progression without competing
+              // with the phase glyphs.
               <Circle
                 cx={CX} cy={CY} r={RING_R}
                 fill="none"
                 stroke="url(#cycleRingArc)"
-                strokeWidth={3}
+                strokeWidth={2}
                 strokeLinecap="round"
+                opacity={0.55}
                 strokeDasharray={`${(2 * Math.PI * RING_R) * (Math.min(cycleDayToday, cycleLength) / cycleLength)} ${2 * Math.PI * RING_R}`}
                 transform={`rotate(-90 ${CX} ${CY})`}
               />
@@ -615,13 +617,13 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
                   <Text style={[styles.centerLabelD, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
                     {t('cycle_ring_label_day')}
                   </Text>
-                  <Text style={[styles.centerNumberD, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+                  <Text style={[styles.centerNumberD, { color: phaseAccent(selPhase, stickers), fontFamily: diffuseFont.display }]}>
                     {selectedDay}
                   </Text>
                   <Text style={[styles.centerStatusD, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
                     {t('cycle_ring_of_n', { n: cycleLength })}
                   </Text>
-                  <Text style={[styles.centerPhaseD, { color: dt.colors.ink2, fontFamily: diffuseFont.display }]}>
+                  <Text style={[styles.centerPhaseD, { color: dt.colors.ink2, fontFamily: diffuseFont.italic }]}>
                     {phaseLabel(selPhase)}
                   </Text>
                 </>
@@ -650,7 +652,7 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
       {/* ── Legend (inline, single row) ── */}
       <View style={styles.legendRowInline}>
         {LEGEND.map((item) => {
-          const bg = diffuse ? diffusePhaseColor(item.phase, field) : phaseAccent(item.phase, stickers)
+          const bg = phaseAccent(item.phase, stickers)
           return (
             <View key={item.phase} style={styles.legendInlineItem}>
               {diffuse ? (
