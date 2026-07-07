@@ -2091,9 +2091,15 @@ export function KidsHome() {
       {/* ─── Health + Diaper (Mood + Calories live in hero tiles now) ─── */}
       <View style={s.sectionHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ transform: [{ rotate: '-8deg' }], opacity: diffuse ? 0.85 : 1 }}>
-            <HeartSticker size={diffuse ? 22 : 28} fill={diffuse ? stickers.coral : '#EE7B6D'} />
-          </View>
+          {diffuse ? (
+            <DiffuseBloomIcon color={stickers.coral} size={30}>
+              <Heart size={17} color={dt.colors.ink3} strokeWidth={1.6} />
+            </DiffuseBloomIcon>
+          ) : (
+            <View style={{ transform: [{ rotate: '-8deg' }] }}>
+              <HeartSticker size={28} fill="#EE7B6D" />
+            </View>
+          )}
           <Text style={[s.sectionTitle, diffuse
             ? { color: dt.colors.ink, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
             : { color: colors.text }]}>{t('kids_home_section_health_care')}</Text>
@@ -2119,9 +2125,15 @@ export function KidsHome() {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}
           hitSlop={6}
         >
-          <View style={{ transform: [{ rotate: '10deg' }], opacity: diffuse ? 0.85 : 1 }}>
-            <FlowerSticker size={diffuse ? 22 : 28} petal={diffuse ? stickers.lilac : '#C8B6E8'} center={diffuse ? stickers.yellow : '#F5D652'} />
-          </View>
+          {diffuse ? (
+            <DiffuseBloomIcon color={stickers.lilac} size={30}>
+              <Bell size={17} color={dt.colors.ink3} strokeWidth={1.6} />
+            </DiffuseBloomIcon>
+          ) : (
+            <View style={{ transform: [{ rotate: '10deg' }] }}>
+              <FlowerSticker size={28} petal="#C8B6E8" center="#F5D652" />
+            </View>
+          )}
           <Text style={[s.sectionTitle, diffuse
             ? { color: dt.colors.ink, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
             : { color: colors.text }]}>{t('kids_home_section_reminders')}</Text>
