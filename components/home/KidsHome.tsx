@@ -2147,10 +2147,7 @@ export function KidsHome() {
             borderColor: dt.colors.line2, opacity: pressed ? 0.6 : 1,
           }]}
         >
-          <DiffuseBloomIcon color={stickers.yellow} size={30}>
-            <Star size={17} color={dt.colors.ink3} strokeWidth={1.6} />
-          </DiffuseBloomIcon>
-          <Text style={{ fontSize: 17, fontFamily: diffuseFont.display, color: dt.colors.ink, letterSpacing: -0.2 }}>{t('kids_home_set_goals_btn')}</Text>
+          <Text style={{ fontSize: 22, fontFamily: diffuseFont.displayMedium, color: dt.colors.ink, letterSpacing: -0.4 }}>{t('kids_home_set_goals_btn')}</Text>
           <Text style={{ flex: 1, textAlign: 'right', fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.4, fontSize: 9.5, color: dt.colors.ink3 }}>
             {t('kids_home_set_goals_hint')}
           </Text>
@@ -2205,17 +2202,13 @@ export function KidsHome() {
       {/* ─── Health + Diaper (Mood + Calories live in hero tiles now) ─── */}
       <View style={s.sectionHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          {diffuse ? (
-            <DiffuseBloomIcon color={stickers.coral} size={30}>
-              <Heart size={17} color={dt.colors.ink3} strokeWidth={1.6} />
-            </DiffuseBloomIcon>
-          ) : (
+          {diffuse ? null : (
             <View style={{ transform: [{ rotate: '-8deg' }] }}>
               <HeartSticker size={28} fill="#EE7B6D" />
             </View>
           )}
           <Text style={[s.sectionTitle, diffuse
-            ? { color: dt.colors.ink, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
+            ? { color: dt.colors.ink, fontFamily: diffuseFont.displayMedium, fontSize: 24, letterSpacing: -0.5 }
             : { color: colors.text }]}>{t('kids_home_section_health_care')}</Text>
         </View>
       </View>
@@ -2239,17 +2232,13 @@ export function KidsHome() {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}
           hitSlop={6}
         >
-          {diffuse ? (
-            <DiffuseBloomIcon color={stickers.lilac} size={30}>
-              <Bell size={17} color={dt.colors.ink3} strokeWidth={1.6} />
-            </DiffuseBloomIcon>
-          ) : (
+          {diffuse ? null : (
             <View style={{ transform: [{ rotate: '10deg' }] }}>
               <FlowerSticker size={28} petal="#C8B6E8" center="#F5D652" />
             </View>
           )}
           <Text style={[s.sectionTitle, diffuse
-            ? { color: dt.colors.ink, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
+            ? { color: dt.colors.ink, fontFamily: diffuseFont.displayMedium, fontSize: 24, letterSpacing: -0.5 }
             : { color: colors.text }]}>{t('kids_home_section_reminders')}</Text>
           {reminders.length > 0 ? (
             <View style={diffuse ? {
