@@ -288,12 +288,15 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
               const fontSize = d.size >= 52 ? 16 : d.size >= 42 ? 14 : 12
 
               if (diffuse) {
-                // Hairline ring node: done = filled ink, current = open accent
-                // ring (soft bloom behind), upcoming = faint hollow. The W##
-                // label sits below the node in mono, counter-rotated upright.
+                // Soft leap node in the leap's OWN colour (not black): done =
+                // filled soft colour, current = same colour + a soft bloom +
+                // accent hairline, upcoming = faint hollow. The W## label sits
+                // below the node in mono, counter-rotated upright.
                 const nodeSize = isCurrent ? 20 : isPast ? 16 : 13
-                const nodeFill = isPast ? dt.colors.ink : dt.colors.bg
-                const nodeBorder = isCurrent ? diffuseAccent : isPast ? dt.colors.ink : dt.colors.line2
+                // Softened tint of the leap's colour so nodes read calm, not loud.
+                const softLeap = leap.color + (isDark ? 'CC' : 'B0')
+                const nodeFill = isFuture ? 'transparent' : softLeap
+                const nodeBorder = isCurrent ? diffuseAccent : isFuture ? dt.colors.line2 : softLeap
                 return (
                   <View
                     key={d.index}
@@ -309,7 +312,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
                   >
                     {isCurrent ? (
                       <View pointerEvents="none" style={{ position: 'absolute', width: d.size * 1.28, height: d.size * 1.28 }}>
-                        <SoftBloom color={diffuseAccent} opacity={isDark ? 0.4 : 0.5} spread={0.4} radius="50%" />
+                        <SoftBloom color={leap.color} opacity={isDark ? 0.4 : 0.5} spread={0.4} radius="50%" />
                       </View>
                     ) : null}
                     <Animated.View style={counterRotateStyle}>
@@ -320,7 +323,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
                             height: nodeSize,
                             borderRadius: nodeSize / 2,
                             backgroundColor: nodeFill,
-                            borderWidth: 1.5,
+                            borderWidth: isCurrent ? 1.5 : 1,
                             borderColor: nodeBorder,
                             opacity: isFuture ? 0.85 : 1,
                           }}
@@ -395,13 +398,16 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
               strokeWidth={diffuse ? 1 : 1.5}
             />
             {diffuse ? (
-              // Hairline accent chevron marking the 6 o'clock anchor (no fill).
-              <Polygon
-                points={`${CX},${CY + RING_R - 6} ${CX - 8},${CY + RING_R + 8} ${CX + 8},${CY + RING_R + 8}`}
+              // Soft stationary anchor ring at 6 o'clock — leaps rotate into it
+              // (matches the cycle wheel's calm hairline selection frame; no
+              // hard chevron).
+              <Circle
+                cx={CX}
+                cy={CY + RING_R}
+                r={16}
                 fill="none"
-                stroke={diffuseAccent}
-                strokeWidth={1.5}
-                strokeLinejoin="round"
+                stroke={dt.colors.line2}
+                strokeWidth={1}
               />
             ) : (
               <Polygon
@@ -553,10 +559,12 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
               const isPast = state === 'past'
               const isCurr = state === 'current'
               const rowStatus = isCurr ? t('kids_journeyRing_statusNow') : isPast ? t('kids_journeyRing_statusDone') : t('kids_journeyRing_statusUpcoming')
-              // Ring node: done = filled ink, current = open accent ring,
-              // upcoming = faint hollow. Selected row gets an accent ring too.
-              const nodeBorder = isCurr ? diffuseAccent : isPast ? dt.colors.ink : dt.colors.line2
-              const nodeFill = isPast ? dt.colors.ink : dt.colors.bg
+              // Ring node in the leap's own soft colour: done = filled soft
+              // colour, current = same + accent ring, upcoming = faint hollow.
+              // Selected row gets an accent ring too.
+              const softLeap = l.color + (isDark ? 'CC' : 'B0')
+              const nodeBorder = isCurr ? diffuseAccent : isPast ? softLeap : dt.colors.line2
+              const nodeFill = isPast || isCurr ? softLeap : dt.colors.bg
               const node = (
                 <View
                   style={{
