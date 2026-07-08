@@ -6,7 +6,7 @@
  * All real data from Supabase.
  */
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef, Fragment } from 'react'
 import {
   View, Text, Pressable, ScrollView, StyleSheet, Dimensions, Image, Modal, TextInput, Platform,
   Animated, PanResponder, Alert,
@@ -1827,6 +1827,119 @@ export function KidsHome() {
           style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
           onPress={() => setCustomPickerVisible(false)}
         >
+          {diffuse ? (
+            <Pressable
+              onPress={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: dt.colors.bg,
+                borderTopLeftRadius: 28,
+                borderTopRightRadius: 28,
+                borderTopWidth: StyleSheet.hairlineWidth,
+                borderLeftWidth: StyleSheet.hairlineWidth,
+                borderRightWidth: StyleSheet.hairlineWidth,
+                borderColor: dt.colors.line2,
+                paddingTop: 14,
+                paddingHorizontal: 20,
+                paddingBottom: 40,
+                gap: 18,
+              }}
+            >
+              {/* Drag handle */}
+              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: dt.colors.line2, alignSelf: 'center', marginBottom: 2 }} />
+
+              {/* Header */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ color: dt.colors.ink, fontSize: 24, letterSpacing: -0.5, fontFamily: diffuseFont.display }}>{t('kids_home_custom_range_title')}</Text>
+                <Pressable
+                  onPress={() => setCustomPickerVisible(false)}
+                  hitSlop={8}
+                  style={({ pressed }) => ({
+                    width: 34, height: 34, borderRadius: 17,
+                    borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2,
+                    alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <X size={16} color={dt.colors.ink3} strokeWidth={1.8} />
+                </Pressable>
+              </View>
+
+              {/* START / END chips — hairline selection (active = firm ink border) */}
+              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+                {(['start', 'end'] as const).map((which, i) => {
+                  const active = customPickerActive === which
+                  const val = which === 'start' ? customDraft.start : customDraft.end
+                  return (
+                    <Fragment key={which}>
+                      {i === 1 ? <Text style={{ fontSize: 16, fontFamily: diffuseFont.body, color: dt.colors.ink3 }}>{'—'}</Text> : null}
+                      <Pressable
+                        onPress={() => setCustomPickerActive(which)}
+                        style={({ pressed }) => ({
+                          flex: 1,
+                          borderRadius: 18,
+                          borderWidth: active ? 1.5 : StyleSheet.hairlineWidth,
+                          borderColor: active ? dt.colors.hairline : dt.colors.line,
+                          backgroundColor: dt.colors.surface,
+                          paddingVertical: 12,
+                          paddingHorizontal: 14,
+                          gap: 4,
+                          opacity: pressed ? 0.7 : 1,
+                        })}
+                      >
+                        <Text style={{ fontSize: 9.5, fontFamily: diffuseFont.mono, letterSpacing: 1.6, color: dt.colors.ink3, textTransform: 'uppercase' }}>
+                          {which === 'start' ? t('kids_home_range_start') : t('kids_home_range_end')}
+                        </Text>
+                        <Text style={{ fontSize: 18, fontFamily: diffuseFont.display, color: active ? dt.colors.ink : dt.colors.ink2, letterSpacing: -0.3 }}>
+                          {fmtShortDate(val)}
+                        </Text>
+                      </Pressable>
+                    </Fragment>
+                  )
+                })}
+              </View>
+
+              {/* Date spinner — accent-tinted, diffuse theme variant */}
+              <DateTimePicker
+                key={customPickerActive}
+                value={customPickerActive === 'start' ? customDraft.start : customDraft.end}
+                mode="date"
+                display="spinner"
+                maximumDate={customPickerActive === 'start' ? customDraft.end : new Date()}
+                minimumDate={customPickerActive === 'end' ? customDraft.start : undefined}
+                textColor={dt.colors.ink}
+                accentColor={getDiffuseAccent('kids', dt.isDark)}
+                themeVariant={dt.isDark ? 'dark' : 'light'}
+                style={{ width: '100%' }}
+                onChange={(_: DateTimePickerEvent, selected?: Date) => {
+                  if (!selected) return
+                  if (customPickerActive === 'start') {
+                    setCustomDraft((prev) => ({ ...prev, start: selected > prev.end ? prev.end : selected }))
+                  } else {
+                    setCustomDraft((prev) => ({ ...prev, end: selected }))
+                  }
+                }}
+              />
+
+              {/* Apply — containerless mono action on a hairline */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line2, paddingTop: 18 }}>
+                <Pressable onPress={() => setCustomPickerVisible(false)} hitSlop={8} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
+                  <Text style={{ fontSize: 11, fontFamily: diffuseFont.mono, color: dt.colors.ink3, letterSpacing: 1.4, textTransform: 'uppercase' }}>{t('common_cancel')}</Text>
+                </Pressable>
+                <View style={{ flex: 1 }} />
+                <Pressable
+                  onPress={() => {
+                    setCustomRange({ start: customDraft.start, end: customDraft.end })
+                    setDateRange('custom')
+                    setCustomPickerVisible(false)
+                  }}
+                  hitSlop={8}
+                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: pressed ? 0.6 : 1 })}
+                >
+                  <Text style={{ fontSize: 12, fontFamily: diffuseFont.monoBold, color: dt.colors.ink, letterSpacing: 2, textTransform: 'uppercase' }}>{t('kids_home_range_apply')}</Text>
+                  <DiffuseArrow color={getDiffuseAccent('kids', dt.isDark)} size={16} />
+                </Pressable>
+              </View>
+            </Pressable>
+          ) : (
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={{
@@ -1980,6 +2093,7 @@ export function KidsHome() {
               <Text style={{ color: '#141313', fontFamily: font.bodyBold, fontSize: 16, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_home_range_apply')}</Text>
             </Pressable>
           </Pressable>
+          )}
         </Pressable>
       </Modal>
 
