@@ -1217,7 +1217,7 @@ function DiffuseLogDetailSheet({
           <View style={{ alignItems: 'center', paddingVertical: 8, marginBottom: 16 }}>
             <DiffuseLogIcon type={log.type} size={64} inkColor={colors.ink3} />
             {hero ? (
-              <Text style={{ fontFamily: diffuseFont.display, fontSize: 44, letterSpacing: -1, color: colors.ink, marginTop: 8 }}>
+              <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 44, letterSpacing: -1, color: colors.ink, marginTop: 8 }}>
                 {hero.value}
                 {hero.unit ? <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, color: colors.ink2 }}>{' ' + hero.unit}</Text> : null}
               </Text>

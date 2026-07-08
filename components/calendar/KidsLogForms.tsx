@@ -1767,7 +1767,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     </Text>
                   </View>
 
-                  <Text style={{ color: dc.ink, fontSize: 56, letterSpacing: 1, fontVariant: ['tabular-nums'], fontFamily: diffuseFont.display }}>
+                  <Text style={{ color: dc.ink, fontSize: 56, letterSpacing: 1, fontVariant: ['tabular-nums'], fontFamily: diffuseFont.displayLight }}>
                     {formatTimer(timerSeconds)}
                   </Text>
 
@@ -3878,7 +3878,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
             {/* Duration preview — serif hero number over hairline rule */}
             {sleepDuration ? (
               <View style={{ paddingVertical: 18, alignItems: 'center', borderTopWidth: 1, borderColor: dTheme.colors.line }}>
-                <Text style={{ color: dTheme.colors.ink, fontSize: 44, letterSpacing: -1, lineHeight: 48, fontFamily: diffuseFont.display }}>{sleepDuration}</Text>
+                <Text style={{ color: dTheme.colors.ink, fontSize: 44, letterSpacing: -1, lineHeight: 48, fontFamily: diffuseFont.displayLight }}>{sleepDuration}</Text>
                 <Text style={{ color: dTheme.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 10, marginTop: 6, letterSpacing: 1.5, textTransform: 'uppercase' }}>{t('kids_logForm_totalSleep')}</Text>
               </View>
             ) : null}

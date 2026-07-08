@@ -5397,7 +5397,7 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_sleep_modal_total_range')}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
-                <Text style={{ fontFamily: diffuseFont.display, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>{sleepTotal > 0 ? sleepTotal.toFixed(1) : '—'}</Text>
+                <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>{sleepTotal > 0 ? sleepTotal.toFixed(1) : '—'}</Text>
                 <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_sleep_modal_hours_unit')}</Text>
               </View>
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.8, color: dCol.ink3, marginTop: 6 }}>
@@ -6740,7 +6740,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_feeding_modal_feedings')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
-                  <Text style={{ fontFamily: diffuseFont.display, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>{feedingCount.toLocaleString()}</Text>
+                  <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>{feedingCount.toLocaleString()}</Text>
                   <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{'total'}</Text>
                 </View>
                 {avgMl > 0 && (
@@ -6841,7 +6841,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{stage === 'mixed' ? 'Solids Calories' : 'Calories'}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
-                <Text style={{ fontFamily: diffuseFont.display, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>
+                <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>
                   {caloriesTotal > 0 ? caloriesTotal.toLocaleString() : '—'}
                 </Text>
                 {caloriesTotal > 0 ? (
@@ -7240,7 +7240,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_activities_modal_title')}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
-              <Text style={{ fontFamily: diffuseFont.display, fontSize: 44, color: dCol.ink, letterSpacing: -1 }}>{activityCount > 0 ? activityCount.toLocaleString() : '—'}</Text>
+              <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 44, color: dCol.ink, letterSpacing: -1 }}>{activityCount > 0 ? activityCount.toLocaleString() : '—'}</Text>
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{'total'}</Text>
             </View>
             {activeDays > 0 && rangeDays > 0 ? (

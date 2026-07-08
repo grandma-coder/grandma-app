@@ -499,8 +499,11 @@ export const inputStyles = {
 // Serif) are NOT removed — stickers/icons + the legacy theme still use them.
 
 export const diffuseFont = {
-  // Cormorant Garamond — delicate serif. Light is the default display weight.
-  display: 'CormorantGaramond_300Light',
+  // Cormorant Garamond — delicate serif. Per v4 the base weight for titles /
+  // section-headers is Regular (400); only big hero display numbers drop to
+  // Light (300) via `displayLight`.
+  display: 'CormorantGaramond_400Regular',
+  displayLight: 'CormorantGaramond_300Light', // huge hero numbers only
   displayRegular: 'CormorantGaramond_400Regular',
   displayMedium: 'CormorantGaramond_500Medium',
   italic: 'CormorantGaramond_400Regular_Italic', // accent / feeling words

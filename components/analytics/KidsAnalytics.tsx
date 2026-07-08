@@ -983,7 +983,7 @@ function ScoreInfoModal({
       <DiffuseSheet visible={visible} title={t('kids_analytics_score_guide_title')} onClose={onClose}>
         {scores && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, borderTopWidth: 1, borderTopColor: dt.colors.line, paddingVertical: 16 }}>
-            <Text style={{ fontFamily: diffuseFont.display, fontSize: 44, color: dt.colors.ink, letterSpacing: -1 }}>{scores.overall.toFixed(1)}</Text>
+            <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 44, color: dt.colors.ink, letterSpacing: -1 }}>{scores.overall.toFixed(1)}</Text>
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: diffuseFont.body, fontSize: 15, color: dt.colors.ink }}>{t('kids_analytics_score_child_label', { childName })}</Text>
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 3 }}>{t('kids_analytics_score_weighted_avg')}</Text>
