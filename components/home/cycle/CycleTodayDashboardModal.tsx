@@ -13,11 +13,13 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import Svg, { Path as SvgPath, Circle as SvgCircle } from 'react-native-svg'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { toDateStr, type CyclePhase } from '../../../lib/cycleLogic'
 import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
 import { PaperCard } from '../../ui/PaperCard'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../../ui/Stickers'
+import { Smile as SmileLine, Thermometer as ThermometerLine, Droplet as DropletLine, Heart as HeartLine } from 'lucide-react-native'
 import { SymptomSticker } from '../../calendar/symptomStickers'
 import { symptomLabel } from '../../../lib/cycleSymptoms'
 import type { SymptomId } from '../../../lib/cycleSymptoms'
@@ -175,7 +177,11 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
             <MonoCaps size={10} color={muted}>{t('cycleDash_mood')}</MonoCaps>
           </View>
           <View style={styles.moodRow}>
-            {moodMeta ? (
+            {diffuse ? (
+              <DiffuseBloomIcon color={stickers.yellow} size={52}>
+                <SmileLine size={26} color={dt.colors.ink3} strokeWidth={1.6} />
+              </DiffuseBloomIcon>
+            ) : moodMeta ? (
               <moodMeta.Sticker size={48} fill={moodMeta.fill} />
             ) : (
               <Smiley size={48} fill={stickers.yellow} />
@@ -195,7 +201,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         <View style={styles.twoCol}>
           <PaperCard tint={tileTint(stickers.blueSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              <Drop size={16} fill={stickers.blue} />
+              {diffuse ? <ThermometerLine size={14} color={dt.colors.ink3} strokeWidth={1.6} /> : <Drop size={16} fill={stickers.blue} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_bbt')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
@@ -208,7 +214,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
 
           <PaperCard tint={tileTint(stickers.yellowSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              <Drop size={16} fill={stickers.yellow} />
+              {diffuse ? <DropletLine size={14} color={dt.colors.ink3} strokeWidth={1.6} /> : <Drop size={16} fill={stickers.yellow} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_lh')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
@@ -221,7 +227,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
 
           <PaperCard tint={tileTint(stickers.greenSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              <Drop size={16} fill={stickers.green} />
+              {diffuse ? <DropletLine size={14} color={dt.colors.ink3} strokeWidth={1.6} /> : <Drop size={16} fill={stickers.green} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_cm')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
@@ -237,7 +243,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         <View style={styles.twoCol}>
           <PaperCard tint={tileTint(stickers.pinkSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              <Heart size={16} fill={intimacy ? stickers.pink : stickers.pinkSoft} />
+              {diffuse ? <HeartLine size={14} color={dt.colors.ink3} strokeWidth={1.6} /> : <Heart size={16} fill={intimacy ? stickers.pink : stickers.pinkSoft} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_intimacy')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
@@ -250,7 +256,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
 
           <PaperCard tint={tileTint(stickers.peachSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              <Drop size={16} fill={periodStart ? stickers.coral : stickers.pinkSoft} />
+              {diffuse ? <DropletLine size={14} color={dt.colors.ink3} strokeWidth={1.6} /> : <Drop size={16} fill={periodStart ? stickers.coral : stickers.pinkSoft} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_period')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
@@ -293,7 +299,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         {/* 7-day BBT sparkline */}
         <PaperCard tint={diffuse ? undefined : colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
-            <Drop size={16} fill={stickers.blue} />
+            {diffuse ? <ThermometerLine size={14} color={dt.colors.ink3} strokeWidth={1.6} /> : <Drop size={16} fill={stickers.blue} />}
             <MonoCaps size={10} color={muted}>{t('cycleDash_bbtLast7')}</MonoCaps>
           </View>
           {loading ? (
