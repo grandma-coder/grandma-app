@@ -10,7 +10,8 @@ import {
 } from 'react-native'
 import { Lock } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers } from '../../constants/theme'
+import { useTheme, brand, stickers, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import {
   useBadgeStore,
   BADGE_DEFS,
@@ -26,6 +27,8 @@ import { useTranslation } from '../../lib/i18n'
 
 export default function BadgeWalletScreen() {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   const SECTIONS: { key: BadgeCategory; label: string; color: string }[] = [
@@ -49,11 +52,13 @@ export default function BadgeWalletScreen() {
 
   // useTheme()'s colors already resolves light/dark; the prior `isDark ? colors.x : '<lightHex>'`
   // ternaries just re-stated the light token values.
-  const bg = colors.bg
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const ink = colors.text
-  const ink3 = colors.textMuted
+  // Under Diffuse these map onto the diffuse paper/ink ramp so every surface picks
+  // up the hairline language (no shadows, hairline borders, warm off-white paper).
+  const bg = diffuse ? dt.colors.bg : colors.bg
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
@@ -93,9 +98,24 @@ export default function BadgeWalletScreen() {
           return (
             <View key={section.key} style={styles.section}>
               <View style={styles.sectionHeader}>
-                <View style={[styles.sectionDot, { backgroundColor: section.color }]} />
-                <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: font.display }]}>{section.label}</Text>
-                <Text style={[styles.sectionCount, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+                {/* Under Diffuse the bright brand dot becomes a quiet hairline marker
+                    (no filled color pips); serif title, mono count. */}
+                <View
+                  style={[
+                    styles.sectionDot,
+                    diffuse
+                      ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline }
+                      : { backgroundColor: section.color },
+                  ]}
+                />
+                <Text style={[styles.sectionTitle, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{section.label}</Text>
+                <Text
+                  style={
+                    diffuse
+                      ? [styles.sectionCount, { color: ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' }]
+                      : [styles.sectionCount, { color: colors.textMuted, fontFamily: font.bodyMedium }]
+                  }
+                >
                   {badges.filter((d) => earnedSet.has(d.id)).length}/{badges.length}
                 </Text>
               </View>
@@ -109,16 +129,31 @@ export default function BadgeWalletScreen() {
                       key={def.id}
                       style={[
                         styles.badgeCard,
-                        {
-                          backgroundColor: isEarned ? def.color + '10' : colors.surfaceRaised,
-                          borderColor: isEarned ? def.color + '25' : colors.border,
-                          borderRadius: 20,
-                        },
+                        // Diffuse: every tile is a hairline paper card — no filled
+                        // color tint, no per-tier fill. Earned vs locked read only
+                        // through the badge art + a slightly stronger hairline.
+                        diffuse
+                          ? {
+                              backgroundColor: dt.colors.surface,
+                              borderColor: isEarned ? dt.colors.line2 : dt.colors.line,
+                              borderRadius: 20,
+                            }
+                          : {
+                              backgroundColor: isEarned ? def.color + '10' : colors.surfaceRaised,
+                              borderColor: isEarned ? def.color + '25' : colors.border,
+                              borderRadius: 20,
+                            },
                       ]}
                     >
                       {isEarned ? (
+                        // Badge art is the badge system — keep it under Diffuse.
                         <View style={styles.badgeStickerWrap}>
                           <BadgeIcon badgeId={def.id} size={48} />
+                        </View>
+                      ) : diffuse ? (
+                        // Locked: filled circle → hairline frame with a line glyph.
+                        <View style={[styles.lockedIcon, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }]}>
+                          <Lock size={16} color={dt.colors.ink3} strokeWidth={1.6} />
                         </View>
                       ) : (
                         <View style={[styles.lockedIcon, { backgroundColor: colors.surface }]}>
@@ -126,24 +161,50 @@ export default function BadgeWalletScreen() {
                         </View>
                       )}
                       <Text
-                        style={[styles.badgeName, { color: isEarned ? colors.text : colors.textMuted, fontFamily: font.bodySemiBold }]}
+                        style={[
+                          styles.badgeName,
+                          diffuse
+                            ? { color: isEarned ? dt.colors.ink : dt.colors.ink3, fontFamily: diffuseFont.bodySemiBold }
+                            : { color: isEarned ? colors.text : colors.textMuted, fontFamily: font.bodySemiBold },
+                        ]}
                         numberOfLines={1}
                       >
                         {badgeName(def.id, t)}
                       </Text>
                       <Text
-                        style={[styles.badgeDesc, { color: isEarned ? colors.textSecondary : colors.textMuted, fontFamily: font.body }]}
+                        style={[
+                          styles.badgeDesc,
+                          diffuse
+                            ? { color: isEarned ? dt.colors.ink2 : dt.colors.ink3, fontFamily: diffuseFont.body }
+                            : { color: isEarned ? colors.textSecondary : colors.textMuted, fontFamily: font.body },
+                        ]}
                         numberOfLines={2}
                       >
                         {badgeDesc(def.id, t)}
                       </Text>
-                      <View style={[styles.tierPill, { backgroundColor: isEarned ? getTierColor(def.tier) + '24' : 'transparent' }]}>
-                        <Text style={[styles.tierText, { color: isEarned ? getTierColor(def.tier) : colors.textMuted, fontFamily: font.bodySemiBold }]}>
-                          {def.tier}
-                        </Text>
-                      </View>
+                      {diffuse ? (
+                        // Tier → containerless mono caps (no filled color pill).
+                        <View style={styles.tierPillDiffuse}>
+                          <Text style={[styles.tierText, { color: isEarned ? dt.colors.ink2 : dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+                            {def.tier}
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.tierPill, { backgroundColor: isEarned ? getTierColor(def.tier) + '24' : 'transparent' }]}>
+                          <Text style={[styles.tierText, { color: isEarned ? getTierColor(def.tier) : colors.textMuted, fontFamily: font.bodySemiBold }]}>
+                            {def.tier}
+                          </Text>
+                        </View>
+                      )}
                       {isEarned && earned && (
-                        <Text style={[styles.earnedDate, { color: colors.textMuted, fontFamily: font.body }]}>
+                        <Text
+                          style={[
+                            styles.earnedDate,
+                            diffuse
+                              ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5 }
+                              : { color: colors.textMuted, fontFamily: font.body },
+                          ]}
+                        >
                           {new Date(earned.earnedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </Text>
                       )}
@@ -186,6 +247,8 @@ const styles = StyleSheet.create({
   badgeName: { fontSize: 12, textAlign: 'center' },
   badgeDesc: { fontSize: 10, textAlign: 'center', lineHeight: 14 },
   tierPill: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: 999 },
+  // Diffuse: containerless tier caps — same footprint, no filled color pill.
+  tierPillDiffuse: { paddingVertical: 3, paddingHorizontal: 4 },
   tierText: { fontSize: 9, textTransform: 'uppercase', letterSpacing: 1 },
   earnedDate: { fontSize: 9 },
 })
