@@ -765,42 +765,6 @@ const VaultSectionTests = ({ size = 100 }) => <S size={size}>
   <Line x1="42" y1="42" x2="58" y2="42" stroke={STROKE} strokeWidth="1.4"/>
 </S>;
 
-// AirTag — hero (tag on stroller)
-const AirtagHero = ({ size = 100 }) => <S size={size}>
-  <Circle cx="36" cy="48" r="16" fill={CREAM} stroke={STROKE} strokeWidth="1.6"/>
-  <Circle cx="36" cy="48" r="6" fill={ROYAL} stroke={STROKE} strokeWidth="1.4"/>
-  <Rect x="56" y="34" width="30" height="26" rx="4" fill={BLUE} stroke={STROKE} strokeWidth="1.6"/>
-  <Circle cx="64" cy="72" r="6" fill={STROKE}/>
-  <Circle cx="78" cy="72" r="6" fill={STROKE}/>
-  <Path d="M60 34 q10 -16 22 -10" fill="none" stroke={STROKE} strokeWidth="1.6" strokeLinecap="round"/>
-</S>;
-
-// AirTag — pairing
-const AirtagStepPair = ({ size = 100 }) => <S size={size}>
-  <Circle cx="30" cy="50" r="14" fill={CREAM} stroke={STROKE} strokeWidth="1.6"/>
-  <Rect x="56" y="24" width="32" height="52" rx="6" fill={CREAM} stroke={STROKE} strokeWidth="1.6"/>
-  <Circle cx="30" cy="50" r="6" fill={ROYAL} stroke={STROKE} strokeWidth="1.2"/>
-  <Path d="M44 38 q6 -4 12 0" fill="none" stroke={ROYAL} strokeWidth="1.6"/>
-  <Path d="M44 50 q6 -4 12 0" fill="none" stroke={ROYAL} strokeWidth="2"/>
-  <Path d="M44 62 q6 -4 12 0" fill="none" stroke={ROYAL} strokeWidth="1.6"/>
-</S>;
-
-// AirTag — attach
-const AirtagStepAttach = ({ size = 100 }) => <S size={size}>
-  <Circle cx="50" cy="38" r="14" fill={CREAM} stroke={STROKE} strokeWidth="1.6"/>
-  <Circle cx="50" cy="38" r="5" fill={ROYAL} stroke={STROKE} strokeWidth="1.2"/>
-  <Path d="M30 70 q20 -8 40 0" fill="none" stroke={STROKE} strokeWidth="3" strokeLinecap="round"/>
-  <Line x1="46" y1="52" x2="46" y2="70" stroke={STROKE} strokeWidth="1.4"/>
-  <Line x1="54" y1="52" x2="54" y2="70" stroke={STROKE} strokeWidth="1.4"/>
-</S>;
-
-// AirTag — done
-const AirtagStepDone = ({ size = 100 }) => <S size={size}>
-  <Circle cx="50" cy="50" r="38" fill={GREEN} stroke={STROKE} strokeWidth="1.6"/>
-  <Path d="M34 50 l10 10 l22 -22" fill="none" stroke={CREAM} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-  <Path d="M34 50 l10 10 l22 -22" fill="none" stroke={STROKE} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-</S>;
-
 // Brand — paper tape
 const BrandPaperTape = ({ size = 100 }) => <S size={size} vb="0 0 100 40">
   <Path d="M4 14 l92 -2 q4 0 4 4 l-2 14 q0 4 -4 4 l-92 -2 q-4 0 -4 -4 l2 -10 q0 -4 4 -4 z" fill={YELLOW} stroke={STROKE} strokeWidth="1.4"/>
@@ -863,6 +827,5 @@ export const MissingStickers = {
   ChannelsHero, ChannelCardDefault, ChannelEmpty, ChannelThreadEmpty,
   GarageListingSell, GarageListingTrade, GarageListingDonate, GarageCreateHero, GarageEmpty, GarageShareCard,
   VaultSectionTests,
-  AirtagHero, AirtagStepPair, AirtagStepAttach, AirtagStepDone,
   BrandPaperTape, BrandPaperCorner, BrandHandDrawnArrow, BrandStarDoodle,
 };

@@ -1940,17 +1940,6 @@ export function BirthPlanReady({ size = 80, fill = '#C8B6E8', stroke = INK }: Ba
   )
 }
 
-export function AirTagLinked({ size = 80, fill = '#9DC3E8', stroke = INK }: BaseProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 100 100">
-      <SvgCircle cx={50} cy={50} r={42} fill={fill} stroke={stroke} strokeWidth={1.8} />
-      <SvgCircle cx={50} cy={50} r={30} fill="none" stroke={PAPER} strokeWidth={2.5} strokeDasharray="3 4" />
-      <Path d="M50,22 L58,50 L50,46 L42,50 Z" fill={PAPER} stroke={stroke} strokeWidth={1.5} strokeLinejoin="round" />
-      <SvgCircle cx={50} cy={50} r={5} fill="#EE7B6D" stroke={stroke} strokeWidth={1.4} />
-    </Svg>
-  )
-}
-
 export function PaywallUnlock({ size = 80, fill = '#F5D652', stroke = INK }: BaseProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100">

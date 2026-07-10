@@ -1,6 +1,17 @@
 import { create } from 'zustand'
 import type { VaultDocument } from '../lib/vault'
-import type { EmergencyCardData } from '../components/vault/EmergencyCard'
+
+// Emergency-card data shape (the standalone EmergencyCard component was removed
+// as dead code; the data model lives here, its canonical consumer).
+export interface EmergencyCardData {
+  bloodType?: string
+  allergies?: string[]
+  medicalConditions?: string[]
+  primaryContactName?: string
+  primaryContactPhone?: string
+  pediatricianName?: string
+  pediatricianPhone?: string
+}
 
 interface VaultStore {
   documents: VaultDocument[]
