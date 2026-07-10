@@ -19,9 +19,12 @@ import {
 import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
-import { useTheme, stickers, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTheme, stickers, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { Burst } from '../../components/ui/Stickers'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
+import { DiffuseOAuthRow, DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
+import { DiffuseField, DiffuseFieldLabel, DiffuseDivider } from '../../components/ui/diffuse/DiffuseField'
 import { signInWithApple, signInWithGoogle, isAppleSignInAvailable } from '../../lib/auth-providers'
 import { setPendingInvite } from '../../lib/pendingInvite'
 import { Ionicons } from '@expo/vector-icons'
@@ -97,22 +100,126 @@ export default function SignIn() {
     }
   }
 
-  const bg = diffuse ? dt.colors.bg : colors.bg
-  const paper = diffuse ? dt.colors.surface : colors.surface
-  const paperBorder = diffuse ? dt.colors.line : colors.border
-  const ink = diffuse ? dt.colors.ink : colors.text
-  const ink2 = diffuse ? dt.colors.ink2 : isDark ? colors.textSecondary : '#3A3533'
-  const ink3 = diffuse ? dt.colors.ink3 : isDark ? colors.textMuted : '#6E6763'
-  const ink4 = diffuse ? dt.colors.ink4 : isDark ? colors.textFaint : '#A69E93'
+  // ─── Diffuse (v3) render — AUTH 02 · Sign in ──────────────────────────────
+  // Additive branch; the cream `!diffuse` render below is unchanged. Layout
+  // mirrors the AUTH 02 frame: aura field → back button → serif "Welcome" +
+  // italic "back, dear." (pre accent) → subcopy → OAuth rows → "or with email"
+  // divider → bare-underline email + password fields → italic "Forgot password?"
+  // → containerless "SIGN IN" CTA → footer "New here? Create account". No fills,
+  // no pills, no shadows — hairlines + mono/serif type only.
+  if (diffuse) {
+    const accent = getDiffuseAccent('pre-pregnancy')
+    return (
+      <AuraField blooms={AURA.signin}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <ScrollView
+            contentContainerStyle={[
+              dStyles.container,
+              { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 32 },
+            ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Back button */}
+            <Pressable onPress={() => router.back()} hitSlop={12} style={dStyles.back}>
+              <Ionicons name="chevron-back" size={22} color={dt.colors.ink} />
+            </Pressable>
+
+            {/* Heading */}
+            <Text style={[dStyles.heading, { fontFamily: diffuseFont.display, color: dt.colors.ink }]}>
+              {t('auth_welcome')}
+            </Text>
+            <Text style={[dStyles.headingItalic, { fontFamily: diffuseFont.italic, color: accent }]}>
+              {t('auth_welcome_back')}
+            </Text>
+            <Text style={[dStyles.sub, { fontFamily: diffuseFont.body, color: dt.colors.ink2 }]}>
+              {t('auth_welcome_waiting')}
+            </Text>
+
+            {/* Social auth */}
+            <View style={dStyles.oauthGroup}>
+              {appleAvailable && (
+                <DiffuseOAuthRow
+                  label={t('auth_continueWithApple')}
+                  onPress={handleApple}
+                  icon={<Ionicons name="logo-apple" size={17} color={dt.colors.ink} />}
+                />
+              )}
+              <DiffuseOAuthRow
+                label={t('auth_continueWithGoogle')}
+                onPress={handleGoogle}
+                icon={<Ionicons name="logo-google" size={17} color={dt.colors.ink} />}
+              />
+            </View>
+
+            {/* Divider */}
+            <DiffuseDivider label={t('auth_orSignInEmail')} />
+
+            {/* Email */}
+            <DiffuseFieldLabel>{t('auth_emailLabel')}</DiffuseFieldLabel>
+            <DiffuseField
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            {/* Password */}
+            <View style={dStyles.fieldGap}>
+              <DiffuseFieldLabel>{t('auth_passwordLabel')}</DiffuseFieldLabel>
+              <DiffuseField value={password} onChangeText={setPassword} secureTextEntry />
+            </View>
+
+            {/* Forgot */}
+            <Pressable
+              onPress={() => router.push('/(auth)/forgot-password')}
+              hitSlop={8}
+              style={dStyles.forgotWrap}
+            >
+              <Text style={[dStyles.forgot, { fontFamily: diffuseFont.italic, color: dt.colors.ink3 }]}>
+                {t('auth_forgotPassword')}
+              </Text>
+            </Pressable>
+
+            {/* CTA */}
+            <View style={dStyles.ctaWrap}>
+              <DiffuseSolidCTA
+                label={loading ? t('auth_signingIn') : t('auth_signIn')}
+                onPress={signIn}
+                disabled={loading}
+              />
+            </View>
+
+            {/* Switch */}
+            <View style={dStyles.footer}>
+              <Text style={[dStyles.footerText, { fontFamily: diffuseFont.body, color: dt.colors.ink3 }]}>
+                {t('auth_newHere')}
+              </Text>
+              <DiffuseTextLink label={t('auth_createAccount')} onPress={() => router.push('/(auth)/sign-up')} />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </AuraField>
+    )
+  }
+
+  const bg = colors.bg
+  const paper = colors.surface
+  const paperBorder = colors.border
+  const ink = colors.text
+  const ink2 = isDark ? colors.textSecondary : '#3A3533'
+  const ink3 = isDark ? colors.textMuted : '#6E6763'
+  const ink4 = isDark ? colors.textFaint : '#A69E93'
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      {/* Decorative sticker — collage art; hidden under Diffuse */}
-      {!diffuse && (
-        <View style={styles.stickerTR}>
-          <Burst size={80} fill={isDark ? stickers.yellow : '#F5D652'} />
-        </View>
-      )}
+      {/* Decorative sticker — collage art */}
+      <View style={styles.stickerTR}>
+        <Burst size={80} fill={isDark ? stickers.yellow : '#F5D652'} />
+      </View>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -129,21 +236,21 @@ export default function SignIn() {
           {/* Back button */}
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <View style={[styles.backBtn, {
-              backgroundColor: diffuse ? 'transparent' : paper,
-              borderColor: diffuse ? dt.colors.line2 : paperBorder,
+              backgroundColor: paper,
+              borderColor: paperBorder,
             }]}>
               <Ionicons name="chevron-back" size={20} color={ink} />
             </View>
           </Pressable>
 
           {/* Heading */}
-          <Text style={[styles.heading, { fontFamily: diffuse ? diffuseFont.display : font.display, color: ink }]}>
+          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
             {t('auth_welcome')}
           </Text>
-          <Text style={[styles.headingItalic, { fontFamily: diffuse ? diffuseFont.italic : font.italic, color: ink }]}>
+          <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>
             {t('auth_welcome_back')}
           </Text>
-          <Text style={[styles.sub, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink3 }]}>
+          <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
             {t('auth_welcome_waiting')}
           </Text>
 
@@ -154,20 +261,11 @@ export default function SignIn() {
               disabled={oauthLoading !== null}
               style={({ pressed }) => [
                 styles.socialBtn,
-                diffuse
-                  ? {
-                      backgroundColor: 'transparent',
-                      borderWidth: 1,
-                      borderColor: dt.colors.line2,
-                      opacity: pressed ? 0.6 : oauthLoading === 'apple' ? 0.5 : 1,
-                    }
-                  : { backgroundColor: ink, opacity: pressed ? 0.88 : oauthLoading === 'apple' ? 0.6 : 1 },
+                { backgroundColor: ink, opacity: pressed ? 0.88 : oauthLoading === 'apple' ? 0.6 : 1 },
               ]}
             >
-              <Ionicons name="logo-apple" size={18} color={diffuse ? dt.colors.ink : bg} />
-              <Text style={[styles.socialBtnText, diffuse
-                ? { fontFamily: diffuseFont.mono, color: dt.colors.ink, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 }
-                : { fontFamily: font.bodyMedium, color: bg }]}>
+              <Ionicons name="logo-apple" size={18} color={bg} />
+              <Text style={[styles.socialBtnText, { fontFamily: font.bodyMedium, color: bg }]}>
                 {t('auth_continueWithApple')}
               </Text>
             </Pressable>
@@ -177,25 +275,16 @@ export default function SignIn() {
             disabled={oauthLoading !== null}
             style={({ pressed }) => [
               styles.socialBtn,
-              diffuse
-                ? {
-                    backgroundColor: 'transparent',
-                    borderWidth: 1,
-                    borderColor: dt.colors.line2,
-                    opacity: pressed ? 0.6 : oauthLoading === 'google' ? 0.5 : 1,
-                  }
-                : {
-                    backgroundColor: paper,
-                    borderWidth: 1,
-                    borderColor: paperBorder,
-                    opacity: pressed ? 0.88 : oauthLoading === 'google' ? 0.6 : 1,
-                  },
+              {
+                backgroundColor: paper,
+                borderWidth: 1,
+                borderColor: paperBorder,
+                opacity: pressed ? 0.88 : oauthLoading === 'google' ? 0.6 : 1,
+              },
             ]}
           >
             <Ionicons name="logo-google" size={18} color={ink} />
-            <Text style={[styles.socialBtnText, diffuse
-              ? { fontFamily: diffuseFont.mono, color: dt.colors.ink, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 }
-              : { fontFamily: font.bodyMedium, color: ink }]}>
+            <Text style={[styles.socialBtnText, { fontFamily: font.bodyMedium, color: ink }]}>
               {t('auth_continueWithGoogle')}
             </Text>
           </Pressable>
@@ -203,15 +292,13 @@ export default function SignIn() {
           {/* Divider */}
           <View style={styles.divider}>
             <View style={[styles.dividerLine, { backgroundColor: paperBorder }]} />
-            <Text style={[styles.dividerText, diffuse
-              ? { fontFamily: diffuseFont.mono, color: ink4, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 11 }
-              : { fontFamily: font.body, color: ink4 }]}>
+            <Text style={[styles.dividerText, { fontFamily: font.body, color: ink4 }]}>
               {t('auth_orSignInEmail')}
             </Text>
             <View style={[styles.dividerLine, { backgroundColor: paperBorder }]} />
           </View>
 
-          {/* Paper card inputs — hairline fields under Diffuse */}
+          {/* Paper card inputs */}
           <InputField
             label={t('auth_emailLabel')}
             value={email}
@@ -223,7 +310,6 @@ export default function SignIn() {
             ink={ink}
             ink4={ink4}
             font={font}
-            diffuse={diffuse}
           />
           <InputField
             label={t('auth_passwordLabel')}
@@ -235,7 +321,6 @@ export default function SignIn() {
             ink={ink}
             ink4={ink4}
             font={font}
-            diffuse={diffuse}
           />
 
           {/* Forgot */}
@@ -243,9 +328,7 @@ export default function SignIn() {
             onPress={() => router.push('/(auth)/forgot-password')}
             hitSlop={8}
           >
-            <Text style={[styles.forgot, diffuse
-              ? { fontFamily: diffuseFont.mono, color: ink3, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 11 }
-              : { fontFamily: font.body, color: ink3 }]}>
+            <Text style={[styles.forgot, { fontFamily: font.body, color: ink3 }]}>
               {t('auth_forgotPassword')}
             </Text>
           </Pressable>
@@ -256,32 +339,23 @@ export default function SignIn() {
             disabled={loading}
             style={({ pressed }) => [
               styles.cta,
-              diffuse
-                ? {
-                    backgroundColor: 'transparent',
-                    borderWidth: 1,
-                    borderColor: dt.colors.line2,
-                    opacity: pressed ? 0.6 : loading ? 0.5 : 1,
-                  }
-                : {
-                    backgroundColor: ink,
-                    opacity: pressed ? 0.88 : loading ? 0.6 : 1,
-                    transform: [{ scale: pressed ? 0.98 : 1 }],
-                  },
+              {
+                backgroundColor: ink,
+                opacity: pressed ? 0.88 : loading ? 0.6 : 1,
+                transform: [{ scale: pressed ? 0.98 : 1 }],
+              },
             ]}
           >
-            <Text style={[styles.ctaText, diffuse
-              ? { fontFamily: diffuseFont.mono, color: dt.colors.ink, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 }
-              : { fontFamily: font.bodyMedium, color: bg }]}>
+            <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
               {loading ? t('auth_signingIn') : t('auth_signInArrow')}
             </Text>
           </Pressable>
 
           {/* Switch */}
           <Pressable onPress={() => router.push('/(auth)/sign-up')}>
-            <Text style={[styles.switchLink, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink3 }]}>
+            <Text style={[styles.switchLink, { fontFamily: font.body, color: ink3 }]}>
               {t('auth_newHere')}{' '}
-              <Text style={{ fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold, color: ink }}>
+              <Text style={{ fontFamily: font.bodySemiBold, color: ink }}>
                 {t('auth_createAccount')}
               </Text>
             </Text>
@@ -304,7 +378,6 @@ interface InputFieldProps {
   ink: string
   ink4: string
   font: { display: string; body: string; bodyMedium: string; bodySemiBold: string }
-  diffuse?: boolean
 }
 
 function InputField({
@@ -319,11 +392,10 @@ function InputField({
   ink,
   ink4,
   font,
-  diffuse,
 }: InputFieldProps) {
   return (
-    <View style={[styles.inputCard, diffuse && styles.inputCardFlat, { backgroundColor: paper, borderColor: paperBorder }]}>
-      <Text style={[styles.inputLabel, { fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, color: ink4 }]}>
+    <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+      <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
         {label}
       </Text>
       <TextInput
@@ -332,7 +404,7 @@ function InputField({
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
-        style={[styles.inputText, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink }]}
+        style={[styles.inputText, { fontFamily: font.body, color: ink }]}
         selectionColor={ink}
         placeholderTextColor={ink4}
       />
@@ -410,9 +482,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
   },
-  inputCardFlat: {
-    borderWidth: StyleSheet.hairlineWidth,
-  },
   inputLabel: {
     fontSize: 10,
     letterSpacing: 1.2,
@@ -443,5 +512,65 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
     marginTop: 8,
+  },
+})
+
+// ─── Diffuse (v3) styles — AUTH 02 · Sign in ────────────────────────────────
+const dStyles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    paddingHorizontal: 28,
+  },
+  back: {
+    width: 38,
+    height: 38,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  heading: {
+    fontSize: 44,
+    lineHeight: 46,
+    letterSpacing: -0.6,
+    marginTop: 8,
+  },
+  headingItalic: {
+    fontSize: 44,
+    lineHeight: 46,
+    letterSpacing: -0.4,
+    marginBottom: 10,
+  },
+  sub: {
+    fontSize: 14.5,
+    lineHeight: 21,
+    marginBottom: 24,
+  },
+  oauthGroup: {
+    marginBottom: 4,
+  },
+  fieldGap: {
+    marginTop: 20,
+  },
+  forgotWrap: {
+    alignSelf: 'flex-end',
+    marginTop: 12,
+    marginBottom: 26,
+  },
+  forgot: {
+    fontSize: 15,
+  },
+  ctaWrap: {
+    marginTop: 4,
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 20,
+  },
+  footerText: {
+    fontSize: 12.5,
   },
 })
