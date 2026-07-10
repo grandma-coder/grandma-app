@@ -14,7 +14,8 @@
 
 import { useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { getCycleInfo, dailyFertilityCurve, type CycleConfig } from '../../../lib/cycleLogic'
 import { PaperCard } from '../../ui/PaperCard'
 import { FertileWindowModal } from './FertileWindowModal'
@@ -48,9 +49,21 @@ function narrativeFor(pct: number, daysToPeak: number): string {
 
 export function FertileWindowCard({ cycleConfig }: Props) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const diffuseAccent = getDiffuseAccent('pre-pregnancy', dt.isDark)
   const { t } = useTranslation()
   const [modalOpen, setModalOpen] = useState(false)
   const ink = isDark ? colors.text : '#141313'
+
+  // Diffuse forecast pill: calm accent-tinted fill by % bucket (no filled
+  // coral). Higher % → firmer accent border + brighter accent-wash bg.
+  function diffuseBucket(pct: number): { bg: string; border: string; fg: string } {
+    if (pct >= 60) return { bg: diffuseAccent + '2E', border: dt.colors.hairline, fg: dt.colors.ink }
+    if (pct >= 30) return { bg: diffuseAccent + '1C', border: dt.colors.line2, fg: dt.colors.ink }
+    if (pct >= 15) return { bg: diffuseAccent + '10', border: dt.colors.line, fg: dt.colors.ink2 }
+    return { bg: 'transparent', border: dt.colors.line, fg: dt.colors.ink3 }
+  }
 
   const info = getCycleInfo(cycleConfig)
   const curve = useMemo(
@@ -98,47 +111,53 @@ export function FertileWindowCard({ cycleConfig }: Props) {
   return (
     <View style={{ paddingHorizontal: 20, marginTop: 12 }}>
       <Pressable onPress={() => setModalOpen(true)} accessibilityRole="button">
-        <PaperCard radius={radius.lg} padding={14}>
-          <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('prepreg_fertile')}</Text>
+        <PaperCard radius={radius.lg} padding={14} style={diffuse ? { borderColor: dt.colors.line } : undefined}>
+          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('prepreg_fertile')}</Text>
 
           <View style={styles.head}>
-            <Text style={[styles.pct, { color: stickers.coral, fontFamily: font.displayBold }]}>
-              {todayPct}<Text style={[styles.pctSmall, { color: colors.textMuted, fontFamily: font.body }]}>%</Text>
+            <Text style={[styles.pct, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.displayLight } : { color: stickers.coral, fontFamily: font.displayBold }]}>
+              {todayPct}<Text style={[styles.pctSmall, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.body }]}>%</Text>
             </Text>
             <View style={[
               styles.statePill,
-              {
-                backgroundColor: status.tint === 'peak' ? stickers.coral : status.tint === 'high' ? stickers.pink : stickers.pinkSoft,
-                borderColor: ink,
-              },
+              diffuse
+                ? { backgroundColor: 'transparent', borderColor: status.tint === 'peak' ? dt.colors.hairline : dt.colors.line2, shadowOpacity: 0 }
+                : {
+                    backgroundColor: status.tint === 'peak' ? stickers.coral : status.tint === 'high' ? stickers.pink : stickers.pinkSoft,
+                    borderColor: ink,
+                  },
             ]}>
-              <Text style={{ color: status.tint === 'peak' ? '#fff' : ink, fontFamily: font.bodyBold, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }}>
+              <Text style={diffuse
+                ? { color: status.tint === 'peak' ? diffuseAccent : dt.colors.ink3, fontFamily: diffuseFont.monoBold, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }
+                : { color: status.tint === 'peak' ? '#fff' : ink, fontFamily: font.bodyBold, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }}>
                 {status.label}
               </Text>
             </View>
           </View>
-          <Text style={[styles.narrative, { color: colors.textMuted, fontFamily: font.body }]}>
+          <Text style={[styles.narrative, diffuse ? { color: dt.colors.ink2, fontFamily: diffuseFont.body } : { color: colors.textMuted, fontFamily: font.body }]}>
             {narrative}
           </Text>
 
           <View style={styles.pills}>
             {forecast.map((f, i) => {
               const isToday = i === 0
-              const t = bucketTint(f.pct, stickers, colors)
+              const b = diffuse ? diffuseBucket(f.pct) : bucketTint(f.pct, stickers, colors)
+              const bg = diffuse ? (b as ReturnType<typeof diffuseBucket>).bg : (b as ReturnType<typeof bucketTint>).bg
+              const fg = b.fg
               return (
                 <View
                   key={i}
                   style={[
                     styles.pill,
                     {
-                      backgroundColor: t.bg,
-                      borderColor: colors.border,
-                      ...(isToday ? { borderColor: ink, borderWidth: 2 } : null),
+                      backgroundColor: bg,
+                      borderColor: diffuse ? (b as ReturnType<typeof diffuseBucket>).border : colors.border,
+                      ...(isToday ? { borderColor: diffuse ? dt.colors.hairline : ink, borderWidth: diffuse ? 1.5 : 2 } : null),
                     },
                   ]}
                 >
-                  <Text style={{ color: t.fg, fontFamily: font.displayBold, fontSize: 13 }}>{f.pct}</Text>
-                  <Text style={{ color: t.fg, fontFamily: font.body, fontSize: 8, letterSpacing: 1, opacity: 0.85, marginTop: 2, textTransform: 'uppercase' }}>
+                  <Text style={{ color: fg, fontFamily: diffuse ? diffuseFont.monoBold : font.displayBold, fontSize: 13 }}>{f.pct}</Text>
+                  <Text style={{ color: fg, fontFamily: diffuse ? diffuseFont.mono : font.body, fontSize: 8, letterSpacing: 1, opacity: diffuse ? 1 : 0.85, marginTop: 2, textTransform: 'uppercase' }}>
                     {f.weekday.slice(0, 3)}
                   </Text>
                 </View>
@@ -147,11 +166,11 @@ export function FertileWindowCard({ cycleConfig }: Props) {
           </View>
 
           {bestDays !== '' && (
-            <View style={[styles.best, { borderTopColor: colors.border }]}>
-              <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11 }}>
+            <View style={[styles.best, { borderTopColor: diffuse ? dt.colors.line2 : colors.border }]}>
+              <Text style={diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.6, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: font.body, fontSize: 11 }}>
                 {t('prepreg_fertileWindowBestDays')}
               </Text>
-              <Text style={{ color: stickers.coral, fontFamily: font.bodyBold, fontSize: 11 }}>
+              <Text style={diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, fontSize: 10, letterSpacing: 0.6 } : { color: stickers.coral, fontFamily: font.bodyBold, fontSize: 11 }}>
                 {bestDays} {t('common_arrowRight')}
               </Text>
             </View>
