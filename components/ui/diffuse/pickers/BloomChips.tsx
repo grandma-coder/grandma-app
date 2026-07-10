@@ -13,6 +13,7 @@
 // Presentational only — no data/store logic. RN equivalent of the HTML
 // `.chips` / `.chip` / `.other-input` markup in docs/design/Onboarding.html.
 
+import { useState } from 'react'
 import { View, Pressable, Text, StyleSheet } from 'react-native'
 import { diffuseFont, useDiffuseTheme } from '../../../../constants/theme'
 import { DiffuseField } from '../DiffuseField'
@@ -45,8 +46,7 @@ export function BloomChips({
   otherValue = '',
   onOtherChange,
 }: BloomChipsProps) {
-  const otherKey = '__other__'
-  const otherOn = value.includes(otherKey)
+  const [otherOpen, setOtherOpen] = useState(() => !!otherValue)
 
   const handlePress = (opt: ChipOption) => {
     const selected = value.includes(opt.key)
@@ -71,7 +71,7 @@ export function BloomChips({
   }
 
   const handleOtherToggle = () => {
-    onChange(otherOn ? value.filter((k) => k !== otherKey) : [...value, otherKey])
+    setOtherOpen((prev) => !prev)
   }
 
   return (
@@ -84,10 +84,10 @@ export function BloomChips({
           )
         })}
         {allowOther && (
-          <Chip label="Other +" on={otherOn} onPress={handleOtherToggle} />
+          <Chip label="Other +" on={otherOpen} onPress={handleOtherToggle} />
         )}
       </View>
-      {allowOther && otherOn && (
+      {allowOther && otherOpen && (
         <View style={s.otherWrap}>
           <DiffuseField
             value={otherValue}
