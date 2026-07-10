@@ -38,12 +38,14 @@ import {
   Send,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, getModeColor } from '../../constants/theme'
+import { useTheme, getModeColor, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useTranslation } from '../../lib/i18n'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { PaperAlert, type PaperAlertButton } from '../../components/ui/PaperAlert'
 import { createGaragePost } from '../../lib/garagePosts'
+import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 
 const SCREEN_W = Dimensions.get('window').width
 const TOTAL_STEPS = 5
@@ -75,10 +77,12 @@ interface AlertState {
 
 export default function CreatePostScreen() {
   const { colors, radius, stickers, font, isDark, brand } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const mode = useModeStore((sel) => sel.mode)
-  const accent = getModeColor(mode, isDark)
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
   const insets = useSafeAreaInsets()
-  const ink = isDark ? colors.text : '#141313'
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
   const { t } = useTranslation()
 
   const [step, setStep] = useState(1)
@@ -278,23 +282,25 @@ export default function CreatePostScreen() {
   const progress = step / TOTAL_STEPS
 
   return (
-    <View style={[s.root, { backgroundColor: colors.bg }]}>
+    <View style={[s.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
       <View style={[s.header, { paddingTop: insets.top + 8 }]}>
         <Pressable onPress={goBack} style={s.backBtn} hitSlop={12}>
-          <ArrowLeft size={24} color={colors.text} />
+          <ArrowLeft size={24} color={diffuse ? dt.colors.ink : colors.text} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+        <Text style={[s.headerTitle, diffuse
+          ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.6 }
+          : { color: colors.text, fontFamily: font.bodySemiBold }]}>
           {step === 5 ? t('garage_create_preview') : t('garage_create_stepN', { step, total: TOTAL_STEPS })}
         </Text>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <X size={22} color={colors.textMuted} />
+          <X size={22} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
         </Pressable>
       </View>
 
       {/* Progress bar */}
-      <View style={[s.progressTrack, { backgroundColor: colors.border }]}>
-        <View style={[s.progressFill, { width: `${progress * 100}%`, backgroundColor: accent }]} />
+      <View style={[s.progressTrack, { backgroundColor: diffuse ? dt.colors.line : colors.border }]}>
+        <View style={[s.progressFill, { width: `${progress * 100}%`, backgroundColor: diffuse ? dt.colors.ink : accent }]} />
       </View>
 
       {/* Step content */}
@@ -352,13 +358,24 @@ export default function CreatePostScreen() {
             disabled={!canAdvance()}
             style={({ pressed }) => [
               s.nextBtn,
-              { backgroundColor: accent, borderRadius: radius.full, opacity: canAdvance() ? 1 : 0.35 },
+              diffuse
+                ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2, borderRadius: radius.full, opacity: canAdvance() ? 1 : 0.35 }
+                : { backgroundColor: accent, borderRadius: radius.full, opacity: canAdvance() ? 1 : 0.35 },
               pressed && canAdvance() && { transform: [{ scale: 0.98 }] },
             ]}
           >
-            <Text style={[s.nextBtnText, { color: ink, fontFamily: font.bodyBold }]}>
-              {step === 4 ? t('garage_create_preview') : t('garage_create_next')}
-            </Text>
+            {diffuse ? (
+              <View style={s.publishRow}>
+                <Text style={[s.nextBtnText, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, textTransform: 'uppercase', letterSpacing: 2, fontSize: 13 }]}>
+                  {step === 4 ? t('garage_create_preview') : t('garage_create_next')}
+                </Text>
+                <DiffuseArrow color={accent} />
+              </View>
+            ) : (
+              <Text style={[s.nextBtnText, { color: ink, fontFamily: font.bodyBold }]}>
+                {step === 4 ? t('garage_create_preview') : t('garage_create_next')}
+              </Text>
+            )}
           </Pressable>
         ) : (
           <Pressable
@@ -366,16 +383,20 @@ export default function CreatePostScreen() {
             disabled={posting}
             style={({ pressed }) => [
               s.nextBtn,
-              { backgroundColor: accent, borderRadius: radius.full, opacity: posting ? 0.5 : 1 },
+              diffuse
+                ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2, borderRadius: radius.full, opacity: posting ? 0.5 : 1 }
+                : { backgroundColor: accent, borderRadius: radius.full, opacity: posting ? 0.5 : 1 },
               pressed && !posting && { transform: [{ scale: 0.98 }] },
             ]}
           >
             {posting ? (
-              <ActivityIndicator color={ink} size="small" />
+              <ActivityIndicator color={diffuse ? dt.colors.ink : ink} size="small" />
             ) : (
               <View style={s.publishRow}>
-                <Send size={18} color={ink} strokeWidth={2.4} />
-                <Text style={[s.nextBtnText, { color: ink, fontFamily: font.bodyBold }]}>{t('garage_create_publish')}</Text>
+                <Send size={18} color={diffuse ? accent : ink} strokeWidth={2.4} />
+                <Text style={[s.nextBtnText, diffuse
+                  ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, textTransform: 'uppercase', letterSpacing: 2, fontSize: 13 }
+                  : { color: ink, fontFamily: font.bodyBold }]}>{t('garage_create_publish')}</Text>
               </View>
             )}
           </Pressable>
@@ -385,28 +406,30 @@ export default function CreatePostScreen() {
       {/* Upload progress overlay */}
       {posting && (
         <View style={s.uploadOverlay}>
-          <View style={[s.uploadCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.xl }]}>
+          <View style={[s.uploadCard, diffuse
+            ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: radius.xl, shadowOpacity: 0, elevation: 0 }
+            : { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.xl }]}>
             {uploadProgress >= 1 ? (
-              <Check size={32} color={brand.success} strokeWidth={2.5} />
+              <Check size={32} color={diffuse ? dt.colors.success : brand.success} strokeWidth={2.5} />
             ) : (
               <BrandedLoader logoSize={64} />
             )}
-            <Text style={[s.uploadStatusText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+            <Text style={[s.uploadStatusText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold }]}>
               {uploadStatus}
             </Text>
-            <View style={[s.uploadTrack, { backgroundColor: colors.border, borderRadius: radius.sm }]}>
+            <View style={[s.uploadTrack, { backgroundColor: diffuse ? dt.colors.line : colors.border, borderRadius: radius.sm }]}>
               <Animated.View
                 style={[
                   s.uploadFill,
                   {
-                    backgroundColor: uploadProgress >= 1 ? brand.success : accent,
+                    backgroundColor: uploadProgress >= 1 ? (diffuse ? dt.colors.success : brand.success) : (diffuse ? dt.colors.ink : accent),
                     borderRadius: radius.sm,
                     width: progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
                   },
                 ]}
               />
             </View>
-            <Text style={[s.uploadPercent, { color: colors.textMuted, fontFamily: font.bodyBold }]}>
+            <Text style={[s.uploadPercent, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.monoBold : font.bodyBold }]}>
               {Math.round(uploadProgress * 100)}%
             </Text>
           </View>
@@ -437,16 +460,18 @@ function Step1Media({
   onRemove: (i: number) => void
 }) {
   const { colors, radius, stickers, font, isDark, brand } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const mode = useModeStore((sel) => sel.mode)
-  const accent = getModeColor(mode, isDark)
-  const ink = isDark ? colors.text : '#141313'
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
   const thumbSize = (SCREEN_W - 48 - 16) / 3
   const { t } = useTranslation()
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>{t('garage_create_step1Title')}</Text>
-      <Text style={[s.stepHint, { color: colors.textSecondary, fontFamily: font.body }]}>
+      <Text style={[s.stepTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('garage_create_step1Title')}</Text>
+      <Text style={[s.stepHint, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
         {t('garage_create_step1Hint')}
       </Text>
 
@@ -461,11 +486,15 @@ function Step1Media({
               </View>
             )}
             {i === 0 && (
-              <View style={[s.coverBadge, { backgroundColor: accent, borderRadius: radius.sm }]}>
-                <Text style={[s.coverBadgeText, { color: ink, fontFamily: font.bodyBold }]}>{t('garage_create_coverBadge')}</Text>
+              <View style={[s.coverBadge, diffuse
+                ? { backgroundColor: dt.colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2, borderRadius: radius.sm }
+                : { backgroundColor: accent, borderRadius: radius.sm }]}>
+                <Text style={[s.coverBadgeText, diffuse
+                  ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1 }
+                  : { color: ink, fontFamily: font.bodyBold }]}>{t('garage_create_coverBadge')}</Text>
               </View>
             )}
-            <Pressable onPress={() => onRemove(i)} style={[s.removeMediaBtn, { backgroundColor: brand.error }]}>
+            <Pressable onPress={() => onRemove(i)} style={[s.removeMediaBtn, { backgroundColor: diffuse ? dt.colors.error : brand.error }]}>
               <X size={12} color="#FFFFFF" strokeWidth={2.6} />
             </Pressable>
           </View>
@@ -477,24 +506,42 @@ function Step1Media({
         <View style={s.addMediaRow}>
           <Pressable
             onPress={onPickMedia}
-            style={[s.addMediaBtn, { backgroundColor: stickers.blueSoft, borderColor: colors.border, borderRadius: radius.lg }]}
+            style={[s.addMediaBtn, diffuse
+              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: radius.lg }
+              : { backgroundColor: stickers.blueSoft, borderColor: colors.border, borderRadius: radius.lg }]}
           >
-            <ImageIcon size={24} color={stickers.blueInk} strokeWidth={2.2} />
-            <Text style={[s.addMediaText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('garage_create_gallery')}</Text>
-            <Text style={[s.addMediaSub, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('garage_create_galleryPhotosVideos')}</Text>
+            {diffuse ? (
+              <DiffuseBloomIcon size={40} intensity={0.45}><ImageIcon size={24} color={dt.colors.ink3} strokeWidth={1.7} /></DiffuseBloomIcon>
+            ) : (
+              <ImageIcon size={24} color={stickers.blueInk} strokeWidth={2.2} />
+            )}
+            <Text style={[s.addMediaText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>{t('garage_create_gallery')}</Text>
+            <Text style={[s.addMediaSub, diffuse
+              ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1 }
+              : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('garage_create_galleryPhotosVideos')}</Text>
           </Pressable>
           <Pressable
             onPress={onTakePhoto}
-            style={[s.addMediaBtn, { backgroundColor: stickers.yellowSoft, borderColor: colors.border, borderRadius: radius.lg }]}
+            style={[s.addMediaBtn, diffuse
+              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: radius.lg }
+              : { backgroundColor: stickers.yellowSoft, borderColor: colors.border, borderRadius: radius.lg }]}
           >
-            <Camera size={24} color={stickers.yellowInk} strokeWidth={2.2} />
-            <Text style={[s.addMediaText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('scan_cameraBtn')}</Text>
-            <Text style={[s.addMediaSub, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('garage_create_cameraTakePhoto')}</Text>
+            {diffuse ? (
+              <DiffuseBloomIcon size={40} intensity={0.45}><Camera size={24} color={dt.colors.ink3} strokeWidth={1.7} /></DiffuseBloomIcon>
+            ) : (
+              <Camera size={24} color={stickers.yellowInk} strokeWidth={2.2} />
+            )}
+            <Text style={[s.addMediaText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>{t('scan_cameraBtn')}</Text>
+            <Text style={[s.addMediaSub, diffuse
+              ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1 }
+              : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('garage_create_cameraTakePhoto')}</Text>
           </Pressable>
         </View>
       )}
 
-      <Text style={[s.mediaCount, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+      <Text style={[s.mediaCount, diffuse
+        ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2 }
+        : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
         {t('garage_create_mediaCount', { n: media.length })}
       </Text>
     </View>
@@ -514,42 +561,46 @@ function Step2TitleCaption({
   onCaptionChange: (c: string) => void
 }) {
   const { colors, radius, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>{t('garage_create_step2Title')}</Text>
+      <Text style={[s.stepTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('garage_create_step2Title')}</Text>
 
       {/* Title */}
-      <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('garage_create_fieldTitle')}</Text>
+      <Text style={[s.fieldLabel, diffuse
+        ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.6 }
+        : { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('garage_create_fieldTitle')}</Text>
       <TextInput
         value={title}
         onChangeText={onTitleChange}
         placeholder='e.g. "Ergobaby Carrier — Barely Used"'
-        placeholderTextColor={colors.textMuted}
-        style={[s.textInput, {
-          color: colors.text, fontFamily: font.bodyMedium,
-          backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md,
-        }]}
+        placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
+        style={[s.textInput, diffuse
+          ? { color: dt.colors.ink, fontFamily: diffuseFont.body, backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: radius.md }
+          : { color: colors.text, fontFamily: font.bodyMedium, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}
       />
-      <Text style={[s.fieldTip, { color: colors.textMuted, fontFamily: font.italic }]}>
+      <Text style={[s.fieldTip, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
         {t('garage_create_fieldTitleTip')}
       </Text>
 
       {/* Caption */}
-      <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold, marginTop: 20 }]}>
+      <Text style={[s.fieldLabel, { marginTop: 20 }, diffuse
+        ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.6 }
+        : { color: colors.textMuted, fontFamily: font.bodyBold }]}>
         {t('garage_create_fieldCaption')}
       </Text>
       <TextInput
         value={caption}
         onChangeText={onCaptionChange}
         placeholder="Tell others about this item — why you love it, how it's been used…"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
         multiline
-        style={[s.textArea, {
-          color: colors.text, fontFamily: font.bodyMedium,
-          backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md,
-        }]}
+        style={[s.textArea, diffuse
+          ? { color: dt.colors.ink, fontFamily: diffuseFont.body, backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: radius.md }
+          : { color: colors.text, fontFamily: font.bodyMedium, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}
       />
     </View>
   )
@@ -568,13 +619,17 @@ function Step3Category({
   onCustomCategoryChange: (c: string) => void
 }) {
   const { colors, radius, stickers, font, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((sel) => sel.mode)
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : ''
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
   const { t } = useTranslation()
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>{t('garage_create_step3Title')}</Text>
-      <Text style={[s.stepHint, { color: colors.textSecondary, fontFamily: font.body }]}>
+      <Text style={[s.stepTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('garage_create_step3Title')}</Text>
+      <Text style={[s.stepHint, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
         {t('garage_create_step3Hint')}
       </Text>
 
@@ -585,14 +640,22 @@ function Step3Category({
             <Pressable
               key={c}
               onPress={() => onCategoryChange(c)}
-              style={[s.categoryChip, {
-                backgroundColor: isActive ? stickers.pinkSoft : colors.surface,
-                borderColor: isActive ? ink : colors.border,
-                borderRadius: radius.full,
-              }]}
+              style={[s.categoryChip, diffuse
+                ? {
+                    backgroundColor: isActive ? dt.colors.surface : 'transparent',
+                    borderColor: isActive ? dt.colors.hairline : dt.colors.line,
+                    borderRadius: radius.full,
+                  }
+                : {
+                    backgroundColor: isActive ? stickers.pinkSoft : colors.surface,
+                    borderColor: isActive ? ink : colors.border,
+                    borderRadius: radius.full,
+                  }]}
             >
-              {isActive && <Check size={16} color={ink} strokeWidth={3} />}
-              <Text style={[s.categoryChipText, { color: ink, fontFamily: font.bodySemiBold }]}>{c}</Text>
+              {isActive && <Check size={16} color={diffuse ? accent : ink} strokeWidth={3} />}
+              <Text style={[s.categoryChipText, diffuse
+                ? { color: isActive ? dt.colors.ink : dt.colors.ink3, fontFamily: isActive ? diffuseFont.monoBold : diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 12 }
+                : { color: ink, fontFamily: font.bodySemiBold }]}>{c}</Text>
             </Pressable>
           )
         })}
@@ -601,17 +664,18 @@ function Step3Category({
       {/* Custom category input */}
       {category === 'Other' && (
         <View style={{ marginTop: 16 }}>
-          <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('garage_create_fieldYourCategory')}</Text>
+          <Text style={[s.fieldLabel, diffuse
+            ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.6 }
+            : { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('garage_create_fieldYourCategory')}</Text>
           <TextInput
             value={customCategory}
             onChangeText={onCustomCategoryChange}
             placeholder='e.g. "Stroller Accessories", "Feeding Supplies"'
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
             autoFocus
-            style={[s.textInput, {
-              color: colors.text, fontFamily: font.bodyMedium,
-              backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md,
-            }]}
+            style={[s.textInput, diffuse
+              ? { color: dt.colors.ink, fontFamily: diffuseFont.body, backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: radius.md }
+              : { color: colors.text, fontFamily: font.bodyMedium, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}
           />
         </View>
       )}

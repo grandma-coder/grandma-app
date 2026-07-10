@@ -44,8 +44,10 @@ import {
   Zap,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, getModeColor, font } from '../../../constants/theme'
+import { useTheme, brand, getModeColor, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useModeStore } from '../../../store/useModeStore'
+import { useIsDiffuse } from '../../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../../components/ui/diffuse/DiffusePrimitives'
 import { useSavedToast } from '../../../components/ui/SavedToast'
 import { channelSticker } from '../../../lib/channelSticker'
 import { getChannels, type Channel } from '../../../lib/channels'
@@ -72,9 +74,11 @@ const MEDIA_THUMB = (SCREEN_W - 48 - 8) / 4 // 4 columns
 
 export default function ChannelInfoScreen() {
   const { colors, radius, isDark, font, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const mode = useModeStore((s) => s.mode)
-  const accent = getModeColor(mode, isDark)
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -395,7 +399,7 @@ export default function ChannelInfoScreen() {
 
   if (loading) {
     return (
-      <View style={[s.center, { backgroundColor: colors.bg }]}>
+      <View style={[s.center, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
         <BrandedLoader />
       </View>
     )
@@ -403,20 +407,20 @@ export default function ChannelInfoScreen() {
 
   if (!channel) {
     return (
-      <View style={[s.center, { backgroundColor: colors.bg }]}>
-        <Text style={{ color: colors.textMuted }}>{t('channelInfo_channelNotFound')}</Text>
+      <View style={[s.center, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
+        <Text style={diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textMuted }}>{t('channelInfo_channelNotFound')}</Text>
       </View>
     )
   }
 
   return (
-    <View style={[s.root, { backgroundColor: colors.bg }]}>
+    <View style={[s.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
-      <View style={[s.header, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
+      <View style={[s.header, { paddingTop: insets.top + 8, borderBottomColor: diffuse ? dt.colors.line : colors.border }]}>
         <Pressable onPress={() => router.back()} hitSlop={8} style={({ pressed }) => [s.headerBtn, pressed && { opacity: 0.7 }]}>
-          <ArrowLeft size={24} color={colors.text} />
+          <ArrowLeft size={24} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: colors.text, fontFamily: font.display }]}>{t('channelInfo_header')}</Text>
+        <Text style={[s.headerTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display }]}>{t('channelInfo_header')}</Text>
         <View style={s.headerBtn} />
       </View>
 
@@ -427,7 +431,9 @@ export default function ChannelInfoScreen() {
             const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
             const StickerIcon = sticker.Component
             return (
-              <View style={[s.channelIcon, { backgroundColor: sticker.tint }]}>
+              <View style={[s.channelIcon, diffuse
+                ? { backgroundColor: dt.colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                : { backgroundColor: sticker.tint }]}>
                 <StickerIcon size={52} fill={sticker.fill} />
               </View>
             )
@@ -438,28 +444,32 @@ export default function ChannelInfoScreen() {
               <TextInput
                 value={editName}
                 onChangeText={setEditName}
-                style={[s.editInput, { color: colors.text, borderColor: colors.border, borderRadius: radius.lg }]}
+                style={[s.editInput, diffuse
+                  ? { color: dt.colors.ink, borderColor: dt.colors.line, borderRadius: 20, backgroundColor: dt.colors.surface, fontFamily: diffuseFont.body }
+                  : { color: colors.text, borderColor: colors.border, borderRadius: radius.lg }]}
                 placeholder={t('channelInfo_namePlaceholder')}
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
               />
               <TextInput
                 value={editDesc}
                 onChangeText={setEditDesc}
-                style={[s.editTextArea, { color: colors.text, borderColor: colors.border, borderRadius: radius.lg }]}
+                style={[s.editTextArea, diffuse
+                  ? { color: dt.colors.ink, borderColor: dt.colors.line, borderRadius: 20, backgroundColor: dt.colors.surface, fontFamily: diffuseFont.body }
+                  : { color: colors.text, borderColor: colors.border, borderRadius: radius.lg }]}
                 placeholder={t('channelInfo_descriptionPlaceholder')}
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
                 multiline
               />
               <View style={s.editActions}>
-                <Pressable onPress={() => setEditing(false)} style={({ pressed }) => [s.editCancelBtn, { borderColor: colors.border, borderRadius: radius.full }, pressed && { opacity: 0.7 }]}>
-                  <X size={16} color={colors.textSecondary} />
-                  <Text style={[s.editCancelText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{t('channelInfo_editCancel')}</Text>
+                <Pressable onPress={() => setEditing(false)} style={({ pressed }) => [s.editCancelBtn, diffuse ? { borderColor: dt.colors.line2, borderRadius: 999 } : { borderColor: colors.border, borderRadius: radius.full }, pressed && { opacity: 0.7 }]}>
+                  <X size={16} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={diffuse ? 1.6 : 2} />
+                  <Text style={[s.editCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 12 } : { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{t('channelInfo_editCancel')}</Text>
                 </Pressable>
-                <Pressable onPress={handleSaveEdit} disabled={saving} style={({ pressed }) => [s.editSaveBtn, { backgroundColor: accent, borderRadius: radius.full }, pressed && { opacity: 0.85 }]}>
-                  {saving ? <ActivityIndicator color={colors.textInverse} size="small" /> : (
+                <Pressable onPress={handleSaveEdit} disabled={saving} style={({ pressed }) => [s.editSaveBtn, diffuse ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2 } : { backgroundColor: accent, borderRadius: radius.full }, pressed && { opacity: 0.85 }]}>
+                  {saving ? <ActivityIndicator color={diffuse ? dt.colors.ink : colors.textInverse} size="small" /> : (
                     <>
-                      <Check size={16} color={colors.textInverse} />
-                      <Text style={[s.editSaveText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelInfo_editSave')}</Text>
+                      <Check size={16} color={diffuse ? dt.colors.ink : colors.textInverse} strokeWidth={diffuse ? 1.6 : 2} />
+                      <Text style={[s.editSaveText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 12 } : { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelInfo_editSave')}</Text>
                     </>
                   )}
                 </Pressable>
@@ -467,15 +477,15 @@ export default function ChannelInfoScreen() {
             </View>
           ) : (
             <>
-              <Text style={[s.channelName, { color: colors.text, fontFamily: font.display }]}>{channel.name}</Text>
+              <Text style={[s.channelName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display }]}>{channel.name}</Text>
               {channel.description && (
-                <Text style={[s.channelDesc, { color: colors.textSecondary, fontFamily: font.body }]}>{channel.description}</Text>
+                <Text style={[s.channelDesc, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>{channel.description}</Text>
               )}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 {channel.channelType === 'private' && (
-                  <Lock size={12} color={colors.textMuted} strokeWidth={2} />
+                  <Lock size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
                 )}
-                <Text style={[s.channelCategory, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+                <Text style={[s.channelCategory, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1 } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
                   {t('channelInfo_typeChannel', { type: channel.channelType === 'private' ? 'Private' : (channel.category ?? '') })}
                 </Text>
               </View>
@@ -484,23 +494,25 @@ export default function ChannelInfoScreen() {
         </View>
 
         {/* Stats row */}
-        <View style={[s.statsRow, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+        <View style={[s.statsRow, diffuse
+          ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+          : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
           <View style={s.stat}>
-            <Users size={18} color={colors.primary} strokeWidth={2} />
-            <Text style={[s.statNumber, { color: colors.text, fontFamily: font.display }]}>{channel.memberCount}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_statMembers')}</Text>
+            <Users size={18} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+            <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{channel.memberCount}</Text>
+            <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_statMembers')}</Text>
           </View>
-          <View style={[s.statDivider, { backgroundColor: colors.borderLight }]} />
+          <View style={[s.statDivider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
           <View style={s.stat}>
-            <Star size={18} color={stickers.yellow} strokeWidth={2} fill={channel.avgRating > 0 ? stickers.yellow : 'none'} />
-            <Text style={[s.statNumber, { color: colors.text, fontFamily: font.display }]}>{channel.avgRating > 0 ? channel.avgRating.toFixed(1) : '—'}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_statRating')}</Text>
+            <Star size={18} color={diffuse ? dt.colors.ink3 : stickers.yellow} strokeWidth={diffuse ? 1.6 : 2} fill={!diffuse && channel.avgRating > 0 ? stickers.yellow : 'none'} />
+            <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{channel.avgRating > 0 ? channel.avgRating.toFixed(1) : '—'}</Text>
+            <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_statRating')}</Text>
           </View>
-          <View style={[s.statDivider, { backgroundColor: colors.borderLight }]} />
+          <View style={[s.statDivider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
           <View style={s.stat}>
-            <ImageIcon size={18} color={colors.primary} strokeWidth={2} />
-            <Text style={[s.statNumber, { color: colors.text, fontFamily: font.display }]}>{sharedMedia.length}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_statMedia')}</Text>
+            <ImageIcon size={18} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+            <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{sharedMedia.length}</Text>
+            <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_statMedia')}</Text>
           </View>
         </View>
 
@@ -511,14 +523,22 @@ export default function ChannelInfoScreen() {
               onPress={handleShareChannel}
               style={({ pressed }) => [
                 s.shareBtn,
-                { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.full },
+                diffuse
+                  ? { backgroundColor: dt.colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line, borderRadius: 20 }
+                  : { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.full },
                 pressed && { opacity: 0.85 },
               ]}
             >
-              <Share2 size={18} color={colors.text} strokeWidth={2} />
+              {diffuse ? (
+                <DiffuseBloomIcon color={accent} size={38} intensity={0.5}>
+                  <Share2 size={18} color={dt.colors.ink3} strokeWidth={1.6} />
+                </DiffuseBloomIcon>
+              ) : (
+                <Share2 size={18} color={colors.text} strokeWidth={2} />
+              )}
               <View style={{ flex: 1 }}>
-                <Text style={[s.shareBtnText, { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelInfo_shareChannel')}</Text>
-                <Text style={[s.shareBtnSub, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+                <Text style={[s.shareBtnText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelInfo_shareChannel')}</Text>
+                <Text style={[s.shareBtnSub, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5 } : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
                   {channel.channelType === 'private'
                     ? 'Invite link — only members can share'
                     : 'Send invite link via text, WhatsApp, etc.'}
@@ -530,32 +550,38 @@ export default function ChannelInfoScreen() {
 
         {/* Owner / Creator */}
         <View style={s.section}>
-          <Text style={[s.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_sectionCreatedBy')}</Text>
-          <View style={[s.ownerCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+          <Text style={[s.sectionTitle, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_sectionCreatedBy')}</Text>
+          <View style={[s.ownerCard, diffuse
+            ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+            : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
             {/* Owner's sticker identity with a gold crown badge marking the host. */}
             {(() => {
               const os = channelSticker(channel.createdBy ?? 'owner', isDark)
               const OwnerSticker = os.Component
               return (
-                <View style={[s.ownerAvatar, { backgroundColor: os.tint }]}>
+                <View style={[s.ownerAvatar, diffuse
+                  ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                  : { backgroundColor: os.tint }]}>
                   <OwnerSticker size={20} fill={os.fill} />
-                  <View style={[s.ownerCrownBadge, { backgroundColor: colors.surface }]}>
+                  <View style={[s.ownerCrownBadge, { backgroundColor: diffuse ? dt.colors.bg : colors.surface }]}>
                     <Crown size={11} color={brand.accent} strokeWidth={2} fill={brand.accent} />
                   </View>
                 </View>
               )
             })()}
             <View style={{ flex: 1 }}>
-              <Text style={[s.ownerName, { color: colors.text, fontFamily: font.bodyBold }]}>
+              <Text style={[s.ownerName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text, fontFamily: font.bodyBold }]}>
                 {ownerName ?? t('channelInfo_ownerFallback')}
               </Text>
-              <Text style={[s.ownerMeta, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+              <Text style={[s.ownerMeta, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5 } : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
                 {t('channelInfo_createdDate', { date: new Date(channel.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) })}
               </Text>
             </View>
             {isOwner && (
-              <View style={[s.ownerBadge, { backgroundColor: brand.accent + '20', borderRadius: radius.full }]}>
-                <Text style={[s.ownerBadgeText, { color: brand.accent, fontFamily: font.bodySemiBold }]}>{t('channelInfo_youBadge')}</Text>
+              <View style={[s.ownerBadge, diffuse
+                ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                : { backgroundColor: brand.accent + '20', borderRadius: radius.full }]}>
+                <Text style={[s.ownerBadgeText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1 } : { color: brand.accent, fontFamily: font.bodySemiBold }]}>{t('channelInfo_youBadge')}</Text>
               </View>
             )}
           </View>
@@ -563,18 +589,20 @@ export default function ChannelInfoScreen() {
 
         {/* Members */}
         <View style={s.section}>
-          <Text style={[s.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          <Text style={[s.sectionTitle, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
             {t('channelInfo_sectionMembers')} ({members.length})
           </Text>
           {members.slice(0, 10).map((m) => {
             const ms = channelSticker(m.user_id, isDark)
             const MemberSticker = ms.Component
             return (
-              <View key={m.user_id} style={[s.memberRow, { borderBottomColor: colors.borderLight }]}>
-                <View style={[s.memberAvatar, { backgroundColor: ms.tint }]}>
+              <View key={m.user_id} style={[s.memberRow, { borderBottomColor: diffuse ? dt.colors.line : colors.borderLight }]}>
+                <View style={[s.memberAvatar, diffuse
+                  ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                  : { backgroundColor: ms.tint }]}>
                   <MemberSticker size={16} fill={ms.fill} />
                 </View>
-                <Text style={[s.memberName, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+                <Text style={[s.memberName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.bodySemiBold }]}>
                   {m.name ?? t('channelInfo_memberFallback')}
                 </Text>
                 {m.user_id === channel.createdBy && (
@@ -584,7 +612,7 @@ export default function ChannelInfoScreen() {
             )
           })}
           {members.length > 10 && (
-            <Text style={[s.showMore, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+            <Text style={[s.showMore, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5 } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
               {t('channelInfo_moreMembers', { n: members.length - 10 })}
             </Text>
           )}
@@ -593,7 +621,7 @@ export default function ChannelInfoScreen() {
         {/* Shared Media */}
         {sharedMedia.length > 0 && (
           <View style={s.section}>
-            <Text style={[s.sectionTitle, { color: colors.textMuted }]}>{t('channelInfo_sectionMedia')}</Text>
+            <Text style={[s.sectionTitle, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 } : { color: colors.textMuted }]}>{t('channelInfo_sectionMedia')}</Text>
             <View style={s.mediaGrid}>
               {sharedMedia.map((uri, i) => (
                 <Image key={i} source={{ uri }} style={[s.mediaThumb, { borderRadius: radius.sm }]} />
@@ -605,48 +633,50 @@ export default function ChannelInfoScreen() {
         {/* Admin Section (owner only) */}
         {isOwner && (
           <View style={s.section}>
-            <Text style={[s.sectionTitle, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-              <Shield size={12} color={colors.textMuted} strokeWidth={2} /> {t('channelInfo_sectionAdmin')}
+            <Text style={[s.sectionTitle, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+              <Shield size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} /> {t('channelInfo_sectionAdmin')}
             </Text>
 
             {/* Channel Metrics Dashboard */}
             {metrics && (
-              <View style={[s.metricsCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+              <View style={[s.metricsCard, diffuse
+                ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+                : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
                 <View style={s.metricsHeader}>
-                  <ChartBar size={16} color={colors.primary} strokeWidth={2} />
-                  <Text style={[s.metricsTitle, { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelInfo_metricsTitle')}</Text>
+                  <ChartBar size={16} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+                  <Text style={[s.metricsTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontSize: 18 } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelInfo_metricsTitle')}</Text>
                 </View>
                 <View style={s.metricsGrid}>
-                  <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-                    <Users size={16} color={colors.primary} strokeWidth={2} />
-                    <Text style={[s.metricValue, { color: colors.text, fontFamily: font.display }]}>{metrics.totalMembers}</Text>
-                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMembers')}</Text>
+                  <View style={[s.metricItem, diffuse ? { backgroundColor: 'transparent', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line } : { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
+                    <Users size={16} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+                    <Text style={[s.metricValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{metrics.totalMembers}</Text>
+                    <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMembers')}</Text>
                   </View>
-                  <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-                    <MessageSquare size={16} color={colors.secondary} strokeWidth={2} />
-                    <Text style={[s.metricValue, { color: colors.text, fontFamily: font.display }]}>{metrics.totalMessages}</Text>
-                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMessages')}</Text>
+                  <View style={[s.metricItem, diffuse ? { backgroundColor: 'transparent', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line } : { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
+                    <MessageSquare size={16} color={diffuse ? dt.colors.ink3 : colors.secondary} strokeWidth={diffuse ? 1.6 : 2} />
+                    <Text style={[s.metricValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{metrics.totalMessages}</Text>
+                    <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMessages')}</Text>
                   </View>
-                  <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-                    <ImageIcon size={16} color={colors.primary} strokeWidth={2} />
-                    <Text style={[s.metricValue, { color: colors.text, fontFamily: font.display }]}>{metrics.totalMedia}</Text>
-                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMedia')}</Text>
+                  <View style={[s.metricItem, diffuse ? { backgroundColor: 'transparent', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line } : { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
+                    <ImageIcon size={16} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+                    <Text style={[s.metricValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{metrics.totalMedia}</Text>
+                    <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMedia')}</Text>
                   </View>
-                  <View style={[s.metricItem, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-                    <Zap size={16} color={colors.success} strokeWidth={2} />
-                    <Text style={[s.metricValue, { color: colors.text, fontFamily: font.display }]}>{metrics.activeToday}</Text>
-                    <Text style={[s.metricLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricActiveToday')}</Text>
+                  <View style={[s.metricItem, diffuse ? { backgroundColor: 'transparent', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line } : { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
+                    <Zap size={16} color={diffuse ? dt.colors.ink3 : colors.success} strokeWidth={diffuse ? 1.6 : 2} />
+                    <Text style={[s.metricValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{metrics.activeToday}</Text>
+                    <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricActiveToday')}</Text>
                   </View>
                 </View>
-                <View style={[s.metricsFooter, { borderTopColor: colors.borderLight }]}>
+                <View style={[s.metricsFooter, { borderTopColor: diffuse ? dt.colors.line : colors.borderLight }]}>
                   <View style={s.metricsFooterItem}>
-                    <Text style={[s.metricsFooterValue, { color: colors.primary, fontFamily: font.display }]}>{metrics.messagesToday}</Text>
-                    <Text style={[s.metricsFooterLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('channelInfo_msgsToday')}</Text>
+                    <Text style={[s.metricsFooterValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.primary, fontFamily: font.display }]}>{metrics.messagesToday}</Text>
+                    <Text style={[s.metricsFooterLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5 } : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('channelInfo_msgsToday')}</Text>
                   </View>
-                  <View style={[s.metricsFooterDivider, { backgroundColor: colors.borderLight }]} />
+                  <View style={[s.metricsFooterDivider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
                   <View style={s.metricsFooterItem}>
-                    <Text style={[s.metricsFooterValue, { color: colors.primary, fontFamily: font.display }]}>{metrics.messagesThisWeek}</Text>
-                    <Text style={[s.metricsFooterLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('channelInfo_thisWeek')}</Text>
+                    <Text style={[s.metricsFooterValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.primary, fontFamily: font.display }]}>{metrics.messagesThisWeek}</Text>
+                    <Text style={[s.metricsFooterLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5 } : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('channelInfo_thisWeek')}</Text>
                   </View>
                 </View>
               </View>
@@ -654,26 +684,32 @@ export default function ChannelInfoScreen() {
 
             <Pressable
               onPress={() => setEditing(true)}
-              style={[s.adminBtn, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
+              style={[s.adminBtn, diffuse
+                ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+                : { backgroundColor: colors.surface, borderRadius: radius.xl }]}
             >
-              <Edit3 size={18} color={colors.primary} strokeWidth={2} />
-              <Text style={[s.adminBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('channelInfo_editInfo')}</Text>
+              <Edit3 size={18} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+              <Text style={[s.adminBtnText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('channelInfo_editInfo')}</Text>
             </Pressable>
 
             <Pressable
               onPress={handleTransferOwnership}
-              style={[s.adminBtn, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
+              style={[s.adminBtn, diffuse
+                ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+                : { backgroundColor: colors.surface, borderRadius: radius.xl }]}
             >
-              <ArrowRightLeft size={18} color={colors.primary} strokeWidth={2} />
-              <Text style={[s.adminBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('channelInfo_transferOwnership')}</Text>
+              <ArrowRightLeft size={18} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+              <Text style={[s.adminBtnText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('channelInfo_transferOwnership')}</Text>
             </Pressable>
 
             {/* Pending join requests (private channels) */}
             {pendingRequests.length > 0 && (
-              <View style={[s.requestsSection, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+              <View style={[s.requestsSection, diffuse
+                ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+                : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
                 <View style={s.requestsHeader}>
-                  <UserPlus size={16} color={colors.primary} strokeWidth={2} />
-                  <Text style={[s.requestsTitle, { color: colors.text, fontFamily: font.bodyBold }]}>
+                  <UserPlus size={16} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+                  <Text style={[s.requestsTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontSize: 16 } : { color: colors.text, fontFamily: font.bodyBold }]}>
                     {t('channelInfo_pendingRequests')} ({pendingRequests.length})
                   </Text>
                 </View>
@@ -681,24 +717,30 @@ export default function ChannelInfoScreen() {
                   const rs = channelSticker(req.user_id, isDark)
                   const ReqSticker = rs.Component
                   return (
-                  <View key={req.id} style={[s.requestRow, { borderTopColor: colors.borderLight }]}>
-                    <View style={[s.memberAvatar, { backgroundColor: rs.tint }]}>
+                  <View key={req.id} style={[s.requestRow, { borderTopColor: diffuse ? dt.colors.line : colors.borderLight }]}>
+                    <View style={[s.memberAvatar, diffuse
+                      ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                      : { backgroundColor: rs.tint }]}>
                       <ReqSticker size={16} fill={rs.fill} />
                     </View>
-                    <Text style={[s.memberName, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+                    <Text style={[s.memberName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.bodySemiBold }]}>
                       {req.user_name ?? t('channelInfo_memberFallback')}
                     </Text>
                     <Pressable
                       onPress={() => handleApproveRequest(req)}
-                      style={[s.requestActionBtn, { backgroundColor: colors.successTint }]}
+                      style={[s.requestActionBtn, diffuse
+                        ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                        : { backgroundColor: colors.successTint }]}
                     >
-                      <Check size={16} color={colors.success} strokeWidth={2} />
+                      <Check size={16} color={diffuse ? dt.colors.ink : colors.success} strokeWidth={diffuse ? 1.6 : 2} />
                     </Pressable>
                     <Pressable
                       onPress={() => handleDenyRequest(req)}
-                      style={[s.requestActionBtn, { backgroundColor: stickers.coralInk + '22' }]}
+                      style={[s.requestActionBtn, diffuse
+                        ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                        : { backgroundColor: stickers.coralInk + '22' }]}
                     >
-                      <XCircle size={16} color={stickers.coral} strokeWidth={2} />
+                      <XCircle size={16} color={diffuse ? dt.colors.ink3 : stickers.coral} strokeWidth={diffuse ? 1.6 : 2} />
                     </Pressable>
                   </View>
                   )
@@ -708,22 +750,26 @@ export default function ChannelInfoScreen() {
 
             <Pressable
               onPress={() => setShowMessages(!showMessages)}
-              style={[s.adminBtn, { backgroundColor: colors.surface, borderRadius: radius.xl }]}
+              style={[s.adminBtn, diffuse
+                ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+                : { backgroundColor: colors.surface, borderRadius: radius.xl }]}
             >
-              <Settings size={18} color={colors.primary} strokeWidth={2} />
-              <Text style={[s.adminBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('channelInfo_manageMessages')} ({messages.length})</Text>
+              <Settings size={18} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+              <Text style={[s.adminBtnText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('channelInfo_manageMessages')} ({messages.length})</Text>
             </Pressable>
 
             {showMessages && messages.length > 0 && (
-              <View style={[s.messagesList, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+              <View style={[s.messagesList, diffuse
+                ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+                : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
                 {messages.slice(0, 20).map((msg) => (
-                  <View key={msg.id} style={[s.modMsgRow, { borderBottomColor: colors.borderLight }]}>
+                  <View key={msg.id} style={[s.modMsgRow, { borderBottomColor: diffuse ? dt.colors.line : colors.borderLight }]}>
                     <View style={{ flex: 1 }}>
-                      <Text style={[s.modMsgAuthor, { color: colors.text, fontFamily: font.bodyBold }]}>{msg.author_name ?? 'Member'}</Text>
-                      <Text style={[s.modMsgContent, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>{msg.content}</Text>
+                      <Text style={[s.modMsgAuthor, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text, fontFamily: font.bodyBold }]}>{msg.author_name ?? 'Member'}</Text>
+                      <Text style={[s.modMsgContent, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>{msg.content}</Text>
                     </View>
                     <Pressable onPress={() => handleDeleteMessage(msg.id)} hitSlop={8}>
-                      <Trash2 size={16} color={stickers.coral} strokeWidth={2} />
+                      <Trash2 size={16} color={diffuse ? dt.colors.ink3 : stickers.coral} strokeWidth={diffuse ? 1.6 : 2} />
                     </Pressable>
                   </View>
                 ))}
@@ -732,10 +778,12 @@ export default function ChannelInfoScreen() {
 
             <Pressable
               onPress={handleDeleteChannel}
-              style={[s.adminBtn, { backgroundColor: stickers.coralInk + '14', borderRadius: radius.xl }]}
+              style={[s.adminBtn, diffuse
+                ? { backgroundColor: 'transparent', borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                : { backgroundColor: stickers.coralInk + '14', borderRadius: radius.xl }]}
             >
-              <Trash2 size={18} color={stickers.coral} strokeWidth={2} />
-              <Text style={[s.adminBtnText, { color: stickers.coral, fontFamily: font.bodyBold }]}>{t('channelInfo_deleteChannel')}</Text>
+              <Trash2 size={18} color={diffuse ? dt.colors.error : stickers.coral} strokeWidth={diffuse ? 1.6 : 2} />
+              <Text style={[s.adminBtnText, diffuse ? { color: dt.colors.error, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 13 } : { color: stickers.coral, fontFamily: font.bodyBold }]}>{t('channelInfo_deleteChannel')}</Text>
             </Pressable>
           </View>
         )}
@@ -744,10 +792,12 @@ export default function ChannelInfoScreen() {
         {isMember && !isOwner && (
           <Pressable
             onPress={handleLeave}
-            style={[s.leaveBtn, { backgroundColor: stickers.coralInk + '14', borderRadius: radius.xl }]}
+            style={[s.leaveBtn, diffuse
+              ? { backgroundColor: 'transparent', borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+              : { backgroundColor: stickers.coralInk + '14', borderRadius: radius.xl }]}
           >
-            <LogOut size={18} color={stickers.coral} strokeWidth={2} />
-            <Text style={[s.leaveBtnText, { color: stickers.coral, fontFamily: font.bodyBold }]}>{t('channelInfo_leaveChannel')}</Text>
+            <LogOut size={18} color={diffuse ? dt.colors.error : stickers.coral} strokeWidth={diffuse ? 1.6 : 2} />
+            <Text style={[s.leaveBtnText, diffuse ? { color: dt.colors.error, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 13 } : { color: stickers.coral, fontFamily: font.bodyBold }]}>{t('channelInfo_leaveChannel')}</Text>
           </Pressable>
         )}
       </ScrollView>
@@ -780,24 +830,34 @@ function DeleteChannelSheet({
   onConfirm: () => void
 }) {
   const { colors, radius, font, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
       <Pressable style={s.deleteOverlay} onPress={onCancel}>
         <Pressable
-          style={[s.deleteSheet, { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}
+          style={[s.deleteSheet, diffuse
+            ? { backgroundColor: dt.colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+            : { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}
           onPress={(e) => e.stopPropagation()}
         >
-          <View style={[s.deleteHandle, { backgroundColor: colors.textMuted + '55' }]} />
+          <View style={[s.deleteHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.textMuted + '55' }]} />
 
-          <View style={[s.deleteIcon, { backgroundColor: stickers.coralInk + '1A' }]}>
-            <Trash2 size={26} color={stickers.coral} strokeWidth={2} />
-          </View>
-          <Text style={[s.deleteTitle, { color: colors.text, fontFamily: font.display }]}>{t('channelInfo_deleteTitle')}</Text>
-          <Text style={[s.deleteBody, { color: colors.textSecondary, fontFamily: font.body }]}>
+          {diffuse ? (
+            <DiffuseBloomIcon color={dt.colors.error} size={64} intensity={0.5}>
+              <Trash2 size={26} color={dt.colors.error} strokeWidth={1.6} />
+            </DiffuseBloomIcon>
+          ) : (
+            <View style={[s.deleteIcon, { backgroundColor: stickers.coralInk + '1A' }]}>
+              <Trash2 size={26} color={stickers.coral} strokeWidth={2} />
+            </View>
+          )}
+          <Text style={[s.deleteTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display }]}>{t('channelInfo_deleteTitle')}</Text>
+          <Text style={[s.deleteBody, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>
             {t('channelInfo_deleteBodyBefore')}
-            <Text style={{ fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
+            <Text style={diffuse ? { fontFamily: diffuseFont.bodySemiBold, color: dt.colors.ink } : { fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
             {t('channelInfo_deleteBodyAfter')}
           </Text>
 
@@ -806,20 +866,22 @@ function DeleteChannelSheet({
             disabled={deleting}
             style={({ pressed }) => [
               s.deleteConfirmBtn,
-              { backgroundColor: brand.error, borderRadius: radius.full },
+              diffuse
+                ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.error }
+                : { backgroundColor: brand.error, borderRadius: radius.full },
               pressed && { opacity: 0.85 },
               deleting && { opacity: 0.6 },
             ]}
           >
             {deleting ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
+              <ActivityIndicator color={diffuse ? dt.colors.error : '#FFFFFF'} size="small" />
             ) : (
-              <Text style={[s.deleteConfirmText, { fontFamily: font.bodyBold }]}>{t('channelInfo_deleteForever')}</Text>
+              <Text style={[s.deleteConfirmText, diffuse ? { color: dt.colors.error, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase' } : { fontFamily: font.bodyBold }]}>{t('channelInfo_deleteForever')}</Text>
             )}
           </Pressable>
 
           <Pressable onPress={onCancel} style={s.deleteCancel}>
-            <Text style={[s.deleteCancelText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_keepChannel')}</Text>
+            <Text style={[s.deleteCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_keepChannel')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>

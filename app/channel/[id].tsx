@@ -42,8 +42,10 @@ import {
   Copy,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers, shadows, getModeColor, getModeColorSoft } from '../../constants/theme'
+import { useTheme, brand, stickers, shadows, getModeColor, getModeColorSoft, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
+import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { channelSticker } from '../../lib/channelSticker'
@@ -80,9 +82,11 @@ import { useTranslation } from '../../lib/i18n'
 
 export default function ChannelChat() {
   const { colors, radius, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const mode = useModeStore((s) => s.mode)
-  const accent = getModeColor(mode, isDark)
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -666,7 +670,7 @@ export default function ChannelChat() {
 
   if (loading) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+      <View style={[styles.center, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
         <BrandedLoader />
       </View>
     )
@@ -677,15 +681,29 @@ export default function ChannelChat() {
 
   if (loadError) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <EmptyState
-          icon={<Star size={36} color={stickers.coral} strokeWidth={1.5} />}
-          iconBg={stickers.coralInk + '22'}
-          title={t('channelScreen_errorTitle')}
-          message={t('channelScreen_errorSubtitle')}
-          ctaLabel={t('channelScreen_tryAgain')}
-          onCtaPress={load}
-        />
+      <View style={[styles.center, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
+        {diffuse ? (
+          <DiffuseEmptyState
+            icon={
+              <DiffuseBloomIcon color={dt.colors.error} size={44} intensity={0.5}>
+                <Star size={22} color={dt.colors.ink3} strokeWidth={1.6} />
+              </DiffuseBloomIcon>
+            }
+            title={t('channelScreen_errorTitle')}
+            message={t('channelScreen_errorSubtitle')}
+            ctaLabel={t('channelScreen_tryAgain')}
+            onCta={load}
+          />
+        ) : (
+          <EmptyState
+            icon={<Star size={36} color={stickers.coral} strokeWidth={1.5} />}
+            iconBg={stickers.coralInk + '22'}
+            title={t('channelScreen_errorTitle')}
+            message={t('channelScreen_errorSubtitle')}
+            ctaLabel={t('channelScreen_tryAgain')}
+            onCtaPress={load}
+          />
+        )}
       </View>
     )
   }

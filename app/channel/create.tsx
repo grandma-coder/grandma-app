@@ -7,7 +7,9 @@ import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArrowLeft, Check, Camera, Lock, Globe } from 'lucide-react-native'
-import { useTheme, font } from '../../constants/theme'
+import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useModeStore } from '../../store/useModeStore'
+import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import { createChannel } from '../../lib/channelPosts'
 import {
@@ -40,6 +42,10 @@ type IconChoice =
 export default function CreateChannel() {
   const insets = useSafeAreaInsets()
   const { colors, radius, spacing, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : colors.primary
   const { t } = useTranslation()
 
   const [name, setName] = useState('')
@@ -101,17 +107,17 @@ export default function CreateChannel() {
   const styles = makeStyles(colors, radius, spacing)
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.bg }]}>
+    <View style={[styles.screen, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-          <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <ArrowLeft size={22} color={colors.text} />
+          <Pressable onPress={() => router.back()} style={[styles.backBtn, diffuse && { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}>
+            <ArrowLeft size={22} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
           </Pressable>
-          <Text style={styles.headerTitle}>{t('channelCreate_header')}</Text>
+          <Text style={[styles.headerTitle, diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }]}>{t('channelCreate_header')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -136,7 +142,9 @@ export default function CreateChannel() {
               const s = stickerByNameColor(preset.name, preset.color, isDark)
               const Icon = s.Component
               return (
-                <View style={[styles.iconPreview, { backgroundColor: s.tint }]}>
+                <View style={[styles.iconPreview, diffuse
+                  ? { backgroundColor: dt.colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                  : { backgroundColor: s.tint }]}>
                   <Icon size={48} fill={s.fill} />
                 </View>
               )
@@ -155,10 +163,15 @@ export default function CreateChannel() {
                   onPress={() => setIcon({ kind: 'sticker', index: i })}
                   style={[
                     styles.stickerTile,
-                    {
-                      backgroundColor: selected ? s.tint : 'transparent',
-                      borderColor: selected ? s.fill : colors.border,
-                    },
+                    diffuse
+                      ? {
+                          backgroundColor: selected ? dt.colors.surface : 'transparent',
+                          borderColor: selected ? dt.colors.hairline : dt.colors.line,
+                        }
+                      : {
+                          backgroundColor: selected ? s.tint : 'transparent',
+                          borderColor: selected ? s.fill : colors.border,
+                        },
                   ]}
                 >
                   <Icon size={26} fill={s.fill} />
@@ -169,68 +182,93 @@ export default function CreateChannel() {
               onPress={pickChannelPhoto}
               style={[
                 styles.stickerTile,
-                {
-                  backgroundColor: icon.kind === 'photo' ? colors.surfaceRaised : 'transparent',
-                  borderColor: icon.kind === 'photo' ? CREAM : colors.border,
-                },
+                diffuse
+                  ? {
+                      backgroundColor: icon.kind === 'photo' ? dt.colors.surface : 'transparent',
+                      borderColor: icon.kind === 'photo' ? dt.colors.hairline : dt.colors.line,
+                    }
+                  : {
+                      backgroundColor: icon.kind === 'photo' ? colors.surfaceRaised : 'transparent',
+                      borderColor: icon.kind === 'photo' ? CREAM : colors.border,
+                    },
               ]}
             >
-              <Camera size={22} color={colors.textSecondary} strokeWidth={2} />
+              <Camera size={22} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={diffuse ? 1.6 : 2} />
             </Pressable>
           </View>
 
           {/* Name */}
-          <Text style={styles.label}>{t('channelCreate_labelName')}</Text>
+          <Text style={[styles.label, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }]}>{t('channelCreate_labelName')}</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, diffuse && { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, color: dt.colors.ink, fontFamily: diffuseFont.body, borderRadius: 20 }]}
             placeholder={t('channelCreate_namePlaceholder')}
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
             value={name}
             onChangeText={(t) => setName(t.slice(0, 50))}
             maxLength={50}
             autoFocus
           />
-          <Text style={styles.charCount}>{name.length}/50</Text>
+          <Text style={[styles.charCount, diffuse && { color: dt.colors.ink4, fontFamily: diffuseFont.mono }]}>{name.length}/50</Text>
 
           {/* Description */}
-          <Text style={styles.label}>{t('channelCreate_labelDescription')}</Text>
+          <Text style={[styles.label, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }]}>{t('channelCreate_labelDescription')}</Text>
           <TextInput
-            style={[styles.input, styles.inputMulti]}
+            style={[styles.input, styles.inputMulti, diffuse && { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, color: dt.colors.ink, fontFamily: diffuseFont.body, borderRadius: 20 }]}
             placeholder={t('channelCreate_descriptionPlaceholder')}
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
             value={description}
             onChangeText={(t) => setDescription(t.slice(0, 200))}
             maxLength={200}
             multiline
           />
-          <Text style={styles.charCount}>{description.length}/200</Text>
+          <Text style={[styles.charCount, diffuse && { color: dt.colors.ink4, fontFamily: diffuseFont.mono }]}>{description.length}/200</Text>
 
           {/* Privacy toggle */}
-          <Text style={styles.label}>{t('channelCreate_labelType')}</Text>
+          <Text style={[styles.label, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }]}>{t('channelCreate_labelType')}</Text>
           <View style={styles.chipRow}>
             <Pressable
               onPress={() => setIsPrivate(false)}
-              style={[styles.chip, !isPrivate && styles.chipSelected]}
+              style={[
+                styles.chip,
+                diffuse
+                  ? { backgroundColor: !isPrivate ? dt.colors.surface : 'transparent', borderColor: !isPrivate ? dt.colors.hairline : dt.colors.line }
+                  : !isPrivate && styles.chipSelected,
+              ]}
             >
-              <Globe size={14} color={!isPrivate ? colors.primary : colors.textSecondary} style={{ marginRight: 4 }} />
-              <Text style={[styles.chipText, !isPrivate && styles.chipTextSelected]}>{t('channelCreate_typePublic')}</Text>
+              <Globe size={14} color={diffuse ? (!isPrivate ? dt.colors.ink : dt.colors.ink3) : (!isPrivate ? colors.primary : colors.textSecondary)} strokeWidth={diffuse ? 1.6 : 2} style={{ marginRight: 4 }} />
+              <Text style={[
+                styles.chipText,
+                diffuse
+                  ? { color: !isPrivate ? dt.colors.ink : dt.colors.ink3, fontFamily: !isPrivate ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
+                  : !isPrivate && styles.chipTextSelected,
+              ]}>{t('channelCreate_typePublic')}</Text>
             </Pressable>
             <Pressable
               onPress={() => setIsPrivate(true)}
-              style={[styles.chip, isPrivate && styles.chipSelected]}
+              style={[
+                styles.chip,
+                diffuse
+                  ? { backgroundColor: isPrivate ? dt.colors.surface : 'transparent', borderColor: isPrivate ? dt.colors.hairline : dt.colors.line }
+                  : isPrivate && styles.chipSelected,
+              ]}
             >
-              <Lock size={14} color={isPrivate ? colors.primary : colors.textSecondary} style={{ marginRight: 4 }} />
-              <Text style={[styles.chipText, isPrivate && styles.chipTextSelected]}>{t('channelCreate_typePrivate')}</Text>
+              <Lock size={14} color={diffuse ? (isPrivate ? dt.colors.ink : dt.colors.ink3) : (isPrivate ? colors.primary : colors.textSecondary)} strokeWidth={diffuse ? 1.6 : 2} style={{ marginRight: 4 }} />
+              <Text style={[
+                styles.chipText,
+                diffuse
+                  ? { color: isPrivate ? dt.colors.ink : dt.colors.ink3, fontFamily: isPrivate ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
+                  : isPrivate && styles.chipTextSelected,
+              ]}>{t('channelCreate_typePrivate')}</Text>
             </Pressable>
           </View>
           {isPrivate && (
-            <Text style={[styles.charCount, { textAlign: 'left', marginTop: 6 }]}>
+            <Text style={[styles.charCount, { textAlign: 'left', marginTop: 6 }, diffuse && { color: dt.colors.ink4, fontFamily: diffuseFont.mono }]}>
               {t('channelCreate_privateHint')}
             </Text>
           )}
 
           {/* Category */}
-          <Text style={styles.label}>{t('channelCreate_labelCategory')}</Text>
+          <Text style={[styles.label, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }]}>{t('channelCreate_labelCategory')}</Text>
           <View style={styles.chipRow}>
             {CATEGORIES.map((c) => {
               const selected = category === c
@@ -240,13 +278,20 @@ export default function CreateChannel() {
                   onPress={() => setCategory(c)}
                   style={[
                     styles.chip,
-                    selected && styles.chipSelected,
+                    diffuse
+                      ? { backgroundColor: selected ? dt.colors.surface : 'transparent', borderColor: selected ? dt.colors.hairline : dt.colors.line }
+                      : selected && styles.chipSelected,
                   ]}
                 >
                   {selected && (
-                    <Check size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                    <Check size={14} color={diffuse ? dt.colors.ink : colors.primary} strokeWidth={diffuse ? 1.6 : 2} style={{ marginRight: 4 }} />
                   )}
-                  <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                  <Text style={[
+                    styles.chipText,
+                    diffuse
+                      ? { color: selected ? dt.colors.ink : dt.colors.ink3, fontFamily: selected ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
+                      : selected && styles.chipTextSelected,
+                  ]}>
                     {c}
                   </Text>
                 </Pressable>
@@ -257,15 +302,17 @@ export default function CreateChannel() {
           {/* Custom category input when "Other" selected */}
           {category === 'Other' && (
             <View style={{ marginTop: 12 }}>
-              <Text style={styles.label}>{t('channelCreate_labelYourCategory')}</Text>
+              <Text style={[styles.label, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }]}>{t('channelCreate_labelYourCategory')}</Text>
               <TextInput
                 value={customCategory}
                 onChangeText={setCustomCategory}
                 placeholder={t('channelCreate_categoryPlaceholder')}
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
                 style={[
                   styles.input,
-                  { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface },
+                  diffuse
+                    ? { borderColor: dt.colors.line, color: dt.colors.ink, backgroundColor: dt.colors.surface, fontFamily: diffuseFont.body, borderRadius: 20 }
+                    : { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface },
                 ]}
                 autoFocus
               />
@@ -274,18 +321,20 @@ export default function CreateChannel() {
         </ScrollView>
 
         {/* Create button */}
-        <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }, diffuse && { backgroundColor: dt.colors.bg, borderTopColor: dt.colors.line }]}>
           <Pressable
             onPress={handleCreate}
             disabled={loading || !name.trim() || !category}
             style={[
               styles.createBtn,
+              diffuse && { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2, flexDirection: 'row', justifyContent: 'center', gap: 8 },
               (!name.trim() || !category) && styles.createBtnDisabled,
             ]}
           >
-            <Text style={styles.createBtnText}>
+            <Text style={[styles.createBtnText, diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4 }]}>
               {loading ? t('channelCreate_creating') : t('channelCreate_create')}
             </Text>
+            {diffuse && <DiffuseArrow color={dt.colors.ink} size={18} />}
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -315,6 +364,8 @@ function ChannelCreatedModal({
   onGo: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   // Hero = Heart, satellites = Star / Leaf / Moon (distinct colors)
@@ -350,7 +401,9 @@ function ChannelCreatedModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onGo}>
       <View style={modalStyles.overlay}>
-        <View style={[modalStyles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+        <View style={[modalStyles.card, diffuse
+          ? { backgroundColor: dt.colors.bg, borderRadius: 28, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+          : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
           {/* Sticker cluster */}
           <View style={modalStyles.clusterWrap}>
             {/* hero */}
@@ -394,16 +447,19 @@ function ChannelCreatedModal({
             })}
           </View>
 
-          <Text style={[modalStyles.title, { color: colors.text }]}>{t('channelCreate_successTitle')}</Text>
-          <Text style={[modalStyles.desc, { color: colors.textSecondary }]}>
-            <Text style={{ fontWeight: '800', color: colors.text }}>#{channelName}</Text>
+          <Text style={[modalStyles.title, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text }]}>{t('channelCreate_successTitle')}</Text>
+          <Text style={[modalStyles.desc, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary }]}>
+            <Text style={diffuse ? { fontFamily: diffuseFont.bodySemiBold, color: dt.colors.ink } : { fontWeight: '800', color: colors.text }}>#{channelName}</Text>
             {' '}{t('channelCreate_successMsg')}
           </Text>
           <Pressable
             onPress={onGo}
-            style={[modalStyles.cta, { backgroundColor: CREAM, borderRadius: radius.full }]}
+            style={[modalStyles.cta, diffuse
+              ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2, flexDirection: 'row', justifyContent: 'center', gap: 8 }
+              : { backgroundColor: CREAM, borderRadius: radius.full }]}
           >
-            <Text style={[modalStyles.ctaText, { color: INK }]}>{t('channelCreate_goToChannel')}</Text>
+            <Text style={[modalStyles.ctaText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4 } : { color: INK }]}>{t('channelCreate_goToChannel')}</Text>
+            {diffuse && <DiffuseArrow color={dt.colors.ink} size={16} />}
           </Pressable>
         </View>
       </View>

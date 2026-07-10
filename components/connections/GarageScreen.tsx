@@ -22,12 +22,14 @@ import {
 import { router, useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X, Heart, RotateCcw, MessageCircle, Plus, Search, User } from 'lucide-react-native'
-import { useTheme, shadows, getModeColor } from '../../constants/theme'
+import { useTheme, shadows, getModeColor, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useSavedToast } from '../ui/SavedToast'
 import { PillButton } from '../ui/PillButton'
 import { BrandedLoader } from '../ui/BrandedLoader'
 import { Heart as HeartSticker, Drop, Star } from '../stickers/BrandStickers'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
 import {
   fetchFeed,
   toggleSave,
@@ -50,10 +52,12 @@ const FEED_FILTERS = ['For You', 'Clothing', 'Gear', 'Toys', 'Furniture', 'Books
 
 export function GarageScreen() {
   const { colors, radius, stickers, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
-  const accent = getModeColor(mode, isDark)
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
   const toast = useSavedToast()
 
   const [posts, setPosts] = useState<GaragePost[]>([])
@@ -217,20 +221,20 @@ export function GarageScreen() {
   const deckDone = !loading && (deckEmpty || index >= posts.length)
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <View style={styles.headerRow}>
         <View style={{ flex: 1, paddingRight: 12 }}>
-          <Text style={[styles.headerTitle, { color: colors.text, fontFamily: font.display }]}>
+          <Text style={[styles.headerTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
             {t('garage_screen_header_title')}
           </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.textMuted, fontFamily: font.body }]}>
+          <Text style={[styles.headerSubtitle, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
             {t('garage_screen_header_subtitle')}
           </Text>
         </View>
         <View style={styles.headerActions}>
           <CircleBtn onPress={() => {}} tint={stickers.blueSoft} radiusFull={radius.full} border={colors.border}>
-            <Search size={18} color={colors.text} strokeWidth={2.4} />
+            <Search size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2.4} />
           </CircleBtn>
           <CircleBtn
             onPress={() => router.push('/garage/profile' as any)}
@@ -248,7 +252,7 @@ export function GarageScreen() {
             border={colors.border}
             accessibilityLabel="Add a listing"
           >
-            <Plus size={20} color={colors.text} strokeWidth={2.6} />
+            <Plus size={20} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2.6} />
           </CircleBtn>
         </View>
       </View>
@@ -273,8 +277,8 @@ export function GarageScreen() {
                   styles.cardBase,
                   styles.cardBehind,
                   {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
+                    backgroundColor: diffuse ? dt.colors.surface : colors.surface,
+                    borderColor: diffuse ? dt.colors.line : colors.border,
                     borderRadius: radius.lg,
                     transform: [{ scale: nextCardScale }],
                   },
@@ -292,15 +296,15 @@ export function GarageScreen() {
                 style={[
                   styles.cardBase,
                   {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
+                    backgroundColor: diffuse ? dt.colors.surface : colors.surface,
+                    borderColor: diffuse ? dt.colors.line : colors.border,
                     borderRadius: radius.lg,
                     transform: [
                       { translateX: pan.x },
                       { translateY: pan.y },
                       { rotate },
                     ],
-                    ...shadows.cardPop,
+                    ...(diffuse ? {} : shadows.cardPop),
                   },
                 ]}
               >
@@ -312,10 +316,15 @@ export function GarageScreen() {
                   style={[
                     styles.stamp,
                     styles.stampKeep,
-                    { borderColor: stickers.green, opacity: keepStampOpacity, borderRadius: radius.sm, backgroundColor: colors.surface },
+                    {
+                      borderColor: diffuse ? dt.colors.success : stickers.green,
+                      opacity: keepStampOpacity,
+                      borderRadius: radius.sm,
+                      backgroundColor: diffuse ? dt.colors.surface : colors.surface,
+                    },
                   ]}
                 >
-                  <Text style={[styles.stampText, { color: stickers.greenInk, fontFamily: font.display }]}>
+                  <Text style={[styles.stampText, { color: diffuse ? dt.colors.success : stickers.greenInk, fontFamily: diffuse ? diffuseFont.monoBold : font.display }, diffuse && { fontSize: 20, letterSpacing: 2, textTransform: 'uppercase' }]}>
                     {t('garage_screen_stamp_keep')}
                   </Text>
                 </Animated.View>
@@ -326,10 +335,15 @@ export function GarageScreen() {
                   style={[
                     styles.stamp,
                     styles.stampPass,
-                    { borderColor: stickers.coral, opacity: passStampOpacity, borderRadius: radius.sm, backgroundColor: colors.surface },
+                    {
+                      borderColor: diffuse ? dt.colors.error : stickers.coral,
+                      opacity: passStampOpacity,
+                      borderRadius: radius.sm,
+                      backgroundColor: diffuse ? dt.colors.surface : colors.surface,
+                    },
                   ]}
                 >
-                  <Text style={[styles.stampText, { color: stickers.coralInk, fontFamily: font.display }]}>
+                  <Text style={[styles.stampText, { color: diffuse ? dt.colors.error : stickers.coralInk, fontFamily: diffuse ? diffuseFont.monoBold : font.display }, diffuse && { fontSize: 20, letterSpacing: 2, textTransform: 'uppercase' }]}>
                     {t('garage_screen_stamp_pass')}
                   </Text>
                 </Animated.View>
@@ -352,44 +366,44 @@ export function GarageScreen() {
         <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
           <ActionButton
             label="Pass"
-            tint={colors.surface}
-            border={colors.border}
+            tint={diffuse ? 'transparent' : colors.surface}
+            border={diffuse ? dt.colors.line2 : colors.border}
             onPress={() => forceSwipe('left')}
             disabled={!current}
           >
-            <X size={26} color={stickers.coral} strokeWidth={3} />
+            <X size={26} color={diffuse ? dt.colors.error : stickers.coral} strokeWidth={3} />
           </ActionButton>
 
           <ActionButton
             small
             label="Undo"
-            tint={colors.surface}
-            border={colors.border}
+            tint={diffuse ? 'transparent' : colors.surface}
+            border={diffuse ? dt.colors.line2 : colors.border}
             onPress={undo}
             disabled={index === 0 || !lastSwipe.current}
           >
-            <RotateCcw size={18} color={colors.textMuted} strokeWidth={2.5} />
+            <RotateCcw size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2.5} />
           </ActionButton>
 
           <ActionButton
             small
             label="Details"
-            tint={colors.surface}
-            border={colors.border}
+            tint={diffuse ? 'transparent' : colors.surface}
+            border={diffuse ? dt.colors.line2 : colors.border}
             onPress={() => current && router.push(`/garage/${current.id}` as any)}
             disabled={!current}
           >
-            <MessageCircle size={18} color={colors.textMuted} strokeWidth={2.5} />
+            <MessageCircle size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2.5} />
           </ActionButton>
 
           <ActionButton
             label="Keep"
-            tint={accent}
+            tint={diffuse ? 'transparent' : accent}
             border={accent}
             onPress={() => forceSwipe('right')}
             disabled={!current}
           >
-            <Heart size={26} color={colors.text} fill={colors.text} strokeWidth={2} />
+            <Heart size={26} color={diffuse ? accent : colors.text} fill={diffuse ? 'none' : colors.text} strokeWidth={2} />
           </ActionButton>
         </View>
       )}
@@ -409,6 +423,8 @@ function CircleBtn({
   border: string
   accessibilityLabel?: string
 }) {
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
     <Pressable
       hitSlop={8}
@@ -417,7 +433,9 @@ function CircleBtn({
       accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [
         styles.headerCircleBtn,
-        { backgroundColor: tint, borderRadius: radiusFull, borderColor: border },
+        diffuse
+          ? { backgroundColor: 'transparent', borderRadius: radiusFull, borderColor: dt.colors.line2 }
+          : { backgroundColor: tint, borderRadius: radiusFull, borderColor: border },
         pressed && { opacity: 0.85 },
       ]}
     >
@@ -435,21 +453,33 @@ function SwipeCard({
   font: ReturnType<typeof useTheme>['font']
   stickers: ReturnType<typeof useTheme>['stickers']
 }) {
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const cover = post.media[0]?.url
   return (
     <View style={[styles.cardInner, { borderRadius: radius.lg }]}>
       {cover ? (
         <Image source={{ uri: cover }} style={styles.cardImage} />
       ) : (
-        <View style={[styles.cardImage, styles.cardImageEmpty, { backgroundColor: colors.surfaceRaised }]}>
-          <Drop size={56} fill={stickers.blue} />
+        <View style={[styles.cardImage, styles.cardImageEmpty, { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised }]}>
+          {diffuse ? (
+            <DiffuseBloomIcon size={56} intensity={0.5}>
+              <MessageCircle size={30} color={dt.colors.ink3} strokeWidth={1.6} />
+            </DiffuseBloomIcon>
+          ) : (
+            <Drop size={56} fill={stickers.blue} />
+          )}
         </View>
       )}
 
       {/* Category chip — top-left */}
       {post.category && (
-        <View style={[styles.catChip, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
-          <Text style={[styles.catChipText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+        <View style={[styles.catChip, diffuse
+          ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line2, borderRadius: radius.full }
+          : { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
+          <Text style={[styles.catChipText, diffuse
+            ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.4 }
+            : { color: colors.text, fontFamily: font.bodySemiBold }]}>
             {post.category}
           </Text>
         </View>
@@ -463,11 +493,11 @@ function SwipeCard({
             <User size={16} color={colors.textMuted} strokeWidth={2} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text numberOfLines={1} style={[styles.footerName, { fontFamily: font.bodySemiBold }]}>
+            <Text numberOfLines={1} style={[styles.footerName, { fontFamily: diffuse ? diffuseFont.display : font.bodySemiBold }]}>
               {post.author_name ?? 'A neighbour'}
             </Text>
             {post.caption ? (
-              <Text numberOfLines={1} style={[styles.footerCaption, { fontFamily: font.body }]}>
+              <Text numberOfLines={1} style={[styles.footerCaption, { fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                 {post.caption.split('\n')[0]}
               </Text>
             ) : null}
@@ -475,7 +505,7 @@ function SwipeCard({
           {post.like_count > 0 && (
             <View style={styles.footerLikes}>
               <Heart size={13} color="#FFFFFF" fill="#FFFFFF" />
-              <Text style={[styles.footerLikesText, { fontFamily: font.bodySemiBold }]}>{post.like_count}</Text>
+              <Text style={[styles.footerLikesText, { fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold }]}>{post.like_count}</Text>
             </View>
           )}
         </View>
@@ -495,6 +525,7 @@ function ActionButton({
   small?: boolean
   disabled?: boolean
 }) {
+  const diffuse = useIsDiffuse()
   return (
     <Pressable
       onPress={onPress}
@@ -509,7 +540,7 @@ function ActionButton({
           opacity: disabled ? 0.4 : pressed ? 0.82 : 1,
           transform: [{ scale: pressed && !disabled ? 0.92 : 1 }],
         },
-        !small && shadows.subtle,
+        !small && !diffuse && shadows.subtle,
       ]}
     >
       {children}
@@ -519,6 +550,8 @@ function ActionButton({
 
 function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: string) => void }) {
   const { colors, radius, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
     <ScrollView
       horizontal
@@ -534,20 +567,34 @@ function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: strin
             onPress={() => onSelect(f)}
             style={[
               styles.filterChip,
-              {
-                backgroundColor: isActive ? colors.text : colors.surface,
-                borderColor: isActive ? colors.text : colors.border,
-                borderRadius: radius.full,
-              },
+              diffuse
+                ? {
+                    backgroundColor: isActive ? dt.colors.surface : 'transparent',
+                    borderColor: isActive ? dt.colors.hairline : dt.colors.line,
+                    borderRadius: radius.full,
+                  }
+                : {
+                    backgroundColor: isActive ? colors.text : colors.surface,
+                    borderColor: isActive ? colors.text : colors.border,
+                    borderRadius: radius.full,
+                  },
             ]}
           >
             <Text
               style={[
                 styles.filterText,
-                {
-                  color: isActive ? colors.bg : colors.textSecondary,
-                  fontFamily: isActive ? font.bodySemiBold : font.bodyMedium,
-                },
+                diffuse
+                  ? {
+                      color: isActive ? dt.colors.ink : dt.colors.ink3,
+                      fontFamily: isActive ? diffuseFont.monoBold : diffuseFont.mono,
+                      textTransform: 'uppercase',
+                      letterSpacing: 1.4,
+                      fontSize: 11,
+                    }
+                  : {
+                      color: isActive ? colors.bg : colors.textSecondary,
+                      fontFamily: isActive ? font.bodySemiBold : font.bodyMedium,
+                    },
               ]}
             >
               {f}
@@ -561,6 +608,26 @@ function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: strin
 
 function DeckDone({ accent, onRefresh, empty = false }: { accent: string; onRefresh: () => void; empty?: boolean }) {
   const { colors, font, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const title = empty ? 'Nothing here yet' : 'That’s everyone for now'
+  const body = empty
+    ? 'No listings in the garage right now. Be the first to post — or check back soon.'
+    : 'You’ve been through the whole village. Check back later or pull in a new batch.'
+
+  if (diffuse) {
+    return (
+      <DiffuseEmptyState
+        icon={<DiffuseBloomIcon size={56} intensity={0.5}><Heart size={30} color={dt.colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>}
+        title={title}
+        message={body}
+        ctaLabel={empty ? 'Refresh' : 'Refresh the deck'}
+        onCta={onRefresh}
+        style={styles.doneWrap}
+      />
+    )
+  }
+
   return (
     <View style={styles.doneWrap}>
       <View style={styles.doneStickers}>
@@ -568,12 +635,10 @@ function DeckDone({ accent, onRefresh, empty = false }: { accent: string; onRefr
         <HeartSticker size={40} fill={stickers.coral} />
       </View>
       <Text style={[styles.doneTitle, { color: colors.text, fontFamily: font.display }]}>
-        {empty ? 'Nothing here yet' : 'That’s everyone for now'}
+        {title}
       </Text>
       <Text style={[styles.doneBody, { color: colors.textMuted, fontFamily: font.body }]}>
-        {empty
-          ? 'No listings in the garage right now. Be the first to post — or check back soon.'
-          : 'You’ve been through the whole village. Check back later or pull in a new batch.'}
+        {body}
       </Text>
       <View style={styles.doneBtn}>
         <PillButton
@@ -589,7 +654,23 @@ function DeckDone({ accent, onRefresh, empty = false }: { accent: string; onRefr
 
 function DeckError({ accent, onRetry }: { accent: string; onRetry: () => void }) {
   const { colors, font, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
+
+  if (diffuse) {
+    return (
+      <DiffuseEmptyState
+        icon={<DiffuseBloomIcon size={56} intensity={0.5}><X size={30} color={dt.colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>}
+        title={t('garage_screen_error_title')}
+        message={t('garage_screen_error_body')}
+        ctaLabel="Try again"
+        onCta={onRetry}
+        style={styles.doneWrap}
+      />
+    )
+  }
+
   return (
     <View style={styles.doneWrap}>
       <View style={styles.doneStickers}>

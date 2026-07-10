@@ -24,7 +24,10 @@ import {
   User,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers, font } from '../../../constants/theme'
+import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useModeStore } from '../../../store/useModeStore'
+import { useIsDiffuse, DiffuseArrow } from '../../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon, DiffuseEmptyState } from '../../../components/ui/diffuse/DiffusePrimitives'
 import { EmptyState } from '../../../components/ui/EmptyState'
 import {
   fetchThreadReplies,
@@ -38,6 +41,10 @@ import { useTranslation } from '../../../lib/i18n'
 
 export default function ThreadView() {
   const { colors, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : colors.primary
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -114,20 +121,22 @@ export default function ThreadView() {
 
   if (loading) {
     return (
-      <View style={[s.center, { backgroundColor: colors.bg }]}>
+      <View style={[s.center, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
         <BrandedLoader />
       </View>
     )
   }
 
   return (
-    <View style={[s.root, { backgroundColor: colors.bg }]}>
+    <View style={[s.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
-      <View style={[s.header, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
+      <View style={[s.header, { paddingTop: insets.top + 8, borderBottomColor: diffuse ? dt.colors.line : colors.border }]}>
         <Pressable onPress={() => router.back()} style={s.headerBtn}>
-          <ArrowLeft size={24} color={colors.text} />
+          <ArrowLeft size={24} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: colors.text }]}>{t('channelThread_header')}</Text>
+        <Text style={[s.headerTitle, diffuse
+          ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' }
+          : { color: colors.text }]}>{t('channelThread_header')}</Text>
         <View style={s.headerBtn} />
       </View>
 
@@ -144,43 +153,63 @@ export default function ThreadView() {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             parentMsg ? (
-              <View style={[s.parentCard, { backgroundColor: colors.surface, borderRadius: radius.xl, borderLeftColor: colors.primary }]}>
+              <View style={[s.parentCard, diffuse
+                ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderLeftColor: accent, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line, borderLeftWidth: 3 }
+                : { backgroundColor: colors.surface, borderRadius: radius.xl, borderLeftColor: colors.primary }]}>
                 <View style={s.msgHeader}>
-                  <View style={[s.avatar, { backgroundColor: colors.surfaceRaised }]}>
-                    <User size={16} color={colors.textMuted} strokeWidth={1.5} />
+                  <View style={[s.avatar, diffuse
+                    ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                    : { backgroundColor: colors.surfaceRaised }]}>
+                    <User size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={1.5} />
                   </View>
-                  <Text style={[s.authorName, { color: colors.text }]}>
+                  <Text style={[s.authorName, diffuse
+                    ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold, fontWeight: '400' }
+                    : { color: colors.text }]}>
                     {parentMsg.author_name ?? 'Member'}
                   </Text>
-                  <Text style={[s.time, { color: colors.textMuted }]}>
+                  <Text style={[s.time, diffuse
+                    ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+                    : { color: colors.textMuted }]}>
                     {formatTime(parentMsg.created_at)}
                   </Text>
                 </View>
-                <Text style={[s.msgContent, { color: colors.text }]}>{parentMsg.content}</Text>
+                <Text style={[s.msgContent, diffuse
+                  ? { color: dt.colors.ink, fontFamily: diffuseFont.body }
+                  : { color: colors.text }]}>{parentMsg.content}</Text>
                 {parentMsg.photos?.length > 0 && (
                   <Image source={{ uri: parentMsg.photos[0] }} style={[s.photo, { borderRadius: radius.lg }]} />
                 )}
-                <Text style={[s.replyCountText, { color: colors.textMuted }]}>
+                <Text style={[s.replyCountText, diffuse
+                  ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 10 }
+                  : { color: colors.textMuted }]}>
                   {replies.length === 1 ? t('channelThread_replyCountOne', { count: replies.length }) : t('channelThread_replyCountMany', { count: replies.length })}
                 </Text>
               </View>
             ) : null
           }
           renderItem={({ item }) => (
-            <View style={s.replyRow}>
-              <View style={[s.avatar, { backgroundColor: colors.surfaceRaised }]}>
-                <User size={14} color={colors.textMuted} strokeWidth={1.5} />
+            <View style={[s.replyRow, diffuse && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: dt.colors.line }]}>
+              <View style={[s.avatar, diffuse
+                ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                : { backgroundColor: colors.surfaceRaised }]}>
+                <User size={14} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={1.5} />
               </View>
               <View style={{ flex: 1 }}>
                 <View style={s.replyHeader}>
-                  <Text style={[s.replyAuthor, { color: colors.text }]}>
+                  <Text style={[s.replyAuthor, diffuse
+                    ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold, fontWeight: '400' }
+                    : { color: colors.text }]}>
                     {item.author_name ?? 'Member'}
                   </Text>
-                  <Text style={[s.replyTime, { color: colors.textMuted }]}>
+                  <Text style={[s.replyTime, diffuse
+                    ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+                    : { color: colors.textMuted }]}>
                     {formatTime(item.created_at)}
                   </Text>
                 </View>
-                <Text style={[s.replyContent, { color: colors.text }]}>{item.content}</Text>
+                <Text style={[s.replyContent, diffuse
+                  ? { color: dt.colors.ink, fontFamily: diffuseFont.body }
+                  : { color: colors.text }]}>{item.content}</Text>
                 {item.photos?.length > 0 && (
                   <Image source={{ uri: item.photos[0] }} style={[s.replyPhoto, { borderRadius: radius.md }]} />
                 )}
@@ -188,33 +217,60 @@ export default function ThreadView() {
             </View>
           )}
           ListEmptyComponent={
-            <EmptyState
-              icon={<MessageCircle size={36} color={stickers.lilac} strokeWidth={1.5} />}
-              iconBg={stickers.lilacSoft}
-              title={t('channelThread_emptyTitle')}
-              message={t('channelThread_emptySubtitle')}
-            />
+            diffuse ? (
+              <DiffuseEmptyState
+                icon={
+                  <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
+                    <MessageCircle size={22} color={dt.colors.ink3} strokeWidth={1.6} />
+                  </DiffuseBloomIcon>
+                }
+                title={t('channelThread_emptyTitle')}
+                message={t('channelThread_emptySubtitle')}
+              />
+            ) : (
+              <EmptyState
+                icon={<MessageCircle size={36} color={stickers.lilac} strokeWidth={1.5} />}
+                iconBg={stickers.lilacSoft}
+                title={t('channelThread_emptyTitle')}
+                message={t('channelThread_emptySubtitle')}
+              />
+            )
           }
         />
 
         {/* Reply input */}
-        <View style={[s.inputBar, { paddingBottom: insets.bottom + 8, backgroundColor: colors.bg, borderTopColor: colors.border }]}>
+        <View style={[s.inputBar, diffuse
+          ? { paddingBottom: insets.bottom + 8, backgroundColor: dt.colors.bg, borderTopColor: dt.colors.line }
+          : { paddingBottom: insets.bottom + 8, backgroundColor: colors.bg, borderTopColor: colors.border }]}>
           <TextInput
             value={text}
             onChangeText={setText}
             placeholder={t('channelThread_replyPlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            style={[s.input, { color: colors.text, backgroundColor: colors.surface, borderRadius: radius.full }]}
+            placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
+            style={[s.input, diffuse
+              ? { color: dt.colors.ink, backgroundColor: dt.colors.surface, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line, fontFamily: diffuseFont.body }
+              : { color: colors.text, backgroundColor: colors.surface, borderRadius: radius.full }]}
             returnKeyType="send"
             onSubmitEditing={handleSend}
           />
-          <Pressable
-            onPress={handleSend}
-            disabled={!text.trim() || sending}
-            style={[s.sendBtn, { backgroundColor: '#F5EFE3', borderRadius: radius.full, opacity: text.trim() ? 1 : 0.3 }]}
-          >
-            <Send size={18} color="#1A1430" strokeWidth={2} />
-          </Pressable>
+          {diffuse ? (
+            <Pressable
+              onPress={handleSend}
+              disabled={!text.trim() || sending}
+              hitSlop={6}
+              style={[s.sendBtn, { opacity: text.trim() ? 1 : 0.3 }]}
+            >
+              <DiffuseArrow color={dt.colors.ink} size={22} />
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={handleSend}
+              disabled={!text.trim() || sending}
+              style={[s.sendBtn, { backgroundColor: '#F5EFE3', borderRadius: radius.full, opacity: text.trim() ? 1 : 0.3 }]}
+            >
+              <Send size={18} color="#1A1430" strokeWidth={2} />
+            </Pressable>
+          )}
         </View>
       </KeyboardAvoidingView>
     </View>
