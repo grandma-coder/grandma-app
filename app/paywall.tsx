@@ -7,6 +7,7 @@ import {
 } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { X, Check, Heart as HeartIcon, Sparkles, Star as StarIcon, Flower as FlowerIcon } from 'lucide-react-native'
 import {
   getTieredPackages,
   purchasePackage,
@@ -17,7 +18,10 @@ import {
   BillingPeriod,
 } from '../lib/revenue'
 import { supabase } from '../lib/supabase'
-import { useTheme } from '../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
+import { useIsDiffuse, SoftBloom } from '../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
+import { useModeStore } from '../store/useModeStore'
 import { Display, Body } from '../components/ui/Typography'
 import { PillButton } from '../components/ui/PillButton'
 import { GrandmaLogo } from '../components/ui/GrandmaLogo'
@@ -44,6 +48,21 @@ interface TierCopyEntry {
 
 function FeatureStickerIcon({ kind, size = 32 }: { kind: FeatureSticker; size?: number }) {
   const { stickers, colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+
+  if (diffuse) {
+    // Diffuse checklist: a thin Lucide Check glyph in the mode accent over a
+    // soft bloom (the line-icon "included" mark), replacing the filled sticker.
+    const accent = getDiffuseAccent(mode, dt.isDark)
+    return (
+      <DiffuseBloomIcon color={accent} size={size} intensity={0.45}>
+        <Check size={Math.round(size * 0.56)} color={accent} strokeWidth={2} />
+      </DiffuseBloomIcon>
+    )
+  }
+
   const stroke = colors.text
   switch (kind) {
     case 'heart':
@@ -61,16 +80,22 @@ function FeatureStickerIcon({ kind, size = 32 }: { kind: FeatureSticker; size?: 
 
 export default function Paywall() {
   const { colors, font, brand, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{ tier?: string }>()
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const ink = colors.text
-  const inkText = colors.textInverse
-  const accentBg = isDark ? colors.accentSoft : brand.pregnancySoft
-  const accentBorder = brand.pregnancy
-  const coral = stickers.coral
+  const dAccent = getDiffuseAccent(mode, dt.isDark)
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const inkText = diffuse ? dt.colors.bg : colors.textInverse
+  // Diffuse: emphasis on the recommended plan is a subtle accent bloom + hairline,
+  // NOT a saturated fill — so the "active" background stays paper.
+  const accentBg = diffuse ? dt.colors.surface : (isDark ? colors.accentSoft : brand.pregnancySoft)
+  const accentBorder = diffuse ? dt.colors.hairline : brand.pregnancy
+  const coral = diffuse ? dAccent : stickers.coral
 
   const [tieredPackages, setTieredPackages] = useState<TieredPackage[]>([])
   const [loading, setLoading] = useState(true)
@@ -220,7 +245,7 @@ export default function Paywall() {
     <View
       style={[
         styles.container,
-        { backgroundColor: colors.bg, paddingTop: insets.top + 28, paddingBottom: insets.bottom + 16 },
+        { backgroundColor: diffuse ? dt.colors.bg : colors.bg, paddingTop: insets.top + 28, paddingBottom: insets.bottom + 16 },
       ]}
     >
       <Pressable
@@ -229,28 +254,54 @@ export default function Paywall() {
         style={[
           styles.closeButton,
           {
-            backgroundColor: paper,
-            borderColor: colors.borderStrong,
-            borderWidth: 1.5,
+            backgroundColor: diffuse ? 'transparent' : paper,
+            borderColor: diffuse ? dt.colors.line2 : colors.borderStrong,
+            borderWidth: diffuse ? 1 : 1.5,
             top: insets.top + 12,
           },
         ]}
       >
-        <Ionicons name="close" size={20} color={colors.text} />
+        {diffuse ? (
+          <X size={18} color={dt.colors.ink} strokeWidth={1.75} />
+        ) : (
+          <Ionicons name="close" size={20} color={colors.text} />
+        )}
       </Pressable>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         <View style={styles.heroBlock}>
-          {/* Floating decorative stickers */}
-          <View style={[styles.floatSticker, { top: 4, left: 28, transform: [{ rotate: '-14deg' }], opacity: 0.55 }]} pointerEvents="none">
-            <Sparkle size={28} fill={stickers.yellow} stroke={ink} />
-          </View>
-          <View style={[styles.floatSticker, { top: 0, right: 24, transform: [{ rotate: '12deg' }], opacity: 0.6 }]} pointerEvents="none">
-            <Star size={32} fill={stickers.lilac} stroke={ink} />
-          </View>
-          <View style={[styles.floatSticker, { bottom: 12, left: 18, transform: [{ rotate: '-8deg' }], opacity: 0.55 }]} pointerEvents="none">
-            <Heart size={26} fill={stickers.pink} stroke={ink} />
-          </View>
+          {/* Floating decorative accents */}
+          {diffuse ? (
+            <>
+              <View style={[styles.floatSticker, { top: 4, left: 28, opacity: 0.7 }]} pointerEvents="none">
+                <DiffuseBloomIcon color={dAccent} size={30} intensity={0.4}>
+                  <Sparkles size={17} color={dt.colors.ink3} strokeWidth={1.6} />
+                </DiffuseBloomIcon>
+              </View>
+              <View style={[styles.floatSticker, { top: 0, right: 24, opacity: 0.7 }]} pointerEvents="none">
+                <DiffuseBloomIcon color={dAccent} size={34} intensity={0.4}>
+                  <StarIcon size={19} color={dt.colors.ink3} strokeWidth={1.6} />
+                </DiffuseBloomIcon>
+              </View>
+              <View style={[styles.floatSticker, { bottom: 12, left: 18, opacity: 0.7 }]} pointerEvents="none">
+                <DiffuseBloomIcon color={dAccent} size={28} intensity={0.4}>
+                  <HeartIcon size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                </DiffuseBloomIcon>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={[styles.floatSticker, { top: 4, left: 28, transform: [{ rotate: '-14deg' }], opacity: 0.55 }]} pointerEvents="none">
+                <Sparkle size={28} fill={stickers.yellow} stroke={ink} />
+              </View>
+              <View style={[styles.floatSticker, { top: 0, right: 24, transform: [{ rotate: '12deg' }], opacity: 0.6 }]} pointerEvents="none">
+                <Star size={32} fill={stickers.lilac} stroke={ink} />
+              </View>
+              <View style={[styles.floatSticker, { bottom: 12, left: 18, transform: [{ rotate: '-8deg' }], opacity: 0.55 }]} pointerEvents="none">
+                <Heart size={26} fill={stickers.pink} stroke={ink} />
+              </View>
+            </>
+          )}
 
           <GrandmaLogo
             size={110}
@@ -261,7 +312,7 @@ export default function Paywall() {
             size={38}
             align="center"
             color={ink}
-            style={{ marginTop: 18, fontFamily: font.display, letterSpacing: -0.5, lineHeight: 42 }}
+            style={{ marginTop: 18, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: -0.5, lineHeight: 42 }}
           >
             {t('paywall_unlockTitle')}
           </Display>
@@ -269,22 +320,30 @@ export default function Paywall() {
             size={18}
             align="center"
             color={coral}
-            style={{ marginTop: 8, fontFamily: font.italic, fontStyle: 'italic' }}
+            style={{ marginTop: 8, fontFamily: diffuse ? diffuseFont.italic : font.italic, fontStyle: 'italic' }}
           >
             {t('paywall_heroTagline')}
           </Body>
           <Body
             size={12}
             align="center"
-            color={colors.textMuted}
-            style={{ marginTop: 8, paddingHorizontal: 12, fontFamily: font.body }}
+            color={diffuse ? dt.colors.ink3 : colors.textMuted}
+            style={{ marginTop: 8, paddingHorizontal: 12, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : undefined }}
           >
             {trialLine}
           </Body>
         </View>
 
         {/* Tier toggle */}
-        <View style={[styles.tierToggle, { backgroundColor: paper, borderColor: paperBorder }]}>
+        <View
+          style={[
+            styles.tierToggle,
+            {
+              backgroundColor: diffuse ? 'transparent' : paper,
+              borderColor: diffuse ? dt.colors.line : paperBorder,
+            },
+          ]}
+        >
           {(['premium_solo', 'premium_family'] as const).map((tier) => {
             const isActive = selectedTier === tier
             const isSolo = tier === 'premium_solo'
@@ -297,27 +356,42 @@ export default function Paywall() {
                 }}
                 style={[
                   styles.tierToggleItem,
-                  isActive && { backgroundColor: accentBg },
+                  diffuse
+                    ? {
+                        overflow: 'hidden',
+                        borderColor: isActive ? dt.colors.hairline : 'transparent',
+                        backgroundColor: isActive ? dt.colors.surface : 'transparent',
+                      }
+                    : isActive && { backgroundColor: accentBg },
                 ]}
               >
+                {diffuse && isActive ? (
+                  <SoftBloom color={dAccent} cx="50%" cy="40%" opacity={dt.isDark ? 0.24 : 0.3} spread={0.5} radius="70%" />
+                ) : null}
                 <View style={styles.tierToggleHeader}>
-                  {isSolo ? (
+                  {diffuse ? (
+                    isSolo ? (
+                      <HeartIcon size={16} color={isActive ? dAccent : dt.colors.ink3} strokeWidth={1.7} />
+                    ) : (
+                      <FlowerIcon size={16} color={isActive ? dAccent : dt.colors.ink3} strokeWidth={1.7} />
+                    )
+                  ) : isSolo ? (
                     <Heart size={18} fill={stickers.pink} stroke={ink} />
                   ) : (
                     <Flower size={18} petal={stickers.lilac} center={stickers.yellow} stroke={ink} />
                   )}
                   <Body
                     size={18}
-                    color={isActive ? ink : colors.textSecondary}
-                    style={{ fontFamily: font.display, letterSpacing: -0.2 }}
+                    color={diffuse ? (isActive ? dt.colors.ink : dt.colors.ink3) : (isActive ? ink : colors.textSecondary)}
+                    style={{ fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: -0.2 }}
                   >
                     {TIER_COPY[tier].title}
                   </Body>
                 </View>
                 <Body
                   size={11}
-                  color={isActive ? colors.textSecondary : colors.textMuted}
-                  style={{ marginTop: 2, fontFamily: font.body }}
+                  color={diffuse ? (isActive ? dt.colors.ink3 : dt.colors.ink4) : (isActive ? colors.textSecondary : colors.textMuted)}
+                  style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.4 : undefined }}
                 >
                   {TIER_COPY[tier].seats}
                 </Body>
@@ -333,7 +407,7 @@ export default function Paywall() {
               <View style={styles.featureSticker}>
                 <FeatureStickerIcon kind={f.sticker} size={32} />
               </View>
-              <Body size={16} color={ink} style={{ flex: 1, fontFamily: font.body, lineHeight: 22 }}>
+              <Body size={16} color={ink} style={{ flex: 1, fontFamily: diffuse ? diffuseFont.body : font.body, lineHeight: 22 }}>
                 {f.text}
               </Body>
             </View>
@@ -357,47 +431,77 @@ export default function Paywall() {
                   onPress={() => setSelectedPeriod(period)}
                   style={[
                     styles.packageCard,
-                    {
-                      backgroundColor: paper,
-                      borderColor: isSelected ? accentBorder : paperBorder,
-                      borderWidth: isSelected ? 2 : 1,
-                    },
+                    diffuse
+                      ? {
+                          backgroundColor: dt.colors.surface,
+                          borderColor: isSelected ? dt.colors.hairline : dt.colors.line,
+                          borderWidth: isSelected ? 1.5 : 1,
+                          overflow: 'hidden',
+                        }
+                      : {
+                          backgroundColor: paper,
+                          borderColor: isSelected ? accentBorder : paperBorder,
+                          borderWidth: isSelected ? 2 : 1,
+                        },
                   ]}
                 >
+                  {/* Diffuse: selected → subtle accent bloom, not a saturated fill */}
+                  {diffuse && isSelected ? (
+                    <SoftBloom color={dAccent} cx="50%" cy="22%" opacity={dt.isDark ? 0.22 : 0.28} spread={0.55} radius="75%" />
+                  ) : null}
                   {isAnnual && (
-                    <>
-                      <View
-                        style={[
-                          styles.saveBadge,
-                          { backgroundColor: ink, transform: [{ rotate: '-2deg' }] },
-                        ]}
-                      >
-                        <Body
-                          size={10}
-                          color={inkText}
-                          style={{
-                            fontFamily: font.display,
-                            letterSpacing: 1.5,
-                          }}
+                    diffuse ? (
+                      <>
+                        <View style={[styles.saveBadge, { borderWidth: 1, borderColor: dt.colors.line2, backgroundColor: 'transparent' }]}>
+                          <Body
+                            size={9}
+                            color={dt.colors.ink3}
+                            style={{ fontFamily: diffuseFont.mono, letterSpacing: 1.5 }}
+                          >
+                            {t('paywall_bestValue')}
+                          </Body>
+                        </View>
+                        <View style={styles.cornerBloom} pointerEvents="none">
+                          <DiffuseBloomIcon color={dAccent} size={26} intensity={0.4}>
+                            <StarIcon size={14} color={dt.colors.ink3} strokeWidth={1.6} />
+                          </DiffuseBloomIcon>
+                        </View>
+                      </>
+                    ) : (
+                      <>
+                        <View
+                          style={[
+                            styles.saveBadge,
+                            { backgroundColor: ink, transform: [{ rotate: '-2deg' }] },
+                          ]}
                         >
-                          {t('paywall_bestValue')}
-                        </Body>
-                      </View>
-                      <View
-                        style={[
-                          styles.cornerSticker,
-                          { transform: [{ rotate: '8deg' }] },
-                        ]}
-                        pointerEvents="none"
-                      >
-                        <Star size={26} fill={stickers.yellow} stroke={ink} />
-                      </View>
-                    </>
+                          <Body
+                            size={10}
+                            color={inkText}
+                            style={{
+                              fontFamily: font.display,
+                              letterSpacing: 1.5,
+                            }}
+                          >
+                            {t('paywall_bestValue')}
+                          </Body>
+                        </View>
+                        <View
+                          style={[
+                            styles.cornerSticker,
+                            { transform: [{ rotate: '8deg' }] },
+                          ]}
+                          pointerEvents="none"
+                        >
+                          <Star size={26} fill={stickers.yellow} stroke={ink} />
+                        </View>
+                      </>
+                    )
                   )}
                   <Body
                     size={13}
-                    color={isSelected ? ink : colors.textSecondary}
-                    style={{ fontFamily: font.bodyMedium, marginBottom: 6, letterSpacing: 0.4 }}
+                    color={diffuse ? (isSelected ? dt.colors.ink2 : dt.colors.ink3) : (isSelected ? ink : colors.textSecondary)}
+                    style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, marginBottom: 6, letterSpacing: diffuse ? 1 : 0.4 }}
                   >
                     {isAnnual ? t('paywall_annual') : t('paywall_monthly')}
                   </Body>
@@ -405,14 +509,14 @@ export default function Paywall() {
                     size={38}
                     align="center"
                     color={ink}
-                    style={{ fontFamily: font.display, letterSpacing: -0.5, lineHeight: 42 }}
+                    style={{ fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: -0.5, lineHeight: 42 }}
                   >
                     {price}
                   </Display>
                   <Body
                     size={14}
-                    color={colors.textMuted}
-                    style={{ marginTop: 2, fontFamily: font.body }}
+                    color={diffuse ? dt.colors.ink3 : colors.textMuted}
+                    style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : undefined }}
                   >
                     {isAnnual ? '/year' : '/month'}
                   </Body>
@@ -433,12 +537,26 @@ export default function Paywall() {
         />
 
         <Pressable onPress={handleRestore} disabled={purchasing} style={styles.restoreButton} hitSlop={8}>
-          <Body size={14} color={colors.text} style={{ fontFamily: font.bodyMedium, textDecorationLine: 'underline' }}>
+          <Body
+            size={diffuse ? 12 : 14}
+            color={diffuse ? dt.colors.ink3 : colors.text}
+            style={{
+              fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium,
+              textDecorationLine: diffuse ? 'none' : 'underline',
+              letterSpacing: diffuse ? 1.2 : undefined,
+              textTransform: diffuse ? 'uppercase' : undefined,
+            }}
+          >
             {t('paywall_restorePurchases')}
           </Body>
         </Pressable>
 
-        <Body size={11} align="center" color={colors.textMuted} style={{ marginTop: 16, lineHeight: 16, paddingHorizontal: 12 }}>
+        <Body
+          size={11}
+          align="center"
+          color={diffuse ? dt.colors.ink4 : colors.textMuted}
+          style={{ marginTop: 16, lineHeight: 16, paddingHorizontal: 12, fontFamily: diffuse ? diffuseFont.body : undefined }}
+        >
           Payment will be charged to your App Store account. Subscription auto-renews unless cancelled 24 hours before the end of the current period.
         </Body>
       </ScrollView>
@@ -518,6 +636,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -10,
     right: -8,
+    zIndex: 2,
+  },
+  // Diffuse: corner accent stays inside the card (card uses overflow:hidden)
+  cornerBloom: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
     zIndex: 2,
   },
   restoreButton: { alignItems: 'center', paddingVertical: 12 },
