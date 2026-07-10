@@ -17,7 +17,8 @@ import {
   Animated,
   Easing,
 } from 'react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 
 interface StepSliderProps {
   min: number
@@ -43,6 +44,8 @@ export function StepSlider({
   unit,
 }: StepSliderProps) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const [width, setWidth] = useState(0)
   const widthRef = useRef(0)
   const valueRef = useRef(value)
@@ -116,9 +119,28 @@ export function StepSlider({
   return (
     <View style={styles.wrap}>
       <View style={styles.valueRow}>
-        <Text style={[styles.value, { color: colors.text, fontFamily: font.display }]}>
+        <Text
+          style={[
+            styles.value,
+            diffuse
+              ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
+              : { color: colors.text, fontFamily: font.display },
+          ]}
+        >
           {value}
-          {unit ? <Text style={[styles.unit, { color: colors.textMuted, fontFamily: font.bodyMedium }]}> {unit}</Text> : null}
+          {unit ? (
+            <Text
+              style={[
+                styles.unit,
+                diffuse
+                  ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1.4 }
+                  : { color: colors.textMuted, fontFamily: font.bodyMedium },
+              ]}
+            >
+              {' '}
+              {diffuse ? unit.toUpperCase() : unit}
+            </Text>
+          ) : null}
         </Text>
       </View>
 
@@ -130,7 +152,9 @@ export function StepSlider({
         <View
           style={[
             styles.track,
-            { backgroundColor: colors.surface, borderColor: colors.border },
+            diffuse
+              ? { backgroundColor: 'transparent', borderColor: dt.colors.line }
+              : { backgroundColor: colors.surface, borderColor: colors.border },
           ]}
         />
         <View
@@ -145,27 +169,54 @@ export function StepSlider({
         <Animated.View
           style={[
             styles.thumb,
-            {
-              left: thumbLeft,
-              backgroundColor: '#FFFEF8',
-              borderColor: color,
-              transform: [{ translateY }, { scale }, { rotate }],
-            },
+            diffuse
+              ? {
+                  left: thumbLeft,
+                  backgroundColor: dt.colors.surface,
+                  borderColor: color,
+                  shadowOpacity: 0,
+                  elevation: 0,
+                  transform: [{ scale }],
+                }
+              : {
+                  left: thumbLeft,
+                  backgroundColor: '#FFFEF8',
+                  borderColor: color,
+                  transform: [{ translateY }, { scale }, { rotate }],
+                },
           ]}
           pointerEvents="none"
         >
           <View style={[styles.thumbDot, { backgroundColor: color }]} />
-          {/* sticker highlight — small notch top-left */}
-          <View style={styles.thumbHighlight} />
+          {/* sticker highlight — small notch top-left (cream only) */}
+          {!diffuse && <View style={styles.thumbHighlight} />}
         </Animated.View>
       </View>
 
       <View style={styles.scaleRow}>
         <Pressable hitSlop={8} onPress={() => onChange(min)}>
-          <Text style={[styles.scaleText, { color: colors.textMuted, fontFamily: font.body }]}>{min}</Text>
+          <Text
+            style={[
+              styles.scaleText,
+              diffuse
+                ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }
+                : { color: colors.textMuted, fontFamily: font.body },
+            ]}
+          >
+            {min}
+          </Text>
         </Pressable>
         <Pressable hitSlop={8} onPress={() => onChange(max)}>
-          <Text style={[styles.scaleText, { color: colors.textMuted, fontFamily: font.body }]}>{max}</Text>
+          <Text
+            style={[
+              styles.scaleText,
+              diffuse
+                ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }
+                : { color: colors.textMuted, fontFamily: font.body },
+            ]}
+          >
+            {max}
+          </Text>
         </Pressable>
       </View>
     </View>

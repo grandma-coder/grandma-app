@@ -11,6 +11,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router, usePathname } from 'expo-router'
 import { useDevStore } from '../../store/useDevStore'
 import { useTranslation } from '../../lib/i18n'
+import { useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 
 export function DevModeBanner() {
   const active = useDevStore((s) => s.active)
@@ -18,6 +20,8 @@ export function DevModeBanner() {
   const insets = useSafeAreaInsets()
   const pathname = usePathname()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
 
   if (!active) return null
 
@@ -38,17 +42,54 @@ export function DevModeBanner() {
       style={[styles.root, { paddingTop: insets.top + 4 }]}
       pointerEvents="box-none"
     >
-      <View style={styles.pill}>
-        <Text style={styles.dot}>{t('devMode_dot')}</Text>
-        <Text style={styles.label}>{t('devMode_label')}</Text>
-        <Text style={styles.sub}>{t('devMode_sub')}</Text>
+      <View
+        style={[
+          styles.pill,
+          diffuse && {
+            backgroundColor: dt.colors.surface,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: dt.colors.hairline,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+        ]}
+      >
+        <Text style={[styles.dot, diffuse && { color: dt.colors.warning }]}>{t('devMode_dot')}</Text>
+        <Text
+          style={[styles.label, diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4 }]}
+        >
+          {t('devMode_label')}
+        </Text>
+        <Text
+          style={[styles.sub, diffuse && { color: dt.colors.ink3, fontStyle: 'normal', fontFamily: diffuseFont.mono }]}
+        >
+          {t('devMode_sub')}
+        </Text>
         {!onPanel && (
-          <Pressable onPress={handlePanel} hitSlop={8} style={styles.panelBtn}>
-            <Text style={styles.panelText}>{t('devMode_panel')}</Text>
+          <Pressable
+            onPress={handlePanel}
+            hitSlop={8}
+            style={[
+              styles.panelBtn,
+              diffuse && { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 },
+            ]}
+          >
+            <Text style={[styles.panelText, diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.2 }]}>
+              {t('devMode_panel')}
+            </Text>
           </Pressable>
         )}
-        <Pressable onPress={handleExit} hitSlop={8} style={styles.exitBtn}>
-          <Text style={styles.exitText}>{t('devMode_exit')}</Text>
+        <Pressable
+          onPress={handleExit}
+          hitSlop={8}
+          style={[
+            styles.exitBtn,
+            diffuse && { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 },
+          ]}
+        >
+          <Text style={[styles.exitText, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.monoBold, letterSpacing: 1.2 }]}>
+            {t('devMode_exit')}
+          </Text>
         </Pressable>
       </View>
     </View>

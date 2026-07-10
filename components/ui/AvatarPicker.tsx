@@ -16,7 +16,8 @@ import React from 'react'
 import { View, Modal, Pressable, ScrollView, StyleSheet, Image, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { X, Camera, ImagePlus } from 'lucide-react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import { Display, Body, MonoCaps } from './Typography'
 import { usePhotoUrl, PHOTO_BUCKETS, type PhotoBucket } from '../../lib/photoSigning'
@@ -127,6 +128,8 @@ export function AvatarView({
   bucket = PHOTO_BUCKETS.avatar,
 }: AvatarViewProps) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const iconKey = parseIconAvatar(value)
   const hasPhoto = !!value && !isIconAvatar(value)
   // Resolve to a renderable URL: bare storage paths get a short-lived signed
@@ -139,9 +142,11 @@ export function AvatarView({
         width: size,
         height: size,
         borderRadius: 999,
-        backgroundColor: accent,
-        borderColor: borderColor ?? colors.text,
-        borderWidth,
+        // Diffuse: hairline frame on paper — no filled accent disc. A photo
+        // avatar still fills the circle (brand mark), so only tint the frame.
+        backgroundColor: diffuse ? (hasPhoto && resolvedUri ? 'transparent' : dt.colors.surface) : accent,
+        borderColor: diffuse ? (borderColor ?? dt.colors.line2) : (borderColor ?? colors.text),
+        borderWidth: diffuse ? StyleSheet.hairlineWidth * 2 : borderWidth,
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
@@ -152,7 +157,11 @@ export function AvatarView({
       ) : iconKey ? (
         ICON_REGISTRY.find((i) => i.key === iconKey)!.render(Math.round(size * 0.62))
       ) : (
-        <Display size={Math.round(size * 0.4)} color={textColor ?? colors.text} style={{ fontFamily: font.display }}>
+        <Display
+          size={Math.round(size * 0.4)}
+          color={diffuse ? (textColor ?? dt.colors.ink) : (textColor ?? colors.text)}
+          style={{ fontFamily: diffuse ? diffuseFont.display : font.display }}
+        >
           {initial}
         </Display>
       )}
@@ -179,6 +188,8 @@ export function AvatarPickerModal({
   onRemove,
 }: AvatarPickerModalProps) {
   const { colors, font, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   return (
@@ -186,20 +197,32 @@ export function AvatarPickerModal({
       <Pressable onPress={onClose} style={styles.backdrop}>
         <Pressable
           onPress={(e) => e.stopPropagation()}
-          style={[styles.sheet, { backgroundColor: colors.bg, borderColor: colors.border }]}
+          style={[
+            styles.sheet,
+            diffuse
+              ? { backgroundColor: dt.colors.bg, borderColor: dt.colors.line }
+              : { backgroundColor: colors.bg, borderColor: colors.border },
+          ]}
         >
-          <View style={styles.handle} />
+          <View style={[styles.handle, diffuse && { backgroundColor: dt.colors.line2 }]} />
 
           <View style={styles.header}>
-            <Display size={22} color={colors.text} style={{ fontFamily: font.display }}>
+            <Display size={22} color={diffuse ? dt.colors.ink : colors.text} style={!diffuse ? { fontFamily: font.display } : undefined}>
               {t('avatarPicker_title')}
             </Display>
-            <Pressable onPress={onClose} hitSlop={8} style={styles.closeBtn}>
-              <X size={18} color={colors.textMuted} strokeWidth={2} />
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+              style={[
+                styles.closeBtn,
+                diffuse && { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.hairline },
+              ]}
+            >
+              <X size={18} color={diffuse ? dt.colors.ink : colors.textMuted} strokeWidth={2} />
             </Pressable>
           </View>
 
-          <Body size={13} color={colors.textMuted} style={{ marginBottom: 18 }}>
+          <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ marginBottom: 18 }}>
             {t('avatarPicker_subtitle')}
           </Body>
 
@@ -211,21 +234,30 @@ export function AvatarPickerModal({
             }}
             style={({ pressed }) => [
               styles.photoRow,
-              { borderColor: colors.border, backgroundColor: colors.surfaceGlass, opacity: pressed ? 0.7 : 1 },
+              diffuse
+                ? { borderColor: dt.colors.line, backgroundColor: dt.colors.surface, opacity: pressed ? 0.7 : 1 }
+                : { borderColor: colors.border, backgroundColor: colors.surfaceGlass, opacity: pressed ? 0.7 : 1 },
             ]}
           >
-            <View style={[styles.photoBadge, { backgroundColor: stickers.pink }]}>
-              <Camera size={18} color="#141313" strokeWidth={2} />
+            <View
+              style={[
+                styles.photoBadge,
+                diffuse
+                  ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                  : { backgroundColor: stickers.pink },
+              ]}
+            >
+              <Camera size={18} color={diffuse ? dt.colors.ink : '#141313'} strokeWidth={diffuse ? 1.6 : 2} />
             </View>
             <View style={{ flex: 1 }}>
-              <Body size={15} color={colors.text} style={{ fontFamily: font.bodySemiBold }}>
+              <Body size={15} color={diffuse ? dt.colors.ink : colors.text} style={!diffuse ? { fontFamily: font.bodySemiBold } : { fontFamily: diffuseFont.bodySemiBold }}>
                 {t('avatarPicker_upload_title')}
               </Body>
-              <Body size={12} color={colors.textMuted}>
+              <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted}>
                 {t('avatarPicker_upload_subtitle')}
               </Body>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            <Ionicons name="chevron-forward" size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
           </Pressable>
 
           {onRemove && (
@@ -236,20 +268,29 @@ export function AvatarPickerModal({
               }}
               style={({ pressed }) => [
                 styles.photoRow,
-                { borderColor: colors.border, backgroundColor: 'transparent', opacity: pressed ? 0.7 : 1, marginTop: 8 },
+                diffuse
+                  ? { borderColor: dt.colors.line, backgroundColor: 'transparent', opacity: pressed ? 0.7 : 1, marginTop: 8 }
+                  : { borderColor: colors.border, backgroundColor: 'transparent', opacity: pressed ? 0.7 : 1, marginTop: 8 },
               ]}
             >
-              <View style={[styles.photoBadge, { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
-                <ImagePlus size={18} color={colors.textMuted} strokeWidth={2} />
+              <View
+                style={[
+                  styles.photoBadge,
+                  diffuse
+                    ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                    : { backgroundColor: 'rgba(255,255,255,0.06)' },
+                ]}
+              >
+                <ImagePlus size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
               </View>
-              <Body size={15} color={colors.textMuted}>
+              <Body size={15} color={diffuse ? dt.colors.ink3 : colors.textMuted}>
                 {t('avatarPicker_remove')}
               </Body>
             </Pressable>
           )}
 
           {/* Icon grid */}
-          <MonoCaps size={11} color={colors.textMuted} style={{ marginTop: 20, marginBottom: 10 }}>
+          <MonoCaps size={11} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ marginTop: 20, marginBottom: 10 }}>
             {t('avatarPicker_or_icon')}
           </MonoCaps>
           <ScrollView
@@ -266,11 +307,9 @@ export function AvatarPickerModal({
                 }}
                 style={({ pressed }) => [
                   styles.iconTile,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    opacity: pressed ? 0.7 : 1,
-                  },
+                  diffuse
+                    ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, opacity: pressed ? 0.7 : 1 }
+                    : { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
                 ]}
               >
                 {icon.render(46)}

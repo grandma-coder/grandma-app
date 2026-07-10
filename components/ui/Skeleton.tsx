@@ -8,7 +8,8 @@
 
 import { useEffect, useRef } from 'react'
 import { Animated, type ViewStyle, type StyleProp } from 'react-native'
-import { useTheme, radius as r } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, radius as r } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 
 interface SkeletonProps {
   width?: number | `${number}%`
@@ -24,6 +25,8 @@ export function Skeleton({
   style,
 }: SkeletonProps) {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const opacity = useRef(new Animated.Value(0.4)).current
 
   useEffect(() => {
@@ -43,7 +46,7 @@ export function Skeleton({
         {
           width,
           height,
-          backgroundColor: colors.surfaceRaised,
+          backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised,
           borderRadius: rad,
           opacity,
         },
