@@ -15,7 +15,26 @@ import {
   Modal,
 } from 'react-native'
 import { router } from 'expo-router'
-import { ChevronRight, Check, X, Lock, Info } from 'lucide-react-native'
+import {
+  ChevronRight,
+  Check,
+  X,
+  Lock,
+  Info,
+  Flame as FlameLine,
+  Star as StarLine,
+  Sparkles as SparklesLine,
+  Gift as GiftLine,
+  Utensils as UtensilsLine,
+  Moon as MoonLine,
+  Smile as SmileLine,
+  HeartPulse as HeartPulseLine,
+  TrendingUp as TrendingUpLine,
+  Users as UsersLine,
+  Award as AwardLine,
+  Trophy as TrophyLine,
+  type LucideIcon,
+} from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { toDateStr } from '../lib/cycleLogic'
 import {
@@ -24,7 +43,18 @@ import {
   getModeColor,
   getModeColorSoft,
   radius,
+  useDiffuseTheme,
+  diffuseFont,
+  getDiffuseAccent,
 } from '../constants/theme'
+import {
+  useIsDiffuse,
+  SoftBloom,
+  DiffuseArrow,
+} from '../components/ui/diffuse/DiffuseKit'
+import {
+  DiffuseBloomIcon,
+} from '../components/ui/diffuse/DiffusePrimitives'
 import { Display, DisplayItalic, Body, MonoCaps } from '../components/ui/Typography'
 import { ScreenHeader } from '../components/ui/ScreenHeader'
 import { PaperCard } from '../components/ui/PaperCard'
@@ -67,22 +97,25 @@ import { useTranslation } from '../lib/i18n'
 const WEEK_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const
 
 // Category config: paper-palette sticker colors + sticker component per category.
+// `Line` is the Diffuse-branch counterpart — a Lucide line glyph rendered over
+// a soft accent bloom (the sticker stays the cream-branch icon system).
 const CATEGORY_CONFIG: {
   key: BadgeCategory
   label: string
   color: keyof typeof stickerPalette       // sticker palette key (light)
   soft: keyof typeof stickerPalette        // its soft companion
   Sticker: (p: { size?: number; fill?: string }) => React.ReactElement
+  Line: LucideIcon
 }[] = [
-  { key: 'streak',    label: 'Streaks',    color: 'coral',  soft: 'pinkSoft',   Sticker: Flame },
-  { key: 'nutrition', label: 'Nutrition',  color: 'green',  soft: 'greenSoft',  Sticker: LogNutrition },
-  { key: 'sleep',     label: 'Sleep',      color: 'lilac',  soft: 'lilacSoft',  Sticker: LogSleep },
-  { key: 'mood',      label: 'Mood',       color: 'pink',   soft: 'pinkSoft',   Sticker: (p) => <MoodFace {...p} variant="happy" /> },
-  { key: 'health',    label: 'Health',     color: 'blue',   soft: 'blueSoft',   Sticker: LogAppointment },
-  { key: 'growth',    label: 'Growth',     color: 'yellow', soft: 'yellowSoft', Sticker: (p) => <StarSticker {...p} /> },
-  { key: 'community', label: 'Community',  color: 'lilac',  soft: 'lilacSoft',  Sticker: CircleDots },
-  { key: 'milestone', label: 'Milestones', color: 'peach',  soft: 'peachSoft',  Sticker: DayBadge },
-  { key: 'daily',     label: 'Daily',      color: 'yellow', soft: 'yellowSoft', Sticker: QuestRibbon },
+  { key: 'streak',    label: 'Streaks',    color: 'coral',  soft: 'pinkSoft',   Sticker: Flame,       Line: FlameLine },
+  { key: 'nutrition', label: 'Nutrition',  color: 'green',  soft: 'greenSoft',  Sticker: LogNutrition, Line: UtensilsLine },
+  { key: 'sleep',     label: 'Sleep',      color: 'lilac',  soft: 'lilacSoft',  Sticker: LogSleep,     Line: MoonLine },
+  { key: 'mood',      label: 'Mood',       color: 'pink',   soft: 'pinkSoft',   Sticker: (p) => <MoodFace {...p} variant="happy" />, Line: SmileLine },
+  { key: 'health',    label: 'Health',     color: 'blue',   soft: 'blueSoft',   Sticker: LogAppointment, Line: HeartPulseLine },
+  { key: 'growth',    label: 'Growth',     color: 'yellow', soft: 'yellowSoft', Sticker: (p) => <StarSticker {...p} />, Line: TrendingUpLine },
+  { key: 'community', label: 'Community',  color: 'lilac',  soft: 'lilacSoft',  Sticker: CircleDots,   Line: UsersLine },
+  { key: 'milestone', label: 'Milestones', color: 'peach',  soft: 'peachSoft',  Sticker: DayBadge,     Line: AwardLine },
+  { key: 'daily',     label: 'Daily',      color: 'yellow', soft: 'yellowSoft', Sticker: QuestRibbon,  Line: GiftLine },
 ]
 
 // Map category key → i18n translation key for category labels.
@@ -131,17 +164,19 @@ const POINTS_ROWS: { rowKey: string; pts: string; color: keyof typeof stickerPal
 
 export default function DailyRewardsScreen() {
   const { colors, font, isDark, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
 
-  const accent = getModeColor(mode, isDark)
-  const accentSoft = getModeColorSoft(mode, isDark)
-  const ink = colors.text
-  const ink3 = colors.textMuted
-  const paper = colors.surface
-  const paperRaised = colors.surfaceRaised
-  const line = colors.border
-  const bg = colors.bg
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
+  const accentSoft = diffuse ? dt.colors.surface : getModeColorSoft(mode, isDark)
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperRaised = diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised
+  const line = diffuse ? dt.colors.line : colors.border
+  const bg = diffuse ? dt.colors.bg : colors.bg
 
   const checkIn = useBadgeStore((s) => s.checkIn)
   const currentStreak = useBadgeStore((s) => s.currentStreak)
@@ -224,11 +259,24 @@ export default function DailyRewardsScreen() {
             <View
               style={[
                 styles.pointsPill,
-                { backgroundColor: paper, borderColor: line },
+                diffuse
+                  ? { backgroundColor: 'transparent', borderColor: dt.colors.hairline }
+                  : { backgroundColor: paper, borderColor: line },
               ]}
             >
-              <StarSticker size={14} fill={stickers.yellow} />
-              <Text style={[styles.pointsPillText, { color: ink, fontFamily: font.bodySemiBold }]}>
+              {diffuse ? (
+                <StarLine size={13} color={accent} strokeWidth={1.8} />
+              ) : (
+                <StarSticker size={14} fill={stickers.yellow} />
+              )}
+              <Text
+                style={[
+                  styles.pointsPillText,
+                  diffuse
+                    ? { color: ink, fontFamily: diffuseFont.monoBold, letterSpacing: 0.5 }
+                    : { color: ink, fontFamily: font.bodySemiBold },
+                ]}
+              >
                 {totalPoints}
               </Text>
             </View>
@@ -237,18 +285,23 @@ export default function DailyRewardsScreen() {
 
         {/* ─── Hero: streak title + dashed circle ─── */}
         <View style={styles.hero}>
-          <View style={[styles.heroStickerLeft]} pointerEvents="none">
-            <StarSticker size={40} fill={stickers.yellow} />
-          </View>
-          <View style={[styles.heroStickerRight]} pointerEvents="none">
-            <Burst size={44} fill={stickers.pink} points={10} />
-          </View>
+          {/* Decorative sticker bursts — cream only. Diffuse hides confetti. */}
+          {!diffuse && (
+            <>
+              <View style={[styles.heroStickerLeft]} pointerEvents="none">
+                <StarSticker size={40} fill={stickers.yellow} />
+              </View>
+              <View style={[styles.heroStickerRight]} pointerEvents="none">
+                <Burst size={44} fill={stickers.pink} points={10} />
+              </View>
+            </>
+          )}
 
           <View style={styles.heroTitleRow}>
             <Display size={32} color={ink}>
               {t('dailyRewards_n_day', { n: currentStreak })}
             </Display>
-            <DisplayItalic size={32} color={stickers.coral} style={{ marginLeft: 8 }}>
+            <DisplayItalic size={32} color={diffuse ? accent : stickers.coral} style={{ marginLeft: 8 }}>
               {t('dailyRewards_streak_label')}
             </DisplayItalic>
           </View>
@@ -256,18 +309,34 @@ export default function DailyRewardsScreen() {
             {t('dailyRewards_grandmaProud')}
           </Body>
 
-          {/* Dashed streak circle */}
+          {/* Streak circle — dashed ink ring (cream) / hairline ring + soft
+              accent bloom (diffuse). */}
           <View style={styles.streakCircleWrap}>
-            <View
-              style={[
-                styles.streakCircle,
-                { backgroundColor: accentSoft, borderColor: ink },
-              ]}
-            >
-              <Display size={56} color={ink} style={{ lineHeight: 58 }}>
-                {currentStreak}
-              </Display>
-            </View>
+            {diffuse ? (
+              <View
+                style={[
+                  styles.streakCircle,
+                  styles.streakCircleDiffuse,
+                  { backgroundColor: dt.colors.surface, borderColor: accent },
+                ]}
+              >
+                <SoftBloom color={accent} opacity={dt.isDark ? 0.3 : 0.4} spread={0.5} radius="55%" />
+                <Display size={56} color={ink} style={{ lineHeight: 58 }}>
+                  {currentStreak}
+                </Display>
+              </View>
+            ) : (
+              <View
+                style={[
+                  styles.streakCircle,
+                  { backgroundColor: accentSoft, borderColor: ink },
+                ]}
+              >
+                <Display size={56} color={ink} style={{ lineHeight: 58 }}>
+                  {currentStreak}
+                </Display>
+              </View>
+            )}
           </View>
         </View>
 
@@ -298,40 +367,78 @@ export default function DailyRewardsScreen() {
         </PaperCard>
 
         {/* ─── Claim button ─── */}
-        <Pressable
-          onPress={handleCheckIn}
-          disabled={alreadyCheckedIn}
-          style={({ pressed }) => [
-            styles.claimBtn,
-            {
-              backgroundColor: alreadyCheckedIn ? paper : accent,
-              borderColor: alreadyCheckedIn ? line : accent,
-            },
-            pressed && !alreadyCheckedIn && { opacity: 0.92, transform: [{ scale: 0.98 }] },
-          ]}
-        >
-          {alreadyCheckedIn ? (
-            <>
-              <Check size={18} color={ink} strokeWidth={2.5} />
-              <Text style={[styles.claimBtnText, { color: ink, fontFamily: font.bodySemiBold }]}>
-                {t('dailyRewards_checkedIn')}
-              </Text>
-            </>
-          ) : (
-            <>
-              <Sparkle size={22} fill={stickers.yellow} />
-              <Text style={[styles.claimBtnText, { color: ink, fontFamily: font.bodySemiBold }]}>
-                {t('dailyRewards_claimReward')}
-              </Text>
-            </>
-          )}
-        </Pressable>
+        {diffuse ? (
+          <Pressable
+            onPress={handleCheckIn}
+            disabled={alreadyCheckedIn}
+            style={({ pressed }) => [
+              styles.claimBtn,
+              {
+                backgroundColor: 'transparent',
+                borderColor: alreadyCheckedIn ? dt.colors.line : dt.colors.hairline,
+              },
+              pressed && !alreadyCheckedIn && { opacity: 0.6 },
+            ]}
+          >
+            {alreadyCheckedIn ? (
+              <>
+                <Check size={16} color={ink3} strokeWidth={1.8} />
+                <Text style={[styles.claimBtnTextDiffuse, { color: ink3, fontFamily: diffuseFont.mono }]}>
+                  {t('dailyRewards_checkedIn')}
+                </Text>
+              </>
+            ) : (
+              <>
+                <SparklesLine size={16} color={accent} strokeWidth={1.8} />
+                <Text style={[styles.claimBtnTextDiffuse, { color: ink, fontFamily: diffuseFont.monoBold }]}>
+                  {t('dailyRewards_claimReward')}
+                </Text>
+                <DiffuseArrow color={accent} size={16} />
+              </>
+            )}
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={handleCheckIn}
+            disabled={alreadyCheckedIn}
+            style={({ pressed }) => [
+              styles.claimBtn,
+              {
+                backgroundColor: alreadyCheckedIn ? paper : accent,
+                borderColor: alreadyCheckedIn ? line : accent,
+              },
+              pressed && !alreadyCheckedIn && { opacity: 0.92, transform: [{ scale: 0.98 }] },
+            ]}
+          >
+            {alreadyCheckedIn ? (
+              <>
+                <Check size={18} color={ink} strokeWidth={2.5} />
+                <Text style={[styles.claimBtnText, { color: ink, fontFamily: font.bodySemiBold }]}>
+                  {t('dailyRewards_checkedIn')}
+                </Text>
+              </>
+            ) : (
+              <>
+                <Sparkle size={22} fill={stickers.yellow} />
+                <Text style={[styles.claimBtnText, { color: ink, fontFamily: font.bodySemiBold }]}>
+                  {t('dailyRewards_claimReward')}
+                </Text>
+              </>
+            )}
+          </Pressable>
+        )}
 
         {/* ─── Reward reveal (after claim) ─── */}
         {showReward && rewardResult && (
           <PaperCard tint={accentSoft} radius={24} padding={16} borderColor={line}>
             <View style={styles.revealHeader}>
-              <Sparkle size={22} fill={stickers.yellow} />
+              {diffuse ? (
+                <DiffuseBloomIcon color={accent} size={28} intensity={0.5}>
+                  <SparklesLine size={16} color={ink3} strokeWidth={1.8} />
+                </DiffuseBloomIcon>
+              ) : (
+                <Sparkle size={22} fill={stickers.yellow} />
+              )}
               <Display size={20} color={ink} style={{ marginLeft: 8 }}>
                 {t('dailyRewards_pointsReveal', { n: rewardResult.points })}
               </Display>
@@ -350,11 +457,20 @@ export default function DailyRewardsScreen() {
                       key={id}
                       style={[
                         styles.revealBadgeChip,
-                        { backgroundColor: paper, borderColor: line },
+                        diffuse
+                          ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+                          : { backgroundColor: paper, borderColor: line },
                       ]}
                     >
                       <BadgeIcon badgeId={id} size={20} />
-                      <Text style={[styles.revealBadgeName, { color: ink, fontFamily: font.bodyMedium }]}>
+                      <Text
+                        style={[
+                          styles.revealBadgeName,
+                          diffuse
+                            ? { color: ink, fontFamily: diffuseFont.body }
+                            : { color: ink, fontFamily: font.bodyMedium },
+                        ]}
+                      >
                         {def.name}
                       </Text>
                     </View>
@@ -378,9 +494,26 @@ export default function DailyRewardsScreen() {
               const dayIdx = i + 1
               const isDone = dayIdx <= doneThisWeek
               const isToday = dayIdx === dayInCycle && !alreadyCheckedIn
-              const tileBg = isDone ? accent : isToday ? paper : paperRaised
-              const tileBorder = isToday ? ink : line
-              const tileBorderWidth = isToday ? 1.5 : 1
+
+              // Diffuse: hairline day tiles — done = accent ring + soft bloom,
+              // today = strong hairline ring, locked = faint hairline.
+              const tileBg = diffuse
+                ? 'transparent'
+                : isDone
+                  ? accent
+                  : isToday
+                    ? paper
+                    : paperRaised
+              const tileBorder = diffuse
+                ? isDone
+                  ? accent
+                  : isToday
+                    ? dt.colors.hairline
+                    : dt.colors.line
+                : isToday
+                  ? ink
+                  : line
+              const tileBorderWidth = diffuse ? 1 : isToday ? 1.5 : 1
 
               return (
                 <View key={`${letter}-${i}`} style={styles.weekDay}>
@@ -391,21 +524,31 @@ export default function DailyRewardsScreen() {
                         backgroundColor: tileBg,
                         borderColor: tileBorder,
                         borderWidth: tileBorderWidth,
+                        overflow: 'hidden',
                       },
                     ]}
                   >
+                    {diffuse && isDone ? (
+                      <SoftBloom color={accent} opacity={dt.isDark ? 0.32 : 0.42} spread={0.5} radius="55%" />
+                    ) : null}
                     {isDone ? (
-                      <Check size={18} color={ink} strokeWidth={2.5} />
+                      <Check size={18} color={diffuse ? accent : ink} strokeWidth={diffuse ? 1.8 : 2.5} />
                     ) : isToday ? (
-                      <StarSticker size={20} fill={accent} />
+                      diffuse ? (
+                        <StarLine size={16} color={accent} strokeWidth={1.8} />
+                      ) : (
+                        <StarSticker size={20} fill={accent} />
+                      )
                     ) : (
-                      <Lock size={12} color={ink3} strokeWidth={2} />
+                      <Lock size={12} color={diffuse ? dt.colors.ink4 : ink3} strokeWidth={2} />
                     )}
                   </View>
                   <Text
                     style={[
                       styles.weekLetter,
-                      { color: isToday ? ink : ink3, fontFamily: font.bodyMedium },
+                      diffuse
+                        ? { color: isToday ? ink : ink3, fontFamily: diffuseFont.mono }
+                        : { color: isToday ? ink : ink3, fontFamily: font.bodyMedium },
                     ]}
                   >
                     {letter}
@@ -420,25 +563,68 @@ export default function DailyRewardsScreen() {
         <View
           style={[
             styles.questCard,
-            { backgroundColor: accentSoft, borderColor: line },
+            diffuse
+              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+              : { backgroundColor: accentSoft, borderColor: line },
           ]}
         >
-          <View style={styles.questFlower} pointerEvents="none">
-            <Flower size={120} petal={accent} center={stickers.yellow} />
-          </View>
+          {/* Decorative flower hero — cream only. Diffuse uses a soft corner
+              bloom + a small line glyph over bloom instead. */}
+          {diffuse ? (
+            <>
+              <SoftBloom color={accent} cx="88%" cy="80%" opacity={dt.isDark ? 0.28 : 0.38} spread={0.5} />
+              <View style={styles.questGlyph} pointerEvents="none">
+                <DiffuseBloomIcon color={accent} size={40} intensity={0.5}>
+                  <GiftLine size={22} color={ink3} strokeWidth={1.6} />
+                </DiffuseBloomIcon>
+              </View>
+            </>
+          ) : (
+            <View style={styles.questFlower} pointerEvents="none">
+              <Flower size={120} petal={accent} center={stickers.yellow} />
+            </View>
+          )}
           <MonoCaps size={11} color={ink3}>{t('dailyRewards_todaysQuest')}</MonoCaps>
           <Display size={22} color={ink} style={{ marginTop: 4, maxWidth: 220, lineHeight: 26 }}>
             {questCopy}
           </Display>
           <View style={styles.questPills}>
-            <View style={[styles.questPill, { backgroundColor: paper, borderColor: line }]}>
-              <Text style={[styles.questPillText, { color: ink, fontFamily: font.bodyMedium }]}>
+            <View
+              style={[
+                styles.questPill,
+                diffuse
+                  ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+                  : { backgroundColor: paper, borderColor: line },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.questPillText,
+                  diffuse
+                    ? { color: ink, fontFamily: diffuseFont.mono, letterSpacing: 0.5 }
+                    : { color: ink, fontFamily: font.bodyMedium },
+                ]}
+              >
                 {t('dailyRewards_quest_points', { n: todaysReward.points })}
               </Text>
             </View>
             {todaysReward.badge && (
-              <View style={[styles.questPill, { backgroundColor: paper, borderColor: line }]}>
-                <Text style={[styles.questPillText, { color: ink, fontFamily: font.bodyMedium }]}>
+              <View
+                style={[
+                  styles.questPill,
+                  diffuse
+                    ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+                    : { backgroundColor: paper, borderColor: line },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.questPillText,
+                    diffuse
+                      ? { color: ink, fontFamily: diffuseFont.mono, letterSpacing: 0.5 }
+                      : { color: ink, fontFamily: font.bodyMedium },
+                  ]}
+                >
                   {t('dailyRewards_unlock_badge')}
                 </Text>
               </View>
@@ -449,22 +635,42 @@ export default function DailyRewardsScreen() {
         {/* ─── Badge Collection ─── */}
         <PaperCard padding={16} radius={24}>
           <View style={styles.badgeHeader}>
-            <View style={[styles.badgeHeaderIcon, { backgroundColor: stickers.yellowSoft, borderColor: line }]}>
-              <StarSticker size={18} fill={stickers.yellow} />
-            </View>
-            <Text style={[styles.badgeHeaderTitle, { color: ink, fontFamily: font.display }]}>
+            {diffuse ? (
+              <DiffuseBloomIcon color={accent} size={32} intensity={0.5}>
+                <AwardLine size={18} color={ink3} strokeWidth={1.8} />
+              </DiffuseBloomIcon>
+            ) : (
+              <View style={[styles.badgeHeaderIcon, { backgroundColor: stickers.yellowSoft, borderColor: line }]}>
+                <StarSticker size={18} fill={stickers.yellow} />
+              </View>
+            )}
+            <Text
+              style={[
+                styles.badgeHeaderTitle,
+                diffuse
+                  ? { color: ink, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
+                  : { color: ink, fontFamily: font.display },
+              ]}
+            >
               {t('dailyRewards_badgeCollection')}
             </Text>
-            <Text style={[styles.badgeHeaderCount, { color: ink3, fontFamily: font.bodyMedium }]}>
+            <Text
+              style={[
+                styles.badgeHeaderCount,
+                diffuse
+                  ? { color: ink3, fontFamily: diffuseFont.monoBold, letterSpacing: 0.5 }
+                  : { color: ink3, fontFamily: font.bodyMedium },
+              ]}
+            >
               {earnedCount}/{totalBadges}
             </Text>
           </View>
 
-          <View style={[styles.progressBarTrack, { backgroundColor: paperRaised }]}>
+          <View style={[styles.progressBarTrack, { backgroundColor: diffuse ? dt.colors.line : paperRaised }]}>
             <View
               style={[
                 styles.progressBarFill,
-                { width: `${progressPct}%`, backgroundColor: stickers.yellow },
+                { width: `${progressPct}%`, backgroundColor: diffuse ? accent : stickers.yellow },
               ]}
             />
           </View>
@@ -481,20 +687,32 @@ export default function DailyRewardsScreen() {
                     key={earned.badgeId}
                     style={[
                       styles.badgeItem,
-                      { backgroundColor: tint, borderColor: line },
+                      diffuse
+                        ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+                        : { backgroundColor: tint, borderColor: line },
                     ]}
                   >
                     <View style={styles.badgeIconWrap}>
                       <BadgeIcon badgeId={earned.badgeId} size={40} />
                     </View>
                     <Text
-                      style={[styles.badgeName, { color: ink, fontFamily: font.bodySemiBold }]}
+                      style={[
+                        styles.badgeName,
+                        diffuse
+                          ? { color: ink, fontFamily: diffuseFont.bodySemiBold }
+                          : { color: ink, fontFamily: font.bodySemiBold },
+                      ]}
                       numberOfLines={1}
                     >
                       {def.name}
                     </Text>
                     <Text
-                      style={[styles.badgeTier, { color: getTierColor(def.tier), fontFamily: font.bodySemiBold }]}
+                      style={[
+                        styles.badgeTier,
+                        diffuse
+                          ? { color: ink3, fontFamily: diffuseFont.mono }
+                          : { color: getTierColor(def.tier), fontFamily: font.bodySemiBold },
+                      ]}
                     >
                       {def.tier}
                     </Text>
@@ -504,19 +722,35 @@ export default function DailyRewardsScreen() {
             </View>
           )}
 
-          <Pressable
-            onPress={() => router.push('/profile/badges' as any)}
-            style={({ pressed }) => [
-              styles.viewAllBtn,
-              { borderColor: line, backgroundColor: paperRaised },
-              pressed && { opacity: 0.85 },
-            ]}
-          >
-            <Text style={[styles.viewAllText, { color: ink, fontFamily: font.bodyMedium }]}>
-              {t('dailyRewards_viewAllBadges')}
-            </Text>
-            <ChevronRight size={16} color={ink3} />
-          </Pressable>
+          {diffuse ? (
+            <Pressable
+              onPress={() => router.push('/profile/badges' as any)}
+              style={({ pressed }) => [
+                styles.viewAllBtnDiffuse,
+                { borderTopColor: dt.colors.line2 },
+                pressed && { opacity: 0.6 },
+              ]}
+            >
+              <Text style={[styles.viewAllTextDiffuse, { color: ink, fontFamily: diffuseFont.mono }]}>
+                {t('dailyRewards_viewAllBadges')}
+              </Text>
+              <DiffuseArrow color={ink3} size={16} />
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => router.push('/profile/badges' as any)}
+              style={({ pressed }) => [
+                styles.viewAllBtn,
+                { borderColor: line, backgroundColor: paperRaised },
+                pressed && { opacity: 0.85 },
+              ]}
+            >
+              <Text style={[styles.viewAllText, { color: ink, fontFamily: font.bodyMedium }]}>
+                {t('dailyRewards_viewAllBadges')}
+              </Text>
+              <ChevronRight size={16} color={ink3} />
+            </Pressable>
+          )}
         </PaperCard>
 
         {/* ─── Categories ─── */}
@@ -540,35 +774,50 @@ export default function DailyRewardsScreen() {
                   onPress={() => setSelectedCategory(cat.key)}
                   style={({ pressed }) => [
                     styles.categoryCard,
-                    {
-                      backgroundColor: soft,
-                      borderColor: line,
-                    },
-                    pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+                    diffuse
+                      ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+                      : { backgroundColor: soft, borderColor: line },
+                    pressed && { opacity: diffuse ? 0.7 : 0.85, transform: diffuse ? undefined : [{ scale: 0.98 }] },
                   ]}
                 >
                   <View style={styles.categoryCardTop}>
                     <View style={styles.categorySticker}>
-                      <cat.Sticker size={38} fill={color} />
+                      {diffuse ? (
+                        <DiffuseBloomIcon color={accent} size={38} intensity={0.5}>
+                          <cat.Line size={20} color={ink3} strokeWidth={1.7} />
+                        </DiffuseBloomIcon>
+                      ) : (
+                        <cat.Sticker size={38} fill={color} />
+                      )}
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text
-                        style={[styles.categoryLabel, { color: ink, fontFamily: font.bodySemiBold }]}
+                        style={[
+                          styles.categoryLabel,
+                          diffuse
+                            ? { color: ink, fontFamily: diffuseFont.bodySemiBold }
+                            : { color: ink, fontFamily: font.bodySemiBold },
+                        ]}
                       >
                         {t(CAT_LABEL_KEY[cat.key])}
                       </Text>
                       <Text
-                        style={[styles.categoryCount, { color: ink3, fontFamily: font.body }]}
+                        style={[
+                          styles.categoryCount,
+                          diffuse
+                            ? { color: ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5 }
+                            : { color: ink3, fontFamily: font.body },
+                        ]}
                       >
                         {earned}/{catBadges.length}
                       </Text>
                     </View>
                   </View>
-                  <View style={[styles.categoryBar, { backgroundColor: paper }]}>
+                  <View style={[styles.categoryBar, { backgroundColor: diffuse ? dt.colors.line : paper }]}>
                     <View
                       style={[
                         styles.categoryBarFill,
-                        { width: `${pct}%`, backgroundColor: color },
+                        { width: `${pct}%`, backgroundColor: diffuse ? accent : color },
                       ]}
                     />
                   </View>
@@ -583,21 +832,40 @@ export default function DailyRewardsScreen() {
           onPress={() => router.push('/leaderboard' as any)}
           style={({ pressed }) => [
             styles.leaderCard,
-            {
-              backgroundColor: paper,
-              borderColor: line,
-            },
-            pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+            diffuse
+              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+              : { backgroundColor: paper, borderColor: line },
+            pressed && { opacity: diffuse ? 0.7 : 0.9, transform: diffuse ? undefined : [{ scale: 0.98 }] },
           ]}
         >
-          <View style={[styles.leaderIcon, { backgroundColor: stickers.yellowSoft, borderColor: line }]}>
-            <StarSticker size={22} fill={stickers.yellow} />
-          </View>
+          {diffuse ? (
+            <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
+              <TrophyLine size={22} color={ink3} strokeWidth={1.7} />
+            </DiffuseBloomIcon>
+          ) : (
+            <View style={[styles.leaderIcon, { backgroundColor: stickers.yellowSoft, borderColor: line }]}>
+              <StarSticker size={22} fill={stickers.yellow} />
+            </View>
+          )}
           <View style={styles.leaderText}>
-            <Text style={[styles.leaderTitle, { color: ink, fontFamily: font.display }]}>
+            <Text
+              style={[
+                styles.leaderTitle,
+                diffuse
+                  ? { color: ink, fontFamily: diffuseFont.display, letterSpacing: -0.2 }
+                  : { color: ink, fontFamily: font.display },
+              ]}
+            >
               {t('dailyRewards_communityLeaderboard')}
             </Text>
-            <Text style={[styles.leaderSub, { color: ink3, fontFamily: font.body }]}>
+            <Text
+              style={[
+                styles.leaderSub,
+                diffuse
+                  ? { color: ink3, fontFamily: diffuseFont.body }
+                  : { color: ink3, fontFamily: font.body },
+              ]}
+            >
               {leaderboard && myUserId
                 ? t('dailyRewards_rankDesc', {
                     rank: String(leaderboard.find((e) => e.user_id === myUserId)?.rank ?? '—'),
@@ -606,7 +874,7 @@ export default function DailyRewardsScreen() {
                 : t('dailyRewards_competeDesc')}
             </Text>
           </View>
-          <ChevronRight size={20} color={ink3} />
+          {diffuse ? <DiffuseArrow color={ink3} size={18} /> : <ChevronRight size={20} color={ink3} />}
         </Pressable>
 
         {/* ─── How points work ─── */}
@@ -614,12 +882,21 @@ export default function DailyRewardsScreen() {
           onPress={() => setShowPointsInfo(true)}
           style={({ pressed }) => [
             styles.howBtn,
-            { borderColor: line, backgroundColor: paper },
-            pressed && { opacity: 0.8 },
+            diffuse
+              ? { borderColor: dt.colors.line2, backgroundColor: 'transparent' }
+              : { borderColor: line, backgroundColor: paper },
+            pressed && { opacity: diffuse ? 0.6 : 0.8 },
           ]}
         >
           <Info size={14} color={ink3} strokeWidth={2} />
-          <Text style={[styles.howBtnText, { color: ink3, fontFamily: font.bodyMedium }]}>
+          <Text
+            style={[
+              styles.howBtnText,
+              diffuse
+                ? { color: ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' }
+                : { color: ink3, fontFamily: font.bodyMedium },
+            ]}
+          >
             {t('dailyRewards_howPointsWork')}
           </Text>
         </Pressable>
@@ -634,22 +911,46 @@ export default function DailyRewardsScreen() {
       >
         <Pressable style={styles.modalOverlay} onPress={() => setShowPointsInfo(false)}>
           <Pressable
-            style={[styles.modalCard, { backgroundColor: paper, borderColor: line }]}
+            style={[
+              styles.modalCard,
+              diffuse
+                ? { backgroundColor: dt.colors.bg, borderColor: dt.colors.line }
+                : { backgroundColor: paper, borderColor: line },
+            ]}
             onPress={(e) => e.stopPropagation()}
           >
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: ink, fontFamily: font.display }]}>
+              <Text
+                style={[
+                  styles.modalTitle,
+                  diffuse
+                    ? { color: ink, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
+                    : { color: ink, fontFamily: font.display },
+                ]}
+              >
                 {t('dailyRewards_howPointsWork')}
               </Text>
               <Pressable
                 onPress={() => setShowPointsInfo(false)}
                 hitSlop={12}
-                style={[styles.modalCloseBtn, { borderColor: line, backgroundColor: paperRaised }]}
+                style={[
+                  styles.modalCloseBtn,
+                  diffuse
+                    ? { borderColor: dt.colors.hairline, backgroundColor: 'transparent' }
+                    : { borderColor: line, backgroundColor: paperRaised },
+                ]}
               >
                 <X size={16} color={ink} />
               </Pressable>
             </View>
-            <Text style={[styles.modalSubtitle, { color: ink, fontFamily: font.italic }]}>
+            <Text
+              style={[
+                styles.modalSubtitle,
+                diffuse
+                  ? { color: ink3, fontFamily: diffuseFont.italic, opacity: 1 }
+                  : { color: ink, fontFamily: font.italic },
+              ]}
+            >
               {t('dailyRewards_howPointsBody')}
             </Text>
             <View style={{ gap: 8, marginTop: 12 }}>
@@ -658,22 +959,43 @@ export default function DailyRewardsScreen() {
                 return (
                   <View
                     key={item.rowKey}
-                    style={[styles.modalRow, { backgroundColor: paperRaised, borderColor: line }]}
+                    style={[
+                      styles.modalRow,
+                      diffuse
+                        ? { backgroundColor: 'transparent', borderColor: dt.colors.line }
+                        : { backgroundColor: paperRaised, borderColor: line },
+                    ]}
                   >
                     <View
                       style={[
                         styles.modalDot,
-                        {
-                          backgroundColor: dotColor,
-                          borderWidth: 1.2,
-                          borderColor: 'rgba(20,19,19,0.35)',
-                        },
+                        diffuse
+                          ? { backgroundColor: accent }
+                          : {
+                              backgroundColor: dotColor,
+                              borderWidth: 1.2,
+                              borderColor: 'rgba(20,19,19,0.35)',
+                            },
                       ]}
                     />
-                    <Text style={[styles.modalLabel, { color: ink, fontFamily: font.bodySemiBold }]}>
+                    <Text
+                      style={[
+                        styles.modalLabel,
+                        diffuse
+                          ? { color: ink, fontFamily: diffuseFont.body }
+                          : { color: ink, fontFamily: font.bodySemiBold },
+                      ]}
+                    >
                       {t(item.rowKey as any)}
                     </Text>
-                    <Text style={[styles.modalPts, { color: ink, fontFamily: font.display }]}>
+                    <Text
+                      style={[
+                        styles.modalPts,
+                        diffuse
+                          ? { color: ink, fontFamily: diffuseFont.monoBold, fontWeight: '400', letterSpacing: 0 }
+                          : { color: ink, fontFamily: font.display },
+                      ]}
+                    >
                       {item.pts}
                     </Text>
                   </View>
@@ -696,7 +1018,9 @@ export default function DailyRewardsScreen() {
             style={[
               styles.modalCard,
               styles.catModalCard,
-              { backgroundColor: paper, borderColor: line },
+              diffuse
+                ? { backgroundColor: dt.colors.bg, borderColor: dt.colors.line }
+                : { backgroundColor: paper, borderColor: line },
             ]}
             onPress={(e) => e.stopPropagation()}
           >
@@ -714,31 +1038,56 @@ export default function DailyRewardsScreen() {
                 return (
                   <>
                     <View style={styles.catModalHeader}>
-                      <View style={[styles.catModalSticker, { backgroundColor: soft, borderColor: line }]}>
-                        <cat.Sticker size={28} fill={color} />
-                      </View>
+                      {diffuse ? (
+                        <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
+                          <cat.Line size={22} color={ink3} strokeWidth={1.7} />
+                        </DiffuseBloomIcon>
+                      ) : (
+                        <View style={[styles.catModalSticker, { backgroundColor: soft, borderColor: line }]}>
+                          <cat.Sticker size={28} fill={color} />
+                        </View>
+                      )}
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.catModalTitle, { color: ink, fontFamily: font.display }]}>
+                        <Text
+                          style={[
+                            styles.catModalTitle,
+                            diffuse
+                              ? { color: ink, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
+                              : { color: ink, fontFamily: font.display },
+                          ]}
+                        >
                           {cat.label}
                         </Text>
-                        <Text style={[styles.catModalCount, { color: ink3, fontFamily: font.body }]}>
+                        <Text
+                          style={[
+                            styles.catModalCount,
+                            diffuse
+                              ? { color: ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5 }
+                              : { color: ink3, fontFamily: font.body },
+                          ]}
+                        >
                           {t('dailyRewards_earnedOf', { n: String(earnedList.length), total: String(catBadges.length) })}
                         </Text>
                       </View>
                       <Pressable
                         onPress={() => setSelectedCategory(null)}
                         hitSlop={12}
-                        style={[styles.modalCloseBtn, { borderColor: line, backgroundColor: paperRaised }]}
+                        style={[
+                          styles.modalCloseBtn,
+                          diffuse
+                            ? { borderColor: dt.colors.hairline, backgroundColor: 'transparent' }
+                            : { borderColor: line, backgroundColor: paperRaised },
+                        ]}
                       >
                         <X size={16} color={ink} />
                       </Pressable>
                     </View>
 
-                    <View style={[styles.catModalBar, { backgroundColor: paperRaised }]}>
+                    <View style={[styles.catModalBar, { backgroundColor: diffuse ? dt.colors.line : paperRaised }]}>
                       <View
                         style={[
                           styles.catModalBarFill,
-                          { width: `${pct}%`, backgroundColor: color },
+                          { width: `${pct}%`, backgroundColor: diffuse ? accent : color },
                         ]}
                       />
                     </View>
@@ -750,7 +1099,7 @@ export default function DailyRewardsScreen() {
                     >
                       {earnedList.length > 0 && (
                         <View style={styles.catSection}>
-                          <MonoCaps size={10} color={color} style={{ marginBottom: 6 }}>
+                          <MonoCaps size={10} color={diffuse ? accent : color} style={{ marginBottom: 6 }}>
                             {t('dailyRewards_achieved')}
                           </MonoCaps>
                           {earnedList.map((def) => {
@@ -760,14 +1109,16 @@ export default function DailyRewardsScreen() {
                                 key={def.id}
                                 def={def}
                                 earnedDate={earned?.earnedAt}
-                                bg={soft}
+                                bg={diffuse ? dt.colors.surface : soft}
                                 border={line}
                                 ink={ink}
                                 ink3={ink3}
-                                fontBody={font.body}
-                                fontMed={font.bodyMedium}
-                                fontSemi={font.bodySemiBold}
+                                fontBody={diffuse ? diffuseFont.body : font.body}
+                                fontMed={diffuse ? diffuseFont.mono : font.bodyMedium}
+                                fontSemi={diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold}
                                 locked={false}
+                                diffuse={diffuse}
+                                accent={accent}
                               />
                             )
                           })}
@@ -783,14 +1134,16 @@ export default function DailyRewardsScreen() {
                             <BadgeRow
                               key={def.id}
                               def={def}
-                              bg={paperRaised}
+                              bg={diffuse ? 'transparent' : paperRaised}
                               border={line}
                               ink={ink3}
                               ink3={ink3}
-                              fontBody={font.body}
-                              fontMed={font.bodyMedium}
-                              fontSemi={font.bodySemiBold}
+                              fontBody={diffuse ? diffuseFont.body : font.body}
+                              fontMed={diffuse ? diffuseFont.mono : font.bodyMedium}
+                              fontSemi={diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold}
                               locked
+                              diffuse={diffuse}
+                              accent={accent}
                             />
                           ))}
                         </View>
@@ -819,6 +1172,8 @@ interface BadgeRowProps {
   fontMed: string
   fontSemi: string
   locked: boolean
+  diffuse?: boolean
+  accent?: string
 }
 
 function BadgeRow({
@@ -832,7 +1187,18 @@ function BadgeRow({
   fontMed,
   fontSemi,
   locked,
+  diffuse,
+  accent,
 }: BadgeRowProps) {
+  // Diffuse: tier reads in the mode accent (earned) / ink-3 (locked) instead of
+  // the raw tier-color palette; lock chip stays a hairline circle.
+  const tierColor = diffuse
+    ? locked
+      ? ink3
+      : accent ?? ink
+    : locked
+      ? ink3
+      : getTierColor(def.tier)
   return (
     <View style={[styles.catBadgeRow, { backgroundColor: bg, borderColor: border }]}>
       {locked ? (
@@ -857,7 +1223,7 @@ function BadgeRow({
       </View>
       <View style={styles.catBadgeRight}>
         <Text
-          style={[styles.catBadgeTier, { color: locked ? ink3 : getTierColor(def.tier), fontFamily: fontSemi }]}
+          style={[styles.catBadgeTier, { color: tierColor, fontFamily: fontSemi }]}
         >
           {def.tier}
         </Text>
@@ -921,6 +1287,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Diffuse: solid thin hairline ring (no dashed neon), clipped for the bloom
+  streakCircleDiffuse: {
+    borderWidth: 1.5,
+    borderStyle: 'solid',
+    overflow: 'hidden',
+  },
 
   // Stats
   statRow: { flexDirection: 'row', alignItems: 'center' },
@@ -938,6 +1310,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   claimBtnText: { fontSize: 16, letterSpacing: -0.1 },
+  claimBtnTextDiffuse: { fontSize: 13, letterSpacing: 1.5, textTransform: 'uppercase' },
 
   // Reward reveal
   revealHeader: { flexDirection: 'row', alignItems: 'center' },
@@ -981,6 +1354,7 @@ const styles = StyleSheet.create({
     minHeight: 140,
   },
   questFlower: { position: 'absolute', right: -24, bottom: -30, opacity: 0.95 },
+  questGlyph: { position: 'absolute', right: 16, bottom: 16 },
   questPills: { flexDirection: 'row', gap: 8, marginTop: 14 },
   questPill: {
     paddingVertical: 6,
@@ -1027,6 +1401,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   viewAllText: { fontSize: 14 },
+  // Diffuse: containerless "view all" — top hairline rule, mono label + arrow
+  viewAllBtnDiffuse: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingTop: 16,
+    marginTop: 16,
+    borderTopWidth: 1,
+  },
+  viewAllTextDiffuse: { fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase' },
 
   // Categories
   categoriesSection: { gap: 10 },
