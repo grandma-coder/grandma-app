@@ -814,7 +814,9 @@ export default function ChannelChat() {
       {channel && isMember && (
         <Pressable
           onPress={() => setShowRating(true)}
-          style={[styles.rateBar, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}
+          style={[styles.rateBar, diffuse
+            ? { backgroundColor: dt.colors.surface, borderBottomColor: dt.colors.line }
+            : { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}
         >
           <View style={styles.rateBarLeft}>
             {channel.avgRating > 0 ? (
@@ -823,19 +825,19 @@ export default function ChannelChat() {
                   <Star
                     key={i}
                     size={14}
-                    color={stickers.yellow}
-                    strokeWidth={2}
-                    fill={i <= Math.round(channel.avgRating) ? stickers.yellow : 'none'}
+                    color={diffuse ? dt.colors.ink3 : stickers.yellow}
+                    strokeWidth={diffuse ? 1.6 : 2}
+                    fill={i <= Math.round(channel.avgRating) ? (diffuse ? dt.colors.ink3 : stickers.yellow) : 'none'}
                   />
                 ))}
-                <Text style={[styles.rateBarScore, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{channel.avgRating.toFixed(1)}</Text>
-                <Text style={[styles.rateBarCount, { color: colors.textMuted }]}>({channel.ratingCount})</Text>
+                <Text style={[styles.rateBarScore, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold } : { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{channel.avgRating.toFixed(1)}</Text>
+                <Text style={[styles.rateBarCount, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted }]}>({channel.ratingCount})</Text>
               </>
             ) : (
-              <Text style={[styles.rateBarPrompt, { color: colors.textMuted }]}>{t('channelScreen_noRatingsYet')}</Text>
+              <Text style={[styles.rateBarPrompt, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5 } : { color: colors.textMuted }]}>{t('channelScreen_noRatingsYet')}</Text>
             )}
           </View>
-          <Text style={[styles.rateBarAction, { color: accent, fontFamily: font.bodyBold }]}>
+          <Text style={[styles.rateBarAction, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 } : { color: accent, fontFamily: font.bodyBold }]}>
             {myRating > 0 ? t('channelScreen_editRating') : t('channelScreen_rateChannel')}
           </Text>
         </Pressable>
@@ -847,15 +849,17 @@ export default function ChannelChat() {
         <Pressable
           style={[
             styles.pinnedBanner,
-            { backgroundColor: getModeColorSoft(mode, isDark), borderBottomColor: colors.border },
+            diffuse
+              ? { backgroundColor: dt.colors.surface, borderBottomColor: dt.colors.line }
+              : { backgroundColor: getModeColorSoft(mode, isDark), borderBottomColor: colors.border },
           ]}
         >
-          <Pin size={14} color={accent} strokeWidth={2} />
+          <Pin size={14} color={diffuse ? dt.colors.ink3 : accent} strokeWidth={diffuse ? 1.6 : 2} />
           <Text
-            style={[styles.pinnedBannerText, { color: colors.text }]}
+            style={[styles.pinnedBannerText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text }]}
             numberOfLines={1}
           >
-            <Text style={{ fontFamily: font.bodyBold }}>
+            <Text style={diffuse ? { fontFamily: diffuseFont.bodySemiBold } : { fontFamily: font.bodyBold }}>
               {pinnedMessage.author_name ?? 'Someone'}
             </Text>
             {': '}
@@ -890,16 +894,29 @@ export default function ChannelChat() {
                 ? channelSticker(channel.id, isDark, channel.avatarUrl)
                 : null
               const EmptyIcon = s?.Component
+              const emptyTitle = isMember ? t('channelScreen_emptyTitle') : t('channelScreen_emptySubtitle')
+              const emptyMsg = isMember
+                ? 'Start the conversation — your story helps someone else feel less alone.'
+                : `Join ${channel?.name ? `#${channel.name}` : 'this channel'} to start the conversation.`
+              if (diffuse) {
+                return (
+                  <DiffuseEmptyState
+                    icon={
+                      <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
+                        {EmptyIcon ? <EmptyIcon size={22} fill={dt.colors.ink3} /> : <MessageCircle size={22} color={dt.colors.ink3} strokeWidth={1.6} />}
+                      </DiffuseBloomIcon>
+                    }
+                    title={emptyTitle}
+                    message={emptyMsg}
+                  />
+                )
+              }
               return (
                 <EmptyState
                   icon={EmptyIcon ? <EmptyIcon size={40} fill={s!.fill} /> : undefined}
                   iconBg={s?.tint ?? stickers.lilacSoft}
-                  title={isMember ? t('channelScreen_emptyTitle') : t('channelScreen_emptySubtitle')}
-                  message={
-                    isMember
-                      ? 'Start the conversation — your story helps someone else feel less alone.'
-                      : `Join ${channel?.name ? `#${channel.name}` : 'this channel'} to start the conversation.`
-                  }
+                  title={emptyTitle}
+                  message={emptyMsg}
                 />
               )
             })()
@@ -932,11 +949,9 @@ export default function ChannelChat() {
           <View
             style={[
               styles.mentionOverlay,
-              {
-                backgroundColor: colors.surfaceRaised,
-                borderColor: colors.border,
-                borderRadius: radius.md,
-              },
+              diffuse
+                ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: 20, shadowOpacity: 0, elevation: 0 }
+                : { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderRadius: radius.md },
             ]}
           >
             {mentionResults.map((member) => (
@@ -945,12 +960,12 @@ export default function ChannelChat() {
                 onPress={() => insertMention(member)}
                 style={({ pressed }) => [
                   styles.mentionItem,
-                  { borderBottomColor: colors.borderLight },
-                  pressed && { backgroundColor: colors.surface },
+                  { borderBottomColor: diffuse ? dt.colors.line : colors.borderLight },
+                  pressed && { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surface },
                 ]}
               >
-                <AtSign size={14} color={colors.primary} strokeWidth={2} />
-                <Text style={[styles.mentionName, { color: colors.text }]}>
+                <AtSign size={14} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+                <Text style={[styles.mentionName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text }]}>
                   {member.name}
                 </Text>
               </Pressable>
@@ -963,7 +978,9 @@ export default function ChannelChat() {
           <View
             style={[
               styles.photoPreviewRow,
-              { backgroundColor: colors.surface, borderTopColor: colors.borderLight },
+              diffuse
+                ? { backgroundColor: dt.colors.surface, borderTopColor: dt.colors.line }
+                : { backgroundColor: colors.surface, borderTopColor: colors.borderLight },
             ]}
           >
             {photos.map((uri, i) => (
@@ -988,21 +1005,23 @@ export default function ChannelChat() {
           <View
             style={[
               styles.replyBar,
-              { backgroundColor: colors.surface, borderTopColor: colors.borderLight },
+              diffuse
+                ? { backgroundColor: dt.colors.surface, borderTopColor: dt.colors.line }
+                : { backgroundColor: colors.surface, borderTopColor: colors.borderLight },
             ]}
           >
-            <Reply size={14} color={colors.primary} strokeWidth={2} />
+            <Reply size={14} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
             <Text
-              style={[styles.replyBarText, { color: colors.textSecondary }]}
+              style={[styles.replyBarText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary }]}
               numberOfLines={1}
             >
               {t('channelScreen_replyingTo')}{' '}
-              <Text style={{ color: colors.text, fontFamily: font.bodyBold }}>
+              <Text style={diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text, fontFamily: font.bodyBold }}>
                 {replyTo.author_name ?? 'someone'}
               </Text>
             </Text>
             <Pressable onPress={() => setReplyTo(null)} hitSlop={8}>
-              <X size={16} color={colors.textMuted} />
+              <X size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
             </Pressable>
           </View>
         )}
@@ -1012,78 +1031,119 @@ export default function ChannelChat() {
           <View
             style={[
               styles.inputBar,
-              {
-                backgroundColor: colors.surface,
-                borderTopColor: colors.border,
-                paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
-              },
+              diffuse
+                ? {
+                    backgroundColor: dt.colors.bg,
+                    borderTopColor: dt.colors.line,
+                    paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+                  }
+                : {
+                    backgroundColor: colors.surface,
+                    borderTopColor: colors.border,
+                    paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+                  },
             ]}
           >
             <Pressable onPress={pickPhoto} hitSlop={4} style={styles.inputIconBtn}>
-              <Camera size={22} color={colors.textSecondary} strokeWidth={2} />
+              <Camera size={22} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={diffuse ? 1.6 : 2} />
             </Pressable>
             <TextInput
               ref={inputRef}
               value={text}
               onChangeText={handleTextChange}
               placeholder={t('channelScreen_messagePlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
               multiline
               maxLength={2000}
               style={[
                 styles.textInput,
-                {
-                  color: colors.text,
-                  backgroundColor: colors.surfaceRaised,
-                  borderRadius: radius.lg,
-                  borderColor: colors.borderLight,
-                },
+                diffuse
+                  ? {
+                      color: dt.colors.ink,
+                      backgroundColor: dt.colors.surface,
+                      borderRadius: 20,
+                      borderColor: dt.colors.line,
+                      fontFamily: diffuseFont.body,
+                    }
+                  : {
+                      color: colors.text,
+                      backgroundColor: colors.surfaceRaised,
+                      borderRadius: radius.lg,
+                      borderColor: colors.borderLight,
+                    },
               ]}
             />
-            <Pressable
-              onPress={handleSend}
-              disabled={(!text.trim() && photos.length === 0) || sending}
-              hitSlop={4}
-              style={({ pressed }) => [
-                styles.sendBtn,
-                {
-                  backgroundColor:
-                    text.trim() || photos.length > 0 ? accent : colors.surfaceRaised,
-                  borderRadius: radius.full,
-                },
-                pressed && { opacity: 0.8 },
-              ]}
-            >
-              {sending ? (
-                <ActivityIndicator color={colors.textInverse} size="small" />
-              ) : (
-                <Send
-                  size={18}
-                  color={text.trim() || photos.length > 0 ? colors.textInverse : colors.textMuted}
-                  strokeWidth={2}
-                />
-              )}
-            </Pressable>
+            {diffuse ? (
+              <Pressable
+                onPress={handleSend}
+                disabled={(!text.trim() && photos.length === 0) || sending}
+                hitSlop={4}
+                style={({ pressed }) => [
+                  styles.sendBtn,
+                  { opacity: (text.trim() || photos.length > 0) ? (pressed ? 0.6 : 1) : 0.3 },
+                ]}
+              >
+                {sending ? (
+                  <ActivityIndicator color={dt.colors.ink} size="small" />
+                ) : (
+                  <DiffuseArrow color={dt.colors.ink} size={22} />
+                )}
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={handleSend}
+                disabled={(!text.trim() && photos.length === 0) || sending}
+                hitSlop={4}
+                style={({ pressed }) => [
+                  styles.sendBtn,
+                  {
+                    backgroundColor:
+                      text.trim() || photos.length > 0 ? accent : colors.surfaceRaised,
+                    borderRadius: radius.full,
+                  },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                {sending ? (
+                  <ActivityIndicator color={colors.textInverse} size="small" />
+                ) : (
+                  <Send
+                    size={18}
+                    color={text.trim() || photos.length > 0 ? colors.textInverse : colors.textMuted}
+                    strokeWidth={2}
+                  />
+                )}
+              </Pressable>
+            )}
           </View>
         ) : (
           <View
             style={[
               styles.joinPrompt,
-              {
-                backgroundColor: colors.surface,
-                borderTopColor: colors.border,
-                paddingBottom: insets.bottom > 0 ? insets.bottom : 12,
-              },
+              diffuse
+                ? {
+                    backgroundColor: dt.colors.bg,
+                    borderTopColor: dt.colors.line,
+                    paddingBottom: insets.bottom > 0 ? insets.bottom : 12,
+                  }
+                : {
+                    backgroundColor: colors.surface,
+                    borderTopColor: colors.border,
+                    paddingBottom: insets.bottom > 0 ? insets.bottom : 12,
+                  },
             ]}
           >
-            <Text style={[styles.joinPromptText, { color: colors.textSecondary, fontFamily: font.body }]}>
+            <Text style={[styles.joinPromptText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>
               {t('channelScreen_joinPromptText')}
             </Text>
             <Pressable
               onPress={handleJoinLeave}
-              style={[styles.joinPromptBtn, { backgroundColor: accent, borderRadius: radius.full }]}
+              style={[styles.joinPromptBtn, diffuse
+                ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2, flexDirection: 'row', gap: 8, alignItems: 'center' }
+                : { backgroundColor: accent, borderRadius: radius.full }]}
             >
-              <Text style={[styles.joinPromptBtnText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelScreen_joinPromptBtn')}</Text>
+              <Text style={[styles.joinPromptBtnText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase' } : { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelScreen_joinPromptBtn')}</Text>
+              {diffuse && <DiffuseArrow color={dt.colors.ink} size={16} />}
             </Pressable>
           </View>
         )}
@@ -1092,55 +1152,63 @@ export default function ChannelChat() {
       {/* Rating overlay */}
       {showRating && (
         <View style={styles.ratingOverlay}>
-          <View style={[styles.ratingCard, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+          <View style={[styles.ratingCard, diffuse
+            ? { backgroundColor: dt.colors.bg, borderRadius: 28, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+            : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
             {/* Sticker accent — channel's own sticker */}
             {channel && (() => {
               const s = channelSticker(channel.id, isDark, channel.avatarUrl)
               const Icon = s.Component
               return (
-                <View style={[styles.ratingStickerBubble, { backgroundColor: s.tint }]}>
+                <View style={[styles.ratingStickerBubble, diffuse
+                  ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                  : { backgroundColor: s.tint }]}>
                   <Icon size={34} fill={s.fill} />
                 </View>
               )
             })()}
 
-            <Text style={[styles.ratingTitle, { color: colors.text, fontFamily: font.display }]}>
+            <Text style={[styles.ratingTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display }]}>
               {t('channelScreen_ratingHeading', { channel: channel?.name ?? '' })}
             </Text>
-            <Text style={[styles.ratingSubtitle, { color: colors.textMuted, fontFamily: font.body }]}>
+            <Text style={[styles.ratingSubtitle, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textMuted, fontFamily: font.body }]}>
               {t('channelScreen_ratingModalTitle')}
             </Text>
 
             {/* Star selector */}
-            <AnimatedStarRow value={myRating} onChange={setMyRating} starColor={stickers.yellow} />
+            <AnimatedStarRow value={myRating} onChange={setMyRating} starColor={diffuse ? dt.colors.ink : stickers.yellow} />
 
             {/* Review text */}
             <TextInput
               value={myReview}
               onChangeText={setMyReview}
               placeholder={t('channelScreen_reviewPlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
               multiline
-              style={[styles.ratingInput, { color: colors.text, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}
+              style={[styles.ratingInput, diffuse
+                ? { color: dt.colors.ink, backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line, fontFamily: diffuseFont.body }
+                : { color: colors.text, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}
             />
 
             {/* Buttons */}
             <View style={styles.ratingButtons}>
               <Pressable
                 onPress={() => setShowRating(false)}
-                style={[styles.ratingCancelBtn, { borderColor: colors.border, borderRadius: radius.lg }]}
+                style={[styles.ratingCancelBtn, diffuse ? { borderColor: dt.colors.line2, borderRadius: 999 } : { borderColor: colors.border, borderRadius: radius.lg }]}
               >
-                <Text style={[styles.ratingCancelText, { color: colors.textSecondary }]}>{t('channelScreen_ratingCancel')}</Text>
+                <Text style={[styles.ratingCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 12 } : { color: colors.textSecondary }]}>{t('channelScreen_ratingCancel')}</Text>
               </Pressable>
               <Pressable
                 onPress={handleSubmitRating}
                 disabled={myRating === 0 || savingRating}
-                style={[styles.ratingSubmitBtn, { backgroundColor: accent, borderRadius: radius.full, opacity: myRating === 0 ? 0.4 : 1 }]}
+                style={[styles.ratingSubmitBtn, diffuse
+                  ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2, opacity: myRating === 0 ? 0.4 : 1 }
+                  : { backgroundColor: accent, borderRadius: radius.full, opacity: myRating === 0 ? 0.4 : 1 }]}
               >
                 {savingRating ? (
-                  <ActivityIndicator color={colors.textInverse} size="small" />
+                  <ActivityIndicator color={diffuse ? dt.colors.ink : colors.textInverse} size="small" />
                 ) : (
-                  <Text style={[styles.ratingSubmitText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelScreen_ratingSubmit')}</Text>
+                  <Text style={[styles.ratingSubmitText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 12 } : { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelScreen_ratingSubmit')}</Text>
                 )}
               </Pressable>
             </View>
@@ -1221,46 +1289,50 @@ function ShareChannelSheet({
   onShare: () => void
 }) {
   const { colors, radius, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const mode = useModeStore((s) => s.mode)
-  const accent = getModeColor(mode, isDark)
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.shareOverlay} onPress={onClose}>
         <Pressable
-          style={[styles.shareSheet, { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}
+          style={[styles.shareSheet, diffuse
+            ? { backgroundColor: dt.colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+            : { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}
           onPress={(e) => e.stopPropagation()}
         >
-          <View style={[styles.shareHandle, { backgroundColor: colors.textMuted + '55' }]} />
-          <Text style={[styles.shareTitle, { color: colors.text, fontFamily: font.display }]}>{t('channelScreen_shareTitle')}</Text>
+          <View style={[styles.shareHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.textMuted + '55' }]} />
+          <Text style={[styles.shareTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display }]}>{t('channelScreen_shareTitle')}</Text>
 
           <Pressable
             onPress={onCopy}
             style={({ pressed }) => [
               styles.shareAction,
-              { borderColor: colors.borderStrong, borderRadius: radius.full },
+              diffuse ? { borderColor: dt.colors.line2, borderRadius: 999 } : { borderColor: colors.borderStrong, borderRadius: radius.full },
               pressed && { opacity: 0.75 },
             ]}
           >
-            <Copy size={18} color={colors.text} strokeWidth={2} />
-            <Text style={[styles.shareActionText, { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_copyLink')}</Text>
+            <Copy size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
+            <Text style={[styles.shareActionText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 13 } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_copyLink')}</Text>
           </Pressable>
 
           <Pressable
             onPress={onShare}
             style={({ pressed }) => [
               styles.shareActionFilled,
-              { backgroundColor: accent, borderRadius: radius.full },
+              diffuse ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2 } : { backgroundColor: accent, borderRadius: radius.full },
               pressed && { opacity: 0.85 },
             ]}
           >
-            <Share2 size={18} color={colors.textInverse} strokeWidth={2.5} />
-            <Text style={[styles.shareActionTextFilled, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelScreen_shareAction')}</Text>
+            <Share2 size={18} color={diffuse ? dt.colors.ink : colors.textInverse} strokeWidth={diffuse ? 1.6 : 2.5} />
+            <Text style={[styles.shareActionTextFilled, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 13 } : { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelScreen_shareAction')}</Text>
           </Pressable>
 
           <Pressable onPress={onClose} style={styles.shareCancel}>
-            <Text style={[styles.shareCancelText, { color: colors.textMuted }]}>{t('channelScreen_ratingCancel')}</Text>
+            <Text style={[styles.shareCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted }]}>{t('channelScreen_ratingCancel')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -1284,20 +1356,24 @@ function LeaveChannelSheet({
   onConfirm: () => void
 }) {
   const { colors, radius, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
       <Pressable style={styles.shareOverlay} onPress={onCancel}>
         <Pressable
-          style={[styles.shareSheet, { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}
+          style={[styles.shareSheet, diffuse
+            ? { backgroundColor: dt.colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
+            : { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}
           onPress={(e) => e.stopPropagation()}
         >
-          <View style={[styles.shareHandle, { backgroundColor: colors.textMuted + '55' }]} />
-          <Text style={[styles.shareTitle, { color: colors.text, fontFamily: font.display }]}>{t('channelScreen_leaveTitle')}</Text>
-          <Text style={[styles.leaveBody, { color: colors.textSecondary, fontFamily: font.body }]}>
+          <View style={[styles.shareHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.textMuted + '55' }]} />
+          <Text style={[styles.shareTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display }]}>{t('channelScreen_leaveTitle')}</Text>
+          <Text style={[styles.leaveBody, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>
             {t('channelScreen_leaveBodyPrefix')}
-            <Text style={{ fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
+            <Text style={diffuse ? { fontFamily: diffuseFont.bodySemiBold, color: dt.colors.ink } : { fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
             {t('channelScreen_leaveBodySuffix')}
           </Text>
 
@@ -1306,20 +1382,20 @@ function LeaveChannelSheet({
             disabled={leaving}
             style={({ pressed }) => [
               styles.leaveConfirmBtn,
-              { backgroundColor: brand.error, borderRadius: radius.full },
+              diffuse ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.error } : { backgroundColor: brand.error, borderRadius: radius.full },
               pressed && { opacity: 0.85 },
               leaving && { opacity: 0.6 },
             ]}
           >
             {leaving ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
+              <ActivityIndicator color={diffuse ? dt.colors.error : '#FFFFFF'} size="small" />
             ) : (
-              <Text style={styles.leaveConfirmText}>{t('channelScreen_leaveBtn')}</Text>
+              <Text style={[styles.leaveConfirmText, diffuse && { color: dt.colors.error, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase' }]}>{t('channelScreen_leaveBtn')}</Text>
             )}
           </Pressable>
 
           <Pressable onPress={onCancel} style={styles.shareCancel}>
-            <Text style={[styles.shareCancelText, { color: colors.textMuted }]}>{t('channelScreen_stayBtn')}</Text>
+            <Text style={[styles.shareCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted }]}>{t('channelScreen_stayBtn')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -1333,21 +1409,25 @@ function LeaveChannelSheet({
 
 function SystemMessage({ message }: { message: ChannelPost }) {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const isJoin = message.message_type === 'system_join'
 
   return (
     <View style={styles.systemMsg}>
-      <View style={[styles.systemMsgDot, { backgroundColor: isJoin ? brand.success + '30' : brand.error + '30' }]}>
+      <View style={[styles.systemMsgDot, diffuse
+        ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+        : { backgroundColor: isJoin ? brand.success + '30' : brand.error + '30' }]}>
         {isJoin ? (
-          <LogIn size={12} color={brand.success} strokeWidth={2} />
+          <LogIn size={12} color={diffuse ? dt.colors.ink3 : brand.success} strokeWidth={diffuse ? 1.6 : 2} />
         ) : (
-          <LogOut size={12} color={brand.error} strokeWidth={2} />
+          <LogOut size={12} color={diffuse ? dt.colors.ink3 : brand.error} strokeWidth={diffuse ? 1.6 : 2} />
         )}
       </View>
-      <Text style={[styles.systemMsgText, { color: colors.textMuted }]}>
+      <Text style={[styles.systemMsgText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontStyle: 'normal', letterSpacing: 0.5 } : { color: colors.textMuted }]}>
         {message.content}
       </Text>
-      <Text style={[styles.systemMsgTime, { color: colors.textMuted }]}>
+      <Text style={[styles.systemMsgTime, diffuse ? { color: dt.colors.ink4, fontFamily: diffuseFont.mono } : { color: colors.textMuted }]}>
         {formatTime(message.created_at)}
       </Text>
     </View>
@@ -1374,6 +1454,8 @@ function MessageBubbleBase({
   onThreadPress,
 }: MessageBubbleProps) {
   const { colors, radius, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   // Per-author sticker identity — deterministic from author id/name, so each
@@ -1388,22 +1470,26 @@ function MessageBubbleBase({
       delayLongPress={400}
       style={({ pressed }) => [
         styles.bubble,
-        pressed && { backgroundColor: colors.surfaceRaised },
+        pressed && { backgroundColor: diffuse ? dt.colors.surface : colors.surfaceRaised },
       ]}
     >
-      {/* Avatar — author's sticker on a soft tint */}
-      <View style={[styles.avatar, { backgroundColor: s.tint }]}>
+      {/* Avatar — author's sticker (hairline frame under diffuse) */}
+      <View style={[styles.avatar, diffuse
+        ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+        : { backgroundColor: s.tint }]}>
         <AvatarSticker size={20} fill={s.fill} />
       </View>
 
       <View style={styles.bubbleContent}>
         {/* Inline reply reference */}
         {message.reply_to_content && (
-          <View style={[styles.inlineReplyRef, { backgroundColor: colors.surfaceRaised, borderLeftColor: colors.primary }]}>
-            <Text style={[styles.inlineReplyAuthor, { color: colors.primary, fontFamily: font.bodyBold }]}>
+          <View style={[styles.inlineReplyRef, diffuse
+            ? { backgroundColor: 'transparent', borderLeftColor: dt.colors.line2, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line, borderLeftWidth: 3, borderRadius: 12 }
+            : { backgroundColor: colors.surfaceRaised, borderLeftColor: colors.primary }]}>
+            <Text style={[styles.inlineReplyAuthor, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.primary, fontFamily: font.bodyBold }]}>
               {message.reply_to_author ?? 'someone'}
             </Text>
-            <Text style={[styles.inlineReplyText, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={1}>
+            <Text style={[styles.inlineReplyText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={1}>
               {message.reply_to_content}
             </Text>
           </View>
@@ -1411,19 +1497,21 @@ function MessageBubbleBase({
 
         {/* Author + timestamp row */}
         <View style={styles.bubbleHeader}>
-          <Text style={[styles.authorName, { color: colors.text, fontFamily: font.bodyBold }]}>
+          <Text style={[styles.authorName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text, fontFamily: font.bodyBold }]}>
             {message.author_name ?? t('channelScreen_memberFallback')}
           </Text>
-          <Text style={[styles.timestamp, { color: colors.textMuted, fontFamily: font.body }]}>
+          <Text style={[styles.timestamp, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.body }]}>
             {formatTime(message.created_at)}
           </Text>
         </View>
 
         {/* Pinned indicator */}
         {message.is_pinned && (
-          <View style={[styles.pinnedTag, { backgroundColor: brand.accent + '15' }]}>
-            <Pin size={10} color={brand.accent} strokeWidth={2} />
-            <Text style={[styles.pinnedTagText, { color: brand.accent }]}>{t('channelScreen_pinned')}</Text>
+          <View style={[styles.pinnedTag, diffuse
+            ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+            : { backgroundColor: brand.accent + '15' }]}>
+            <Pin size={10} color={diffuse ? dt.colors.ink3 : brand.accent} strokeWidth={diffuse ? 1.6 : 2} />
+            <Text style={[styles.pinnedTagText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1 } : { color: brand.accent }]}>{t('channelScreen_pinned')}</Text>
           </View>
         )}
 
@@ -1436,17 +1524,17 @@ function MessageBubbleBase({
           <Pressable onPress={onReaction} hitSlop={6} style={styles.reactionBtn}>
             <Heart
               size={14}
-              color={message.user_reacted ? brand.error : colors.textMuted}
-              strokeWidth={2}
-              fill={message.user_reacted ? brand.error : 'none'}
+              color={message.user_reacted ? (diffuse ? dt.colors.ink : brand.error) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
+              strokeWidth={diffuse ? 1.6 : 2}
+              fill={message.user_reacted ? (diffuse ? dt.colors.ink : brand.error) : 'none'}
             />
             {message.reaction_count > 0 && (
               <Text
                 style={[
                   styles.reactionCount,
-                  {
-                    color: message.user_reacted ? brand.error : colors.textMuted,
-                  },
+                  diffuse
+                    ? { color: message.user_reacted ? dt.colors.ink : dt.colors.ink3, fontFamily: diffuseFont.mono }
+                    : { color: message.user_reacted ? brand.error : colors.textMuted },
                 ]}
               >
                 {message.reaction_count}
@@ -1457,8 +1545,8 @@ function MessageBubbleBase({
           {/* Reply count — tap to open thread */}
           {message.reply_count > 0 && (
             <Pressable onPress={onThreadPress} style={styles.replyLink}>
-              <MessageCircle size={14} color={colors.primary} strokeWidth={2} />
-              <Text style={[styles.replyLinkText, { color: colors.primary }]}>
+              <MessageCircle size={14} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+              <Text style={[styles.replyLinkText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5, textTransform: 'uppercase', fontSize: 10 } : { color: colors.primary }]}>
                 {`${message.reply_count === 1 ? t('channelScreen_replyCountOne', { count: message.reply_count }) : t('channelScreen_replyCountMany', { count: message.reply_count })} — ${t('channelScreen_viewThread')}`}
               </Text>
             </Pressable>
@@ -1467,8 +1555,8 @@ function MessageBubbleBase({
           {/* Thread CTA for messages with no replies yet */}
           {(message.reply_count ?? 0) === 0 && (
             <Pressable onPress={onThreadPress} style={styles.replyLink}>
-              <MessageCircle size={12} color={colors.textMuted} strokeWidth={1.5} />
-              <Text style={[styles.replyLinkText, { color: colors.textMuted, fontSize: 11 }]}>
+              <MessageCircle size={12} color={diffuse ? dt.colors.ink4 : colors.textMuted} strokeWidth={1.5} />
+              <Text style={[styles.replyLinkText, diffuse ? { color: dt.colors.ink4, fontFamily: diffuseFont.mono, letterSpacing: 0.5, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontSize: 11 }]}>
                 {t('channelScreen_replyInThread')}
               </Text>
             </Pressable>
@@ -1497,6 +1585,8 @@ const MessageBubble = memo(MessageBubbleBase, (a, b) => {
 
 function MessageContent({ content, photos }: { content: string; photos?: string[] }) {
   const { colors, radius, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   // Check for [garage:ID] share tag
@@ -1520,32 +1610,34 @@ function MessageContent({ content, photos }: { content: string; photos?: string[
       <View style={{ gap: 8 }}>
         {/* User's personal note */}
         {userNote && (
-          <Text style={[styles.messageText, { color: colors.text }]}>{userNote}</Text>
+          <Text style={[styles.messageText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text }]}>{userNote}</Text>
         )}
 
         {/* Shared post card */}
         <Pressable
           onPress={() => router.push(`/garage/${garageId}` as any)}
-          style={[styles.shareCard, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}
+          style={[styles.shareCard, diffuse
+            ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderColor: dt.colors.line }
+            : { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}
         >
           {coverPhoto && (
-            <Image source={{ uri: coverPhoto }} style={[styles.shareCardImage, { borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg }]} />
+            <Image source={{ uri: coverPhoto }} style={[styles.shareCardImage, { borderTopLeftRadius: diffuse ? 20 : radius.lg, borderTopRightRadius: diffuse ? 20 : radius.lg }]} />
           )}
           <View style={styles.shareCardBody}>
-            <Text style={[styles.shareCardLabel, { color: colors.primary }]}>
+            <Text style={[styles.shareCardLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.2 } : { color: colors.primary }]}>
               {t('channelScreen_sharedFromGarage')}
             </Text>
             {quotedCaption && (
-              <Text style={[styles.shareCardCaption, { color: colors.text }]} numberOfLines={2}>
+              <Text style={[styles.shareCardCaption, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text }]} numberOfLines={2}>
                 {quotedCaption}
               </Text>
             )}
             {sharedAuthor && (
-              <Text style={[styles.shareCardAuthor, { color: colors.textMuted }]}>
+              <Text style={[styles.shareCardAuthor, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted }]}>
                 {t('channelScreen_byAuthor', { author: sharedAuthor })}
               </Text>
             )}
-            <Text style={[styles.shareCardCta, { color: colors.primary }]}>
+            <Text style={[styles.shareCardCta, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 } : { color: colors.primary }]}>
               {t('channelScreen_tapToView')}
             </Text>
           </View>
@@ -1560,11 +1652,11 @@ function MessageContent({ content, photos }: { content: string; photos?: string[
 
   return (
     <View style={{ gap: 6 }}>
-      <Text style={[styles.messageText, { color: colors.text, fontFamily: font.body }]}>
+      <Text style={[styles.messageText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.body }]}>
         {hasMentions
           ? parts.map((part, i) =>
               part.startsWith('@') ? (
-                <Text key={i} style={{ color: colors.primary, fontFamily: font.bodySemiBold }}>{part}</Text>
+                <Text key={i} style={diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.primary, fontFamily: font.bodySemiBold }}>{part}</Text>
               ) : (
                 <Text key={i}>{part}</Text>
               )
