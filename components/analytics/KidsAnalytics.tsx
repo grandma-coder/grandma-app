@@ -842,7 +842,7 @@ export function KidsAnalytics() {
         {analytics && analytics.totalLogs === 0 && !isLoading && (
           diffuse ? (
             <DiffuseEmptyState
-              icon={<FileQuestion size={26} color={dt.colors.ink3} strokeWidth={1.4} />}
+              icon={<DiffuseBloomIcon color={getDiffuseAccent('kids', dt.isDark)} size={48} intensity={0.5}><FileQuestion size={24} color={dt.colors.ink3} strokeWidth={1.4} /></DiffuseBloomIcon>}
               title={t('kids_analytics_no_data_title')}
               message={t('kids_analytics_no_data_hint')}
             />
@@ -4224,7 +4224,7 @@ function EmptyDetail({ pillar }: { pillar: PillarKey }) {
   if (diffuse) {
     return (
       <DiffuseEmptyState
-        icon={<Icon size={24} color={dt.colors.ink3} strokeWidth={1.4} />}
+        icon={<DiffuseBloomIcon color={config.color} size={48} intensity={0.5}><Icon size={24} color={dt.colors.ink3} strokeWidth={1.4} /></DiffuseBloomIcon>}
         title={config.label}
         message={messages[pillar]}
       />
