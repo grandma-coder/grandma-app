@@ -16,12 +16,14 @@ import { useState, useMemo } from 'react'
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { useTheme, radius, shadows, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useTheme, radius, shadows, useDiffuseTheme, diffuseFont, getDiffuseAccent, stickers as stickerPalette } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { AnalyticsHeader } from './shared/AnalyticsHeader'
 import { PeriodSelector, type Period } from './shared/PeriodSelector'
 import { PhaseFlowChart } from './shared/PhaseFlowChart'
 import { Moon, Burst, Flower, Heart, Drop, Star } from '../ui/Stickers'
+import { Sparkles as SparklesLine, Heart as HeartLine, Moon as MoonLine, Activity as ActivityLine, Droplet as DropletLine, Flower2 as FlowerLine } from 'lucide-react-native'
 import {
   getCycleInfo,
   dailyFertilityCurve,
@@ -141,8 +143,14 @@ export function CycleAnalytics() {
             >
               {voice.word}
             </Text>
-            <View pointerEvents="none" style={[styles.heroSticker, diffuse ? { transform: [{ rotate: '0deg' }], opacity: 0.9 } : null]}>
-              <PhaseSticker phase={info.phase} stickers={stickers} />
+            <View pointerEvents="none" style={styles.heroSticker}>
+              {diffuse ? (
+                <DiffuseBloomIcon color={accent} size={40}>
+                  <PhaseGlyph phase={info.phase} color={dt.colors.ink3} />
+                </DiffuseBloomIcon>
+              ) : (
+                <PhaseSticker phase={info.phase} stickers={stickers} />
+              )}
             </View>
           </View>
           <Text style={[styles.heroLine, diffuse ? { color: dt.colors.ink2, fontFamily: diffuseFont.italic } : { color: colors.textSecondary, fontFamily: font.italic }]}>
@@ -189,9 +197,11 @@ export function CycleAnalytics() {
             accessibilityLabel={t('cycleAnalytics_viewLengthDetail')}
           >
             <View style={[styles.medallion, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line2, ...({ shadowOpacity: 0, elevation: 0 }) } : { backgroundColor: stickers.pinkSoft, borderColor: colors.borderStrong }]}>
-              <View pointerEvents="none" style={[styles.medallionStar, diffuse ? { opacity: 0.85 } : null]}>
-                <Star size={26} fill={stickers.pink} stroke={diffuse ? dt.colors.ink : colors.text} />
-              </View>
+              {diffuse ? null : (
+                <View pointerEvents="none" style={styles.medallionStar}>
+                  <Star size={26} fill={stickers.pink} stroke={colors.text} />
+                </View>
+              )}
               <Text style={[styles.medallionNum, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
                 {avgLabel}
               </Text>
@@ -210,6 +220,8 @@ export function CycleAnalytics() {
               tilt={2.5}
               tint={stickers.yellowSoft}
               sticker={<Flower size={24} petal={stickers.pink} center={stickers.yellow} />}
+              diffuseIcon={<SparklesLine size={18} color={dt.colors.ink3} strokeWidth={1.6} />}
+              diffuseHue={stickerPalette.pink}
               value={fertileLabel}
               sub={fertileSub}
               onPress={() => setDetailType('fertile')}
@@ -218,6 +230,8 @@ export function CycleAnalytics() {
               tilt={-3}
               tint={stickers.greenSoft}
               sticker={<Heart size={22} fill={stickers.pink} />}
+              diffuseIcon={<HeartLine size={18} color={dt.colors.ink3} strokeWidth={1.6} />}
+              diffuseHue={stickerPalette.coral}
               value={moodLabel}
               sub={moodSub}
               onPress={() => setDetailType('mood')}
@@ -232,6 +246,8 @@ export function CycleAnalytics() {
             wide
             tint={stickers.lilacSoft}
             sticker={<Moon size={24} fill={stickers.lilac} />}
+            diffuseIcon={<MoonLine size={18} color={dt.colors.ink3} strokeWidth={1.6} />}
+            diffuseHue={stickerPalette.lilac}
             value={regularLabel}
             sub={regularSub}
             onPress={() => setDetailType('regularity')}
@@ -241,6 +257,8 @@ export function CycleAnalytics() {
             wide
             tint={stickers.pinkSoft}
             sticker={<Burst size={24} fill={stickers.coral} points={8} />}
+            diffuseIcon={<ActivityLine size={18} color={dt.colors.ink3} strokeWidth={1.6} />}
+            diffuseHue={stickerPalette.coral}
             value={pmsLabel}
             sub={pmsSub}
             onPress={() => setDetailType('pms')}
@@ -261,13 +279,17 @@ export function CycleAnalytics() {
   )
 }
 
-/** A small tilted pastel chip: sticker + value + warm sub-line. */
+/** A small tilted pastel chip: sticker + value + warm sub-line.
+ *  Under Diffuse the filled sticker is replaced by a thin Lucide glyph over a
+ *  soft bloom (`diffuseIcon` + `diffuseHue`), matching the v4 icon system. */
 function TiltChip({
-  tilt, tint, sticker, value, sub, onPress, wide,
+  tilt, tint, sticker, diffuseIcon, diffuseHue, value, sub, onPress, wide,
 }: {
   tilt: number
   tint: string
   sticker: React.ReactNode
+  diffuseIcon?: React.ReactNode
+  diffuseHue?: string
   value: string
   sub: string
   onPress?: () => void
@@ -292,9 +314,15 @@ function TiltChip({
             },
       ]}
     >
-      <View style={[styles.chipChip, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        {sticker}
-      </View>
+      {diffuse ? (
+        <DiffuseBloomIcon color={diffuseHue ?? dt.colors.ink3} size={38}>
+          {diffuseIcon}
+        </DiffuseBloomIcon>
+      ) : (
+        <View style={[styles.chipChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          {sticker}
+        </View>
+      )}
       <View style={{ flex: 1 }}>
         <Text
           style={[styles.chipValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}
@@ -325,6 +353,22 @@ function PhaseSticker({ phase, stickers }: { phase: CyclePhase; stickers: Return
     case 'luteal':
     default:
       return <Moon size={46} fill={stickers.lilac} />
+  }
+}
+
+/** Diffuse: the hero phase glyph as a thin Lucide line icon (over a bloom). */
+function PhaseGlyph({ phase, color }: { phase: CyclePhase; color: string }) {
+  const props = { size: 22, color, strokeWidth: 1.6 as const }
+  switch (phase) {
+    case 'menstruation':
+      return <DropletLine {...props} />
+    case 'follicular':
+      return <SparklesLine {...props} />
+    case 'ovulation':
+      return <FlowerLine {...props} />
+    case 'luteal':
+    default:
+      return <MoonLine {...props} />
   }
 }
 
