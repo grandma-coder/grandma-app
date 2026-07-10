@@ -20,12 +20,15 @@ import {
 import { router } from 'expo-router'
 import { Bell } from 'lucide-react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 import { getUnreadCount } from '../../lib/notifications'
 import { supabase } from '../../lib/supabase'
 
 export function NotificationBell() {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const queryClient = useQueryClient()
   const channelId = useId()
   const rotate = useRef(new Animated.Value(0)).current
@@ -108,20 +111,31 @@ export function NotificationBell() {
       <Animated.View
         style={[
           styles.btn,
-          {
+          diffuse ? {
+            backgroundColor: dt.colors.surface,
+            borderColor: dt.colors.line2,
+            borderWidth: 1,
+            transform: [{ rotate: rotateInterp }],
+            shadowOpacity: 0,
+            elevation: 0,
+          } : {
             backgroundColor: colors.surface,
             borderColor: '#141313',
             transform: [{ rotate: rotateInterp }],
           },
         ]}
       >
-        <Bell size={18} color="#141313" strokeWidth={2} />
+        <Bell size={18} color={diffuse ? dt.colors.ink : '#141313'} strokeWidth={diffuse ? 1.6 : 2} />
         {count > 0 && (
-          <View style={[styles.badge, { backgroundColor: stickers.coral, borderColor: colors.surface }]}>
+          <View style={[styles.badge, diffuse
+            ? { backgroundColor: stickers.coral, borderColor: dt.colors.bg }
+            : { backgroundColor: stickers.coral, borderColor: colors.surface }]}>
             <Text
               style={[
                 styles.badgeText,
-                { fontFamily: font.bodySemiBold, color: '#FFFEF8' },
+                diffuse
+                  ? { fontFamily: diffuseFont.monoBold, color: '#FFFEF8' }
+                  : { fontFamily: font.bodySemiBold, color: '#FFFEF8' },
               ]}
             >
               {count > 99 ? '99+' : count}

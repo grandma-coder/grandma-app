@@ -16,7 +16,8 @@
  */
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import { Modal, View, Pressable, StyleSheet, Animated, Easing, Dimensions } from 'react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 import { Display, Body } from './Typography'
 import { GrandmaLogo } from './GrandmaLogo'
 import { Burst, Heart, Sparkle } from './Stickers'
@@ -87,6 +88,8 @@ function SavedToastOverlay({
   onClose: () => void
 }) {
   const { colors, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const autoMs = opts.autoDismiss ?? 2400
   const wantsButton = opts.showButton ?? autoMs === 0
 
@@ -112,10 +115,10 @@ function SavedToastOverlay({
   const title = opts.title ?? 'Saved'
   const message = opts.message ?? 'Your changes have been saved.'
 
-  const paper = colors.surface
-  const borderInk = colors.border
-  const ink = colors.text
-  const muted = colors.textMuted
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const borderInk = diffuse ? dt.colors.line : colors.border
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -124,7 +127,8 @@ function SavedToastOverlay({
           pointerEvents="box-none"
           style={[styles.centerWrap, { opacity, transform: [{ scale }] }]}
         >
-          {/* Floating sticker accents — outside the card for a collage feel */}
+          {/* Floating sticker accents — collage feel; hidden under Diffuse. */}
+          {!diffuse && (<>
           <View pointerEvents="none" style={[styles.stickerTopLeft]}>
             <Burst size={46} fill={stickers.yellow} />
           </View>
@@ -134,6 +138,7 @@ function SavedToastOverlay({
           <View pointerEvents="none" style={[styles.stickerBottomLeft]}>
             <Sparkle size={30} fill={stickers.lilac} />
           </View>
+          </>)}
 
           <Pressable
             onPress={(e) => e.stopPropagation()}

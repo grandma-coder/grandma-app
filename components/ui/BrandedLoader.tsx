@@ -8,7 +8,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Animated, StyleSheet, Text, View } from 'react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 import { GrandmaLogo, type GrandmaLogoMotion } from './GrandmaLogo'
 import { useTranslation } from '../../lib/i18n'
 
@@ -31,10 +32,12 @@ export function BrandedLoader({
   compact,
 }: Props) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const isCompact = compact ?? logoSize < 96
 
   const container = fullscreen
-    ? [styles.fullscreen, { backgroundColor: colors.bg }]
+    ? [styles.fullscreen, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]
     : styles.inline
 
   if (isCompact) {
@@ -50,7 +53,7 @@ export function BrandedLoader({
       <GrandmaLogo size={logoSize} motion={motion} />
       <TypewriterLabel label={label} />
       {sublabel && (
-        <Text style={[styles.sublabel, { color: colors.textSecondary, fontFamily: font.italic }]}>
+        <Text style={[styles.sublabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
           {sublabel}
         </Text>
       )}
@@ -62,6 +65,8 @@ export function BrandedLoader({
 
 function TypewriterLabel({ label }: { label: string }) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const [typed, setTyped] = useState('')
 
@@ -108,11 +113,11 @@ function TypewriterLabel({ label }: { label: string }) {
 
   return (
     <View style={styles.labelRow}>
-      <Text style={[styles.label, { color: colors.text, fontFamily: font.display }]}>
+      <Text style={[styles.label, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
         {typed}
       </Text>
       <Animated.Text
-        style={[styles.cursor, { color: colors.text, fontFamily: font.display, opacity: cursor }]}
+        style={[styles.cursor, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display, opacity: cursor }]}
       >
         {t('common_typewriterCursor')}
       </Animated.Text>

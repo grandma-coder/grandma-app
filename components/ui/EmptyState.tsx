@@ -8,7 +8,8 @@
 
 import { ReactNode } from 'react'
 import { View, StyleSheet, type ViewStyle, type StyleProp } from 'react-native'
-import { useTheme, spacing } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, spacing } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 import { Display, Body } from './Typography'
 import { PillButton } from './PillButton'
 
@@ -34,12 +35,17 @@ export function EmptyState({
   style,
 }: EmptyStateProps) {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const socketBg = iconBg ?? colors.surfaceRaised
 
   return (
     <View style={[styles.wrap, style]}>
       {icon ? (
-        <View style={[styles.iconSocket, { backgroundColor: socketBg }]}>{icon}</View>
+        // Diffuse: hairline ring (no filled soft-disc socket).
+        <View style={[styles.iconSocket, diffuse
+          ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
+          : { backgroundColor: socketBg }]}>{icon}</View>
       ) : null}
       <Display size={20} align="center">{title}</Display>
       {message ? (
