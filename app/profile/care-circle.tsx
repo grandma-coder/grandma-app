@@ -37,6 +37,7 @@ import {
   Link2,
   ChevronRight,
   User,
+  Users,
   Utensils,
   Moon as MoonIcon,
   Heart,
@@ -47,9 +48,16 @@ import {
   Thermometer,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
+import {
+  DiffuseBloomIcon,
+  DiffuseEmptyState,
+} from '../../components/ui/diffuse/DiffusePrimitives'
+import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
+import { SubscriptionTier, TIER_SEAT_LIMIT } from '../../lib/revenue'
 import { SignedImage, PHOTO_BUCKETS } from '../../lib/photoSigning'
 import { toDateStr } from '../../lib/cycleLogic'
 import { LogSheet } from '../../components/calendar/LogSheet'
@@ -191,6 +199,41 @@ function renderActivitySticker(kind: string, size: number, stickerColors: { cora
     default:
       return <HeartSticker size={size} fill={stickerColors.pink} />
   }
+}
+
+/**
+ * Diffuse-mode activity glyphs — thin Lucide line icons keyed by log kind,
+ * sitting over a soft bloom. Typed as a loose component map (not the raw Lucide
+ * ForwardRefExoticComponent) so JSX assignability holds under strict TS.
+ */
+type IconCmp = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
+
+const ACTIVITY_LUCIDE: Record<string, IconCmp> = {
+  vaccine: Thermometer,
+  medicine: Thermometer,
+  health: Thermometer,
+  temperature: Thermometer,
+  diaper: Baby,
+  feeding: Utensils,
+  food: Utensils,
+  sleep: MoonIcon,
+  mood: Smile,
+  activity: Dumbbell,
+  memory: Camera,
+  photo: Camera,
+  growth: Heart,
+  milestone: Heart,
+  note: Heart,
+}
+
+/** Bloom-backed line glyph for a log kind, in Diffuse mode. */
+function renderActivityDiffuseIcon(kind: string, glyphColor: string, bloomColor: string, size = 20) {
+  const Icon = ACTIVITY_LUCIDE[kind] ?? Heart
+  return (
+    <DiffuseBloomIcon color={bloomColor} size={30} intensity={0.4}>
+      <Icon size={size} color={glyphColor} strokeWidth={1.6} />
+    </DiffuseBloomIcon>
+  )
 }
 
 const EVENT_COLORS: Record<string, string> = {
@@ -337,7 +380,9 @@ function friendlyTypeLabel(type: string, value: string | null): string {
 
 function PhotoPickerAvatar({ uri, onPick, size = 96 }: { uri: string; onPick: (newUri: string) => void; size?: number }) {
   const { colors, stickers, isDark } = useTheme()
-  const ink = colors.text
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const ink = diffuse ? dt.colors.ink : colors.text
 
   async function pickPhoto() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -364,18 +409,28 @@ function PhotoPickerAvatar({ uri, onPick, size = 96 }: { uri: string; onPick: (n
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: stickers.lilac + (isDark ? '32' : '40'),
-          borderColor: ink,
+          backgroundColor: diffuse ? dt.colors.surface : stickers.lilac + (isDark ? '32' : '40'),
+          borderColor: diffuse ? dt.colors.line2 : ink,
+          borderWidth: diffuse ? 1 : 2,
         },
       ]}
     >
       {uri ? (
         <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} />
+      ) : diffuse ? (
+        <User size={size * 0.42} color={dt.colors.ink3} strokeWidth={1.4} />
       ) : (
         <FlowerSticker size={size * 0.55} petal={stickers.lilac} center={stickers.yellow} />
       )}
-      <View style={[photoStyles.badge, { backgroundColor: stickers.lilac, borderRadius: 14, borderColor: ink, borderWidth: 1.5 }]}>
-        <Camera size={12} color={ink} strokeWidth={2.5} />
+      <View
+        style={[
+          photoStyles.badge,
+          diffuse
+            ? { backgroundColor: dt.colors.surface, borderRadius: 14, borderColor: dt.colors.hairline, borderWidth: 1 }
+            : { backgroundColor: stickers.lilac, borderRadius: 14, borderColor: ink, borderWidth: 1.5 },
+        ]}
+      >
+        <Camera size={12} color={diffuse ? dt.colors.ink : ink} strokeWidth={diffuse ? 1.6 : 2.5} />
       </View>
     </Pressable>
   )
@@ -423,6 +478,10 @@ const photoStyles = StyleSheet.create({
 
 export default function CareCircleScreen() {
   const { colors, font, stickers, isDark, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getDiffuseAccent(mode, dt.isDark)
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
@@ -430,6 +489,7 @@ export default function CareCircleScreen() {
   const [tab, setTab] = useState<'members' | 'activity'>('members')
   const [members, setMembers] = useState<CareCircleMember[]>([])
   const [activities, setActivities] = useState<ActivityEntry[]>([])
+  const [tier, setTier] = useState<SubscriptionTier>('free')
   const [loading, setLoading] = useState(true)
   const [showAddSheet, setShowAddSheet] = useState(false)
   const [editingMember, setEditingMember] = useState<CareCircleMember | null>(null)
@@ -447,6 +507,14 @@ export default function CareCircleScreen() {
   async function loadMembers() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
+
+    // Tier drives whether the user can invite at all (free = 0 seats).
+    supabase
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', session.user.id)
+      .single()
+      .then(({ data: profile }) => setTier((profile?.subscription_tier as SubscriptionTier) ?? 'free'))
 
     const { data, error } = await supabase
       .from('child_caregivers')
@@ -685,15 +753,15 @@ export default function CareCircleScreen() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header — paper-circle back + large editorial title */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
         <ScreenHeader />
         <View style={styles.titleBlock}>
-          <Text style={[styles.pageTitle, { color: colors.text, fontFamily: font.display }]}>
+          <Text style={[styles.pageTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
             {t('careCircle_title')}
           </Text>
-          <Text style={[styles.pageItalic, { color: stickers.coral, fontFamily: font.italic }]}>
+          <Text style={[styles.pageItalic, { color: diffuse ? dt.colors.ink3 : stickers.coral, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
             {t('careCircle_tagline')}
           </Text>
         </View>
@@ -703,27 +771,39 @@ export default function CareCircleScreen() {
       <View
         style={[
           styles.toggleRow,
-          {
-            backgroundColor: colors.surfaceRaised,
-            borderColor: colors.borderLight,
-            marginHorizontal: 20,
-          },
+          diffuse
+            ? { backgroundColor: 'transparent', borderColor: dt.colors.line, marginHorizontal: 20 }
+            : { backgroundColor: colors.surfaceRaised, borderColor: colors.borderLight, marginHorizontal: 20 },
         ]}
       >
         <Pressable
           onPress={() => setTab('members')}
           style={[
             styles.toggleBtn,
-            { backgroundColor: tab === 'members' ? stickers.lilac : 'transparent' },
+            diffuse
+              ? {
+                  backgroundColor: tab === 'members' ? dt.colors.surface : 'transparent',
+                  borderWidth: 1,
+                  borderColor: tab === 'members' ? dt.colors.hairline : 'transparent',
+                }
+              : { backgroundColor: tab === 'members' ? stickers.lilac : 'transparent' },
           ]}
         >
           <Text
             style={[
               styles.toggleText,
-              {
-                color: tab === 'members' ? stickers.lilacInk : colors.textSecondary,
-                fontFamily: tab === 'members' ? font.bodySemiBold : font.bodyMedium,
-              },
+              diffuse
+                ? {
+                    color: tab === 'members' ? dt.colors.ink : dt.colors.ink3,
+                    fontFamily: tab === 'members' ? diffuseFont.monoBold : diffuseFont.mono,
+                    letterSpacing: 1.4,
+                    textTransform: 'uppercase',
+                    fontSize: 12,
+                  }
+                : {
+                    color: tab === 'members' ? stickers.lilacInk : colors.textSecondary,
+                    fontFamily: tab === 'members' ? font.bodySemiBold : font.bodyMedium,
+                  },
             ]}
           >
             {t('careCircle_members_tab')}
@@ -733,16 +813,30 @@ export default function CareCircleScreen() {
           onPress={() => setTab('activity')}
           style={[
             styles.toggleBtn,
-            { backgroundColor: tab === 'activity' ? stickers.lilac : 'transparent' },
+            diffuse
+              ? {
+                  backgroundColor: tab === 'activity' ? dt.colors.surface : 'transparent',
+                  borderWidth: 1,
+                  borderColor: tab === 'activity' ? dt.colors.hairline : 'transparent',
+                }
+              : { backgroundColor: tab === 'activity' ? stickers.lilac : 'transparent' },
           ]}
         >
           <Text
             style={[
               styles.toggleText,
-              {
-                color: tab === 'activity' ? stickers.lilacInk : colors.textSecondary,
-                fontFamily: tab === 'activity' ? font.bodySemiBold : font.bodyMedium,
-              },
+              diffuse
+                ? {
+                    color: tab === 'activity' ? dt.colors.ink : dt.colors.ink3,
+                    fontFamily: tab === 'activity' ? diffuseFont.monoBold : diffuseFont.mono,
+                    letterSpacing: 1.4,
+                    textTransform: 'uppercase',
+                    fontSize: 12,
+                  }
+                : {
+                    color: tab === 'activity' ? stickers.lilacInk : colors.textSecondary,
+                    fontFamily: tab === 'activity' ? font.bodySemiBold : font.bodyMedium,
+                  },
             ]}
           >
             {t('careCircle_activity_tab')}
@@ -754,26 +848,34 @@ export default function CareCircleScreen() {
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* Empty state */}
           {members.length === 0 && !loading && (
-            <View
-              style={[
-                styles.emptyCard,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <FlowerSticker size={120} petal={stickers.pink} center={stickers.yellow} />
-              <Display size={24} align="center" color={colors.text}>
-                {t('careCircle_no_caregivers')}
-              </Display>
-              <Text style={{ fontFamily: font.italic, fontSize: 18, color: stickers.coral, textAlign: 'center', marginTop: -6 }}>
-                {t('careCircle_invite_village')}
-              </Text>
-              <Body size={14} align="center" color={colors.textSecondary}>
-                {t('careCircle_invite_partner_desc')}
-              </Body>
-            </View>
+            diffuse ? (
+              <DiffuseEmptyState
+                icon={<Users size={26} color={dt.colors.ink3} strokeWidth={1.4} />}
+                title={t('careCircle_no_caregivers')}
+                message={t('careCircle_invite_partner_desc')}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.emptyCard,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <FlowerSticker size={120} petal={stickers.pink} center={stickers.yellow} />
+                <Display size={24} align="center" color={colors.text}>
+                  {t('careCircle_no_caregivers')}
+                </Display>
+                <Text style={{ fontFamily: font.italic, fontSize: 18, color: stickers.coral, textAlign: 'center', marginTop: -6 }}>
+                  {t('careCircle_invite_village')}
+                </Text>
+                <Body size={14} align="center" color={colors.textSecondary}>
+                  {t('careCircle_invite_partner_desc')}
+                </Body>
+              </View>
+            )
           )}
 
           {/* Member cards */}
@@ -787,76 +889,110 @@ export default function CareCircleScreen() {
             const statusColor = isPaused ? stickers.coral : stickers.green
             const pendingColor = stickers.yellow
 
+            // Diffuse status hues map onto the carried-forward semantic tokens.
+            const dStatusColor = isPaused ? dt.colors.error : isPending ? dt.colors.warning : dt.colors.success
+
             return (
               <View
                 key={m.email || m.rowIds[0]}
                 style={[
                   styles.memberCard,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    opacity: isPaused ? 0.7 : 1,
-                  },
+                  diffuse && styles.memberCardFlat,
+                  diffuse
+                    ? {
+                        backgroundColor: dt.colors.surface,
+                        borderColor: dt.colors.line,
+                        opacity: isPaused ? 0.7 : 1,
+                      }
+                    : {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                        opacity: isPaused ? 0.7 : 1,
+                      },
                 ]}
               >
                 {/* Status dot — top right */}
-                <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+                <View style={[styles.statusDot, { backgroundColor: diffuse ? dStatusColor : statusColor }]} />
 
                 {/* Top row */}
                 <View style={styles.memberTop}>
                   <View
                     style={[
                       styles.memberAvatar,
-                      {
-                        backgroundColor: roleColor + (isDark ? '30' : '40'),
-                        borderColor: colors.text,
-                      },
+                      diffuse
+                        ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line2, borderWidth: 1 }
+                        : { backgroundColor: roleColor + (isDark ? '30' : '40'), borderColor: colors.text },
                     ]}
                   >
                     {m.photoUrl && !isIconAvatar(m.photoUrl) ? (
                       <SignedImage value={m.photoUrl} bucket={PHOTO_BUCKETS.avatar} style={styles.memberPhoto} />
+                    ) : diffuse ? (
+                      <User size={22} color={dt.colors.ink3} strokeWidth={1.4} />
                     ) : (
                       <FlowerSticker size={26} petal={roleColor} center={stickers.yellow} />
                     )}
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.memberName, { color: colors.text, fontFamily: font.display }]}>
+                    <Text style={[styles.memberName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
                       {title}
                     </Text>
                     {m.email ? (
-                      <Text style={[styles.memberEmail, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>{m.email}</Text>
+                      <Text style={[styles.memberEmail, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]} numberOfLines={1}>{m.email}</Text>
                     ) : null}
                     <View style={styles.memberBadges}>
-                      <View style={[styles.badge, { backgroundColor: roleColor + (isDark ? '32' : '38') }]}>
-                        <Text style={[styles.badgeText, { color: isDark ? roleColor : colors.textSecondary, fontFamily: font.bodySemiBold }]}>
-                          {m.role.charAt(0).toUpperCase() + m.role.slice(1)}
-                        </Text>
-                      </View>
-                      <View style={[styles.badge, {
-                        backgroundColor: isPaused
-                          ? stickers.coral + (isDark ? '32' : '32')
-                          : isPending
-                          ? stickers.yellow + (isDark ? '32' : '50')
-                          : stickers.green + (isDark ? '32' : '50'),
-                      }]}>
-                        {isPaused ? (
-                          <Pause size={10} color={stickers.coralInk} />
-                        ) : isPending ? (
-                          <Clock size={10} color={stickers.yellowInk} />
-                        ) : (
-                          <Check size={10} color={stickers.greenInk} />
-                        )}
-                        <Text style={[styles.badgeText, {
-                          color: isPaused
-                            ? stickers.coralInk
+                      {diffuse ? (
+                        <View style={[styles.badge, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }]}>
+                          <Text style={[styles.badgeText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' }]}>
+                            {m.role.charAt(0).toUpperCase() + m.role.slice(1)}
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.badge, { backgroundColor: roleColor + (isDark ? '32' : '38') }]}>
+                          <Text style={[styles.badgeText, { color: isDark ? roleColor : colors.textSecondary, fontFamily: font.bodySemiBold }]}>
+                            {m.role.charAt(0).toUpperCase() + m.role.slice(1)}
+                          </Text>
+                        </View>
+                      )}
+                      {diffuse ? (
+                        <View style={[styles.badge, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }]}>
+                          {isPaused ? (
+                            <Pause size={10} color={dStatusColor} />
+                          ) : isPending ? (
+                            <Clock size={10} color={dStatusColor} />
+                          ) : (
+                            <Check size={10} color={dStatusColor} />
+                          )}
+                          <Text style={[styles.badgeText, { color: dStatusColor, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' }]}>
+                            {isPaused ? 'Paused' : m.status}
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.badge, {
+                          backgroundColor: isPaused
+                            ? stickers.coral + (isDark ? '32' : '32')
                             : isPending
-                            ? stickers.yellowInk
-                            : stickers.greenInk,
-                          fontFamily: font.bodySemiBold,
+                            ? stickers.yellow + (isDark ? '32' : '50')
+                            : stickers.green + (isDark ? '32' : '50'),
                         }]}>
-                          {isPaused ? 'Paused' : m.status}
-                        </Text>
-                      </View>
+                          {isPaused ? (
+                            <Pause size={10} color={stickers.coralInk} />
+                          ) : isPending ? (
+                            <Clock size={10} color={stickers.yellowInk} />
+                          ) : (
+                            <Check size={10} color={stickers.greenInk} />
+                          )}
+                          <Text style={[styles.badgeText, {
+                            color: isPaused
+                              ? stickers.coralInk
+                              : isPending
+                              ? stickers.yellowInk
+                              : stickers.greenInk,
+                            fontFamily: font.bodySemiBold,
+                          }]}>
+                            {isPaused ? 'Paused' : m.status}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   </View>
                 </View>
@@ -873,11 +1009,17 @@ export default function CareCircleScreen() {
                           key={cid}
                           style={[
                             styles.childChip,
-                            {
-                              backgroundColor: dotColor + (isDark ? '28' : '24'),
-                              borderColor: colors.borderStrong,
-                              borderWidth: 1,
-                            },
+                            diffuse
+                              ? {
+                                  backgroundColor: 'transparent',
+                                  borderColor: dt.colors.line2,
+                                  borderWidth: 1,
+                                }
+                              : {
+                                  backgroundColor: dotColor + (isDark ? '28' : '24'),
+                                  borderColor: colors.borderStrong,
+                                  borderWidth: 1,
+                                },
                           ]}
                         >
                           <View
@@ -886,17 +1028,16 @@ export default function CareCircleScreen() {
                               height: 7,
                               borderRadius: 4,
                               backgroundColor: dotColor,
-                              borderWidth: 1,
-                              borderColor: colors.borderStrong,
+                              borderWidth: diffuse ? 0 : 1,
+                              borderColor: diffuse ? 'transparent' : colors.borderStrong,
                             }}
                           />
                           <Text
                             style={[
                               styles.childChipText,
-                              {
-                                color: colors.text,
-                                fontFamily: font.bodySemiBold,
-                              },
+                              diffuse
+                                ? { color: dt.colors.ink2, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' }
+                                : { color: colors.text, fontFamily: font.bodySemiBold },
                             ]}
                           >
                             {name}
@@ -914,15 +1055,15 @@ export default function CareCircleScreen() {
                       key={p}
                       style={[
                         styles.permChip,
-                        {
-                          backgroundColor: colors.surface,
-                          borderWidth: 1,
-                          borderColor: colors.borderStrong,
-                        },
+                        diffuse
+                          ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
+                          : { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderStrong },
                       ]}
                     >
-                      <SparkleSticker size={12} fill={stickers.yellow} />
-                      <Text style={[styles.permText, { color: colors.text, fontFamily: font.bodyMedium }]}>{p.replace('_', ' ')}</Text>
+                      {diffuse ? null : <SparkleSticker size={12} fill={stickers.yellow} />}
+                      <Text style={[styles.permText, diffuse
+                        ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' }
+                        : { color: colors.text, fontFamily: font.bodyMedium }]}>{p.replace('_', ' ')}</Text>
                     </View>
                   ))}
                 </View>
@@ -931,48 +1072,68 @@ export default function CareCircleScreen() {
                 {isPending && (
                   <Pressable
                     onPress={() => resendInvite(m)}
-                    style={[styles.resendBtn, { backgroundColor: stickers.lilac + (isDark ? '28' : '38') }]}
+                    style={[styles.resendBtn, diffuse
+                      ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
+                      : { backgroundColor: stickers.lilac + (isDark ? '28' : '38') }]}
                   >
-                    <Mail size={14} color={stickers.lilacInk} strokeWidth={2} />
-                    <Text style={[styles.resendText, { color: stickers.lilacInk, fontFamily: font.bodySemiBold }]}>{t('careCircle_resend_invite')}</Text>
+                    <Mail size={14} color={diffuse ? accent : stickers.lilacInk} strokeWidth={diffuse ? 1.6 : 2} />
+                    <Text style={[styles.resendText, diffuse
+                      ? { color: accent, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 12 }
+                      : { color: stickers.lilacInk, fontFamily: font.bodySemiBold }]}>{t('careCircle_resend_invite')}</Text>
                   </Pressable>
                 )}
 
                 {/* Actions row 2 */}
                 <View style={styles.actionRow}>
                   <Pressable
-                    style={[styles.actionBtn, { borderColor: colors.borderStrong }]}
+                    style={[styles.actionBtn, { borderColor: diffuse ? dt.colors.line2 : colors.borderStrong }]}
                     onPress={() => setEditingMember(m)}
                   >
-                    <Pencil size={14} color={colors.text} />
-                    <Text style={[styles.actionText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_edit')}</Text>
+                    <Pencil size={14} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
+                    <Text style={[styles.actionText, diffuse
+                      ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
+                      : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_edit')}</Text>
                   </Pressable>
                   <Pressable
-                    style={[styles.actionBtn, { borderColor: colors.borderStrong }]}
+                    style={[styles.actionBtn, { borderColor: diffuse ? dt.colors.line2 : colors.borderStrong }]}
                     onPress={() => pauseMember(m)}
                   >
-                    {isPaused ? <Check size={14} color={stickers.greenInk} /> : <Pause size={14} color={stickers.yellowInk} />}
-                    <Text style={[styles.actionText, { color: isPaused ? stickers.greenInk : stickers.yellowInk, fontFamily: font.bodySemiBold }]}>{isPaused ? 'Activate' : 'Pause'}</Text>
+                    {diffuse
+                      ? (isPaused ? <Check size={14} color={dt.colors.success} strokeWidth={1.6} /> : <Pause size={14} color={dt.colors.warning} strokeWidth={1.6} />)
+                      : (isPaused ? <Check size={14} color={stickers.greenInk} /> : <Pause size={14} color={stickers.yellowInk} />)}
+                    <Text style={[styles.actionText, diffuse
+                      ? { color: isPaused ? dt.colors.success : dt.colors.warning, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
+                      : { color: isPaused ? stickers.greenInk : stickers.yellowInk, fontFamily: font.bodySemiBold }]}>{isPaused ? 'Activate' : 'Pause'}</Text>
                   </Pressable>
                   <Pressable
-                    style={[styles.actionBtn, { borderColor: stickers.coral + '40' }]}
+                    style={[styles.actionBtn, { borderColor: diffuse ? dt.colors.line2 : stickers.coral + '40' }]}
                     onPress={() => removeMember(m)}
                   >
-                    <Trash2 size={14} color={stickers.coral} />
-                    <Text style={[styles.actionText, { color: stickers.coral, fontFamily: font.bodySemiBold }]}>{t('careCircle_remove')}</Text>
+                    <Trash2 size={14} color={diffuse ? dt.colors.error : stickers.coral} strokeWidth={diffuse ? 1.6 : 2} />
+                    <Text style={[styles.actionText, diffuse
+                      ? { color: dt.colors.error, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
+                      : { color: stickers.coral, fontFamily: font.bodySemiBold }]}>{t('careCircle_remove')}</Text>
                   </Pressable>
                 </View>
               </View>
             )
           })}
 
-          {/* Add button — editorial ink CTA with sparkle */}
+          {/* Add button — editorial ink CTA with sparkle.
+              Free tier has 0 seats: send them to the paywall up front rather
+              than letting them fill out 4 steps only to be blocked by the DB. */}
           <PillButton
-            label="Add to Care Circle"
+            label={TIER_SEAT_LIMIT[tier] === 0 ? 'Upgrade to add caregivers' : 'Add to Care Circle'}
             variant="ink"
             height={64}
-            onPress={() => setShowAddSheet(true)}
-            leading={<SparkleSticker size={20} fill={stickers.yellow} />}
+            onPress={() =>
+              TIER_SEAT_LIMIT[tier] === 0
+                ? router.push('/paywall?tier=premium_solo')
+                : setShowAddSheet(true)
+            }
+            leading={diffuse
+              ? <UserPlus size={18} color={dt.colors.bg} strokeWidth={1.8} />
+              : <SparkleSticker size={20} fill={stickers.yellow} />}
             style={{ marginTop: 10 }}
           />
         </ScrollView>
@@ -1019,7 +1180,13 @@ export default function CareCircleScreen() {
             }
 
             if (filtered.length === 0) {
-              return (
+              return diffuse ? (
+                <DiffuseEmptyState
+                  icon={<Clock size={26} color={dt.colors.ink3} strokeWidth={1.4} />}
+                  title={t('careCircle_no_activity_title')}
+                  message={t('careCircle_activity_log_desc')}
+                />
+              ) : (
                 <View
                   style={[
                     styles.emptyCard,
@@ -1054,7 +1221,9 @@ export default function CareCircleScreen() {
 
             return Array.from(grouped.entries()).map(([dateLabel, items]) => (
               <View key={dateLabel}>
-                <Text style={[styles.dateHeader, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{dateLabel}</Text>
+                <Text style={[styles.dateHeader, diffuse
+                  ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+                  : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{dateLabel}</Text>
                 {items.map((a) => {
                   const summary = formatActivitySummary(a.type, a.value, a.notes)
                   const typeLabel = friendlyTypeLabel(a.type, a.value)
@@ -1063,40 +1232,61 @@ export default function CareCircleScreen() {
                       key={a.id}
                       style={[
                         styles.activityItem,
-                        {
-                          backgroundColor: colors.surface,
-                          borderColor: colors.border,
-                        },
+                        diffuse
+                          ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+                          : { backgroundColor: colors.surface, borderColor: colors.border },
                       ]}
                     >
                       <View style={styles.activityStickerSlot}>
-                        {renderActivitySticker(a.type, 38, stickers)}
+                        {diffuse
+                          ? renderActivityDiffuseIcon(a.type, dt.colors.ink3, EVENT_COLORS[a.type] ?? accent)
+                          : renderActivitySticker(a.type, 38, stickers)}
                       </View>
                       <View style={{ flex: 1 }}>
                         <View style={styles.activityTopRow}>
-                          <Text style={[styles.activityType, { color: colors.text, fontFamily: font.display }]}>
+                          <Text style={[styles.activityType, diffuse
+                            ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
+                            : { color: colors.text, fontFamily: font.display }]}>
                             {typeLabel}
                           </Text>
-                          <View style={[styles.loggerBadge, { backgroundColor: colors.surfaceRaised }]}>
-                            <Text style={[styles.loggerText, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>{a.loggedByName}</Text>
+                          <View style={[styles.loggerBadge, diffuse
+                            ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
+                            : { backgroundColor: colors.surfaceRaised }]}>
+                            <Text style={[styles.loggerText, diffuse
+                              ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' }
+                              : { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>{a.loggedByName}</Text>
                           </View>
                         </View>
                         {summary !== '' && (
-                          <Text style={[styles.activityValue, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>
+                          <Text style={[styles.activityValue, diffuse
+                            ? { color: dt.colors.ink2, fontFamily: diffuseFont.body }
+                            : { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>
                             {summary}
                           </Text>
                         )}
                         {a.notes && summary !== a.notes && (
-                          <Text style={[styles.activityNotes, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>
+                          <Text style={[styles.activityNotes, diffuse
+                            ? { color: dt.colors.ink3, fontFamily: diffuseFont.body }
+                            : { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>
                             {a.notes}
                           </Text>
                         )}
                         <View style={styles.activityFooter}>
-                          <View style={[styles.childTag, { backgroundColor: stickers.blue + (isDark ? '28' : '40') }]}>
-                            <FlowerSticker size={10} petal={stickers.blue} center={stickers.yellow} />
-                            <Text style={[styles.childTagText, { color: stickers.blueInk, fontFamily: font.bodySemiBold }]}>{a.childName}</Text>
+                          <View style={[styles.childTag, diffuse
+                            ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
+                            : { backgroundColor: stickers.blue + (isDark ? '28' : '40') }]}>
+                            {diffuse ? (
+                              <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: EVENT_COLORS[a.type] ?? accent }} />
+                            ) : (
+                              <FlowerSticker size={10} petal={stickers.blue} center={stickers.yellow} />
+                            )}
+                            <Text style={[styles.childTagText, diffuse
+                              ? { color: dt.colors.ink2, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' }
+                              : { color: stickers.blueInk, fontFamily: font.bodySemiBold }]}>{a.childName}</Text>
                           </View>
-                          <Text style={[styles.activityTime, { color: colors.textMuted, fontFamily: font.body }]}>{a.date}</Text>
+                          <Text style={[styles.activityTime, diffuse
+                            ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+                            : { color: colors.textMuted, fontFamily: font.body }]}>{a.date}</Text>
                         </View>
                       </View>
                     </View>
@@ -1145,6 +1335,38 @@ export default function CareCircleScreen() {
 
 function FilterChip({ label, active, onPress, kind = 'kid' }: { label: string; active: boolean; onPress: () => void; kind?: 'kid' | 'person' }) {
   const { colors, font, isDark, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getDiffuseAccent(mode, dt.isDark)
+
+  if (diffuse) {
+    return (
+      <Pressable
+        onPress={onPress}
+        style={[styles.filterChip, {
+          backgroundColor: active ? dt.colors.surface : 'transparent',
+          borderColor: active ? dt.colors.hairline : dt.colors.line,
+          borderWidth: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+        }]}
+      >
+        {kind === 'kid' ? (
+          <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: accent }} />
+        ) : null}
+        <Text style={[styles.filterChipText, {
+          color: active ? dt.colors.ink : dt.colors.ink3,
+          fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
+          letterSpacing: 1,
+          textTransform: 'uppercase',
+          fontSize: 12,
+        }]}>{label}</Text>
+      </Pressable>
+    )
+  }
+
   return (
     <Pressable
       onPress={onPress}
@@ -1171,13 +1393,26 @@ function FilterChip({ label, active, onPress, kind = 'kid' }: { label: string; a
 
 function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
   const { colors, font, stickers, isDark, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getDiffuseAccent(mode, dt.isDark)
   const { t } = useTranslation()
   const allChildren = useChildStore((s) => s.children)
   const toast = useSavedToast()
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const inkActiveBg = stickers.lilac + (isDark ? '32' : '40')
-  const inkActiveText = stickers.lilacInk
+  // Diffuse re-tokens the shared field/chip colors; the JSX below reads these.
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const inkActiveBg = diffuse ? dt.colors.surface : stickers.lilac + (isDark ? '32' : '40')
+  const inkActiveText = diffuse ? dt.colors.ink : stickers.lilacInk
+  const inkActiveBorder = diffuse ? dt.colors.hairline : inkActiveText
+  const textColor = diffuse ? dt.colors.ink : colors.text
+  const mutedColor = diffuse ? dt.colors.ink3 : colors.textMuted
+  const secondaryColor = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const bodyFont = diffuse ? diffuseFont.body : font.body
+  const chipFont = diffuse ? diffuseFont.mono : font.bodySemiBold
+  const displayFont = diffuse ? diffuseFont.display : font.display
+  const chipExtras = diffuse ? { letterSpacing: 0.6, textTransform: 'uppercase' as const } : null
 
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
@@ -1247,7 +1482,12 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
 
       const email = inviteEmail.trim() || `pending_${Date.now()}@invite.local`
 
-      // Use upsert to handle duplicate child+email combos
+      // Use upsert to handle duplicate child+email combos. We MUST surface
+      // write errors here — the DB enforces a per-tier seat cap via the
+      // enforce_seat_limit_on_insert() trigger (free tier = 0 seats), and RLS
+      // restricts inserts to children the caller owns. Swallowing these errors
+      // made the flow report a fake "Invite Sent!" with an empty invite token.
+      let insertedAny = false
       for (const childId of selectedChildren) {
         const { data: existing } = await supabase
           .from('child_caregivers')
@@ -1257,16 +1497,22 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           .single()
 
         if (existing) {
-          await supabase.from('child_caregivers').update({
+          const { error: updateErr } = await supabase.from('child_caregivers').update({
             role: safeRole, status: 'pending', permissions: permObj,
           }).eq('id', existing.id)
+          if (updateErr) throw updateErr
+          insertedAny = true
         } else {
-          await supabase.from('child_caregivers').insert({
+          const { error: insertErr } = await supabase.from('child_caregivers').insert({
             child_id: childId, email, role: safeRole,
             status: 'pending', permissions: permObj, invited_by: session.user.id,
           })
+          if (insertErr) throw insertErr
+          insertedAny = true
         }
       }
+
+      if (!insertedAny) throw new Error('No children selected for this invite.')
 
       // Get token for invite link
       const { data: tokenRow } = await supabase
@@ -1303,7 +1549,23 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
       reset()
       onSaved()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      // The seat-limit trigger raises P0001 'seat_limit_exceeded'. Free tier has
+      // 0 seats, so every invite hits this — route to the paywall instead of a
+      // dead-end error. (Other errors get a plain alert.)
+      const msg = e?.message ?? ''
+      if (msg.includes('seat_limit_exceeded')) {
+        handleClose()
+        Alert.alert(
+          'Caregivers are a premium feature',
+          'Upgrade to invite a partner, nanny, or family member to your Care Circle.',
+          [
+            { text: 'Not now', style: 'cancel' },
+            { text: 'See plans', onPress: () => router.push('/paywall?tier=premium_solo') },
+          ],
+        )
+      } else {
+        Alert.alert('Couldn’t send invite', msg || 'Please try again.')
+      }
     } finally {
       setSaving(false)
     }
@@ -1318,7 +1580,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {/* Progress dots */}
           <View style={sheetStyles.progressRow}>
             {[1, 2, 3, 4].map((s) => (
-              <View key={s} style={[sheetStyles.progressDot, { backgroundColor: s <= step ? stickers.lilacInk : colors.borderLight }]} />
+              <View key={s} style={[sheetStyles.progressDot, { backgroundColor: s <= step ? (diffuse ? dt.colors.ink : stickers.lilacInk) : (diffuse ? dt.colors.line2 : colors.borderLight) }]} />
             ))}
           </View>
 
@@ -1326,23 +1588,23 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {step === 1 && (
             <>
               <View style={{ alignItems: 'center', marginBottom: 8 }}>
-                <Text style={{ fontFamily: font.display, fontSize: 28, color: colors.text, letterSpacing: -0.5 }}>
+                <Text style={{ fontFamily: displayFont, fontSize: 28, color: textColor, letterSpacing: -0.5 }}>
                   {t('careCircle_step1_who')}
                 </Text>
-                <Text style={{ fontFamily: font.italic, fontSize: 18, color: stickers.coral, marginTop: 2 }}>
+                <Text style={{ fontFamily: diffuse ? diffuseFont.italic : font.italic, fontSize: 18, color: diffuse ? dt.colors.ink3 : stickers.coral, marginTop: 2 }}>
                   {t('careCircle_step1_tagline')}
                 </Text>
               </View>
               <PhotoPickerAvatar uri={photoUri} onPick={setPhotoUri} />
-              <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_name')}</MonoCaps></View>
+              <View style={{ marginTop: 4 }}><MonoCaps color={mutedColor}>{t('careCircle_field_name')}</MonoCaps></View>
               <TextInput
                 value={name}
                 onChangeText={setName}
                 placeholder="Caregiver's name"
-                placeholderTextColor={colors.textMuted}
-                style={[sheetStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
+                placeholderTextColor={mutedColor}
+                style={[sheetStyles.input, { color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
               />
-              <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_role')}</MonoCaps></View>
+              <View style={{ marginTop: 4 }}><MonoCaps color={mutedColor}>{t('careCircle_field_role')}</MonoCaps></View>
               <View style={sheetStyles.chipGrid}>
                 {ROLES.map((r) => {
                   const active = role === r.id
@@ -1352,10 +1614,10 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       onPress={() => setRole(r.id)}
                       style={[sheetStyles.chip, {
                         backgroundColor: active ? inkActiveBg : paper,
-                        borderColor: active ? inkActiveText : paperBorder,
+                        borderColor: active ? inkActiveBorder : paperBorder,
                       }]}
                     >
-                      <Text style={[sheetStyles.chipText, { color: active ? inkActiveText : colors.text, fontFamily: font.bodySemiBold }]}>{r.label}</Text>
+                      <Text style={[sheetStyles.chipText, chipExtras, { color: active ? inkActiveText : textColor, fontFamily: chipFont }]}>{r.label}</Text>
                     </Pressable>
                   )
                 })}
@@ -1367,7 +1629,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {/* Step 2: Children */}
           {step === 2 && (
             <>
-              <Text style={[sheetStyles.stepDesc, { color: colors.textSecondary }]}>
+              <Text style={[sheetStyles.stepDesc, { color: secondaryColor, fontFamily: diffuse ? diffuseFont.body : undefined }]}>
                 {t('careCircle_step2_which_children', { name: name || 'this person' })}
               </Text>
               <View style={sheetStyles.chipGrid}>
@@ -1378,19 +1640,21 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       key={c.id}
                       onPress={() => toggleChild(c.id)}
                       style={[sheetStyles.chip, {
-                        backgroundColor: active ? stickers.blue + (isDark ? '32' : '40') : paper,
-                        borderColor: active ? stickers.blueInk : paperBorder,
+                        backgroundColor: active ? inkActiveBg : paper,
+                        borderColor: active ? inkActiveBorder : paperBorder,
                       }]}
                     >
-                      {active && <Check size={12} color={stickers.blueInk} strokeWidth={3} />}
-                      <Text style={[sheetStyles.chipText, { color: active ? stickers.blueInk : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
+                      {active && <Check size={12} color={diffuse ? dt.colors.ink : stickers.blueInk} strokeWidth={diffuse ? 2 : 3} />}
+                      <Text style={[sheetStyles.chipText, chipExtras, { color: active ? inkActiveText : textColor, fontFamily: chipFont }]}>{c.name}</Text>
                     </Pressable>
                   )
                 })}
               </View>
               <View style={sheetStyles.btnRow}>
-                <Pressable onPress={() => setStep(1)} style={[sheetStyles.backBtn, { borderColor: paperBorder }]}>
-                  <Text style={[sheetStyles.backBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
+                <Pressable onPress={() => setStep(1)} style={[sheetStyles.backBtn, { borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
+                  <Text style={[sheetStyles.backBtnText, diffuse
+                    ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 12 }
+                    : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <SheetButton label="Next — Permissions" onPress={() => setStep(3)} disabled={selectedChildren.length === 0} />
@@ -1402,7 +1666,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {/* Step 3: Permissions */}
           {step === 3 && (
             <>
-              <Text style={[sheetStyles.stepDesc, { color: colors.textSecondary }]}>
+              <Text style={[sheetStyles.stepDesc, { color: secondaryColor, fontFamily: diffuse ? diffuseFont.body : undefined }]}>
                 {t('careCircle_step3_what_can', { name: name || 'this person' })}
               </Text>
               {PERMISSION_LEVELS.map((p) => {
@@ -1413,17 +1677,19 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                     onPress={() => setPermLevel(p.id)}
                     style={[sheetStyles.permCard, {
                       backgroundColor: active ? inkActiveBg : paper,
-                      borderColor: active ? inkActiveText : paperBorder,
+                      borderColor: active ? inkActiveBorder : paperBorder,
                     }]}
                   >
-                    <Text style={[sheetStyles.permLabel, { color: active ? inkActiveText : colors.text, fontFamily: font.display }]}>{p.label}</Text>
-                    <Text style={[sheetStyles.permDesc, { color: colors.textMuted, fontFamily: font.body }]}>{p.desc}</Text>
+                    <Text style={[sheetStyles.permLabel, { color: active ? inkActiveText : textColor, fontFamily: displayFont }]}>{p.label}</Text>
+                    <Text style={[sheetStyles.permDesc, { color: mutedColor, fontFamily: bodyFont }]}>{p.desc}</Text>
                   </Pressable>
                 )
               })}
               <View style={sheetStyles.btnRow}>
-                <Pressable onPress={() => setStep(2)} style={[sheetStyles.backBtn, { borderColor: paperBorder }]}>
-                  <Text style={[sheetStyles.backBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
+                <Pressable onPress={() => setStep(2)} style={[sheetStyles.backBtn, { borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
+                  <Text style={[sheetStyles.backBtnText, diffuse
+                    ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 12 }
+                    : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <SheetButton label="Next — Send Invite" onPress={() => setStep(4)} />
@@ -1435,7 +1701,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {/* Step 4: Contact + Send */}
           {step === 4 && (
             <>
-              <Text style={[sheetStyles.stepDesc, { color: colors.textSecondary }]}>
+              <Text style={[sheetStyles.stepDesc, { color: secondaryColor, fontFamily: diffuse ? diffuseFont.body : undefined }]}>
                 {t('careCircle_step4_how_invite', { name: name || 'them' })}
               </Text>
 
@@ -1450,10 +1716,10 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       onPress={() => setSendMethod(m)}
                       style={[sheetStyles.chip, {
                         backgroundColor: active ? inkActiveBg : paper,
-                        borderColor: active ? inkActiveText : paperBorder,
+                        borderColor: active ? inkActiveBorder : paperBorder,
                       }]}
                     >
-                      <Text style={[sheetStyles.chipText, { color: active ? inkActiveText : colors.text, fontFamily: font.bodySemiBold }]}>{labels[m]}</Text>
+                      <Text style={[sheetStyles.chipText, chipExtras, { color: active ? inkActiveText : textColor, fontFamily: chipFont }]}>{labels[m]}</Text>
                     </Pressable>
                   )
                 })}
@@ -1462,15 +1728,15 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               {/* Email field */}
               {sendMethod === 'email' && (
                 <>
-                  <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_email_address')}</MonoCaps></View>
+                  <View style={{ marginTop: 4 }}><MonoCaps color={mutedColor}>{t('careCircle_field_email_address')}</MonoCaps></View>
                   <TextInput
                     value={inviteEmail}
                     onChangeText={setInviteEmail}
                     placeholder="caregiver@email.com"
-                    placeholderTextColor={colors.textMuted}
+                    placeholderTextColor={mutedColor}
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    style={[sheetStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
+                    style={[sheetStyles.input, { color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
                   />
                 </>
               )}
@@ -1478,23 +1744,23 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               {/* SMS fields */}
               {sendMethod === 'sms' && (
                 <>
-                  <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_phone_number')}</MonoCaps></View>
+                  <View style={{ marginTop: 4 }}><MonoCaps color={mutedColor}>{t('careCircle_field_phone_number')}</MonoCaps></View>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <Pressable
                       onPress={() => setShowCountryPicker(!showCountryPicker)}
                       style={[sheetStyles.countryBtn, { backgroundColor: paper, borderColor: paperBorder }]}
                     >
                       <Text style={{ fontSize: 16 }}>{COUNTRY_CODES.find((c) => c.code === countryCode)?.flag ?? '🌍'}</Text>
-                      <Text style={[sheetStyles.countryCode, { color: colors.text, fontFamily: font.bodySemiBold }]}>{countryCode}</Text>
-                      <ChevronRight size={14} color={colors.textMuted} style={{ transform: [{ rotate: showCountryPicker ? '90deg' : '0deg' }] }} />
+                      <Text style={[sheetStyles.countryCode, { color: textColor, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}>{countryCode}</Text>
+                      <ChevronRight size={14} color={mutedColor} style={{ transform: [{ rotate: showCountryPicker ? '90deg' : '0deg' }] }} />
                     </Pressable>
                     <TextInput
                       value={invitePhone}
                       onChangeText={setInvitePhone}
                       placeholder="Phone number"
-                      placeholderTextColor={colors.textMuted}
+                      placeholderTextColor={mutedColor}
                       keyboardType="phone-pad"
-                      style={[sheetStyles.input, { flex: 1, color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
+                      style={[sheetStyles.input, { flex: 1, color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
                     />
                   </View>
                   {showCountryPicker && (
@@ -1503,11 +1769,11 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                         <Pressable
                           key={`${c.flag}${c.code}`}
                           onPress={() => { setCountryCode(c.code); setShowCountryPicker(false) }}
-                          style={({ pressed }) => [sheetStyles.countryRow, pressed && { backgroundColor: colors.surfaceRaised }]}
+                          style={({ pressed }) => [sheetStyles.countryRow, pressed && { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised }]}
                         >
                           <Text style={{ fontSize: 18 }}>{c.flag}</Text>
-                          <Text style={[sheetStyles.countryLabel, { color: colors.text, fontFamily: font.body }]}>{c.label}</Text>
-                          <Text style={[sheetStyles.countryCodeText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{c.code}</Text>
+                          <Text style={[sheetStyles.countryLabel, { color: textColor, fontFamily: bodyFont }]}>{c.label}</Text>
+                          <Text style={[sheetStyles.countryCodeText, { color: mutedColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{c.code}</Text>
                         </Pressable>
                       ))}
                     </ScrollView>
@@ -1517,14 +1783,16 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
 
               {/* Share link — no extra fields */}
               {sendMethod === 'link' && (
-                <Text style={[sheetStyles.stepDesc, { color: colors.textMuted, fontFamily: font.body }]}>
+                <Text style={[sheetStyles.stepDesc, { color: mutedColor, fontFamily: bodyFont }]}>
                   {t('careCircle_link_share_desc')}
                 </Text>
               )}
 
               <View style={sheetStyles.btnRow}>
-                <Pressable onPress={() => setStep(3)} style={[sheetStyles.backBtn, { borderColor: paperBorder }]}>
-                  <Text style={[sheetStyles.backBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
+                <Pressable onPress={() => setStep(3)} style={[sheetStyles.backBtn, { borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
+                  <Text style={[sheetStyles.backBtnText, diffuse
+                    ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 12 }
+                    : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <SheetButton label={saving ? 'Sending…' : 'Send Invite'} onPress={handleSendInvite} disabled={saving} />
@@ -1540,6 +1808,35 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
 
 function SheetButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+
+  if (diffuse) {
+    // Containerless hairline pill: transparent + line2 border, mono uppercase
+    // label with a trailing arrow glyph.
+    return (
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        style={({ pressed }) => [
+          sheetStyles.sheetBtn,
+          {
+            backgroundColor: 'transparent',
+            borderWidth: 1,
+            borderColor: dt.colors.line2,
+            flexDirection: 'row',
+            gap: 8,
+            opacity: disabled ? 0.45 : 1,
+          },
+          pressed && !disabled && { opacity: 0.6 },
+        ]}
+      >
+        <Text style={[sheetStyles.sheetBtnText, { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 13 }]}>{label}</Text>
+        <DiffuseArrow color={dt.colors.ink3} size={16} />
+      </Pressable>
+    )
+  }
+
   const ink = colors.text
   const inkText = colors.bg
   return (
@@ -1559,13 +1856,33 @@ function SheetButton({ label, onPress, disabled }: { label: string; onPress: () 
 
 function InviteButton({ icon: Icon, label, color, onPress, saving }: { icon: typeof Mail; label: string; color: string; onPress: () => void; saving: boolean }) {
   const { colors, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  // Loose component type keeps the Lucide glyph JSX-assignable under strict TS.
+  const Glyph = Icon as IconCmp
+
+  if (diffuse) {
+    return (
+      <Pressable
+        onPress={onPress}
+        disabled={saving}
+        style={[sheetStyles.inviteBtn, { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderRadius: radius.xl }]}
+      >
+        <DiffuseBloomIcon color={color} size={30} intensity={0.4}>
+          <Glyph size={20} color={dt.colors.ink3} strokeWidth={1.6} />
+        </DiffuseBloomIcon>
+        <Text style={[sheetStyles.inviteBtnText, { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' }]}>{label}</Text>
+      </Pressable>
+    )
+  }
+
   return (
     <Pressable
       onPress={onPress}
       disabled={saving}
       style={[sheetStyles.inviteBtn, { backgroundColor: color + '12', borderColor: color + '25', borderRadius: radius.xl }]}
     >
-      <Icon size={22} color={color} strokeWidth={2} />
+      <Glyph size={22} color={color} strokeWidth={2} />
       <Text style={[sheetStyles.inviteBtnText, { color }]}>{label}</Text>
     </Pressable>
   )
@@ -1579,11 +1896,20 @@ function EditMemberSheet({ member, onClose, onSaved }: {
   onSaved: (updates: { displayName?: string; photoUrl?: string; role?: string; permLevel?: string }) => void
 }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const inkActiveBg = stickers.lilac + (isDark ? '32' : '40')
-  const inkActiveText = stickers.lilacInk
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const inkActiveBg = diffuse ? dt.colors.surface : stickers.lilac + (isDark ? '32' : '40')
+  const inkActiveText = diffuse ? dt.colors.ink : stickers.lilacInk
+  const inkActiveBorder = diffuse ? dt.colors.hairline : inkActiveText
+  const textColor = diffuse ? dt.colors.ink : colors.text
+  const mutedColor = diffuse ? dt.colors.ink3 : colors.textMuted
+  const bodyFont = diffuse ? diffuseFont.body : font.body
+  const chipFont = diffuse ? diffuseFont.mono : font.bodySemiBold
+  const displayFont = diffuse ? diffuseFont.display : font.display
+  const chipExtras = diffuse ? { letterSpacing: 0.6, textTransform: 'uppercase' as const } : null
 
   const [editName, setEditName] = useState(member.displayName)
   const [editPhotoUri, setEditPhotoUri] = useState(member.photoUrl)
@@ -1601,23 +1927,23 @@ function EditMemberSheet({ member, onClose, onSaved }: {
         <View style={sheetStyles.form}>
           <PhotoPickerAvatar uri={editPhotoUri} onPick={setEditPhotoUri} />
 
-          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_name')}</MonoCaps></View>
+          <View style={{ marginTop: 4 }}><MonoCaps color={mutedColor}>{t('careCircle_field_name')}</MonoCaps></View>
           <TextInput
             value={editName}
             onChangeText={setEditName}
             placeholder="Caregiver name"
-            placeholderTextColor={colors.textMuted}
-            style={[sheetStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
+            placeholderTextColor={mutedColor}
+            style={[sheetStyles.input, { color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
           />
 
           {member.email ? (
             <>
-              <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_email')}</MonoCaps></View>
-              <Text style={[sheetStyles.readOnly, { color: colors.textMuted, fontFamily: font.body }]}>{member.email}</Text>
+              <View style={{ marginTop: 4 }}><MonoCaps color={mutedColor}>{t('careCircle_field_email')}</MonoCaps></View>
+              <Text style={[sheetStyles.readOnly, { color: mutedColor, fontFamily: bodyFont }]}>{member.email}</Text>
             </>
           ) : null}
 
-          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_role')}</MonoCaps></View>
+          <View style={{ marginTop: 4 }}><MonoCaps color={mutedColor}>{t('careCircle_field_role')}</MonoCaps></View>
           <View style={sheetStyles.chipGrid}>
             {ROLES.map((r) => {
               const active = editRole === r.id || editRole === ((r as any).dbRole ?? r.id)
@@ -1627,16 +1953,16 @@ function EditMemberSheet({ member, onClose, onSaved }: {
                   onPress={() => setEditRole(r.id)}
                   style={[sheetStyles.chip, {
                     backgroundColor: active ? inkActiveBg : paper,
-                    borderColor: active ? inkActiveText : paperBorder,
+                    borderColor: active ? inkActiveBorder : paperBorder,
                   }]}
                 >
-                  <Text style={[sheetStyles.chipText, { color: active ? inkActiveText : colors.text, fontFamily: font.bodySemiBold }]}>{r.label}</Text>
+                  <Text style={[sheetStyles.chipText, chipExtras, { color: active ? inkActiveText : textColor, fontFamily: chipFont }]}>{r.label}</Text>
                 </Pressable>
               )
             })}
           </View>
 
-          <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('careCircle_field_permission_level')}</MonoCaps></View>
+          <View style={{ marginTop: 4 }}><MonoCaps color={mutedColor}>{t('careCircle_field_permission_level')}</MonoCaps></View>
           {PERMISSION_LEVELS.map((p) => {
             const active = editPermLevel === p.id
             return (
@@ -1645,11 +1971,11 @@ function EditMemberSheet({ member, onClose, onSaved }: {
                 onPress={() => setEditPermLevel(p.id)}
                 style={[sheetStyles.permCard, {
                   backgroundColor: active ? inkActiveBg : paper,
-                  borderColor: active ? inkActiveText : paperBorder,
+                  borderColor: active ? inkActiveBorder : paperBorder,
                 }]}
               >
-                <Text style={[sheetStyles.permLabel, { color: active ? inkActiveText : colors.text, fontFamily: font.display }]}>{p.label}</Text>
-                <Text style={[sheetStyles.permDesc, { color: colors.textMuted, fontFamily: font.body }]}>{p.desc}</Text>
+                <Text style={[sheetStyles.permLabel, { color: active ? inkActiveText : textColor, fontFamily: displayFont }]}>{p.label}</Text>
+                <Text style={[sheetStyles.permDesc, { color: mutedColor, fontFamily: bodyFont }]}>{p.desc}</Text>
               </Pressable>
             )
           })}
@@ -1708,6 +2034,14 @@ const styles = StyleSheet.create({
     elevation: 2,
     position: 'relative' as const,
     overflow: 'hidden' as const,
+  },
+  memberCardFlat: {
+    borderRadius: 20,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
   },
   statusDot: { position: 'absolute' as const, top: 16, right: 16, width: 10, height: 10, borderRadius: 5, zIndex: 1 },
   memberTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
