@@ -151,7 +151,7 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
         <View style={styles.logList}>
           {grouped.map((g) => (
             <View key={g.type} style={[styles.logRow, diffuse ? { borderBottomColor: dt.colors.line, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: 8 } : null]}>
-              <View style={[styles.logDot, { backgroundColor: g.color }]} />
+              <View style={[styles.logDot, { backgroundColor: diffuse ? dt.colors.ink3 : g.color }]} />
               <Text style={[styles.logLabel, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: ink, fontFamily: font.bodySemiBold }]}>
                 {g.label}
               </Text>

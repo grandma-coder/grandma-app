@@ -12,6 +12,8 @@ import { LogSheet } from '../calendar/LogSheet'
 import { Body, Display } from '../ui/Typography'
 import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow, useMoodStats, type MoodId } from '../../lib/cycleAnalytics'
 import { Burst, Flower } from '../ui/Stickers'
+import { Sparkles as SparklesLine, Flower2 as FlowerLine } from 'lucide-react-native'
+import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { MiniBarChart } from './shared/MiniCharts'
 import { useTranslation } from '../../lib/i18n'
 
@@ -323,9 +325,15 @@ function PMSDetail() {
             return (
               <View key={s.name} style={pmsStyles.symptomRow}>
                 <View style={pmsStyles.symptomLeft}>
-                  <View style={[pmsStyles.chip, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 } : { backgroundColor: stickers.peachSoft, borderColor: colors.border }]}>
-                    <Burst size={20} fill={stickers.peach} points={8} wobble={0.2} />
-                  </View>
+                  {diffuse ? (
+                    <DiffuseBloomIcon color={stickers.peach} size={32}>
+                      <SparklesLine size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                    </DiffuseBloomIcon>
+                  ) : (
+                    <View style={[pmsStyles.chip, { backgroundColor: stickers.peachSoft, borderColor: colors.border }]}>
+                      <Burst size={20} fill={stickers.peach} points={8} wobble={0.2} />
+                    </View>
+                  )}
                   <Body size={14} color={diffuse ? dt.colors.ink : colors.text}>{s.name}</Body>
                 </View>
                 <View style={pmsStyles.symptomRight}>
@@ -398,9 +406,15 @@ function FertileDetail() {
   return (
     <View style={{ gap: 18 }}>
       <View style={[fertStyles.currentCard, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line } : { backgroundColor: stickers.pinkSoft, borderColor: colors.border }]}>
-        <View style={[fertStyles.currentChip, diffuse ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 } : { backgroundColor: colors.surface }]}>
-          <Flower size={40} petal={stickers.pink} center={stickers.yellow} />
-        </View>
+        {diffuse ? (
+          <DiffuseBloomIcon color={stickers.pink} size={48}>
+            <FlowerLine size={24} color={dt.colors.ink3} strokeWidth={1.6} />
+          </DiffuseBloomIcon>
+        ) : (
+          <View style={[fertStyles.currentChip, { backgroundColor: colors.surface }]}>
+            <Flower size={40} petal={stickers.pink} center={stickers.yellow} />
+          </View>
+        )}
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
             {t('cycleDetail_thisCycle')}
