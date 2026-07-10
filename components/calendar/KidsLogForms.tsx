@@ -1639,10 +1639,11 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   </View>
                 )}
 
-                {/* Manual kcal popup */}
+                {/* Manual kcal popup — centered Diffuse dialog (paper + hairline,
+                    softer backdrop matching DiffuseSheet's 0.45 dim). */}
                 <Modal visible={manualCalIdx !== null} transparent animationType="fade" onRequestClose={() => setManualCalIdx(null)}>
-                  <Pressable style={[styles.popupBackdrop, { backgroundColor: 'rgba(20,19,19,0.6)' }]} onPress={() => setManualCalIdx(null)} />
-                  <View style={[styles.manualCalPopup, { backgroundColor: dc.surface, borderRadius: 20, borderColor: dc.line2 }]}>
+                  <Pressable style={[styles.popupBackdrop, { backgroundColor: 'rgba(20,19,19,0.45)' }]} onPress={() => setManualCalIdx(null)} />
+                  <View style={[styles.manualCalPopup, { backgroundColor: dc.surface, borderRadius: 28, borderColor: dc.line2 }]}>
                     <Text style={{ color: dc.ink, fontFamily: diffuseFont.display, fontSize: 20, letterSpacing: -0.3, marginBottom: 4 }}>
                       {t('kids_logForm_unknownFood')}
                     </Text>
