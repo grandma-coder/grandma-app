@@ -288,15 +288,14 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
               const fontSize = d.size >= 52 ? 16 : d.size >= 42 ? 14 : 12
 
               if (diffuse) {
-                // Soft leap node in the leap's OWN colour (not black): done =
-                // filled soft colour, current = same colour + a soft bloom +
-                // accent hairline, upcoming = faint hollow. The W## label sits
-                // below the node in mono, counter-rotated upright.
-                const nodeSize = isCurrent ? 20 : isPast ? 16 : 13
-                // Softened tint of the leap's colour so nodes read calm, not loud.
-                const softLeap = leap.color + (isDark ? 'CC' : 'B0')
-                const nodeFill = isFuture ? 'transparent' : softLeap
-                const nodeBorder = isCurrent ? diffuseAccent : isFuture ? dt.colors.line2 : softLeap
+                // Every leap is a glowing orb in its OWN colour — a soft radial
+                // bloom under a brighter core dot, so the ring reads as a string
+                // of little lights, not flat dots. Hierarchy by state: current =
+                // biggest orb + strongest glow + accent ring; past = full orb;
+                // future = faint, dimmer glow. Label in mono below, upright.
+                const coreSize = isCurrent ? 16 : isPast ? 13 : 11
+                const bloomBox = coreSize * (isCurrent ? 3.4 : 2.8)
+                const bloomOpacity = isCurrent ? (isDark ? 0.55 : 0.7) : isPast ? (isDark ? 0.4 : 0.5) : (isDark ? 0.22 : 0.3)
                 return (
                   <View
                     key={d.index}
@@ -310,22 +309,21 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
                       justifyContent: 'center',
                     }}
                   >
-                    {isCurrent ? (
-                      <View pointerEvents="none" style={{ position: 'absolute', width: d.size * 1.28, height: d.size * 1.28 }}>
-                        <SoftBloom color={leap.color} opacity={isDark ? 0.4 : 0.5} spread={0.4} radius="50%" />
-                      </View>
-                    ) : null}
+                    {/* Glow under every orb (feathered radial in the leap hue). */}
+                    <View pointerEvents="none" style={{ position: 'absolute', width: bloomBox, height: bloomBox }}>
+                      <SoftBloom color={leap.color} opacity={bloomOpacity} spread={0.5} radius="50%" />
+                    </View>
                     <Animated.View style={counterRotateStyle}>
                       <View style={{ alignItems: 'center' }}>
                         <View
                           style={{
-                            width: nodeSize,
-                            height: nodeSize,
-                            borderRadius: nodeSize / 2,
-                            backgroundColor: nodeFill,
-                            borderWidth: isCurrent ? 1.5 : 1,
-                            borderColor: nodeBorder,
-                            opacity: isFuture ? 0.85 : 1,
+                            width: coreSize,
+                            height: coreSize,
+                            borderRadius: coreSize / 2,
+                            backgroundColor: leap.color,
+                            borderWidth: isCurrent ? 2 : 0,
+                            borderColor: diffuseAccent,
+                            opacity: isFuture ? 0.5 : 1,
                           }}
                         />
                         <Text
@@ -335,7 +333,7 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
                             letterSpacing: 0.5,
                             textTransform: 'uppercase',
                             color: isFuture ? dt.colors.ink4 : dt.colors.ink3,
-                            marginTop: 4,
+                            marginTop: 5,
                           }}
                         >
                           {t('kids_journeyRing_weekLabel', { n: leap.week })}
