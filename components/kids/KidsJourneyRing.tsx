@@ -539,53 +539,10 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
           )}
         </Pressable>
 
-        {/* All leaps — Diffuse: hairline rows; current: mini dot strip */}
-        {diffuse ? (
-          <View style={{ marginTop: 4 }}>
-            <Text
-              style={[styles.sectionLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.8, marginBottom: 4 }]}
-            >
-              {t('kids_journeyRing_allLeaps')}
-            </Text>
-            {leaps.map((l, i) => {
-              const state = leapStatusForWeek(weekAge, l.week)
-              const isSel = i === selectedIndex
-              const isPast = state === 'past'
-              const isCurr = state === 'current'
-              const rowStatus = isCurr ? t('kids_journeyRing_statusNow') : isPast ? t('kids_journeyRing_statusDone') : t('kids_journeyRing_statusUpcoming')
-              // Ring node in the leap's own soft colour: done = filled soft
-              // colour, current = same + accent ring, upcoming = faint hollow.
-              // Selected row gets an accent ring too.
-              const softLeap = l.color + (isDark ? 'CC' : 'B0')
-              const nodeBorder = isCurr ? diffuseAccent : isPast ? softLeap : dt.colors.line2
-              const nodeFill = isPast || isCurr ? softLeap : dt.colors.bg
-              const node = (
-                <View
-                  style={{
-                    width: 13,
-                    height: 13,
-                    borderRadius: 7,
-                    backgroundColor: nodeFill,
-                    borderWidth: 1.5,
-                    borderColor: isSel ? diffuseAccent : nodeBorder,
-                  }}
-                />
-              )
-              return (
-                <DiffuseListRow
-                  key={l.week}
-                  title={l.name}
-                  sub={t('kids_journeyRing_weekLabel', { n: l.week })}
-                  icon={node}
-                  value={rowStatus}
-                  valueColor={isCurr ? diffuseAccent : dt.colors.ink3}
-                  onPress={() => snapToIndex(i)}
-                  last={i === leaps.length - 1}
-                />
-              )
-            })}
-          </View>
-        ) : (
+        {/* All leaps — under Diffuse the wheel already shows every leap with its
+            done/current/upcoming status, so the redundant list is dropped. The
+            current theme keeps its mini dot strip. */}
+        {diffuse ? null : (
         <View style={styles.section}>
           <Text
             style={[styles.sectionLabel, { color: inkFaint, fontFamily: font.bodySemiBold }]}
