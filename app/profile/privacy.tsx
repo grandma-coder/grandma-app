@@ -9,9 +9,17 @@ import { useState, useEffect } from 'react'
 import {
   View, Text, Pressable, ScrollView, Switch, Alert, StyleSheet, ActivityIndicator,
 } from 'react-native'
-import { ChevronRight } from 'lucide-react-native'
+import {
+  ChevronRight,
+  Heart as HeartLine,
+  Cross as CrossLine,
+  Sparkles as SparklesLine,
+  Star as StarLine,
+  Leaf as LeafLine,
+  Eye as EyeLine,
+} from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { useChildStore } from '../../store/useChildStore'
@@ -19,6 +27,8 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { Heart, Cross, Sparkle, Star, Leaf, GrandmaEye } from '../../components/ui/Stickers'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 
 type StickerKind =
   | 'heart' | 'crossPink' | 'crossCoral' | 'sparkle' | 'star' | 'leaf' | 'eye'
@@ -41,6 +51,8 @@ const DEFAULT_SETTINGS: PrivacySettings = {
 
 export default function PrivacyScreen() {
   const { colors, font, stickers, radius, spacing, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
   const children = useChildStore((s) => s.children)
@@ -261,8 +273,14 @@ export default function PrivacyScreen() {
     )
   }
 
+  const cardStyle = diffuse
+    ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: radius.lg }
+    : { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }
+  const dividerColor = diffuse ? dt.colors.line : colors.borderLight
+  const sectionLabelColor = diffuse ? dt.colors.ink3 : colors.textMuted
+
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
         <ScreenHeader title="" />
       </View>
@@ -270,66 +288,66 @@ export default function PrivacyScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Big Fraunces title */}
         <View style={styles.titleBlock}>
-          <Display size={34} color={colors.text}>{t('privacy_title')}</Display>
-          <DisplayItalic size={18} color={stickers.coral} style={{ marginTop: 6 }}>
+          <Display size={34} color={diffuse ? dt.colors.ink : colors.text}>{t('privacy_title')}</Display>
+          <DisplayItalic size={18} color={diffuse ? dt.colors.ink : stickers.coral} style={{ marginTop: 6 }}>
             {t('privacy_subtitle')}
           </DisplayItalic>
         </View>
 
         {/* Data Sharing */}
         <View style={{ marginTop: 8 }}>
-          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionDataSharing')}</MonoCaps>
+          <MonoCaps color={sectionLabelColor} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionDataSharing')}</MonoCaps>
         </View>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+        <View style={[styles.card, diffuse && styles.cardFlat, cardStyle]}>
           <ToggleRow stickerKind="heart" label={t('privacy_toggleShareCareCircle')} desc={t('privacy_toggleShareCareCircleDesc')}
             value={settings.share_with_caregivers} onToggle={(v) => updateSetting('share_with_caregivers', v)} />
-          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
           <ToggleRow stickerKind="crossPink" label={t('privacy_toggleShareHealth')} desc={t('privacy_toggleShareHealthDesc')}
             value={settings.share_health_data} onToggle={(v) => updateSetting('share_health_data', v)} />
-          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
           <ToggleRow stickerKind="sparkle" label={t('privacy_toggleSharePhotos')} desc={t('privacy_toggleSharePhotosDesc')}
             value={settings.share_photos} onToggle={(v) => updateSetting('share_photos', v)} />
         </View>
 
         {/* AI & Analytics */}
         <View style={{ marginTop: 18 }}>
-          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionAI')}</MonoCaps>
+          <MonoCaps color={sectionLabelColor} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionAI')}</MonoCaps>
         </View>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+        <View style={[styles.card, diffuse && styles.cardFlat, cardStyle]}>
           <ToggleRow stickerKind="eye" label={t('privacy_toggleAI')} desc={t('privacy_toggleAIDesc')}
             value={settings.ai_data_usage} onToggle={(v) => updateSetting('ai_data_usage', v)} />
-          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
           <ToggleRow stickerKind="star" label={t('privacy_toggleAnalytics')} desc={t('privacy_toggleAnalyticsDesc')}
             value={settings.analytics} onToggle={(v) => updateSetting('analytics', v)} />
         </View>
 
         {/* Your Data */}
         <View style={{ marginTop: 18 }}>
-          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionYourData')}</MonoCaps>
+          <MonoCaps color={sectionLabelColor} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionYourData')}</MonoCaps>
         </View>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+        <View style={[styles.card, diffuse && styles.cardFlat, cardStyle]}>
           <ActionRow stickerKind="leaf" label={t('privacy_exportData')} desc={t('privacy_exportDataDesc')} onPress={handleExportData} />
-          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
           <ActionRow stickerKind="crossCoral" label={t('privacy_clearLogs')} desc={t('privacy_clearLogsDesc')} onPress={handleClearLogs} loading={clearingLogs} danger />
-          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
           <ActionRow stickerKind="crossCoral" label={t('privacy_clearChat')} desc={t('privacy_clearChatDesc')} onPress={handleClearChat} loading={clearingChat} danger />
-          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
           <ActionRow stickerKind="crossCoral" label={t('privacy_clearMemories')} desc={t('privacy_clearMemoriesDesc')} onPress={handleClearMemories} loading={clearingMemories} danger />
-          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
           <ActionRow stickerKind="crossCoral" label={t('privacy_clearHealth')} desc={t('privacy_clearHealthDesc')} onPress={handleClearHealthRecords} danger />
         </View>
 
         {/* Legal */}
         <View style={{ marginTop: 18 }}>
-          <MonoCaps color={colors.textMuted} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionLegal')}</MonoCaps>
+          <MonoCaps color={sectionLabelColor} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionLegal')}</MonoCaps>
         </View>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+        <View style={[styles.card, diffuse && styles.cardFlat, cardStyle]}>
           <ActionRow stickerKind="star" label={t('privacy_privacyPolicy')} desc={t('privacy_privacyPolicyDesc')} onPress={() => Alert.alert(t('privacy_privacyPolicy'), 'Available at grandma.app/privacy')} />
-          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
           <ActionRow stickerKind="sparkle" label={t('privacy_termsOfService')} desc={t('privacy_termsOfServiceDesc')} onPress={() => Alert.alert(t('privacy_termsOfService'), 'Available at grandma.app/terms')} />
         </View>
 
-        <Text style={[styles.footer, { color: colors.textMuted, fontFamily: font.body }]}>
+        <Text style={[styles.footer, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {t('privacy_footer')}
         </Text>
       </ScrollView>
@@ -337,8 +355,41 @@ export default function PrivacyScreen() {
   )
 }
 
+// Lucide line-icon + bloom hue per sticker kind, for the Diffuse branch. The
+// glyph reads quiet (ink3); the bloom carries the sticker's semantic hue.
+const DIFFUSE_ICON: Record<StickerKind, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
+  heart: HeartLine,
+  crossPink: CrossLine,
+  crossCoral: CrossLine,
+  sparkle: SparklesLine,
+  star: StarLine,
+  leaf: LeafLine,
+  eye: EyeLine,
+}
+
 function StickerGlyph({ kind, size = 34 }: { kind: StickerKind; size?: number }) {
   const { stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+
+  if (diffuse) {
+    const Glyph = DIFFUSE_ICON[kind]
+    const bloom: Record<StickerKind, string> = {
+      heart: dt.stickers.pink,
+      crossPink: dt.stickers.pink,
+      crossCoral: dt.stickers.coral,
+      sparkle: dt.stickers.yellow,
+      star: dt.stickers.yellow,
+      leaf: dt.stickers.green,
+      eye: dt.stickers.lilac,
+    }
+    return (
+      <DiffuseBloomIcon color={bloom[kind]} size={size} intensity={0.5}>
+        <Glyph size={Math.round(size * 0.56)} color={dt.colors.ink3} strokeWidth={1.6} />
+      </DiffuseBloomIcon>
+    )
+  }
+
   switch (kind) {
     case 'heart': return <Heart size={size} fill={stickers.pink} />
     case 'crossPink': return <Cross size={size} fill={stickers.pink} />
@@ -354,19 +405,21 @@ function ToggleRow({ stickerKind, label, desc, value, onToggle }: {
   stickerKind: StickerKind; label: string; desc: string; value: boolean; onToggle: (v: boolean) => void
 }) {
   const { colors, font, brand } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
     <View style={styles.toggleRow}>
       <View style={styles.stickerWrap}><StickerGlyph kind={stickerKind} /></View>
       <View style={{ flex: 1 }}>
-        <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{label}</Text>
-        <Text style={[styles.rowDesc, { color: colors.textMuted, fontFamily: font.body }]}>{desc}</Text>
+        <Text style={[styles.rowLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>{label}</Text>
+        <Text style={[styles.rowDesc, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{desc}</Text>
       </View>
       <Switch
         value={value}
         onValueChange={onToggle}
-        trackColor={{ false: colors.borderStrong, true: brand.pregnancy }}
-        thumbColor="#FFFFFF"
-        ios_backgroundColor={colors.borderStrong}
+        trackColor={{ false: diffuse ? dt.colors.line2 : colors.borderStrong, true: diffuse ? dt.colors.ink : brand.pregnancy }}
+        thumbColor={diffuse ? dt.colors.surface : '#FFFFFF'}
+        ios_backgroundColor={diffuse ? dt.colors.line2 : colors.borderStrong}
       />
     </View>
   )
@@ -376,16 +429,20 @@ function ActionRow({ stickerKind, label, desc, onPress, loading, danger }: {
   stickerKind: StickerKind; label: string; desc: string; onPress: () => void; loading?: boolean; danger?: boolean
 }) {
   const { colors, font, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
     <Pressable onPress={loading ? undefined : onPress} style={[styles.row, loading && { opacity: 0.5 }]}>
       <View style={styles.rowLeft}>
         <View style={styles.stickerWrap}><StickerGlyph kind={stickerKind} /></View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{label}</Text>
-          <Text style={[styles.rowDesc, { color: colors.textMuted, fontFamily: font.body }]}>{desc}</Text>
+          <Text style={[styles.rowLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>{label}</Text>
+          <Text style={[styles.rowDesc, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{desc}</Text>
         </View>
       </View>
-      {loading ? <ActivityIndicator size="small" color={colors.text} /> : <ChevronRight size={16} color={danger ? stickers.coral : colors.textMuted} />}
+      {loading
+        ? <ActivityIndicator size="small" color={diffuse ? dt.colors.ink : colors.text} />
+        : <ChevronRight size={16} color={diffuse ? (danger ? dt.colors.error : dt.colors.ink3) : (danger ? stickers.coral : colors.textMuted)} strokeWidth={diffuse ? 1.5 : 2} />}
     </Pressable>
   )
 }
@@ -403,6 +460,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 2,
+  },
+  cardFlat: {
+    shadowOpacity: 0,
+    elevation: 0,
   },
   divider: { height: 1, marginHorizontal: 20 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16, paddingHorizontal: 20, gap: 12 },

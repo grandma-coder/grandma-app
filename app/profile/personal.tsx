@@ -25,7 +25,7 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
-import { useTheme, getModeColor } from '../../constants/theme'
+import { useTheme, getModeColor, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
@@ -40,6 +40,7 @@ import {
 } from '../../components/ui/Stickers'
 import { AvatarView, AvatarPickerModal, isIconAvatar } from '../../components/ui/AvatarPicker'
 import { useSavedToast } from '../../components/ui/SavedToast'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -104,6 +105,8 @@ function PhotoAvatar({
   onChange: (newValue: string | null) => void
 }) {
   const { colors, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const [pickerOpen, setPickerOpen] = useState(false)
 
   async function pickPhoto() {
@@ -127,12 +130,16 @@ function PhotoAvatar({
 
   return (
     <View style={avatarStyles.container}>
-      <View style={avatarStyles.stickerLeft}>
-        <Squishy w={56} h={38} fill={stickers.yellow} />
-      </View>
-      <View style={avatarStyles.stickerRight}>
-        <HeartSticker size={32} fill={stickers.pink} />
-      </View>
+      {!diffuse && (
+        <>
+          <View style={avatarStyles.stickerLeft}>
+            <Squishy w={56} h={38} fill={stickers.yellow} />
+          </View>
+          <View style={avatarStyles.stickerRight}>
+            <HeartSticker size={32} fill={stickers.pink} />
+          </View>
+        </>
+      )}
 
       <Pressable
         onPress={() => setPickerOpen(true)}
@@ -143,18 +150,22 @@ function PhotoAvatar({
           size={110}
           accent={accentColor}
           initial={initial}
-          borderColor={colors.text}
+          borderColor={diffuse ? dt.colors.hairline : colors.text}
         />
-        <View style={avatarStyles.starAccent}>
-          <StarSticker size={32} fill={stickers.yellow} />
-        </View>
+        {!diffuse && (
+          <View style={avatarStyles.starAccent}>
+            <StarSticker size={32} fill={stickers.yellow} />
+          </View>
+        )}
         <View
           style={[
             avatarStyles.cameraBadge,
-            { backgroundColor: colors.text, borderColor: colors.bg },
+            diffuse
+              ? { backgroundColor: dt.colors.ink, borderColor: dt.colors.bg }
+              : { backgroundColor: colors.text, borderColor: colors.bg },
           ]}
         >
-          <Ionicons name="camera" size={14} color={colors.bg} />
+          <Ionicons name="camera" size={14} color={diffuse ? dt.colors.bg : colors.bg} />
         </View>
       </Pressable>
 
@@ -220,6 +231,8 @@ const avatarStyles = StyleSheet.create({
 
 export default function PersonalProfile() {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
   const { t } = useTranslation()
@@ -328,8 +341,11 @@ export default function PersonalProfile() {
   const initial = (name.trim()[0] ?? 'I').toUpperCase()
   const accentColor = getModeColor('preg', isDark)
 
+  const dividerColor = diffuse ? dt.colors.line : colors.borderLight
+  const sectionLabelColor = diffuse ? dt.colors.ink3 : colors.textMuted
+
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
         <ScreenHeader title={t('personal_headerTitle')} />
       </View>
@@ -350,22 +366,22 @@ export default function PersonalProfile() {
             accentColor={accentColor}
             onChange={handleAvatarChange}
           />
-          <Display size={28} align="center" color={colors.text}>
+          <Display size={28} align="center" color={diffuse ? dt.colors.ink : colors.text}>
             {name || t('personal_nameFallback')}
           </Display>
           <Body
             size={13}
             align="center"
-            color={colors.textMuted}
+            color={diffuse ? dt.colors.ink3 : colors.textMuted}
             style={{ marginTop: 4, marginBottom: 8 }}
           >
             {t('personal_avatarHint')}
           </Body>
 
           <View style={styles.divider}>
-            <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
-            <MonoCaps color={colors.textMuted}>{t('personal_sectionAbout')}</MonoCaps>
-            <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
+            <View style={[styles.dividerLine, { backgroundColor: dividerColor }]} />
+            <MonoCaps color={sectionLabelColor}>{t('personal_sectionAbout')}</MonoCaps>
+            <View style={[styles.dividerLine, { backgroundColor: dividerColor }]} />
           </View>
 
           {/* Name */}
@@ -383,9 +399,9 @@ export default function PersonalProfile() {
           <LanguageField value={language} onChange={setLanguage} />
 
           <View style={styles.divider}>
-            <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
-            <MonoCaps color={colors.textMuted}>{t('personal_sectionHealth')}</MonoCaps>
-            <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
+            <View style={[styles.dividerLine, { backgroundColor: dividerColor }]} />
+            <MonoCaps color={sectionLabelColor}>{t('personal_sectionHealth')}</MonoCaps>
+            <View style={[styles.dividerLine, { backgroundColor: dividerColor }]} />
           </View>
 
           {/* Health Notes */}
@@ -406,11 +422,13 @@ export default function PersonalProfile() {
             onPress={handleSave}
             disabled={saving}
             leading={
-              <Ionicons
-                name="checkmark-circle"
-                size={18}
-                color={colors.bg}
-              />
+              diffuse ? undefined : (
+                <Ionicons
+                  name="checkmark-circle"
+                  size={18}
+                  color={colors.bg}
+                />
+              )
             }
             style={{ marginTop: 16 }}
           />
@@ -436,24 +454,26 @@ function PaperField({
   multiline?: boolean
 }) {
   const { colors, font, isDark } = useTheme()
-  const paper = colors.surface
-  const border = colors.border
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const border = diffuse ? dt.colors.line : colors.border
   return (
     <View style={styles.field}>
-      <MonoCaps color={colors.textMuted}>{label}</MonoCaps>
+      <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{label}</MonoCaps>
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
         multiline={multiline}
         style={[
           styles.input,
           {
-            color: colors.text,
+            color: diffuse ? dt.colors.ink : colors.text,
             backgroundColor: paper,
             borderColor: border,
-            fontFamily: font.body,
+            fontFamily: diffuse ? diffuseFont.body : font.body,
           },
           multiline && { height: 96, textAlignVertical: 'top', paddingTop: 14 },
         ]}
@@ -477,9 +497,11 @@ function LocationField({
   onChange: (v: string) => void
 }) {
   const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const paper = colors.surface
-  const border = colors.border
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const border = diffuse ? dt.colors.line : colors.border
   const [query, setQuery] = useState(value)
   const [results, setResults] = useState<LocationResult[]>([])
   const [showResults, setShowResults] = useState(false)
@@ -525,20 +547,20 @@ function LocationField({
 
   return (
     <View style={[styles.field, { zIndex: 10 }]}>
-      <MonoCaps color={colors.textMuted}>{t('personal_fieldLocation')}</MonoCaps>
+      <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('personal_fieldLocation')}</MonoCaps>
       <View
         style={[
           styles.inputRow,
           { backgroundColor: paper, borderColor: border },
         ]}
       >
-        <Ionicons name="location-outline" size={18} color={colors.textMuted} />
+        <Ionicons name="location-outline" size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
         <TextInput
           value={query}
           onChangeText={search}
           placeholder={t('personal_locationPlaceholder')}
-          placeholderTextColor={colors.textMuted}
-          style={[styles.inputInner, { color: colors.text, fontFamily: font.body }]}
+          placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
+          style={[styles.inputInner, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}
           onFocus={() => { if (results.length > 0) setShowResults(true) }}
           onBlur={() => setTimeout(() => setShowResults(false), 200)}
         />
@@ -551,7 +573,7 @@ function LocationField({
               setShowResults(false)
             }}
           >
-            <Ionicons name="close" size={16} color={colors.textMuted} />
+            <Ionicons name="close" size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
           </Pressable>
         )}
       </View>
@@ -559,6 +581,7 @@ function LocationField({
         <View
           style={[
             styles.dropdownAbsolute,
+            diffuse && styles.dropdownFlat,
             { backgroundColor: paper, borderColor: border },
           ]}
         >
@@ -568,17 +591,17 @@ function LocationField({
               onPress={() => selectLocation(item)}
               style={({ pressed }) => [
                 styles.dropdownItem,
-                pressed && { backgroundColor: colors.surfaceRaised },
+                pressed && { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised },
               ]}
             >
               <Ionicons
                 name="location-outline"
                 size={14}
-                color={colors.textSecondary}
+                color={diffuse ? dt.colors.ink3 : colors.textSecondary}
               />
               <Body
                 size={14}
-                color={colors.text}
+                color={diffuse ? dt.colors.ink : colors.text}
                 numberOfLines={2}
                 style={{ flex: 1 }}
               >
@@ -602,9 +625,11 @@ function LanguageField({
   onChange: (v: string) => void
 }) {
   const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const paper = colors.surface
-  const border = colors.border
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const border = diffuse ? dt.colors.line : colors.border
   const insets = useSafeAreaInsets()
 
   const [modalVisible, setModalVisible] = useState(false)
@@ -621,7 +646,7 @@ function LanguageField({
 
   return (
     <View style={styles.field}>
-      <MonoCaps color={colors.textMuted}>{t('personal_fieldLanguage')}</MonoCaps>
+      <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('personal_fieldLanguage')}</MonoCaps>
       <Pressable
         onPress={() => setModalVisible(true)}
         style={[
@@ -629,15 +654,15 @@ function LanguageField({
           { backgroundColor: paper, borderColor: border },
         ]}
       >
-        <Ionicons name="globe-outline" size={18} color={colors.textMuted} />
+        <Ionicons name="globe-outline" size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
         <Body
           size={15}
-          color={colors.text}
-          style={{ flex: 1, fontFamily: font.body }}
+          color={diffuse ? dt.colors.ink : colors.text}
+          style={{ flex: 1, fontFamily: diffuse ? diffuseFont.body : font.body }}
         >
           {current ? `${current.label} (${current.code})` : value}
         </Body>
-        <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
+        <Ionicons name="chevron-down" size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
       </Pressable>
 
       <Modal
@@ -645,9 +670,9 @@ function LanguageField({
         animationType="slide"
         presentationStyle="pageSheet"
       >
-        <View style={[styles.modalRoot, { backgroundColor: colors.bg }]}>
+        <View style={[styles.modalRoot, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
           <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
-            <Display size={20} color={colors.text}>
+            <Display size={20} color={diffuse ? dt.colors.ink : colors.text}>
               {t('personal_languageModalTitle')}
             </Display>
             <Pressable
@@ -656,7 +681,7 @@ function LanguageField({
                 setSearchQuery('')
               }}
             >
-              <Ionicons name="close" size={24} color={colors.text} />
+              <Ionicons name="close" size={24} color={diffuse ? dt.colors.ink : colors.text} />
             </Pressable>
           </View>
 
@@ -666,15 +691,15 @@ function LanguageField({
               { backgroundColor: paper, borderColor: border },
             ]}
           >
-            <Ionicons name="search" size={18} color={colors.textMuted} />
+            <Ionicons name="search" size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
             <TextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholder={t('personal_languageSearchPlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
               style={[
                 styles.inputInner,
-                { color: colors.text, fontFamily: font.body },
+                { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body },
               ]}
               autoFocus
             />
@@ -696,16 +721,16 @@ function LanguageField({
                   }}
                   style={({ pressed }) => [
                     styles.langRow,
-                    { borderBottomColor: colors.borderLight },
-                    isSelected && { backgroundColor: colors.surfaceRaised },
+                    { borderBottomColor: diffuse ? dt.colors.line : colors.borderLight },
+                    isSelected && { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised },
                     pressed && { opacity: 0.7 },
                   ]}
                 >
                   <View style={{ flex: 1 }}>
-                    <Body size={16} color={colors.text} style={{ fontFamily: font.bodySemiBold }}>
+                    <Body size={16} color={diffuse ? dt.colors.ink : colors.text} style={{ fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }}>
                       {item.label}
                     </Body>
-                    <Body size={13} color={colors.textMuted}>
+                    <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted}>
                       {item.code}
                     </Body>
                   </View>
@@ -713,7 +738,7 @@ function LanguageField({
                     <Ionicons
                       name="checkmark"
                       size={20}
-                      color={colors.text}
+                      color={diffuse ? dt.colors.ink : colors.text}
                     />
                   )}
                 </Pressable>
@@ -736,11 +761,13 @@ function AllergyField({
   onChange: (v: string[]) => void
 }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const paper = colors.surface
-  const border = colors.border
-  const chipBg = stickers.coral + (isDark ? '24' : '22')
-  const chipFg = stickers.coralInk
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const border = diffuse ? dt.colors.line : colors.border
+  const chipBg = diffuse ? 'transparent' : stickers.coral + (isDark ? '24' : '22')
+  const chipFg = diffuse ? dt.colors.ink : stickers.coralInk
 
   const [query, setQuery] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -773,20 +800,24 @@ function AllergyField({
 
   return (
     <View style={styles.field}>
-      <MonoCaps color={colors.textMuted}>{t('personal_fieldAllergies')}</MonoCaps>
+      <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('personal_fieldAllergies')}</MonoCaps>
 
       {value.length > 0 && (
         <View style={styles.chipWrap}>
           {value.map((a) => (
             <View
               key={a}
-              style={[styles.chip, { backgroundColor: chipBg }]}
+              style={[
+                styles.chip,
+                { backgroundColor: chipBg },
+                diffuse && { borderWidth: 1, borderColor: dt.colors.line2 },
+              ]}
             >
-              <Body size={13} color={chipFg} style={{ fontFamily: font.bodySemiBold }}>
+              <Body size={13} color={chipFg} style={{ fontFamily: diffuse ? diffuseFont.bodyMedium : font.bodySemiBold }}>
                 {a}
               </Body>
               <Pressable onPress={() => removeAllergy(a)} hitSlop={6}>
-                <Ionicons name="close" size={14} color={chipFg} />
+                <Ionicons name="close" size={14} color={diffuse ? dt.colors.ink3 : chipFg} />
               </Pressable>
             </View>
           ))}
@@ -799,7 +830,7 @@ function AllergyField({
           { backgroundColor: paper, borderColor: border },
         ]}
       >
-        <Ionicons name="search" size={18} color={colors.textMuted} />
+        <Ionicons name="search" size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
         <TextInput
           value={query}
           onChangeText={(t) => {
@@ -807,8 +838,8 @@ function AllergyField({
             setShowSuggestions(t.length >= 1)
           }}
           placeholder={t('personal_allergyPlaceholder')}
-          placeholderTextColor={colors.textMuted}
-          style={[styles.inputInner, { color: colors.text, fontFamily: font.body }]}
+          placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
+          style={[styles.inputInner, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}
           onSubmitEditing={handleSubmit}
           returnKeyType="done"
           onFocus={() => {
@@ -831,10 +862,10 @@ function AllergyField({
               onPress={() => addAllergy(s)}
               style={({ pressed }) => [
                 styles.dropdownItem,
-                pressed && { backgroundColor: colors.surfaceRaised },
+                pressed && { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised },
               ]}
             >
-              <Body size={14} color={colors.text} style={{ flex: 1 }}>
+              <Body size={14} color={diffuse ? dt.colors.ink : colors.text} style={{ flex: 1 }}>
                 {s}
               </Body>
             </Pressable>
@@ -848,13 +879,13 @@ function AllergyField({
                   borderTopWidth: suggestions.length > 0 ? 1 : 0,
                   borderTopColor: border,
                 },
-                pressed && { backgroundColor: colors.surfaceRaised },
+                pressed && { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised },
               ]}
             >
               <Body
                 size={14}
-                color={colors.text}
-                style={{ flex: 1, fontFamily: font.bodySemiBold }}
+                color={diffuse ? dt.colors.ink : colors.text}
+                style={{ flex: 1, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }}
               >
                 {t('personal_addCustomAllergy', { query: query.trim() })}
               </Body>
@@ -927,6 +958,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.16,
     shadowRadius: 16,
     elevation: 8,
+  },
+  dropdownFlat: {
+    shadowOpacity: 0,
+    elevation: 0,
   },
   dropdownItem: {
     flexDirection: 'row',
