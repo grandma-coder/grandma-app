@@ -46,7 +46,9 @@ import {
 } from '../lib/channelPosts'
 import { runNotificationEngine } from '../lib/notificationEngine'
 import { toDateStr } from '../lib/cycleLogic'
-import { useTheme, getModeColor, radius, spacing } from '../constants/theme'
+import { useTheme, getModeColor, radius, spacing, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
+import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon, DiffuseEmptyState } from '../components/ui/diffuse/DiffusePrimitives'
 import { useModeStore } from '../store/useModeStore'
 import { useBehaviorStore, type Behavior } from '../store/useBehaviorStore'
 import { useChildStore } from '../store/useChildStore'
@@ -318,10 +320,12 @@ function behaviorToMode(b: Behavior): 'pre' | 'preg' | 'kids' {
 
 export default function NotificationsScreen() {
   const { colors, stickers, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
-  const accent = getModeColor(mode, isDark)
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
   const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
   const showBehaviorFilter = enrolledBehaviors.length > 1
 
@@ -375,48 +379,68 @@ export default function NotificationsScreen() {
   const hasUnread = notifications.some((n) => !n.is_read)
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
+  const pageBg = diffuse ? dt.colors.bg : colors.bg
+
   if (loading) {
     return (
-      <View style={[styles.screen, { backgroundColor: colors.bg }, styles.loading]}>
+      <View style={[styles.screen, { backgroundColor: pageBg }, styles.loading]}>
         <BrandedLoader />
       </View>
     )
   }
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.bg }]}>
+    <View style={[styles.screen, { backgroundColor: pageBg }]}>
       {/* Top bar */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
+      <View style={[styles.topBar, { paddingTop: insets.top + 8, borderBottomColor: diffuse ? dt.colors.line : colors.border }]}>
         <View style={styles.topBarRow}>
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <View
               style={[
                 styles.backBtn,
-                { backgroundColor: colors.surface, borderColor: colors.border },
+                diffuse
+                  ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+                  : { backgroundColor: colors.surface, borderColor: colors.border },
               ]}
             >
-              <ArrowLeft size={18} color={colors.text} strokeWidth={2} />
+              <ArrowLeft size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
             </View>
           </Pressable>
 
           <View style={styles.titleWrap}>
             <Display size={26}>{t('notifications_title')}</Display>
             {unreadCount > 0 && (
-              <View style={[styles.titleCount, {
-                backgroundColor: stickers.coral,
-                borderColor: isDark ? 'transparent' : colors.text,
-              }]}>
-                <Text style={[styles.titleCountText, { color: colors.surface, fontFamily: font.bodySemiBold }]}>
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </Text>
-              </View>
+              diffuse ? (
+                <View style={[styles.titleCount, {
+                  backgroundColor: 'transparent',
+                  borderColor: dt.colors.line2,
+                }]}>
+                  <Text style={[styles.titleCountText, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold }]}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              ) : (
+                <View style={[styles.titleCount, {
+                  backgroundColor: stickers.coral,
+                  borderColor: isDark ? 'transparent' : colors.text,
+                }]}>
+                  <Text style={[styles.titleCountText, { color: colors.surface, fontFamily: font.bodySemiBold }]}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )
             )}
           </View>
 
           {hasUnread ? (
             <Pressable onPress={handleMarkAllRead} hitSlop={8} style={styles.markAllBtn}>
-              <CheckCheck size={16} color={colors.text} strokeWidth={2} />
-              <Text style={[styles.markAllText, { color: colors.text, fontFamily: font.bodyMedium }]}>
+              <CheckCheck size={16} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
+              <Text style={[
+                styles.markAllText,
+                diffuse
+                  ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 11 }
+                  : { color: colors.text, fontFamily: font.bodyMedium },
+              ]}>
                 {t('notifications_markAllRead')}
               </Text>
             </Pressable>
@@ -438,6 +462,8 @@ export default function NotificationsScreen() {
                 ? notifications.length
                 : notifications.filter((n) => matchesBehaviorFilter(n, b)).length
 
+            const diffuseDotColor = b === 'all' ? accent : getDiffuseAccent(behaviorToMode(b), dt.isDark)
+
             return (
               <Pressable
                 key={b}
@@ -445,31 +471,47 @@ export default function NotificationsScreen() {
                 hitSlop={6}
                 style={[
                   styles.filterChip,
-                  {
-                    backgroundColor: isActive
-                      ? (b === 'all' ? colors.text : chipColor + '26')
-                      : colors.surface,
-                    borderColor: isActive
-                      ? (b === 'all' ? colors.text : (isDark ? chipColor : colors.text))
-                      : colors.borderStrong,
-                  },
+                  diffuse
+                    ? {
+                        backgroundColor: isActive ? dt.colors.surface : 'transparent',
+                        borderColor: isActive ? dt.colors.hairline : dt.colors.line,
+                        borderWidth: 1,
+                      }
+                    : {
+                        backgroundColor: isActive
+                          ? (b === 'all' ? colors.text : chipColor + '26')
+                          : colors.surface,
+                        borderColor: isActive
+                          ? (b === 'all' ? colors.text : (isDark ? chipColor : colors.text))
+                          : colors.borderStrong,
+                      },
                 ]}
               >
                 {b !== 'all' && (
-                  <View style={[styles.behaviorDot, {
-                    backgroundColor: chipColor,
-                    borderColor: isDark ? 'transparent' : colors.text,
-                  }]} />
+                  <View style={[styles.behaviorDot, diffuse
+                    ? { backgroundColor: diffuseDotColor, borderColor: 'transparent' }
+                    : {
+                        backgroundColor: chipColor,
+                        borderColor: isDark ? 'transparent' : colors.text,
+                      }]} />
                 )}
                 <Text
                   style={[
                     styles.filterChipText,
-                    {
-                      color: isActive
-                        ? (b === 'all' ? colors.surface : (isDark ? chipColor : colors.text))
-                        : colors.textMuted,
-                      fontFamily: font.bodySemiBold,
-                    },
+                    diffuse
+                      ? {
+                          color: isActive ? dt.colors.ink : dt.colors.ink3,
+                          fontFamily: isActive ? diffuseFont.monoBold : diffuseFont.mono,
+                          letterSpacing: 1.2,
+                          textTransform: 'uppercase',
+                          fontSize: 11,
+                        }
+                      : {
+                          color: isActive
+                            ? (b === 'all' ? colors.surface : (isDark ? chipColor : colors.text))
+                            : colors.textMuted,
+                          fontFamily: font.bodySemiBold,
+                        },
                   ]}
                 >
                   {label}
@@ -478,13 +520,17 @@ export default function NotificationsScreen() {
                   <View
                     style={[
                       styles.filterCount,
-                      { backgroundColor: isActive ? colors.text : colors.surfaceRaised },
+                      diffuse
+                        ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                        : { backgroundColor: isActive ? colors.text : colors.surfaceRaised },
                     ]}
                   >
-                    <Text style={[styles.filterCountText, {
-                      color: isActive ? colors.surface : colors.textSecondary,
-                      fontFamily: font.bodySemiBold,
-                    }]}>
+                    <Text style={[styles.filterCountText, diffuse
+                      ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+                      : {
+                          color: isActive ? colors.surface : colors.textSecondary,
+                          fontFamily: font.bodySemiBold,
+                        }]}>
                       {count}
                     </Text>
                   </View>
@@ -514,21 +560,35 @@ export default function NotificationsScreen() {
               hitSlop={6}
               style={[
                 styles.filterChip,
-                {
-                  backgroundColor: isActive && tab === 'All' ? colors.text : colors.surface,
-                  borderColor: isActive ? colors.text : colors.borderStrong,
-                },
+                diffuse
+                  ? {
+                      backgroundColor: isActive ? dt.colors.surface : 'transparent',
+                      borderColor: isActive ? dt.colors.hairline : dt.colors.line,
+                      borderWidth: 1,
+                    }
+                  : {
+                      backgroundColor: isActive && tab === 'All' ? colors.text : colors.surface,
+                      borderColor: isActive ? colors.text : colors.borderStrong,
+                    },
               ]}
             >
               <Text
                 style={[
                   styles.filterChipText,
-                  {
-                    color: isActive
-                      ? (tab === 'All' ? colors.surface : colors.text)
-                      : colors.textMuted,
-                    fontFamily: font.bodySemiBold,
-                  },
+                  diffuse
+                    ? {
+                        color: isActive ? dt.colors.ink : dt.colors.ink3,
+                        fontFamily: isActive ? diffuseFont.monoBold : diffuseFont.mono,
+                        letterSpacing: 1.2,
+                        textTransform: 'uppercase',
+                        fontSize: 11,
+                      }
+                    : {
+                        color: isActive
+                          ? (tab === 'All' ? colors.surface : colors.text)
+                          : colors.textMuted,
+                        fontFamily: font.bodySemiBold,
+                      },
                 ]}
               >
                 {tab}
@@ -537,13 +597,17 @@ export default function NotificationsScreen() {
                 <View
                   style={[
                     styles.filterCount,
-                    { backgroundColor: isActive ? colors.text : colors.surfaceRaised },
+                    diffuse
+                      ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                      : { backgroundColor: isActive ? colors.text : colors.surfaceRaised },
                   ]}
                 >
-                  <Text style={[styles.filterCountText, {
-                    color: isActive ? colors.surface : colors.textSecondary,
-                    fontFamily: font.bodySemiBold,
-                  }]}>
+                  <Text style={[styles.filterCountText, diffuse
+                    ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+                    : {
+                        color: isActive ? colors.surface : colors.textSecondary,
+                        fontFamily: font.bodySemiBold,
+                      }]}>
                     {count}
                   </Text>
                 </View>
@@ -561,11 +625,13 @@ export default function NotificationsScreen() {
           sections.length === 0 ? styles.emptyContent : { paddingBottom: insets.bottom + spacing.lg }
         }
         renderSectionHeader={({ section }) => (
-          <View style={[styles.sectionHeader, { backgroundColor: colors.bg }]}>
-            <Text style={[styles.sectionHeaderText, {
-              fontFamily: font.bodySemiBold,
-              color: colors.textMuted,
-            }]}>{section.title}</Text>
+          <View style={[styles.sectionHeader, { backgroundColor: pageBg }]}>
+            <Text style={[styles.sectionHeaderText, diffuse
+              ? { fontFamily: diffuseFont.mono, color: dt.colors.ink3 }
+              : {
+                  fontFamily: font.bodySemiBold,
+                  color: colors.textMuted,
+                }]}>{section.title}</Text>
           </View>
         )}
         renderItem={({ item }) => {
@@ -578,6 +644,76 @@ export default function NotificationsScreen() {
           const cardBorder = item.is_read
             ? colors.border
             : (isDark ? stickerColor + '40' : stickerColor + '70')
+
+          if (diffuse) {
+            return (
+              <View style={styles.rowOuter}>
+                <Pressable
+                  onPress={() => handleTap(item)}
+                  style={({ pressed }) => [
+                    styles.row,
+                    {
+                      backgroundColor: dt.colors.surface,
+                      borderColor: item.is_read ? dt.colors.line : dt.colors.line2,
+                      shadowOpacity: 0,
+                      elevation: 0,
+                    },
+                    pressed && { opacity: 0.85 },
+                  ]}
+                >
+                  {/* Lucide glyph over a soft bloom (accent-tinted) */}
+                  <DiffuseBloomIcon color={accent} size={42} intensity={0.5}>
+                    <cfg.Icon size={18} color={dt.colors.ink3} />
+                  </DiffuseBloomIcon>
+                  <View style={styles.rowContent}>
+                    <View style={styles.rowTitleRow}>
+                      <Text
+                        style={[styles.rowTitle, {
+                          color: dt.colors.ink,
+                          fontFamily: diffuseFont.display,
+                          letterSpacing: -0.3,
+                        }]}
+                        numberOfLines={2}
+                      >
+                        {item.title}
+                      </Text>
+                      {!item.is_read && (
+                        <View style={[styles.unreadDot, { backgroundColor: accent, borderColor: 'transparent' }]} />
+                      )}
+                    </View>
+                    {item.body ? (
+                      <Text
+                        style={[styles.rowBody, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}
+                        numberOfLines={2}
+                      >
+                        {item.body}
+                      </Text>
+                    ) : null}
+                    <View style={styles.rowFooter}>
+                      <Text style={[styles.rowTime, {
+                        color: dt.colors.ink3,
+                        fontFamily: diffuseFont.mono,
+                        letterSpacing: 0.8,
+                        textTransform: 'uppercase',
+                      }]}>
+                        {timeAgo(item.created_at)}
+                      </Text>
+                      <Text
+                        style={[styles.categoryChip, {
+                          fontFamily: diffuseFont.mono,
+                          color: dt.colors.ink3,
+                          backgroundColor: 'transparent',
+                          borderColor: dt.colors.line2,
+                        }]}
+                      >
+                        {cfg.category.toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
+              </View>
+            )
+          }
 
           return (
             <View style={styles.rowOuter}>
@@ -648,18 +784,34 @@ export default function NotificationsScreen() {
             </View>
           )
         }}
-        ListEmptyComponent={() => (
-          <EmptyState
-            icon={<MissingStickers.NotificationsEmpty size={88} />}
-            iconBg={colors.surface}
-            title={activeFilter === 'All' ? 'No notifications yet' : `No ${activeFilter.toLowerCase()} notifications`}
-            message={
-              activeFilter === 'All'
-                ? 'Grandma will notify you about wellness changes, routine reminders, health alerts, and more.'
-                : 'Notifications in this category will appear here.'
-            }
-          />
-        )}
+        ListEmptyComponent={() =>
+          diffuse ? (
+            <DiffuseEmptyState
+              icon={
+                <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
+                  <Bell size={22} color={dt.colors.ink3} strokeWidth={1.6} />
+                </DiffuseBloomIcon>
+              }
+              title={activeFilter === 'All' ? 'No notifications yet' : `No ${activeFilter.toLowerCase()} notifications`}
+              message={
+                activeFilter === 'All'
+                  ? 'Grandma will notify you about wellness changes, routine reminders, health alerts, and more.'
+                  : 'Notifications in this category will appear here.'
+              }
+            />
+          ) : (
+            <EmptyState
+              icon={<MissingStickers.NotificationsEmpty size={88} />}
+              iconBg={colors.surface}
+              title={activeFilter === 'All' ? 'No notifications yet' : `No ${activeFilter.toLowerCase()} notifications`}
+              message={
+                activeFilter === 'All'
+                  ? 'Grandma will notify you about wellness changes, routine reminders, health alerts, and more.'
+                  : 'Notifications in this category will appear here.'
+              }
+            />
+          )
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
