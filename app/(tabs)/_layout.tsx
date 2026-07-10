@@ -29,7 +29,8 @@ import { getModeConfig } from '../../lib/modeConfig'
 import { useTheme, brand, getModeColor, font, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { Burst, Blob, Flower, Squishy, Heart, Star, Drop, StickerPalette } from '../../components/stickers/BrandStickers'
-import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { useIsDiffuse, SoftBloom } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 
 // ─── Collage Strip constants ───────────────────────────────────────────────
 const STRIP_HEIGHT = 84
@@ -54,6 +55,7 @@ interface WheelItem {
   route: string
   rotation: number // degrees of playful tilt
   sticker: StickerRenderer
+  accent: string // Diffuse: bloom color behind the line icon (parallel to the sticker fill)
 }
 
 const WHEEL_ITEMS: WheelItem[] = [
@@ -65,6 +67,7 @@ const WHEEL_ITEMS: WheelItem[] = [
     route: '/insights',
     rotation: -6,
     sticker: ({ size }) => <Burst size={size} fill={StickerPalette.yellow} points={12} />,
+    accent: StickerPalette.yellow,
   },
   {
     id: 'rewards',
@@ -74,6 +77,7 @@ const WHEEL_ITEMS: WheelItem[] = [
     route: '/daily-rewards',
     rotation: 4,
     sticker: ({ size }) => <Flower size={size} petal={StickerPalette.pink} center={StickerPalette.yellow} />,
+    accent: StickerPalette.pink,
   },
   {
     id: 'chat',
@@ -83,6 +87,7 @@ const WHEEL_ITEMS: WheelItem[] = [
     route: '/grandma-talk',
     rotation: -8,
     sticker: ({ size }) => <Blob size={size} fill={StickerPalette.lilac} variant={1} />,
+    accent: StickerPalette.lilac,
   },
   {
     id: 'garage',
@@ -92,6 +97,7 @@ const WHEEL_ITEMS: WheelItem[] = [
     route: '/connections',
     rotation: 6,
     sticker: ({ size }) => <Squishy w={size * 1.15} h={size * 0.78} fill={StickerPalette.green} />,
+    accent: StickerPalette.green,
   },
   {
     id: 'channels',
@@ -101,6 +107,7 @@ const WHEEL_ITEMS: WheelItem[] = [
     route: '/connections?tab=channels',
     rotation: -4,
     sticker: ({ size }) => <Blob size={size} fill={StickerPalette.peach} variant={2} />,
+    accent: StickerPalette.peach,
   },
 ]
 
@@ -117,8 +124,10 @@ function CenterTabButton() {
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
-  const accentColor = getModeColor(mode, isDark)
+  const accentColor = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
   const { data: profile } = useProfile()
   const parentName = useJourneyStore((s) => s.parentName)
   // Prefer the saved profile name; fall back to the onboarding journey name,
@@ -174,15 +183,33 @@ function CenterTabButton() {
 
   // Theme-aware scrim — fully opaque paper/ink so the home screen never
   // bleeds through and competes with the menu's typography.
-  const scrimColor = isDark ? '#0E0B08' : StickerPalette.cream
-  const inkColor = isDark ? '#F5EDDC' : '#141313'
-  const ink3Color = isDark ? 'rgba(245,237,220,0.55)' : '#6E6763'
+  const scrimColor = diffuse ? dt.colors.bg : (isDark ? '#0E0B08' : StickerPalette.cream)
+  const inkColor = diffuse ? dt.colors.ink : (isDark ? '#F5EDDC' : '#141313')
+  const ink3Color = diffuse ? dt.colors.ink3 : (isDark ? 'rgba(245,237,220,0.55)' : '#6E6763')
 
   return (
     <>
       {/* Tab bar button — Burst sticker, raised above the strip */}
       <View style={styles.centerWrapper}>
         <Pressable onPress={open ? animateClose : animateOpen} hitSlop={12}>
+          {diffuse ? (
+            <Animated.View
+              style={[
+                diffuseFab.node,
+                {
+                  backgroundColor: dt.colors.surface,
+                  borderColor: dt.colors.line2,
+                  transform: [{ rotate: rotation }, { scale: pulse }],
+                },
+              ]}
+            >
+              {/* soft accent bloom behind the node — no hard silhouette */}
+              <View pointerEvents="none" style={diffuseFab.bloom}>
+                <SoftBloom color={accentColor} opacity={dt.isDark ? 0.5 : 0.6} spread={0.5} radius="55%" />
+              </View>
+              <Plus size={26} color={dt.colors.ink} strokeWidth={2} />
+            </Animated.View>
+          ) : (
           <Animated.View
             style={[
               styles.centerBurstWrap,
@@ -194,6 +221,7 @@ function CenterTabButton() {
               <Plus size={26} color={STICKER_INK} strokeWidth={3} />
             </View>
           </Animated.View>
+          )}
         </Pressable>
       </View>
 
@@ -204,7 +232,9 @@ function CenterTabButton() {
           <Pressable style={StyleSheet.absoluteFill} onPress={animateClose} />
         </Animated.View>
 
-        {/* Decorative sticker confetti — sits above scrim, below tiles */}
+        {/* Decorative sticker confetti — sits above scrim, below tiles.
+            Hidden under Diffuse (the calm variant has no collage confetti). */}
+        {!diffuse && (<>
         <Animated.View
           pointerEvents="none"
           style={[styles.confetti, { top: 76, left: 26, transform: [{ rotate: '-18deg' }], opacity: overlayAnim }]}
@@ -223,6 +253,7 @@ function CenterTabButton() {
         >
           <Drop size={28} fill={StickerPalette.blue} />
         </Animated.View>
+        </>)}
 
         {/* Prompt — "where to, dear?" serif + italic accent.
             Sits well below the status bar in its own band so it never
@@ -289,20 +320,35 @@ function CenterTabButton() {
                   pressed && { opacity: 0.75, transform: [{ scale: 0.96 }] },
                 ]}
               >
-                {/* Sticker + icon stacked */}
-                <View style={styles.stickerStack}>
-                  <View style={StyleSheet.absoluteFill}>{item.sticker({ size: STICKER_SIZE })}</View>
-                  <Icon size={ICON_SIZE} color="#141313" strokeWidth={2} />
-                </View>
+                {/* Icon glyph — Diffuse: Lucide line icon over a soft bloom;
+                    current: collage sticker with the icon stacked on top. */}
+                {diffuse ? (
+                  <View style={styles.stickerStack}>
+                    <DiffuseBloomIcon color={item.accent} size={STICKER_SIZE * 0.72} intensity={0.55}>
+                      <Icon size={ICON_SIZE + 2} color={dt.colors.ink3} strokeWidth={1.5} />
+                    </DiffuseBloomIcon>
+                  </View>
+                ) : (
+                  <View style={styles.stickerStack}>
+                    <View style={StyleSheet.absoluteFill}>{item.sticker({ size: STICKER_SIZE })}</View>
+                    <Icon size={ICON_SIZE} color="#141313" strokeWidth={2} />
+                  </View>
+                )}
 
-                {/* Label pill — paper chip, counter-rotated so text reads flat */}
+                {/* Label — Diffuse: hairline chip + mono; current: paper chip. */}
                 <View style={{ transform: [{ rotate: `${-item.rotation}deg` }], alignItems: 'center', marginTop: 8 }}>
-                  <View style={[styles.labelPill, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.labelText, { color: inkColor }]} numberOfLines={1}>
+                  <View style={[styles.labelPill, diffuse
+                    ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+                    : { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.labelText, diffuse
+                      ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 }
+                      : { color: inkColor }]} numberOfLines={1}>
                       {t(item.labelKey)}
                     </Text>
                   </View>
-                  <Text style={[styles.subtitle, { color: ink3Color }]} numberOfLines={1}>
+                  <Text style={[styles.subtitle, diffuse
+                    ? { color: dt.colors.ink3, fontFamily: diffuseFont.body }
+                    : { color: ink3Color }]} numberOfLines={1}>
                     {t(item.subtitleKey)}
                   </Text>
                 </View>
@@ -683,6 +729,26 @@ export default function TabLayout() {
     </Animated.View>
   )
 }
+
+// Diffuse center FAB — calm circular node (paper + hairline) with a soft
+// mode-accent bloom behind it, replacing the collage Burst sticker.
+const diffuseFab = StyleSheet.create({
+  node: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bloom: {
+    position: 'absolute',
+    top: -18,
+    left: -18,
+    right: -18,
+    bottom: -18,
+  },
+})
 
 const styles = StyleSheet.create({
   centerWrapper: {
