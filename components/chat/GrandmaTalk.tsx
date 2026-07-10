@@ -45,7 +45,9 @@ import {
   Moon as MoonIcon,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers as stickerPalette, font } from '../../constants/theme'
+import { useTheme, brand, stickers as stickerPalette, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
 import { Burst, Heart, Flower } from '../ui/Stickers'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
@@ -101,6 +103,13 @@ function parseInlineMarkdown(line: string): StyledSegment[] {
 function FormattedText({ content, color }: { content: string; color: string }) {
   // Split into paragraphs (double newlines) then lines
   const paragraphs = content.split(/\n\n+/)
+  const diffuse = useIsDiffuse()
+
+  // Under Diffuse the reading copy is Hanken sans; bold/italic map onto the
+  // Hanken bold + Cormorant italic families so no synthetic weights are used.
+  const baseFont = diffuse ? { fontFamily: diffuseFont.body } : undefined
+  const boldStyle = diffuse ? { fontFamily: diffuseFont.bodyBold } : mdStyles.bold
+  const italicStyle = diffuse ? { fontFamily: diffuseFont.italic, fontStyle: 'italic' as const } : mdStyles.italic
 
   return (
     <View style={mdStyles.container}>
@@ -118,16 +127,16 @@ function FormattedText({ content, color }: { content: string; color: string }) {
               if (bulletMatch || numberedMatch) {
                 return (
                   <View key={li} style={mdStyles.bulletRow}>
-                    <Text style={[mdStyles.bullet, { color }]}>
+                    <Text style={[mdStyles.bullet, baseFont, { color }]}>
                       {bulletMatch ? '•' : `${numberedMatch![1]}.`}
                     </Text>
-                    <Text style={[mdStyles.text, { color, flex: 1 }]}>
+                    <Text style={[mdStyles.text, baseFont, { color, flex: 1 }]}>
                       {segments.map((seg, si) => (
                         <Text
                           key={si}
                           style={[
-                            seg.bold && mdStyles.bold,
-                            seg.italic && mdStyles.italic,
+                            seg.bold && boldStyle,
+                            seg.italic && italicStyle,
                           ]}
                         >
                           {seg.text}
@@ -139,13 +148,13 @@ function FormattedText({ content, color }: { content: string; color: string }) {
               }
 
               return (
-                <Text key={li} style={[mdStyles.text, { color }]}>
+                <Text key={li} style={[mdStyles.text, baseFont, { color }]}>
                   {segments.map((seg, si) => (
                     <Text
                       key={si}
                       style={[
-                        seg.bold && mdStyles.bold,
-                        seg.italic && mdStyles.italic,
+                        seg.bold && boldStyle,
+                        seg.italic && italicStyle,
                       ]}
                     >
                       {seg.text}
@@ -361,7 +370,18 @@ function useSwayAnim(minDeg = -8, maxDeg = 14, duration = 2400) {
 // ─── Animated sticker wrappers ──────────────────────────────────────────
 
 function SpinningSun() {
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const rotate = useRotateAnim(22000)
+  if (diffuse) {
+    // Big decorative burst → soft feathered corner bloom (no saturated sticker).
+    return (
+      <View style={[styles.stickerTopLeft, { width: 64, height: 64 }]} pointerEvents="none">
+        <SoftBloom color={getDiffuseAccent(mode, dt.isDark)} opacity={dt.isDark ? 0.34 : 0.42} spread={0.5} radius="55%" />
+      </View>
+    )
+  }
   return (
     <Animated.View style={[styles.stickerTopLeft, { transform: [{ rotate }] }]} pointerEvents="none">
       <Burst size={64} fill={stickerPalette.yellow} points={10} wobble={0.18} />
@@ -370,8 +390,19 @@ function SpinningSun() {
 }
 
 function BeatingHeart() {
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const scale = useHeartbeatAnim()
   const sway = useSwayAnim(6, 16, 2800)
+  if (diffuse) {
+    // Heartbeat glow instead of the filled sticker — still alive, but a whisper.
+    return (
+      <Animated.View style={[styles.stickerTopRight, { width: 52, height: 52, transform: [{ scale }] }]} pointerEvents="none">
+        <SoftBloom color={getDiffuseAccent(mode, dt.isDark)} opacity={dt.isDark ? 0.3 : 0.38} spread={0.48} radius="52%" />
+      </Animated.View>
+    )
+  }
   return (
     <Animated.View
       style={[styles.stickerTopRight, { transform: [{ rotate: sway }, { scale }] }]}
@@ -383,7 +414,18 @@ function BeatingHeart() {
 }
 
 function SwayingFlower() {
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const sway = useSwayAnim(-12, 22, 2200)
+  if (diffuse) {
+    // Corner accent on the latest reply card → soft bloom, not a filled flower.
+    return (
+      <View style={[styles.cardSticker, { width: 72, height: 72 }]} pointerEvents="none">
+        <SoftBloom color={getDiffuseAccent(mode, dt.isDark)} opacity={dt.isDark ? 0.26 : 0.32} spread={0.5} radius="52%" />
+      </View>
+    )
+  }
   return (
     <Animated.View style={[styles.cardSticker, { transform: [{ rotate: sway }] }]} pointerEvents="none">
       <Flower size={72} petal={stickerPalette.lilac} center={stickerPalette.yellow} />
@@ -401,6 +443,9 @@ interface GrandmaOrbProps {
 
 function GrandmaOrb({ status, state, size = 260 }: GrandmaOrbProps) {
   const { font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const breathe = useRef(new Animated.Value(0.94)).current
 
   // Motion tuned per state:
@@ -427,12 +472,45 @@ function GrandmaOrb({ status, state, size = 260 }: GrandmaOrbProps) {
     return () => loop.stop()
   }, [state])
 
+  const s = size
+
+  // Diffuse: concentric feathered blooms of the mode accent (no saturated rings),
+  // a hairline paper core, a line moon glyph, and mono status text.
+  if (diffuse) {
+    const accent = getDiffuseAccent(mode, dt.isDark)
+    return (
+      <Animated.View style={[orbStyles.root, { width: s, height: s, transform: [{ scale: breathe }] }]}>
+        <View pointerEvents="none" style={[orbStyles.ring, { width: s, height: s }]}>
+          <SoftBloom color={accent} opacity={dt.isDark ? 0.3 : 0.4} spread={0.55} radius="55%" />
+        </View>
+        <View pointerEvents="none" style={[orbStyles.ring, { width: s * 0.7, height: s * 0.7 }]}>
+          <SoftBloom color={accent} opacity={dt.isDark ? 0.34 : 0.44} spread={0.5} radius="52%" />
+        </View>
+        <View
+          style={[
+            orbStyles.core,
+            {
+              width: s * 0.52,
+              height: s * 0.52,
+              borderRadius: (s * 0.52) / 2,
+              backgroundColor: dt.colors.surface,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: dt.colors.line2,
+            },
+          ]}
+        >
+          <MoonIcon size={28} color={dt.colors.ink3} strokeWidth={1.5} />
+          <Text style={[orbStyles.statusMono, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>{status}</Text>
+        </View>
+      </Animated.View>
+    )
+  }
+
   const ringOuter = isDark ? 'rgba(200,182,232,0.22)' : '#E3D8F2'
   const ringMid = isDark ? 'rgba(200,182,232,0.38)' : '#D0BFEC'
   const ringInner = isDark ? 'rgba(200,182,232,0.58)' : '#C8B6E8'
   const core = isDark ? '#141313' : '#141313'
 
-  const s = size
   return (
     <Animated.View style={[orbStyles.root, { width: s, height: s, transform: [{ scale: breathe }] }]}>
       <View style={[orbStyles.ring, { width: s, height: s, borderRadius: s / 2, backgroundColor: ringOuter }]} />
@@ -451,6 +529,7 @@ const orbStyles = StyleSheet.create({
   ring: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   core: { alignItems: 'center', justifyContent: 'center', gap: 8 },
   status: { fontSize: 16, letterSpacing: -0.3 },
+  statusMono: { fontSize: 11, letterSpacing: 0.6, textAlign: 'center', paddingHorizontal: 12, textTransform: 'lowercase' },
 })
 
 // ─── Initial suggestion chips ─────────────────────────────────────────────
@@ -601,49 +680,72 @@ interface HistoryPanelProps {
 
 function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const sessions = useGrandmaHistoryStore((s) => s.sessions)
   const deleteSession = useGrandmaHistoryStore((s) => s.deleteSession)
   const hydrated = useGrandmaHistoryStore((s) => s.hydrated)
 
+  const accent = getDiffuseAccent(mode, dt.isDark)
+
   // Sticker palette
   const ST_INK = '#141313'
   const ST_YELLOW = isDark ? '#F0CE4C' : '#F5D652'
   const ST_LILAC = isDark ? '#D0BFEC' : '#C8B6E8'
-  const PAPER = isDark ? colors.surface : '#FFFEF8'
-  const ink = isDark ? colors.text : ST_INK
-  const ink3 = colors.textMuted
+  const PAPER = diffuse ? dt.colors.surface : (isDark ? colors.surface : '#FFFEF8')
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : ST_INK)
+  const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
+  const pageBg = diffuse ? dt.colors.bg : colors.bg
 
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, zIndex: 10 }]}>
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: pageBg, zIndex: 10 }]}>
       {/* History header */}
       <View style={[
         histStyles.header,
-        { paddingTop: insets.top + 10, borderBottomColor: colors.border, backgroundColor: colors.bg }
+        { paddingTop: insets.top + 10, borderBottomColor: diffuse ? dt.colors.line : colors.border, backgroundColor: pageBg }
       ]}>
         <Pressable onPress={onClose} style={histStyles.headerBtn} hitSlop={8}>
           <ArrowLeft size={22} color={ink} strokeWidth={2} />
         </Pressable>
-        <Text style={{ fontSize: 22, fontFamily: font.display, color: ink, letterSpacing: -0.4 }}>
+        <Text style={{ fontSize: 22, fontFamily: diffuse ? diffuseFont.display : font.display, color: ink, letterSpacing: -0.4 }}>
           {t('grandmaTalk_history_title')}
         </Text>
-        <Pressable
-          onPress={onNewChat}
-          hitSlop={8}
-          style={({ pressed }) => ({
-            width: 38, height: 38, borderRadius: 19,
-            backgroundColor: ST_YELLOW,
-            borderWidth: 1.5, borderColor: ST_INK,
-            alignItems: 'center', justifyContent: 'center',
-            shadowColor: ST_INK,
-            shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-            shadowOpacity: 1, shadowRadius: 0, elevation: 4,
-            transform: [{ translateY: pressed ? 2 : 0 }],
-          })}
-        >
-          <Plus size={18} color={ST_INK} strokeWidth={2.5} />
-        </Pressable>
+        {diffuse ? (
+          // Calm hairline "+" node — no filled yellow sticker button, no hard shadow.
+          <Pressable
+            onPress={onNewChat}
+            hitSlop={8}
+            style={({ pressed }) => ({
+              width: 38, height: 38, borderRadius: 19,
+              backgroundColor: dt.colors.surface,
+              borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.hairline,
+              alignItems: 'center', justifyContent: 'center',
+              opacity: pressed ? 0.6 : 1,
+            })}
+          >
+            <Plus size={18} color={dt.colors.ink} strokeWidth={2} />
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={onNewChat}
+            hitSlop={8}
+            style={({ pressed }) => ({
+              width: 38, height: 38, borderRadius: 19,
+              backgroundColor: ST_YELLOW,
+              borderWidth: 1.5, borderColor: ST_INK,
+              alignItems: 'center', justifyContent: 'center',
+              shadowColor: ST_INK,
+              shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+              shadowOpacity: 1, shadowRadius: 0, elevation: 4,
+              transform: [{ translateY: pressed ? 2 : 0 }],
+            })}
+          >
+            <Plus size={18} color={ST_INK} strokeWidth={2.5} />
+          </Pressable>
+        )}
       </View>
 
       {/* Wait for AsyncStorage to rehydrate before deciding empty vs. list —
@@ -651,6 +753,15 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
       {!hydrated ? (
         <View style={histStyles.empty} />
       ) : sessions.length === 0 ? (
+        diffuse ? (
+          <DiffuseEmptyState
+            icon={<MessageCircle size={44} color={dt.colors.ink3} strokeWidth={1.5} />}
+            title={t('grandmaTalk_history_empty_title')}
+            message={t('grandmaTalk_history_empty_body')}
+            ctaLabel={t('grandmaTalk_history_start_convo')}
+            onCta={onNewChat}
+          />
+        ) : (
         <View style={histStyles.empty}>
           <MessageCircle size={48} color={ink3} strokeWidth={1.5} />
           <Text style={{ fontSize: 22, fontFamily: font.display, color: ink, textAlign: 'center', letterSpacing: -0.4 }}>
@@ -680,6 +791,7 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
             </Text>
           </Pressable>
         </View>
+        )
       ) : (
         <FlatList
           data={sessions}
@@ -689,7 +801,14 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
           ListHeaderComponent={
             <Pressable
               onPress={onNewChat}
-              style={({ pressed }) => ({
+              style={({ pressed }) => (diffuse ? {
+                flexDirection: 'row', alignItems: 'center', gap: 12,
+                borderRadius: 18,
+                borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2,
+                padding: 14, marginBottom: 4,
+                backgroundColor: dt.colors.surface,
+                opacity: pressed ? 0.7 : 1,
+              } : {
                 flexDirection: 'row', alignItems: 'center', gap: 12,
                 borderRadius: 18,
                 borderWidth: 1.5, borderColor: ST_INK,
@@ -701,14 +820,20 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
                 transform: [{ translateY: pressed ? 2 : 0 }],
               })}
             >
-              <View style={{
-                width: 36, height: 36, borderRadius: 18,
-                backgroundColor: PAPER, borderWidth: 1.5, borderColor: ST_INK,
-                alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Plus size={18} color={ST_INK} strokeWidth={2.5} />
-              </View>
-              <Text style={{ fontSize: 15, fontFamily: font.bodyBold, color: ST_INK, letterSpacing: -0.2 }}>
+              {diffuse ? (
+                <DiffuseBloomIcon color={accent} size={36} intensity={0.5}>
+                  <Plus size={18} color={dt.colors.ink} strokeWidth={2} />
+                </DiffuseBloomIcon>
+              ) : (
+                <View style={{
+                  width: 36, height: 36, borderRadius: 18,
+                  backgroundColor: PAPER, borderWidth: 1.5, borderColor: ST_INK,
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Plus size={18} color={ST_INK} strokeWidth={2.5} />
+                </View>
+              )}
+              <Text style={{ fontSize: 15, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodyBold, color: diffuse ? dt.colors.ink : ST_INK, letterSpacing: -0.2 }}>
                 {t('grandmaTalk_history_new_convo')}
               </Text>
             </Pressable>
@@ -716,7 +841,13 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
           renderItem={({ item }) => (
             <Pressable
               onPress={() => onSelect(item)}
-              style={({ pressed }) => ({
+              style={({ pressed }) => (diffuse ? {
+                flexDirection: 'row', alignItems: 'center', gap: 12,
+                borderRadius: 18, padding: 14,
+                backgroundColor: dt.colors.surface,
+                borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line,
+                opacity: pressed ? 0.7 : 1,
+              } : {
                 flexDirection: 'row', alignItems: 'center', gap: 12,
                 borderRadius: 18, padding: 14,
                 backgroundColor: PAPER,
@@ -728,40 +859,71 @@ function HistoryPanel({ onClose, onSelect, onNewChat }: HistoryPanelProps) {
               })}
             >
               <View style={histStyles.sessionCardLeft}>
-                <View style={{
-                  width: 36, height: 36, borderRadius: 18,
-                  backgroundColor: ST_LILAC, borderWidth: 1.5, borderColor: ST_INK,
-                  alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2,
-                }}>
-                  <Sparkles size={14} color={ST_INK} strokeWidth={2.5} />
-                </View>
+                {diffuse ? (
+                  <View style={{ marginTop: 2 }}>
+                    <DiffuseBloomIcon color={accent} size={36} intensity={0.5}>
+                      <Sparkles size={14} color={dt.colors.ink3} strokeWidth={2} />
+                    </DiffuseBloomIcon>
+                  </View>
+                ) : (
+                  <View style={{
+                    width: 36, height: 36, borderRadius: 18,
+                    backgroundColor: ST_LILAC, borderWidth: 1.5, borderColor: ST_INK,
+                    alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2,
+                  }}>
+                    <Sparkles size={14} color={ST_INK} strokeWidth={2.5} />
+                  </View>
+                )}
                 <View style={histStyles.sessionMeta}>
-                  <Text style={{ fontSize: 14, fontFamily: font.bodySemiBold, color: ink, lineHeight: 20 }} numberOfLines={2}>
+                  <Text style={{ fontSize: 14, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold, color: ink, lineHeight: 20 }} numberOfLines={2}>
                     {item.title}
                   </Text>
                   <View style={histStyles.sessionTags}>
-                    <Text style={{ fontSize: 11, fontFamily: font.bodyMedium, color: ink3 }}>
+                    <Text style={{ fontSize: 11, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, color: ink3, letterSpacing: diffuse ? 0.4 : 0 }}>
                       {formatDate(item.createdAt)}
                     </Text>
-                    <View style={{
-                      paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
-                      backgroundColor: getBehaviorColor(item.behavior) + (isDark ? '30' : 'AA'),
-                      borderWidth: 1, borderColor: ST_INK + '30',
-                    }}>
-                      <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: ST_INK, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-                        {getBehaviorLabel(item.behavior)}
-                      </Text>
-                    </View>
-                    {item.childName && (
+                    {diffuse ? (
+                      // Hairline mono chip — no filled behavior color.
                       <View style={{
                         paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
-                        backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
-                        borderWidth: 1, borderColor: ST_INK + '30',
+                        borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2,
                       }}>
-                        <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: ink, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-                          {item.childName}
+                        <Text style={{ fontSize: 10, fontFamily: diffuseFont.mono, color: dt.colors.ink3, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                          {getBehaviorLabel(item.behavior)}
                         </Text>
                       </View>
+                    ) : (
+                      <View style={{
+                        paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
+                        backgroundColor: getBehaviorColor(item.behavior) + (isDark ? '30' : 'AA'),
+                        borderWidth: 1, borderColor: ST_INK + '30',
+                      }}>
+                        <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: ST_INK, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                          {getBehaviorLabel(item.behavior)}
+                        </Text>
+                      </View>
+                    )}
+                    {item.childName && (
+                      diffuse ? (
+                        <View style={{
+                          paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
+                          borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2,
+                        }}>
+                          <Text style={{ fontSize: 10, fontFamily: diffuseFont.mono, color: dt.colors.ink3, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                            {item.childName}
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={{
+                          paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
+                          backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
+                          borderWidth: 1, borderColor: ST_INK + '30',
+                        }}>
+                          <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: ink, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                            {item.childName}
+                          </Text>
+                        </View>
+                      )
                     )}
                   </View>
                 </View>
@@ -856,6 +1018,8 @@ const histStyles = StyleSheet.create({
 
 export function GrandmaTalk() {
   const { colors, radius, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
@@ -1072,14 +1236,66 @@ export function GrandmaTalk() {
       const isTyping = item.role === 'assistant' && item.content === '' && isStreaming
       const isLatestGrandma = !isUser && index === lastAssistantIndex
 
+      const timeAgo = isUser ? 'A MOMENT AGO' : ''
+      const label = isUser ? `YOU, ${timeAgo}` : 'GRANDMA'
+
+      if (diffuse) {
+        // Softened bubbles: no saturated dark fill. Latest grandma reply = paper
+        // surface with a whisper accent bloom; user = faint surface tint; other
+        // grandma = hairline on the page bg. Labels mono, body ink.
+        const accent = getDiffuseAccent(mode, dt.isDark)
+        const dCardBg = isUser
+          ? dt.colors.surface
+          : isLatestGrandma
+            ? dt.colors.surface
+            : dt.colors.bg
+        const dBorderColor = isLatestGrandma ? dt.colors.line2 : dt.colors.line
+        const dTextColor = dt.colors.ink
+        const dLabelColor = dt.colors.ink3
+        return (
+          <View style={[styles.cardWrap, isLatestGrandma && styles.cardWrapLatest]}>
+            {isLatestGrandma && <SwayingFlower />}
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: dCardBg,
+                  borderColor: dBorderColor,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  overflow: 'hidden',
+                },
+              ]}
+            >
+              {isLatestGrandma ? (
+                <SoftBloom color={accent} cx="88%" cy="8%" opacity={dt.isDark ? 0.26 : 0.32} spread={0.5} radius="55%" />
+              ) : null}
+              <Text style={[styles.cardLabel, { color: dLabelColor, fontFamily: diffuseFont.mono }]}>
+                {label}
+              </Text>
+              {isTyping ? (
+                <View style={styles.typingRow}>
+                  <Animated.View style={[styles.dot, { backgroundColor: dLabelColor, opacity: pulseAnim }]} />
+                  <Animated.View style={[styles.dot, { backgroundColor: dLabelColor, opacity: pulseAnim, transform: [{ scale: pulseAnim }] }]} />
+                  <Animated.View style={[styles.dot, { backgroundColor: dLabelColor, opacity: pulseAnim }]} />
+                  <Text style={[styles.typingText, { color: dt.colors.ink2, fontFamily: diffuseFont.italic }]}>{orbMessage}</Text>
+                </View>
+              ) : isUser ? (
+                <Text style={[styles.cardBody, { color: dTextColor, fontFamily: diffuseFont.body }]}>
+                  {item.content}
+                </Text>
+              ) : (
+                <FormattedText content={item.content} color={dTextColor} />
+              )}
+            </View>
+          </View>
+        )
+      }
+
       const cardBg = isLatestGrandma
         ? (isDark ? colors.text : '#141313')
         : colors.surface
       const textColor = isLatestGrandma ? colors.textInverse : colors.text
       const labelColor = isLatestGrandma ? 'rgba(245,237,220,0.55)' : colors.textMuted
-
-      const timeAgo = isUser ? 'A MOMENT AGO' : ''
-      const label = isUser ? `YOU, ${timeAgo}` : 'GRANDMA'
 
       return (
         <View style={[styles.cardWrap, isLatestGrandma && styles.cardWrapLatest]}>
@@ -1115,7 +1331,7 @@ export function GrandmaTalk() {
         </View>
       )
     },
-    [colors, font, isStreaming, orbMessage, pulseAnim, lastAssistantIndex, isDark]
+    [colors, font, isStreaming, orbMessage, pulseAnim, lastAssistantIndex, isDark, diffuse, dt, mode]
   )
 
   // Show the AI follow-up suggestions (after Grandma replies)
@@ -1123,37 +1339,45 @@ export function GrandmaTalk() {
   // Show the initial suggestions only before any user messages
   const showInitialSuggestions = !hasUserMessages && !isStreaming
 
+  // Page-level diffuse tokens (fall back to cream tokens when the flag is off).
+  const pageBg = diffuse ? dt.colors.bg : colors.bg
+  const headerTextColor = diffuse ? dt.colors.ink : colors.text
+  const accent = getDiffuseAccent(mode, dt.isDark)
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: pageBg }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10, backgroundColor: colors.bg }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 10, backgroundColor: pageBg }]}>
         <Pressable
           onPress={() => router.back()}
-          style={[styles.headerCircleBtn, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
+          style={[styles.headerCircleBtn, diffuse
+            ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line2, borderWidth: StyleSheet.hairlineWidth }
+            : { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
           hitSlop={8}
         >
-          <X size={18} color={colors.text} strokeWidth={1.75} />
+          <X size={18} color={headerTextColor} strokeWidth={1.75} />
         </Pressable>
         <View style={styles.headerTitleBlock}>
-          <Text style={[styles.headerTitle, { color: colors.text, fontFamily: font.display }]}>
+          <Text style={[styles.headerTitle, { color: headerTextColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
             {t('grandmaTalk_header_grandma')}
-            <Text style={[styles.headerTitleItalic, { fontFamily: font.italic }]}>{t('grandmaTalk_header_talk')}</Text>
+            <Text style={[styles.headerTitleItalic, { fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>{t('grandmaTalk_header_talk')}</Text>
           </Text>
         </View>
         <Pressable
           onPress={() => setShowHistory(true)}
-          style={[styles.headerCircleBtn, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
+          style={[styles.headerCircleBtn, diffuse
+            ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line2, borderWidth: StyleSheet.hairlineWidth }
+            : { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
           hitSlop={8}
           accessibilityLabel="Past conversations"
         >
-          <MessagesSquare size={18} color={colors.text} strokeWidth={1.75} />
+          <MessagesSquare size={18} color={headerTextColor} strokeWidth={1.75} />
         </Pressable>
       </View>
 
       {/* Child selector row (only in kids mode with multiple children) */}
       {children.length > 1 && chatBehavior === 'kids' && (
-        <View style={[styles.childSelectorRow, { borderBottomColor: colors.border }]}>
+        <View style={[styles.childSelectorRow, { borderBottomColor: diffuse ? dt.colors.line : colors.border }]}>
           <ChildPills
             children={children}
             activeChildId={activeChild?.id}
@@ -1164,12 +1388,23 @@ export function GrandmaTalk() {
 
       {/* Context card (when opened from insight) */}
       {insightContext && (
+        diffuse ? (
+          <View style={[styles.contextCard, { backgroundColor: dt.colors.surface, borderBottomColor: dt.colors.line, borderBottomWidth: StyleSheet.hairlineWidth }]}>
+            <DiffuseBloomIcon color={accent} size={26} intensity={0.5}>
+              <Lightbulb size={15} color={dt.colors.ink3} strokeWidth={2} />
+            </DiffuseBloomIcon>
+            <Text style={[styles.contextText, { color: dt.colors.ink2, fontFamily: diffuseFont.body }]} numberOfLines={2}>
+              {insightContext}
+            </Text>
+          </View>
+        ) : (
         <View style={[styles.contextCard, { backgroundColor: colors.primaryTint, borderBottomColor: colors.border }]}>
           <Lightbulb size={15} color={colors.primary} strokeWidth={2} />
           <Text style={[styles.contextText, { color: colors.primary }]} numberOfLines={2}>
             {insightContext}
           </Text>
         </View>
+        )
       )}
 
       {/* Messages + input */}
@@ -1208,13 +1443,21 @@ export function GrandmaTalk() {
                   onPress={() => sendText(s.prompt)}
                   style={({ pressed }) => [
                     styles.chip,
-                    {
-                      backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-                      borderColor: colors.borderLight,
-                    },
+                    diffuse
+                      ? {
+                          // Hairline transparent pill — no filled color chip.
+                          backgroundColor: 'transparent',
+                          borderColor: dt.colors.line2,
+                          borderWidth: StyleSheet.hairlineWidth,
+                          opacity: pressed ? 0.6 : 1,
+                        }
+                      : {
+                          backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+                          borderColor: colors.borderLight,
+                        },
                   ]}
                 >
-                  <Text style={[styles.chipLabel, { color: colors.text, fontFamily: font.body }]}>
+                  <Text style={[styles.chipLabel, { color: diffuse ? dt.colors.ink2 : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.4 : 0 }]}>
                     {s.label}
                   </Text>
                 </Pressable>
@@ -1237,13 +1480,20 @@ export function GrandmaTalk() {
                   onPress={() => sendText(s)}
                   style={({ pressed }) => [
                     styles.chip,
-                    {
-                      backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-                      borderColor: colors.borderLight,
-                    },
+                    diffuse
+                      ? {
+                          backgroundColor: 'transparent',
+                          borderColor: dt.colors.line2,
+                          borderWidth: StyleSheet.hairlineWidth,
+                          opacity: pressed ? 0.6 : 1,
+                        }
+                      : {
+                          backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+                          borderColor: colors.borderLight,
+                        },
                   ]}
                 >
-                  <Text style={[styles.chipLabel, { color: colors.text, fontFamily: font.body }]} numberOfLines={1}>
+                  <Text style={[styles.chipLabel, { color: diffuse ? dt.colors.ink2 : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.4 : 0 }]} numberOfLines={1}>
                     {s}
                   </Text>
                 </Pressable>
@@ -1253,15 +1503,26 @@ export function GrandmaTalk() {
         )}
 
         {/* Input bar — voice-first "Tap to talk" pill + mic */}
-        <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 4), backgroundColor: colors.bg }]}>
+        <View style={[
+          styles.inputBar,
+          { paddingBottom: Math.max(insets.bottom, 4), backgroundColor: pageBg },
+          diffuse && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line },
+        ]}>
           <View
             style={[
               styles.input,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.borderLight,
-                borderRadius: radius.full,
-              },
+              diffuse
+                ? {
+                    backgroundColor: dt.colors.surface,
+                    borderColor: dt.colors.line2,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderRadius: radius.full,
+                  }
+                : {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.borderLight,
+                    borderRadius: radius.full,
+                  },
             ]}
           >
             <TextInput
@@ -1269,12 +1530,12 @@ export function GrandmaTalk() {
               value={input}
               onChangeText={setInput}
               placeholder="Tap to talk to grandma…"
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={diffuse ? dt.colors.ink3 : colors.textMuted}
               multiline
               maxLength={2000}
               style={[
                 styles.inputField,
-                { color: colors.text, fontFamily: font.body },
+                { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body },
               ]}
               onSubmitEditing={handleSend}
               returnKeyType="send"
@@ -1282,23 +1543,42 @@ export function GrandmaTalk() {
             />
             {input.trim().length > 0 && (
               <Pressable onPress={handleSend} hitSlop={6} style={styles.inlineSendBtn}>
-                <Send size={16} color={colors.primary} strokeWidth={2} />
+                <Send size={16} color={diffuse ? dt.colors.ink : colors.primary} strokeWidth={2} />
               </Pressable>
             )}
           </View>
-          <Pressable
-            onPress={() => inputRef.current?.focus()}
-            style={({ pressed }) => [
-              styles.micBtn,
-              {
-                backgroundColor: isDark ? colors.text : '#141313',
-                borderRadius: radius.full,
-              },
-              pressed && { opacity: 0.82 },
-            ]}
-          >
-            <Mic size={20} color={isDark ? colors.bg : '#F5EDDC'} strokeWidth={2} fill={isDark ? colors.bg : '#F5EDDC'} />
-          </Pressable>
+          {diffuse ? (
+            // Calm circular node — paper + hairline + ink mic (not a filled dark circle).
+            <Pressable
+              onPress={() => inputRef.current?.focus()}
+              style={({ pressed }) => [
+                styles.micBtn,
+                {
+                  backgroundColor: dt.colors.surface,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: dt.colors.hairline,
+                  borderRadius: radius.full,
+                },
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <Mic size={20} color={dt.colors.ink} strokeWidth={2} />
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => inputRef.current?.focus()}
+              style={({ pressed }) => [
+                styles.micBtn,
+                {
+                  backgroundColor: isDark ? colors.text : '#141313',
+                  borderRadius: radius.full,
+                },
+                pressed && { opacity: 0.82 },
+              ]}
+            >
+              <Mic size={20} color={isDark ? colors.bg : '#F5EDDC'} strokeWidth={2} fill={isDark ? colors.bg : '#F5EDDC'} />
+            </Pressable>
+          )}
         </View>
       </KeyboardAvoidingView>
 
