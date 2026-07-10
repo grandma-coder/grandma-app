@@ -25,7 +25,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { X, ChevronRight, Brain, Sparkles, Flame } from 'lucide-react-native'
+import { X, ChevronRight, Brain, Sparkles, Flame, Check } from 'lucide-react-native'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { DiffuseSheet, DiffuseListRow, DiffuseSectionHeader, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
@@ -320,12 +320,20 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
                             width: coreSize,
                             height: coreSize,
                             borderRadius: coreSize / 2,
-                            backgroundColor: leap.color,
-                            borderWidth: isCurrent ? 2 : 0,
-                            borderColor: diffuseAccent,
-                            opacity: isFuture ? 0.5 : 1,
+                            // Past = solid filled orb (a completed light). Current
+                            // = solid + accent ring. Future = hollow ring only, so
+                            // done/todo reads at a glance around the wheel.
+                            backgroundColor: isFuture ? 'transparent' : leap.color,
+                            borderWidth: isFuture ? 1.5 : isCurrent ? 2 : 0,
+                            borderColor: isFuture ? leap.color : diffuseAccent,
+                            opacity: isFuture ? 0.7 : 1,
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           }}
-                        />
+                        >
+                          {/* Past leaps carry a tiny check — visibly "done". */}
+                          {isPast ? <Check size={coreSize * 0.7} color={dt.colors.bg} strokeWidth={3} /> : null}
+                        </View>
                         <Text
                           style={{
                             fontFamily: diffuseFont.mono,
@@ -465,38 +473,26 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
         contentContainerStyle={[styles.panelContent, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Status pill */}
-        <View style={styles.metaRow}>
-          <Text
-            style={[
-              styles.metaLabel,
-              diffuse
-                ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.8 }
-                : { color: col, fontFamily: font.bodySemiBold },
-            ]}
-          >
-            {t('kids_journeyRing_growthLeap')}
-          </Text>
-          <View
-            style={[
-              styles.statusPill,
-              diffuse
-                ? { borderColor: selectedState === 'current' ? diffuseAccent : dt.colors.line2, backgroundColor: 'transparent' }
-                : { borderColor: isDark ? statusColor + '70' : INK, backgroundColor: isDark ? statusColor + '22' : statusFill },
-            ]}
-          >
-            <Text
+        {/* Status pill — current theme only. Under Diffuse the wheel already
+            shows status (checks on past leaps, accent ring on current), so this
+            redundant row is dropped for a cleaner bottom. */}
+        {!diffuse ? (
+          <View style={styles.metaRow}>
+            <Text style={[styles.metaLabel, { color: col, fontFamily: font.bodySemiBold }]}>
+              {t('kids_journeyRing_growthLeap')}
+            </Text>
+            <View
               style={[
-                styles.statusPillText,
-                diffuse
-                  ? { color: selectedState === 'current' ? diffuseAccent : dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1 }
-                  : { color: isDark ? statusColor : INK, fontFamily: font.bodySemiBold },
+                styles.statusPill,
+                { borderColor: isDark ? statusColor + '70' : INK, backgroundColor: isDark ? statusColor + '22' : statusFill },
               ]}
             >
-              {statusLabel}
-            </Text>
+              <Text style={[styles.statusPillText, { color: isDark ? statusColor : INK, fontFamily: font.bodySemiBold }]}>
+                {statusLabel}
+              </Text>
+            </View>
           </View>
-        </View>
+        ) : null}
 
         {/* Tappable description card → opens detail modal */}
         <Pressable
