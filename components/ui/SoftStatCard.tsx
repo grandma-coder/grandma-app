@@ -9,6 +9,8 @@
 import { ReactNode } from 'react'
 import { View, Pressable, StyleSheet, ViewStyle, StyleProp } from 'react-native'
 import { Display, MonoCaps, Body } from './Typography'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
+import { useDiffuseTheme } from '../../constants/theme'
 
 interface SoftStatCardProps {
   label: string
@@ -46,12 +48,21 @@ export function SoftStatCard({
   valueSize = 30,
 }: SoftStatCardProps) {
   const Container: any = onPress ? Pressable : View
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  // Diffuse: hairline geometry — paper surface + hairline border, no filled
+  // sticker tint, no shadow. Typography children (Display/MonoCaps/Body)
+  // self-branch to serif hero / mono label roles automatically.
+  const cardTokens = diffuse
+    ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+    : { backgroundColor: bg ?? '#FFFEF8', borderColor: 'rgba(20,19,19,0.08)' }
   return (
     <Container
       onPress={onPress}
       style={({ pressed }: { pressed?: boolean }) => [
         styles.card,
-        { backgroundColor: bg ?? '#FFFEF8', opacity: pressed ? 0.92 : 1 },
+        cardTokens,
+        { opacity: pressed ? 0.92 : 1 },
         style,
       ]}
     >

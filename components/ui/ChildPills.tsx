@@ -13,7 +13,8 @@
 
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
 import { stickers, font } from '../../constants/theme'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from './diffuse/DiffuseKit'
 
 const ST_INK = '#141313'
 const PAPER_BORDER = 'rgba(20,19,19,0.18)'
@@ -127,9 +128,62 @@ interface ChildPillProps {
 
 export function ChildPill({ label, age, active, color, onPress, showDot = true }: ChildPillProps) {
   const { isDark, colors, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const ink = isDark ? colors.text : ST_INK
   const inkBorder = isDark ? colors.border : PAPER_BORDER
   const tintBg = isDark ? color + '28' : color + '24' // ~14% in light, ~16% in dark
+
+  // Diffuse: never a filled saturated pill. Selection = hairline border + a
+  // colored dot + a weight/serif shift. Active gets the strong hairline rule
+  // and a paper surface; inactive is a transparent faint hairline. No shadow.
+  if (diffuse) {
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.pill,
+          {
+            backgroundColor: active ? dt.colors.surface : 'transparent',
+            borderColor: active ? dt.colors.hairline : dt.colors.line2,
+            borderWidth: 1,
+            borderRadius: radius.full,
+            opacity: pressed ? 0.7 : 1,
+          },
+        ]}
+      >
+        {showDot && (
+          <View
+            style={[
+              styles.pillDot,
+              { backgroundColor: color, borderColor: 'transparent' },
+            ]}
+          />
+        )}
+        <Text
+          style={[
+            styles.pillName,
+            {
+              color: active ? dt.colors.ink : dt.colors.ink2,
+              fontFamily: active ? diffuseFont.bodySemiBold : diffuseFont.body,
+            },
+          ]}
+        >
+          {label}
+        </Text>
+        {age ? (
+          <Text
+            style={[
+              styles.pillAge,
+              { color: dt.colors.ink3, opacity: 1, fontFamily: diffuseFont.mono, letterSpacing: 0.4 },
+            ]}
+          >
+            {age}
+          </Text>
+        ) : null}
+      </Pressable>
+    )
+  }
 
   return (
     <Pressable
