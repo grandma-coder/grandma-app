@@ -12,10 +12,19 @@ import { createContext, useContext } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme } from '../../constants/theme'
+import {
+  useTheme,
+  useDiffuseTheme,
+  diffuseFont,
+  getDiffuseAccent,
+  getModeField,
+} from '../../constants/theme'
 import { Display, DisplayItalic } from '../ui/Typography'
 import { PillButton } from '../ui/PillButton'
 import { useTranslation } from '../../lib/i18n'
+import { AuraField, type AuraBloom } from '../ui/diffuse/AuraField'
+import { DiffuseSolidCTA, DiffuseTextLink } from '../ui/diffuse/DiffuseActions'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 
 /**
  * OnboardingNavContext — lets parent provide back/close handlers
@@ -52,6 +61,10 @@ interface OnboardingStepProps {
   onClose?: () => void
   continueDisabled?: boolean
   continueLabel?: string
+  /** Diffuse variant: which mode's aura recipe backs the shell */
+  auraMode?: 'pre-pregnancy' | 'pregnancy' | 'kids'
+  /** Diffuse variant: explicit progress 0..1 for the hairline bar (defaults to step/total) */
+  progress?: number
 }
 
 export function OnboardingStep({
@@ -67,14 +80,125 @@ export function OnboardingStep({
   onClose,
   continueDisabled = false,
   continueLabel = 'Continue →',
+  auraMode,
+  progress,
 }: OnboardingStepProps) {
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
   const { t } = useTranslation()
   const nav = useContext(OnboardingNavContext)
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
 
   const backHandler = onBack ?? nav.onBack
   const closeHandler = onClose ?? nav.onClose
+
+  // ── Diffuse (v3) shell ────────────────────────────────────────────────────
+  // Aura field + mono step header + hairline progress bar + serif question +
+  // containerless solid CTA. Mirrors `.ob-head` / `.prog` / `.q` / `.cta` in
+  // docs/design/Onboarding.html. Additive: the cream-paper path below is
+  // untouched and renders whenever the variant is 'current'.
+  if (diffuse) {
+    const mode = auraMode ?? 'pre-pregnancy'
+    const [g1, g2, g3] = getModeField(mode, dt.isDark)
+    const auraBlooms: AuraBloom[] = [
+      { color: g1, cx: '16%', cy: '14%', opacity: 0.42 },
+      { color: g2, cx: '88%', cy: '22%', opacity: 0.4 },
+      { color: g3, cx: '50%', cy: '104%', opacity: 0.4 },
+    ]
+    const accent = getDiffuseAccent(mode, dt.isDark)
+    const pct = Math.max(0, Math.min(1, progress ?? (total > 0 ? step / total : 0)))
+
+    // Strip trailing arrow / check glyphs; decide the finish icon from intent.
+    const rawLabel = continueLabel.replace(/[→✓]/g, '').trim()
+    const ctaLabel = rawLabel.toUpperCase()
+    const finish = /✓|finish|send|done|complete/i.test(continueLabel)
+
+    return (
+      <AuraField blooms={auraBlooms} style={{ backgroundColor: dt.colors.bg }}>
+        <View style={[dStyles.top, { paddingTop: insets.top + 12 }]}>
+          {/* .ob-head — back · step label · skip/close */}
+          <View style={dStyles.head}>
+            {backHandler ? (
+              <Pressable onPress={backHandler} hitSlop={8}>
+                <View style={[dStyles.circleBtn, { borderColor: dt.colors.line2 }]}>
+                  <Ionicons name="chevron-back" size={18} color={dt.colors.ink} />
+                </View>
+              </Pressable>
+            ) : (
+              <View style={dStyles.circleBtn} />
+            )}
+
+            <Text
+              style={[
+                dStyles.stepLabel,
+                { fontFamily: diffuseFont.mono, color: dt.colors.ink3 },
+              ]}
+            >
+              {step} / {total}
+            </Text>
+
+            {onSkip ? (
+              <DiffuseTextLink label={t('common_skip')} onPress={onSkip} />
+            ) : closeHandler ? (
+              <Pressable onPress={closeHandler} hitSlop={8}>
+                <View style={[dStyles.circleBtn, { borderColor: dt.colors.line2 }]}>
+                  <Ionicons name="close" size={18} color={dt.colors.ink} />
+                </View>
+              </Pressable>
+            ) : (
+              <View style={dStyles.circleBtn} />
+            )}
+          </View>
+
+          {/* .prog — hairline progress track + accent fill */}
+          <View style={[dStyles.progTrack, { backgroundColor: dt.colors.line }]}>
+            <View
+              style={[
+                dStyles.progFill,
+                { width: `${pct * 100}%`, backgroundColor: accent },
+              ]}
+            />
+          </View>
+
+          {/* .q — serif question + optional italic accent line */}
+          <View style={dStyles.questionWrap}>
+            <Text
+              style={[
+                dStyles.question,
+                { fontFamily: diffuseFont.displayLight, color: dt.colors.ink },
+              ]}
+            >
+              {question}
+            </Text>
+            {italicSuffix ? (
+              <Text
+                style={[
+                  dStyles.question,
+                  { fontFamily: diffuseFont.italic, color: dt.colors.ink3 },
+                ]}
+              >
+                {italicSuffix}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+
+        {/* Content area */}
+        <View style={dStyles.content}>{children}</View>
+
+        {/* .cta — containerless solid action pinned bottom */}
+        <View style={[dStyles.bottom, { paddingBottom: insets.bottom + 16 }]}>
+          <DiffuseSolidCTA
+            label={ctaLabel}
+            onPress={onContinue}
+            disabled={continueDisabled}
+            icon={finish ? 'check' : 'arrow'}
+          />
+        </View>
+      </AuraField>
+    )
+  }
 
   const bg = colors.bg
   const paper = colors.surface
@@ -193,6 +317,59 @@ const styles = StyleSheet.create({
     paddingTop: 22,
   },
 
+  bottom: {
+    marginTop: 'auto',
+    paddingHorizontal: 24,
+    paddingTop: 8,
+  },
+})
+
+// Diffuse (v3) shell styles — parallel to `styles`, applied only in the
+// `if (diffuse)` branch. Colors are injected inline from useDiffuseTheme().
+const dStyles = StyleSheet.create({
+  top: {
+    paddingHorizontal: 24,
+    gap: 22,
+  },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 38,
+  },
+  circleBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepLabel: {
+    fontSize: 12,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+  progTrack: {
+    height: 3,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  progFill: {
+    height: 3,
+    borderRadius: 999,
+  },
+  questionWrap: {},
+  question: {
+    fontSize: 35,
+    lineHeight: 40,
+    letterSpacing: -0.4,
+  },
+  content: {
+    paddingHorizontal: 24,
+    paddingTop: 22,
+  },
   bottom: {
     marginTop: 'auto',
     paddingHorizontal: 24,
