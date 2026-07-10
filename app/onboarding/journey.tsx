@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { View, Text, Pressable, StyleSheet, ScrollView, type DimensionValue } from 'react-native'
+import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -20,9 +20,10 @@ import { Flower, Heart, Star } from '../../components/ui/Stickers'
 import { Display, DisplayItalic, Body } from '../../components/ui/Typography'
 import { PillButton } from '../../components/ui/PillButton'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
-import { useIsDiffuse, SoftBloom } from '../../components/ui/diffuse/DiffuseKit'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
+import { BlobPicker, type BlobOption } from '../../components/ui/diffuse/pickers/BlobPicker'
 import { useTranslation } from '../../lib/i18n'
 
 interface JourneyOption {
@@ -134,6 +135,21 @@ export default function JourneyScreen() {
     })
   }
 
+  // Diffuse blob-field data (only consumed by the diffuse branch). Each journey
+  // maps to a BlobOption carrying the same center-anchor cx/cy the inline blobs
+  // used. Already-enrolled journeys are dimmed in add-mode. BlobPicker.onChange
+  // hands back the option key (always a Behavior id here) → handleToggle.
+  const blobOptions: BlobOption[] = JOURNEYS.map((journey) => ({
+    key: journey.id,
+    kicker: journey.subtitle,
+    name: journey.title,
+    color: journey.blobColor,
+    cx: journey.blobCx,
+    cy: journey.blobCy,
+  }))
+  const dimmedKeys = isAddMode ? enrolledBehaviors : []
+  const handleBlobChange = (key: string) => handleToggle(key as Behavior)
+
   function handleContinue() {
     if (!hasSelection) return
 
@@ -199,59 +215,19 @@ export default function JourneyScreen() {
             {isAddMode ? t('onboardingJourney_addSubtitle') : t('onboardingJourney_subtitle')}
           </Text>
 
-          {/* Blob field — free-floating bloom circles (BlobPicker treatment,
-              wired inline to the existing multi-select toggle so add-mode
-              dimming of enrolled journeys is preserved). */}
+          {/* Blob field — free-floating bloom circles via the shared BlobPicker
+              primitive. Wired to the existing multi-select toggle: selectedKeys
+              drives the bright/scaled state, disabledKeys dims already-enrolled
+              journeys in add-mode. Center-anchor cx/cy come straight from each
+              JOURNEYS entry (same coords the inline version used). */}
           <View style={dStyles.blobfield}>
-            {JOURNEYS.map((journey) => {
-              const isEnrolled = enrolledBehaviors.includes(journey.id)
-              const isSelected = newSelections.includes(journey.id)
-              const isDimmed = isAddMode && isEnrolled
-              const active = isSelected || isDimmed
-
-              return (
-                <Pressable
-                  key={journey.id}
-                  onPress={() => !isDimmed && handleToggle(journey.id)}
-                  disabled={isDimmed}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isSelected, disabled: isDimmed }}
-                  style={[
-                    dStyles.blob,
-                    {
-                      left: journey.blobCx as DimensionValue,
-                      top: journey.blobCy as DimensionValue,
-                      opacity: isDimmed ? 0.55 : 1,
-                    },
-                  ]}
-                >
-                  <View
-                    pointerEvents="none"
-                    style={[StyleSheet.absoluteFillObject, active && dStyles.blobActive]}
-                  >
-                    <SoftBloom
-                      color={journey.blobColor}
-                      opacity={active ? 0.82 : 0.5}
-                      cx="50%"
-                      cy="50%"
-                      spread={0.6}
-                      radius="50%"
-                    />
-                  </View>
-                  <Text
-                    style={[
-                      dStyles.blobKicker,
-                      { fontFamily: diffuseFont.mono, color: active ? dt.colors.ink : dt.colors.ink3 },
-                    ]}
-                  >
-                    {journey.subtitle}
-                  </Text>
-                  <Text style={[dStyles.blobName, { fontFamily: diffuseFont.italic, color: dt.colors.ink }]}>
-                    {journey.title}
-                  </Text>
-                </Pressable>
-              )
-            })}
+            <BlobPicker
+              options={blobOptions}
+              value={null}
+              onChange={handleBlobChange}
+              selectedKeys={newSelections}
+              disabledKeys={dimmedKeys}
+            />
           </View>
         </ScrollView>
 
@@ -486,8 +462,6 @@ const styles = StyleSheet.create({
 })
 
 // ─── Diffuse (v3) styles — GENERAL 01 · journey picker ──────────────────────
-const BLOB_SIZE = 188
-
 const dStyles = StyleSheet.create({
   scroll: { paddingHorizontal: 28 },
   step: {
@@ -512,34 +486,13 @@ const dStyles = StyleSheet.create({
     maxWidth: 260,
     marginTop: 12,
   },
-  // Free-layout blob field; blobs are absolutely positioned by CENTER anchor.
+  // Free-layout blob field; the BlobPicker inside positions blobs by CENTER
+  // anchor. This wrapper just reserves the field's footprint.
   blobfield: {
     position: 'relative',
     width: '100%',
     height: 420,
     marginTop: 28,
-  },
-  blob: {
-    position: 'absolute',
-    width: BLOB_SIZE,
-    height: BLOB_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // Anchor left/top to the option's CENTER (mirrors BlobPicker).
-    transform: [{ translateX: -BLOB_SIZE / 2 }, { translateY: -BLOB_SIZE / 2 }],
-  },
-  blobActive: {
-    transform: [{ scale: 1.06 }],
-  },
-  blobKicker: {
-    fontSize: 11,
-    letterSpacing: 2.2,
-    textTransform: 'uppercase',
-  },
-  blobName: {
-    fontSize: 27,
-    letterSpacing: -0.3,
-    marginTop: 1,
   },
   footer: {
     paddingHorizontal: 28,
