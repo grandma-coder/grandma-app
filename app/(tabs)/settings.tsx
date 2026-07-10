@@ -21,7 +21,9 @@ import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Settings as SettingsIcon, LogOut } from 'lucide-react-native'
 import { NotificationBell } from '../../components/ui/NotificationBell'
-import { useTheme, brand, getModeColor } from '../../constants/theme'
+import { useTheme, brand, getModeColor, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseListRow } from '../../components/ui/diffuse/DiffusePrimitives'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
 import { useChildStore } from '../../store/useChildStore'
@@ -43,6 +45,8 @@ import { AnimatedSticker } from '../../components/ui/AnimatedSticker'
 
 export default function ProfileScreen() {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
 
@@ -188,7 +192,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -203,11 +207,17 @@ export default function ProfileScreen() {
             onPress={() => router.push('/profile/settings')}
             style={[
               styles.gearBtn,
-              { backgroundColor: colors.surface, borderColor: colors.border },
+              diffuse
+                ? { backgroundColor: 'transparent', borderColor: dt.colors.hairline }
+                : { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
             hitSlop={8}
           >
-            <SettingsIcon size={16} color={colors.text} strokeWidth={2} />
+            <SettingsIcon
+              size={16}
+              color={diffuse ? dt.colors.ink : colors.text}
+              strokeWidth={diffuse ? 1.6 : 2}
+            />
           </Pressable>
         </View>
 
@@ -238,93 +248,187 @@ export default function ProfileScreen() {
         <View
           style={[
             styles.menuCard,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radius.lg,
-            },
+            diffuse
+              ? {
+                  backgroundColor: dt.colors.surface,
+                  borderColor: dt.colors.line,
+                  borderRadius: radius.lg,
+                  paddingHorizontal: 16,
+                }
+              : {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  borderRadius: radius.lg,
+                },
           ]}
         >
-          <StatRow
-            icon={<AnimatedSticker type="Heart" size={18} fill="#F2B2C7" />}
-            label={t('profile_careCircle')}
-            value={careCircleCount === 1 ? '1 person' : `${careCircleCount} people`}
-            onPress={() => router.push('/profile/care-circle')}
-          />
+          {diffuse ? (
+            <>
+              <DiffuseListRow
+                icon={<AnimatedSticker type="Heart" size={18} fill="#F2B2C7" />}
+                title={t('profile_careCircle')}
+                value={careCircleCount === 1 ? '1 person' : `${careCircleCount} people`}
+                onPress={() => router.push('/profile/care-circle')}
+              />
 
-          {/* Pregnancy-only row — surfaces current week / due date */}
-          {isPregnancyBehavior && (
-            <StatRow
-              icon={<AnimatedSticker type="Heart" size={18} fill="#C8B6E8" />}
-              label="Pregnancy"
-              value={pregnancySummary}
-              onPress={() => router.push('/profile/pregnancy')}
-            />
-          )}
+              {isPregnancyBehavior && (
+                <DiffuseListRow
+                  icon={<AnimatedSticker type="Heart" size={18} fill="#C8B6E8" />}
+                  title="Pregnancy"
+                  value={pregnancySummary}
+                  onPress={() => router.push('/profile/pregnancy')}
+                />
+              )}
 
-          {/* Pre-pregnancy-only row — cycle tracking entry point */}
-          {isPrePregBehavior && (
-            <StatRow
-              icon={<AnimatedSticker type="Moon" size={18} fill="#F2B2C7" />}
-              label="Cycle"
-              value="Tracking"
-              onPress={() => router.push('/(tabs)')}
-            />
-          )}
+              {isPrePregBehavior && (
+                <DiffuseListRow
+                  icon={<AnimatedSticker type="Moon" size={18} fill="#F2B2C7" />}
+                  title="Cycle"
+                  value="Tracking"
+                  onPress={() => router.push('/(tabs)')}
+                />
+              )}
 
-          {/* Kids-only rows — hidden in pregnancy / pre-pregnancy modes */}
-          {showKidsItems && (
-            <StatRow
-              icon={<AnimatedSticker type="Flower" size={18} petal="#9DC3E8" center="#F5D652" />}
-              label="Kids Profile"
-              value={children.length === 1 ? '1 child' : `${children.length} children`}
-              onPress={() => router.push('/profile/kids')}
-            />
+              {showKidsItems && (
+                <DiffuseListRow
+                  icon={<AnimatedSticker type="Flower" size={18} petal="#9DC3E8" center="#F5D652" />}
+                  title="Kids Profile"
+                  value={children.length === 1 ? '1 child' : `${children.length} children`}
+                  onPress={() => router.push('/profile/kids')}
+                />
+              )}
+              {showKidsItems && (
+                <DiffuseListRow
+                  icon={<AnimatedSticker type="Star" size={18} fill="#F5D652" />}
+                  title={t('profile_memories')}
+                  value="—"
+                  onPress={() => router.push('/profile/memories')}
+                />
+              )}
+              {showKidsItems && (
+                <DiffuseListRow
+                  icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
+                  title={t('profile_healthHistory')}
+                  value={joinedYear ? `Since ${joinedYear}` : '—'}
+                  onPress={() => router.push('/profile/health-history')}
+                />
+              )}
+              <DiffuseListRow
+                icon={<AnimatedSticker type="Cross" size={18} fill="#EE7B6D" />}
+                title={t('profile_emergencyInsurance')}
+                value={hasEmergency ? 'Ready' : 'Not set'}
+                onPress={() => router.push('/profile/emergency-insurance')}
+              />
+              <DiffuseListRow
+                icon={<AnimatedSticker type="Drop" size={18} fill="#F5D652" />}
+                title={t('profile_notifications')}
+                showArrow
+                onPress={() => router.push('/profile/notifications')}
+              />
+              <DiffuseListRow
+                icon={<AnimatedSticker type="Moon" size={18} fill="#C8B6E8" />}
+                title={t('profile_accountSecurity')}
+                showArrow
+                onPress={() => router.push('/profile/account')}
+              />
+              <DiffuseListRow
+                icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
+                title={t('profile_dataPrivacy')}
+                showArrow
+                onPress={() => router.push('/profile/privacy')}
+              />
+              <DiffuseListRow
+                icon={<AnimatedSticker type="Burst" size={18} fill="#C8B6E8" />}
+                title={t('profile_subscription')}
+                value={isPremium ? 'Premium' : 'Upgrade'}
+                onPress={() => router.push('/paywall')}
+                last
+              />
+            </>
+          ) : (
+            <>
+              <StatRow
+                icon={<AnimatedSticker type="Heart" size={18} fill="#F2B2C7" />}
+                label={t('profile_careCircle')}
+                value={careCircleCount === 1 ? '1 person' : `${careCircleCount} people`}
+                onPress={() => router.push('/profile/care-circle')}
+              />
+
+              {/* Pregnancy-only row — surfaces current week / due date */}
+              {isPregnancyBehavior && (
+                <StatRow
+                  icon={<AnimatedSticker type="Heart" size={18} fill="#C8B6E8" />}
+                  label="Pregnancy"
+                  value={pregnancySummary}
+                  onPress={() => router.push('/profile/pregnancy')}
+                />
+              )}
+
+              {/* Pre-pregnancy-only row — cycle tracking entry point */}
+              {isPrePregBehavior && (
+                <StatRow
+                  icon={<AnimatedSticker type="Moon" size={18} fill="#F2B2C7" />}
+                  label="Cycle"
+                  value="Tracking"
+                  onPress={() => router.push('/(tabs)')}
+                />
+              )}
+
+              {/* Kids-only rows — hidden in pregnancy / pre-pregnancy modes */}
+              {showKidsItems && (
+                <StatRow
+                  icon={<AnimatedSticker type="Flower" size={18} petal="#9DC3E8" center="#F5D652" />}
+                  label="Kids Profile"
+                  value={children.length === 1 ? '1 child' : `${children.length} children`}
+                  onPress={() => router.push('/profile/kids')}
+                />
+              )}
+              {showKidsItems && (
+                <StatRow
+                  icon={<AnimatedSticker type="Star" size={18} fill="#F5D652" />}
+                  label={t('profile_memories')}
+                  value="—"
+                  onPress={() => router.push('/profile/memories')}
+                />
+              )}
+              {showKidsItems && (
+                <StatRow
+                  icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
+                  label={t('profile_healthHistory')}
+                  value={joinedYear ? `Since ${joinedYear}` : '—'}
+                  onPress={() => router.push('/profile/health-history')}
+                />
+              )}
+              <StatRow
+                icon={<AnimatedSticker type="Cross" size={18} fill="#EE7B6D" />}
+                label={t('profile_emergencyInsurance')}
+                value={hasEmergency ? 'Ready' : 'Not set'}
+                onPress={() => router.push('/profile/emergency-insurance')}
+              />
+              <StatRow
+                icon={<AnimatedSticker type="Drop" size={18} fill="#F5D652" />}
+                label={t('profile_notifications')}
+                onPress={() => router.push('/profile/notifications')}
+              />
+              <StatRow
+                icon={<AnimatedSticker type="Moon" size={18} fill="#C8B6E8" />}
+                label={t('profile_accountSecurity')}
+                onPress={() => router.push('/profile/account')}
+              />
+              <StatRow
+                icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
+                label={t('profile_dataPrivacy')}
+                onPress={() => router.push('/profile/privacy')}
+              />
+              <StatRow
+                icon={<AnimatedSticker type="Burst" size={18} fill="#C8B6E8" />}
+                label={t('profile_subscription')}
+                value={isPremium ? 'Premium' : 'Upgrade'}
+                onPress={() => router.push('/paywall')}
+                isLast
+              />
+            </>
           )}
-          {showKidsItems && (
-            <StatRow
-              icon={<AnimatedSticker type="Star" size={18} fill="#F5D652" />}
-              label={t('profile_memories')}
-              value="—"
-              onPress={() => router.push('/profile/memories')}
-            />
-          )}
-          {showKidsItems && (
-            <StatRow
-              icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
-              label={t('profile_healthHistory')}
-              value={joinedYear ? `Since ${joinedYear}` : '—'}
-              onPress={() => router.push('/profile/health-history')}
-            />
-          )}
-          <StatRow
-            icon={<AnimatedSticker type="Cross" size={18} fill="#EE7B6D" />}
-            label={t('profile_emergencyInsurance')}
-            value={hasEmergency ? 'Ready' : 'Not set'}
-            onPress={() => router.push('/profile/emergency-insurance')}
-          />
-          <StatRow
-            icon={<AnimatedSticker type="Drop" size={18} fill="#F5D652" />}
-            label={t('profile_notifications')}
-            onPress={() => router.push('/profile/notifications')}
-          />
-          <StatRow
-            icon={<AnimatedSticker type="Moon" size={18} fill="#C8B6E8" />}
-            label={t('profile_accountSecurity')}
-            onPress={() => router.push('/profile/account')}
-          />
-          <StatRow
-            icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
-            label={t('profile_dataPrivacy')}
-            onPress={() => router.push('/profile/privacy')}
-          />
-          <StatRow
-            icon={<AnimatedSticker type="Burst" size={18} fill="#C8B6E8" />}
-            label={t('profile_subscription')}
-            value={isPremium ? 'Premium' : 'Upgrade'}
-            onPress={() => router.push('/paywall')}
-            isLast
-          />
         </View>
 
         {/* Sign out */}
@@ -332,18 +436,39 @@ export default function ProfileScreen() {
           onPress={handleSignOut}
           style={({ pressed }) => [
             styles.signOutBtn,
-            { backgroundColor: colors.surface, borderRadius: radius.lg },
+            diffuse
+              ? {
+                  backgroundColor: 'transparent',
+                  borderRadius: radius.full,
+                  borderWidth: 1,
+                  borderColor: dt.colors.line2,
+                }
+              : { backgroundColor: colors.surface, borderRadius: radius.lg },
             pressed && { opacity: 0.7 },
           ]}
         >
-          <LogOut size={18} color={brand.error} strokeWidth={2} />
-          <Text style={[styles.signOutText, { color: brand.error }]}>
+          <LogOut size={18} color={diffuse ? dt.colors.error : brand.error} strokeWidth={diffuse ? 1.6 : 2} />
+          <Text
+            style={[
+              styles.signOutText,
+              diffuse
+                ? { color: dt.colors.error, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 13 }
+                : { color: brand.error },
+            ]}
+          >
             {t('profile_signOut')}
           </Text>
         </Pressable>
 
         <Pressable onPress={handleVersionPress} hitSlop={8}>
-          <Text style={[styles.version, { color: colors.textMuted }]}>
+          <Text
+            style={[
+              styles.version,
+              diffuse
+                ? { color: dt.colors.ink4, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase' }
+                : { color: colors.textMuted },
+            ]}
+          >
             {t('profile_version')}
           </Text>
         </Pressable>
