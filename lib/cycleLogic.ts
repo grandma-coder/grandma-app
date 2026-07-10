@@ -115,8 +115,13 @@ export function getCycleInfo(config: Partial<CycleConfig>, forDate?: string): Cy
   // Calculate what cycle day we're on
   const daysSincePeriod = daysBetween(cfg.lastPeriodStart, today)
 
-  // Handle if we're past the expected cycle length (new cycle predicted)
-  const cycleDay = (daysSincePeriod % cfg.cycleLength) + 1
+  // Project the date onto a repeating cycle. Use a Euclidean modulo so dates
+  // BEFORE lastPeriodStart wrap backward into prior cycles instead of going
+  // negative — JS `%` keeps the sign (-23 % 28 === -23), which made every past
+  // date land at cycleDay <= 0 and read as menstruation (painting the whole
+  // calendar before the last logged period red).
+  const dayInCycle = ((daysSincePeriod % cfg.cycleLength) + cfg.cycleLength) % cfg.cycleLength
+  const cycleDay = dayInCycle + 1
 
   // Ovulation typically happens cycleLength - lutealPhase days after period start
   const ovulationDay = cfg.cycleLength - cfg.lutealPhase

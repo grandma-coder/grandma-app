@@ -1016,7 +1016,7 @@ export function InsightsScreen() {
   function handleAskGrandma(insight: Insight) {
     setSelectedInsight(null)
     router.push({
-      pathname: '/(tabs)/library',
+      pathname: '/grandma-talk',
       params: { insightContext: `${insight.title}: ${insight.body}` },
     })
   }

@@ -31,7 +31,7 @@ import {
   CircleLinked, CircleDots, RolePartner, RoleNanny, RoleFamily, RoleDoctor,
   QuestRibbon, PointsCoin, DayBadge, DayLocked, Premium, VaultSecured,
   TalkMaster, EmergencyReady, Legendary, ScanComplete, BirthPlanReady,
-  AirTagLinked, PaywallUnlock, JourneyStart, AllThreeJourneys,
+  PaywallUnlock, JourneyStart, AllThreeJourneys,
   ModeTrying, ModePregnant, ModeParent, Trimester, WeekMarker, Flame,
   WeekWheel, WeekBar, PillarMaster, PillarOpen, PillarComplete,
   PillarWeekByWeek, PillarBreastfeeding, PillarFeeding, PillarVaccines,

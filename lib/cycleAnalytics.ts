@@ -6,9 +6,14 @@
  * values so the UI can show a "Log your first cycle" nudge.
  */
 
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from './supabase'
 import { getCycleInfo, toDateStr } from './cycleLogic'
+import {
+  getChecklistItems,
+  getChecklistTitle,
+  type ChecklistIntent,
+} from './cycleChecklist'
 
 // ─── Raw row shape ────────────────────────────────────────────────────────
 
@@ -308,4 +313,101 @@ export function useMoodStats() {
     ...rest,
     data: { avgScore, distribution, recent } satisfies MoodStats,
   }
+}
+
+// ─── Cycle Intent (trying to conceive vs cycle health) ─────────────────────
+//
+// Onboarding stores `tryingToConceive` in the first period_start row's notes
+// JSON (same source the notification engine reads). Returns 'ttc' | 'cycle' so
+// the checklist + tips can reframe content. Defaults to 'cycle' (the neutral,
+// non-assumptive framing) when nothing is logged or parsing fails.
+
+export function useCycleIntent() {
+  const { data: logs, ...rest } = useCycleLogs()
+  let intent: ChecklistIntent = 'cycle'
+  if (logs) {
+    const periodStart = logs.find((l) => l.type === 'period_start' && l.notes)
+    if (periodStart?.notes) {
+      try {
+        const meta = JSON.parse(periodStart.notes)
+        if (meta?.tryingToConceive) intent = 'ttc'
+      } catch {
+        // malformed notes — keep neutral default
+      }
+    }
+  }
+  return { ...rest, data: logs ? intent : undefined }
+}
+
+// ─── Checklist (completion state synced to cycle_checklist) ────────────────
+
+export interface ChecklistDisplayItem {
+  id: string
+  title: string
+  description: string
+  category: string
+  completed: boolean
+}
+
+export interface CycleChecklist {
+  title: string
+  items: ChecklistDisplayItem[]
+}
+
+/** Merges the static item set for the user's intent with completion state. */
+export function useCycleChecklist() {
+  const intentResult = useCycleIntent()
+  const intent: ChecklistIntent = intentResult.data ?? 'cycle'
+
+  const completedQuery = useQuery({
+    queryKey: ['cycleChecklist'],
+    queryFn: async (): Promise<Set<string>> => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return new Set()
+      const { data, error } = await supabase
+        .from('cycle_checklist')
+        .select('item_id, completed')
+        .eq('user_id', user.id)
+      if (error) throw error
+      return new Set(
+        (data ?? [])
+          .filter((r: { item_id: string; completed: boolean }) => r.completed)
+          .map((r: { item_id: string }) => r.item_id),
+      )
+    },
+    staleTime: 30_000,
+  })
+
+  const done = completedQuery.data ?? new Set<string>()
+  const items: ChecklistDisplayItem[] = getChecklistItems(intent).map((item) => ({
+    ...item,
+    completed: done.has(item.id),
+  }))
+
+  return {
+    isLoading: intentResult.isLoading || completedQuery.isLoading,
+    error: intentResult.error ?? completedQuery.error,
+    data: { title: getChecklistTitle(intent), items } satisfies CycleChecklist,
+  }
+}
+
+/** Toggle a checklist item's completion (upserts into cycle_checklist). */
+export function useToggleChecklistItem() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ itemId, completed }: { itemId: string; completed: boolean }) => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not signed in')
+      const { error } = await supabase
+        .from('cycle_checklist')
+        .upsert(
+          { user_id: user.id, item_id: itemId, completed, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id,item_id' },
+        )
+      if (error) throw error
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['cycleChecklist'] })
+    },
+  })
 }
