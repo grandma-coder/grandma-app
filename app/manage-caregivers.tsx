@@ -2,10 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, FlatList, Alert, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { ArrowLeft, Users, ArrowUpCircle, UserPlus, User, X, Heart as HeartLine } from 'lucide-react-native'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
-import { useTheme } from '../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
 import { useTranslation } from '../lib/i18n'
+import { useModeStore } from '../store/useModeStore'
+import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon, DiffuseEmptyState } from '../components/ui/diffuse/DiffusePrimitives'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { PaperAlert } from '../components/ui/PaperAlert'
@@ -23,6 +27,10 @@ interface CaregiverRow {
 
 export default function ManageCaregivers() {
   const { colors, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getDiffuseAccent(mode, dt.isDark)
   const { t } = useTranslation()
 
   const STATUS_COLORS: Record<string, string> = {
@@ -35,6 +43,13 @@ export default function ManageCaregivers() {
     pending: colors.warning,
     accepted: colors.success,
     revoked: colors.error,
+  }
+
+  // Diffuse status colors — ink ramp + semantic, mono type.
+  const DIFFUSE_STATUS_TEXT: Record<string, string> = {
+    pending: dt.colors.warning,
+    accepted: dt.colors.success,
+    revoked: dt.colors.error,
   }
 
   const styles = useMemo(() => StyleSheet.create({
@@ -130,22 +145,42 @@ export default function ManageCaregivers() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, diffuse && { backgroundColor: dt.colors.bg }]}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+        <Pressable
+          onPress={() => router.back()}
+          style={[
+            styles.backButton,
+            diffuse && { backgroundColor: 'transparent', borderColor: dt.colors.line2 },
+          ]}
+        >
+          {diffuse ? (
+            <ArrowLeft size={20} color={dt.colors.ink} strokeWidth={1.6} />
+          ) : (
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          )}
         </Pressable>
-        <Text style={styles.title}>{t('leaderboard_tabCaregivers')}</Text>
+        <Text style={[
+          styles.title,
+          diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' },
+        ]}>{t('leaderboard_tabCaregivers')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <Text style={styles.subtitle}>
+      <Text style={[styles.subtitle, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
         {t('manageCaregivers_subtitle', { name: child?.name ?? t('careInvite_yourChild') })}
       </Text>
 
       <View style={styles.seatCounter}>
-        <Ionicons name="people-outline" size={16} color={colors.textMuted} />
-        <Text style={styles.seatCounterText}>
+        {diffuse ? (
+          <Users size={15} color={dt.colors.ink3} strokeWidth={1.6} />
+        ) : (
+          <Ionicons name="people-outline" size={16} color={colors.textMuted} />
+        )}
+        <Text style={[
+          styles.seatCounterText,
+          diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 },
+        ]}>
           {seatLimit === 0
             ? 'Upgrade to invite caregivers'
             : `${activeSeats} of ${seatLimit} seat${seatLimit === 1 ? '' : 's'} used`}
@@ -155,18 +190,40 @@ export default function ManageCaregivers() {
       {atLimit && nextTierRoute ? (
         <Pressable
           onPress={() => router.push(`/paywall?tier=${nextTierRoute}`)}
-          style={[styles.inviteButton, { backgroundColor: colors.accent }]}
+          style={[
+            styles.inviteButton,
+            diffuse
+              ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2, borderRadius: 999 }
+              : { backgroundColor: colors.accent },
+          ]}
         >
-          <Ionicons name="arrow-up-circle-outline" size={20} color={colors.textInverse} />
-          <Text style={styles.inviteText}>{t('manageCaregivers_upgradeForSeats', { tier: nextTierLabel ?? '' })}</Text>
+          {diffuse ? (
+            <ArrowUpCircle size={18} color={dt.colors.ink} strokeWidth={1.6} />
+          ) : (
+            <Ionicons name="arrow-up-circle-outline" size={20} color={colors.textInverse} />
+          )}
+          <Text style={[
+            styles.inviteText,
+            diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 12 },
+          ]}>{t('manageCaregivers_upgradeForSeats', { tier: nextTierLabel ?? '' })}</Text>
         </Pressable>
       ) : (
         <Pressable
           onPress={() => router.push('/invite-caregiver')}
-          style={styles.inviteButton}
+          style={[
+            styles.inviteButton,
+            diffuse && { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2, borderRadius: 999 },
+          ]}
         >
-          <Ionicons name="person-add-outline" size={20} color={colors.textInverse} />
-          <Text style={styles.inviteText}>{t('careInvite_title')}</Text>
+          {diffuse ? (
+            <UserPlus size={18} color={dt.colors.ink} strokeWidth={1.6} />
+          ) : (
+            <Ionicons name="person-add-outline" size={20} color={colors.textInverse} />
+          )}
+          <Text style={[
+            styles.inviteText,
+            diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 12 },
+          ]}>{t('careInvite_title')}</Text>
         </Pressable>
       )}
 
@@ -180,43 +237,98 @@ export default function ManageCaregivers() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <EmptyState
-              icon={<Heart fill={stickers.pink} size={36} />}
-              iconBg={stickers.pinkSoft}
-              title="No caregivers yet"
-              message="Invite a nanny or family member to share care."
-            />
+            diffuse ? (
+              <DiffuseEmptyState
+                icon={
+                  <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
+                    <HeartLine size={22} color={dt.colors.ink3} strokeWidth={1.6} />
+                  </DiffuseBloomIcon>
+                }
+                title="No caregivers yet"
+                message="Invite a nanny or family member to share care."
+              />
+            ) : (
+              <EmptyState
+                icon={<Heart fill={stickers.pink} size={36} />}
+                iconBg={stickers.pinkSoft}
+                title="No caregivers yet"
+                message="Invite a nanny or family member to share care."
+              />
+            )
           }
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardLeft}>
-                <View style={styles.avatar}>
-                  <Ionicons name="person-outline" size={20} color={colors.textMuted} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.email}>{item.email}</Text>
-                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-                    <Text style={styles.role}>{item.role}</Text>
-                    <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status] ?? colors.surfaceRaised }]}>
-                      <Text style={[styles.statusText, { color: STATUS_TEXT_COLORS[item.status] ?? colors.textMuted }]}>
-                        {item.status}
-                      </Text>
-                    </View>
-                    {item.is_locked && (
-                      <View style={[styles.statusBadge, { backgroundColor: stickers.peachSoft }]}>
-                        <Text style={[styles.statusText, { color: colors.warning }]}>{t('manageCaregivers_readOnly')}</Text>
-                      </View>
+          renderItem={({ item }) => {
+            const statusTextColor = diffuse
+              ? (DIFFUSE_STATUS_TEXT[item.status] ?? dt.colors.ink3)
+              : (STATUS_TEXT_COLORS[item.status] ?? colors.textMuted)
+            return (
+              <View style={[
+                styles.card,
+                diffuse && { backgroundColor: dt.colors.surface, borderColor: dt.colors.line },
+              ]}>
+                <View style={styles.cardLeft}>
+                  <View style={[
+                    styles.avatar,
+                    diffuse && { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 },
+                  ]}>
+                    {diffuse ? (
+                      <User size={18} color={dt.colors.ink3} strokeWidth={1.6} />
+                    ) : (
+                      <Ionicons name="person-outline" size={20} color={colors.textMuted} />
                     )}
                   </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[
+                      styles.email,
+                      diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.body, fontWeight: '400' },
+                    ]}>{item.email}</Text>
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+                      <Text style={[
+                        styles.role,
+                        diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 },
+                      ]}>{item.role}</Text>
+                      <View style={[
+                        styles.statusBadge,
+                        diffuse
+                          ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                          : { backgroundColor: STATUS_COLORS[item.status] ?? colors.surfaceRaised },
+                      ]}>
+                        <Text style={[
+                          styles.statusText,
+                          { color: statusTextColor },
+                          diffuse && { fontFamily: diffuseFont.mono, letterSpacing: 0.8 },
+                        ]}>
+                          {item.status}
+                        </Text>
+                      </View>
+                      {item.is_locked && (
+                        <View style={[
+                          styles.statusBadge,
+                          diffuse
+                            ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                            : { backgroundColor: stickers.peachSoft },
+                        ]}>
+                          <Text style={[
+                            styles.statusText,
+                            { color: diffuse ? dt.colors.warning : colors.warning },
+                            diffuse && { fontFamily: diffuseFont.mono, letterSpacing: 0.8 },
+                          ]}>{t('manageCaregivers_readOnly')}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
                 </View>
+                {item.status !== 'revoked' && (
+                  <Pressable onPress={() => revoke(item.id)} style={styles.revokeButton}>
+                    {diffuse ? (
+                      <X size={20} color={dt.colors.ink3} strokeWidth={1.6} />
+                    ) : (
+                      <Ionicons name="close-circle-outline" size={22} color={colors.error} />
+                    )}
+                  </Pressable>
+                )}
               </View>
-              {item.status !== 'revoked' && (
-                <Pressable onPress={() => revoke(item.id)} style={styles.revokeButton}>
-                  <Ionicons name="close-circle-outline" size={22} color={colors.error} />
-                </Pressable>
-              )}
-            </View>
-          )}
+            )
+          }}
         />
       )}
 

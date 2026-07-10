@@ -2,13 +2,20 @@ import { useMemo } from 'react'
 import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { X, Check } from 'lucide-react-native'
 import { useChildStore } from '../store/useChildStore'
 import type { ChildWithRole } from '../types'
-import { useTheme } from '../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
 import { useTranslation } from '../lib/i18n'
+import { useModeStore } from '../store/useModeStore'
+import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 
 export default function ChildPicker() {
   const { colors, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getDiffuseAccent(mode, dt.isDark)
   const { t } = useTranslation()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -18,6 +25,14 @@ export default function ChildPicker() {
     parent: colors.primaryTint,
     nanny: stickers.lilacSoft,
     family: stickers.peachSoft,
+  }
+
+  // Diffuse: each role gets a small color dot (accent hues) instead of a filled
+  // badge fill — hairline pill + dot reads as the v4 data voice.
+  const DIFFUSE_ROLE_DOT: Record<string, string> = {
+    parent: getDiffuseAccent('kids', dt.isDark),
+    nanny: getDiffuseAccent('pregnancy', dt.isDark),
+    family: getDiffuseAccent('pre-pregnancy', dt.isDark),
   }
 
   const styles = useMemo(() => StyleSheet.create({
@@ -53,11 +68,24 @@ export default function ChildPicker() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, diffuse && { backgroundColor: dt.colors.bg }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('childPicker_title')}</Text>
-        <Pressable onPress={() => router.back()} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color={colors.textMuted} />
+        <Text style={[
+          styles.title,
+          diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' },
+        ]}>{t('childPicker_title')}</Text>
+        <Pressable
+          onPress={() => router.back()}
+          style={[
+            styles.closeButton,
+            diffuse && { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 },
+          ]}
+        >
+          {diffuse ? (
+            <X size={20} color={dt.colors.ink} strokeWidth={1.6} />
+          ) : (
+            <Ionicons name="close" size={24} color={colors.textMuted} />
+          )}
         </Pressable>
       </View>
 
@@ -70,19 +98,50 @@ export default function ChildPicker() {
           return (
             <Pressable
               onPress={() => handleSelect(item)}
-              style={[styles.card, isActive && styles.cardActive]}
+              style={[
+                styles.card,
+                isActive && styles.cardActive,
+                diffuse && {
+                  backgroundColor: dt.colors.surface,
+                  borderColor: isActive ? dt.colors.hairline : dt.colors.line,
+                },
+              ]}
             >
-              <View style={styles.avatar}>
+              <View style={[
+                styles.avatar,
+                diffuse && { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 },
+              ]}>
                 <Text style={{ fontSize: 24 }}>{t('childPicker_avatarIcon')}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.childName}>{item.name}</Text>
-                <View style={[styles.roleBadge, { backgroundColor: ROLE_COLORS[item.caregiverRole] ?? colors.surfaceRaised }]}>
-                  <Text style={styles.roleText}>{item.caregiverRole}</Text>
-                </View>
+                <Text style={[
+                  styles.childName,
+                  diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400', fontSize: 18 },
+                ]}>{item.name}</Text>
+                {diffuse ? (
+                  <View style={[styles.roleBadge, {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    backgroundColor: 'transparent',
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: dt.colors.line2,
+                  }]}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: DIFFUSE_ROLE_DOT[item.caregiverRole] ?? dt.colors.ink3 }} />
+                    <Text style={[styles.roleText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.8 }]}>{item.caregiverRole}</Text>
+                  </View>
+                ) : (
+                  <View style={[styles.roleBadge, { backgroundColor: ROLE_COLORS[item.caregiverRole] ?? colors.surfaceRaised }]}>
+                    <Text style={styles.roleText}>{item.caregiverRole}</Text>
+                  </View>
+                )}
               </View>
               {isActive && (
-                <Ionicons name="checkmark-circle" size={24} color={colors.accent} />
+                diffuse ? (
+                  <Check size={22} color={accent} strokeWidth={1.8} />
+                ) : (
+                  <Ionicons name="checkmark-circle" size={24} color={colors.accent} />
+                )
               )}
             </Pressable>
           )

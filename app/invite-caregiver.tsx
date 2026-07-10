@@ -21,26 +21,36 @@ import {
 import { router } from 'expo-router'
 import * as Clipboard from 'expo-clipboard'
 import { Ionicons } from '@expo/vector-icons'
+import { Baby, Heart, Mail, Send, Check, Copy, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
 import { useTranslation } from '../lib/i18n'
 import { useChildStore } from '../store/useChildStore'
-import { useTheme, radius, spacing } from '../constants/theme'
+import { useTheme, radius, spacing, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
 import { Display, MonoCaps, Body } from '../components/ui/Typography'
 import { PaperCard } from '../components/ui/PaperCard'
 import { PillButton } from '../components/ui/PillButton'
 import { useSavedToast } from '../components/ui/SavedToast'
 import { MissingStickers } from '../components/stickers/MissingStickers'
+import { useModeStore } from '../store/useModeStore'
+import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
 
-const ROLES = [
-  { id: 'nanny', label: 'Nanny', Sticker: MissingStickers.CaregiverNanny },
-  { id: 'family', label: 'Family', Sticker: MissingStickers.CaregiverFamily },
+type RoleGlyph = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
+
+const ROLES: { id: string; label: string; Sticker: React.ComponentType<{ size?: number }>; Glyph: RoleGlyph }[] = [
+  { id: 'nanny', label: 'Nanny', Sticker: MissingStickers.CaregiverNanny, Glyph: Baby },
+  { id: 'family', label: 'Family', Sticker: MissingStickers.CaregiverFamily, Glyph: Heart },
 ]
 
 export default function InviteCaregiver() {
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
   const { colors, font, stickers, brand } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getDiffuseAccent(mode, dt.isDark)
   const { t } = useTranslation()
 
   const styles = useMemo(() => StyleSheet.create({
@@ -190,7 +200,7 @@ export default function InviteCaregiver() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, diffuse && { backgroundColor: dt.colors.bg }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -207,35 +217,54 @@ export default function InviteCaregiver() {
           <View style={styles.header}>
             <Pressable
               onPress={() => router.back()}
-              style={styles.closeButton}
+              style={[
+                styles.closeButton,
+                diffuse && { backgroundColor: 'transparent', borderColor: dt.colors.line2 },
+              ]}
               hitSlop={12}
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <Ionicons name="close" size={20} color={colors.textMuted} />
+              {diffuse ? (
+                <X size={18} color={dt.colors.ink} strokeWidth={1.6} />
+              ) : (
+                <Ionicons name="close" size={20} color={colors.textMuted} />
+              )}
             </Pressable>
           </View>
 
           {!inviteLink ? (
             <>
               {/* Title */}
-              <Display size={40} color={colors.text}>
+              <Display size={40} color={diffuse ? dt.colors.ink : colors.text}>
                 {t('careInvite_title')}
               </Display>
-              <Body size={15} color={colors.textMuted} style={styles.subtitle}>
+              <Body size={15} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={styles.subtitle}>
                 {t('careInvite_subtitle', { name: child?.name ?? t('careInvite_yourChild') })}
               </Body>
 
               {/* Email input */}
               <View style={styles.field}>
-                <MonoCaps color={colors.textMuted}>{t('careInvite_field_email')}</MonoCaps>
-                <View style={styles.inputRow}>
-                  <Ionicons name="mail-outline" size={18} color={colors.textMuted} />
+                <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('careInvite_field_email')}</MonoCaps>
+                <View style={[
+                  styles.inputRow,
+                  diffuse && { backgroundColor: dt.colors.surface, borderColor: dt.colors.line },
+                ]}>
+                  {diffuse ? (
+                    <Mail size={17} color={dt.colors.ink3} strokeWidth={1.6} />
+                  ) : (
+                    <Ionicons name="mail-outline" size={18} color={colors.textMuted} />
+                  )}
                   <TextInput
-                    style={[styles.inputInner, { color: colors.text, fontFamily: font.body }]}
-                    selectionColor={brand.secondary}
+                    style={[
+                      styles.inputInner,
+                      diffuse
+                        ? { color: dt.colors.ink, fontFamily: diffuseFont.body }
+                        : { color: colors.text, fontFamily: font.body },
+                    ]}
+                    selectionColor={diffuse ? accent : brand.secondary}
                     placeholder="nanny@email.com"
-                    placeholderTextColor={colors.textMuted}
+                    placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"
@@ -246,10 +275,39 @@ export default function InviteCaregiver() {
 
               {/* Role selection */}
               <View style={styles.field}>
-                <MonoCaps color={colors.textMuted}>{t('careInvite_field_role')}</MonoCaps>
+                <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('careInvite_field_role')}</MonoCaps>
                 <View style={styles.roleRow}>
                   {ROLES.map((r) => {
                     const isActive = role === r.id
+                    if (diffuse) {
+                      return (
+                        <Pressable
+                          key={r.id}
+                          onPress={() => setRole(r.id)}
+                          style={[
+                            styles.roleChip,
+                            {
+                              backgroundColor: 'transparent',
+                              borderWidth: 1,
+                              borderColor: isActive ? dt.colors.hairline : dt.colors.line,
+                            },
+                          ]}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Select role ${r.label}`}
+                        >
+                          <DiffuseBloomIcon color={accent} size={40} intensity={isActive ? 0.55 : 0.32}>
+                            <r.Glyph size={22} color={dt.colors.ink3} strokeWidth={1.6} />
+                          </DiffuseBloomIcon>
+                          <Body
+                            size={15}
+                            color={isActive ? dt.colors.ink : dt.colors.ink3}
+                            style={{ fontFamily: isActive ? diffuseFont.bodySemiBold : diffuseFont.body }}
+                          >
+                            {r.label}
+                          </Body>
+                        </Pressable>
+                      )
+                    }
                     return (
                       <Pressable
                         key={r.id}
@@ -282,7 +340,11 @@ export default function InviteCaregiver() {
                 height={72}
                 trailing={
                   !loading ? (
-                    <Ionicons name="send" size={16} color={colors.bg} />
+                    diffuse ? (
+                      <Send size={15} color={dt.colors.ink} strokeWidth={1.7} />
+                    ) : (
+                      <Ionicons name="send" size={16} color={colors.bg} />
+                    )
                   ) : undefined
                 }
                 style={{ marginTop: spacing.sm }}
@@ -290,30 +352,57 @@ export default function InviteCaregiver() {
 
               {/* Footer */}
               <View style={styles.footer}>
-                <MonoCaps color={colors.textFaint}>{t('careInvite_footer_secured')}</MonoCaps>
+                <MonoCaps color={diffuse ? dt.colors.ink4 : colors.textFaint}>{t('careInvite_footer_secured')}</MonoCaps>
               </View>
             </>
           ) : (
             <View style={styles.successWrap}>
-              <View style={styles.stickerBadge}>
-                <Ionicons name="checkmark" size={36} color={stickers.greenInk} />
-              </View>
-              <Display size={36} align="center" color={colors.text}>
+              {diffuse ? (
+                <View style={{ marginBottom: spacing.md }}>
+                  <DiffuseBloomIcon color={accent} size={72} intensity={0.55}>
+                    <Check size={34} color={dt.colors.ink} strokeWidth={1.6} />
+                  </DiffuseBloomIcon>
+                </View>
+              ) : (
+                <View style={styles.stickerBadge}>
+                  <Ionicons name="checkmark" size={36} color={stickers.greenInk} />
+                </View>
+              )}
+              <Display size={36} align="center" color={diffuse ? dt.colors.ink : colors.text}>
                 {t('careInvite_sent_title')}
               </Display>
-              <Body size={15} align="center" color={colors.textMuted}>
+              <Body size={15} align="center" color={diffuse ? dt.colors.ink3 : colors.textMuted}>
                 {t('careInvite_share_with', { email })}
               </Body>
 
               <Pressable onPress={copyLink} style={styles.linkCard} accessibilityRole="button" accessibilityLabel="Copy invite link">
-                <PaperCard flat padding={16} radius={radius.md} style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <Body size={13} color={colors.textMuted} numberOfLines={2} style={{ flex: 1 }}>
+                {diffuse ? (
+                  <View style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: 16,
+                    borderRadius: radius.md,
+                    backgroundColor: dt.colors.surface,
+                    borderWidth: 1,
+                    borderColor: dt.colors.line,
+                  }}>
+                    <Body size={13} color={dt.colors.ink3} numberOfLines={2} style={{ flex: 1, fontFamily: diffuseFont.mono }}>
                       {inviteLink}
                     </Body>
-                    <Ionicons name="copy-outline" size={20} color={colors.primary} />
+                    <Copy size={18} color={dt.colors.ink} strokeWidth={1.6} />
                   </View>
-                </PaperCard>
+                ) : (
+                  <PaperCard flat padding={16} radius={radius.md} style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      <Body size={13} color={colors.textMuted} numberOfLines={2} style={{ flex: 1 }}>
+                        {inviteLink}
+                      </Body>
+                      <Ionicons name="copy-outline" size={20} color={colors.primary} />
+                    </View>
+                  </PaperCard>
+                )}
               </Pressable>
 
               <Pressable
@@ -323,7 +412,13 @@ export default function InviteCaregiver() {
                 accessibilityRole="button"
                 accessibilityLabel="Done"
               >
-                <Body size={16} color={colors.primary} style={{ fontFamily: font.bodySemiBold }}>
+                <Body
+                  size={diffuse ? 12 : 16}
+                  color={diffuse ? dt.colors.ink : colors.primary}
+                  style={diffuse
+                    ? { fontFamily: diffuseFont.mono, letterSpacing: 2, textTransform: 'uppercase' }
+                    : { fontFamily: font.bodySemiBold }}
+                >
                   {t('common_done')}
                 </Body>
               </Pressable>
